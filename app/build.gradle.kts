@@ -15,7 +15,7 @@ android {
 
   defaultConfig {
     applicationId = "com.aistudio.braintool.xkqzps"
-    minSdk = 24
+    minSdk = 26
     targetSdk = 36
     versionCode = 1
     versionName = "1.0"
@@ -71,12 +71,12 @@ googleServices { missingGoogleServicesStrategy = MissingGoogleServicesStrategy.W
 // Some unused dependencies are commented out below instead of being removed.
 // This makes it easy to add them back in the future if needed.
 dependencies {
-  implementation(project(":halo-core"))
-  implementation(project(":halo-runtime"))
-  implementation(project(":halo-engine-memory"))
-  implementation(project(":halo-provider-openai"))
-  implementation(project(":halo-driver-heycyan"))
-  implementation(project(":halo-plugin-calendar"))
+  // implementation(project(":halo-xxx"))
+  // implementation(project(":halo-xxx"))
+  // implementation(project(":halo-xxx"))
+  // implementation(project(":halo-xxx"))
+  // implementation(project(":halo-xxx"))
+  // implementation(project(":halo-xxx"))
   
   implementation(platform(libs.androidx.compose.bom))
   implementation(platform(libs.firebase.bom))
@@ -138,4 +138,21 @@ dependencies {
   debugImplementation(libs.androidx.compose.ui.tooling)
   "ksp"(libs.androidx.room.compiler)
   "ksp"(libs.moshi.kotlin.codegen)
+}
+dependencies {
+    implementation(project(":engines:voice"))
+    implementation(project(":sdk:driver-sdk"))
+    implementation(project(":sdk:provider-sdk"))
+    implementation(project(":sdk:runtime-sdk"))
+    implementation(project(":libraries:common"))
+}
+dependencies {
+    implementation(project(":runtime:events"))
+    implementation(project(":runtime:commands"))
+    implementation(project(":runtime:queries"))
+    implementation(project(":runtime:scheduler"))
+    implementation(project(":runtime:registry"))
+    implementation(project(":runtime:kernel"))
+    implementation(project(":libraries:testing"))
+    implementation(project(":libraries:logging"))
 }
