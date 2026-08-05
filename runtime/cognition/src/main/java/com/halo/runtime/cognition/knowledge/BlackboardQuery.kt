@@ -4,7 +4,7 @@ import kotlinx.datetime.Instant
 import kotlin.reflect.KClass
 
 data class BlackboardQuery(
-    val payload: KClass<out KnowledgePayload>? = null,
+    val payload: KClass<*>? = null,
     val source: KnowledgeSource? = null,
     val minimumConfidence: Float? = null,
     val since: Instant? = null,

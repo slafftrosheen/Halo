@@ -16,15 +16,15 @@ import com.halo.engines.interpretation.model.TimeEntity
 import com.halo.runtime.cognition.knowledge.Confidence
 
 class RulePipeline(
-    rules: List<InterpretationRule>
+    private val registry: RuleRegistry
 ) {
-    private val rules = rules.sortedByDescending { it.priority }
+    constructor(rules: List<InterpretationRule>) : this(RuleRegistry(rules))
 
     suspend fun execute(
         context: InterpretationContext
     ): InterpretationResult {
         val interpretations = buildList {
-            for (rule in rules) {
+            for (rule in registry.all().sortedByDescending { it.priority }) {
                 if (rule.applies(context)) {
                     rule.interpret(context)?.let(::add)
                 }
