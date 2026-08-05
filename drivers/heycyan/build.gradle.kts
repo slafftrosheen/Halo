@@ -1,6 +1,6 @@
 plugins {
     id("com.android.library")
-}
+    }
 
 android {
     namespace = "com.halo.drivers.heycyan"
@@ -16,3 +16,5 @@ dependencies {
     implementation(project(":libraries:common"))
     implementation(project(":sdk:driver-sdk"))
 }
+
+

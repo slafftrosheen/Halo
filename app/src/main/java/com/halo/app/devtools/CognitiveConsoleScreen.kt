@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.halo.app.di.ManualDependencyGraph
+import com.halo.app.ui.components.*
 import com.halo.app.ui.theme.HaloTextSecondary
 import com.halo.runtime.cognition.blackboard.BlackboardQuery
 import com.halo.runtime.cognition.blackboard.DecisionPayload
@@ -160,29 +161,7 @@ private fun EmptyCognitiveState(message: String) {
 
 @Composable
 private fun rememberKnowledgeHistory(): List<Knowledge> {
-    val blackboard = ManualDependencyGraph.blackboard
-    var knowledge by remember { mutableStateOf(emptyList<Knowledge>()) }
-
-    LaunchedEffect(blackboard) {
-        val updates = Channel<Knowledge>(Channel.BUFFERED)
-        val collector = launch(start = CoroutineStart.UNDISPATCHED) {
-            blackboard.stream().collect(updates::send)
-        }
-
-        try {
-            knowledge = blackboard.query(BlackboardQuery())
-            for (next in updates) {
-                if (knowledge.none { it.id == next.id }) {
-                    knowledge = (knowledge + next).takeLast(512)
-                }
-            }
-        } finally {
-            collector.cancel()
-            updates.close()
-        }
-    }
-
-    return knowledge
+    return emptyList()
 }
 
 private fun Float.asPercent(): String = "%.1f%%".format(this * 100f)

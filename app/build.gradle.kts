@@ -80,7 +80,7 @@ dependencies {
   
   implementation(platform(libs.androidx.compose.bom))
   implementation(platform(libs.firebase.bom))
-  // implementation(libs.accompanist.permissions)
+  implementation(libs.accompanist.permissions)
   implementation(libs.androidx.activity.compose)
   // implementation(libs.androidx.camera.camera2)
   // implementation(libs.androidx.camera.core)
@@ -138,6 +138,7 @@ dependencies {
   debugImplementation(libs.androidx.compose.ui.tooling)
   "ksp"(libs.androidx.room.compiler)
   "ksp"(libs.moshi.kotlin.codegen)
+  debugImplementation("com.squareup.leakcanary:leakcanary-android:2.14")
 }
 dependencies {
     implementation(project(":engines:ai"))
@@ -146,6 +147,7 @@ dependencies {
     implementation(project(":sdk:provider-sdk"))
     implementation(project(":sdk:runtime-sdk"))
     implementation(project(":libraries:common"))
+    implementation(project(":libraries:halo-cognition-language"))
 }
 dependencies {
     implementation(project(":runtime:events"))
@@ -174,6 +176,7 @@ dependencies {
     implementation(project(":engines:interpretation"))
     implementation(project(":engines:planning"))
     implementation(project(":engines:execution"))
+    implementation(project(":engines:agents"))
 }
 dependencies {
     implementation(project(":runtime:cognition"))

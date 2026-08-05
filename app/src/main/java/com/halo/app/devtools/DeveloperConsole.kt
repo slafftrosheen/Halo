@@ -3,18 +3,13 @@ import com.halo.sdk.runtime.*
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontFamily
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.halo.app.ui.theme.HaloSurface
-import com.halo.app.ui.theme.HaloTextPrimary
+import com.halo.app.ui.theme.*
 import com.halo.app.ui.viewmodel.DeveloperConsoleViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -26,13 +21,12 @@ fun DeveloperConsole(viewModel: DeveloperConsoleViewModel = viewModel()) {
     val tabs = listOf(
         "Runtime",
         "Engines",
-        "Services",
-        "Plugins",
         "Timeline",
-        "Settings",
-        "Knowledge",
-        "Interpretation",
-        "Reasoning"
+        "Blackboard",
+        "Memory",
+        "Providers",
+        "Performance",
+        "Logs"
     )
 
     Scaffold(
@@ -40,37 +34,45 @@ fun DeveloperConsole(viewModel: DeveloperConsoleViewModel = viewModel()) {
             Column {
                 TopAppBar(
                     title = { Text("Halo DevTools", color = HaloTextPrimary, fontFamily = FontFamily.Monospace) },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = HaloBackground)
                 )
                 ScrollableTabRow(
                     selectedTabIndex = selectedTab,
-                    containerColor = MaterialTheme.colorScheme.background,
-                    edgePadding = 0.dp
+                    containerColor = HaloBackground,
+                    contentColor = HaloPrimary,
+                    edgePadding = 0.dp,
+                    divider = { HorizontalDivider(color = HaloDivider) }
                 ) {
                     tabs.forEachIndexed { index, title ->
                         Tab(
                             selected = selectedTab == index,
                             onClick = { selectedTab = index },
-                            text = { Text(title, fontFamily = FontFamily.Monospace) }
+                            text = { 
+                                Text(
+                                    title, 
+                                    fontFamily = FontFamily.Monospace,
+                                    color = if (selectedTab == index) HaloPrimary else HaloTextSecondary
+                                ) 
+                            }
                         )
                     }
                 }
             }
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = HaloBackground
     ) { padding ->
         Box(modifier = Modifier.padding(padding).fillMaxSize()) {
             when (selectedTab) {
                 0 -> RuntimeScreen(snapshot)
-                1 -> EngineScreen(snapshot.engines)
-                2 -> ServiceScreen(snapshot.services)
-                3 -> PluginScreen(snapshot.plugins)
-                4 -> TimelineScreen()
-                5 -> SettingsScreen()
-                6 -> KnowledgeScreen()
-                7 -> InterpretationScreen()
-                8 -> ReasoningScreen()
+                1 -> EngineScreen(snapshot)
+                2 -> TimelineScreen()
+                3 -> BlackboardScreen()
+                4 -> Text("Memory Inspector (Coming Soon)", modifier = Modifier.padding(16.dp), color = HaloTextPrimary, fontFamily = FontFamily.Monospace)
+                5 -> ProvidersScreen()
+                6 -> Text("Performance (Coming Soon)", modifier = Modifier.padding(16.dp), color = HaloTextPrimary, fontFamily = FontFamily.Monospace)
+                7 -> Text("Logs (Coming Soon)", modifier = Modifier.padding(16.dp), color = HaloTextPrimary, fontFamily = FontFamily.Monospace)
             }
         }
     }
 }
+

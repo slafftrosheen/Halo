@@ -1,6 +1,5 @@
 package com.halo.app.ui.theme
 
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
@@ -9,14 +8,16 @@ import androidx.compose.ui.graphics.Color
 
 private val HaloColorScheme =
   darkColorScheme(
-    primary = HaloAccent,
-    onPrimary = HaloBase,
-    background = HaloBase,
+    primary = HaloPrimary,
+    onPrimary = HaloBackground,
+    background = HaloBackground,
     onBackground = HaloTextPrimary,
     surface = HaloSurface,
     onSurface = HaloTextPrimary,
-    surfaceVariant = HaloDivider,
+    surfaceVariant = HaloCard,
     onSurfaceVariant = HaloTextSecondary,
+    error = HaloDanger,
+    onError = HaloTextPrimary
   )
 
 @Composable
@@ -28,3 +29,4 @@ fun BrainToolTheme(
 ) {
   MaterialTheme(colorScheme = HaloColorScheme, typography = Typography, content = content)
 }
+

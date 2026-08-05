@@ -1,6 +1,6 @@
 plugins {
     id("com.android.library")
-}
+    }
 
 android {
     namespace = "com.halo.engines.diagnostics"
@@ -17,3 +17,5 @@ dependencies {
     implementation(project(":runtime:services"))
     implementation(project(":libraries:common"))
 }
+
+

@@ -1,0 +1,8 @@
+com.halo.engines.diagnostics-pngs-0 C:\Users\Slaff\Halo\engines\diagnostics\build\generated\res\pngs\debug
+com.halo.engines.diagnostics-updated_navigation_xml-1 C:\Users\Slaff\Halo\engines\diagnostics\build\generated\updated_navigation_xml\debug
+com.halo.engines.diagnostics-mergeDebugResources-2 C:\Users\Slaff\Halo\engines\diagnostics\build\intermediates\incremental\debug\mergeDebugResources\merged.dir
+com.halo.engines.diagnostics-mergeDebugResources-3 C:\Users\Slaff\Halo\engines\diagnostics\build\intermediates\incremental\debug\mergeDebugResources\stripped.dir
+com.halo.engines.diagnostics-debug-4 C:\Users\Slaff\Halo\engines\diagnostics\build\intermediates\merged_res\debug\mergeDebugResources
+com.halo.engines.diagnostics-debug-5 C:\Users\Slaff\Halo\engines\diagnostics\build\intermediates\packaged_res\debug\packageDebugResources
+com.halo.engines.diagnostics-debug-6 C:\Users\Slaff\Halo\engines\diagnostics\src\debug\res
+com.halo.engines.diagnostics-main-7 C:\Users\Slaff\Halo\engines\diagnostics\src\main\res

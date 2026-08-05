@@ -1,0 +1,8 @@
+com.halo.engines.speech-pngs-0 C:\Users\Slaff\Halo\engines\speech\build\generated\res\pngs\debug
+com.halo.engines.speech-updated_navigation_xml-1 C:\Users\Slaff\Halo\engines\speech\build\generated\updated_navigation_xml\debug
+com.halo.engines.speech-mergeDebugResources-2 C:\Users\Slaff\Halo\engines\speech\build\intermediates\incremental\debug\mergeDebugResources\merged.dir
+com.halo.engines.speech-mergeDebugResources-3 C:\Users\Slaff\Halo\engines\speech\build\intermediates\incremental\debug\mergeDebugResources\stripped.dir
+com.halo.engines.speech-debug-4 C:\Users\Slaff\Halo\engines\speech\build\intermediates\merged_res\debug\mergeDebugResources
+com.halo.engines.speech-debug-5 C:\Users\Slaff\Halo\engines\speech\build\intermediates\packaged_res\debug\packageDebugResources
+com.halo.engines.speech-debug-6 C:\Users\Slaff\Halo\engines\speech\src\debug\res
+com.halo.engines.speech-main-7 C:\Users\Slaff\Halo\engines\speech\src\main\res

@@ -1,0 +1,8 @@
+com.halo.runtime.registry-pngs-0 C:\Users\Slaff\Halo\runtime\registry\build\generated\res\pngs\debug
+com.halo.runtime.registry-updated_navigation_xml-1 C:\Users\Slaff\Halo\runtime\registry\build\generated\updated_navigation_xml\debug
+com.halo.runtime.registry-mergeDebugResources-2 C:\Users\Slaff\Halo\runtime\registry\build\intermediates\incremental\debug\mergeDebugResources\merged.dir
+com.halo.runtime.registry-mergeDebugResources-3 C:\Users\Slaff\Halo\runtime\registry\build\intermediates\incremental\debug\mergeDebugResources\stripped.dir
+com.halo.runtime.registry-debug-4 C:\Users\Slaff\Halo\runtime\registry\build\intermediates\merged_res\debug\mergeDebugResources
+com.halo.runtime.registry-debug-5 C:\Users\Slaff\Halo\runtime\registry\build\intermediates\packaged_res\debug\packageDebugResources
+com.halo.runtime.registry-debug-6 C:\Users\Slaff\Halo\runtime\registry\src\debug\res
+com.halo.runtime.registry-main-7 C:\Users\Slaff\Halo\runtime\registry\src\main\res

@@ -1,0 +1,8 @@
+com.halo.libraries.testing-pngs-0 C:\Users\Slaff\Halo\libraries\testing\build\generated\res\pngs\debug
+com.halo.libraries.testing-updated_navigation_xml-1 C:\Users\Slaff\Halo\libraries\testing\build\generated\updated_navigation_xml\debug
+com.halo.libraries.testing-mergeDebugResources-2 C:\Users\Slaff\Halo\libraries\testing\build\intermediates\incremental\debug\mergeDebugResources\merged.dir
+com.halo.libraries.testing-mergeDebugResources-3 C:\Users\Slaff\Halo\libraries\testing\build\intermediates\incremental\debug\mergeDebugResources\stripped.dir
+com.halo.libraries.testing-debug-4 C:\Users\Slaff\Halo\libraries\testing\build\intermediates\merged_res\debug\mergeDebugResources
+com.halo.libraries.testing-debug-5 C:\Users\Slaff\Halo\libraries\testing\build\intermediates\packaged_res\debug\packageDebugResources
+com.halo.libraries.testing-debug-6 C:\Users\Slaff\Halo\libraries\testing\src\debug\res
+com.halo.libraries.testing-main-7 C:\Users\Slaff\Halo\libraries\testing\src\main\res

@@ -6,6 +6,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import com.halo.app.di.ManualDependencyGraph
 import com.halo.app.ui.navigation.AppNavigation
@@ -24,15 +26,23 @@ class MainActivity : ComponentActivity() {
         haloHost = HaloHost(this, ManualDependencyGraph.eventBus)
         haloHost.start()
         
-        val runtime = ManualDependencyGraph.runtime
+        val microkernel = ManualDependencyGraph.microkernel
         setContent {
             CompositionLocalProvider(LocalHaloHost provides haloHost) {
                 BrainToolTheme {
-                    LaunchedEffect(Unit) {
-                        runtime.boot()
-                    }
+                    var permissionsGranted by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+                    var bootComplete by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
                     
-                    AppNavigation()
+                    if (!permissionsGranted) {
+                        com.halo.app.ui.screens.PermissionsScreen(onPermissionsGranted = { permissionsGranted = true })
+                    } else if (!bootComplete) {
+                        LaunchedEffect(Unit) {
+                            microkernel.boot()
+                        }
+                        com.halo.app.ui.screens.StartupScreen(onBootComplete = { bootComplete = true })
+                    } else {
+                        AppNavigation()
+                    }
                 }
             }
         }

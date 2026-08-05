@@ -99,7 +99,7 @@ data class Interpretation(
     val metadata: Map<String, String> = emptyMap()
 )
 
-sealed interface KnowledgePayload
+interface KnowledgePayload
 
 data class SpeechKnowledge(
     val transcript: String,

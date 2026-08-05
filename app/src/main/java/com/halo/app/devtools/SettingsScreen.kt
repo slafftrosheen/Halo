@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.halo.app.ui.theme.HaloTextPrimary
 import com.halo.app.ui.theme.HaloTextSecondary
+import com.halo.app.ui.components.*
 
 @Composable
 fun SettingsScreen() {

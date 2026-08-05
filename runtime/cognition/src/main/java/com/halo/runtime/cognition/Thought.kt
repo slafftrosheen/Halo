@@ -1,5 +1,8 @@
 package com.halo.runtime.cognition
 
+import kotlinx.datetime.Instant
+import java.util.UUID
+
 enum class ThoughtSource {
     RULE,
     MEMORY,
@@ -8,7 +11,9 @@ enum class ThoughtSource {
 }
 
 data class Thought(
-    val text: String,
+    val id: UUID = UUID.randomUUID(),
+    val reasoning: String,
     val confidence: Float,
-    val source: ThoughtSource
+    val source: ThoughtSource,
+    val timestamp: Instant
 )

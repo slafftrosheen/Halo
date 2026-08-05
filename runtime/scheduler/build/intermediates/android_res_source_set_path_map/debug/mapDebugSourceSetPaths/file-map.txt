@@ -1,0 +1,8 @@
+com.halo.runtime.scheduler-pngs-0 C:\Users\Slaff\Halo\runtime\scheduler\build\generated\res\pngs\debug
+com.halo.runtime.scheduler-updated_navigation_xml-1 C:\Users\Slaff\Halo\runtime\scheduler\build\generated\updated_navigation_xml\debug
+com.halo.runtime.scheduler-mergeDebugResources-2 C:\Users\Slaff\Halo\runtime\scheduler\build\intermediates\incremental\debug\mergeDebugResources\merged.dir
+com.halo.runtime.scheduler-mergeDebugResources-3 C:\Users\Slaff\Halo\runtime\scheduler\build\intermediates\incremental\debug\mergeDebugResources\stripped.dir
+com.halo.runtime.scheduler-debug-4 C:\Users\Slaff\Halo\runtime\scheduler\build\intermediates\merged_res\debug\mergeDebugResources
+com.halo.runtime.scheduler-debug-5 C:\Users\Slaff\Halo\runtime\scheduler\build\intermediates\packaged_res\debug\packageDebugResources
+com.halo.runtime.scheduler-debug-6 C:\Users\Slaff\Halo\runtime\scheduler\src\debug\res
+com.halo.runtime.scheduler-main-7 C:\Users\Slaff\Halo\runtime\scheduler\src\main\res

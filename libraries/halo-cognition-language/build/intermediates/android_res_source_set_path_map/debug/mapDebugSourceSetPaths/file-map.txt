@@ -1,0 +1,8 @@
+com.halo.libraries.cognition.language.halo-cognition-language-pngs-0 C:\Users\Slaff\Halo\libraries\halo-cognition-language\build\generated\res\pngs\debug
+com.halo.libraries.cognition.language.halo-cognition-language-updated_navigation_xml-1 C:\Users\Slaff\Halo\libraries\halo-cognition-language\build\generated\updated_navigation_xml\debug
+com.halo.libraries.cognition.language.halo-cognition-language-mergeDebugResources-2 C:\Users\Slaff\Halo\libraries\halo-cognition-language\build\intermediates\incremental\debug\mergeDebugResources\merged.dir
+com.halo.libraries.cognition.language.halo-cognition-language-mergeDebugResources-3 C:\Users\Slaff\Halo\libraries\halo-cognition-language\build\intermediates\incremental\debug\mergeDebugResources\stripped.dir
+com.halo.libraries.cognition.language.halo-cognition-language-debug-4 C:\Users\Slaff\Halo\libraries\halo-cognition-language\build\intermediates\merged_res\debug\mergeDebugResources
+com.halo.libraries.cognition.language.halo-cognition-language-debug-5 C:\Users\Slaff\Halo\libraries\halo-cognition-language\build\intermediates\packaged_res\debug\packageDebugResources
+com.halo.libraries.cognition.language.halo-cognition-language-debug-6 C:\Users\Slaff\Halo\libraries\halo-cognition-language\src\debug\res
+com.halo.libraries.cognition.language.halo-cognition-language-main-7 C:\Users\Slaff\Halo\libraries\halo-cognition-language\src\main\res

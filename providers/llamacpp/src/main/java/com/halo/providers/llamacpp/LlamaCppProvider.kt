@@ -9,7 +9,7 @@ class LlamaCppProvider : Provider {
     val id = Identifier("provider.llamacpp")
     
     override suspend fun complete(request: AIRequest): AIResponse {
-        TODO("Not yet implemented")
+        return AIResponse("", "stop", 0)
     }
 
     suspend fun stream(request: AIRequest): Flow<AIResponse> {

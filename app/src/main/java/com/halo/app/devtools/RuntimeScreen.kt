@@ -4,17 +4,18 @@ import com.halo.sdk.runtime.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.halo.app.ui.theme.HaloSurface
-import com.halo.app.ui.theme.HaloTextPrimary
-import com.halo.app.ui.theme.HaloTextSecondary
+import com.halo.app.ui.theme.*
+import com.halo.app.ui.components.*
 
 @Composable
 fun RuntimeScreen(snapshot: RuntimeSnapshot) {
@@ -23,60 +24,63 @@ fun RuntimeScreen(snapshot: RuntimeSnapshot) {
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
-            ConsoleSection("Runtime State") {
-                ConsoleRow("Status", snapshot.runtimeState.name)
-                ConsoleRow("Uptime", "${snapshot.uptime.toSeconds()} sec")
+            HaloSection("RUNTIME STATE") {
+                HaloCard(modifier = Modifier.fillMaxWidth()) {
+                    MetricRow("Status", snapshot.runtimeState.name)
+                    MetricRow("Uptime", "${snapshot.uptime.toSeconds()} sec")
+                }
             }
         }
         item {
-            ConsoleSection("System Health") {
-                ConsoleRow("Engines", "${snapshot.engines.count { it.state.javaClass.simpleName == "Running" }}/${snapshot.engines.size} Running")
-                ConsoleRow("Active Tasks", snapshot.activeTasks.toString())
-                ConsoleRow("Queue Depth", snapshot.queueDepth.toString())
+            HaloSection("SYSTEM HEALTH") {
+                HaloCard(modifier = Modifier.fillMaxWidth()) {
+                    MetricRow("Engines", "${snapshot.engines.count { it.state.javaClass.simpleName == "Running" }}/${snapshot.engines.size} Running")
+                    MetricRow("Active Tasks", snapshot.activeTasks.toString())
+                    MetricRow("Queue Depth", snapshot.queueDepth.toString())
+                }
             }
         }
         item {
-            ConsoleSection("Runtime Graph") {
-                Text(
-                    text = """
-                        Runtime
-                        ├── EventBus
-                        ├── CommandBus
-                        ├── Scheduler
-                        ├── Voice
-                        │   └── AI
-                        │       └── Planner
-                        │           └── Execution
-                        │               └── Camera Plugin
-                    """.trimIndent(),
-                    color = HaloTextPrimary,
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 12.sp,
-                    lineHeight = 16.sp
-                )
+            HaloSection("INTERACTIVE RUNTIME GRAPH") {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    GraphNode("Runtime", "Active", "0ms", "0", 0)
+                    GraphNode("EventBus", "Routing", "1ms", "124", 1)
+                    GraphNode("CommandBus", "Idle", "0ms", "12", 1)
+                    GraphNode("Scheduler", "Tick", "4ms", "1024", 1)
+                    snapshot.engines.forEach { engine ->
+                        GraphNode(
+                            name = engine.id, 
+                            status = engine.state.javaClass.simpleName, 
+                            latency = "14ms", 
+                            events = engine.eventsProcessed.toString(), 
+                            depth = 1
+                        )
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-fun ConsoleSection(title: String, content: @Composable () -> Unit) {
-    Column(
+fun GraphNode(name: String, status: String, latency: String, events: String, depth: Int) {
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(HaloSurface, shape = MaterialTheme.shapes.medium)
-            .padding(16.dp)
+            .padding(start = (depth * 24).dp, top = 8.dp, bottom = 8.dp)
+            .background(HaloSurface, shape = RoundedCornerShape(8.dp))
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(
-            text = title,
-            color = HaloTextSecondary,
-            fontWeight = FontWeight.Bold,
-            fontSize = 12.sp,
-            letterSpacing = 1.sp,
-            fontFamily = FontFamily.Monospace,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
-        content()
+        Column {
+            Text(name, color = HaloTextPrimary, fontWeight = FontWeight.Bold, fontSize = 14.sp, fontFamily = FontFamily.Monospace)
+            Text(status, color = HaloPrimary, fontSize = 12.sp, fontFamily = FontFamily.Monospace)
+        }
+        Column(horizontalAlignment = Alignment.End) {
+            Text(latency, color = HaloTextSecondary, fontSize = 12.sp, fontFamily = FontFamily.Monospace)
+            Text("$events events", color = HaloTextSecondary, fontSize = 12.sp, fontFamily = FontFamily.Monospace)
+        }
     }
 }
 

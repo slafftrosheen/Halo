@@ -1,6 +1,6 @@
 plugins {
     id("com.android.library")
-}
+    }
 
 android {
     namespace = "com.halo.sdk.provider"
@@ -15,3 +15,5 @@ dependencies {
     implementation(project(":libraries:common"))
     implementation(project(":sdk:runtime-sdk"))
 }
+
+

@@ -1,6 +1,6 @@
 plugins {
     id("com.android.library")
-}
+    }
 
 android {
     namespace = "com.halo.libraries.testing"
@@ -17,3 +17,5 @@ dependencies {
     implementation(project(":sdk:driver-sdk"))
     implementation(project(":sdk:provider-sdk"))
 }
+
+

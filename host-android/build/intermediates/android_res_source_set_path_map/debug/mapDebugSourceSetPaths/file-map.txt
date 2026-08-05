@@ -1,0 +1,8 @@
+com.halo.host.android.host-android-pngs-0 C:\Users\Slaff\Halo\host-android\build\generated\res\pngs\debug
+com.halo.host.android.host-android-updated_navigation_xml-1 C:\Users\Slaff\Halo\host-android\build\generated\updated_navigation_xml\debug
+com.halo.host.android.host-android-mergeDebugResources-2 C:\Users\Slaff\Halo\host-android\build\intermediates\incremental\debug\mergeDebugResources\merged.dir
+com.halo.host.android.host-android-mergeDebugResources-3 C:\Users\Slaff\Halo\host-android\build\intermediates\incremental\debug\mergeDebugResources\stripped.dir
+com.halo.host.android.host-android-debug-4 C:\Users\Slaff\Halo\host-android\build\intermediates\merged_res\debug\mergeDebugResources
+com.halo.host.android.host-android-debug-5 C:\Users\Slaff\Halo\host-android\build\intermediates\packaged_res\debug\packageDebugResources
+com.halo.host.android.host-android-debug-6 C:\Users\Slaff\Halo\host-android\src\debug\res
+com.halo.host.android.host-android-main-7 C:\Users\Slaff\Halo\host-android\src\main\res

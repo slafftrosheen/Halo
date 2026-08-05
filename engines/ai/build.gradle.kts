@@ -1,6 +1,6 @@
 plugins {
     id("com.android.library")
-}
+    }
 
 android {
     namespace = "com.halo.engines.ai"
@@ -18,3 +18,5 @@ dependencies {
     implementation(project(":engines:provider"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
 }
+
+

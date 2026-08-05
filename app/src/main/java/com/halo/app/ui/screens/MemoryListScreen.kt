@@ -16,7 +16,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.halo.app.data.Memory
 import com.halo.app.ui.components.HaloDividerLine
 import com.halo.app.ui.components.SectionHeader
-import com.halo.app.ui.theme.HaloAccent
+import com.halo.app.ui.theme.HaloPrimary
 import com.halo.app.ui.theme.HaloTextPrimary
 import com.halo.app.ui.theme.HaloTextSecondary
 import com.halo.app.ui.viewmodel.MemoryViewModel
@@ -32,7 +32,7 @@ fun MemoryListScreen(viewModel: MemoryViewModel) {
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { showAddDialog = true },
-                containerColor = HaloAccent,
+                containerColor = HaloPrimary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Add Memory")
@@ -165,7 +165,7 @@ fun MemoryDialog(
                 onClick = { onConfirm(text) },
                 enabled = text.isNotBlank()
             ) {
-                Text("Save", color = HaloAccent)
+                Text("Save", color = HaloPrimary)
             }
         },
         dismissButton = {

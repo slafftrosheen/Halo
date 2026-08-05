@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.dp
 import com.halo.app.ui.components.HaloDividerLine
 import com.halo.app.ui.components.MetricRow
 import com.halo.app.ui.components.SectionHeader
-import com.halo.app.ui.theme.HaloAccent
+import com.halo.app.ui.theme.HaloPrimary
 import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
 
