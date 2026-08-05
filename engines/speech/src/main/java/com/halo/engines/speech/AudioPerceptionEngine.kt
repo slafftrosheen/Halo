@@ -250,7 +250,9 @@ class AudioPerceptionEngine(
 
         buffer.clear()
         _state.value = EngineState.Stopped
-        _speechState.value = Idle
+        if (_speechState.value !is Error) {
+            _speechState.value = Idle
+        }
     }
 
     private suspend fun stopAudioSource() {
