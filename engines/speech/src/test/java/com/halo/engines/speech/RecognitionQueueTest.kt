@@ -7,7 +7,7 @@ import org.junit.Test
 
 class RecognitionQueueTest {
     @Test
-    fun unboundedQueuePreservesSegmentOrder() = runBlocking {
+    fun unboundedQueuePreservesSegmentOrder(): Unit = runBlocking {
         val queue = Channel<SpeechSegment>(Channel.UNLIMITED)
         repeat(100) { index ->
             queue.send(segment(index))

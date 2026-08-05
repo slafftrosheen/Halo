@@ -23,7 +23,7 @@ import com.halo.runtime.cognition.blackboard.BlackboardQuery
 import com.halo.runtime.cognition.blackboard.DecisionPayload
 import com.halo.runtime.cognition.blackboard.GoalPayload
 import com.halo.runtime.cognition.blackboard.Interpretation
-import com.halo.runtime.cognition.blackboard.InterpretationPayload
+import com.halo.runtime.cognition.blackboard.InterpretationKnowledge
 import com.halo.runtime.cognition.blackboard.Knowledge
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.channels.Channel
@@ -53,7 +53,7 @@ fun KnowledgeScreen() {
 @Composable
 fun InterpretationScreen() {
     val interpretations = rememberKnowledgeHistory()
-        .mapNotNull { (it.payload as? InterpretationPayload)?.interpretation }
+        .mapNotNull { (it.payload as? InterpretationKnowledge)?.interpretation }
 
     LazyColumn(
         modifier = Modifier
@@ -80,7 +80,7 @@ fun ReasoningScreen() {
         .firstNotNullOfOrNull { (it.payload as? GoalPayload)?.goal }
     val latestInterpretation = knowledge
         .asReversed()
-        .firstNotNullOfOrNull { (it.payload as? InterpretationPayload)?.interpretation }
+        .firstNotNullOfOrNull { (it.payload as? InterpretationKnowledge)?.interpretation }
     val latestDecision = knowledge
         .asReversed()
         .firstNotNullOfOrNull { (it.payload as? DecisionPayload)?.decision }
@@ -95,11 +95,8 @@ fun ReasoningScreen() {
             ConsoleSection("Reasoning") {
                 ConsoleRow("Current Goal", latestGoal?.toString() ?: "None")
                 ConsoleRow(
-                    "Alternatives",
-                    latestInterpretation
-                        ?.candidates
-                        ?.joinToString { "${it.name} (${it.confidence.asPercent()})" }
-                        ?: "None"
+                    "Intent",
+                    latestInterpretation?.intent?.toString() ?: "None"
                 )
                 ConsoleRow("Decision", latestDecision?.toString() ?: "None")
                 ConsoleRow(
@@ -120,32 +117,31 @@ private fun InterpretationDetails(
     interpretation: Interpretation
 ) {
     ConsoleSection("Interpretation") {
+        ConsoleRow("Intent", interpretation.intent.toString())
         ConsoleRow(
             "Entities",
             interpretation.entities.joinToString {
                 when (it) {
                     is com.halo.runtime.cognition.blackboard.PersonEntity -> "Person: ${it.name}"
                     is com.halo.runtime.cognition.blackboard.LocationEntity -> "Location: ${it.location}"
+                    is com.halo.runtime.cognition.blackboard.PlaceEntity -> "Place: ${it.name}"
                     is com.halo.runtime.cognition.blackboard.TimeEntity -> "Time: ${it.expression}"
+                    is com.halo.runtime.cognition.blackboard.DateEntity -> "Date: ${it.expression}"
+                    is com.halo.runtime.cognition.blackboard.NumberEntity -> "Number: ${it.value}"
                     is com.halo.runtime.cognition.blackboard.ObjectEntity -> "Object: ${it.name}"
                     is com.halo.runtime.cognition.blackboard.ApplicationEntity -> "Application: ${it.name}"
                     is com.halo.runtime.cognition.blackboard.DeviceEntity -> "Device: ${it.name}"
+                    is com.halo.runtime.cognition.blackboard.MediaEntity -> "Media: ${it.title}"
+                    is com.halo.runtime.cognition.blackboard.WebEntity -> "Web: ${it.query}"
                     else -> it.toString()
                 }
             }
         )
-        ConsoleRow(
-            "Candidates",
-            interpretation.candidates.joinToString {
-                "${it.name} (${it.confidence.asPercent()})"
-            }
-        )
-        ConsoleRow(
-            "Slots",
-            interpretation.slots.joinToString {
-                "${it.key}: ${it.value}"
-            }
-        )
+        ConsoleRow("Transcript", interpretation.transcript)
+        ConsoleRow("Language", interpretation.language)
+        ConsoleRow("Metadata", interpretation.metadata.entries.joinToString {
+            "${it.key}: ${it.value}"
+        })
         ConsoleRow("Confidence", interpretation.confidence.overall.asPercent())
     }
 }

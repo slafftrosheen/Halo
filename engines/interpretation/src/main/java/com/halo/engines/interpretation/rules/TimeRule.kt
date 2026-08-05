@@ -1,38 +1,25 @@
 package com.halo.engines.interpretation.rules
 
-import com.halo.engines.interpretation.api.Interpretation
-import com.halo.engines.interpretation.api.InterpretationBuilder
 import com.halo.engines.interpretation.api.InterpretationContext
 import com.halo.engines.interpretation.api.InterpretationRule
+import com.halo.engines.interpretation.api.RuleMatch
+import com.halo.engines.interpretation.model.TimeEntity
 import com.halo.engines.speech.SpeechRecognizedPayload
-import com.halo.runtime.cognition.blackboard.Confidence
 
 class TimeRule : InterpretationRule {
     override val priority: Int = 600
 
-    override suspend fun applies(
-        context: InterpretationContext
-    ): Boolean = transcript(context)?.let(timePattern::containsMatchIn) == true
-
-    override suspend fun interpret(
-        context: InterpretationContext
-    ): Interpretation? {
+    override suspend fun match(context: InterpretationContext): RuleMatch? {
         val transcript = transcript(context) ?: return null
         val match = timePattern.find(transcript) ?: return null
         val expression = normalize(match.groupValues[1], match.groupValues[2])
-        val confidence = context.observation.confidence
 
-        return InterpretationBuilder()
-            .time(expression, 0.98f)
-            .slot("time", expression)
-            .confidence(
-                Confidence(
-                    lexical = confidence,
-                    contextual = 0.95f,
-                    semantic = 0.98f
-                )
-            )
-            .build()
+        return RuleMatch(
+            confidence = 0.98f,
+            entities = listOf(TimeEntity(expression, 0.98f)),
+            consumedTokens = match.value.tokenCount(),
+            diagnostics = "Extracted time $expression"
+        )
     }
 
     private fun transcript(context: InterpretationContext): String? =
@@ -41,15 +28,15 @@ class TimeRule : InterpretationRule {
             ?.trim()
             ?.takeIf { it.isNotEmpty() }
 
-    private fun normalize(
-        day: String,
-        rawTime: String
-    ): String {
+    private fun normalize(day: String, rawTime: String): String {
         if (rawTime.isBlank()) {
             return day.lowercase()
         }
 
-        val timeMatch = clockPattern.matchEntire(rawTime.trim()) ?: return "$day $rawTime"
+        val normalizedTime = wordHours[rawTime.trim().lowercase()]
+            ?: rawTime.trim()
+        val timeMatch = clockPattern.matchEntire(normalizedTime)
+            ?: return "$day ${rawTime.trim().lowercase()}"
         var hour = timeMatch.groupValues[1].toInt()
         val minute = timeMatch.groupValues[2].ifBlank { "00" }
         val period = timeMatch.groupValues[3].lowercase()
@@ -63,14 +50,31 @@ class TimeRule : InterpretationRule {
         return "${day.lowercase()} ${hour.toString().padStart(2, '0')}:$minute"
     }
 
+    private fun String.tokenCount(): Int =
+        trim().split(Regex("\\s+")).count { it.isNotBlank() }
+
     private companion object {
         val timePattern = Regex(
-            "\\b(today|tomorrow|tonight)(?:\\s+at\\s+(\\d{1,2}(?::\\d{2})?\\s*(?:am|pm)?))?",
+            "\\b(today|tomorrow|tonight)(?:\\s+(?:at\\s+)?(\\d{1,2}(?::\\d{2})?\\s*(?:am|pm)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|morning|afternoon|evening))?",
             RegexOption.IGNORE_CASE
         )
         val clockPattern = Regex(
             "(\\d{1,2})(?::(\\d{2}))?\\s*(am|pm)?",
             RegexOption.IGNORE_CASE
+        )
+        val wordHours = mapOf(
+            "one" to "1:00",
+            "two" to "2:00",
+            "three" to "3:00",
+            "four" to "4:00",
+            "five" to "5:00",
+            "six" to "6:00",
+            "seven" to "7:00",
+            "eight" to "8:00",
+            "nine" to "9:00",
+            "ten" to "10:00",
+            "eleven" to "11:00",
+            "twelve" to "12:00"
         )
     }
 }

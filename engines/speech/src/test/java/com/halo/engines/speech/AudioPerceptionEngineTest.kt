@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class AudioPerceptionEngineTest {
     @Test
-    fun recognitionWorkerPublishesSpeechAndObservation() = runBlocking {
+    fun recognitionWorkerPublishesSpeechAndObservation(): Unit = runBlocking {
         val source = TestAudioSource()
         val recognizer = RecordingRecognizer()
         val eventBus = RecordingEventBus()
@@ -62,7 +62,7 @@ class AudioPerceptionEngineTest {
     }
 
     @Test
-    fun captureContinuesWhileRecognitionIsBlocked() = runBlocking {
+    fun captureContinuesWhileRecognitionIsBlocked(): Unit = runBlocking {
         val source = TestAudioSource()
         val recognizer = BlockingRecognizer()
         val eventBus = RecordingEventBus()
@@ -98,7 +98,7 @@ class AudioPerceptionEngineTest {
     }
 
     @Test
-    fun stopCancelsRecognitionAndStopsCapture() = runBlocking {
+    fun stopCancelsRecognitionAndStopsCapture(): Unit = runBlocking {
         val source = TestAudioSource()
         val recognizer = CancellingRecognizer()
         val eventBus = RecordingEventBus()
@@ -122,7 +122,7 @@ class AudioPerceptionEngineTest {
     }
 
     @Test
-    fun recognitionTimeoutPublishesEventAndCaptureContinues() = runBlocking {
+    fun recognitionTimeoutPublishesEventAndCaptureContinues(): Unit = runBlocking {
         val source = TestAudioSource()
         val eventBus = RecordingEventBus()
         val engine = engine(
@@ -150,6 +150,33 @@ class AudioPerceptionEngineTest {
         } finally {
             engine.stop()
         }
+    }
+
+    @Test
+    fun captureCanRestartAfterStartupFailureWhileRecognitionWorkerIdles(): Unit = runBlocking {
+        val source = FailingOnceAudioSource()
+        val eventBus = RecordingEventBus()
+        val engine = engine(source, RecordingRecognizer())
+
+        engine.initialize(engineContext(eventBus))
+        engine.start()
+        awaitCondition {
+            eventBus.published.any { it is RecognitionFailed }
+        }
+        withTimeout(1_000) {
+            source.failureCleanup.await()
+        }
+
+        try {
+            engine.start()
+            withTimeout(1_000) {
+                source.successfulStart.await()
+            }
+        } finally {
+            engine.stop()
+        }
+
+        assertEquals(2, source.startAttempts.get())
     }
 
     private fun engine(
@@ -211,6 +238,27 @@ class AudioPerceptionEngineTest {
 
         suspend fun emit(frame: AudioFrame) {
             frameChannel.send(frame)
+        }
+    }
+
+    private class FailingOnceAudioSource : AudioSource {
+        private val frameChannel = Channel<AudioFrame>(Channel.UNLIMITED)
+
+        val startAttempts = AtomicInteger()
+        val successfulStart = CompletableDeferred<Unit>()
+        val failureCleanup = CompletableDeferred<Unit>()
+
+        override val frames: Flow<AudioFrame> = frameChannel.receiveAsFlow()
+
+        override suspend fun start() {
+            if (startAttempts.incrementAndGet() == 1) {
+                throw IllegalStateException("Microphone unavailable")
+            }
+            successfulStart.complete(Unit)
+        }
+
+        override suspend fun stop() {
+            failureCleanup.complete(Unit)
         }
     }
 

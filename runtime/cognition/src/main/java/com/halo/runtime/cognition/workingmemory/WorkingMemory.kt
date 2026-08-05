@@ -3,7 +3,7 @@ package com.halo.runtime.cognition.workingmemory
 import com.halo.runtime.cognition.Goal
 import com.halo.runtime.cognition.Task
 import com.halo.runtime.cognition.blackboard.Interpretation
-import com.halo.runtime.cognition.blackboard.LocationEntity
+import com.halo.runtime.cognition.blackboard.PlaceEntity
 import com.halo.runtime.cognition.blackboard.PersonEntity
 import com.halo.sdk.runtime.Observation
 
@@ -18,5 +18,5 @@ interface WorkingMemory {
 
     suspend fun focusedPerson(): PersonEntity?
 
-    suspend fun currentLocation(): LocationEntity?
+    suspend fun currentLocation(): PlaceEntity?
 }

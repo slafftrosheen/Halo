@@ -86,7 +86,7 @@ class AudioPerceptionEngine(
             check(_state.value != EngineState.Disposed) {
                 "AudioPerceptionEngine cannot be started after it is disposed"
             }
-            if (captureJob?.isActive == true || recognitionJob?.isActive == true) {
+            if (captureJob?.isActive == true) {
                 return@withLock
             }
 
@@ -94,12 +94,20 @@ class AudioPerceptionEngine(
             _speechState.value = Listening
 
             val eventBus = context.registry.resolve(Services.EventBus)
-            val queue = Channel<SpeechSegment>(Channel.UNLIMITED)
-            recognitionQueue = queue
-            queuedSegmentCount.set(0)
+            val queue = recognitionQueue
+                ?.takeIf { recognitionJob?.isActive == true }
+                ?: Channel<SpeechSegment>(Channel.UNLIMITED).also { newQueue ->
+                    recognitionQueue = newQueue
+                    queuedSegmentCount.set(0)
+                    recognitionJob = scope.launch {
+                        runRecognitionWorker(eventBus, newQueue)
+                    }
+                }
 
-            recognitionJob = scope.launch {
-                runRecognitionWorker(eventBus, queue)
+            if (recognitionJob?.isActive != true) {
+                recognitionJob = scope.launch {
+                    runRecognitionWorker(eventBus, queue)
+                }
             }
             captureJob = scope.launch {
                 runCaptureLoop(eventBus, queue)

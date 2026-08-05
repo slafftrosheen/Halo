@@ -1,81 +1,118 @@
 package com.halo.engines.interpretation.rules
 
-import com.halo.engines.interpretation.api.Interpretation
-import com.halo.engines.interpretation.api.InterpretationBuilder
 import com.halo.engines.interpretation.api.InterpretationContext
 import com.halo.engines.interpretation.api.InterpretationRule
+import com.halo.engines.interpretation.api.RuleMatch
+import com.halo.engines.interpretation.model.ApplicationEntity
+import com.halo.engines.interpretation.model.CallIntent
+import com.halo.engines.interpretation.model.MediaEntity
+import com.halo.engines.interpretation.model.NavigateIntent
+import com.halo.engines.interpretation.model.OpenIntent
+import com.halo.engines.interpretation.model.PauseIntent
+import com.halo.engines.interpretation.model.PlaceEntity
+import com.halo.engines.interpretation.model.PlayIntent
+import com.halo.engines.interpretation.model.QuestionIntent
+import com.halo.engines.interpretation.model.ReminderIntent
+import com.halo.engines.interpretation.model.SearchIntent
+import com.halo.engines.interpretation.model.WebEntity
 import com.halo.engines.speech.SpeechRecognizedPayload
-import com.halo.runtime.cognition.blackboard.Confidence
 
 class SpeechRule : InterpretationRule {
     override val priority: Int = 500
 
-    override suspend fun applies(
-        context: InterpretationContext
-    ): Boolean = transcript(context) != null
-
-    override suspend fun interpret(
-        context: InterpretationContext
-    ): Interpretation? {
+    override suspend fun match(context: InterpretationContext): RuleMatch? {
         val transcript = transcript(context) ?: return null
-        val confidence = context.observation.confidence
-        val builder = InterpretationBuilder().confidence(
-            Confidence(
-                lexical = confidence,
-                contextual = confidence,
-                semantic = 0.99f
-            )
-        )
         val normalized = transcript.lowercase()
+        val confidence = context.observation.confidence
+        val consumedTokens = transcript.tokenCount()
 
-        when {
-            normalized.startsWith("call ") || normalized == "call" -> {
-                builder.candidate("Call", 0.99f).slot("action", "Call")
-                recipient(transcript)?.let {
-                    builder.person(it, 0.98f).slot("target", it)
-                }
-                timeExpression(transcript)?.let { time ->
-                    builder
-                        .time(time, 0.98f)
-                        .slot("time", time)
-                        .candidate("Schedule", 0.18f)
-                }
-            }
+        return when {
+            normalized.startsWith("call ") || normalized == "call" -> RuleMatch(
+                confidence = 0.99f,
+                intent = CallIntent,
+                consumedTokens = consumedTokens,
+                diagnostics = "Detected call command"
+            )
 
-            normalized.startsWith("navigate to ") || normalized.startsWith("go to ") -> {
+            navigationPattern.matches(transcript) -> {
                 val destination = navigationPattern.find(transcript)
                     ?.groupValues
                     ?.get(1)
                     ?.trim()
                     .orEmpty()
-                if (destination.isBlank()) {
-                    return null
+                destination.takeIf { it.isNotBlank() }?.let {
+                    RuleMatch(
+                        confidence = 0.99f,
+                        intent = NavigateIntent,
+                        entities = listOf(PlaceEntity(it.titlecaseWords(), 0.97f)),
+                        consumedTokens = consumedTokens,
+                        diagnostics = "Detected navigation command"
+                    )
                 }
-
-                builder
-                    .candidate("Navigate", 0.99f)
-                    .location(destination.titlecaseWords(), 0.97f)
-                    .slot("destination", destination.titlecaseWords())
             }
 
             normalized.startsWith("open ") -> {
-                val application = transcript
-                    .dropWhile { !it.isWhitespace() }
-                    .trim()
-                if (application.isBlank()) {
-                    return null
+                val application = transcript.afterFirstWord()
+                application.takeIf { it.isNotBlank() }?.let {
+                    RuleMatch(
+                        confidence = 0.95f,
+                        intent = OpenIntent,
+                        entities = listOf(ApplicationEntity(it.titlecaseWords(), 0.94f)),
+                        consumedTokens = consumedTokens,
+                        diagnostics = "Detected application command"
+                    )
                 }
-
-                builder
-                    .candidate("OpenApplication", 0.91f)
-                    .application(application.titlecaseWords(), 0.91f)
-                    .slot("application", application.titlecaseWords())
             }
 
-            else -> return null
-        }
+            normalized.startsWith("play ") -> {
+                val media = transcript.afterFirstWord()
+                media.takeIf { it.isNotBlank() }?.let {
+                    RuleMatch(
+                        confidence = 0.95f,
+                        intent = PlayIntent,
+                        entities = listOf(MediaEntity(it.titlecaseWords(), 0.93f)),
+                        consumedTokens = consumedTokens,
+                        diagnostics = "Detected media command"
+                    )
+                }
+            }
 
-        return builder.build()
+            normalized == "pause" || normalized.startsWith("pause ") -> RuleMatch(
+                confidence = 0.95f,
+                intent = PauseIntent,
+                consumedTokens = consumedTokens,
+                diagnostics = "Detected pause command"
+            )
+
+            normalized.startsWith("remind me") || normalized.startsWith("set a reminder") -> RuleMatch(
+                confidence = 0.94f,
+                intent = ReminderIntent,
+                consumedTokens = consumedTokens,
+                diagnostics = "Detected reminder command"
+            )
+
+            normalized.startsWith("search ") -> {
+                val query = transcript.afterFirstWord()
+                query.takeIf { it.isNotBlank() }?.let {
+                    RuleMatch(
+                        confidence = 0.92f,
+                        intent = SearchIntent,
+                        entities = listOf(WebEntity(it, 0.9f)),
+                        consumedTokens = consumedTokens,
+                        diagnostics = "Detected web search command"
+                    )
+                }
+            }
+
+            questionPattern.containsMatchIn(transcript) -> RuleMatch(
+                confidence = confidence.coerceAtLeast(0.7f),
+                intent = QuestionIntent,
+                consumedTokens = consumedTokens,
+                diagnostics = "Detected question"
+            )
+
+            else -> null
+        }
     }
 
     private fun transcript(context: InterpretationContext): String? =
@@ -84,47 +121,11 @@ class SpeechRule : InterpretationRule {
             ?.trim()
             ?.takeIf { it.isNotEmpty() }
 
-    private fun recipient(transcript: String): String? {
-        val commandEnd = transcript.indexOfFirst(Char::isWhitespace)
-        if (commandEnd < 0) {
-            return null
-        }
+    private fun String.afterFirstWord(): String =
+        dropWhile { !it.isWhitespace() }.trim()
 
-        val remainder = transcript.substring(commandEnd).trim()
-        val timeIndex = timePattern.find(remainder)?.range?.first ?: remainder.length
-        return remainder
-            .substring(0, timeIndex)
-            .trim(' ', ',', '.', '!', '?')
-            .takeIf { it.isNotBlank() }
-            ?.titlecaseWords()
-    }
-
-    private fun timeExpression(transcript: String): String? =
-        timePattern.find(transcript)?.let { match ->
-            normalizeTime(match.groupValues[1], match.groupValues[2])
-        }
-
-    private fun normalizeTime(
-        day: String,
-        rawTime: String
-    ): String {
-        if (rawTime.isBlank()) {
-            return day.lowercase()
-        }
-
-        val timeMatch = clockPattern.matchEntire(rawTime.trim()) ?: return "$day $rawTime"
-        var hour = timeMatch.groupValues[1].toInt()
-        val minute = timeMatch.groupValues[2].ifBlank { "00" }
-        val period = timeMatch.groupValues[3].lowercase()
-
-        if (period == "pm" && hour < 12) {
-            hour += 12
-        } else if (period == "am" && hour == 12) {
-            hour = 0
-        }
-
-        return "${day.lowercase()} ${hour.toString().padStart(2, '0')}:$minute"
-    }
+    private fun String.tokenCount(): Int =
+        trim().split(Regex("\\s+")).count { it.isNotBlank() }
 
     private fun String.titlecaseWords(): String =
         split(Regex("\\s+"))
@@ -134,16 +135,12 @@ class SpeechRule : InterpretationRule {
             }
 
     private companion object {
-        val timePattern = Regex(
-            "\\b(today|tomorrow|tonight)(?:\\s+at\\s+(\\d{1,2}(?::\\d{2})?\\s*(?:am|pm)?))?",
-            RegexOption.IGNORE_CASE
-        )
-        val clockPattern = Regex(
-            "(\\d{1,2})(?::(\\d{2}))?\\s*(am|pm)?",
-            RegexOption.IGNORE_CASE
-        )
         val navigationPattern = Regex(
-            "^\\s*(?:navigate\\s+to|go\\s+to)\\s+(.+)$",
+            "^\\s*(?:navigate(?:\\s+to)?|go\\s+to)\\s+(.+)$",
+            RegexOption.IGNORE_CASE
+        )
+        val questionPattern = Regex(
+            "^\\s*(?:what|when|where|who|why|how|can|could|would|is|are|do|does)\\b|\\?$",
             RegexOption.IGNORE_CASE
         )
     }
