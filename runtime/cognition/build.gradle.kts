@@ -13,4 +13,5 @@ android {
 
 dependencies {
     implementation(project(":sdk:runtime-sdk"))
+    api(libs.kotlinx.datetime)
 }
