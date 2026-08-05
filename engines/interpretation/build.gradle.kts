@@ -18,4 +18,5 @@ dependencies {
     implementation(project(":runtime:services"))
     implementation(project(":engines:speech"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    testImplementation(libs.junit)
 }

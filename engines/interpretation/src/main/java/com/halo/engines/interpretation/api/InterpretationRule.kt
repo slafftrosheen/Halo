@@ -3,11 +3,7 @@ package com.halo.engines.interpretation.api
 interface InterpretationRule {
     val priority: Int
 
-    suspend fun applies(
+    suspend fun match(
         context: InterpretationContext
-    ): Boolean
-
-    suspend fun interpret(
-        context: InterpretationContext
-    ): Interpretation?
+    ): RuleMatch?
 }

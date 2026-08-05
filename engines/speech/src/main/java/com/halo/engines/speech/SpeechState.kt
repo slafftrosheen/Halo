@@ -6,3 +6,4 @@ object Listening : SpeechState
 object DetectingSpeech : SpeechState
 object Recording : SpeechState
 object Transcribing : SpeechState
+data class Error(val reason: String) : SpeechState

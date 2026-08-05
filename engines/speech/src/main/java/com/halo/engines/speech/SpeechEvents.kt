@@ -8,4 +8,10 @@ data class SpeechEnded(override val timestamp: Long = System.currentTimeMillis()
 data class RecognitionStarted(override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
 data class RecognitionFinished(override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
 data class RecognitionFailed(val reason: String, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
+data class RecognitionTimeoutEvent(
+    val timeoutMillis: Long,
+    val segmentStartedAt: Long,
+    val segmentFinishedAt: Long,
+    override val timestamp: Long = System.currentTimeMillis()
+) : HaloEvent
 data class SpeechRecognized(val text: String, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent

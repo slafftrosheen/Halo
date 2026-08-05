@@ -7,11 +7,11 @@ data class SpeechRecognitionResult(
 )
 
 interface SpeechRecognizer {
-    suspend fun transcribe(audio: AudioBuffer): SpeechRecognitionResult
+    suspend fun transcribe(segment: SpeechSegment): SpeechRecognitionResult
 }
 
 class MockSpeechRecognizer : SpeechRecognizer {
-    override suspend fun transcribe(audio: AudioBuffer): SpeechRecognitionResult {
+    override suspend fun transcribe(segment: SpeechSegment): SpeechRecognitionResult {
         return SpeechRecognitionResult("What is the weather?", "en", 0.95f)
     }
 }

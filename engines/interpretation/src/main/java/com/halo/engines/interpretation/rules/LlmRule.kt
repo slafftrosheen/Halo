@@ -4,6 +4,7 @@ import com.halo.engines.interpretation.api.Interpretation
 import com.halo.engines.interpretation.api.InterpretationContext
 import com.halo.engines.interpretation.api.LlmInterpretationClient
 import com.halo.engines.interpretation.api.LowConfidenceInterpretationRule
+import com.halo.engines.interpretation.api.RuleMatch
 
 class LlmRule(
     private val client: LlmInterpretationClient,
@@ -25,5 +26,5 @@ class LlmRule(
     override suspend fun interpret(
         context: InterpretationContext,
         current: Interpretation
-    ): Interpretation? = client.interpret(context)
+    ): RuleMatch? = client.interpret(context)
 }

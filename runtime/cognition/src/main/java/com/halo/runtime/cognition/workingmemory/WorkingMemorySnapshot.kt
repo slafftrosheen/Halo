@@ -4,7 +4,7 @@ import com.halo.runtime.cognition.Goal
 import com.halo.runtime.cognition.Task
 import com.halo.runtime.cognition.blackboard.Interpretation
 import com.halo.runtime.cognition.blackboard.Knowledge
-import com.halo.runtime.cognition.blackboard.LocationEntity
+import com.halo.runtime.cognition.blackboard.PlaceEntity
 import com.halo.runtime.cognition.blackboard.PersonEntity
 import com.halo.sdk.runtime.Observation
 
@@ -14,7 +14,7 @@ data class WorkingMemorySnapshot(
     val latestObservation: Observation?,
     val latestInterpretation: Interpretation?,
     val focusedPerson: PersonEntity?,
-    val currentLocation: LocationEntity?,
+    val currentLocation: PlaceEntity?,
     val recentKnowledge: List<Knowledge> = emptyList()
 )
 

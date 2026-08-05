@@ -6,7 +6,7 @@ data class Confidence(
     val semantic: Float
 ) {
     val overall: Float
-        get() = (lexical + contextual + semantic) / 3f
+        get() = lexical * contextual * semantic
 
     companion object {
         val None = Confidence(

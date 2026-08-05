@@ -16,4 +16,5 @@ dependencies {
     implementation(project(":libraries:common"))
     implementation(project(":runtime:services"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    testImplementation(libs.junit)
 }
