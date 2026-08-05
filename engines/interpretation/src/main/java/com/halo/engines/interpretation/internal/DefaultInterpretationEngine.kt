@@ -5,13 +5,14 @@ import com.halo.engines.interpretation.api.InterpretationEngine
 import com.halo.engines.interpretation.api.InterpretationResult
 import com.halo.libraries.common.core.Identifier
 import com.halo.libraries.common.core.Version
-import com.halo.runtime.cognition.knowledge.Blackboard
-import com.halo.runtime.cognition.knowledge.Confidence
-import com.halo.runtime.cognition.knowledge.InterpretationPayload
-import com.halo.runtime.cognition.knowledge.Knowledge
-import com.halo.runtime.cognition.knowledge.KnowledgeId
-import com.halo.runtime.cognition.knowledge.KnowledgeSource
-import com.halo.runtime.cognition.knowledge.ObservationPayload
+import com.halo.runtime.cognition.blackboard.Blackboard
+import com.halo.runtime.cognition.blackboard.Confidence
+import com.halo.runtime.cognition.blackboard.InterpretationPayload
+import com.halo.runtime.cognition.blackboard.Knowledge
+import com.halo.runtime.cognition.blackboard.KnowledgeId
+import com.halo.runtime.cognition.blackboard.KnowledgeSource
+import com.halo.runtime.cognition.blackboard.ObservationPayload
+import com.halo.runtime.cognition.context.ContextAssembler
 import com.halo.runtime.services.Services
 import com.halo.sdk.runtime.EngineContext
 import com.halo.sdk.runtime.EngineHealth
@@ -23,6 +24,7 @@ import com.halo.sdk.runtime.ServiceKey
 import com.halo.sdk.runtime.Source
 import java.util.UUID
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -46,13 +48,19 @@ open class DefaultInterpretationEngine(
     private val _state = MutableStateFlow<EngineState>(EngineState.Created)
     override val state: StateFlow<EngineState> = _state
 
-    override val dependencies: Set<ServiceKey<*>> = setOf(Services.EventBus)
+    override val dependencies: Set<ServiceKey<*>> = setOf(
+        Services.EventBus,
+        Services.Blackboard
+    )
 
     private lateinit var context: EngineContext
     private var job: Job? = null
 
     override suspend fun initialize(context: EngineContext) {
         this.context = context
+        check(context.registry.resolve(Services.Blackboard) === blackboard) {
+            "InterpretationEngine must use the registered Blackboard instance"
+        }
         _state.value = EngineState.Initializing
     }
 
@@ -62,16 +70,28 @@ open class DefaultInterpretationEngine(
 
         job = CoroutineScope(context.runtime.scheduler.io).launch {
             eventBus.observe(ObservationCreated::class.java).collect { event ->
-                val processed = process(event.observation)
-                val interpretation = processed.result.interpretation ?: return@collect
-                val knowledge = processed.knowledge ?: return@collect
+                try {
+                    val processed = process(event.observation)
+                    val interpretation = processed.result.interpretation ?: return@collect
+                    val knowledge = processed.knowledge ?: return@collect
 
-                eventBus.publish(
-                    InterpretationCreated(
-                        interpretation = interpretation,
-                        knowledgeId = knowledge.id
+                    eventBus.publish(
+                        InterpretationCreated(
+                            interpretation = interpretation,
+                            knowledgeId = knowledge.id
+                        )
                     )
-                )
+                    _health.value = EngineHealth.Healthy
+                } catch (exception: CancellationException) {
+                    throw exception
+                } catch (exception: Exception) {
+                    _health.value = EngineHealth.Degraded
+                    context.runtime.logger.error(
+                        category = "interpretation",
+                        message = "Failed to process an observation",
+                        throwable = exception
+                    )
+                }
             }
         }
     }
@@ -91,7 +111,7 @@ open class DefaultInterpretationEngine(
     ): ProcessedInterpretation {
         blackboard.publish(observation.asKnowledge())
 
-        val result = pipeline.execute(contextAssembler.assemble(observation))
+        val result = pipeline.execute(contextAssembler.build(observation))
         val interpretation = result.interpretation
             ?: return ProcessedInterpretation(result, null)
         val knowledge = Knowledge(

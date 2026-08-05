@@ -5,7 +5,7 @@ import com.halo.engines.interpretation.api.InterpretationBuilder
 import com.halo.engines.interpretation.api.InterpretationContext
 import com.halo.engines.interpretation.api.InterpretationRule
 import com.halo.engines.speech.SpeechRecognizedPayload
-import com.halo.runtime.cognition.knowledge.Confidence
+import com.halo.runtime.cognition.blackboard.Confidence
 
 class ContactRule(
     private val knownContacts: Set<String> = emptySet()
@@ -34,7 +34,7 @@ class ContactRule(
 
         return InterpretationBuilder()
             .person(contact, if (isKnown) 0.99f else 0.9f)
-            .slot("contact", contact)
+            .slot("target", contact)
             .confidence(
                 Confidence(
                     lexical = confidence,
@@ -50,7 +50,7 @@ class ContactRule(
         context: InterpretationContext
     ): String? {
         if (requestedContact.lowercase() in pronouns) {
-            return context.workingMemory.focusedPerson()?.name
+            return context.workingMemory.focusedPerson?.name
         }
 
         return requestedContact.titlecaseWords()

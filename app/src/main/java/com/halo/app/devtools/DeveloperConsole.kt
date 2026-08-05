@@ -23,7 +23,17 @@ fun DeveloperConsole(viewModel: DeveloperConsoleViewModel = viewModel()) {
     val snapshot by viewModel.uiState.collectAsState()
     var selectedTab by remember { mutableStateOf(0) }
     
-    val tabs = listOf("Runtime", "Engines", "Services", "Plugins", "Timeline", "Settings")
+    val tabs = listOf(
+        "Runtime",
+        "Engines",
+        "Services",
+        "Plugins",
+        "Timeline",
+        "Settings",
+        "Knowledge",
+        "Interpretation",
+        "Reasoning"
+    )
 
     Scaffold(
         topBar = {
@@ -57,6 +67,9 @@ fun DeveloperConsole(viewModel: DeveloperConsoleViewModel = viewModel()) {
                 3 -> PluginScreen(snapshot.plugins)
                 4 -> TimelineScreen()
                 5 -> SettingsScreen()
+                6 -> KnowledgeScreen()
+                7 -> InterpretationScreen()
+                8 -> ReasoningScreen()
             }
         }
     }

@@ -10,6 +10,9 @@ Halo is not an Android application.
 Halo is a platform.
 Android is merely the first host.
 
+The canonical cognitive runtime pipeline is documented in
+[Cognitive Kernel v1](COGNITIVE-KERNEL.md).
+
 Everything should be written so that the business logic could theoretically run on:
 - Android
 - Android XR

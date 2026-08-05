@@ -5,7 +5,7 @@ import com.halo.engines.interpretation.api.InterpretationBuilder
 import com.halo.engines.interpretation.api.InterpretationContext
 import com.halo.engines.interpretation.api.InterpretationRule
 import com.halo.engines.speech.SpeechRecognizedPayload
-import com.halo.runtime.cognition.knowledge.Confidence
+import com.halo.runtime.cognition.blackboard.Confidence
 
 class TimeRule : InterpretationRule {
     override val priority: Int = 600

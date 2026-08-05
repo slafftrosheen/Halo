@@ -4,6 +4,7 @@ import com.halo.engines.interpretation.api.Interpretation
 import com.halo.engines.interpretation.api.InterpretationContext
 import com.halo.engines.interpretation.api.InterpretationResult
 import com.halo.engines.interpretation.api.InterpretationRule
+import com.halo.engines.interpretation.api.LowConfidenceInterpretationRule
 import com.halo.engines.interpretation.model.ApplicationEntity
 import com.halo.engines.interpretation.model.DeviceEntity
 import com.halo.engines.interpretation.model.Entity
@@ -13,25 +14,37 @@ import com.halo.engines.interpretation.model.ObjectEntity
 import com.halo.engines.interpretation.model.PersonEntity
 import com.halo.engines.interpretation.model.Slot
 import com.halo.engines.interpretation.model.TimeEntity
-import com.halo.runtime.cognition.knowledge.Confidence
+import com.halo.runtime.cognition.blackboard.Confidence
 
 class RulePipeline(
-    private val registry: RuleRegistry
+    private val registry: RuleRegistry,
+    private val lowConfidenceRules: List<LowConfidenceInterpretationRule> = emptyList()
 ) {
-    constructor(rules: List<InterpretationRule>) : this(RuleRegistry(rules))
+    constructor(
+        rules: List<InterpretationRule>,
+        lowConfidenceRules: List<LowConfidenceInterpretationRule> = emptyList()
+    ) : this(RuleRegistry(rules), lowConfidenceRules)
 
     suspend fun execute(
         context: InterpretationContext
     ): InterpretationResult {
-        val interpretations = buildList {
-            for (rule in registry.all().sortedByDescending { it.priority }) {
-                if (rule.applies(context)) {
-                    rule.interpret(context)?.let(::add)
-                }
+        val interpretations = mutableListOf<Interpretation>()
+        for (rule in registry.ordered()) {
+            if (rule.applies(context)) {
+                rule.interpret(context)?.let(interpretations::add)
             }
         }
 
-        return resultFor(merge(interpretations))
+        var merged = merge(interpretations)
+
+        for (rule in lowConfidenceRules.sortedByDescending { it.priority }) {
+            if (rule.applies(context, merged)) {
+                rule.interpret(context, merged)?.let(interpretations::add)
+                merged = merge(interpretations)
+            }
+        }
+
+        return resultFor(merged)
     }
 
     private fun resultFor(

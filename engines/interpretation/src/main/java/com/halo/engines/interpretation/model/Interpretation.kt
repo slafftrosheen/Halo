@@ -1,3 +1,3 @@
 package com.halo.engines.interpretation.model
 
-typealias Interpretation = com.halo.runtime.cognition.knowledge.Interpretation
+typealias Interpretation = com.halo.runtime.cognition.blackboard.Interpretation

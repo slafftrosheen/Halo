@@ -15,3 +15,6 @@ Create the most capable open-source wearable AI platform that:
 ## Documentation Index
 The documentation has been consolidated into the formal Halo Platform Specification. 
 Please see the [HPS-000: Halo Platform Specification](HPS-000-INDEX.md) for the complete index covering the Repository, Design System, Components, SDKs, and the Halo Constitution.
+
+The canonical cognitive runtime is documented in
+[Cognitive Kernel v1](04-architecture/COGNITIVE-KERNEL.md).

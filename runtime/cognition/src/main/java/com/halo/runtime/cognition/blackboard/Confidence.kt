@@ -1,4 +1,4 @@
-package com.halo.runtime.cognition.knowledge
+package com.halo.runtime.cognition.blackboard
 
 data class Confidence(
     val lexical: Float,

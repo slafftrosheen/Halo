@@ -2,11 +2,12 @@ package com.halo.engines.interpretation.api
 
 import com.halo.engines.interpretation.model.Entity
 import com.halo.engines.interpretation.model.IntentCandidate
+import com.halo.engines.interpretation.model.ApplicationEntity
 import com.halo.engines.interpretation.model.LocationEntity
 import com.halo.engines.interpretation.model.PersonEntity
 import com.halo.engines.interpretation.model.Slot
 import com.halo.engines.interpretation.model.TimeEntity
-import com.halo.runtime.cognition.knowledge.Confidence
+import com.halo.runtime.cognition.blackboard.Confidence
 
 class InterpretationBuilder {
     private val entities = mutableListOf<Entity>()
@@ -27,6 +28,11 @@ class InterpretationBuilder {
         location: String,
         confidence: Float
     ): InterpretationBuilder = entity(LocationEntity(location, confidence))
+
+    fun application(
+        name: String,
+        confidence: Float
+    ): InterpretationBuilder = entity(ApplicationEntity(name, confidence))
 
     fun time(
         expression: String,

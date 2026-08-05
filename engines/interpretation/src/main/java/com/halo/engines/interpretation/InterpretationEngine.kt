@@ -1,10 +1,9 @@
 package com.halo.engines.interpretation
 
 class InterpretationEngine(
-    blackboard: com.halo.runtime.cognition.knowledge.Blackboard =
-        com.halo.runtime.cognition.knowledge.InMemoryBlackboard(),
-    workingMemory: com.halo.runtime.cognition.WorkingMemory =
-        com.halo.runtime.cognition.WorkingMemory(blackboard),
+    blackboard: com.halo.runtime.cognition.blackboard.Blackboard,
+    workingMemory: com.halo.runtime.cognition.workingmemory.WorkingMemory =
+        com.halo.runtime.cognition.workingmemory.DefaultWorkingMemory(blackboard),
     pipeline: com.halo.engines.interpretation.internal.RulePipeline =
         com.halo.engines.interpretation.internal.RulePipeline(
             listOf(
@@ -16,5 +15,8 @@ class InterpretationEngine(
 ) : com.halo.engines.interpretation.internal.DefaultInterpretationEngine(
     pipeline = pipeline,
     blackboard = blackboard,
-    contextAssembler = com.halo.engines.interpretation.internal.ContextAssembler(workingMemory)
+    contextAssembler = com.halo.runtime.cognition.context.DefaultContextAssembler(
+        blackboard = blackboard,
+        workingMemory = workingMemory
+    )
 )

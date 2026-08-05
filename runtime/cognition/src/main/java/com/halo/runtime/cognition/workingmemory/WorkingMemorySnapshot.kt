@@ -1,0 +1,31 @@
+package com.halo.runtime.cognition.workingmemory
+
+import com.halo.runtime.cognition.Goal
+import com.halo.runtime.cognition.Task
+import com.halo.runtime.cognition.blackboard.Interpretation
+import com.halo.runtime.cognition.blackboard.Knowledge
+import com.halo.runtime.cognition.blackboard.LocationEntity
+import com.halo.runtime.cognition.blackboard.PersonEntity
+import com.halo.sdk.runtime.Observation
+
+data class WorkingMemorySnapshot(
+    val currentGoal: Goal?,
+    val activeTask: Task?,
+    val latestObservation: Observation?,
+    val latestInterpretation: Interpretation?,
+    val focusedPerson: PersonEntity?,
+    val currentLocation: LocationEntity?,
+    val recentKnowledge: List<Knowledge> = emptyList()
+)
+
+suspend fun WorkingMemory.snapshot(
+    recentKnowledge: List<Knowledge> = emptyList()
+): WorkingMemorySnapshot = WorkingMemorySnapshot(
+    currentGoal = currentGoal(),
+    activeTask = activeTask(),
+    latestObservation = latestObservation(),
+    latestInterpretation = latestInterpretation(),
+    focusedPerson = focusedPerson(),
+    currentLocation = currentLocation(),
+    recentKnowledge = recentKnowledge
+)

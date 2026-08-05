@@ -16,5 +16,6 @@ class RuleRegistry(
         rules -= rule
     }
 
-    fun all(): List<InterpretationRule> = rules.toList()
+    fun ordered(): List<InterpretationRule> =
+        rules.sortedByDescending { it.priority }
 }

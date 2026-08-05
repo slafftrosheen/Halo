@@ -17,8 +17,8 @@ import com.halo.runtime.plugins.PluginManager
 import com.halo.runtime.plugins.PluginRegistry
 import com.halo.runtime.plugins.PluginContext
 import com.halo.app.devtools.RecordingEventBus
-import com.halo.runtime.cognition.WorkingMemory
-import com.halo.runtime.cognition.knowledge.InMemoryBlackboard
+import com.halo.runtime.cognition.blackboard.DefaultBlackboard
+import com.halo.runtime.cognition.workingmemory.DefaultWorkingMemory
 import com.halo.sdk.runtime.RuntimeClock
 import com.halo.runtime.plugins.PermissionManager
 
@@ -37,6 +37,7 @@ object ManualDependencyGraph {
     val registry by lazy {
         val r = DefaultServiceRegistry()
         r.register(com.halo.runtime.services.Services.EventBus, eventBus)
+        r.register(com.halo.runtime.services.Services.Blackboard, blackboard)
         r.register(com.halo.runtime.services.Services.CommandBus, commandBus)
         r.register(com.halo.runtime.services.Services.Driver, driver)
         r.register(com.halo.runtime.services.Services.Provider, provider)
@@ -55,8 +56,8 @@ object ManualDependencyGraph {
     }
     val driver by lazy { FakeDriver("heycyan.mock") }
     val provider by lazy { FakeProvider("llamacpp.mock") }
-    val blackboard by lazy { InMemoryBlackboard() }
-    val workingMemory by lazy { WorkingMemory(blackboard) }
+    val blackboard by lazy { DefaultBlackboard() }
+    val workingMemory by lazy { DefaultWorkingMemory(blackboard) }
 
     val aiEngine by lazy { com.halo.engines.ai.AIEngine() }
     val memoryEngine by lazy { DefaultMemoryEngine() }

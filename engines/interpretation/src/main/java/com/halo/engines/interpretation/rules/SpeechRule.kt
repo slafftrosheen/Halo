@@ -4,9 +4,8 @@ import com.halo.engines.interpretation.api.Interpretation
 import com.halo.engines.interpretation.api.InterpretationBuilder
 import com.halo.engines.interpretation.api.InterpretationContext
 import com.halo.engines.interpretation.api.InterpretationRule
-import com.halo.engines.interpretation.model.ApplicationEntity
 import com.halo.engines.speech.SpeechRecognizedPayload
-import com.halo.runtime.cognition.knowledge.Confidence
+import com.halo.runtime.cognition.blackboard.Confidence
 
 class SpeechRule : InterpretationRule {
     override val priority: Int = 500
@@ -33,18 +32,22 @@ class SpeechRule : InterpretationRule {
             normalized.startsWith("call ") || normalized == "call" -> {
                 builder.candidate("Call", 0.99f).slot("action", "Call")
                 recipient(transcript)?.let {
-                    builder.person(it, 0.98f).slot("contact", it)
+                    builder.person(it, 0.98f).slot("target", it)
                 }
-                timeExpression(transcript)?.let {
-                    builder.time(it, 0.98f).slot("time", it)
+                timeExpression(transcript)?.let { time ->
+                    builder
+                        .time(time, 0.98f)
+                        .slot("time", time)
+                        .candidate("Schedule", 0.18f)
                 }
             }
 
             normalized.startsWith("navigate to ") || normalized.startsWith("go to ") -> {
-                val destination = transcript.substringAfter(
-                    if (normalized.startsWith("navigate to ")) "navigate to " else "go to ",
-                    missingDelimiterValue = ""
-                ).trim()
+                val destination = navigationPattern.find(transcript)
+                    ?.groupValues
+                    ?.get(1)
+                    ?.trim()
+                    .orEmpty()
                 if (destination.isBlank()) {
                     return null
                 }
@@ -56,14 +59,16 @@ class SpeechRule : InterpretationRule {
             }
 
             normalized.startsWith("open ") -> {
-                val application = transcript.substringAfter(" ", "").trim()
+                val application = transcript
+                    .dropWhile { !it.isWhitespace() }
+                    .trim()
                 if (application.isBlank()) {
                     return null
                 }
 
                 builder
                     .candidate("OpenApplication", 0.91f)
-                    .entity(ApplicationEntity(application.titlecaseWords(), 0.91f))
+                    .application(application.titlecaseWords(), 0.91f)
                     .slot("application", application.titlecaseWords())
             }
 
@@ -135,6 +140,10 @@ class SpeechRule : InterpretationRule {
         )
         val clockPattern = Regex(
             "(\\d{1,2})(?::(\\d{2}))?\\s*(am|pm)?",
+            RegexOption.IGNORE_CASE
+        )
+        val navigationPattern = Regex(
+            "^\\s*(?:navigate\\s+to|go\\s+to)\\s+(.+)$",
             RegexOption.IGNORE_CASE
         )
     }

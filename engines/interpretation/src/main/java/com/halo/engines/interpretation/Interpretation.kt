@@ -1,10 +1,7 @@
 package com.halo.engines.interpretation
 
 import com.halo.sdk.runtime.HaloEvent
-import com.halo.runtime.cognition.knowledge.KnowledgeId
-
-@JvmInline
-value class InterpretationId(val value: String)
+import com.halo.runtime.cognition.blackboard.KnowledgeId
 
 typealias Interpretation = com.halo.engines.interpretation.model.Interpretation
 
