@@ -10,7 +10,7 @@ data class AssistantState(
     val speaking: Boolean,
     val connected: Boolean,
     val provider: ProviderInfo,
-    val currentIntent: Intent?,
+    val currentIntent: String?,
     val battery: Int
 )
 
@@ -29,42 +29,3 @@ data class ContextSnapshot(
     val focusMode: String
 )
 
-enum class VoiceSessionState {
-    IDLE,
-    LISTENING,
-    RECOGNIZING,
-    PROCESSING,
-    GENERATING,
-    SPEAKING,
-    FINISHED
-}
-
-data class VoiceSession(
-    val id: String,
-    val state: VoiceSessionState
-)
-
-data class IntentEntity(
-    val type: String,
-    val value: String
-)
-
-data class Intent(
-    val type: String,
-    val confidence: Float,
-    val entities: List<IntentEntity>,
-    val priority: Int,
-    val source: String,
-    val pluginId: String?,
-    val metadata: Map<String, String>
-)
-
-enum class CognitiveLoad {
-    LOW,
-    MEDIUM,
-    HIGH
-}
-
-data class AttentionScore(
-    val score: Int // 0 to 100
-)

@@ -140,7 +140,8 @@ dependencies {
   "ksp"(libs.moshi.kotlin.codegen)
 }
 dependencies {
-    implementation(project(":engines:voice"))
+    implementation(project(":engines:ai"))
+    implementation(project(":host-android"))
     implementation(project(":sdk:driver-sdk"))
     implementation(project(":sdk:provider-sdk"))
     implementation(project(":sdk:runtime-sdk"))
@@ -155,4 +156,25 @@ dependencies {
     implementation(project(":runtime:kernel"))
     implementation(project(":libraries:testing"))
     implementation(project(":libraries:logging"))
+}
+dependencies {
+    implementation(project(":runtime:services"))
+    implementation(project(":engines:memory"))
+    implementation(project(":engines:diagnostics"))
+    implementation(project(":engines:reasoning"))
+    implementation(project(":engines:interpretation"))
+    implementation(project(":engines:speech"))
+    implementation(project(":host-android"))
+    implementation(project(":runtime:intents"))
+    implementation(project(":runtime:plugins"))
+}
+dependencies {
+    implementation(project(":engines:perception"))
+    implementation(project(":engines:reasoning"))
+    implementation(project(":engines:interpretation"))
+    implementation(project(":engines:planning"))
+    implementation(project(":engines:execution"))
+}
+dependencies {
+    implementation(project(":runtime:cognition"))
 }

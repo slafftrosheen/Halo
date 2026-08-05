@@ -1,38 +1,26 @@
 package com.halo.libraries.testing
 
-import com.halo.libraries.common.core.Identifier
-import com.halo.sdk.driver.*
-import kotlinx.coroutines.flow.Flow
+import com.halo.sdk.driver.DeviceEvent
+import com.halo.sdk.driver.Driver
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
 
-class FakeDriver(id: String) : Driver {
-    override val id = Identifier(id)
+class FakeDriver(
+    private val deviceId: String
+) : Driver {
 
-    override val capabilities = DeviceCapabilities(
-        microphone = true,
-        speaker = true,
-        buttons = true,
-        display = false,
-        camera = false
-    )
+    private val _events = MutableSharedFlow<DeviceEvent>(extraBufferCapacity = 64)
+    override val events = _events.asSharedFlow()
 
-    private val _state = MutableStateFlow<DriverState>(DriverState.Disconnected)
-    override val state: StateFlow<DriverState> = _state.asStateFlow()
-
-    private val _events = MutableSharedFlow<DeviceEvent>()
-    override val events: Flow<DeviceEvent> = _events.asSharedFlow()
+    override suspend fun emit(event: DeviceEvent) {
+        _events.emit(event)
+    }
 
     override suspend fun connect() {
-        _state.value = DriverState.Pairing
-        _state.value = DriverState.Connected
-        _state.value = DriverState.Ready
+        // no-op for now
     }
 
     override suspend fun disconnect() {
-        _state.value = DriverState.Disconnected
+        // no-op for now
     }
 }

@@ -21,11 +21,11 @@ open class FakeEngine : Engine {
     private val _state = MutableStateFlow<EngineState>(EngineState.Created)
     override val state: StateFlow<EngineState> = _state.asStateFlow()
 
-    override val dependencies: Set<KClass<out Engine>> = emptySet()
+    override val dependencies: Set<ServiceKey<*>> = emptySet()
 
-    protected lateinit var runtimeContext: RuntimeContext
+    protected lateinit var runtimeContext: EngineContext
 
-    override suspend fun initialize(context: RuntimeContext) {
+    override suspend fun initialize(context: EngineContext) {
         this.runtimeContext = context
         _state.value = EngineState.Initializing
     }

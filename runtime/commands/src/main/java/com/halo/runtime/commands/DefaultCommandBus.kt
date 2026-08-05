@@ -1,11 +1,16 @@
 package com.halo.runtime.commands
 
-import com.halo.sdk.runtime.Command
 import com.halo.sdk.runtime.CommandBus
+import com.halo.sdk.runtime.RuntimeCommand
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 
 class DefaultCommandBus : CommandBus {
-    // Basic stub. A real implementation needs a way to register handlers for specific command types.
-    override suspend fun <R> dispatch(command: Command<R>): R {
-        throw NotImplementedError("Command handlers not yet registered for ${command::class.simpleName}")
+    private val _commands = MutableSharedFlow<RuntimeCommand>()
+    
+    override suspend fun dispatch(command: RuntimeCommand) {
+        _commands.emit(command)
     }
+
+    override fun commands(): Flow<RuntimeCommand> = _commands
 }

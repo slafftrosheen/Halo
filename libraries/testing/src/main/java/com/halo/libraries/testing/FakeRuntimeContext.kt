@@ -6,7 +6,7 @@ class FakeRuntimeContext(
     override val eventBus: EventBus,
     override val commandBus: CommandBus,
     override val queryBus: QueryBus,
-    override val scheduler: Scheduler,
+    override val scheduler: RuntimeScheduler,
     override val registry: ServiceRegistry,
     override val logger: HaloLogger
 ) : RuntimeContext

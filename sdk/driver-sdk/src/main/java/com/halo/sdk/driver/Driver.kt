@@ -1,15 +1,25 @@
 package com.halo.sdk.driver
 
-import com.halo.libraries.common.core.Identifier
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.StateFlow
 
 interface Driver {
-    val id: Identifier
-    val capabilities: DeviceCapabilities
-    val state: StateFlow<DriverState>
     val events: Flow<DeviceEvent>
-
+    suspend fun emit(event: DeviceEvent)
     suspend fun connect()
     suspend fun disconnect()
+}
+
+sealed interface DeviceEvent {
+    val timestamp: Long
+
+    data class Input(
+        override val timestamp: Long,
+        val payloadText: String? = null,
+        val locale: String? = null
+    ) : DeviceEvent
+
+    data class Output(
+        override val timestamp: Long,
+        val payloadText: String
+    ) : DeviceEvent
 }

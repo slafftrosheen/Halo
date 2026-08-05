@@ -4,84 +4,42 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.staticCompositionLocalOf
 import com.halo.app.di.ManualDependencyGraph
-import com.halo.sdk.runtime.EngineHealth
-import com.halo.sdk.runtime.RuntimeState
-import kotlinx.coroutines.launch
+import com.halo.app.ui.navigation.AppNavigation
+import com.halo.app.ui.theme.BrainToolTheme
+import com.halo.host.android.HaloHost
+
+val LocalHaloHost = staticCompositionLocalOf<HaloHost?> { null }
 
 class MainActivity : ComponentActivity() {
+    private lateinit var haloHost: HaloHost
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         
-        val runtime = ManualDependencyGraph.runtime
-        val pipeline = ManualDependencyGraph.voicePipeline
+        haloHost = HaloHost(this, ManualDependencyGraph.eventBus)
+        haloHost.start()
         
+        val runtime = ManualDependencyGraph.runtime
         setContent {
-            MaterialTheme {
-                val scope = rememberCoroutineScope()
-                val runtimeState by runtime.state.collectAsState()
-                val pipelineState by pipeline.state.collectAsState()
-                val pipelineHealth by pipeline.health.collectAsState()
-                
-                LaunchedEffect(Unit) {
-                    runtime.boot()
-                }
-                
-                Scaffold { innerPadding ->
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding)
-                            .padding(24.dp),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "Halo Platform",
-                            style = MaterialTheme.typography.headlineMedium
-                        )
-                        
-                        Spacer(modifier = Modifier.height(32.dp))
-                        
-                        Card(
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(16.dp)
-                            ) {
-                                Text("Runtime Kernel: $runtimeState", style = MaterialTheme.typography.bodyLarge)
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text("Voice Pipeline: $pipelineState", style = MaterialTheme.typography.bodyLarge)
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text("Pipeline Health: $pipelineHealth", style = MaterialTheme.typography.bodyLarge)
-                            }
-                        }
-                        
-                        Spacer(modifier = Modifier.height(32.dp))
-                        
-                        Button(
-                            onClick = { 
-                                scope.launch {
-                                    if (runtimeState == RuntimeState.Running) {
-                                        runtime.shutdown()
-                                    } else if (runtimeState == RuntimeState.Offline) {
-                                        runtime.boot()
-                                    }
-                                }
-                            }
-                        ) {
-                            Text(if (runtimeState == RuntimeState.Running) "Shutdown" else "Boot Kernel")
-                        }
+            CompositionLocalProvider(LocalHaloHost provides haloHost) {
+                BrainToolTheme {
+                    LaunchedEffect(Unit) {
+                        runtime.boot()
                     }
+                    
+                    AppNavigation()
                 }
             }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        haloHost.stop()
     }
 }

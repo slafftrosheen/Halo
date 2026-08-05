@@ -1,7 +1,13 @@
 package com.halo.sdk.runtime
+import kotlinx.coroutines.flow.Flow
 
-interface Command<R>
+sealed interface RuntimeCommand
+
+data class SpeakText(val text: String) : RuntimeCommand
+data class LaunchApplication(val packageName: String) : RuntimeCommand
+data class SaveMemory(val memory: String) : RuntimeCommand
 
 interface CommandBus {
-    suspend fun <R> dispatch(command: Command<R>): R
+    suspend fun dispatch(command: RuntimeCommand)
+    fun commands(): Flow<RuntimeCommand>
 }

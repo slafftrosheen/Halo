@@ -12,14 +12,16 @@ data class EngineMetadata(
 )
 
 enum class EngineHealth {
-    Healthy, Degraded, Failed
+    Healthy, Degraded, Recovering, Failed, Offline
 }
 
 sealed interface EngineState {
     data object Created : EngineState
     data object Initializing : EngineState
     data object Running : EngineState
+    data object Paused : EngineState
     data object Stopped : EngineState
+    data object Disposed : EngineState
     data class Failed(val reason: String) : EngineState
 }
 
@@ -27,9 +29,14 @@ interface Engine {
     val metadata: EngineMetadata
     val health: StateFlow<EngineHealth>
     val state: StateFlow<EngineState>
-    val dependencies: Set<KClass<out Engine>>
+    val priority: Priority get() = Priority.NORMAL
+    val dependencies: Set<ServiceKey<*>>
+    val provides: Set<ServiceKey<*>> get() = emptySet()
 
-    suspend fun initialize(context: RuntimeContext)
+    suspend fun initialize(context: EngineContext)
     suspend fun start()
+    suspend fun pause() = Unit
+    suspend fun resume() = Unit
     suspend fun stop()
+    suspend fun dispose() = Unit
 }
