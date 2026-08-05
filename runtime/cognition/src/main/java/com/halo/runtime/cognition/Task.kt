@@ -18,5 +18,5 @@ data class Task(
     val id: UUID,
     val goal: Goal,
     val state: TaskState,
-    val steps: MutableList<TaskStep>
+    val steps: List<TaskStep>
 )
