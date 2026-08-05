@@ -171,10 +171,10 @@ class AudioPerceptionEngine(
         } finally {
             withContext(NonCancellable) {
                 stopAudioSource()
-            }
-            buffer.clear()
-            if (_speechState.value !is Error) {
-                _speechState.value = Idle
+                buffer.clear()
+                if (_speechState.value !is Error) {
+                    _speechState.value = Idle
+                }
             }
         }
     }
@@ -245,7 +245,10 @@ class AudioPerceptionEngine(
         job = null
 
         activeJob?.cancel()
-        stopAudioSource()
+        withContext(NonCancellable) {
+            // Releasing AudioRecord unblocks a capture read so the job can reach its cleanup.
+            stopAudioSource()
+        }
         activeJob?.join()
 
         buffer.clear()
