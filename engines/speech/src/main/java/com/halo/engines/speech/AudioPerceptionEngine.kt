@@ -90,32 +90,29 @@ class AudioPerceptionEngine(
     }
 
     override suspend fun stop() {
-        if (_state.value == EngineState.Disposed) {
-            return
-        }
-
         withContext(NonCancellable) {
             lifecycleMutex.withLock {
-                val activeJob = job
-                job = null
-
-                activeJob?.cancel()
-                stopAudioSource()
-                activeJob?.join()
-
-                buffer.clear()
-                _state.value = EngineState.Stopped
-                _speechState.value = Idle
+                if (_state.value != EngineState.Disposed) {
+                    stopLocked()
+                }
             }
         }
     }
 
     override suspend fun dispose() {
-        stop()
-        if (::scope.isInitialized) {
-            scope.cancel()
+        withContext(NonCancellable) {
+            lifecycleMutex.withLock {
+                if (_state.value == EngineState.Disposed) {
+                    return@withLock
+                }
+
+                stopLocked()
+                if (::scope.isInitialized) {
+                    scope.cancel()
+                }
+                _state.value = EngineState.Disposed
+            }
         }
-        _state.value = EngineState.Disposed
     }
 
     private suspend fun runPerceptionLoop(eventBus: EventBus) {
@@ -200,7 +197,7 @@ class AudioPerceptionEngine(
             eventBus.publish(RecognitionFinished())
             _health.value = EngineHealth.Healthy
         } catch (exception: TimeoutCancellationException) {
-            reportFailure(
+            reportRecognitionFailure(
                 eventBus = eventBus,
                 reason = "Speech recognition timed out after ${recognitionTimeoutMillis}ms",
                 throwable = exception
@@ -208,7 +205,7 @@ class AudioPerceptionEngine(
         } catch (exception: CancellationException) {
             throw exception
         } catch (exception: Exception) {
-            reportFailure(
+            reportRecognitionFailure(
                 eventBus = eventBus,
                 reason = "Speech recognition failed: ${exception.message ?: "Unknown error"}",
                 throwable = exception
@@ -223,12 +220,34 @@ class AudioPerceptionEngine(
     ) {
         _health.value = EngineHealth.Degraded
         _speechState.value = Error(reason)
+        reportRecognitionFailure(eventBus, reason, throwable)
+    }
+
+    private suspend fun reportRecognitionFailure(
+        eventBus: EventBus,
+        reason: String,
+        throwable: Throwable
+    ) {
+        _health.value = EngineHealth.Degraded
         context.runtime.logger.error(
             category = "speech",
             message = reason,
             throwable = throwable
         )
         eventBus.publish(RecognitionFailed(reason))
+    }
+
+    private suspend fun stopLocked() {
+        val activeJob = job
+        job = null
+
+        activeJob?.cancel()
+        stopAudioSource()
+        activeJob?.join()
+
+        buffer.clear()
+        _state.value = EngineState.Stopped
+        _speechState.value = Idle
     }
 
     private suspend fun stopAudioSource() {
