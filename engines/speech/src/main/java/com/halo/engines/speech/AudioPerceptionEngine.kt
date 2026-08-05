@@ -18,6 +18,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import java.util.concurrent.atomic.AtomicBoolean
 
 class AudioPerceptionEngine(
     private val audioSource: AudioSource,
@@ -56,6 +57,7 @@ class AudioPerceptionEngine(
     private lateinit var context: EngineContext
     private lateinit var scope: CoroutineScope
     private val lifecycleMutex = Mutex()
+    private val sourceActive = AtomicBoolean(false)
     private var job: Job? = null
     private val buffer = AudioBuffer()
 
@@ -118,6 +120,7 @@ class AudioPerceptionEngine(
     private suspend fun runPerceptionLoop(eventBus: EventBus) {
         try {
             try {
+                sourceActive.set(true)
                 audioSource.start()
             } catch (exception: CancellationException) {
                 throw exception
@@ -251,6 +254,10 @@ class AudioPerceptionEngine(
     }
 
     private suspend fun stopAudioSource() {
+        if (!sourceActive.compareAndSet(true, false)) {
+            return
+        }
+
         try {
             audioSource.stop()
         } catch (exception: Exception) {
