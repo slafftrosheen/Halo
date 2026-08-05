@@ -1,0 +1,6 @@
+{
+  "name": "Halo",
+  "description": "A local-first, privacy-first wearable AI companion configuration app.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
