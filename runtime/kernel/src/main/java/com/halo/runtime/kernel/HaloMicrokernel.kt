@@ -32,9 +32,9 @@ class HaloMicrokernel(
         scope.launch {
             perceptionBus.subscribe("kernel.interaction").collect { obj ->
                 if (obj is Observation) {
-                    if (obj.modality == "speech_partial") {
+                    if (obj.modality.equals("speech_partial", ignoreCase = true)) {
                         _interactionState.value = HaloInteractionState.Listening
-                    } else if (obj.modality == "speech") {
+                    } else if (obj.modality.equals("speech", ignoreCase = true)) {
                         _interactionState.value = HaloInteractionState.Reasoning
                     }
                 }

@@ -25,7 +25,7 @@ fun DeveloperConsole(viewModel: DeveloperConsoleViewModel = viewModel()) {
         "Blackboard",
         "Memory",
         "Providers",
-        "Performance",
+        "Inject",
         "Logs"
     )
 
@@ -69,7 +69,7 @@ fun DeveloperConsole(viewModel: DeveloperConsoleViewModel = viewModel()) {
                 3 -> BlackboardScreen()
                 4 -> Text("Memory Inspector (Coming Soon)", modifier = Modifier.padding(16.dp), color = HaloTextPrimary, fontFamily = FontFamily.Monospace)
                 5 -> ProvidersScreen()
-                6 -> Text("Performance (Coming Soon)", modifier = Modifier.padding(16.dp), color = HaloTextPrimary, fontFamily = FontFamily.Monospace)
+                6 -> InjectionScreen()
                 7 -> Text("Logs (Coming Soon)", modifier = Modifier.padding(16.dp), color = HaloTextPrimary, fontFamily = FontFamily.Monospace)
             }
         }

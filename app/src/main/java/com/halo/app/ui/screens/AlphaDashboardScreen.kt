@@ -25,6 +25,11 @@ import com.halo.app.di.ManualDependencyGraph
 import com.halo.host.android.AndroidSpeechProcess
 import kotlinx.coroutines.flow.StateFlow
 import com.halo.engines.memory.WorkingMemoryProcess
+import com.halo.icl.ontology.Observation
+import com.halo.icl.ontology.Thought
+import com.halo.icl.ontology.Goal
+import com.halo.icl.ontology.Plan
+import com.halo.icl.ontology.Outcome
 
 class AlphaDashboardViewModel : ViewModel() {
     val interactionState: StateFlow<HaloInteractionState> = ManualDependencyGraph.microkernel.interactionState
@@ -150,12 +155,23 @@ fun AlphaDashboardScreen(viewModel: AlphaDashboardViewModel = viewModel(factory 
                         Column(modifier = Modifier.padding(12.dp)) {
                             Text(text = obj::class.simpleName ?: "Unknown", style = MaterialTheme.typography.labelMedium, color = Color(0xFF64748B))
                             Spacer(modifier = Modifier.height(4.dp))
-                            Text(text = obj.toString(), style = MaterialTheme.typography.bodyMedium, color = Color(0xFF0F172A))
+                            Text(text = formatCognitivePayload(obj), style = MaterialTheme.typography.bodyMedium, color = Color(0xFF0F172A))
                         }
                     }
                 }
             }
         }
+    }
+}
+
+fun formatCognitivePayload(obj: CognitiveObject): String {
+    return when (obj) {
+        is Observation -> "User said: \"${obj.rawData}\""
+        is Thought -> "Intent detected: ${obj.content}"
+        is Goal -> "Goal initialized: ${obj.desiredState}"
+        is Plan -> "Selected Action: ${obj.intent}"
+        is Outcome -> if (obj.success) "Success: ${obj.resultPayload}" else "Failed: ${obj.resultPayload}"
+        else -> obj.toString()
     }
 }
 
