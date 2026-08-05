@@ -11,14 +11,19 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 
 class AudioPerceptionEngine(
     private val audioSource: AudioSource,
@@ -29,6 +34,7 @@ class AudioPerceptionEngine(
 ) : Engine {
     companion object {
         private const val DEFAULT_RECOGNITION_TIMEOUT_MILLIS = 30_000L
+        private const val NANOS_PER_MILLISECOND = 1_000_000L
     }
 
     init {
@@ -58,7 +64,10 @@ class AudioPerceptionEngine(
     private lateinit var scope: CoroutineScope
     private val lifecycleMutex = Mutex()
     private val sourceStartAttempted = AtomicBoolean(false)
-    private var job: Job? = null
+    private val queuedSegmentCount = AtomicInteger()
+    private var captureJob: Job? = null
+    private var recognitionJob: Job? = null
+    private var recognitionQueue: Channel<SpeechSegment>? = null
     private val buffer = AudioBuffer()
 
     override suspend fun initialize(context: EngineContext) {
@@ -77,7 +86,7 @@ class AudioPerceptionEngine(
             check(_state.value != EngineState.Disposed) {
                 "AudioPerceptionEngine cannot be started after it is disposed"
             }
-            if (job?.isActive == true) {
+            if (captureJob?.isActive == true || recognitionJob?.isActive == true) {
                 return@withLock
             }
 
@@ -85,8 +94,15 @@ class AudioPerceptionEngine(
             _speechState.value = Listening
 
             val eventBus = context.registry.resolve(Services.EventBus)
-            job = scope.launch {
-                runPerceptionLoop(eventBus)
+            val queue = Channel<SpeechSegment>(Channel.UNLIMITED)
+            recognitionQueue = queue
+            queuedSegmentCount.set(0)
+
+            recognitionJob = scope.launch {
+                runRecognitionWorker(eventBus, queue)
+            }
+            captureJob = scope.launch {
+                runCaptureLoop(eventBus, queue)
             }
         }
     }
@@ -117,7 +133,10 @@ class AudioPerceptionEngine(
         }
     }
 
-    private suspend fun runPerceptionLoop(eventBus: EventBus) {
+    private suspend fun runCaptureLoop(
+        eventBus: EventBus,
+        queue: Channel<SpeechSegment>
+    ) {
         try {
             try {
                 sourceStartAttempted.set(true)
@@ -125,7 +144,7 @@ class AudioPerceptionEngine(
             } catch (exception: CancellationException) {
                 throw exception
             } catch (exception: Exception) {
-                reportFailure(
+                reportCaptureFailure(
                     eventBus = eventBus,
                     reason = "Unable to start microphone: ${
                         exception.message ?: "Audio initialization failed"
@@ -151,21 +170,23 @@ class AudioPerceptionEngine(
                     buffer.append(frame)
                 } else if (isRecording) {
                     isRecording = false
-                    _speechState.value = Transcribing
                     eventBus.publish(SpeechEnded())
 
                     val segment = buffer.snapshot()
-                    buffer.clear()
-                    recognize(segment, eventBus)
-                    _speechState.value = Listening
+                    try {
+                        enqueueSegment(queue, segment)
+                    } finally {
+                        buffer.clear()
+                        _speechState.value = Listening
+                    }
                 }
             }
         } catch (exception: CancellationException) {
             throw exception
         } catch (exception: Exception) {
-            reportFailure(
+            reportCaptureFailure(
                 eventBus = eventBus,
-                reason = "Audio perception failed: ${exception.message ?: "Unknown error"}",
+                reason = "Audio capture failed: ${exception.message ?: "Unknown error"}",
                 throwable = exception
             )
         } finally {
@@ -179,7 +200,68 @@ class AudioPerceptionEngine(
         }
     }
 
-    private suspend fun recognize(segment: AudioBuffer, eventBus: EventBus) {
+    private suspend fun enqueueSegment(
+        queue: Channel<SpeechSegment>,
+        segment: SpeechSegment
+    ) {
+        val queueSize = queuedSegmentCount.incrementAndGet()
+        try {
+            queue.send(segment)
+        } catch (exception: Exception) {
+            queuedSegmentCount.decrementAndGet()
+            throw exception
+        }
+
+        context.runtime.logger.info(
+            category = "speech",
+            message = "Captured segment durationMs=${segment.durationMillis} " +
+                "pcmSamples=${segment.sampleCount} queueSize=$queueSize"
+        )
+    }
+
+    private suspend fun runRecognitionWorker(
+        eventBus: EventBus,
+        queue: ReceiveChannel<SpeechSegment>
+    ) {
+        while (currentCoroutineContext().isActive) {
+            val segment = try {
+                queue.receiveCatching().getOrNull() ?: return
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
+                reportRecognitionFailure(
+                    eventBus = eventBus,
+                    reason = "Recognition worker failed: ${exception.message ?: "Unknown error"}",
+                    throwable = exception
+                )
+                continue
+            }
+
+            queuedSegmentCount.updateAndGet { count -> (count - 1).coerceAtLeast(0) }
+            try {
+                recognize(segment, eventBus)
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
+                reportRecognitionFailure(
+                    eventBus = eventBus,
+                    reason = "Recognition worker failed: ${exception.message ?: "Unknown error"}",
+                    throwable = exception
+                )
+            }
+        }
+    }
+
+    private suspend fun recognize(segment: SpeechSegment, eventBus: EventBus) {
+        val startedAt = System.nanoTime()
+        val provider = recognizer.javaClass.simpleName.ifBlank {
+            recognizer.javaClass.name
+        }
+        context.runtime.logger.info(
+            category = "speech",
+            message = "Recognition started provider=$provider durationMs=${segment.durationMillis} " +
+                "pcmSamples=${segment.sampleCount} queueSize=${queuedSegmentCount.get()}"
+        )
         eventBus.publish(RecognitionStarted())
         try {
             val result = withTimeout(recognitionTimeoutMillis) {
@@ -199,7 +281,20 @@ class AudioPerceptionEngine(
             )
             eventBus.publish(RecognitionFinished())
             _health.value = EngineHealth.Healthy
+            val latencyMillis = (System.nanoTime() - startedAt) / NANOS_PER_MILLISECOND
+            context.runtime.logger.info(
+                category = "speech",
+                message = "Recognition finished provider=$provider latencyMs=$latencyMillis " +
+                    "confidence=${result.confidence} characters=${result.text.length}"
+            )
         } catch (exception: TimeoutCancellationException) {
+            eventBus.publish(
+                RecognitionTimeoutEvent(
+                    timeoutMillis = recognitionTimeoutMillis,
+                    segmentStartedAt = segment.startedAt,
+                    segmentFinishedAt = segment.finishedAt
+                )
+            )
             reportRecognitionFailure(
                 eventBus = eventBus,
                 reason = "Speech recognition timed out after ${recognitionTimeoutMillis}ms",
@@ -216,14 +311,19 @@ class AudioPerceptionEngine(
         }
     }
 
-    private suspend fun reportFailure(
+    private suspend fun reportCaptureFailure(
         eventBus: EventBus,
         reason: String,
         throwable: Throwable
     ) {
         _health.value = EngineHealth.Degraded
         _speechState.value = Error(reason)
-        reportRecognitionFailure(eventBus, reason, throwable)
+        context.runtime.logger.error(
+            category = "speech",
+            message = reason,
+            throwable = throwable
+        )
+        publishFailure(eventBus, reason)
     }
 
     private suspend fun reportRecognitionFailure(
@@ -237,20 +337,43 @@ class AudioPerceptionEngine(
             message = reason,
             throwable = throwable
         )
-        eventBus.publish(RecognitionFailed(reason))
+        publishFailure(eventBus, reason)
+    }
+
+    private suspend fun publishFailure(eventBus: EventBus, reason: String) {
+        try {
+            eventBus.publish(RecognitionFailed(reason))
+        } catch (exception: CancellationException) {
+            throw exception
+        } catch (exception: Exception) {
+            context.runtime.logger.error(
+                category = "speech",
+                message = "Failed to publish speech failure",
+                throwable = exception
+            )
+        }
     }
 
     private suspend fun stopLocked() {
-        val activeJob = job
-        job = null
+        val activeCaptureJob = captureJob
+        val activeRecognitionJob = recognitionJob
+        val queue = recognitionQueue
+        captureJob = null
+        recognitionJob = null
+        recognitionQueue = null
 
-        activeJob?.cancel()
+        activeCaptureJob?.cancel()
         withContext(NonCancellable) {
             // Releasing AudioRecord unblocks a capture read so the job can reach its cleanup.
             stopAudioSource()
         }
-        activeJob?.join()
+        activeCaptureJob?.join()
 
+        queue?.close()
+        activeRecognitionJob?.cancel()
+        activeRecognitionJob?.join()
+
+        queuedSegmentCount.set(0)
         buffer.clear()
         _state.value = EngineState.Stopped
         if (_speechState.value !is Error) {
@@ -274,4 +397,5 @@ class AudioPerceptionEngine(
             )
         }
     }
+
 }
