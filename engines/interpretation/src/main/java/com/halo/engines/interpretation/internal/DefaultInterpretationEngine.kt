@@ -1,17 +1,25 @@
 package com.halo.engines.interpretation.internal
 
 import com.halo.engines.interpretation.InterpretationCreated
+import com.halo.engines.interpretation.InterpretationBuilt
+import com.halo.engines.interpretation.InterpretationPublished
+import com.halo.engines.interpretation.InterpretationStarted
+import com.halo.engines.interpretation.RuleMatched
 import com.halo.engines.interpretation.api.InterpretationEngine
 import com.halo.engines.interpretation.api.InterpretationResult
+import com.halo.engines.speech.SpeechRecognizedPayload
 import com.halo.libraries.common.core.Identifier
 import com.halo.libraries.common.core.Version
 import com.halo.runtime.cognition.blackboard.Blackboard
 import com.halo.runtime.cognition.blackboard.Confidence
-import com.halo.runtime.cognition.blackboard.InterpretationPayload
+import com.halo.runtime.cognition.blackboard.EntityKnowledge
+import com.halo.runtime.cognition.blackboard.IntentKnowledge
+import com.halo.runtime.cognition.blackboard.InterpretationKnowledge
 import com.halo.runtime.cognition.blackboard.Knowledge
 import com.halo.runtime.cognition.blackboard.KnowledgeId
 import com.halo.runtime.cognition.blackboard.KnowledgeSource
 import com.halo.runtime.cognition.blackboard.ObservationPayload
+import com.halo.runtime.cognition.blackboard.SpeechKnowledge
 import com.halo.runtime.cognition.context.ContextAssembler
 import com.halo.runtime.services.Services
 import com.halo.sdk.runtime.EngineContext
@@ -62,6 +70,10 @@ open class DefaultInterpretationEngine(
             "InterpretationEngine must use the registered Blackboard instance"
         }
         _state.value = EngineState.Initializing
+        context.runtime.logger.info(
+            category = "interpretation",
+            message = "Loaded ${pipeline.ruleCount} speech rules"
+        )
     }
 
     override suspend fun start() {
@@ -70,15 +82,36 @@ open class DefaultInterpretationEngine(
 
         job = CoroutineScope(context.runtime.scheduler.io).launch {
             eventBus.observe(ObservationCreated::class.java).collect { event ->
+                val speech = event.observation.payload as? SpeechRecognizedPayload
+                if (speech == null) {
+                    blackboard.publish(event.observation.asKnowledge())
+                    return@collect
+                }
                 try {
+                    eventBus.publish(InterpretationStarted(speech.transcript))
                     val processed = process(event.observation)
-                    val interpretation = processed.result.interpretation ?: return@collect
-                    val knowledge = processed.knowledge ?: return@collect
+                    for (match in processed.result.matches) {
+                        eventBus.publish(
+                            RuleMatched(
+                                ruleName = match.ruleName,
+                                confidence = match.confidence,
+                                entityCount = match.entities.size,
+                                diagnostics = match.diagnostics
+                            )
+                        )
+                        context.runtime.logger.info(
+                            category = "interpretation",
+                            message = "Rule=${match.ruleName} confidence=${match.confidence} " +
+                                "latencyMs=${match.latencyMillis} entities=${match.entities.size}"
+                        )
+                    }
+                    eventBus.publish(InterpretationBuilt(processed.result.interpretation))
+                    eventBus.publish(InterpretationPublished(processed.knowledge.id))
 
                     eventBus.publish(
                         InterpretationCreated(
-                            interpretation = interpretation,
-                            knowledgeId = knowledge.id
+                            interpretation = processed.result.interpretation,
+                            knowledgeId = processed.knowledge.id
                         )
                     )
                     _health.value = EngineHealth.Healthy
@@ -109,17 +142,44 @@ open class DefaultInterpretationEngine(
     private suspend fun process(
         observation: Observation
     ): ProcessedInterpretation {
-        blackboard.publish(observation.asKnowledge())
+        val speechKnowledge = observation.asSpeechKnowledge()
+        if (speechKnowledge != null) {
+            blackboard.publish(speechKnowledge)
+        } else {
+            blackboard.publish(observation.asKnowledge())
+        }
 
         val result = pipeline.execute(contextAssembler.build(observation))
         val interpretation = result.interpretation
-            ?: return ProcessedInterpretation(result, null)
+        val createdAt = Instant.fromEpochMilliseconds(observation.timestamp)
+
+        blackboard.publish(
+            Knowledge(
+                id = KnowledgeId(UUID.randomUUID().toString()),
+                payload = IntentKnowledge(
+                    intent = interpretation.intent,
+                    confidence = interpretation.confidence.contextual
+                ),
+                confidence = interpretation.confidence,
+                source = KnowledgeSource.RULE,
+                createdAt = createdAt
+            )
+        )
+        blackboard.publish(
+            Knowledge(
+                id = KnowledgeId(UUID.randomUUID().toString()),
+                payload = EntityKnowledge(interpretation.entities),
+                confidence = interpretation.confidence,
+                source = KnowledgeSource.RULE,
+                createdAt = createdAt
+            )
+        )
         val knowledge = Knowledge(
             id = KnowledgeId(UUID.randomUUID().toString()),
-            payload = InterpretationPayload(interpretation),
+            payload = InterpretationKnowledge(interpretation),
             confidence = interpretation.confidence,
             source = KnowledgeSource.RULE,
-            createdAt = Instant.fromEpochMilliseconds(observation.timestamp)
+            createdAt = createdAt
         )
         blackboard.publish(knowledge)
 
@@ -131,8 +191,8 @@ open class DefaultInterpretationEngine(
         payload = ObservationPayload(this),
         confidence = Confidence(
             lexical = confidence,
-            contextual = confidence,
-            semantic = confidence
+            contextual = 1f,
+            semantic = 1f
         ),
         source = when (source) {
             Source.MICROPHONE -> KnowledgeSource.AUDIO
@@ -146,8 +206,30 @@ open class DefaultInterpretationEngine(
         createdAt = Instant.fromEpochMilliseconds(timestamp)
     )
 
+    private fun Observation.asSpeechKnowledge(): Knowledge? {
+        val speech = payload as? SpeechRecognizedPayload ?: return null
+        val recognitionConfidence = confidence.coerceIn(0f, 1f)
+        val knowledgeConfidence = Confidence(
+            lexical = recognitionConfidence,
+            contextual = 1f,
+            semantic = 1f
+        )
+        return Knowledge(
+            id = KnowledgeId(UUID.randomUUID().toString()),
+            payload = SpeechKnowledge(
+                transcript = speech.transcript,
+                confidence = recognitionConfidence,
+                language = speech.language,
+                timestamp = timestamp
+            ),
+            confidence = knowledgeConfidence,
+            source = KnowledgeSource.AUDIO,
+            createdAt = Instant.fromEpochMilliseconds(timestamp)
+        )
+    }
+
     private data class ProcessedInterpretation(
         val result: InterpretationResult,
-        val knowledge: Knowledge?
+        val knowledge: Knowledge
     )
 }

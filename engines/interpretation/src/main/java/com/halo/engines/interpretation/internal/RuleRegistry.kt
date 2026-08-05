@@ -16,6 +16,12 @@ class RuleRegistry(
         rules -= rule
     }
 
+    val size: Int
+        get() = rules.size
+
     fun ordered(): List<InterpretationRule> =
-        rules.sortedByDescending { it.priority }
+        rules.sortedWith(
+            compareByDescending<InterpretationRule> { it.priority }
+                .thenBy { it::class.java.name }
+        )
 }

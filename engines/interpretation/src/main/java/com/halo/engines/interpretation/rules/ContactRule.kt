@@ -1,24 +1,17 @@
 package com.halo.engines.interpretation.rules
 
-import com.halo.engines.interpretation.api.Interpretation
-import com.halo.engines.interpretation.api.InterpretationBuilder
 import com.halo.engines.interpretation.api.InterpretationContext
 import com.halo.engines.interpretation.api.InterpretationRule
+import com.halo.engines.interpretation.api.RuleMatch
+import com.halo.engines.interpretation.model.PersonEntity
 import com.halo.engines.speech.SpeechRecognizedPayload
-import com.halo.runtime.cognition.blackboard.Confidence
 
 class ContactRule(
     private val knownContacts: Set<String> = emptySet()
 ) : InterpretationRule {
     override val priority: Int = 700
 
-    override suspend fun applies(
-        context: InterpretationContext
-    ): Boolean = transcript(context)?.let(commandPattern::containsMatchIn) == true
-
-    override suspend fun interpret(
-        context: InterpretationContext
-    ): Interpretation? {
+    override suspend fun match(context: InterpretationContext): RuleMatch? {
         val transcript = transcript(context) ?: return null
         val matched = commandPattern.find(transcript) ?: return null
         val contactAndTime = matched.groupValues[1]
@@ -30,19 +23,13 @@ class ContactRule(
             ?: return null
         val contact = resolveContact(requestedContact, context) ?: return null
         val isKnown = knownContacts.any { it.equals(contact, ignoreCase = true) }
-        val confidence = context.observation.confidence
 
-        return InterpretationBuilder()
-            .person(contact, if (isKnown) 0.99f else 0.9f)
-            .slot("target", contact)
-            .confidence(
-                Confidence(
-                    lexical = confidence,
-                    contextual = if (isKnown) 0.99f else 0.85f,
-                    semantic = 0.98f
-                )
-            )
-            .build()
+        return RuleMatch(
+            confidence = if (isKnown) 0.99f else 0.9f,
+            entities = listOf(PersonEntity(contact, if (isKnown) 0.99f else 0.9f)),
+            consumedTokens = requestedContact.tokenCount(),
+            diagnostics = "Extracted contact $contact"
+        )
     }
 
     private suspend fun resolveContact(
@@ -62,6 +49,9 @@ class ContactRule(
             ?.trim()
             ?.takeIf { it.isNotEmpty() }
 
+    private fun String.tokenCount(): Int =
+        trim().split(Regex("\\s+")).count { it.isNotBlank() }
+
     private fun String.titlecaseWords(): String =
         split(Regex("\\s+"))
             .filter { it.isNotBlank() }
@@ -75,7 +65,7 @@ class ContactRule(
             RegexOption.IGNORE_CASE
         )
         val timePattern = Regex(
-            "\\b(?:today|tomorrow|tonight)(?:\\s+at\\s+\\d{1,2}(?::\\d{2})?(?:\\s*(?:am|pm))?)?",
+            "\\b(?:today|tomorrow|tonight)(?:\\s+(?:at\\s+)?(?:\\d{1,2}(?::\\d{2})?\\s*(?:am|pm)?|morning|afternoon|evening))?",
             RegexOption.IGNORE_CASE
         )
         val pronouns = setOf("him", "her", "them")

@@ -12,12 +12,21 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 class AndroidAudioSource : AudioSource {
+    @Volatile
     private var isRecording = false
+
+    @Volatile
     private var audioRecord: AudioRecord? = null
-    
+
+    private val recorderMutex = Mutex()
+    private var activeReader: AudioRecord? = null
+    private var pendingRelease: AudioRecord? = null
+
     private val sampleRate = 16000
     private val channelConfig = AudioFormat.CHANNEL_IN_MONO
     private val audioFormat = AudioFormat.ENCODING_PCM_16BIT
@@ -26,39 +35,139 @@ class AndroidAudioSource : AudioSource {
     @SuppressLint("MissingPermission")
     override suspend fun start() {
         withContext(Dispatchers.IO) {
-            audioRecord = AudioRecord(
-                MediaRecorder.AudioSource.MIC,
-                sampleRate,
-                channelConfig,
-                audioFormat,
-                bufferSize
-            )
-            audioRecord?.startRecording()
-            isRecording = true
+            recorderMutex.withLock {
+                if (isRecording) {
+                    return@withLock
+                }
+                check(pendingRelease == null) {
+                    "AudioRecord cleanup is still in progress"
+                }
+
+                check(bufferSize > 0) {
+                    "Unable to determine a valid AudioRecord buffer size: $bufferSize"
+                }
+
+                val recorder = AudioRecord(
+                    MediaRecorder.AudioSource.MIC,
+                    sampleRate,
+                    channelConfig,
+                    audioFormat,
+                    bufferSize
+                )
+                try {
+                    check(recorder.state == AudioRecord.STATE_INITIALIZED) {
+                        "AudioRecord failed to initialize"
+                    }
+                    recorder.startRecording()
+                    check(recorder.recordingState == AudioRecord.RECORDSTATE_RECORDING) {
+                        "AudioRecord failed to start recording"
+                    }
+
+                    audioRecord = recorder
+                    isRecording = true
+                } catch (exception: Exception) {
+                    runCatching { recorder.release() }
+                    throw IllegalStateException("Unable to start AudioRecord", exception)
+                }
+            }
         }
     }
 
     override suspend fun stop() {
         withContext(Dispatchers.IO) {
-            isRecording = false
-            audioRecord?.stop()
-            audioRecord?.release()
-            audioRecord = null
+            var releaseImmediately: AudioRecord? = null
+            recorderMutex.withLock {
+                isRecording = false
+                val recorder = audioRecord ?: pendingRelease ?: return@withLock
+                audioRecord = null
+
+                try {
+                    if (recorder.recordingState == AudioRecord.RECORDSTATE_RECORDING) {
+                        recorder.stop()
+                    }
+                } catch (_: IllegalStateException) {
+                    // The recorder may already have been stopped by an audio-device failure.
+                }
+
+                pendingRelease = recorder
+                if (activeReader !== recorder) {
+                    pendingRelease = null
+                    releaseImmediately = recorder
+                }
+            }
+            releaseImmediately?.release()
         }
     }
 
     override val frames: Flow<AudioFrame> = flow {
+        check(bufferSize > 0) {
+            "Unable to determine a valid AudioRecord buffer size: $bufferSize"
+        }
         val buffer = ShortArray(bufferSize / 2)
-        while (currentCoroutineContext().isActive) {
-            if (isRecording) {
-                val read = audioRecord?.read(buffer, 0, buffer.size) ?: 0
-                if (read > 0) {
-                    val samples = buffer.copyOf(read)
-                    emit(AudioFrame(samples, sampleRate, 1, System.currentTimeMillis()))
+        var reader: AudioRecord? = null
+        try {
+            while (currentCoroutineContext().isActive) {
+                val recorder = audioRecord
+                if (!isRecording || recorder == null) {
+                    break
                 }
-            } else {
-                delay(10)
+
+                val canRead = recorderMutex.withLock {
+                    if (!isRecording || audioRecord !== recorder) {
+                        false
+                    } else {
+                        activeReader = recorder
+                        reader = recorder
+                        true
+                    }
+                }
+                if (!canRead) {
+                    break
+                }
+
+                val read = try {
+                    recorder.read(buffer, 0, buffer.size)
+                } catch (exception: IllegalStateException) {
+                    if (!isRecording) {
+                        break
+                    }
+                    throw IllegalStateException("AudioRecord read failed", exception)
+                }
+
+                if (!isRecording) {
+                    break
+                }
+
+                when {
+                    read > 0 -> {
+                        val samples = buffer.copyOf(read)
+                        emit(AudioFrame(samples, sampleRate, 1, System.nanoTime()))
+                    }
+                    read == 0 -> delay(10)
+                    read == AudioRecord.ERROR_INVALID_OPERATION -> {
+                        throw IllegalStateException("AudioRecord read failed: invalid operation")
+                    }
+                    read == AudioRecord.ERROR_BAD_VALUE -> {
+                        throw IllegalStateException("AudioRecord read failed: invalid buffer parameters")
+                    }
+                    read == AudioRecord.ERROR_DEAD_OBJECT -> {
+                        throw IllegalStateException("AudioRecord read failed: recorder is no longer available")
+                    }
+                    else -> throw IllegalStateException("AudioRecord read failed with code $read")
+                }
             }
+        } finally {
+            var releaseAfterRead: AudioRecord? = null
+            recorderMutex.withLock {
+                if (activeReader === reader) {
+                    activeReader = null
+                }
+                if (pendingRelease === reader) {
+                    pendingRelease = null
+                    releaseAfterRead = reader
+                }
+            }
+            releaseAfterRead?.release()
         }
     }
 }

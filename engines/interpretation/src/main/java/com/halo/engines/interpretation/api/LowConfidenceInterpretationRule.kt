@@ -11,5 +11,5 @@ interface LowConfidenceInterpretationRule {
     suspend fun interpret(
         context: InterpretationContext,
         current: Interpretation
-    ): Interpretation?
+    ): RuleMatch?
 }
