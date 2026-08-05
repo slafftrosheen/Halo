@@ -6,7 +6,7 @@ import com.halo.sdk.runtime.RuntimeContext
 import com.halo.sdk.runtime.RuntimeScheduler
 import com.halo.sdk.runtime.HaloLogger
 import com.halo.sdk.runtime.RuntimeClock
-import com.halo.runtime.cognition.WorkingMemory
+import com.halo.runtime.cognition.workingmemory.WorkingMemory
 
 // Basic permission manager placeholder for now
 interface PermissionManager {

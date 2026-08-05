@@ -13,4 +13,6 @@ android {
 
 dependencies {
     implementation(project(":sdk:runtime-sdk"))
+    api(libs.kotlinx.datetime)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
 }
