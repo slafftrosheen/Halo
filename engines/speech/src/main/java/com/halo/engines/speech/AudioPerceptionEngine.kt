@@ -57,7 +57,7 @@ class AudioPerceptionEngine(
     private lateinit var context: EngineContext
     private lateinit var scope: CoroutineScope
     private val lifecycleMutex = Mutex()
-    private val sourceActive = AtomicBoolean(false)
+    private val sourceStartAttempted = AtomicBoolean(false)
     private var job: Job? = null
     private val buffer = AudioBuffer()
 
@@ -120,7 +120,7 @@ class AudioPerceptionEngine(
     private suspend fun runPerceptionLoop(eventBus: EventBus) {
         try {
             try {
-                sourceActive.set(true)
+                sourceStartAttempted.set(true)
                 audioSource.start()
             } catch (exception: CancellationException) {
                 throw exception
@@ -254,7 +254,7 @@ class AudioPerceptionEngine(
     }
 
     private suspend fun stopAudioSource() {
-        if (!sourceActive.compareAndSet(true, false)) {
+        if (!sourceStartAttempted.compareAndSet(true, false)) {
             return
         }
 
