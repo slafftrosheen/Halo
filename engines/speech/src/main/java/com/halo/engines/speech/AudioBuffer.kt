@@ -11,6 +11,24 @@ class AudioBuffer(val maxMillis: Long = 10000) {
         frames.clear()
     }
 
+    /**
+     * Returns a detached copy that remains valid after this buffer is cleared.
+     */
+    fun snapshot(): AudioBuffer {
+        val snapshot = AudioBuffer(maxMillis)
+        frames.forEach { frame ->
+            snapshot.append(
+                AudioFrame(
+                    samples = frame.samples.copyOf(),
+                    sampleRate = frame.sampleRate,
+                    channels = frame.channels,
+                    timestamp = frame.timestamp
+                )
+            )
+        }
+        return snapshot
+    }
+
     fun duration(): Long {
         if (frames.isEmpty()) return 0
         val sampleRate = frames.first().sampleRate
