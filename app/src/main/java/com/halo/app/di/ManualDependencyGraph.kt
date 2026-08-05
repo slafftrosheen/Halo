@@ -18,6 +18,7 @@ import com.halo.runtime.plugins.PluginRegistry
 import com.halo.runtime.plugins.PluginContext
 import com.halo.app.devtools.RecordingEventBus
 import com.halo.runtime.cognition.WorkingMemory
+import com.halo.runtime.cognition.knowledge.InMemoryBlackboard
 import com.halo.sdk.runtime.RuntimeClock
 import com.halo.runtime.plugins.PermissionManager
 
@@ -54,6 +55,8 @@ object ManualDependencyGraph {
     }
     val driver by lazy { FakeDriver("heycyan.mock") }
     val provider by lazy { FakeProvider("llamacpp.mock") }
+    val blackboard by lazy { InMemoryBlackboard() }
+    val workingMemory by lazy { WorkingMemory(blackboard) }
 
     val aiEngine by lazy { com.halo.engines.ai.AIEngine() }
     val memoryEngine by lazy { DefaultMemoryEngine() }
@@ -61,7 +64,12 @@ object ManualDependencyGraph {
     val diagnosticsEngine by lazy { DiagnosticsEngine() }
     
     val reasoningEngine by lazy { com.halo.engines.reasoning.ReasoningEngine() }
-    val interpretationEngine by lazy { com.halo.engines.interpretation.InterpretationEngine() }
+    val interpretationEngine by lazy {
+        com.halo.engines.interpretation.InterpretationEngine(
+            blackboard = blackboard,
+            workingMemory = workingMemory
+        )
+    }
 
     val audioPerceptionEngine: com.halo.sdk.runtime.Engine by lazy {
         AudioPerceptionEngine(
@@ -81,7 +89,7 @@ object ManualDependencyGraph {
             eventBus = eventBus,
             commandBus = commandBus,
             clock = object : RuntimeClock { override fun now() = java.time.Instant.now(); override fun millis() = System.currentTimeMillis() },
-            workingMemory = WorkingMemory(),
+            workingMemory = workingMemory,
             permissionManager = object : PermissionManager { override fun hasPermission(p: String) = true }
         )
         val pluginManager = PluginManager(pluginRegistry, pluginContext)
