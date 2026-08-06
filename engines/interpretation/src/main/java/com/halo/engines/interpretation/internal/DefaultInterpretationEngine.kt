@@ -96,7 +96,7 @@ open class DefaultInterpretationEngine(
                                 ruleName = match.ruleName,
                                 confidence = match.confidence,
                                 entityCount = match.entities.size,
-                                diagnostics = match.diagnostics
+                                diagnostics = match.diagnostics?.let { mapOf("info" to it) } ?: emptyMap()
                             )
                         )
                         context.runtime.logger.info(
@@ -105,6 +105,11 @@ open class DefaultInterpretationEngine(
                                 "latencyMs=${match.latencyMillis} entities=${match.entities.size}"
                         )
                     }
+
+                    for (execution in processed.result.executions) {
+                        eventBus.publish(execution)
+                    }
+                    
                     eventBus.publish(InterpretationBuilt(processed.result.interpretation))
                     eventBus.publish(InterpretationPublished(processed.knowledge.id))
 
@@ -158,9 +163,9 @@ open class DefaultInterpretationEngine(
                 id = KnowledgeId(UUID.randomUUID().toString()),
                 payload = IntentKnowledge(
                     intent = interpretation.intent,
-                    confidence = interpretation.confidence.contextual
+                    confidence = interpretation.confidence
                 ),
-                confidence = interpretation.confidence,
+                confidence = com.halo.runtime.cognition.blackboard.Confidence(interpretation.confidence, interpretation.confidence, interpretation.confidence),
                 source = KnowledgeSource.RULE,
                 createdAt = createdAt
             )
@@ -169,7 +174,7 @@ open class DefaultInterpretationEngine(
             Knowledge(
                 id = KnowledgeId(UUID.randomUUID().toString()),
                 payload = EntityKnowledge(interpretation.entities),
-                confidence = interpretation.confidence,
+                confidence = com.halo.runtime.cognition.blackboard.Confidence(interpretation.confidence, interpretation.confidence, interpretation.confidence),
                 source = KnowledgeSource.RULE,
                 createdAt = createdAt
             )
@@ -177,7 +182,7 @@ open class DefaultInterpretationEngine(
         val knowledge = Knowledge(
             id = KnowledgeId(UUID.randomUUID().toString()),
             payload = InterpretationKnowledge(interpretation),
-            confidence = interpretation.confidence,
+            confidence = com.halo.runtime.cognition.blackboard.Confidence(interpretation.confidence, interpretation.confidence, interpretation.confidence),
             source = KnowledgeSource.RULE,
             createdAt = createdAt
         )

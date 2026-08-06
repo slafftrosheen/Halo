@@ -14,7 +14,15 @@ data class RuleMatched(
     val ruleName: String,
     val confidence: Float,
     val entityCount: Int,
-    val diagnostics: String?,
+    val diagnostics: Map<String, String> = emptyMap(),
+    override val timestamp: Long = System.currentTimeMillis()
+) : HaloEvent
+
+data class RuleExecution(
+    val rule: String,
+    val latencyMillis: Long,
+    val matched: Boolean,
+    val confidence: Float,
     override val timestamp: Long = System.currentTimeMillis()
 ) : HaloEvent
 

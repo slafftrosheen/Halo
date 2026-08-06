@@ -13,14 +13,13 @@ import com.halo.engines.interpretation.model.PlayIntent
 import com.halo.engines.interpretation.model.ReminderIntent
 import com.halo.engines.interpretation.model.SearchIntent
 import com.halo.engines.interpretation.model.TimeEntity
-import com.halo.runtime.cognition.blackboard.Confidence
 import com.halo.sdk.runtime.Source
 
 class InterpretationBuilder {
     private val entities = mutableListOf<Entity>()
     private val metadata = linkedMapOf<String, String>()
     private var intent: Intent = ConversationIntent
-    private var confidence = Confidence.None
+    private var confidence: Float = 0.0f
     private var transcript = ""
     private var language = "und"
     private var source = Source.USER
@@ -69,7 +68,7 @@ class InterpretationBuilder {
         metadata[key] = value
     }
 
-    fun confidence(confidence: Confidence): InterpretationBuilder = apply {
+    fun confidence(confidence: Float): InterpretationBuilder = apply {
         this.confidence = confidence
     }
 
@@ -77,13 +76,7 @@ class InterpretationBuilder {
     fun candidate(
         name: String,
         confidence: Float
-    ): InterpretationBuilder = intent(name.toIntent()).confidence(
-        Confidence(
-            lexical = confidence,
-            contextual = confidence,
-            semantic = confidence
-        )
-    )
+    ): InterpretationBuilder = intent(name.toIntent()).confidence(confidence)
 
     @Deprecated("Use metadata(key, value)")
     fun slot(

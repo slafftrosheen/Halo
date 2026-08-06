@@ -4,9 +4,9 @@ import com.halo.runtime.kernel.Process
 import com.halo.runtime.kernel.ProcessState
 import com.halo.runtime.kernel.bus.PerceptionBus
 import com.halo.runtime.kernel.bus.CognitiveBus
+import com.halo.icl.ontology.Goal
 import com.halo.icl.ontology.Observation
 import com.halo.icl.ontology.Thought
-import com.halo.icl.ontology.Goal
 import com.halo.icl.core.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

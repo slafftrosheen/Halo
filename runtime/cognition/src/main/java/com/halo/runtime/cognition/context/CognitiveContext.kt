@@ -1,6 +1,6 @@
 package com.halo.runtime.cognition.context
 
-import com.halo.runtime.cognition.Goal
+import com.halo.icl.ontology.Goal
 import com.halo.runtime.cognition.Task
 import com.halo.runtime.cognition.workingmemory.WorkingMemorySnapshot
 import com.halo.sdk.runtime.Observation

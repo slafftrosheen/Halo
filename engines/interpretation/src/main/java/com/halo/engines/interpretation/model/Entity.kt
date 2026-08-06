@@ -1,14 +1,14 @@
 package com.halo.engines.interpretation.model
 
-typealias Entity = com.halo.runtime.cognition.blackboard.Entity
-typealias PersonEntity = com.halo.runtime.cognition.blackboard.PersonEntity
-typealias LocationEntity = com.halo.runtime.cognition.blackboard.LocationEntity
-typealias PlaceEntity = com.halo.runtime.cognition.blackboard.PlaceEntity
-typealias TimeEntity = com.halo.runtime.cognition.blackboard.TimeEntity
-typealias DateEntity = com.halo.runtime.cognition.blackboard.DateEntity
-typealias NumberEntity = com.halo.runtime.cognition.blackboard.NumberEntity
-typealias ObjectEntity = com.halo.runtime.cognition.blackboard.ObjectEntity
-typealias ApplicationEntity = com.halo.runtime.cognition.blackboard.ApplicationEntity
-typealias DeviceEntity = com.halo.runtime.cognition.blackboard.DeviceEntity
-typealias MediaEntity = com.halo.runtime.cognition.blackboard.MediaEntity
-typealias WebEntity = com.halo.runtime.cognition.blackboard.WebEntity
+typealias Entity = com.halo.cognition.language.Entity
+typealias PersonEntity = com.halo.cognition.language.PersonEntity
+typealias LocationEntity = com.halo.cognition.language.LocationEntity
+typealias PlaceEntity = com.halo.cognition.language.PlaceEntity
+typealias TimeEntity = com.halo.cognition.language.TimeEntity
+typealias DateEntity = com.halo.cognition.language.DateEntity
+typealias NumberEntity = com.halo.cognition.language.NumberEntity
+typealias ObjectEntity = com.halo.cognition.language.ObjectEntity
+typealias ApplicationEntity = com.halo.cognition.language.ApplicationEntity
+typealias DeviceEntity = com.halo.cognition.language.DeviceEntity
+typealias MediaEntity = com.halo.cognition.language.MediaEntity
+typealias WebEntity = com.halo.cognition.language.WebEntity

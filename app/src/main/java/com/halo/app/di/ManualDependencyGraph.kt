@@ -33,6 +33,8 @@ import com.halo.app.ui.screens.home.HomeViewModel
 import com.halo.app.ui.screens.timeline.TimelineViewModel
 import com.halo.app.ui.screens.console.ConsoleViewModel
 import com.halo.app.ui.screens.settings.SettingsViewModel
+import com.halo.runtime.speech.SpeechSessionManager
+import com.halo.engines.speech.MockSpeechRecognizer
 
 object ManualDependencyGraph {
     lateinit var applicationContext: Context
@@ -66,9 +68,11 @@ object ManualDependencyGraph {
     val modelDownloadManager by lazy { ModelDownloadManager(applicationContext) }
     val nativeLlamaProvider by lazy { NativeLlamaProvider(applicationContext, modelDownloadManager) }
     val reasoningServiceProcess by lazy { ReasoningServiceProcess(perceptionBus, cognitiveBus, nativeLlamaProvider) }
+    
+    val speechSessionManager by lazy { SpeechSessionManager(MockSpeechRecognizer(), eventBus, scope) }
 
     // ViewModels
-    val homeViewModel by lazy { HomeViewModel(processManager, cognitiveBus, modelDownloadManager) }
+    val homeViewModel by lazy { HomeViewModel(modelDownloadManager, commandBus) }
     val timelineViewModel by lazy { TimelineViewModel(cognitiveBus) }
     val consoleViewModel by lazy { ConsoleViewModel(processManager) }
     val settingsViewModel by lazy { SettingsViewModel() }
@@ -79,6 +83,10 @@ object ManualDependencyGraph {
         processManager.register(androidWakeWordProcess)
         processManager.register(RuleInterpretationProcess(perceptionBus, cognitiveBus))
         processManager.register(reasoningServiceProcess)
+        
+        // Start speech session manager
+        speechSessionManager.start()
+        
         processManager.register(PlannerServiceProcess(cognitiveBus, executionBus))
         processManager.register(workingMemoryProcess)
         processManager.register(AndroidExecutionProcess(executionBus, applicationContext))

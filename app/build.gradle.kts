@@ -169,6 +169,7 @@ dependencies {
     implementation(project(":host-android"))
     implementation(project(":runtime:intents"))
     implementation(project(":runtime:plugins"))
+    implementation(project(":runtime:speech"))
 }
 dependencies {
     implementation(project(":engines:perception"))

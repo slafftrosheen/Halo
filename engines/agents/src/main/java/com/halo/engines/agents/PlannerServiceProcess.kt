@@ -34,10 +34,10 @@ class PlannerServiceProcess(
                 val plan = Plan(
                     id = CognitiveId(),
                     created = Clock.System.now(),
-                    confidence = goal.confidence * Confidence(0.95f), // Decay slightly
+                    confidence = com.halo.icl.core.Confidence(goal.confidence.value * 0.95f), // Decay slightly
                     provenance = Provenance(id, goal.id),
                     edges = listOf(CognitiveEdge(goal.id, EdgeType.Derived)),
-                    intent = goal.desiredState,
+                    intent = goal.payload.toString(),
                     taskIds = emptyList() // Mock task list
                 )
                 

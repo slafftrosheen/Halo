@@ -28,11 +28,11 @@ import org.junit.Test
 
 class RulePipelineTest {
     private val pipeline = RulePipeline(
-        listOf(
-            ContactRule(knownContacts = setOf("John", "Sarah")),
-            TimeRule(),
-            SpeechRule()
-        )
+        RuleRegistry().apply {
+            registerContextRule(SpeechRule())
+            registerContextRule(ContactRule(knownContacts = setOf("John", "Sarah")))
+            registerContextRule(TimeRule())
+        }
     )
 
     @Test

@@ -85,9 +85,11 @@ class RuleInterpretationProcess(
                         id = CognitiveId(),
                         created = Clock.System.now(),
                         confidence = observation.confidence,
-                        provenance = Provenance(id, thought.id),
+                        provenance = Provenance(generatorId = id, parentId = thought.id),
                         edges = listOf(CognitiveEdge(thought.id, EdgeType.Derived)),
-                        desiredState = matchedIntent
+                        type = com.halo.icl.ontology.GoalType.AUTOMATION,
+                        payload = com.halo.icl.ontology.AutomationPayload(routine = matchedIntent),
+                        priority = com.halo.icl.ontology.Priority.NORMAL
                     )
                     
                     cognitiveBus.publish(id, thought)

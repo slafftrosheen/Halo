@@ -2,6 +2,7 @@ package com.halo.runtime.cognition
 
 import com.halo.runtime.cognition.blackboard.Blackboard
 import com.halo.sdk.runtime.Engine
+import com.halo.icl.ontology.Goal
 
 abstract class CognitiveCycle {
     abstract suspend fun assembleContext(): ReasoningContext

@@ -1,6 +1,6 @@
 package com.halo.runtime.cognition.workingmemory
 
-import com.halo.runtime.cognition.Goal
+import com.halo.icl.ontology.Goal
 import com.halo.runtime.cognition.Task
 import com.halo.runtime.cognition.TaskState
 import com.halo.runtime.cognition.blackboard.Blackboard
@@ -8,9 +8,9 @@ import com.halo.runtime.cognition.blackboard.BlackboardQuery
 import com.halo.runtime.cognition.blackboard.Interpretation
 import com.halo.runtime.cognition.blackboard.InterpretationKnowledge
 import com.halo.runtime.cognition.blackboard.ObservationPayload
-import com.halo.runtime.cognition.blackboard.PersonEntity
-import com.halo.runtime.cognition.blackboard.PlaceEntity
-import com.halo.runtime.cognition.blackboard.GoalPayload
+import com.halo.cognition.language.PersonEntity
+import com.halo.cognition.language.PlaceEntity
+import com.halo.runtime.cognition.blackboard.GoalKnowledge
 import com.halo.runtime.cognition.blackboard.TaskPayload
 import com.halo.sdk.runtime.Observation
 
@@ -18,7 +18,7 @@ class DefaultWorkingMemory(
     private val blackboard: Blackboard
 ) : WorkingMemory {
     override suspend fun currentGoal(): Goal? =
-        (blackboard.latest(GoalPayload::class)?.payload as? GoalPayload)?.goal
+        (blackboard.latest(GoalKnowledge::class)?.payload as? GoalKnowledge)?.goal
 
     override suspend fun activeTask(): Task? =
         activeTasks().lastOrNull()

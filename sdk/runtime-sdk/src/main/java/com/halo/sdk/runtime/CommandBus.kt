@@ -6,6 +6,9 @@ sealed interface RuntimeCommand
 data class SpeakText(val text: String) : RuntimeCommand
 data class LaunchApplication(val packageName: String) : RuntimeCommand
 data class SaveMemory(val memory: String) : RuntimeCommand
+data object StartListening : RuntimeCommand
+data object StopListening : RuntimeCommand
+data object CancelSpeech : RuntimeCommand
 
 interface CommandBus {
     suspend fun dispatch(command: RuntimeCommand)

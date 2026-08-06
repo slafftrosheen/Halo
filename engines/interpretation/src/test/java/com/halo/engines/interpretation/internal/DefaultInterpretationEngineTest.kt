@@ -46,7 +46,11 @@ class DefaultInterpretationEngineTest {
         val eventBus = TestEventBus()
         val engine = DefaultInterpretationEngine(
             pipeline = RulePipeline(
-                listOf(ContactRule(), TimeRule(), SpeechRule())
+                RuleRegistry().apply {
+                    registerContextRule(SpeechRule())
+                    registerContextRule(ContactRule())
+                    registerContextRule(TimeRule())
+                }
             ),
             blackboard = blackboard,
             contextAssembler = DefaultContextAssembler(

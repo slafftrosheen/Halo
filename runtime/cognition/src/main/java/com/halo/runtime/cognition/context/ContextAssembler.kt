@@ -1,11 +1,11 @@
 package com.halo.runtime.cognition.context
 
-import com.halo.runtime.cognition.Goal
+import com.halo.icl.ontology.Goal
 import com.halo.runtime.cognition.Task
 import com.halo.runtime.cognition.TaskState
 import com.halo.runtime.cognition.blackboard.Blackboard
 import com.halo.runtime.cognition.blackboard.BlackboardQuery
-import com.halo.runtime.cognition.blackboard.GoalPayload
+import com.halo.runtime.cognition.blackboard.GoalKnowledge
 import com.halo.runtime.cognition.blackboard.TaskPayload
 import com.halo.runtime.cognition.workingmemory.WorkingMemory
 import com.halo.runtime.cognition.workingmemory.snapshot
@@ -34,8 +34,8 @@ class DefaultContextAssembler(
     ): CognitiveContext {
         val recentKnowledge = blackboard.query(BlackboardQuery())
             .takeLast(recentKnowledgeLimit)
-        val goals = blackboard.query(BlackboardQuery(payload = GoalPayload::class))
-            .mapNotNull { (it.payload as? GoalPayload)?.goal }
+        val goals = blackboard.query(BlackboardQuery(payload = GoalKnowledge::class))
+            .mapNotNull { (it.payload as? GoalKnowledge)?.goal }
         val tasks = activeTasks()
 
         return CognitiveContext(

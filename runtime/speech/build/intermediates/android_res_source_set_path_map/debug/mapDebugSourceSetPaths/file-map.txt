@@ -1,0 +1,8 @@
+com.halo.runtime.speech-pngs-0 C:\Users\Slaff\Halo\runtime\speech\build\generated\res\pngs\debug
+com.halo.runtime.speech-updated_navigation_xml-1 C:\Users\Slaff\Halo\runtime\speech\build\generated\updated_navigation_xml\debug
+com.halo.runtime.speech-mergeDebugResources-2 C:\Users\Slaff\Halo\runtime\speech\build\intermediates\incremental\debug\mergeDebugResources\merged.dir
+com.halo.runtime.speech-mergeDebugResources-3 C:\Users\Slaff\Halo\runtime\speech\build\intermediates\incremental\debug\mergeDebugResources\stripped.dir
+com.halo.runtime.speech-debug-4 C:\Users\Slaff\Halo\runtime\speech\build\intermediates\merged_res\debug\mergeDebugResources
+com.halo.runtime.speech-debug-5 C:\Users\Slaff\Halo\runtime\speech\build\intermediates\packaged_res\debug\packageDebugResources
+com.halo.runtime.speech-debug-6 C:\Users\Slaff\Halo\runtime\speech\src\debug\res
+com.halo.runtime.speech-main-7 C:\Users\Slaff\Halo\runtime\speech\src\main\res

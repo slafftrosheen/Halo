@@ -1,8 +1,8 @@
 package com.halo.runtime.kernel
 
+import com.halo.icl.ontology.Goal
 import com.halo.runtime.cognition.Capability
 import com.halo.runtime.cognition.memory.Memory
-import com.halo.runtime.cognition.Goal
 import com.halo.runtime.cognition.AttentionState
 import com.halo.runtime.cognition.DeviceState
 

@@ -1,10 +1,10 @@
 package com.halo.engines.interpretation.internal
 
+import com.halo.engines.interpretation.RuleExecution
 import com.halo.engines.interpretation.api.Interpretation
 import com.halo.engines.interpretation.api.InterpretationContext
 import com.halo.engines.interpretation.api.InterpretationResult
 import com.halo.engines.interpretation.api.InterpretationRule
-import com.halo.engines.interpretation.api.LowConfidenceInterpretationRule
 import com.halo.engines.interpretation.api.RuleMatch
 import com.halo.engines.interpretation.model.ApplicationEntity
 import com.halo.engines.interpretation.model.ConversationIntent
@@ -20,60 +20,110 @@ import com.halo.engines.interpretation.model.TimeEntity
 import com.halo.engines.interpretation.model.WebEntity
 import com.halo.engines.speech.SpeechRecognizedPayload
 import com.halo.runtime.cognition.blackboard.Confidence
+import com.halo.cognition.language.InterpretationStrategy
 
 class RulePipeline(
-    private val registry: RuleRegistry,
-    private val lowConfidenceRules: List<LowConfidenceInterpretationRule> = emptyList()
+    private val registry: RuleRegistry
 ) {
-    constructor(
-        rules: List<InterpretationRule>,
-        lowConfidenceRules: List<LowConfidenceInterpretationRule> = emptyList()
-    ) : this(RuleRegistry(rules), lowConfidenceRules)
-
     val ruleCount: Int
         get() = registry.size
 
     suspend fun execute(context: InterpretationContext): InterpretationResult {
         val matches = mutableListOf<RuleMatch>()
-        for (rule in registry.ordered()) {
-            rule.evaluate(context)?.let(matches::add)
+        val executions = mutableListOf<RuleExecution>()
+        var maxConfidence = 0f
+        var strategy: InterpretationStrategy = InterpretationStrategy.Deterministic
+
+        // 1. Hard Rules
+        for (rule in registry.getHardRules()) {
+            val (execution, match) = rule.evaluateWithExecution(context)
+            executions.add(execution)
+            if (match != null) {
+                matches.add(match)
+                if (match.confidence > maxConfidence) {
+                    maxConfidence = match.confidence
+                    strategy = InterpretationStrategy.Deterministic
+                }
+            }
+        }
+        
+        if (maxConfidence >= 0.90f) {
+            return InterpretationResult(
+                interpretation = buildInterpretation(context, matches, strategy),
+                matches = matches.sortedForMerge(),
+                executions = executions
+            )
         }
 
-        var interpretation = buildInterpretation(context, matches)
-        for (rule in lowConfidenceRules.sortedByDescending { it.priority }) {
-            if (rule.applies(context, interpretation)) {
-                rule.interpret(context, interpretation)?.let { match ->
-                    matches += match.copy(
-                        ruleName = rule::class.java.simpleName,
-                        priority = rule.priority
-                    )
-                    interpretation = buildInterpretation(context, matches)
+        // 2. Context Rules
+        for (rule in registry.getContextRules()) {
+            val (execution, match) = rule.evaluateWithExecution(context)
+            executions.add(execution)
+            if (match != null) {
+                matches.add(match)
+                if (match.confidence > maxConfidence) {
+                    maxConfidence = match.confidence
+                    strategy = InterpretationStrategy.Contextual
+                }
+            }
+        }
+
+        if (maxConfidence >= 0.50f) {
+            return InterpretationResult(
+                interpretation = buildInterpretation(context, matches, strategy),
+                matches = matches.sortedForMerge(),
+                executions = executions
+            )
+        }
+
+        // 3. Semantic Rules
+        for (rule in registry.getSemanticRules()) {
+            val (execution, match) = rule.evaluateWithExecution(context)
+            executions.add(execution)
+            if (match != null) {
+                matches.add(match)
+                if (match.confidence > maxConfidence) {
+                    maxConfidence = match.confidence
+                    strategy = InterpretationStrategy.Semantic
                 }
             }
         }
 
         return InterpretationResult(
-            interpretation = interpretation,
-            matches = matches.sortedForMerge()
+            interpretation = buildInterpretation(context, matches, strategy),
+            matches = matches.sortedForMerge(),
+            executions = executions
         )
     }
 
-    private suspend fun InterpretationRule.evaluate(
+    private suspend fun InterpretationRule.evaluateWithExecution(
         context: InterpretationContext
-    ): RuleMatch? {
+    ): Pair<RuleExecution, RuleMatch?> {
+        val ruleName = this::class.java.simpleName
         val startedAt = System.nanoTime()
-        val match = match(context) ?: return null
+        val match = match(context)
         val latencyMillis = (System.nanoTime() - startedAt) / NANOS_PER_MILLISECOND
-        return match.copy(
-            ruleName = this::class.java.simpleName,
+        
+        val enhancedMatch = match?.copy(
+            ruleName = ruleName,
             priority = priority,
             latencyMillis = latencyMillis
         )
+        
+        val execution = RuleExecution(
+            rule = ruleName,
+            latencyMillis = latencyMillis,
+            matched = match != null,
+            confidence = match?.confidence ?: 0f
+        )
+        
+        return execution to enhancedMatch
     }
 
     private fun buildInterpretation(
         context: InterpretationContext,
-        matches: List<RuleMatch>
+        matches: List<RuleMatch>,
+        strategy: InterpretationStrategy
     ): Interpretation {
         val sortedMatches = matches.sortedForMerge()
         val selectedIntentMatch = sortedMatches.firstOrNull { it.intent != null }
@@ -96,13 +146,10 @@ class RulePipeline(
                 ?: "und",
             intent = selectedIntentMatch?.intent ?: ConversationIntent,
             entities = entities,
-            confidence = Confidence(
-                lexical = recognizerConfidence,
-                contextual = ruleConfidence,
-                semantic = entityConfidence
-            ),
+            confidence = ruleConfidence,
             source = context.observation.source,
-            metadata = contextMetadata(context)
+            metadata = contextMetadata(context),
+            strategy = strategy
         )
     }
 

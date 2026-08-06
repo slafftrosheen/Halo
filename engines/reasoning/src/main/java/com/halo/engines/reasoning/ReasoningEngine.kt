@@ -11,10 +11,17 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.filter
+
+import com.halo.engines.reasoning.strategy.DefaultReasoningStrategy
+import com.halo.runtime.cognition.blackboard.InterpretationKnowledge
+import com.halo.runtime.cognition.GoalCreated
+import com.halo.sdk.runtime.EventBus
 
 class ReasoningEngine(
-    private val cognitiveCycle: CognitiveCycle,
-    private val blackboard: Blackboard
+    private val strategy: DefaultReasoningStrategy,
+    private val blackboard: Blackboard,
+    private val eventBus: EventBus
 ) : Engine {
     override val metadata = EngineMetadata(
         id = Identifier("engine.reasoning.core"),
@@ -41,13 +48,15 @@ class ReasoningEngine(
     override suspend fun start() {
         _state.value = EngineState.Running
         
-        // Subscribe to InterpretationKnowledge (simulated as EventBus logic here, or Blackboard directly)
-        // Whenever Interpretation arrives, trigger cognitive cycle
         scope.launch {
-            // Simplified subscription simulation
-            // blackboard.subscribe(InterpretationKnowledge::class) {
-            //     cognitiveCycle.runCycle(blackboard)
-            // }
+            // Subscribe to InterpretationKnowledge from Blackboard
+            blackboard.stream().filter { it.payload is InterpretationKnowledge }.collect { knowledge ->
+                val interpretation = (knowledge.payload as InterpretationKnowledge).interpretation
+                val goal = strategy.generateGoal(interpretation)
+                
+                // Publish GoalCreated event
+                eventBus.publish(GoalCreated(goal = goal))
+            }
         }
     }
 

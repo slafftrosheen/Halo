@@ -2,6 +2,7 @@ package com.halo.runtime.cognition
 
 import java.util.UUID
 import kotlin.time.Duration
+import com.halo.icl.ontology.Goal
 
 data class CostEstimate(
     val timeMs: Long = 0L,

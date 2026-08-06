@@ -3,6 +3,7 @@ package com.halo.runtime.cognition
 import com.halo.runtime.cognition.workingmemory.WorkingMemory
 import com.halo.runtime.cognition.blackboard.Interpretation
 import kotlinx.datetime.Instant
+import com.halo.icl.ontology.Goal
 
 data class ReasoningContext(
     val interpretation: Interpretation,

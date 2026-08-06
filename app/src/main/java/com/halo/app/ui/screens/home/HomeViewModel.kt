@@ -4,66 +4,78 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.halo.app.ui.components.HaloRuntimeState
 import com.halo.engines.reasoning.models.ModelDownloadManager
-import com.halo.runtime.kernel.ProcessManager
-import com.halo.runtime.kernel.bus.CognitiveBus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.halo.sdk.runtime.CommandBus
+import com.halo.sdk.runtime.StartListening
+import com.halo.sdk.runtime.StopListening
 
-data class HomeUiState(
-    val runtimeState: HaloRuntimeState = HaloRuntimeState.Idle,
-    val isSpeechReady: Boolean = true,
-    val isReasoningReady: Boolean = false,
-    val isPlanningReady: Boolean = true,
-    val isExecutionReady: Boolean = true,
-    val activeProviderId: String? = null,
-    val lastCommand: String = "None",
-    val batteryLevel: String = "98%",
-    val networkState: String = "Connected",
-    val isRuntimeReady: Boolean = true
+data class TimelinePreviewEvent(
+    val command: String,
+    val status: String,
+    val timestamp: String
 )
 
+data class EngineUiState(
+    val id: String,
+    val state: String,
+    val isHealthy: Boolean
+)
+
+data class HomeUiState(
+    val greeting: String = "Good Morning",
+    val systemStatus: String = "Initializing...",
+    val isRuntimeReady: Boolean = false,
+    val runtimeState: HaloRuntimeState = HaloRuntimeState.Idle,
+    val recentEvents: List<TimelinePreviewEvent> = emptyList(),
+    val engines: List<EngineUiState> = emptyList(),
+    val activeProvider: String = "None"
+)
+
+
 class HomeViewModel(
-    private val processManager: ProcessManager,
-    private val cognitiveBus: CognitiveBus,
-    private val modelDownloadManager: ModelDownloadManager
+    private val modelDownloadManager: ModelDownloadManager,
+    private val commandBus: CommandBus
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     init {
+        // Collect model changes for Runtime Summary (as a temporary measure for Alpha)
         viewModelScope.launch {
             modelDownloadManager.activeModelId.collect { activeId ->
                 _uiState.update { it.copy(
-                    activeProviderId = activeId,
-                    isReasoningReady = activeId != null
+                    activeProvider = activeId ?: "None Selected"
                 ) }
             }
         }
         
-        // Mocking runtime state for now until we have a real RuntimeState emitter
-        viewModelScope.launch {
-            // Subscribe to actual intents/events here to change HaloRuntimeState
-        }
+        // Setup initial static state (to be replaced by actual Runtime observers)
+        _uiState.update { it.copy(
+            isRuntimeReady = true,
+            systemStatus = "Halo Runtime Ready.",
+            engines = listOf(
+                EngineUiState("Speech", "Ready", true),
+                EngineUiState("Reasoning", "Waiting", true),
+                EngineUiState("Planning", "Idle", true),
+                EngineUiState("Execution", "Idle", true)
+            )
+        ) }
     }
 
-    fun triggerMicrophone() {
-        // Toggle listening state
-        val currentState = _uiState.value.runtimeState
-        val nextState = if (currentState == HaloRuntimeState.Idle) {
-            HaloRuntimeState.Listening
-        } else {
-            HaloRuntimeState.Idle
+    fun startListening() {
+        viewModelScope.launch {
+            commandBus.dispatch(StartListening)
         }
-        _uiState.update { it.copy(runtimeState = nextState) }
-        
-        // Actually trigger microphone process or inject event
-        if (nextState == HaloRuntimeState.Listening) {
-            // In a real implementation, we would send a command to AndroidWakeWordProcess
-            // For Alpha, this will act as the "Inject Event" trigger if we want
+    }
+    
+    fun stopListening() {
+        viewModelScope.launch {
+            commandBus.dispatch(StopListening)
         }
     }
 }

@@ -16,7 +16,7 @@ class ReflectionEngine(
             recency = Clock.System.now(),
             confidence = 1.0f,
             frequency = 1,
-            goalId = plan.goal.id,
+            goalId = plan.goal.id.value,
             executionResult = result::class.simpleName ?: "Unknown",
             reflectionNotes = "Goal executed with outcome: $result"
         )

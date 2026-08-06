@@ -1,6 +1,7 @@
 package com.halo.engines.planning.planner
 
 import com.halo.runtime.cognition.*
+import com.halo.icl.ontology.Goal
 import kotlin.time.Duration.Companion.milliseconds
 
 class RulePlanner : Planner {

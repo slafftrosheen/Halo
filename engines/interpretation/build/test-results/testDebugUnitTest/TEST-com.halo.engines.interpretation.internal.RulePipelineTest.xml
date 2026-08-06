@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.halo.engines.interpretation.internal.RulePipelineTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-08-06T09:58:21.449Z" hostname="RECLAME-RTX1" time="0.07">
+  <properties/>
+  <testcase name="navigateHomeBuildsTypedIntentAndPlaceEntity" classname="com.halo.engines.interpretation.internal.RulePipelineTest" time="0.054"/>
+  <testcase name="matchingAndMergingAreDeterministic" classname="com.halo.engines.interpretation.internal.RulePipelineTest" time="0.006"/>
+  <testcase name="callCommandMergesIntentContactAndTimeMatches" classname="com.halo.engines.interpretation.internal.RulePipelineTest" time="0.001"/>
+  <testcase name="unmatchedTranscriptFallsBackToConversationIntent" classname="com.halo.engines.interpretation.internal.RulePipelineTest" time="0.001"/>
+  <testcase name="playCommandExtractsMediaEntity" classname="com.halo.engines.interpretation.internal.RulePipelineTest" time="0.001"/>
+  <testcase name="reminderCommandExtractsTimeEntity" classname="com.halo.engines.interpretation.internal.RulePipelineTest" time="0.003"/>
+  <testcase name="openSpotifyBuildsTypedIntentAndApplicationEntity" classname="com.halo.engines.interpretation.internal.RulePipelineTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
