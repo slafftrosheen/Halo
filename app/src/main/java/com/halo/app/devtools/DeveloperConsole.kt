@@ -64,7 +64,7 @@ fun DeveloperConsole(viewModel: DeveloperConsoleViewModel = viewModel()) {
         Box(modifier = Modifier.padding(padding).fillMaxSize()) {
             when (selectedTab) {
                 0 -> RuntimeScreen(snapshot)
-                1 -> EngineScreen(snapshot)
+                1 -> EngineScreen()
                 2 -> TimelineScreen()
                 3 -> BlackboardScreen()
                 4 -> Text("Memory Inspector (Coming Soon)", modifier = Modifier.padding(16.dp), color = HaloTextPrimary, fontFamily = FontFamily.Monospace)

@@ -7,41 +7,68 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import com.halo.app.ui.theme.HaloTextPrimary
 import com.halo.app.ui.components.*
+import com.halo.app.di.ManualDependencyGraph
+import com.halo.icl.ontology.Goal
+import com.halo.icl.ontology.Observation
+import com.halo.icl.ontology.Thought
 
 @Composable
 fun BlackboardScreen() {
+    val recentContext by ManualDependencyGraph.workingMemoryProcess.recentContext.collectAsState()
+    
+    val goals = recentContext.filterIsInstance<Goal>()
+    val thoughts = recentContext.filterIsInstance<Thought>()
+    val observations = recentContext.filterIsInstance<Observation>()
+    
     LazyColumn(
         modifier = Modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
-            HaloSection("ACTIVE GRAPH") {
-                BlackboardGraph(
-                    nodes = listOf("MediaPlayback", "Launch Spotify", "User wants music", "Audio Context")
-                )
+            HaloSection("GOALS (${goals.size})") {
+                if (goals.isEmpty()) {
+                    Text("No active goals", color = HaloTextPrimary, fontFamily = FontFamily.Monospace)
+                } else {
+                    goals.forEach { goal ->
+                        GoalChip(goal = goal.desiredState, priority = "High")
+                    }
+                }
             }
         }
         item {
-            HaloSection("GOALS") {
-                GoalChip(goal = "MediaPlayback", priority = "High")
+            HaloSection("THOUGHTS (${thoughts.size})") {
+                if (thoughts.isEmpty()) {
+                    Text("No recent thoughts", color = HaloTextPrimary, fontFamily = FontFamily.Monospace)
+                } else {
+                    thoughts.forEach { thought ->
+                        MemoryNode(
+                            title = thought.content,
+                            type = "Inference",
+                            confidence = thought.confidence.value,
+                            timeAgo = "Just now"
+                        )
+                    }
+                }
             }
         }
         item {
-            HaloSection("RECENT MEMORIES") {
-                MemoryNode(
-                    title = "User prefers Spotify",
-                    type = "Preference",
-                    confidence = 0.95f,
-                    timeAgo = "2d ago"
-                )
-                MemoryNode(
-                    title = "Audio processing intent",
-                    type = "Short-term",
-                    confidence = 0.88f,
-                    timeAgo = "12s ago"
-                )
+            HaloSection("OBSERVATIONS (${observations.size})") {
+                if (observations.isEmpty()) {
+                    Text("No recent observations", color = HaloTextPrimary, fontFamily = FontFamily.Monospace)
+                } else {
+                    observations.forEach { obs ->
+                        MemoryNode(
+                            title = obs.rawData.toString(),
+                            type = obs.modality,
+                            confidence = obs.confidence.value,
+                            timeAgo = "Just now"
+                        )
+                    }
+                }
             }
         }
     }

@@ -181,3 +181,17 @@ dependencies {
 dependencies {
     implementation(project(":runtime:cognition"))
 }
+
+tasks.register<Copy>("copyApkToReleases") {
+    dependsOn("assembleDebug")
+    from(layout.buildDirectory.dir("outputs/apk/debug"))
+    into(rootProject.layout.projectDirectory.dir("releases"))
+    include("app-debug.apk")
+    rename("app-debug.apk", "halo-alpha-debug.apk")
+}
+
+afterEvaluate {
+    tasks.named("assembleDebug") {
+        finalizedBy("copyApkToReleases")
+    }
+}

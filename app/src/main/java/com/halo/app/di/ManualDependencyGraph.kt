@@ -21,6 +21,7 @@ import kotlinx.coroutines.SupervisorJob
 import com.halo.host.android.AndroidExecutionProcess
 import com.halo.host.android.AndroidSpeechProcess
 import com.halo.host.android.TextToSpeechProcess
+import com.halo.host.android.AndroidWakeWordProcess
 import com.halo.engines.speech.SpeechRecognitionProcess
 import com.halo.engines.interpretation.RuleInterpretationProcess
 import com.halo.engines.agents.PlannerServiceProcess
@@ -53,11 +54,13 @@ object ManualDependencyGraph {
     }
 
     val androidSpeechProcess by lazy { AndroidSpeechProcess(applicationContext, perceptionBus) }
+    val androidWakeWordProcess by lazy { AndroidWakeWordProcess(applicationContext, perceptionBus) }
     val workingMemoryProcess by lazy { WorkingMemoryProcess(perceptionBus, cognitiveBus, executionBus) }
 
     val microkernel by lazy {
         // Register new alpha MVP processes
         processManager.register(androidSpeechProcess)
+        processManager.register(androidWakeWordProcess)
         processManager.register(RuleInterpretationProcess(perceptionBus, cognitiveBus))
         processManager.register(PlannerServiceProcess(cognitiveBus, executionBus))
         processManager.register(workingMemoryProcess)

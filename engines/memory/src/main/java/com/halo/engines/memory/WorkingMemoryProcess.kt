@@ -66,6 +66,13 @@ class WorkingMemoryProcess(
     suspend fun getRecentContext(): List<CognitiveObject> {
         return _recentContext.value
     }
+    
+    suspend fun clear() {
+        mutex.withLock {
+            contextList.clear()
+            _recentContext.value = emptyList()
+        }
+    }
 
     override suspend fun pause() { _state.value = ProcessState.Paused }
     override suspend fun resume() { _state.value = ProcessState.Running }

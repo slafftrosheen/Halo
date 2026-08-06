@@ -5,6 +5,8 @@ import android.content.Intent
 import android.hardware.camera2.CameraManager
 import android.media.AudioManager
 import android.net.Uri
+import android.provider.AlarmClock
+import android.provider.Settings
 import com.halo.runtime.kernel.Process
 import com.halo.runtime.kernel.ProcessState
 import com.halo.runtime.kernel.bus.ExecutionBus
@@ -70,6 +72,19 @@ class AndroidExecutionProcess(
                         resultMsg = "The time is $time"
                     } else if (intentStr == "CheckBattery") {
                         resultMsg = "Battery is currently at 85 percent"
+                    } else if (intentStr == "TurnOnWifi" || intentStr == "TurnOffWifi") {
+                        openSettings(Settings.ACTION_WIFI_SETTINGS)
+                        resultMsg = "Opening Wi-Fi settings"
+                    } else if (intentStr == "TurnOnBluetooth" || intentStr == "TurnOffBluetooth") {
+                        openSettings(Settings.ACTION_BLUETOOTH_SETTINGS)
+                        resultMsg = "Opening Bluetooth settings"
+                    } else if (intentStr == "CheckWeather") {
+                        resultMsg = "It is currently 72 degrees and sunny."
+                    } else if (intentStr == "SetTimer") {
+                        setTimer(300) // 5 minutes mock for MVP
+                        resultMsg = "Timer set for 5 minutes."
+                    } else if (intentStr == "IdentifySelf") {
+                        resultMsg = "I am Halo, a cognitive operating system."
                     } else {
                         success = false
                         resultMsg = "Unknown Android Action: $intentStr"
@@ -140,6 +155,22 @@ class AndroidExecutionProcess(
             webIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(webIntent)
         }
+    }
+
+    private fun openSettings(action: String) {
+        val intent = Intent(action)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        context.startActivity(intent)
+    }
+
+    private fun setTimer(seconds: Int) {
+        val intent = Intent(AlarmClock.ACTION_SET_TIMER).apply {
+            putExtra(AlarmClock.EXTRA_MESSAGE, "Halo Timer")
+            putExtra(AlarmClock.EXTRA_LENGTH, seconds)
+            putExtra(AlarmClock.EXTRA_SKIP_UI, false)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        context.startActivity(intent)
     }
 
     override suspend fun pause() { _state.value = ProcessState.Paused }

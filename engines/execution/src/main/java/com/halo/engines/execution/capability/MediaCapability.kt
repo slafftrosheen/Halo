@@ -15,9 +15,9 @@ class MediaCapability : Capability {
     override suspend fun execute(task: Task): TaskResult {
         require(task is MediaTask)
         // Simulated transactional execution
-        println("Prepare: Check if media app is installed and licensed")
-        println("Execute: Play ${task.mediaId}")
-        println("Verify: Ensure playback started")
+        android.util.Log.i("MediaCapability", "Prepare: Check if media app is installed and licensed")
+        android.util.Log.i("MediaCapability", "Execute: Play ${task.mediaId}")
+        android.util.Log.i("MediaCapability", "Verify: Ensure playback started")
         return TaskResult.Success("Media playing")
     }
 }

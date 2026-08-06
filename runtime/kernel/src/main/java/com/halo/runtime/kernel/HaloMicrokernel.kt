@@ -19,7 +19,7 @@ enum class HaloInteractionState {
 
 class HaloMicrokernel(
     private val scope: CoroutineScope,
-    private val processManager: ProcessManager,
+    val processManager: ProcessManager,
     val perceptionBus: PerceptionBus,
     val cognitiveBus: CognitiveBus,
     val executionBus: ExecutionBus
@@ -33,6 +33,8 @@ class HaloMicrokernel(
             perceptionBus.subscribe("kernel.interaction").collect { obj ->
                 if (obj is Observation) {
                     if (obj.modality.equals("speech_partial", ignoreCase = true)) {
+                        _interactionState.value = HaloInteractionState.Listening
+                    } else if (obj.modality.equals("WakeWord", ignoreCase = true)) {
                         _interactionState.value = HaloInteractionState.Listening
                     } else if (obj.modality.equals("speech", ignoreCase = true)) {
                         _interactionState.value = HaloInteractionState.Reasoning

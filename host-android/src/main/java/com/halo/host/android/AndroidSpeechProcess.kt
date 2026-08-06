@@ -16,6 +16,7 @@ import com.halo.icl.core.Provenance
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -41,6 +42,16 @@ class AndroidSpeechProcess(
                 initializeRecognizer()
             } else {
                 _state.value = ProcessState.Crashed
+            }
+        }
+        
+        launch {
+            perceptionBus.subscribe(id).filterIsInstance<Observation>().collect { obs ->
+                if (obs.modality == "WakeWord") {
+                    withContext(Dispatchers.Main) {
+                        startCapturing()
+                    }
+                }
             }
         }
     }
