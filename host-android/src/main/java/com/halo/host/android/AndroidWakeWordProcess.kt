@@ -19,7 +19,9 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
+import android.media.AudioManager
 
 class AndroidWakeWordProcess(
     private val context: Context,
@@ -85,8 +87,38 @@ class AndroidWakeWordProcess(
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false)
         }
+        
+        muteBeep()
         speechRecognizer?.startListening(intent)
         isListening = true
+        
+        // Unmute after a short delay so the beep is swallowed
+        kotlinx.coroutines.GlobalScope.launch(Dispatchers.Main) {
+            delay(300)
+            unmuteBeep()
+        }
+    }
+    
+    private fun muteBeep() {
+        try {
+            val am = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            am.adjustStreamVolume(AudioManager.STREAM_NOTIFICATION, AudioManager.ADJUST_MUTE, 0)
+            am.adjustStreamVolume(AudioManager.STREAM_SYSTEM, AudioManager.ADJUST_MUTE, 0)
+            am.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_MUTE, 0)
+        } catch (e: Exception) {
+            // Ignore if permission denied
+        }
+    }
+
+    private fun unmuteBeep() {
+        try {
+            val am = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            am.adjustStreamVolume(AudioManager.STREAM_NOTIFICATION, AudioManager.ADJUST_UNMUTE, 0)
+            am.adjustStreamVolume(AudioManager.STREAM_SYSTEM, AudioManager.ADJUST_UNMUTE, 0)
+            am.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_UNMUTE, 0)
+        } catch (e: Exception) {
+            // Ignore if permission denied
+        }
     }
     
     private fun restartLoop() {
