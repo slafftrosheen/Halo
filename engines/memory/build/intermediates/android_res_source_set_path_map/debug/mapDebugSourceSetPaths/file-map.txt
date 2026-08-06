@@ -1,8 +1,0 @@
-com.halo.engines.memory-pngs-0 C:\Users\Slaff\Halo\engines\memory\build\generated\res\pngs\debug
-com.halo.engines.memory-updated_navigation_xml-1 C:\Users\Slaff\Halo\engines\memory\build\generated\updated_navigation_xml\debug
-com.halo.engines.memory-mergeDebugResources-2 C:\Users\Slaff\Halo\engines\memory\build\intermediates\incremental\debug\mergeDebugResources\merged.dir
-com.halo.engines.memory-mergeDebugResources-3 C:\Users\Slaff\Halo\engines\memory\build\intermediates\incremental\debug\mergeDebugResources\stripped.dir
-com.halo.engines.memory-debug-4 C:\Users\Slaff\Halo\engines\memory\build\intermediates\merged_res\debug\mergeDebugResources
-com.halo.engines.memory-debug-5 C:\Users\Slaff\Halo\engines\memory\build\intermediates\packaged_res\debug\packageDebugResources
-com.halo.engines.memory-debug-6 C:\Users\Slaff\Halo\engines\memory\src\debug\res
-com.halo.engines.memory-main-7 C:\Users\Slaff\Halo\engines\memory\src\main\res

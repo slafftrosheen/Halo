@@ -1,8 +1,0 @@
-com.halo.sdk.provider.provider-sdk-pngs-0 C:\Users\Slaff\Halo\sdk\provider-sdk\build\generated\res\pngs\debug
-com.halo.sdk.provider.provider-sdk-updated_navigation_xml-1 C:\Users\Slaff\Halo\sdk\provider-sdk\build\generated\updated_navigation_xml\debug
-com.halo.sdk.provider.provider-sdk-mergeDebugResources-2 C:\Users\Slaff\Halo\sdk\provider-sdk\build\intermediates\incremental\debug\mergeDebugResources\merged.dir
-com.halo.sdk.provider.provider-sdk-mergeDebugResources-3 C:\Users\Slaff\Halo\sdk\provider-sdk\build\intermediates\incremental\debug\mergeDebugResources\stripped.dir
-com.halo.sdk.provider.provider-sdk-debug-4 C:\Users\Slaff\Halo\sdk\provider-sdk\build\intermediates\merged_res\debug\mergeDebugResources
-com.halo.sdk.provider.provider-sdk-debug-5 C:\Users\Slaff\Halo\sdk\provider-sdk\build\intermediates\packaged_res\debug\packageDebugResources
-com.halo.sdk.provider.provider-sdk-debug-6 C:\Users\Slaff\Halo\sdk\provider-sdk\src\debug\res
-com.halo.sdk.provider.provider-sdk-main-7 C:\Users\Slaff\Halo\sdk\provider-sdk\src\main\res

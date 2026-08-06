@@ -1,8 +1,0 @@
-com.halo.sdk.driver.driver-sdk-pngs-0 C:\Users\Slaff\Halo\sdk\driver-sdk\build\generated\res\pngs\debug
-com.halo.sdk.driver.driver-sdk-updated_navigation_xml-1 C:\Users\Slaff\Halo\sdk\driver-sdk\build\generated\updated_navigation_xml\debug
-com.halo.sdk.driver.driver-sdk-mergeDebugResources-2 C:\Users\Slaff\Halo\sdk\driver-sdk\build\intermediates\incremental\debug\mergeDebugResources\merged.dir
-com.halo.sdk.driver.driver-sdk-mergeDebugResources-3 C:\Users\Slaff\Halo\sdk\driver-sdk\build\intermediates\incremental\debug\mergeDebugResources\stripped.dir
-com.halo.sdk.driver.driver-sdk-debug-4 C:\Users\Slaff\Halo\sdk\driver-sdk\build\intermediates\merged_res\debug\mergeDebugResources
-com.halo.sdk.driver.driver-sdk-debug-5 C:\Users\Slaff\Halo\sdk\driver-sdk\build\intermediates\packaged_res\debug\packageDebugResources
-com.halo.sdk.driver.driver-sdk-debug-6 C:\Users\Slaff\Halo\sdk\driver-sdk\src\debug\res
-com.halo.sdk.driver.driver-sdk-main-7 C:\Users\Slaff\Halo\sdk\driver-sdk\src\main\res

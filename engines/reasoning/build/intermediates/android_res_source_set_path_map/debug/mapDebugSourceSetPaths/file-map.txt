@@ -1,8 +1,0 @@
-com.halo.engines.reasoning-pngs-0 C:\Users\Slaff\Halo\engines\reasoning\build\generated\res\pngs\debug
-com.halo.engines.reasoning-updated_navigation_xml-1 C:\Users\Slaff\Halo\engines\reasoning\build\generated\updated_navigation_xml\debug
-com.halo.engines.reasoning-mergeDebugResources-2 C:\Users\Slaff\Halo\engines\reasoning\build\intermediates\incremental\debug\mergeDebugResources\merged.dir
-com.halo.engines.reasoning-mergeDebugResources-3 C:\Users\Slaff\Halo\engines\reasoning\build\intermediates\incremental\debug\mergeDebugResources\stripped.dir
-com.halo.engines.reasoning-debug-4 C:\Users\Slaff\Halo\engines\reasoning\build\intermediates\merged_res\debug\mergeDebugResources
-com.halo.engines.reasoning-debug-5 C:\Users\Slaff\Halo\engines\reasoning\build\intermediates\packaged_res\debug\packageDebugResources
-com.halo.engines.reasoning-debug-6 C:\Users\Slaff\Halo\engines\reasoning\src\debug\res
-com.halo.engines.reasoning-main-7 C:\Users\Slaff\Halo\engines\reasoning\src\main\res

@@ -1,8 +1,0 @@
-com.halo.runtime.intents-pngs-0 C:\Users\Slaff\Halo\runtime\intents\build\generated\res\pngs\debug
-com.halo.runtime.intents-updated_navigation_xml-1 C:\Users\Slaff\Halo\runtime\intents\build\generated\updated_navigation_xml\debug
-com.halo.runtime.intents-mergeDebugResources-2 C:\Users\Slaff\Halo\runtime\intents\build\intermediates\incremental\debug\mergeDebugResources\merged.dir
-com.halo.runtime.intents-mergeDebugResources-3 C:\Users\Slaff\Halo\runtime\intents\build\intermediates\incremental\debug\mergeDebugResources\stripped.dir
-com.halo.runtime.intents-debug-4 C:\Users\Slaff\Halo\runtime\intents\build\intermediates\merged_res\debug\mergeDebugResources
-com.halo.runtime.intents-debug-5 C:\Users\Slaff\Halo\runtime\intents\build\intermediates\packaged_res\debug\packageDebugResources
-com.halo.runtime.intents-debug-6 C:\Users\Slaff\Halo\runtime\intents\src\debug\res
-com.halo.runtime.intents-main-7 C:\Users\Slaff\Halo\runtime\intents\src\main\res

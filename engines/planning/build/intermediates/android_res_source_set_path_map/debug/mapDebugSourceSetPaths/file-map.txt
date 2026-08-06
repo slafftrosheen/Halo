@@ -1,8 +1,0 @@
-com.halo.engines.planning-pngs-0 C:\Users\Slaff\Halo\engines\planning\build\generated\res\pngs\debug
-com.halo.engines.planning-updated_navigation_xml-1 C:\Users\Slaff\Halo\engines\planning\build\generated\updated_navigation_xml\debug
-com.halo.engines.planning-mergeDebugResources-2 C:\Users\Slaff\Halo\engines\planning\build\intermediates\incremental\debug\mergeDebugResources\merged.dir
-com.halo.engines.planning-mergeDebugResources-3 C:\Users\Slaff\Halo\engines\planning\build\intermediates\incremental\debug\mergeDebugResources\stripped.dir
-com.halo.engines.planning-debug-4 C:\Users\Slaff\Halo\engines\planning\build\intermediates\merged_res\debug\mergeDebugResources
-com.halo.engines.planning-debug-5 C:\Users\Slaff\Halo\engines\planning\build\intermediates\packaged_res\debug\packageDebugResources
-com.halo.engines.planning-debug-6 C:\Users\Slaff\Halo\engines\planning\src\debug\res
-com.halo.engines.planning-main-7 C:\Users\Slaff\Halo\engines\planning\src\main\res
