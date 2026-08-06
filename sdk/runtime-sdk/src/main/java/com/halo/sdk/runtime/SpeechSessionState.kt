@@ -1,4 +1,4 @@
-package com.halo.runtime.speech
+package com.halo.sdk.runtime
 
 sealed interface SpeechSessionState {
     data object Idle : SpeechSessionState

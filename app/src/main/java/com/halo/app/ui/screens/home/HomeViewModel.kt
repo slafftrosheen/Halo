@@ -3,15 +3,18 @@ package com.halo.app.ui.screens.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.halo.app.ui.components.HaloRuntimeState
-import com.halo.engines.reasoning.models.ModelDownloadManager
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
+import com.halo.app.state.RuntimeSnapshotManager
 import com.halo.sdk.runtime.CommandBus
+import com.halo.sdk.runtime.RuntimeSnapshot
+import com.halo.sdk.runtime.RuntimeUiMapper
+import com.halo.sdk.runtime.SpeechSessionState
 import com.halo.sdk.runtime.StartListening
 import com.halo.sdk.runtime.StopListening
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 data class TimelinePreviewEvent(
     val command: String,
@@ -35,37 +38,48 @@ data class HomeUiState(
     val activeProvider: String = "None"
 )
 
+class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
+    override fun map(snapshot: RuntimeSnapshot): HomeUiState {
+        val isReady = snapshot.runtimeState == com.halo.sdk.runtime.RuntimeState.Running
+        
+        val uiRuntimeState = when (snapshot.speech) {
+            is SpeechSessionState.PassiveListening -> HaloRuntimeState.Idle
+            is SpeechSessionState.Capturing, is SpeechSessionState.Recognizing -> HaloRuntimeState.Listening
+            is SpeechSessionState.Processing -> HaloRuntimeState.Processing
+            is SpeechSessionState.Speaking -> HaloRuntimeState.Speaking
+            else -> HaloRuntimeState.Idle
+        }
+        
+        return HomeUiState(
+            greeting = "System Online",
+            systemStatus = if (isReady) "Halo Runtime Ready." else "Initializing...",
+            isRuntimeReady = isReady,
+            runtimeState = uiRuntimeState,
+            recentEvents = snapshot.timeline.map { 
+                TimelinePreviewEvent(it.title, it.status, "Just now") 
+            },
+            engines = snapshot.engines.map { 
+                EngineUiState(it.id, it.state.javaClass.simpleName, it.health == com.halo.sdk.runtime.EngineHealth.Healthy) 
+            },
+            activeProvider = snapshot.providers.firstOrNull()?.name ?: "Native Engine"
+        )
+    }
+}
 
 class HomeViewModel(
-    private val modelDownloadManager: ModelDownloadManager,
+    private val snapshotManager: RuntimeSnapshotManager,
     private val commandBus: CommandBus
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(HomeUiState())
-    val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
-
-    init {
-        // Collect model changes for Runtime Summary (as a temporary measure for Alpha)
-        viewModelScope.launch {
-            modelDownloadManager.activeModelId.collect { activeId ->
-                _uiState.update { it.copy(
-                    activeProvider = activeId ?: "None Selected"
-                ) }
-            }
-        }
-        
-        // Setup initial static state (to be replaced by actual Runtime observers)
-        _uiState.update { it.copy(
-            isRuntimeReady = true,
-            systemStatus = "Halo Runtime Ready.",
-            engines = listOf(
-                EngineUiState("Speech", "Ready", true),
-                EngineUiState("Reasoning", "Waiting", true),
-                EngineUiState("Planning", "Idle", true),
-                EngineUiState("Execution", "Idle", true)
-            )
-        ) }
-    }
+    private val mapper = HomeUiMapper()
+    
+    val uiState: StateFlow<HomeUiState> = snapshotManager.snapshot
+        .map { mapper.map(it) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = HomeUiState()
+        )
 
     fun startListening() {
         viewModelScope.launch {

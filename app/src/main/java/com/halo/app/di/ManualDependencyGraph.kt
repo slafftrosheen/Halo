@@ -39,6 +39,7 @@ import com.halo.host.android.capability.AndroidMediaCapability
 import com.halo.host.android.capability.AndroidNavigationCapability
 import com.halo.engines.reasoning.models.ModelDownloadManager
 import com.halo.engines.reasoning.providers.NativeLlamaProvider
+import com.halo.app.state.RuntimeSnapshotManager
 import com.halo.app.ui.screens.home.HomeViewModel
 import com.halo.app.ui.screens.timeline.TimelineViewModel
 import com.halo.app.ui.screens.console.ConsoleViewModel
@@ -110,10 +111,18 @@ object ManualDependencyGraph {
     
     val speechSessionManager by lazy { SpeechSessionManager(MockSpeechRecognizer(), eventBus, scope, runtimeOrchestrator) }
 
+    val runtimeSnapshotManager by lazy {
+        RuntimeSnapshotManager(
+            speechSessionManager,
+            processManager,
+            scope
+        )
+    }
+
     // ViewModels
-    val homeViewModel by lazy { HomeViewModel(modelDownloadManager, commandBus) }
+    val homeViewModel by lazy { HomeViewModel(runtimeSnapshotManager, commandBus) }
     val timelineViewModel by lazy { TimelineViewModel(cognitiveBus) }
-    val consoleViewModel by lazy { ConsoleViewModel(processManager) }
+    val consoleViewModel by lazy { ConsoleViewModel(runtimeSnapshotManager) }
     val settingsViewModel by lazy { SettingsViewModel() }
 
     val microkernel by lazy {

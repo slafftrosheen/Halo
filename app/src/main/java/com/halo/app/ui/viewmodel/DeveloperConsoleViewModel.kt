@@ -15,7 +15,7 @@ class DeveloperConsoleViewModel : ViewModel() {
     val uiState: StateFlow<RuntimeSnapshot> = MutableStateFlow(
         RuntimeSnapshot(
             runtimeState = com.halo.sdk.runtime.RuntimeState.Running,
-            uptime = java.time.Duration.ZERO,
+            speech = com.halo.sdk.runtime.SpeechSessionState.Idle,
             engines = listOf(
                 com.halo.sdk.runtime.EngineSnapshot("com.halo.engines.perception", com.halo.sdk.runtime.EngineState.Running, com.halo.sdk.runtime.EngineHealth.Healthy, java.time.Duration.ZERO, 0, java.time.Instant.now()),
                 com.halo.sdk.runtime.EngineSnapshot("com.halo.engines.speech", com.halo.sdk.runtime.EngineState.Running, com.halo.sdk.runtime.EngineHealth.Healthy, java.time.Duration.ZERO, 0, java.time.Instant.now()),
@@ -24,10 +24,9 @@ class DeveloperConsoleViewModel : ViewModel() {
                 com.halo.sdk.runtime.EngineSnapshot("com.halo.engines.execution", com.halo.sdk.runtime.EngineState.Running, com.halo.sdk.runtime.EngineHealth.Healthy, java.time.Duration.ZERO, 0, java.time.Instant.now()),
                 com.halo.sdk.runtime.EngineSnapshot("com.halo.engines.memory", com.halo.sdk.runtime.EngineState.Running, com.halo.sdk.runtime.EngineHealth.Healthy, java.time.Duration.ZERO, 0, java.time.Instant.now()),
             ),
-            services = emptyList(),
-            plugins = emptyList(),
-            queueDepth = 0,
-            activeTasks = 0
+            timeline = emptyList(),
+            providers = emptyList(),
+            blackboard = com.halo.sdk.runtime.BlackboardSnapshot(0, emptyList())
         )
     )
     

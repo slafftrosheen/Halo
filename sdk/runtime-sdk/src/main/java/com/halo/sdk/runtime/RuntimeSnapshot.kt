@@ -1,15 +1,34 @@
 package com.halo.sdk.runtime
+
 import java.time.Duration
 import java.time.Instant
 
 data class RuntimeSnapshot(
     val runtimeState: RuntimeState,
-    val uptime: Duration,
+    val speech: SpeechSessionState,
     val engines: List<EngineSnapshot>,
-    val services: List<ServiceSnapshot>,
-    val plugins: List<PluginSnapshot>,
-    val queueDepth: Int,
-    val activeTasks: Int
+    val timeline: List<TimelineEvent>,
+    val providers: List<ProviderSnapshot>,
+    val blackboard: BlackboardSnapshot
+)
+
+data class TimelineEvent(
+    val id: String,
+    val title: String,
+    val description: String,
+    val timestamp: Instant,
+    val status: String
+)
+
+data class ProviderSnapshot(
+    val id: String,
+    val name: String,
+    val status: String
+)
+
+data class BlackboardSnapshot(
+    val factCount: Int,
+    val recentFacts: List<String>
 )
 
 data class EngineSnapshot(
@@ -19,14 +38,4 @@ data class EngineSnapshot(
     val uptime: Duration,
     val eventsProcessed: Long,
     val lastActivity: Instant
-)
-
-data class ServiceSnapshot(
-    val id: String,
-    val status: String
-)
-
-data class PluginSnapshot(
-    val id: String,
-    val status: String
 )
