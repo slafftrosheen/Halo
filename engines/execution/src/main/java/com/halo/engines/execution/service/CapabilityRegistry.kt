@@ -11,7 +11,7 @@ class CapabilityRegistry : ICapabilityRegistry {
         capabilities.add(capability)
     }
 
-    override suspend fun getCapability(task: Task): Capability? {
+    override suspend fun resolve(task: Task): Capability? {
         return capabilities.firstOrNull { it.supports(task) }
     }
 }

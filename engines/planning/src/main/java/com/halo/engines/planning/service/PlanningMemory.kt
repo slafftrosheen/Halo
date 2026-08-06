@@ -4,13 +4,13 @@ import com.halo.runtime.cognition.ExecutionPlan
 import java.util.UUID
 
 class PlanningMemory {
-    private val plans = mutableMapOf<UUID, ExecutionPlan>()
+    var currentPlan: ExecutionPlan? = null
+        private set
+    var lastPlan: ExecutionPlan? = null
+        private set
 
     fun save(plan: ExecutionPlan) {
-        plans[plan.id] = plan
+        lastPlan = currentPlan
+        currentPlan = plan
     }
-
-    fun getPlan(id: UUID): ExecutionPlan? = plans[id]
-
-    fun getAllPlans(): List<ExecutionPlan> = plans.values.toList()
 }

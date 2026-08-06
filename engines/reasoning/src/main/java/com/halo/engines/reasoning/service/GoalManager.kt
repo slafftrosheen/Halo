@@ -5,9 +5,18 @@ import com.halo.icl.ontology.*
 import com.halo.icl.core.*
 import kotlinx.datetime.Clock
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
+/**
+ * GoalManager tracks the lifecycle of Goals within the Alpha Runtime.
+ *
+ * Alpha Architecture constraints:
+ * - Deterministic creation: ONLY the [RuntimeOrchestrator] (via the Interpretation layer) is allowed to generate Goals.
+ * - No redundant goal generators allowed in the wild.
+ * - Thread Safety: Uses [ConcurrentHashMap] to prevent race conditions during concurrent goal operations under high coroutine load.
+ */
 class GoalManager {
-    private val goals = mutableMapOf<String, Goal>()
+    private val goals = ConcurrentHashMap<String, Goal>()
 
     fun register(goal: Goal) {
         goals[goal.id.value.toString()] = goal

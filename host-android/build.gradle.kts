@@ -17,5 +17,6 @@ dependencies {
     implementation(project(":engines:speech"))
     implementation(project(":libraries:halo-cognition-language"))
     implementation(project(":runtime:kernel"))
+    implementation(project(":runtime:cognition"))
 }
 

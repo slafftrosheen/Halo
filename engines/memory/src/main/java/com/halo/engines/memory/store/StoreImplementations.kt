@@ -3,9 +3,10 @@ package com.halo.engines.memory.store
 import com.halo.runtime.cognition.memory.Memory
 import com.halo.runtime.cognition.memory.MemoryQuery
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
 class WorkingMemoryStore : MemoryStore {
-    private val memories = mutableMapOf<UUID, Memory>()
+    private val memories = ConcurrentHashMap<UUID, Memory>()
 
     override suspend fun save(memory: Memory) { memories[memory.id] = memory }
     override suspend fun get(id: UUID): Memory? = memories[id]
@@ -15,7 +16,7 @@ class WorkingMemoryStore : MemoryStore {
 }
 
 class SemanticMemoryStore : MemoryStore {
-    private val memories = mutableMapOf<UUID, Memory>()
+    private val memories = ConcurrentHashMap<UUID, Memory>()
 
     override suspend fun save(memory: Memory) { memories[memory.id] = memory }
     override suspend fun get(id: UUID): Memory? = memories[id]
@@ -25,7 +26,7 @@ class SemanticMemoryStore : MemoryStore {
 }
 
 class EpisodicMemoryStore : MemoryStore {
-    private val memories = mutableMapOf<UUID, Memory>()
+    private val memories = ConcurrentHashMap<UUID, Memory>()
 
     override suspend fun save(memory: Memory) { memories[memory.id] = memory }
     override suspend fun get(id: UUID): Memory? = memories[id]
@@ -35,7 +36,7 @@ class EpisodicMemoryStore : MemoryStore {
 }
 
 class VectorStore : MemoryStore {
-    private val memories = mutableMapOf<UUID, Memory>()
+    private val memories = ConcurrentHashMap<UUID, Memory>()
 
     override suspend fun save(memory: Memory) { memories[memory.id] = memory }
     override suspend fun get(id: UUID): Memory? = memories[id]
@@ -45,7 +46,7 @@ class VectorStore : MemoryStore {
 }
 
 class KnowledgeStore : MemoryStore {
-    private val memories = mutableMapOf<UUID, Memory>()
+    private val memories = ConcurrentHashMap<UUID, Memory>()
 
     override suspend fun save(memory: Memory) { memories[memory.id] = memory }
     override suspend fun get(id: UUID): Memory? = memories[id]

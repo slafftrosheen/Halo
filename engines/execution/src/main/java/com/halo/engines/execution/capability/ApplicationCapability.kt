@@ -3,7 +3,7 @@ package com.halo.engines.execution.capability
 import com.halo.runtime.cognition.Capability
 import com.halo.runtime.cognition.Task
 import com.halo.runtime.cognition.ApplicationTask
-import com.halo.runtime.cognition.TaskResult
+import com.halo.runtime.cognition.Outcome
 
 class ApplicationCapability : Capability {
     override val id: String = "capability.application"
@@ -12,8 +12,8 @@ class ApplicationCapability : Capability {
         return task is ApplicationTask
     }
 
-    override suspend fun execute(task: Task): TaskResult {
+    override suspend fun execute(task: Task): Outcome {
         require(task is ApplicationTask)
-        return TaskResult.Success("Launched ${task.packageName}")
+        return Outcome.Success("Launched ${task.packageName}")
     }
 }

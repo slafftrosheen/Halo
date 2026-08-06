@@ -1,6 +1,6 @@
 package com.halo.engines.memory
 
-import com.halo.runtime.cognition.TaskResult
+import com.halo.runtime.cognition.Outcome
 import com.halo.runtime.cognition.ExecutionPlan
 import com.halo.runtime.cognition.memory.EpisodeMemory
 import com.halo.engines.memory.store.EpisodicMemoryStore
@@ -10,9 +10,9 @@ import java.util.UUID
 class ReflectionEngine(
     private val episodicStore: EpisodicMemoryStore
 ) {
-    suspend fun reflectOnExecution(plan: ExecutionPlan, result: TaskResult) {
+    suspend fun reflectOnExecution(plan: ExecutionPlan, result: Outcome) {
         val episode = EpisodeMemory(
-            importance = if (result is TaskResult.Success) 0.8f else 0.9f, // Failures are important to learn from
+            importance = if (result is Outcome.Success) 0.8f else 0.9f, // Failures are important to learn from
             recency = Clock.System.now(),
             confidence = 1.0f,
             frequency = 1,
@@ -24,9 +24,9 @@ class ReflectionEngine(
         episodicStore.save(episode)
         
         // Adjust confidence of associated skills or facts based on outcome
-        if (result is TaskResult.Failure) {
+        if (result is Outcome.Failure) {
             // Decrease confidence of the approach
-        } else if (result is TaskResult.Success) {
+        } else if (result is Outcome.Success) {
             // Increase confidence
         }
     }

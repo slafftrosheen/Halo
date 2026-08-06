@@ -3,7 +3,7 @@ package com.halo.engines.execution.capability
 import com.halo.runtime.cognition.Capability
 import com.halo.runtime.cognition.Task
 import com.halo.runtime.cognition.NavigationTask
-import com.halo.runtime.cognition.TaskResult
+import com.halo.runtime.cognition.Outcome
 
 class NavigationCapability : Capability {
     override val id: String = "capability.navigation"
@@ -12,8 +12,8 @@ class NavigationCapability : Capability {
         return task is NavigationTask
     }
 
-    override suspend fun execute(task: Task): TaskResult {
+    override suspend fun execute(task: Task): Outcome {
         require(task is NavigationTask)
-        return TaskResult.Success("Navigating to ${task.coordinates}")
+        return Outcome.Success("Navigating to ${task.coordinates}")
     }
 }

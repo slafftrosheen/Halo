@@ -15,10 +15,13 @@ import com.halo.engines.speech.RecognitionTimeoutEvent
 import com.halo.engines.speech.RecognitionFailed
 import com.halo.engines.speech.SpeechRecognizedPayload
 
+import com.halo.engines.agents.RuntimeOrchestrator
+
 class SpeechSessionManager(
     private val recognizer: SpeechRecognizer,
     private val eventBus: EventBus,
-    private val scope: CoroutineScope
+    private val scope: CoroutineScope,
+    private val orchestrator: RuntimeOrchestrator? = null
 ) {
     private val _sessionState = MutableStateFlow<SpeechSessionState>(SpeechSessionState.Idle)
     val sessionState: StateFlow<SpeechSessionState> = _sessionState.asStateFlow()
@@ -78,6 +81,10 @@ class SpeechSessionManager(
                 }
                 
                 eventBus.publish(SpeechRecognized(result.text))
+                
+                // Trigger the deterministic Alpha orchestration loop
+                orchestrator?.onSpeechRecognized(result.text)
+                
                 eventBus.publish(
                     ObservationCreated(
                         Observation(

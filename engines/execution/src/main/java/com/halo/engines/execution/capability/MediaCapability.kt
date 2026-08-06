@@ -3,7 +3,7 @@ package com.halo.engines.execution.capability
 import com.halo.runtime.cognition.Capability
 import com.halo.runtime.cognition.Task
 import com.halo.runtime.cognition.MediaTask
-import com.halo.runtime.cognition.TaskResult
+import com.halo.runtime.cognition.Outcome
 
 class MediaCapability : Capability {
     override val id: String = "capability.media"
@@ -12,12 +12,12 @@ class MediaCapability : Capability {
         return task is MediaTask
     }
 
-    override suspend fun execute(task: Task): TaskResult {
+    override suspend fun execute(task: Task): Outcome {
         require(task is MediaTask)
         // Simulated transactional execution
-        android.util.Log.i("MediaCapability", "Prepare: Check if media app is installed and licensed")
-        android.util.Log.i("MediaCapability", "Execute: Play ${task.mediaId}")
-        android.util.Log.i("MediaCapability", "Verify: Ensure playback started")
-        return TaskResult.Success("Media playing")
+        println("MediaCapability: Prepare: Check if media app is installed and licensed")
+        println("MediaCapability: Execute: Play ${task.mediaId}")
+        println("MediaCapability: Verify: Ensure playback started")
+        return Outcome.Success("Media playing")
     }
 }

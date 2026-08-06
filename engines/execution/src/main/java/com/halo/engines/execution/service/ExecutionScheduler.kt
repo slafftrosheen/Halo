@@ -6,44 +6,35 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 
 class ExecutionScheduler(
-    private val retryManager: RetryManager,
-    private val resourceLockManager: ResourceLockManager
+    private val capabilityRegistry: CapabilityRegistry
 ) {
-    suspend fun executeTaskGraph(context: ExecutionContext, task: Task): TaskResult = coroutineScope {
-        context.cancellation.checkCancellation()
+    suspend fun executeTaskGraph(task: Task): Outcome = coroutineScope {
+        val capability = capabilityRegistry.resolve(task)
+            ?: return@coroutineScope Outcome.Failure("No capability found for task ${task::class.simpleName}")
 
-        // Very basic DAG walker. Proper implementation would use topological sort and manage parallel branches.
-        val capability = context.capabilities.getCapability(task) 
-            ?: return@coroutineScope TaskResult.Failure("No capability found for task ${task::class.simpleName}")
+        val result = capability.execute(task)
 
-        val result = retryManager.withRetry(RetryPolicy()) {
-            resourceLockManager.withLock(task::class.simpleName ?: "Unknown") {
-                capability.execute(task)
-            }
-        }
-
-        if (result is TaskResult.Success) {
-            // Execute dependencies (children)
+        if (result is Outcome.Success) {
             if (task.dependencies.isNotEmpty()) {
                 if (task.isParallel) {
                     val deferreds = task.dependencies.map { dep ->
-                        async { executeTaskGraph(context, dep) }
+                        async { executeTaskGraph(dep) }
                     }
                     val results = deferreds.awaitAll()
-                    val firstFailure = results.firstOrNull { it is TaskResult.Failure }
+                    val firstFailure = results.firstOrNull { it is Outcome.Failure }
                     if (firstFailure != null) {
                         return@coroutineScope firstFailure
                     }
                 } else {
                     for (dep in task.dependencies) {
-                        val depResult = executeTaskGraph(context, dep)
-                        if (depResult is TaskResult.Failure) {
+                        val depResult = executeTaskGraph(dep)
+                        if (depResult is Outcome.Failure) {
                             return@coroutineScope depResult
                         }
                     }
                 }
             }
-            return@coroutineScope TaskResult.Success("Graph executed successfully")
+            return@coroutineScope Outcome.Success("Graph executed successfully")
         }
 
         return@coroutineScope result

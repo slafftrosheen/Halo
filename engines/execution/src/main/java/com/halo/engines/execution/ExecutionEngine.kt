@@ -1,5 +1,7 @@
 package com.halo.engines.execution
-
+import com.halo.runtime.cognition.ExecutionPlan
+import com.halo.runtime.cognition.Outcome
+import com.halo.runtime.cognition.Task
 import com.halo.sdk.runtime.*
 import com.halo.libraries.common.core.Identifier
 import com.halo.libraries.common.core.Version
@@ -13,46 +15,31 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
+/**
+ * ExecutionEngine acts as the single deterministic driver for physical and digital actions in the Alpha Runtime.
+ * 
+ * Alpha Architecture constraints:
+ * - NO pub/sub listeners in the host attempting to execute raw intents.
+ * - ALL execution must pass through this engine by matching a [Task] to a registered [Capability].
+ * - Platform agnosticism is strictly maintained. The implementation of a capability 
+ *   (e.g., `AndroidDeviceCapability`) is provided by the host layer and injected into the [CapabilityRegistry].
+ */
 class ExecutionEngine(
-    private val blackboard: Blackboard,
     private val scheduler: ExecutionScheduler
-) : Engine {
-    override val metadata = EngineMetadata(
-        id = Identifier("engine.execution.core"),
-        version = Version(1, 0, 0),
-        description = "Core Execution Engine"
-    )
-
-    private val _health = MutableStateFlow(EngineHealth.Healthy)
-    override val health: StateFlow<EngineHealth> = _health
-
-    private val _state = MutableStateFlow<EngineState>(EngineState.Created)
-    override val state: StateFlow<EngineState> = _state
-
-    override val dependencies: Set<ServiceKey<*>> = setOf(Services.EventBus)
-
-    private lateinit var context: EngineContext
-    private val scope = CoroutineScope(Dispatchers.Default)
-
-    override suspend fun initialize(context: EngineContext) {
-        this.context = context
-        _state.value = EngineState.Initializing
-    }
-
-    override suspend fun start() {
-        _state.value = EngineState.Running
+) {
+    suspend fun executePlan(plan: ExecutionPlan): Outcome {
+        var finalOutcome: Outcome = Outcome.Success("Plan executed successfully")
         
-        // Subscribe to ExecutionPlanKnowledge
-        scope.launch {
-            // blackboard.subscribe(ExecutionPlanKnowledge::class) { planKnowledge ->
-            //     val executionContext = ExecutionContext(...)
-            //     val result = scheduler.executeTaskGraph(executionContext, planKnowledge.plan.rootTask)
-            //     // Publish TaskResult back to blackboard
-            // }
+        for (task in plan.tasks) {
+            val result = scheduler.executeTaskGraph(task)
+            if (result is Outcome.Failure) {
+                finalOutcome = result
+                break
+            } else if (result is Outcome.Partial) {
+                finalOutcome = result
+            }
         }
-    }
-
-    override suspend fun stop() {
-        _state.value = EngineState.Stopped
+        
+        return finalOutcome
     }
 }

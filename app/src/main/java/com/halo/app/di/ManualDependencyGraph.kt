@@ -18,15 +18,25 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 
-import com.halo.host.android.AndroidExecutionProcess
 import com.halo.host.android.AndroidSpeechProcess
 import com.halo.host.android.TextToSpeechProcess
 import com.halo.host.android.AndroidWakeWordProcess
-import com.halo.engines.speech.SpeechRecognitionProcess
-import com.halo.engines.interpretation.RuleInterpretationProcess
-import com.halo.engines.agents.PlannerServiceProcess
-import com.halo.engines.agents.ReasoningServiceProcess
+import com.halo.engines.interpretation.InterpretationEngine
+import com.halo.engines.agents.RuntimeOrchestrator
+
 import com.halo.engines.memory.WorkingMemoryProcess
+import com.halo.engines.memory.ReflectionEngine
+import com.halo.engines.memory.store.WorkingMemoryStore
+import com.halo.engines.memory.store.EpisodicMemoryStore
+import com.halo.engines.reasoning.service.GoalManager
+import com.halo.engines.planning.PlanningEngine
+import com.halo.engines.execution.ExecutionEngine
+import com.halo.engines.execution.service.ExecutionScheduler
+import com.halo.engines.execution.service.CapabilityRegistry
+import com.halo.host.android.capability.AndroidDeviceCapability
+import com.halo.host.android.capability.AndroidApplicationCapability
+import com.halo.host.android.capability.AndroidMediaCapability
+import com.halo.host.android.capability.AndroidNavigationCapability
 import com.halo.engines.reasoning.models.ModelDownloadManager
 import com.halo.engines.reasoning.providers.NativeLlamaProvider
 import com.halo.app.ui.screens.home.HomeViewModel
@@ -55,6 +65,7 @@ object ManualDependencyGraph {
     val perceptionBus by lazy { com.halo.runtime.kernel.bus.DefaultPerceptionBus() }
     val cognitiveBus by lazy { com.halo.runtime.kernel.bus.DefaultCognitiveBus() }
     val executionBus by lazy { com.halo.runtime.kernel.bus.DefaultExecutionBus() }
+    val blackboard by lazy { com.halo.runtime.cognition.blackboard.DefaultBlackboard() }
 
     val processManager by lazy { ProcessManager(scope) }
 
@@ -67,9 +78,37 @@ object ManualDependencyGraph {
     val workingMemoryProcess by lazy { WorkingMemoryProcess(perceptionBus, cognitiveBus, executionBus) }
     val modelDownloadManager by lazy { ModelDownloadManager(applicationContext) }
     val nativeLlamaProvider by lazy { NativeLlamaProvider(applicationContext, modelDownloadManager) }
-    val reasoningServiceProcess by lazy { ReasoningServiceProcess(perceptionBus, cognitiveBus, nativeLlamaProvider) }
+
     
-    val speechSessionManager by lazy { SpeechSessionManager(MockSpeechRecognizer(), eventBus, scope) }
+    // Alpha Architecture Services
+    val goalManager by lazy { GoalManager() }
+    
+    val capabilityRegistry by lazy { 
+        CapabilityRegistry().apply {
+            register(AndroidDeviceCapability(applicationContext))
+            register(AndroidApplicationCapability(applicationContext))
+            register(AndroidMediaCapability(applicationContext))
+            register(AndroidNavigationCapability(applicationContext))
+        }
+    }
+    
+    val executionScheduler by lazy { ExecutionScheduler(capabilityRegistry) }
+    val executionEngine by lazy { ExecutionEngine(executionScheduler) }
+    val planningEngine by lazy { PlanningEngine() }
+    val interpretationEngine by lazy { InterpretationEngine(blackboard) }
+    val reflectionEngine by lazy { ReflectionEngine(EpisodicMemoryStore()) }
+
+    val runtimeOrchestrator by lazy {
+        RuntimeOrchestrator(
+            interpretationEngine,
+            goalManager,
+            planningEngine,
+            executionEngine,
+            reflectionEngine
+        )
+    }
+    
+    val speechSessionManager by lazy { SpeechSessionManager(MockSpeechRecognizer(), eventBus, scope, runtimeOrchestrator) }
 
     // ViewModels
     val homeViewModel by lazy { HomeViewModel(modelDownloadManager, commandBus) }
@@ -81,15 +120,12 @@ object ManualDependencyGraph {
         // Register new alpha MVP processes
         processManager.register(androidSpeechProcess)
         processManager.register(androidWakeWordProcess)
-        processManager.register(RuleInterpretationProcess(perceptionBus, cognitiveBus))
-        processManager.register(reasoningServiceProcess)
         
         // Start speech session manager
         speechSessionManager.start()
         
-        processManager.register(PlannerServiceProcess(cognitiveBus, executionBus))
+
         processManager.register(workingMemoryProcess)
-        processManager.register(AndroidExecutionProcess(executionBus, applicationContext))
         processManager.register(TextToSpeechProcess(applicationContext, executionBus))
         
         HaloMicrokernel(

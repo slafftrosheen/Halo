@@ -3,7 +3,7 @@ package com.halo.engines.execution.capability
 import com.halo.runtime.cognition.Capability
 import com.halo.runtime.cognition.Task
 import com.halo.runtime.cognition.DeviceTask
-import com.halo.runtime.cognition.TaskResult
+import com.halo.runtime.cognition.Outcome
 
 class DeviceCapability : Capability {
     override val id: String = "capability.device"
@@ -12,8 +12,8 @@ class DeviceCapability : Capability {
         return task is DeviceTask
     }
 
-    override suspend fun execute(task: Task): TaskResult {
+    override suspend fun execute(task: Task): Outcome {
         require(task is DeviceTask)
-        return TaskResult.Success("Executed device action ${task.action}")
+        return Outcome.Success("Executed device action ${task.action}")
     }
 }

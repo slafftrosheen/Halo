@@ -6,7 +6,7 @@ import kotlinx.datetime.Instant
 
 // Basic interface to represent capability registry without circular dependencies
 interface ICapabilityRegistry {
-    suspend fun getCapability(task: Task): Capability?
+    suspend fun resolve(task: Task): Capability?
 }
 
 // CancellationToken stub
