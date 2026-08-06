@@ -4,7 +4,7 @@ plugins {
 
 android {
     namespace = "com.halo.engines.agents"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 26
@@ -18,6 +18,7 @@ dependencies {
     implementation(project(":runtime:kernel"))
     implementation(project(":runtime:services"))
     implementation(project(":runtime:cognition"))
+    implementation(project(":engines:reasoning"))
     api(libs.kotlinx.datetime)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
 }

@@ -25,7 +25,14 @@ import com.halo.host.android.AndroidWakeWordProcess
 import com.halo.engines.speech.SpeechRecognitionProcess
 import com.halo.engines.interpretation.RuleInterpretationProcess
 import com.halo.engines.agents.PlannerServiceProcess
+import com.halo.engines.agents.ReasoningServiceProcess
 import com.halo.engines.memory.WorkingMemoryProcess
+import com.halo.engines.reasoning.models.ModelDownloadManager
+import com.halo.engines.reasoning.providers.NativeLlamaProvider
+import com.halo.app.ui.screens.home.HomeViewModel
+import com.halo.app.ui.screens.timeline.TimelineViewModel
+import com.halo.app.ui.screens.console.ConsoleViewModel
+import com.halo.app.ui.screens.settings.SettingsViewModel
 
 object ManualDependencyGraph {
     lateinit var applicationContext: Context
@@ -56,12 +63,22 @@ object ManualDependencyGraph {
     val androidSpeechProcess by lazy { AndroidSpeechProcess(applicationContext, perceptionBus) }
     val androidWakeWordProcess by lazy { AndroidWakeWordProcess(applicationContext, perceptionBus) }
     val workingMemoryProcess by lazy { WorkingMemoryProcess(perceptionBus, cognitiveBus, executionBus) }
+    val modelDownloadManager by lazy { ModelDownloadManager(applicationContext) }
+    val nativeLlamaProvider by lazy { NativeLlamaProvider(applicationContext, modelDownloadManager) }
+    val reasoningServiceProcess by lazy { ReasoningServiceProcess(perceptionBus, cognitiveBus, nativeLlamaProvider) }
+
+    // ViewModels
+    val homeViewModel by lazy { HomeViewModel(processManager, cognitiveBus, modelDownloadManager) }
+    val timelineViewModel by lazy { TimelineViewModel(cognitiveBus) }
+    val consoleViewModel by lazy { ConsoleViewModel(processManager) }
+    val settingsViewModel by lazy { SettingsViewModel() }
 
     val microkernel by lazy {
         // Register new alpha MVP processes
         processManager.register(androidSpeechProcess)
         processManager.register(androidWakeWordProcess)
         processManager.register(RuleInterpretationProcess(perceptionBus, cognitiveBus))
+        processManager.register(reasoningServiceProcess)
         processManager.register(PlannerServiceProcess(cognitiveBus, executionBus))
         processManager.register(workingMemoryProcess)
         processManager.register(AndroidExecutionProcess(executionBus, applicationContext))

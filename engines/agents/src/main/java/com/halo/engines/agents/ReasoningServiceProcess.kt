@@ -15,9 +15,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.datetime.Clock
 
+import com.halo.engines.reasoning.providers.NativeLlamaProvider
+
 class ReasoningServiceProcess(
     private val perceptionBus: PerceptionBus,
-    private val cognitiveBus: CognitiveBus
+    private val cognitiveBus: CognitiveBus,
+    private val provider: NativeLlamaProvider
 ) : Process {
     override val id: String = "service.reasoning"
     override val name: String = "Reasoning Service"
@@ -30,17 +33,22 @@ class ReasoningServiceProcess(
         
         launch {
             perceptionBus.subscribe(id).filterIsInstance<Observation>().collect { observation ->
-                // Example mock reasoning
-                val thought = Thought(
-                    id = CognitiveId(),
-                    created = Clock.System.now(),
-                    confidence = observation.confidence,
-                    provenance = Provenance(id, observation.id),
-                    edges = listOf(CognitiveEdge(observation.id, EdgeType.Derived)),
-                    content = "Reasoned about ${observation.modality}"
-                )
+                // Example reasoning loop with NativeLlamaProvider
+                val prompt = "Observation: ${observation.modality} -> ${observation.rawData}\nWhat should I do?"
                 
-                cognitiveBus.publish(id, thought)
+                provider.generate(prompt).collect { token ->
+                    // For now, emit each token as a partial thought, or accumulate it
+                    // In a real system, you accumulate and emit the final thought
+                    val thought = Thought(
+                        id = CognitiveId(),
+                        created = Clock.System.now(),
+                        confidence = observation.confidence,
+                        provenance = Provenance(id, observation.id),
+                        edges = listOf(CognitiveEdge(observation.id, EdgeType.Derived)),
+                        content = token
+                    )
+                    cognitiveBus.publish(id, thought)
+                }
             }
         }
         Unit

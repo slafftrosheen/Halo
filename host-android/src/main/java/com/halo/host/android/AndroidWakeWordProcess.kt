@@ -53,16 +53,23 @@ class AndroidWakeWordProcess(
         
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context).apply {
             setRecognitionListener(object : RecognitionListener {
-                override fun onReadyForSpeech(params: Bundle?) {}
+                override fun onReadyForSpeech(params: Bundle?) {
+                    // Delay unmuting to ensure the system beep is fully swallowed
+                    kotlinx.coroutines.GlobalScope.launch(Dispatchers.Main) {
+                        kotlinx.coroutines.delay(400)
+                        unmuteBeep()
+                    }
+                }
                 override fun onBeginningOfSpeech() {}
                 override fun onRmsChanged(rmsdB: Float) {}
                 override fun onBufferReceived(buffer: ByteArray?) {}
                 override fun onEndOfSpeech() {}
                 override fun onError(error: Int) {
-                    // Ignore errors like SPEECH_TIMEOUT and restart loop
-                    if (_state.value == ProcessState.Running) {
-                        restartLoop()
-                    }
+                    unmuteBeep()
+                    // Ignore errors like SPEECH_TIMEOUT and DO NOT restart loop
+                    // if (_state.value == ProcessState.Running) {
+                    //    restartLoop()
+                    // }
                 }
 
                 override fun onResults(results: Bundle?) {
@@ -73,9 +80,9 @@ class AndroidWakeWordProcess(
                             publishWakeWordEvent()
                         }
                     }
-                    if (_state.value == ProcessState.Running) {
-                        restartLoop()
-                    }
+                    // if (_state.value == ProcessState.Running) {
+                    //    restartLoop()
+                    // }
                 }
 
                 override fun onPartialResults(partialResults: Bundle?) {}
@@ -91,12 +98,6 @@ class AndroidWakeWordProcess(
         muteBeep()
         speechRecognizer?.startListening(intent)
         isListening = true
-        
-        // Unmute after a short delay so the beep is swallowed
-        kotlinx.coroutines.GlobalScope.launch(Dispatchers.Main) {
-            delay(300)
-            unmuteBeep()
-        }
     }
     
     private fun muteBeep() {

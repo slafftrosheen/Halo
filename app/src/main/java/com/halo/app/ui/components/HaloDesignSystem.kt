@@ -10,12 +10,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.style.TextOverflow
 import com.halo.app.ui.theme.*
+import com.halo.runtime.kernel.ProcessState
 
 @Composable
 fun HaloCard(
@@ -142,17 +146,31 @@ fun HaloMetricCard(
 @Composable
 fun HaloEngineCard(
     name: String,
-    status: String,
-    isReady: Boolean = true
+    state: ProcessState
 ) {
+    val color = when (state) {
+        ProcessState.Running -> HaloPrimary
+        ProcessState.Paused -> HaloWarning
+        ProcessState.Crashed -> HaloDanger
+        else -> HaloTextSecondary
+    }
+    
     HaloCard(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(name, color = HaloTextPrimary, fontSize = 16.sp, fontWeight = FontWeight.Medium)
-            HaloStatusChip(status, color = if (isReady) HaloPrimary else HaloDanger)
+            Text(
+                text = name, 
+                color = HaloTextPrimary, 
+                fontSize = 14.sp, 
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f).padding(end = 8.dp)
+            )
+            HaloStatusChip(state.name.uppercase(), color = color)
         }
     }
 }
@@ -266,3 +284,55 @@ fun ConsoleRow(label: String, value: String) {
     }
 }
 
+@Composable
+fun HaloMetric(label: String, value: String, modifier: Modifier = Modifier) {
+    Column(modifier = modifier) {
+        Text(text = label, color = HaloTextSecondary, fontSize = 12.sp)
+        Text(text = value, color = HaloTextPrimary, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+@Composable
+fun HaloStatus(label: String, statusText: String, isHealthy: Boolean, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier.fillMaxWidth().padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(text = label, color = HaloTextPrimary, fontSize = 14.sp)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .background(if (isHealthy) HaloPrimary else HaloDanger, RoundedCornerShape(4.dp))
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(text = statusText, color = HaloTextSecondary, fontSize = 14.sp)
+        }
+    }
+}
+
+@Composable
+fun HaloDialog(title: String, onDismissRequest: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
+    androidx.compose.ui.window.Dialog(
+        onDismissRequest = onDismissRequest,
+        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            modifier = Modifier.fillMaxWidth(0.9f).padding(16.dp),
+            color = HaloSurface,
+            shape = RoundedCornerShape(24.dp)
+        ) {
+            Column(modifier = Modifier.padding(24.dp)) {
+                Text(
+                    text = title,
+                    color = HaloTextPrimary,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+                content()
+            }
+        }
+    }
+}
