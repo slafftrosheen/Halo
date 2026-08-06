@@ -37,6 +37,7 @@ include(":runtime:debug")
 include(":runtime:services")
 include(":runtime:plugins")
 include(":runtime:speech")
+include(":runtime:observer")
 
 include(":sdk:runtime-sdk")
 include(":sdk:driver-sdk")

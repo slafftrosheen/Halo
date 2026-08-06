@@ -7,16 +7,22 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.delay
 import android.util.Log
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+
 class ProcessManager(private val scope: CoroutineScope) {
-    private val _processes = mutableListOf<Process>()
-    val processes: List<Process> get() = _processes
+    private val _processes = MutableStateFlow<List<Process>>(emptyList())
+    val processFlow: StateFlow<List<Process>> = _processes.asStateFlow()
+    val processes: List<Process> get() = _processes.value
 
     fun register(process: Process) {
-        _processes.add(process)
+        _processes.update { it + process }
     }
 
     suspend fun startAll() {
-        _processes.forEach { process ->
+        _processes.value.forEach { process ->
             startProcessWithRecovery(process)
         }
     }
@@ -42,6 +48,6 @@ class ProcessManager(private val scope: CoroutineScope) {
     }
 
     suspend fun stopAll() {
-        _processes.forEach { it.stop() }
+        _processes.value.forEach { it.stop() }
     }
 }

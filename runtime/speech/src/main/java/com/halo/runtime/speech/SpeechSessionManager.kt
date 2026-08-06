@@ -22,9 +22,9 @@ class SpeechSessionManager(
     private val eventBus: EventBus,
     private val scope: CoroutineScope,
     private val orchestrator: RuntimeOrchestrator? = null
-) {
+) : SpeechStateObserver {
     private val _sessionState = MutableStateFlow<SpeechSessionState>(SpeechSessionState.Idle)
-    val sessionState: StateFlow<SpeechSessionState> = _sessionState.asStateFlow()
+    override val sessionState: StateFlow<SpeechSessionState> = _sessionState.asStateFlow()
     
     private val recognitionQueue = Channel<SpeechTask>(Channel.UNLIMITED)
     private var workerJob: Job? = null

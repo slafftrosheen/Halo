@@ -2,8 +2,8 @@ package com.halo.app.ui.screens.console
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.halo.app.state.RuntimeSnapshotManager
 import com.halo.sdk.runtime.RuntimeSnapshot
+import com.halo.sdk.runtime.RuntimeSnapshotSource
 import com.halo.sdk.runtime.RuntimeUiMapper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.stateIn
 data class EngineStatus(
     val name: String,
     val isHealthy: Boolean,
-    val latencyMs: Long,
+    val latencyMs: Long?,
     val queueSize: Int
 )
 
@@ -30,23 +30,30 @@ class ConsoleUiMapper(private val selectedTab: Int) : RuntimeUiMapper<ConsoleUiS
     override fun map(snapshot: RuntimeSnapshot): ConsoleUiState {
         return ConsoleUiState(
             selectedTab = selectedTab,
-            uptime = "00:00:00", // Would be formatted snapshot.uptime
+            uptime = formatDuration(snapshot.health.uptime),
             memoryUsage = "128 MB", // Mocked for now
             threadCount = 0, // Mocked for now
             engines = snapshot.engines.map {
                 EngineStatus(
                     name = it.id,
                     isHealthy = it.health == com.halo.sdk.runtime.EngineHealth.Healthy,
-                    latencyMs = 15L, // Mocked until metrics available
+                    latencyMs = null, // Unknown until metrics available
                     queueSize = 0
                 )
             }
         )
     }
+
+    private fun formatDuration(duration: java.time.Duration): String {
+        val hours = duration.toHours()
+        val minutes = duration.toMinutesPart()
+        val seconds = duration.toSecondsPart()
+        return String.format("%02d:%02d:%02d", hours, minutes, seconds)
+    }
 }
 
 class ConsoleViewModel(
-    private val snapshotManager: RuntimeSnapshotManager
+    private val snapshotManager: RuntimeSnapshotSource
 ) : ViewModel() {
 
     private val _selectedTab = MutableStateFlow(0)

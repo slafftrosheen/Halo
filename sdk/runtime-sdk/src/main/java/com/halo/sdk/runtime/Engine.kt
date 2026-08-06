@@ -12,7 +12,7 @@ data class EngineMetadata(
 )
 
 enum class EngineHealth {
-    Healthy, Degraded, Recovering, Failed, Offline
+    Healthy, Degraded, Recovering, Failed, Offline, Unknown
 }
 
 sealed interface EngineState {
@@ -22,6 +22,7 @@ sealed interface EngineState {
     data object Paused : EngineState
     data object Stopped : EngineState
     data object Disposed : EngineState
+    data object Unknown : EngineState
     data class Failed(val reason: String) : EngineState
 }
 

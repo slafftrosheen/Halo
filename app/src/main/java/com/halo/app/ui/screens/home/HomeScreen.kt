@@ -16,6 +16,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
 import com.halo.app.ui.components.*
 import com.halo.app.ui.theme.*
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun HomeScreen(viewModel: HomeViewModel) {
@@ -167,6 +169,7 @@ fun TimelinePreviewItem(event: TimelinePreviewEvent) {
                 Text(text = event.status, color = HaloTextSecondary, fontSize = 14.sp)
             }
         }
-        Text(text = event.timestamp, color = HaloTextSecondary, fontSize = 12.sp)
+        val formatter = DateTimeFormatter.ofPattern("HH:mm:ss").withZone(ZoneId.systemDefault())
+        Text(text = formatter.format(event.timestamp), color = HaloTextSecondary, fontSize = 12.sp)
     }
 }

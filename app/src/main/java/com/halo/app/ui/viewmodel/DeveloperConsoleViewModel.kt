@@ -14,6 +14,10 @@ class DeveloperConsoleViewModel : ViewModel() {
     
     val uiState: StateFlow<RuntimeSnapshot> = MutableStateFlow(
         RuntimeSnapshot(
+            runtimeVersion = "1.0.0-mock",
+            buildNumber = 999,
+            startedAt = java.time.Instant.now(),
+            health = com.halo.sdk.runtime.RuntimeHealth(true, java.time.Duration.ZERO, false, null),
             runtimeState = com.halo.sdk.runtime.RuntimeState.Running,
             speech = com.halo.sdk.runtime.SpeechSessionState.Idle,
             engines = listOf(

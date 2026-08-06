@@ -156,6 +156,9 @@ dependencies {
     implementation(project(":runtime:scheduler"))
     implementation(project(":runtime:registry"))
     implementation(project(":runtime:kernel"))
+    implementation(project(":runtime:speech"))
+    implementation(project(":runtime:observer"))
+    implementation(project(":engines:execution"))
     implementation(project(":libraries:testing"))
     implementation(project(":libraries:logging"))
 }

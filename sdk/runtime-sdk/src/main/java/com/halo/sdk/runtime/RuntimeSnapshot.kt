@@ -3,7 +3,18 @@ package com.halo.sdk.runtime
 import java.time.Duration
 import java.time.Instant
 
+data class RuntimeHealth(
+    val healthy: Boolean,
+    val uptime: Duration,
+    val degraded: Boolean,
+    val lastFailure: Instant?
+)
+
 data class RuntimeSnapshot(
+    val runtimeVersion: String,
+    val buildNumber: Int,
+    val startedAt: Instant,
+    val health: RuntimeHealth,
     val runtimeState: RuntimeState,
     val speech: SpeechSessionState,
     val engines: List<EngineSnapshot>,

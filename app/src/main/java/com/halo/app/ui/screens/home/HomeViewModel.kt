@@ -3,9 +3,9 @@ package com.halo.app.ui.screens.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.halo.app.ui.components.HaloRuntimeState
-import com.halo.app.state.RuntimeSnapshotManager
 import com.halo.sdk.runtime.CommandBus
 import com.halo.sdk.runtime.RuntimeSnapshot
+import com.halo.sdk.runtime.RuntimeSnapshotSource
 import com.halo.sdk.runtime.RuntimeUiMapper
 import com.halo.sdk.runtime.SpeechSessionState
 import com.halo.sdk.runtime.StartListening
@@ -15,11 +15,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.time.Instant
 
 data class TimelinePreviewEvent(
     val command: String,
     val status: String,
-    val timestamp: String
+    val timestamp: Instant
 )
 
 data class EngineUiState(
@@ -38,7 +39,15 @@ data class HomeUiState(
     val activeProvider: String = "None"
 )
 
-class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
+interface GreetingProvider {
+    fun getGreeting(): String
+}
+
+class DefaultGreetingProvider : GreetingProvider {
+    override fun getGreeting(): String = "System Online"
+}
+
+class HomeUiMapper(private val greetingProvider: GreetingProvider) : RuntimeUiMapper<HomeUiState> {
     override fun map(snapshot: RuntimeSnapshot): HomeUiState {
         val isReady = snapshot.runtimeState == com.halo.sdk.runtime.RuntimeState.Running
         
@@ -51,12 +60,12 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
         }
         
         return HomeUiState(
-            greeting = "System Online",
+            greeting = greetingProvider.getGreeting(),
             systemStatus = if (isReady) "Halo Runtime Ready." else "Initializing...",
             isRuntimeReady = isReady,
             runtimeState = uiRuntimeState,
             recentEvents = snapshot.timeline.map { 
-                TimelinePreviewEvent(it.title, it.status, "Just now") 
+                TimelinePreviewEvent(it.title, it.status, it.timestamp) 
             },
             engines = snapshot.engines.map { 
                 EngineUiState(it.id, it.state.javaClass.simpleName, it.health == com.halo.sdk.runtime.EngineHealth.Healthy) 
@@ -67,11 +76,12 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
 }
 
 class HomeViewModel(
-    private val snapshotManager: RuntimeSnapshotManager,
-    private val commandBus: CommandBus
+    private val snapshotManager: RuntimeSnapshotSource,
+    private val commandBus: CommandBus,
+    private val greetingProvider: GreetingProvider = DefaultGreetingProvider()
 ) : ViewModel() {
 
-    private val mapper = HomeUiMapper()
+    private val mapper = HomeUiMapper(greetingProvider)
     
     val uiState: StateFlow<HomeUiState> = snapshotManager.snapshot
         .map { mapper.map(it) }
