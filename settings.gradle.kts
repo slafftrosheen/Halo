@@ -11,7 +11,9 @@ pluginManagement {
     gradlePluginPortal()
   }
 }
-plugins { id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0" }
+plugins { 
+  id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0" 
+}
 dependencyResolutionManagement {
   repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
   repositories {
@@ -54,6 +56,7 @@ include(":engines:planning")
 include(":engines:agents")
 include(":engines:execution")
 include(":host-android")
+include(":host-heycyan")
 include(":engines:memory")
 include(":engines:workflow")
 include(":engines:provider")

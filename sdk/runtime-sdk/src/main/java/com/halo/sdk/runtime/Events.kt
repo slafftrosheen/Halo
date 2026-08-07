@@ -62,3 +62,28 @@ data class TraceValidationWarning(
     val message: String,
     override val timestamp: Long = System.currentTimeMillis()
 ) : HaloEvent
+
+// Recovery Events
+data class RecoveryStarted(
+    override val id: String = UUID.randomUUID().toString(),
+    val observationId: String,
+    val recoveryAction: String,
+    val attempt: Int,
+    override val timestamp: Long = System.currentTimeMillis()
+) : HaloEvent
+
+data class RecoveryCompleted(
+    override val id: String = UUID.randomUUID().toString(),
+    val observationId: String,
+    val recoveryAction: String,
+    val success: Boolean,
+    override val timestamp: Long = System.currentTimeMillis()
+) : HaloEvent
+
+data class RecoveryFailed(
+    override val id: String = UUID.randomUUID().toString(),
+    val observationId: String,
+    val recoveryAction: String,
+    val reason: String,
+    override val timestamp: Long = System.currentTimeMillis()
+) : HaloEvent

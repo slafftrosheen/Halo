@@ -1,7 +1,7 @@
 # HALO ENGINEERING CONSTITUTION
 
 ## Version
-Alpha
+Alpha-W1
 
 ## Owner
 Chief Engineer
@@ -12,7 +12,7 @@ Chief Engineer
 Halo is no longer an architectural experiment.
 Halo is no longer an AI demo.
 Halo is no longer a collection of engines.
-Halo is now a **Cognitive Runtime**.
+Halo is now a **Wearable Cognitive Runtime**.
 
 Every commit must move Halo toward a runtime that is:
 * deterministic
@@ -23,23 +23,115 @@ Every commit must move Halo toward a runtime that is:
 
 ---
 
-# 1. The Golden Rule
-Everything in Halo must answer exactly one question.
-**"Who owns this responsibility?"**
-If two modules own the same thing -> Architecture bug.
-
-Example of Correct Ownership:
-`Reasoning` -> `GoalManager` -> `Goal` -> `Planning` -> `Execution` -> `Outcome`
+# 1. Architecture & Kernel
+Halo is a deterministic Cognitive Runtime. Instead of a monolithic runtime, Halo is a small **Runtime Kernel** surrounded by pluggable modules. The Kernel owns ONLY lifecycle, event bus, scheduling, DI, module registration, runtime state, and health monitoring. Everything else (Perception, Memory, Reasoning, Planning, Execution, Reflection, Drivers, Hosts, Capabilities) plugs into it.
 
 ---
 
-# 2. Runtime owns orchestration
+# 2. Runtime Stability
+The core runtime architecture is considered stable. Major redesigns require strong justification based on production requirements. New capabilities should extend the runtime rather than alter its core execution model.
+
+---
+
+# 3. Boundaries & Responsibilities
+The **Runtime** strictly owns:
+* perception
+* cognition
+* planning
+* execution
+* reflection
+* timeline
+* recovery
+
+The **Host** strictly owns:
+* audio capture
+* audio playback
+* buttons
+* sensors
+* bluetooth
+* cameras
+* permissions
+* SDK integration
+
+If two modules own the same thing -> Architecture bug.
+
+---
+
+# 4. Dependency Rules
+Adhere to strict dependency inversion:
+* Allowed: `runtime/` -> `core/` -> `interfaces/` -> `drivers/` -> `host-*`
+* **NEVER**: `host-*` -> `runtime internals`
+* **NEVER**: `runtime` -> `Android SDK`
+* **NEVER**: `runtime` -> `HeyCyan SDK`
+
+---
+
+# 5. Driver Layer & Hosts
+Drivers are first-class citizens (`drivers/audio`, `drivers/bluetooth`, `drivers/camera`, `drivers/buttons`, `drivers/sensors`). 
+Hosts (e.g., `host-heycyan`, `host-android`) assemble these drivers.
+
+---
+
+# 6. Platform Services
+Use interfaces for all platform-specific logic: `Clock`, `Logger`, `Storage`, `PowerManager`, `Scheduler`, `Network`, `Permissions`. 
+**Never** call `System.currentTimeMillis()` inside the runtime.
+
+---
+
+# 7. Audio Pipeline
+The audio flow is exactly:
+`PCM` -> `Audio Preprocessing` -> `Voice Activity Detection` -> `Wake Word` -> `Speech Recognition` -> `Intent Observation`
+
+---
+
+# 8. Runtime State Machine
+The runtime lifecycle flows through explicitly defined states:
+`Idle` -> `Passive Listening` -> `Wake Detected` -> `Capturing` -> `Recognizing` -> `Thinking` -> `Planning` -> `Executing` -> `Speaking` -> `Passive Listening`
+
+---
+
+# 9. Power Modes
+Wearables require power awareness. The runtime adapts via `RuntimeMode`: `PERFORMANCE`, `BALANCED`, `LOW_POWER`, `CHARGING`.
+
+---
+
+# 10. Alpha-W1 Success Criteria
+1. HeyCyan connects
+2. Runtime recognizes connection
+3. Button event received
+4. Wake word detected
+5. PCM streamed
+6. Observation created
+7. Goal produced
+8. Plan executed
+9. Android capability invoked
+10. Speech synthesized
+11. Runtime returns to Passive Listening
+12. No Android SDK references inside runtime
+13. Host swap requires no runtime code changes
+
+---
+
+# 11. NEVER BUILD
+* Android-specific logic in Runtime
+* UI logic inside Runtime
+* Device-specific code inside Runtime
+* Blocking APIs inside Runtime
+* Singleton state
+* Mutable global state
+* SDK wrappers outside host modules
+* LLM-specific assumptions inside planning
+* Vendor-specific APIs leaking into interfaces
+
+---
+
+# 12. Orchestration
 Engines never orchestrate. Engines perform work. Runtime coordinates.
 Runtime is conductor. Engines are musicians.
 
 ---
 
-# 3. Engine Contract
+# 13. Engine Contract
 Every engine must implement exactly this contract.
 ```kotlin
 interface CognitiveEngine {
@@ -55,136 +147,25 @@ Nothing more. Never expose implementation.
 
 ---
 
-# 4. Runtime Command Pattern
-Every UI action becomes a RuntimeCommand.
-```kotlin
-runtime.execute(RuntimeCommand.StartListening)
-```
-Runtime owns state. UI reflects state.
+# 14. Execution
+`Capability` interface remains tiny. Capabilities remain stateless.
 
 ---
 
-# 5. Runtime Event Pattern
-Everything publishes events. Never direct engine calls.
-Every step observable.
+# 15. Unified Input & Output
+* Every input becomes `Observation`, regardless of source.
+* Every execution returns `Outcome`. Never Boolean.
 
 ---
 
-# 6. Canonical Alpha Loop
-This loop is frozen:
-`Input` -> `Observation` -> `Interpretation` -> `Goal` -> `ExecutionPlan` -> `Capability` -> `Outcome` -> `Timeline` -> `Idle`
-No additional cognitive stages before Alpha.
-
----
-
-# 7. Speech Session
-Speech becomes runtime. Not engine.
-Audio engine never owns conversation.
-
----
-
-# 8. Unified Input
-Every input becomes `Observation`, regardless of source (Phone, Glasses, Bluetooth, Developer Injection). No special cases.
-
----
-
-# 9. Unified Output
-Every execution returns `Outcome`. Never Boolean.
-
----
-
-# 10. Rule Pipeline
+# 16. Rule Pipeline
 Never call the LLM first.
 Pipeline: `Hard Rules` -> `Context Rules` -> `Semantic Rules`
 Exit immediately when matched. LLM is last resort.
 
 ---
 
-# 11. Goal Simplification
-Alpha owns exactly one Goal class. No Goal inheritance explosion.
-
----
-
-# 12. Planning
-Planner converts `Goal` -> `ExecutionPlan`. Nothing else. No optimization. No replanning.
-
----
-
-# 13. Execution
-Capability interface remains tiny. Capabilities remain stateless.
-
----
-
-# 14. Android Isolation
-Android belongs only in `host-android` and `drivers`.
-Never inside `runtime`, `reasoning`, `planning`, `ontology`.
-
----
-
-# 15. UI Ownership
-Compose never talks to Runtime.
-Always: `Composable` -> `ViewModel` -> `UseCase` -> `Runtime` -> `Engine`
-
----
-
-# 16. State
-Every screen `StateFlow<UiState>`. Never expose Runtime objects directly.
-
----
-
-# 17. Home Screen
-Mission Control. Contains Runtime State, Microphone, Timeline Preview, Recent Activity, Runtime Summary. Nothing else.
-
----
-
-# 18. Timeline
-Timeline is first-class. Every cognitive step creates one event.
-
----
-
-# 19. Diagnostics
-Developer Console becomes Runtime Inspector.
-Everything live.
-
----
-
-# 20. Runtime Health
-Every engine reports `EngineMetrics`. No hidden state.
-
----
-
-# 21. Dependency Rule
-Allowed: `UI` -> `SDK` -> `Runtime` -> `Engines` -> `Ontology`
-Forbidden: `Runtime` -> `Android`
-
----
-
-# 22. Module Rule
-One concept. One module. Never duplicate models.
-
----
-
-# 23. Alpha Commands
-Freeze to a core set (Open Camera, Spotify, Play, Pause, Flashlight, Volume, Navigate Home, Remember This, Help). Perfect these. Do not add fifty more.
-
----
-
-# 24. Performance
-Cold Start <2s, Rule Pipeline <20ms, Reasoning <100ms, Speech <150ms, UI 60fps.
-
----
-
-# 25. Testing
-Every Capability, Rule, Runtime State, Planner, Engine Lifecycle must have tests.
-
----
-
-# 26. Delete List
-Remove: Generated build artifacts, Duplicate docs, Duplicate Goal classes, Dead providers, Unused dependencies, Mock runtime state, Fake battery/network values, TODOs in runtime path.
-
----
-
-# 27. PR Checklist
+# 17. PR Checklist
 Every PR answers:
 * Does this reduce complexity?
 * Does this improve observability?
@@ -195,28 +176,5 @@ If not, do not merge.
 
 ---
 
-# 28. Wearable Contract
-Can this run without Android UI? If no, architecture probably needs adjustment.
-
----
-
-# 30. Runtime Mapper Pattern
-Every screen gets its own mapper (`RuntimeUiMapper<T>`). Keeps ViewModels extremely small.
-
----
-
-# 31. Event Definitions
-Freeze the core event set for Alpha. No engine-specific event leakage into the UI.
-
----
-
-# 32. Acceptance Criteria for Every Sprint
-* App installs on physical device.
-* Existing flows work.
-* No public API became more complicated without justification.
-* No new architectural concept introduced.
-* At least one user-visible flow became better.
-
----
 **"Does this make the cognitive runtime stronger, or am I just making it bigger?"**
-If it only makes it bigger, defer it until after Alpha.
+If it only makes it bigger, defer it. Favor deleting code over adding abstractions.

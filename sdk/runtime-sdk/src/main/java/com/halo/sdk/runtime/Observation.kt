@@ -13,6 +13,12 @@ enum class Source {
     MICROPHONE, CAMERA, BLUETOOTH, GPS, OS, USER, SYSTEM
 }
 
+/** Stable physical source identity. Kept separate from modality and legacy Source. */
+data class ObservationOrigin(
+    val source: ObservationSource,
+    val hostId: String? = null
+)
+
 interface ObservationPayload
 
 data class Observation(
@@ -20,6 +26,7 @@ data class Observation(
     val modality: Modality,
     val source: Source,
     val payload: ObservationPayload,
+    val origin: ObservationOrigin? = null,
     val confidence: Float = 1.0f,
     val timestamp: Long = System.currentTimeMillis(),
     val metadata: Map<String, Any> = emptyMap()

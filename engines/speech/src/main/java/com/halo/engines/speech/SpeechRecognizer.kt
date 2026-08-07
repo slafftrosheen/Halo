@@ -1,5 +1,7 @@
 package com.halo.engines.speech
 
+import com.halo.sdk.runtime.AudioBuffer
+
 data class SpeechRecognitionResult(
     val text: String,
     val language: String,
@@ -7,11 +9,11 @@ data class SpeechRecognitionResult(
 )
 
 interface SpeechRecognizer {
-    suspend fun transcribe(segment: SpeechSegment): SpeechRecognitionResult
+    suspend fun recognize(audio: AudioBuffer): SpeechRecognitionResult
 }
 
 class MockSpeechRecognizer : SpeechRecognizer {
-    override suspend fun transcribe(segment: SpeechSegment): SpeechRecognitionResult {
+    override suspend fun recognize(audio: AudioBuffer): SpeechRecognitionResult {
         return SpeechRecognitionResult("What is the weather?", "en", 0.95f)
     }
 }

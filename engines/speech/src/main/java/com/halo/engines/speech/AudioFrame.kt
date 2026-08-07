@@ -1,9 +1,4 @@
 package com.halo.engines.speech
 
-class AudioFrame(
-    val samples: ShortArray,
-    val sampleRate: Int,
-    val channels: Int,
-    /** Monotonic capture timestamp in nanoseconds. */
-    val timestamp: Long
-)
+/** Compatibility alias. Host boundaries use the runtime SDK audio contract. */
+typealias AudioFrame = com.halo.sdk.runtime.AudioFrame

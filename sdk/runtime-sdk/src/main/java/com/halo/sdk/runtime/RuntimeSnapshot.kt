@@ -21,6 +21,7 @@ data class RuntimeSnapshot(
     val timeline: List<TimelineEvent>,
     val providers: List<ProviderSnapshot>,
     val blackboard: BlackboardSnapshot,
+    val deviceContext: DeviceContext = DeviceContext(),
     val traces: List<ObservationTrace> = emptyList()
 )
 
