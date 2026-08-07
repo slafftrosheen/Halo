@@ -34,3 +34,31 @@ data class PlanGenerated(override val id: String = UUID.randomUUID().toString(),
 data class ExecutionStarted(override val id: String = UUID.randomUUID().toString(), val planId: String, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
 data class ExecutionFinished(override val id: String = UUID.randomUUID().toString(), val planId: String, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
 data class OutcomePublished(override val id: String = UUID.randomUUID().toString(), val outcome: String, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
+
+// Metrics Events
+data class StageMetricsPublished(
+    override val id: String = UUID.randomUUID().toString(),
+    val observationId: String,
+    val stage: RuntimeStage,
+    val startedAt: Long,
+    val finishedAt: Long,
+    val latency: Long,
+    val success: Boolean,
+    val error: String? = null,
+    override val timestamp: Long = System.currentTimeMillis()
+) : HaloEvent
+
+// Validation Events
+data class TraceValidationFailed(
+    override val id: String = UUID.randomUUID().toString(),
+    val observationId: String,
+    val message: String,
+    override val timestamp: Long = System.currentTimeMillis()
+) : HaloEvent
+
+data class TraceValidationWarning(
+    override val id: String = UUID.randomUUID().toString(),
+    val observationId: String,
+    val message: String,
+    override val timestamp: Long = System.currentTimeMillis()
+) : HaloEvent

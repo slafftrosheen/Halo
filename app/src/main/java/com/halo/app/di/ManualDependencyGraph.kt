@@ -80,7 +80,7 @@ object ManualDependencyGraph {
     }
 
     val androidSpeechProcess by lazy { AndroidSpeechProcess(applicationContext, perceptionBus, commandBus, eventBus, scope = scope) }
-    val androidWakeWordProcess by lazy { AndroidWakeWordProcess(applicationContext, perceptionBus, id = "driver.android.wakeword", name = "Android Wake Word", scope = scope) }
+    val androidWakeWordProcess by lazy { AndroidWakeWordProcess(applicationContext, perceptionBus, eventBus, id = "driver.android.wakeword", name = "Android Wake Word", scope = scope) }
     val workingMemoryProcess by lazy { WorkingMemoryProcess(perceptionBus, cognitiveBus, executionBus) }
     val modelDownloadManager by lazy { ModelDownloadManager(applicationContext) }
     val nativeLlamaProvider by lazy { NativeLlamaProvider(applicationContext, modelDownloadManager) }
@@ -124,9 +124,26 @@ object ManualDependencyGraph {
 
     val timelineEventMapper by lazy { DefaultTimelineEventMapper() }
     val timelineRecorder by lazy { TimelineRecorder(eventBus, timelineEventMapper, scope) }
+    val runtimeValidator by lazy { com.halo.runtime.observer.RuntimeValidator() }
+    val traceRecorder by lazy { com.halo.runtime.observer.TraceRecorder(eventBus, runtimeValidator, scope) }
 
     val healthEvaluator by lazy { DefaultRuntimeHealthEvaluator(java.time.Clock.systemUTC()) }
     val snapshotAssembler by lazy { DefaultSnapshotAssembler(healthEvaluator, java.time.Clock.systemUTC()) }
+
+    val runtimeReplayRecorder by lazy {
+        com.halo.runtime.observer.replay.RuntimeReplayRecorder(
+            eventBus,
+            scope,
+            java.io.File(applicationContext.cacheDir, "replay_sessions")
+        )
+    }
+
+    val runtimeReplayPlayer by lazy {
+        com.halo.runtime.observer.replay.RuntimeReplayPlayer(
+            eventBus,
+            scope
+        )
+    }
 
     val runtimeSnapshotManager by lazy {
         DefaultRuntimeObserver(
@@ -134,6 +151,7 @@ object ManualDependencyGraph {
             processManager,
             blackboard,
             timelineRecorder,
+            traceRecorder,
             snapshotAssembler,
             java.time.Clock.systemUTC(),
             scope
@@ -154,9 +172,11 @@ object ManualDependencyGraph {
         // Start speech session manager
         speechSessionManager.start()
         
+        // Start replay recorder for debugging
+        runtimeReplayRecorder.startRecording()
 
         processManager.register(workingMemoryProcess)
-        processManager.register(TextToSpeechProcess(applicationContext, executionBus))
+        processManager.register(TextToSpeechProcess(applicationContext, executionBus, eventBus))
         
         HaloMicrokernel(
             scope,

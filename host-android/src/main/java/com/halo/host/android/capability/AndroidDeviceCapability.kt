@@ -31,10 +31,14 @@ class AndroidDeviceCapability(private val context: Context) : Capability {
                     adjustVolume(AudioManager.ADJUST_LOWER)
                     Outcome.Success("Volume decreased")
                 }
-                else -> Outcome.Failure("Unknown device action: ${task.action}")
+                else -> Outcome.PermanentFailure("Unknown device action: ${task.action}")
             }
+        } catch (e: android.hardware.camera2.CameraAccessException) {
+            Outcome.PermanentFailure("Camera access denied or camera in use")
+        } catch (e: SecurityException) {
+            Outcome.PermanentFailure("Permission denied to modify device state")
         } catch (e: Exception) {
-            Outcome.Failure(e.message ?: "Failed to execute device action")
+            Outcome.RetryableFailure(e.message ?: "Failed to execute device action")
         }
     }
 

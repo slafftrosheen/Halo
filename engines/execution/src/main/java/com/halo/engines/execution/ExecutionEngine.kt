@@ -32,7 +32,7 @@ class ExecutionEngine(
         
         for (task in plan.tasks) {
             val result = scheduler.executeTaskGraph(task)
-            if (result is Outcome.Failure) {
+            if (result is Outcome.PermanentFailure || result is Outcome.RetryableFailure) {
                 finalOutcome = result
                 break
             } else if (result is Outcome.Partial) {

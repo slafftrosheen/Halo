@@ -85,11 +85,29 @@ class SpeechSessionManager(
             }
         }
         
-        // Listen for Outcome to return to Idle
+        // Listen for TTS events
+        scope.launch {
+            eventBus.observe(com.halo.engines.speech.SpeechOutputStarted::class.java).collect {
+                _sessionState.value = SpeechSessionState.Speaking
+            }
+        }
+        scope.launch {
+            eventBus.observe(com.halo.engines.speech.SpeechOutputFinished::class.java).collect {
+                if (_sessionState.value == SpeechSessionState.Speaking) {
+                    _sessionState.value = SpeechSessionState.Idle
+                }
+            }
+        }
+
+        // Listen for Outcome to return to Idle if we aren't speaking
         scope.launch {
             eventBus.observe(OutcomePublished::class.java).collect {
-                if (_sessionState.value == SpeechSessionState.Thinking || _sessionState.value == SpeechSessionState.Speaking) {
-                    _sessionState.value = SpeechSessionState.Idle
+                if (_sessionState.value == SpeechSessionState.Thinking) {
+                    // Small delay to allow TTS to start if applicable
+                    delay(100)
+                    if (_sessionState.value == SpeechSessionState.Thinking) {
+                        _sessionState.value = SpeechSessionState.Idle
+                    }
                 }
             }
         }

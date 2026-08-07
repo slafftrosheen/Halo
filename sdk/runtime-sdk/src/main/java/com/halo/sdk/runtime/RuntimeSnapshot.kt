@@ -20,7 +20,40 @@ data class RuntimeSnapshot(
     val engines: List<EngineSnapshot>,
     val timeline: List<TimelineEvent>,
     val providers: List<ProviderSnapshot>,
-    val blackboard: BlackboardSnapshot
+    val blackboard: BlackboardSnapshot,
+    val traces: List<ObservationTrace> = emptyList()
+)
+
+data class StageMetrics(
+    val stage: RuntimeStage,
+    val startedAt: Long,
+    val finishedAt: Long,
+    val latency: Long,
+    val success: Boolean,
+    val error: String? = null
+)
+
+enum class TraceState {
+    RUNNING,
+    COMPLETED,
+    FAILED,
+    CANCELLED
+}
+
+enum class TraceValidation {
+    VALID,
+    INVALID,
+    PENDING
+}
+
+data class ObservationTrace(
+    val observationId: String,
+    val startedAt: Long,
+    val finishedAt: Long,
+    val totalLatency: Long,
+    val state: TraceState,
+    val validation: TraceValidation,
+    val stages: List<StageMetrics>
 )
 
 data class TimelineEvent(

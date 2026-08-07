@@ -12,6 +12,7 @@ interface SnapshotAssembler {
         processes: List<com.halo.runtime.kernel.Process>,
         facts: List<com.halo.runtime.cognition.blackboard.Knowledge>,
         timeline: List<TimelineEvent>,
+        traces: List<ObservationTrace>,
         startedAtTime: Instant
     ): RuntimeSnapshot
 }
@@ -25,6 +26,7 @@ class DefaultSnapshotAssembler(
         processes: List<com.halo.runtime.kernel.Process>,
         facts: List<com.halo.runtime.cognition.blackboard.Knowledge>,
         timeline: List<TimelineEvent>,
+        traces: List<ObservationTrace>,
         startedAtTime: Instant
     ): RuntimeSnapshot {
         val engines = processes.map { p -> p.engineSnapshot() }
@@ -53,7 +55,8 @@ class DefaultSnapshotAssembler(
             providers = emptyList(),
             blackboard = BlackboardSnapshot(facts.size, facts.takeLast(10).map { 
                 FactSummary(it.id.value, it.payload::class.simpleName ?: "Unknown", it.createdAt.toJavaInstant()) 
-            })
+            }),
+            traces = traces
         )
     }
 }

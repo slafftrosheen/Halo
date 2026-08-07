@@ -21,18 +21,22 @@ class AndroidNavigationCapability(private val context: Context) : Capability {
             val gmmIntentUri = Uri.parse("geo:0,0?q=${Uri.encode(task.coordinates)}")
             val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)
             mapIntent.setPackage("com.google.android.apps.maps")
-            mapIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            mapIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
             if (mapIntent.resolveActivity(context.packageManager) != null) {
                 context.startActivity(mapIntent)
                 Outcome.Success("Navigating to ${task.coordinates}")
             } else {
                 val webIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://maps.google.com/?q=${Uri.encode(task.coordinates)}"))
-                webIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                webIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
                 context.startActivity(webIntent)
                 Outcome.Success("Navigating to ${task.coordinates} via web")
             }
+        } catch (e: android.content.ActivityNotFoundException) {
+            Outcome.PermanentFailure("Navigation app not found")
+        } catch (e: SecurityException) {
+            Outcome.PermanentFailure("Permission denied to launch navigation")
         } catch (e: Exception) {
-            Outcome.Failure(e.message ?: "Failed to execute navigation action")
+            Outcome.RetryableFailure(e.message ?: "Failed to execute navigation action")
         }
     }
 }

@@ -17,4 +17,6 @@ dependencies {
     implementation(project(":sdk:runtime-sdk"))
     implementation(project(":runtime:kernel"))
     implementation(project(":runtime:cognition"))
+    implementation(libs.moshi.kotlin)
+    implementation(libs.moshi.adapters)
 }

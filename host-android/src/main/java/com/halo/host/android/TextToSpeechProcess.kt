@@ -5,6 +5,7 @@ import android.speech.tts.TextToSpeech
 import com.halo.runtime.kernel.Process
 import com.halo.runtime.kernel.ProcessState
 import com.halo.runtime.kernel.bus.ExecutionBus
+import com.halo.sdk.runtime.EventBus
 import com.halo.icl.ontology.Outcome
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,11 +14,15 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import android.speech.tts.UtteranceProgressListener
+import com.halo.engines.speech.SpeechOutputStarted
+import com.halo.engines.speech.SpeechOutputFinished
 import java.util.Locale
 
 class TextToSpeechProcess(
     private val context: Context,
-    private val executionBus: ExecutionBus
+    private val executionBus: ExecutionBus,
+    private val eventBus: EventBus
 ) : Process, TextToSpeech.OnInitListener {
     
     override val id: String = "driver.android.tts"
@@ -51,6 +56,19 @@ class TextToSpeechProcess(
         
         withContext(Dispatchers.Main) {
             tts = TextToSpeech(context, this@TextToSpeechProcess)
+            tts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+                override fun onStart(utteranceId: String?) {
+                    launch { eventBus.publish(SpeechOutputStarted()) }
+                }
+
+                override fun onDone(utteranceId: String?) {
+                    launch { eventBus.publish(SpeechOutputFinished()) }
+                }
+
+                override fun onError(utteranceId: String?) {
+                    launch { eventBus.publish(SpeechOutputFinished()) }
+                }
+            })
         }
         
         launch {

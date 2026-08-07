@@ -19,14 +19,18 @@ class AndroidApplicationCapability(private val context: Context) : Capability {
         return try {
             val intent = context.packageManager.getLaunchIntentForPackage(task.packageName)
             if (intent != null) {
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
                 context.startActivity(intent)
                 Outcome.Success("Launched ${task.packageName}")
             } else {
-                Outcome.Failure("Application ${task.packageName} not found")
+                Outcome.PermanentFailure("Application ${task.packageName} not found")
             }
+        } catch (e: android.content.ActivityNotFoundException) {
+            Outcome.PermanentFailure("Application ${task.packageName} not installed or disabled")
+        } catch (e: SecurityException) {
+            Outcome.PermanentFailure("Permission denied to launch ${task.packageName}")
         } catch (e: Exception) {
-            Outcome.Failure(e.message ?: "Failed to launch application")
+            Outcome.RetryableFailure(e.message ?: "Failed to launch application")
         }
     }
 }

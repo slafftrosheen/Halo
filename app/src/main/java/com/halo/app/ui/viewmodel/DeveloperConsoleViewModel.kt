@@ -30,7 +30,8 @@ class DeveloperConsoleViewModel : ViewModel() {
             ),
             timeline = emptyList(),
             providers = emptyList(),
-            blackboard = com.halo.sdk.runtime.BlackboardSnapshot(0, emptyList())
+            blackboard = com.halo.sdk.runtime.BlackboardSnapshot(0, emptyList()),
+            traces = emptyList()
         )
     )
     

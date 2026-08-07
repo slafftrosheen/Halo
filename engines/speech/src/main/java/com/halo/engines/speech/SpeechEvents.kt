@@ -18,3 +18,7 @@ data class RecognitionTimeoutEvent(
 ) : HaloEvent
 data class SpeechRecognized(override val id: String = UUID.randomUUID().toString(), val text: String, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
 data class SpeechSegmentCaptured(override val id: String = UUID.randomUUID().toString(), val segment: SpeechSegment, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
+data class SpeechOutputStarted(override val id: String = UUID.randomUUID().toString(), override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
+data class SpeechOutputFinished(override val id: String = UUID.randomUUID().toString(), override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
+data class RawWakeWordDetected(override val id: String = UUID.randomUUID().toString(), val word: String, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
+data class WakeWordDetected(override val id: String = UUID.randomUUID().toString(), val word: String, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent

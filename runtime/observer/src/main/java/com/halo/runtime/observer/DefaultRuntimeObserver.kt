@@ -23,6 +23,7 @@ class DefaultRuntimeObserver(
     processManager: ProcessManager,
     blackboard: Blackboard,
     timelineRecorder: TimelineRecorder,
+    private val traceRecorder: TraceRecorder,
     private val assembler: SnapshotAssembler,
     private val clock: Clock,
     scope: CoroutineScope
@@ -44,9 +45,10 @@ class DefaultRuntimeObserver(
         speechObserver.sessionState,
         processesStates,
         blackboard.flow,
-        timelineRecorder.timelineFlow
-    ) { speechState, processes, facts, timeline ->
-        assembler.assemble(speechState, processes, facts, timeline, startedAtTime)
+        timelineRecorder.timelineFlow,
+        traceRecorder.tracesFlow
+    ) { speechState, processes, facts, timeline, traces ->
+        assembler.assemble(speechState, processes, facts, timeline, traces, startedAtTime)
     }.stateIn(
         scope = scope,
         started = SharingStarted.Eagerly,

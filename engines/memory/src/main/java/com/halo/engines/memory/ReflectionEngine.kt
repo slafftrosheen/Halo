@@ -24,7 +24,7 @@ class ReflectionEngine(
         episodicStore.save(episode)
         
         // Adjust confidence of associated skills or facts based on outcome
-        if (result is Outcome.Failure) {
+        if (result is Outcome.PermanentFailure || result is Outcome.RetryableFailure) {
             // Decrease confidence of the approach
         } else if (result is Outcome.Success) {
             // Increase confidence

@@ -29,6 +29,7 @@ import com.halo.sdk.runtime.EngineSnapshot
 class AndroidWakeWordProcess(
     private val context: Context,
     private val perceptionBus: PerceptionBus,
+    private val eventBus: com.halo.sdk.runtime.EventBus,
     override val id: String,
     override val name: String,
     private val scope: CoroutineScope
@@ -98,12 +99,9 @@ class AndroidWakeWordProcess(
                     if (!matches.isNullOrEmpty()) {
                         val text = matches[0].lowercase()
                         if (text.contains("halo") || text.contains("hello")) {
-                            publishWakeWordEvent()
+                            publishWakeWordEvent(text)
                         }
                     }
-                    // if (_state.value == ProcessState.Running) {
-                    //    restartLoop()
-                    // }
                 }
 
                 override fun onPartialResults(partialResults: Bundle?) {}
@@ -149,18 +147,9 @@ class AndroidWakeWordProcess(
         startListeningLoop()
     }
 
-    private fun publishWakeWordEvent() {
-        val observation = Observation(
-            id = CognitiveId(),
-            created = Clock.System.now(),
-            confidence = Confidence(0.9f),
-            provenance = Provenance(id, null),
-            edges = emptyList(),
-            rawData = "WakeWordDetected",
-            modality = "WakeWord"
-        )
-        kotlinx.coroutines.GlobalScope.launch(Dispatchers.Default) {
-            perceptionBus.publish(id, observation)
+    private fun publishWakeWordEvent(word: String) {
+        scope.launch {
+            eventBus.publish(com.halo.engines.speech.RawWakeWordDetected(word = word))
         }
     }
 

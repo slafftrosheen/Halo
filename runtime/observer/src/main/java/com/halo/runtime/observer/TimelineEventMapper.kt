@@ -81,6 +81,13 @@ class DefaultTimelineEventMapper : TimelineEventMapper {
                 timestamp = timestamp,
                 status = "Published"
             )
+            is StageMetricsPublished -> TimelineEvent(
+                id = event.id,
+                title = event.stage.name,
+                description = "${event.latency} ms\n" + if (event.success) "✓" else "✗",
+                timestamp = timestamp,
+                status = if (event.success) "Success" else "Failed"
+            )
             else -> null
         }
     }
