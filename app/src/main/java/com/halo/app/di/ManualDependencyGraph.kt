@@ -79,7 +79,7 @@ object ManualDependencyGraph {
         CognitiveTrace(scope, perceptionBus, cognitiveBus, executionBus).apply { start() }
     }
 
-    val androidSpeechProcess by lazy { AndroidSpeechProcess(applicationContext, perceptionBus, scope = scope) }
+    val androidSpeechProcess by lazy { AndroidSpeechProcess(applicationContext, perceptionBus, commandBus, eventBus, scope = scope) }
     val androidWakeWordProcess by lazy { AndroidWakeWordProcess(applicationContext, perceptionBus, id = "driver.android.wakeword", name = "Android Wake Word", scope = scope) }
     val workingMemoryProcess by lazy { WorkingMemoryProcess(perceptionBus, cognitiveBus, executionBus) }
     val modelDownloadManager by lazy { ModelDownloadManager(applicationContext) }
@@ -107,15 +107,20 @@ object ManualDependencyGraph {
 
     val runtimeOrchestrator by lazy {
         RuntimeOrchestrator(
-            interpretationEngine,
-            goalManager,
-            planningEngine,
-            executionEngine,
-            reflectionEngine
-        )
+            interpretationEngine = interpretationEngine,
+            goalManager = goalManager,
+            planningEngine = planningEngine,
+            executionEngine = executionEngine,
+            reflectionEngine = reflectionEngine,
+            eventBus = eventBus
+        ).apply { start() }
     }
     
-    val speechSessionManager by lazy { SpeechSessionManager(MockSpeechRecognizer(), eventBus, scope, runtimeOrchestrator) }
+    val speechSessionManager by lazy { SpeechSessionManager(eventBus, commandBus, scope) }
+
+    val speechPerceptionBridge by lazy {
+        com.halo.runtime.speech.SpeechPerceptionBridge(eventBus, scope).apply { start() }
+    }
 
     val timelineEventMapper by lazy { DefaultTimelineEventMapper() }
     val timelineRecorder by lazy { TimelineRecorder(eventBus, timelineEventMapper, scope) }

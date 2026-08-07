@@ -26,6 +26,8 @@ import kotlinx.datetime.Clock
 class AndroidSpeechProcess(
     private val context: Context,
     private val perceptionBus: PerceptionBus,
+    private val commandBus: com.halo.sdk.runtime.CommandBus,
+    private val eventBus: com.halo.sdk.runtime.EventBus,
     override val id: String = "driver.android.speech_recognizer",
     override val name: String = "Android Built-in Speech Recognizer",
     private val scope: CoroutineScope
@@ -73,29 +75,64 @@ class AndroidSpeechProcess(
                 }
             }
         }
+        
+        launch {
+            commandBus.commands().filterIsInstance<com.halo.sdk.runtime.StartListening>().collect {
+                withContext(Dispatchers.Main) {
+                    startCapturing()
+                }
+            }
+        }
+
+        launch {
+            commandBus.commands().filterIsInstance<com.halo.sdk.runtime.StopListening>().collect {
+                withContext(Dispatchers.Main) {
+                    stopCapturing()
+                }
+            }
+        }
     }
 
     private fun initializeRecognizer() {
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context).apply {
             setRecognitionListener(object : RecognitionListener {
                 override fun onReadyForSpeech(params: Bundle?) {
-                    // Optionally notify that we are ready
+                    scope.launch {
+                        eventBus.publish(com.halo.engines.speech.RawRecognitionStarted(id = java.util.UUID.randomUUID().toString()))
+                    }
                 }
                 override fun onBeginningOfSpeech() {}
                 override fun onRmsChanged(rmsdB: Float) {}
                 override fun onBufferReceived(buffer: ByteArray?) {}
                 override fun onEndOfSpeech() {}
                 override fun onError(error: Int) {
-                    // No auto-looping in Push-to-Talk mode
+                    val reason = when (error) {
+                        SpeechRecognizer.ERROR_NETWORK_TIMEOUT -> com.halo.engines.speech.SpeechFailureReason.Timeout
+                        SpeechRecognizer.ERROR_NETWORK -> com.halo.engines.speech.SpeechFailureReason.Network
+                        SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> com.halo.engines.speech.SpeechFailureReason.Permission
+                        SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> com.halo.engines.speech.SpeechFailureReason.Busy
+                        else -> com.halo.engines.speech.SpeechFailureReason.Unknown
+                    }
+                    scope.launch {
+                        eventBus.publish(com.halo.engines.speech.RawRecognitionFailure(id = java.util.UUID.randomUUID().toString(), reason = reason, message = "Android Speech Error: $error"))
+                    }
                 }
 
                 override fun onResults(results: Bundle?) {
                     val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                     if (!matches.isNullOrEmpty()) {
                         val text = matches[0]
-                        publishTranscription(text)
+                        scope.launch {
+                            eventBus.publish(com.halo.engines.speech.RawRecognitionResult(id = java.util.UUID.randomUUID().toString(), text = text))
+                        }
+                    } else {
+                        scope.launch {
+                            eventBus.publish(com.halo.engines.speech.RawRecognitionFailure(id = java.util.UUID.randomUUID().toString(), reason = com.halo.engines.speech.SpeechFailureReason.Unknown, message = "No speech recognized"))
+                        }
                     }
-                    // No auto-looping in Push-to-Talk mode
+                    scope.launch {
+                        eventBus.publish(com.halo.engines.speech.RawRecognitionFinished(id = java.util.UUID.randomUUID().toString()))
+                    }
                 }
 
                 override fun onPartialResults(partialResults: Bundle?) {}
@@ -117,21 +154,7 @@ class AndroidSpeechProcess(
         speechRecognizer?.stopListening()
     }
 
-    private fun publishTranscription(text: String) {
-        val observation = Observation(
-            id = CognitiveId(),
-            created = Clock.System.now(),
-            confidence = Confidence(0.9f),
-            provenance = Provenance(id, null),
-            edges = emptyList(),
-            rawData = text,
-            modality = "Speech"
-        )
-        // Fire and forget onto the perception bus
-        kotlinx.coroutines.GlobalScope.launch(Dispatchers.Default) {
-            perceptionBus.publish(id, observation)
-        }
-    }
+
 
     override suspend fun pause() {
         _state.value = ProcessState.Paused

@@ -16,67 +16,74 @@ import com.halo.cognition.language.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import com.halo.sdk.runtime.EventBus
+import com.halo.sdk.runtime.SpeechRecognized
+import com.halo.sdk.runtime.OutcomePublished
+import kotlinx.coroutines.flow.filterIsInstance
 import java.util.UUID
 
 /**
  * The RuntimeOrchestrator coordinates the Alpha Loop deterministically:
  * Speech Event -> Interpretation -> Goal Manager -> Planning -> Execution -> Outcome -> Timeline
  * 
- * No redundant pub/sub between these steps. The orchestrator calls them in sequence.
+ * Subscribes to the EventBus directly instead of being invoked.
  */
 class RuntimeOrchestrator(
     private val interpretationEngine: DefaultInterpretationEngine,
     private val goalManager: GoalManager,
     private val planningEngine: PlanningEngine,
     private val executionEngine: ExecutionEngine,
-    private val reflectionEngine: ReflectionEngine
+    private val reflectionEngine: ReflectionEngine,
+    private val eventBus: EventBus
 ) {
     private val scope = CoroutineScope(Dispatchers.Default)
 
-    /**
-     * Triggered when speech input is recognized and transcribed.
-     */
-    fun onSpeechRecognized(transcription: String) {
+    fun start() {
         scope.launch {
-            // 1. Interpretation
-            val observation = Observation(
-                id = ObservationId(UUID.randomUUID().toString()),
-                timestamp = System.currentTimeMillis(),
-                modality = Modality.AUDIO,
-                source = Source.MICROPHONE,
-                confidence = 1.0f,
-                payload = SpeechRecognizedPayload(transcription, "en-US")
-            )
-            val result = interpretationEngine.interpret(observation)
-            
-            // 2. Goal Generation
-            val intent = result.interpretation.intent
-            val payload = when (intent) {
-                is CallIntent -> CommunicationPayload(target = extractEntityValue(result.interpretation.entities) ?: "")
-                is NavigateIntent -> NavigationPayload(destination = extractEntityValue(result.interpretation.entities) ?: "")
-                is PlayIntent -> MediaPayload(query = extractEntityValue(result.interpretation.entities) ?: "")
-                is OpenIntent -> DevicePayload(action = "open", target = extractEntityValue(result.interpretation.entities) ?: "")
-                else -> ConversationPayload(topic = transcription)
+            eventBus.observe(SpeechRecognized::class.java).collect { event ->
+                val transcription = event.text
+                
+                // 1. Interpretation
+                val observation = Observation(
+                    id = ObservationId(UUID.randomUUID().toString()),
+                    timestamp = System.currentTimeMillis(),
+                    modality = Modality.AUDIO,
+                    source = Source.MICROPHONE,
+                    confidence = 1.0f,
+                    payload = SpeechRecognizedPayload(transcription, "en-US")
+                )
+                val result = interpretationEngine.interpret(observation)
+                
+                // 2. Goal Generation
+                val intent = result.interpretation.intent
+                val payload = when (intent) {
+                    is CallIntent -> CommunicationPayload(target = extractEntityValue(result.interpretation.entities) ?: "")
+                    is NavigateIntent -> NavigationPayload(destination = extractEntityValue(result.interpretation.entities) ?: "")
+                    is PlayIntent -> MediaPayload(query = extractEntityValue(result.interpretation.entities) ?: "")
+                    is OpenIntent -> DevicePayload(action = "open", target = extractEntityValue(result.interpretation.entities) ?: "")
+                    else -> ConversationPayload(topic = transcription)
+                }
+                val type = when (intent) {
+                    is CallIntent -> GoalType.COMMUNICATION
+                    is NavigateIntent -> GoalType.NAVIGATION
+                    is PlayIntent -> GoalType.MEDIA
+                    is OpenIntent -> GoalType.DEVICE
+                    else -> GoalType.CONVERSATION
+                }
+                val goal = goalManager.createGoal(type, intent, payload, Priority.NORMAL, result.interpretation.confidence)
+                
+                // 3. Planning
+                val plan = planningEngine.createPlan(goal)
+                
+                // 4. Execution
+                val outcome = executionEngine.executePlan(plan)
+                
+                // 5. Reflection (Timeline)
+                reflectionEngine.reflectOnExecution(plan, outcome)
+                
+                // 6. Signal completion
+                eventBus.publish(OutcomePublished(outcome = outcome.javaClass.simpleName))
             }
-            val type = when (intent) {
-                is CallIntent -> GoalType.COMMUNICATION
-                is NavigateIntent -> GoalType.NAVIGATION
-                is PlayIntent -> GoalType.MEDIA
-                is OpenIntent -> GoalType.DEVICE
-                else -> GoalType.CONVERSATION
-            }
-            val goal = goalManager.createGoal(type, intent, payload, Priority.NORMAL, result.interpretation.confidence)
-            
-            // 3. Planning
-            val plan = planningEngine.createPlan(goal)
-            
-            // 4. Execution
-            val outcome = executionEngine.executePlan(plan)
-            
-            // 5. Reflection (Timeline)
-            reflectionEngine.reflectOnExecution(plan, outcome)
-            
-            // Return to Idle is handled by the caller or UI observing state
         }
     }
 

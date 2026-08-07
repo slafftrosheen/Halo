@@ -3,10 +3,10 @@ package com.halo.runtime.speech
 import com.halo.engines.speech.SpeechRecognizer
 import com.halo.sdk.runtime.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filterIsInstance
 import com.halo.engines.speech.SpeechSegmentCaptured
 import com.halo.engines.speech.RecognitionStarted
 import com.halo.engines.speech.SpeechRecognized
@@ -18,24 +18,21 @@ import com.halo.engines.speech.SpeechRecognizedPayload
 import com.halo.engines.agents.RuntimeOrchestrator
 
 class SpeechSessionManager(
-    private val recognizer: SpeechRecognizer,
     private val eventBus: EventBus,
-    private val scope: CoroutineScope,
-    private val orchestrator: RuntimeOrchestrator? = null
+    private val commandBus: CommandBus,
+    private val scope: CoroutineScope
 ) : SpeechStateObserver {
     private val _sessionState = MutableStateFlow<SpeechSessionState>(SpeechSessionState.Idle)
     override val sessionState: StateFlow<SpeechSessionState> = _sessionState.asStateFlow()
     
-    private val recognitionQueue = Channel<SpeechTask>(Channel.UNLIMITED)
     private var workerJob: Job? = null
     
     fun start() {
         if (workerJob?.isActive == true) return
         
-        _sessionState.value = SpeechSessionState.PassiveListening
         workerJob = scope.launch {
-            launch { runRecognitionWorker() }
-            launch { listenForSegments() }
+            launch { observeCommands() }
+            launch { observeRecognitionEvents() }
         }
     }
     
@@ -45,76 +42,55 @@ class SpeechSessionManager(
         _sessionState.value = SpeechSessionState.Idle
     }
     
-    private suspend fun listenForSegments() {
-        eventBus.observe(SpeechSegmentCaptured::class.java).collect { event ->
-            // In Alpha, any captured segment triggers a default ManualButton task for now
-            val task = SpeechTask(
-                segment = event.segment,
-                timeoutMillis = 30_000L,
-                source = SpeechTrigger.ManualButton
-            )
-            enqueueTask(task)
-        }
-    }
-    
-    fun enqueueTask(task: SpeechTask) {
-        if (_sessionState.value == SpeechSessionState.Idle) {
-            _sessionState.value = SpeechSessionState.PassiveListening
-        }
-        recognitionQueue.trySend(task)
-    }
-    
-    private suspend fun runRecognitionWorker() {
-        while (currentCoroutineContext().isActive) {
-            val task = try {
-                recognitionQueue.receiveCatching().getOrNull() ?: return
-            } catch (e: CancellationException) {
-                throw e
+    private fun observeCommands() {
+        scope.launch {
+            commandBus.commands().filterIsInstance<StartListening>().collect {
+                _sessionState.value = SpeechSessionState.Capturing
             }
-            
-            _sessionState.value = SpeechSessionState.Recognizing
-            eventBus.publish(RecognitionStarted(id = java.util.UUID.randomUUID().toString()))
-            
-            try {
-                val result = withTimeout(task.timeoutMillis) {
-                    recognizer.transcribe(task.segment)
+        }
+        scope.launch {
+            commandBus.commands().filterIsInstance<StopListening>().collect {
+                if (_sessionState.value == SpeechSessionState.Capturing) {
+                    _sessionState.value = SpeechSessionState.Idle
                 }
-                
-                eventBus.publish(SpeechRecognized(id = java.util.UUID.randomUUID().toString(), text = result.text))
-                
-                // Trigger the deterministic Alpha orchestration loop
-                orchestrator?.onSpeechRecognized(result.text)
-                
-                eventBus.publish(
-                    ObservationCreated(
-                        id = java.util.UUID.randomUUID().toString(),
-                        observation = Observation(
-                            id = com.halo.sdk.runtime.ObservationId(java.util.UUID.randomUUID().toString()),
-                            modality = Modality.AUDIO,
-                            source = Source.MICROPHONE,
-                            payload = SpeechRecognizedPayload(result.text, result.language ?: "en"),
-                            confidence = result.confidence,
-                            metadata = mapOf("engine" to "SpeechSessionManager")
-                        )
-                    )
-                )
+            }
+        }
+    }
+
+    private fun observeRecognitionEvents() {
+        // Driver Events -> Domain Events Translation
+        scope.launch {
+            eventBus.observe(com.halo.engines.speech.RawRecognitionStarted::class.java).collect {
+                _sessionState.value = SpeechSessionState.Recognizing
+                eventBus.publish(RecognitionStarted(id = java.util.UUID.randomUUID().toString()))
+            }
+        }
+        scope.launch {
+            eventBus.observe(com.halo.engines.speech.RawRecognitionResult::class.java).collect { event ->
+                _sessionState.value = SpeechSessionState.Thinking
+                eventBus.publish(SpeechRecognized(id = java.util.UUID.randomUUID().toString(), text = event.text))
+            }
+        }
+        scope.launch {
+            eventBus.observe(com.halo.engines.speech.RawRecognitionFinished::class.java).collect {
                 eventBus.publish(RecognitionFinished(id = java.util.UUID.randomUUID().toString()))
-            } catch (e: TimeoutCancellationException) {
-                eventBus.publish(
-                    RecognitionTimeoutEvent(
-                        id = java.util.UUID.randomUUID().toString(),
-                        timeoutMillis = task.timeoutMillis,
-                        segmentStartedAt = task.segment.startedAt,
-                        segmentFinishedAt = task.segment.finishedAt
-                    )
-                )
-                eventBus.publish(RecognitionFailed(id = java.util.UUID.randomUUID().toString(), reason = "Recognition timed out after ${task.timeoutMillis}ms"))
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                eventBus.publish(RecognitionFailed(id = java.util.UUID.randomUUID().toString(), reason = e.message ?: "Unknown error"))
-            } finally {
-                _sessionState.value = SpeechSessionState.PassiveListening
+            }
+        }
+        scope.launch {
+            eventBus.observe(com.halo.engines.speech.RawRecognitionFailure::class.java).collect { event ->
+                eventBus.publish(RecognitionFailed(id = java.util.UUID.randomUUID().toString(), reason = event.message ?: event.reason.name))
+                _sessionState.value = SpeechSessionState.Recovering
+                delay(500)
+                _sessionState.value = SpeechSessionState.Idle
+            }
+        }
+        
+        // Listen for Outcome to return to Idle
+        scope.launch {
+            eventBus.observe(OutcomePublished::class.java).collect {
+                if (_sessionState.value == SpeechSessionState.Thinking || _sessionState.value == SpeechSessionState.Speaking) {
+                    _sessionState.value = SpeechSessionState.Idle
+                }
             }
         }
     }
