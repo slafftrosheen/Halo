@@ -73,21 +73,23 @@ class SpeechSessionManager(
             }
             
             _sessionState.value = SpeechSessionState.Recognizing
-            eventBus.publish(RecognitionStarted())
+            eventBus.publish(RecognitionStarted(id = java.util.UUID.randomUUID().toString()))
             
             try {
                 val result = withTimeout(task.timeoutMillis) {
                     recognizer.transcribe(task.segment)
                 }
                 
-                eventBus.publish(SpeechRecognized(result.text))
+                eventBus.publish(SpeechRecognized(id = java.util.UUID.randomUUID().toString(), text = result.text))
                 
                 // Trigger the deterministic Alpha orchestration loop
                 orchestrator?.onSpeechRecognized(result.text)
                 
                 eventBus.publish(
                     ObservationCreated(
-                        Observation(
+                        id = java.util.UUID.randomUUID().toString(),
+                        observation = Observation(
+                            id = com.halo.sdk.runtime.ObservationId(java.util.UUID.randomUUID().toString()),
                             modality = Modality.AUDIO,
                             source = Source.MICROPHONE,
                             payload = SpeechRecognizedPayload(result.text, result.language ?: "en"),
@@ -96,20 +98,21 @@ class SpeechSessionManager(
                         )
                     )
                 )
-                eventBus.publish(RecognitionFinished())
+                eventBus.publish(RecognitionFinished(id = java.util.UUID.randomUUID().toString()))
             } catch (e: TimeoutCancellationException) {
                 eventBus.publish(
                     RecognitionTimeoutEvent(
+                        id = java.util.UUID.randomUUID().toString(),
                         timeoutMillis = task.timeoutMillis,
                         segmentStartedAt = task.segment.startedAt,
                         segmentFinishedAt = task.segment.finishedAt
                     )
                 )
-                eventBus.publish(RecognitionFailed("Recognition timed out after ${task.timeoutMillis}ms"))
+                eventBus.publish(RecognitionFailed(id = java.util.UUID.randomUUID().toString(), reason = "Recognition timed out after ${task.timeoutMillis}ms"))
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                eventBus.publish(RecognitionFailed(e.message ?: "Unknown error"))
+                eventBus.publish(RecognitionFailed(id = java.util.UUID.randomUUID().toString(), reason = e.message ?: "Unknown error"))
             } finally {
                 _sessionState.value = SpeechSessionState.PassiveListening
             }

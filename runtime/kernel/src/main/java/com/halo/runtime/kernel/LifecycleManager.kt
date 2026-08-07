@@ -16,7 +16,7 @@ class LifecycleManager {
             } catch (e: Exception) {
                 attempts++
                 if (attempts > 3) {
-                    context.eventBus.publish(EngineFailed(engine.metadata.id.value, e.message ?: "Failed after 3 retries"))
+                    context.eventBus.publish(EngineFailed(engineId = engine.metadata.id.value, reason = e.message ?: "Failed after 3 retries"))
                     return null
                 }
                 
@@ -34,7 +34,7 @@ class LifecycleManager {
 
     suspend fun initialize(engines: List<EngineNode>, context: RuntimeContext) {
         engines.forEach { node ->
-            context.eventBus.publish(EngineInitializing(node.engine.metadata.id.value))
+            context.eventBus.publish(EngineInitializing(engineId = node.engine.metadata.id.value))
             val result = withRecovery(node.engine, context) {
                 node.engine.initialize(EngineContext(context.registry, context))
                 true
@@ -52,7 +52,7 @@ class LifecycleManager {
                 true
             }
             if (result != null) {
-                context.eventBus.publish(EngineStarted(node.engine.metadata.id.value))
+                context.eventBus.publish(EngineStarted(engineId = node.engine.metadata.id.value))
             } else {
                 throw IllegalStateException("Engine failed to start: ${node.engine.metadata.id.value}")
             }
@@ -63,9 +63,9 @@ class LifecycleManager {
         engines.asReversed().forEach { node ->
             try {
                 node.engine.stop()
-                context.eventBus.publish(EngineStopped(node.engine.metadata.id.value))
+                context.eventBus.publish(EngineStopped(engineId = node.engine.metadata.id.value))
             } catch (e: Exception) {
-                context.eventBus.publish(EngineFailed(node.engine.metadata.id.value, e.message ?: "Unknown error during stop"))
+                context.eventBus.publish(EngineFailed(engineId = node.engine.metadata.id.value, reason = e.message ?: "Unknown error during stop"))
             }
         }
     }

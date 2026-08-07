@@ -88,11 +88,12 @@ open class DefaultInterpretationEngine(
                     return@collect
                 }
                 try {
-                    eventBus.publish(InterpretationStarted(speech.transcript))
+                    eventBus.publish(InterpretationStarted(id = UUID.randomUUID().toString(), transcript = speech.transcript))
                     val processed = process(event.observation)
                     for (match in processed.result.matches) {
                         eventBus.publish(
                             RuleMatched(
+                                id = UUID.randomUUID().toString(),
                                 ruleName = match.ruleName,
                                 confidence = match.confidence,
                                 entityCount = match.entities.size,
@@ -110,11 +111,12 @@ open class DefaultInterpretationEngine(
                         eventBus.publish(execution)
                     }
                     
-                    eventBus.publish(InterpretationBuilt(processed.result.interpretation))
-                    eventBus.publish(InterpretationPublished(processed.knowledge.id))
+                    eventBus.publish(InterpretationBuilt(id = UUID.randomUUID().toString(), interpretation = processed.result.interpretation))
+                    eventBus.publish(InterpretationPublished(id = UUID.randomUUID().toString(), knowledgeId = processed.knowledge.id))
 
                     eventBus.publish(
                         InterpretationCreated(
+                            id = UUID.randomUUID().toString(),
                             interpretation = processed.result.interpretation,
                             knowledgeId = processed.knowledge.id
                         )

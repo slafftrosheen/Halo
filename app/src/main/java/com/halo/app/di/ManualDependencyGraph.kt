@@ -41,6 +41,9 @@ import com.halo.engines.reasoning.models.ModelDownloadManager
 import com.halo.engines.reasoning.providers.NativeLlamaProvider
 import com.halo.runtime.observer.DefaultRuntimeObserver
 import com.halo.runtime.observer.TimelineRecorder
+import com.halo.runtime.observer.DefaultTimelineEventMapper
+import com.halo.runtime.observer.DefaultRuntimeHealthEvaluator
+import com.halo.runtime.observer.DefaultSnapshotAssembler
 import com.halo.app.ui.screens.home.HomeViewModel
 import com.halo.app.ui.screens.timeline.TimelineViewModel
 import com.halo.app.ui.screens.console.ConsoleViewModel
@@ -75,8 +78,8 @@ object ManualDependencyGraph {
         CognitiveTrace(scope, perceptionBus, cognitiveBus, executionBus).apply { start() }
     }
 
-    val androidSpeechProcess by lazy { AndroidSpeechProcess(applicationContext, perceptionBus) }
-    val androidWakeWordProcess by lazy { AndroidWakeWordProcess(applicationContext, perceptionBus) }
+    val androidSpeechProcess by lazy { AndroidSpeechProcess(applicationContext, perceptionBus, scope = scope) }
+    val androidWakeWordProcess by lazy { AndroidWakeWordProcess(applicationContext, perceptionBus, id = "driver.android.wakeword", name = "Android Wake Word", scope = scope) }
     val workingMemoryProcess by lazy { WorkingMemoryProcess(perceptionBus, cognitiveBus, executionBus) }
     val modelDownloadManager by lazy { ModelDownloadManager(applicationContext) }
     val nativeLlamaProvider by lazy { NativeLlamaProvider(applicationContext, modelDownloadManager) }
@@ -112,7 +115,11 @@ object ManualDependencyGraph {
     
     val speechSessionManager by lazy { SpeechSessionManager(MockSpeechRecognizer(), eventBus, scope, runtimeOrchestrator) }
 
-    val timelineRecorder by lazy { TimelineRecorder(eventBus, scope) }
+    val timelineEventMapper by lazy { DefaultTimelineEventMapper() }
+    val timelineRecorder by lazy { TimelineRecorder(eventBus, timelineEventMapper, scope) }
+
+    val healthEvaluator by lazy { DefaultRuntimeHealthEvaluator(java.time.Clock.systemUTC()) }
+    val snapshotAssembler by lazy { DefaultSnapshotAssembler(healthEvaluator, java.time.Clock.systemUTC()) }
 
     val runtimeSnapshotManager by lazy {
         DefaultRuntimeObserver(
@@ -120,6 +127,7 @@ object ManualDependencyGraph {
             processManager,
             blackboard,
             timelineRecorder,
+            snapshotAssembler,
             java.time.Clock.systemUTC(),
             scope
         )

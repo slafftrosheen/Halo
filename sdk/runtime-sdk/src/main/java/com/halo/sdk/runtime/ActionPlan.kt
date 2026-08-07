@@ -14,6 +14,7 @@ data class ActionPlan(
 )
 
 data class PlanCreated(
+    override val id: String = UUID.randomUUID().toString(),
     val plan: ActionPlan,
     override val timestamp: Long = System.currentTimeMillis()
 ) : HaloEvent

@@ -18,19 +18,38 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 
 class AndroidSpeechProcess(
     private val context: Context,
-    private val perceptionBus: PerceptionBus
+    private val perceptionBus: PerceptionBus,
+    override val id: String = "driver.android.speech_recognizer",
+    override val name: String = "Android Built-in Speech Recognizer",
+    private val scope: CoroutineScope
 ) : Process {
-    override val id: String = "driver.android.speech_recognizer"
-    override val name: String = "Android Built-in Speech Recognizer"
     
-    private val _state = MutableStateFlow(ProcessState.Created)
+    private val _state = MutableStateFlow(ProcessState.Stopped)
     override val state: StateFlow<ProcessState> = _state
+
+    private val _metrics = MutableStateFlow(com.halo.sdk.runtime.EngineMetrics(
+        latencyMs = null,
+        uptime = java.time.Duration.ZERO,
+        eventsProcessed = 0L,
+        queueSize = 0,
+        cpuUsage = 0.0
+    ))
+    override val metrics: StateFlow<com.halo.sdk.runtime.EngineMetrics> = _metrics
+
+    override fun engineSnapshot(): com.halo.sdk.runtime.EngineSnapshot = com.halo.sdk.runtime.EngineSnapshot(
+        id = id,
+        state = com.halo.sdk.runtime.EngineState.Running,
+        health = com.halo.sdk.runtime.EngineHealth.Healthy,
+        metrics = _metrics.value,
+        lastActivity = java.time.Instant.now()
+    )
 
     private var speechRecognizer: SpeechRecognizer? = null
     

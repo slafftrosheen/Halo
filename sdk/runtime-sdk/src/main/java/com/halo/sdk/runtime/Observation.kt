@@ -26,6 +26,7 @@ data class Observation(
 )
 
 data class ObservationCreated(
+    override val id: String = UUID.randomUUID().toString(),
     val observation: Observation,
     override val timestamp: Long = System.currentTimeMillis()
 ) : HaloEvent

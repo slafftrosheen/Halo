@@ -3,6 +3,7 @@ package com.halo.sdk.runtime
 import kotlinx.coroutines.flow.Flow
 
 interface HaloEvent {
+    val id: String
     val timestamp: Long
 }
 

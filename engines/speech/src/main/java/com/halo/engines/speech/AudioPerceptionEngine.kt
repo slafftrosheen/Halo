@@ -177,7 +177,7 @@ class AudioPerceptionEngine(
     ) {
         metrics.segmentsCaptured++
         try {
-            eventBus.publish(SpeechSegmentCaptured(segment))
+            eventBus.publish(SpeechSegmentCaptured(segment = segment))
         } catch (exception: Exception) {
             throw exception
         }
@@ -205,7 +205,7 @@ class AudioPerceptionEngine(
 
     private suspend fun publishFailure(eventBus: EventBus, reason: String) {
         try {
-            eventBus.publish(RecognitionFailed(reason))
+            eventBus.publish(RecognitionFailed(reason = reason))
         } catch (exception: CancellationException) {
             throw exception
         } catch (exception: Exception) {

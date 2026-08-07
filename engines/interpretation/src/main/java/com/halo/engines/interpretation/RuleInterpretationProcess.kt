@@ -19,6 +19,12 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.Dispatchers
 import kotlinx.datetime.Clock
+import com.halo.sdk.runtime.EngineSnapshot
+import com.halo.sdk.runtime.EngineState
+import com.halo.sdk.runtime.EngineHealth
+import com.halo.sdk.runtime.EngineMetrics
+import java.time.Duration
+import java.time.Instant
 
 class RuleInterpretationProcess(
     private val perceptionBus: PerceptionBus,
@@ -29,6 +35,10 @@ class RuleInterpretationProcess(
     
     private val _state = MutableStateFlow(ProcessState.Created)
     override val state: StateFlow<ProcessState> = _state
+    
+    private val _metrics = MutableStateFlow(EngineMetrics(null, Duration.ZERO, 0, 0, 0.0))
+    override val metrics: StateFlow<EngineMetrics> = _metrics
+    private var eventsProcessed = 0L
 
     private val intentRules = mapOf(
         Regex(".*play.*(spotify|music).*", RegexOption.IGNORE_CASE) to "PlayMusic",
@@ -92,8 +102,12 @@ class RuleInterpretationProcess(
                         priority = com.halo.icl.ontology.Priority.NORMAL
                     )
                     
+                    
                     cognitiveBus.publish(id, thought)
                     cognitiveBus.publish(id, goal)
+                    
+                    eventsProcessed++
+                    _metrics.value = _metrics.value.copy(eventsProcessed = eventsProcessed)
                 }
             }
         }
@@ -102,4 +116,20 @@ class RuleInterpretationProcess(
     override suspend fun pause() { _state.value = ProcessState.Paused }
     override suspend fun resume() { _state.value = ProcessState.Running }
     override suspend fun stop() { _state.value = ProcessState.Stopped }
+
+    override fun engineSnapshot(): EngineSnapshot {
+        return EngineSnapshot(
+            id = name,
+            state = when (state.value) {
+                ProcessState.Created -> EngineState.Unknown
+                ProcessState.Running -> EngineState.Running
+                ProcessState.Paused -> EngineState.Unknown
+                ProcessState.Stopped -> EngineState.Unknown
+                ProcessState.Crashed -> EngineState.Failed("Crashed")
+            },
+            health = EngineHealth.Healthy,
+            metrics = metrics.value,
+            lastActivity = Instant.now()
+        )
+    }
 }

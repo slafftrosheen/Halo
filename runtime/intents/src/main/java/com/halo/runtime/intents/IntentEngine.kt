@@ -43,7 +43,7 @@ class IntentEngine : Engine {
         scope.launch {
             context.runtime.eventBus.observe(SpeechRecognized::class.java).collect {
                 val intent = parser.parse(it.text)
-                context.runtime.eventBus.publish(IntentRecognized(System.currentTimeMillis(), intent))
+                context.runtime.eventBus.publish(IntentRecognized(timestamp = System.currentTimeMillis(), intent = intent))
                 pluginManager.dispatch(intent)
             }
         }

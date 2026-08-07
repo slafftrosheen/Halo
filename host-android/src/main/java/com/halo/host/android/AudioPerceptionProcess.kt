@@ -31,6 +31,23 @@ class AudioPerceptionProcess(
     private val _state = MutableStateFlow(ProcessState.Created)
     override val state: StateFlow<ProcessState> = _state
 
+    private val _metrics = MutableStateFlow(com.halo.sdk.runtime.EngineMetrics(
+        latencyMs = null,
+        uptime = java.time.Duration.ZERO,
+        eventsProcessed = 0L,
+        queueSize = 0,
+        cpuUsage = 0.0
+    ))
+    override val metrics: StateFlow<com.halo.sdk.runtime.EngineMetrics> = _metrics
+
+    override fun engineSnapshot(): com.halo.sdk.runtime.EngineSnapshot = com.halo.sdk.runtime.EngineSnapshot(
+        id = id,
+        state = com.halo.sdk.runtime.EngineState.Running,
+        health = com.halo.sdk.runtime.EngineHealth.Healthy,
+        metrics = _metrics.value,
+        lastActivity = java.time.Instant.now()
+    )
+
     private var audioRecord: AudioRecord? = null
     
     private val sampleRate = 16000
