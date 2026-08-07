@@ -20,6 +20,8 @@ intermediates/
 */.transformed/
 .dex
 .class
+runtime_library_classes_dir/
+*/runtime_library_classes_dir/
 /captures
 .externalNativeBuild
 local.properties
