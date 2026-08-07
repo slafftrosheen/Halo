@@ -7,6 +7,6 @@ object Services {
     val Blackboard = ServiceKey(com.halo.runtime.cognition.blackboard.Blackboard::class)
     val CommandBus = ServiceKey(com.halo.sdk.runtime.CommandBus::class)
     val Driver = ServiceKey(com.halo.sdk.driver.Driver::class)
-    val Provider = ServiceKey(com.halo.sdk.provider.Provider::class)
+    val InferenceProvider = ServiceKey(com.halo.sdk.provider.InferenceProvider::class)
     val PluginManager = ServiceKey(com.halo.runtime.plugins.PluginManager::class)
 }

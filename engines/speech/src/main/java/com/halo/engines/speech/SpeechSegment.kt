@@ -10,7 +10,8 @@ class SpeechSegment(
     pcm: ShortArray,
     val sampleRate: Int,
     val startedAt: Long,
-    val finishedAt: Long
+    val finishedAt: Long,
+    val audioBuffer: com.halo.sdk.host.AudioBuffer
 ) {
     private val samples = pcm.copyOf()
 

@@ -1,6 +1,6 @@
 package com.halo.sdk.runtime
 
-interface HaloLogger {
+interface RuntimeLogger {
     fun trace(category: String, message: String)
     fun debug(category: String, message: String)
     fun info(category: String, message: String)

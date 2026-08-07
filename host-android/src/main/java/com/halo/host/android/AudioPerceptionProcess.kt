@@ -19,7 +19,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
-import com.halo.engines.speech.EnergyVoiceActivityDetector
+import com.halo.engines.speech.EnergyVAD
 import com.halo.engines.speech.AudioFrame
 
 class AudioPerceptionProcess(
@@ -82,7 +82,7 @@ class AudioPerceptionProcess(
             return@coroutineScope
         }
         
-        val vad = EnergyVoiceActivityDetector(threshold = 1000)
+        val vad = EnergyVAD(threshold = 1000)
         
         launch(Dispatchers.IO) {
             val audioBuffer = ShortArray(bufferSize)

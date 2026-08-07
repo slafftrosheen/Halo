@@ -4,8 +4,8 @@ import android.annotation.SuppressLint
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
-import com.halo.sdk.runtime.AudioFrame
-import com.halo.sdk.runtime.AudioSource
+import com.halo.sdk.host.AudioFrame
+import com.halo.sdk.host.AudioSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay

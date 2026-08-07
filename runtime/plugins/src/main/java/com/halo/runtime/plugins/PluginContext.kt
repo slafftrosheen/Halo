@@ -4,7 +4,7 @@ import com.halo.sdk.runtime.EventBus
 import com.halo.sdk.runtime.CommandBus
 import com.halo.sdk.runtime.RuntimeContext
 import com.halo.sdk.runtime.RuntimeScheduler
-import com.halo.sdk.runtime.HaloLogger
+import com.halo.sdk.runtime.RuntimeLogger
 import com.halo.sdk.runtime.RuntimeClock
 import com.halo.runtime.cognition.workingmemory.WorkingMemory
 
@@ -16,7 +16,7 @@ interface PermissionManager {
 class PluginContext(
     val runtime: RuntimeContext,
     val scheduler: RuntimeScheduler,
-    val logger: HaloLogger,
+    val logger: RuntimeLogger,
     val eventBus: EventBus,
     val commandBus: CommandBus,
     val clock: RuntimeClock,

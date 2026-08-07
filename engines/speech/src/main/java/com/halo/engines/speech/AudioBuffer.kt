@@ -31,7 +31,8 @@ class AudioBuffer(val maxMillis: Long = 10000) {
             pcm = pcm,
             sampleRate = firstFrame.sampleRate,
             startedAt = firstFrame.timestamp,
-            finishedAt = finishedAt
+            finishedAt = finishedAt,
+            audioBuffer = com.halo.sdk.host.AudioBuffer(frames.map { com.halo.sdk.host.AudioFrame(it.samples, it.sampleRate, it.channels, it.timestamp) })
         )
     }
 

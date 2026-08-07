@@ -1,18 +1,21 @@
 package com.halo.runtime.kernel
 
+import com.halo.sdk.runtime.RuntimeLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.delay
-import android.util.Log
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-class ProcessManager(private val scope: CoroutineScope) {
+class ProcessManager(
+    private val scope: CoroutineScope,
+    private val logger: RuntimeLogger
+) {
     private val _processes = MutableStateFlow<List<Process>>(emptyList())
     val processFlow: StateFlow<List<Process>> = _processes.asStateFlow()
     val processes: List<Process> get() = _processes.value
@@ -29,15 +32,15 @@ class ProcessManager(private val scope: CoroutineScope) {
 
     private fun startProcessWithRecovery(process: Process) {
         val handler = CoroutineExceptionHandler { _, exception ->
-            Log.e("ProcessManager", "Process ${process.id} crashed: ${exception.message}")
+            logger.error("ProcessManager", "Process ${process.id} crashed: ${exception.message}", exception)
             // Basic recovery loop for Alpha MVP
             scope.launch {
                 try {
                     delay(2000) // Backoff
-                    Log.i("ProcessManager", "Attempting to restart ${process.id}")
+                    logger.info("ProcessManager", "Attempting to restart ${process.id}")
                     startProcessWithRecovery(process)
                 } catch (e: Exception) {
-                    Log.e("ProcessManager", "Failed to recover ${process.id}")
+                    logger.error("ProcessManager", "Failed to recover ${process.id}", e)
                 }
             }
         }

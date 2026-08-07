@@ -1,14 +1,6 @@
 plugins {
-    id("com.android.library")
-}
-
-android {
-    namespace = "com.halo.engines.reasoning"
-    compileSdk = 36
-
-    defaultConfig {
-        minSdk = 26
-    }
+    id("java-library")
+    id("org.jetbrains.kotlin.jvm")
 }
 
 dependencies {
@@ -19,10 +11,5 @@ dependencies {
     implementation(project(":libraries:halo-cognition-language"))
     api(libs.kotlinx.datetime)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
-    implementation("io.github.ljcamargo:llamacpp-kotlin:0.4.0")
-    
-    // HTTP & JSON for Ollama Provider
-    implementation(libs.okhttp)
-    implementation(libs.logging.interceptor)
-    implementation(libs.moshi.kotlin)
+    // LLM dependencies belong in providers, not here
 }

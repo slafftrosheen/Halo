@@ -1,6 +1,6 @@
-package com.halo.engines.speech
+package com.halo.sdk.provider
 
-import com.halo.sdk.runtime.AudioFrame
+import com.halo.sdk.host.AudioFrame
 
 data class WakeWordResult(
     val detected: Boolean,
@@ -11,4 +11,5 @@ data class WakeWordResult(
 
 interface WakeWordDetector {
     fun process(frame: AudioFrame): WakeWordResult
+    suspend fun health(): Boolean
 }

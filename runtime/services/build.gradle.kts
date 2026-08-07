@@ -1,15 +1,7 @@
 plugins {
-    id("com.android.library")
+    id("java-library")
+    id("org.jetbrains.kotlin.jvm")
     }
-
-android {
-    namespace = "com.halo.runtime.services"
-    compileSdk = 34
-
-    defaultConfig {
-        minSdk = 26
-    }
-}
 
 dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
@@ -19,5 +11,4 @@ dependencies {
     api(project(":sdk:provider-sdk"))
     api(project(":runtime:plugins"))
 }
-
 

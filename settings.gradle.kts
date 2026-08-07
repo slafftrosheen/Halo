@@ -46,6 +46,7 @@ include(":sdk:runtime-sdk")
 include(":sdk:driver-sdk")
 include(":sdk:provider-sdk")
 include(":sdk:plugin-sdk")
+include(":sdk:host-sdk")
 
 include(":engines:ai")
 include(":engines:perception")
@@ -69,6 +70,8 @@ include(":engines:diagnostics")
 
 include(":drivers:heycyan")
 include(":providers:llamacpp")
+include(":providers:android-stt")
+include(":providers:android-tts")
 
 include(":libraries:common")
 include(":libraries:halo-cognition-language")

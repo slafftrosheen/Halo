@@ -12,13 +12,22 @@ import kotlinx.coroutines.launch
 
 class PlanningEngine {
     fun createPlan(goal: Goal): ExecutionPlan {
-        // Alpha: Simple mapping from Goal to a single-task ExecutionPlan
-        val actionTask = com.halo.runtime.cognition.SystemTask(
-            command = "Execute Goal ${goal.type} ${goal.payload}"
-        )
+        // Alpha: Map Goal to appropriate ExecutionPlan task
+        val task = when (goal.type) {
+            com.halo.icl.ontology.GoalType.CONVERSATION -> {
+                val topic = (goal.payload as? com.halo.icl.ontology.ConversationPayload)?.topic ?: ""
+                com.halo.runtime.cognition.CommunicationTask(
+                    targetId = "user",
+                    payload = topic
+                )
+            }
+            else -> com.halo.runtime.cognition.SystemTask(
+                command = "Execute Goal ${goal.type} ${goal.payload}"
+            )
+        }
         return ExecutionPlan(
             goal = goal,
-            tasks = listOf(actionTask)
+            tasks = listOf(task)
         )
     }
 }

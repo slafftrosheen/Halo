@@ -8,5 +8,5 @@ class FakeRuntimeContext(
     override val queryBus: QueryBus,
     override val scheduler: RuntimeScheduler,
     override val registry: ServiceRegistry,
-    override val logger: HaloLogger
+    override val logger: RuntimeLogger
 ) : RuntimeContext

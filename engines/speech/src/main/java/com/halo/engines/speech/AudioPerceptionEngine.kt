@@ -27,9 +27,9 @@ data class EngineMetrics(
 )
 
 class AudioPerceptionEngine(
-    private val audioSource: AudioSource,
-    private val vad: VoiceActivityDetector,
-    private val preprocessor: AudioPreprocessor
+    private val audioSource: com.halo.sdk.host.AudioSource,
+    private val preprocessor: AudioPreprocessor,
+    private val audioPipeline: AudioPipeline
 ) : Engine {
 
     override val metadata = EngineMetadata(
@@ -111,7 +111,6 @@ class AudioPerceptionEngine(
     }
 
     private suspend fun runCaptureLoop(eventBus: EventBus) {
-        val buffer = AudioBuffer()
         try {
             try {
                 sourceStartAttempted.set(true)
@@ -131,29 +130,12 @@ class AudioPerceptionEngine(
 
             _health.value = EngineHealth.Healthy
             eventBus.publish(ListeningStarted())
-
-            var isRecording = false
+            audioPipeline.reset()
+            
             audioSource.frames.collect { rawFrame ->
                 metrics.framesProcessed++
                 val frame = preprocessor.process(rawFrame)
-
-                if (vad.isSpeech(frame)) {
-                    if (!isRecording) {
-                        isRecording = true
-                        eventBus.publish(SpeechStarted())
-                    }
-                    buffer.append(frame)
-                } else if (isRecording) {
-                    isRecording = false
-                    eventBus.publish(SpeechEnded())
-
-                    val segment = buffer.snapshot()
-                    try {
-                        enqueueSegment(eventBus, segment)
-                    } finally {
-                        buffer.clear()
-                    }
-                }
+                audioPipeline.processFrame(frame)
             }
         } catch (exception: CancellationException) {
             throw exception
@@ -166,28 +148,12 @@ class AudioPerceptionEngine(
         } finally {
             withContext(NonCancellable) {
                 stopAudioSource()
-                buffer.clear()
+                audioPipeline.reset()
             }
         }
     }
 
-    private suspend fun enqueueSegment(
-        eventBus: EventBus,
-        segment: SpeechSegment
-    ) {
-        metrics.segmentsCaptured++
-        try {
-            eventBus.publish(SpeechSegmentCaptured(segment = segment))
-        } catch (exception: Exception) {
-            throw exception
-        }
 
-        context.runtime.logger.info(
-            category = "speech",
-            message = "Captured segment durationMs=${segment.durationMillis} " +
-                "pcmSamples=${segment.sampleCount} totalSegments=${metrics.segmentsCaptured}"
-        )
-    }
 
     private suspend fun reportCaptureFailure(
         eventBus: EventBus,

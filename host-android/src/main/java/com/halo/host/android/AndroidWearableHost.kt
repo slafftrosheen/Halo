@@ -1,12 +1,12 @@
 package com.halo.host.android
 
 import com.halo.host.android.audio.AndroidAudioSource
-import com.halo.sdk.runtime.AudioOutput
-import com.halo.sdk.runtime.AudioSource
-import com.halo.sdk.runtime.ButtonEvent
-import com.halo.sdk.runtime.ConnectionState
-import com.halo.sdk.runtime.DeviceContext
-import com.halo.sdk.runtime.WearableHost
+import com.halo.sdk.host.AudioOutput
+import com.halo.sdk.host.AudioSource
+import com.halo.sdk.host.ButtonEvent
+import com.halo.sdk.host.ConnectionState
+import com.halo.sdk.host.DeviceContext
+import com.halo.sdk.host.WearableHost
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

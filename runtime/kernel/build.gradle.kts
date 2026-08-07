@@ -1,14 +1,6 @@
 plugins {
-    id("com.android.library")
-}
-
-android {
-    namespace = "com.halo.runtime.kernel"
-    compileSdk = 34
-
-    defaultConfig {
-        minSdk = 26
-    }
+    id("java-library")
+    id("org.jetbrains.kotlin.jvm")
 }
 
 dependencies {

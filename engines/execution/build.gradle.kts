@@ -1,7 +1,8 @@
 plugins {
-    id("com.android.library")
+    id("java-library")
+    id("org.jetbrains.kotlin.jvm")
 }
-android { namespace = "com.halo.engines.execution"; compileSdk = 34; defaultConfig { minSdk = 26 } }
+
 dependencies { 
     implementation(project(":sdk:runtime-sdk")) 
     implementation(project(":runtime:cognition"))

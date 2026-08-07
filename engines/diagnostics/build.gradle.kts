@@ -1,15 +1,7 @@
 plugins {
-    id("com.android.library")
+    id("java-library")
+    id("org.jetbrains.kotlin.jvm")
     }
-
-android {
-    namespace = "com.halo.engines.diagnostics"
-    compileSdk = 34
-
-    defaultConfig {
-        minSdk = 26
-    }
-}
 
 dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
@@ -17,5 +9,4 @@ dependencies {
     implementation(project(":runtime:services"))
     implementation(project(":libraries:common"))
 }
-
 

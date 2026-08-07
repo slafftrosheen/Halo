@@ -1,8 +1,8 @@
 package com.halo.drivers.heycyan
 
 import com.halo.sdk.driver.Driver
-import com.halo.sdk.runtime.AudioFrame
-import com.halo.sdk.runtime.AudioSource
+import com.halo.sdk.host.AudioFrame
+import com.halo.sdk.host.AudioSource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 

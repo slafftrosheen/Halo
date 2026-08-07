@@ -1,7 +1,7 @@
-package com.halo.engines.reasoning.providers
+package com.halo.providers.llamacpp
 
 import android.content.Context
-import com.halo.engines.reasoning.models.ModelDownloadManager
+
 import org.nehuatl.llamacpp.LlamaHelper
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.CoroutineScope
@@ -12,10 +12,16 @@ import kotlinx.coroutines.flow.flow
 import java.io.File
 import android.util.Log
 
+import com.halo.sdk.provider.InferenceProvider
+import com.halo.sdk.provider.AIRequest
+import com.halo.sdk.provider.AIResponse
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.flow.map
+
 class NativeLlamaProvider(
     private val context: Context,
     private val downloadManager: ModelDownloadManager
-) {
+) : InferenceProvider {
     private val TAG = "NativeLlamaProvider"
     private var engine: LlamaHelper? = null
     private val scope = CoroutineScope(Dispatchers.IO)
@@ -59,7 +65,33 @@ class NativeLlamaProvider(
         }
     }
 
-    fun generate(prompt: String): Flow<String> = flow {
+    override suspend fun health(): Boolean {
+        return downloadManager.activeModelId.value != null && loadModelIfNeeded()
+    }
+
+    override suspend fun complete(request: AIRequest): AIResponse {
+        val startTime = System.currentTimeMillis()
+        val prompt = request.conversation.messages.joinToString("\n") { it.content }
+        var result = ""
+        try {
+            stream(prompt).collect { chunk ->
+                result += chunk
+            }
+            return AIResponse(
+                text = result,
+                finishReason = "stop",
+                latencyMs = System.currentTimeMillis() - startTime
+            )
+        } catch (e: Exception) {
+            return AIResponse(
+                text = "[Error: ${e.message}]",
+                finishReason = "error",
+                latencyMs = System.currentTimeMillis() - startTime
+            )
+        }
+    }
+
+    override fun stream(prompt: String): Flow<String> = flow {
         if (!loadModelIfNeeded()) {
             emit("[Error: Engine not loaded or no active model]")
             return@flow

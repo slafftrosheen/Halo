@@ -1,9 +1,9 @@
-package com.halo.engines.reasoning.providers
+package com.halo.providers.llamacpp
 
 import android.util.Log
 import com.halo.sdk.provider.AIRequest
 import com.halo.sdk.provider.AIResponse
-import com.halo.sdk.provider.Provider
+
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.Dispatchers
@@ -19,9 +19,11 @@ import okhttp3.logging.HttpLoggingInterceptor
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
+import com.halo.sdk.provider.InferenceProvider
+
 class OllamaProvider(
     private val baseUrl: String = "http://10.0.2.2:11434"
-) : Provider {
+) : InferenceProvider {
 
     private val TAG = "OllamaProvider"
     private val JSON = "application/json; charset=utf-8".toMediaType()
@@ -50,7 +52,7 @@ class OllamaProvider(
         client.connectionPool.idleConnectionCount() 
     }
 
-    suspend fun healthCheck(): Boolean {
+    override suspend fun health(): Boolean {
         return withContext(Dispatchers.IO) {
             try {
                 val request = Request.Builder()
@@ -117,9 +119,9 @@ class OllamaProvider(
         }
     }
 
-    fun generate(prompt: String, model: String = "llama3"): Flow<String> = flow {
+    override fun stream(prompt: String): Flow<String> = flow {
         val ollamaRequest = OllamaGenerateRequest(
-            model = model,
+            model = "llama3",
             prompt = prompt,
             stream = true
         )

@@ -2,6 +2,7 @@ package com.halo.sdk.runtime
 
 import java.time.Duration
 import java.time.Instant
+import com.halo.sdk.host.DeviceContext
 
 data class RuntimeHealth(
     val healthy: Boolean,

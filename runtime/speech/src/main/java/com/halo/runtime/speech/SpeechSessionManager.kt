@@ -1,6 +1,6 @@
 package com.halo.runtime.speech
 
-import com.halo.engines.speech.SpeechRecognizer
+
 import com.halo.sdk.runtime.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -58,56 +58,35 @@ class SpeechSessionManager(
     }
 
     private fun observeRecognitionEvents() {
-        // Driver Events -> Domain Events Translation
+        // Domain Events -> State Translation
         scope.launch {
-            eventBus.observe(com.halo.engines.speech.RawRecognitionStarted::class.java).collect {
+            eventBus.observe(RecognitionStarted::class.java).collect {
                 _sessionState.value = SpeechSessionState.Recognizing
-                eventBus.publish(RecognitionStarted(id = java.util.UUID.randomUUID().toString()))
             }
         }
         scope.launch {
-            eventBus.observe(com.halo.engines.speech.RawRecognitionResult::class.java).collect { event ->
+            eventBus.observe(SpeechRecognized::class.java).collect { event ->
                 _sessionState.value = SpeechSessionState.Thinking
-                eventBus.publish(SpeechRecognized(id = java.util.UUID.randomUUID().toString(), text = event.text))
             }
         }
         scope.launch {
-            eventBus.observe(com.halo.engines.speech.RawRecognitionFinished::class.java).collect {
-                eventBus.publish(RecognitionFinished(id = java.util.UUID.randomUUID().toString()))
+            eventBus.observe(RecognitionFinished::class.java).collect {
+                // Keep Thinking until TTS starts or outcome finishes
             }
         }
         scope.launch {
-            eventBus.observe(com.halo.engines.speech.RawRecognitionFailure::class.java).collect { event ->
-                eventBus.publish(RecognitionFailed(id = java.util.UUID.randomUUID().toString(), reason = event.message ?: event.reason.name))
+            eventBus.observe(RecognitionFailed::class.java).collect { event ->
                 _sessionState.value = SpeechSessionState.Recovering
                 delay(500)
                 _sessionState.value = SpeechSessionState.Idle
             }
         }
         
-        // Listen for TTS events
+        // Listen for Outcome to return to Idle
         scope.launch {
-            eventBus.observe(com.halo.engines.speech.SpeechOutputStarted::class.java).collect {
-                _sessionState.value = SpeechSessionState.Speaking
-            }
-        }
-        scope.launch {
-            eventBus.observe(com.halo.engines.speech.SpeechOutputFinished::class.java).collect {
-                if (_sessionState.value == SpeechSessionState.Speaking) {
-                    _sessionState.value = SpeechSessionState.Idle
-                }
-            }
-        }
-
-        // Listen for Outcome to return to Idle if we aren't speaking
-        scope.launch {
-            eventBus.observe(OutcomePublished::class.java).collect {
+            eventBus.observe(OutcomePublished::class.java).collect { event ->
                 if (_sessionState.value == SpeechSessionState.Thinking) {
-                    // Small delay to allow TTS to start if applicable
-                    delay(100)
-                    if (_sessionState.value == SpeechSessionState.Thinking) {
-                        _sessionState.value = SpeechSessionState.Idle
-                    }
+                    _sessionState.value = SpeechSessionState.Idle
                 }
             }
         }

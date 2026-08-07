@@ -1,13 +1,6 @@
 plugins {
-    id("com.android.library")
-}
-
-android {
-    namespace = "com.halo.runtime.speech"
-    compileSdk = 36
-    defaultConfig {
-        minSdk = 26
-    }
+    id("java-library")
+    id("org.jetbrains.kotlin.jvm")
 }
 
 dependencies {
@@ -15,4 +8,5 @@ dependencies {
     implementation(project(":sdk:runtime-sdk"))
     implementation(project(":engines:speech")) // Need SpeechSegment and AudioPerceptionEngine references for now
     implementation(project(":engines:agents"))
+    implementation(project(":sdk:provider-sdk"))
 }

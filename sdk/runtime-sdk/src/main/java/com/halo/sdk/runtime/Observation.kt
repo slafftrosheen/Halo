@@ -1,6 +1,7 @@
 package com.halo.sdk.runtime
 
 import java.util.UUID
+import com.halo.sdk.host.ObservationSource
 
 @JvmInline
 value class ObservationId(val value: String)

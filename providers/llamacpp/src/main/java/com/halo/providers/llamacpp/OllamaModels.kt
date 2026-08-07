@@ -1,4 +1,4 @@
-package com.halo.engines.reasoning.providers
+package com.halo.providers.llamacpp
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass

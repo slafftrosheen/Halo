@@ -144,6 +144,7 @@ dependencies {
     implementation(project(":engines:ai"))
     implementation(project(":host-android"))
     implementation(project(":sdk:driver-sdk"))
+    implementation(project(":sdk:host-sdk"))
     implementation(project(":sdk:provider-sdk"))
     implementation(project(":sdk:runtime-sdk"))
     implementation(project(":libraries:common"))
@@ -184,6 +185,9 @@ dependencies {
 }
 dependencies {
     implementation(project(":runtime:cognition"))
+    implementation(project(":providers:llamacpp"))
+    implementation(project(":providers:android-stt"))
+    implementation(project(":providers:android-tts"))
 }
 
 tasks.register<Copy>("copyApkToReleases") {
