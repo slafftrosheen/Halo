@@ -25,3 +25,10 @@ data class EngineStopped(override val engineId: String, override val timestamp: 
 
 // Provider Events
 data class ProviderConnected(val providerId: String, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
+
+// Planning & Execution Events
+data class GoalCreated(val goalId: String, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
+data class PlanGenerated(val planId: String, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
+data class ExecutionStarted(val planId: String, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
+data class ExecutionFinished(val planId: String, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
+data class OutcomePublished(val outcome: String, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent

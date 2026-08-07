@@ -37,8 +37,8 @@ class ConsoleUiMapper(private val selectedTab: Int) : RuntimeUiMapper<ConsoleUiS
                 EngineStatus(
                     name = it.id,
                     isHealthy = it.health == com.halo.sdk.runtime.EngineHealth.Healthy,
-                    latencyMs = null, // Unknown until metrics available
-                    queueSize = 0
+                    latencyMs = it.metrics.latencyMs,
+                    queueSize = it.metrics.queueSize
                 )
             }
         )

@@ -37,16 +37,29 @@ data class ProviderSnapshot(
     val status: String
 )
 
+data class FactSummary(
+    val id: String,
+    val type: String,
+    val createdAt: Instant
+)
+
 data class BlackboardSnapshot(
     val factCount: Int,
-    val recentFacts: List<String>
+    val recentFacts: List<FactSummary>
+)
+
+data class EngineMetrics(
+    val latencyMs: Long?,
+    val uptime: Duration,
+    val eventsProcessed: Long,
+    val queueSize: Int,
+    val cpuUsage: Double
 )
 
 data class EngineSnapshot(
     val id: String,
     val state: EngineState,
     val health: EngineHealth,
-    val uptime: Duration,
-    val eventsProcessed: Long,
+    val metrics: EngineMetrics,
     val lastActivity: Instant
 )
