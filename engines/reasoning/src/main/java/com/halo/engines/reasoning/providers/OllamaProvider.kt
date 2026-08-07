@@ -1,0 +1,165 @@
+package com.halo.engines.reasoning.providers
+
+import android.util.Log
+import com.halo.sdk.provider.AIRequest
+import com.halo.sdk.provider.AIResponse
+import com.halo.sdk.provider.Provider
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.logging.HttpLoggingInterceptor
+import java.io.IOException
+import java.util.concurrent.TimeUnit
+
+class OllamaProvider(
+    private val baseUrl: String = "http://10.0.2.2:11434"
+) : Provider {
+
+    private val TAG = "OllamaProvider"
+    private val JSON = "application/json; charset=utf-8".toMediaType()
+
+    private val client: OkHttpClient by lazy {
+        val logging = HttpLoggingInterceptor { Log.d(TAG, it) }
+        logging.level = HttpLoggingInterceptor.Level.BASIC
+
+        OkHttpClient.Builder()
+            .addInterceptor(logging)
+            .connectTimeout(10, TimeUnit.SECONDS)
+            .readTimeout(120, TimeUnit.SECONDS)
+            .build()
+    }
+
+    private val moshi = Moshi.Builder()
+        .addLast(KotlinJsonAdapterFactory())
+        .build()
+
+    private val generateRequestAdapter = moshi.adapter(OllamaGenerateRequest::class.java)
+    private val generateResponseAdapter = moshi.adapter(OllamaGenerateResponse::class.java)
+
+    suspend fun connect() {
+        Log.i(TAG, "Connecting to Ollama at $baseUrl")
+        // Just warm up the client
+        client.connectionPool.idleConnectionCount() 
+    }
+
+    suspend fun healthCheck(): Boolean {
+        return withContext(Dispatchers.IO) {
+            try {
+                val request = Request.Builder()
+                    .url("$baseUrl/api/tags")
+                    .get()
+                    .build()
+
+                client.newCall(request).execute().use { response ->
+                    val isHealthy = response.isSuccessful
+                    Log.i(TAG, "Health check result: $isHealthy")
+                    isHealthy
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Health check failed: ${e.message}")
+                false
+            }
+        }
+    }
+
+    override suspend fun complete(request: AIRequest): AIResponse {
+        return withContext(Dispatchers.IO) {
+            val startTime = System.currentTimeMillis()
+            val prompt = request.conversation.messages.lastOrNull()?.content ?: ""
+            
+            val ollamaRequest = OllamaGenerateRequest(
+                model = "llama3", // Assuming llama3 as the default
+                prompt = prompt,
+                stream = false,
+                options = mapOf(
+                    "temperature" to request.temperature,
+                    "num_predict" to request.maxTokens
+                )
+            )
+
+            val body = generateRequestAdapter.toJson(ollamaRequest).toRequestBody(JSON)
+            val httpRequest = Request.Builder()
+                .url("$baseUrl/api/generate")
+                .post(body)
+                .build()
+
+            try {
+                client.newCall(httpRequest).execute().use { response ->
+                    if (!response.isSuccessful) {
+                        throw IOException("Unexpected code $response")
+                    }
+                    val json = response.body?.string() ?: throw IOException("Empty body")
+                    val ollamaResponse = generateResponseAdapter.fromJson(json) 
+                        ?: throw IOException("Failed to parse response")
+
+                    AIResponse(
+                        text = ollamaResponse.response,
+                        finishReason = if (ollamaResponse.done) "stop" else "length",
+                        latencyMs = System.currentTimeMillis() - startTime
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Completion failed", e)
+                AIResponse(
+                    text = "Error: ${e.message}",
+                    finishReason = "error",
+                    latencyMs = System.currentTimeMillis() - startTime
+                )
+            }
+        }
+    }
+
+    fun generate(prompt: String, model: String = "llama3"): Flow<String> = flow {
+        val ollamaRequest = OllamaGenerateRequest(
+            model = model,
+            prompt = prompt,
+            stream = true
+        )
+
+        val body = generateRequestAdapter.toJson(ollamaRequest).toRequestBody(JSON)
+        val request = Request.Builder()
+            .url("$baseUrl/api/generate")
+            .post(body)
+            .build()
+
+        try {
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) throw IOException("Unexpected code $response")
+
+                val source = response.body?.source() ?: throw IOException("Empty body")
+                while (!source.exhausted()) {
+                    val line = source.readUtf8LineStrict()
+                    if (line.isNotBlank()) {
+                        try {
+                            val ollamaResponse = generateResponseAdapter.fromJson(line)
+                            if (ollamaResponse != null) {
+                                emit(ollamaResponse.response)
+                                if (ollamaResponse.done) {
+                                    break
+                                }
+                            }
+                        } catch (e: Exception) {
+                            Log.e(TAG, "JSON parsing error on line: $line", e)
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Streaming failed", e)
+            emit("[Error: ${e.message}]")
+        }
+    }.flowOn(Dispatchers.IO)
+
+    fun disconnect() {
+        Log.i(TAG, "Disconnecting from Ollama")
+        client.connectionPool.evictAll()
+    }
+}

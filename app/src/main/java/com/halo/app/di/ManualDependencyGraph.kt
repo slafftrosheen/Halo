@@ -39,6 +39,7 @@ import com.halo.host.android.capability.AndroidMediaCapability
 import com.halo.host.android.capability.AndroidNavigationCapability
 import com.halo.engines.reasoning.models.ModelDownloadManager
 import com.halo.engines.reasoning.providers.NativeLlamaProvider
+import com.halo.engines.reasoning.providers.OllamaProvider
 import com.halo.runtime.observer.DefaultRuntimeObserver
 import com.halo.runtime.observer.TimelineRecorder
 import com.halo.runtime.observer.DefaultTimelineEventMapper
@@ -83,6 +84,7 @@ object ManualDependencyGraph {
     val workingMemoryProcess by lazy { WorkingMemoryProcess(perceptionBus, cognitiveBus, executionBus) }
     val modelDownloadManager by lazy { ModelDownloadManager(applicationContext) }
     val nativeLlamaProvider by lazy { NativeLlamaProvider(applicationContext, modelDownloadManager) }
+    val ollamaProvider by lazy { OllamaProvider() }
 
     
     // Alpha Architecture Services

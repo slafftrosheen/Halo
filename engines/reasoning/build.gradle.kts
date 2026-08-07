@@ -20,4 +20,9 @@ dependencies {
     api(libs.kotlinx.datetime)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
     implementation("io.github.ljcamargo:llamacpp-kotlin:0.4.0")
+    
+    // HTTP & JSON for Ollama Provider
+    implementation(libs.okhttp)
+    implementation(libs.logging.interceptor)
+    implementation(libs.moshi.kotlin)
 }
