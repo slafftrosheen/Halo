@@ -35,6 +35,7 @@ class CaptureSessionRecorder(
 
     fun start(
         scenario: String = "discovery",
+        captureId: String? = null,
         deviceAddress: String? = null,
         deviceName: String? = null,
         metadata: CaptureMetadata = CaptureMetadata()
@@ -43,7 +44,9 @@ class CaptureSessionRecorder(
             check(!active) { "A capture session is already active" }
             startedAt = now()
             endedAt = null
-            captureId = captureIdFactory(startedAt)
+            this.captureId = captureId?.also {
+                require(it.isNotBlank()) { "Capture ID must not be blank" }
+            } ?: captureIdFactory(startedAt)
             this.scenario = scenario
             this.deviceAddress = deviceAddress
             this.deviceName = deviceName
@@ -87,12 +90,33 @@ class CaptureSessionRecorder(
             } else {
                 endedAt = now()
                 appendEvent(CaptureEventKind.SESSION_FINISHED, endedAt!!)
-                active = false
                 buildCapture(endedAt)
             }
         } ?: return null
 
-        return store.save(capture)
+        return try {
+            val file = store.save(capture)
+            synchronized(lock) { active = false }
+            file
+        } catch (error: Throwable) {
+            // A duplicate or filesystem failure must not crash the UI coroutine.
+            // Leave no active session behind; the next explicit capture can retry.
+            abort()
+            throw error
+        }
+    }
+
+    /** Ends the in-memory session without persisting partial evidence. */
+    fun abort() {
+        synchronized(lock) {
+            active = false
+            captureId = null
+            endedAt = null
+            packets.clear()
+            advertisements.clear()
+            timeline.clear()
+            services.clear()
+        }
     }
 
     fun record(packet: BlePacket) {
@@ -252,6 +276,38 @@ class CaptureSessionRecorder(
         )
     }
 
+    override fun onRfcomm(channel: String, direction: PacketDirection, bytes: ByteArray) {
+        val characteristic = UUID.nameUUIDFromBytes("rfcomm:$channel".toByteArray())
+        record(
+            BlePacket(
+                sequence = 0L,
+                timestamp = now(),
+                direction = direction,
+                characteristic = characteristic,
+                payload = bytes.copyOf(),
+                transport = PacketTransport.RFCOMM,
+                transportChannel = channel
+            )
+        )
+    }
+
+    override fun onRfcommStateChanged(channel: String, connected: Boolean) {
+        synchronized(lock) {
+            if (active) {
+                appendEvent(
+                    kind = if (connected) {
+                        CaptureEventKind.RFCOMM_CHANNEL_CONNECTED
+                    } else {
+                        CaptureEventKind.RFCOMM_CHANNEL_DISCONNECTED
+                    },
+                    timestamp = now(),
+                    transport = PacketTransport.RFCOMM,
+                    transportChannel = channel
+                )
+            }
+        }
+    }
+
     private fun appendPacket(packet: BlePacket) {
         val packetIndex = packets.size
         packets += packet.copy(payload = packet.payload.copyOf())
@@ -277,7 +333,9 @@ class CaptureSessionRecorder(
         permissions: Int? = null,
         status: Int? = null,
         mtu: Int? = null,
-        newState: Int? = null
+        newState: Int? = null,
+        transport: PacketTransport? = null,
+        transportChannel: String? = null
     ) {
         timeline += CaptureEvent(
             sequence = nextSequence++,
@@ -293,7 +351,9 @@ class CaptureSessionRecorder(
             permissions = permissions,
             status = status,
             mtu = mtu,
-            newState = newState
+            newState = newState,
+            transport = transport,
+            transportChannel = transportChannel
         )
     }
 
@@ -394,5 +454,13 @@ class CompositePacketTracer(
 
     override fun onRx(characteristicUuid: UUID, bytes: ByteArray) = tracers.forEach {
         it.onRx(characteristicUuid, bytes.copyOf())
+    }
+
+    override fun onRfcomm(channel: String, direction: PacketDirection, bytes: ByteArray) = tracers.forEach {
+        it.onRfcomm(channel, direction, bytes.copyOf())
+    }
+
+    override fun onRfcommStateChanged(channel: String, connected: Boolean) = tracers.forEach {
+        it.onRfcommStateChanged(channel, connected)
     }
 }

@@ -38,12 +38,21 @@ class HeyCyanDiscoverySession(
         _selected.value = device.advertisement.address
     }
 
+    /** Clears the selected address before a new scan so stale devices cannot connect. */
+    fun clearSelection() {
+        selectedDevice = null
+        _selected.value = null
+    }
+
     /**
      * Connects only the device selected through [select]. Keeping this as the
      * sole connection entry point prevents a scan result from being connected
      * implicitly by a caller that bypasses the selection workflow.
      */
-    suspend fun connectSelected(scenario: String = "discovery") {
+    suspend fun connectSelected(
+        scenario: String = "discovery",
+        captureId: String? = null
+    ) {
         val device = selectedDevice
             ?: throw IllegalStateException("Select a BLE device before connecting")
         driver.connect(
@@ -51,19 +60,18 @@ class HeyCyanDiscoverySession(
             mode = HeyCyanConnectionMode.DISCOVERY,
             selectedName = device.advertisement.name,
             scenario = scenario,
+            captureId = captureId,
             advertisement = device.advertisement
         )
     }
 
     suspend fun disconnect() {
         driver.disconnect()
-        selectedDevice = null
-        _selected.value = null
+        clearSelection()
     }
 
     suspend fun shutdown() {
         driver.shutdown()
-        selectedDevice = null
-        _selected.value = null
+        clearSelection()
     }
 }

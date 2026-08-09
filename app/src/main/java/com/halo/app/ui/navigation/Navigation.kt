@@ -38,7 +38,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     object Home : Screen("home", "Home", Icons.Default.Home)
     object Timeline : Screen("timeline", "Timeline", Icons.Default.List)
     object Console : Screen("console", "Console", Icons.Default.Info)
-    object Discovery : Screen("heycyan-discovery", "Discovery", Icons.Default.Bluetooth)
+    object Discovery : Screen("heycyan-discovery", "BLE Capture", Icons.Default.Bluetooth)
     object Settings : Screen("settings", "Settings", Icons.Default.Settings)
 }
 

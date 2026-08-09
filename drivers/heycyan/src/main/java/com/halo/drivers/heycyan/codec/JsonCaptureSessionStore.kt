@@ -27,6 +27,13 @@ class JsonCaptureSessionStore(
         }
 
         val target = File(directory, "heycyan-${safeFileName(capture.captureId)}.json")
+        if (target.exists()) {
+            val existing = load(target)
+            require(existing == capture) {
+                "Capture ID already exists with different evidence: ${capture.captureId}"
+            }
+            return target
+        }
         val temporary = File(directory, "${target.name}.tmp")
         temporary.writeText(adapter.toJson(capture.toJsonModel()))
 
@@ -122,7 +129,9 @@ class JsonCaptureSessionStore(
                 timestamp = packet.timestamp,
                 direction = packet.direction,
                 characteristic = packet.characteristic.toString(),
-                payload = HexCodec.encode(packet.payload)
+                payload = HexCodec.encode(packet.payload),
+                transport = packet.transport,
+                transportChannel = packet.transportChannel
             )
         },
         services = services,
@@ -147,7 +156,9 @@ class JsonCaptureSessionStore(
                 timestamp = packet.timestamp,
                 direction = packet.direction,
                 characteristic = java.util.UUID.fromString(packet.characteristic),
-                payload = HexCodec.decode(packet.payload)
+                payload = HexCodec.decode(packet.payload),
+                transport = packet.transport,
+                transportChannel = packet.transportChannel
             )
         },
         services = services,
@@ -187,5 +198,7 @@ private data class BlePacketJson(
     val timestamp: Long,
     val direction: PacketDirection,
     val characteristic: String,
-    val payload: String
+    val payload: String,
+    val transport: PacketTransport = PacketTransport.BLE,
+    val transportChannel: String? = null
 )

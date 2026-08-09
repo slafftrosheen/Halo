@@ -3,18 +3,15 @@
 import java.util.UUID
 
 /**
- * Observability interface for raw BLE discovery and traffic.
+ * Observability interface for raw BLE and RFCOMM transport.
  *
- * The discovery callbacks deliberately expose metadata without interpreting any
- * payload. This keeps protocol reverse-engineering separate from transport logging.
+ * Callers receive bytes and metadata only. Protocol reverse-engineering remains
+ * separate from transport logging.
  */
 interface PacketTracer {
     fun onConnectionStateChanged(status: Int, newState: Int) = Unit
-
     fun onReady() = Unit
-
     fun onMtuRequested(mtu: Int) = Unit
-
     fun onDiscoveredService(serviceUuid: UUID) = Unit
 
     fun onDiscoveredService(serviceUuid: UUID, serviceType: Int) {
@@ -44,9 +41,9 @@ interface PacketTracer {
     ) = Unit
 
     fun onDescriptorWrite(descriptorUuid: UUID, status: Int) = Unit
-
     fun onMtuChanged(mtu: Int) = Unit
-
     fun onTx(characteristicUuid: UUID, bytes: ByteArray)
     fun onRx(characteristicUuid: UUID, bytes: ByteArray)
+    fun onRfcomm(channel: String, direction: PacketDirection, bytes: ByteArray) = Unit
+    fun onRfcommStateChanged(channel: String, connected: Boolean) = Unit
 }

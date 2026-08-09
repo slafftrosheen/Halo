@@ -27,6 +27,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.halo.drivers.heycyan.HeyCyanDiscoverySession
+import com.halo.drivers.heycyan.CaptureScenario
 import com.halo.drivers.heycyan.ble.DiscoveredBleDevice
 import com.halo.sdk.driver.DriverState
 import kotlinx.coroutines.Job
@@ -41,6 +42,7 @@ fun HeyCyanDiscoveryScreen(context: Context) {
     val state by session.state.collectAsState()
     var scanJob by remember { mutableStateOf<Job?>(null) }
     var message by remember { mutableStateOf<String?>(null) }
+    var selectedScenario by remember { mutableStateOf(CaptureScenario.BOOT) }
 
     DisposableEffect(session) {
         onDispose {
@@ -56,9 +58,26 @@ fun HeyCyanDiscoveryScreen(context: Context) {
         Text("BLE PROTOCOL DISCOVERY", style = MaterialTheme.typography.headlineSmall)
         Text("Raw BLE evidence collection. The selected device is not assumed to be HeyCyan. No protocol commands are sent.")
 
+        Text("Scenario: ${selectedScenario.label}", style = MaterialTheme.typography.titleMedium)
+        Text(selectedScenario.instructions, style = MaterialTheme.typography.bodySmall)
+        LazyColumn(
+            modifier = Modifier.height(110.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(CaptureScenario.entries, key = { it.id }) { scenario ->
+                Button(
+                    enabled = state == DriverState.Disconnected,
+                    onClick = { selectedScenario = scenario }
+                ) {
+                    Text(scenario.label)
+                }
+            }
+        }
+
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(onClick = {
                 devices.clear()
+                session.clearSelection()
                 message = "Scanning..."
                 scanJob?.cancel()
                 scanJob = scope.launch {
@@ -75,18 +94,26 @@ fun HeyCyanDiscoveryScreen(context: Context) {
                 enabled = selectedAddress != null && state is DriverState.Disconnected,
                 onClick = {
                     scope.launch {
-                        runCatching { session.connectSelected() }
+                        runCatching {
+                            session.connectSelected(
+                                scenario = selectedScenario.id,
+                                captureId = selectedScenario.id
+                            )
+                        }
                             .onSuccess { message = "Connected; GATT discovery and subscriptions complete." }
                             .onFailure { message = it.message }
                     }
                 }
             ) { Text("Connect") }
             Button(
-                enabled = state != DriverState.Disconnected,
+                enabled = state != DriverState.Disconnected || selectedAddress != null,
                 onClick = {
                     scope.launch {
-                        session.disconnect()
-                        message = "Capture saved under captures/heycyan."
+                        runCatching { session.disconnect() }
+                            .onSuccess {
+                                message = "Capture saved under captures/heycyan, or discarded if connection did not complete."
+                            }
+                            .onFailure { message = "Capture could not be saved: ${it.message ?: "unknown error"}" }
                     }
                 }
             ) { Text("Save Capture") }

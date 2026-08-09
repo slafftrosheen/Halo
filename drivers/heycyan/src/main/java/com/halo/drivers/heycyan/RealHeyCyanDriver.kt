@@ -1,9 +1,13 @@
 package com.halo.drivers.heycyan
 
 import android.annotation.SuppressLint
+import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothManager
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Build
+import com.halo.drivers.heycyan.HeyCyanDeviceController
+import com.halo.drivers.heycyan.HeyCyanDeviceControllerImpl
 import com.halo.drivers.heycyan.ble.HeyCyanBleScanner
 import com.halo.drivers.heycyan.ble.HeyCyanGattClient
 import com.halo.drivers.heycyan.codec.LoggingPacketTracer
@@ -12,7 +16,7 @@ import com.halo.drivers.heycyan.codec.CaptureMetadata
 import com.halo.drivers.heycyan.codec.CompositePacketTracer
 import com.halo.drivers.heycyan.codec.JsonCaptureSessionStore
 import com.halo.drivers.heycyan.codec.HeyCyanCommandEncoder
-import com.halo.drivers.heycyan.codec.HeyCyanEventDecoder
+import com.halo.drivers.heycyan.HeyCyanEventDecoder
 import com.halo.drivers.heycyan.protocol.ButtonType
 import com.halo.drivers.heycyan.protocol.HeyCyanCommand
 import com.halo.drivers.heycyan.protocol.HeyCyanEvent
@@ -32,6 +36,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import java.io.File
+import com.halo.drivers.heycyan.rfcomm.HeyCyanRfcommClient
 
 /**
  * Real HeyCyan transport driver.
@@ -56,6 +61,7 @@ class RealHeyCyanDriver(
     )
     val scanner = HeyCyanBleScanner(context)
     private val gattClient = HeyCyanGattClient(context, tracer)
+    private val rfcommClient = HeyCyanRfcommClient(context, tracer)
 
     private val _events = MutableSharedFlow<DeviceEvent>(extraBufferCapacity = 64)
     override val events: Flow<DeviceEvent> = _events.asSharedFlow()
@@ -63,6 +69,7 @@ class RealHeyCyanDriver(
     private val eventScope = kotlinx.coroutines.CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var incomingEventJob: Job? = null
     private var connectionMode: HeyCyanConnectionMode? = null
+    private var deviceController: HeyCyanDeviceController? = null
 
     override suspend fun initialize() = Unit
 
@@ -77,6 +84,7 @@ class RealHeyCyanDriver(
         mode: HeyCyanConnectionMode,
         selectedName: String? = null,
         scenario: String = "discovery",
+        captureId: String? = null,
         advertisement: com.halo.drivers.heycyan.ble.BleAdvertisement? = null
     ) {
         require(selectedAddress.isNotBlank()) { "Selected BLE address must not be blank" }
@@ -84,7 +92,11 @@ class RealHeyCyanDriver(
         if (canDecodeEvents(mode)) {
             startIncomingEventDecoder()
         }
-        captureRecorder.start(scenario = scenario, metadata = captureMetadata())
+        captureRecorder.start(
+            scenario = scenario,
+            captureId = captureId,
+            metadata = captureMetadata()
+        )
         gattClient.markScanning()
 
         try {
@@ -101,32 +113,48 @@ class RealHeyCyanDriver(
                     )
                 )
             }
-            gattClient.connect(selectedAddress)
-            gattClient.awaitReady()
+            val rfcommChannels = rfcommClient.connect(selectedAddress).getOrElse { emptyList() }
+            val gattReady = runCatching {
+                gattClient.connect(selectedAddress)
+                gattClient.awaitReady()
+                true
+            }.getOrDefault(false)
+            if (gattReady && mode == HeyCyanConnectionMode.RUNTIME) {
+                initializeDeviceController()
+            }
+            check(isUsableDiscoveryTransport(rfcommChannels, gattReady)) {
+                "No usable HeyCyan transport connected for $selectedAddress"
+            }
+            if (mode == HeyCyanConnectionMode.RUNTIME) {
+                check(gattReady) { "Runtime mode requires verified BLE GATT readiness" }
+            }
             if (canDecodeEvents(mode)) {
                 _events.emit(DeviceEvent.Ready(System.currentTimeMillis()))
             }
         } catch (error: CancellationException) {
-            captureRecorder.stop()
+            captureRecorder.abort()
             throw error
         } catch (error: Throwable) {
             gattClient.fail(error)
-            captureRecorder.stop()
+            captureRecorder.abort()
             throw error
         }
     }
 
     override suspend fun disconnect() {
+        rfcommClient.disconnect()
         gattClient.disconnect()
         gattClient.awaitDisconnected()
         incomingEventJob?.cancel()
         incomingEventJob = null
         connectionMode = null
-        captureRecorder.stop()
+        deviceController = null
+        runCatching { captureRecorder.stop() }
     }
 
     override suspend fun shutdown() {
         disconnect()
+        rfcommClient.shutdown()
         eventScope.coroutineContext[Job]?.cancel()
     }
 
@@ -147,6 +175,22 @@ class RealHeyCyanDriver(
         }
     }
 
+    private fun initializeDeviceController() {
+        val commandChar = gattClient.findCharacteristicByProperty(BluetoothGattCharacteristic.PROPERTY_WRITE)
+        val notifyChar = gattClient.findCharacteristicByProperty(BluetoothGattCharacteristic.PROPERTY_NOTIFY)
+        if (commandChar != null && notifyChar != null) {
+            val encoder = HeyCyanCommandEncoder(commandChar.uuid, tracer)
+            val decoder = HeyCyanEventDecoder()
+            deviceController = HeyCyanDeviceControllerImpl(
+                gattClient = gattClient,
+                commandEncoder = encoder,
+                eventDecoder = decoder,
+                commandCharacteristic = commandChar.uuid,
+                notificationCharacteristic = notifyChar.uuid
+            )
+        }
+    }
+
     private fun startIncomingEventDecoder() {
         if (incomingEventJob != null) return
         val decoder = eventDecoder
@@ -164,29 +208,42 @@ class RealHeyCyanDriver(
     }
 
     private suspend fun emitDeviceEvent(
-        event: HeyCyanEvent,
+        event: HeyCyanBleEvent,
         characteristic: java.util.UUID,
         payload: ByteArray
     ) {
         val timestamp = System.currentTimeMillis()
         when (event) {
-            is HeyCyanEvent.BatteryUpdated -> {
+            is HeyCyanBleEvent.Battery -> {
                 _events.emit(DeviceEvent.BatteryLevel(timestamp, event.level))
                 _events.emit(DeviceEvent.ChargingState(timestamp, event.isCharging))
             }
-            is HeyCyanEvent.ButtonPressed -> {
-                _events.emit(DeviceEvent.ButtonClick(timestamp, event.type.toButtonId()))
+            is HeyCyanBleEvent.ModeChanged -> {
+                // Mode change is internal state, not emitted as DeviceEvent
             }
-            HeyCyanEvent.Ready -> _events.emit(DeviceEvent.Ready(timestamp))
-            is HeyCyanEvent.UnknownEvent -> _events.emit(
-                DeviceEvent.ProtocolUnknown(
+            is HeyCyanBleEvent.Version -> {
+                // Version info available via deviceController.getVersion()
+            }
+            is HeyCyanBleEvent.MediaCounts -> {
+                // Media counts available via deviceController.getMediaCounts()
+            }
+            is HeyCyanBleEvent.WiFiCredentials -> {
+                // WiFi credentials available via deviceController.enableTransferMode()
+            }
+            is HeyCyanBleEvent.AIImageChunk -> {
+                // AI image chunks - not yet handled
+            }
+            is HeyCyanBleEvent.Error -> {
+                // Error event - log if needed
+            }
+            is HeyCyanBleEvent.Unknown -> {
+                _events.emit(DeviceEvent.ProtocolUnknown(
                     timestamp = timestamp,
                     characteristic = characteristic,
                     payload = payload,
-                    reason = event.reason
-                )
-            )
-            else -> Unit
+                    reason = "Unknown event type: ${event.eventType}"
+                ))
+            }
         }
     }
 

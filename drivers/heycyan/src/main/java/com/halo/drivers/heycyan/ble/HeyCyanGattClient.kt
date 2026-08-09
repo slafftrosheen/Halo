@@ -252,6 +252,10 @@ class HeyCyanGattClient(
         return currentGatt.writeCharacteristic(characteristic)
     }
 
+    fun findCharacteristicByProperty(property: Int): BluetoothGattCharacteristic? {
+        return characteristics.values.firstOrNull { it.properties and property != 0 }
+    }
+
     fun disconnect() {
         val currentGatt = gatt
         if (currentGatt == null) {

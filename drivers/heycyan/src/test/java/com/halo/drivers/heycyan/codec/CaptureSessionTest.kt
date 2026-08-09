@@ -131,6 +131,48 @@ class CaptureSessionTest {
     }
 
     @Test
+    fun recorderUsesExplicitScenarioCaptureIdWhenProvided() {
+        val directory = Files.createTempDirectory("heycyan-explicit-id").toFile()
+        val store = JsonCaptureSessionStore(directory)
+        val recorder = CaptureSessionRecorder(store, captureIdFactory = { "generated-id" })
+
+        recorder.start(
+            scenario = "button-single-001",
+            captureId = "button-single-001"
+        )
+        val file = recorder.stop()
+
+        assertEquals("heycyan-button-single-001.json", requireNotNull(file).name)
+        assertEquals("button-single-001", store.load(requireNotNull(file)).captureId)
+    }
+
+    @Test
+    fun storeRefusesToOverwriteDifferentEvidenceWithSameCaptureId() {
+        val directory = Files.createTempDirectory("heycyan-immutable-save").toFile()
+        val store = JsonCaptureSessionStore(directory)
+        store.save(
+            BleCapture(
+                captureId = "boot-001",
+                startedAt = 100L,
+                scenario = "boot-001"
+            )
+        )
+
+        try {
+            store.save(
+                BleCapture(
+                    captureId = "boot-001",
+                    startedAt = 200L,
+                    scenario = "boot-001"
+                )
+            )
+            throw AssertionError("Expected duplicate capture ID to be rejected")
+        } catch (_: IllegalArgumentException) {
+            // Expected: immutable capture IDs cannot be reused for different evidence.
+        }
+    }
+
+    @Test
     fun legacyCaptureWithoutPacketSequencesOrMetadataRemainsLoadable() {
         val directory = Files.createTempDirectory("heycyan-legacy").toFile()
         val file = directory.resolve("legacy.json")

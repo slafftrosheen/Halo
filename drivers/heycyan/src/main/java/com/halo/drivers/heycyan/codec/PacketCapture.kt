@@ -6,6 +6,11 @@ enum class PacketDirection {
     TX, RX
 }
 
+enum class PacketTransport {
+    BLE,
+    RFCOMM
+}
+
 const val CURRENT_CAPTURE_FORMAT_VERSION = 2
 
 data class BlePacket(
@@ -13,7 +18,9 @@ data class BlePacket(
     val timestamp: Long,
     val direction: PacketDirection,
     val characteristic: UUID,
-    val payload: ByteArray
+    val payload: ByteArray,
+    val transport: PacketTransport = PacketTransport.BLE,
+    val transportChannel: String? = null
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -26,6 +33,8 @@ data class BlePacket(
         if (direction != other.direction) return false
         if (characteristic != other.characteristic) return false
         if (!payload.contentEquals(other.payload)) return false
+        if (transport != other.transport) return false
+        if (transportChannel != other.transportChannel) return false
 
         return true
     }
@@ -36,6 +45,8 @@ data class BlePacket(
         result = 31 * result + direction.hashCode()
         result = 31 * result + characteristic.hashCode()
         result = 31 * result + payload.contentHashCode()
+        result = 31 * result + transport.hashCode()
+        result = 31 * result + (transportChannel?.hashCode() ?: 0)
         return result
     }
 }
@@ -47,9 +58,8 @@ data class DiscoveredCharacteristic(
 )
 
 /**
- * A complete, transport-level capture session. The payload of every packet is
- * persisted as hex by [JsonCaptureSessionStore]; no protocol interpretation is
- * performed here.
+ * A complete transport-level capture session. Payloads are persisted as hex;
+ * no protocol interpretation is performed here.
  */
 data class BleCapture(
     val schemaVersion: Int = CURRENT_CAPTURE_FORMAT_VERSION,
@@ -68,7 +78,6 @@ data class BleCapture(
     val timeline: List<CaptureEvent> = emptyList()
 )
 
-/** Application and device context recorded alongside raw transport evidence. */
 data class CaptureMetadata(
     val haloVersion: String? = null,
     val gitCommit: String? = null,
@@ -116,13 +125,11 @@ enum class CaptureEventKind {
     DESCRIPTOR_WRITE,
     MTU_CHANGED,
     PACKET,
-    READY
+    READY,
+    RFCOMM_CHANNEL_CONNECTED,
+    RFCOMM_CHANNEL_DISCONNECTED
 }
 
-/**
- * Ordered transport metadata. Packet bytes remain in [BleCapture.packets] and
- * packet events refer to them by [packetIndex], avoiding duplicate raw payloads.
- */
 data class CaptureEvent(
     val sequence: Long,
     val timestamp: Long,
@@ -137,5 +144,7 @@ data class CaptureEvent(
     val permissions: Int? = null,
     val status: Int? = null,
     val mtu: Int? = null,
-    val newState: Int? = null
+    val newState: Int? = null,
+    val transport: PacketTransport? = null,
+    val transportChannel: String? = null
 )
