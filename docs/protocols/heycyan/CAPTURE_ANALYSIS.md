@@ -100,14 +100,16 @@ committed as development anchors in `drivers/heycyan/src/test/resources/captures
 | `boot-synthetic-001.json` | Simulate a device boot + battery notification | seq=0: Ready (0x01), seq=1: Battery 90% (0x02 5A 00) |
 | `button-synthetic-001.json` | Simulate button press + RequestBattery TX | seq=0-2: SingleTap/DoubleTap/LongPress (0x03 0x0N), seq=3: TX 0x0A |
 
-These fixtures are **not real protocol observations**. They exist so that decoder
-and encoder definitions in `HeyCyanProtocolDefinitions` can be developed and
-tested offline. Each fixture is labelled `"scenario": "synthetic"` and
+These fixtures are **not real protocol observations**. They exist so that the
+test-scoped `SyntheticHeyCyanProtocolFixtures` codec fixtures can be developed and
+tested offline. They are not compiled into production. Each fixture is labelled `"scenario": "synthetic"` and
 `"metadata.haloVersion": "synthetic"`.
 
 When real captures are committed, compare the actual payloads to the hypothesis
-patterns. If they match, change confidence to `CORRELATED` or `VERIFIED`. If
-they differ, update the definitions accordingly.
+patterns. If they match across controlled scenarios, a later PR may introduce a
+reviewed runtime definition with real evidence references. If they differ, discard
+the hypothesis and update the test fixture or analysis. Never use the synthetic
+fixture as production evidence.
 
 ## Current findings
 
@@ -126,7 +128,8 @@ only. Consequently the following remain **Unknown** for real hardware:
 | RequestBattery command | HYPOTHESIS | button-synthetic-001, seq=3 |
 | Connection/state transitions at protocol level | Unknown | No real capture |
 
-The decoder and encoder now enforce this boundary in code. A decoder without
+Discovery Mode and Runtime Mode enforce separate responsibilities in code.
+Discovery records transport data but has no decoder or command encoder. A decoder without
 definitions returns an immutable `UnknownEvent` containing the characteristic,
 timestamp, raw payload, and reason. An encoder without a capture-backed command
 definition rejects the command instead of transmitting guessed bytes. Definitions

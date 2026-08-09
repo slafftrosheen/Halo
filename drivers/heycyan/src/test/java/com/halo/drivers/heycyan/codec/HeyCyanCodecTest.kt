@@ -107,7 +107,7 @@ class HeyCyanCodecTest {
 
     private val notifyCharacteristic = UUID.fromString("0000abcd-0000-1000-8000-00805f9b34fb")
     private val writeCharacteristic = UUID.fromString("0000abce-0000-1000-8000-00805f9b34fb")
-    private val hypothesisDecoder = HeyCyanEventDecoder(HeyCyanProtocolDefinitions.eventDecoderDefinitions())
+    private val hypothesisDecoder = HeyCyanEventDecoder(SyntheticHeyCyanProtocolFixtures.eventDecoderDefinitions())
 
     @Test
     fun `hypothesis decoder decodes Ready packet from notify characteristic`() {
@@ -211,7 +211,7 @@ class HeyCyanCodecTest {
     // PR-014 — Hypothesis command encoder definitions (synthetic fixture evidence)
     // -------------------------------------------------------------------------
 
-    private val hypothesisEncoder = HeyCyanCommandEncoder(HeyCyanProtocolDefinitions.commandEncoderDefinitions())
+    private val hypothesisEncoder = HeyCyanCommandEncoder(SyntheticHeyCyanProtocolFixtures.commandEncoderDefinitions())
 
     @Test
     fun `hypothesis encoder encodes RequestBattery to write characteristic`() {
@@ -251,12 +251,12 @@ class HeyCyanCodecTest {
     }
 
     // -------------------------------------------------------------------------
-    // HeyCyanProtocolDefinitions completeness checks
+    // SyntheticHeyCyanProtocolFixtures completeness checks
     // -------------------------------------------------------------------------
 
     @Test
     fun `all event definitions have non-empty evidence lists`() {
-        val definitions = HeyCyanProtocolDefinitions.eventDecoderDefinitions()
+        val definitions = SyntheticHeyCyanProtocolFixtures.eventDecoderDefinitions()
         assertTrue("Expected at least one event definition", definitions.isNotEmpty())
         definitions.forEach { definition ->
             assertTrue(
@@ -268,7 +268,7 @@ class HeyCyanCodecTest {
 
     @Test
     fun `all command definitions have non-empty evidence lists`() {
-        val definitions = HeyCyanProtocolDefinitions.commandEncoderDefinitions()
+        val definitions = SyntheticHeyCyanProtocolFixtures.commandEncoderDefinitions()
         assertTrue("Expected at least one command definition", definitions.isNotEmpty())
         definitions.forEach { definition ->
             assertTrue(
@@ -280,7 +280,7 @@ class HeyCyanCodecTest {
 
     @Test
     fun `all event definition IDs are unique`() {
-        val definitions = HeyCyanProtocolDefinitions.eventDecoderDefinitions()
+        val definitions = SyntheticHeyCyanProtocolFixtures.eventDecoderDefinitions()
         val ids = definitions.map { it.id }
         assertEquals("Event definition IDs must be unique", ids.distinct().size, ids.size)
     }

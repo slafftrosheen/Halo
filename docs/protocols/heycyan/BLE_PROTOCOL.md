@@ -26,13 +26,14 @@ never overwrites the raw packet or capture document. No real capture is present
 in this repository yet, so no application-level protocol finding is promoted
 beyond `Unknown`.
 
-PR-013/014 hypothesis decoder and encoder definitions are now implemented in
-[`HeyCyanProtocolDefinitions`](../../../drivers/heycyan/src/main/java/com/halo/drivers/heycyan/codec/HeyCyanProtocolDefinitions.kt).
-All definitions carry **HYPOTHESIS** confidence backed by synthetic fixture captures
-in `drivers/heycyan/src/test/resources/captures/`. No real HeyCyan capture has
-been imported, so no definition has been promoted to VERIFIED.
+PR-013/014 codec seams are covered by the test-scoped
+`SyntheticHeyCyanProtocolFixtures` object. These definitions carry **HYPOTHESIS**
+confidence backed only by synthetic fixture captures in
+`drivers/heycyan/src/test/resources/captures/`. The fixture object is not compiled
+into production and cannot affect Discovery Mode or Runtime Mode. No real HeyCyan
+capture has been imported, so no definition has been promoted to VERIFIED.
 
-Current hypothesis definitions:
+Current synthetic test hypotheses (not production protocol definitions):
 
 | Event/Command | Pattern (synthetic) | Confidence | Fixture |
 | --- | --- | --- | --- |
@@ -43,8 +44,22 @@ Current hypothesis definitions:
 | `ButtonPressed(LONG_PRESS)` | RX, byte[0]=0x03, byte[1]=0x03 | HYPOTHESIS | button-synthetic-001, seq=2 |
 | `RequestBattery` command | TX, 0x0A | HYPOTHESIS | button-synthetic-001, seq=3 |
 
-All other notifications still become `UnknownEvent`; all other commands still throw
-`UnsupportedOperationException`.
+All production notifications still become `UnknownEvent` until a runtime decoder
+is explicitly supplied from verified evidence; all commands without an explicitly
+configured verified encoder still throw `UnsupportedOperationException`.
+
+## Discovery mode boundary
+
+The application discovery screen is named **BLE PROTOCOL DISCOVERY** because an
+unfiltered scan may show any nearby BLE device. Discovery requires an explicit
+address selection and passes `HeyCyanConnectionMode.DISCOVERY` to the transport.
+In that mode the driver records raw transport evidence only: it does not start a
+notification decoder and it cannot send commands. The cognitive runtime is not
+started by discovery.
+
+Protocol promotion requires a reproducible real-device capture or authoritative
+vendor documentation. Synthetic captures, device names, common BLE UUIDs, and
+assumptions from another application are not sufficient evidence.
 
 ## Advertisement
 

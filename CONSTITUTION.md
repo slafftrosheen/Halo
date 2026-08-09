@@ -10,8 +10,11 @@ Chief Engineer
 
 # 0. Mission
 Halo is no longer an architectural experiment.
+
 Halo is no longer an AI demo.
+
 Halo is no longer a collection of engines.
+
 Halo is now a **Wearable Cognitive Runtime**.
 
 Every commit must move Halo toward a runtime that is:
@@ -68,12 +71,14 @@ Adhere to strict dependency inversion:
 
 # 5. Driver Layer & Hosts
 Drivers are first-class citizens (`drivers/audio`, `drivers/bluetooth`, `drivers/camera`, `drivers/buttons`, `drivers/sensors`). 
+
 Hosts (e.g., `host-heycyan`, `host-android`) assemble these drivers.
 
 ---
 
 # 6. Platform Services
 Use interfaces for all platform-specific logic: `Clock`, `Logger`, `Storage`, `PowerManager`, `Scheduler`, `Network`, `Permissions`. 
+
 **Never** call `System.currentTimeMillis()` inside the runtime.
 
 ---
@@ -127,6 +132,7 @@ Wearables require power awareness. The runtime adapts via `RuntimeMode`: `PERFOR
 
 # 12. Orchestration
 Engines never orchestrate. Engines perform work. Runtime coordinates.
+
 Runtime is conductor. Engines are musicians.
 
 ---
@@ -164,7 +170,9 @@ on concrete capability class names.
 
 # 16. Rule Pipeline
 Never call the LLM first.
+
 Pipeline: `Hard Rules` -> `Context Rules` -> `Semantic Rules`
+
 Exit immediately when matched. LLM is last resort.
 
 ---
@@ -195,8 +203,44 @@ If not, do not merge.
 9. The simulator is a supported host for deterministic development and tests.
 10. Every new working flow must be executable without physical hardware unless the
     behavior itself is hardware-specific.
+11. Discovery Mode is an independent developer workflow. It must not invoke
+    `HaloRuntime`, cognition, speech, providers, or automatic host connection.
+12. Discovery Mode is raw-only: it may record transport observations but must not
+    decode notifications or send commands.
+13. No HeyCyan protocol implementation may be promoted from hypothesis to
+    production based on synthetic captures, naming conventions, common BLE UUIDs,
+    or assumptions from another application. Promotion requires a reproducible
+    real-device capture or authoritative vendor documentation.
 
 ---
 
 **"Does this make the cognitive runtime stronger, or am I just making it bigger?"**
 If it only makes it bigger, defer it. Favor deleting code over adding abstractions.
+
+# 19. Evidence-Driven Hardware Sequence
+
+The HeyCyan work is intentionally staged:
+
+`PR-015 Discovery` -> `PR-016 Capture Analysis` -> `PR-017 Event Decoder` ->
+`PR-018 Command Layer` -> `PR-019 Device Context` -> `PR-020 Audio Investigation` ->
+`PR-021 AudioSource` -> `PR-022 End-to-End Wearable Speech`
+
+Runtime Kernel, provider architecture, host abstraction, capability registry,
+audio pipeline API, capture format, replay, driver lifecycle, and DI decomposition
+remain frozen throughout PR-016–PR-020 unless a real hardware requirement proves a
+change necessary.
+
+---
+
+# 20. Discovery Acceptance Gate
+
+Before merging physical discovery:
+
+* Scan is unfiltered; multiple devices can appear; none is auto-selected.
+* The selected address is the only address passed to GATT.
+* Discovery never invokes `HaloRuntime` and sends no protocol commands.
+* Services, characteristics, descriptors, properties, permissions, requested MTU,
+  negotiated MTU, and sequential subscriptions are recorded.
+* Advertisement, connection lifecycle, GATT metadata, CCCD writes, RX/TX, ready,
+  disconnect, and failure capture state are persisted where observed.
+* Synthetic definitions cannot affect discovery.

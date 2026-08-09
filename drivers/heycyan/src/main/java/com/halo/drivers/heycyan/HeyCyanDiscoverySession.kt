@@ -44,6 +44,7 @@ class HeyCyanDiscoverySession(
             ?: throw IllegalStateException("Select a BLE device before connecting")
         driver.connect(
             selectedAddress = device.advertisement.address,
+            mode = HeyCyanConnectionMode.DISCOVERY,
             selectedName = device.advertisement.name,
             scenario = scenario,
             advertisement = device.advertisement
@@ -54,6 +55,7 @@ class HeyCyanDiscoverySession(
         _selected.value = advertisement.address
         driver.connect(
             selectedAddress = advertisement.address,
+            mode = HeyCyanConnectionMode.DISCOVERY,
             selectedName = advertisement.name,
             scenario = scenario,
             advertisement = advertisement

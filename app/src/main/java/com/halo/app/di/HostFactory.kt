@@ -7,7 +7,7 @@ import com.halo.drivers.heycyan.RealHeyCyanDriver
 import com.halo.drivers.heycyan.HeyCyanHost
 import com.halo.drivers.heycyan.HeyCyanAudioOutput
 import com.halo.drivers.simulator.SimulatedWearableHost
-import kotlinx.coroutines.runBlocking
+
 
 enum class HostType {
     ANDROID,
@@ -21,8 +21,6 @@ object HostFactory {
         return when (type) {
             HostType.HEYCYAN -> {
                 val driver = RealHeyCyanDriver(context)
-                // Initialize the driver synchronously during DI setup for now
-                runBlocking { driver.initialize() }
                 HeyCyanHost(
                     driver = driver,
                     audioOutput = HeyCyanAudioOutput(driver)

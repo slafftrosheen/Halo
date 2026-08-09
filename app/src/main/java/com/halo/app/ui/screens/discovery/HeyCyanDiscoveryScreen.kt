@@ -53,8 +53,8 @@ fun HeyCyanDiscoveryScreen(context: Context) {
         modifier = Modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text("HEY C Y A N DISCOVERY", style = MaterialTheme.typography.headlineSmall)
-        Text("Raw BLE evidence collection. Select a device explicitly; no protocol commands are sent.")
+        Text("BLE PROTOCOL DISCOVERY", style = MaterialTheme.typography.headlineSmall)
+        Text("Raw BLE evidence collection. The selected device is not assumed to be HeyCyan. No protocol commands are sent.")
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(onClick = {

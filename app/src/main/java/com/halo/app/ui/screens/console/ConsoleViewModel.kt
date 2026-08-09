@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import java.util.Locale
 
 data class EngineStatus(
     val name: String,
@@ -46,9 +47,9 @@ class ConsoleUiMapper(private val selectedTab: Int) : RuntimeUiMapper<ConsoleUiS
 
     private fun formatDuration(duration: java.time.Duration): String {
         val hours = duration.toHours()
-        val minutes = duration.toMinutesPart()
-        val seconds = duration.toSecondsPart()
-        return String.format("%02d:%02d:%02d", hours, minutes, seconds)
+        val minutes = duration.toMinutes() % 60
+        val seconds = duration.seconds % 60
+        return String.format(Locale.ROOT, "%02d:%02d:%02d", hours, minutes, seconds)
     }
 }
 

@@ -1,6 +1,7 @@
 package com.halo.app
 
 import com.halo.app.di.ManualDependencyGraph
+import com.halo.sdk.host.ConnectionState
 
 /**
  * Orchestrates the startup and shutdown sequence for the entire Halo system.
@@ -9,8 +10,9 @@ class HaloRuntime(
     private val graph: ManualDependencyGraph
 ) {
     suspend fun start() {
-        // Connect to wearable device (e.g. HeyCyan Glasses)
-        graph.wearableHost.connect()
+        check(graph.wearableHost.connectivity.value is ConnectionState.Connected) {
+            "Runtime requires a connected host; discovery and physical device selection are separate workflows"
+        }
 
         // Initialize audio subsystem
         val audioEngine = graph.audioPerceptionEngine

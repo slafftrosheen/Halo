@@ -82,6 +82,7 @@ class MainActivity : ComponentActivity() {
 
     private fun startAlphaLoop() {
         lifecycleScope.launch {
+            ManualDependencyGraph.wearableHost.connect()
             runtime.start()
         }
     }

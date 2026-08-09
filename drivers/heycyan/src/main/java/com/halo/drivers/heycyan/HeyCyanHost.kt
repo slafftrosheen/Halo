@@ -41,6 +41,7 @@ class HeyCyanHost(
 
     override suspend fun connect() {
         _connectivity.value = ConnectionState.Connecting
+        driver.initialize()
         runCatching { driver.connect() }
             .onSuccess {
                 _deviceContext.value = _deviceContext.value.copy(connected = true)

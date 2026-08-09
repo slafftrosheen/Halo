@@ -1,20 +1,22 @@
 # HeyCyan Physical Discovery Checklist
 
-This checklist is the manual acceptance procedure for PR-015. The discovery workflow collects evidence only: it does not decode protocol packets or send speculative commands.
+This checklist is the manual acceptance procedure for PR-015. The workflow is
+**BLE PROTOCOL DISCOVERY**, not HeyCyan identification. It collects evidence only:
+it does not invoke `HaloRuntime`, decode protocol packets, or send speculative commands.
 
 ## Preconditions
 
-- Use a physical HeyCyan device and an Android phone with Bluetooth enabled.
+- Use the physical device under investigation and an Android phone with Bluetooth enabled.
 - Grant Bluetooth scan/connect permissions to Halo.
 - Keep other BLE devices away from the test area where practical.
-- Open **Discovery** from the Halo developer navigation.
+- Open **BLE Protocol Discovery** from the Halo developer navigation.
 - Save each scenario as a separate capture. The application stores captures in `captures/heycyan/<capture-id>.json` within its app files directory.
 
 ## Workflow
 
 1. Press **Scan**.
-2. Confirm that advertisements are listed without automatic connection.
-3. Select the intended glasses by name/address and verify the selected row.
+2. Confirm that advertisements from multiple nearby BLE devices can be listed without automatic connection.
+3. Select one address explicitly and verify the selected row. Do not assume the device is HeyCyan from its name.
 4. Press **Connect**.
 5. Wait for **Ready**. The transport performs GATT discovery and subscribes to notification/indication characteristics.
 6. Perform only the controlled actions for the current scenario.
@@ -22,7 +24,7 @@ This checklist is the manual acceptance procedure for PR-015. The discovery work
 8. Copy the JSON artifact from the application files directory into the repository capture archive when the session is ready to commit.
 9. Replay the JSON offline with the existing capture replay tooling before analyzing any bytes.
 
-Every capture must include the advertisement, connection transitions, services, characteristics, descriptors, descriptor writes, MTU observations, raw RX/TX packets, ready transition, and disconnect timeline where the device exposes those observations.
+Every capture must include the advertisement, connection transitions, services, characteristics, descriptors, descriptor writes, MTU observations, raw RX/TX packets, transport-ready transition, and disconnect timeline where the device exposes those observations.
 
 ## Capture A — Boot
 
@@ -70,5 +72,7 @@ Filename: `heycyan-reconnect-001.json`
 - Treat all packets as raw and unknown during discovery.
 - Do not issue battery, media, camera, audio, Wi-Fi, or other device commands.
 - Do not promote synthetic fixture definitions into production.
+- Discovery Mode must not start a notification decoder or command encoder.
+- The runtime must remain unused during discovery.
 - A real capture must be correlated with a controlled action before it can update `BLE_PROTOCOL.md`.
 - Record the capture ID and exact scenario in the protocol analysis notes.
