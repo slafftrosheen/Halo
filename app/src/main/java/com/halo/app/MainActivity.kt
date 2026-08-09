@@ -70,6 +70,9 @@ class MainActivity : ComponentActivity() {
             // Wake up the cognitive engine 
             ManualDependencyGraph.microkernel.boot()
             
+            // Connect to wearable device (e.g. HeyCyan Glasses)
+            ManualDependencyGraph.wearableHost.connect()
+            
             // Start the physical hardware perception loop
             val audioEngine = ManualDependencyGraph.audioPerceptionEngine
             audioEngine.initialize(ManualDependencyGraph.engineContext)
@@ -80,6 +83,7 @@ class MainActivity : ComponentActivity() {
     override fun onDestroy() {
         super.onDestroy()
         lifecycleScope.launch {
+            ManualDependencyGraph.wearableHost.disconnect()
             ManualDependencyGraph.audioPerceptionEngine.stop()
             ManualDependencyGraph.microkernel.shutdown()
         }

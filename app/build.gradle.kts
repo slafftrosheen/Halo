@@ -188,6 +188,7 @@ dependencies {
     implementation(project(":providers:llamacpp"))
     implementation(project(":providers:android-stt"))
     implementation(project(":providers:android-tts"))
+    implementation(project(":drivers:heycyan"))
 }
 
 tasks.register<Copy>("copyApkToReleases") {

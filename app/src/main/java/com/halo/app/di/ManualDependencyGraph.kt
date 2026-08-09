@@ -24,7 +24,7 @@ object ManualDependencyGraph {
 
     val infra by lazy { InfrastructureGraph() }
     val providerGraph by lazy { ProviderGraph(applicationContext) }
-    val hostGraph by lazy { HostGraph(infra, providerGraph) }
+    val hostGraph by lazy { HostGraph(applicationContext, infra, providerGraph) }
     val engineGraph by lazy { EngineGraph(applicationContext, infra, providerGraph) }
     val observerGraph by lazy { ObserverGraph(applicationContext, infra, engineGraph) }
 

@@ -20,4 +20,4 @@ class HeyCyanAudioSource(private val driver: Driver) : AudioSource {
     override suspend fun stop() = Unit
 }
 
-private val heyCyanDriverReference = HeyCyanDriver::class
+private val heyCyanDriverReference = MockHeyCyanDriver::class
