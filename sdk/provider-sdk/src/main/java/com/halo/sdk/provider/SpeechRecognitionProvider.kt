@@ -1,7 +1,6 @@
 package com.halo.sdk.provider
 
 import com.halo.sdk.host.AudioBuffer
-import com.halo.sdk.host.AudioFrame
 import kotlinx.coroutines.flow.Flow
 
 data class RecognitionResult(
@@ -10,12 +9,32 @@ data class RecognitionResult(
     val confidence: Float
 )
 
-data class RecognitionEvent(
-    val partialText: String
-)
+sealed interface RecognitionEvent {
+    object Ready : RecognitionEvent
+    object Listening : RecognitionEvent
+    data class Partial(val text: String) : RecognitionEvent
+    data class Final(val result: RecognitionResult) : RecognitionEvent
+    data class Error(val reason: String) : RecognitionEvent
+    object Stopped : RecognitionEvent
+}
 
-interface SpeechRecognitionProvider {
-    suspend fun recognize(audio: AudioBuffer): RecognitionResult
-    fun stream(frames: Flow<AudioFrame>): Flow<RecognitionEvent>
+enum class SpeechRecognitionMode {
+    BUFFERED,
+    LIVE
+}
+
+sealed interface SpeechRecognitionProvider {
+    val mode: SpeechRecognitionMode
     suspend fun health(): Boolean
+}
+
+interface BufferedSpeechRecognitionProvider : SpeechRecognitionProvider {
+    override val mode: SpeechRecognitionMode get() = SpeechRecognitionMode.BUFFERED
+    suspend fun recognize(audio: AudioBuffer): RecognitionResult
+}
+
+interface LiveSpeechRecognitionProvider : SpeechRecognitionProvider {
+    override val mode: SpeechRecognitionMode get() = SpeechRecognitionMode.LIVE
+    fun startListening(): Flow<RecognitionEvent>
+    suspend fun stopListening()
 }

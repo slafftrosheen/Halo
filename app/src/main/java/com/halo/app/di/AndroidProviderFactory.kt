@@ -3,7 +3,7 @@ package com.halo.app.di
 import android.content.Context
 import com.halo.sdk.provider.*
 import com.halo.engines.speech.AlwaysWakeDetector
-import com.halo.providers.android.stt.StubAndroidSpeechRecognitionProvider
+import com.halo.providers.android.stt.AndroidSpeechRecognitionProvider
 import com.halo.providers.android.tts.AndroidTTSProvider
 import com.halo.providers.llamacpp.NativeLlamaProvider
 import com.halo.providers.llamacpp.ModelDownloadManager
@@ -16,7 +16,7 @@ class AndroidProviderFactory(
     override fun createProviders(): Providers {
         return Providers(
             inference = NativeLlamaProvider(context, modelDownloadManager),
-            speechRecognition = StubAndroidSpeechRecognitionProvider(context),
+            speechRecognition = AndroidSpeechRecognitionProvider(context),
             speechSynthesis = AndroidTTSProvider(context),
             wakeWord = AlwaysWakeDetector()
         )

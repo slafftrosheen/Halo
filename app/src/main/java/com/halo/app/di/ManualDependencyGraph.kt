@@ -108,4 +108,18 @@ object ManualDependencyGraph {
             executionBus
         )
     }
+
+    val engineContext by lazy {
+        com.halo.sdk.runtime.EngineContext(
+            runtime = object : com.halo.sdk.runtime.RuntimeContext {
+                override val eventBus = infra.eventBus
+                override val commandBus = infra.commandBus
+                override val queryBus = infra.queryBus
+                override val registry = infra.registry
+                override val logger = infra.logger
+                override val scheduler = infra.scheduler
+            },
+            registry = infra.registry
+        )
+    }
 }
