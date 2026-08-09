@@ -4,7 +4,7 @@ plugins {
 
 android {
     namespace = "com.halo.drivers.heycyan"
-    compileSdk = 34
+    compileSdk = 36
     defaultConfig {
         minSdk = 26
     }

@@ -27,14 +27,22 @@ data class BleAdvertisement(
     val manufacturerData: Map<String, String>
 )
 
-class HeyCyanBleScanner(private val context: Context) {
+data class DiscoveredBleDevice(
+    val advertisement: BleAdvertisement,
+    val firstSeenAt: Long
+)
+
+class HeyCyanBleScanner(
+    private val context: Context,
+    private val now: () -> Long = { System.currentTimeMillis() }
+) {
 
     private val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
     private val adapter = bluetoothManager.adapter
     private val scanner = adapter.bluetoothLeScanner
 
-    @SuppressLint("MissingPermission") // Caller (HostGraph) is responsible for ensuring permissions
-    fun scanForDevice(): Flow<BleAdvertisement> = callbackFlow {
+    @SuppressLint("MissingPermission") // Caller is responsible for ensuring permissions
+    fun scan(): Flow<BleAdvertisement> = callbackFlow {
         if (scanner == null) {
             close(IllegalStateException("Bluetooth is not enabled or supported"))
             return@callbackFlow

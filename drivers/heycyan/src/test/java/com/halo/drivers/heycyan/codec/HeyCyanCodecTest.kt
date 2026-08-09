@@ -33,6 +33,15 @@ class HeyCyanCodecTest {
     }
 
     @Test
+    fun `production decoder remains raw-only with no definitions`() {
+        val payload = byteArrayOf(0x01)
+        val decoded = HeyCyanEventDecoder().decode(payload, notifyCharacteristic, 7L)
+
+        assertTrue(decoded is HeyCyanEvent.UnknownEvent)
+        assertArrayEquals(payload, (decoded as HeyCyanEvent.UnknownEvent).payload)
+    }
+
+    @Test
     fun `decoder accepts only definitions with evidence`() {
         val decoder = HeyCyanEventDecoder(
             definitions = listOf(
@@ -80,6 +89,16 @@ class HeyCyanCodecTest {
         assertArrayEquals(byteArrayOf(0x10, 0x20), encoded.payload)
         assertEquals(characteristic, encoded.characteristic)
         assertEquals(evidence, encoded.evidence)
+    }
+
+    @Test
+    fun `production command encoder exposes no speculative commands`() {
+        try {
+            HeyCyanCommandEncoder().encode(HeyCyanCommand.RequestBattery)
+            throw AssertionError("Expected speculative command to fail")
+        } catch (_: UnsupportedOperationException) {
+            // Expected: discovery mode has no command definitions.
+        }
     }
 
     // -------------------------------------------------------------------------

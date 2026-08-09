@@ -12,7 +12,6 @@ import com.halo.drivers.heycyan.codec.CompositePacketTracer
 import com.halo.drivers.heycyan.codec.JsonCaptureSessionStore
 import com.halo.drivers.heycyan.codec.HeyCyanCommandEncoder
 import com.halo.drivers.heycyan.codec.HeyCyanEventDecoder
-import com.halo.drivers.heycyan.codec.HeyCyanProtocolDefinitions
 import com.halo.drivers.heycyan.protocol.ButtonType
 import com.halo.drivers.heycyan.protocol.HeyCyanCommand
 import com.halo.drivers.heycyan.protocol.HeyCyanEvent
@@ -25,8 +24,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -37,26 +35,16 @@ import java.io.File
 /**
  * Real HeyCyan transport driver.
  *
- * PR-011 records complete BLE discovery and transport sessions.
- * PR-013/014 installs hypothesis decoder and encoder definitions backed by
- * synthetic fixture captures. Real hardware evidence will promote or replace
- * these definitions once imported captures are committed.
- *
- * @see HeyCyanProtocolDefinitions
+ * Physical discovery is deliberately raw-only. A caller must select an
+ * advertisement address explicitly before connecting; this driver never picks
+ * the first nearby BLE device. Protocol definitions remain test-only until
+ * real capture evidence promotes them.
  */
 class RealHeyCyanDriver(
     private val context: Context,
-    private val eventDecoder: HeyCyanEventDecoder = HeyCyanEventDecoder(
-        HeyCyanProtocolDefinitions.eventDecoderDefinitions()
-    ),
-    private val commandEncoder: HeyCyanCommandEncoder = HeyCyanCommandEncoder(
-        HeyCyanProtocolDefinitions.commandEncoderDefinitions()
-    )
+    private val eventDecoder: HeyCyanEventDecoder = HeyCyanEventDecoder(),
+    private val commandEncoder: HeyCyanCommandEncoder = HeyCyanCommandEncoder()
 ) : Driver {
-
-    companion object {
-        private const val SCAN_TIMEOUT_MILLIS = 30_000L
-    }
 
     private val captureRecorder = CaptureSessionRecorder(
         JsonCaptureSessionStore(File(context.filesDir, "captures/heycyan"))
@@ -65,7 +53,7 @@ class RealHeyCyanDriver(
         LoggingPacketTracer(ConsoleLogger()),
         captureRecorder
     )
-    private val scanner = HeyCyanBleScanner(context)
+    val scanner = HeyCyanBleScanner(context)
     private val gattClient = HeyCyanGattClient(context, tracer)
 
     private val _events = MutableSharedFlow<DeviceEvent>(extraBufferCapacity = 64)
@@ -77,29 +65,37 @@ class RealHeyCyanDriver(
     override suspend fun initialize() = Unit
 
     override suspend fun connect() {
-        startIncomingEventDecoder()
-        captureRecorder.start(
-            scenario = "runtime",
-            metadata = captureMetadata()
+        throw IllegalStateException(
+            "HeyCyan requires explicit device selection; use connect(selectedAddress, selectedName)"
         )
+    }
+
+    suspend fun connect(
+        selectedAddress: String,
+        selectedName: String? = null,
+        scenario: String = "discovery",
+        advertisement: com.halo.drivers.heycyan.ble.BleAdvertisement? = null
+    ) {
+        require(selectedAddress.isNotBlank()) { "Selected BLE address must not be blank" }
+        startIncomingEventDecoder()
+        captureRecorder.start(scenario = scenario, metadata = captureMetadata())
         gattClient.markScanning()
 
         try {
-            val advertisement = withTimeout(SCAN_TIMEOUT_MILLIS) {
-                scanner.scanForDevice().first()
-            }
-            captureRecorder.recordAdvertisement(
-                com.halo.drivers.heycyan.codec.CaptureAdvertisement(
-                    timestamp = System.currentTimeMillis(),
-                    address = advertisement.address,
-                    name = advertisement.name,
-                    rssi = advertisement.rssi,
-                    serviceUuids = advertisement.serviceUuids,
-                    manufacturerData = advertisement.manufacturerData
+            captureRecorder.setDevice(selectedAddress, selectedName)
+            advertisement?.let {
+                captureRecorder.recordAdvertisement(
+                    com.halo.drivers.heycyan.codec.CaptureAdvertisement(
+                        timestamp = System.currentTimeMillis(),
+                        address = it.address,
+                        name = it.name,
+                        rssi = it.rssi,
+                        serviceUuids = it.serviceUuids,
+                        manufacturerData = it.manufacturerData
+                    )
                 )
-            )
-            gattClient.connect(advertisement.address)
-            captureRecorder.setDevice(advertisement.address, advertisement.name)
+            }
+            gattClient.connect(selectedAddress)
             gattClient.awaitReady()
             _events.emit(DeviceEvent.Ready(System.currentTimeMillis()))
         } catch (error: CancellationException) {
@@ -129,7 +125,7 @@ class RealHeyCyanDriver(
         _events.emit(event)
     }
 
-    /** Sends a command only when the supplied encoder has capture-backed evidence. */
+    /** Sends only promoted, capture-backed commands. Discovery has none. */
     suspend fun sendCommand(command: HeyCyanCommand): Result<Unit> = runCatching {
         val encoded = commandEncoder.encodeWithTarget(command)
         check(gattClient.write(encoded.characteristic, encoded.copyPayload())) {
