@@ -1,7 +1,6 @@
 package com.halo.drivers.heycyan
 
 import android.content.Context
-import com.halo.drivers.heycyan.ble.BleAdvertisement
 import com.halo.drivers.heycyan.ble.DiscoveredBleDevice
 import com.halo.sdk.driver.DriverState
 import kotlinx.coroutines.flow.Flow
@@ -39,6 +38,11 @@ class HeyCyanDiscoverySession(
         _selected.value = device.advertisement.address
     }
 
+    /**
+     * Connects only the device selected through [select]. Keeping this as the
+     * sole connection entry point prevents a scan result from being connected
+     * implicitly by a caller that bypasses the selection workflow.
+     */
     suspend fun connectSelected(scenario: String = "discovery") {
         val device = selectedDevice
             ?: throw IllegalStateException("Select a BLE device before connecting")
@@ -48,17 +52,6 @@ class HeyCyanDiscoverySession(
             selectedName = device.advertisement.name,
             scenario = scenario,
             advertisement = device.advertisement
-        )
-    }
-
-    suspend fun connect(advertisement: BleAdvertisement, scenario: String = "discovery") {
-        _selected.value = advertisement.address
-        driver.connect(
-            selectedAddress = advertisement.address,
-            mode = HeyCyanConnectionMode.DISCOVERY,
-            selectedName = advertisement.name,
-            scenario = scenario,
-            advertisement = advertisement
         )
     }
 

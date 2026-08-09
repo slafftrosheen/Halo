@@ -94,9 +94,12 @@ Deliverables:
 
 - Raw JSON captures under the agreed capture archive.
 - `CAPTURE_ANALYSIS.md` annotations or sidecars with capture ID, packet sequence, characteristic, payload, trigger, and confidence.
+- Deterministic [`PacketCorrelation`](drivers/heycyan/src/main/java/com/halo/drivers/heycyan/codec/PacketCorrelation.kt:40) for baseline/action comparisons, aligned by direction and characteristic without interpreting payloads.
 - Replay success for every capture.
 - Unknown packets retained and raw bytes unchanged.
 - No decoder or command implementation promoted by this PR.
+
+**Current implementation boundary:** The correlation/diff infrastructure and regression tests are code-complete. Physical capture acquisition remains a hardware gate; no real capture is fabricated in the repository.
 
 Acceptance:
 
@@ -108,6 +111,8 @@ Acceptance:
 - [ ] Candidate correlations are documented without overclaiming interpretation.
 
 ### PR-017 — Evidence-Based Event Decoder
+
+**Gate:** Do not start protocol promotion until PR-016 has imported and reviewed real boot, button, and reconnect captures.
 
 Only after PR-016 produces repeatable real evidence. Promote the smallest useful set: Ready, BatteryUpdated, ButtonPressed, and ChargingState only when supported. Every definition references real capture IDs and packet sequences. Unknown packets remain `UnknownEvent`. Synthetic fixtures remain test-only and cannot be used as production evidence.
 

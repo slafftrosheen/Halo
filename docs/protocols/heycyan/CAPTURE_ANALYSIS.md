@@ -74,6 +74,38 @@ in that capture; and an offset/length range must fit inside the raw payload.
 An omitted range refers to the complete packet. A reference is an address into
 evidence, not a decoded value.
 
+## Packet correlation
+
+PR-016 provides [`PacketCorrelation`](../../drivers/heycyan/src/main/java/com/halo/drivers/heycyan/codec/PacketCorrelation.kt)
+through [`OrderedPacketCorrelation`](../../drivers/heycyan/src/main/java/com/halo/drivers/heycyan/codec/PacketCorrelation.kt).
+It compares a baseline capture with an action capture by direction and characteristic,
+then aligns packet order within each transport stream. This intentionally does not
+interpret payload bytes or align by capture-local sequence numbers, because an action
+may insert packets and shift subsequent sequence values.
+
+The result is a list of raw [`PacketDifference`](../../drivers/heycyan/src/main/java/com/halo/drivers/heycyan/codec/PacketCorrelation.kt)
+values containing copied baseline/action payloads. Use [`baselineHex()`](../../drivers/heycyan/src/main/java/com/halo/drivers/heycyan/codec/PacketCorrelation.kt:29)
+and [`actionHex()`](../../drivers/heycyan/src/main/java/com/halo/drivers/heycyan/codec/PacketCorrelation.kt:31)
+for presentation only. A difference is a candidate observation, not a protocol meaning.
+
+Example workflow:
+
+```text
+boot-001 baseline
+        +
+button-single-001 action
+        ↓
+OrderedPacketCorrelation.compare(...)
+        ↓
+raw packet differences
+        ↓
+manual annotation with capture IDs and packet sequences
+```
+
+This tooling is code-only until real captures are available. Synthetic fixtures may
+exercise the algorithm, but cannot promote a finding or populate production protocol
+definitions.
+
 ## Analysis procedure
 
 For each controlled session:
@@ -127,6 +159,14 @@ only. Consequently the following remain **Unknown** for real hardware:
 | Ready notification | HYPOTHESIS | boot-synthetic-001, seq=0 |
 | RequestBattery command | HYPOTHESIS | button-synthetic-001, seq=3 |
 | Connection/state transitions at protocol level | Unknown | No real capture |
+
+### PR-016 implementation status
+
+The repository now has deterministic packet correlation tests, replay support, raw-byte
+preservation, and the existing atomic capture/analysis stores. The hardware acceptance
+items remain blocked until the physical glasses produce boot, button, reconnect, and
+battery/charging captures. PR-017 must not begin protocol promotion before those
+artifacts are imported and reviewed.
 
 Discovery Mode and Runtime Mode enforce separate responsibilities in code.
 Discovery records transport data but has no decoder or command encoder. A decoder without
