@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 2,
+  "captureId": "button-synthetic-001",
+  "scenario": "synthetic",
+  "deviceAddress": "AA:BB:CC:DD:EE:FF",
+  "deviceName": "HeyCyan-Synthetic",
+  "metadata": {
+    "haloVersion": "synthetic",
+    "gitCommit": null,
+    "androidVersion": null,
+    "phoneModel": null,
+    "bluetoothAdapter": null,
+    "glassesFirmware": null
+  },
+  "advertisements": [],
+  "requestedMtu": 517,
+  "mtu": 247,
+  "startedAt": 3000,
+  "endedAt": 4000,
+  "packets": [
+    {
+      "sequence": 0,
+      "timestamp": 3100,
+      "direction": "RX",
+      "characteristic": "0000abcd-0000-1000-8000-00805f9b34fb",
+      "payload": "0301"
+    },
+    {
+      "sequence": 1,
+      "timestamp": 3200,
+      "direction": "RX",
+      "characteristic": "0000abcd-0000-1000-8000-00805f9b34fb",
+      "payload": "0302"
+    },
+    {
+      "sequence": 2,
+      "timestamp": 3300,
+      "direction": "RX",
+      "characteristic": "0000abcd-0000-1000-8000-00805f9b34fb",
+      "payload": "0303"
+    },
+    {
+      "sequence": 3,
+      "timestamp": 3400,
+      "direction": "TX",
+      "characteristic": "0000abce-0000-1000-8000-00805f9b34fb",
+      "payload": "0A"
+    }
+  ],
+  "services": [
+    {
+      "uuid": "0000abcd-0000-1000-8000-00805f9b34fb",
+      "type": 0,
+      "characteristics": [
+        {
+          "uuid": "0000abcd-0000-1000-8000-00805f9b34fb",
+          "properties": 16,
+          "permissions": 0,
+          "descriptors": []
+        },
+        {
+          "uuid": "0000abce-0000-1000-8000-00805f9b34fb",
+          "properties": 8,
+          "permissions": 4,
+          "descriptors": []
+        }
+      ]
+    }
+  ],
+  "timeline": [
+    { "sequence": 0, "timestamp": 3000, "kind": "SESSION_STARTED" },
+    { "sequence": 1, "timestamp": 3100, "kind": "PACKET", "characteristicUuid": "0000abcd-0000-1000-8000-00805f9b34fb", "direction": "RX", "packetIndex": 0 },
+    { "sequence": 2, "timestamp": 3200, "kind": "PACKET", "characteristicUuid": "0000abcd-0000-1000-8000-00805f9b34fb", "direction": "RX", "packetIndex": 1 },
+    { "sequence": 3, "timestamp": 3300, "kind": "PACKET", "characteristicUuid": "0000abcd-0000-1000-8000-00805f9b34fb", "direction": "RX", "packetIndex": 2 },
+    { "sequence": 4, "timestamp": 3400, "kind": "PACKET", "characteristicUuid": "0000abce-0000-1000-8000-00805f9b34fb", "direction": "TX", "packetIndex": 3 },
+    { "sequence": 5, "timestamp": 4000, "kind": "SESSION_FINISHED" }
+  ]
+}

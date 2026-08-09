@@ -90,19 +90,41 @@ For each controlled session:
 Do not add decoder or command behavior from an annotation. PR-013 begins only
 after the protocol finding is repeatable and documented.
 
+## Synthetic Fixtures
+
+Because no real HeyCyan capture is available, two synthetic JSON fixtures were
+committed as development anchors in `drivers/heycyan/src/test/resources/captures/`:
+
+| File | Purpose | Key packets |
+| --- | --- | --- |
+| `boot-synthetic-001.json` | Simulate a device boot + battery notification | seq=0: Ready (0x01), seq=1: Battery 90% (0x02 5A 00) |
+| `button-synthetic-001.json` | Simulate button press + RequestBattery TX | seq=0-2: SingleTap/DoubleTap/LongPress (0x03 0x0N), seq=3: TX 0x0A |
+
+These fixtures are **not real protocol observations**. They exist so that decoder
+and encoder definitions in `HeyCyanProtocolDefinitions` can be developed and
+tested offline. Each fixture is labelled `"scenario": "synthetic"` and
+`"metadata.haloVersion": "synthetic"`.
+
+When real captures are committed, compare the actual payloads to the hypothesis
+patterns. If they match, change confidence to `CORRELATED` or `VERIFIED`. If
+they differ, update the definitions accordingly.
+
 ## Current findings
 
-There are currently no repository capture artifacts under `captures/` or test
-resources. Consequently the following remain **Unknown**:
+There are currently no real hardware capture artifacts under `captures/` or test
+resources. The two synthetic fixture files exist for offline codec development
+only. Consequently the following remain **Unknown** for real hardware:
 
 | Finding | Status | Evidence |
 | --- | --- | --- |
-| Connection handshake | Unknown | No imported capture |
-| Heartbeat/keep-alive | Unknown | No imported capture |
-| ACK/NACK frames | Unknown | No imported capture |
-| Battery updates | Unknown | No imported capture |
-| Button presses | Unknown | No imported capture |
-| Connection/state transitions at protocol level | Unknown | No imported capture |
+| Connection handshake | Unknown | No real capture |
+| Heartbeat/keep-alive | Unknown | No real capture |
+| ACK/NACK frames | Unknown | No real capture |
+| Battery updates | HYPOTHESIS | boot-synthetic-001, seq=1 |
+| Button presses | HYPOTHESIS | button-synthetic-001, seq=0,1,2 |
+| Ready notification | HYPOTHESIS | boot-synthetic-001, seq=0 |
+| RequestBattery command | HYPOTHESIS | button-synthetic-001, seq=3 |
+| Connection/state transitions at protocol level | Unknown | No real capture |
 
 The decoder and encoder now enforce this boundary in code. A decoder without
 definitions returns an immutable `UnknownEvent` containing the characteristic,

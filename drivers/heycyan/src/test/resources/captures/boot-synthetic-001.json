@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 2,
+  "captureId": "boot-synthetic-001",
+  "scenario": "synthetic",
+  "deviceAddress": "AA:BB:CC:DD:EE:FF",
+  "deviceName": "HeyCyan-Synthetic",
+  "metadata": {
+    "haloVersion": "synthetic",
+    "gitCommit": null,
+    "androidVersion": null,
+    "phoneModel": null,
+    "bluetoothAdapter": null,
+    "glassesFirmware": null
+  },
+  "advertisements": [],
+  "requestedMtu": 517,
+  "mtu": 247,
+  "startedAt": 1000,
+  "endedAt": 2000,
+  "packets": [
+    {
+      "sequence": 0,
+      "timestamp": 1100,
+      "direction": "RX",
+      "characteristic": "0000abcd-0000-1000-8000-00805f9b34fb",
+      "payload": "01"
+    },
+    {
+      "sequence": 1,
+      "timestamp": 1200,
+      "direction": "RX",
+      "characteristic": "0000abcd-0000-1000-8000-00805f9b34fb",
+      "payload": "025A00"
+    }
+  ],
+  "services": [
+    {
+      "uuid": "0000abcd-0000-1000-8000-00805f9b34fb",
+      "type": 0,
+      "characteristics": [
+        {
+          "uuid": "0000abcd-0000-1000-8000-00805f9b34fb",
+          "properties": 16,
+          "permissions": 0,
+          "descriptors": []
+        }
+      ]
+    }
+  ],
+  "timeline": [
+    { "sequence": 0, "timestamp": 1000, "kind": "SESSION_STARTED" },
+    { "sequence": 1, "timestamp": 1100, "kind": "PACKET", "characteristicUuid": "0000abcd-0000-1000-8000-00805f9b34fb", "direction": "RX", "packetIndex": 0 },
+    { "sequence": 2, "timestamp": 1200, "kind": "PACKET", "characteristicUuid": "0000abcd-0000-1000-8000-00805f9b34fb", "direction": "RX", "packetIndex": 1 },
+    { "sequence": 3, "timestamp": 2000, "kind": "SESSION_FINISHED" }
+  ]
+}

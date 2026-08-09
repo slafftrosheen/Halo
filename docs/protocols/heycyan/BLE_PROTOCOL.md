@@ -26,11 +26,25 @@ never overwrites the raw packet or capture document. No real capture is present
 in this repository yet, so no application-level protocol finding is promoted
 beyond `Unknown`.
 
-The PR-013/014 codec boundaries are now implemented without promoting any
-unverified findings: unmatched notifications become observable unknown events,
-and commands are rejected unless a capture-backed definition supplies both target
-characteristic and payload. No verified command or event mapping is currently
-shipped because this repository still has no real HeyCyan capture artifact.
+PR-013/014 hypothesis decoder and encoder definitions are now implemented in
+[`HeyCyanProtocolDefinitions`](../../../drivers/heycyan/src/main/java/com/halo/drivers/heycyan/codec/HeyCyanProtocolDefinitions.kt).
+All definitions carry **HYPOTHESIS** confidence backed by synthetic fixture captures
+in `drivers/heycyan/src/test/resources/captures/`. No real HeyCyan capture has
+been imported, so no definition has been promoted to VERIFIED.
+
+Current hypothesis definitions:
+
+| Event/Command | Pattern (synthetic) | Confidence | Fixture |
+| --- | --- | --- | --- |
+| `Ready` | RX, byte[0]=0x01, len=1 | HYPOTHESIS | boot-synthetic-001, seq=0 |
+| `BatteryUpdated` | RX, byte[0]=0x02, len≥3, byte[1]=level%, byte[2]=charging | HYPOTHESIS | boot-synthetic-001, seq=1 |
+| `ButtonPressed(SINGLE_TAP)` | RX, byte[0]=0x03, byte[1]=0x01 | HYPOTHESIS | button-synthetic-001, seq=0 |
+| `ButtonPressed(DOUBLE_TAP)` | RX, byte[0]=0x03, byte[1]=0x02 | HYPOTHESIS | button-synthetic-001, seq=1 |
+| `ButtonPressed(LONG_PRESS)` | RX, byte[0]=0x03, byte[1]=0x03 | HYPOTHESIS | button-synthetic-001, seq=2 |
+| `RequestBattery` command | TX, 0x0A | HYPOTHESIS | button-synthetic-001, seq=3 |
+
+All other notifications still become `UnknownEvent`; all other commands still throw
+`UnsupportedOperationException`.
 
 ## Advertisement
 

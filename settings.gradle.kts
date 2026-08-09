@@ -78,3 +78,10 @@ include(":libraries:common")
 include(":libraries:halo-cognition-language")
 include(":libraries:logging")
 include(":libraries:testing")
+
+// Protocol Laboratory — device-agnostic capture/replay/analysis tooling
+include(":lab:capture")
+include(":lab:replay")
+include(":lab:analysis")
+include(":lab:protocol")
+include(":lab:diagnostics")

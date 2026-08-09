@@ -1,4 +1,4 @@
-﻿package com.halo.drivers.heycyan
+package com.halo.drivers.heycyan
 
 import android.bluetooth.BluetoothManager
 import android.content.Context
@@ -12,6 +12,7 @@ import com.halo.drivers.heycyan.codec.CompositePacketTracer
 import com.halo.drivers.heycyan.codec.JsonCaptureSessionStore
 import com.halo.drivers.heycyan.codec.HeyCyanCommandEncoder
 import com.halo.drivers.heycyan.codec.HeyCyanEventDecoder
+import com.halo.drivers.heycyan.codec.HeyCyanProtocolDefinitions
 import com.halo.drivers.heycyan.protocol.ButtonType
 import com.halo.drivers.heycyan.protocol.HeyCyanCommand
 import com.halo.drivers.heycyan.protocol.HeyCyanEvent
@@ -36,13 +37,21 @@ import java.io.File
 /**
  * Real HeyCyan transport driver.
  *
- * PR-011 records complete BLE discovery and transport sessions. Protocol decoding
- * and command serialization still wait for evidence from replayable captures.
+ * PR-011 records complete BLE discovery and transport sessions.
+ * PR-013/014 installs hypothesis decoder and encoder definitions backed by
+ * synthetic fixture captures. Real hardware evidence will promote or replace
+ * these definitions once imported captures are committed.
+ *
+ * @see HeyCyanProtocolDefinitions
  */
 class RealHeyCyanDriver(
     private val context: Context,
-    private val eventDecoder: HeyCyanEventDecoder = HeyCyanEventDecoder(),
-    private val commandEncoder: HeyCyanCommandEncoder = HeyCyanCommandEncoder()
+    private val eventDecoder: HeyCyanEventDecoder = HeyCyanEventDecoder(
+        HeyCyanProtocolDefinitions.eventDecoderDefinitions()
+    ),
+    private val commandEncoder: HeyCyanCommandEncoder = HeyCyanCommandEncoder(
+        HeyCyanProtocolDefinitions.commandEncoderDefinitions()
+    )
 ) : Driver {
 
     companion object {
