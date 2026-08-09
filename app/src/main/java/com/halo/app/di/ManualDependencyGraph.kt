@@ -118,6 +118,9 @@ object ManualDependencyGraph {
                 override val registry = infra.registry
                 override val logger = infra.logger
                 override val scheduler = infra.scheduler
+                override val clock = infra.clock
+                override val powerMode get() = infra.powerMode
+                override val metrics = infra.metrics
             },
             registry = infra.registry
         )

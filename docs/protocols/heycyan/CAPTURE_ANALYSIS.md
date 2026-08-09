@@ -1,6 +1,6 @@
 # HeyCyan Capture Analysis Workflow
 
-**Status:** PR-012 tooling foundation  
+**Status:** PR-012 tooling foundation; PR-013/014 evidence-gated codec seams
 **Evidence status:** No real HeyCyan capture has been imported into this repository yet.
 
 This document defines how transport evidence is imported and annotated without
@@ -103,6 +103,12 @@ resources. Consequently the following remain **Unknown**:
 | Battery updates | Unknown | No imported capture |
 | Button presses | Unknown | No imported capture |
 | Connection/state transitions at protocol level | Unknown | No imported capture |
+
+The decoder and encoder now enforce this boundary in code. A decoder without
+definitions returns an immutable `UnknownEvent` containing the characteristic,
+timestamp, raw payload, and reason. An encoder without a capture-backed command
+definition rejects the command instead of transmitting guessed bytes. Definitions
+must include at least one `PacketEvidenceReference` before they can be installed.
 
 The transport lifecycle events already recorded by PR-011 describe what the
 client observed at the GATT layer. They are not evidence for a HeyCyan

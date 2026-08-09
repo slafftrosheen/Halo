@@ -69,6 +69,7 @@ include(":engines:notification")
 include(":engines:diagnostics")
 
 include(":drivers:heycyan")
+include(":drivers:simulator")
 include(":providers:llamacpp")
 include(":providers:android-stt")
 include(":providers:android-tts")

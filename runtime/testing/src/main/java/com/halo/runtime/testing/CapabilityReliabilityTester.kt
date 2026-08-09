@@ -21,13 +21,15 @@ data class ReliabilityReport(
     val p99LatencyMs: Long,
     val stdDeviationMs: Double,
     val failureReasons: Map<String, Int>,
-    val deviceModel: String = android.os.Build.MODEL ?: "Unknown",
-    val androidVersion: String = android.os.Build.VERSION.RELEASE ?: "Unknown",
+    val deviceModel: String = "Unknown",
+    val androidVersion: String = "Unknown",
     val runtimeVersion: String = "Alpha-1",
     val timestamp: Long = System.currentTimeMillis()
 )
 
-class CapabilityReliabilityTester {
+class CapabilityReliabilityTester(
+    private val environment: ReliabilityEnvironment = ReliabilityEnvironment()
+) {
 
     suspend fun runReliabilityTest(capability: Capability, task: Task, iterations: Int = 100): ReliabilityReport {
         var successes = 0
@@ -91,7 +93,16 @@ class CapabilityReliabilityTester {
             p95LatencyMs = p95,
             p99LatencyMs = p99,
             stdDeviationMs = stdDev,
-            failureReasons = failures
+            failureReasons = failures,
+            deviceModel = environment.deviceModel,
+            androidVersion = environment.androidVersion,
+            runtimeVersion = environment.runtimeVersion
         )
     }
 }
+
+data class ReliabilityEnvironment(
+    val deviceModel: String = "Unknown",
+    val androidVersion: String = "Unknown",
+    val runtimeVersion: String = "Alpha-1"
+)

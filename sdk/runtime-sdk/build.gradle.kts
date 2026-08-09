@@ -8,5 +8,6 @@ dependencies {
     implementation(project(":libraries:common"))
     implementation(project(":libraries:halo-cognition-language"))
     implementation(project(":sdk:host-sdk"))
+    testImplementation(libs.junit)
 }
 

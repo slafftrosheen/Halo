@@ -189,6 +189,7 @@ dependencies {
     implementation(project(":providers:android-stt"))
     implementation(project(":providers:android-tts"))
     implementation(project(":drivers:heycyan"))
+    implementation(project(":drivers:simulator"))
 }
 
 tasks.register<Copy>("copyApkToReleases") {

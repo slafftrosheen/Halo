@@ -76,4 +76,11 @@ class AndroidTTSProvider(
     override suspend fun health(): Boolean {
         return isInitialized
     }
+
+    override suspend fun close() {
+        tts?.stop()
+        tts?.shutdown()
+        tts = null
+        isInitialized = false
+    }
 }

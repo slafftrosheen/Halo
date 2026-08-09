@@ -24,6 +24,16 @@ class RecognitionQueueTest {
         pcm = shortArrayOf(index.toShort()),
         sampleRate = 16_000,
         startedAt = index.toLong(),
-        finishedAt = index + 1L
+        finishedAt = index + 1L,
+        audioBuffer = com.halo.sdk.host.AudioBuffer(
+            listOf(
+                com.halo.sdk.host.AudioFrame(
+                    samples = shortArrayOf(index.toShort()),
+                    sampleRate = 16_000,
+                    channels = 1,
+                    timestamp = index.toLong()
+                )
+            )
+        )
     )
 }

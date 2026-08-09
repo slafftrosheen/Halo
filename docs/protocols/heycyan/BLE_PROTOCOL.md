@@ -26,6 +26,12 @@ never overwrites the raw packet or capture document. No real capture is present
 in this repository yet, so no application-level protocol finding is promoted
 beyond `Unknown`.
 
+The PR-013/014 codec boundaries are now implemented without promoting any
+unverified findings: unmatched notifications become observable unknown events,
+and commands are rejected unless a capture-backed definition supplies both target
+characteristic and payload. No verified command or event mapping is currently
+shipped because this repository still has no real HeyCyan capture artifact.
+
 ## Advertisement
 
 ### Observed facts

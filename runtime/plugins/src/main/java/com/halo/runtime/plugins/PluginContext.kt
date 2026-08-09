@@ -7,6 +7,7 @@ import com.halo.sdk.runtime.RuntimeScheduler
 import com.halo.sdk.runtime.RuntimeLogger
 import com.halo.sdk.runtime.RuntimeClock
 import com.halo.runtime.cognition.workingmemory.WorkingMemory
+import com.halo.runtime.cognition.ICapabilityRegistry
 
 // Basic permission manager placeholder for now
 interface PermissionManager {
@@ -21,5 +22,6 @@ class PluginContext(
     val commandBus: CommandBus,
     val clock: RuntimeClock,
     val workingMemory: WorkingMemory,
-    val permissionManager: PermissionManager
+    val permissionManager: PermissionManager,
+    val capabilities: ICapabilityRegistry
 )

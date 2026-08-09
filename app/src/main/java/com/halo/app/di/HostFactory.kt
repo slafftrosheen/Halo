@@ -6,12 +6,14 @@ import com.halo.drivers.heycyan.MockHeyCyanDriver
 import com.halo.drivers.heycyan.RealHeyCyanDriver
 import com.halo.drivers.heycyan.HeyCyanHost
 import com.halo.drivers.heycyan.HeyCyanAudioOutput
+import com.halo.drivers.simulator.SimulatedWearableHost
 import kotlinx.coroutines.runBlocking
 
 enum class HostType {
     ANDROID,
     HEYCYAN,
-    REPLAY
+    REPLAY,
+    SIMULATOR
 }
 
 object HostFactory {
@@ -26,8 +28,8 @@ object HostFactory {
                     audioOutput = HeyCyanAudioOutput(driver)
                 )
             }
-            HostType.ANDROID -> TODO("AndroidHost not yet implemented")
-            HostType.REPLAY -> TODO("ReplayHost not yet implemented")
+            HostType.ANDROID -> com.halo.host.android.AndroidHost()
+            HostType.REPLAY, HostType.SIMULATOR -> SimulatedWearableHost()
         }
     }
 }

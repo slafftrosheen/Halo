@@ -9,5 +9,6 @@ dependencies {
     implementation(project(":sdk:runtime-sdk"))
     implementation(project(":sdk:driver-sdk"))
     implementation(project(":sdk:provider-sdk"))
+    implementation(project(":sdk:host-sdk"))
 }
 

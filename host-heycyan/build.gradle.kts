@@ -1,6 +1,14 @@
 plugins {
-    id("java-library")
-    id("org.jetbrains.kotlin.jvm")
+    id("com.android.library")
+}
+
+android {
+    namespace = "com.halo.host.heycyan"
+    compileSdk = 34
+
+    defaultConfig {
+        minSdk = 26
+    }
 }
 
 dependencies {

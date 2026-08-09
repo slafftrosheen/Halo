@@ -89,6 +89,15 @@ class AndroidSpeechRecognitionProvider(
         }
     }
 
+    override suspend fun close() {
+        val handler = android.os.Handler(android.os.Looper.getMainLooper())
+        handler.post {
+            speechRecognizer?.cancel()
+            speechRecognizer?.destroy()
+            speechRecognizer = null
+        }
+    }
+
     override suspend fun health(): Boolean {
         return SpeechRecognizer.isRecognitionAvailable(context)
     }

@@ -10,6 +10,11 @@ import com.halo.drivers.heycyan.codec.CaptureSessionRecorder
 import com.halo.drivers.heycyan.codec.CaptureMetadata
 import com.halo.drivers.heycyan.codec.CompositePacketTracer
 import com.halo.drivers.heycyan.codec.JsonCaptureSessionStore
+import com.halo.drivers.heycyan.codec.HeyCyanCommandEncoder
+import com.halo.drivers.heycyan.codec.HeyCyanEventDecoder
+import com.halo.drivers.heycyan.protocol.ButtonType
+import com.halo.drivers.heycyan.protocol.HeyCyanCommand
+import com.halo.drivers.heycyan.protocol.HeyCyanEvent
 import com.halo.libraries.logging.ConsoleLogger
 import com.halo.sdk.driver.DeviceEvent
 import com.halo.sdk.driver.Driver
@@ -21,6 +26,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import java.io.File
 
 /**
@@ -30,7 +40,9 @@ import java.io.File
  * and command serialization still wait for evidence from replayable captures.
  */
 class RealHeyCyanDriver(
-    private val context: Context
+    private val context: Context,
+    private val eventDecoder: HeyCyanEventDecoder = HeyCyanEventDecoder(),
+    private val commandEncoder: HeyCyanCommandEncoder = HeyCyanCommandEncoder()
 ) : Driver {
 
     companion object {
@@ -50,10 +62,13 @@ class RealHeyCyanDriver(
     private val _events = MutableSharedFlow<DeviceEvent>(extraBufferCapacity = 64)
     override val events: Flow<DeviceEvent> = _events.asSharedFlow()
     override val state: StateFlow<DriverState> = gattClient.state
+    private val eventScope = kotlinx.coroutines.CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private var incomingEventJob: Job? = null
 
     override suspend fun initialize() = Unit
 
     override suspend fun connect() {
+        startIncomingEventDecoder()
         captureRecorder.start(
             scenario = "runtime",
             metadata = captureMetadata()
@@ -77,6 +92,7 @@ class RealHeyCyanDriver(
             gattClient.connect(advertisement.address)
             captureRecorder.setDevice(advertisement.address, advertisement.name)
             gattClient.awaitReady()
+            _events.emit(DeviceEvent.Ready(System.currentTimeMillis()))
         } catch (error: CancellationException) {
             captureRecorder.stop()
             throw error
@@ -90,15 +106,75 @@ class RealHeyCyanDriver(
     override suspend fun disconnect() {
         gattClient.disconnect()
         gattClient.awaitDisconnected()
+        incomingEventJob?.cancel()
+        incomingEventJob = null
         captureRecorder.stop()
     }
 
     override suspend fun shutdown() {
         disconnect()
+        eventScope.coroutineContext[Job]?.cancel()
     }
 
     override suspend fun emit(event: DeviceEvent) {
         _events.emit(event)
+    }
+
+    /** Sends a command only when the supplied encoder has capture-backed evidence. */
+    suspend fun sendCommand(command: HeyCyanCommand): Result<Unit> = runCatching {
+        val encoded = commandEncoder.encodeWithTarget(command)
+        check(gattClient.write(encoded.characteristic, encoded.copyPayload())) {
+            "HeyCyan command write was rejected by GATT"
+        }
+    }
+
+    private fun startIncomingEventDecoder() {
+        if (incomingEventJob != null) return
+        incomingEventJob = eventScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            gattClient.incomingBytes.collect { (characteristic, payload) ->
+                val decoded = eventDecoder.decode(
+                    payload = payload,
+                    characteristic = characteristic,
+                    timestamp = System.currentTimeMillis()
+                )
+                emitDeviceEvent(decoded, characteristic, payload)
+            }
+        }
+    }
+
+    private suspend fun emitDeviceEvent(
+        event: HeyCyanEvent,
+        characteristic: java.util.UUID,
+        payload: ByteArray
+    ) {
+        val timestamp = System.currentTimeMillis()
+        when (event) {
+            is HeyCyanEvent.BatteryUpdated -> {
+                _events.emit(DeviceEvent.BatteryLevel(timestamp, event.level))
+                _events.emit(DeviceEvent.ChargingState(timestamp, event.isCharging))
+            }
+            is HeyCyanEvent.ButtonPressed -> {
+                _events.emit(DeviceEvent.ButtonClick(timestamp, event.type.toButtonId()))
+            }
+            HeyCyanEvent.Ready -> _events.emit(DeviceEvent.Ready(timestamp))
+            is HeyCyanEvent.UnknownEvent -> _events.emit(
+                DeviceEvent.ProtocolUnknown(
+                    timestamp = timestamp,
+                    characteristic = characteristic,
+                    payload = payload,
+                    reason = event.reason
+                )
+            )
+            else -> Unit
+        }
+    }
+
+    private fun ButtonType.toButtonId(): Int = when (this) {
+        ButtonType.SINGLE_TAP -> 1
+        ButtonType.DOUBLE_TAP -> 2
+        ButtonType.LONG_PRESS -> 3
+        ButtonType.VOICE_BUTTON -> 4
+        ButtonType.CAMERA_BUTTON -> 5
     }
 
     private fun captureMetadata(): CaptureMetadata {

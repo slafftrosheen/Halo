@@ -11,6 +11,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -22,7 +24,8 @@ import java.util.concurrent.TimeUnit
 import com.halo.sdk.provider.InferenceProvider
 
 class OllamaProvider(
-    private val baseUrl: String = "http://10.0.2.2:11434"
+    private val baseUrl: String = "http://10.0.2.2:11434",
+    private val modelId: String = "llama3"
 ) : InferenceProvider {
 
     private val TAG = "OllamaProvider"
@@ -45,6 +48,13 @@ class OllamaProvider(
 
     private val generateRequestAdapter = moshi.adapter(OllamaGenerateRequest::class.java)
     private val generateResponseAdapter = moshi.adapter(OllamaGenerateResponse::class.java)
+
+    override val metadata = com.halo.sdk.provider.ProviderMetadata(
+        id = "provider.ollama",
+        displayName = "Ollama",
+        local = true,
+        supportsStreaming = true
+    )
 
     suspend fun connect() {
         Log.i(TAG, "Connecting to Ollama at $baseUrl")
@@ -75,10 +85,12 @@ class OllamaProvider(
     override suspend fun complete(request: AIRequest): AIResponse {
         return withContext(Dispatchers.IO) {
             val startTime = System.currentTimeMillis()
-            val prompt = request.conversation.messages.lastOrNull()?.content ?: ""
+            val prompt = request.conversation.messages.joinToString("\n") {
+                "${it.role.name.lowercase()}: ${it.content}"
+            }
             
             val ollamaRequest = OllamaGenerateRequest(
-                model = "llama3", // Assuming llama3 as the default
+                model = modelId,
                 prompt = prompt,
                 stream = false,
                 options = mapOf(
@@ -109,6 +121,7 @@ class OllamaProvider(
                     )
                 }
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 Log.e(TAG, "Completion failed", e)
                 AIResponse(
                     text = "Error: ${e.message}",
@@ -121,7 +134,7 @@ class OllamaProvider(
 
     override fun stream(prompt: String): Flow<String> = flow {
         val ollamaRequest = OllamaGenerateRequest(
-            model = "llama3",
+            model = modelId,
             prompt = prompt,
             stream = true
         )
@@ -138,6 +151,7 @@ class OllamaProvider(
 
                 val source = response.body?.source() ?: throw IOException("Empty body")
                 while (!source.exhausted()) {
+                    currentCoroutineContext().ensureActive()
                     val line = source.readUtf8LineStrict()
                     if (line.isNotBlank()) {
                         try {
@@ -155,13 +169,18 @@ class OllamaProvider(
                 }
             }
         } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
             Log.e(TAG, "Streaming failed", e)
-            emit("[Error: ${e.message}]")
+            throw e
         }
     }.flowOn(Dispatchers.IO)
 
-    fun disconnect() {
+    override suspend fun close() {
         Log.i(TAG, "Disconnecting from Ollama")
+        client.connectionPool.evictAll()
+    }
+
+    fun disconnect() {
         client.connectionPool.evictAll()
     }
 }

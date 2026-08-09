@@ -150,6 +150,10 @@ Nothing more. Never expose implementation.
 # 14. Execution
 `Capability` interface remains tiny. Capabilities remain stateless.
 
+Capability implementations are resolved through the capability registry. Plugins
+may contribute capabilities, but planning and runtime orchestration must not depend
+on concrete capability class names.
+
 ---
 
 # 15. Unified Input & Output
@@ -173,6 +177,24 @@ Every PR answers:
 * Does this improve wearable readiness?
 * Does this improve one complete user flow?
 If not, do not merge.
+
+---
+
+# 18. Product Implementation Rules
+
+1. Runtime modules must not import platform SDKs.
+2. Drivers own hardware protocols and preserve raw observations.
+3. Hosts adapt drivers to runtime contracts.
+4. Providers implement AI capabilities only; provider-specific APIs do not leak
+   into runtime contracts.
+5. Protocol implementations require capture evidence. Guessed packet meanings and
+   speculative commands are forbidden.
+6. Unknown protocol data must remain observable and reproducible.
+7. Imported replay artifacts are immutable evidence; annotations belong in sidecars.
+8. Every new abstraction must have a measurable integration or product benefit.
+9. The simulator is a supported host for deterministic development and tests.
+10. Every new working flow must be executable without physical hardware unless the
+    behavior itself is hardware-specific.
 
 ---
 

@@ -54,6 +54,27 @@ PR-010 changes the HeyCyan objective from *making an assumed protocol work* to *
 - [ ] **PR-012 — Evidence-based protocol documentation:** import and annotate real captures, then identify framing, packet boundaries, battery messages, button packets, acknowledgements, heartbeat, and notification traffic in documentation only. Analysis tooling is present; findings remain pending real captures.
 - [ ] **PR-013 — Verified event decoding:** implement battery, button, connection, and state events only from packet definitions supported by multiple captures.
 
+The repository now contains an evidence-gated decoder that emits immutable
+unknown events when no definition matches. Verified battery/button/state mappings
+remain blocked on real capture artifacts, as required by the constitution.
+
+## Product implementation track
+
+- [x] Deterministic simulator host, driver, clock, audio source, and audio output.
+- [x] Capability registry with deterministic priority resolution, duplicate-ID
+  protection, lifecycle removal, and plugin capability contribution.
+- [x] Provider metadata, health details, lifecycle close hooks, runtime clock,
+  power modes, and metrics sink contracts.
+- [x] Evidence-safe HeyCyan decoder and command encoder seams; unknown packets are
+  preserved and speculative commands are rejected.
+- [x] llama.cpp/Ollama configuration and cancellation/lifecycle hardening.
+- [ ] Import real HeyCyan captures and promote repeatable definitions to verified.
+- [ ] Add Moonshine/Sherpa/Piper/Porcupine backends after their native artifacts
+  or dependency coordinates are selected and checked in.
+- [ ] Complete physical-hardware acceptance flow: connect, button, battery,
+  command acknowledgement, audio input, and wearable speech output.
+- [ ] Establish measured latency and battery budgets on representative hardware.
+
 ### Guardrails
 
 - Do not implement guessed commands or packet fields.

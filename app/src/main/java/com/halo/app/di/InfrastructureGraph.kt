@@ -11,6 +11,11 @@ import com.halo.app.devtools.CognitiveTrace
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import com.halo.sdk.runtime.InMemoryRuntimeMetrics
+import com.halo.sdk.runtime.RuntimeClock
+import com.halo.sdk.runtime.RuntimePowerMode
+import com.halo.sdk.runtime.RuntimeMetricsSink
+import com.halo.sdk.runtime.SystemRuntimeClock
 
 /**
  * Owns all cross-cutting infrastructure: buses, logger, scheduler, scope.
@@ -19,6 +24,9 @@ import kotlinx.coroutines.SupervisorJob
 class InfrastructureGraph {
 
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    val clock: RuntimeClock = SystemRuntimeClock()
+    val metrics: RuntimeMetricsSink = InMemoryRuntimeMetrics()
+    var powerMode: RuntimePowerMode = RuntimePowerMode.BALANCED
 
     val eventBus by lazy { RecordingEventBus(DefaultEventBus()) }
     val commandBus by lazy { DefaultCommandBus() }

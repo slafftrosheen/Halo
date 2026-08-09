@@ -6,7 +6,7 @@ class AudioBuffer(val maxMillis: Long = 10000) {
 
     fun append(frame: AudioFrame) {
         synchronized(lock) {
-            frames.add(frame.copy())
+            frames.add(frame.copyDetached())
         }
     }
 
@@ -32,7 +32,16 @@ class AudioBuffer(val maxMillis: Long = 10000) {
             sampleRate = firstFrame.sampleRate,
             startedAt = firstFrame.timestamp,
             finishedAt = finishedAt,
-            audioBuffer = com.halo.sdk.host.AudioBuffer(frames.map { com.halo.sdk.host.AudioFrame(it.samples, it.sampleRate, it.channels, it.timestamp) })
+            audioBuffer = com.halo.sdk.host.AudioBuffer(
+                frames.map {
+                    com.halo.sdk.host.AudioFrame(
+                        samples = it.samples.copyOf(),
+                        sampleRate = it.sampleRate,
+                        channels = it.channels,
+                        timestamp = it.timestamp
+                    )
+                }
+            )
         )
     }
 
@@ -62,7 +71,7 @@ class AudioBuffer(val maxMillis: Long = 10000) {
         return result
     }
 
-    private fun AudioFrame.copy(): AudioFrame = AudioFrame(
+    private fun AudioFrame.copyDetached(): AudioFrame = AudioFrame(
         samples = samples.copyOf(),
         sampleRate = sampleRate,
         channels = channels,

@@ -24,8 +24,12 @@ enum class SpeechRecognitionMode {
 }
 
 sealed interface SpeechRecognitionProvider {
+    val metadata: ProviderMetadata
+        get() = ProviderMetadata(id = this::class.java.name, supportsStreaming = mode == SpeechRecognitionMode.LIVE)
     val mode: SpeechRecognitionMode
     suspend fun health(): Boolean
+    suspend fun healthDetails(): ProviderHealth = ProviderHealth(healthy = health())
+    suspend fun close() = Unit
 }
 
 interface BufferedSpeechRecognitionProvider : SpeechRecognitionProvider {

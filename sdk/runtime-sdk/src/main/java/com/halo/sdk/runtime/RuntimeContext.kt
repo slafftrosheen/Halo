@@ -7,5 +7,10 @@ interface RuntimeContext {
     val scheduler: RuntimeScheduler
     val registry: ServiceRegistry
     val logger: RuntimeLogger
-    // val clock: Clock (skipping for now or define a simple one)
+    val clock: RuntimeClock
+        get() = SystemRuntimeClock()
+    val powerMode: RuntimePowerMode
+        get() = RuntimePowerMode.BALANCED
+    val metrics: RuntimeMetricsSink
+        get() = NoopRuntimeMetrics
 }
