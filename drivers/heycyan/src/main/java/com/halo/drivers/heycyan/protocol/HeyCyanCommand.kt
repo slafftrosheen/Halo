@@ -5,22 +5,22 @@ package com.halo.drivers.heycyan.protocol
  * These map to the QCOperatorDeviceMode values and proprietary vendor commands.
  */
 sealed interface HeyCyanCommand {
-    
+    // State Queries
+    data object GetBattery : HeyCyanCommand
+    data object GetVersion : HeyCyanCommand
+    data object GetMediaCounts : HeyCyanCommand
+    data object GetMacAddress : HeyCyanCommand
+
     // Media Capture
     data object TakePhoto : HeyCyanCommand
     data object StartVideo : HeyCyanCommand
     data object StopVideo : HeyCyanCommand
+
+    // Audio Capture
     data object StartAudio : HeyCyanCommand
     data object StopAudio : HeyCyanCommand
-    
-    // AI Features
-    data object AIPhoto : HeyCyanCommand
-    
-    // State Queries
-    data object RequestBattery : HeyCyanCommand
-    data object RequestMediaCounts : HeyCyanCommand
-    data object RequestDeviceInfo : HeyCyanCommand
-    
+
     // Network / Transfer
-    data object EnableWiFiTransfer : HeyCyanCommand
+    data object EnableTransfer : HeyCyanCommand
+    data object SetDateTime : HeyCyanCommand
 }
