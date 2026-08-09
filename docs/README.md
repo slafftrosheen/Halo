@@ -37,6 +37,7 @@ graph TD
 - **[05-runtime](05-runtime/README.md)**: Runtime API, Lifecycle, Events, Configuration
 - **[06-cognition](06-cognition/README.md)**: Cognitive Engines, Inference, Memory Models
 - **[07-platform](07-platform/README.md)**: Drivers, Providers, and Plugins architecture
+- **[protocols](protocols/README.md)**: Evidence-backed device protocol documentation
 - **[10-features](10-features/README.md)**: Shipped features and functional capabilities
 - **[11-ui](11-ui/README.md)**: User Interface components and layout specifics
 - **[12-security](12-security/README.md)**: Security, sandboxing, and permissions

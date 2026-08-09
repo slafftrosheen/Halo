@@ -1,6 +1,8 @@
-package com.halo.app
+﻿package com.halo.app
 
 import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -8,39 +10,39 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import com.halo.app.di.ManualDependencyGraph
-import com.halo.app.ui.screens.home.HomeScreen
 import com.halo.app.ui.screens.PermissionsScreen
+import com.halo.app.ui.screens.home.HomeScreen
 import com.halo.app.ui.theme.BrainToolTheme
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
-    private var hasRecordAudioPermission by mutableStateOf(false)
+    private var hasRequiredPermissions by mutableStateOf(false)
+    private lateinit var runtime: HaloRuntime
 
     private val permissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        hasRecordAudioPermission = isGranted
-        if (isGranted) {
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) {
+        hasRequiredPermissions = areRequiredPermissionsGranted()
+        if (hasRequiredPermissions) {
             startAlphaLoop()
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
-        // Check if we already have permission before launching UI
-        val currentPermission = checkSelfPermission(Manifest.permission.RECORD_AUDIO)
-        hasRecordAudioPermission = currentPermission == android.content.pm.PackageManager.PERMISSION_GRANTED
-        
-        if (hasRecordAudioPermission) {
+
+        ManualDependencyGraph.init(this)
+        runtime = HaloRuntime(ManualDependencyGraph)
+
+        hasRequiredPermissions = areRequiredPermissionsGranted()
+        if (hasRequiredPermissions) {
             startAlphaLoop()
         }
 
@@ -50,13 +52,12 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    if (hasRecordAudioPermission) {
-                        // For MVP, we will directly render the HomeScreen
+                    if (hasRequiredPermissions) {
                         HomeScreen(viewModel = ManualDependencyGraph.homeViewModel)
                     } else {
                         PermissionsScreen(
                             onPermissionsGranted = {
-                                permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                                permissionLauncher.launch(requiredPermissions())
                             }
                         )
                     }
@@ -65,27 +66,30 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun requiredPermissions(): Array<String> = buildList {
+        add(Manifest.permission.RECORD_AUDIO)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            add(Manifest.permission.BLUETOOTH_SCAN)
+            add(Manifest.permission.BLUETOOTH_CONNECT)
+        } else {
+            add(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+    }.toTypedArray()
+
+    private fun areRequiredPermissionsGranted(): Boolean = requiredPermissions().all { permission ->
+        checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
+    }
+
     private fun startAlphaLoop() {
         lifecycleScope.launch {
-            // Wake up the cognitive engine 
-            ManualDependencyGraph.microkernel.boot()
-            
-            // Connect to wearable device (e.g. HeyCyan Glasses)
-            ManualDependencyGraph.wearableHost.connect()
-            
-            // Start the physical hardware perception loop
-            val audioEngine = ManualDependencyGraph.audioPerceptionEngine
-            audioEngine.initialize(ManualDependencyGraph.engineContext)
-            audioEngine.start()
+            runtime.start()
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
         lifecycleScope.launch {
-            ManualDependencyGraph.wearableHost.disconnect()
-            ManualDependencyGraph.audioPerceptionEngine.stop()
-            ManualDependencyGraph.microkernel.shutdown()
+            runtime.stop()
         }
     }
 }

@@ -1,63 +1,96 @@
-package com.halo.drivers.heycyan
+﻿package com.halo.drivers.heycyan
 
+import android.bluetooth.BluetoothManager
 import android.content.Context
+import android.os.Build
+import com.halo.drivers.heycyan.ble.HeyCyanBleScanner
+import com.halo.drivers.heycyan.ble.HeyCyanGattClient
+import com.halo.drivers.heycyan.codec.LoggingPacketTracer
+import com.halo.drivers.heycyan.codec.CaptureSessionRecorder
+import com.halo.drivers.heycyan.codec.CaptureMetadata
+import com.halo.drivers.heycyan.codec.CompositePacketTracer
+import com.halo.drivers.heycyan.codec.JsonCaptureSessionStore
+import com.halo.libraries.logging.ConsoleLogger
 import com.halo.sdk.driver.DeviceEvent
 import com.halo.sdk.driver.Driver
 import com.halo.sdk.driver.DriverState
-import com.halo.drivers.heycyan.ble.HeyCyanBleScanner
-import com.halo.drivers.heycyan.ble.HeyCyanGattClient
-import com.halo.drivers.heycyan.protocol.HeyCyanEvent
-import com.halo.drivers.heycyan.protocol.ButtonType
-import com.halo.drivers.heycyan.protocol.HeyCyanProtocolParser
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
+import java.io.File
 
+/**
+ * Real HeyCyan transport driver.
+ *
+ * PR-011 records complete BLE discovery and transport sessions. Protocol decoding
+ * and command serialization still wait for evidence from replayable captures.
+ */
 class RealHeyCyanDriver(
     private val context: Context
 ) : Driver {
 
-    private val scanner = HeyCyanBleScanner(context)
-    private val gattClient = HeyCyanGattClient(context)
-    private val parser = HeyCyanProtocolParser()
-    
-    private val _events = MutableSharedFlow<DeviceEvent>(extraBufferCapacity = 64)
-    override val events: Flow<DeviceEvent> = _events.asSharedFlow()
-    
-    override val state: StateFlow<DriverState> = gattClient.state
-    
-    private val scope = CoroutineScope(Dispatchers.IO)
-    private var readJob: Job? = null
-
-    override suspend fun initialize() {
-        // Any setup before connecting
+    companion object {
+        private const val SCAN_TIMEOUT_MILLIS = 30_000L
     }
 
+    private val captureRecorder = CaptureSessionRecorder(
+        JsonCaptureSessionStore(File(context.filesDir, "captures/heycyan"))
+    )
+    private val tracer = CompositePacketTracer(
+        LoggingPacketTracer(ConsoleLogger()),
+        captureRecorder
+    )
+    private val scanner = HeyCyanBleScanner(context)
+    private val gattClient = HeyCyanGattClient(context, tracer)
+
+    private val _events = MutableSharedFlow<DeviceEvent>(extraBufferCapacity = 64)
+    override val events: Flow<DeviceEvent> = _events.asSharedFlow()
+    override val state: StateFlow<DriverState> = gattClient.state
+
+    override suspend fun initialize() = Unit
+
     override suspend fun connect() {
-        // 1. Scan for the device
-        val macAddress = try {
-            scanner.scanForDevice().first() // Get the first discovered HeyCyan device
-        } catch (e: Exception) {
-            // Error handling could be expanded here
-            return
+        captureRecorder.start(
+            scenario = "runtime",
+            metadata = captureMetadata()
+        )
+        gattClient.markScanning()
+
+        try {
+            val advertisement = withTimeout(SCAN_TIMEOUT_MILLIS) {
+                scanner.scanForDevice().first()
+            }
+            captureRecorder.recordAdvertisement(
+                com.halo.drivers.heycyan.codec.CaptureAdvertisement(
+                    timestamp = System.currentTimeMillis(),
+                    address = advertisement.address,
+                    name = advertisement.name,
+                    rssi = advertisement.rssi,
+                    serviceUuids = advertisement.serviceUuids,
+                    manufacturerData = advertisement.manufacturerData
+                )
+            )
+            gattClient.connect(advertisement.address)
+            captureRecorder.setDevice(advertisement.address, advertisement.name)
+            gattClient.awaitReady()
+        } catch (error: CancellationException) {
+            captureRecorder.stop()
+            throw error
+        } catch (error: Throwable) {
+            gattClient.fail(error)
+            captureRecorder.stop()
+            throw error
         }
-        
-        // 2. Connect to the device via GATT
-        gattClient.connect(macAddress)
-        
-        // 3. Start processing incoming notifications
-        startReading()
     }
 
     override suspend fun disconnect() {
-        readJob?.cancel()
         gattClient.disconnect()
+        gattClient.awaitDisconnected()
+        captureRecorder.stop()
     }
 
     override suspend fun shutdown() {
@@ -65,45 +98,25 @@ class RealHeyCyanDriver(
     }
 
     override suspend fun emit(event: DeviceEvent) {
-        // For sending events out to the host, but the Driver interface has this method
         _events.emit(event)
     }
-    
-    private fun startReading() {
-        readJob?.cancel()
-        readJob = scope.launch {
-            gattClient.incomingBytes.collect { payload ->
-                val heyCyanEvent = parser.parse(payload) ?: return@collect
-                
-                // Map HeyCyanEvent to generic DeviceEvent
-                val deviceEvent = mapToDeviceEvent(heyCyanEvent)
-                if (deviceEvent != null) {
-                    _events.emit(deviceEvent)
-                }
-            }
-        }
-    }
-    
-    private fun mapToDeviceEvent(event: HeyCyanEvent): DeviceEvent? {
-        val timestamp = System.currentTimeMillis()
-        return when (event) {
-            is HeyCyanEvent.ButtonPressed -> {
-                // Map ButtonType to buttonId (0 for single tap, 1 for double tap, etc)
-                val buttonId = when(event.type) {
-                    ButtonType.SINGLE_TAP -> 0
-                    ButtonType.DOUBLE_TAP -> 1
-                    ButtonType.LONG_PRESS -> 2
-                    ButtonType.VOICE_BUTTON -> 3
-                    ButtonType.CAMERA_BUTTON -> 4
-                }
-                DeviceEvent.ButtonClick(timestamp, buttonId)
-            }
-            is HeyCyanEvent.BatteryUpdated -> {
-                DeviceEvent.BatteryLevel(timestamp, event.level)
-            }
-            // Other events like WiFiHotspotReady aren't mapped to generic DeviceEvents yet,
-            // they would be handled by specialized channels if necessary.
-            else -> null
-        }
+
+    private fun captureMetadata(): CaptureMetadata {
+        val packageInfo = runCatching {
+            context.packageManager.getPackageInfo(context.packageName, 0)
+        }.getOrNull()
+        val bluetoothAdapter = runCatching {
+            context.getSystemService(BluetoothManager::class.java)?.adapter?.name
+        }.getOrNull()
+
+        return CaptureMetadata(
+            haloVersion = packageInfo?.versionName,
+            androidVersion = "Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})",
+            phoneModel = listOf(Build.MANUFACTURER, Build.MODEL)
+                .filter { it.isNotBlank() }
+                .joinToString(" ")
+                .ifBlank { null },
+            bluetoothAdapter = bluetoothAdapter
+        )
     }
 }

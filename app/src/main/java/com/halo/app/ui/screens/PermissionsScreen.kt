@@ -1,33 +1,28 @@
-package com.halo.app.ui.screens
+﻿package com.halo.app.ui.screens
 
-import android.Manifest
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
 fun PermissionsScreen(onPermissionsGranted: () -> Unit) {
     var hasRequested by remember { mutableStateOf(false) }
-    
-    val permissions = arrayOf(
-        Manifest.permission.RECORD_AUDIO,
-        Manifest.permission.CAMERA,
-        Manifest.permission.ACCESS_FINE_LOCATION,
-        Manifest.permission.BLUETOOTH_CONNECT
-    )
-    
-    val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestMultiplePermissions()
-    ) { _ ->
-        // In a real app we'd check if all required permissions are granted.
-        // For Alpha, we just continue after asking.
-        onPermissionsGranted()
-    }
-    
+
     Scaffold { padding ->
         Column(
             modifier = Modifier
@@ -41,30 +36,27 @@ fun PermissionsScreen(onPermissionsGranted: () -> Unit) {
             Text("Halo requires the following permissions to operate:", style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(8.dp))
             Text("• Microphone (for voice input)")
-            Text("• Camera (for flashlight control)")
-            Text("• Location (for navigation)")
-            Text("• Bluetooth (for wearables)")
-            
+            Text("• Bluetooth scan and connection (for wearable discovery)")
+            Text("• Location on older Android versions (required by BLE scanning)")
+
             Spacer(modifier = Modifier.height(32.dp))
-            
+
             Button(
                 onClick = {
                     hasRequested = true
-                    launcher.launch(permissions)
+                    onPermissionsGranted()
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Grant Permissions")
             }
-            
+
             if (hasRequested) {
                 Spacer(modifier = Modifier.height(16.dp))
-                TextButton(
-                    onClick = onPermissionsGranted,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Continue anyway (Some features will be degraded)")
-                }
+                Text(
+                    "Bluetooth and microphone permissions are required before device discovery can start.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
         }
     }
