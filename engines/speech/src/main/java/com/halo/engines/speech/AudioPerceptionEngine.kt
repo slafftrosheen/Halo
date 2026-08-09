@@ -29,7 +29,8 @@ data class EngineMetrics(
 class AudioPerceptionEngine(
     private val audioSource: com.halo.sdk.host.AudioSource,
     private val preprocessor: AudioPreprocessor,
-    private val audioPipeline: AudioPipeline
+    private val audioPipeline: AudioPipeline,
+    private val eventBus: com.halo.sdk.runtime.EventBus
 ) : Engine {
 
     override val metadata = EngineMetadata(
@@ -44,7 +45,7 @@ class AudioPerceptionEngine(
     private val _state = MutableStateFlow<EngineState>(EngineState.Created)
     override val state: StateFlow<EngineState> = _state
 
-    override val dependencies: Set<ServiceKey<*>> = setOf(Services.EventBus)
+    override val dependencies: Set<ServiceKey<*>> = emptySet()
 
     private lateinit var context: EngineContext
     private lateinit var scope: CoroutineScope
@@ -76,8 +77,6 @@ class AudioPerceptionEngine(
 
             _state.value = EngineState.Running
 
-            val eventBus = context.registry.resolve(Services.EventBus)
-            
             captureJob = scope.launch {
                 runCaptureLoop(eventBus)
             }

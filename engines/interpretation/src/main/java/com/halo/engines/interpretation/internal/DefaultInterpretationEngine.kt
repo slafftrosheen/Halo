@@ -42,7 +42,8 @@ import kotlinx.datetime.Instant
 open class DefaultInterpretationEngine(
     private val pipeline: RulePipeline,
     private val blackboard: Blackboard,
-    private val contextAssembler: ContextAssembler
+    private val contextAssembler: ContextAssembler,
+    private val eventBus: com.halo.sdk.runtime.EventBus
 ) : InterpretationEngine {
     override val metadata = EngineMetadata(
         id = Identifier("engine.interpretation.core"),
@@ -56,19 +57,13 @@ open class DefaultInterpretationEngine(
     private val _state = MutableStateFlow<EngineState>(EngineState.Created)
     override val state: StateFlow<EngineState> = _state
 
-    override val dependencies: Set<ServiceKey<*>> = setOf(
-        Services.EventBus,
-        Services.Blackboard
-    )
+    override val dependencies: Set<ServiceKey<*>> = emptySet()
 
     private lateinit var context: EngineContext
     private var job: Job? = null
 
     override suspend fun initialize(context: EngineContext) {
         this.context = context
-        check(context.registry.resolve(Services.Blackboard) === blackboard) {
-            "InterpretationEngine must use the registered Blackboard instance"
-        }
         _state.value = EngineState.Initializing
         context.runtime.logger.info(
             category = "interpretation",
@@ -78,7 +73,6 @@ open class DefaultInterpretationEngine(
 
     override suspend fun start() {
         _state.value = EngineState.Running
-        val eventBus = context.registry.resolve(Services.EventBus)
 
         job = CoroutineScope(context.runtime.scheduler.io).launch {
             eventBus.observe(ObservationCreated::class.java).collect { event ->

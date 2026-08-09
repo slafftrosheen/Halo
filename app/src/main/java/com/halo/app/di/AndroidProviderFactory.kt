@@ -13,14 +13,12 @@ class AndroidProviderFactory(
     private val modelDownloadManager: ModelDownloadManager
 ) : ProviderFactory {
 
-    override fun createProviders(): ProviderRegistry {
-        val registry = DefaultProviderRegistry()
-        
-        registry.register(InferenceProvider::class, NativeLlamaProvider(context, modelDownloadManager))
-        registry.register(SpeechRecognitionProvider::class, StubAndroidSpeechRecognitionProvider(context))
-        registry.register(SpeechSynthesisProvider::class, AndroidTTSProvider(context))
-        registry.register(WakeWordDetector::class, AlwaysWakeDetector())
-        
-        return registry
+    override fun createProviders(): Providers {
+        return Providers(
+            inference = NativeLlamaProvider(context, modelDownloadManager),
+            speechRecognition = StubAndroidSpeechRecognitionProvider(context),
+            speechSynthesis = AndroidTTSProvider(context),
+            wakeWord = AlwaysWakeDetector()
+        )
     }
 }

@@ -1,207 +1,107 @@
 package com.halo.app.di
 
 import android.content.Context
-import com.halo.libraries.logging.ConsoleLogger
-import com.halo.runtime.commands.DefaultCommandBus
-import com.halo.runtime.events.DefaultEventBus
-import com.halo.runtime.kernel.HaloMicrokernel
-import com.halo.runtime.kernel.ProcessManager
-import com.halo.runtime.kernel.bus.PerceptionBus
-import com.halo.runtime.kernel.bus.CognitiveBus
-import com.halo.runtime.kernel.bus.ExecutionBus
-import com.halo.runtime.queries.DefaultQueryBus
-import com.halo.runtime.registry.DefaultServiceRegistry
-import com.halo.runtime.scheduler.DefaultScheduler
-import com.halo.app.devtools.RecordingEventBus
-import com.halo.app.devtools.CognitiveTrace
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-
-import com.halo.host.android.AndroidWakeWordProcess
-import com.halo.engines.interpretation.InterpretationEngine
-import com.halo.engines.agents.RuntimeOrchestrator
-
 import com.halo.engines.memory.WorkingMemoryProcess
-import com.halo.engines.memory.ReflectionEngine
-import com.halo.engines.memory.store.WorkingMemoryStore
-import com.halo.engines.memory.store.EpisodicMemoryStore
-import com.halo.engines.reasoning.service.GoalManager
-import com.halo.engines.planning.PlanningEngine
-import com.halo.engines.execution.ExecutionEngine
-import com.halo.engines.execution.service.ExecutionScheduler
-import com.halo.engines.execution.service.CapabilityRegistry
-import com.halo.host.android.capability.AndroidDeviceCapability
-import com.halo.host.android.capability.AndroidApplicationCapability
-import com.halo.host.android.capability.AndroidMediaCapability
-import com.halo.host.android.capability.AndroidNavigationCapability
-import com.halo.providers.llamacpp.ModelDownloadManager
-import com.halo.providers.llamacpp.NativeLlamaProvider
-import com.halo.providers.llamacpp.OllamaProvider
-import com.halo.runtime.observer.DefaultRuntimeObserver
-import com.halo.runtime.observer.TimelineRecorder
-import com.halo.runtime.observer.DefaultTimelineEventMapper
-import com.halo.runtime.observer.DefaultRuntimeHealthEvaluator
-import com.halo.runtime.observer.DefaultSnapshotAssembler
+import com.halo.host.android.AndroidWakeWordProcess
+import com.halo.runtime.kernel.HaloMicrokernel
 import com.halo.app.ui.screens.home.HomeViewModel
 import com.halo.app.ui.screens.timeline.TimelineViewModel
 import com.halo.app.ui.screens.console.ConsoleViewModel
 import com.halo.app.ui.screens.settings.SettingsViewModel
-import com.halo.runtime.speech.SpeechSessionManager
 
-
+/**
+ * Thin façade that wires sub-graphs together. This is the sole composition root.
+ * No resolve() calls exist outside this file.
+ */
 object ManualDependencyGraph {
     lateinit var applicationContext: Context
-    
+
     fun init(context: Context) {
         applicationContext = context.applicationContext
     }
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    // ─── Sub-graphs ─────────────────────────────────────────────
 
-    val eventBus by lazy { RecordingEventBus(DefaultEventBus()) }
-    val commandBus by lazy { DefaultCommandBus() }
-    val queryBus by lazy { DefaultQueryBus() }
-    val scheduler by lazy { DefaultScheduler() }
-    val registry by lazy { 
-        DefaultServiceRegistry().apply {
-            register(com.halo.runtime.services.Services.EventBus, eventBus)
-        }
-    }
-    val logger by lazy { ConsoleLogger() }
+    val infra by lazy { InfrastructureGraph() }
+    val providerGraph by lazy { ProviderGraph(applicationContext) }
+    val hostGraph by lazy { HostGraph(infra, providerGraph) }
+    val engineGraph by lazy { EngineGraph(applicationContext, infra, providerGraph) }
+    val observerGraph by lazy { ObserverGraph(applicationContext, infra, engineGraph) }
 
-    val perceptionBus by lazy { com.halo.runtime.kernel.bus.DefaultPerceptionBus() }
-    val cognitiveBus by lazy { com.halo.runtime.kernel.bus.DefaultCognitiveBus() }
-    val executionBus by lazy { com.halo.runtime.kernel.bus.DefaultExecutionBus() }
-    val blackboard by lazy { com.halo.runtime.cognition.blackboard.DefaultBlackboard() }
+    // ─── Convenience accessors (preserve existing API) ──────────
 
-    val processManager by lazy { ProcessManager(scope, logger) }
+    val eventBus get() = infra.eventBus
+    val commandBus get() = infra.commandBus
+    val queryBus get() = infra.queryBus
+    val scheduler get() = infra.scheduler
+    val registry get() = infra.registry
+    val logger get() = infra.logger
+    val perceptionBus get() = infra.perceptionBus
+    val cognitiveBus get() = infra.cognitiveBus
+    val executionBus get() = infra.executionBus
+    val blackboard get() = infra.blackboard
+    val cognitiveTrace get() = infra.cognitiveTrace
 
-    val cognitiveTrace by lazy {
-        CognitiveTrace(scope, perceptionBus, cognitiveBus, executionBus).apply { start() }
-    }
+    val modelDownloadManager get() = providerGraph.modelDownloadManager
+    val providers get() = providerGraph.providers
 
-    val androidWakeWordProcess by lazy { AndroidWakeWordProcess(applicationContext, perceptionBus, eventBus, id = "driver.android.wakeword", name = "Android Wake Word", scope = scope) }
-    val workingMemoryProcess by lazy { WorkingMemoryProcess(perceptionBus, cognitiveBus, executionBus) }
-    val modelDownloadManager by lazy { ModelDownloadManager(applicationContext) }
-    val providerFactory by lazy { AndroidProviderFactory(applicationContext, modelDownloadManager) }
-    val providerRegistry by lazy { providerFactory.createProviders() }
+    val wearableHost get() = hostGraph.wearableHost
+    val audioPipeline get() = hostGraph.audioPipeline
+    val audioPerceptionEngine get() = hostGraph.audioPerceptionEngine
 
-    val wearableHost by lazy { com.halo.host.android.AndroidWearableHost(audioOutput = com.halo.host.android.AndroidWearableAudioOutput()) }
+    val goalManager get() = engineGraph.goalManager
+    val capabilityRegistry get() = engineGraph.capabilityRegistry
+    val executionScheduler get() = engineGraph.executionScheduler
+    val executionEngine get() = engineGraph.executionEngine
+    val planningEngine get() = engineGraph.planningEngine
+    val interpretationEngine get() = engineGraph.interpretationEngine
+    val reflectionEngine get() = engineGraph.reflectionEngine
+    val runtimeOrchestrator get() = engineGraph.runtimeOrchestrator
+    val speechSessionManager get() = engineGraph.speechSessionManager
+    val speechPerceptionBridge get() = engineGraph.speechPerceptionBridge
 
-    val audioPipeline by lazy {
-        com.halo.engines.speech.AudioPipeline(
-            vad = com.halo.engines.speech.EnergyVAD(threshold = 1000),
-            wakeWordDetector = providerRegistry.resolve(com.halo.sdk.provider.WakeWordDetector::class),
-            sttProvider = providerRegistry.resolve(com.halo.sdk.provider.SpeechRecognitionProvider::class),
-            eventBus = eventBus,
-            scope = scope
+    val processManager get() = observerGraph.processManager
+    val timelineEventMapper get() = observerGraph.timelineEventMapper
+    val timelineRecorder get() = observerGraph.timelineRecorder
+    val runtimeValidator get() = observerGraph.runtimeValidator
+    val traceRecorder get() = observerGraph.traceRecorder
+    val healthEvaluator get() = observerGraph.healthEvaluator
+    val snapshotAssembler get() = observerGraph.snapshotAssembler
+    val runtimeReplayRecorder get() = observerGraph.runtimeReplayRecorder
+    val runtimeReplayPlayer get() = observerGraph.runtimeReplayPlayer
+    val runtimeSnapshotManager get() = observerGraph.runtimeSnapshotManager
+
+    // ─── Processes ──────────────────────────────────────────────
+
+    val androidWakeWordProcess by lazy {
+        AndroidWakeWordProcess(
+            applicationContext, perceptionBus, eventBus,
+            id = "driver.android.wakeword", name = "Android Wake Word",
+            scope = infra.scope
         )
     }
 
-    val audioPerceptionEngine by lazy {
-        com.halo.engines.speech.AudioPerceptionEngine(
-            audioSource = wearableHost.audioSource,
-            preprocessor = com.halo.engines.speech.DefaultAudioPreprocessor(),
-            audioPipeline = audioPipeline
-        )
+    val workingMemoryProcess by lazy {
+        WorkingMemoryProcess(perceptionBus, cognitiveBus, executionBus)
     }
 
-    
-    // Alpha Architecture Services
-    val goalManager by lazy { GoalManager() }
-    
-    val capabilityRegistry by lazy { 
-        com.halo.engines.execution.service.CapabilityRegistry().apply {
-            register(AndroidDeviceCapability(applicationContext))
-            register(AndroidApplicationCapability(applicationContext))
-            register(AndroidMediaCapability(applicationContext))
-            register(AndroidNavigationCapability(applicationContext))
-            register(com.halo.engines.execution.capability.SpeechCapability(
-                providerRegistry.resolve(com.halo.sdk.provider.SpeechSynthesisProvider::class)
-            ))
-        }
-    }
-    
-    val executionScheduler by lazy { ExecutionScheduler(capabilityRegistry) }
-    val executionEngine by lazy { ExecutionEngine(executionScheduler) }
-    val planningEngine by lazy { PlanningEngine() }
-    val interpretationEngine by lazy { InterpretationEngine(blackboard) }
-    val reflectionEngine by lazy { ReflectionEngine(EpisodicMemoryStore()) }
+    // ─── ViewModels ─────────────────────────────────────────────
 
-    val runtimeOrchestrator by lazy {
-        RuntimeOrchestrator(
-            interpretationEngine = interpretationEngine,
-            goalManager = goalManager,
-            planningEngine = planningEngine,
-            executionEngine = executionEngine,
-            reflectionEngine = reflectionEngine,
-            eventBus = eventBus
-        ).apply { start() }
-    }
-    
-    val speechSessionManager by lazy { SpeechSessionManager(eventBus, commandBus, scope) }
-
-    val speechPerceptionBridge by lazy {
-        com.halo.runtime.speech.SpeechPerceptionBridge(eventBus, scope).apply { start() }
-    }
-
-    val timelineEventMapper by lazy { DefaultTimelineEventMapper() }
-    val timelineRecorder by lazy { TimelineRecorder(eventBus, timelineEventMapper, scope) }
-    val runtimeValidator by lazy { com.halo.runtime.observer.RuntimeValidator() }
-    val traceRecorder by lazy { com.halo.runtime.observer.TraceRecorder(eventBus, runtimeValidator, scope) }
-
-    val healthEvaluator by lazy { DefaultRuntimeHealthEvaluator(java.time.Clock.systemUTC()) }
-    val snapshotAssembler by lazy { DefaultSnapshotAssembler(healthEvaluator, java.time.Clock.systemUTC()) }
-
-    val runtimeReplayRecorder by lazy {
-        com.halo.runtime.observer.replay.RuntimeReplayRecorder(
-            eventBus,
-            scope,
-            java.io.File(applicationContext.cacheDir, "replay_sessions")
-        )
-    }
-
-    val runtimeReplayPlayer by lazy {
-        com.halo.runtime.observer.replay.RuntimeReplayPlayer(
-            eventBus,
-            scope
-        )
-    }
-
-    val runtimeSnapshotManager by lazy {
-        DefaultRuntimeObserver(
-            speechSessionManager,
-            processManager,
-            blackboard,
-            timelineRecorder,
-            traceRecorder,
-            snapshotAssembler,
-            java.time.Clock.systemUTC(),
-            scope
-        )
-    }
-
-    // ViewModels
     val homeViewModel by lazy { HomeViewModel(runtimeSnapshotManager, commandBus) }
     val timelineViewModel by lazy { TimelineViewModel(cognitiveBus) }
     val consoleViewModel by lazy { ConsoleViewModel(runtimeSnapshotManager) }
     val settingsViewModel by lazy { SettingsViewModel() }
 
-    val microkernel by lazy {
-        // Register new alpha MVP processes
-        processManager.register(androidWakeWordProcess)
-        
-        // Start speech session manager
-        speechSessionManager.start()
-        
-        // Start replay recorder for debugging
-        runtimeReplayRecorder.startRecording()
+    // ─── Kernel ─────────────────────────────────────────────────
 
+    val microkernel by lazy {
+        processManager.register(androidWakeWordProcess)
+        speechSessionManager.start()
+        runtimeReplayRecorder.startRecording()
         processManager.register(workingMemoryProcess)
-        
+
         HaloMicrokernel(
-            scope,
+            infra.scope,
             processManager,
             perceptionBus,
             cognitiveBus,

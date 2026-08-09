@@ -2,6 +2,7 @@ package com.halo.engines.interpretation
 
 class InterpretationEngine(
     blackboard: com.halo.runtime.cognition.blackboard.Blackboard,
+    eventBus: com.halo.sdk.runtime.EventBus,
     workingMemory: com.halo.runtime.cognition.workingmemory.WorkingMemory =
         com.halo.runtime.cognition.workingmemory.DefaultWorkingMemory(blackboard),
     pipeline: com.halo.engines.interpretation.internal.RulePipeline =
@@ -18,5 +19,6 @@ class InterpretationEngine(
     contextAssembler = com.halo.runtime.cognition.context.DefaultContextAssembler(
         blackboard = blackboard,
         workingMemory = workingMemory
-    )
+    ),
+    eventBus = eventBus
 )

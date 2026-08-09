@@ -33,15 +33,6 @@ class AlphaW1IntegrationTest {
     fun testCognitiveLoop_EndToEnd() = runBlocking {
         withTimeout(30000L) {
             val graph = ManualDependencyGraph
-        
-        // Inject Mock SpeechSynthesisProvider to avoid Robolectric timeout
-        graph.providerRegistry.register(com.halo.sdk.provider.SpeechSynthesisProvider::class, object : com.halo.sdk.provider.SpeechSynthesisProvider {
-            override suspend fun synthesize(request: com.halo.sdk.provider.SpeechRequest): com.halo.sdk.provider.SpeechResult {
-                return com.halo.sdk.provider.SpeechResult(durationMillis = 1000L, successful = true)
-            }
-            override fun stream(text: String): kotlinx.coroutines.flow.Flow<com.halo.sdk.host.AudioFrame> = kotlinx.coroutines.flow.emptyFlow()
-            override suspend fun health(): Boolean = true
-        })
 
         // 1. Initialize and start engines/orchestrators
         // For testing the core loop, we need RuntimeOrchestrator and AudioPerceptionEngine
