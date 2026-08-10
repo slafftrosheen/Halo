@@ -2,7 +2,7 @@ package com.halo.app.ui.screens.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.halo.app.ui.components.HaloRuntimeState
+import com.halo.app.ui.glass.material.HaloRuntimeState
 import com.halo.sdk.runtime.CommandBus
 import com.halo.sdk.runtime.RuntimeSnapshot
 import com.halo.sdk.runtime.RuntimeSnapshotSource
@@ -15,12 +15,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.time.Instant
 
 data class TimelinePreviewEvent(
     val command: String,
     val status: String,
-    val timestamp: Instant
+    val timestamp: Long
 )
 
 data class EngineUiState(
@@ -30,9 +29,8 @@ data class EngineUiState(
 )
 
 data class HomeUiState(
-    val greeting: String = "Good Morning",
+    val greeting: String = "System Online",
     val systemStatus: String = "Initializing...",
-    val isRuntimeReady: Boolean = false,
     val runtimeState: HaloRuntimeState = HaloRuntimeState.Idle,
     val recentEvents: List<TimelinePreviewEvent> = emptyList(),
     val engines: List<EngineUiState> = emptyList(),
@@ -53,8 +51,8 @@ class HomeUiMapper(private val greetingProvider: GreetingProvider) : RuntimeUiMa
         
         val uiRuntimeState = when (snapshot.speech) {
             is SpeechSessionState.PassiveListening -> HaloRuntimeState.Idle
-            is SpeechSessionState.Capturing, is SpeechSessionState.Recognizing -> HaloRuntimeState.Listening
-            is SpeechSessionState.Processing -> HaloRuntimeState.Processing
+            is SpeechSessionState.Capturing, is SpeechSessionState.Recognizing -> HaloRuntimeState.Capturing
+            is SpeechSessionState.Processing -> HaloRuntimeState.Recognizing
             is SpeechSessionState.Speaking -> HaloRuntimeState.Speaking
             else -> HaloRuntimeState.Idle
         }
@@ -62,10 +60,9 @@ class HomeUiMapper(private val greetingProvider: GreetingProvider) : RuntimeUiMa
         return HomeUiState(
             greeting = greetingProvider.getGreeting(),
             systemStatus = if (isReady) "Halo Runtime Ready." else "Initializing...",
-            isRuntimeReady = isReady,
             runtimeState = uiRuntimeState,
             recentEvents = snapshot.timeline.map { 
-                TimelinePreviewEvent(it.title, it.status, it.timestamp) 
+                TimelinePreviewEvent(it.title, it.status, System.currentTimeMillis())
             },
             engines = snapshot.engines.map { 
                 EngineUiState(it.id, it.state.javaClass.simpleName, it.health == com.halo.sdk.runtime.EngineHealth.Healthy) 

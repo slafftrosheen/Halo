@@ -1,3 +1,61 @@
+Status: SUPERSEDED
+Authority: docs/11-ui/UI-ALPHA-SPECIFICATION.md
+
+Status: ACTIVE
+Version: Alpha v0.1
+Priority: Critical
+
+Purpose
+Define every user-facing screen required for Halo Alpha,
+its responsibilities,
+expected behaviour,
+required runtime integration,
+and acceptance criteria.
+
+No additional screens should be added before Alpha unless absolutely required.
+
+All screens must use the existing design system and shared Halo UI components.
+
+Every screen must have:
+
+- ViewModel
+- immutable UiState
+- StateFlow
+- Loading state
+- Error state
+- Empty state
+- Pull-to-refresh (where applicable)
+
+---
+Status: SUPERSEDED
+Authority: docs/11-ui/UI-ALPHA-SPECIFICATION.md
+
+Status: ACTIVE
+Version: Alpha v0.1
+Priority: Critical
+
+Purpose
+Define every user-facing screen required for Halo Alpha,
+its responsibilities,
+expected behaviour,
+required runtime integration,
+and acceptance criteria.
+
+No additional screens should be added before Alpha unless absolutely required.
+
+All screens must use the existing design system and shared Halo UI components.
+
+Every screen must have:
+
+- ViewModel
+- immutable UiState
+- StateFlow
+- Loading state
+- Error state
+- Empty state
+- Pull-to-refresh (where applicable)
+
+---
 Status: ACTIVE
 Version: Alpha v0.1
 Priority: Critical

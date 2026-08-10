@@ -1,18 +1,38 @@
 package com.halo.app.ui.screens.console
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.halo.app.ui.components.*
-import com.halo.app.ui.theme.*
+import com.halo.app.ui.glass.components.HaloGlassSection
+import com.halo.app.ui.glass.components.HaloGlassCard
+import com.halo.app.ui.glass.components.HaloGlassChip
+import com.halo.app.ui.glass.components.HaloGlassDivider
+import com.halo.app.ui.glass.material.HaloGlassColors
+import com.halo.app.ui.glass.material.HaloTypography
+
+enum class ConsoleTab(val label: String) {
+    Logs("Logs"),
+    Engines("Engines"),
+    Blackboard("Blackboard"),
+    Providers("Providers"),
+    Performance("Performance")
+}
+
+data class ConsoleUiState(
+    val selectedTab: ConsoleTab = ConsoleTab.Logs,
+    val logs: List<String> = emptyList(),
+    val engines: List<String> = emptyList(),
+    val blackboard: List<String> = emptyList(),
+    val providers: List<String> = emptyList()
+)
 
 @Composable
 fun ConsoleScreen(viewModel: ConsoleViewModel) {
@@ -21,79 +41,37 @@ fun ConsoleScreen(viewModel: ConsoleViewModel) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .background(HaloGlassColors.Background)
     ) {
-        Text(
-            text = "CONSOLE",
-            color = HaloTextPrimary,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-
-        val tabs = listOf("Runtime", "Engines", "Blackboard", "Providers", "Logs", "Performance")
-        
-        ScrollableTabRow(
-            selectedTabIndex = uiState.selectedTab,
-            containerColor = HaloBackground,
-            contentColor = HaloTextPrimary,
-            edgePadding = 0.dp,
-            divider = {}
+        // Top Tabs
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            tabs.forEachIndexed { index, title ->
-                Tab(
-                    selected = uiState.selectedTab == index,
-                    onClick = { viewModel.selectTab(index) },
-                    text = { Text(title, color = if (uiState.selectedTab == index) HaloPrimary else HaloTextSecondary) }
-                )
+            ConsoleTab.values().forEach { tab ->
+                HaloGlassChip(
+                    text = tab.label,
+                    modifier = Modifier.weight(1f),
+                    onClick = { viewModel.selectTab(tab) }
+                ).also {
+                    if (uiState.selectedTab == tab) {
+                        // Active tab
+                    }
+                }
             }
         }
-        
-        Spacer(modifier = Modifier.height(16.dp))
 
-        when (uiState.selectedTab) {
-            0 -> RuntimeTab(uiState)
-            1 -> EnginesTab(uiState)
-            else -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
-                Text("Not yet implemented for Alpha", color = HaloTextSecondary)
-            }
-        }
-    }
-}
-
-@Composable
-fun RuntimeTab(uiState: ConsoleUiState) {
-    HaloCard {
-        HaloSection("System") {
-            HaloMetric("Uptime", uiState.uptime)
-            Spacer(modifier = Modifier.height(8.dp))
-            HaloMetric("Memory Usage", uiState.memoryUsage)
-            Spacer(modifier = Modifier.height(8.dp))
-            HaloMetric("Thread Count", uiState.threadCount.toString())
-        }
-    }
-}
-
-@Composable
-fun EnginesTab(uiState: ConsoleUiState) {
-    LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        items(uiState.engines) { engine ->
-            HaloCard {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(text = engine.name, color = HaloPrimary, fontWeight = FontWeight.Bold)
-                    HaloStatus("", if (engine.isHealthy) "Healthy" else "Offline", engine.isHealthy)
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    HaloMetric("Latency", "${engine.latencyMs} ms")
-                    HaloMetric("Queue", "${engine.queueSize}")
-                }
+        // Content Area
+        Spacer(modifier = Modifier.height(8.dp))
+        Box(Modifier.weight(1f)) {
+            when (uiState.selectedTab) {
+                ConsoleTab.Logs -> ConsoleLogs(uiState.logs)
+                ConsoleTab.Engines -> ConsoleEngines(uiState.engines)
+                ConsoleTab.Blackboard -> ConsoleBlackboard(uiState.blackboard)
+                ConsoleTab.Providers -> ConsoleProviders(uiState.providers)
+                ConsoleTab.Performance -> ConsolePerformance()
             }
         }
     }
