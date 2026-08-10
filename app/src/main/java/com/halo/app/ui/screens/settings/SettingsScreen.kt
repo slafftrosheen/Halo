@@ -1,4 +1,5 @@
-package com.halo.app.ui.screens.settings
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -7,31 +8,29 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.Voice
 import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.VolumeUp
 import com.halo.app.ui.glass.components.HaloGlassSection
 import com.halo.app.ui.glass.components.HaloGlassDivider
-import com.halo.app.ui.glass.components.HaloGlassChip
 import com.halo.app.ui.glass.material.HaloGlassColors
 import com.halo.app.ui.glass.material.HaloTypography
 
+
 @Composable
 fun SettingsScreen(viewModel: SettingsViewModel) {
-    val uiState = viewModel.uiState.value
+    val uiState by viewModel.uiState.collectAsState()
 
     Column(
         modifier = Modifier
@@ -92,7 +91,7 @@ private fun SettingItem(label: String, value: String, clickable: Boolean) {
     ) {
         Text(label, color = HaloGlassColors.TextPrimary, style = HaloTypography.bodyMedium)
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(value, color = HaloGlassColors.TextSecondary, style = HaloTypography.bodySmall)
+            Text(value, color = HaloGlassColors.TextSecondary, style = HaloTypography.bodyMedium)
             if (clickable) {
                 Spacer(Modifier.width(4.dp))
                 Icon(Icons.Default.ChevronRight, contentDescription = null, tint = HaloGlassColors.TextMuted)
@@ -101,23 +100,9 @@ private fun SettingItem(label: String, value: String, clickable: Boolean) {
     }
 }
 
-data class SettingsUiState(
-    val version: String = "Alpha v0.1",
-    val provider: String = "Ollama/LlamaCpp",
-    val wakeWord: String = "Halo",
-    val sensitivity: String = "Medium",
-    val devMode: Boolean = false,
-    val logLevel: String = "Info"
-)
 
-class SettingsViewModel {
-    private val _state = mutableStateOf(SettingsUiState())
-    val uiState: androidx.compose.runtime.State<SettingsUiState> get() = _state
-    
-    fun setDevMode(enabled: Boolean) {
-        _state.value = _state.value.copy(devMode = enabled)
-    }
-}
+
+
 
 @Composable
 fun PermissionsScreen() {
@@ -232,7 +217,7 @@ private fun PermissionItem(
             Spacer(Modifier.width(12.dp))
             Column {
                 Text(label, color = HaloGlassColors.TextPrimary, style = HaloTypography.bodyMedium)
-                Text(description, color = HaloGlassColors.TextMuted, style = HaloTypography.labelSmall)
+                Text(description, color = HaloGlassColors.TextMuted, style = HaloTypography.labelMedium)
             }
         }
         Switch(checked = granted, onCheckedChange = onChange)
