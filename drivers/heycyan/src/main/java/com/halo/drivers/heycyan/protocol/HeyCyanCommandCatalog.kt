@@ -70,6 +70,15 @@ object HeyCyanCommandCatalog {
             evidence = listOf(referenceEvidence),
         ),
 
+        // Semantic alias — GetDeviceInfo is the PR-025 capability-layer name for GetVersion.
+        CommandDescriptor(
+            command = HeyCyanCommand.GetDeviceInfo,
+            commandId = 0x10,
+            payload = byteArrayOf(),
+            status = ProtocolDefinitionStatus.VERIFIED_FROM_REFERENCE,
+            evidence = listOf(referenceEvidence),
+        ),
+
         CommandDescriptor(
             command = HeyCyanCommand.GetMacAddress,
             commandId = 0x11,

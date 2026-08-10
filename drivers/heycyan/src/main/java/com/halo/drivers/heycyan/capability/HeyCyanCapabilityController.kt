@@ -155,7 +155,8 @@ class HeyCyanCapabilityController(
             HeyCyanOperation.StartAudioRecording,
             HeyCyanOperation.StopAudioRecording -> HeyCyanCapabilities.audioRecording
             HeyCyanOperation.GenerateAIPhoto -> HeyCyanCapabilities.aiPhoto
-            HeyCyanOperation.EnableTransferMode -> HeyCyanCapabilities.wifiTransfer
+            HeyCyanOperation.EnableTransferMode,
+            HeyCyanOperation.SynchronizeMedia -> HeyCyanCapabilities.wifiTransfer
         }
 
     private suspend fun failure(

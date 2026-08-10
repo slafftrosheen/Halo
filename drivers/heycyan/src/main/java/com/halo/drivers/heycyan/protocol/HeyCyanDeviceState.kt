@@ -16,6 +16,12 @@ data class HeyCyanDeviceState(
 
     val wifiCredentials: WiFiCredentials? = null,
 
+    val transports: com.halo.drivers.heycyan.transport.HeyCyanTransportSnapshot =
+        com.halo.drivers.heycyan.transport.HeyCyanTransportSnapshot(),
+
+    val operation: com.halo.drivers.heycyan.capability.HeyCyanOperationState =
+        com.halo.drivers.heycyan.capability.HeyCyanOperationState.Idle,
+
     val lastEventAtMillis: Long? = null,
 )
 

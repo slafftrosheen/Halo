@@ -55,6 +55,12 @@ sealed interface HeyCyanOperation {
      * This operation activates BLE transfer mode only; HTTP stack is separate.
      */
     data object EnableTransferMode : HeyCyanOperation
+
+    /**
+     * High-level media synchronization operation (PR-027).
+     * Triggers transfer mode and full manifest -> diff -> download pipeline.
+     */
+    data object SynchronizeMedia : HeyCyanOperation
 }
 
 /**
@@ -93,6 +99,7 @@ fun HeyCyanOperation.toCommand(): HeyCyanCommand =
         HeyCyanOperation.GenerateAIPhoto ->
             HeyCyanCommand.SetMode(HeyCyanMode.AI_PHOTO)
 
-        HeyCyanOperation.EnableTransferMode ->
+        HeyCyanOperation.EnableTransferMode,
+        HeyCyanOperation.SynchronizeMedia ->
             HeyCyanCommand.SetMode(HeyCyanMode.TRANSFER)
     }
