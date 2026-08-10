@@ -23,4 +23,7 @@ sealed interface HeyCyanCommand {
     // Network / Transfer
     data object EnableTransfer : HeyCyanCommand
     data object SetDateTime : HeyCyanCommand
+
+    // Mode Control
+    data class SetMode(val mode: HeyCyanMode) : HeyCyanCommand
 }

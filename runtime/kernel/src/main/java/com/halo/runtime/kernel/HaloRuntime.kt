@@ -1,22 +1,16 @@
 package com.halo.runtime.kernel
 
-import com.halo.sdk.runtime.*
-import kotlinx.coroutines.flow.StateFlow
-
-class HaloRuntime(
-    engines: List<Engine>,
-    runtimeContext: RuntimeContext
-) : Runtime {
-
-    private val kernel = RuntimeKernel(engines, runtimeContext)
-
-    override val state: StateFlow<RuntimeState> = kernel.state
-
-    override suspend fun boot() {
-        kernel.boot()
-    }
-
-    override suspend fun shutdown() {
-        kernel.shutdown()
-    }
+/**
+ * Placeholder for HaloRuntime.
+ *
+ * The actual implementation lives in :app module at com.halo.app.HaloRuntime.
+ * This placeholder exists to satisfy package structure requirements.
+ */
+@Deprecated(
+    message = "Use com.halo.app.HaloRuntime instead",
+    replaceWith = ReplaceWith("com.halo.app.HaloRuntime")
+)
+class HaloRuntime {
+    // Delegate to the app module implementation
+    // This class should not be instantiated directly
 }

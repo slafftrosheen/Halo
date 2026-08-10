@@ -2,11 +2,40 @@ package com.halo.runtime.cognition
 
 import com.halo.icl.ontology.Goal
 import com.halo.sdk.runtime.HaloEvent
-
 import java.util.UUID
 
 data class GoalCreated(
     override val id: String = UUID.randomUUID().toString(),
     val goal: Goal,
+    override val timestamp: Long = System.currentTimeMillis()
+) : HaloEvent
+
+data class OutcomePublished(
+    override val id: String = UUID.randomUUID().toString(),
+    val outcome: String,
+    override val timestamp: Long = System.currentTimeMillis()
+) : HaloEvent
+
+data class RecoveryStarted(
+    override val id: String = UUID.randomUUID().toString(),
+    val observationId: String,
+    val recoveryAction: String,
+    val attempt: Int,
+    override val timestamp: Long = System.currentTimeMillis()
+) : HaloEvent
+
+data class RecoveryCompleted(
+    override val id: String = UUID.randomUUID().toString(),
+    val observationId: String,
+    val recoveryAction: String,
+    val success: Boolean,
+    override val timestamp: Long = System.currentTimeMillis()
+) : HaloEvent
+
+data class RecoveryFailed(
+    override val id: String = UUID.randomUUID().toString(),
+    val observationId: String,
+    val recoveryAction: String,
+    val reason: String,
     override val timestamp: Long = System.currentTimeMillis()
 ) : HaloEvent

@@ -1,59 +1,81 @@
 package com.halo.drivers.heycyan.codec
 
 import com.halo.drivers.heycyan.protocol.HeyCyanCommand
-import java.util.UUID
+import com.halo.drivers.heycyan.protocol.HeyCyanMode
 
-/**
- * Responsible for translating HeyCyanCommands into raw BLE byte arrays.
- */
-data class EncodedHeyCyanCommand(
-    val characteristic: UUID,
+data class EncodedCommand(
+    val commandId: Int,
     val payload: ByteArray,
-    val evidence: List<PacketEvidenceReference>
-) {
-    init {
-        require(evidence.isNotEmpty()) { "Encoded command requires capture evidence" }
-    }
+)
 
-    fun copyPayload(): ByteArray = payload.copyOf()
-}
+class HeyCyanCommandEncoder {
 
-class HeyCyanCommandEncoder(
-    definitions: List<Definition> = emptyList()
-) {
-    private val definitions = definitions.toList().also { entries ->
-        require(entries.map { it.command }.distinct().size == entries.size) {
-            "Command definitions must be unique"
+    fun encode(
+        command: HeyCyanCommand
+    ): Result<EncodedCommand> =
+        when (command) {
+
+            HeyCyanCommand.GetVersion ->
+                Result.success(
+                    EncodedCommand(
+                        commandId = 0x10,
+                        payload = byteArrayOf()
+                    )
+                )
+
+            HeyCyanCommand.GetMacAddress ->
+                Result.success(
+                    EncodedCommand(
+                        commandId = 0x11,
+                        payload = byteArrayOf()
+                    )
+                )
+
+            HeyCyanCommand.GetBattery ->
+                Result.success(
+                    EncodedCommand(
+                        commandId = 0x13,
+                        payload = byteArrayOf()
+                    )
+                )
+
+            HeyCyanCommand.GetMediaCounts ->
+                Result.success(
+                    EncodedCommand(
+                        commandId = 0x14,
+                        payload = byteArrayOf()
+                    )
+                )
+
+            is HeyCyanCommand.SetMode ->
+                Result.success(
+                    EncodedCommand(
+                        commandId = 0x01,
+                        payload = byteArrayOf(
+                            command.mode.value.toByte()
+                        )
+                    )
+                )
+
+            is HeyCyanCommand.SetDateTime ->
+                Result.failure(
+                    UnsupportedOperationException(
+                        "HeyCyan SET_DATETIME payload format is not established"
+                    )
+                )
+
+            is HeyCyanCommand.EnableTransfer ->
+                Result.failure(
+                    UnsupportedOperationException(
+                        "HeyCyan EnableTransfer payload format is not established"
+                    )
+                )
+
+            else ->
+                Result.failure(
+                    UnsupportedOperationException(
+                        "HeyCyan command not yet implemented"
+                    )
+                )
         }
-        entries.forEach { definition ->
-            require(definition.evidence.isNotEmpty()) {
-                "Command ${definition.command} requires capture evidence"
-            }
-        }
-    }
-
-    fun encode(command: HeyCyanCommand): ByteArray = encodeWithTarget(command).copyPayload()
-
-    fun encodeWithTarget(command: HeyCyanCommand): EncodedHeyCyanCommand {
-        val definition = definitions.firstOrNull { it.command == command }
-            ?: throw UnsupportedOperationException(
-                "No evidence-backed encoding is available for ${command::class.simpleName}"
-            )
-        return EncodedHeyCyanCommand(
-            characteristic = definition.characteristic,
-            payload = definition.payload.copyOf(),
-            evidence = definition.evidence.toList()
-        )
-    }
-
-    data class Definition(
-        val command: HeyCyanCommand,
-        val characteristic: UUID,
-        val payload: ByteArray,
-        val evidence: List<PacketEvidenceReference>
-    ) {
-        init {
-            require(payload.isNotEmpty()) { "Command payload must not be empty" }
-        }
-    }
 }

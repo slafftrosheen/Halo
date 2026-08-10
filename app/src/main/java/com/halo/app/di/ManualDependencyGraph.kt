@@ -55,6 +55,7 @@ object ManualDependencyGraph {
     val executionEngine get() = engineGraph.executionEngine
     val planningEngine get() = engineGraph.planningEngine
     val interpretationEngine get() = engineGraph.interpretationEngine
+    val reasoningEngine get() = engineGraph.reasoningEngine
     val reflectionEngine get() = engineGraph.reflectionEngine
     val runtimeOrchestrator get() = engineGraph.runtimeOrchestrator
     val speechSessionManager get() = engineGraph.speechSessionManager

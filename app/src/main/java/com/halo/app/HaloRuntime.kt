@@ -4,28 +4,100 @@ import com.halo.app.di.ManualDependencyGraph
 import com.halo.sdk.host.ConnectionState
 
 /**
- * Orchestrates the startup and shutdown sequence for the entire Halo system.
+ * Owns the application-level runtime lifecycle.
+ *
+ * Construction != startup.
  */
 class HaloRuntime(
     private val graph: ManualDependencyGraph
 ) {
+
+    private var started = false
+
     suspend fun start() {
-        check(graph.wearableHost.connectivity.value is ConnectionState.Connected) {
+
+        check(!started) {
+            "HaloRuntime is already running"
+        }
+
+        check(
+            graph.wearableHost.connectivity.value
+                is ConnectionState.Connected
+        ) {
             "Runtime requires a connected host; discovery and physical device selection are separate workflows"
         }
 
-        // Initialize audio subsystem
-        val audioEngine = graph.audioPerceptionEngine
-        audioEngine.initialize(graph.engineContext)
-        audioEngine.start()
+        /*
+         * Cognitive engines
+         */
+        graph.interpretationEngine.initialize(
+            graph.engineContext
+        )
 
-        // Wake up the cognitive engine
+        graph.reasoningEngine.initialize(
+            graph.engineContext
+        )
+
+        graph.interpretationEngine.start()
+        graph.reasoningEngine.start()
+
+        /*
+         * Planning/execution orchestration
+         */
+        graph.runtimeOrchestrator.start()
+
+        /*
+         * Audio perception
+         */
+        graph.audioPerceptionEngine.initialize(
+            graph.engineContext
+        )
+
+        graph.audioPerceptionEngine.start()
+
+        /*
+         * Kernel
+         */
         graph.microkernel.boot()
+
+        started = true
     }
 
     suspend fun stop() {
-        graph.microkernel.shutdown()
+
+        if (!started) {
+            return
+        }
+
+        /*
+         * Stop producers first.
+         */
         graph.audioPerceptionEngine.stop()
+
+        /*
+         * Stop orchestration.
+         */
+        graph.runtimeOrchestrator.stop()
+
+        /*
+         * Stop cognition.
+         */
+        graph.reasoningEngine.stop()
+        graph.reasoningEngine.dispose()
+
+        graph.interpretationEngine.stop()
+        graph.interpretationEngine.dispose()
+
+        /*
+         * Stop kernel.
+         */
+        graph.microkernel.shutdown()
+
+        /*
+         * Disconnect physical host last.
+         */
         graph.wearableHost.disconnect()
+
+        started = false
     }
 }

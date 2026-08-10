@@ -1,43 +1,107 @@
 package com.halo.engines.reasoning.strategy
 
+import com.halo.cognition.language.CallIntent
+import com.halo.cognition.language.ConversationIntent
+import com.halo.cognition.language.Entity
+import com.halo.cognition.language.Intent
+import com.halo.cognition.language.NavigateIntent
+import com.halo.cognition.language.OpenIntent
+import com.halo.cognition.language.PauseIntent
+import com.halo.cognition.language.PlaceEntity
+import com.halo.cognition.language.LocationEntity
+import com.halo.cognition.language.MediaEntity
+import com.halo.cognition.language.PersonEntity
+import com.halo.cognition.language.ApplicationEntity
+import com.halo.cognition.language.PlayIntent
+import com.halo.cognition.language.QuestionIntent
+import com.halo.cognition.language.ReminderIntent
+import com.halo.cognition.language.SearchIntent
+import com.halo.icl.ontology.Goal
+import com.halo.icl.ontology.GoalType
+import com.halo.icl.ontology.GoalPayload
 import com.halo.engines.reasoning.service.GoalManager
 import com.halo.runtime.cognition.blackboard.Interpretation
-import com.halo.cognition.language.*
-import com.halo.icl.ontology.*
 
-class DefaultReasoningStrategy(private val goalManager: GoalManager) {
+/**
+ * Deterministic semantic compiler:
+ *
+ * Interpretation -> Goal
+ *
+ * This is deliberately rule-based.
+ *
+ * LLM/semantic escalation can be introduced later as another reasoning
+ * strategy, without contaminating the deterministic baseline.
+ */
+class DefaultReasoningStrategy(
+    private val goalManager: GoalManager
+) {
 
-    fun generateGoal(interpretation: Interpretation): Goal {
-        val type = when (interpretation.intent) {
+    fun generateGoal(
+        interpretation: Interpretation,
+        parentKnowledgeId: String? = null
+    ): Goal {
+
+        val intent = interpretation.intent
+
+        val type = when (intent) {
             is NavigateIntent -> GoalType.NAVIGATION
             is PlayIntent, is PauseIntent -> GoalType.MEDIA
             is ReminderIntent -> GoalType.MEMORY
             is SearchIntent -> GoalType.SEARCH
             is CallIntent -> GoalType.COMMUNICATION
             is OpenIntent -> GoalType.DEVICE
+            is QuestionIntent, is ConversationIntent -> GoalType.CONVERSATION
             else -> GoalType.CONVERSATION
         }
 
-        val payload = when (interpretation.intent) {
-            is NavigateIntent -> NavigationPayload(destination = extractEntity<PlaceEntity>(interpretation.entities)?.name ?: "")
-            is PlayIntent -> MediaPayload(query = extractEntity<MediaEntity>(interpretation.entities)?.title ?: "", action = "play")
+        val payload = when (intent) {
+            is NavigateIntent -> {
+                val destination = extractEntity<PlaceEntity>(interpretation.entities)
+                    ?.name
+                    ?: extractEntity<LocationEntity>(interpretation.entities)
+                        ?.location
+                    ?: interpretation.transcript
+                NavigationPayload(destination)
+            }
+            is PlayIntent -> MediaPayload(
+                query = extractEntity<MediaEntity>(interpretation.entities)?.title
+                    ?: interpretation.transcript,
+                action = "play"
+            )
             is PauseIntent -> MediaPayload(query = "", action = "pause")
-            is ReminderIntent -> MemoryPayload(fact = "") // Just mock memory/reminder
+            is ReminderIntent -> MemoryPayload(fact = interpretation.transcript)
             is SearchIntent -> SearchPayload(query = interpretation.transcript)
-            is CallIntent -> CommunicationPayload(target = extractEntity<PersonEntity>(interpretation.entities)?.name ?: "")
-            is OpenIntent -> DevicePayload(action = "open", target = extractEntity<ApplicationEntity>(interpretation.entities)?.name ?: "")
+            is CallIntent -> CommunicationPayload(
+                target = extractEntity<PersonEntity>(interpretation.entities)?.name
+                    ?: interpretation.transcript
+            )
+            is OpenIntent -> DevicePayload(
+                action = "open",
+                target = extractEntity<ApplicationEntity>(interpretation.entities)?.name
+                    ?: interpretation.transcript
+            )
+            is QuestionIntent, is ConversationIntent -> ConversationPayload(topic = interpretation.transcript)
             else -> ConversationPayload(topic = interpretation.transcript)
         }
 
         return goalManager.createGoal(
             type = type,
-            intent = interpretation.intent,
+            intent = intent,
             payload = payload,
-            confidence = interpretation.confidence
+            confidence = interpretation.confidence,
+            parentId = parentKnowledgeId
         )
     }
 
-    private inline fun <reified T : Entity> extractEntity(entities: List<Entity>): T? {
-        return entities.filterIsInstance<T>().firstOrNull()
-    }
+    private inline fun <reified T : Entity> extractEntity(entities: List<Entity>): T? =
+        entities.filterIsInstance<T>().firstOrNull()
 }
+
+// Local payload implementations matching com.halo.icl.ontology.Goal
+data class NavigationPayload(val destination: String) : GoalPayload
+data class MediaPayload(val query: String, val action: String) : GoalPayload
+data class MemoryPayload(val fact: String) : GoalPayload
+data class SearchPayload(val query: String) : GoalPayload
+data class CommunicationPayload(val target: String) : GoalPayload
+data class DevicePayload(val action: String, val target: String) : GoalPayload
+data class ConversationPayload(val topic: String) : GoalPayload

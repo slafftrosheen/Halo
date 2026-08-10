@@ -1,75 +1,108 @@
 package com.halo.drivers.heycyan.ble
 
-import android.bluetooth.BluetoothGattCharacteristic
+import com.halo.drivers.heycyan.protocol.HeyCyanProtocolConstants
 import java.util.UUID
 
-/**
- * Resolves HeyCyan GATT characteristics by their BLE property flags.
- *
- * The HeyCyan SDK embeds characteristic UUIDs in compiled binaries only.
- * Rather than hardcoding UUIDs that may vary across firmware versions,
- * we discover the correct characteristics at runtime after GATT service
- * discovery completes, matching by property flags.
- *
- * Evidence: SDK README notes UUIDs are in binaries; CyanBridge discovers dynamically.
- */
+data class HeyCyanGattEndpoints(
+    val commandWrite: UUID?,
+    val notification: UUID?,
+    val dataTransfer: UUID?,
+    val uartTx: UUID?,
+    val uartRx: UUID?,
+)
+
+class AmbiguousHeyCyanEndpointException(
+    message: String
+) : IllegalStateException(message)
+
 class HeyCyanCharacteristicResolver {
 
-    data class ResolvedCharacteristics(
-        val commandCharacteristic: UUID,
-        val notificationCharacteristic: UUID,
-        val indicationCharacteristic: UUID?,
-        val readCharacteristic: UUID?
-    )
-
-    /**
-     * Resolves the required characteristics from discovered GATT services.
-     *
-     * @param characteristics Map of UUID → BluetoothGattCharacteristic from service discovery
-     * @return Resolved characteristics, or null if required characteristics are missing
-     */
     fun resolve(
-        characteristics: Map<UUID, BluetoothGattCharacteristic>
-    ): ResolvedCharacteristics? {
-        val writeChar = findByProperty(
-            characteristics,
-            BluetoothGattCharacteristic.PROPERTY_WRITE
-        ) ?: findByProperty(
-            characteristics,
-            BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE
-        )
+        services: List<DiscoveredService>
+    ): HeyCyanGattEndpoints {
 
-        val notifyChar = findByProperty(
-            characteristics,
-            BluetoothGattCharacteristic.PROPERTY_NOTIFY
-        )
+        val primary = services.firstOrNull {
+            it.uuid == HeyCyanProtocolConstants.PRIMARY_SERVICE
+        }
 
-        if (writeChar == null || notifyChar == null) return null
+        val secondary = services.firstOrNull {
+            it.uuid == HeyCyanProtocolConstants.SECONDARY_SERVICE
+        }
 
-        val indicateChar = findByProperty(
-            characteristics,
-            BluetoothGattCharacteristic.PROPERTY_INDICATE
-        )
-
-        val readChar = findByProperty(
-            characteristics,
-            BluetoothGattCharacteristic.PROPERTY_READ
-        )
-
-        return ResolvedCharacteristics(
-            commandCharacteristic = writeChar,
-            notificationCharacteristic = notifyChar,
-            indicationCharacteristic = indicateChar,
-            readCharacteristic = readChar
-        )
-    }
-
-    private fun findByProperty(
-        characteristics: Map<UUID, BluetoothGattCharacteristic>,
-        property: Int
+        fun findCharacteristic(
+            characteristics: List<DiscoveredCharacteristic>,
+            predicate: (DiscoveredCharacteristic) -> Boolean
     ): UUID? {
-        return characteristics.entries.firstOrNull { (_, char) ->
-            char.properties and property != 0
-        }?.key
+            val matches = characteristics.filter(predicate).map { it.uuid }
+            if (matches.size > 1) {
+                throw AmbiguousHeyCyanEndpointException(
+                    "Multiple candidates for characteristic: ${matches.joinToString()}"
+                )
+            }
+            return matches.firstOrNull()
+        }
+
+        return HeyCyanGattEndpoints(
+            commandWrite = primary?.let { primaryService ->
+                findCharacteristic(
+                    primaryService.characteristics,
+                    { it.properties.canWrite }
+                )
+            },
+
+            notification = primary?.let { primaryService ->
+                findCharacteristic(
+                    primaryService.characteristics,
+                    { it.properties.canNotify || it.properties.canIndicate }
+                )
+            },
+
+            dataTransfer = primary?.let { primaryService ->
+                findCharacteristic(
+                    primaryService.characteristics,
+                    { 
+                        it.properties.canNotify && 
+                        it.properties.canNotify &&
+                        // Exclude the notification characteristic itself
+                        it.uuid != findCharacteristic(
+                            primaryService.characteristics,
+                            { it.properties.canNotify || it.properties.canIndicate }
+                        )
+                    }
+                )
+            },
+
+            uartTx = secondary?.let { secondaryService ->
+                findCharacteristic(
+                    secondaryService.characteristics,
+                    { it.properties.canWriteWithoutResponse }
+                )
+            },
+
+            uartRx = secondary?.let { secondaryService ->
+                findCharacteristic(
+                    secondaryService.characteristics,
+                    { it.properties.canNotify }
+                )
+            },
+        )
     }
 }
+
+data class DiscoveredService(
+    val uuid: UUID,
+    val characteristics: List<DiscoveredCharacteristic>
+)
+
+data class DiscoveredCharacteristic(
+    val uuid: UUID,
+    val properties: CharacteristicProperties
+)
+
+data class CharacteristicProperties(
+    val canRead: Boolean,
+    val canWrite: Boolean,
+    val canWriteWithoutResponse: Boolean,
+    val canNotify: Boolean,
+    val canIndicate: Boolean
+)
