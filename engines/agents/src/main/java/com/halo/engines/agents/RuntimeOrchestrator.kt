@@ -87,9 +87,7 @@ class RuntimeOrchestrator(
         goal: Goal
     ) {
 
-        val traceId =
-            goal.provenance.parentId
-                ?: goal.id.value.toString()
+        val traceId = goal.provenance.parentId?.toString() ?: goal.id.value.toString()
 
         try {
 

@@ -29,10 +29,10 @@ class HeyCyanCharacteristicResolver {
             it.uuid == HeyCyanProtocolConstants.SECONDARY_SERVICE
         }
 
-        fun findCharacteristic(
+        fun findSingle(
             characteristics: List<DiscoveredCharacteristic>,
             predicate: (DiscoveredCharacteristic) -> Boolean
-    ): UUID? {
+        ): UUID? {
             val matches = characteristics.filter(predicate).map { it.uuid }
             if (matches.size > 1) {
                 throw AmbiguousHeyCyanEndpointException(
@@ -42,45 +42,51 @@ class HeyCyanCharacteristicResolver {
             return matches.firstOrNull()
         }
 
+        val notificationCandidates = primary?.characteristics?.filter {
+            it.properties.canNotify || it.properties.canIndicate
+        } ?: emptyList()
+
+        val notificationUuid = if (notificationCandidates.size > 1) {
+            throw AmbiguousHeyCyanEndpointException(
+                "Multiple notification candidates: ${notificationCandidates.map { it.uuid }.joinToString()}"
+            )
+        } else {
+            notificationCandidates.firstOrNull()?.uuid
+        }
+
+        val dataCandidates = primary?.characteristics?.filter {
+            it.properties.canNotify && it.uuid != notificationUuid
+        } ?: emptyList()
+
+        val dataTransferUuid = if (dataCandidates.size > 1) {
+            throw AmbiguousHeyCyanEndpointException(
+                "Multiple data transfer candidates: ${dataCandidates.map { it.uuid }.joinToString()}"
+            )
+        } else {
+            dataCandidates.firstOrNull()?.uuid
+        }
+
         return HeyCyanGattEndpoints(
             commandWrite = primary?.let { primaryService ->
-                findCharacteristic(
+                findSingle(
                     primaryService.characteristics,
                     { it.properties.canWrite }
                 )
             },
 
-            notification = primary?.let { primaryService ->
-                findCharacteristic(
-                    primaryService.characteristics,
-                    { it.properties.canNotify || it.properties.canIndicate }
-                )
-            },
+            notification = notificationUuid,
 
-            dataTransfer = primary?.let { primaryService ->
-                findCharacteristic(
-                    primaryService.characteristics,
-                    { 
-                        it.properties.canNotify && 
-                        it.properties.canNotify &&
-                        // Exclude the notification characteristic itself
-                        it.uuid != findCharacteristic(
-                            primaryService.characteristics,
-                            { it.properties.canNotify || it.properties.canIndicate }
-                        )
-                    }
-                )
-            },
+            dataTransfer = dataTransferUuid,
 
             uartTx = secondary?.let { secondaryService ->
-                findCharacteristic(
+                findSingle(
                     secondaryService.characteristics,
                     { it.properties.canWriteWithoutResponse }
                 )
             },
 
             uartRx = secondary?.let { secondaryService ->
-                findCharacteristic(
+                findSingle(
                     secondaryService.characteristics,
                     { it.properties.canNotify }
                 )

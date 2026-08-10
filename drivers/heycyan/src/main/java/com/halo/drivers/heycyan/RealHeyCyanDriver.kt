@@ -1,4 +1,4 @@
-﻿package com.halo.drivers.heycyan
+package com.halo.drivers.heycyan
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothGattCharacteristic
@@ -57,6 +57,9 @@ class RealHeyCyanDriver(
     private val gattClient = HeyCyanGattClient(context, tracer)
     private val rfcommClient = HeyCyanRfcommClient(context, tracer)
 
+    private val stateStore = com.halo.drivers.heycyan.protocol.HeyCyanDeviceStateStore()
+    val deviceState: StateFlow<com.halo.drivers.heycyan.protocol.HeyCyanDeviceState> = stateStore.state
+
     private val _events = MutableSharedFlow<DeviceEvent>(extraBufferCapacity = 64)
     override val events: Flow<DeviceEvent> = _events.asSharedFlow()
     
@@ -91,6 +94,7 @@ class RealHeyCyanDriver(
             metadata = captureMetadata()
         )
         gattClient.markScanning()
+        stateStore.updateConnection(com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.SCANNING)
 
         try {
             captureRecorder.setDevice(selectedAddress, selectedName)
@@ -106,12 +110,16 @@ class RealHeyCyanDriver(
                     )
                 )
             }
+            stateStore.updateConnection(com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.CONNECTING)
             val rfcommChannels = rfcommClient.connect(selectedAddress).getOrElse { emptyList() }
             val gattReady = runCatching {
                 gattClient.connect(selectedAddress)
                 gattClient.awaitReady()
                 true
             }.getOrDefault(false)
+            if (gattReady) {
+                stateStore.updateConnection(com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.READY)
+            }
             if (gattReady && mode == HeyCyanConnectionMode.RUNTIME) {
                 startReading()
             }
@@ -125,9 +133,11 @@ class RealHeyCyanDriver(
                 _events.emit(DeviceEvent.Ready(System.currentTimeMillis()))
             }
         } catch (error: CancellationException) {
+            stateStore.updateConnection(com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.DISCONNECTED)
             captureRecorder.abort()
             throw error
         } catch (error: Throwable) {
+            stateStore.updateConnection(com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.ERROR)
             gattClient.fail(error)
             captureRecorder.abort()
             throw error
@@ -140,6 +150,7 @@ class RealHeyCyanDriver(
         gattClient.awaitDisconnected()
         readJob?.cancel()
         readJob = null
+        stateStore.updateConnection(com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.DISCONNECTED)
         runCatching { captureRecorder.stop() }
     }
 
@@ -168,14 +179,23 @@ class RealHeyCyanDriver(
             val decoder = HeyCyanEventDecoder()
             
             gattClient.incomingBytes.collect { (characteristicUuid, payload) ->
-                val event = decoder.decode(payload)
-                    ?: return@collect
+                val timestamp = System.currentTimeMillis()
+                val decodedEvent = decoder.decode(
+                    payload = payload,
+                    characteristicUuid = characteristicUuid,
+                    timestamp = timestamp,
+                )
 
-                when (event) {
+                stateStore.apply(
+                    event = decodedEvent.event,
+                    timestamp = timestamp,
+                )
+
+                when (val event = decodedEvent.event) {
                     is HeyCyanEvent.BatteryUpdated -> {
                         _events.emit(
                             DeviceEvent.BatteryLevel(
-                                timestamp = System.currentTimeMillis(),
+                                timestamp = timestamp,
                                 level = event.level,
                             )
                         )
@@ -185,7 +205,7 @@ class RealHeyCyanDriver(
                     is HeyCyanEvent.ButtonPressed -> {
                         _events.emit(
                             DeviceEvent.ButtonClick(
-                                timestamp = System.currentTimeMillis(),
+                                timestamp = timestamp,
                                 buttonId = event.type.toButtonId(),
                             )
                         )

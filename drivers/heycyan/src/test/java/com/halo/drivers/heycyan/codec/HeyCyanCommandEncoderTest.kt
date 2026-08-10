@@ -49,7 +49,7 @@ class HeyCyanCommandEncoderTest {
             .encode(HeyCyanCommand.GetVersion)
             .getOrThrow()
 
-        assertEquals(0x10, encoded.commandId.toByte())
+        assertEquals(0x10.toByte(), encoded.commandId.toByte())
         assertArrayEquals(byteArrayOf(), encoded.payload)
     }
 
@@ -59,7 +59,7 @@ class HeyCyanCommandEncoderTest {
             .encode(HeyCyanCommand.GetMacAddress)
             .getOrThrow()
 
-        assertEquals(0x11, encoded.commandId.toByte())
+        assertEquals(0x11.toByte(), encoded.commandId.toByte())
         assertArrayEquals(byteArrayOf(), encoded.payload)
     }
 
@@ -69,7 +69,7 @@ class HeyCyanCommandEncoderTest {
             .encode(HeyCyanCommand.GetBattery)
             .getOrThrow()
 
-        assertEquals(0x13, encoded.commandId.toByte())
+        assertEquals(0x13.toByte(), encoded.commandId.toByte())
         assertArrayEquals(byteArrayOf(), encoded.payload)
     }
 
@@ -79,7 +79,7 @@ class HeyCyanCommandEncoderTest {
             .encode(HeyCyanCommand.GetMediaCounts)
             .getOrThrow()
 
-        assertEquals(0x14, encoded.commandId.toByte())
+        assertEquals(0x14.toByte(), encoded.commandId.toByte())
         assertArrayEquals(byteArrayOf(), encoded.payload)
     }
 
@@ -105,7 +105,7 @@ class HeyCyanCommandEncoderTest {
 
         // Verify payload is a copy, not a reference
         val originalPayload = encoded.payload
-        originalPayload[0] = 0xFF
+        originalPayload[0] = 0xFF.toByte()
 
         // Get a new encoded command and verify it's different
         val encoded2 = encoder
@@ -113,6 +113,6 @@ class HeyCyanCommandEncoderTest {
             .getOrThrow()
 
         // Should still be 0x02 (VIDEO), not 0xFF
-        assertEquals(0x02, encoded2.payload[0])
+        assertEquals(0x02.toByte(), encoded2.payload[0])
     }
 }

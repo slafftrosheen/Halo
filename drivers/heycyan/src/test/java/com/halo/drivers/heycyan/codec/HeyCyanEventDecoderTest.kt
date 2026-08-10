@@ -2,8 +2,12 @@ package com.halo.drivers.heycyan.codec
 
 import com.halo.drivers.heycyan.protocol.HeyCyanEvent
 import com.halo.drivers.heycyan.protocol.HeyCyanMode
+import org.junit.Assert.assertArrayEquals
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
-import org.junit.Assert.*
 
 class HeyCyanEventDecoderTest {
 
@@ -14,15 +18,17 @@ class HeyCyanEventDecoderTest {
         val packet = byteArrayOf(
             0x01,
             85,
-            1
+            1,
         )
 
-        val event = decoder.decode(packet)
+        val decoded = decoder.decode(packet)
+        val event = decoded.event
 
         assertTrue(event is HeyCyanEvent.BatteryUpdated)
         event as HeyCyanEvent.BatteryUpdated
         assertEquals(85, event.level)
         assertTrue(event.isCharging)
+        assertArrayEquals(packet, decoded.rawPayload)
     }
 
     @Test
@@ -30,10 +36,11 @@ class HeyCyanEventDecoderTest {
         val packet = byteArrayOf(
             0x01,
             50.toByte(),
-            0
+            0,
         )
 
-        val event = decoder.decode(packet)
+        val decoded = decoder.decode(packet)
+        val event = decoded.event
 
         assertTrue(event is HeyCyanEvent.BatteryUpdated)
         event as HeyCyanEvent.BatteryUpdated
@@ -48,10 +55,11 @@ class HeyCyanEventDecoderTest {
             0x02, 0x00, // 2 photos (little endian)
             0x03, 0x00, // 3 videos
             0x04, 0x00, // 4 audio
-            0x01
+            0x01,
         )
 
-        val event = decoder.decode(packet)
+        val decoded = decoder.decode(packet)
+        val event = decoded.event
 
         assertTrue(event is HeyCyanEvent.MediaCountsUpdated)
         event as HeyCyanEvent.MediaCountsUpdated
@@ -63,12 +71,13 @@ class HeyCyanEventDecoderTest {
 
     @Test
     fun decodeMode() {
-        val event = decoder.decode(
+        val decoded = decoder.decode(
             byteArrayOf(
                 0x04,
-                0x02
+                0x02,
             )
         )
+        val event = decoded.event
 
         assertTrue(event is HeyCyanEvent.ModeChanged)
         event as HeyCyanEvent.ModeChanged
@@ -78,12 +87,13 @@ class HeyCyanEventDecoderTest {
 
     @Test
     fun unknownModeIsNotCoerced() {
-        val event = decoder.decode(
+        val decoded = decoder.decode(
             byteArrayOf(
                 0x04,
-                0x7F
+                0x7F,
             )
-        ) as HeyCyanEvent.ModeChanged
+        )
+        val event = decoded.event as HeyCyanEvent.ModeChanged
 
         assertNull(event.mode)
         assertEquals(0x7F, event.rawMode)
@@ -95,10 +105,11 @@ class HeyCyanEventDecoderTest {
             0x77.toByte(),
             0x01,
             0x02,
-            0x03
+            0x03,
         )
 
-        val event = decoder.decode(payload)
+        val decoded = decoder.decode(payload)
+        val event = decoded.event
 
         assertTrue(event is HeyCyanEvent.Unknown)
         event as HeyCyanEvent.Unknown
@@ -107,16 +118,57 @@ class HeyCyanEventDecoderTest {
     }
 
     @Test
-    fun malformedBatteryFails() {
-        assertFailsWith<IllegalArgumentException> {
-            decoder.decode(
-                byteArrayOf(
-                    0x01,
-                    120.toByte(), // Invalid level
-                    0
-                )
+    fun unknownPayloadIsNeverDropped() {
+        val payload = byteArrayOf(
+            0xEE.toByte(),
+            0xAA.toByte(),
+            0xBB.toByte(),
+        )
+
+        val decoded = decoder.decode(payload)
+
+        assertTrue(decoded.event is HeyCyanEvent.Unknown)
+        assertArrayEquals(payload, decoded.rawPayload)
+    }
+
+    @Test
+    fun malformedPayloadDoesNotTerminateDecoder() {
+        val malformedPacket = byteArrayOf(
+            0x01,
+            120.toByte(), // Invalid level > 100
+            0,
+        )
+
+        val decoded = decoder.decode(malformedPacket)
+
+        assertTrue(decoded.event is HeyCyanEvent.Malformed)
+        val malformed = decoded.event as HeyCyanEvent.Malformed
+        assertArrayEquals(malformedPacket, malformed.payload)
+        assertTrue(malformed.reason.isNotBlank())
+    }
+
+    @Test
+    fun tooShortBatteryPayloadProducesMalformedEvent() {
+        val decoded = decoder.decode(
+            byteArrayOf(
+                0x01,
+                50.toByte(),
             )
-        }
+        )
+
+        assertTrue(decoded.event is HeyCyanEvent.Malformed)
+    }
+
+    @Test
+    fun tooShortMediaCountsPayloadProducesMalformedEvent() {
+        val decoded = decoder.decode(
+            byteArrayOf(
+                0x02,
+                0x01, 0x00,
+            )
+        )
+
+        assertTrue(decoded.event is HeyCyanEvent.Malformed)
     }
 
     @Test
@@ -129,7 +181,8 @@ class HeyCyanEventDecoderTest {
             0x03, 'W'.code.toByte(), 'F'.code.toByte(), '1'.code.toByte(),
         )
 
-        val event = decoder.decode(packet)
+        val decoded = decoder.decode(packet)
+        val event = decoded.event
 
         assertTrue(event is HeyCyanEvent.VersionInfo)
         event as HeyCyanEvent.VersionInfo
@@ -144,13 +197,14 @@ class HeyCyanEventDecoderTest {
         val packet = byteArrayOf(
             0x05,
             0x03, 'H'.code.toByte(), 'C'.code.toByte(), '1'.code.toByte(),
-            0x09, 
+            0x09,
             '1'.code.toByte(), '2'.code.toByte(), '3'.code.toByte(),
             '4'.code.toByte(), '5'.code.toByte(), '6'.code.toByte(),
             '7'.code.toByte(), '8'.code.toByte(), '9'.code.toByte(),
         )
 
-        val event = decoder.decode(packet)
+        val decoded = decoder.decode(packet)
+        val event = decoded.event
 
         assertTrue(event is HeyCyanEvent.WiFiCredentials)
         event as HeyCyanEvent.WiFiCredentials
@@ -162,10 +216,11 @@ class HeyCyanEventDecoderTest {
     fun decodeAiImage() {
         val payload = byteArrayOf(
             0x06,
-            0xAA.toByte(), 0xBB.toByte(), 0xCC.toByte(), // image data
+            0xAA.toByte(), 0xBB.toByte(), 0xCC.toByte(),
         )
 
-        val event = decoder.decode(payload)
+        val decoded = decoder.decode(payload)
+        val event = decoded.event
 
         assertTrue(event is HeyCyanEvent.AIImageData)
         event as HeyCyanEvent.AIImageData
@@ -176,31 +231,9 @@ class HeyCyanEventDecoderTest {
     }
 
     @Test
-    fun emptyPayloadReturnsNull() {
-        assertNull(decoder.decode(byteArrayOf()))
-    }
-
-    @Test
-    fun tooShortBatteryPayloadFails() {
-        assertFailsWith<IllegalArgumentException> {
-            decoder.decode(
-                byteArrayOf(
-                    0x01,
-                    50.toByte()
-                )
-            )
-        }
-    }
-
-    @Test
-    fun tooShortMediaCountsPayloadFails() {
-        assertFailsWith<IllegalArgumentException> {
-            decoder.decode(
-                byteArrayOf(
-                    0x02,
-                    0x01, 0x00
-                )
-            )
-        }
+    fun emptyPayloadReturnsUnknownWithMinusOne() {
+        val decoded = decoder.decode(byteArrayOf())
+        assertTrue(decoded.event is HeyCyanEvent.Unknown)
+        assertEquals(-1, (decoded.event as HeyCyanEvent.Unknown).eventType)
     }
 }

@@ -25,6 +25,8 @@ enum class HeyCyanMode(val value: Int) {
 }
 
 sealed interface HeyCyanEvent {
+    data object Ready : HeyCyanEvent
+
     data class ButtonPressed(
         val type: ButtonType,
     ) : HeyCyanEvent
@@ -67,6 +69,19 @@ sealed interface HeyCyanEvent {
         override fun hashCode(): Int = payload.contentHashCode()
     }
 
+    data class Malformed(
+        val payload: ByteArray,
+        val reason: String,
+    ) : HeyCyanEvent {
+        override fun equals(other: Any?): Boolean =
+            other is Malformed &&
+                payload.contentEquals(other.payload) &&
+                reason == other.reason
+
+        override fun hashCode(): Int =
+            31 * payload.contentHashCode() + reason.hashCode()
+    }
+
     data class Unknown(
         val eventType: Int,
         val payload: ByteArray,
@@ -78,5 +93,24 @@ sealed interface HeyCyanEvent {
 
         override fun hashCode(): Int =
             31 * eventType + payload.contentHashCode()
+    }
+
+    data class UnknownEvent(
+        val payload: ByteArray,
+        val characteristic: java.util.UUID? = null,
+        val timestamp: Long = 0L,
+    ) : HeyCyanEvent {
+        override fun equals(other: Any?): Boolean =
+            other is UnknownEvent &&
+                payload.contentEquals(other.payload) &&
+                characteristic == other.characteristic &&
+                timestamp == other.timestamp
+
+        override fun hashCode(): Int {
+            var result = payload.contentHashCode()
+            result = 31 * result + (characteristic?.hashCode() ?: 0)
+            result = 31 * result + timestamp.hashCode()
+            return result
+        }
     }
 }

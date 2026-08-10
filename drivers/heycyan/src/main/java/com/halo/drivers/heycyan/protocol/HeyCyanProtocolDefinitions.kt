@@ -2,13 +2,76 @@ package com.halo.drivers.heycyan.protocol
 
 import java.util.UUID
 
+enum class ProtocolDefinitionStatus {
+    VERIFIED_FROM_REFERENCE,
+    VERIFIED_FROM_CAPTURE,
+    IMPLEMENTED_WITH_LIMITATION,
+    BLOCKED,
+}
+
+enum class EvidenceKind {
+    REAL_DEVICE_CAPTURE,
+    AUTHORITATIVE_SOURCE,
+}
+
+enum class ProtocolConfidence {
+    HIGH,
+    MEDIUM,
+    LOW,
+}
+
+/** Evidence references for protocol definitions */
+data class ProtocolEvidenceReference(
+    val source: String,
+    val locator: String,
+    val kind: EvidenceKind,
+    val confidence: ProtocolConfidence = ProtocolConfidence.HIGH,
+) {
+    init {
+        require(source.isNotBlank()) { "Source must not be blank" }
+        require(locator.isNotBlank()) { "Locator must not be blank" }
+    }
+}
+
 /**
- * Evidence-backed protocol definitions for HeyCyan commands and events.
- * Must be populated with real captures or vendor documentation.
+ * Source-backed command definition for HeyCyan commands.
+ * Target characteristic is handled at transport layer.
+ */
+data class HeyCyanCommandDefinition(
+    val command: HeyCyanCommand,
+    val commandId: Int?,
+    val payload: ByteArray = byteArrayOf(),
+    val evidence: List<ProtocolEvidenceReference>,
+    val status: ProtocolDefinitionStatus,
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is HeyCyanCommandDefinition) return false
+        return command == other.command &&
+                commandId == other.commandId &&
+                payload.contentEquals(other.payload) &&
+                evidence == other.evidence &&
+                status == other.status
+    }
+
+    override fun hashCode(): Int {
+        var result = command.hashCode()
+        result = 31 * result + (commandId ?: 0)
+        result = 31 * result + payload.contentHashCode()
+        result = 31 * result + evidence.hashCode()
+        result = 31 * result + status.hashCode()
+        return result
+    }
+}
+
+typealias CommandDefinition = HeyCyanCommandDefinition
+
+/**
+ * Evidence-backed protocol definitions collection for HeyCyan.
  */
 data class HeyCyanProtocolDefinitions(
     val topology: HeyCyanTopologyProfile? = null,
-    val commands: List<CommandDefinition> = emptyList(),
+    val commands: List<HeyCyanCommandDefinition> = emptyList(),
     val events: List<EventDefinition> = emptyList()
 ) {
     init {
@@ -20,20 +83,8 @@ data class HeyCyanProtocolDefinitions(
         }
     }
 
-    fun command(command: HeyCyanCommand): CommandDefinition? =
+    fun command(command: HeyCyanCommand): HeyCyanCommandDefinition? =
         commands.firstOrNull { it.command == command }
-
-    data class CommandDefinition(
-        val command: HeyCyanCommand,
-        val targetCharacteristic: UUID,
-        val bytes: ByteArray,
-        val evidence: List<ProtocolEvidenceReference>
-    ) {
-        init {
-            require(bytes.isNotEmpty()) { "Command must have bytes" }
-            require(evidence.isNotEmpty()) { "Command requires evidence" }
-        }
-    }
 
     data class EventDefinition(
         val id: String,
@@ -47,23 +98,6 @@ data class HeyCyanProtocolDefinitions(
             require(evidence.isNotEmpty()) { "Event requires evidence" }
         }
     }
-}
-
-/** Evidence references for protocol definitions */
-data class ProtocolEvidenceReference(
-    val source: String,
-    val locator: String,
-    val kind: EvidenceKind
-) {
-    init {
-        require(source.isNotBlank()) { "Source must not be blank" }
-        require(locator.isNotBlank()) { "Locator must not be blank" }
-    }
-}
-
-enum class EvidenceKind {
-    REAL_DEVICE_CAPTURE,
-    AUTHORITATIVE_DOCUMENTATION
 }
 
 /**
@@ -88,3 +122,4 @@ class ProtocolNotVerifiedException(
     val operation: String,
     detail: String = "No evidence-backed definition"
 ) : UnsupportedOperationException("HeyCyan $operation blocked: $detail")
+

@@ -7,7 +7,10 @@ package com.halo.drivers.heycyan.protocol
 sealed interface HeyCyanCommand {
     // State Queries
     data object GetBattery : HeyCyanCommand
+    data object RequestBattery : HeyCyanCommand
     data object GetVersion : HeyCyanCommand
+    /** Semantic alias for [GetVersion] — used by the PR-025 capability layer. */
+    data object GetDeviceInfo : HeyCyanCommand
     data object GetMediaCounts : HeyCyanCommand
     data object GetMacAddress : HeyCyanCommand
 
@@ -22,7 +25,7 @@ sealed interface HeyCyanCommand {
 
     // Network / Transfer
     data object EnableTransfer : HeyCyanCommand
-    data object SetDateTime : HeyCyanCommand
+    data class SetDateTime(val timestamp: Long = 0L) : HeyCyanCommand
 
     // Mode Control
     data class SetMode(val mode: HeyCyanMode) : HeyCyanCommand

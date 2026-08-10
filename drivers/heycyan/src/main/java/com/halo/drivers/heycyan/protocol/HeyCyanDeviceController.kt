@@ -1,12 +1,10 @@
 package com.halo.drivers.heycyan.protocol
 
-import com.halo.drivers.heycyan.codec.EncodedCommand
-import com.halo.drivers.heycyan.codec.HeyCyanCommandEncoder
 import com.halo.drivers.heycyan.codec.HeyCyanPacketFramer
 
 class HeyCyanDeviceController(
-    private val commandEncoder: HeyCyanCommandEncoder,
-    private val packetFramer: HeyCyanPacketFramer,
+    private val commandCatalog: HeyCyanCommandCatalog = HeyCyanCommandCatalog,
+    private val packetFramer: HeyCyanPacketFramer = HeyCyanPacketFramer(),
     private val transport: HeyCyanCommandTransport,
 ) {
 
@@ -27,16 +25,33 @@ class HeyCyanDeviceController(
     ): Result<Unit> =
         execute(HeyCyanCommand.SetMode(mode))
 
+    suspend fun executeCommand(
+        command: HeyCyanCommand
+    ): Result<Unit> =
+        execute(command)
+
     private suspend fun execute(
         command: HeyCyanCommand
     ): Result<Unit> {
+        val definition = commandCatalog.definition(command)
+            ?: return Result.failure(
+                ProtocolNotVerifiedException(
+                    operation = command.toString(),
+                    detail = "No evidence-backed catalog definition"
+                )
+            )
 
-        val encoded = commandEncoder
-            .encode(command)
-            .getOrElse { return Result.failure(it) }
+        if (definition.status == ProtocolDefinitionStatus.BLOCKED) {
+            return Result.failure(
+                ProtocolNotVerifiedException(
+                    operation = command.toString(),
+                    detail = "Command is explicitly BLOCKED"
+                )
+            )
+        }
 
         val framed = packetFramer
-            .frame(encoded)
+            .frame(definition)
             .getOrElse { return Result.failure(it) }
 
         return transport.send(framed)
