@@ -1,0 +1,190 @@
+{
+  "session_id": "camera_double-006",
+  "device": {
+    "name": "BW-AG1 Pro_38C2",
+    "address": "5F:AE:56:10:38:C2"
+  },
+  "action": {
+    "id": "camera_double",
+    "label": "CAMERA BUTTON \u2014 DOUBLE"
+  },
+  "timestamp": "2026-08-11T20:19:30.462313",
+  "gatt": {
+    "services": [
+      {
+        "uuid": "00001800-0000-1000-8000-00805f9b34fb",
+        "characteristics": [
+          {
+            "uuid": "00002a00-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "read",
+              "write"
+            ]
+          }
+        ]
+      },
+      {
+        "uuid": "0000ae30-0000-1000-8000-00805f9b34fb",
+        "characteristics": [
+          {
+            "uuid": "0000ae01-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "write-without-response"
+            ]
+          },
+          {
+            "uuid": "0000ae02-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "notify"
+            ]
+          },
+          {
+            "uuid": "0000ae03-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "write-without-response"
+            ]
+          },
+          {
+            "uuid": "0000ae04-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "notify"
+            ]
+          },
+          {
+            "uuid": "0000ae05-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "indicate"
+            ]
+          },
+          {
+            "uuid": "0000ae10-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "read",
+              "write"
+            ]
+          }
+        ]
+      },
+      {
+        "uuid": "00003802-0000-1000-8000-00805f9b34fb",
+        "characteristics": [
+          {
+            "uuid": "00004a02-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "read",
+              "notify",
+              "write"
+            ]
+          }
+        ]
+      },
+      {
+        "uuid": "0000ae3a-0000-1000-8000-00805f9b34fb",
+        "characteristics": [
+          {
+            "uuid": "0000ae3b-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "write-without-response"
+            ]
+          },
+          {
+            "uuid": "0000ae3c-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "notify"
+            ]
+          }
+        ]
+      },
+      {
+        "uuid": "00001801-0000-1000-8000-00805f9b34fb",
+        "characteristics": [
+          {
+            "uuid": "00002a05-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "indicate"
+            ]
+          }
+        ]
+      },
+      {
+        "uuid": "6e40fff0-b5a3-f393-e0a9-e50e24dcca9e",
+        "characteristics": [
+          {
+            "uuid": "6e400002-b5a3-f393-e0a9-e50e24dcca9e",
+            "properties": [
+              "write-without-response",
+              "write"
+            ]
+          },
+          {
+            "uuid": "6e400003-b5a3-f393-e0a9-e50e24dcca9e",
+            "properties": [
+              "notify"
+            ]
+          }
+        ]
+      },
+      {
+        "uuid": "de5bf728-d711-4e47-af26-65e3012a5dc7",
+        "characteristics": [
+          {
+            "uuid": "de5bf72a-d711-4e47-af26-65e3012a5dc7",
+            "properties": [
+              "write-without-response",
+              "write"
+            ]
+          },
+          {
+            "uuid": "de5bf729-d711-4e47-af26-65e3012a5dc7",
+            "properties": [
+              "notify"
+            ]
+          }
+        ]
+      },
+      {
+        "uuid": "0000180a-0000-1000-8000-00805f9b34fb",
+        "characteristics": [
+          {
+            "uuid": "00002a25-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "read"
+            ]
+          },
+          {
+            "uuid": "00002a27-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "read"
+            ]
+          },
+          {
+            "uuid": "00002a26-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "read"
+            ]
+          },
+          {
+            "uuid": "00002a23-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "read"
+            ]
+          }
+        ]
+      },
+      {
+        "uuid": "0000fee1-0000-1000-8000-00805f9b34fb",
+        "characteristics": [
+          {
+            "uuid": "0000fee3-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "read",
+              "notify",
+              "write"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "packets": []
+}
