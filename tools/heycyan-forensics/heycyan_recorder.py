@@ -1,16 +1,25 @@
 #!/usr/bin/env python3
 """
-HeyCyan Forensics Recorder
+HeyCyan Forensics Recorder - PR-017C
 
-A PC-side tool for systematic BLE protocol discovery using controlled
-interaction captures. Records raw packets during specific button/touch
-interactions to enable differential byte analysis.
+Passive BLE protocol recorder for systematic discovery of HeyCyan smart
+glasses communication protocols.
+
+This is a STRICTLY PASSIVE recorder:
+- No automatic writes or commands
+- No speculative protocol guesses
+- Records raw BLE traffic for offline analysis
+
+Usage:
+    pip install bleak
+    python heycyan_recorder.py
 """
 
 import asyncio
 import json
 import sys
 import time
+from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -40,11 +49,16 @@ class Capture:
     session_id: str
     device_name: str
     device_address: str
+    mtu: int
     action_id: str
     action_label: str
-    timestamp: str
+    capture_started_at: str
+    capture_ended_at: str
+    action_timestamp: Optional[str]
     gatt_services: List[Dict] = field(default_factory=list)
+    subscription_results: List[Dict] = field(default_factory=list)
     packets: List[Packet] = field(default_factory=list)
+    _action_ts: float = field(default=0.0, repr=False, compare=False)
     
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -53,98 +67,106 @@ class Capture:
                 "name": self.device_name,
                 "address": self.device_address,
             },
+            "connection": {
+                "mtu": self.mtu,
+            },
             "action": {
                 "id": self.action_id,
                 "label": self.action_label,
             },
-            "timestamp": self.timestamp,
+            "capture": {
+                "started_at": self.capture_started_at,
+                "ended_at": self.capture_ended_at,
+                "action_timestamp": self.action_timestamp,
+            },
             "gatt": {
                 "services": self.gatt_services,
             },
+            "subscriptions": self.subscription_results,
             "packets": [
                 {
                     "timestamp": p.timestamp,
                     "direction": p.direction,
                     "characteristic": p.characteristic,
                     "payload_hex": p.payload_hex,
+                    "relative_to_action_ms": round(
+                        (p.timestamp - self._action_ts) * 1000, 2
+                    ) if self._action_ts else None,
                 }
                 for p in self.packets
             ],
         }
+    
+    def set_action_timestamp(self, ts: float):
+        """Set the action timestamp for relative calculations."""
+        self._action_ts = ts
+        self.action_timestamp = datetime.fromtimestamp(ts).isoformat()
 
 
-def make_notification_handler(recorder_self, char_uuid: str):
-    """Factory to create a notification handler with captured UUID."""
-    def handler(data: bytearray):
-        recorder_self.notification_handler(char_uuid, data)
-    return handler
-
-
-class InteractionRecorder:
-    """Records BLE interactions for forensic analysis."""
+class PassiveForensicsRecorder:
+    """
+    PASSIVE BLE forensics recorder - sends nothing, records everything.
     
-    # Known HeyCyan device name patterns (from documentation and hardware)
-    HEYCYAN_PATTERNS = [
-        "HeyCyan",
-        "Cyan",
-        "BW-AG1",  # HeyCyan glasses model
-        "AG1",      # Common abbreviation  
-        "Glasses",  # General descriptor
-    ]
+    Implements PR-017C: 90-second passive capture with delayed stream verification.
+    """
     
-    # Command characteristics to try for initialization
-    COMMAND_CHARACTERISTICS = [
-        "0000ae03-0000-1000-8000-00805f9b34fb",  # System Command
-        "de5bf728-d711-4e47-af26-65e3012a5dc7",  # Protocol Command
-        "0000fee3-0000-1000-8000-00805f9b34fb",  # MCU Status
-    ]
+    HEYCYAN_PATTERNS = ["HeyCyan", "Cyan", "BW-AG1", "AG1", "Glasses"]
     
-    INTERACTION_TESTS = [
-        {"id": "baseline", "label": "BASELINE - Idle 5 seconds"},
-        {"id": "ai_single", "label": "AI BUTTON — SINGLE PRESS"},
-        {"id": "ai_double", "label": "AI BUTTON — DOUBLE PRESS"},
-        {"id": "ai_long", "label": "AI BUTTON — LONG PRESS"},
-        {"id": "camera_single", "label": "CAMERA BUTTON — SINGLE"},
-        {"id": "camera_double", "label": "CAMERA BUTTON — DOUBLE"},
-        {"id": "touch_left", "label": "TOUCH — SWIPE LEFT"},
-        {"id": "touch_right", "label": "TOUCH — SWIPE RIGHT"},
-        {"id": "touch_tap", "label": "TOUCH — CENTER TAP"},
-        {"id": "touch_double", "label": "TOUCH — CENTER DOUBLE TAP"},
-        {"id": "touch_hold", "label": "TOUCH — CENTER HOLD"},
-        {"id": "wear_off", "label": "WEAR SENSOR — REMOVE"},
-        {"id": "wear_on", "label": "WEAR SENSOR — PUT ON"},
-    ]
+    # Default passive capture duration (PR-017C: 90 seconds)
+    DEFAULT_PASSIVE_SECONDS = 90
     
-    def __init__(self, capture_dir: Path):
+    def __init__(self, capture_dir: Path, passive_seconds: float = None):
         self.capture_dir = capture_dir
         self.capture_dir.mkdir(parents=True, exist_ok=True)
         self.client: Optional[BleakClient] = None
         self.device: Optional[BLEDevice] = None
         self.packets: List[Packet] = []
         self.gatt_services: List[Dict] = []
-        self.session_counter = 0
-        self.session_start_time = 0.0
-        self.subscribed_chars = []
-        self._callback_registered = False
+        self.subscription_results: List[Dict] = []
+        self.notification_count = 0
+        self.first_tx: Optional[float] = None
+        self.last_notification_time: Optional[float] = None
+        self.mtu: int = 0
+        self._action_ts: float = 0
+        self.passive_seconds = passive_seconds or self.DEFAULT_PASSIVE_SECONDS
         
-    def notification_handler(self, characteristic_uuid: str, data: bytearray):
-        """Handle incoming BLE notifications."""
+    def make_notification_handler(self):
+        """
+        Create a notification handler with the CORRECT Bleak signature.
+        
+        Bleak callbacks receive (characteristic, data), NOT just data.
+        """
+        def handler(characteristic, data: bytearray):
+            self._handle_notification(str(characteristic.uuid), bytes(data))
+        return handler
+    
+    def _handle_notification(self, characteristic_uuid: str, data: bytes):
+        """Handle an incoming BLE notification."""
         timestamp = time.time()
+        
+        if self.first_tx is None:
+            self.first_tx = timestamp
+        
+        self.notification_count += 1
+        self.last_notification_time = timestamp
         
         packet = Packet(
             timestamp=timestamp,
             direction="RX",
             characteristic=characteristic_uuid,
-            payload_hex=data.hex().upper(),
-            payload_bytes=bytes(data)
+            payload_hex=data.hex(" ").upper(),
+            payload_bytes=bytes(data),
         )
         self.packets.append(packet)
         
-        delta = packet.timestamp - self.session_start_time
-        print(f"  [{delta:.3f}s] RX {characteristic_uuid[:8]}... {len(data)}B: {data.hex().upper()}")
+        elapsed = timestamp - (self._action_ts if self._action_ts else time.time())
+        print(
+            f"  [RX +{elapsed:7.3f}s] {characteristic_uuid} {len(data):3d}B: {data.hex(' ').upper()[:48]}",
+            flush=True,
+        )
     
     def dump_gatt_services(self):
-        """Dump all GATT services and characteristics."""
+        """Dump all GATT services and characteristics with descriptors."""
         self.gatt_services = []
         print("\nGATT Services:")
         print("-" * 40)
@@ -152,7 +174,7 @@ class InteractionRecorder:
         for service in self.client.services:
             service_info = {
                 "uuid": str(service.uuid),
-                "characteristics": []
+                "characteristics": [],
             }
             print(f"\nSERVICE {service.uuid}")
             
@@ -161,6 +183,7 @@ class InteractionRecorder:
                 char_info = {
                     "uuid": str(char.uuid),
                     "properties": props,
+                    "descriptors": [],
                 }
                 service_info["characteristics"].append(char_info)
                 
@@ -168,86 +191,52 @@ class InteractionRecorder:
                 print(f"    properties: {', '.join(props)}")
                 
                 for desc in char.descriptors:
+                    char_info["descriptors"].append({"uuid": str(desc.uuid)})
                     print(f"    DESCRIPTOR {desc.uuid}")
                     
             self.gatt_services.append(service_info)
     
-    def _find_char_by_uuid(self, target_uuid: str):
-        """Find a characteristic by its UUID."""
-        for service in self.client.services:
-            for char in service.characteristics:
-                if str(char.uuid) == target_uuid:
-                    return char
-        return None
-    
-    async def initialize_notifications(self):
-        """Initialize notifications by reading some characteristics first."""
-        print("\nInitializing device state...")
-        
-        # Try to read initial values from key characteristics to "wake" the device
-        for service in self.client.services:
-            for char in service.characteristics:
-                if "read" in char.properties:
-                    try:
-                        value = await self.client.read_gatt_char(char.uuid)
-                        print(f"  Read {char.uuid[:8]}: {value.hex().upper()}")
-                    except Exception as e:
-                        pass  # Ignore read errors
-        
-        # Now subscribe to notifications
+    async def subscribe_to_notifications(self):
+        """
+        Subscribe to all notify/indicate characteristics.
+        Records results with success/failure status.
+        """
         print("\nSubscribing to notifications...")
+        self.subscription_results = []
+        
+        handler = self.make_notification_handler()
         
         for service in self.client.services:
             for char in service.characteristics:
                 char_uuid = str(char.uuid)
                 
                 if "notify" in char.properties:
-                    try:
-                        handler = make_notification_handler(self, char_uuid)
-                        await self.client.start_notify(char_uuid, handler)
-                        print(f"  Subscribed to {char_uuid}")
-                        self.subscribed_chars.append(char_uuid)
-                    except Exception as e:
-                        print(f"  Failed to subscribe to {char_uuid}: {e}")
-                
+                    mode = "notify"
                 elif "indicate" in char.properties:
-                    try:
-                        handler = make_notification_handler(self, char_uuid)
-                        await self.client.start_notify(char_uuid, handler)
-                        print(f"  Subscribed to {char_uuid} (indicate)")
-                        self.subscribed_chars.append(char_uuid)
-                    except Exception as e:
-                        print(f"  Failed to subscribe to {char_uuid}: {e}")
-        
-        # Try sending initialization commands to wake up the device
-        print("\nSending initialization commands...")
-        for char_uuid in self.COMMAND_CHARACTERISTICS:
-            char = self._find_char_by_uuid(char_uuid)
-            if char is None:
-                continue
-            # Try a simple ping/write command
-            if "write" in char.properties:
-                # Try various command formats that might trigger notifications
-                commands_to_try = [
-                    b'\x00\x01',  # Start command
-                    b'\x01',      # Single byte start
-                    b'\x01\x00',  # Two byte start
-                    bytes([0x55, 0x55]),  # Sync pattern
-                    bytes([0x01, 0x01]),  # Alternative start
-                ]
-                for cmd in commands_to_try:
-                    try:
-                        await self.client.write_gatt_char(char_uuid, cmd)
-                        print(f"  Sent {cmd.hex().upper()} to {char_uuid[:8]}...")
-                        await asyncio.sleep(0.05)
-                    except Exception as e:
-                        pass  # Try next command
-
+                    mode = "indicate"
+                else:
+                    continue
+                
+                result = {
+                    "characteristic": char_uuid,
+                    "mode": mode,
+                    "success": False,
+                    "error": None,
+                }
+                
+                try:
+                    await self.client.start_notify(char_uuid, handler)
+                    result["success"] = True
+                    print(f"  Subscribed to {char_uuid}")
+                except Exception as e:
+                    result["error"] = str(e)
+                    print(f"  Failed: {char_uuid}: {e}")
+                
+                self.subscription_results.append(result)
+    
     async def find_device(self) -> Optional[BLEDevice]:
         """Find a HeyCyan device."""
-        print("Scanning for BLE devices (15s)...")
-        print("Place your HeyCyan glasses in visible range and ready to pair.")
-        
+        print(f"Scanning for BLE devices (15s)...")
         devices = await BleakScanner.discover(timeout=15.0)
         
         candidates = []
@@ -262,7 +251,7 @@ class InteractionRecorder:
         
         if not candidates:
             print("\nNo HeyCyan devices found.")
-            print("All nearby devices:")
+            print("\nAll nearby devices:")
             for device in devices:
                 name = device.name or "Unknown"
                 rssi = getattr(device, 'rssi', 'N/A')
@@ -287,11 +276,38 @@ class InteractionRecorder:
             print("Invalid input. Using first candidate.")
             return candidates[0]
     
-    def countdown(self, seconds: int):
-        """Display a countdown."""
-        for i in range(seconds, 0, -1):
-            print(f"  {i}...", flush=True)
-            time.sleep(1)
+    async def passive_capture(self, duration_sec: float, label: str = "PASSIVE") -> List[Packet]:
+        """
+        Perform a passive capture for the specified duration.
+        Prints elapsed time continuously.
+        """
+        print(f"\n{'=' * 60}")
+        print(f"{label}")
+        print(f"Listening for {int(duration_sec)} seconds...")
+        print("Estimated first activity may take >20 seconds after subscription.")
+        print("=" * 60)
+        
+        start_time = time.time()
+        self._action_ts = start_time
+        
+        print(f"\n[PASSIVE +000.0s] listening")
+        
+        # Print a dot every second to show we're alive
+        async def ticker():
+            while True:
+                await asyncio.sleep(1)
+                elapsed = time.time() - start_time
+                print(f"\r[PASSIVE +{elapsed:.1f}s] listening...", end="", flush=True)
+        
+        ticker_task = asyncio.create_task(ticker())
+        
+        await asyncio.sleep(duration_sec)
+        
+        ticker_task.cancel()
+        
+        print(f"\n[PASSIVE +{duration_sec:.1f}s] done")
+        
+        return self.packets
     
     def save_capture(self, capture: Capture) -> Path:
         """Save a capture to a JSON file."""
@@ -300,57 +316,68 @@ class InteractionRecorder:
             json.dump(capture.to_dict(), f, indent=2)
         return filepath
     
-    def capture_window(self, label: str, baseline_sec: float = 2.0, record_sec: float = 3.0) -> List[Packet]:
-        """Capture a window of packets around an action."""
-        print(f"\nCollecting {int(baseline_sec)}s baseline...")
-        self.countdown(int(baseline_sec))
-        
-        start_idx = len(self.packets)
-        self.session_start_time = time.time()
-        
-        print("\n>>> PERFORM ACTION NOW <<<")
-        self.countdown(3)
-        
-        print(f"\nRecording {int(record_sec)}s post-action...")
-        time.sleep(record_sec)
-        
-        packets_captured = len(self.packets[start_idx:])
-        print(f"Packets received during this window: {packets_captured}")
-        
-        return self.packets[start_idx:]
-    
-    def run_test_action(self, test: Dict) -> Capture:
-        """Run a single test action with timing window."""
-        test_id = test["id"]
-        test_label = test["label"]
+    def print_statistics(self):
+        """Print detailed packet statistics by characteristic."""
+        by_char = defaultdict(list)
+        for p in self.packets:
+            by_char[p.characteristic].append(p)
         
         print("\n" + "=" * 60)
-        print(f"ACTION: {test_label}")
+        print("RX SUMMARY")
         print("=" * 60)
         
-        window_packets = self.capture_window(test_label)
+        if not self.packets:
+            print("\nNo notifications received.")
+            return
         
-        self.session_counter += 1
-        capture_id = f"{test_id}-{self.session_counter:03d}"
+        if self.first_tx:
+            first_elapsed = self.first_tx - self._action_ts
+            print(f"\nFIRST RX:")
+            print(f"  elapsed:     {first_elapsed:.3f}s")
+            first_p = by_char[self.packets[0].characteristic][0]
+            print(f"  characteristic: {first_p.characteristic}")
+            print(f"  length:        {len(first_p.payload_bytes)}B")
+            print(f"  raw:           {first_p.payload_hex[:64]}...")
         
-        capture = Capture(
-            session_id=capture_id,
-            device_name=self.device.name if self.device else "Unknown",
-            device_address=self.device.address if self.device else "Unknown",
-            action_id=test_id,
-            action_label=test_label,
-            timestamp=datetime.now().isoformat(),
-            gatt_services=self.gatt_services,
-            packets=window_packets
-        )
+        print(f"\nTOTAL PACKETS: {len(self.packets)}")
         
-        return capture
+        print("\nCHARACTERISTICS:")
+        print(f"{'UUID':<80} {'pkts':>8} {'first':>10} {'last':>10} {'lengths':<40}")
+        print("-" * 150)
+        
+        for url, pkts in sorted(by_char.items(), key=lambda x: -len(x[1])):
+            count = len(pkts)
+            if pkts:
+                first_t = pkts[0].timestamp - self._action_ts
+                last_t = pkts[-1].timestamp - self._action_ts
+            else:
+                first_t = last_t = 0
+            lengths = Counter(len(p.payload_bytes) for p in pkts)
+            
+            # Show most common lengths
+            len_strs = [f"{k}B" for k in sorted(lengths.keys())[:5]]
+            if len(lengths) > 5:
+                len_strs.append("...")
+            
+            print(f"{url:<80} {count:>8} {first_t:>10.3f}s {last_t:>10.3f}s {', '.join(len_strs):<40}")
+        
+        # Show first few packets for each characteristic
+        print("\nFIRST PACKETS BY CHARACTERISTIC:")
+        print("-" * 60)
+        for url, pkts in sorted(by_char.items(), key=lambda x: x[1][0].timestamp):
+            print(f"\n{url}:")
+            for i, p in enumerate(pkts[:3]):
+                print(f"  {i+1}. {p.payload_hex[:64]}...")
     
     async def run(self):
-        """Main recording loop."""
+        """Main passive recording session (PR-017C)."""
         print("=" * 60)
-        print("HEY CYAN FORENSICS RECORDER v2")
+        print("HEY CYAN FORENSICS RECORDER v3 - PASSIVE MODE")
+        print("PR-017C: 90-second delayed stream verification")
         print("=" * 60)
+        print("\nThis is a STRICTLY PASSIVE recorder.")
+        print("It will NOT send any commands or write to characteristics.")
+        print(f"Passive capture duration: {self.passive_seconds} seconds")
         
         self.device = await self.find_device()
         if not self.device:
@@ -373,85 +400,83 @@ class InteractionRecorder:
             return
         
         print("Connected!")
-        print(f"MTU: {self.client.mtu_size}")
+        self.mtu = self.client.mtu_size
+        print(f"MTU: {self.mtu}")
         
         # Dump GATT services
         self.dump_gatt_services()
         
-        # Initialize notifications and send wake-up commands
-        await self.initialize_notifications()
+        # Subscribe to notifications (PASSIVE)
+        await self.subscribe_to_notifications()
         
-        print(f"\nSubscribed to {len(self.subscribed_chars)} characteristics")
-        print(f"Sent initialization commands to {len(self.COMMAND_CHARACTERISTICS)} command characteristics")
+        successful = sum(1 for r in self.subscription_results if r["success"])
+        total = len(self.subscription_results)
+        print(f"\nSuccessfully subscribed to {successful}/{total} characteristic(s)")
         
-        # Wait a moment for device to respond
-        print("\nWaiting 2 seconds for device to start streaming...")
-        await asyncio.sleep(2)
+        # Passive capture for extended duration (PR-017C: 90 seconds)
+        print("\n" + "-" * 60)
+        print("PASSIVE BASELINE CAPTURE")
+        print("-" * 60)
         
-        print(f"\nCaptured so far: {len(self.packets)} packets")
+        await self.passive_capture(self.passive_seconds, "BASELINE - 90 seconds passive listening")
         
-        print("\nREADY. Starting interaction recordings...")
+        print(f"\nNotifications received during baseline: {self.notification_count}")
         
-        all_captures = []
+        if self.first_tx:
+            first_elapsed = self.first_tx - self._action_ts
+            print(f"First notification at: {first_elapsed:.3f}s after subscription")
         
-        for test in self.INTERACTION_TESTS:
-            self.packets = []
-            self.session_start_time = time.time()
-            
-            capture = self.run_test_action(test)
-            
-            if test["id"] == "baseline":
-                pass
-            else:
-                filepath = self.save_capture(capture)
-                all_captures.append(capture)
-                print(f"Saved: {filepath}")
-                print(f"Packets captured: {len(capture.packets)}")
-                if len(capture.packets) == 0:
-                    print("  WARNING: No packets captured!")
-                    print("  The device may not be emitting notifications yet.")
-                    print("  Try touching/wearing the glasses while holding the device.")
-                print("\nWaiting 2 seconds...")
-                time.sleep(2)
+        # Print detailed statistics
+        self.print_statistics()
         
-        # Save baseline
-        baseline_capture = Capture(
-            session_id="baseline-001",
+        # Save capture
+        capture = Capture(
+            session_id="passive-delayed-001",
             device_name=self.device.name,
             device_address=self.device.address,
-            action_id="baseline",
-            action_label="BASELINE - Idle 5 seconds",
-            timestamp=datetime.now().isoformat(),
+            mtu=self.mtu,
+            action_id="passive_baseline",
+            action_label="PASSIVE BASELINE - 90 seconds",
+            capture_started_at=datetime.fromtimestamp(self._action_ts).isoformat() if self._action_ts else None,
+            capture_ended_at=datetime.now().isoformat(),
+            action_timestamp=datetime.fromtimestamp(self.first_tx).isoformat() if self.first_tx else None,
             gatt_services=self.gatt_services,
-            packets=self.packets
+            subscription_results=self.subscription_results,
+            packets=self.packets,
         )
-        filepath = self.save_capture(baseline_capture)
-        all_captures.insert(0, baseline_capture)
-        print(f"\nSaved: {filepath}")
+        filepath = self.save_capture(capture)
+        print(f"\nSaved capture: {filepath}")
         
         print("\n" + "=" * 60)
-        print("CAPTURE SUMMARY")
+        print("NEXT STEPS")
         print("=" * 60)
-        print(f"Total captures: {len(all_captures)}")
-        for cap in all_captures:
-            print(f"  {cap.session_id}: {len(cap.packets)} packets")
-        
-        print(f"\nCaptures saved to: {self.capture_dir}")
-        print("\nKey notification characteristic: de5bf729-d711-4e47-af26-65e3012a5dc7")
+        print("If packets captured:")
+        print("  1. Analyze characteristic patterns")
+        print("  2. Correlate with physical actions")
+        print("  3. Compare with SDK event definitions")
+        print("\nIf NO packets (0):")
+        print("  1. Device may not be in streaming mode")
+        print("  2. Check companion app is NOT running")
+        print("  3. Try different device state")
+        print("  4. Consider host-specific behavior")
         
         await self.client.disconnect()
 
 
 def main():
+    # Allow override via environment variable
+    import os
+    passive_secs = float(os.environ.get("PASSIVE_SECONDS", "90"))
+    
     capture_dir = Path(__file__).parent / "captures"
-    recorder = InteractionRecorder(capture_dir)
+    recorder = PassiveForensicsRecorder(capture_dir, passive_seconds=passive_secs)
     
     try:
         asyncio.run(recorder.run())
     except KeyboardInterrupt:
-        print("\nInterrupted by user")
+        print("\n\nInterrupted by user")
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"\n\nError: {e}")
         import traceback
         traceback.print_exc()
 
