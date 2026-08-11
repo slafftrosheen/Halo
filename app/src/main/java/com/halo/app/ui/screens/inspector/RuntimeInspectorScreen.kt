@@ -6,12 +6,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
 import com.halo.app.ui.glass.components.HaloGlassSection
-import com.halo.app.ui.glass.components.HaloGlassCard
 import com.halo.app.ui.glass.material.HaloGlassColors
 import com.halo.app.ui.glass.material.HaloTypography
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 @Composable
 fun RuntimeInspectorScreen(viewModel: RuntimeInspectorViewModel) {
@@ -33,7 +36,6 @@ fun RuntimeInspectorScreen(viewModel: RuntimeInspectorViewModel) {
         // Graph Section
         HaloGlassSection(title = "Cognitive Pipeline", modifier = Modifier.weight(1f)) {
             Text("Observation → Interpretation → Reasoning → Planning → Execution", color = HaloGlassColors.TextSecondary)
-            // Live graph visualization placeholder
         }
         
         Spacer(Modifier.height(16.dp))
@@ -53,8 +55,11 @@ fun RuntimeInspectorScreen(viewModel: RuntimeInspectorViewModel) {
 }
 
 data class InspectorState(val isRecording: Boolean = false, val blackboard: List<String> = emptyList())
-class RuntimeInspectorViewModel {
-    private val _state = mutableStateOf(InspectorState())
-    val uiState: State<InspectorState> = _state
-    fun setRecording(recording: Boolean) { _state.value = _state.value.copy(isRecording = recording) }
+
+class RuntimeInspectorViewModel : ViewModel() {
+    private val _state = MutableStateFlow(InspectorState())
+    val uiState: StateFlow<InspectorState> = _state.asStateFlow()
+    fun setRecording(recording: Boolean) { 
+        _state.update { it.copy(isRecording = recording) }
+    }
 }

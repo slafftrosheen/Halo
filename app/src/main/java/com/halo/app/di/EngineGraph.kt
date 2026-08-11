@@ -7,7 +7,7 @@ import com.halo.engines.execution.ExecutionEngine
 import com.halo.engines.execution.service.ExecutionScheduler
 import com.halo.engines.execution.service.CapabilityRegistry
 import com.halo.engines.interpretation.InterpretationEngine
-import com.halo.engines.memory.EpisodicMemoryStore
+import com.halo.engines.memory.store.EpisodicMemoryStore
 import com.halo.engines.memory.ReflectionEngine
 import com.halo.engines.planning.PlanningEngine
 import com.halo.engines.reasoning.ReasoningEngine

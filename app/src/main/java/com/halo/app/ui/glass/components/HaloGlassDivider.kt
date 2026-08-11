@@ -1,66 +1,64 @@
 package com.halo.app.ui.glass.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.Divider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import com.halo.app.ui.glass.material.HaloGlassColors
 
 /**
- * Glass divider component that replaces legacy dividers.
- * Provides a subtle line separator with glass-appropriate styling.
+ * A glass-styled divider using the subtle border color.
  */
 @Composable
 fun HaloGlassDivider(
     modifier: Modifier = Modifier,
-    thickness: androidx.compose.ui.unit.Dp = 1.dp,
-    color: androidx.compose.ui.graphics.Color = HaloGlassColors.BorderSubtle,
-    startIndent: androidx.compose.ui.unit.Dp = 0.dp,
-    endIndent: androidx.compose.ui.unit.Dp = 0.dp
+    thickness: Dp = 1.dp,
+    color: Color = HaloGlassColors.BorderSubtle,
+    startIndent: Dp = 0.dp,
+    endIndent: Dp = 0.dp
 ) {
-    androidx.compose.foundation.layout.Divider(
+    Divider(
         modifier = modifier
-            .then(
-                Modifier
-                    .fillMaxWidth()
-                    .height(thickness)
-                    .padding(start = startIndent, end = endIndent)
-            ),
-        color = color
+            .padding(start = startIndent, end = endIndent)
+            .background(color),
+        thickness = thickness,
+        color = Color.Transparent
     )
 }
 
 /**
- * Horizontal glass divider that spans full width with standard padding.
+ * Specialized horizontal divider with pre-defined glass styling.
  */
 @Composable
 fun HaloGlassHorizontalDivider(
     modifier: Modifier = Modifier,
-    thickness: androidx.compose.ui.unit.Dp = 1.dp
+    thickness: Dp = 1.dp
 ) {
     HaloGlassDivider(
-        modifier = modifier,
-        thickness = thickness,
-        startIndent = androidx.compose.ui.glass.material.HaloGlassTokens.md,
-        endIndent = androidx.compose.ui.glass.material.HaloGlassTokens.md
+        modifier = modifier
+            .fillMaxWidth()
+            .background(HaloGlassColors.BorderSubtle),
+        thickness = thickness
     )
 }
 
 /**
- * Vertical glass divider for use in rows/columns.
+ * Specialized vertical divider with pre-defined glass styling.
  */
 @Composable
 fun HaloGlassVerticalDivider(
     modifier: Modifier = Modifier,
-    thickness: androidx.compose.ui.unit.Dp = 1.dp,
-    height: androidx.compose.ui.unit.Dp = 24.dp
+    thickness: Dp = 1.dp,
+    height: Dp = 24.dp
 ) {
-    androidx.compose.foundation.layout.Divider(
+    Box(
         modifier = modifier
-            .then(
-                Modifier
-                    .width(thickness)
-                    .height(height)
-            ),
-        color = HaloGlassColors.BorderSubtle
+            .width(thickness)
+            .height(height)
+            .background(HaloGlassColors.BorderSubtle)
     )
 }

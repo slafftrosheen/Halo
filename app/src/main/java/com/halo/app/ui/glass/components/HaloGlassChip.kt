@@ -1,152 +1,105 @@
 package com.halo.app.ui.glass.components
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
-import com.halo.app.ui.glass.components.HaloGlassSurface
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.halo.app.ui.glass.material.HaloGlassColors
 import com.halo.app.ui.glass.material.HaloGlassMaterial
-import com.halo.app.ui.glass.material.HaloGlassShapes
+import com.halo.app.ui.glass.material.HaloGlassMaterials
 import com.halo.app.ui.glass.material.HaloGlassTokens
 
 /**
- * Glass chip component that replaces legacy HaloTag and HaloStatusChip.
- * Used for labels, status indicators, and categorical chips.
+ * Small glass indicator/chip for status, tags, or small data points.
  */
 @Composable
 fun HaloGlassChip(
     modifier: Modifier = Modifier,
     text: String,
-    color: Color = HaloGlassColors.TextPrimary,
-    material: HaloGlassMaterial = HaloGlassMaterials.Standard,
-    shape: androidx.compose.foundation.shape.Shape = HaloGlassShapes.pill,
-    padding: Dp = HaloGlassTokens.xs
+    textColor: Color = Color.Unspecified,
+    material: HaloGlassMaterial = HaloGlassMaterials.Interactive,
+    shape: Shape = HaloGlassTokens.pillShape,
+    elevation: Dp = 2.dp
 ) {
-    // Determine appropriate text color based on background
-    val textColor = if (color == HaloGlassColors.TextPrimary) {
-        HaloGlassColors.TextPrimary
-    } else {
-        // Simple contrast check - in production would use proper luminance calculation
-        val isLightBackground = 
-            (color.red * 0.299 + color.green * 0.587 + color.blue * 0.114) > 186
-        if (isLightBackground) HaloGlassColors.TextPrimary else HaloGlassColors.TextPrimary
-    }
-    
     HaloGlassSurface(
-        modifier = modifier
-            .then(
-                Modifier
-                    .padding(
-                        horizontal = padding,
-                        vertical = padding / 2
-                    )
-            ),
-        material = material.copy(
-            containerColor = color
-        ),
+        modifier = modifier,
+        material = material.copy(elevation = elevation),
         shape = shape
     ) {
         Text(
             text = text,
-            color = textColor,
-            fontSize = 12.sp,
-            fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
+            color = if (textColor == Color.Unspecified) material.contentColor else textColor,
+            fontSize = 11.sp,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
         )
     }
 }
 
 /**
- * Extended glass chip with semantic variants.
+ * Semantic variants for glass chips.
  */
 object HaloGlassChip {
-    /**
-     * Creates a status chip indicating success
-     */
     @Composable
-    fun Success(
-        modifier: Modifier = Modifier,
-        text: String = "Success"
-    ) {
+    fun Success(modifier: Modifier = Modifier, text: String) {
         HaloGlassChip(
             modifier = modifier,
             text = text,
-            color = HaloGlassColors.Success,
-            material = HaloGlassMaterials.Standard.copy(
-                containerColor = HaloGlassColors.Success.copy(alpha = 0.1f)
+            material = HaloGlassMaterials.Interactive.copy(
+                containerColor = HaloGlassColors.Success.copy(alpha = 0.2f),
+                contentColor = HaloGlassColors.Success
             )
         )
     }
 
-    /**
-     * Creates a status chip indicating warning
-     */
     @Composable
-    fun Warning(
-        modifier: Modifier = Modifier,
-        text: String = "Warning"
-    ) {
+    fun Warning(modifier: Modifier = Modifier, text: String) {
         HaloGlassChip(
             modifier = modifier,
             text = text,
-            color = HaloGlassColors.Warning,
-            material = HaloGlassMaterials.Standard.copy(
-                containerColor = HaloGlassColors.Warning.copy(alpha = 0.1f)
+            material = HaloGlassMaterials.Interactive.copy(
+                containerColor = HaloGlassColors.Warning.copy(alpha = 0.2f),
+                contentColor = HaloGlassColors.Warning
             )
         )
     }
 
-    /**
-     * Creates a status chip indicating danger/error
-     */
     @Composable
-    fun Danger(
-        modifier: Modifier = Modifier,
-        text: String = "Error"
-    ) {
+    fun Danger(modifier: Modifier = Modifier, text: String) {
         HaloGlassChip(
             modifier = modifier,
             text = text,
-            color = HaloGlassColors.Danger,
-            material = HaloGlassMaterials.Standard.copy(
-                containerColor = HaloGlassColors.Danger.copy(alpha = 0.1f)
+            material = HaloGlassMaterials.Interactive.copy(
+                containerColor = HaloGlassColors.Danger.copy(alpha = 0.2f),
+                contentColor = HaloGlassColors.Danger
             )
         )
     }
 
-    /**
-     * Creates a status chip indicating info
-     */
     @Composable
-    fun Info(
-        modifier: Modifier = Modifier,
-        text: String = "Info"
-    ) {
+    fun Info(modifier: Modifier = Modifier, text: String) {
         HaloGlassChip(
             modifier = modifier,
             text = text,
-            color = HaloGlassColors.Info,
-            material = HaloGlassMaterials.Standard.copy(
-                containerColor = HaloGlassColors.Info.copy(alpha = 0.1f)
+            material = HaloGlassMaterials.Interactive.copy(
+                containerColor = HaloGlassColors.Info.copy(alpha = 0.2f),
+                contentColor = HaloGlassColors.Info
             )
         )
     }
 
-    /**
-     * Creates an accent chip for primary actions/tags
-     */
     @Composable
-    fun Accent(
-        modifier: Modifier = Modifier,
-        text: String
-    ) {
+    fun Accent(modifier: Modifier = Modifier, text: String) {
         HaloGlassChip(
             modifier = modifier,
             text = text,
-            color = HaloGlassColors.Accent,
-            material = HaloGlassMaterials.Standard.copy(
-                containerColor = HaloGlassColors.Accent.copy(alpha = 0.1f)
+            material = HaloGlassMaterials.Interactive.copy(
+                containerColor = HaloGlassColors.Accent.copy(alpha = 0.2f),
+                contentColor = HaloGlassColors.Accent
             )
         )
     }

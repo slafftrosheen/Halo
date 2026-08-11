@@ -11,20 +11,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.graphics.Color
 import com.halo.app.ui.glass.components.HaloStateOrb
 import com.halo.app.ui.glass.components.HaloGlassCard
 import com.halo.app.ui.glass.components.HaloGlassSection
 import com.halo.app.ui.glass.components.HaloGlassChip
 import com.halo.app.ui.glass.material.HaloGlassColors
 import com.halo.app.ui.glass.material.HaloTypography
-import com.halo.app.ui.glass.material.HaloRuntimeState
-
-data class TimelinePreviewEvent(
-    val command: String,
-    val status: String,
-    val timestamp: Long
-)
 
 @Composable
 fun HomeScreen(viewModel: HomeViewModel) {

@@ -11,10 +11,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.*
 import com.halo.app.di.ManualDependencyGraph
 import com.halo.app.ui.glass.components.HaloGlassNavigation
+import com.halo.app.ui.glass.components.NavigationItem
 import com.halo.app.ui.screens.home.HomeScreen
 import com.halo.app.ui.screens.activity.ActivityScreen
 import com.halo.app.ui.screens.devices.DevicesScreen
@@ -22,13 +22,12 @@ import com.halo.app.ui.screens.settings.SettingsScreen
 
 /**
  * Navigation configuration for HALO Glass UI.
- * Matches PROJECT-DIRECTION.md authority document.
  */
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
-    object Home : Screen("home", "Home", Icons.Default.Home)
-    object Activity : Screen("activity", "Activity", Icons.Default.Timer)
-    object Devices : Screen("devices", "Devices", Icons.Default.Devices)
-    object Settings : Screen("settings", "Settings", Icons.Default.Settings)
+    data object Home : Screen("home", "Home", Icons.Default.Home)
+    data object Activity : Screen("activity", "Activity", Icons.Default.Timer)
+    data object Devices : Screen("devices", "Devices", Icons.Default.Devices)
+    data object Settings : Screen("settings", "Settings", Icons.Default.Settings)
 }
 
 // Primary navigation items (bottom bar)
@@ -40,21 +39,12 @@ fun AppNavigation() {
     
     Scaffold(
         bottomBar = {
-            val navBackStackEntry by navController.currentBackStackEntryAsState()
-            val currentRoute = navBackStackEntry?.destination?.route
-            
             HaloGlassNavigation(
                 navController = navController,
                 items = bottomNavItems.map { 
-                    HaloGlassNavigation.NavigationItem(it.route, it.title, it.icon) 
-                },
-                selectedItemIndex = bottomNavItems.indexOfFirst { it.route == currentRoute }.let { if (it < 0) 0 else it },
-                onItemSelected = { index -> /* handled by navController */ }
+                    NavigationItem(it.route, it.title, it.icon) 
+                }
             )
-        },
-        drawer = {
-            // Developer mode items appear in drawer
-            // Console, Protocol Lab, Runtime Inspector
         }
     ) { innerPadding ->
         NavHost(
@@ -77,12 +67,3 @@ fun AppNavigation() {
         }
     }
 }
-
-/**
- * Navigation item for Halo Glass
- */
-data class NavigationItem(
-    val route: String,
-    val label: String,
-    val icon: ImageVector
-)

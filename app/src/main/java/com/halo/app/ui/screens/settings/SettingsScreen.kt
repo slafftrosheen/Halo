@@ -1,6 +1,7 @@
+package com.halo.app.ui.screens.settings
+
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -10,23 +11,17 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.Camera
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material.icons.filled.*
 import com.halo.app.ui.glass.components.HaloGlassSection
 import com.halo.app.ui.glass.components.HaloGlassDivider
+import com.halo.app.ui.glass.components.HaloGlassChip
 import com.halo.app.ui.glass.material.HaloGlassColors
 import com.halo.app.ui.glass.material.HaloTypography
-
 
 @Composable
 fun SettingsScreen(viewModel: SettingsViewModel) {
@@ -65,7 +60,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                 Text("Developer Mode", color = HaloGlassColors.TextPrimary, style = HaloTypography.bodyMedium)
                 Switch(
                     checked = uiState.devMode,
-                    onCheckedChange = viewModel::setDevMode
+                    onCheckedChange = { viewModel.setDevMode(it) }
                 )
             }
         }
@@ -100,10 +95,6 @@ private fun SettingItem(label: String, value: String, clickable: Boolean) {
     }
 }
 
-
-
-
-
 @Composable
 fun PermissionsScreen() {
     val uiState by remember { mutableStateOf(PermissionsUiState()) }
@@ -129,7 +120,7 @@ fun PermissionsScreen() {
         
         HaloGlassSection(title = "Audio Permissions") {
             PermissionItem(
-                icon = Icons.Default.Voice,
+                icon = Icons.Default.Mic,
                 label = "Microphone",
                 description = "Required for voice commands and listening mode",
                 granted = uiState.microphoneGranted,
@@ -137,7 +128,7 @@ fun PermissionsScreen() {
             )
             HaloGlassDivider()
             PermissionItem(
-                icon = Icons.Default.Voice,
+                icon = Icons.Default.VolumeUp,
                 label = "Speaker Output",
                 description = "Required for audio playback and responses",
                 granted = uiState.speakerGranted,

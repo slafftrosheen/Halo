@@ -77,6 +77,14 @@ object HaloTypography {
         lineHeight = 22.sp,
         letterSpacing = 0.5.sp
     )
+
+    val bodySmall = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.Normal,
+        fontSize = 13.sp,
+        lineHeight = 18.sp,
+        letterSpacing = 0.5.sp
+    )
     
     // Label styles (12-14sp)
     val labelLarge = TextStyle(
@@ -94,6 +102,15 @@ object HaloTypography {
         lineHeight = 16.sp,
         letterSpacing = 0.5.sp
     )
+
+    val labelSmall = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.Normal,
+        fontSize = 10.sp,
+        lineHeight = 14.sp,
+        letterSpacing = 0.5.sp
+    )
+
     
     // Mono styles for diagnostics/console (12-14sp as per spec)
     val monoMedium = TextStyle(

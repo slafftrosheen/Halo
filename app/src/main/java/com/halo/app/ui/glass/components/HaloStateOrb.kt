@@ -1,33 +1,35 @@
 package com.halo.app.ui.glass.components
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.halo.app.ui.glass.material.HaloGlassColors
-import com.halo.app.ui.glass.material.HaloGlassShapes
 import com.halo.app.ui.glass.material.HaloRuntimeState
 
 /**
  * Halo State Orb - Visualizes runtime state with sophisticated animations.
  * Replaces legacy HapticFloatingMic with glass-enhanced presentation.
- * 
- * Design ref: HALO-GLASS-DESIGN.md
  */
 @Composable
 fun HaloStateOrb(
     state: HaloRuntimeState,
     modifier: Modifier = Modifier,
-    size: androidx.compose.ui.unit.Dp = 80.dp
+    size: Dp = 80.dp
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "state_orb")
     
@@ -53,17 +55,17 @@ fun HaloStateOrb(
             modifier = Modifier.size(size * 0.5f).background(color, CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            createStateOrbContent(state, size)
+            StateOrbContent(state, size)
         }
     }
 }
 
 @Composable
-private fun createStateOrbContent(state: HaloRuntimeState, size: androidx.compose.ui.unit.Dp) {
+private fun StateOrbContent(state: HaloRuntimeState, size: Dp) {
     when (state) {
         HaloRuntimeState.Idle, HaloRuntimeState.Stopped -> {
             Icon(
-                imageVector = androidx.compose.foundation.icons.Icons.Default.Search,
+                imageVector = Icons.Default.Search,
                 contentDescription = "Idle",
                 tint = HaloGlassColors.TextPrimary,
                 modifier = Modifier.size(size * 0.25f)
@@ -71,7 +73,7 @@ private fun createStateOrbContent(state: HaloRuntimeState, size: androidx.compos
         }
         HaloRuntimeState.Listening, HaloRuntimeState.Wakeword -> {
             Icon(
-                imageVector = androidx.compose.foundation.icons.Icons.Default.Mic,
+                imageVector = Icons.Default.Mic,
                 contentDescription = "Listening",
                 tint = Color.White,
                 modifier = Modifier.size(size * 0.3f)
@@ -79,25 +81,23 @@ private fun createStateOrbContent(state: HaloRuntimeState, size: androidx.compos
         }
         HaloRuntimeState.Capturing -> {
             Icon(
-                imageVector = androidx.compose.foundation.icons.Icons.Default.Mic,
+                imageVector = Icons.Default.Mic,
                 contentDescription = "Capturing",
                 tint = Color.White,
                 modifier = Modifier.size(size * 0.35f)
             )
         }
         else -> {
-            // Show progress indicator for other states
-            val progress = getProgressForState(state)
             val rotation by rememberInfiniteTransition(label = "rotation").animateFloat(
                 initialValue = 0f, targetValue = 360f,
-                animationSpec = infiniteRepeatable(tween(2000, LinearEasing))
+                animationSpec = infiniteRepeatable(tween(2000, easing = LinearEasing))
             )
             
             Canvas(modifier = Modifier.size(size * 0.4f)) {
                 drawArc(
                     color = Color.White.copy(alpha = 0.7f),
                     startAngle = -90f,
-                    sweepAngle = rotation % 360f,
+                    sweepAngle = rotation,
                     useCenter = false,
                     style = Stroke(2.dp.toPx())
                 )
@@ -123,13 +123,6 @@ private fun getStateColor(state: HaloRuntimeState): Color = when (state) {
     HaloRuntimeState.Executing, HaloRuntimeState.Recovering -> HaloGlassColors.Accent.copy(alpha = 0.8f)
 }
 
-private fun getProgressForState(state: HaloRuntimeState): Float = when (state) {
-    HaloRuntimeState.Recognizing, HaloRuntimeState.Planning, 
-    HaloRuntimeState.Executing, HaloRuntimeState.Speaking -> 1f
-    HaloRuntimeState.Recovering -> 0.3f
-    else -> 0.5f
-}
-
 /**
  * Convenience constructors for common states.
  */
@@ -137,12 +130,12 @@ object HaloStateOrb {
     @Composable
     fun Idle(
         modifier: Modifier = Modifier,
-        size: androidx.compose.ui.unit.Dp = 80.dp
+        size: Dp = 80.dp
     ) = HaloStateOrb(state = HaloRuntimeState.Idle, modifier = modifier, size = size)
     
     @Composable
     fun Listening(
         modifier: Modifier = Modifier,
-        size: androidx.compose.ui.unit.Dp = 80.dp
+        size: Dp = 80.dp
     ) = HaloStateOrb(state = HaloRuntimeState.Listening, modifier = modifier, size = size)
 }

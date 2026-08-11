@@ -1,10 +1,8 @@
 package com.halo.app.ui.screens.devices
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -14,12 +12,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
 import com.halo.app.ui.glass.components.HaloGlassCard
 import com.halo.app.ui.glass.components.HaloGlassSection
-import com.halo.app.ui.glass.components.HaloGlassDivider
 import com.halo.app.ui.glass.material.HaloGlassColors
 import com.halo.app.ui.glass.material.HaloTypography
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 @Composable
 fun DevicesScreen(viewModel: DevicesViewModel) {
@@ -181,32 +181,11 @@ data class DevicesUiState(
     val showCapabilities: Boolean = true
 )
 
-class DevicesViewModel {
-    val uiState = mutableStateOf(DevicesUiState())
+class DevicesViewModel : ViewModel() {
+    private val _uiState = MutableStateFlow(DevicesUiState())
+    val uiState: StateFlow<DevicesUiState> = _uiState.asStateFlow()
 }
 
-// Device Capability Registry - Authoritative source for device capabilities
-object DeviceCapabilityRegistry {
-    val knownCapabilities = setOf(
-        "Speech Recognition",
-        "Wake Word Detection",
-        "Camera Preview",
-        "Motion Detection",
-        "BLE Communication",
-        "Audio Playback",
-        "Temperature Sensor",
-        "Accelerometer"
-    )
-    
-    fun getSupportedCapabilities(device: DeviceInfo?): List<String> {
-        return device?.capabilities?.let { caps ->
-            buildList {
-                if (caps.speech == CapabilityStatus.Supported) add("Speech Recognition")
-                if (caps.vision == CapabilityStatus.Supported) add("Camera Preview")
-                // Add more as implemented
-            }
-        } ?: emptyList()
-    }
-    
-    fun isCapabilitySupported(caps: String): Boolean = knownCapabilities.contains(caps)
+enum class CapabilityStatusScreen {
+    Supported, PartiallySupported, Unsupported
 }

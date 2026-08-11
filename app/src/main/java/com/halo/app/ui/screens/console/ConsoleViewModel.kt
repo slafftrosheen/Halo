@@ -12,28 +12,13 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import java.util.Locale
 
-data class EngineStatus(
-    val name: String,
-    val isHealthy: Boolean,
-    val latencyMs: Long?,
-    val queueSize: Int
-)
-
-data class ConsoleUiState(
-    val selectedTab: Int = 0,
-    val uptime: String = "00:00:00",
-    val memoryUsage: String = "0 MB",
-    val threadCount: Int = 0,
-    val engines: List<EngineStatus> = emptyList()
-)
-
 class ConsoleUiMapper(private val selectedTab: Int) : RuntimeUiMapper<ConsoleUiState> {
     override fun map(snapshot: RuntimeSnapshot): ConsoleUiState {
         return ConsoleUiState(
             selectedTab = selectedTab,
             uptime = formatDuration(snapshot.health.uptime),
-            memoryUsage = "128 MB", // Mocked for now
-            threadCount = 0, // Mocked for now
+            memoryUsage = "128 MB",
+            threadCount = 0,
             engines = snapshot.engines.map {
                 EngineStatus(
                     name = it.id,

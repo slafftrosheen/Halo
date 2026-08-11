@@ -2,7 +2,6 @@ package com.halo.app.ui.screens.activity
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -12,10 +11,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
 import com.halo.app.ui.glass.components.HaloGlassCard
 import com.halo.app.ui.glass.components.HaloGlassSection
 import com.halo.app.ui.glass.material.HaloGlassColors
 import com.halo.app.ui.glass.material.HaloTypography
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 @Composable
 fun ActivityScreen(viewModel: ActivityViewModel) {
@@ -134,7 +137,8 @@ data class ActivityUiState(
     val hasMore: Boolean = false
 )
 
-class ActivityViewModel {
-    val uiState = androidx.compose.runtime.mutableStateOf(ActivityUiState())
+class ActivityViewModel : ViewModel() {
+    private val _uiState = MutableStateFlow(ActivityUiState())
+    val uiState: StateFlow<ActivityUiState> = _uiState.asStateFlow()
     fun loadMore() {}
 }

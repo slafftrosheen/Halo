@@ -1,165 +1,136 @@
 package com.halo.app.ui.glass.components
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CornerBasedShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.unit.Dp
-import com.halo.app.ui.glass.components.HaloGlassSurface
-import com.halo.app.ui.glass.material.HaloGlassColors
-import com.halo.app.ui.glass.material.HaloGlassMaterial
-import com.halo.app.ui.glass.material.HaloGlassShapes
-import com.halo.app.ui.glass.material.HaloGlassTokens
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.halo.app.ui.glass.material.HaloGlassMaterial
+import com.halo.app.ui.glass.material.HaloGlassMaterials
+import com.halo.app.ui.glass.material.HaloGlassTokens
+import com.halo.app.ui.glass.material.HaloGlassColors
 
 /**
- * Glass dialog component that replaces legacy dialog implementations.
- * Provides a glass-material surface for modal dialogs with appropriate elevation.
+ * Glass dialog for modal interactions.
+ * Uses elevated glass material with higher blur and shadows.
  */
 @Composable
 fun HaloGlassDialog(
     modifier: Modifier = Modifier,
     title: String? = null,
     onDismissRequest: () -> Unit,
-    content: @Composable () -> Unit,
+    content: @Composable BoxScope.() -> Unit,
     material: HaloGlassMaterial = HaloGlassMaterials.Elevated,
-    shape: androidx.compose.foundation.shape.Shape = HaloGlassShapes.large,
-    properties: DialogProperties = DialogProperties(
-        dismissOnBackPress = true,
-        dismissOnClickOutside = true
-    )
+    shape: Shape = HaloGlassTokens.xlShape,
+    properties: DialogProperties = DialogProperties()
 ) {
-    // Calculate dialog width based on screen size
-    val dialogWidth = LocalConfiguration.current.screenWidthDp.dp * 0.88
-    val maxWidth = 600.dp // Maximum width for large screens
-    
     Dialog(
         onDismissRequest = onDismissRequest,
         properties = properties
     ) {
         HaloGlassSurface(
             modifier = modifier
-                .then(
-                    Modifier
-                        .width(dialogWidth.coerceAtMost(maxWidth))
-                        .padding(16.dp) // Standard dialog padding
-                        .glassElevation(HaloGlassTokens.level4) // 20.dp elevation for dialogs
-                ),
+                .fillMaxWidth(0.9f)
+                .wrapContentHeight(),
             material = material,
             shape = shape
         ) {
-            // Optional title
-            title?.let {
-                Text(
-                    text = it,
-                    modifier = Modifier
-                        .padding(bottom = HaloGlassTokens.md),
-                    fontSize = 20.sp,
-                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                    color = HaloGlassColors.TextPrimary
-                )
-            }
-            
-            // Dialog content
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        start = HaloGlassTokens.lg,
-                        end = HaloGlassTokens.lg,
-                        bottom = HaloGlassTokens.lg
-                    )
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                content()
+                if (title != null) {
+                    Text(
+                        text = title,
+                        color = HaloGlassColors.TextPrimary,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                }
+                
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    content = content
+                )
             }
         }
     }
 }
 
 /**
- * Extended glass dialog with different variants.
+ * Semantic variants for glass dialogs.
  */
 object HaloGlassDialog {
-    /**
-     * Creates a standard glass dialog (elevated material)
-     */
     @Composable
     fun Standard(
         modifier: Modifier = Modifier,
         title: String? = null,
         onDismissRequest: () -> Unit,
-        content: @Composable () -> Unit
+        content: @Composable BoxScope.() -> Unit
     ) {
         HaloGlassDialog(
             modifier = modifier,
             title = title,
             onDismissRequest = onDismissRequest,
-            content = content,
-            material = HaloGlassMaterials.Elevated
+            material = HaloGlassMaterials.Standard,
+            content = content
         )
     }
 
-    /**
-     * Creates a background glass dialog (for full-screen dialogs)
-     */
     @Composable
     fun Background(
         modifier: Modifier = Modifier,
         title: String? = null,
         onDismissRequest: () -> Unit,
-        content: @Composable () -> Unit
+        content: @Composable BoxScope.() -> Unit
     ) {
         HaloGlassDialog(
             modifier = modifier,
             title = title,
             onDismissRequest = onDismissRequest,
-            content = content,
             material = HaloGlassMaterials.Background,
-            shape = HaloGlassShapes.large
+            content = content
         )
     }
 
-    /**
-     * Creates a strong glass dialog (for critical alerts/confirmations)
-     */
     @Composable
     fun Strong(
         modifier: Modifier = Modifier,
         title: String? = null,
         onDismissRequest: () -> Unit,
-        content: @Composable () -> Unit
+        content: @Composable BoxScope.() -> Unit
     ) {
         HaloGlassDialog(
             modifier = modifier,
             title = title,
             onDismissRequest = onDismissRequest,
-            content = content,
-            material = HaloGlassMaterials.Strong
+            material = HaloGlassMaterials.Strong,
+            content = content
         )
     }
 
-    /**
-     * Creates an informative glass dialog (uses accent coloring)
-     */
     @Composable
     fun Accent(
         modifier: Modifier = Modifier,
         title: String? = null,
         onDismissRequest: () -> Unit,
-        content: @Composable () -> Unit
+        content: @Composable BoxScope.() -> Unit
     ) {
         HaloGlassDialog(
             modifier = modifier,
             title = title,
             onDismissRequest = onDismissRequest,
-            content = content,
-            material = HaloGlassMaterials.Standard.copy(
-                containerColor = HaloGlassColors.AccentContainer
-            )
+            material = HaloGlassMaterials.Elevated.copy(
+                containerColor = HaloGlassColors.Accent.copy(alpha = 0.1f)
+            ),
+            content = content
         )
     }
 }

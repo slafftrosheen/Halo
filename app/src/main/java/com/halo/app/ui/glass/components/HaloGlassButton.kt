@@ -1,21 +1,20 @@
 package com.halo.app.ui.glass.components
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.PressIndication
-import androidx.compose.foundation.interaction.Indication
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.remember
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import com.halo.app.ui.glass.components.HaloGlassSurface
 import com.halo.app.ui.glass.material.HaloGlassColors
 import com.halo.app.ui.glass.material.HaloGlassMaterial
+import com.halo.app.ui.glass.material.HaloGlassMaterials
 import com.halo.app.ui.glass.material.HaloGlassTokens
-import com.halo.app.ui.glass.material.HaloGlassShapes
+import androidx.compose.foundation.gestures.detectTapGestures
 
 /**
  * Glass button component that replaces the legacy HaloButton.
@@ -28,13 +27,13 @@ fun HaloGlassButton(
     onClick: () -> Unit,
     enabled: Boolean = true,
     isPrimary: Boolean = true,
-    contentColor: androidx.compose.ui.graphics.Color = androidx.compose.ui.graphics.Color.Unspecified,
+    contentColor: Color = Color.Unspecified,
     material: HaloGlassMaterial = HaloGlassMaterials.Interactive
 ) {
-    val isPressed by remember { mutableStateOf(false) }
+    var isPressed by remember { mutableStateOf(false) }
     
     // Determine colors
-    val buttonContentColor = if (contentColor != androidx.compose.ui.graphics.Color.Unspecified) {
+    val buttonContentColor = if (contentColor != Color.Unspecified) {
         contentColor
     } else {
         HaloGlassColors.TextPrimary
@@ -43,33 +42,33 @@ fun HaloGlassButton(
     val buttonContainerColor = if (!enabled) {
         material.containerColor.copy(alpha = 0.3f)
     } else if (isPressed) {
-        material.containerColor
+        material.containerColor.copy(alpha = 0.9f)
     } else {
         material.containerColor
     }
     
     HaloGlassSurface(
         modifier = modifier
-            .then(
-                Modifier
-                    .clickable(
-                        onClick = { if (enabled) onClick() },
-                        enabled = enabled
-                    )
-                    .then(
-                        Modifier
-                            .pointerInput(Unit) {
-                                detectTapGestures(
-                                    onPress = { isPressed = true },
-                                    onRelease = { isPressed = false }
-                                )
-                            }
-                    )
-            ),
+            .clickable(
+                onClick = { if (enabled) onClick() },
+                enabled = enabled
+            )
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onPress = { 
+                        isPressed = true
+                        try {
+                            awaitRelease()
+                        } finally {
+                            isPressed = false
+                        }
+                    }
+                )
+            },
         material = material.copy(
             containerColor = buttonContainerColor
         ),
-        shape = HaloGlassShapes.pill
+        shape = HaloGlassTokens.pillShape
     ) {
         Box(
             modifier = Modifier
@@ -77,13 +76,13 @@ fun HaloGlassButton(
                     horizontal = HaloGlassTokens.md,
                     vertical = HaloGlassTokens.xs
                 )
-                .align(androidx.compose.ui.Alignment.Center)
+                .align(Alignment.Center)
         ) {
             Text(
                 text = text,
                 color = buttonContentColor,
                 fontSize = 14.sp,
-                fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
+                fontWeight = FontWeight.Medium
             )
         }
     }

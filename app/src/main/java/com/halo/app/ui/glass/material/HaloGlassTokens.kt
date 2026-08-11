@@ -1,14 +1,16 @@
 package com.halo.app.ui.glass.material
 
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.graphicsLayer
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.clickable
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.animation.core.SpringSpec
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.Easing
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 
 object HaloSpacing {
     val xxs = 2.dp
@@ -40,30 +42,55 @@ object HaloGlassElevation {
 }
 
 object HaloGlassMotion {
-    val immediate = 120  // ms
+    val immediate = 120
     val standard = 200
     val emphasized = 300
     
-    val spring = SpringSpec(
+    val spring = SpringSpec<Float>(
         dampingRatio = 0.8f,
         stiffness = 400f
     )
     
-    val easingStandard = tween(durationMillis = standard)
-    val easingImmediate = tween(durationMillis = immediate)
-    val easingEmphasized = tween(durationMillis = emphasized)
+    val easingStandard = tween<Float>(durationMillis = standard)
+    val easingImmediate = tween<Float>(durationMillis = immediate)
+    val easingEmphasized = tween<Float>(durationMillis = emphasized)
+}
+
+object HaloGlassTokens {
+    // Spacing
+    val xxs = HaloSpacing.xxs
+    val xs = HaloSpacing.xs
+    val sm = HaloSpacing.sm
+    val md = HaloSpacing.md
+    val lg = HaloSpacing.lg
+    val xl = HaloSpacing.xl
+    val xxl = HaloSpacing.xxl
+    val xxxl = HaloSpacing.xxxl
+
+    // Shapes
+    val smallShape: Shape = HaloGlassShapes.small
+    val mediumShape: Shape = HaloGlassShapes.medium
+    val largeShape: Shape = HaloGlassShapes.large
+    val xlShape: Shape = HaloGlassShapes.xl
+    val pillShape: Shape = HaloGlassShapes.pill
+    val circleShape: Shape = HaloGlassShapes.circle
+
+    // Elevation
+    val level0 = HaloGlassElevation.level0
+    val level1 = HaloGlassElevation.level1
+    val level2 = HaloGlassElevation.level2
+    val level3 = HaloGlassElevation.level3
+    val level4 = HaloGlassElevation.level4
+    val level5 = HaloGlassElevation.level5
 }
 
 // Extension modifiers for glass effects
-fun Modifier.glassElevation(elevation: Dp = HaloGlassElevation.level1) = 
+fun Modifier.glassElevation(elevation: Dp = HaloGlassTokens.level1) = 
     this.graphicsLayer { 
-        elevationZ = elevation 
-        translationZ = elevation 
+        shadowElevation = elevation.toPx()
     }
 
 fun Modifier.rippleGlass() = 
-    this.then(
-        androidx.compose.foundation.clickable {
-            // Placeholder - actual implementation in components
-        }
-    )
+    this.clickable {
+        // Placeholder
+    }
