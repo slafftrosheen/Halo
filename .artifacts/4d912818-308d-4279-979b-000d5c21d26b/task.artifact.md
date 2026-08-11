@@ -1,0 +1,31 @@
+# Tasks - Fix Compilation Errors in Halo App
+
+- `[ ]` Fix DI & Drivers
+    - `[ ]` Fix `EpisodicMemoryStore` import in `EngineGraph.kt`
+    - `[ ]` Implement `HeyCyanHost.kt` in `:drivers:heycyan`
+- `[ ]` Fix UI Material System
+    - `[ ]` Consolidate tokens in `HaloGlassTokens.kt`
+    - `[ ]` Fix Compose APIs in `HaloGlassMaterial.kt`
+    - `[ ]` Fix `HaloGlassColors.kt` (if needed)
+- `[ ]` Fix UI Components
+    - `[ ]` Fix `HaloGlassSurface.kt` (drawing logic & imports)
+    - `[ ]` Fix `HaloGlassButton.kt` (State & imports)
+    - `[ ]` Fix `HaloGlassCard.kt`
+    - `[ ]` Fix `HaloGlassChip.kt`
+    - `[ ]` Fix `HaloGlassDialog.kt`
+    - `[ ]` Fix `HaloGlassDivider.kt`
+    - `[ ]` Fix `HaloGlassMetric.kt`
+    - `[ ]` Fix `HaloGlassNavigation.kt`
+    - `[ ]` Fix `HaloGlassSection.kt`
+    - `[ ]` Fix `HaloGlassSheet.kt`
+    - `[ ]` Fix `HaloStateOrb.kt`
+- `[ ]` Fix App Screens & ViewModels
+    - `[ ]` Fix `SettingsScreen.kt` & `SettingsViewModel.kt`
+    - `[ ]` Fix `ActivityScreen.kt` & `ActivityViewModel.kt`
+    - `[ ]` Fix `DevicesScreen.kt` & `DevicesViewModel.kt`
+    - `[ ]` Fix `ConsoleScreen.kt` & `ConsoleViewModel.kt`
+    - `[ ]` Fix `HomeScreen.kt` & `HomeViewModel.kt`
+    - `[ ]` Fix `RuntimeInspectorScreen.kt`
+    - `[ ]` Fix `ProtocolLabScreen.kt`
+- `[ ]` Verification
+    - `[ ]` Run `:app:assembleDebug`
