@@ -1,5 +1,6 @@
 package com.halo.host.android
 
+import com.halo.host.android.audio.AndroidAudioSource
 import com.halo.sdk.host.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -9,12 +10,7 @@ import kotlinx.coroutines.flow.emptyFlow
 class AndroidHost : WearableHost {
     override val id: String = "host.android"
 
-    // TODO: implement raw Android AudioRecord provider
-    override val audioSource: AudioSource = object : AudioSource {
-        override val frames: Flow<AudioFrame> = emptyFlow()
-        override suspend fun start() {}
-        override suspend fun stop() {}
-    }
+    override val audioSource: AudioSource = AndroidAudioSource()
 
     override val audioOutput: AudioOutput = object : AudioOutput {
         override suspend fun speak(text: String) {}

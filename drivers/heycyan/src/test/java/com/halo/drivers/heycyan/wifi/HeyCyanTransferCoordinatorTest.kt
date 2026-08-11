@@ -96,7 +96,7 @@ class HeyCyanTransferCoordinatorTest {
     fun transferEntersTransferModeBeforeWifi() = runTest {
         // Set Wi-Fi credentials in device state
         stateStore.apply(
-            com.halo.drivers.heycyan.protocol.HeyCyanEvent.WiFiCredentials("TestSSID", "TestPass")
+            com.halo.drivers.heycyan.protocol.HeyCyanEvent.WiFiHotspotReady("TestSSID", "TestPass")
         )
 
         val result = coordinator.synchronizeManifest()
@@ -111,7 +111,7 @@ class HeyCyanTransferCoordinatorTest {
     @Test
     fun wifiFailureStopsTransfer() = runTest {
         stateStore.apply(
-            com.halo.drivers.heycyan.protocol.HeyCyanEvent.WiFiCredentials("TestSSID", "TestPass")
+            com.halo.drivers.heycyan.protocol.HeyCyanEvent.WiFiHotspotReady("TestSSID", "TestPass")
         )
         wifiConnection.shouldFailConnect = true
 
@@ -125,7 +125,7 @@ class HeyCyanTransferCoordinatorTest {
     @Test
     fun manifestFailureIsReported() = runTest {
         stateStore.apply(
-            com.halo.drivers.heycyan.protocol.HeyCyanEvent.WiFiCredentials("TestSSID", "TestPass")
+            com.halo.drivers.heycyan.protocol.HeyCyanEvent.WiFiHotspotReady("TestSSID", "TestPass")
         )
         fakeApi.manifestToReturn = Result.failure(RuntimeException("HTTP 500 Server Error"))
 

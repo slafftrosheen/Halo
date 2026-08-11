@@ -13,6 +13,7 @@ class HaloRuntime(
 ) {
 
     private var started = false
+    fun isStarted() = started
 
     suspend fun start() {
 

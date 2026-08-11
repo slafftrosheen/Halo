@@ -154,7 +154,7 @@ class HeyCyanCapabilityControllerTest {
     @Test
     fun videoCannotStartWhileAudioIsActive() = runTest {
         // Simulate audio recording already active in device state
-        stateStore.apply(HeyCyanEvent.ModeChanged(mode = HeyCyanMode.AUDIO, rawMode = 0x04))
+        stateStore.apply(HeyCyanEvent.ModeChanged(mode = HeyCyanMode.AUDIO.value))
 
         val result = controller.execute(HeyCyanOperation.StartVideo)
         assertTrue(result.isFailure)
@@ -165,7 +165,7 @@ class HeyCyanCapabilityControllerTest {
     @Test
     fun audioCannotStartWhileVideoIsActive() = runTest {
         // Simulate video recording already active in device state
-        stateStore.apply(HeyCyanEvent.ModeChanged(mode = HeyCyanMode.VIDEO, rawMode = 0x02))
+        stateStore.apply(HeyCyanEvent.ModeChanged(mode = HeyCyanMode.VIDEO.value))
 
         val result = controller.execute(HeyCyanOperation.StartAudioRecording)
         assertTrue(result.isFailure)
@@ -175,14 +175,14 @@ class HeyCyanCapabilityControllerTest {
 
     @Test
     fun videoStartDoesNotReachExecutorWhileAudioActive() = runTest {
-        stateStore.apply(HeyCyanEvent.ModeChanged(mode = HeyCyanMode.AUDIO, rawMode = 0x04))
+        stateStore.apply(HeyCyanEvent.ModeChanged(mode = HeyCyanMode.AUDIO.value))
         controller.execute(HeyCyanOperation.StartVideo)
         assertTrue(executor.executedCommands.isEmpty())
     }
 
     @Test
     fun audioStartDoesNotReachExecutorWhileVideoActive() = runTest {
-        stateStore.apply(HeyCyanEvent.ModeChanged(mode = HeyCyanMode.VIDEO, rawMode = 0x02))
+        stateStore.apply(HeyCyanEvent.ModeChanged(mode = HeyCyanMode.VIDEO.value))
         controller.execute(HeyCyanOperation.StartAudioRecording)
         assertTrue(executor.executedCommands.isEmpty())
     }

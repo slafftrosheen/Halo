@@ -67,7 +67,7 @@ fun HaloGlassSurface(
         if (material.highlightBrush != null) {
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .matchParentSize()
                     .alpha(0.2f)
                     .drawBehind {
                         // Highlight implementation
@@ -78,7 +78,6 @@ fun HaloGlassSurface(
         // Main content area
         Box(
             modifier = Modifier
-                .fillMaxSize()
                 .padding(HaloGlassTokens.lg),
             content = content
         )

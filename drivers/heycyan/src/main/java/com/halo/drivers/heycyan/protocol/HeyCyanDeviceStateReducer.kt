@@ -19,7 +19,7 @@ class HeyCyanDeviceStateReducer {
                     lastEventAtMillis = timestamp,
                 )
 
-            is HeyCyanEvent.VersionInfo ->
+            is HeyCyanEvent.VersionUpdated ->
                 state.copy(
                     version = VersionInfo(
                         hardware = event.hardwareVersion,
@@ -43,12 +43,12 @@ class HeyCyanDeviceStateReducer {
 
             is HeyCyanEvent.ModeChanged ->
                 state.copy(
-                    mode = event.mode,
-                    rawMode = event.rawMode,
+                    mode = HeyCyanMode.fromValue(event.mode),
+                    rawMode = event.mode,
                     lastEventAtMillis = timestamp,
                 )
 
-            is HeyCyanEvent.WiFiCredentials ->
+            is HeyCyanEvent.WiFiHotspotReady ->
                 state.copy(
                     wifiCredentials = WiFiCredentials(
                         ssid = event.ssid,
@@ -59,10 +59,8 @@ class HeyCyanDeviceStateReducer {
 
             is HeyCyanEvent.Ready,
             is HeyCyanEvent.ButtonPressed,
-            is HeyCyanEvent.AIImageData,
-            is HeyCyanEvent.Malformed,
-            is HeyCyanEvent.Unknown,
-            is HeyCyanEvent.UnknownEvent ->
+            is HeyCyanEvent.AiImageData,
+            is HeyCyanEvent.Unknown ->
                 state.copy(
                     lastEventAtMillis = timestamp,
                 )

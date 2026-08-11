@@ -1,14 +1,16 @@
 package com.halo.drivers.heycyan.codec
 
 import com.halo.drivers.heycyan.protocol.HeyCyanCommand
-import com.halo.drivers.heycyan.protocol.HeyCyanMode
 import java.util.UUID
 
+/**
+ * Result of encoding a command into its semantic payload.
+ */
 data class EncodedCommand(
     val commandId: Int,
     val payload: ByteArray,
     val characteristic: UUID? = null,
-    val evidence: List<Any> = emptyList(),
+    val evidence: List<Any> = emptyList()
 ) {
     fun copyPayload(): ByteArray = payload.copyOf()
 
@@ -30,6 +32,10 @@ data class EncodedCommand(
     }
 }
 
+/**
+ * Encodes commands whose semantic operation is established by the
+ * HeyCyan SDK / CyanBridge forensic analysis.
+ */
 class HeyCyanCommandEncoder(
     private val definitions: List<Definition> = emptyList(),
 ) {
@@ -52,92 +58,105 @@ class HeyCyanCommandEncoder(
         )
     }
 
-    fun encode(
-        command: HeyCyanCommand
-    ): Result<EncodedCommand> {
+    fun encodePayload(command: HeyCyanCommand): ByteArray =
+        when (command) {
+            HeyCyanCommand.TakePhoto ->
+                byteArrayOf(MODE_PHOTO)
+
+            HeyCyanCommand.StartVideo ->
+                byteArrayOf(MODE_VIDEO)
+
+            HeyCyanCommand.StopVideo ->
+                byteArrayOf(MODE_VIDEO_STOP)
+
+            HeyCyanCommand.StartAudio ->
+                byteArrayOf(MODE_AUDIO)
+
+            HeyCyanCommand.StopAudio ->
+                byteArrayOf(MODE_AUDIO_STOP)
+
+            HeyCyanCommand.GetBattery,
+            HeyCyanCommand.RequestBattery ->
+                byteArrayOf(COMMAND_GET_BATTERY)
+
+            HeyCyanCommand.GetMediaCounts ->
+                byteArrayOf(COMMAND_GET_MEDIA_COUNTS)
+
+            HeyCyanCommand.GetVersion,
+            HeyCyanCommand.GetDeviceInfo ->
+                byteArrayOf(COMMAND_GET_VERSION)
+
+            HeyCyanCommand.GetMacAddress ->
+                byteArrayOf(COMMAND_GET_MAC)
+
+            HeyCyanCommand.EnableTransfer ->
+                byteArrayOf(MODE_TRANSFER)
+
+            is HeyCyanCommand.SetDateTime ->
+                byteArrayOf(COMMAND_SET_DATETIME)
+
+            is HeyCyanCommand.SetMode ->
+                byteArrayOf(command.mode.value.toByte())
+        }
+
+    fun encode(command: HeyCyanCommand): Result<EncodedCommand> = runCatching {
         if (definitions.isNotEmpty()) {
             val def = definitions.firstOrNull { it.command == command }
-                ?: return Result.failure(
-                    UnsupportedOperationException("No definition for command $command")
-                )
-            return Result.success(
-                EncodedCommand(
-                    commandId = 0x01,
-                    payload = def.payload.copyOf(),
-                    characteristic = def.characteristic,
-                    evidence = def.evidence,
-                )
+                ?: throw UnsupportedOperationException("No definition for command $command")
+            return@runCatching EncodedCommand(
+                commandId = 0x01,
+                payload = def.payload.copyOf(),
+                characteristic = def.characteristic,
+                evidence = def.evidence,
             )
         }
 
-        return when (command) {
-            HeyCyanCommand.GetVersion,
-            HeyCyanCommand.GetDeviceInfo ->
-                Result.success(
-                    EncodedCommand(
-                        commandId = 0x10,
-                        payload = byteArrayOf()
-                    )
-                )
-
-            HeyCyanCommand.GetMacAddress ->
-                Result.success(
-                    EncodedCommand(
-                        commandId = 0x11,
-                        payload = byteArrayOf()
-                    )
-                )
-
-            HeyCyanCommand.GetBattery ->
-                Result.success(
-                    EncodedCommand(
-                        commandId = 0x13,
-                        payload = byteArrayOf()
-                    )
-                )
-            HeyCyanCommand.RequestBattery ->
-                Result.failure(
-                    UnsupportedOperationException("HeyCyan RequestBattery is speculative and not implemented")
-                )
-
-            HeyCyanCommand.GetMediaCounts ->
-                Result.success(
-                    EncodedCommand(
-                        commandId = 0x14,
-                        payload = byteArrayOf()
-                    )
-                )
-
-            is HeyCyanCommand.SetMode ->
-                Result.success(
-                    EncodedCommand(
-                        commandId = 0x01,
-                        payload = byteArrayOf(
-                            command.mode.value.toByte()
-                        )
-                    )
-                )
-
-            is HeyCyanCommand.SetDateTime ->
-                Result.failure(
-                    UnsupportedOperationException(
-                        "HeyCyan SET_DATETIME payload format is not established"
-                    )
-                )
-
-            is HeyCyanCommand.EnableTransfer ->
-                Result.failure(
-                    UnsupportedOperationException(
-                        "HeyCyan EnableTransfer payload format is not established"
-                    )
-                )
-
-            else ->
-                Result.failure(
-                    UnsupportedOperationException(
-                        "HeyCyan command not yet implemented"
-                    )
-                )
+        val payload = encodePayload(command)
+        val commandId = when (command) {
+            is HeyCyanCommand.TakePhoto, 
+            is HeyCyanCommand.StartVideo, 
+            is HeyCyanCommand.StopVideo, 
+            is HeyCyanCommand.StartAudio, 
+            is HeyCyanCommand.StopAudio, 
+            is HeyCyanCommand.EnableTransfer,
+            is HeyCyanCommand.SetMode -> 0x01
+            else -> payload[0].toInt() and 0xFF
         }
+        val actualPayload = when (command) {
+            is HeyCyanCommand.TakePhoto, 
+            is HeyCyanCommand.StartVideo, 
+            is HeyCyanCommand.StopVideo, 
+            is HeyCyanCommand.StartAudio, 
+            is HeyCyanCommand.StopAudio, 
+            is HeyCyanCommand.EnableTransfer,
+            is HeyCyanCommand.SetMode -> payload
+            else -> byteArrayOf()
+        }
+        EncodedCommand(commandId, actualPayload)
+    }
+
+    fun encodeVerifiedPayload(command: HeyCyanCommand): ByteArray =
+        encodePayload(command)
+
+    private companion object {
+        // setDeviceMode values — verified from CyanBridge.
+        const val MODE_PHOTO: Byte = 0x01
+        const val MODE_VIDEO: Byte = 0x02
+        const val MODE_VIDEO_STOP: Byte = 0x03
+        const val MODE_AUDIO: Byte = 0x04
+        const val MODE_AUDIO_STOP: Byte = 0x05
+        const val MODE_AI_PHOTO: Byte = 0x06
+        const val MODE_TRANSFER: Byte = 0x07
+
+        /*
+         * These command identifiers are currently documented as
+         * CyanBridge-derived/inferred and
+         * NOT yet verified as fully decoded wire packets.
+         */
+        const val COMMAND_GET_VERSION: Byte = 0x10
+        const val COMMAND_GET_MAC: Byte = 0x11
+        const val COMMAND_SET_DATETIME: Byte = 0x12
+        const val COMMAND_GET_BATTERY: Byte = 0x13
+        const val COMMAND_GET_MEDIA_COUNTS: Byte = 0x14
     }
 }

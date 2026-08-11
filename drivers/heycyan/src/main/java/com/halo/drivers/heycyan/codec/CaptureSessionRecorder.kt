@@ -41,7 +41,7 @@ class CaptureSessionRecorder(
         metadata: CaptureMetadata = CaptureMetadata()
     ) {
         synchronized(lock) {
-            check(!active) { "A capture session is already active" }
+            if (active) abort()
             startedAt = now()
             endedAt = null
             this.captureId = captureId?.also {

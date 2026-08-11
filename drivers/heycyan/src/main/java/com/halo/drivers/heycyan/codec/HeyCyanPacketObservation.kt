@@ -2,6 +2,12 @@ package com.halo.drivers.heycyan.codec
 
 import java.util.UUID
 
+/**
+ * Observation of a single BLE packet from the HeyCyan glasses.
+ *
+ * This data class preserves raw packet evidence for forensic analysis
+ * and correlation with physical actions.
+ */
 data class HeyCyanPacketObservation(
     val characteristicUuid: UUID,
     val payload: ByteArray,
@@ -19,19 +25,4 @@ data class HeyCyanPacketObservation(
 
     fun hex(): String =
         payload.joinToString(" ") { "%02X".format(it) }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is HeyCyanPacketObservation) return false
-        return characteristicUuid == other.characteristicUuid &&
-                payload.contentEquals(other.payload) &&
-                timestampMillis == other.timestampMillis
-    }
-
-    override fun hashCode(): Int {
-        var result = characteristicUuid.hashCode()
-        result = 31 * result + payload.contentHashCode()
-        result = 31 * result + timestampMillis.hashCode()
-        return result
-    }
 }

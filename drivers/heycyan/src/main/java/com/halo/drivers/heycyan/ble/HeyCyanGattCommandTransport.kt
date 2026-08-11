@@ -1,5 +1,6 @@
 package com.halo.drivers.heycyan.ble
 
+import android.bluetooth.BluetoothGattCharacteristic
 import com.halo.drivers.heycyan.protocol.HeyCyanCommandTransport
 import java.util.UUID
 
@@ -11,14 +12,19 @@ class HeyCyanGattCommandTransport(
     override suspend fun send(
         bytes: ByteArray
     ): Result<Unit> {
-        if (commandCharacteristic == null) {
+        val characteristicUuid = commandCharacteristic ?: gatt.findCharacteristicByProperty(
+            BluetoothGattCharacteristic.PROPERTY_WRITE or
+            BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE
+        )?.uuid
+
+        if (characteristicUuid == null) {
             return Result.failure(
-                IllegalStateException("No command characteristic resolved")
+                IllegalStateException("No command characteristic resolved for HeyCyan")
             )
         }
 
         val success = gatt.write(
-            characteristicUuid = commandCharacteristic,
+            characteristicUuid = characteristicUuid,
             payload = bytes,
         )
 

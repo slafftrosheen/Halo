@@ -10,7 +10,7 @@ fun interface HeyCyanChecksum {
 class HeyCyanPacketFramer(
     private val checksum: HeyCyanChecksum? = null
 ) {
-    fun frame(
+    fun frameFromDefinition(
         definition: HeyCyanCommandDefinition
     ): Result<ByteArray> {
         if (checksum == null) {
@@ -44,18 +44,10 @@ class HeyCyanPacketFramer(
     }
 
     fun frame(command: EncodedCommand): Result<ByteArray> {
-        if (checksum == null) {
-            return Result.failure(
-                ProtocolNotVerifiedException(
-                    operation = "Command 0x${command.commandId.toString(16)}",
-                    detail = "Checksum implementation unresolved"
-                )
-            )
-        }
         return Result.failure(
             ProtocolNotVerifiedException(
                 operation = "Command 0x${command.commandId.toString(16)}",
-                detail = "Checksum implementation unresolved"
+                detail = "HeyCyan outer BLE command framing has not been verified"
             )
         )
     }

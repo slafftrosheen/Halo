@@ -22,7 +22,7 @@ import com.halo.app.ui.glass.material.HaloGlassTokens
 fun HaloGlassSection(
     modifier: Modifier = Modifier,
     title: String,
-    contentModifier: Modifier = Modifier,
+    surfaceModifier: Modifier = Modifier,
     trailing: @Composable () -> Unit = {},
     material: HaloGlassMaterial = HaloGlassMaterials.Standard,
     titleStyle: TextStyle = TextStyle(
@@ -31,7 +31,7 @@ fun HaloGlassSection(
         color = HaloGlassColors.TextSecondary
     ),
     spacing: Dp = HaloGlassTokens.md,
-    content: @Composable () -> Unit
+    content: @Composable BoxScope.() -> Unit
 ) {
     Column(modifier = modifier) {
         Row(
@@ -45,17 +45,11 @@ fun HaloGlassSection(
         }
         
         HaloGlassSurface(
-            modifier = contentModifier.fillMaxWidth(),
+            modifier = surfaceModifier.fillMaxWidth(),
             material = material,
-            shape = HaloGlassTokens.mediumShape
-        ) {
-            Column(
-                modifier = Modifier.padding(spacing),
-                verticalArrangement = Arrangement.spacedBy(spacing)
-            ) {
-                content()
-            }
-        }
+            shape = HaloGlassTokens.mediumShape,
+            content = content
+        )
     }
 }
 
@@ -67,7 +61,7 @@ object HaloGlassSection {
     fun Standard(
         modifier: Modifier = Modifier,
         title: String,
-        content: @Composable () -> Unit
+        content: @Composable BoxScope.() -> Unit
     ) {
         HaloGlassSection(
             modifier = modifier,
@@ -81,7 +75,7 @@ object HaloGlassSection {
     fun Background(
         modifier: Modifier = Modifier,
         title: String,
-        content: @Composable () -> Unit
+        content: @Composable BoxScope.() -> Unit
     ) {
         HaloGlassSection(
             modifier = modifier,
@@ -95,7 +89,7 @@ object HaloGlassSection {
     fun Elevated(
         modifier: Modifier = Modifier,
         title: String,
-        content: @Composable () -> Unit
+        content: @Composable BoxScope.() -> Unit
     ) {
         HaloGlassSection(
             modifier = modifier,
@@ -109,7 +103,7 @@ object HaloGlassSection {
     fun Strong(
         modifier: Modifier = Modifier,
         title: String,
-        content: @Composable () -> Unit
+        content: @Composable BoxScope.() -> Unit
     ) {
         HaloGlassSection(
             modifier = modifier,

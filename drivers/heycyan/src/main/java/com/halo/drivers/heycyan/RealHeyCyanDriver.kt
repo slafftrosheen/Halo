@@ -8,12 +8,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import com.halo.drivers.heycyan.ble.HeyCyanBleScanner
 import com.halo.drivers.heycyan.ble.HeyCyanGattClient
-import com.halo.drivers.heycyan.codec.CaptureSessionRecorder
-import com.halo.drivers.heycyan.codec.CaptureMetadata
-import com.halo.drivers.heycyan.codec.CompositePacketTracer
-import com.halo.drivers.heycyan.codec.JsonCaptureSessionStore
-import com.halo.drivers.heycyan.codec.LoggingPacketTracer
-import com.halo.drivers.heycyan.codec.HeyCyanEventDecoder
+import com.halo.drivers.heycyan.codec.*
 import com.halo.drivers.heycyan.protocol.ButtonType
 import com.halo.drivers.heycyan.protocol.HeyCyanEvent
 import com.halo.libraries.logging.ConsoleLogger
@@ -33,6 +28,11 @@ import kotlinx.coroutines.launch
 import java.io.File
 import com.halo.drivers.heycyan.HeyCyanConnectionMode
 import com.halo.drivers.heycyan.rfcomm.HeyCyanRfcommClient
+import com.halo.drivers.heycyan.capability.*
+import com.halo.drivers.heycyan.ble.HeyCyanGattCommandTransport
+import com.halo.drivers.heycyan.codec.HeyCyanCommandEncoder
+import com.halo.drivers.heycyan.codec.HeyCyanPacketFramer
+import com.halo.drivers.heycyan.capability.toOperationFailure
 
 /**
  * Real HeyCyan transport driver.
@@ -46,6 +46,10 @@ class RealHeyCyanDriver(
     private val context: Context
 ) : Driver {
 
+    init {
+        android.util.Log.i("RealHeyCyanDriver", "Initializing RealHeyCyanDriver")
+    }
+
     private val captureRecorder = CaptureSessionRecorder(
         JsonCaptureSessionStore(File(context.filesDir, "captures/heycyan"))
     )
@@ -56,6 +60,9 @@ class RealHeyCyanDriver(
     val scanner = HeyCyanBleScanner(context)
     private val gattClient = HeyCyanGattClient(context, tracer)
     private val rfcommClient = HeyCyanRfcommClient(context, tracer)
+
+    private val packetAnalyzer = HeyCyanConsolePacketAnalyzer(ConsoleLogger())
+    private val eventRouter = HeyCyanEventRouter(HeyCyanSdkEventDecoder())
 
     private val stateStore = com.halo.drivers.heycyan.protocol.HeyCyanDeviceStateStore()
     val deviceState: StateFlow<com.halo.drivers.heycyan.protocol.HeyCyanDeviceState> = stateStore.state
@@ -70,6 +77,22 @@ class RealHeyCyanDriver(
     override val state: StateFlow<DriverState> = gattClient.state
     private val eventScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var readJob: kotlinx.coroutines.Job? = null
+
+    val capabilityProvider: CapabilityProvider by lazy {
+        HeyCyanCapabilityProvider(
+            HeyCyanCapabilityController(
+                executor = DefaultHeyCyanCommandExecutor(
+                    transport = HeyCyanGattCommandTransport(
+                        gatt = gattClient,
+                        commandCharacteristic = null // Resolved at runtime in transport
+                    ),
+                    encoder = HeyCyanCommandEncoder(),
+                    framer = HeyCyanPacketFramer()
+                ),
+                stateStore = stateStore
+            )
+        )
+    }
 
     override suspend fun initialize() = Unit
 
@@ -88,6 +111,8 @@ class RealHeyCyanDriver(
         advertisement: com.halo.drivers.heycyan.ble.BleAdvertisement? = null
     ) {
         require(selectedAddress.isNotBlank()) { "Selected BLE address must not be blank" }
+        android.util.Log.i("RealHeyCyanDriver", "Connecting to $selectedAddress (mode: $mode)")
+        captureRecorder.abort()
         captureRecorder.start(
             scenario = scenario,
             captureId = captureId,
@@ -111,12 +136,24 @@ class RealHeyCyanDriver(
                 )
             }
             stateStore.updateConnection(com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.CONNECTING)
-            val rfcommChannels = rfcommClient.connect(selectedAddress).getOrElse { emptyList() }
+            
+            android.util.Log.i("RealHeyCyanDriver", "Starting RFCOMM connection...")
+            val rfcommChannels = rfcommClient.connect(selectedAddress).getOrElse { 
+                android.util.Log.w("RealHeyCyanDriver", "RFCOMM connection failed: $it")
+                emptyList() 
+            }
+            
+            android.util.Log.i("RealHeyCyanDriver", "Starting GATT connection...")
             val gattReady = runCatching {
                 gattClient.connect(selectedAddress)
                 gattClient.awaitReady()
                 true
+            }.onFailure {
+                android.util.Log.w("RealHeyCyanDriver", "GATT connection failed", it)
             }.getOrDefault(false)
+
+            android.util.Log.i("RealHeyCyanDriver", "Transport status: RFCOMM=$rfcommChannels, GATT=$gattReady")
+
             if (gattReady) {
                 stateStore.updateConnection(com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.READY)
             }
@@ -133,10 +170,12 @@ class RealHeyCyanDriver(
                 _events.emit(DeviceEvent.Ready(System.currentTimeMillis()))
             }
         } catch (error: CancellationException) {
+            android.util.Log.i("RealHeyCyanDriver", "Connection cancelled")
             stateStore.updateConnection(com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.DISCONNECTED)
             captureRecorder.abort()
             throw error
         } catch (error: Throwable) {
+            android.util.Log.e("RealHeyCyanDriver", "Connection failed", error)
             stateStore.updateConnection(com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.ERROR)
             gattClient.fail(error)
             captureRecorder.abort()
@@ -145,6 +184,7 @@ class RealHeyCyanDriver(
     }
 
     override suspend fun disconnect() {
+        android.util.Log.i("RealHeyCyanDriver", "Disconnecting...")
         rfcommClient.disconnect()
         gattClient.disconnect()
         gattClient.awaitDisconnected()
@@ -155,6 +195,7 @@ class RealHeyCyanDriver(
     }
 
     override suspend fun shutdown() {
+        android.util.Log.i("RealHeyCyanDriver", "Shutting down...")
         disconnect()
         rfcommClient.shutdown()
         eventScope.coroutineContext[kotlinx.coroutines.Job]?.cancel()
@@ -176,48 +217,74 @@ class RealHeyCyanDriver(
         readJob?.cancel()
 
         readJob = eventScope.launch {
-            val decoder = HeyCyanEventDecoder()
+            android.util.Log.i("RealHeyCyanDriver", "Starting event reader loop")
             
             gattClient.incomingBytes.collect { (characteristicUuid, payload) ->
-                val timestamp = System.currentTimeMillis()
-                val decodedEvent = decoder.decode(
-                    payload = payload,
+
+                packetAnalyzer.onRx(
                     characteristicUuid = characteristicUuid,
-                    timestamp = timestamp,
+                    payload = payload
                 )
 
-                stateStore.apply(
-                    event = decodedEvent.event,
-                    timestamp = timestamp,
+                val observation = HeyCyanPacketObservation(
+                    characteristicUuid = characteristicUuid,
+                    payload = payload.copyOf()
                 )
 
-                when (val event = decodedEvent.event) {
-                    is HeyCyanEvent.BatteryUpdated -> {
-                        _events.emit(
-                            DeviceEvent.BatteryLevel(
-                                timestamp = timestamp,
-                                level = event.level,
-                            )
-                        )
-                        emitDeviceEvent(event)
-                    }
+                val event = eventRouter.decode(
+                    characteristicUuid = observation.characteristicUuid,
+                    payload = observation.payload
+                )
 
-                    is HeyCyanEvent.ButtonPressed -> {
-                        _events.emit(
-                            DeviceEvent.ButtonClick(
-                                timestamp = timestamp,
-                                buttonId = event.type.toButtonId(),
-                            )
-                        )
-                        emitDeviceEvent(event)
+                when (event) {
+                    is HeyCyanEvent.Unknown -> {
+                        // Preserve evidence; don't discard it.
+                        android.util.Log.d("RealHeyCyanDriver", "Unknown event on $characteristicUuid: ${observation.hex()}")
                     }
 
                     else -> {
-                        // Keep HeyCyan-specific events available through
-                        // the protocol event stream.
-                        emitDeviceEvent(event)
+                        handleDecodedEvent(event)
                     }
                 }
+            }
+        }
+    }
+
+    private suspend fun handleDecodedEvent(
+        event: HeyCyanEvent
+    ) {
+        val timestamp = System.currentTimeMillis()
+        
+        stateStore.apply(
+            event = event,
+            timestamp = timestamp,
+        )
+
+        when (event) {
+            is HeyCyanEvent.BatteryUpdated -> {
+                _events.emit(
+                    DeviceEvent.BatteryLevel(
+                        timestamp = timestamp,
+                        level = event.level,
+                    )
+                )
+                emitDeviceEvent(event)
+            }
+
+            is HeyCyanEvent.ButtonPressed -> {
+                _events.emit(
+                    DeviceEvent.ButtonClick(
+                        timestamp = timestamp,
+                        buttonId = event.type.toButtonId(),
+                    )
+                )
+                emitDeviceEvent(event)
+            }
+
+            else -> {
+                // Keep HeyCyan-specific events available through
+                // the protocol event stream.
+                emitDeviceEvent(event)
             }
         }
     }
@@ -229,6 +296,18 @@ class RealHeyCyanDriver(
         ButtonType.VOICE_BUTTON -> 3
         ButtonType.CAMERA_BUTTON -> 4
         ButtonType.UNKNOWN -> -1
+    }
+
+    private fun isUsableDiscoveryTransport(rfcommChannels: List<String>, gattReady: Boolean): Boolean {
+        return rfcommChannels.isNotEmpty() || gattReady
+    }
+
+    private fun shouldReadBluetoothAdapterName(sdkInt: Int, permissionChecker: (String) -> Int): Boolean {
+        return if (sdkInt >= Build.VERSION_CODES.S) {
+            permissionChecker(android.Manifest.permission.BLUETOOTH_CONNECT) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        } else {
+            true
+        }
     }
 
     @SuppressLint("MissingPermission")

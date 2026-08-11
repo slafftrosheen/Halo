@@ -10,6 +10,8 @@ import com.halo.app.ui.screens.console.ConsoleViewModel
 import com.halo.app.ui.screens.settings.SettingsViewModel
 import com.halo.app.ui.screens.activity.ActivityViewModel
 import com.halo.app.ui.screens.devices.DevicesViewModel
+import com.halo.app.ui.screens.protocol.ProtocolLabViewModel
+import com.halo.app.ui.screens.inspector.RuntimeInspectorViewModel
 
 /**
  * Thin façade that wires sub-graphs together. This is the sole composition root.
@@ -47,9 +49,13 @@ object ManualDependencyGraph {
     val modelDownloadManager get() = providerGraph.modelDownloadManager
     val providers get() = providerGraph.providers
 
-    val wearableHost get() = hostGraph.wearableHost
+    val wearableHost get() = run {
+        android.util.Log.i("ManualDependencyGraph", "Accessing wearableHost")
+        hostGraph.wearableHost
+    }
     val audioPipeline get() = hostGraph.audioPipeline
     val audioPerceptionEngine get() = hostGraph.audioPerceptionEngine
+    val heyCyanDriver get() = HostFactory.getHeyCyanDriver(applicationContext)
 
     val goalManager get() = engineGraph.goalManager
     val capabilityRegistry get() = engineGraph.capabilityRegistry
@@ -96,6 +102,8 @@ object ManualDependencyGraph {
     val settingsViewModel by lazy { SettingsViewModel() }
     val activityViewModel by lazy { ActivityViewModel() }
     val devicesViewModel by lazy { DevicesViewModel() }
+    val protocolLabViewModel by lazy { ProtocolLabViewModel(heyCyanDriver) }
+    val runtimeInspectorViewModel by lazy { RuntimeInspectorViewModel() }
 
     // ─── Kernel ─────────────────────────────────────────────────
 

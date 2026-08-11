@@ -84,17 +84,11 @@ class HeyCyanCommandEncoderTest {
     }
 
     @Test
-    fun setDateTimeIsUnsupported() {
+    fun setDateTimeIsSupported() {
         val result = encoder.encode(HeyCyanCommand.SetDateTime(0L))
 
-        assertTrue(result.isFailure)
-        assertTrue(result.exceptionOrNull() is UnsupportedOperationException)
-        assertTrue(
-            result.exceptionOrNull()!!.message!!.contains(
-                "not established",
-                ignoreCase = true
-            )
-        )
+        assertTrue(result.isSuccess)
+        assertEquals(0x12.toByte(), result.getOrThrow().commandId.toByte())
     }
 
     @Test

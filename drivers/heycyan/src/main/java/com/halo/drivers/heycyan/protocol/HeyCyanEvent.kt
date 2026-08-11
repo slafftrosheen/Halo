@@ -28,88 +28,59 @@ sealed interface HeyCyanEvent {
     data object Ready : HeyCyanEvent
 
     data class ButtonPressed(
-        val type: ButtonType,
+        val type: ButtonType
     ) : HeyCyanEvent
 
     data class BatteryUpdated(
         val level: Int,
-        val isCharging: Boolean,
+        val isCharging: Boolean
     ) : HeyCyanEvent
 
     data class MediaCountsUpdated(
         val photoCount: Int,
         val videoCount: Int,
         val audioCount: Int,
-        val mediaType: Int,
+        val mediaType: Int
     ) : HeyCyanEvent
 
-    data class VersionInfo(
+    data class VersionUpdated(
         val hardwareVersion: String,
         val firmwareVersion: String,
         val wifiHardwareVersion: String,
-        val wifiFirmwareVersion: String,
+        val wifiFirmwareVersion: String
     ) : HeyCyanEvent
 
     data class ModeChanged(
-        val mode: HeyCyanMode?,
-        val rawMode: Int,
+        val mode: Int
     ) : HeyCyanEvent
 
-    data class WiFiCredentials(
+    data class WiFiHotspotReady(
         val ssid: String,
-        val password: String,
+        val password: String
     ) : HeyCyanEvent
 
-    data class AIImageData(
-        val payload: ByteArray,
+    class AiImageData(
+        val bytes: ByteArray
     ) : HeyCyanEvent {
         override fun equals(other: Any?): Boolean =
-            other is AIImageData && payload.contentEquals(other.payload)
-
-        override fun hashCode(): Int = payload.contentHashCode()
-    }
-
-    data class Malformed(
-        val payload: ByteArray,
-        val reason: String,
-    ) : HeyCyanEvent {
-        override fun equals(other: Any?): Boolean =
-            other is Malformed &&
-                payload.contentEquals(other.payload) &&
-                reason == other.reason
+            other is AiImageData && bytes.contentEquals(other.bytes)
 
         override fun hashCode(): Int =
-            31 * payload.contentHashCode() + reason.hashCode()
+            bytes.contentHashCode()
     }
 
     data class Unknown(
-        val eventType: Int,
-        val payload: ByteArray,
+        val characteristicUuid: String?,
+        val payload: ByteArray
     ) : HeyCyanEvent {
         override fun equals(other: Any?): Boolean =
             other is Unknown &&
-                eventType == other.eventType &&
+                characteristicUuid == other.characteristicUuid &&
                 payload.contentEquals(other.payload)
 
-        override fun hashCode(): Int =
-            31 * eventType + payload.contentHashCode()
-    }
-
-    data class UnknownEvent(
-        val payload: ByteArray,
-        val characteristic: java.util.UUID? = null,
-        val timestamp: Long = 0L,
-    ) : HeyCyanEvent {
-        override fun equals(other: Any?): Boolean =
-            other is UnknownEvent &&
-                payload.contentEquals(other.payload) &&
-                characteristic == other.characteristic &&
-                timestamp == other.timestamp
-
         override fun hashCode(): Int {
-            var result = payload.contentHashCode()
-            result = 31 * result + (characteristic?.hashCode() ?: 0)
-            result = 31 * result + timestamp.hashCode()
+            var result = characteristicUuid?.hashCode() ?: 0
+            result = 31 * result + payload.contentHashCode()
             return result
         }
     }

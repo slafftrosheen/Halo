@@ -11,7 +11,7 @@ class HostGraph(
 ) {
 
     val wearableHost: com.halo.sdk.host.WearableHost by lazy {
-        HostFactory.create(HostType.SIMULATOR, context)
+        HostFactory.create(HostType.HEYCYAN, context)
     }
 
     val audioPipeline by lazy {

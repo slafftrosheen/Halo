@@ -66,6 +66,7 @@ class HeyCyanGattClient(
 
     private val gattCallback = object : BluetoothGattCallback() {
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
+            android.util.Log.i("HeyCyanGattClient", "onConnectionStateChange: status=$status, newState=$newState")
             tracer.onConnectionStateChanged(status, newState)
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 failGatt(gatt, RuntimeException("GATT connection error: $status"))
@@ -103,6 +104,7 @@ class HeyCyanGattClient(
         }
 
         override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
+            android.util.Log.i("HeyCyanGattClient", "onServicesDiscovered: status=$status")
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 failGatt(gatt, RuntimeException("Service discovery failed: $status"))
                 return
@@ -195,10 +197,14 @@ class HeyCyanGattClient(
     }
 
     fun connect(macAddress: String) {
-        if (_state.value != DriverState.Disconnected && _state.value !is DriverState.Error) {
+        if (_state.value != DriverState.Disconnected && 
+            _state.value != DriverState.Scanning && 
+            _state.value !is DriverState.Error) {
+            android.util.Log.d("HeyCyanGattClient", "Skipping connect, already in state: ${_state.value}")
             return
         }
 
+        android.util.Log.i("HeyCyanGattClient", "Connecting to $macAddress")
         _state.value = DriverState.Connecting
         val device: BluetoothDevice = try {
             adapter.getRemoteDevice(macAddress)

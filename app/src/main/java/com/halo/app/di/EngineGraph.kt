@@ -17,6 +17,7 @@ import com.halo.host.android.capability.AndroidApplicationCapability
 import com.halo.host.android.capability.AndroidDeviceCapability
 import com.halo.host.android.capability.AndroidMediaCapability
 import com.halo.host.android.capability.AndroidNavigationCapability
+import com.halo.app.capability.HeyCyanCapabilityBridge
 import com.halo.runtime.speech.SpeechPerceptionBridge
 import com.halo.runtime.speech.SpeechSessionManager
 
@@ -43,6 +44,7 @@ class EngineGraph(
                     providerGraph.providers.speechSynthesis
                 )
             )
+            register(HeyCyanCapabilityBridge(ManualDependencyGraph.heyCyanDriver.capabilityProvider))
         }
     }
 

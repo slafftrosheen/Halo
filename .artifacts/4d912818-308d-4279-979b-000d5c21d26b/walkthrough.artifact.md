@@ -1,38 +1,21 @@
-# Walkthrough - Fixed Compilation Errors in Halo App
+# Walkthrough - Fixed List Visibility & Navigation Insets
 
-I have resolved all compilation errors in the `:app` module, addressing issues across dependency injection, drivers, and the Glass UI material system.
+I have fixed the issue where the discovered devices list was missing and ensured the app's navigation bar is no longer overlapped by the system navbar.
 
 ## Changes
 
-### DI & Drivers
-- **EngineGraph.kt**: Fixed `EpisodicMemoryStore` import.
-- **HeyCyanHost.kt**: Implemented a basic `HeyCyanHost` that satisfies the `WearableHost` interface, wrapping `RealHeyCyanDriver`.
-- **ManualDependencyGraph.kt**: Added missing `activityViewModel` and `devicesViewModel` providers.
+### UI Fixes
+- **HaloGlassSurface.kt**: Removed the restrictive `fillMaxSize()` from the default content area. This prevents the "Device Status" card from expanding to fill the entire screen and pushing the list section off-screen.
+- **ProtocolLabScreen.kt**:
+    - Verified that the "Discovered Devices" section now has a proper `weight(1f)` and `fillMaxSize()` for its internal `LazyColumn`.
+    - Both "Device Status" and "Discovered Devices" sections now share the screen space correctly.
+- **HaloGlassNavigation.kt**: Added `navigationBarsPadding()` to the navigation bar. This ensures that the navigation icons are always visible and positioned correctly above the Android system buttons.
 
-### Glass UI Material System
-- **HaloGlassTokens.kt**: Consolidated spacing, shapes, and elevation tokens into a single `HaloGlassTokens` object. Fixed `Modifier.glassElevation` implementation.
-- **HaloGlassMaterial.kt**: Fixed Compose API usage (e.g., using `SolidColor` for borders) and cleaned up imports.
-- **HaloTypography.kt**: Added missing `bodySmall` and `labelSmall` styles.
-
-### UI Components
-- **HaloGlassSurface.kt**: Fixed drawing logic, shadows, and cleaned up ambiguous imports.
-- **HaloGlassButton.kt**: Corrected `MutableState` usage and fixed gesture detection logic.
-- **HaloGlassNavigation.kt**: Updated to use `NavController.currentBackStackEntryAsState` correctly and simplified the API.
-- **Other Components**: Cleaned up imports and `Shape` references in `Card`, `Chip`, `Dialog`, `Divider`, `Metric`, `Section`, and `Sheet`.
-- **HaloStateOrb.kt**: Fixed animation specs, icon references, and drawing scope calls.
-
-### App Screens & ViewModels
-- **SettingsScreen.kt & SettingsViewModel.kt**: Updated the ViewModel to match the expected UI state and fixed icon references in the screen.
-- **Activity, Devices, Console, Home, Inspector, Protocol Lab**:
-    - Moved ViewModels to use `StateFlow` instead of `MutableState`.
-    - Fixed `collectAsState` usage in Composable functions.
-    - Resolved redeclarations of UI state data classes by consolidating them.
-- **AppNavigation.kt**: Updated to match the new `HaloGlassNavigation` API and corrected ViewModel injection.
+### Navigation Cleanup
+- **AppNavigation.kt**: Removed the global `navigationBarsPadding()` from the `Scaffold` root to allow the app background to flow edge-to-edge while the specific UI elements (like the navbar) handle their own insets.
 
 ## Verification Results
 
-### Automated Tests
-- Ran `:app:compileDebugKotlin` and confirmed the build finished successfully.
-
 ### Manual Verification
-- Verified that all components are correctly referencing the consolidated tokens and materials.
+1.  **Device List**: The "DISCOVERED DEVICES" header and the scrollable list of devices should now be visible below the "DEVICE STATUS" section.
+2.  **Navigation Bar**: The app's bottom navigation icons should be fully visible and not covered by the system "Home/Back" buttons.

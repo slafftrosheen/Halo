@@ -43,6 +43,7 @@ fun HaloGlassNavigation(
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .navigationBarsPadding()
             .height(64.dp)
             .background(HaloGlassColors.BackgroundSecondary.copy(alpha = 0.8f))
             .padding(horizontal = HaloGlassTokens.md),

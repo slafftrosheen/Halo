@@ -176,9 +176,38 @@ A packet belongs here only after its framing, direction, characteristic, trigger
 
 Keep unknown traffic visible. Do not discard it merely because it cannot yet be decoded.
 
-| Observation ID | Direction | Characteristic UUID | Length | Trigger/context | Current hypothesis | Next test | Capture reference |
-| --- | --- | --- | ---: | --- | --- | --- | --- |
-| — | — | — | — | — | None | Capture a controlled reproduction | — |
+|| Observation ID | Direction | Characteristic UUID | Length | Trigger/context | Current hypothesis | Next test | Capture reference |
+|| --- | --- | --- | --- | --- | --- | --- | --- |
+|| 20260811-001 | RX | de5bf729-d711-4e47-af26-65e3012a5dc7 | Variable | Button presses | Button-related stream | Trace SDK decoder | Physical log (Today) |
+
+### Physical Observation: de5bf729 stream
+
+- **Characteristic:** `de5bf729-d711-4e47-af26-65e3012a5dc7` (NOTIFY)
+- **Status:** **OBSERVED/CORRELATED**
+- **Details:** High-rate traffic observed during physical button interaction.
+- **Sample Packet:** `BC 59 28 00 52 48 4B 41 1E 0B E4 C1 22 23 61 F0 ...`
+- **Correlation:** User-controlled test confirmed traffic burst on button press. Semantics remain unverified until SDK tracing or binary analysis is complete.
+- **Capture reference:** Today's physical capture session, button interaction test (5:47 PM)
+
+### Characteristic Discovery Results (Physical Device)
+
+Based on actual device discovery, the following services and characteristics have been observed:
+
+|| Service UUID | Characteristic UUID | Properties | Notes |
+|| --- | --- | --- | --- |
+| (Primary) | de5bf728-d711-4e47-af26-65e3012a5dc7 | WRITE, WRITE_NO_RESPONSE | Command channel |
+| (Primary) | de5bf729-d711-4e47-af26-65e3012a5dc7 | NOTIFY | Notification / event stream |
+| 0000ae30-0000-1000-8000-00805f9b34fb | ae01 | WRITE_NO_RESPONSE | Secondary command |
+| 0000ae30-0000-1000-8000-00805f9b34fb | ae02 | NOTIFY | Secondary notification |
+| 0000ae30-0000-1000-8000-00805f9b34fb | ae03 | WRITE_NO_RESPONSE | |
+| 0000ae30-0000-1000-8000-00805f9b34fb | ae04 | NOTIFY | |
+| 0000ae30-0000-1000-8000-00805f9b34fb | ae05 | INDICATE | |
+| 0000ae30-0000-1000-8000-00805f9b34fb | ae10 | READ/WRITE | |
+| 00003802-0000-1000-8000-00805f9b34fb | 4a02 | READ/WRITE/NOTIFY | |
+| 6e40fff0-b5a3-f393-e0a9-e50e24dcca9e | 6e400002 | WRITE | Nordic UART TX |
+| 6e40fff0-b5a3-f393-e0a9-e50e24dcca9e | 6e400003 | NOTIFY | Nordic UART RX |
+| 0000fee1-0000-1000-8000-00805f9b34fb | fee3 | READ/WRITE/NOTIFY | |
+
 
 ## Capture References
 

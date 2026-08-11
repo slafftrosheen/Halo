@@ -2,7 +2,6 @@ package com.halo.drivers.heycyan.codec
 
 import com.halo.drivers.heycyan.protocol.DecodedEvent
 import com.halo.drivers.heycyan.protocol.HeyCyanEvent
-import com.halo.drivers.heycyan.protocol.HeyCyanMode
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.UUID
@@ -25,26 +24,18 @@ class HeyCyanEventDecoder(
     ): DecodedEvent {
         val event = if (payload.isEmpty()) {
             HeyCyanEvent.Unknown(
-                eventType = -1,
+                characteristicUuid = characteristicUuid?.toString(),
                 payload = byteArrayOf(),
             )
         } else {
             val matchedDef = definitions.firstOrNull { it.matches(payload, characteristicUuid) }
             if (matchedDef != null) {
                 matchedDef.decode(payload, characteristicUuid, timestamp)
-            } else if (definitions.isNotEmpty()) {
-                // Definitions exist but none match; treat as unknown raw event.
-                HeyCyanEvent.UnknownEvent(
-                    payload = payload.copyOf(),
-                    characteristic = characteristicUuid,
-                    timestamp = timestamp,
-                )
             } else {
-                // No definitions provided; fall back to known decoding.
-                runCatching { decodeKnown(payload) }.getOrElse {
-                    HeyCyanEvent.Malformed(
-                        payload = payload.copyOf(),
-                        reason = it.message ?: "Unknown decoding failure",
+                runCatching { decodeKnown(payload, characteristicUuid) }.getOrElse {
+                    HeyCyanEvent.Unknown(
+                        characteristicUuid = characteristicUuid?.toString(),
+                        payload = payload.copyOf()
                     )
                 }
             }
@@ -58,7 +49,7 @@ class HeyCyanEventDecoder(
         )
     }
 
-    private fun decodeKnown(payload: ByteArray): HeyCyanEvent {
+    private fun decodeKnown(payload: ByteArray, characteristicUuid: UUID?): HeyCyanEvent {
         val type = payload[0].toInt() and 0xFF
 
         return when (type) {
@@ -70,58 +61,34 @@ class HeyCyanEventDecoder(
             0x06 -> decodeAiImage(payload)
             else -> {
                 HeyCyanEvent.Unknown(
-                    eventType = type,
-                    payload = if (payload.size > 1) payload.copyOfRange(1, payload.size) else byteArrayOf(),
+                    characteristicUuid = characteristicUuid?.toString(),
+                    payload = payload.copyOf(),
                 )
             }
         }
     }
 
     private fun decodeBattery(payload: ByteArray): HeyCyanEvent {
-        require(payload.size >= 3) {
-            "Battery event requires 3 bytes, got ${payload.size}"
-        }
-
+        require(payload.size >= 3)
         val level = payload[1].toInt() and 0xFF
         val charging = payload[2].toInt() != 0
-
-        require(level in 0..100) {
-            "Invalid HeyCyan battery level: $level"
-        }
-
-        return HeyCyanEvent.BatteryUpdated(
-            level = level,
-            isCharging = charging,
-        )
+        return HeyCyanEvent.BatteryUpdated(level = level, isCharging = charging)
     }
 
     private fun decodeMediaCounts(payload: ByteArray): HeyCyanEvent {
-        require(payload.size >= 8) {
-            "Media count event requires 8 bytes, got ${payload.size}"
-        }
-
-        val buffer = ByteBuffer
-            .wrap(payload, 1, 6)
-            .order(ByteOrder.LITTLE_ENDIAN)
-
-        val photos = buffer.short.toInt() and 0xFFFF
-        val videos = buffer.short.toInt() and 0xFFFF
-        val audio = buffer.short.toInt() and 0xFFFF
-
-        val mediaType = payload[7].toInt() and 0xFF
-
+        require(payload.size >= 8)
+        val buffer = ByteBuffer.wrap(payload, 1, 6).order(ByteOrder.LITTLE_ENDIAN)
         return HeyCyanEvent.MediaCountsUpdated(
-            photoCount = photos,
-            videoCount = videos,
-            audioCount = audio,
-            mediaType = mediaType,
+            photoCount = buffer.short.toInt() and 0xFFFF,
+            videoCount = buffer.short.toInt() and 0xFFFF,
+            audioCount = buffer.short.toInt() and 0xFFFF,
+            mediaType = payload[7].toInt() and 0xFF,
         )
     }
 
     private fun decodeVersion(payload: ByteArray): HeyCyanEvent {
         val reader = LengthPrefixedReader(payload, 1)
-
-        return HeyCyanEvent.VersionInfo(
+        return HeyCyanEvent.VersionUpdated(
             hardwareVersion = reader.readUtf8(),
             firmwareVersion = reader.readUtf8(),
             wifiHardwareVersion = reader.readUtf8(),
@@ -130,31 +97,21 @@ class HeyCyanEventDecoder(
     }
 
     private fun decodeMode(payload: ByteArray): HeyCyanEvent {
-        require(payload.size >= 2) {
-            "Mode event requires 2 bytes"
-        }
-
+        require(payload.size >= 2)
         val raw = payload[1].toInt() and 0xFF
-
-        return HeyCyanEvent.ModeChanged(
-            mode = HeyCyanMode.fromValue(raw),
-            rawMode = raw,
-        )
+        return HeyCyanEvent.ModeChanged(mode = raw)
     }
 
     private fun decodeWifiCredentials(payload: ByteArray): HeyCyanEvent {
         val reader = LengthPrefixedReader(payload, 1)
-
-        return HeyCyanEvent.WiFiCredentials(
+        return HeyCyanEvent.WiFiHotspotReady(
             ssid = reader.readUtf8(),
             password = reader.readUtf8(),
         )
     }
 
     private fun decodeAiImage(payload: ByteArray): HeyCyanEvent {
-        return HeyCyanEvent.AIImageData(
-            payload = payload.copyOfRange(1, payload.size),
-        )
+        return HeyCyanEvent.AiImageData(payload.copyOfRange(1, payload.size))
     }
 
     private class LengthPrefixedReader(
@@ -164,23 +121,12 @@ class HeyCyanEventDecoder(
         private var index = startIndex
 
         fun readUtf8(): String {
-            require(index < bytes.size) {
-                "Missing length prefix at index $index"
-            }
-
+            if (index >= bytes.size) return ""
             val length = bytes[index].toInt() and 0xFF
             index++
-
-            require(index + length <= bytes.size) {
-                "Length-prefixed string exceeds payload: index=$index length=$length size=${bytes.size}"
-            }
-
-            val result = bytes
-                .copyOfRange(index, index + length)
-                .toString(Charsets.UTF_8)
-
+            if (index + length > bytes.size) return ""
+            val result = String(bytes, index, length, Charsets.UTF_8)
             index += length
-
             return result
         }
     }

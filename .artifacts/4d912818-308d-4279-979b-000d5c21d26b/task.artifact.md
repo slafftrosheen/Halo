@@ -1,31 +1,9 @@
-# Tasks - Fix Compilation Errors in Halo App
+# Tasks - Fix Protocol Lab UI & Connection Status
 
-- `[x]` Fix DI & Drivers
-    - `[x]` Fix `EpisodicMemoryStore` import in `EngineGraph.kt`
-    - `[x]` Implement `HeyCyanHost.kt` in `:drivers:heycyan`
-- `[x]` Fix UI Material System
-    - `[x]` Consolidate tokens in `HaloGlassTokens.kt`
-    - `[x]` Fix Compose APIs in `HaloGlassMaterial.kt`
-    - `[ ]` Fix `HaloGlassColors.kt` (if needed)
-- `[x]` Fix UI Components
-    - `[x]` Fix `HaloGlassSurface.kt` (drawing logic & imports)
-    - `[x]` Fix `HaloGlassButton.kt` (State & imports)
-    - `[x]` Fix `HaloGlassCard.kt`
-    - `[x]` Fix `HaloGlassChip.kt`
-    - `[x]` Fix `HaloGlassDialog.kt`
-    - `[x]` Fix `HaloGlassDivider.kt`
-    - `[x]` Fix `HaloGlassMetric.kt`
-    - `[x]` Fix `HaloGlassNavigation.kt`
-    - `[x]` Fix `HaloGlassSection.kt`
-    - `[x]` Fix `HaloGlassSheet.kt`
-    - `[x]` Fix `HaloStateOrb.kt`
-- `[x]` Fix App Screens & ViewModels
-    - `[x]` Fix `SettingsScreen.kt` & `SettingsViewModel.kt`
-    - `[x]` Fix `ActivityScreen.kt` & `ActivityViewModel.kt`
-    - `[x]` Fix `DevicesScreen.kt` & `DevicesViewModel.kt`
-    - `[x]` Fix `ConsoleScreen.kt` & `ConsoleViewModel.kt`
-    - `[x]` Fix `HomeScreen.kt` & `HomeViewModel.kt`
-    - `[x]` Fix `RuntimeInspectorScreen.kt`
-    - `[x]` Fix `ProtocolLabScreen.kt`
+- `[x]` App UI & UX
+    - `[x]` Refactor `HaloGlassSection.kt` for layout flexibility
+    - `[x]` Implement `LazyColumn` in `ProtocolLabScreen.kt`
+    - `[x]` Update `ProtocolLabViewModel` to observe connection status
 - `[x]` Verification
-    - `[x]` Run `:app:assembleDebug`
+    - `[x]` Verify list rendering with many devices
+    - `[x]` Verify Active device status updates

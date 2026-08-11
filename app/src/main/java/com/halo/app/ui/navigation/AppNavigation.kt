@@ -19,6 +19,9 @@ import com.halo.app.ui.screens.home.HomeScreen
 import com.halo.app.ui.screens.activity.ActivityScreen
 import com.halo.app.ui.screens.devices.DevicesScreen
 import com.halo.app.ui.screens.settings.SettingsScreen
+import com.halo.app.ui.screens.protocol.ProtocolLabScreen
+import com.halo.app.ui.screens.inspector.RuntimeInspectorScreen
+import com.halo.app.ui.screens.console.ConsoleScreen
 
 /**
  * Navigation configuration for HALO Glass UI.
@@ -28,10 +31,11 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     data object Activity : Screen("activity", "Activity", Icons.Default.Timer)
     data object Devices : Screen("devices", "Devices", Icons.Default.Devices)
     data object Settings : Screen("settings", "Settings", Icons.Default.Settings)
+    data object ProtocolLab : Screen("protocol_lab", "Protocol", Icons.Default.Settings) // Temporary
 }
 
 // Primary navigation items (bottom bar)
-val bottomNavItems = listOf(Screen.Home, Screen.Activity, Screen.Devices, Screen.Settings)
+val bottomNavItems = listOf(Screen.Home, Screen.Activity, Screen.Devices, Screen.Settings, Screen.ProtocolLab)
 
 @Composable
 fun AppNavigation() {
@@ -63,6 +67,15 @@ fun AppNavigation() {
             }
             composable(Screen.Settings.route) {
                 SettingsScreen(viewModel = ManualDependencyGraph.settingsViewModel)
+            }
+            composable(Screen.ProtocolLab.route) {
+                ProtocolLabScreen(viewModel = ManualDependencyGraph.protocolLabViewModel)
+            }
+            composable("console") {
+                ConsoleScreen(viewModel = ManualDependencyGraph.consoleViewModel)
+            }
+            composable("inspector") {
+                RuntimeInspectorScreen(viewModel = ManualDependencyGraph.runtimeInspectorViewModel)
             }
         }
     }

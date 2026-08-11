@@ -6,6 +6,7 @@ import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -36,6 +37,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
         ManualDependencyGraph.init(this)
@@ -82,8 +84,19 @@ class MainActivity : ComponentActivity() {
 
     private fun startAlphaLoop() {
         lifecycleScope.launch {
-            ManualDependencyGraph.wearableHost.connect()
-            runtime.start()
+            val host = ManualDependencyGraph.wearableHost
+            host.connectivity.collect { state ->
+                if (state is com.halo.sdk.host.ConnectionState.Connected && !runtime.isStarted()) {
+                    runtime.start()
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            val host = ManualDependencyGraph.wearableHost
+            if (host !is com.halo.drivers.heycyan.HeyCyanHost) {
+                host.connect()
+            }
         }
     }
 

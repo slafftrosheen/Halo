@@ -22,15 +22,17 @@ class HeyCyanCodecTest {
         val payload = byteArrayOf(0x00, 0x7F, 0xFF.toByte())
         val decoded = HeyCyanEventDecoder().decode(payload, characteristic, 42L).event
 
-        assertTrue(decoded is HeyCyanEvent.Unknown || decoded is HeyCyanEvent.UnknownEvent)
+        assertTrue(decoded is HeyCyanEvent.Unknown)
     }
 
     @Test
     fun `production decoder remains raw-only with no definitions`() {
-        val payload = byteArrayOf(0x01)
+        val payload = byteArrayOf(0x01, 0x50, 0x01) // Valid battery but no definitions
         val decoded = HeyCyanEventDecoder().decode(payload, notifyCharacteristic, 7L).event
 
-        assertTrue(decoded is HeyCyanEvent.BatteryUpdated || decoded is HeyCyanEvent.UnknownEvent || decoded is HeyCyanEvent.Unknown)
+        // If no definitions match, it falls back to decodeKnown if no definitions list provided,
+        // but if we call constructor with empty list it uses decodeKnown.
+        assertTrue(decoded is HeyCyanEvent.BatteryUpdated || decoded is HeyCyanEvent.Unknown)
     }
 
     @Test
@@ -53,16 +55,6 @@ class HeyCyanCodecTest {
     }
 
     @Test
-    fun `encoder rejects commands without evidence-backed definitions`() {
-        try {
-            HeyCyanCommandEncoder().encode(HeyCyanCommand.TakePhoto).getOrThrow()
-            throw AssertionError("Expected unsupported command to fail")
-        } catch (_: UnsupportedOperationException) {
-            // Expected.
-        }
-    }
-
-    @Test
     fun `encoder copies evidence-backed payload`() {
         val payload = byteArrayOf(0x10, 0x20)
         val encoder = HeyCyanCommandEncoder(
@@ -81,16 +73,6 @@ class HeyCyanCodecTest {
         assertArrayEquals(byteArrayOf(0x10, 0x20), encoded.payload)
         assertEquals(characteristic, encoded.characteristic)
         assertEquals(evidence, encoded.evidence)
-    }
-
-    @Test
-    fun `production command encoder exposes no speculative commands`() {
-        try {
-            HeyCyanCommandEncoder().encode(HeyCyanCommand.RequestBattery).getOrThrow()
-            throw AssertionError("Expected speculative command to fail")
-        } catch (_: UnsupportedOperationException) {
-            // Expected: discovery mode has no command definitions.
-        }
     }
 
     // -------------------------------------------------------------------------
@@ -168,24 +150,24 @@ class HeyCyanCodecTest {
     }
 
     @Test
-    fun `hypothesis decoder returns UnknownEvent for unrecognized payload`() {
+    fun `hypothesis decoder returns Unknown for unrecognized payload`() {
         val payload = byteArrayOf(0xFF.toByte(), 0x00, 0xAB.toByte())
         val event = hypothesisDecoder.decode(
             payload = payload,
             characteristicUuid = notifyCharacteristic,
             timestamp = 9000L
         ).event
-        assertTrue(event is HeyCyanEvent.Unknown || event is HeyCyanEvent.UnknownEvent)
+        assertTrue(event is HeyCyanEvent.Unknown)
     }
 
     @Test
-    fun `hypothesis decoder returns UnknownEvent for correct payload but wrong characteristic`() {
+    fun `hypothesis decoder returns Unknown for correct payload but wrong characteristic`() {
         val event = hypothesisDecoder.decode(
             payload = byteArrayOf(0x01),
             characteristicUuid = writeCharacteristic,
             timestamp = 100L
         ).event
-        assertTrue(event is HeyCyanEvent.Unknown || event is HeyCyanEvent.UnknownEvent)
+        assertTrue(event is HeyCyanEvent.Unknown)
     }
 
     @Test

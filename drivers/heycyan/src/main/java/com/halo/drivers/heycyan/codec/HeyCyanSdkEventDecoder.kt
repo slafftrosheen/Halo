@@ -1,5 +1,6 @@
 package com.halo.drivers.heycyan.codec
 
+import com.halo.drivers.heycyan.protocol.ButtonType
 import com.halo.drivers.heycyan.protocol.HeyCyanEvent
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -22,24 +23,12 @@ class HeyCyanSdkEventDecoder {
                 .order(ByteOrder.LITTLE_ENDIAN)
 
             when (buffer.get().toInt() and 0xFF) {
-                EVENT_BATTERY ->
-                    decodeBattery(buffer)
-
-                EVENT_MEDIA ->
-                    decodeMedia(buffer)
-
-                EVENT_VERSION ->
-                    decodeVersion(buffer)
-
-                EVENT_MODE ->
-                    decodeMode(buffer)
-
-                EVENT_WIFI ->
-                    decodeWifi(buffer)
-
-                EVENT_AI_IMAGE ->
-                    decodeAiImage(buffer)
-
+                EVENT_BATTERY -> decodeBattery(buffer)
+                EVENT_MEDIA -> decodeMedia(buffer)
+                EVENT_VERSION -> decodeVersion(buffer)
+                EVENT_MODE -> decodeMode(buffer)
+                EVENT_WIFI -> decodeWifi(buffer)
+                EVENT_AI_IMAGE -> decodeAiImage(buffer)
                 else -> null
             }
         }.getOrNull()
@@ -122,7 +111,7 @@ class HeyCyanSdkEventDecoder {
         val bytes = ByteArray(length)
         buffer.get(bytes)
 
-        return String(bytes, Charsets.UTF_8)
+        return bytes.toString(Charsets.UTF_8)
     }
 
     companion object {

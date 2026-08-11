@@ -3,6 +3,12 @@ package com.halo.drivers.heycyan.codec
 import com.halo.drivers.heycyan.protocol.HeyCyanEvent
 import java.util.UUID
 
+/**
+ * Characteristic-aware event router for HeyCyan devices.
+ *
+ * This router receives both characteristic UUID and payload, allowing it to
+ * distinguish between different protocol families on different characteristics.
+ */
 class HeyCyanEventRouter(
     private val sdkDecoder: HeyCyanSdkEventDecoder
 ) {

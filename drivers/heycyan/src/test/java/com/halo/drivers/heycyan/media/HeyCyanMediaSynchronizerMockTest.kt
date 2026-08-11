@@ -223,11 +223,16 @@ class HeyCyanMediaSynchronizerMockTest {
         val collectJob = launch {
             synchronizer.state.collect { observedStates.add(it) }
         }
+        
+        // Ensure initial state is collected
+        kotlinx.coroutines.yield()
 
         synchronizer.synchronize()
         collectJob.cancel()
 
         val kinds = observedStates.map { it::class.simpleName }
+        // StateFlow always emits its current value immediately to new collectors,
+        // so Idle should be present if we yield.
         assertTrue("Should have Idle", kinds.contains("Idle"))
         assertTrue("Should have FetchingManifest", kinds.contains("FetchingManifest"))
         assertTrue("Should have Planning", kinds.contains("Planning"))

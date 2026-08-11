@@ -51,7 +51,7 @@ class HeyCyanDeviceController(
         }
 
         val framed = packetFramer
-            .frame(definition)
+            .frameFromDefinition(definition)
             .getOrElse { return Result.failure(it) }
 
         return transport.send(framed)

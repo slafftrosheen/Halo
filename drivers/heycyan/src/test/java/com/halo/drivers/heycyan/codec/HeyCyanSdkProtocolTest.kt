@@ -1,11 +1,11 @@
 package com.halo.drivers.heycyan.codec
 
 import com.halo.drivers.heycyan.protocol.HeyCyanEvent
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.util.UUID
-import kotlin.test.assertContentEquals
 
 class HeyCyanSdkProtocolTest {
 
@@ -88,7 +88,7 @@ class HeyCyanSdkProtocolTest {
 
         val unknown = event as HeyCyanEvent.Unknown
 
-        assertContentEquals(
+        assertArrayEquals(
             payload,
             unknown.payload
         )

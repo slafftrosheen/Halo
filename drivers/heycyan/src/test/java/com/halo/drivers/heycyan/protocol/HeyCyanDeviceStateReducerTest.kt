@@ -53,7 +53,7 @@ class HeyCyanDeviceStateReducerTest {
 
         val result = reducer.reduce(
             initial,
-            HeyCyanEvent.VersionInfo(
+            HeyCyanEvent.VersionUpdated(
                 hardwareVersion = "v1.0",
                 firmwareVersion = "v2.1",
                 wifiHardwareVersion = "w1.0",
@@ -98,8 +98,7 @@ class HeyCyanDeviceStateReducerTest {
         val result = reducer.reduce(
             initial,
             HeyCyanEvent.ModeChanged(
-                mode = HeyCyanMode.PHOTO,
-                rawMode = 0x01,
+                mode = 0x01,
             ),
             timestamp = 5000L,
         )
@@ -116,8 +115,7 @@ class HeyCyanDeviceStateReducerTest {
         val result = reducer.reduce(
             initial,
             HeyCyanEvent.ModeChanged(
-                mode = null,
-                rawMode = 0x99,
+                mode = 0x99,
             ),
             timestamp = 6000L,
         )
@@ -133,7 +131,7 @@ class HeyCyanDeviceStateReducerTest {
 
         val result = reducer.reduce(
             initial,
-            HeyCyanEvent.WiFiCredentials(
+            HeyCyanEvent.WiFiHotspotReady(
                 ssid = "HeyCyan_AP",
                 password = "secret_password",
             ),

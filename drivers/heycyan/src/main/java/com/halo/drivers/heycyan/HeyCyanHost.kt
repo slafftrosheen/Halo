@@ -1,15 +1,17 @@
 package com.halo.drivers.heycyan
 
+import android.util.Log
+import com.halo.drivers.heycyan.protocol.HeyCyanEvent
 import com.halo.sdk.host.AudioOutput
 import com.halo.sdk.host.AudioSource
 import com.halo.sdk.host.ButtonEvent
 import com.halo.sdk.host.ConnectionState
 import com.halo.sdk.host.DeviceContext
 import com.halo.sdk.host.WearableHost
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.*
 
 /**
  * Implementation of [WearableHost] for HeyCyan glasses.
@@ -19,16 +21,22 @@ class HeyCyanHost(
     private val driver: RealHeyCyanDriver,
     override val audioOutput: AudioOutput
 ) : WearableHost {
+    init {
+        Log.i("HeyCyanHost", "Initializing HeyCyanHost")
+    }
     override val id: String = "heycyan-glasses"
     
-    // TODO: Connect driver audio source
-    override val audioSource: AudioSource = object : AudioSource {
-        override suspend fun start() {}
-        override suspend fun stop() {}
-        override val frames: Flow<com.halo.sdk.host.AudioFrame> = emptyFlow()
-    }
+    override val audioSource: AudioSource = HeyCyanAudioSource(driver)
 
-    override val buttons: Flow<ButtonEvent> = emptyFlow()
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private var selectedAddress: String? = null
+
+    override val buttons: Flow<ButtonEvent> = driver.heyCyanEvents
+        .filterIsInstance<HeyCyanEvent.ButtonPressed>()
+        .map {
+            // All HeyCyan button interactions trigger cognitive intent
+            ButtonEvent.Pressed
+        }
 
     private val _deviceContext = MutableStateFlow(DeviceContext())
     override val deviceContext: StateFlow<DeviceContext> = _deviceContext
@@ -36,13 +44,50 @@ class HeyCyanHost(
     private val _connectivity = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected)
     override val connectivity: StateFlow<ConnectionState> = _connectivity
 
+    init {
+        // Sync device context from driver state
+        driver.deviceState
+            .onEach { state ->
+                _deviceContext.value = DeviceContext(
+                    batteryPercent = state.battery?.level,
+                    connected = state.connection == com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.READY,
+                    charging = state.battery?.charging ?: false
+                )
+            }
+            .launchIn(scope)
+            
+        // Sync connectivity state
+        driver.state
+            .onEach { state ->
+                _connectivity.value = when(state) {
+                    is com.halo.sdk.driver.DriverState.Ready -> ConnectionState.Connected
+                    is com.halo.sdk.driver.DriverState.Connecting -> ConnectionState.Connecting
+                    is com.halo.sdk.driver.DriverState.Error -> ConnectionState.Failed(state.cause.message ?: "Unknown error")
+                    else -> ConnectionState.Disconnected
+                }
+            }
+            .launchIn(scope)
+    }
+
+    fun setTargetDevice(address: String) {
+        selectedAddress = address
+    }
+
     override suspend fun connect() {
-        _connectivity.value = ConnectionState.Connecting
-        // Driver connection logic would go here
-        _connectivity.value = ConnectionState.Connected
+        val address = selectedAddress ?: run {
+            Log.w("HeyCyanHost", "Connect called without selected address")
+            return
+        }
+        
+        try {
+            driver.connect(address, HeyCyanConnectionMode.RUNTIME)
+        } catch (e: Exception) {
+            Log.e("HeyCyanHost", "Failed to connect to $address", e)
+            _connectivity.value = ConnectionState.Failed(e.message ?: "Unknown error")
+        }
     }
 
     override suspend fun disconnect() {
-        _connectivity.value = ConnectionState.Disconnected
+        driver.disconnect()
     }
 }

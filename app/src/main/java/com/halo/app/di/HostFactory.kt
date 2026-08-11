@@ -17,10 +17,16 @@ enum class HostType {
 }
 
 object HostFactory {
+    private var heyCyanDriver: RealHeyCyanDriver? = null
+
+    fun getHeyCyanDriver(context: Context): RealHeyCyanDriver {
+        return heyCyanDriver ?: RealHeyCyanDriver(context).also { heyCyanDriver = it }
+    }
+
     fun create(type: HostType, context: Context): WearableHost {
         return when (type) {
             HostType.HEYCYAN -> {
-                val driver = RealHeyCyanDriver(context)
+                val driver = getHeyCyanDriver(context)
                 HeyCyanHost(
                     driver = driver,
                     audioOutput = HeyCyanAudioOutput(driver)
