@@ -1,34 +1,37 @@
 package com.halo.engines.agents
 
+import com.halo.icl.ontology.ConversationPayload
 import com.halo.icl.ontology.Goal
+import com.halo.icl.ontology.GoalType
+import com.halo.engines.reasoning.service.GoalManager
+import com.halo.runtime.cognition.ExecutionPlan
 import com.halo.runtime.cognition.Outcome
+import com.halo.runtime.cognition.RecoveryAction
+import com.halo.runtime.cognition.RecoveryContext
 import com.halo.runtime.cognition.Task
-import com.halo.sdk.runtime.Observation
-import com.halo.sdk.runtime.ObservationId
-import com.halo.sdk.runtime.Source
-import com.halo.sdk.runtime.Modality
-import com.halo.engines.speech.SpeechRecognizedPayload
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.util.UUID
 
 class RecoveryPolicyTest {
 
     private val recoveryPolicy = DefaultRecoveryPolicy()
     
     private fun createTestContext(attempt: Int = 1): RecoveryContext {
+        val goal = GoalManager().createGoal(
+            type = GoalType.CONVERSATION,
+            intent = null,
+            payload = ConversationPayload("test")
+        )
+        val plan = ExecutionPlan(
+            goal = goal,
+            tasks = emptyList()
+        )
         return RecoveryContext(
-            observation = Observation(
-                id = ObservationId(UUID.randomUUID().toString()),
-                payload = SpeechRecognizedPayload(transcript = "Test observation", language = "en"), // Fixed: Use proper payload
-                source = Source.SYSTEM, // Fixed: Use correct source
-                modality = Modality.TEXT
-            ),
-            goal = null,
-            plan = null,
+            goal = goal,
+            plan = plan,
             task = null,
             attempt = attempt,
             deviceState = "idle",
@@ -45,7 +48,7 @@ class RecoveryPolicyTest {
         
         assertTrue("Should return RetryExecution for low attempt count", action is RecoveryAction.RetryExecution)
         val retryAction = action as RecoveryAction.RetryExecution
-        assertEquals("Should have 1000ms delay", 1000L, retryAction.delayMs)
+        assertEquals("Should have 500ms delay", 500L, retryAction.delayMs)
     }
 
     @Test

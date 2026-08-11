@@ -2,7 +2,6 @@ package com.halo.drivers.heycyan.mock
 
 import com.halo.drivers.heycyan.media.HeyCyanMedia
 import com.halo.drivers.heycyan.media.HeyCyanMediaManifest
-import com.halo.drivers.heycyan.media.MediaDownloadModels
 import com.halo.drivers.heycyan.media.MediaDownloadProgress
 import com.halo.drivers.heycyan.media.MediaDownloadResult
 import com.halo.drivers.heycyan.media.MediaIntegrity

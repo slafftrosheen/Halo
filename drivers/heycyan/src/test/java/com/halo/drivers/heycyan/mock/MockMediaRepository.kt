@@ -5,8 +5,8 @@ import com.halo.drivers.heycyan.media.MediaDownloadProgress
 import com.halo.drivers.heycyan.media.MediaDownloadResult
 import com.halo.drivers.heycyan.media.MediaIntegrity
 import com.halo.drivers.heycyan.media.MediaLocation
-import com.halo.drivers.heycyan.media.repository.FileHeyCyanMediaRepository
 import com.halo.drivers.heycyan.media.repository.HeyCyanMediaIdentityResolver
+import com.halo.drivers.heycyan.media.repository.HeyCyanMediaRepository
 import com.halo.drivers.heycyan.media.repository.HeyCyanMediaType
 import com.halo.drivers.heycyan.media.repository.MediaWriteSession
 import com.halo.drivers.heycyan.media.repository.StoredHeyCyanMedia
@@ -16,7 +16,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 /**
- * In-memory [FileHeyCyanMediaRepository] substitute for unit tests.
+ * In-memory [HeyCyanMediaRepository] implementation for unit tests.
  *
  * Stores committed [StoredHeyCyanMedia] records in a mutable in-memory map.
  * Eliminates all filesystem interaction — tests run without temp directories.
@@ -29,12 +29,7 @@ import kotlinx.coroutines.sync.withLock
  */
 class MockMediaRepository(
     private val identityResolver: HeyCyanMediaIdentityResolver = DefaultMockIdentityResolver(),
-) : FileHeyCyanMediaRepository(
-    // FileHeyCyanMediaRepository requires a real File, but we never use it in tests
-    // since we override all operations in the subclass.
-    storageDir = createTempDir("heycyan_mock_repo"),
-    identityResolver = DefaultMockIdentityResolver(),
-) {
+) : HeyCyanMediaRepository {
     private val mutex = Mutex()
     private val store = mutableMapOf<String, StoredHeyCyanMedia>()
 
@@ -124,7 +119,7 @@ class MockDownloadStrategy(
 
     override suspend fun download(
         media: HeyCyanMedia,
-        repository: FileHeyCyanMediaRepository,
+        repository: HeyCyanMediaRepository,
         progress: (MediaDownloadProgress) -> Unit,
     ): Result<MediaDownloadResult> {
         downloadedItems.add(media)

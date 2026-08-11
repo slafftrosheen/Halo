@@ -3,7 +3,7 @@ package com.halo.drivers.heycyan.media.sync
 import com.halo.drivers.heycyan.media.HeyCyanMedia
 import com.halo.drivers.heycyan.media.MediaDownloadProgress
 import com.halo.drivers.heycyan.media.MediaDownloadResult
-import com.halo.drivers.heycyan.media.repository.FileHeyCyanMediaRepository
+import com.halo.drivers.heycyan.media.repository.HeyCyanMediaRepository
 import com.halo.drivers.heycyan.media.repository.MediaWriteSession
 import com.halo.drivers.heycyan.wifi.HeyCyanMediaApi
 import kotlinx.coroutines.CancellationException
@@ -14,7 +14,7 @@ import kotlinx.coroutines.CancellationException
 interface MediaDownloadStrategy {
     suspend fun download(
         media: HeyCyanMedia,
-        repository: FileHeyCyanMediaRepository,
+        repository: HeyCyanMediaRepository,
         progress: (MediaDownloadProgress) -> Unit,
     ): Result<MediaDownloadResult>
 }
@@ -30,7 +30,7 @@ class StreamingMediaDownloadStrategy(
 
     override suspend fun download(
         media: HeyCyanMedia,
-        repository: FileHeyCyanMediaRepository,
+        repository: HeyCyanMediaRepository,
         progress: (MediaDownloadProgress) -> Unit,
     ): Result<MediaDownloadResult> {
         val session: MediaWriteSession = repository.beginWrite(media)

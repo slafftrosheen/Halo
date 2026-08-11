@@ -49,7 +49,8 @@ class MockBleExecutor(
             Behaviour.Protocol -> Result.failure(
                 HeyCyanCapabilityException(
                     HeyCyanOperationFailure.ProtocolNotEstablished(
-                        message = "Mock: BLE packet framing not established for $operation"
+                        operation = operation,
+                        detail = "Mock: BLE packet framing not established for $operation",
                     )
                 )
             )

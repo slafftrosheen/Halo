@@ -3,6 +3,7 @@ package com.halo.drivers.heycyan.media
 import com.halo.drivers.heycyan.media.repository.DefaultHeyCyanMediaIdentityResolver
 import com.halo.drivers.heycyan.media.repository.DefaultMediaPathResolver
 import com.halo.drivers.heycyan.media.repository.FileHeyCyanMediaRepository
+import com.halo.drivers.heycyan.media.repository.HeyCyanMediaRepository
 import com.halo.drivers.heycyan.media.sync.HeyCyanMediaDownloadQueue
 import com.halo.drivers.heycyan.media.sync.MediaDownloadStrategy
 import kotlinx.coroutines.test.runTest
@@ -22,7 +23,7 @@ class HeyCyanMediaDownloadQueueTest {
 
         override suspend fun download(
             media: HeyCyanMedia,
-            repository: FileHeyCyanMediaRepository,
+            repository: HeyCyanMediaRepository,
             progress: (MediaDownloadProgress) -> Unit
         ): Result<MediaDownloadResult> {
             downloadedMedia.add(media)

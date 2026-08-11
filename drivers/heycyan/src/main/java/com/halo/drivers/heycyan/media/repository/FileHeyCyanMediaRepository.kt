@@ -9,6 +9,20 @@ import java.io.File
 import java.io.FileOutputStream
 
 /**
+ * Repository contract for local HeyCyan media storage.
+ *
+ * Implemented by [FileHeyCyanMediaRepository] for production and by in-memory
+ * mocks for unit tests, without requiring either to subclass the other.
+ */
+interface HeyCyanMediaRepository {
+    suspend fun list(): List<StoredHeyCyanMedia>
+    suspend fun find(identity: String): StoredHeyCyanMedia?
+    suspend fun beginWrite(media: HeyCyanMedia): MediaWriteSession
+    suspend fun commit(session: MediaWriteSession, sha256: String? = null): Result<StoredHeyCyanMedia>
+    suspend fun abort(session: MediaWriteSession)
+}
+
+/**
  * File-based implementation of [HeyCyanMediaRepository].
  *
  * Implements atomic writes:
@@ -20,7 +34,7 @@ class FileHeyCyanMediaRepository(
     private val storageDir: File,
     private val pathResolver: MediaPathResolver = DefaultMediaPathResolver(storageDir.absolutePath),
     private val identityResolver: HeyCyanMediaIdentityResolver = DefaultHeyCyanMediaIdentityResolver(),
-) {
+) : HeyCyanMediaRepository {
     private val mutex = Mutex()
     private val records = mutableMapOf<String, StoredHeyCyanMedia>()
 
@@ -54,15 +68,15 @@ class FileHeyCyanMediaRepository(
         }
     }
 
-    suspend fun list(): List<StoredHeyCyanMedia> = mutex.withLock {
+    override suspend fun list(): List<StoredHeyCyanMedia> = mutex.withLock {
         records.values.toList()
     }
 
-    suspend fun find(identity: String): StoredHeyCyanMedia? = mutex.withLock {
+    override suspend fun find(identity: String): StoredHeyCyanMedia? = mutex.withLock {
         records[identity]
     }
 
-    suspend fun beginWrite(media: HeyCyanMedia): MediaWriteSession = withContext(Dispatchers.IO) {
+    override suspend fun beginWrite(media: HeyCyanMedia): MediaWriteSession = withContext(Dispatchers.IO) {
         val identity = identityResolver.identity(media)
         val targetPath = pathResolver.pathFor(media, identity)
         val targetFile = File(targetPath)
@@ -83,7 +97,7 @@ class FileHeyCyanMediaRepository(
         )
     }
 
-    suspend fun commit(session: MediaWriteSession, sha256: String? = null): Result<StoredHeyCyanMedia> = withContext(Dispatchers.IO) {
+    override suspend fun commit(session: MediaWriteSession, sha256: String?): Result<StoredHeyCyanMedia> = withContext(Dispatchers.IO) {
         runCatching {
             val fileSession = session as FileMediaWriteSession
             fileSession.flush()
@@ -123,7 +137,7 @@ class FileHeyCyanMediaRepository(
         }
     }
 
-    suspend fun abort(session: MediaWriteSession) = withContext(Dispatchers.IO) {
+    override suspend fun abort(session: MediaWriteSession) = withContext(Dispatchers.IO) {
         val fileSession = session as? FileMediaWriteSession ?: return@withContext
         fileSession.close()
         if (fileSession.tempFile.exists()) {

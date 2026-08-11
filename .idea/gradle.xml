@@ -1,11 +1,77 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="GradleMigrationSettings" migrationVersion="1" />
   <component name="GradleSettings">
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
         <option name="testRunner" value="CHOOSE_PER_TEST" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
         <option name="gradleJvm" value="#GRADLE_LOCAL_JAVA_HOME" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/drivers" />
+            <option value="$PROJECT_DIR$/drivers/heycyan" />
+            <option value="$PROJECT_DIR$/drivers/simulator" />
+            <option value="$PROJECT_DIR$/engines" />
+            <option value="$PROJECT_DIR$/engines/agents" />
+            <option value="$PROJECT_DIR$/engines/ai" />
+            <option value="$PROJECT_DIR$/engines/automation" />
+            <option value="$PROJECT_DIR$/engines/context" />
+            <option value="$PROJECT_DIR$/engines/device" />
+            <option value="$PROJECT_DIR$/engines/diagnostics" />
+            <option value="$PROJECT_DIR$/engines/execution" />
+            <option value="$PROJECT_DIR$/engines/interpretation" />
+            <option value="$PROJECT_DIR$/engines/memory" />
+            <option value="$PROJECT_DIR$/engines/notification" />
+            <option value="$PROJECT_DIR$/engines/perception" />
+            <option value="$PROJECT_DIR$/engines/planning" />
+            <option value="$PROJECT_DIR$/engines/privacy" />
+            <option value="$PROJECT_DIR$/engines/provider" />
+            <option value="$PROJECT_DIR$/engines/reasoning" />
+            <option value="$PROJECT_DIR$/engines/speech" />
+            <option value="$PROJECT_DIR$/engines/workflow" />
+            <option value="$PROJECT_DIR$/host-android" />
+            <option value="$PROJECT_DIR$/lab" />
+            <option value="$PROJECT_DIR$/lab/analysis" />
+            <option value="$PROJECT_DIR$/lab/capture" />
+            <option value="$PROJECT_DIR$/lab/diagnostics" />
+            <option value="$PROJECT_DIR$/lab/protocol" />
+            <option value="$PROJECT_DIR$/lab/replay" />
+            <option value="$PROJECT_DIR$/libraries" />
+            <option value="$PROJECT_DIR$/libraries/common" />
+            <option value="$PROJECT_DIR$/libraries/halo-cognition-language" />
+            <option value="$PROJECT_DIR$/libraries/logging" />
+            <option value="$PROJECT_DIR$/libraries/testing" />
+            <option value="$PROJECT_DIR$/providers" />
+            <option value="$PROJECT_DIR$/providers/android-stt" />
+            <option value="$PROJECT_DIR$/providers/android-tts" />
+            <option value="$PROJECT_DIR$/providers/llamacpp" />
+            <option value="$PROJECT_DIR$/runtime" />
+            <option value="$PROJECT_DIR$/runtime/cognition" />
+            <option value="$PROJECT_DIR$/runtime/commands" />
+            <option value="$PROJECT_DIR$/runtime/debug" />
+            <option value="$PROJECT_DIR$/runtime/events" />
+            <option value="$PROJECT_DIR$/runtime/intents" />
+            <option value="$PROJECT_DIR$/runtime/kernel" />
+            <option value="$PROJECT_DIR$/runtime/lifecycle" />
+            <option value="$PROJECT_DIR$/runtime/observer" />
+            <option value="$PROJECT_DIR$/runtime/plugins" />
+            <option value="$PROJECT_DIR$/runtime/queries" />
+            <option value="$PROJECT_DIR$/runtime/registry" />
+            <option value="$PROJECT_DIR$/runtime/scheduler" />
+            <option value="$PROJECT_DIR$/runtime/services" />
+            <option value="$PROJECT_DIR$/runtime/speech" />
+            <option value="$PROJECT_DIR$/runtime/testing" />
+            <option value="$PROJECT_DIR$/sdk" />
+            <option value="$PROJECT_DIR$/sdk/driver-sdk" />
+            <option value="$PROJECT_DIR$/sdk/host-sdk" />
+            <option value="$PROJECT_DIR$/sdk/plugin-sdk" />
+            <option value="$PROJECT_DIR$/sdk/provider-sdk" />
+            <option value="$PROJECT_DIR$/sdk/runtime-sdk" />
+          </set>
+        </option>
       </GradleProjectSettings>
     </option>
   </component>

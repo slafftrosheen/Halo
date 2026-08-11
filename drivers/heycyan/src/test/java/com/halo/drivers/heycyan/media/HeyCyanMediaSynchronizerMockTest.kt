@@ -123,7 +123,7 @@ class HeyCyanMediaSynchronizerMockTest {
         val mixedDownloadStrategy = object : com.halo.drivers.heycyan.media.sync.MediaDownloadStrategy {
             override suspend fun download(
                 media: HeyCyanMedia,
-                repository: com.halo.drivers.heycyan.media.repository.FileHeyCyanMediaRepository,
+                repository: com.halo.drivers.heycyan.media.repository.HeyCyanMediaRepository,
                 progress: (MediaDownloadProgress) -> Unit,
             ): Result<MediaDownloadResult> {
                 callCount++
@@ -178,7 +178,7 @@ class HeyCyanMediaSynchronizerMockTest {
         val cancellingStrategy = object : com.halo.drivers.heycyan.media.sync.MediaDownloadStrategy {
             override suspend fun download(
                 media: HeyCyanMedia,
-                repository: com.halo.drivers.heycyan.media.repository.FileHeyCyanMediaRepository,
+                repository: com.halo.drivers.heycyan.media.repository.HeyCyanMediaRepository,
                 progress: (MediaDownloadProgress) -> Unit,
             ): Result<MediaDownloadResult> {
                 syncCallCount++

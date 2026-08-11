@@ -148,7 +148,7 @@ class HeyCyanMediaSynchronizerTest {
         val cancellingStrategy = object : MediaDownloadStrategy {
             override suspend fun download(
                 media: HeyCyanMedia,
-                repository: FileHeyCyanMediaRepository,
+                repository: com.halo.drivers.heycyan.media.repository.HeyCyanMediaRepository,
                 progress: (MediaDownloadProgress) -> Unit
             ): Result<MediaDownloadResult> {
                 throw CancellationException("User cancelled sync")
