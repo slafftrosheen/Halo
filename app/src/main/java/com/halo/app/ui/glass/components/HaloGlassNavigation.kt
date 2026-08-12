@@ -46,51 +46,52 @@ fun HaloGlassNavigation(
         modifier = modifier
             .fillMaxWidth()
             .navigationBarsPadding()
-            .padding(bottom = 24.dp),
+            .padding(bottom = 24.dp, start = 24.dp, end = 24.dp),
         contentAlignment = Alignment.BottomCenter
     ) {
         Row(
             modifier = Modifier
-                .fillMaxWidth(0.85f)
+                .fillMaxWidth(0.9f)
                 .height(64.dp)
                 .clip(RoundedCornerShape(32.dp))
                 .background(HaloGlassColors.BackgroundSecondary.copy(alpha = 0.8f))
-                .padding(horizontal = HaloGlassTokens.md),
-            horizontalArrangement = Arrangement.SpaceAround,
+                .padding(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
-        items.forEach { item ->
-            val selected = currentDestination?.hierarchy?.any { it.route == item.route } == true
-            
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .clickable {
-                        navController.navigate(item.route) {
-                            popUpTo(navController.graph.findStartDestination().id) {
-                                saveState = true
+            items.forEach { item ->
+                val selected = currentDestination?.hierarchy?.any { it.route == item.route } == true
+                
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable {
+                            navController.navigate(item.route) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
                             }
-                            launchSingleTop = true
-                            restoreState = true
                         }
-                    }
-                    .padding(vertical = 8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    imageVector = item.icon,
-                    contentDescription = item.label,
-                    tint = if (selected) HaloGlassColors.Accent else HaloGlassColors.TextMuted,
-                    modifier = Modifier.size(24.dp)
-                )
-                Text(
-                    text = item.label,
-                    color = if (selected) HaloGlassColors.TextPrimary else HaloGlassColors.TextMuted,
-                    fontSize = 10.sp
-                )
+                        .padding(vertical = 8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = item.icon,
+                        contentDescription = item.label,
+                        tint = if (selected) HaloGlassColors.Accent else HaloGlassColors.TextMuted,
+                        modifier = Modifier.size(26.dp)
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = item.label,
+                        color = if (selected) HaloGlassColors.TextPrimary else HaloGlassColors.TextMuted,
+                        fontSize = 11.sp
+                    )
+                }
             }
-        }
         }
     }
 }

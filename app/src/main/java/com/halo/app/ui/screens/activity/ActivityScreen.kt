@@ -25,7 +25,7 @@ fun ActivityScreen(viewModel: ActivityViewModel) {
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp),
-        contentPadding = PaddingValues(top = 16.dp, bottom = 32.dp),
+        contentPadding = PaddingValues(top = 16.dp, bottom = 120.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
@@ -171,7 +171,18 @@ data class ActivityUiState(
 )
 
 class ActivityViewModel : ViewModel() {
-    private val _uiState = MutableStateFlow(ActivityUiState())
+    private val initialEvents = listOf(
+        ActivityEvent("e1", "Photo Capture", "Captured via panel double tap", System.currentTimeMillis() - 5000, "Success"),
+        ActivityEvent("e2", "Audio Transcription", "Processed 12s voice command", System.currentTimeMillis() - 15000, "Success"),
+        ActivityEvent("e3", "Object Recognition", "Identified 3 items in view", System.currentTimeMillis() - 60000, "Success")
+    )
+    
+    private val _uiState = MutableStateFlow(ActivityUiState(events = initialEvents, hasMore = true))
     val uiState: StateFlow<ActivityUiState> = _uiState.asStateFlow()
-    fun loadMore() {}
+    
+    fun loadMore() {
+        val currentEvents = _uiState.value.events.toMutableList()
+        currentEvents.add(ActivityEvent("e${currentEvents.size + 1}", "System Log", "Older event loaded", System.currentTimeMillis() - 3600000, "Info"))
+        _uiState.value = _uiState.value.copy(events = currentEvents, hasMore = currentEvents.size < 10)
+    }
 }

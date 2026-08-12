@@ -25,7 +25,9 @@ fun HomeScreen(viewModel: HomeViewModel) {
         modifier = Modifier
             .fillMaxSize()
             .background(HaloGlassColors.Background)
+            .verticalScroll(rememberScrollState())
             .padding(24.dp)
+            .padding(bottom = 80.dp) // padding for navigation pill overlay
     ) {
         // Subtle Header
         Row(
@@ -48,7 +50,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
             )
         }
 
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(64.dp))
 
         // Primary Action: State Orb
         Box(
@@ -69,7 +71,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
             )
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(64.dp))
         
         // Subtle system status
         Text(
@@ -79,6 +81,6 @@ fun HomeScreen(viewModel: HomeViewModel) {
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
 
-        Spacer(modifier = Modifier.weight(1.5f))
+        Spacer(modifier = Modifier.height(32.dp))
     }
 }

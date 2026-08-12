@@ -13,3 +13,6 @@ The definitive guide for the project's direction can be found in [PROJECT-DIRECT
 
 ## Acknowledgments
 A special thanks to the [FerSaiyan/Alternative-HeyCyan-App-and-SDK](https://github.com/FerSaiyan/Alternative-HeyCyan-App-and-SDK) repository. Their work and source description served as an invaluable reference that helped significantly during the reverse-engineering and extraction of the HeyCyan hardware protocol.
+
+## Protocol Status
+We have formally **frozen manual reverse-engineering of the protocol**. Analysis of the decompiled SDK confirmed that the media stream (such as the audio trigger and microphone data) uses raw 40-byte Opus packets with no secondary Ogg layer encapsulation, mapped perfectly to `ACTION_GPT_UPLOAD` (0x59). Moving forward, our strategy is strictly forensic extraction of the vendor SDK architecture rather than behavioral inference.

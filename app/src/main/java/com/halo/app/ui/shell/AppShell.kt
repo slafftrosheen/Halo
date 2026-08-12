@@ -1,6 +1,6 @@
 package com.halo.app.ui.shell
 
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Devices
@@ -10,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.compose.*
@@ -57,20 +58,11 @@ fun AppShell() {
         }
     }
     
-    Scaffold(
-        bottomBar = {
-            HaloGlassNavigation(
-                navController = navController,
-                items = bottomNavItems.map { 
-                    NavigationItem(it.route, it.title, it.icon) 
-                }
-            )
-        }
-    ) { innerPadding ->
+    Box(modifier = Modifier.fillMaxSize()) {
         NavHost(
             navController = navController,
             startDestination = Screen.Home.route,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.fillMaxSize()
         ) {
             composable(Screen.Home.route) {
                 HomeScreen(viewModel = ManualDependencyGraph.homeViewModel)
@@ -99,5 +91,14 @@ fun AppShell() {
                 RuntimeInspectorScreen(viewModel = ManualDependencyGraph.runtimeInspectorViewModel)
             }
         }
+        
+        // Navigation Pill Overlay
+        HaloGlassNavigation(
+            navController = navController,
+            items = bottomNavItems.map { 
+                NavigationItem(it.route, it.title, it.icon) 
+            },
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
     }
 }

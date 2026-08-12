@@ -221,15 +221,15 @@ UNRESOLVED.
 
 ### Q3. What are bytes 4–5 in `BC 73 0E`?
 
-UNRESOLVED.
+RESOLVED. They are the CRC16 checksum for the payload, based on the `LargeDataHandler` structure.
 
 ### Q4. What is byte 10 in `BC 73 0E`?
 
-Strong candidate for action/control value; exact semantics unresolved.
+RESOLVED (Legacy). `0x0E` is just the payload length. The payload itself starts at byte 6. The byte previously at offset 10 is actually offset 4 of the payload.
 
 ### Q5. What is byte 19 in `BC 73 0E`?
 
-Likely an event/source/type field; unresolved.
+RESOLVED (Legacy). As with Q4, this was based on a misunderstanding of the frame structure. Byte 19 is offset 13 of the payload.
 
 ### Q6. What is `BC 59 28`?
 

@@ -23,6 +23,9 @@ import com.halo.app.ui.glass.components.HaloGlassChip
 import com.halo.app.ui.glass.material.HaloGlassColors
 import com.halo.app.ui.glass.material.HaloTypography
 
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+
 @Composable
 fun SettingsScreen(viewModel: SettingsViewModel) {
     val uiState by viewModel.uiState.collectAsState()
@@ -31,7 +34,9 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
         modifier = Modifier
             .fillMaxSize()
             .background(HaloGlassColors.Background)
-            .padding(16.dp),
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp)
+            .padding(bottom = 120.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text("Settings", style = HaloTypography.displayMedium, color = HaloGlassColors.TextPrimary)
@@ -125,7 +130,9 @@ fun PermissionsScreen() {
         modifier = Modifier
             .fillMaxSize()
             .background(HaloGlassColors.Background)
-            .padding(16.dp),
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp)
+            .padding(bottom = 120.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(

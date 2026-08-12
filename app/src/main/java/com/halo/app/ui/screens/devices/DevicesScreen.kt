@@ -31,7 +31,8 @@ fun DevicesScreen(viewModel: DevicesViewModel) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(horizontal = 16.dp),
+        contentPadding = PaddingValues(top = 16.dp, bottom = 120.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
@@ -158,7 +159,15 @@ private fun DeviceCapabilitiesList(capabilities: List<String>) {
         style = HaloTypography.bodySmall
     )
     Spacer(modifier = Modifier.height(8.dp))
-    // Capability tags would go here
+    @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+    androidx.compose.foundation.layout.FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        capabilities.forEach { cap ->
+            com.halo.app.ui.glass.components.HaloGlassChip(text = cap)
+        }
+    }
 }
 
 enum class DeviceStatus(val label: String, val color: Color) {
@@ -193,7 +202,20 @@ data class DevicesUiState(
 )
 
 class DevicesViewModel : ViewModel() {
-    private val _uiState = MutableStateFlow(DevicesUiState())
+    private val _uiState = MutableStateFlow(
+        DevicesUiState(
+            devices = listOf(
+                DeviceInfo(
+                    id = "HALO-8F3A",
+                    name = "Halo Glass Prototype",
+                    description = "Firmware v2.4.1",
+                    status = DeviceStatus.Connected,
+                    capabilities = DeviceCapabilities(CapabilityStatus.Supported, CapabilityStatus.Partial, CapabilityStatus.Supported, CapabilityStatus.Supported)
+                )
+            ),
+            capabilities = listOf("Audio Streaming", "Gesture Control", "Notifications", "Camera (Beta)")
+        )
+    )
     val uiState: StateFlow<DevicesUiState> = _uiState.asStateFlow()
 
     private val _navigationEvents = kotlinx.coroutines.flow.MutableSharedFlow<String>()
@@ -204,8 +226,4 @@ class DevicesViewModel : ViewModel() {
             _navigationEvents.emit(route)
         }
     }
-}
-
-enum class CapabilityStatusScreen {
-    Supported, PartiallySupported, Unsupported
 }
