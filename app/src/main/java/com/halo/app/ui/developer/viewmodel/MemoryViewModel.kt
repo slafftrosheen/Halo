@@ -1,4 +1,4 @@
-package com.halo.app.ui.viewmodel
+package com.halo.app.ui.developer.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider

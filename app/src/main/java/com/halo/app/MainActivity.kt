@@ -1,4 +1,4 @@
-﻿package com.halo.app
+package com.halo.app
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -17,8 +17,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import com.halo.app.di.ManualDependencyGraph
-import com.halo.app.ui.screens.PermissionsScreen
-import com.halo.app.ui.navigation.AppNavigation
+import com.halo.app.ui.shell.PermissionsScreen
+import com.halo.app.ui.shell.AppShell
 import com.halo.app.ui.theme.BrainToolTheme
 import kotlinx.coroutines.launch
 
@@ -55,7 +55,7 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     if (hasRequiredPermissions) {
-                        AppNavigation()
+                        AppShell()
                     } else {
                         PermissionsScreen(
                             onPermissionsGranted = {

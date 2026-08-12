@@ -9,7 +9,7 @@ import java.util.UUID
 class HeyCyanEventRouterTest {
 
     private val router = HeyCyanEventRouter(
-        sdkDecoder = HeyCyanSdkEventDecoder()
+        responseDecoder = HeyCyanResponseDecoder()
     )
 
     @Test
@@ -44,7 +44,18 @@ class HeyCyanEventRouterTest {
 
     @Test
     fun `sdk decoded events pass through correctly`() {
-        val batteryPayload = byteArrayOf(0x01, 85.toByte(), 0x01)
+        // Construct a valid BC frame for Battery: BC 42 02 00 xx xx 55 01
+        // 55 hex = 85 decimal
+        val batteryPayload = byteArrayOf(
+            0xBC.toByte(),
+            0x42,
+            0x02,
+            0x00,
+            0x00, // CRC placeholder
+            0x00, // CRC placeholder
+            85.toByte(), // level
+            0x01 // charging
+        )
 
         val event = router.decode(
             UUID.fromString("0000fed1-0000-1000-8000-00805f9b34fb"),

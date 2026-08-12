@@ -21,12 +21,11 @@ fun HaloGlassDivider(
     startIndent: Dp = 0.dp,
     endIndent: Dp = 0.dp
 ) {
-    Divider(
+    HorizontalDivider(
         modifier = modifier
-            .padding(start = startIndent, end = endIndent)
-            .background(color),
+            .padding(start = startIndent, end = endIndent),
         thickness = thickness,
-        color = Color.Transparent
+        color = color
     )
 }
 

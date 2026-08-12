@@ -10,7 +10,7 @@ import java.util.UUID
  * distinguish between different protocol families on different characteristics.
  */
 class HeyCyanEventRouter(
-    private val sdkDecoder: HeyCyanSdkEventDecoder,
+    private val responseDecoder: HeyCyanResponseDecoder,
     private val structuralDecoder: HeyCyanStructuralDecoder = HeyCyanStructuralDecoder()
 ) {
 
@@ -71,11 +71,27 @@ class HeyCyanEventRouter(
             }
         }
 
-        return sdkDecoder.decode(payload)
-            ?: HeyCyanEvent.Unknown(
+        val decoded = responseDecoder.decode(payload)
+        return when (decoded) {
+            is HeyCyanResponse.Battery -> HeyCyanEvent.BatteryUpdated(decoded.level, decoded.charging)
+            is HeyCyanResponse.ClassBluetooth -> HeyCyanEvent.WiFiIpReceived("") // Map as needed or remove
+            is HeyCyanResponse.VoiceState -> {
+                if (decoded.payload.isNotEmpty()) {
+                    when (decoded.payload[0]) {
+                        0x03.toByte() -> HeyCyanEvent.VoiceActivationStarted
+                        0x0A.toByte() -> HeyCyanEvent.VoiceActivationEnded
+                        else -> HeyCyanEvent.Unknown(characteristicUuid.toString(), payload.copyOf())
+                    }
+                } else {
+                    HeyCyanEvent.Unknown(characteristicUuid.toString(), payload.copyOf())
+                }
+            }
+            null, is HeyCyanResponse.Unknown -> HeyCyanEvent.Unknown(
                 characteristicUuid = characteristicUuid.toString(),
                 payload = payload.copyOf()
             )
+            else -> HeyCyanEvent.Unknown(characteristicUuid.toString(), payload.copyOf())
+        }
     }
 
     companion object {

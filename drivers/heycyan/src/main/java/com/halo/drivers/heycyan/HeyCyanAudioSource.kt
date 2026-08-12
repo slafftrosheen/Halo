@@ -28,14 +28,9 @@ import kotlinx.coroutines.launch
  * - On-device audio recording (mode 0x04 start / 0x05 stop)
  * - Transfer recorded audio files via WiFi (.opus format)
  * - Playback of recorded audio after transfer
- * - **Passive live stream (`BC 59`)**: Trigger unknown, currently under analysis.
+ * - **Live stream (`BC 59`)**: Triggered by physical voice activation session (`BC 73` payload 03).
  *
- * This AudioSource is currently PASSIVE. It does not actively send a start/stop
- * command because the exact physical trigger or BLE command that initiates the
- * `BC 59` stream is unknown. It will consume decoded BC59 frames once the parser
- * proves the framing.
- *
- * Do not connect this source to the cognitive loop yet.
+ * This AudioSource captures the decoded BC59 frames as long as the voice session is active.
  */
 class HeyCyanAudioSource(
     private val driver: com.halo.drivers.heycyan.RealHeyCyanDriver,

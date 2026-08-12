@@ -1,7 +1,7 @@
 package com.halo.drivers.heycyan.ble
 
 import com.halo.drivers.heycyan.codec.HeyCyanCommand
-import com.halo.drivers.heycyan.codec.HeyCyanCommandEncoder
+
 import com.halo.drivers.heycyan.debug.HeyCyanLogger
 import com.halo.drivers.heycyan.protocol.HeyCyanProtocolConstants
 import kotlinx.coroutines.runBlocking
@@ -55,12 +55,4 @@ class HeyCyanGattCommandTransportTest {
         assertArrayEquals(expectedGoldenVector, fakeClient.lastWrittenPayload)
     }
 
-    @Test
-    fun `encoder pipeline produces identical wire frame to photo builder`() = runBlocking {
-        val encoder = HeyCyanCommandEncoder()
-        val encodedFromSemantic = encoder.encodeWireFrame(com.halo.drivers.heycyan.protocol.HeyCyanCommand.TakePhoto)
-        val photoBuilderFrame = HeyCyanCommand.photo()
-
-        assertArrayEquals(photoBuilderFrame, encodedFromSemantic)
-    }
 }

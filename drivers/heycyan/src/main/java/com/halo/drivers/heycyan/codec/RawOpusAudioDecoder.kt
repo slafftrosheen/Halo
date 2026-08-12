@@ -76,11 +76,10 @@ class RawOpusAudioDecoder {
         if (!isInitialized) initialize()
 
         // 40-byte Opus packet handling (hasHead = false)
+        // We preserve raw BC59 payloads and decoder output for evidence.
+        // DO NOT reject based on preliminary RFC validation.
         val analysis = parser.parse(payload)
-        if (!analysis.isRfcValid) {
-            return
-        }
-        
+        // (analysis.isRfcValid check removed as per PR-020 constraints)
         val codec = decoder ?: return
         try {
             val inputBufferId = codec.dequeueInputBuffer(10000)

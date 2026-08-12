@@ -25,31 +25,32 @@ fun HomeScreen(viewModel: HomeViewModel) {
         modifier = Modifier
             .fillMaxSize()
             .background(HaloGlassColors.Background)
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp)
+            .padding(24.dp)
     ) {
-        // Header
+        // Subtle Header
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "HALO", 
-                style = HaloTypography.displayMedium,
-                color = HaloGlassColors.TextPrimary
+                text = "NOW", 
+                style = HaloTypography.titleMedium,
+                color = HaloGlassColors.TextSecondary,
+                letterSpacing = 2.sp
             )
-            HaloGlassChip.Success(text = if (uiState.isDeviceConnected) "Connected" else "Standalone")
+            
+            val connectionText = if (uiState.isDeviceConnected) "Glasses Connected" else "Phone Audio"
+            Text(
+                text = connectionText,
+                style = HaloTypography.labelMedium,
+                color = HaloGlassColors.TextMuted
+            )
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = uiState.systemStatus,
-            style = HaloTypography.bodyMedium,
-            color = HaloGlassColors.TextSecondary
-        )
+        Spacer(modifier = Modifier.weight(1f))
 
-        // Primary Action: State Orb / Floating Mic
+        // Primary Action: State Orb
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -68,65 +69,16 @@ fun HomeScreen(viewModel: HomeViewModel) {
             )
         }
 
-        // Quick Status Section
-        HaloGlassSection(title = "Quick Status") {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                HaloGlassMetric(
-                    label = "Battery",
-                    value = uiState.batteryPercent?.let { "$it%" } ?: "--",
-                    modifier = Modifier.weight(1f)
-                )
-                HaloGlassDivider(modifier = Modifier.height(40.dp).width(1.dp))
-                HaloGlassMetric(
-                    label = "Provider",
-                    value = uiState.activeProvider,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        }
+        Spacer(modifier = Modifier.height(32.dp))
+        
+        // Subtle system status
+        Text(
+            text = uiState.systemStatus,
+            style = HaloTypography.bodyLarge,
+            color = HaloGlassColors.TextPrimary,
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        )
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Recent Activity Section
-        HaloGlassSection(title = "Recent Activity") {
-            if (uiState.recentEvents.isEmpty()) {
-                Text(
-                    text = "No recent interactions.", 
-                    color = HaloGlassColors.TextSecondary, 
-                    style = HaloTypography.bodyMedium,
-                    modifier = Modifier.padding(8.dp)
-                )
-            } else {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    uiState.recentEvents.take(3).forEach { event ->
-                        TimelineEventCard(event)
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun TimelineEventCard(event: TimelinePreviewEvent) {
-    HaloGlassCard(onClick = { }) {
-        Column(modifier = Modifier.padding(4.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = event.command, 
-                    color = HaloGlassColors.TextPrimary, 
-                    style = HaloTypography.bodyLarge,
-                    fontWeight = FontWeight.Medium
-                )
-                HaloGlassChip.Info(text = event.status)
-            }
-        }
+        Spacer(modifier = Modifier.weight(1.5f))
     }
 }

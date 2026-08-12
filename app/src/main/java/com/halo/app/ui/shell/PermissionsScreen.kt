@@ -1,4 +1,4 @@
-ï»¿package com.halo.app.ui.screens
+package com.halo.app.ui.shell
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -35,9 +35,9 @@ fun PermissionsScreen(onPermissionsGranted: () -> Unit) {
             Spacer(modifier = Modifier.height(16.dp))
             Text("Halo requires the following permissions to operate:", style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(8.dp))
-            Text("â€¢ Microphone (for voice input)")
-            Text("â€¢ Bluetooth scan and connection (for wearable discovery)")
-            Text("â€¢ Location on older Android versions (required by BLE scanning)")
+            Text("• Microphone (for voice input)")
+            Text("• Bluetooth scan and connection (for wearable discovery)")
+            Text("• Location on older Android versions (required by BLE scanning)")
 
             Spacer(modifier = Modifier.height(32.dp))
 

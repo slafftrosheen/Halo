@@ -17,7 +17,7 @@ class HeyCyanVoiceSessionTest {
         val eventFlow = MutableSharedFlow<HeyCyanEvent>()
         val session = HeyCyanVoiceSession(
             events = eventFlow,
-            scope = this
+            scope = backgroundScope
         )
         // Run initial launch so events.collect starts before any emissions
         testScheduler.runCurrent()

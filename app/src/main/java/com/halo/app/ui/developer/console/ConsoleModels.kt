@@ -1,4 +1,4 @@
-package com.halo.app.ui.screens.console
+package com.halo.app.ui.developer.console
 
 data class EngineStatus(
     val name: String,

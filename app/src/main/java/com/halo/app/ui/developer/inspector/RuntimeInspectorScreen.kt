@@ -1,4 +1,4 @@
-package com.halo.app.ui.screens.inspector
+package com.halo.app.ui.developer.inspector
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*

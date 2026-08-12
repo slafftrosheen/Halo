@@ -20,6 +20,9 @@ import com.halo.app.ui.glass.material.HaloTypography
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 
 @Composable
 fun DevicesScreen(viewModel: DevicesViewModel) {
@@ -88,6 +91,14 @@ fun DevicesScreen(viewModel: DevicesViewModel) {
                     DeviceCapabilitiesList(uiState.capabilities)
                 }
             }
+        }
+        
+        item {
+            com.halo.app.ui.glass.components.HaloGlassButton(
+                text = "Add Device",
+                onClick = { viewModel.navigateTo("discovery") },
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
@@ -184,6 +195,15 @@ data class DevicesUiState(
 class DevicesViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(DevicesUiState())
     val uiState: StateFlow<DevicesUiState> = _uiState.asStateFlow()
+
+    private val _navigationEvents = kotlinx.coroutines.flow.MutableSharedFlow<String>()
+    val navigationEvents = _navigationEvents.asSharedFlow()
+
+    fun navigateTo(route: String) {
+        viewModelScope.launch {
+            _navigationEvents.emit(route)
+        }
+    }
 }
 
 enum class CapabilityStatusScreen {

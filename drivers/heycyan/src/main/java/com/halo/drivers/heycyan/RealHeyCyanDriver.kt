@@ -30,8 +30,6 @@ import com.halo.drivers.heycyan.HeyCyanConnectionMode
 import com.halo.drivers.heycyan.rfcomm.HeyCyanRfcommClient
 import com.halo.drivers.heycyan.capability.*
 import com.halo.drivers.heycyan.ble.HeyCyanGattCommandTransport
-import com.halo.drivers.heycyan.codec.HeyCyanCommandEncoder
-import com.halo.drivers.heycyan.codec.HeyCyanPacketFramer
 import com.halo.drivers.heycyan.protocol.HeyCyanProtocolConstants
 import com.halo.drivers.heycyan.capability.toOperationFailure
 
@@ -65,7 +63,7 @@ class RealHeyCyanDriver(
     private val rfcommClient = HeyCyanRfcommClient(context, tracer)
 
     private val packetAnalyzer = HeyCyanConsolePacketAnalyzer(ConsoleLogger())
-    private val eventRouter = HeyCyanEventRouter(HeyCyanSdkEventDecoder())
+    private val eventRouter = HeyCyanEventRouter(HeyCyanResponseDecoder())
 
     private val stateStore = com.halo.drivers.heycyan.protocol.HeyCyanDeviceStateStore()
     val deviceState: StateFlow<com.halo.drivers.heycyan.protocol.HeyCyanDeviceState> = stateStore.state
@@ -88,9 +86,7 @@ class RealHeyCyanDriver(
                     transport = HeyCyanGattCommandTransport(
                         gatt = gattClient,
                         commandCharacteristic = HeyCyanProtocolConstants.WRITE_CHARACTERISTIC
-                    ),
-                    encoder = HeyCyanCommandEncoder(),
-                    framer = HeyCyanPacketFramer()
+                    )
                 ),
                 stateStore = stateStore
             )
@@ -139,13 +135,6 @@ class RealHeyCyanDriver(
                 )
             }
             stateStore.updateConnection(com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.CONNECTING)
-            
-            android.util.Log.i("RealHeyCyanDriver", "Starting RFCOMM connection...")
-            val rfcommChannels = rfcommClient.connect(selectedAddress).getOrElse { 
-                android.util.Log.w("RealHeyCyanDriver", "RFCOMM connection failed: $it")
-                emptyList() 
-            }
-            
             android.util.Log.i("RealHeyCyanDriver", "Starting GATT connection...")
             val gattReady = runCatching {
                 gattClient.connect(selectedAddress)
@@ -155,7 +144,7 @@ class RealHeyCyanDriver(
                 android.util.Log.w("RealHeyCyanDriver", "GATT connection failed", it)
             }.getOrDefault(false)
 
-            android.util.Log.i("RealHeyCyanDriver", "Transport status: RFCOMM=$rfcommChannels, GATT=$gattReady")
+            android.util.Log.i("RealHeyCyanDriver", "Transport status: GATT=$gattReady")
 
             if (gattReady) {
                 stateStore.updateConnection(com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.READY)
@@ -163,7 +152,7 @@ class RealHeyCyanDriver(
             if (gattReady && mode == HeyCyanConnectionMode.RUNTIME) {
                 startReading()
             }
-            check(isUsableDiscoveryTransport(rfcommChannels, gattReady)) {
+            check(gattReady) {
                 "No usable HeyCyan transport connected for $selectedAddress"
             }
             if (mode == HeyCyanConnectionMode.RUNTIME) {

@@ -1,4 +1,4 @@
-package com.halo.app.ui.navigation
+package com.halo.app.ui.shell
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -20,9 +20,9 @@ import com.halo.app.ui.screens.home.HomeScreen
 import com.halo.app.ui.screens.activity.ActivityScreen
 import com.halo.app.ui.screens.devices.DevicesScreen
 import com.halo.app.ui.screens.settings.SettingsScreen
-import com.halo.app.ui.screens.protocol.ProtocolLabScreen
-import com.halo.app.ui.screens.inspector.RuntimeInspectorScreen
-import com.halo.app.ui.screens.console.ConsoleScreen
+import com.halo.app.ui.developer.protocol.ProtocolLabScreen
+import com.halo.app.ui.developer.inspector.RuntimeInspectorScreen
+import com.halo.app.ui.developer.console.ConsoleScreen
 import kotlinx.coroutines.flow.collectLatest
 
 /**
@@ -40,12 +40,19 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
 val bottomNavItems = listOf(Screen.Home, Screen.Activity, Screen.Devices, Screen.Settings)
 
 @Composable
-fun AppNavigation() {
+fun AppShell() {
     val navController = rememberNavController()
     val settingsViewModel = ManualDependencyGraph.settingsViewModel
+    val devicesViewModel = ManualDependencyGraph.devicesViewModel
 
     LaunchedEffect(Unit) {
         settingsViewModel.navigationEvents.collectLatest { route ->
+            navController.navigate(route)
+        }
+    }
+    
+    LaunchedEffect(Unit) {
+        devicesViewModel.navigationEvents.collectLatest { route ->
             navController.navigate(route)
         }
     }
@@ -76,6 +83,11 @@ fun AppNavigation() {
             }
             composable(Screen.Settings.route) {
                 SettingsScreen(viewModel = ManualDependencyGraph.settingsViewModel)
+            }
+            composable("discovery") {
+                com.halo.app.ui.screens.discovery.HeyCyanDiscoveryScreen(
+                    context = androidx.compose.ui.platform.LocalContext.current
+                )
             }
             composable(Screen.ProtocolLab.route) {
                 ProtocolLabScreen(viewModel = ManualDependencyGraph.protocolLabViewModel)

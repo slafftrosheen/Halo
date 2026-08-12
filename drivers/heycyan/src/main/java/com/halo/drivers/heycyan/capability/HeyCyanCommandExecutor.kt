@@ -1,7 +1,5 @@
 package com.halo.drivers.heycyan.capability
 
-import com.halo.drivers.heycyan.codec.HeyCyanCommandEncoder
-import com.halo.drivers.heycyan.codec.HeyCyanPacketFramer
 import com.halo.drivers.heycyan.codec.HeyCyanProtocolCapture
 import com.halo.drivers.heycyan.debug.HeyCyanLogger
 import com.halo.drivers.heycyan.protocol.HeyCyanCommand
@@ -41,19 +39,65 @@ interface HeyCyanCommandExecutor {
  */
 class DefaultHeyCyanCommandExecutor(
     private val transport: HeyCyanCommandTransport,
-    private val encoder: HeyCyanCommandEncoder,
-    private val framer: HeyCyanPacketFramer,
 ) : HeyCyanCommandExecutor {
 
     override suspend fun execute(command: HeyCyanCommand): Result<Unit> {
         HeyCyanLogger.i("HALO-TX-TRACE", "HeyCyan command requested: $command")
         HeyCyanProtocolCapture.instance.startOperation(command.toString())
         try {
-            val encoded = encoder.encode(command)
-                .getOrElse { return Result.failure(it) }
+            val action: Byte
+            val payload: ByteArray
 
-            val framed = framer.frame(encoded)
-                .getOrElse { return Result.failure(it) }
+            when (command) {
+                is HeyCyanCommand.GetBattery, is HeyCyanCommand.RequestBattery -> {
+                    action = com.halo.drivers.heycyan.protocol.HeyCyanCommandCatalog.ACTION_GLASSES_BATTERY
+                    payload = byteArrayOf()
+                }
+                is HeyCyanCommand.GetVersion, is HeyCyanCommand.GetDeviceInfo -> {
+                    action = com.halo.drivers.heycyan.protocol.HeyCyanCommandCatalog.ACTION_DEVICE_INFO
+                    payload = byteArrayOf()
+                }
+                is HeyCyanCommand.GetMediaCounts -> {
+                    action = com.halo.drivers.heycyan.protocol.HeyCyanCommandCatalog.ACTION_GLASSES_CONTROL
+                    payload = byteArrayOf(0x02, 0x04)
+                }
+                is HeyCyanCommand.GetMacAddress -> {
+                    action = com.halo.drivers.heycyan.protocol.HeyCyanCommandCatalog.ACTION_BT_MAC_PROTOCOL
+                    payload = byteArrayOf()
+                }
+                is HeyCyanCommand.SetMode -> {
+                    action = com.halo.drivers.heycyan.protocol.HeyCyanCommandCatalog.ACTION_GLASSES_CONTROL
+                    payload = byteArrayOf(0x02, 0x01, command.mode.value.toByte())
+                }
+                is HeyCyanCommand.TakePhoto -> {
+                    action = com.halo.drivers.heycyan.protocol.HeyCyanCommandCatalog.ACTION_GLASSES_CONTROL
+                    payload = byteArrayOf(0x02, 0x01, 0x01)
+                }
+                is HeyCyanCommand.ToggleVideo -> {
+                    action = com.halo.drivers.heycyan.protocol.HeyCyanCommandCatalog.ACTION_GLASSES_CONTROL
+                    payload = byteArrayOf(0x02, 0x01, 0x02)
+                }
+                is HeyCyanCommand.EnterWifiTransferMode -> {
+                    action = com.halo.drivers.heycyan.protocol.HeyCyanCommandCatalog.ACTION_GLASSES_CONTROL
+                    payload = byteArrayOf(0x02, 0x01, 0x03)
+                }
+                is HeyCyanCommand.PrepareVoiceRouting -> {
+                    action = com.halo.drivers.heycyan.protocol.HeyCyanCommandCatalog.ACTION_GLASSES_CONTROL
+                    payload = byteArrayOf(0x02, 0x01, 0x05)
+                }
+                is HeyCyanCommand.SetDateTime -> {
+                    action = com.halo.drivers.heycyan.protocol.HeyCyanCommandCatalog.ACTION_SYNC_TIME
+                    payload = byteArrayOf() // Needs proper implementation, omitting for now
+                }
+                else -> return Result.failure(
+                    com.halo.drivers.heycyan.protocol.ProtocolNotVerifiedException(
+                        operation = command.toString(),
+                        detail = "No evidence-backed catalog definition for command"
+                    )
+                )
+            }
+
+            val framed = com.halo.drivers.heycyan.codec.HeyCyanWireFrameCodec.encode(action, payload)
 
             HeyCyanLogger.i("HALO-TX-TRACE", "HeyCyan dispatch transport=${transport.javaClass.simpleName}")
             val result = transport.send(framed)

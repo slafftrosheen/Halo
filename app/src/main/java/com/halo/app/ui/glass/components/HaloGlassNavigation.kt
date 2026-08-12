@@ -12,6 +12,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -40,16 +42,23 @@ fun HaloGlassNavigation(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
-    Row(
+    Box(
         modifier = modifier
             .fillMaxWidth()
             .navigationBarsPadding()
-            .height(64.dp)
-            .background(HaloGlassColors.BackgroundSecondary.copy(alpha = 0.8f))
-            .padding(horizontal = HaloGlassTokens.md),
-        horizontalArrangement = Arrangement.SpaceAround,
-        verticalAlignment = Alignment.CenterVertically
+            .padding(bottom = 24.dp),
+        contentAlignment = Alignment.BottomCenter
     ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth(0.85f)
+                .height(64.dp)
+                .clip(RoundedCornerShape(32.dp))
+                .background(HaloGlassColors.BackgroundSecondary.copy(alpha = 0.8f))
+                .padding(horizontal = HaloGlassTokens.md),
+            horizontalArrangement = Arrangement.SpaceAround,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
         items.forEach { item ->
             val selected = currentDestination?.hierarchy?.any { it.route == item.route } == true
             
@@ -81,6 +90,7 @@ fun HaloGlassNavigation(
                     fontSize = 10.sp
                 )
             }
+        }
         }
     }
 }

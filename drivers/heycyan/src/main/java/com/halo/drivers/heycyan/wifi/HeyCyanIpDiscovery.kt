@@ -58,12 +58,18 @@ class HeyCyanIpDiscovery(
     }
 
     /**
-     * Discovers the device IP by probing all candidate IPs concurrently.
+     * Discovers the device IP by probing the announced IP first, then candidate IPs.
      *
+     * @param announcedIp The IP address announced via BLE (if any)
      * @return The first reachable IP, or null if no candidate responds
      */
-    suspend fun discover(): String? {
+    suspend fun discover(announcedIp: String? = null): String? {
         return withTimeoutOrNull(totalTimeoutMillis) {
+            if (announcedIp != null) {
+                if (testConnection(announcedIp)) {
+                    return@withTimeoutOrNull announcedIp
+                }
+            }
             discoverConcurrently()
         }
     }

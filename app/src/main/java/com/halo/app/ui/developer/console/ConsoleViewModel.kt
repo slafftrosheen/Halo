@@ -1,4 +1,4 @@
-package com.halo.app.ui.screens.console
+package com.halo.app.ui.developer.console
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

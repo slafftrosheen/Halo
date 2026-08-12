@@ -5,13 +5,12 @@ import com.halo.engines.memory.WorkingMemoryProcess
 import com.halo.host.android.AndroidWakeWordProcess
 import com.halo.runtime.kernel.HaloMicrokernel
 import com.halo.app.ui.screens.home.HomeViewModel
-import com.halo.app.ui.screens.timeline.TimelineViewModel
-import com.halo.app.ui.screens.console.ConsoleViewModel
+import com.halo.app.ui.developer.console.ConsoleViewModel
 import com.halo.app.ui.screens.settings.SettingsViewModel
 import com.halo.app.ui.screens.activity.ActivityViewModel
 import com.halo.app.ui.screens.devices.DevicesViewModel
-import com.halo.app.ui.screens.protocol.ProtocolLabViewModel
-import com.halo.app.ui.screens.inspector.RuntimeInspectorViewModel
+import com.halo.app.ui.developer.protocol.ProtocolLabViewModel
+import com.halo.app.ui.developer.inspector.RuntimeInspectorViewModel
 
 /**
  * Thin façade that wires sub-graphs together. This is the sole composition root.
@@ -97,7 +96,6 @@ object ManualDependencyGraph {
     // ─── ViewModels ─────────────────────────────────────────────
 
     val homeViewModel by lazy { HomeViewModel(runtimeSnapshotManager, commandBus) }
-    val timelineViewModel by lazy { TimelineViewModel(cognitiveBus) }
     val consoleViewModel by lazy { ConsoleViewModel(runtimeSnapshotManager) }
     val settingsViewModel by lazy { SettingsViewModel() }
     val activityViewModel by lazy { ActivityViewModel() }

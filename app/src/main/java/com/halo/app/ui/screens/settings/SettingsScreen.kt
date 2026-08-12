@@ -150,7 +150,7 @@ fun PermissionsScreen() {
             )
             HaloGlassDivider()
             PermissionItem(
-                icon = Icons.Default.VolumeUp,
+                icon = Icons.AutoMirrored.Default.VolumeUp,
                 label = "Speaker Output",
                 description = "Required for audio playback and responses",
                 granted = uiState.speakerGranted,
