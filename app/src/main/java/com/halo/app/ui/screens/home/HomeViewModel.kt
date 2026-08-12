@@ -22,33 +22,18 @@ data class TimelinePreviewEvent(
     val timestamp: Long
 )
 
-data class EngineUiState(
-    val id: String,
-    val state: String,
-    val isHealthy: Boolean
-)
-
 data class HomeUiState(
-    val greeting: String = "System Online",
-    val systemStatus: String = "Initializing...",
+    val connectionState: String = "Disconnected",
+    val contextualText: String = "Initializing...",
     val runtimeState: HaloRuntimeState = HaloRuntimeState.Idle,
     val recentEvents: List<TimelinePreviewEvent> = emptyList(),
-    val engines: List<EngineUiState> = emptyList(),
-    val activeProvider: String = "None",
+    val activeProvider: String = "No provider",
     val batteryPercent: Int? = null,
-    val isDeviceConnected: Boolean = false,
-    val isCharging: Boolean = false
+    val isCharging: Boolean = false,
+    val capabilities: List<String> = emptyList()
 )
 
-interface GreetingProvider {
-    fun getGreeting(): String
-}
-
-class DefaultGreetingProvider : GreetingProvider {
-    override fun getGreeting(): String = "System Online"
-}
-
-class HomeUiMapper(private val greetingProvider: GreetingProvider) : RuntimeUiMapper<HomeUiState> {
+class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
     override fun map(snapshot: RuntimeSnapshot): HomeUiState {
         val isReady = snapshot.runtimeState == com.halo.sdk.runtime.RuntimeState.Running
         
@@ -60,31 +45,44 @@ class HomeUiMapper(private val greetingProvider: GreetingProvider) : RuntimeUiMa
             else -> HaloRuntimeState.Idle
         }
         
+        val contextualText = when (uiRuntimeState) {
+            HaloRuntimeState.Idle -> if (isReady) "Ready when you are" else "Initializing..."
+            HaloRuntimeState.Capturing -> "Listening"
+            HaloRuntimeState.Recognizing -> "Thinking"
+            HaloRuntimeState.Speaking -> "Speaking"
+            else -> "Processing..."
+        }
+        
+        val isConnected = snapshot.deviceContext.connected
+        
+        val caps = mutableListOf<String>()
+        if (isConnected) {
+            caps.add("Camera")
+            caps.add("Audio")
+            caps.add("Glasses")
+        }
+        
         return HomeUiState(
-            greeting = greetingProvider.getGreeting(),
-            systemStatus = if (isReady) "Halo Runtime Ready." else "Initializing...",
+            connectionState = if (isConnected) "Connected" else "Disconnected",
+            contextualText = if (!isConnected) "Glasses disconnected" else contextualText,
             runtimeState = uiRuntimeState,
             recentEvents = snapshot.timeline.map { 
                 TimelinePreviewEvent(it.title, it.status, System.currentTimeMillis())
             },
-            engines = snapshot.engines.map { 
-                EngineUiState(it.id, it.state.javaClass.simpleName, it.health == com.halo.sdk.runtime.EngineHealth.Healthy) 
-            },
-            activeProvider = snapshot.providers.firstOrNull()?.name ?: "Native Engine",
+            activeProvider = snapshot.providers.firstOrNull()?.name ?: "No provider",
             batteryPercent = snapshot.deviceContext.batteryPercent,
-            isDeviceConnected = snapshot.deviceContext.connected,
-            isCharging = snapshot.deviceContext.charging
+            isCharging = snapshot.deviceContext.charging,
+            capabilities = caps
         )
     }
 }
 
 class HomeViewModel(
     private val snapshotManager: RuntimeSnapshotSource,
-    private val commandBus: CommandBus,
-    private val greetingProvider: GreetingProvider = DefaultGreetingProvider()
+    private val commandBus: CommandBus
 ) : ViewModel() {
 
-    private val mapper = HomeUiMapper(greetingProvider)
+    private val mapper = HomeUiMapper()
     
     val uiState: StateFlow<HomeUiState> = snapshotManager.snapshot
         .map { mapper.map(it) }

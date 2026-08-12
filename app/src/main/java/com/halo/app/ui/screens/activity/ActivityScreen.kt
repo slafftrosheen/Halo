@@ -16,6 +16,11 @@ import com.halo.app.ui.glass.material.HaloTypography
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import androidx.lifecycle.viewModelScope
+import com.halo.sdk.runtime.RuntimeSnapshotSource
 
 @Composable
 fun ActivityScreen(viewModel: ActivityViewModel) {
@@ -44,11 +49,11 @@ fun ActivityScreen(viewModel: ActivityViewModel) {
         
         if (uiState.events.isEmpty()) {
             item {
-                Box(Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                Box(Modifier.fillMaxWidth().height(300.dp), contentAlignment = Alignment.Center) {
                     Text(
-                        text = "No cognitive events recorded yet.",
-                        color = HaloGlassColors.TextSecondary,
-                        style = HaloTypography.bodyMedium
+                        text = "No activity yet.",
+                        color = HaloGlassColors.TextMuted,
+                        style = HaloTypography.bodyLarge
                     )
                 }
             }
@@ -97,43 +102,47 @@ private fun ActivityEventItem(event: ActivityEvent) {
             }
             
             if (expanded) {
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(16.dp))
                 HaloGlassDivider()
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(16.dp))
                 
                 Text(
                     text = "STATUS",
                     style = HaloTypography.labelSmall,
                     color = HaloGlassColors.TextSecondary
                 )
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = event.status,
-                    style = HaloTypography.bodyMedium,
+                    style = HaloTypography.bodyLarge,
                     color = if (event.status == "Success") HaloGlassColors.Success else HaloGlassColors.TextPrimary
                 )
                 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(24.dp))
                 
                 Text(
                     text = "DESCRIPTION",
                     style = HaloTypography.labelSmall,
                     color = HaloGlassColors.TextSecondary
                 )
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = event.description,
                     color = HaloGlassColors.TextPrimary,
-                    style = HaloTypography.bodySmall
+                    style = HaloTypography.bodyMedium
                 )
                 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(24.dp))
                 
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Column {
                         Text("LATENCY", style = HaloTypography.labelSmall, color = HaloGlassColors.TextSecondary)
-                        Text("42ms", style = HaloTypography.bodyMedium, color = HaloGlassColors.Info)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text("42ms", style = HaloTypography.bodyLarge, color = HaloGlassColors.Info)
                     }
                     Column(horizontalAlignment = Alignment.End) {
                         Text("ID", style = HaloTypography.labelSmall, color = HaloGlassColors.TextSecondary)
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(event.id.take(8), style = HaloTypography.monoSmall, color = HaloGlassColors.TextMuted)
                     }
                 }
@@ -170,19 +179,29 @@ data class ActivityUiState(
     val hasMore: Boolean = false
 )
 
-class ActivityViewModel : ViewModel() {
-    private val initialEvents = listOf(
-        ActivityEvent("e1", "Photo Capture", "Captured via panel double tap", System.currentTimeMillis() - 5000, "Success"),
-        ActivityEvent("e2", "Audio Transcription", "Processed 12s voice command", System.currentTimeMillis() - 15000, "Success"),
-        ActivityEvent("e3", "Object Recognition", "Identified 3 items in view", System.currentTimeMillis() - 60000, "Success")
-    )
-    
-    private val _uiState = MutableStateFlow(ActivityUiState(events = initialEvents, hasMore = true))
-    val uiState: StateFlow<ActivityUiState> = _uiState.asStateFlow()
+class ActivityViewModel(private val snapshotManager: RuntimeSnapshotSource) : ViewModel() {
+    val uiState: StateFlow<ActivityUiState> = snapshotManager.snapshot
+        .map { snapshot ->
+            ActivityUiState(
+                events = snapshot.timeline.map {
+                    ActivityEvent(
+                        id = it.id,
+                        command = it.title,
+                        description = it.description,
+                        timestamp = it.timestamp.toEpochMilli(),
+                        status = it.status
+                    )
+                }.sortedByDescending { it.timestamp },
+                hasMore = false
+            )
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = ActivityUiState()
+        )
     
     fun loadMore() {
-        val currentEvents = _uiState.value.events.toMutableList()
-        currentEvents.add(ActivityEvent("e${currentEvents.size + 1}", "System Log", "Older event loaded", System.currentTimeMillis() - 3600000, "Info"))
-        _uiState.value = _uiState.value.copy(events = currentEvents, hasMore = currentEvents.size < 10)
+        // No-op for now, until pagination is supported in the timeline
     }
 }

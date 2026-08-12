@@ -1,5 +1,8 @@
 package com.halo.drivers.heycyan.debug
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+
 /**
  * A probe for characterizing the BC 59 candidate audio stream.
  * 
@@ -42,6 +45,12 @@ interface AudioStreamProbe {
 }
 
 object HeyCyanAudioStreamProbe : AudioStreamProbe {
+    private val _packetCountFlow = MutableStateFlow(0)
+    val packetCountFlow = _packetCountFlow.asStateFlow()
+    
+    private val _statusFlow = MutableStateFlow("Inactive")
+    val statusFlow = _statusFlow.asStateFlow()
+
     private var packetCount = 0
     private val payloadSizes = mutableMapOf<Int, Int>()
     private val byte0Frequencies = mutableMapOf<Byte, Int>()
@@ -63,6 +72,8 @@ object HeyCyanAudioStreamProbe : AudioStreamProbe {
 
     override fun onPacket(packet: AudioStreamPacket) {
         packetCount++
+        _packetCountFlow.value = packetCount
+        _statusFlow.value = "Receiving Packets"
         
         payloadSizes[packet.length] = (payloadSizes[packet.length] ?: 0) + 1
         

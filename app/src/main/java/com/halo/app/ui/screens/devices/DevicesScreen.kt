@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import com.halo.app.ui.glass.components.HaloGlassCard
 import com.halo.app.ui.glass.components.HaloGlassSection
@@ -23,6 +24,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
+import com.halo.sdk.runtime.RuntimeSnapshotSource
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import com.halo.sdk.driver.DeviceCapabilities as SdkDeviceCapabilities
 
 @Composable
 fun DevicesScreen(viewModel: DevicesViewModel) {
@@ -37,186 +43,131 @@ fun DevicesScreen(viewModel: DevicesViewModel) {
     ) {
         item {
             Text(
-                text = "Devices",
-                style = HaloTypography.displayMedium,
-                color = HaloGlassColors.TextPrimary
+                text = "GLASSES",
+                style = HaloTypography.labelLarge,
+                color = HaloGlassColors.TextSecondary,
+                letterSpacing = 2.sp
             )
             Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Connected Halos and capability status",
-                style = HaloTypography.bodyMedium,
-                color = HaloGlassColors.TextSecondary
-            )
-        }
-        
-        item {
-            HaloGlassSection(
-                title = "Connected Devices",
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                if (uiState.devices.isEmpty()) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.padding(16.dp)
-                    ) {
-                        Text(
-                            text = "No devices connected",
-                            color = HaloGlassColors.TextSecondary,
-                            style = HaloTypography.bodyMedium
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Wake Halo devices to connect",
-                            color = HaloGlassColors.TextMuted,
-                            style = HaloTypography.labelLarge
-                        )
-                    }
-                } else {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        uiState.devices.forEach { device ->
-                            DeviceCard(device)
-                        }
-                    }
-                }
-            }
-        }
-        
-        if (uiState.showCapabilities) {
-            item {
-                HaloGlassSection(
-                    title = "Capabilities",
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    DeviceCapabilitiesList(uiState.capabilities)
-                }
-            }
-        }
-        
-        item {
-            com.halo.app.ui.glass.components.HaloGlassButton(
-                text = "Add Device",
-                onClick = { viewModel.navigateTo("discovery") },
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-    }
-}
-
-@Composable
-private fun DeviceCard(device: DeviceInfo) {
-    HaloGlassCard(
-        onClick = { /* TODO: Handle device click */ }
-    ) {
-        Column {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = device.name,
-                        color = HaloGlassColors.TextPrimary,
-                        style = HaloTypography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
-                        text = device.id,
-                        color = HaloGlassColors.TextSecondary,
-                        style = HaloTypography.labelMedium
-                    )
-                }
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     modifier = Modifier
-                        .background(device.status.color, androidx.compose.foundation.shape.RoundedCornerShape(50))
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                ) {
+                        .size(12.dp)
+                        .background(
+                            if (uiState.isConnected) HaloGlassColors.Accent else HaloGlassColors.Danger,
+                            androidx.compose.foundation.shape.CircleShape
+                        )
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = if (uiState.isConnected) "Connected" else "Not connected",
+                    style = HaloTypography.titleLarge,
+                    color = HaloGlassColors.TextPrimary
+                )
+            }
+        }
+        
+        item { Spacer(modifier = Modifier.height(32.dp)) }
+
+        if (!uiState.isConnected) {
+            item {
+                Box(Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
                     Text(
-                        text = device.status.label,
-                        color = HaloGlassColors.TextPrimary,
-                        style = HaloTypography.labelSmall,
-                        fontWeight = FontWeight.Medium
+                        text = "No active glasses",
+                        color = HaloGlassColors.TextMuted,
+                        style = HaloTypography.bodyLarge
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = device.description,
-                color = HaloGlassColors.TextMuted,
-                style = HaloTypography.bodySmall
-            )
+            item {
+                com.halo.app.ui.glass.components.HaloGlassButton(
+                    text = "Find glasses",
+                    onClick = { viewModel.navigateTo("discovery") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        } else {
+            item {
+                HaloGlassSection(
+                    title = "Device Status",
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Battery", style = HaloTypography.bodyMedium, color = HaloGlassColors.TextSecondary)
+                        Text(uiState.battery, style = HaloTypography.bodyMedium, color = HaloGlassColors.TextPrimary)
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Connection", style = HaloTypography.bodyMedium, color = HaloGlassColors.TextSecondary)
+                        Text(uiState.connectionType, style = HaloTypography.bodyMedium, color = HaloGlassColors.Accent)
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Audio", style = HaloTypography.bodyMedium, color = HaloGlassColors.TextSecondary)
+                        Text(uiState.audioStatus, style = HaloTypography.bodyMedium, color = HaloGlassColors.TextPrimary)
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Camera", style = HaloTypography.bodyMedium, color = HaloGlassColors.TextSecondary)
+                        Text(uiState.cameraStatus, style = HaloTypography.bodyMedium, color = HaloGlassColors.TextPrimary)
+                    }
+                }
+            }
+            
+            item { Spacer(modifier = Modifier.height(16.dp)) }
+            
+            item {
+                com.halo.app.ui.glass.components.HaloGlassButton(
+                    text = "Device details",
+                    onClick = { /* TODO */ },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
     }
-}
-
-@Composable
-private fun DeviceCapabilitiesList(capabilities: List<String>) {
-    Text(
-        text = "Device supports:",
-        color = HaloGlassColors.TextSecondary,
-        style = HaloTypography.bodySmall
-    )
-    Spacer(modifier = Modifier.height(8.dp))
-    @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
-    androidx.compose.foundation.layout.FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        capabilities.forEach { cap ->
-            com.halo.app.ui.glass.components.HaloGlassChip(text = cap)
-        }
-    }
-}
-
-enum class DeviceStatus(val label: String, val color: Color) {
-    Connected("Connected", HaloGlassColors.Accent),
-    Pairing("Pairing", HaloGlassColors.Warning),
-    Disconnected("Offline", HaloGlassColors.Danger)
-}
-
-data class DeviceInfo(
-    val id: String,
-    val name: String,
-    val description: String,
-    val status: DeviceStatus,
-    val capabilities: DeviceCapabilities? = null
-)
-
-data class DeviceCapabilities(
-    val speech: CapabilityStatus = CapabilityStatus.Unsupported,
-    val vision: CapabilityStatus = CapabilityStatus.Unsupported,
-    val movement: CapabilityStatus = CapabilityStatus.Unsupported,
-    val communication: CapabilityStatus = CapabilityStatus.Unsupported
-)
-
-enum class CapabilityStatus {
-    Supported, Partial, Unsupported
 }
 
 data class DevicesUiState(
-    val devices: List<DeviceInfo> = emptyList(),
-    val capabilities: List<String> = emptyList(),
-    val showCapabilities: Boolean = true
+    val isConnected: Boolean = false,
+    val battery: String = "Unknown",
+    val connectionType: String = "Unknown",
+    val audioStatus: String = "Unknown",
+    val cameraStatus: String = "Unknown"
 )
 
-class DevicesViewModel : ViewModel() {
-    private val _uiState = MutableStateFlow(
-        DevicesUiState(
-            devices = listOf(
-                DeviceInfo(
-                    id = "HALO-8F3A",
-                    name = "Halo Glass Prototype",
-                    description = "Firmware v2.4.1",
-                    status = DeviceStatus.Connected,
-                    capabilities = DeviceCapabilities(CapabilityStatus.Supported, CapabilityStatus.Partial, CapabilityStatus.Supported, CapabilityStatus.Supported)
-                )
-            ),
-            capabilities = listOf("Audio Streaming", "Gesture Control", "Notifications", "Camera (Beta)")
+class DevicesViewModel(private val snapshotManager: RuntimeSnapshotSource) : ViewModel() {
+    val uiState: StateFlow<DevicesUiState> = snapshotManager.snapshot
+        .map { snapshot ->
+            val isConnected = snapshot.deviceContext.connected
+            DevicesUiState(
+                isConnected = isConnected,
+                battery = snapshot.deviceContext.batteryPercent?.let { "$it%" } ?: "Unknown",
+                connectionType = if (isConnected) "BLE" else "Disconnected",
+                audioStatus = if (isConnected) "Available" else "Not connected",
+                cameraStatus = if (isConnected) "Available" else "Not connected"
+            )
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = DevicesUiState()
         )
-    )
-    val uiState: StateFlow<DevicesUiState> = _uiState.asStateFlow()
 
     private val _navigationEvents = kotlinx.coroutines.flow.MutableSharedFlow<String>()
     val navigationEvents = _navigationEvents.asSharedFlow()

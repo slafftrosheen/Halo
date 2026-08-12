@@ -29,34 +29,33 @@ fun HomeScreen(viewModel: HomeViewModel) {
             .padding(24.dp)
             .padding(bottom = 80.dp) // padding for navigation pill overlay
     ) {
-        // Subtle Header
+        // TOP Header
         Row(
             modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "NOW", 
-                style = HaloTypography.titleMedium,
-                color = HaloGlassColors.TextSecondary,
-                letterSpacing = 2.sp
+                text = "HALO", 
+                style = HaloTypography.titleLarge,
+                color = HaloGlassColors.TextPrimary,
+                letterSpacing = 4.sp
             )
             
-            val connectionText = if (uiState.isDeviceConnected) "Glasses Connected" else "Phone Audio"
             Text(
-                text = connectionText,
+                text = uiState.connectionState,
                 style = HaloTypography.labelMedium,
-                color = HaloGlassColors.TextMuted
+                color = if (uiState.connectionState == "Connected") HaloGlassColors.Accent else HaloGlassColors.TextMuted
             )
         }
 
-        Spacer(modifier = Modifier.height(64.dp))
+        Spacer(modifier = Modifier.height(48.dp))
 
-        // Primary Action: State Orb
+        // CENTER Action: State Orb
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 32.dp),
+                .padding(vertical = 16.dp),
             contentAlignment = Alignment.Center
         ) {
             HaloFloatingMic(
@@ -71,16 +70,86 @@ fun HomeScreen(viewModel: HomeViewModel) {
             )
         }
 
-        Spacer(modifier = Modifier.height(64.dp))
+        Spacer(modifier = Modifier.height(24.dp))
         
-        // Subtle system status
+        // Contextual Text
         Text(
-            text = uiState.systemStatus,
+            text = uiState.contextualText,
             style = HaloTypography.bodyLarge,
             color = HaloGlassColors.TextPrimary,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(48.dp))
+        
+        // Capabilities Row (Compact)
+        if (uiState.capabilities.isNotEmpty()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                uiState.capabilities.forEach { cap ->
+                    HaloGlassChip(
+                        text = cap
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(32.dp))
+        }
+
+        // Device Status
+        HaloGlassSection(title = "Device Status") {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Connection", style = HaloTypography.bodyMedium, color = HaloGlassColors.TextSecondary)
+                Text(uiState.connectionState, style = HaloTypography.bodyMedium, color = HaloGlassColors.TextPrimary)
+            }
+            if (uiState.connectionState == "Connected") {
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Battery", style = HaloTypography.bodyMedium, color = HaloGlassColors.TextSecondary)
+                    val batteryText = uiState.batteryPercent?.let { "$it%" } ?: "Unknown"
+                    val chargeText = if (uiState.isCharging) " (Charging)" else ""
+                    Text("$batteryText$chargeText", style = HaloTypography.bodyMedium, color = HaloGlassColors.TextPrimary)
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Audio Routing", style = HaloTypography.bodyMedium, color = HaloGlassColors.TextSecondary)
+                    Text("Glasses", style = HaloTypography.bodyMedium, color = HaloGlassColors.TextPrimary)
+                }
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Recent Activity
+        HaloGlassSection(title = "Activity") {
+            if (uiState.recentEvents.isEmpty()) {
+                Text(
+                    text = "No activity yet.",
+                    style = HaloTypography.bodyMedium,
+                    color = HaloGlassColors.TextMuted,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+            } else {
+                uiState.recentEvents.take(3).forEach { event ->
+                    Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                        Text(event.command, style = HaloTypography.bodyMedium, color = HaloGlassColors.TextPrimary)
+                        Text(event.status, style = HaloTypography.labelMedium, color = HaloGlassColors.TextMuted)
+                    }
+                }
+            }
+        }
     }
 }

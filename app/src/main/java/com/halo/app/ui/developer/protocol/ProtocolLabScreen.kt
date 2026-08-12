@@ -39,169 +39,192 @@ fun ProtocolLabScreen(viewModel: ProtocolLabViewModel) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text("Protocol Lab", color = HaloGlassColors.TextPrimary, style = HaloTypography.displayMedium)
-            Button(
-                onClick = { viewModel.toggleDiscovery() },
-                enabled = !state.isConnecting
-            ) { 
-                Text(if (state.isDiscovering) "Stop" else "Discover") 
-            }
         }
         
-        // Single root container for all scrollable content
         Box(modifier = Modifier.weight(1f)) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = 32.dp)
             ) {
-                // Status Section
+                // Connection Section
                 item {
                     HaloGlassSection(
-                        title = "Device Status", 
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp)
-                    ) {
-                        Column(Modifier.padding(8.dp)) {
-                            Text("State: ${if (state.isDiscovering) "Scanning" else "Idle"}", color = HaloGlassColors.TextPrimary)
-                            Text("Found: ${state.discoveredDevices.size}", color = HaloGlassColors.TextSecondary)
-                            Text("Active: ${state.activeDeviceName ?: "None"}", color = HaloGlassColors.TextSecondary)
-                            Text("Connection: ${state.connectionStatus}", color = HaloGlassColors.Accent, style = HaloTypography.labelSmall)
-                        }
-                    }
-                }
-
-                item {
-                    Spacer(Modifier.height(16.dp))
-                    HaloGlassSection(
-                        title = "Forensic Tools",
+                        title = "Connection", 
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
                     ) {
                         Column(Modifier.padding(8.dp)) {
                             Row(
-                                Modifier.fillMaxWidth(),
+                                modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text("Capture Mode", color = HaloGlassColors.TextPrimary)
-                                Switch(
-                                    checked = state.isForensicCaptureEnabled,
-                                    onCheckedChange = { viewModel.setForensicCaptureEnabled(it) }
-                                )
+                                Text(if (state.isDiscovering) "Scanning..." else "Idle", color = HaloGlassColors.TextPrimary)
+                                Button(
+                                    onClick = { viewModel.toggleDiscovery() },
+                                    enabled = !state.isConnecting
+                                ) { 
+                                    Text(if (state.isDiscovering) "Stop" else "Discover") 
+                                }
                             }
                             
-                            if (state.isForensicCaptureEnabled) {
-                                Spacer(Modifier.height(12.dp))
-                                Text("Trigger Commands:", style = HaloTypography.labelLarge, color = HaloGlassColors.Accent)
-                                Row(
-                                    Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Button(
-                                        onClick = { 
-                                            println("[INFO ] [${java.time.Instant.now()}] [HALO-UI-CLICK] PHOTO button pressed")
-                                            viewModel.triggerForensicOperation("PHOTO") 
-                                        },
-                                        modifier = Modifier.weight(1f),
-                                        contentPadding = PaddingValues(4.dp)
-                                    ) { Text("Photo", fontSize = 10.sp) }
-                                    
-                                    Button(
-                                        onClick = { 
-                                            println("[INFO ] [${java.time.Instant.now()}] [HALO-UI-CLICK] VID_TOGGLE button pressed")
-                                            viewModel.triggerForensicOperation("VID_TOGGLE") 
-                                        },
-                                        modifier = Modifier.weight(1f),
-                                        contentPadding = PaddingValues(4.dp)
-                                    ) { Text("Vid Toggle", fontSize = 10.sp) }
-                                    
-                                    Button(
-                                        onClick = { 
-                                            println("[INFO ] [${java.time.Instant.now()}] [HALO-UI-CLICK] AUD_TOGGLE button pressed")
-                                            viewModel.triggerForensicOperation("AUD_TOGGLE") 
-                                        },
-                                        modifier = Modifier.weight(1f),
-                                        contentPadding = PaddingValues(4.dp)
-                                    ) { Text("Aud Toggle", fontSize = 10.sp) }
-                                }
-                                
-                                Row(
-                                    Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Button(
-                                        onClick = { 
-                                            println("[INFO ] [${java.time.Instant.now()}] [HALO-UI-CLICK] MEDIA_COUNT button pressed")
-                                            viewModel.triggerForensicOperation("MEDIA_COUNT") 
-                                        },
-                                        modifier = Modifier.weight(1f),
-                                        contentPadding = PaddingValues(4.dp)
-                                    ) { Text("Media Cnt", fontSize = 10.sp) }
-
-                                    Spacer(Modifier.weight(2f))
+                            if (state.discoveredDevices.isNotEmpty()) {
+                                Spacer(Modifier.height(8.dp))
+                                state.discoveredDevices.forEach { device ->
+                                    Row(
+                                        Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column {
+                                            Text(device.name, color = HaloGlassColors.TextPrimary)
+                                            Text(device.id, color = HaloGlassColors.TextSecondary, style = HaloTypography.labelSmall)
+                                        }
+                                        Button(
+                                            onClick = { viewModel.connect(device) },
+                                            enabled = !state.isDiscovering && !state.isConnecting
+                                        ) {
+                                            Text(if (state.isConnecting && state.activeDeviceName == device.name) "..." else "Connect")
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                 }
-                
-                item { Spacer(Modifier.height(24.dp)) }
-                
-                // Devices Header
+
+                item { Spacer(Modifier.height(16.dp)) }
+
+                // DEVICE Section
                 item {
-                    Text(
-                        text = "DISCOVERED DEVICES",
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                        style = HaloTypography.labelLarge,
-                        color = HaloGlassColors.TextSecondary
-                    )
+                    HaloGlassSection(
+                        title = "DEVICE", 
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+                    ) {
+                        Column(Modifier.padding(8.dp)) {
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("Active Name", color = HaloGlassColors.TextSecondary)
+                                Text(state.activeDeviceName ?: "None", color = HaloGlassColors.TextPrimary)
+                            }
+                        }
+                    }
                 }
 
-                // Devices List
-                if (state.discoveredDevices.isEmpty()) {
-                    item {
-                        Box(
-                            Modifier
-                                .fillMaxWidth()
-                                .height(200.dp), 
-                            contentAlignment = Alignment.Center
+                item { Spacer(Modifier.height(16.dp)) }
+
+                // TRANSPORT Section
+                item {
+                    HaloGlassSection(
+                        title = "TRANSPORT (BLE GATT)", 
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+                    ) {
+                        Column(Modifier.padding(8.dp)) {
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("Status", color = HaloGlassColors.TextSecondary)
+                                Text(state.connectionStatus, color = HaloGlassColors.Accent)
+                            }
+                        }
+                    }
+                }
+
+                item { Spacer(Modifier.height(16.dp)) }
+
+                // FORENSIC CAPTURE Section
+                item {
+                    HaloGlassSection(
+                        title = "FORENSIC CAPTURE",
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+                    ) {
+                        Row(
+                            Modifier.fillMaxWidth().padding(8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                if (state.isDiscovering) "Searching..." else "No devices discovered", 
-                                color = HaloGlassColors.TextSecondary
+                            Text("Record Session", color = HaloGlassColors.TextPrimary)
+                            Switch(
+                                checked = state.isForensicCaptureEnabled,
+                                onCheckedChange = { viewModel.setForensicCaptureEnabled(it) }
                             )
                         }
                     }
-                } else {
-                    items(state.discoveredDevices, key = { it.id }) { device ->
-                        Card(
-                            colors = CardDefaults.cardColors(
-                                containerColor = HaloGlassColors.BackgroundSecondary.copy(alpha = 0.5f)
-                            ),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 4.dp)
-                        ) {
+                }
+                
+                item { Spacer(Modifier.height(16.dp)) }
+
+                // QUICK ACTIONS Section
+                item {
+                    HaloGlassSection(
+                        title = "QUICK ACTIONS",
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+                    ) {
+                        Column(Modifier.padding(8.dp)) {
                             Row(
-                                Modifier
-                                    .padding(12.dp)
-                                    .fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                                Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Column(Modifier.weight(1f)) {
-                                    Text(device.name, color = HaloGlassColors.TextPrimary, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
-                                    Text(device.id, color = HaloGlassColors.TextSecondary, style = HaloTypography.labelSmall)
-                                }
                                 Button(
-                                    onClick = { viewModel.connect(device) },
-                                    enabled = !state.isDiscovering && !state.isConnecting,
-                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
-                                ) {
-                                    Text(
-                                        if (state.isConnecting && state.activeDeviceName == device.name) "..." else "Connect", 
-                                        fontSize = 12.sp
-                                    )
-                                }
+                                    onClick = { viewModel.triggerForensicOperation("PHOTO") },
+                                    modifier = Modifier.weight(1f),
+                                    contentPadding = PaddingValues(4.dp)
+                                ) { Text("Photo", fontSize = 10.sp) }
+                                
+                                Button(
+                                    onClick = { viewModel.triggerForensicOperation("VID_TOGGLE") },
+                                    modifier = Modifier.weight(1f),
+                                    contentPadding = PaddingValues(4.dp)
+                                ) { Text("Vid Toggle", fontSize = 10.sp) }
+                                
+                                Button(
+                                    onClick = { viewModel.triggerForensicOperation("AUD_TOGGLE") },
+                                    modifier = Modifier.weight(1f),
+                                    contentPadding = PaddingValues(4.dp)
+                                ) { Text("Aud Toggle", fontSize = 10.sp) }
+                            }
+                            Row(
+                                Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Button(
+                                    onClick = { viewModel.triggerForensicOperation("MEDIA_COUNT") },
+                                    modifier = Modifier.weight(1f),
+                                    contentPadding = PaddingValues(4.dp)
+                                ) { Text("Media Cnt", fontSize = 10.sp) }
+                                Spacer(Modifier.weight(2f))
+                            }
+                        }
+                    }
+                }
+
+                item { Spacer(Modifier.height(16.dp)) }
+
+                // LIVE TRANSACTIONS Section
+                item {
+                    HaloGlassSection(
+                        title = "LIVE TRANSACTIONS",
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+                    ) {
+                        Column(Modifier.padding(8.dp)) {
+                            Text("Transaction log available in Developer Console", color = HaloGlassColors.TextMuted, style = HaloTypography.bodySmall)
+                        }
+                    }
+                }
+
+                item { Spacer(Modifier.height(16.dp)) }
+
+                // AUDIO STREAM Section
+                item {
+                    HaloGlassSection(
+                        title = "AUDIO STREAM",
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+                    ) {
+                        Column(Modifier.padding(8.dp)) {
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("Status", color = HaloGlassColors.TextSecondary)
+                                Text(state.audioStreamStatus, color = HaloGlassColors.TextPrimary)
+                            }
+                            Spacer(Modifier.height(8.dp))
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("Packets Received", color = HaloGlassColors.TextSecondary)
+                                Text("${state.audioPacketsReceived}", color = HaloGlassColors.Accent)
                             }
                         }
                     }
@@ -217,7 +240,9 @@ data class DiscoveryState(
     val connectionStatus: String = "Disconnected",
     val isDiscovering: Boolean = false,
     val isConnecting: Boolean = false,
-    val isForensicCaptureEnabled: Boolean = false
+    val isForensicCaptureEnabled: Boolean = false,
+    val audioStreamStatus: String = "Inactive",
+    val audioPacketsReceived: Int = 0
 )
 data class ProtocolDevice(val id: String, val name: String, val protocol: String)
 
@@ -241,6 +266,19 @@ class ProtocolLabViewModel(
         driver.state.onEach { ds ->
             _state.update { it.copy(connectionStatus = ds.toString()) }
         }.launchIn(viewModelScope)
+        
+        // Observe audio stream stats
+        com.halo.drivers.heycyan.debug.HeyCyanAudioStreamProbe.packetCountFlow
+            .onEach { count ->
+                _state.update { it.copy(audioPacketsReceived = count) }
+            }
+            .launchIn(viewModelScope)
+            
+        com.halo.drivers.heycyan.debug.HeyCyanAudioStreamProbe.statusFlow
+            .onEach { status ->
+                _state.update { it.copy(audioStreamStatus = status) }
+            }
+            .launchIn(viewModelScope)
     }
 
     fun setForensicCaptureEnabled(enabled: Boolean) {

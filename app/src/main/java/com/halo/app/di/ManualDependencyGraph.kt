@@ -97,9 +97,9 @@ object ManualDependencyGraph {
 
     val homeViewModel by lazy { HomeViewModel(runtimeSnapshotManager, commandBus) }
     val consoleViewModel by lazy { ConsoleViewModel(runtimeSnapshotManager) }
-    val settingsViewModel by lazy { SettingsViewModel() }
-    val activityViewModel by lazy { ActivityViewModel() }
-    val devicesViewModel by lazy { DevicesViewModel() }
+    val settingsViewModel by lazy { SettingsViewModel(runtimeSnapshotManager) }
+    val activityViewModel by lazy { ActivityViewModel(runtimeSnapshotManager) }
+    val devicesViewModel by lazy { DevicesViewModel(runtimeSnapshotManager) }
     val protocolLabViewModel by lazy { ProtocolLabViewModel(heyCyanDriver) }
     val runtimeInspectorViewModel by lazy { RuntimeInspectorViewModel() }
 
