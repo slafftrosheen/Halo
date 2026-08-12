@@ -21,7 +21,7 @@ object HaloIcons {
     val Bluetooth: ImageVector = Icons.Rounded.Bluetooth
     val Navigation: ImageVector = Icons.Rounded.Navigation
     val Search: ImageVector = Icons.Rounded.Search
-    val Volume: ImageVector = Icons.AutoMirrored.Rounded.VolumeUp
+    val Volume: ImageVector = Icons.Rounded.VolumeUp
     val Folder: ImageVector = Icons.Rounded.Folder
     val Graph: ImageVector = Icons.Rounded.Timeline
     val Eye: ImageVector = Icons.Rounded.Visibility

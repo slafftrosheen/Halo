@@ -21,7 +21,7 @@ fun HaloGlassDivider(
     startIndent: Dp = 0.dp,
     endIndent: Dp = 0.dp
 ) {
-    HorizontalDivider(
+    androidx.compose.material3.Divider(
         modifier = modifier
             .padding(start = startIndent, end = endIndent),
         thickness = thickness,
