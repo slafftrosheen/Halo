@@ -21,12 +21,10 @@ class HeyCyanCommandEncoderTest {
 
     @Test
     fun allKnownModesMapCorrectly() {
-        val expected = mapOf(
+        val expected = mapOf<HeyCyanMode, Int>(
             HeyCyanMode.PHOTO to 0x01,
             HeyCyanMode.VIDEO to 0x02,
-            HeyCyanMode.VIDEO_STOP to 0x03,
             HeyCyanMode.AUDIO to 0x04,
-            HeyCyanMode.AUDIO_STOP to 0x05,
             HeyCyanMode.AI_PHOTO to 0x06,
             HeyCyanMode.TRANSFER to 0x07,
         )

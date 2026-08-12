@@ -1,27 +1,13 @@
 package com.halo.drivers.heycyan.codec
 
+import com.halo.drivers.heycyan.protocol.HeyCyanCommand
 import com.halo.drivers.heycyan.protocol.HeyCyanCommandDefinition
 import com.halo.drivers.heycyan.protocol.ProtocolNotVerifiedException
 
-fun interface HeyCyanChecksum {
-    fun calculate(header: Byte, length: Byte, commandId: Byte, payload: ByteArray): Byte
-}
-
-class HeyCyanPacketFramer(
-    private val checksum: HeyCyanChecksum? = null
-) {
+class HeyCyanPacketFramer {
     fun frameFromDefinition(
         definition: HeyCyanCommandDefinition
     ): Result<ByteArray> {
-        if (checksum == null) {
-            return Result.failure(
-                ProtocolNotVerifiedException(
-                    operation = definition.command.toString(),
-                    detail = "Checksum implementation unresolved"
-                )
-            )
-        }
-
         val commandId = definition.commandId ?: return Result.failure(
             ProtocolNotVerifiedException(
                 operation = definition.command.toString(),
@@ -29,50 +15,55 @@ class HeyCyanPacketFramer(
             )
         )
 
-        val header: Byte = 0xAA.toByte()
-        val totalLength: Byte = (4 + definition.payload.size).toByte()
-        val cs = checksum.calculate(header, totalLength, commandId.toByte(), definition.payload)
+        val action: Byte = when (commandId) {
+            0x01, 0x14 -> HeyCyanWireFrameCodec.ACTION_GLASSES_CONTROL // 0x41
+            0x10, 0x11 -> HeyCyanWireFrameCodec.ACTION_DEVICE_INFO // 0x43
+            0x13 -> HeyCyanWireFrameCodec.ACTION_GLASSES_BATTERY // 0x42
+            else -> HeyCyanWireFrameCodec.ACTION_GLASSES_CONTROL
+        }
 
-        val packet = ByteArray(totalLength.toInt())
-        packet[0] = header
-        packet[1] = totalLength
-        packet[2] = commandId.toByte()
-        definition.payload.copyInto(packet, destinationOffset = 3)
-        packet[packet.size - 1] = cs
+        val payload = when (commandId) {
+            0x14 -> byteArrayOf(0x02, 0x04)
+            0x01 -> {
+                if (definition.payload.size == 1) {
+                    byteArrayOf(0x02, 0x01, definition.payload[0])
+                } else {
+                    definition.payload
+                }
+            }
+            else -> definition.payload
+        }
 
-        return Result.success(packet)
+        return Result.success(HeyCyanWireFrameCodec.encode(action, payload))
     }
 
     fun frame(command: EncodedCommand): Result<ByteArray> {
-        return Result.failure(
-            ProtocolNotVerifiedException(
-                operation = "Command 0x${command.commandId.toString(16)}",
-                detail = "HeyCyan outer BLE command framing has not been verified"
-            )
-        )
+        val action: Byte = when (command.commandId) {
+            0x01, 0x14 -> HeyCyanWireFrameCodec.ACTION_GLASSES_CONTROL // 0x41
+            0x10, 0x11 -> HeyCyanWireFrameCodec.ACTION_DEVICE_INFO // 0x43
+            0x13 -> HeyCyanWireFrameCodec.ACTION_GLASSES_BATTERY // 0x42
+            else -> HeyCyanWireFrameCodec.ACTION_GLASSES_CONTROL
+        }
+
+        val payload = when (command.commandId) {
+            0x14 -> byteArrayOf(0x02, 0x04)
+            0x01 -> {
+                if (command.payload.size == 1) {
+                    byteArrayOf(0x02, 0x01, command.payload[0])
+                } else {
+                    command.payload
+                }
+            }
+            else -> command.payload
+        }
+
+        return Result.success(HeyCyanWireFrameCodec.encode(action, payload))
     }
 
     /**
      * Bypasses protocol verification for forensic capture purposes.
-     * 
-     * DANGER: This is for research only. It assumes the payload is already
-     * a valid wire frame OR it wraps it in a simplistic AA header if it looks like SDK data.
      */
     fun frameForForensics(command: EncodedCommand): Result<ByteArray> {
-        // If it already looks like a framed packet (AA... or BC...), pass it through
-        if (command.payload.isNotEmpty() && (command.payload[0].toInt() and 0xFF) == 0xAA) {
-            return Result.success(command.payload)
-        }
-
-        // Simplistic framing hypothesis for research
-        val totalLength = (4 + command.payload.size).toByte()
-        val packet = ByteArray(totalLength.toInt())
-        packet[0] = 0xAA.toByte()
-        packet[1] = totalLength
-        packet[2] = command.commandId.toByte()
-        command.payload.copyInto(packet, destinationOffset = 3)
-        packet[packet.size - 1] = 0x00.toByte() // Null checksum hypothesis
-
-        return Result.success(packet)
+        return frame(command)
     }
 }

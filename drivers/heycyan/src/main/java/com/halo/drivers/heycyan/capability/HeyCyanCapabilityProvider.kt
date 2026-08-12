@@ -1,5 +1,6 @@
 package com.halo.drivers.heycyan.capability
 
+import com.halo.drivers.heycyan.debug.HeyCyanLogger
 import com.halo.drivers.heycyan.protocol.HeyCyanOperation
 
 /**
@@ -32,6 +33,7 @@ class HeyCyanCapabilityProvider(
         capabilityId: String,
         request: CapabilityRequest,
     ): CapabilityOutcome {
+        HeyCyanLogger.i("HALO-TX-TRACE", "Capability execution requested: $capabilityId")
         val operation = capabilityIdToOperation(capabilityId)
             ?: return CapabilityOutcome.Failure("Unknown HeyCyan capability: $capabilityId")
 
@@ -64,10 +66,10 @@ class HeyCyanCapabilityProvider(
             "heycyan.device_info" -> HeyCyanOperation.GetDeviceInfo
             "heycyan.media_inventory" -> HeyCyanOperation.GetMediaInventory
             "heycyan.camera.photo" -> HeyCyanOperation.TakePhoto
-            "heycyan.camera.video" -> HeyCyanOperation.StartVideo
-            "heycyan.audio.recording" -> HeyCyanOperation.StartAudioRecording
+            "heycyan.camera.video" -> HeyCyanOperation.ToggleVideo
+            "heycyan.audio.recording" -> HeyCyanOperation.PrepareVoiceRouting
             "heycyan.ai_photo" -> HeyCyanOperation.GenerateAIPhoto
-            "heycyan.wifi_transfer" -> HeyCyanOperation.EnableTransferMode
+            "heycyan.wifi_transfer" -> HeyCyanOperation.EnterWifiTransferMode
             // heycyan.audio.live_input has no operation — device doesn't support it
             else -> null
         }

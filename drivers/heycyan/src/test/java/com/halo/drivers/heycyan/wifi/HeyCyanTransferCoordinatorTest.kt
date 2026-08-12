@@ -104,7 +104,7 @@ class HeyCyanTransferCoordinatorTest {
 
         // Verify BLE command issued to enter transfer mode (SetMode(TRANSFER))
         val executedCmd = fakeExecutor.executedCommands.firstOrNull()
-        assertEquals(HeyCyanCommand.SetMode(HeyCyanMode.TRANSFER), executedCmd)
+        assertEquals(HeyCyanCommand.EnterWifiTransferMode, executedCmd)
         assertEquals(WifiConnectionState.CONNECTED, wifiConnection.state.value)
     }
 

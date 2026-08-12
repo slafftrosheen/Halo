@@ -27,15 +27,15 @@ class HeyCyanWireFrameCodecTest {
     }
 
     @Test
-    fun `calculates crc16 for record start payload matching vendor golden vector`() {
-        val crc = HeyCyanWireFrameCodec.calculateCrc16(HeyCyanWireFrameCodec.PAYLOAD_RECORD_START)
-        assertEquals(0x56D0, crc)
+    fun `calculates crc16 for voice routing payload matching vendor golden vector`() {
+        val crc = HeyCyanWireFrameCodec.calculateCrc16(HeyCyanWireFrameCodec.PAYLOAD_VOICE_ROUTING)
+        assertEquals(0x5790, crc)
     }
 
     @Test
-    fun `calculates crc16 for record stop payload matching vendor golden vector`() {
-        val crc = HeyCyanWireFrameCodec.calculateCrc16(HeyCyanWireFrameCodec.PAYLOAD_RECORD_STOP)
-        assertEquals(0x95D1, crc)
+    fun `calculates crc16 for wifi transfer payload matching vendor golden vector`() {
+        val crc = HeyCyanWireFrameCodec.calculateCrc16(HeyCyanWireFrameCodec.PAYLOAD_WIFI_TRANSFER)
+        assertEquals(0x5C93, crc)
     }
 
     @Test
@@ -63,12 +63,12 @@ class HeyCyanWireFrameCodecTest {
     }
 
     @Test
-    fun `encodes record start command matching golden vector byte for byte`() {
+    fun `encodes voice routing command matching golden vector byte for byte`() {
         val encoded = HeyCyanWireFrameCodec.encode(
             action = HeyCyanWireFrameCodec.ACTION_GLASSES_CONTROL,
-            payload = HeyCyanWireFrameCodec.PAYLOAD_RECORD_START
+            payload = HeyCyanWireFrameCodec.PAYLOAD_VOICE_ROUTING
         )
-        assertArrayEquals(HeyCyanWireFrameCodec.GOLDEN_RECORD_START, encoded)
+        assertArrayEquals(HeyCyanWireFrameCodec.GOLDEN_VOICE_ROUTING, encoded)
     }
 
     @Test

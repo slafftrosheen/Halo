@@ -38,25 +38,17 @@ class DefaultHeyCyanRfcommCommandMapper : HeyCyanRfcommCommandMapper {
                 command = 0x01,
                 payload = byteArrayOf(HeyCyanMode.PHOTO.value.toByte()),
             )
-            is HeyCyanCommand.StartVideo -> MemoMindPacket(
+            is HeyCyanCommand.ToggleVideo -> MemoMindPacket(
                 command = 0x01,
-                payload = byteArrayOf(HeyCyanMode.VIDEO.value.toByte()),
+                payload = byteArrayOf(0x02)
             )
-            is HeyCyanCommand.StopVideo -> MemoMindPacket(
+            is HeyCyanCommand.PrepareVoiceRouting -> MemoMindPacket(
                 command = 0x01,
-                payload = byteArrayOf(HeyCyanMode.VIDEO_STOP.value.toByte()),
+                payload = byteArrayOf(0x02, 0x01, 0x0B)
             )
-            is HeyCyanCommand.StartAudio -> MemoMindPacket(
+            is HeyCyanCommand.EnterWifiTransferMode -> MemoMindPacket(
                 command = 0x01,
-                payload = byteArrayOf(HeyCyanMode.AUDIO.value.toByte()),
-            )
-            is HeyCyanCommand.StopAudio -> MemoMindPacket(
-                command = 0x01,
-                payload = byteArrayOf(HeyCyanMode.AUDIO_STOP.value.toByte()),
-            )
-            is HeyCyanCommand.EnableTransfer -> MemoMindPacket(
-                command = 0x01,
-                payload = byteArrayOf(HeyCyanMode.TRANSFER.value.toByte()),
+                payload = byteArrayOf(0x02, 0x01, 0x04, 0x01)
             )
             else -> throw UnsupportedOperationException("HeyCyan RFCOMM command mapping not established for $command")
         }

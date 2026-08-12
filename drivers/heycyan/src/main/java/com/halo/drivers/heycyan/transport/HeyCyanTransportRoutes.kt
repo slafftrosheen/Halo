@@ -88,37 +88,21 @@ object HeyCyanTransportRoutes {
             evidence = listOf(sdkEvidence),
             reason = "Camera control capture action.",
         ),
-        HeyCyanOperation.StartVideo to HeyCyanOperationRoute(
-            operation = HeyCyanOperation.StartVideo,
+        HeyCyanOperation.ToggleVideo to HeyCyanOperationRoute(
+            operation = HeyCyanOperation.ToggleVideo,
             preferred = HeyCyanTransportType.BLE_GATT,
             fallback = null,
             retrySafety = RetrySafety.NOT_IDEMPOTENT,
             evidence = listOf(sdkEvidence),
-            reason = "Video recording action.",
+            reason = "Video recording toggle action.",
         ),
-        HeyCyanOperation.StopVideo to HeyCyanOperationRoute(
-            operation = HeyCyanOperation.StopVideo,
+        HeyCyanOperation.PrepareVoiceRouting to HeyCyanOperationRoute(
+            operation = HeyCyanOperation.PrepareVoiceRouting,
             preferred = HeyCyanTransportType.BLE_GATT,
             fallback = null,
             retrySafety = RetrySafety.NOT_IDEMPOTENT,
             evidence = listOf(sdkEvidence),
-            reason = "Video recording action.",
-        ),
-        HeyCyanOperation.StartAudioRecording to HeyCyanOperationRoute(
-            operation = HeyCyanOperation.StartAudioRecording,
-            preferred = HeyCyanTransportType.BLE_GATT,
-            fallback = null,
-            retrySafety = RetrySafety.NOT_IDEMPOTENT,
-            evidence = listOf(sdkEvidence),
-            reason = "On-device audio recording action.",
-        ),
-        HeyCyanOperation.StopAudioRecording to HeyCyanOperationRoute(
-            operation = HeyCyanOperation.StopAudioRecording,
-            preferred = HeyCyanTransportType.BLE_GATT,
-            fallback = null,
-            retrySafety = RetrySafety.NOT_IDEMPOTENT,
-            evidence = listOf(sdkEvidence),
-            reason = "On-device audio recording action.",
+            reason = "Audio recording toggle action.",
         ),
         HeyCyanOperation.GenerateAIPhoto to HeyCyanOperationRoute(
             operation = HeyCyanOperation.GenerateAIPhoto,
@@ -128,8 +112,8 @@ object HeyCyanTransportRoutes {
             evidence = listOf(sdkEvidence),
             reason = "AI photo trigger.",
         ),
-        HeyCyanOperation.EnableTransferMode to HeyCyanOperationRoute(
-            operation = HeyCyanOperation.EnableTransferMode,
+        HeyCyanOperation.EnterWifiTransferMode to HeyCyanOperationRoute(
+            operation = HeyCyanOperation.EnterWifiTransferMode,
             preferred = HeyCyanTransportType.BLE_GATT,
             fallback = HeyCyanTransportType.RFCOMM,
             retrySafety = RetrySafety.UNKNOWN,

@@ -12,9 +12,7 @@ enum class ButtonType {
 enum class HeyCyanMode(val value: Int) {
     PHOTO(0x01),
     VIDEO(0x02),
-    VIDEO_STOP(0x03),
     AUDIO(0x04),
-    AUDIO_STOP(0x05),
     AI_PHOTO(0x06),
     TRANSFER(0x07);
 
@@ -103,6 +101,16 @@ sealed interface HeyCyanEvent {
 
         override fun hashCode(): Int =
             bytes.contentHashCode()
+    }
+
+    class RawAudioFrame(
+        val payload: ByteArray
+    ) : HeyCyanEvent {
+        override fun equals(other: Any?): Boolean =
+            other is RawAudioFrame && payload.contentEquals(other.payload)
+
+        override fun hashCode(): Int =
+            payload.contentHashCode()
     }
 
     data class Unknown(

@@ -47,7 +47,7 @@ class HeyCyanTransferCoordinator(
 
         // 2. Put glasses into transfer mode via BLE
         _state.value = HeyCyanTransferState.EnteringTransferMode
-        commandController.execute(HeyCyanOperation.EnableTransferMode).getOrElse { err ->
+        commandController.execute(HeyCyanOperation.EnterWifiTransferMode).getOrElse { err ->
             val failure = HeyCyanTransferFailure.TransferModeFailed
             _state.value = HeyCyanTransferState.Failed("Failed to enter transfer mode", cause = err, failure = failure)
             return Result.failure(err)

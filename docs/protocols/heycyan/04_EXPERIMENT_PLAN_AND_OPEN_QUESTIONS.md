@@ -233,7 +233,11 @@ Likely an event/source/type field; unresolved.
 
 ### Q6. What is `BC 59 28`?
 
-Strongly associated with the recording/audio experiment. Exact framing and codec unresolved.
+RESOLVED. This is the real-time audio transport stream from the glasses' microphone.
+- The `BC 59` identifies it as the `AUDIO_STREAM` action.
+- `28 00` (length 40 bytes) and the two-byte CRC surround exactly 40 bytes of audio payload.
+- The payload itself is a flawless, standard **RFC 6716 Code-3 Opus packet** (TOC byte `0x4B` or `0x48`, indicating a 48kHz sampling rate, mono, frame count and padding).
+- It can be fed *directly* into standard Opus decoders (like Android's `c2.android.opus.decoder`) without stripping the Opus-level padding, yielding perfect 16-bit 48kHz PCM audio.
 
 ### Q7. Does `BC 73 08` encode photo and AI results in the same message family?
 

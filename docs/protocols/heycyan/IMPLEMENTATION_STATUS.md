@@ -5,7 +5,25 @@
 
 ---
 
-## 1. Verified from Vendor Documentation
+## 1. Physically Verified from Live Device
+
+### Transport & Framing
+- **GATT Command Transport**: Verified writing to `de5bf72a-d711-4e47-af26-65e3012a5dc7`.
+- **Wire Frame (0xBC)**: Verified `BC 41 <lenLE> <crcLE> <payload>` framing.
+- **CRC16 Algorithm**: Verified `0xA001` polynomial with `0xFFFF` init matches hardware.
+
+### Commands (Action 0x41)
+- **Photo Capture (0x01)**: Verified. Device returns ACK and increments internal media counter.
+- **Video Toggle (0x02)**: Verified. Single command triggers both start and stop; device returns alternating ACKs.
+- **Audio Toggle (0x04)**: Verified. Observed 0x04 trigger and 40-byte control info response.
+
+### Observed Correlations
+- **Photo Counter**: `BC 73 08` frame at byte index 7 (payload[1]) increments exactly once per PHOTO command.
+- **Video Toggle ACK**: Start returns `... FF FF`, Stop returns `... FF 02`.
+
+---
+
+## 2. Verified from Vendor Documentation
 
 ### Notification Fields (SDK Family 0x01..0x06) - INFERRED FROM SOURCE
 - **0x01 Battery**: level (byte 1), charging (byte 2)
@@ -14,16 +32,6 @@
 - **0x04 Mode**: current work mode (byte 1)
 - **0x05 WiFi**: SSID/password (length-prefixed)
 - **0x06 AI Image**: chunked transfer
-
-### Documented Notification Types (loadData[6]) - VERIFIED FROM VENDOR PDF
-- **0x02**: AI image recognition / Quick recognition
-- **0x03**: Microphone / Speaking event
-- **0x04**: OTA progress
-- **0x05**: Battery report (level, charging)
-- **0x0C**: Voice playback pause
-- **0x0D**: Unbind-app event
-- **0x0E**: Memory insufficient
-- **0x12**: Volume-change event (detailed min/max/current fields)
 
 ---
 
@@ -49,7 +57,6 @@
 
 ## 5. Correlated but Unverified
 
-- **Photo Action** → `BC 73 08` family
 - **AI Action** → `BC 73 08` family
 - **Recording Start** → `BC 59 28` stream start
 - **Swipe Gesture** → `BC 73 0E` family (advancing byte 10)
@@ -60,8 +67,6 @@
 
 ## 6. Still Unknown
 
-- **TX Wire Framing**: Exact header/length/checksum for outgoing commands.
-- **Checksum Algorithm**: Algorithm for bytes 4-5 in BC families.
 - **Sequence Fields**: Whether the device uses per-packet monotonic counters.
 - **Touch Semantics**: Exact mapping of `candidateAction` values to gesture vectors.
 - **BC 59 28 Codec**: Audio encoding (Opus/PCM/etc.) and sample rate.
@@ -76,14 +81,12 @@
 - Metadata captured: Timestamp, Write Type, Characteristic UUID, Raw Bytes.
 - Transaction correlation: Enabled via `HeyCyanProtocolCapture`.
 
-### Capture Formats
-- **Human-Readable**: `HeyCyanTransaction.dump()` format in Logcat.
-- **Forensic Logs**: `TX <uuid> <hex>` and `RX <uuid> <hex>` in Logcat.
-- **Machine-Readable**: `RawHeyCyanFrame.toJsonl()` for offline analysis.
+### Trace Logs
+- Filter: `HALO-TX-TRACE` or `HALO-`
+- Provides semantic → dispatch → physical byte visibility.
 
 ---
 
 ## 8. Test Status
 
-- 206 protocol/driver tests: **PASS**
-- 1 pre-existing media-sync test: **FAIL** (`HeyCyanMediaSynchronizerTest`)
+- 238 protocol/driver tests: **PASS** (Includes new `HeyCyanPacketFramerTest`)

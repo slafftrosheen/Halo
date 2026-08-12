@@ -36,21 +36,21 @@ object HeyCyanCommand {
     )
 
     /**
-     * Constructs a RECORD_START command wire frame.
-     * Output: BC 41 03 00 D0 56 02 01 08
+     * Constructs a WIFI_TRANSFER command wire frame.
+     * Output: BC 41 04 00 93 5C 02 01 04 01
      */
-    fun recordStart(): ByteArray = HeyCyanWireFrameCodec.encode(
+    fun wifiTransferMode(): ByteArray = HeyCyanWireFrameCodec.encode(
         action = HeyCyanWireFrameCodec.ACTION_GLASSES_CONTROL,
-        payload = HeyCyanWireFrameCodec.PAYLOAD_RECORD_START
+        payload = HeyCyanWireFrameCodec.PAYLOAD_WIFI_TRANSFER
     )
 
     /**
-     * Constructs a RECORD_STOP command wire frame.
-     * Output: BC 41 03 00 D1 95 02 01 0C
+     * Constructs a VOICE_ROUTING command wire frame.
+     * Output: BC 41 03 00 90 57 02 01 0B
      */
-    fun recordStop(): ByteArray = HeyCyanWireFrameCodec.encode(
+    fun prepareVoiceRouting(): ByteArray = HeyCyanWireFrameCodec.encode(
         action = HeyCyanWireFrameCodec.ACTION_GLASSES_CONTROL,
-        payload = HeyCyanWireFrameCodec.PAYLOAD_RECORD_STOP
+        payload = HeyCyanWireFrameCodec.PAYLOAD_VOICE_ROUTING
     )
 
     /**

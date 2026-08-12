@@ -23,13 +23,13 @@ class HeyCyanCommandTest {
     }
 
     @Test
-    fun `recordStart command matches golden vector byte for byte`() {
-        assertArrayEquals(HeyCyanWireFrameCodec.GOLDEN_RECORD_START, HeyCyanCommand.recordStart())
+    fun `prepareVoiceRouting command matches golden vector byte for byte`() {
+        assertArrayEquals(HeyCyanWireFrameCodec.GOLDEN_VOICE_ROUTING, HeyCyanCommand.prepareVoiceRouting())
     }
 
     @Test
-    fun `recordStop command matches golden vector byte for byte`() {
-        assertArrayEquals(HeyCyanWireFrameCodec.GOLDEN_RECORD_STOP, HeyCyanCommand.recordStop())
+    fun `wifiTransferMode command matches golden vector byte for byte`() {
+        assertArrayEquals(HeyCyanWireFrameCodec.GOLDEN_WIFI_TRANSFER, HeyCyanCommand.wifiTransferMode())
     }
 
     @Test

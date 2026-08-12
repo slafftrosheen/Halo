@@ -213,12 +213,12 @@ class HeyCyanCodecTest {
     }
 
     @Test
-    fun `hypothesis encoder still rejects StartVideo without definitions`() {
+    fun `hypothesis encoder still rejects ToggleVideo without definitions`() {
         try {
-            hypothesisEncoder.encode(HeyCyanCommand.StartVideo).getOrThrow()
+            hypothesisEncoder.encode(HeyCyanCommand.ToggleVideo).getOrThrow()
             throw AssertionError("Expected UnsupportedOperationException")
         } catch (_: UnsupportedOperationException) {
-            // Expected — StartVideo has no evidence-backed definition.
+            // Expected — ToggleVideo has no evidence-backed definition.
         }
     }
 

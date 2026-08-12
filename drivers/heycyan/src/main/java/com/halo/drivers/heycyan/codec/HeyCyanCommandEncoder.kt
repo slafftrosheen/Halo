@@ -65,17 +65,11 @@ class HeyCyanCommandEncoder(
             HeyCyanCommand.TakePhoto ->
                 byteArrayOf(MODE_PHOTO)
 
-            HeyCyanCommand.StartVideo ->
+            HeyCyanCommand.ToggleVideo ->
                 byteArrayOf(MODE_VIDEO)
 
-            HeyCyanCommand.StopVideo ->
-                byteArrayOf(MODE_VIDEO_STOP)
-
-            HeyCyanCommand.StartAudio ->
-                byteArrayOf(MODE_AUDIO)
-
-            HeyCyanCommand.StopAudio ->
-                byteArrayOf(MODE_AUDIO_STOP)
+            HeyCyanCommand.PrepareVoiceRouting ->
+                byteArrayOf(0x02, 0x01, 0x0B)
 
             HeyCyanCommand.GetBattery,
             HeyCyanCommand.RequestBattery ->
@@ -91,8 +85,8 @@ class HeyCyanCommandEncoder(
             HeyCyanCommand.GetMacAddress ->
                 byteArrayOf(COMMAND_GET_MAC)
 
-            HeyCyanCommand.EnableTransfer ->
-                byteArrayOf(MODE_TRANSFER)
+            HeyCyanCommand.EnterWifiTransferMode ->
+                byteArrayOf(0x02, 0x01, 0x04, 0x01)
 
             is HeyCyanCommand.SetDateTime ->
                 byteArrayOf(COMMAND_SET_DATETIME)
@@ -109,17 +103,14 @@ class HeyCyanCommandEncoder(
             HeyCyanCommand.TakePhoto ->
                 WireCommand.photo()
 
-            HeyCyanCommand.StartVideo ->
+            HeyCyanCommand.ToggleVideo ->
                 WireCommand.videoStart()
 
-            HeyCyanCommand.StopVideo ->
-                WireCommand.videoStop()
+            HeyCyanCommand.PrepareVoiceRouting ->
+                WireCommand.prepareVoiceRouting()
 
-            HeyCyanCommand.StartAudio ->
-                WireCommand.recordStart()
-
-            HeyCyanCommand.StopAudio ->
-                WireCommand.recordStop()
+            HeyCyanCommand.EnterWifiTransferMode ->
+                WireCommand.wifiTransferMode()
 
             HeyCyanCommand.GetMediaCounts ->
                 WireCommand.mediaCount()
@@ -127,9 +118,7 @@ class HeyCyanCommandEncoder(
             is HeyCyanCommand.SetMode -> when (command.mode) {
                 HeyCyanMode.PHOTO -> WireCommand.photo()
                 HeyCyanMode.VIDEO -> WireCommand.videoStart()
-                HeyCyanMode.VIDEO_STOP -> WireCommand.videoStop()
-                HeyCyanMode.AUDIO -> WireCommand.recordStart()
-                HeyCyanMode.AUDIO_STOP -> WireCommand.recordStop()
+                HeyCyanMode.AUDIO -> HeyCyanWireFrameCodec.encode(HeyCyanWireFrameCodec.ACTION_GLASSES_CONTROL, byteArrayOf(0x02, 0x01, 0x04)) // Unknown meaning, likely Wi-Fi transfer
                 HeyCyanMode.AI_PHOTO -> WireCommand.ai()
                 HeyCyanMode.TRANSFER -> HeyCyanWireFrameCodec.encode(HeyCyanWireFrameCodec.ACTION_GLASSES_CONTROL, byteArrayOf(0x02, 0x07))
             }
@@ -155,21 +144,17 @@ class HeyCyanCommandEncoder(
         val payload = encodePayload(command)
         val commandId = when (command) {
             is HeyCyanCommand.TakePhoto, 
-            is HeyCyanCommand.StartVideo, 
-            is HeyCyanCommand.StopVideo, 
-            is HeyCyanCommand.StartAudio, 
-            is HeyCyanCommand.StopAudio, 
-            is HeyCyanCommand.EnableTransfer,
+            is HeyCyanCommand.ToggleVideo, 
+            is HeyCyanCommand.PrepareVoiceRouting, 
+            is HeyCyanCommand.EnterWifiTransferMode,
             is HeyCyanCommand.SetMode -> 0x01
             else -> payload[0].toInt() and 0xFF
         }
         val actualPayload = when (command) {
             is HeyCyanCommand.TakePhoto, 
-            is HeyCyanCommand.StartVideo, 
-            is HeyCyanCommand.StopVideo, 
-            is HeyCyanCommand.StartAudio, 
-            is HeyCyanCommand.StopAudio, 
-            is HeyCyanCommand.EnableTransfer,
+            is HeyCyanCommand.ToggleVideo, 
+            is HeyCyanCommand.PrepareVoiceRouting, 
+            is HeyCyanCommand.EnterWifiTransferMode,
             is HeyCyanCommand.SetMode -> payload
             else -> byteArrayOf()
         }
@@ -182,9 +167,7 @@ class HeyCyanCommandEncoder(
     private companion object {
         const val MODE_PHOTO: Byte = 0x01
         const val MODE_VIDEO: Byte = 0x02
-        const val MODE_VIDEO_STOP: Byte = 0x03
         const val MODE_AUDIO: Byte = 0x04
-        const val MODE_AUDIO_STOP: Byte = 0x05
         const val MODE_AI_PHOTO: Byte = 0x06
         const val MODE_TRANSFER: Byte = 0x07
 

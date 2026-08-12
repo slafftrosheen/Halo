@@ -105,6 +105,7 @@ enum class HeyCyanActionFamily(val actionByte: Byte?) {
     DEVICE_DATA_REPORTING(HeyCyanWireFrameCodec.ACTION_DEVICE_DATA_REPORTING),
     GLASSES_CONTROL(HeyCyanWireFrameCodec.ACTION_GLASSES_CONTROL),
     DEVICE_INFO(HeyCyanWireFrameCodec.ACTION_DEVICE_INFO),
+    AUDIO_STREAM(HeyCyanWireFrameCodec.ACTION_AUDIO_STREAM),
     UNKNOWN(null);
 
     companion object {

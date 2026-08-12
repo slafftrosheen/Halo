@@ -34,6 +34,23 @@ class HeyCyanEventRouter(
         if (characteristicUuid == DE5BF729) {
             val decoded = structuralDecoder.decode(rawFrame)
             if (decoded.actionFamily != HeyCyanActionFamily.UNKNOWN) {
+                if (decoded.actionFamily == HeyCyanActionFamily.AUDIO_STREAM) {
+                    val p = decoded.payload
+                    var trailingZeroes = 0
+                    for (i in p.indices.reversed()) {
+                        if (p[i] == 0.toByte()) trailingZeroes++ else break
+                    }
+                    val packet = com.halo.drivers.heycyan.debug.AudioStreamPacket(
+                        timestampMs = timestampMillis,
+                        payload = p,
+                        length = p.size,
+                        firstBytes = if (p.size >= 4) p.copyOfRange(0, 4) else p,
+                        trailingZeroCount = trailingZeroes
+                    )
+                    com.halo.drivers.heycyan.debug.HeyCyanAudioStreamProbe.onPacket(packet)
+                    return HeyCyanEvent.RawAudioFrame(p)
+                }
+
                 return HeyCyanEvent.DecodedProprietaryFrame(
                     actionFamily = decoded.actionFamily,
                     action = decoded.action,

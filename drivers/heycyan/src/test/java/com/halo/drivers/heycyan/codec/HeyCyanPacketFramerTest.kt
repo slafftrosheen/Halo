@@ -1,11 +1,17 @@
 package com.halo.drivers.heycyan.codec
 
+import com.halo.drivers.heycyan.debug.HeyCyanLogger
 import com.halo.drivers.heycyan.protocol.HeyCyanCommand
 import org.junit.Assert.assertArrayEquals
-import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 
 class HeyCyanPacketFramerTest {
+
+    @Before
+    fun setup() {
+        HeyCyanLogger.logger = { tag, msg -> println("$tag: $msg") }
+    }
 
     @Test
     fun `frame TakePhoto produces golden vector`() {
@@ -15,11 +21,7 @@ class HeyCyanPacketFramerTest {
         val encoded = encoder.encode(HeyCyanCommand.TakePhoto).getOrThrow()
         val framed = framer.frame(encoded).getOrThrow()
         
-        val expectedGoldenVector = byteArrayOf(
-            0xBC.toByte(), 0x41.toByte(), 0x03, 0x00, 0x10, 0x50, 0x02, 0x01, 0x01
-        )
-        
-        assertArrayEquals(expectedGoldenVector, framed)
+        assertArrayEquals(HeyCyanWireFrameCodec.GOLDEN_PHOTO, framed)
     }
 
     @Test
@@ -30,10 +32,6 @@ class HeyCyanPacketFramerTest {
         val encoded = encoder.encode(HeyCyanCommand.GetMediaCounts).getOrThrow()
         val framed = framer.frame(encoded).getOrThrow()
         
-        val expectedGoldenVector = byteArrayOf(
-            0xBC.toByte(), 0x41.toByte(), 0x02, 0x00, 0x01, 0x13, 0x02, 0x04
-        )
-        
-        assertArrayEquals(expectedGoldenVector, framed)
+        assertArrayEquals(HeyCyanWireFrameCodec.GOLDEN_MEDIA_COUNT, framed)
     }
 }

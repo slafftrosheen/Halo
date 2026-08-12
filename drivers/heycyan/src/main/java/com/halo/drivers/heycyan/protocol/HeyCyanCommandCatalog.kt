@@ -104,7 +104,7 @@ object HeyCyanCommandCatalog {
         ),
 
         CommandDescriptor(
-            command = HeyCyanCommand.StartVideo,
+            command = HeyCyanCommand.ToggleVideo,
             commandId = 0x01,
             payload = byteArrayOf(0x02),
             mode = HeyCyanMode.VIDEO,
@@ -113,36 +113,17 @@ object HeyCyanCommandCatalog {
         ),
 
         CommandDescriptor(
-            command = HeyCyanCommand.StopVideo,
+            command = HeyCyanCommand.PrepareVoiceRouting,
             commandId = 0x01,
-            payload = byteArrayOf(0x03),
-            mode = HeyCyanMode.VIDEO_STOP,
+            payload = byteArrayOf(0x02, 0x01, 0x0B),
             status = ProtocolDefinitionStatus.VERIFIED_FROM_REFERENCE,
             evidence = listOf(referenceEvidence),
         ),
 
         CommandDescriptor(
-            command = HeyCyanCommand.StartAudio,
+            command = HeyCyanCommand.EnterWifiTransferMode,
             commandId = 0x01,
-            payload = byteArrayOf(0x04),
-            mode = HeyCyanMode.AUDIO,
-            status = ProtocolDefinitionStatus.VERIFIED_FROM_REFERENCE,
-            evidence = listOf(referenceEvidence),
-        ),
-
-        CommandDescriptor(
-            command = HeyCyanCommand.StopAudio,
-            commandId = 0x01,
-            payload = byteArrayOf(0x05),
-            mode = HeyCyanMode.AUDIO_STOP,
-            status = ProtocolDefinitionStatus.VERIFIED_FROM_REFERENCE,
-            evidence = listOf(referenceEvidence),
-        ),
-
-        CommandDescriptor(
-            command = HeyCyanCommand.EnableTransfer,
-            commandId = 0x01,
-            payload = byteArrayOf(0x07),
+            payload = byteArrayOf(0x02, 0x01, 0x04, 0x01),
             mode = HeyCyanMode.TRANSFER,
             status = ProtocolDefinitionStatus.VERIFIED_FROM_REFERENCE,
             evidence = listOf(referenceEvidence),

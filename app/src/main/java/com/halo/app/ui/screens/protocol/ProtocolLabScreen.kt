@@ -17,7 +17,7 @@ import com.halo.app.ui.glass.components.HaloGlassSection
 import com.halo.app.ui.glass.material.HaloGlassColors
 import com.halo.app.ui.glass.material.HaloTypography
 import com.halo.drivers.heycyan.RealHeyCyanDriver
-import com.halo.sdk.host.ConnectionState
+import com.halo.drivers.heycyan.debug.HeyCyanLogger
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -97,22 +97,47 @@ fun ProtocolLabScreen(viewModel: ProtocolLabViewModel) {
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                     Button(
-                                        onClick = { viewModel.triggerForensicOperation("PHOTO") },
+                                        onClick = { 
+                                            println("[INFO ] [${java.time.Instant.now()}] [HALO-UI-CLICK] PHOTO button pressed")
+                                            viewModel.triggerForensicOperation("PHOTO") 
+                                        },
                                         modifier = Modifier.weight(1f),
                                         contentPadding = PaddingValues(4.dp)
                                     ) { Text("Photo", fontSize = 10.sp) }
                                     
                                     Button(
-                                        onClick = { viewModel.triggerForensicOperation("RECORD_START") },
+                                        onClick = { 
+                                            println("[INFO ] [${java.time.Instant.now()}] [HALO-UI-CLICK] VID_TOGGLE button pressed")
+                                            viewModel.triggerForensicOperation("VID_TOGGLE") 
+                                        },
                                         modifier = Modifier.weight(1f),
                                         contentPadding = PaddingValues(4.dp)
-                                    ) { Text("Rec Start", fontSize = 10.sp) }
+                                    ) { Text("Vid Toggle", fontSize = 10.sp) }
                                     
                                     Button(
-                                        onClick = { viewModel.triggerForensicOperation("RECORD_STOP") },
+                                        onClick = { 
+                                            println("[INFO ] [${java.time.Instant.now()}] [HALO-UI-CLICK] AUD_TOGGLE button pressed")
+                                            viewModel.triggerForensicOperation("AUD_TOGGLE") 
+                                        },
                                         modifier = Modifier.weight(1f),
                                         contentPadding = PaddingValues(4.dp)
-                                    ) { Text("Rec Stop", fontSize = 10.sp) }
+                                    ) { Text("Aud Toggle", fontSize = 10.sp) }
+                                }
+                                
+                                Row(
+                                    Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Button(
+                                        onClick = { 
+                                            println("[INFO ] [${java.time.Instant.now()}] [HALO-UI-CLICK] MEDIA_COUNT button pressed")
+                                            viewModel.triggerForensicOperation("MEDIA_COUNT") 
+                                        },
+                                        modifier = Modifier.weight(1f),
+                                        contentPadding = PaddingValues(4.dp)
+                                    ) { Text("Media Cnt", fontSize = 10.sp) }
+
+                                    Spacer(Modifier.weight(2f))
                                 }
                             }
                         }
@@ -205,14 +230,17 @@ class ProtocolLabViewModel(
     private var scanJob: kotlinx.coroutines.Job? = null
 
     init {
-        // ... (existing observations)
-        
         // Observe capture state
         com.halo.drivers.heycyan.codec.HeyCyanProtocolCapture.instance.isCaptureEnabled
             .onEach { enabled ->
                 _state.update { it.copy(isForensicCaptureEnabled = enabled) }
             }
             .launchIn(viewModelScope)
+            
+        // Observe connection state
+        driver.state.onEach { ds ->
+            _state.update { it.copy(connectionStatus = ds.toString()) }
+        }.launchIn(viewModelScope)
     }
 
     fun setForensicCaptureEnabled(enabled: Boolean) {
@@ -220,16 +248,16 @@ class ProtocolLabViewModel(
     }
 
     fun triggerForensicOperation(opName: String) {
+        HeyCyanLogger.i("HALO-TX-TRACE", "UI: Trigger forensic operation: $opName")
         viewModelScope.launch {
             val driver = ManualDependencyGraph.heyCyanDriver
             val hooks = com.halo.drivers.heycyan.debug.HeyCyanCaptureHooks(driver, this)
             
             when (opName) {
                 "PHOTO" -> hooks.triggerPhoto()
-                "VIDEO_START" -> hooks.triggerVideoStart()
-                "VIDEO_STOP" -> hooks.triggerVideoStop()
-                "RECORD_START" -> hooks.triggerRecordStart()
-                "RECORD_STOP" -> hooks.triggerRecordStop()
+                "VID_TOGGLE" -> hooks.triggerVideoToggle()
+                "AUD_TOGGLE" -> hooks.triggerAudioToggle()
+                "MEDIA_COUNT" -> hooks.triggerMediaCount()
             }
         }
     }
@@ -281,6 +309,8 @@ class ProtocolLabViewModel(
                     host.setTargetDevice(device.id)
                     host.connect()
                 }
+            } catch (e: Exception) {
+                println("[ERROR] [${java.time.Instant.now()}] [HALO-ProtocolLab] Connection failed: ${e.message}")
             } finally {
                 _state.update { it.copy(isConnecting = false) }
             }

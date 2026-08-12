@@ -32,6 +32,7 @@ import com.halo.drivers.heycyan.capability.*
 import com.halo.drivers.heycyan.ble.HeyCyanGattCommandTransport
 import com.halo.drivers.heycyan.codec.HeyCyanCommandEncoder
 import com.halo.drivers.heycyan.codec.HeyCyanPacketFramer
+import com.halo.drivers.heycyan.protocol.HeyCyanProtocolConstants
 import com.halo.drivers.heycyan.capability.toOperationFailure
 
 /**
@@ -48,6 +49,7 @@ class RealHeyCyanDriver(
 
     init {
         android.util.Log.i("RealHeyCyanDriver", "Initializing RealHeyCyanDriver")
+        println("[INFO ] [${java.time.Instant.now()}] [HALO-RealHeyCyanDriver] Initializing RealHeyCyanDriver")
         HeyCyanProtocolCapture.instance = HeyCyanProtocolCapture(ConsoleLogger())
     }
 
@@ -85,7 +87,7 @@ class RealHeyCyanDriver(
                 executor = DefaultHeyCyanCommandExecutor(
                     transport = HeyCyanGattCommandTransport(
                         gatt = gattClient,
-                        commandCharacteristic = null // Resolved at runtime in transport
+                        commandCharacteristic = HeyCyanProtocolConstants.WRITE_CHARACTERISTIC
                     ),
                     encoder = HeyCyanCommandEncoder(),
                     framer = HeyCyanPacketFramer()

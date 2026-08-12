@@ -3,6 +3,7 @@ package com.halo.drivers.heycyan.capability
 import com.halo.drivers.heycyan.codec.HeyCyanCommandEncoder
 import com.halo.drivers.heycyan.codec.HeyCyanPacketFramer
 import com.halo.drivers.heycyan.codec.HeyCyanProtocolCapture
+import com.halo.drivers.heycyan.debug.HeyCyanLogger
 import com.halo.drivers.heycyan.protocol.HeyCyanCommand
 import com.halo.drivers.heycyan.protocol.HeyCyanCommandTransport
 
@@ -45,6 +46,7 @@ class DefaultHeyCyanCommandExecutor(
 ) : HeyCyanCommandExecutor {
 
     override suspend fun execute(command: HeyCyanCommand): Result<Unit> {
+        HeyCyanLogger.i("HALO-TX-TRACE", "HeyCyan command requested: $command")
         HeyCyanProtocolCapture.instance.startOperation(command.toString())
         try {
             val encoded = encoder.encode(command)
@@ -53,6 +55,7 @@ class DefaultHeyCyanCommandExecutor(
             val framed = framer.frame(encoded)
                 .getOrElse { return Result.failure(it) }
 
+            HeyCyanLogger.i("HALO-TX-TRACE", "HeyCyan dispatch transport=${transport.javaClass.simpleName}")
             val result = transport.send(framed)
             return result
         } finally {

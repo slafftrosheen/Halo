@@ -2,15 +2,22 @@ package com.halo.drivers.heycyan.ble
 
 import com.halo.drivers.heycyan.codec.HeyCyanCommand
 import com.halo.drivers.heycyan.codec.HeyCyanCommandEncoder
+import com.halo.drivers.heycyan.debug.HeyCyanLogger
 import com.halo.drivers.heycyan.protocol.HeyCyanProtocolConstants
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 import java.util.UUID
 
 class HeyCyanGattCommandTransportTest {
+
+    @Before
+    fun setup() {
+        HeyCyanLogger.logger = { tag, msg -> println("$tag: $msg") }
+    }
 
     private class FakeHeyCyanGattClient : HeyCyanGattClient() {
         var lastWrittenUuid: UUID? = null

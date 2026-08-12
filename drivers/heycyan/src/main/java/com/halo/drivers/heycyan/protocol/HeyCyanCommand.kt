@@ -14,19 +14,15 @@ sealed interface HeyCyanCommand {
     data object GetMediaCounts : HeyCyanCommand
     data object GetMacAddress : HeyCyanCommand
 
-    // Media Capture
+    // Transient Actions (observed to be toggles on hardware)
     data object TakePhoto : HeyCyanCommand
-    data object StartVideo : HeyCyanCommand
-    data object StopVideo : HeyCyanCommand
-
-    // Audio Capture
-    data object StartAudio : HeyCyanCommand
-    data object StopAudio : HeyCyanCommand
+    data object ToggleVideo : HeyCyanCommand
+    data object PrepareVoiceRouting : HeyCyanCommand
 
     // Network / Transfer
-    data object EnableTransfer : HeyCyanCommand
+    data object EnterWifiTransferMode : HeyCyanCommand
     data class SetDateTime(val timestamp: Long = 0L) : HeyCyanCommand
 
-    // Mode Control
+    // Legacy/Fallback Mode Control (maintained for potential explicit state support)
     data class SetMode(val mode: HeyCyanMode) : HeyCyanCommand
 }
