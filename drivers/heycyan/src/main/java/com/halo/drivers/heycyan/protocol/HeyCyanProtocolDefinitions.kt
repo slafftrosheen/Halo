@@ -5,6 +5,7 @@ import java.util.UUID
 enum class ProtocolDefinitionStatus {
     VERIFIED_FROM_REFERENCE,
     VERIFIED_FROM_CAPTURE,
+    VERIFIED_FROM_DECOMPILED_SDK,
     IMPLEMENTED_WITH_LIMITATION,
     BLOCKED,
 }

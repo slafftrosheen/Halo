@@ -78,7 +78,9 @@ class DefaultHeyCyanMediaApiTest {
         val media = HeyCyanMedia.Photo("sample.jpg", "sample.jpg", testData.size.toLong(), null, null, null)
         var progressReported = false
 
-        val result = testApi.download(media, "/tmp/sample.jpg") { progress ->
+        val tempFile = java.io.File.createTempFile("sample", ".jpg")
+        tempFile.deleteOnExit()
+        val result = testApi.download(media, tempFile.absolutePath) { progress ->
             progressReported = true
             assertTrue(progress.bytesReceived > 0)
         }
@@ -106,9 +108,11 @@ class DefaultHeyCyanMediaApiTest {
         )
 
         val media = HeyCyanMedia.Photo("corrupt.jpg", "corrupt.jpg", 1000L, null, null, null)
-        val result = testApi.download(media, "/tmp/corrupt.jpg")
+        val corruptTempFile = java.io.File.createTempFile("corrupt", ".jpg")
+        corruptTempFile.deleteOnExit()
+        val result = testApi.download(media, corruptTempFile.absolutePath)
 
-        assertTrue(result.isFailure)
-        assertTrue(result.exceptionOrNull() is HeyCyanIntegrityException)
+        val ex = result.exceptionOrNull()
+        assertTrue("Expected HeyCyanIntegrityException but got: ${ex?.javaClass?.name} - ${ex?.message}", ex is HeyCyanIntegrityException)
     }
 }

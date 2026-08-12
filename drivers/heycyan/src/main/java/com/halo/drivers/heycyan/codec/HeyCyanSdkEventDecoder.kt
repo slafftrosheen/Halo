@@ -29,6 +29,7 @@ class HeyCyanSdkEventDecoder {
                 EVENT_MODE -> decodeMode(buffer)
                 EVENT_WIFI -> decodeWifi(buffer)
                 EVENT_AI_IMAGE -> decodeAiImage(buffer)
+                EVENT_WIFI_IP -> decodeWifiIp(buffer)
                 else -> null
             }
         }.getOrNull()
@@ -52,12 +53,17 @@ class HeyCyanSdkEventDecoder {
         val photoCount = buffer.short.toInt() and 0xFFFF
         val videoCount = buffer.short.toInt() and 0xFFFF
         val audioCount = buffer.short.toInt() and 0xFFFF
-        val mediaType = buffer.get().toInt() and 0xFF
+        
+        val total = if (buffer.remaining() >= 4) buffer.short.toInt() and 0xFFFF else 0
+        val currIndex = if (buffer.remaining() >= 2) buffer.short.toInt() and 0xFFFF else 0
+        val mediaType = if (buffer.remaining() >= 1) buffer.get().toInt() and 0xFF else 0
 
         return HeyCyanEvent.MediaCountsUpdated(
             photoCount = photoCount,
             videoCount = videoCount,
             audioCount = audioCount,
+            total = total,
+            currIndex = currIndex,
             mediaType = mediaType
         )
     }
@@ -101,6 +107,23 @@ class HeyCyanSdkEventDecoder {
         return HeyCyanEvent.AiImageData(data)
     }
 
+    private fun decodeWifiIp(buffer: ByteBuffer): HeyCyanEvent {
+        // IP address starts at offset 7 of the payload
+        // The event type is byte 0, so offset 7 in payload is index 7 of the underlying array,
+        // which means we need to jump to buffer.position(7) or skip bytes.
+        // We know buffer is at position 1 (because event type was read).
+        require(buffer.capacity() >= 11)
+        buffer.position(7)
+        
+        val ipPart1 = buffer.get().toInt() and 0xFF
+        val ipPart2 = buffer.get().toInt() and 0xFF
+        val ipPart3 = buffer.get().toInt() and 0xFF
+        val ipPart4 = buffer.get().toInt() and 0xFF
+        
+        val ipString = "$ipPart1.$ipPart2.$ipPart3.$ipPart4"
+        return HeyCyanEvent.WiFiIpReceived(ipString)
+    }
+
     private fun readLengthPrefixedString(buffer: ByteBuffer): String {
         require(buffer.remaining() >= 1)
 
@@ -121,5 +144,6 @@ class HeyCyanSdkEventDecoder {
         const val EVENT_MODE = 0x04
         const val EVENT_WIFI = 0x05
         const val EVENT_AI_IMAGE = 0x06
+        const val EVENT_WIFI_IP = 0x08
     }
 }

@@ -77,12 +77,20 @@ class HeyCyanEventDecoder(
 
     private fun decodeMediaCounts(payload: ByteArray): HeyCyanEvent {
         require(payload.size >= 8)
-        val buffer = ByteBuffer.wrap(payload, 1, 6).order(ByteOrder.LITTLE_ENDIAN)
+        val buffer = ByteBuffer.wrap(payload, 1, payload.size - 1).order(ByteOrder.LITTLE_ENDIAN)
+        val photo = buffer.short.toInt() and 0xFFFF
+        val video = buffer.short.toInt() and 0xFFFF
+        val audio = buffer.short.toInt() and 0xFFFF
+        val total = if (buffer.remaining() >= 4) buffer.short.toInt() and 0xFFFF else 0
+        val currIndex = if (buffer.remaining() >= 2) buffer.short.toInt() and 0xFFFF else 0
+        val mediaType = if (buffer.remaining() >= 1) buffer.get().toInt() and 0xFF else (payload[7].toInt() and 0xFF)
         return HeyCyanEvent.MediaCountsUpdated(
-            photoCount = buffer.short.toInt() and 0xFFFF,
-            videoCount = buffer.short.toInt() and 0xFFFF,
-            audioCount = buffer.short.toInt() and 0xFFFF,
-            mediaType = payload[7].toInt() and 0xFF,
+            photoCount = photo,
+            videoCount = video,
+            audioCount = audio,
+            total = total,
+            currIndex = currIndex,
+            mediaType = mediaType,
         )
     }
 

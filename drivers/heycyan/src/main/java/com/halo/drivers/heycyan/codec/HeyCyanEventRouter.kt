@@ -51,6 +51,15 @@ class HeyCyanEventRouter(
                     return HeyCyanEvent.RawAudioFrame(p)
                 }
 
+                if (decoded.actionFamily == HeyCyanActionFamily.DEVICE_DATA_REPORTING) {
+                    if (decoded.payload.isNotEmpty()) {
+                        when (decoded.payload[0]) {
+                            0x03.toByte() -> return HeyCyanEvent.VoiceActivationStarted
+                            0x0A.toByte() -> return HeyCyanEvent.VoiceActivationEnded
+                        }
+                    }
+                }
+
                 return HeyCyanEvent.DecodedProprietaryFrame(
                     actionFamily = decoded.actionFamily,
                     action = decoded.action,

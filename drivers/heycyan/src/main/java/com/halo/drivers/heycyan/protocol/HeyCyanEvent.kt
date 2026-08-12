@@ -25,6 +25,9 @@ enum class HeyCyanMode(val value: Int) {
 sealed interface HeyCyanEvent {
     data object Ready : HeyCyanEvent
 
+    data object VoiceActivationStarted : HeyCyanEvent
+    data object VoiceActivationEnded : HeyCyanEvent
+
     data class ButtonPressed(
         val type: ButtonType
     ) : HeyCyanEvent
@@ -38,6 +41,8 @@ sealed interface HeyCyanEvent {
         val photoCount: Int,
         val videoCount: Int,
         val audioCount: Int,
+        val total: Int,
+        val currIndex: Int,
         val mediaType: Int
     ) : HeyCyanEvent
 
@@ -55,6 +60,10 @@ sealed interface HeyCyanEvent {
     data class WiFiHotspotReady(
         val ssid: String,
         val password: String
+    ) : HeyCyanEvent
+
+    data class WiFiIpReceived(
+        val ip: String
     ) : HeyCyanEvent
 
     /**

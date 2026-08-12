@@ -112,11 +112,13 @@ class DefaultHeyCyanMediaApi(
         destinationPath: String,
         progress: (MediaDownloadProgress) -> Unit,
     ): Result<MediaDownloadResult> = withContext(Dispatchers.IO) {
-        val file = java.io.File(destinationPath)
-        file.parentFile?.mkdirs()
-        java.io.FileOutputStream(file).use { outputStream ->
-            downloadInternal(media, destinationPath, progress) { buffer, offset, len ->
-                outputStream.write(buffer, offset, len)
+        runCatching {
+            val file = java.io.File(destinationPath)
+            file.parentFile?.mkdirs()
+            java.io.FileOutputStream(file).use { outputStream ->
+                downloadInternal(media, destinationPath, progress) { buffer, offset, len ->
+                    outputStream.write(buffer, offset, len)
+                }.getOrThrow()
             }
         }
     }
@@ -144,6 +146,9 @@ class DefaultHeyCyanMediaApi(
         conn.readTimeout = readTimeoutMillis
         conn.requestMethod = "GET"
 
+        var bytesReceived = 0L
+        val expectedBytes = media.sizeBytes
+
         try {
             val code = conn.responseCode
             if (code !in 200..299) {
@@ -153,9 +158,9 @@ class DefaultHeyCyanMediaApi(
                 )
             }
 
-            val totalBytes = conn.contentLengthLong.let { if (it > 0) it else null }
+            val headerTotalBytes = conn.contentLengthLong.let { if (it > 0) it else null }
+            val finalExpectedBytes = headerTotalBytes ?: expectedBytes
             val digest = MessageDigest.getInstance("SHA-256")
-            var bytesReceived = 0L
 
             conn.inputStream.use { input ->
                 val buffer = ByteArray(bufferSize)
@@ -165,21 +170,21 @@ class DefaultHeyCyanMediaApi(
                     writeBlock(buffer, 0, read)
                     digest.update(buffer, 0, read)
                     bytesReceived += read
-                    progress(MediaDownloadProgress(bytesReceived, totalBytes))
+                    progress(MediaDownloadProgress(bytesReceived, finalExpectedBytes))
                 }
             }
 
             val sha256 = digest.digest().joinToString("") { "%02x".format(it) }
             val integrity = MediaIntegrity(
-                expectedBytes = totalBytes,
+                expectedBytes = finalExpectedBytes,
                 actualBytes = bytesReceived,
                 sha256 = sha256,
             )
 
-            if (totalBytes != null && bytesReceived != totalBytes) {
+            if (finalExpectedBytes != null && bytesReceived != finalExpectedBytes) {
                 throw HeyCyanIntegrityException(
                     mediaId = media.id,
-                    expected = totalBytes,
+                    expected = finalExpectedBytes,
                     actual = bytesReceived,
                 )
             }
@@ -190,6 +195,17 @@ class DefaultHeyCyanMediaApi(
                 destination = MediaLocation(destinationPath),
                 integrity = integrity,
             )
+        } catch (e: Exception) {
+            if (e is CancellationException || e is HeyCyanHttpException || e is HeyCyanIntegrityException) throw e
+            val targetExpected = expectedBytes ?: runCatching { conn.contentLengthLong.let { if (it > 0) it else null } }.getOrNull()
+            if (targetExpected != null && bytesReceived != targetExpected) {
+                throw HeyCyanIntegrityException(
+                    mediaId = media.id,
+                    expected = targetExpected,
+                    actual = bytesReceived,
+                )
+            }
+            throw e
         } finally {
             conn.disconnect()
         }

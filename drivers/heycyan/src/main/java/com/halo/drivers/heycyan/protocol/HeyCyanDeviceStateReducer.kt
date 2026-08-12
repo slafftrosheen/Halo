@@ -63,6 +63,9 @@ class HeyCyanDeviceStateReducer {
             is HeyCyanEvent.ObservedProprietaryFrame,
             is HeyCyanEvent.DecodedProprietaryFrame,
             is HeyCyanEvent.RawAudioFrame,
+            is HeyCyanEvent.VoiceActivationStarted,
+            is HeyCyanEvent.VoiceActivationEnded,
+            is HeyCyanEvent.WiFiIpReceived,
             is HeyCyanEvent.Unknown ->
                 state.copy(
                     lastEventAtMillis = timestamp,

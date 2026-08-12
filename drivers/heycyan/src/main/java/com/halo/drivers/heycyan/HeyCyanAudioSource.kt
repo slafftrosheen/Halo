@@ -38,9 +38,10 @@ import kotlinx.coroutines.launch
  * Do not connect this source to the cognitive loop yet.
  */
 class HeyCyanAudioSource(
-    private val driver: com.halo.drivers.heycyan.RealHeyCyanDriver
+    private val driver: com.halo.drivers.heycyan.RealHeyCyanDriver,
+    private val voiceSession: HeyCyanVoiceSession = HeyCyanVoiceSession(driver)
 ) : AudioSource {
-    private val decoder = com.halo.drivers.heycyan.codec.HeyCyanAudioStreamDecoder()
+    private val decoder = com.halo.drivers.heycyan.codec.RawOpusAudioDecoder()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     override val frames: Flow<AudioFrame> = decoder.frames
@@ -50,7 +51,10 @@ class HeyCyanAudioSource(
             driver.heyCyanEvents
                 .filterIsInstance<HeyCyanEvent.RawAudioFrame>()
                 .collect { event ->
-                    decoder.decodePacket(event.payload, System.nanoTime() / 1000)
+                    // Only process audio frames when the voice session is ACTIVE (BC 73 payload 03 trigger)
+                    if (voiceSession.isActive) {
+                        decoder.decodePacket(event.payload, System.nanoTime() / 1000)
+                    }
                 }
         }
     }

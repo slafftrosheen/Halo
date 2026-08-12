@@ -1,0 +1,27 @@
+Summary for C:\Users\slavd\Halo\drivers\heycyan\forensic\original\classes.jar
+Decompiled with CFR 0.152
+
+
+com.oudmon.ble.base.bluetooth.spp.jieli.SppHandle
+----------------------------
+
+executeFilePrepare(java.lang.String )
+  Exception : org.benf.cfr.reader.util.ConfusedCFRException: Tried to end blocks [15[CATCHBLOCK]], but top level block is 35[SIMPLE_IF_TAKEN]
+
+
+com.oudmon.ble.base.bluetooth.spp.jieli.SppHandleBackup
+----------------------------
+
+executeFilePrepare(java.lang.String )
+  Exception : org.benf.cfr.reader.util.ConfusedCFRException: Tried to end blocks [15[CATCHBLOCK]], but top level block is 35[SIMPLE_IF_TAKEN]
+
+
+org.jvcompress.lzo.MiniLZO
+----------------------------
+
+_lzo1x_1_do_compress(byte[] int byte[] org.jvcompress.util.MInt int[] )
+  Unable to fully structure code
+lzo1x_decompress(byte[] int byte[] org.jvcompress.util.MInt )
+  Unable to fully structure code
+lzo1x_decompress_safe(byte[] int byte[] org.jvcompress.util.MInt )
+  Unable to fully structure code

@@ -28,12 +28,14 @@ class HeyCyanSdkEventDecoderTest {
 
     @Test
     fun `media counts decode little endian`() {
-        // photos=2, videos=5, audio=7, mediaType=1
+        // photos=2, videos=5, audio=7, total=14, currIndex=1, mediaType=1
         val payload = byteArrayOf(
             0x02,           // event type
             0x02, 0x00,     // photoCount = 2 (little endian)
             0x05, 0x00,     // videoCount = 5 (little endian)
             0x07, 0x00,     // audioCount = 7 (little endian)
+            0x0E, 0x00,     // total = 14 (little endian)
+            0x01, 0x00,     // currIndex = 1 (little endian)
             0x01            // mediaType
         )
 
@@ -44,8 +46,26 @@ class HeyCyanSdkEventDecoderTest {
                 photoCount = 2,
                 videoCount = 5,
                 audioCount = 7,
+                total = 14,
+                currIndex = 1,
                 mediaType = 1
             ),
+            event
+        )
+    }
+
+    @Test
+    fun `wifi ip decodes`() {
+        val payload = byteArrayOf(
+            0x08,                           // event type
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // padding / metadata up to index 6
+            192.toByte(), 168.toByte(), 43.toByte(), 1.toByte() // IP address at bytes [7..10]
+        )
+
+        val event = decoder.decode(payload)
+
+        assertEquals(
+            HeyCyanEvent.WiFiIpReceived("192.168.43.1"),
             event
         )
     }

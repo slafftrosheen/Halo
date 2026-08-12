@@ -79,6 +79,8 @@ class HeyCyanDeviceStateReducerTest {
                 photoCount = 10,
                 videoCount = 5,
                 audioCount = 2,
+                total = 17,
+                currIndex = 1,
                 mediaType = 1,
             ),
             timestamp = 4000L,

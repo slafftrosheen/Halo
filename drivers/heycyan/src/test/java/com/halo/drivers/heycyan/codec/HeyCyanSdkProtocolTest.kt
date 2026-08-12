@@ -44,6 +44,8 @@ class HeyCyanSdkProtocolTest {
                 photoCount = 2,
                 videoCount = 5,
                 audioCount = 7,
+                total = 0,
+                currIndex = 0,
                 mediaType = 1
             ),
             event
