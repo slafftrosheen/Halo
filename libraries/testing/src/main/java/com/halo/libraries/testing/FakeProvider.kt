@@ -10,8 +10,8 @@ class FakeProvider(
 ) : InferenceProvider {
     override suspend fun health(): Boolean = true
 
-    override suspend fun complete(request: AIRequest): AIResponse {
-        return AIResponse(
+    override suspend fun complete(request: AIRequestLegacy): AIResponseLegacy {
+        return AIResponseLegacy(
             text = "Mock provider response from $providerId",
             finishReason = "stop",
             latencyMs = 100

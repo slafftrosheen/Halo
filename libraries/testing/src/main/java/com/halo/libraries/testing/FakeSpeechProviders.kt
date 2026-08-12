@@ -2,8 +2,8 @@ package com.halo.libraries.testing
 
 import com.halo.sdk.host.AudioBuffer
 import com.halo.sdk.host.AudioFrame
-import com.halo.sdk.provider.AIRequest
-import com.halo.sdk.provider.AIResponse
+import com.halo.sdk.provider.AIRequestLegacy
+import com.halo.sdk.provider.AIResponseLegacy
 import com.halo.sdk.provider.BufferedSpeechRecognitionProvider
 import com.halo.sdk.provider.InferenceProvider
 import com.halo.sdk.provider.RecognitionResult
@@ -76,8 +76,8 @@ class FakeInferenceProvider(
         displayName = "Test inference"
     )
 
-    override suspend fun complete(request: AIRequest): AIResponse =
-        AIResponse(response, "stop", 0L)
+    override suspend fun complete(request: AIRequestLegacy): AIResponseLegacy =
+        AIResponseLegacy(response, "stop", 0L)
 
     override fun stream(prompt: String): Flow<String> = flow { emit(response) }
 

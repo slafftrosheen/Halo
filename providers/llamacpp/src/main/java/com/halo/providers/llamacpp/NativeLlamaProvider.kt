@@ -13,8 +13,8 @@ import java.io.File
 import android.util.Log
 
 import com.halo.sdk.provider.InferenceProvider
-import com.halo.sdk.provider.AIRequest
-import com.halo.sdk.provider.AIResponse
+import com.halo.sdk.provider.AIRequestLegacy
+import com.halo.sdk.provider.AIResponseLegacy
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.takeWhile
@@ -84,7 +84,7 @@ class NativeLlamaProvider(
         return downloadManager.activeModelId.value != null && loadModelIfNeeded()
     }
 
-    override suspend fun complete(request: AIRequest): AIResponse {
+    override suspend fun complete(request: AIRequestLegacy): AIResponseLegacy {
         return inferenceMutex.withLock {
             val startTime = System.currentTimeMillis()
             val prompt = request.conversation.messages.joinToString("\n") {
@@ -94,11 +94,11 @@ class NativeLlamaProvider(
                 val result = buildString {
                     streamInternal(prompt).collect { append(it) }
                 }
-                AIResponse(result, "stop", System.currentTimeMillis() - startTime)
+                AIResponseLegacy(result, "stop", System.currentTimeMillis() - startTime)
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
-                AIResponse("", "error", System.currentTimeMillis() - startTime)
+                AIResponseLegacy("", "error", System.currentTimeMillis() - startTime)
             }
         }
     }

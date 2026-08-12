@@ -41,17 +41,28 @@ data class AudioStreamPacket(
 
 interface AudioStreamProbe {
     fun onPacket(packet: AudioStreamPacket)
+    fun onVoiceActivationStarted()
+    fun onVoiceActivationEnded()
     fun dumpStatistics()
 }
 
 object HeyCyanAudioStreamProbe : AudioStreamProbe {
-    private val _packetCountFlow = MutableStateFlow(0)
-    val packetCountFlow = _packetCountFlow.asStateFlow()
+    private val _totalPacketCountFlow = MutableStateFlow(0)
+    val totalPacketCountFlow = _totalPacketCountFlow.asStateFlow()
+
+    private val _sessionPacketCountFlow = MutableStateFlow(0)
+    val sessionPacketCountFlow = _sessionPacketCountFlow.asStateFlow()
     
     private val _statusFlow = MutableStateFlow("Inactive")
     val statusFlow = _statusFlow.asStateFlow()
 
-    private var packetCount = 0
+    private var totalPacketCount = 0
+    private var sessionPacketCount = 0
+    
+    // Statistical collectors
+    private var lastPayloadSize = 0
+    private var lastIntervalMs = 0L
+    
     private val payloadSizes = mutableMapOf<Int, Int>()
     private val byte0Frequencies = mutableMapOf<Byte, Int>()
     private val byte1Frequencies = mutableMapOf<Byte, Int>()
@@ -70,10 +81,37 @@ object HeyCyanAudioStreamProbe : AudioStreamProbe {
     // Decoder validation probe
     private val decoderProbe = HeyCyanOpusDecoderProbe()
 
+    fun getSessionPackets() = sessionPacketCount
+    fun getTotalPackets() = totalPacketCount
+    fun getLastPayloadSize() = lastPayloadSize
+    fun getLastIntervalMs() = lastIntervalMs
+    fun getDecoderStatus() = if (decoderProbe.failedDecodes > 0) "Degraded" else "Healthy"
+
+    override fun onVoiceActivationStarted() {
+        sessionPacketCount = 0
+        _sessionPacketCountFlow.value = 0
+        _statusFlow.value = "Listening"
+        HeyCyanLogger.i("AudioProbe", "Voice activation session started. Stats reset.")
+    }
+
+    override fun onVoiceActivationEnded() {
+        _statusFlow.value = "Stopped"
+        HeyCyanLogger.i("AudioProbe", "Voice activation session ended. Final session packets: $sessionPacketCount")
+        dumpStatistics()
+    }
+
     override fun onPacket(packet: AudioStreamPacket) {
-        packetCount++
-        _packetCountFlow.value = packetCount
-        _statusFlow.value = "Receiving Packets"
+        totalPacketCount++
+        sessionPacketCount++
+        lastPayloadSize = packet.length
+        
+        _totalPacketCountFlow.value = totalPacketCount
+        _sessionPacketCountFlow.value = sessionPacketCount
+        
+        // Transition to Receiving if we were Listening or Stopped
+        if (_statusFlow.value != "Error") {
+            _statusFlow.value = "Receiving"
+        }
         
         payloadSizes[packet.length] = (payloadSizes[packet.length] ?: 0) + 1
         
@@ -97,7 +135,8 @@ object HeyCyanAudioStreamProbe : AudioStreamProbe {
 
         if (previousTimestamp != 0L) {
             val interval = packet.timestampMs - previousTimestamp
-            if (interval > 0) { // filter out identical timestamps if batched
+            lastIntervalMs = interval
+            if (interval > 0) { 
                 if (interval < minInterval) minInterval = interval
                 if (interval > maxInterval) maxInterval = interval
                 sumInterval += interval
@@ -106,27 +145,50 @@ object HeyCyanAudioStreamProbe : AudioStreamProbe {
         }
         previousTimestamp = packet.timestampMs
         
-        // Feed the raw payload directly to the Opus decoder validation probe
-        // Multiply ms by 1000 to get microseconds for MediaCodec
         decoderProbe.decodePacket(packet.payload, packet.timestampMs * 1000)
         
-        // Dump stats every 10 packets to get a live view
-        if (packetCount % 10 == 0) {
+        if (sessionPacketCount % 20 == 0) {
             dumpStatistics()
         }
     }
 
+    fun onError(message: String) {
+        _statusFlow.value = "Error"
+        HeyCyanLogger.i("AudioProbe", "Audio stream ERROR: $message")
+    }
+
+    fun reset() {
+        _statusFlow.value = "Inactive"
+        totalPacketCount = 0
+        sessionPacketCount = 0
+        _totalPacketCountFlow.value = 0
+        _sessionPacketCountFlow.value = 0
+        payloadSizes.clear()
+        byte0Frequencies.clear()
+        byte1Frequencies.clear()
+        byte2Frequencies.clear()
+        minTrailingZeroes = Int.MAX_VALUE
+        maxTrailingZeroes = Int.MIN_VALUE
+        sumTrailingZeroes = 0
+        previousTimestamp = 0
+        minInterval = Long.MAX_VALUE
+        maxInterval = Long.MIN_VALUE
+        sumInterval = 0
+        intervalCount = 0
+    }
+
     override fun dumpStatistics() {
-        val meanZeroes = if (packetCount > 0) sumTrailingZeroes / packetCount else 0
+        val meanZeroes = if (totalPacketCount > 0) sumTrailingZeroes / totalPacketCount else 0
         val meanInterval = if (intervalCount > 0) sumInterval / intervalCount else 0
 
         val stats = buildString {
             appendLine("=== BC 59 Audio Stream Statistics ===")
-            appendLine("Packets:        $packetCount")
+            appendLine("Session Packets: $sessionPacketCount")
+            appendLine("Total Packets:   $totalPacketCount")
             
             append("Payload sizes:  ")
             payloadSizes.forEach { (size, count) -> 
-                append("$size bytes ($count/$packetCount)  ")
+                append("$size bytes ($count/$totalPacketCount)  ")
             }
             appendLine()
 

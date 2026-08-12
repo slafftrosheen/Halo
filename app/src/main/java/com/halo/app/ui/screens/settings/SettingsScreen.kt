@@ -47,11 +47,13 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
         
         // HALO Section
         HaloGlassSection(title = "HALO") {
-            SettingItem("Assistant", "Native Engine", clickable = true)
+            SettingItem("Assistant", uiState.provider, clickable = true) {
+                viewModel.navigateTo("ai_settings")
+            }
             HaloGlassDivider()
-            SettingItem("Voice", "System Default", clickable = true)
+            SettingItem("Voice", "Not configured", clickable = false)
             HaloGlassDivider()
-            SettingItem("Glasses", "Halo Glass Prototype", clickable = true)
+            SettingItem("Glasses", uiState.deviceName, clickable = false)
             HaloGlassDivider()
             SettingItem("Privacy", "Review", clickable = true)
             HaloGlassDivider()
@@ -87,9 +89,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                         viewModel.navigateTo("console")
                     }
                     HaloGlassDivider()
-                    SettingItem("Audio Diagnostics", "View", clickable = true) {
-                        // TODO: Implement Audio diagnostics route
-                    }
+                    SettingItem("Audio Diagnostics", "Not configured", clickable = false)
                 }
             }
         }
@@ -175,13 +175,19 @@ fun PermissionsScreen() {
                 description = "Required for device pairing and data transfer",
                 granted = btConnectGranted && btScanGranted
             )
-            HaloGlassDivider()
-            PermissionItem(
-                icon = Icons.Default.Settings,
-                label = "Location Services",
-                description = "Required for proximity detection",
-                granted = locationGranted
-            )
+            
+            // Only show Location if Android < 12 (API 31) where it was strictly required for BLE scans,
+            // or if it's already granted on newer devices.
+            val locationRequired = android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S
+            if (locationRequired || locationGranted) {
+                HaloGlassDivider()
+                PermissionItem(
+                    icon = Icons.Default.Settings,
+                    label = "Location Services",
+                    description = "Required for BLE discovery on older Android versions",
+                    granted = locationGranted
+                )
+            }
         }
         
         HaloGlassSection(title = "Device Capabilities") {

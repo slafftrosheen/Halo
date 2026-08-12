@@ -356,17 +356,20 @@ Every intent 0-100%
 
 ---
 
-## 22. AI Router
+## 22. AI Provider Integration
 
-Decision tree:
+AI is decoupled from the core runtime via `AiProvider`.
+
 ```text
-Simple? -> Android
-Complex? -> LLM
-Vision? -> Vision Provider
-Offline? -> Local Provider
+AiRequest (Multimodal) -> AiProviderRouter -> Selected Provider -> AiResponse
 ```
 
-No provider-specific logic.
+Responsibilities:
+- **Multimodal Support**: Requests can contain text, image, audio, or video data.
+- **Provider Routing**: Selection based on capability matching and user preference.
+- **Android Integration**: The `AndroidAssistantProvider` uses system-level interaction (e.g., `ACTION_ASSIST`) for assistant handoff.
+
+The architecture distinguishes between synchronous AI responses and one-way assistant handoffs.
 
 ---
 

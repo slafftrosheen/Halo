@@ -1,36 +1,31 @@
-# UI Implementation Status (PR-UI-002 Complete)
+# UI Implementation Status (PR-UI-003 Complete)
 
 ## Home
-- **Implemented**: connection state, battery percentage, active provider, contextual text, capabilities map, reactive floating mic.
-- **Partially Implemented**: none.
+- **Implemented**: connection state, battery percentage, active provider, reactive floating mic.
+- **Partially Implemented**: capabilities map (filtered for reported only).
 - **Placeholder**: none.
 - **Real data source**: YES (RuntimeSnapshot)
-- **Developer-only**: none.
 
 ## Activity
 - **Implemented**: real timeline from RuntimeSnapshot. Empty state handled properly.
-- **Partially Implemented**: none.
+- **Partially Implemented**: pagination.
 - **Placeholder**: none.
-- **Real data source**: YES.
-- **Fake events**: NONE.
+- **Real data source**: YES (TimelineEventMapper).
 
 ## Devices
-- **Implemented**: Connected/Disconnected state modes, real capabilities mapped from connected state. Responsive UI elements.
+- **Implemented**: Connected/Disconnected state modes, real capabilities mapped from `DeviceContext.capabilities`.
 - **Partially Implemented**: none.
 - **Placeholder**: none.
-- **Real data source**: YES (for connection state and capabilities).
-- **Fake device data**: NONE.
+- **Real data source**: YES (RuntimeSnapshot).
 
 ## Settings
-- **Implemented**: Real Android permissions checking, Developer Mode toggle, Settings menu navigation. Split into HALO and DEVELOPER sections.
+- **Implemented**: Real Android permissions checking (API-aware for Location), Developer Mode toggle, Settings menu navigation.
 - **Partially Implemented**: none.
-- **Placeholder**: none.
-- **Real data source**: YES (ContextCompat).
-- **Developer mode**: YES.
+- **Placeholder**: Audio Diagnostics (informational only).
+- **Real data source**: YES.
 
 ## Protocol Lab
-- **Implemented**: Forensic capture toggle, LIVE TRANSACTIONS, Quick Actions (Photo, Video, Audio, Media Count), and AUDIO STREAM stats.
+- **Implemented**: Forensic capture toggle, TRANSACTION LOG (nav to Console), Quick Actions, and AUDIO STREAM (BC 59) stats with Session tracking.
 - **Partially Implemented**: none.
 - **Placeholder**: none.
-- **Real data source**: YES (HeyCyanLogger, CaptureSession, HeyCyanAudioStreamProbe).
-- **Real commands**: YES (driver hooks).
+- **Real data source**: YES (HeyCyanAudioStreamProbe).

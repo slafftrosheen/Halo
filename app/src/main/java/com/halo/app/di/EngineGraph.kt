@@ -6,6 +6,8 @@ import com.halo.engines.agents.RuntimeOrchestrator
 import com.halo.engines.execution.ExecutionEngine
 import com.halo.engines.execution.service.ExecutionScheduler
 import com.halo.engines.execution.service.CapabilityRegistry
+import com.halo.engines.ai.AIEngine
+import com.halo.engines.ai.AiProviderRouter
 import com.halo.engines.interpretation.InterpretationEngine
 import com.halo.engines.memory.store.EpisodicMemoryStore
 import com.halo.engines.memory.ReflectionEngine
@@ -86,4 +88,7 @@ class EngineGraph(
     val speechPerceptionBridge by lazy {
         SpeechPerceptionBridge(infra.eventBus, infra.scope)
     }
+
+    val aiProviderRouter by lazy { AiProviderRouter(providerGraph.providers.aiProviders) }
+    val aiEngine by lazy { AIEngine(aiProviderRouter) }
 }

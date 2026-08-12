@@ -59,12 +59,11 @@ fun ProtocolLabScreen(viewModel: ProtocolLabViewModel) {
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(if (state.isDiscovering) "Scanning..." else "Idle", color = HaloGlassColors.TextPrimary)
-                                Button(
+                                com.halo.app.ui.glass.components.HaloGlassButton(
+                                    text = if (state.isDiscovering) "Stop" else "Discover",
                                     onClick = { viewModel.toggleDiscovery() },
                                     enabled = !state.isConnecting
-                                ) { 
-                                    Text(if (state.isDiscovering) "Stop" else "Discover") 
-                                }
+                                )
                             }
                             
                             if (state.discoveredDevices.isNotEmpty()) {
@@ -79,12 +78,11 @@ fun ProtocolLabScreen(viewModel: ProtocolLabViewModel) {
                                             Text(device.name, color = HaloGlassColors.TextPrimary)
                                             Text(device.id, color = HaloGlassColors.TextSecondary, style = HaloTypography.labelSmall)
                                         }
-                                        Button(
+                                        com.halo.app.ui.glass.components.HaloGlassButton(
+                                            text = if (state.isConnecting && (state.activeDeviceName == device.name)) "..." else "Connect",
                                             onClick = { viewModel.connect(device) },
                                             enabled = !state.isDiscovering && !state.isConnecting
-                                        ) {
-                                            Text(if (state.isConnecting && state.activeDeviceName == device.name) "..." else "Connect")
-                                        }
+                                        )
                                     }
                                 }
                             }
@@ -161,33 +159,33 @@ fun ProtocolLabScreen(viewModel: ProtocolLabViewModel) {
                                 Modifier.fillMaxWidth().padding(vertical = 8.dp),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Button(
+                                com.halo.app.ui.glass.components.HaloGlassButton(
+                                    text = "Photo",
                                     onClick = { viewModel.triggerForensicOperation("PHOTO") },
-                                    modifier = Modifier.weight(1f),
-                                    contentPadding = PaddingValues(4.dp)
-                                ) { Text("Photo", fontSize = 10.sp) }
+                                    modifier = Modifier.weight(1f)
+                                )
                                 
-                                Button(
+                                com.halo.app.ui.glass.components.HaloGlassButton(
+                                    text = "Vid Toggle",
                                     onClick = { viewModel.triggerForensicOperation("VID_TOGGLE") },
-                                    modifier = Modifier.weight(1f),
-                                    contentPadding = PaddingValues(4.dp)
-                                ) { Text("Vid Toggle", fontSize = 10.sp) }
+                                    modifier = Modifier.weight(1f)
+                                )
                                 
-                                Button(
+                                com.halo.app.ui.glass.components.HaloGlassButton(
+                                    text = "Aud Toggle",
                                     onClick = { viewModel.triggerForensicOperation("AUD_TOGGLE") },
-                                    modifier = Modifier.weight(1f),
-                                    contentPadding = PaddingValues(4.dp)
-                                ) { Text("Aud Toggle", fontSize = 10.sp) }
+                                    modifier = Modifier.weight(1f)
+                                )
                             }
                             Row(
                                 Modifier.fillMaxWidth().padding(vertical = 4.dp),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Button(
+                                com.halo.app.ui.glass.components.HaloGlassButton(
+                                    text = "Media Cnt",
                                     onClick = { viewModel.triggerForensicOperation("MEDIA_COUNT") },
-                                    modifier = Modifier.weight(1f),
-                                    contentPadding = PaddingValues(4.dp)
-                                ) { Text("Media Cnt", fontSize = 10.sp) }
+                                    modifier = Modifier.weight(1f)
+                                )
                                 Spacer(Modifier.weight(2f))
                             }
                         }
@@ -196,14 +194,24 @@ fun ProtocolLabScreen(viewModel: ProtocolLabViewModel) {
 
                 item { Spacer(Modifier.height(16.dp)) }
 
-                // LIVE TRANSACTIONS Section
+                // TRANSACTION LOG Section
                 item {
                     HaloGlassSection(
-                        title = "LIVE TRANSACTIONS",
+                        title = "TRANSACTION LOG",
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
                     ) {
                         Column(Modifier.padding(8.dp)) {
-                            Text("Transaction log available in Developer Console", color = HaloGlassColors.TextMuted, style = HaloTypography.bodySmall)
+                            Text(
+                                text = "View raw transport evidence and detailed logs in the Developer Console.",
+                                color = HaloGlassColors.TextSecondary,
+                                style = HaloTypography.bodySmall
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            com.halo.app.ui.glass.components.HaloGlassButton(
+                                text = "Open Console",
+                                onClick = { viewModel.navigateTo("console") },
+                                modifier = Modifier.fillMaxWidth()
+                            )
                         }
                     }
                 }
@@ -213,18 +221,38 @@ fun ProtocolLabScreen(viewModel: ProtocolLabViewModel) {
                 // AUDIO STREAM Section
                 item {
                     HaloGlassSection(
-                        title = "AUDIO STREAM",
+                        title = "AUDIO STREAM (BC 59)",
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
                     ) {
                         Column(Modifier.padding(8.dp)) {
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Text("Status", color = HaloGlassColors.TextSecondary)
-                                Text(state.audioStreamStatus, color = HaloGlassColors.TextPrimary)
+                                Text(state.audioStreamStatus, color = HaloGlassColors.Accent)
                             }
                             Spacer(Modifier.height(8.dp))
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text("Packets Received", color = HaloGlassColors.TextSecondary)
-                                Text("${state.audioPacketsReceived}", color = HaloGlassColors.Accent)
+                                Text("Session Packets", color = HaloGlassColors.TextSecondary)
+                                Text(state.sessionAudioPacketsReceived.toString(), color = HaloGlassColors.TextPrimary)
+                            }
+                            Spacer(Modifier.height(8.dp))
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("Last Payload", color = HaloGlassColors.TextSecondary)
+                                Text("${state.lastPayloadSize} bytes", color = HaloGlassColors.TextPrimary)
+                            }
+                            Spacer(Modifier.height(8.dp))
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("Interval", color = HaloGlassColors.TextSecondary)
+                                Text("${state.lastIntervalMs} ms", color = HaloGlassColors.TextPrimary)
+                            }
+                            Spacer(Modifier.height(8.dp))
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("Decoder", color = HaloGlassColors.TextSecondary)
+                                Text(state.decoderStatus, color = if (state.decoderStatus == "Healthy") HaloGlassColors.Success else HaloGlassColors.Warning)
+                            }
+                            Spacer(Modifier.height(8.dp))
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("Lifetime Packets", color = HaloGlassColors.TextSecondary)
+                                Text(state.audioPacketsReceived.toString(), color = HaloGlassColors.TextMuted)
                             }
                         }
                     }
@@ -242,7 +270,11 @@ data class DiscoveryState(
     val isConnecting: Boolean = false,
     val isForensicCaptureEnabled: Boolean = false,
     val audioStreamStatus: String = "Inactive",
-    val audioPacketsReceived: Int = 0
+    val audioPacketsReceived: Int = 0,
+    val sessionAudioPacketsReceived: Int = 0,
+    val lastPayloadSize: Int = 0,
+    val lastIntervalMs: Long = 0,
+    val decoderStatus: String = "Unknown"
 )
 data class ProtocolDevice(val id: String, val name: String, val protocol: String)
 
@@ -268,17 +300,37 @@ class ProtocolLabViewModel(
         }.launchIn(viewModelScope)
         
         // Observe audio stream stats
-        com.halo.drivers.heycyan.debug.HeyCyanAudioStreamProbe.packetCountFlow
+        com.halo.drivers.heycyan.debug.HeyCyanAudioStreamProbe.totalPacketCountFlow
             .onEach { count ->
                 _state.update { it.copy(audioPacketsReceived = count) }
             }
             .launchIn(viewModelScope)
             
-        com.halo.drivers.heycyan.debug.HeyCyanAudioStreamProbe.statusFlow
-            .onEach { status ->
-                _state.update { it.copy(audioStreamStatus = status) }
+        com.halo.drivers.heycyan.debug.HeyCyanAudioStreamProbe.sessionPacketCountFlow
+            .onEach { count ->
+                _state.update { it.copy(sessionAudioPacketsReceived = count) }
             }
             .launchIn(viewModelScope)
+            
+        com.halo.drivers.heycyan.debug.HeyCyanAudioStreamProbe.statusFlow
+            .onEach { status ->
+                _state.update { it.copy(
+                    audioStreamStatus = status,
+                    lastPayloadSize = com.halo.drivers.heycyan.debug.HeyCyanAudioStreamProbe.getLastPayloadSize(),
+                    lastIntervalMs = com.halo.drivers.heycyan.debug.HeyCyanAudioStreamProbe.getLastIntervalMs(),
+                    decoderStatus = com.halo.drivers.heycyan.debug.HeyCyanAudioStreamProbe.getDecoderStatus()
+                ) }
+            }
+            .launchIn(viewModelScope)
+    }
+
+    private val _navigationEvents = MutableSharedFlow<String>()
+    val navigationEvents: SharedFlow<String> = _navigationEvents.asSharedFlow()
+
+    fun navigateTo(route: String) {
+        viewModelScope.launch {
+            _navigationEvents.emit(route)
+        }
     }
 
     fun setForensicCaptureEnabled(enabled: Boolean) {

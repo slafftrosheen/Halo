@@ -136,3 +136,37 @@ interpretation are in place.
 Reasoning, planning, execution, AI-provider integration, long-term memory, and
 live debugger behavior remain separate engine implementations. They must
 consume the typed cognitive contracts rather than introduce parallel state.
+
+## AI Provider Integration
+
+AI is an external cognitive service, accessed via the `AiProvider` abstraction.
+
+```text
+AiRequest (Multimodal)
+   │
+   ▼
+AiProviderRouter
+   │
+   ▼
+Selected AiProvider (Local, Assistant, etc.)
+   │
+   ▼
+AiResponse
+```
+
+### Multimodal Abstraction
+
+The `AiRequest` and `AiResponse` models in `sdk:provider-sdk` support text, image, audio, and video modalities. This allows Halo to remain provider-agnostic while supporting advanced AI capabilities.
+
+### Provider Router
+
+The `AiProviderRouter` in `engines:ai` manages registered providers and selects the best one based on:
+1. User preference (manual selection).
+2. Provider availability (`isAvailable()`).
+3. Capability matching (e.g., ensuring a provider supports `IMAGE` if an image is attached).
+
+### Android Assistant Integration
+
+The `AndroidAssistantProvider` acts as a bridge to the system's default assistant. It supports "assistant handoff" using standard Android `ACTION_ASSIST` intents. This distinction is critical:
+- **Assistant Handoff**: Halo triggers the system assistant UI for the user to continue the interaction. Halo does not necessarily receive the result back.
+- **AI Response**: A provider returns a structured response directly to Halo's reasoning layer.

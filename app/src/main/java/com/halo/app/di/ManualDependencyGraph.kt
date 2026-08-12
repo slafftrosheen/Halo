@@ -29,7 +29,7 @@ object ManualDependencyGraph {
     val providerGraph by lazy { ProviderGraph(applicationContext) }
     val hostGraph by lazy { HostGraph(applicationContext, infra, providerGraph) }
     val engineGraph by lazy { EngineGraph(applicationContext, infra, providerGraph) }
-    val observerGraph by lazy { ObserverGraph(applicationContext, infra, engineGraph) }
+    val observerGraph by lazy { ObserverGraph(applicationContext, infra, engineGraph, providerGraph) }
 
     // ─── Convenience accessors (preserve existing API) ──────────
 
@@ -63,6 +63,8 @@ object ManualDependencyGraph {
     val planningEngine get() = engineGraph.planningEngine
     val interpretationEngine get() = engineGraph.interpretationEngine
     val reasoningEngine get() = engineGraph.reasoningEngine
+    val aiEngine get() = engineGraph.aiEngine
+    val aiProviderRouter get() = engineGraph.aiProviderRouter
     val reflectionEngine get() = engineGraph.reflectionEngine
     val runtimeOrchestrator get() = engineGraph.runtimeOrchestrator
     val speechSessionManager get() = engineGraph.speechSessionManager
@@ -97,7 +99,7 @@ object ManualDependencyGraph {
 
     val homeViewModel by lazy { HomeViewModel(runtimeSnapshotManager, commandBus) }
     val consoleViewModel by lazy { ConsoleViewModel(runtimeSnapshotManager) }
-    val settingsViewModel by lazy { SettingsViewModel(runtimeSnapshotManager) }
+    val settingsViewModel by lazy { SettingsViewModel(runtimeSnapshotManager, aiProviderRouter) }
     val activityViewModel by lazy { ActivityViewModel(runtimeSnapshotManager) }
     val devicesViewModel by lazy { DevicesViewModel(runtimeSnapshotManager) }
     val protocolLabViewModel by lazy { ProtocolLabViewModel(heyCyanDriver) }

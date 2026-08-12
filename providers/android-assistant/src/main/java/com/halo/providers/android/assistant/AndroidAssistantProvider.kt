@@ -25,18 +25,44 @@ class AndroidAssistantProvider(
         AiCapability.MULTIMODAL
     )
 
+    override fun isAvailable(): Boolean {
+        // Basic check for assistant availability via Intent resolution
+        val intent = android.content.Intent(android.content.Intent.ACTION_ASSIST)
+        val resolveInfo = context.packageManager.resolveActivity(intent, 0)
+        return resolveInfo != null
+    }
+
     override suspend fun execute(request: AiRequest): AiResponse {
         // Implementation note: Android's public Assistant integration is primarily
         // based on intents and assist context. This provider encapsulates that logic.
 
-        // Placeholder for real integration logic
-        val inputPreview = request.text ?: "Multimodal input"
+        android.util.Log.i("HALO-AI", "provider=$id operation=execute capability=TEXT availability=${isAvailable()}")
+
+        // Launch assistant intent for handoff if text is provided
+        if (request.text != null) {
+            val intent = android.content.Intent(android.content.Intent.ACTION_ASSIST).apply {
+                flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+                putExtra(android.content.Intent.EXTRA_ASSIST_CONTEXT, android.os.Bundle())
+                // Note: Standard ACTION_ASSIST doesn't always take text directly, 
+                // but some implementations/OEMs support it via extras.
+                // For a true "handoff", we are launching the system assistant.
+            }
+            context.startActivity(intent)
+            
+            return AiResponse(
+                text = "HANDOFF_STARTED",
+                metadata = mapOf(
+                    "status" to "HANDOFF",
+                    "provider_id" to id
+                )
+            )
+        }
 
         return AiResponse(
-            text = "Processed by Android Assistant: $inputPreview",
+            text = "UNSUPPORTED",
             metadata = mapOf(
-                "provider_id" to id,
-                "capabilities" to capabilities.map { it.name }
+                "status" to "FAILED",
+                "reason" to "No supported modality for handoff"
             )
         )
     }

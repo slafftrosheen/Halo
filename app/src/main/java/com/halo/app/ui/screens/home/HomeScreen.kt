@@ -83,19 +83,55 @@ fun HomeScreen(viewModel: HomeViewModel) {
         Spacer(modifier = Modifier.height(48.dp))
         
         // Capabilities Row (Compact)
-        if (uiState.capabilities.isNotEmpty()) {
+        val filteredCapabilities = uiState.capabilities.filter { it != "Not reported" }
+        if (filteredCapabilities.isNotEmpty()) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                uiState.capabilities.forEach { cap ->
+                filteredCapabilities.forEach { cap ->
                     HaloGlassChip(
-                        text = cap
+                        text = cap,
+                        modifier = Modifier.padding(horizontal = 4.dp)
                     )
                 }
             }
             Spacer(modifier = Modifier.height(32.dp))
         }
+
+        // AI Status
+        HaloGlassSection(title = "Intelligence") {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text("AI Provider", style = HaloTypography.bodyMedium, color = HaloGlassColors.TextSecondary)
+                    Text(uiState.activeProvider, style = HaloTypography.bodyMedium, color = HaloGlassColors.TextPrimary)
+                }
+                HaloGlassChip(
+                    text = uiState.activeProviderStatus,
+                    material = when (uiState.activeProviderStatus) {
+                        "READY" -> com.halo.app.ui.glass.material.HaloGlassMaterials.Interactive.copy(
+                            containerColor = HaloGlassColors.Success.copy(alpha = 0.2f),
+                            contentColor = HaloGlassColors.Success
+                        )
+                        "HANDOFF" -> com.halo.app.ui.glass.material.HaloGlassMaterials.Interactive.copy(
+                            containerColor = HaloGlassColors.Accent.copy(alpha = 0.2f),
+                            contentColor = HaloGlassColors.Accent
+                        )
+                        else -> com.halo.app.ui.glass.material.HaloGlassMaterials.Interactive.copy(
+                            containerColor = HaloGlassColors.Danger.copy(alpha = 0.2f),
+                            contentColor = HaloGlassColors.Danger
+                        )
+                    }
+                )
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(24.dp))
 
         // Device Status
         HaloGlassSection(title = "Device Status") {
@@ -120,14 +156,6 @@ fun HomeScreen(viewModel: HomeViewModel) {
                     Text("$batteryText$chargeText", style = HaloTypography.bodyMedium, color = HaloGlassColors.TextPrimary)
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Audio Routing", style = HaloTypography.bodyMedium, color = HaloGlassColors.TextSecondary)
-                    Text("Glasses", style = HaloTypography.bodyMedium, color = HaloGlassColors.TextPrimary)
-                }
             }
         }
         

@@ -60,7 +60,7 @@ fun DevicesScreen(viewModel: DevicesViewModel) {
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = if (uiState.isConnected) "Connected" else "Not connected",
+                    text = uiState.deviceName,
                     style = HaloTypography.titleLarge,
                     color = HaloGlassColors.TextPrimary
                 )
@@ -129,38 +129,32 @@ fun DevicesScreen(viewModel: DevicesViewModel) {
                     }
                 }
             }
-            
-            item { Spacer(modifier = Modifier.height(16.dp)) }
-            
-            item {
-                com.halo.app.ui.glass.components.HaloGlassButton(
-                    text = "Device details",
-                    onClick = { /* TODO */ },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+            // Removed dead Device Details button
         }
     }
 }
 
 data class DevicesUiState(
     val isConnected: Boolean = false,
-    val battery: String = "Unknown",
-    val connectionType: String = "Unknown",
-    val audioStatus: String = "Unknown",
-    val cameraStatus: String = "Unknown"
+    val deviceName: String = "No glasses connected",
+    val battery: String = "Not reported",
+    val connectionType: String = "Not reported",
+    val audioStatus: String = "Not reported",
+    val cameraStatus: String = "Not reported"
 )
 
 class DevicesViewModel(private val snapshotManager: RuntimeSnapshotSource) : ViewModel() {
     val uiState: StateFlow<DevicesUiState> = snapshotManager.snapshot
         .map { snapshot ->
             val isConnected = snapshot.deviceContext.connected
+            val caps = snapshot.deviceContext.capabilities
             DevicesUiState(
                 isConnected = isConnected,
+                deviceName = snapshot.deviceContext.name ?: if (isConnected) "Unknown device" else "No glasses connected",
                 battery = snapshot.deviceContext.batteryPercent?.let { "$it%" } ?: "Unknown",
                 connectionType = if (isConnected) "BLE" else "Disconnected",
-                audioStatus = if (isConnected) "Available" else "Not connected",
-                cameraStatus = if (isConnected) "Available" else "Not connected"
+                audioStatus = if (caps.contains("Audio")) "Supported" else "Not reported",
+                cameraStatus = if (caps.contains("Camera")) "Supported" else "Not reported"
             )
         }
         .stateIn(

@@ -1,8 +1,8 @@
 package com.halo.providers.llamacpp
 
 import android.util.Log
-import com.halo.sdk.provider.AIRequest
-import com.halo.sdk.provider.AIResponse
+import com.halo.sdk.provider.AIRequestLegacy
+import com.halo.sdk.provider.AIResponseLegacy
 
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -82,7 +82,7 @@ class OllamaProvider(
         }
     }
 
-    override suspend fun complete(request: AIRequest): AIResponse {
+    override suspend fun complete(request: AIRequestLegacy): AIResponseLegacy {
         return withContext(Dispatchers.IO) {
             val startTime = System.currentTimeMillis()
             val prompt = request.conversation.messages.joinToString("\n") {
@@ -114,7 +114,7 @@ class OllamaProvider(
                     val ollamaResponse = generateResponseAdapter.fromJson(json) 
                         ?: throw IOException("Failed to parse response")
 
-                    AIResponse(
+                    AIResponseLegacy(
                         text = ollamaResponse.response,
                         finishReason = if (ollamaResponse.done) "stop" else "length",
                         latencyMs = System.currentTimeMillis() - startTime
@@ -123,7 +123,7 @@ class OllamaProvider(
             } catch (e: Exception) {
                 if (e is kotlinx.coroutines.CancellationException) throw e
                 Log.e(TAG, "Completion failed", e)
-                AIResponse(
+                AIResponseLegacy(
                     text = "Error: ${e.message}",
                     finishReason = "error",
                     latencyMs = System.currentTimeMillis() - startTime

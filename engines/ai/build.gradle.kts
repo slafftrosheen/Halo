@@ -8,6 +8,9 @@ dependencies {
     implementation(project(":sdk:provider-sdk"))
     implementation(project(":libraries:common"))
     implementation(project(":engines:provider"))
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
+    implementation(libs.kotlinx.coroutines.core)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
 }
 

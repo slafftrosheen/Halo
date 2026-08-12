@@ -25,6 +25,7 @@ class DefaultRuntimeObserver(
     timelineRecorder: TimelineRecorder,
     private val traceRecorder: TraceRecorder,
     private val assembler: SnapshotAssembler,
+    private val providerSource: () -> List<ProviderSnapshot>,
     private val clock: Clock,
     scope: CoroutineScope
 ) : RuntimeSnapshotSource {
@@ -48,8 +49,9 @@ class DefaultRuntimeObserver(
         timelineRecorder.timelineFlow,
         traceRecorder.tracesFlow
     ) { speechState, processes, facts, timeline, traces ->
-        assembler.assemble(speechState, processes, facts, timeline, traces, startedAtTime)
+        assembler.assemble(speechState, processes, facts, timeline, traces, providerSource(), startedAtTime)
     }.stateIn(
+        // ...
         scope = scope,
         started = SharingStarted.Eagerly,
         initialValue = RuntimeSnapshot(

@@ -21,6 +21,7 @@ import com.halo.app.ui.screens.home.HomeScreen
 import com.halo.app.ui.screens.activity.ActivityScreen
 import com.halo.app.ui.screens.devices.DevicesScreen
 import com.halo.app.ui.screens.settings.SettingsScreen
+import com.halo.app.ui.screens.settings.AiSettingsScreen
 import com.halo.app.ui.developer.protocol.ProtocolLabScreen
 import com.halo.app.ui.developer.inspector.RuntimeInspectorScreen
 import com.halo.app.ui.developer.console.ConsoleScreen
@@ -45,6 +46,7 @@ fun AppShell() {
     val navController = rememberNavController()
     val settingsViewModel = ManualDependencyGraph.settingsViewModel
     val devicesViewModel = ManualDependencyGraph.devicesViewModel
+    val protocolLabViewModel = ManualDependencyGraph.protocolLabViewModel
 
     LaunchedEffect(Unit) {
         settingsViewModel.navigationEvents.collectLatest { route ->
@@ -54,6 +56,12 @@ fun AppShell() {
     
     LaunchedEffect(Unit) {
         devicesViewModel.navigationEvents.collectLatest { route ->
+            navController.navigate(route)
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        protocolLabViewModel.navigationEvents.collectLatest { route ->
             navController.navigate(route)
         }
     }
@@ -75,6 +83,9 @@ fun AppShell() {
             }
             composable(Screen.Settings.route) {
                 SettingsScreen(viewModel = ManualDependencyGraph.settingsViewModel)
+            }
+            composable("ai_settings") {
+                AiSettingsScreen(viewModel = ManualDependencyGraph.settingsViewModel)
             }
             composable("discovery") {
                 com.halo.app.ui.screens.discovery.HeyCyanDiscoveryScreen(

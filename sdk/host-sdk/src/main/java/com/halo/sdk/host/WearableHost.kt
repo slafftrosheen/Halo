@@ -41,11 +41,13 @@ enum class ButtonEvent {
 }
 
 data class DeviceContext(
+    val name: String? = null,
     val batteryPercent: Int? = null,
     val wearing: Boolean = false,
     val connected: Boolean = false,
     val charging: Boolean = false,
-    val temperatureCelsius: Float? = null
+    val temperatureCelsius: Float? = null,
+    val capabilities: List<String> = emptyList()
 )
 
 sealed interface ConnectionState {

@@ -5,6 +5,7 @@ import com.halo.sdk.provider.*
 import com.halo.engines.speech.AlwaysWakeDetector
 import com.halo.providers.android.stt.AndroidSpeechRecognitionProvider
 import com.halo.providers.android.tts.AndroidTTSProvider
+import com.halo.providers.android.assistant.AndroidAssistantProvider
 import com.halo.providers.llamacpp.NativeLlamaProvider
 import com.halo.providers.llamacpp.ModelDownloadManager
 
@@ -18,7 +19,10 @@ class AndroidProviderFactory(
             inference = NativeLlamaProvider(context, modelDownloadManager),
             speechRecognition = AndroidSpeechRecognitionProvider(context),
             speechSynthesis = AndroidTTSProvider(context),
-            wakeWord = AlwaysWakeDetector()
+            wakeWord = AlwaysWakeDetector(),
+            aiProviders = listOf(
+                AndroidAssistantProvider(context)
+            )
         )
     }
 }

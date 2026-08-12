@@ -28,6 +28,7 @@ data class HomeUiState(
     val runtimeState: HaloRuntimeState = HaloRuntimeState.Idle,
     val recentEvents: List<TimelinePreviewEvent> = emptyList(),
     val activeProvider: String = "No provider",
+    val activeProviderStatus: String = "Unavailable",
     val batteryPercent: Int? = null,
     val isCharging: Boolean = false,
     val capabilities: List<String> = emptyList()
@@ -55,11 +56,17 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
         
         val isConnected = snapshot.deviceContext.connected
         
-        val caps = mutableListOf<String>()
-        if (isConnected) {
-            caps.add("Camera")
-            caps.add("Audio")
-            caps.add("Glasses")
+        val caps = if (snapshot.deviceContext.capabilities.isEmpty()) {
+            listOf("Not reported")
+        } else {
+            snapshot.deviceContext.capabilities
+        }
+
+        val provider = snapshot.providers.find { it.name.contains("Assistant") } ?: snapshot.providers.firstOrNull()
+        val providerStatus = when {
+            provider == null -> "Unavailable"
+            provider.name.contains("Assistant") -> "HANDOFF"
+            else -> "READY"
         }
         
         return HomeUiState(
@@ -67,9 +74,10 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
             contextualText = if (!isConnected) "Glasses disconnected" else contextualText,
             runtimeState = uiRuntimeState,
             recentEvents = snapshot.timeline.map { 
-                TimelinePreviewEvent(it.title, it.status, System.currentTimeMillis())
+                TimelinePreviewEvent(it.title, it.status, it.timestamp.toEpochMilli())
             },
-            activeProvider = snapshot.providers.firstOrNull()?.name ?: "No provider",
+            activeProvider = provider?.name ?: "No provider",
+            activeProviderStatus = providerStatus,
             batteryPercent = snapshot.deviceContext.batteryPercent,
             isCharging = snapshot.deviceContext.charging,
             capabilities = caps

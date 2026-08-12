@@ -134,12 +134,7 @@ private fun ActivityEventItem(event: ActivityEvent) {
                 
                 Spacer(modifier = Modifier.height(24.dp))
                 
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Column {
-                        Text("LATENCY", style = HaloTypography.labelSmall, color = HaloGlassColors.TextSecondary)
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text("42ms", style = HaloTypography.bodyLarge, color = HaloGlassColors.Info)
-                    }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     Column(horizontalAlignment = Alignment.End) {
                         Text("ID", style = HaloTypography.labelSmall, color = HaloGlassColors.TextSecondary)
                         Spacer(modifier = Modifier.height(4.dp))

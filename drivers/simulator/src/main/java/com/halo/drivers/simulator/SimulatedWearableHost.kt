@@ -57,9 +57,11 @@ class SimulatedWearableHost(
         try {
             driver.connect()
             _deviceContext.value = _deviceContext.value.copy(
+                name = "Simulator",
                 connected = true,
                 batteryPercent = driver.currentBatteryLevel,
-                wearing = driver.isCurrentlyWearing
+                wearing = driver.isCurrentlyWearing,
+                capabilities = listOf("Camera", "Audio") // Simulator has fixed capabilities for testing
             )
             _connectivity.value = ConnectionState.Connected
             yield()

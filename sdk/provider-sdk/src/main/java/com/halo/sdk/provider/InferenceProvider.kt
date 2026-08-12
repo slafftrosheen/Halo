@@ -18,7 +18,7 @@ interface InferenceProvider {
     val metadata: ProviderMetadata
         get() = ProviderMetadata(id = this::class.java.name)
 
-    suspend fun complete(request: AIRequest): AIResponse
+    suspend fun complete(request: AIRequestLegacy): AIResponseLegacy
     fun stream(prompt: String): Flow<String>
     suspend fun health(): Boolean
 

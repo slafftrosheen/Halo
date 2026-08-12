@@ -5,16 +5,49 @@ import com.halo.sdk.provider.AiRequest
 import com.halo.sdk.provider.AiResponse
 import com.halo.sdk.provider.AiCapability
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+
 /**
  * Routes AI requests to the appropriate provider based on capabilities and configuration.
  */
 class AiProviderRouter(
     private val providers: List<AiProvider>
 ) {
+    private val _selectedProviderId = MutableStateFlow<String?>(providers.firstOrNull()?.id)
+    val selectedProviderId: StateFlow<String?> = _selectedProviderId.asStateFlow()
+
+    fun selectProvider(id: String) {
+        if (providers.any { it.id == id }) {
+            _selectedProviderId.value = id
+        }
+    }
+
+    /**
+     * Returns all registered providers.
+     */
+    fun getAllProviders(): List<AiProvider> = providers
+
+    /**
+     * Returns only providers that report being available.
+     */
+    fun getAvailableProviders(): List<AiProvider> = providers.filter { it.isAvailable() }
+
+    /**
+     * Executes a request using the selected provider if it supports the capabilities,
+     * otherwise falls back to the first available provider that supports them.
+     */
     suspend fun execute(request: AiRequest): AiResponse {
-        val provider = providers
-            .firstOrNull { supports(it, request) }
-            ?: throw IllegalStateException("No compatible AI provider found for request")
+        val selected = providers.find { it.id == _selectedProviderId.value }
+        
+        val provider = if (selected != null && selected.isAvailable() && supports(selected, request)) {
+            selected
+        } else {
+            providers
+                .filter { it.isAvailable() }
+                .firstOrNull { supports(it, request) }
+        } ?: throw IllegalStateException("No available AI provider found for requested capabilities")
 
         return provider.execute(request)
     }

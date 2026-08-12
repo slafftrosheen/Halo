@@ -49,9 +49,11 @@ class HeyCyanHost(
         driver.deviceState
             .onEach { state ->
                 _deviceContext.value = DeviceContext(
+                    name = "HeyCyan", // In a real scenario, this comes from BLE Advertisement or Device Info
                     batteryPercent = state.battery?.level,
                     connected = state.connection == com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.READY,
-                    charging = state.battery?.charging ?: false
+                    charging = state.battery?.charging ?: false,
+                    capabilities = emptyList() // The actual capabilities are yet to be decoded
                 )
             }
             .launchIn(scope)

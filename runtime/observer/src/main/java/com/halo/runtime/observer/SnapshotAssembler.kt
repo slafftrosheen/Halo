@@ -13,6 +13,7 @@ interface SnapshotAssembler {
         facts: List<com.halo.runtime.cognition.blackboard.Knowledge>,
         timeline: List<TimelineEvent>,
         traces: List<ObservationTrace>,
+        providers: List<ProviderSnapshot>,
         startedAtTime: Instant
     ): RuntimeSnapshot
 }
@@ -27,6 +28,7 @@ class DefaultSnapshotAssembler(
         facts: List<com.halo.runtime.cognition.blackboard.Knowledge>,
         timeline: List<TimelineEvent>,
         traces: List<ObservationTrace>,
+        providers: List<ProviderSnapshot>,
         startedAtTime: Instant
     ): RuntimeSnapshot {
         val engines = processes.map { p -> p.engineSnapshot() }
@@ -44,7 +46,7 @@ class DefaultSnapshotAssembler(
         val health = healthEvaluator.evaluate(isBooting, startedAtTime, speechState, actualEngines)
 
         return RuntimeSnapshot(
-            runtimeVersion = "1.0.0-alpha", // Issue 9: Placeholder for BuildConfig later
+            runtimeVersion = "1.0.0-alpha",
             buildNumber = 44,
             startedAt = startedAtTime,
             health = health,
@@ -52,7 +54,7 @@ class DefaultSnapshotAssembler(
             speech = speechState,
             engines = actualEngines,
             timeline = timeline,
-            providers = emptyList(),
+            providers = providers,
             blackboard = BlackboardSnapshot(facts.size, facts.takeLast(10).map { 
                 FactSummary(it.id.value, it.payload::class.simpleName ?: "Unknown", it.createdAt.toJavaInstant()) 
             }),

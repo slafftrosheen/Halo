@@ -14,6 +14,18 @@ import com.halo.sdk.runtime.RuntimeSnapshotSource
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 
+import com.halo.engines.ai.AiProviderRouter
+import com.halo.sdk.provider.AiCapability
+import com.halo.sdk.provider.AiProvider
+
+data class AiProviderUiState(
+    val id: String,
+    val name: String,
+    val isAvailable: Boolean,
+    val isSelected: Boolean,
+    val capabilities: Set<AiCapability>
+)
+
 data class SettingsUiState(
     val version: String = "1.0.0",
     val provider: String = "Llama.cpp",
@@ -21,24 +33,42 @@ data class SettingsUiState(
     val sensitivity: String = "High",
     val devMode: Boolean = false,
     val logLevel: String = "Debug",
-    val isAlwaysListening: Boolean = false
+    val isAlwaysListening: Boolean = false,
+    val deviceName: String = "Not reported",
+    val aiProviders: List<AiProviderUiState> = emptyList()
 )
-class SettingsViewModel(private val snapshotManager: RuntimeSnapshotSource) : ViewModel() {
+class SettingsViewModel(
+    private val snapshotManager: RuntimeSnapshotSource,
+    private val aiProviderRouter: AiProviderRouter
+) : ViewModel() {
 
     private val _devMode = MutableStateFlow(false)
 
     val uiState: StateFlow<SettingsUiState> = combine(
         snapshotManager.snapshot,
+        aiProviderRouter.selectedProviderId,
         _devMode
-    ) { snapshot, devMode ->
+    ) { snapshot, selectedId, devMode ->
+        val providers = aiProviderRouter.getAllProviders().map {
+            AiProviderUiState(
+                id = it.id,
+                name = it.name,
+                isAvailable = it.isAvailable(),
+                isSelected = it.id == selectedId,
+                capabilities = it.capabilities
+            )
+        }
+
         SettingsUiState(
             version = "v${snapshot.runtimeVersion} (${snapshot.buildNumber})",
-            provider = snapshot.providers.firstOrNull()?.name ?: "Native Engine",
+            provider = providers.find { it.isSelected }?.name ?: "Not configured",
             wakeWord = "Halo",
             sensitivity = "High",
             devMode = devMode,
             logLevel = "Debug",
-            isAlwaysListening = false
+            isAlwaysListening = false,
+            deviceName = snapshot.deviceContext.name ?: "Not reported",
+            aiProviders = providers
         )
     }.stateIn(
         scope = viewModelScope,
@@ -55,6 +85,10 @@ class SettingsViewModel(private val snapshotManager: RuntimeSnapshotSource) : Vi
 
     fun toggleDeveloperMode() {
         _devMode.value = !_devMode.value
+    }
+
+    fun selectAiProvider(id: String) {
+        aiProviderRouter.selectProvider(id)
     }
 
     fun navigateTo(route: String) {
