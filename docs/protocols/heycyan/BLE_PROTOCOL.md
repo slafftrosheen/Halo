@@ -183,11 +183,21 @@ Keep unknown traffic visible. Do not discard it merely because it cannot yet be 
 ### Physical Observation: de5bf729 stream
 
 - **Characteristic:** `de5bf729-d711-4e47-af26-65e3012a5dc7` (NOTIFY)
-- **Status:** **OBSERVED/CORRELATED**
-- **Details:** High-rate traffic observed during physical button interaction.
-- **Sample Packet:** `BC 59 28 00 52 48 4B 41 1E 0B E4 C1 22 23 61 F0 ...`
-- **Correlation:** User-controlled test confirmed traffic burst on button press. Semantics remain unverified until SDK tracing or binary analysis is complete.
-- **Capture reference:** Today's physical capture session, button interaction test (5:47 PM)
+- **Status:** **CORRELATED/BEHAVIORAL**
+- **Details:** Primary proprietary control pipe. High-rate traffic observed during physical interaction.
+- **Packet Families Observed:**
+    - `BC 73 05`: Discrete events (e.g., AI button double-press).
+    - `BC 73 08`: Discrete command/action events (e.g., Camera buttons, AI long-press).
+    - `BC 73 0E`: Ordered control parameters (e.g., Swipes left/right, likely volume/zoom).
+    - `BC 59 28`: High-rate variable payload (likely Audio/Sensor data).
+- **Sample (Swipe Sequence):**
+    ```text
+    BC 73 0E 00 FA A6 12 01 00 10 03 02 00 0F 0F 03 00 10 0A 03 -> value: 03
+    BC 73 0E 00 4B 7C 12 01 00 10 04 02 00 0F 0F 03 00 10 0A 03 -> value: 04
+    BC 73 0E 00 1A B9 12 01 00 10 05 02 00 0F 0F 03 00 10 0A 03 -> value: 05
+    ```
+- **Correlation:** User interaction testing established ground truth for these families based on filenames and reproducible sequences.
+- **Capture reference:** Behavioral protocol corpus, button/swipe interaction test (Aug 12, 2026)
 
 ### Characteristic Discovery Results (Physical Device)
 

@@ -37,6 +37,7 @@ class MockHeyCyanMediaApi(
 
     override suspend fun getMediaConfig(): Result<HeyCyanMediaManifest> {
         manifestFetchCount++
+        kotlinx.coroutines.yield()
         return when (manifestBehaviour) {
             ManifestBehaviour.Succeed -> Result.success(manifest)
             is ManifestBehaviour.Fail ->
@@ -50,6 +51,7 @@ class MockHeyCyanMediaApi(
         progress: (MediaDownloadProgress) -> Unit,
     ): Result<MediaDownloadResult> {
         downloadedItems.add(media)
+        kotlinx.coroutines.yield()
 
         return when (downloadBehaviour) {
             DownloadBehaviour.Succeed -> {

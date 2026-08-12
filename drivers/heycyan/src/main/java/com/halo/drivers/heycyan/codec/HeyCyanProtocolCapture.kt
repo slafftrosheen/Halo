@@ -1,18 +1,20 @@
 package com.halo.drivers.heycyan.codec
 
+import com.halo.sdk.runtime.RuntimeLogger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import java.util.UUID
 
 /**
- * Singleton-like manager for controlled HeyCyan protocol capture.
+ * Manager for controlled HeyCyan protocol capture.
  *
  * It allows enabling "Correlated Capture Mode" which groups TX/RX frames
  * around high-level operations like PHOTO or VIDEO_START.
  */
-object HeyCyanProtocolCapture {
+class HeyCyanProtocolCapture(
+    private val logger: RuntimeLogger? = null
+) {
     
     private val _isCaptureEnabled = MutableStateFlow(false)
     val isCaptureEnabled: StateFlow<Boolean> = _isCaptureEnabled.asStateFlow()
@@ -47,7 +49,7 @@ object HeyCyanProtocolCapture {
             endedAtMillis = now
         )
         
-        android.util.Log.i("HeyCyanCapture", transaction.dump())
+        logger?.info("HeyCyanCapture", transaction.dump())
         currentOperation = null
     }
 
@@ -57,7 +59,8 @@ object HeyCyanProtocolCapture {
         direction: PacketDirection,
         writeType: String? = null
     ) {
-        if (!_isCaptureEnabled.value) return
+        // Record even if not enabled for immediate hex dump if needed,
+        // but only store in allFrames if enabled.
         
         val frame = RawHeyCyanFrame(
             timestampMillis = System.currentTimeMillis(),
@@ -67,14 +70,21 @@ object HeyCyanProtocolCapture {
             operation = currentOperation,
             writeType = writeType
         )
-        
-        synchronized(allFrames) {
-            allFrames.add(frame)
+
+        if (_isCaptureEnabled.value) {
+            synchronized(allFrames) {
+                allFrames.add(frame)
+            }
         }
         
-        // Immediate hex dump to Logcat
+        // Immediate hex dump to Logcat (always if in debug)
         val prefix = if (direction == PacketDirection.TX) "TX" else "RX"
-        android.util.Log.d("HeyCyanWire", "$prefix $characteristicUuid ${frame.hex()}")
+        val writeInfo = if (writeType != null) " ($writeType)" else ""
+        try {
+            android.util.Log.d("HeyCyanWire", "$prefix $characteristicUuid ${frame.hex()}$writeInfo")
+        } catch (_: Throwable) {
+            // Ignored in non-Android JVM unit test environments
+        }
     }
 
     fun clear() {
@@ -87,5 +97,10 @@ object HeyCyanProtocolCapture {
     /** machine-readable JSONL line format */
     fun RawHeyCyanFrame.toJsonl(): String {
         return """{"timestamp": $timestampMillis, "direction": "$direction", "uuid": "$characteristicUuid", "bytes": "${hex()}", "operation": ${currentOperation?.let { "\"$it\"" } ?: "null"}}"""
+    }
+
+    companion object {
+        /** Global instance for driver instrumentation */
+        var instance = HeyCyanProtocolCapture()
     }
 }

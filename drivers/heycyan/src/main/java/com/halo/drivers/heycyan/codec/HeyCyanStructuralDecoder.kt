@@ -42,11 +42,15 @@ class HeyCyanStructuralDecoder {
         val bytes = frame.bytes
         val fields = mutableMapOf<String, Int>()
         
-        // Template: BC 73 0E 00 ?? ?? 12 01 00 10 XX 02 00 0F 0F 03 00 10 0A YY
+        // Verified Wire Format: BC 73 <length LE: 0E 00> <CRC16 LE> <payload: 14 bytes>
+        // Legacy template note: BC 73 0E 00 [crc_lo] [crc_hi] 12 01 00 10 XX 02 00 0F 0F 03 00 10 0A YY
         if (bytes.size >= 20) {
-            // unknown04/unknown05 — candidate checksum/sequence field; requires offline analysis against corpus
-            fields["unknown04"] = bytes[4].toInt() and 0xFF
-            fields["unknown05"] = bytes[5].toInt() and 0xFF
+            val length = (bytes[2].toInt() and 0xFF) or ((bytes[3].toInt() and 0xFF) shl 8)
+            val crc16 = (bytes[4].toInt() and 0xFF) or ((bytes[5].toInt() and 0xFF) shl 8)
+            fields["payloadLength"] = length
+            fields["crc16"] = crc16
+            fields["unknown04"] = bytes[4].toInt() and 0xFF // CRC16 low byte
+            fields["unknown05"] = bytes[5].toInt() and 0xFF // CRC16 high byte
             fields["candidateAction"] = bytes[10].toInt() and 0xFF
             fields["unknown19"] = bytes[19].toInt() and 0xFF
         }

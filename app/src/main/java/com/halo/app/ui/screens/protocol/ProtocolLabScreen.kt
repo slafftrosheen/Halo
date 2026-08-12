@@ -69,6 +69,55 @@ fun ProtocolLabScreen(viewModel: ProtocolLabViewModel) {
                         }
                     }
                 }
+
+                item {
+                    Spacer(Modifier.height(16.dp))
+                    HaloGlassSection(
+                        title = "Forensic Tools",
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+                    ) {
+                        Column(Modifier.padding(8.dp)) {
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("Capture Mode", color = HaloGlassColors.TextPrimary)
+                                Switch(
+                                    checked = state.isForensicCaptureEnabled,
+                                    onCheckedChange = { viewModel.setForensicCaptureEnabled(it) }
+                                )
+                            }
+                            
+                            if (state.isForensicCaptureEnabled) {
+                                Spacer(Modifier.height(12.dp))
+                                Text("Trigger Commands:", style = HaloTypography.labelLarge, color = HaloGlassColors.Accent)
+                                Row(
+                                    Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Button(
+                                        onClick = { viewModel.triggerForensicOperation("PHOTO") },
+                                        modifier = Modifier.weight(1f),
+                                        contentPadding = PaddingValues(4.dp)
+                                    ) { Text("Photo", fontSize = 10.sp) }
+                                    
+                                    Button(
+                                        onClick = { viewModel.triggerForensicOperation("RECORD_START") },
+                                        modifier = Modifier.weight(1f),
+                                        contentPadding = PaddingValues(4.dp)
+                                    ) { Text("Rec Start", fontSize = 10.sp) }
+                                    
+                                    Button(
+                                        onClick = { viewModel.triggerForensicOperation("RECORD_STOP") },
+                                        modifier = Modifier.weight(1f),
+                                        contentPadding = PaddingValues(4.dp)
+                                    ) { Text("Rec Stop", fontSize = 10.sp) }
+                                }
+                            }
+                        }
+                    }
+                }
                 
                 item { Spacer(Modifier.height(24.dp)) }
                 
@@ -142,7 +191,8 @@ data class DiscoveryState(
     val activeDeviceName: String? = null,
     val connectionStatus: String = "Disconnected",
     val isDiscovering: Boolean = false,
-    val isConnecting: Boolean = false
+    val isConnecting: Boolean = false,
+    val isForensicCaptureEnabled: Boolean = false
 )
 data class ProtocolDevice(val id: String, val name: String, val protocol: String)
 
@@ -155,32 +205,33 @@ class ProtocolLabViewModel(
     private var scanJob: kotlinx.coroutines.Job? = null
 
     init {
-        // Observe host connectivity
-        ManualDependencyGraph.wearableHost.connectivity
-            .onEach { connState ->
-                val statusText = when (connState) {
-                    is ConnectionState.Connected -> "Connected"
-                    is ConnectionState.Connecting -> "Connecting..."
-                    is ConnectionState.Failed -> "Failed"
-                    is ConnectionState.Disconnected -> "Disconnected"
-                }
-                _state.update { it.copy(
-                    connectionStatus = statusText,
-                    isConnecting = connState is ConnectionState.Connecting
-                ) }
+        // ... (existing observations)
+        
+        // Observe capture state
+        com.halo.drivers.heycyan.codec.HeyCyanProtocolCapture.instance.isCaptureEnabled
+            .onEach { enabled ->
+                _state.update { it.copy(isForensicCaptureEnabled = enabled) }
             }
             .launchIn(viewModelScope)
+    }
 
-        // Observe active device from host context
-        ManualDependencyGraph.wearableHost.deviceContext
-            .onEach { context ->
-                if (context.connected) {
-                    _state.update { it.copy(activeDeviceName = "HeyCyan Glasses") }
-                } else {
-                    _state.update { it.copy(activeDeviceName = null) }
-                }
+    fun setForensicCaptureEnabled(enabled: Boolean) {
+        com.halo.drivers.heycyan.codec.HeyCyanProtocolCapture.instance.setCaptureEnabled(enabled)
+    }
+
+    fun triggerForensicOperation(opName: String) {
+        viewModelScope.launch {
+            val driver = ManualDependencyGraph.heyCyanDriver
+            val hooks = com.halo.drivers.heycyan.debug.HeyCyanCaptureHooks(driver, this)
+            
+            when (opName) {
+                "PHOTO" -> hooks.triggerPhoto()
+                "VIDEO_START" -> hooks.triggerVideoStart()
+                "VIDEO_STOP" -> hooks.triggerVideoStop()
+                "RECORD_START" -> hooks.triggerRecordStart()
+                "RECORD_STOP" -> hooks.triggerRecordStop()
             }
-            .launchIn(viewModelScope)
+        }
     }
 
     fun toggleDiscovery() {

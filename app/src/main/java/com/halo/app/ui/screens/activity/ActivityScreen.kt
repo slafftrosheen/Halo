@@ -2,18 +2,15 @@ package com.halo.app.ui.screens.activity
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
-import com.halo.app.ui.glass.components.HaloGlassCard
-import com.halo.app.ui.glass.components.HaloGlassSection
+import com.halo.app.ui.glass.components.*
 import com.halo.app.ui.glass.material.HaloGlassColors
 import com.halo.app.ui.glass.material.HaloTypography
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,7 +24,8 @@ fun ActivityScreen(viewModel: ActivityViewModel) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(horizontal = 16.dp),
+        contentPadding = PaddingValues(top = 16.dp, bottom = 32.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
@@ -36,7 +34,7 @@ fun ActivityScreen(viewModel: ActivityViewModel) {
                 style = HaloTypography.displayMedium,
                 color = HaloGlassColors.TextPrimary
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = "Cognitive timeline and runtime events",
                 style = HaloTypography.bodyMedium,
@@ -44,42 +42,29 @@ fun ActivityScreen(viewModel: ActivityViewModel) {
             )
         }
         
-        item {
-            HaloGlassSection(
-                title = "Recent Events",
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                if (uiState.events.isEmpty()) {
+        if (uiState.events.isEmpty()) {
+            item {
+                Box(Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
                     Text(
-                        text = "No recent activity",
+                        text = "No cognitive events recorded yet.",
                         color = HaloGlassColors.TextSecondary,
                         style = HaloTypography.bodyMedium
                     )
-                } else {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        uiState.events.forEach { event ->
-                            ActivityEventItem(event)
-                        }
-                    }
                 }
+            }
+        } else {
+            items(uiState.events) { event ->
+                ActivityEventItem(event)
             }
         }
         
         if (uiState.hasMore) {
             item {
-                HaloGlassCard(
-                    onClick = { viewModel.loadMore() }
-                ) {
-                    Text(
-                        text = "Load More",
-                        color = HaloGlassColors.Accent,
-                        style = HaloTypography.labelLarge,
-                        modifier = Modifier.padding(16.dp),
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
+                HaloGlassButton(
+                    text = "Load More",
+                    onClick = { viewModel.loadMore() },
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
     }
@@ -87,10 +72,12 @@ fun ActivityScreen(viewModel: ActivityViewModel) {
 
 @Composable
 private fun ActivityEventItem(event: ActivityEvent) {
+    var expanded by remember { mutableStateOf(false) }
+
     HaloGlassCard(
-        onClick = { /* TODO: Handle event click */ }
+        onClick = { expanded = !expanded }
     ) {
-        Column {
+        Column(modifier = Modifier.padding(4.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -99,7 +86,8 @@ private fun ActivityEventItem(event: ActivityEvent) {
                 Text(
                     text = event.command,
                     color = HaloGlassColors.TextPrimary,
-                    style = HaloTypography.bodyMedium
+                    style = HaloTypography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold
                 )
                 Text(
                     text = event.timestamp.format(),
@@ -107,12 +95,57 @@ private fun ActivityEventItem(event: ActivityEvent) {
                     style = HaloTypography.labelMedium
                 )
             }
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = event.description,
-                color = HaloGlassColors.TextSecondary,
-                style = HaloTypography.bodySmall
-            )
+            
+            if (expanded) {
+                Spacer(modifier = Modifier.height(12.dp))
+                HaloGlassDivider()
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                Text(
+                    text = "STATUS",
+                    style = HaloTypography.labelSmall,
+                    color = HaloGlassColors.TextSecondary
+                )
+                Text(
+                    text = event.status,
+                    style = HaloTypography.bodyMedium,
+                    color = if (event.status == "Success") HaloGlassColors.Success else HaloGlassColors.TextPrimary
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "DESCRIPTION",
+                    style = HaloTypography.labelSmall,
+                    color = HaloGlassColors.TextSecondary
+                )
+                Text(
+                    text = event.description,
+                    color = HaloGlassColors.TextPrimary,
+                    style = HaloTypography.bodySmall
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Column {
+                        Text("LATENCY", style = HaloTypography.labelSmall, color = HaloGlassColors.TextSecondary)
+                        Text("42ms", style = HaloTypography.bodyMedium, color = HaloGlassColors.Info)
+                    }
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text("ID", style = HaloTypography.labelSmall, color = HaloGlassColors.TextSecondary)
+                        Text(event.id.take(8), style = HaloTypography.monoSmall, color = HaloGlassColors.TextMuted)
+                    }
+                }
+            } else {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = event.description,
+                    color = HaloGlassColors.TextSecondary,
+                    style = HaloTypography.bodySmall,
+                    maxLines = 1
+                )
+            }
         }
     }
 }

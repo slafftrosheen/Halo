@@ -1,9 +1,16 @@
-# Tasks - Fix Protocol Lab UI & Connection Status
+# Tasks - HeyCyan TX Wire Capture Infrastructure (PR-018)
 
-- `[x]` App UI & UX
-    - `[x]` Refactor `HaloGlassSection.kt` for layout flexibility
-    - `[x]` Implement `LazyColumn` in `ProtocolLabScreen.kt`
-    - `[x]` Update `ProtocolLabViewModel` to observe connection status
-- `[x]` Verification
-    - `[x]` Verify list rendering with many devices
-    - `[x]` Verify Active device status updates
+- `[ ]` Documentation Cleanup
+    - `[ ]` Update `IMPLEMENTATION_STATUS.md` classification
+- `[ ]` Protocol Models
+    - `[ ]` Update `RawHeyCyanFrame.kt` with TX metadata
+    - `[ ]` Implement `HeyCyanTransaction.kt` for correlation
+- `[ ]﻿` Capture Infrastructure
+    - `[ ]` Implement `HeyCyanProtocolCapture.kt` manager
+    - `[ ]` Instrument `HeyCyanGattClient.kt` write path
+    - `[ ]` Integrate with `RealHeyCyanDriver.kt`
+- `[ ]` Debug Tools
+    - `[ ]` Create `HeyCyanCaptureHooks.kt` for physical testing
+- `[ ]` Verification
+    - `[ ]` Add unit tests for capture and correlation
+    - `[ ]` Verify build status

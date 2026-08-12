@@ -1,0 +1,101 @@
+Compiled from "WriteRequest.java"
+public class com.oudmon.ble.base.request.WriteRequest extends com.oudmon.ble.base.request.BaseRequest {
+  private byte[] value;
+
+  private boolean noRsp;
+
+  public com.oudmon.ble.base.request.WriteRequest(java.util.UUID, java.util.UUID);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: aload_2
+       3: invokespecial #1                  // Method com/oudmon/ble/base/request/BaseRequest."<init>":(Ljava/util/UUID;Ljava/util/UUID;)V
+       6: aload_0
+       7: iconst_0
+       8: putfield      #7                  // Field noRsp:Z
+      11: aload_0
+      12: iconst_1
+      13: putfield      #13                 // Field writeRequest:Z
+      16: return
+
+  private com.oudmon.ble.base.request.WriteRequest(java.util.UUID, java.util.UUID, boolean);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: aload_2
+       3: invokespecial #1                  // Method com/oudmon/ble/base/request/BaseRequest."<init>":(Ljava/util/UUID;Ljava/util/UUID;)V
+       6: aload_0
+       7: iconst_0
+       8: putfield      #7                  // Field noRsp:Z
+      11: aload_0
+      12: iload_3
+      13: putfield      #7                  // Field noRsp:Z
+      16: aload_0
+      17: iconst_1
+      18: putfield      #13                 // Field writeRequest:Z
+      21: return
+
+  public static com.oudmon.ble.base.request.WriteRequest getNoRspInstance(java.util.UUID, java.util.UUID);
+    Code:
+       0: new           #8                  // class com/oudmon/ble/base/request/WriteRequest
+       3: dup
+       4: aload_0
+       5: aload_1
+       6: iconst_1
+       7: invokespecial #16                 // Method "<init>":(Ljava/util/UUID;Ljava/util/UUID;Z)V
+      10: areturn
+
+  public void setValue(byte[]);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #19                 // Field value:[B
+       5: return
+
+  public byte[] getValue();
+    Code:
+       0: aload_0
+       1: getfield      #19                 // Field value:[B
+       4: areturn
+
+  public boolean execute(android.bluetooth.BluetoothGatt, android.bluetooth.BluetoothGattCharacteristic);
+    Code:
+       0: aload_0
+       1: getfield      #19                 // Field value:[B
+       4: ifnonnull     9
+       7: iconst_0
+       8: ireturn
+       9: aload_2
+      10: aload_0
+      11: getfield      #7                  // Field noRsp:Z
+      14: ifeq          21
+      17: iconst_1
+      18: goto          22
+      21: iconst_2
+      22: invokevirtual #25                 // Method android/bluetooth/BluetoothGattCharacteristic.setWriteType:(I)V
+      25: aload_2
+      26: aload_0
+      27: getfield      #19                 // Field value:[B
+      30: invokevirtual #29                 // Method android/bluetooth/BluetoothGattCharacteristic.setValue:([B)Z
+      33: istore_3
+      34: iload_3
+      35: ifeq          50
+      38: aload_1
+      39: aload_2
+      40: invokevirtual #33                 // Method android/bluetooth/BluetoothGatt.writeCharacteristic:(Landroid/bluetooth/BluetoothGattCharacteristic;)Z
+      43: ifeq          50
+      46: iconst_1
+      47: goto          51
+      50: iconst_0
+      51: istore        4
+      53: iload         4
+      55: ireturn
+      56: astore_3
+      57: aload_3
+      58: invokevirtual #41                 // Method java/lang/Exception.printStackTrace:()V
+      61: iconst_0
+      62: ireturn
+    Exception table:
+       from    to  target type
+           9    55    56   Class java/lang/Exception
+}

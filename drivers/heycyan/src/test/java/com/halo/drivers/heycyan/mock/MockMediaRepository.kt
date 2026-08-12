@@ -123,6 +123,7 @@ class MockDownloadStrategy(
         progress: (MediaDownloadProgress) -> Unit,
     ): Result<MediaDownloadResult> {
         downloadedItems.add(media)
+        kotlinx.coroutines.yield()
 
         return when (behaviour) {
             Behaviour.Succeed -> {

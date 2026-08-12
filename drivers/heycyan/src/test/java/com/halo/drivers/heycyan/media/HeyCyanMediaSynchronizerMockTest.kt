@@ -7,12 +7,17 @@ import com.halo.drivers.heycyan.media.sync.HeyCyanMediaDiffer
 import com.halo.drivers.heycyan.media.sync.HeyCyanMediaSyncState
 import com.halo.drivers.heycyan.media.sync.HeyCyanMediaSynchronizer
 import com.halo.drivers.heycyan.media.sync.MediaSyncRequest
+import com.halo.drivers.heycyan.media.MediaDownloadProgress
+import com.halo.drivers.heycyan.media.MediaDownloadResult
+import com.halo.drivers.heycyan.media.MediaLocation
+import com.halo.drivers.heycyan.media.MediaIntegrity
 import com.halo.drivers.heycyan.mock.MockDownloadStrategy
 import com.halo.drivers.heycyan.mock.MockHeyCyanMediaApi
 import com.halo.drivers.heycyan.mock.MockMediaRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -50,7 +55,7 @@ class HeyCyanMediaSynchronizerMockTest {
 
     // --- MS-01 ---
     @Test
-    fun downloadsAllNewItems() = runTest {
+    fun downloadsAllNewItems() = runTest(UnconfinedTestDispatcher()) {
         mockApi.manifest = MockHeyCyanMediaApi.threeItemManifest()
 
         val result = synchronizer.synchronize()
@@ -65,7 +70,7 @@ class HeyCyanMediaSynchronizerMockTest {
 
     // --- MS-02 ---
     @Test
-    fun skipsAlreadyPresentItems() = runTest {
+    fun skipsAlreadyPresentItems() = runTest(UnconfinedTestDispatcher()) {
         val manifest = MockHeyCyanMediaApi.threeItemManifest()
         mockApi.manifest = manifest
 
@@ -101,7 +106,7 @@ class HeyCyanMediaSynchronizerMockTest {
 
     // --- MS-03 ---
     @Test
-    fun manifestFailurePropagated() = runTest {
+    fun manifestFailurePropagated() = runTest(UnconfinedTestDispatcher()) {
         mockApi.manifestBehaviour = MockHeyCyanMediaApi.ManifestBehaviour.Fail(
             cause = RuntimeException("HTTP 503")
         )
@@ -115,7 +120,7 @@ class HeyCyanMediaSynchronizerMockTest {
 
     // --- MS-04 ---
     @Test
-    fun continuesAfterOneDownloadFailure() = runTest {
+    fun continuesAfterOneDownloadFailure() = runTest(UnconfinedTestDispatcher()) {
         val manifest = MockHeyCyanMediaApi.threeItemManifest()
         mockApi.manifest = manifest
 
@@ -127,11 +132,11 @@ class HeyCyanMediaSynchronizerMockTest {
                 progress: (MediaDownloadProgress) -> Unit,
             ): Result<MediaDownloadResult> {
                 callCount++
-                return if (callCount == 1) {
-                    Result.failure(RuntimeException("Network error"))
+                if (callCount == 1) {
+                    return Result.failure(RuntimeException("Network error"))
                 } else {
                     val bytes = media.sizeBytes ?: 1024L
-                    Result.success(
+                    return Result.success(
                         MediaDownloadResult(
                             media = media,
                             bytesWritten = bytes,
@@ -161,7 +166,7 @@ class HeyCyanMediaSynchronizerMockTest {
 
     // --- MS-05 ---
     @Test
-    fun cancellationPropagatesToState() = runTest {
+    fun cancellationPropagatesToState() = runTest(UnconfinedTestDispatcher()) {
         val manyItems = (1..10).map { i ->
             HeyCyanMedia.Photo(
                 id = "img${i.toString().padStart(3, '0')}.jpg",
@@ -216,23 +221,19 @@ class HeyCyanMediaSynchronizerMockTest {
 
     // --- MS-06 ---
     @Test
-    fun stateTransitionsAreCorrect() = runTest {
+    fun stateTransitionsAreCorrect() = runTest(UnconfinedTestDispatcher()) {
         mockApi.manifest = MockHeyCyanMediaApi.threeItemManifest()
 
         val observedStates = mutableListOf<HeyCyanMediaSyncState>()
         val collectJob = launch {
             synchronizer.state.collect { observedStates.add(it) }
         }
-        
-        // Ensure initial state is collected
         kotlinx.coroutines.yield()
 
         synchronizer.synchronize()
         collectJob.cancel()
 
         val kinds = observedStates.map { it::class.simpleName }
-        // StateFlow always emits its current value immediately to new collectors,
-        // so Idle should be present if we yield.
         assertTrue("Should have Idle", kinds.contains("Idle"))
         assertTrue("Should have FetchingManifest", kinds.contains("FetchingManifest"))
         assertTrue("Should have Planning", kinds.contains("Planning"))

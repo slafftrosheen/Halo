@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -22,6 +23,7 @@ import com.halo.app.ui.screens.settings.SettingsScreen
 import com.halo.app.ui.screens.protocol.ProtocolLabScreen
 import com.halo.app.ui.screens.inspector.RuntimeInspectorScreen
 import com.halo.app.ui.screens.console.ConsoleScreen
+import kotlinx.coroutines.flow.collectLatest
 
 /**
  * Navigation configuration for HALO Glass UI.
@@ -35,11 +37,18 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
 }
 
 // Primary navigation items (bottom bar)
-val bottomNavItems = listOf(Screen.Home, Screen.Activity, Screen.Devices, Screen.Settings, Screen.ProtocolLab)
+val bottomNavItems = listOf(Screen.Home, Screen.Activity, Screen.Devices, Screen.Settings)
 
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
+    val settingsViewModel = ManualDependencyGraph.settingsViewModel
+
+    LaunchedEffect(Unit) {
+        settingsViewModel.navigationEvents.collectLatest { route ->
+            navController.navigate(route)
+        }
+    }
     
     Scaffold(
         bottomBar = {

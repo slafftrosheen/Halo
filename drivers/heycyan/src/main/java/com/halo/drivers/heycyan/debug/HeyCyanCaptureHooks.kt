@@ -1,8 +1,6 @@
 package com.halo.drivers.heycyan.debug
 
 import com.halo.drivers.heycyan.RealHeyCyanDriver
-import com.halo.drivers.heycyan.protocol.HeyCyanCommand
-import com.halo.drivers.heycyan.protocol.HeyCyanMode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

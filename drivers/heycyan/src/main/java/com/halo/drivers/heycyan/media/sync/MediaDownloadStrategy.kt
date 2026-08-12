@@ -35,9 +35,8 @@ class StreamingMediaDownloadStrategy(
     ): Result<MediaDownloadResult> {
         val session: MediaWriteSession = repository.beginWrite(media)
         try {
-            // Initiate HTTP download via mediaApi
-            val tempPath = session.identity
-            val result = mediaApi.download(media, tempPath) { p ->
+            // Initiate HTTP download via mediaApi directly into session
+            val result = mediaApi.download(media, session) { p ->
                 progress(p)
             }
 

@@ -34,7 +34,10 @@ data class HomeUiState(
     val runtimeState: HaloRuntimeState = HaloRuntimeState.Idle,
     val recentEvents: List<TimelinePreviewEvent> = emptyList(),
     val engines: List<EngineUiState> = emptyList(),
-    val activeProvider: String = "None"
+    val activeProvider: String = "None",
+    val batteryPercent: Int? = null,
+    val isDeviceConnected: Boolean = false,
+    val isCharging: Boolean = false
 )
 
 interface GreetingProvider {
@@ -67,7 +70,10 @@ class HomeUiMapper(private val greetingProvider: GreetingProvider) : RuntimeUiMa
             engines = snapshot.engines.map { 
                 EngineUiState(it.id, it.state.javaClass.simpleName, it.health == com.halo.sdk.runtime.EngineHealth.Healthy) 
             },
-            activeProvider = snapshot.providers.firstOrNull()?.name ?: "Native Engine"
+            activeProvider = snapshot.providers.firstOrNull()?.name ?: "Native Engine",
+            batteryPercent = snapshot.deviceContext.batteryPercent,
+            isDeviceConnected = snapshot.deviceContext.connected,
+            isCharging = snapshot.deviceContext.charging
         )
     }
 }

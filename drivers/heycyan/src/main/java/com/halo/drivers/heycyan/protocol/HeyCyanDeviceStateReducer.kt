@@ -60,6 +60,8 @@ class HeyCyanDeviceStateReducer {
             is HeyCyanEvent.Ready,
             is HeyCyanEvent.ButtonPressed,
             is HeyCyanEvent.AiImageData,
+            is HeyCyanEvent.ObservedProprietaryFrame,
+            is HeyCyanEvent.DecodedProprietaryFrame,
             is HeyCyanEvent.Unknown ->
                 state.copy(
                     lastEventAtMillis = timestamp,

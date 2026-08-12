@@ -1,0 +1,1707 @@
+Classfile /tmp/qcaar/classes/com/oudmon/ble/base/communication/LargeDataHandler.class
+  Last modified Jan 1, 1981; size 15022 bytes
+  SHA-256 checksum 6b59b7abfce4d7f5d867f88ecf902705917bf4c35f8203367305884a9b21ea52
+  Compiled from "LargeDataHandler.java"
+public class com.oudmon.ble.base.communication.LargeDataHandler
+  minor version: 0
+  major version: 52
+  flags: (0x0021) ACC_PUBLIC, ACC_SUPER
+  this_class: #4                          // com/oudmon/ble/base/communication/LargeDataHandler
+  super_class: #14                        // java/lang/Object
+  interfaces: 0, fields: 27, methods: 37, attributes: 2
+Constant pool:
+    #1 = Class              #2            // com/oudmon/ble/base/bluetooth/QCDataParser
+    #2 = Utf8               com/oudmon/ble/base/bluetooth/QCDataParser
+    #3 = Methodref          #4.#5         // com/oudmon/ble/base/communication/LargeDataHandler.syncPictureThumbnails:(I)V
+    #4 = Class              #6            // com/oudmon/ble/base/communication/LargeDataHandler
+    #5 = NameAndType        #7:#8         // syncPictureThumbnails:(I)V
+    #6 = Utf8               com/oudmon/ble/base/communication/LargeDataHandler
+    #7 = Utf8               syncPictureThumbnails
+    #8 = Utf8               (I)V
+    #9 = Fieldref           #4.#10        // com/oudmon/ble/base/communication/LargeDataHandler.batterySparseArray:Ljava/util/concurrent/ConcurrentHashMap;
+   #10 = NameAndType        #11:#12       // batterySparseArray:Ljava/util/concurrent/ConcurrentHashMap;
+   #11 = Utf8               batterySparseArray
+   #12 = Utf8               Ljava/util/concurrent/ConcurrentHashMap;
+   #13 = Methodref          #14.#15       // java/lang/Object."<init>":()V
+   #14 = Class              #16           // java/lang/Object
+   #15 = NameAndType        #17:#18       // "<init>":()V
+   #16 = Utf8               java/lang/Object
+   #17 = Utf8               <init>
+   #18 = Utf8               ()V
+   #19 = Class              #20           // com/oudmon/ble/base/communication/bigData/resp/GlassesDeviceNotifyListener
+   #20 = Utf8               com/oudmon/ble/base/communication/bigData/resp/GlassesDeviceNotifyListener
+   #21 = Methodref          #19.#15       // com/oudmon/ble/base/communication/bigData/resp/GlassesDeviceNotifyListener."<init>":()V
+   #22 = Fieldref           #4.#23        // com/oudmon/ble/base/communication/LargeDataHandler.deviceNotifyListener:Lcom/oudmon/ble/base/communication/bigData/resp/GlassesDeviceNotifyListener;
+   #23 = NameAndType        #24:#25       // deviceNotifyListener:Lcom/oudmon/ble/base/communication/bigData/resp/GlassesDeviceNotifyListener;
+   #24 = Utf8               deviceNotifyListener
+   #25 = Utf8               Lcom/oudmon/ble/base/communication/bigData/resp/GlassesDeviceNotifyListener;
+   #26 = Class              #27           // java/util/concurrent/ConcurrentHashMap
+   #27 = Utf8               java/util/concurrent/ConcurrentHashMap
+   #28 = Methodref          #26.#15       // java/util/concurrent/ConcurrentHashMap."<init>":()V
+   #29 = Class              #30           // com/oudmon/ble/base/request/EnableNotifyRequest
+   #30 = Utf8               com/oudmon/ble/base/request/EnableNotifyRequest
+   #31 = Fieldref           #4.#32        // com/oudmon/ble/base/communication/LargeDataHandler.SERIAL_PORT_SERVICE:Ljava/util/UUID;
+   #32 = NameAndType        #33:#34       // SERIAL_PORT_SERVICE:Ljava/util/UUID;
+   #33 = Utf8               SERIAL_PORT_SERVICE
+   #34 = Utf8               Ljava/util/UUID;
+   #35 = Fieldref           #4.#36        // com/oudmon/ble/base/communication/LargeDataHandler.SERIAL_PORT_CHARACTER_NOTIFY:Ljava/util/UUID;
+   #36 = NameAndType        #37:#34       // SERIAL_PORT_CHARACTER_NOTIFY:Ljava/util/UUID;
+   #37 = Utf8               SERIAL_PORT_CHARACTER_NOTIFY
+   #38 = Class              #39           // com/oudmon/ble/base/communication/LargeDataHandler$1
+   #39 = Utf8               com/oudmon/ble/base/communication/LargeDataHandler$1
+   #40 = Methodref          #38.#41       // com/oudmon/ble/base/communication/LargeDataHandler$1."<init>":(Lcom/oudmon/ble/base/communication/LargeDataHandler;)V
+   #41 = NameAndType        #17:#42       // "<init>":(Lcom/oudmon/ble/base/communication/LargeDataHandler;)V
+   #42 = Utf8               (Lcom/oudmon/ble/base/communication/LargeDataHandler;)V
+   #43 = Methodref          #29.#44       // com/oudmon/ble/base/request/EnableNotifyRequest."<init>":(Ljava/util/UUID;Ljava/util/UUID;Lcom/oudmon/ble/base/request/EnableNotifyRequest$ListenerCallback;)V
+   #44 = NameAndType        #17:#45       // "<init>":(Ljava/util/UUID;Ljava/util/UUID;Lcom/oudmon/ble/base/request/EnableNotifyRequest$ListenerCallback;)V
+   #45 = Utf8               (Ljava/util/UUID;Ljava/util/UUID;Lcom/oudmon/ble/base/request/EnableNotifyRequest$ListenerCallback;)V
+   #46 = Fieldref           #4.#47        // com/oudmon/ble/base/communication/LargeDataHandler.enableNotifyRequest:Lcom/oudmon/ble/base/request/EnableNotifyRequest;
+   #47 = NameAndType        #48:#49       // enableNotifyRequest:Lcom/oudmon/ble/base/request/EnableNotifyRequest;
+   #48 = Utf8               enableNotifyRequest
+   #49 = Utf8               Lcom/oudmon/ble/base/request/EnableNotifyRequest;
+   #50 = Fieldref           #4.#51        // com/oudmon/ble/base/communication/LargeDataHandler.respMap:Ljava/util/concurrent/ConcurrentHashMap;
+   #51 = NameAndType        #52:#12       // respMap:Ljava/util/concurrent/ConcurrentHashMap;
+   #52 = Utf8               respMap
+   #53 = Fieldref           #4.#54        // com/oudmon/ble/base/communication/LargeDataHandler.noClearMap:Ljava/util/concurrent/ConcurrentHashMap;
+   #54 = NameAndType        #55:#12       // noClearMap:Ljava/util/concurrent/ConcurrentHashMap;
+   #55 = Utf8               noClearMap
+   #56 = Methodref          #57.#58       // com/oudmon/ble/base/communication/JPackageManager.getInstance:()Lcom/oudmon/ble/base/communication/JPackageManager;
+   #57 = Class              #59           // com/oudmon/ble/base/communication/JPackageManager
+   #58 = NameAndType        #60:#61       // getInstance:()Lcom/oudmon/ble/base/communication/JPackageManager;
+   #59 = Utf8               com/oudmon/ble/base/communication/JPackageManager
+   #60 = Utf8               getInstance
+   #61 = Utf8               ()Lcom/oudmon/ble/base/communication/JPackageManager;
+   #62 = Methodref          #57.#63       // com/oudmon/ble/base/communication/JPackageManager.getLength:()I
+   #63 = NameAndType        #64:#65       // getLength:()I
+   #64 = Utf8               getLength
+   #65 = Utf8               ()I
+   #66 = Fieldref           #4.#67        // com/oudmon/ble/base/communication/LargeDataHandler.mPackageLength:I
+   #67 = NameAndType        #68:#69       // mPackageLength:I
+   #68 = Utf8               mPackageLength
+   #69 = Utf8               I
+   #70 = Methodref          #71.#72       // java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+   #71 = Class              #73           // java/lang/Integer
+   #72 = NameAndType        #74:#75       // valueOf:(I)Ljava/lang/Integer;
+   #73 = Utf8               java/lang/Integer
+   #74 = Utf8               valueOf
+   #75 = Utf8               (I)Ljava/lang/Integer;
+   #76 = Methodref          #26.#77       // java/util/concurrent/ConcurrentHashMap.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+   #77 = NameAndType        #78:#79       // put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+   #78 = Utf8               put
+   #79 = Utf8               (Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+   #80 = Fieldref           #4.#81        // com/oudmon/ble/base/communication/LargeDataHandler.mInstance:Lcom/oudmon/ble/base/communication/LargeDataHandler;
+   #81 = NameAndType        #82:#83       // mInstance:Lcom/oudmon/ble/base/communication/LargeDataHandler;
+   #82 = Utf8               mInstance
+   #83 = Utf8               Lcom/oudmon/ble/base/communication/LargeDataHandler;
+   #84 = Methodref          #4.#15        // com/oudmon/ble/base/communication/LargeDataHandler."<init>":()V
+   #85 = Methodref          #29.#86       // com/oudmon/ble/base/request/EnableNotifyRequest.setEnable:(Z)V
+   #86 = NameAndType        #87:#88       // setEnable:(Z)V
+   #87 = Utf8               setEnable
+   #88 = Utf8               (Z)V
+   #89 = Methodref          #90.#91       // com/oudmon/ble/base/bluetooth/BleOperateManager.getInstance:()Lcom/oudmon/ble/base/bluetooth/BleOperateManager;
+   #90 = Class              #92           // com/oudmon/ble/base/bluetooth/BleOperateManager
+   #91 = NameAndType        #60:#93       // getInstance:()Lcom/oudmon/ble/base/bluetooth/BleOperateManager;
+   #92 = Utf8               com/oudmon/ble/base/bluetooth/BleOperateManager
+   #93 = Utf8               ()Lcom/oudmon/ble/base/bluetooth/BleOperateManager;
+   #94 = Methodref          #90.#95       // com/oudmon/ble/base/bluetooth/BleOperateManager.execute:(Lcom/oudmon/ble/base/request/BaseRequest;)Z
+   #95 = NameAndType        #96:#97       // execute:(Lcom/oudmon/ble/base/request/BaseRequest;)Z
+   #96 = Utf8               execute
+   #97 = Utf8               (Lcom/oudmon/ble/base/request/BaseRequest;)Z
+   #98 = Methodref          #26.#99       // java/util/concurrent/ConcurrentHashMap.remove:(Ljava/lang/Object;)Ljava/lang/Object;
+   #99 = NameAndType        #100:#101     // remove:(Ljava/lang/Object;)Ljava/lang/Object;
+  #100 = Utf8               remove
+  #101 = Utf8               (Ljava/lang/Object;)Ljava/lang/Object;
+  #102 = Methodref          #19.#103      // com/oudmon/ble/base/communication/bigData/resp/GlassesDeviceNotifyListener.setOutRspIOdmOpResponse:(ILcom/oudmon/ble/base/communication/ILargeDataResponse;)V
+  #103 = NameAndType        #104:#105     // setOutRspIOdmOpResponse:(ILcom/oudmon/ble/base/communication/ILargeDataResponse;)V
+  #104 = Utf8               setOutRspIOdmOpResponse
+  #105 = Utf8               (ILcom/oudmon/ble/base/communication/ILargeDataResponse;)V
+  #106 = Methodref          #19.#107      // com/oudmon/ble/base/communication/bigData/resp/GlassesDeviceNotifyListener.removeCallback:(I)V
+  #107 = NameAndType        #108:#8       // removeCallback:(I)V
+  #108 = Utf8               removeCallback
+  #109 = Methodref          #110.#111     // com/oudmon/ble/base/bluetooth/queue/BleThreadManager.getInstance:()Lcom/oudmon/ble/base/bluetooth/queue/BleThreadManager;
+  #110 = Class              #112          // com/oudmon/ble/base/bluetooth/queue/BleThreadManager
+  #111 = NameAndType        #60:#113      // getInstance:()Lcom/oudmon/ble/base/bluetooth/queue/BleThreadManager;
+  #112 = Utf8               com/oudmon/ble/base/bluetooth/queue/BleThreadManager
+  #113 = Utf8               ()Lcom/oudmon/ble/base/bluetooth/queue/BleThreadManager;
+  #114 = Class              #115          // com/oudmon/ble/base/bluetooth/queue/BleDataBean
+  #115 = Utf8               com/oudmon/ble/base/bluetooth/queue/BleDataBean
+  #116 = Class              #117          // com/oudmon/ble/base/communication/bigData/bean/SyncTime
+  #117 = Utf8               com/oudmon/ble/base/communication/bigData/bean/SyncTime
+  #118 = Methodref          #116.#119     // com/oudmon/ble/base/communication/bigData/bean/SyncTime."<init>":(I)V
+  #119 = NameAndType        #17:#8        // "<init>":(I)V
+  #120 = Methodref          #116.#121     // com/oudmon/ble/base/communication/bigData/bean/SyncTime.getSubData:()[B
+  #121 = NameAndType        #122:#123     // getSubData:()[B
+  #122 = Utf8               getSubData
+  #123 = Utf8               ()[B
+  #124 = Methodref          #4.#125       // com/oudmon/ble/base/communication/LargeDataHandler.addHeader:(I[B)[B
+  #125 = NameAndType        #126:#127     // addHeader:(I[B)[B
+  #126 = Utf8               addHeader
+  #127 = Utf8               (I[B)[B
+  #128 = Methodref          #114.#129     // com/oudmon/ble/base/bluetooth/queue/BleDataBean."<init>":([BI)V
+  #129 = NameAndType        #17:#130      // "<init>":([BI)V
+  #130 = Utf8               ([BI)V
+  #131 = Methodref          #110.#132     // com/oudmon/ble/base/bluetooth/queue/BleThreadManager.addData:(Lcom/oudmon/ble/base/bluetooth/queue/BleDataBean;)V
+  #132 = NameAndType        #133:#134     // addData:(Lcom/oudmon/ble/base/bluetooth/queue/BleDataBean;)V
+  #133 = Utf8               addData
+  #134 = Utf8               (Lcom/oudmon/ble/base/bluetooth/queue/BleDataBean;)V
+  #135 = Class              #136          // com/oudmon/ble/base/communication/LargeDataHandler$2
+  #136 = Utf8               com/oudmon/ble/base/communication/LargeDataHandler$2
+  #137 = Methodref          #135.#41      // com/oudmon/ble/base/communication/LargeDataHandler$2."<init>":(Lcom/oudmon/ble/base/communication/LargeDataHandler;)V
+  #138 = Methodref          #114.#139     // com/oudmon/ble/base/bluetooth/queue/BleDataBean."<init>":([BII)V
+  #139 = NameAndType        #17:#140      // "<init>":([BII)V
+  #140 = Utf8               ([BII)V
+  #141 = Class              #142          // com/oudmon/ble/base/communication/bigData/bean/WifiInfoReq
+  #142 = Utf8               com/oudmon/ble/base/communication/bigData/bean/WifiInfoReq
+  #143 = Methodref          #141.#144     // com/oudmon/ble/base/communication/bigData/bean/WifiInfoReq."<init>":(Ljava/lang/String;)V
+  #144 = NameAndType        #17:#145      // "<init>":(Ljava/lang/String;)V
+  #145 = Utf8               (Ljava/lang/String;)V
+  #146 = Methodref          #141.#121     // com/oudmon/ble/base/communication/bigData/bean/WifiInfoReq.getSubData:()[B
+  #147 = Class              #148          // com/oudmon/ble/base/communication/bigData/bean/GlassModelControl
+  #148 = Utf8               com/oudmon/ble/base/communication/bigData/bean/GlassModelControl
+  #149 = Methodref          #147.#150     // com/oudmon/ble/base/communication/bigData/bean/GlassModelControl."<init>":([B)V
+  #150 = NameAndType        #17:#151      // "<init>":([B)V
+  #151 = Utf8               ([B)V
+  #152 = Methodref          #147.#121     // com/oudmon/ble/base/communication/bigData/bean/GlassModelControl.getSubData:()[B
+  #153 = Class              #154          // com/oudmon/ble/base/communication/LargeDataHandler$3
+  #154 = Utf8               com/oudmon/ble/base/communication/LargeDataHandler$3
+  #155 = Methodref          #153.#156     // com/oudmon/ble/base/communication/LargeDataHandler$3."<init>":(Lcom/oudmon/ble/base/communication/LargeDataHandler;Lcom/oudmon/ble/base/communication/ILargeDataImageResponse;)V
+  #156 = NameAndType        #17:#157      // "<init>":(Lcom/oudmon/ble/base/communication/LargeDataHandler;Lcom/oudmon/ble/base/communication/ILargeDataImageResponse;)V
+  #157 = Utf8               (Lcom/oudmon/ble/base/communication/LargeDataHandler;Lcom/oudmon/ble/base/communication/ILargeDataImageResponse;)V
+  #158 = Methodref          #159.#160     // com/oudmon/ble/base/communication/utils/ByteUtil.loword:(I)I
+  #159 = Class              #161          // com/oudmon/ble/base/communication/utils/ByteUtil
+  #160 = NameAndType        #162:#163     // loword:(I)I
+  #161 = Utf8               com/oudmon/ble/base/communication/utils/ByteUtil
+  #162 = Utf8               loword
+  #163 = Utf8               (I)I
+  #164 = Methodref          #159.#165     // com/oudmon/ble/base/communication/utils/ByteUtil.hiword:(I)I
+  #165 = NameAndType        #166:#163     // hiword:(I)I
+  #166 = Utf8               hiword
+  #167 = Methodref          #26.#168      // java/util/concurrent/ConcurrentHashMap.isEmpty:()Z
+  #168 = NameAndType        #169:#170     // isEmpty:()Z
+  #169 = Utf8               isEmpty
+  #170 = Utf8               ()Z
+  #171 = Methodref          #26.#172      // java/util/concurrent/ConcurrentHashMap.clear:()V
+  #172 = NameAndType        #173:#18      // clear:()V
+  #173 = Utf8               clear
+  #174 = Methodref          #175.#176     // com/oudmon/qc_utils/bytes/DataTransferUtils.shortToBytes:(S)[B
+  #175 = Class              #177          // com/oudmon/qc_utils/bytes/DataTransferUtils
+  #176 = NameAndType        #178:#179     // shortToBytes:(S)[B
+  #177 = Utf8               com/oudmon/qc_utils/bytes/DataTransferUtils
+  #178 = Utf8               shortToBytes
+  #179 = Utf8               (S)[B
+  #180 = Methodref          #181.#182     // java/lang/System.arraycopy:(Ljava/lang/Object;ILjava/lang/Object;II)V
+  #181 = Class              #183          // java/lang/System
+  #182 = NameAndType        #184:#185     // arraycopy:(Ljava/lang/Object;ILjava/lang/Object;II)V
+  #183 = Utf8               java/lang/System
+  #184 = Utf8               arraycopy
+  #185 = Utf8               (Ljava/lang/Object;ILjava/lang/Object;II)V
+  #186 = Methodref          #187.#188     // com/oudmon/ble/base/communication/utils/CRC16.calcCrc16:([B)I
+  #187 = Class              #189          // com/oudmon/ble/base/communication/utils/CRC16
+  #188 = NameAndType        #190:#191     // calcCrc16:([B)I
+  #189 = Utf8               com/oudmon/ble/base/communication/utils/CRC16
+  #190 = Utf8               calcCrc16
+  #191 = Utf8               ([B)I
+  #192 = String             #193          // GLASSES_LOG
+  #193 = Utf8               GLASSES_LOG
+  #194 = Class              #195          // java/lang/StringBuilder
+  #195 = Utf8               java/lang/StringBuilder
+  #196 = Methodref          #194.#15      // java/lang/StringBuilder."<init>":()V
+  #197 = String             #198          // getWriteRequest: data=
+  #198 = Utf8               getWriteRequest: data=
+  #199 = Methodref          #194.#200     // java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+  #200 = NameAndType        #201:#202     // append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+  #201 = Utf8               append
+  #202 = Utf8               (Ljava/lang/String;)Ljava/lang/StringBuilder;
+  #203 = Methodref          #175.#204     // com/oudmon/qc_utils/bytes/DataTransferUtils.getHexString:([B)Ljava/lang/String;
+  #204 = NameAndType        #205:#206     // getHexString:([B)Ljava/lang/String;
+  #205 = Utf8               getHexString
+  #206 = Utf8               ([B)Ljava/lang/String;
+  #207 = Methodref          #194.#208     // java/lang/StringBuilder.toString:()Ljava/lang/String;
+  #208 = NameAndType        #209:#210     // toString:()Ljava/lang/String;
+  #209 = Utf8               toString
+  #210 = Utf8               ()Ljava/lang/String;
+  #211 = Methodref          #212.#213     // android/util/Log.i:(Ljava/lang/String;Ljava/lang/String;)I
+  #212 = Class              #214          // android/util/Log
+  #213 = NameAndType        #215:#216     // i:(Ljava/lang/String;Ljava/lang/String;)I
+  #214 = Utf8               android/util/Log
+  #215 = Utf8               i
+  #216 = Utf8               (Ljava/lang/String;Ljava/lang/String;)I
+  #217 = Fieldref           #4.#218       // com/oudmon/ble/base/communication/LargeDataHandler.SERIAL_PORT_CHARACTER_WRITE:Ljava/util/UUID;
+  #218 = NameAndType        #219:#34      // SERIAL_PORT_CHARACTER_WRITE:Ljava/util/UUID;
+  #219 = Utf8               SERIAL_PORT_CHARACTER_WRITE
+  #220 = Methodref          #221.#222     // com/oudmon/ble/base/request/WriteRequest.getNoRspInstance:(Ljava/util/UUID;Ljava/util/UUID;)Lcom/oudmon/ble/base/request/WriteRequest;
+  #221 = Class              #223          // com/oudmon/ble/base/request/WriteRequest
+  #222 = NameAndType        #224:#225     // getNoRspInstance:(Ljava/util/UUID;Ljava/util/UUID;)Lcom/oudmon/ble/base/request/WriteRequest;
+  #223 = Utf8               com/oudmon/ble/base/request/WriteRequest
+  #224 = Utf8               getNoRspInstance
+  #225 = Utf8               (Ljava/util/UUID;Ljava/util/UUID;)Lcom/oudmon/ble/base/request/WriteRequest;
+  #226 = Methodref          #221.#227     // com/oudmon/ble/base/request/WriteRequest.setValue:([B)V
+  #227 = NameAndType        #228:#151     // setValue:([B)V
+  #228 = Utf8               setValue
+  #229 = String             #230          // de5bf728-d711-4e47-af26-65e3012a5dc7
+  #230 = Utf8               de5bf728-d711-4e47-af26-65e3012a5dc7
+  #231 = Methodref          #232.#233     // java/util/UUID.fromString:(Ljava/lang/String;)Ljava/util/UUID;
+  #232 = Class              #234          // java/util/UUID
+  #233 = NameAndType        #235:#236     // fromString:(Ljava/lang/String;)Ljava/util/UUID;
+  #234 = Utf8               java/util/UUID
+  #235 = Utf8               fromString
+  #236 = Utf8               (Ljava/lang/String;)Ljava/util/UUID;
+  #237 = String             #238          // de5bf729-d711-4e47-af26-65e3012a5dc7
+  #238 = Utf8               de5bf729-d711-4e47-af26-65e3012a5dc7
+  #239 = String             #240          // de5bf72a-d711-4e47-af26-65e3012a5dc7
+  #240 = Utf8               de5bf72a-d711-4e47-af26-65e3012a5dc7
+  #241 = Utf8               ACTION_DEVICE_DATA_REPORTING
+  #242 = Utf8               B
+  #243 = Utf8               ConstantValue
+  #244 = Integer            115
+  #245 = Utf8               ACTION_SYNC_TIME
+  #246 = Integer            64
+  #247 = Utf8               ACTION_GLASSES_CONTROL
+  #248 = Integer            65
+  #249 = Utf8               ACTION_GLASSES_BATTERY
+  #250 = Integer            66
+  #251 = Utf8               ACTION_DEVICE_INFO
+  #252 = Integer            67
+  #253 = Utf8               ACTION_DEVICE_AI_VOICE
+  #254 = Integer            68
+  #255 = Utf8               ACTION_DEVICE_HEART_BEAT
+  #256 = Integer            69
+  #257 = Utf8               ACTION_DEVICE_WEAR
+  #258 = Integer            70
+  #259 = Utf8               ACTION_DEVICE_WEAR_SUPPORT
+  #260 = Integer            71
+  #261 = Utf8               ACTION_BT_MAC_Protocol
+  #262 = Integer            46
+  #263 = Utf8               ACTION_OTA_SOC
+  #264 = Integer            -4
+  #265 = Utf8               ACTION_GPT_UPLOAD
+  #266 = Integer            89
+  #267 = Utf8               ACTION_PICTURE_THUMBNAILS
+  #268 = Integer            -3
+  #269 = Utf8               ACTION_VOICE_STATUS
+  #270 = Integer            72
+  #271 = Utf8               ACTION_BT_CONNECT
+  #272 = Integer            73
+  #273 = Utf8               ACTION_VOLUME_CONTROL
+  #274 = Integer            81
+  #275 = Utf8               ACTION_SPEAK_SOUND_SWITCH
+  #276 = Integer            82
+  #277 = Utf8               Signature
+  #278 = Utf8               Ljava/util/concurrent/ConcurrentHashMap<Ljava/lang/String;Lcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/BatteryResponse;>;>;
+  #279 = Utf8               Ljava/util/concurrent/ConcurrentHashMap<Ljava/lang/Integer;Lcom/oudmon/ble/base/communication/ILargeDataResponse;>;
+  #280 = Utf8               Code
+  #281 = Utf8               LineNumberTable
+  #282 = Utf8               LocalVariableTable
+  #283 = Utf8               this
+  #284 = Utf8               ()Lcom/oudmon/ble/base/communication/LargeDataHandler;
+  #285 = Utf8               StackMapTable
+  #286 = Class              #287          // java/lang/Throwable
+  #287 = Utf8               java/lang/Throwable
+  #288 = Utf8               initEnable
+  #289 = Utf8               disEnable
+  #290 = Utf8               packageLength
+  #291 = Utf8               initPackageNotify
+  #292 = Utf8               (Lcom/oudmon/ble/base/communication/ILargeDataResponse;)V
+  #293 = Utf8               listener
+  #294 = Utf8               Lcom/oudmon/ble/base/communication/ILargeDataResponse;
+  #295 = Utf8               LocalVariableTypeTable
+  #296 = Utf8               Lcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/AiChatResponse;>;
+  #297 = Utf8               (Lcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/AiChatResponse;>;)V
+  #298 = Utf8               removeGptNotify
+  #299 = Utf8               addOutDeviceListener
+  #300 = Utf8               type
+  #301 = Utf8               outRspIOdmOpResponse
+  #302 = Utf8               removeOutDeviceListener
+  #303 = Utf8               key
+  #304 = Utf8               syncTime
+  #305 = Utf8               response
+  #306 = Utf8               Lcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/SyncTimeResponse;>;
+  #307 = Utf8               (Lcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/SyncTimeResponse;>;)V
+  #308 = Utf8               addBatteryCallBack
+  #309 = Utf8               (Ljava/lang/String;Lcom/oudmon/ble/base/communication/ILargeDataResponse;)V
+  #310 = Utf8               Ljava/lang/String;
+  #311 = Utf8               Lcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/BatteryResponse;>;
+  #312 = Utf8               (Ljava/lang/String;Lcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/BatteryResponse;>;)V
+  #313 = Utf8               removeBatteryCallBack
+  #314 = Utf8               syncBattery
+  #315 = Utf8               openBT
+  #316 = Utf8               setVolumeControl
+  #317 = Utf8               (IIIIIIIIII)V
+  #318 = Utf8               minMusic
+  #319 = Utf8               maxMusic
+  #320 = Utf8               currMusic
+  #321 = Utf8               minCall
+  #322 = Utf8               maxCall
+  #323 = Utf8               currCall
+  #324 = Utf8               systemMin
+  #325 = Utf8               systemMax
+  #326 = Utf8               systemCurr
+  #327 = Utf8               currVolumeType
+  #328 = Utf8               getVolumeControl
+  #329 = Utf8               Lcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/VolumeControlResponse;>;
+  #330 = Utf8               (Lcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/VolumeControlResponse;>;)V
+  #331 = Utf8               writeIpToSoc
+  #332 = Utf8               url
+  #333 = Utf8               syncDeviceInfo
+  #334 = Utf8               Lcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/DeviceInfoResponse;>;
+  #335 = Utf8               (Lcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/DeviceInfoResponse;>;)V
+  #336 = Utf8               aiVoiceWake
+  #337 = Utf8               (ZZLcom/oudmon/ble/base/communication/ILargeDataResponse;)V
+  #338 = Utf8               data
+  #339 = Utf8               [B
+  #340 = Utf8               write
+  #341 = Utf8               Z
+  #342 = Utf8               isOpen
+  #343 = Utf8               Lcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/GlassesAiVoiceRsp;>;
+  #344 = Class              #345          // com/oudmon/ble/base/communication/ILargeDataResponse
+  #345 = Utf8               com/oudmon/ble/base/communication/ILargeDataResponse
+  #346 = Class              #339          // "[B"
+  #347 = Utf8               (ZZLcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/GlassesAiVoiceRsp;>;)V
+  #348 = Utf8               aiVoicePlay
+  #349 = Utf8               status
+  #350 = Utf8               Lcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/GlassesAiVoicePlayStatusRsp;>;
+  #351 = Utf8               (ILcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/GlassesAiVoicePlayStatusRsp;>;)V
+  #352 = Utf8               wearCheck
+  #353 = Utf8               Lcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/GlassesWearRsp;>;
+  #354 = Utf8               (ZZLcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/GlassesWearRsp;>;)V
+  #355 = Utf8               wearFunctionSupport
+  #356 = Utf8               Lcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/GlassesTouchSupportRsp;>;
+  #357 = Utf8               (Lcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/GlassesTouchSupportRsp;>;)V
+  #358 = Utf8               glassesControl
+  #359 = Utf8               ([BLcom/oudmon/ble/base/communication/ILargeDataResponse;)V
+  #360 = Utf8               sendData
+  #361 = Utf8               Lcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/GlassModelControlResponse;>;
+  #362 = Utf8               ([BLcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/GlassModelControlResponse;>;)V
+  #363 = Utf8               speakSoundSwitch
+  #364 = Utf8               phone
+  #365 = Utf8               removeGlassesControlCallback
+  #366 = Utf8               getPictureThumbnails
+  #367 = Utf8               (Lcom/oudmon/ble/base/communication/ILargeDataImageResponse;)V
+  #368 = Utf8               Lcom/oudmon/ble/base/communication/ILargeDataImageResponse;
+  #369 = Utf8               index
+  #370 = Utf8               cmdData
+  #371 = Utf8               syncHeartBeat
+  #372 = Utf8               syncClassicBluetooth
+  #373 = Utf8               Lcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/ClassBluetoothResponse;>;
+  #374 = Utf8               (Lcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/ClassBluetoothResponse;>;)V
+  #375 = Utf8               getRespMap
+  #376 = Utf8               ()Ljava/util/concurrent/ConcurrentHashMap;
+  #377 = Utf8               ()Ljava/util/concurrent/ConcurrentHashMap<Ljava/lang/Integer;Lcom/oudmon/ble/base/communication/ILargeDataResponse;>;
+  #378 = Utf8               getNoClearMap
+  #379 = Utf8               cleanMap
+  #380 = Utf8               cmdId
+  #381 = Utf8               pocket
+  #382 = Utf8               getWriteRequest
+  #383 = Utf8               ([B)Lcom/oudmon/ble/base/request/WriteRequest;
+  #384 = Utf8               noRspInstance
+  #385 = Utf8               Lcom/oudmon/ble/base/request/WriteRequest;
+  #386 = Utf8               access$000
+  #387 = Utf8               (Lcom/oudmon/ble/base/communication/LargeDataHandler;)Ljava/util/concurrent/ConcurrentHashMap;
+  #388 = Utf8               x0
+  #389 = Utf8               access$100
+  #390 = Utf8               (Lcom/oudmon/ble/base/communication/LargeDataHandler;I)V
+  #391 = Utf8               x1
+  #392 = Utf8               <clinit>
+  #393 = Utf8               SourceFile
+  #394 = Utf8               LargeDataHandler.java
+  #395 = Utf8               InnerClasses
+  #396 = Class              #397          // com/oudmon/ble/base/request/EnableNotifyRequest$ListenerCallback
+  #397 = Utf8               com/oudmon/ble/base/request/EnableNotifyRequest$ListenerCallback
+  #398 = Utf8               ListenerCallback
+{
+  public static final byte ACTION_DEVICE_DATA_REPORTING;
+    descriptor: B
+    flags: (0x0019) ACC_PUBLIC, ACC_STATIC, ACC_FINAL
+    ConstantValue: int 115
+
+  public static final byte ACTION_SYNC_TIME;
+    descriptor: B
+    flags: (0x0019) ACC_PUBLIC, ACC_STATIC, ACC_FINAL
+    ConstantValue: int 64
+
+  public static final byte ACTION_GLASSES_CONTROL;
+    descriptor: B
+    flags: (0x0019) ACC_PUBLIC, ACC_STATIC, ACC_FINAL
+    ConstantValue: int 65
+
+  public static final byte ACTION_GLASSES_BATTERY;
+    descriptor: B
+    flags: (0x0019) ACC_PUBLIC, ACC_STATIC, ACC_FINAL
+    ConstantValue: int 66
+
+  public static final byte ACTION_DEVICE_INFO;
+    descriptor: B
+    flags: (0x0019) ACC_PUBLIC, ACC_STATIC, ACC_FINAL
+    ConstantValue: int 67
+
+  public static final byte ACTION_DEVICE_AI_VOICE;
+    descriptor: B
+    flags: (0x0019) ACC_PUBLIC, ACC_STATIC, ACC_FINAL
+    ConstantValue: int 68
+
+  public static final byte ACTION_DEVICE_HEART_BEAT;
+    descriptor: B
+    flags: (0x0019) ACC_PUBLIC, ACC_STATIC, ACC_FINAL
+    ConstantValue: int 69
+
+  public static final byte ACTION_DEVICE_WEAR;
+    descriptor: B
+    flags: (0x0019) ACC_PUBLIC, ACC_STATIC, ACC_FINAL
+    ConstantValue: int 70
+
+  public static final byte ACTION_DEVICE_WEAR_SUPPORT;
+    descriptor: B
+    flags: (0x0019) ACC_PUBLIC, ACC_STATIC, ACC_FINAL
+    ConstantValue: int 71
+
+  public static final byte ACTION_BT_MAC_Protocol;
+    descriptor: B
+    flags: (0x0019) ACC_PUBLIC, ACC_STATIC, ACC_FINAL
+    ConstantValue: int 46
+
+  public static final byte ACTION_OTA_SOC;
+    descriptor: B
+    flags: (0x0019) ACC_PUBLIC, ACC_STATIC, ACC_FINAL
+    ConstantValue: int -4
+
+  public static final byte ACTION_GPT_UPLOAD;
+    descriptor: B
+    flags: (0x0019) ACC_PUBLIC, ACC_STATIC, ACC_FINAL
+    ConstantValue: int 89
+
+  public static final byte ACTION_PICTURE_THUMBNAILS;
+    descriptor: B
+    flags: (0x0019) ACC_PUBLIC, ACC_STATIC, ACC_FINAL
+    ConstantValue: int -3
+
+  public static final byte ACTION_VOICE_STATUS;
+    descriptor: B
+    flags: (0x0019) ACC_PUBLIC, ACC_STATIC, ACC_FINAL
+    ConstantValue: int 72
+
+  public static final byte ACTION_BT_CONNECT;
+    descriptor: B
+    flags: (0x0019) ACC_PUBLIC, ACC_STATIC, ACC_FINAL
+    ConstantValue: int 73
+
+  public static final byte ACTION_VOLUME_CONTROL;
+    descriptor: B
+    flags: (0x0019) ACC_PUBLIC, ACC_STATIC, ACC_FINAL
+    ConstantValue: int 81
+
+  public static final byte ACTION_SPEAK_SOUND_SWITCH;
+    descriptor: B
+    flags: (0x0019) ACC_PUBLIC, ACC_STATIC, ACC_FINAL
+    ConstantValue: int 82
+
+  public static com.oudmon.ble.base.communication.LargeDataHandler getInstance();
+    descriptor: ()Lcom/oudmon/ble/base/communication/LargeDataHandler;
+    flags: (0x0009) ACC_PUBLIC, ACC_STATIC
+    Code:
+      stack=2, locals=2, args_size=0
+         0: getstatic     #80                 // Field mInstance:Lcom/oudmon/ble/base/communication/LargeDataHandler;
+         3: ifnonnull     37
+         6: ldc           #4                  // class com/oudmon/ble/base/communication/LargeDataHandler
+         8: dup
+         9: astore_0
+        10: monitorenter
+        11: getstatic     #80                 // Field mInstance:Lcom/oudmon/ble/base/communication/LargeDataHandler;
+        14: ifnonnull     27
+        17: new           #4                  // class com/oudmon/ble/base/communication/LargeDataHandler
+        20: dup
+        21: invokespecial #84                 // Method "<init>":()V
+        24: putstatic     #80                 // Field mInstance:Lcom/oudmon/ble/base/communication/LargeDataHandler;
+        27: aload_0
+        28: monitorexit
+        29: goto          37
+        32: astore_1
+        33: aload_0
+        34: monitorexit
+        35: aload_1
+        36: athrow
+        37: getstatic     #80                 // Field mInstance:Lcom/oudmon/ble/base/communication/LargeDataHandler;
+        40: areturn
+      Exception table:
+         from    to  target type
+            11    29    32   any
+            32    35    32   any
+      LineNumberTable:
+        line 109: 0
+        line 110: 6
+        line 111: 11
+        line 112: 17
+        line 114: 27
+        line 116: 37
+      StackMapTable: number_of_entries = 3
+        frame_type = 252 /* append */
+          offset_delta = 27
+          locals = [ class java/lang/Object ]
+        frame_type = 68 /* same_locals_1_stack_item */
+          stack = [ class java/lang/Throwable ]
+        frame_type = 250 /* chop */
+          offset_delta = 4
+
+  public void initEnable();
+    descriptor: ()V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=3, locals=1, args_size=1
+         0: aload_0
+         1: getfield      #46                 // Field enableNotifyRequest:Lcom/oudmon/ble/base/request/EnableNotifyRequest;
+         4: iconst_1
+         5: invokevirtual #85                 // Method com/oudmon/ble/base/request/EnableNotifyRequest.setEnable:(Z)V
+         8: invokestatic  #89                 // Method com/oudmon/ble/base/bluetooth/BleOperateManager.getInstance:()Lcom/oudmon/ble/base/bluetooth/BleOperateManager;
+        11: aload_0
+        12: getfield      #46                 // Field enableNotifyRequest:Lcom/oudmon/ble/base/request/EnableNotifyRequest;
+        15: invokevirtual #94                 // Method com/oudmon/ble/base/bluetooth/BleOperateManager.execute:(Lcom/oudmon/ble/base/request/BaseRequest;)Z
+        18: pop
+        19: aload_0
+        20: getfield      #53                 // Field noClearMap:Ljava/util/concurrent/ConcurrentHashMap;
+        23: bipush        115
+        25: invokestatic  #70                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+        28: aload_0
+        29: getfield      #22                 // Field deviceNotifyListener:Lcom/oudmon/ble/base/communication/bigData/resp/GlassesDeviceNotifyListener;
+        32: invokevirtual #76                 // Method java/util/concurrent/ConcurrentHashMap.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+        35: pop
+        36: return
+      LineNumberTable:
+        line 120: 0
+        line 121: 8
+        line 122: 19
+        line 123: 36
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      37     0  this   Lcom/oudmon/ble/base/communication/LargeDataHandler;
+
+  public void disEnable();
+    descriptor: ()V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=2, locals=1, args_size=1
+         0: aload_0
+         1: getfield      #46                 // Field enableNotifyRequest:Lcom/oudmon/ble/base/request/EnableNotifyRequest;
+         4: iconst_0
+         5: invokevirtual #85                 // Method com/oudmon/ble/base/request/EnableNotifyRequest.setEnable:(Z)V
+         8: invokestatic  #89                 // Method com/oudmon/ble/base/bluetooth/BleOperateManager.getInstance:()Lcom/oudmon/ble/base/bluetooth/BleOperateManager;
+        11: aload_0
+        12: getfield      #46                 // Field enableNotifyRequest:Lcom/oudmon/ble/base/request/EnableNotifyRequest;
+        15: invokevirtual #94                 // Method com/oudmon/ble/base/bluetooth/BleOperateManager.execute:(Lcom/oudmon/ble/base/request/BaseRequest;)Z
+        18: pop
+        19: return
+      LineNumberTable:
+        line 127: 0
+        line 128: 8
+        line 129: 19
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      20     0  this   Lcom/oudmon/ble/base/communication/LargeDataHandler;
+
+  public void packageLength();
+    descriptor: ()V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=2, locals=1, args_size=1
+         0: aload_0
+         1: invokestatic  #56                 // Method com/oudmon/ble/base/communication/JPackageManager.getInstance:()Lcom/oudmon/ble/base/communication/JPackageManager;
+         4: invokevirtual #62                 // Method com/oudmon/ble/base/communication/JPackageManager.getLength:()I
+         7: putfield      #66                 // Field mPackageLength:I
+        10: return
+      LineNumberTable:
+        line 132: 0
+        line 133: 10
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      11     0  this   Lcom/oudmon/ble/base/communication/LargeDataHandler;
+
+  public void initPackageNotify(com.oudmon.ble.base.communication.ILargeDataResponse<com.oudmon.ble.base.communication.bigData.resp.AiChatResponse>);
+    descriptor: (Lcom/oudmon/ble/base/communication/ILargeDataResponse;)V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=3, locals=2, args_size=2
+         0: aload_0
+         1: getfield      #50                 // Field respMap:Ljava/util/concurrent/ConcurrentHashMap;
+         4: bipush        89
+         6: invokestatic  #70                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+         9: aload_1
+        10: invokevirtual #76                 // Method java/util/concurrent/ConcurrentHashMap.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+        13: pop
+        14: return
+      LineNumberTable:
+        line 136: 0
+        line 137: 14
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      15     0  this   Lcom/oudmon/ble/base/communication/LargeDataHandler;
+            0      15     1 listener   Lcom/oudmon/ble/base/communication/ILargeDataResponse;
+      LocalVariableTypeTable:
+        Start  Length  Slot  Name   Signature
+            0      15     1 listener   Lcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/AiChatResponse;>;
+    Signature: #297                         // (Lcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/AiChatResponse;>;)V
+
+  public void removeGptNotify();
+    descriptor: ()V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=2, locals=1, args_size=1
+         0: aload_0
+         1: getfield      #50                 // Field respMap:Ljava/util/concurrent/ConcurrentHashMap;
+         4: bipush        89
+         6: invokestatic  #70                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+         9: invokevirtual #98                 // Method java/util/concurrent/ConcurrentHashMap.remove:(Ljava/lang/Object;)Ljava/lang/Object;
+        12: pop
+        13: return
+      LineNumberTable:
+        line 140: 0
+        line 141: 13
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      14     0  this   Lcom/oudmon/ble/base/communication/LargeDataHandler;
+
+  public void addOutDeviceListener(int, com.oudmon.ble.base.communication.ILargeDataResponse);
+    descriptor: (ILcom/oudmon/ble/base/communication/ILargeDataResponse;)V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=3, locals=3, args_size=3
+         0: aload_0
+         1: getfield      #22                 // Field deviceNotifyListener:Lcom/oudmon/ble/base/communication/bigData/resp/GlassesDeviceNotifyListener;
+         4: iload_1
+         5: aload_2
+         6: invokevirtual #102                // Method com/oudmon/ble/base/communication/bigData/resp/GlassesDeviceNotifyListener.setOutRspIOdmOpResponse:(ILcom/oudmon/ble/base/communication/ILargeDataResponse;)V
+         9: return
+      LineNumberTable:
+        line 144: 0
+        line 145: 9
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      10     0  this   Lcom/oudmon/ble/base/communication/LargeDataHandler;
+            0      10     1  type   I
+            0      10     2 outRspIOdmOpResponse   Lcom/oudmon/ble/base/communication/ILargeDataResponse;
+
+  public void removeOutDeviceListener(int);
+    descriptor: (I)V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=2, locals=2, args_size=2
+         0: aload_0
+         1: getfield      #22                 // Field deviceNotifyListener:Lcom/oudmon/ble/base/communication/bigData/resp/GlassesDeviceNotifyListener;
+         4: iload_1
+         5: invokevirtual #106                // Method com/oudmon/ble/base/communication/bigData/resp/GlassesDeviceNotifyListener.removeCallback:(I)V
+         8: return
+      LineNumberTable:
+        line 148: 0
+        line 149: 8
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       9     0  this   Lcom/oudmon/ble/base/communication/LargeDataHandler;
+            0       9     1   key   I
+
+  public void syncTime(com.oudmon.ble.base.communication.ILargeDataResponse<com.oudmon.ble.base.communication.bigData.resp.SyncTimeResponse>);
+    descriptor: (Lcom/oudmon/ble/base/communication/ILargeDataResponse;)V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=8, locals=2, args_size=2
+         0: aload_0
+         1: getfield      #50                 // Field respMap:Ljava/util/concurrent/ConcurrentHashMap;
+         4: bipush        64
+         6: invokestatic  #70                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+         9: aload_1
+        10: invokevirtual #76                 // Method java/util/concurrent/ConcurrentHashMap.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+        13: pop
+        14: invokestatic  #109                // Method com/oudmon/ble/base/bluetooth/queue/BleThreadManager.getInstance:()Lcom/oudmon/ble/base/bluetooth/queue/BleThreadManager;
+        17: new           #114                // class com/oudmon/ble/base/bluetooth/queue/BleDataBean
+        20: dup
+        21: aload_0
+        22: bipush        64
+        24: new           #116                // class com/oudmon/ble/base/communication/bigData/bean/SyncTime
+        27: dup
+        28: iconst_1
+        29: invokespecial #118                // Method com/oudmon/ble/base/communication/bigData/bean/SyncTime."<init>":(I)V
+        32: invokevirtual #120                // Method com/oudmon/ble/base/communication/bigData/bean/SyncTime.getSubData:()[B
+        35: invokespecial #124                // Method addHeader:(I[B)[B
+        38: aload_0
+        39: getfield      #66                 // Field mPackageLength:I
+        42: invokespecial #128                // Method com/oudmon/ble/base/bluetooth/queue/BleDataBean."<init>":([BI)V
+        45: invokevirtual #131                // Method com/oudmon/ble/base/bluetooth/queue/BleThreadManager.addData:(Lcom/oudmon/ble/base/bluetooth/queue/BleDataBean;)V
+        48: return
+      LineNumberTable:
+        line 153: 0
+        line 154: 14
+        line 155: 48
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      49     0  this   Lcom/oudmon/ble/base/communication/LargeDataHandler;
+            0      49     1 response   Lcom/oudmon/ble/base/communication/ILargeDataResponse;
+      LocalVariableTypeTable:
+        Start  Length  Slot  Name   Signature
+            0      49     1 response   Lcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/SyncTimeResponse;>;
+    Signature: #307                         // (Lcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/SyncTimeResponse;>;)V
+
+  public void addBatteryCallBack(java.lang.String, com.oudmon.ble.base.communication.ILargeDataResponse<com.oudmon.ble.base.communication.bigData.resp.BatteryResponse>);
+    descriptor: (Ljava/lang/String;Lcom/oudmon/ble/base/communication/ILargeDataResponse;)V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=3, locals=3, args_size=3
+         0: aload_0
+         1: getfield      #9                  // Field batterySparseArray:Ljava/util/concurrent/ConcurrentHashMap;
+         4: aload_1
+         5: aload_2
+         6: invokevirtual #76                 // Method java/util/concurrent/ConcurrentHashMap.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+         9: pop
+        10: return
+      LineNumberTable:
+        line 157: 0
+        line 158: 10
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      11     0  this   Lcom/oudmon/ble/base/communication/LargeDataHandler;
+            0      11     1   key   Ljava/lang/String;
+            0      11     2 listener   Lcom/oudmon/ble/base/communication/ILargeDataResponse;
+      LocalVariableTypeTable:
+        Start  Length  Slot  Name   Signature
+            0      11     2 listener   Lcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/BatteryResponse;>;
+    Signature: #312                         // (Ljava/lang/String;Lcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/BatteryResponse;>;)V
+
+  public void removeBatteryCallBack(java.lang.String);
+    descriptor: (Ljava/lang/String;)V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=2, locals=2, args_size=2
+         0: aload_0
+         1: getfield      #9                  // Field batterySparseArray:Ljava/util/concurrent/ConcurrentHashMap;
+         4: aload_1
+         5: invokevirtual #98                 // Method java/util/concurrent/ConcurrentHashMap.remove:(Ljava/lang/Object;)Ljava/lang/Object;
+         8: pop
+         9: return
+      LineNumberTable:
+        line 161: 0
+        line 162: 9
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      10     0  this   Lcom/oudmon/ble/base/communication/LargeDataHandler;
+            0      10     1   key   Ljava/lang/String;
+
+  public void syncBattery();
+    descriptor: ()V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=6, locals=1, args_size=1
+         0: aload_0
+         1: getfield      #50                 // Field respMap:Ljava/util/concurrent/ConcurrentHashMap;
+         4: bipush        66
+         6: invokestatic  #70                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+         9: new           #135                // class com/oudmon/ble/base/communication/LargeDataHandler$2
+        12: dup
+        13: aload_0
+        14: invokespecial #137                // Method com/oudmon/ble/base/communication/LargeDataHandler$2."<init>":(Lcom/oudmon/ble/base/communication/LargeDataHandler;)V
+        17: invokevirtual #76                 // Method java/util/concurrent/ConcurrentHashMap.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+        20: pop
+        21: invokestatic  #109                // Method com/oudmon/ble/base/bluetooth/queue/BleThreadManager.getInstance:()Lcom/oudmon/ble/base/bluetooth/queue/BleThreadManager;
+        24: new           #114                // class com/oudmon/ble/base/bluetooth/queue/BleDataBean
+        27: dup
+        28: aload_0
+        29: bipush        66
+        31: iconst_2
+        32: newarray       byte
+        34: invokespecial #124                // Method addHeader:(I[B)[B
+        37: aload_0
+        38: getfield      #66                 // Field mPackageLength:I
+        41: sipush        200
+        44: invokespecial #138                // Method com/oudmon/ble/base/bluetooth/queue/BleDataBean."<init>":([BII)V
+        47: invokevirtual #131                // Method com/oudmon/ble/base/bluetooth/queue/BleThreadManager.addData:(Lcom/oudmon/ble/base/bluetooth/queue/BleDataBean;)V
+        50: return
+      LineNumberTable:
+        line 165: 0
+        line 174: 21
+        line 175: 50
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      51     0  this   Lcom/oudmon/ble/base/communication/LargeDataHandler;
+
+  public void openBT();
+    descriptor: ()V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=9, locals=1, args_size=1
+         0: invokestatic  #109                // Method com/oudmon/ble/base/bluetooth/queue/BleThreadManager.getInstance:()Lcom/oudmon/ble/base/bluetooth/queue/BleThreadManager;
+         3: new           #114                // class com/oudmon/ble/base/bluetooth/queue/BleDataBean
+         6: dup
+         7: aload_0
+         8: bipush        73
+        10: iconst_2
+        11: newarray       byte
+        13: dup
+        14: iconst_0
+        15: iconst_2
+        16: bastore
+        17: dup
+        18: iconst_1
+        19: iconst_1
+        20: bastore
+        21: invokespecial #124                // Method addHeader:(I[B)[B
+        24: aload_0
+        25: getfield      #66                 // Field mPackageLength:I
+        28: invokespecial #128                // Method com/oudmon/ble/base/bluetooth/queue/BleDataBean."<init>":([BI)V
+        31: invokevirtual #131                // Method com/oudmon/ble/base/bluetooth/queue/BleThreadManager.addData:(Lcom/oudmon/ble/base/bluetooth/queue/BleDataBean;)V
+        34: return
+      LineNumberTable:
+        line 179: 0
+        line 180: 34
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      35     0  this   Lcom/oudmon/ble/base/communication/LargeDataHandler;
+
+  public void setVolumeControl(int, int, int, int, int, int, int, int, int, int);
+    descriptor: (IIIIIIIIII)V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=9, locals=11, args_size=11
+         0: invokestatic  #109                // Method com/oudmon/ble/base/bluetooth/queue/BleThreadManager.getInstance:()Lcom/oudmon/ble/base/bluetooth/queue/BleThreadManager;
+         3: new           #114                // class com/oudmon/ble/base/bluetooth/queue/BleDataBean
+         6: dup
+         7: aload_0
+         8: bipush        81
+        10: bipush        14
+        12: newarray       byte
+        14: dup
+        15: iconst_0
+        16: iconst_2
+        17: bastore
+        18: dup
+        19: iconst_1
+        20: iconst_1
+        21: bastore
+        22: dup
+        23: iconst_2
+        24: iload_1
+        25: i2b
+        26: bastore
+        27: dup
+        28: iconst_3
+        29: iload_2
+        30: i2b
+        31: bastore
+        32: dup
+        33: iconst_4
+        34: iload_3
+        35: i2b
+        36: bastore
+        37: dup
+        38: iconst_5
+        39: iconst_2
+        40: bastore
+        41: dup
+        42: bipush        6
+        44: iload         4
+        46: i2b
+        47: bastore
+        48: dup
+        49: bipush        7
+        51: iload         5
+        53: i2b
+        54: bastore
+        55: dup
+        56: bipush        8
+        58: iload         6
+        60: i2b
+        61: bastore
+        62: dup
+        63: bipush        9
+        65: iconst_3
+        66: bastore
+        67: dup
+        68: bipush        10
+        70: iload         7
+        72: i2b
+        73: bastore
+        74: dup
+        75: bipush        11
+        77: iload         8
+        79: i2b
+        80: bastore
+        81: dup
+        82: bipush        12
+        84: iload         9
+        86: i2b
+        87: bastore
+        88: dup
+        89: bipush        13
+        91: iload         10
+        93: i2b
+        94: bastore
+        95: invokespecial #124                // Method addHeader:(I[B)[B
+        98: aload_0
+        99: getfield      #66                 // Field mPackageLength:I
+       102: invokespecial #128                // Method com/oudmon/ble/base/bluetooth/queue/BleDataBean."<init>":([BI)V
+       105: invokevirtual #131                // Method com/oudmon/ble/base/bluetooth/queue/BleThreadManager.addData:(Lcom/oudmon/ble/base/bluetooth/queue/BleDataBean;)V
+       108: return
+      LineNumberTable:
+        line 184: 0
+        line 188: 108
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0     109     0  this   Lcom/oudmon/ble/base/communication/LargeDataHandler;
+            0     109     1 minMusic   I
+            0     109     2 maxMusic   I
+            0     109     3 currMusic   I
+            0     109     4 minCall   I
+            0     109     5 maxCall   I
+            0     109     6 currCall   I
+            0     109     7 systemMin   I
+            0     109     8 systemMax   I
+            0     109     9 systemCurr   I
+            0     109    10 currVolumeType   I
+
+  public void getVolumeControl(com.oudmon.ble.base.communication.ILargeDataResponse<com.oudmon.ble.base.communication.bigData.resp.VolumeControlResponse>);
+    descriptor: (Lcom/oudmon/ble/base/communication/ILargeDataResponse;)V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=9, locals=2, args_size=2
+         0: aload_0
+         1: getfield      #50                 // Field respMap:Ljava/util/concurrent/ConcurrentHashMap;
+         4: bipush        81
+         6: invokestatic  #70                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+         9: aload_1
+        10: invokevirtual #76                 // Method java/util/concurrent/ConcurrentHashMap.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+        13: pop
+        14: invokestatic  #109                // Method com/oudmon/ble/base/bluetooth/queue/BleThreadManager.getInstance:()Lcom/oudmon/ble/base/bluetooth/queue/BleThreadManager;
+        17: new           #114                // class com/oudmon/ble/base/bluetooth/queue/BleDataBean
+        20: dup
+        21: aload_0
+        22: bipush        81
+        24: iconst_1
+        25: newarray       byte
+        27: dup
+        28: iconst_0
+        29: iconst_1
+        30: bastore
+        31: invokespecial #124                // Method addHeader:(I[B)[B
+        34: aload_0
+        35: getfield      #66                 // Field mPackageLength:I
+        38: invokespecial #128                // Method com/oudmon/ble/base/bluetooth/queue/BleDataBean."<init>":([BI)V
+        41: invokevirtual #131                // Method com/oudmon/ble/base/bluetooth/queue/BleThreadManager.addData:(Lcom/oudmon/ble/base/bluetooth/queue/BleDataBean;)V
+        44: return
+      LineNumberTable:
+        line 192: 0
+        line 193: 14
+        line 194: 44
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      45     0  this   Lcom/oudmon/ble/base/communication/LargeDataHandler;
+            0      45     1 response   Lcom/oudmon/ble/base/communication/ILargeDataResponse;
+      LocalVariableTypeTable:
+        Start  Length  Slot  Name   Signature
+            0      45     1 response   Lcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/VolumeControlResponse;>;
+    Signature: #330                         // (Lcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/VolumeControlResponse;>;)V
+
+  public void writeIpToSoc(java.lang.String, com.oudmon.ble.base.communication.ILargeDataResponse<com.oudmon.ble.base.communication.bigData.resp.BatteryResponse>);
+    descriptor: (Ljava/lang/String;Lcom/oudmon/ble/base/communication/ILargeDataResponse;)V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=8, locals=3, args_size=3
+         0: aload_0
+         1: getfield      #50                 // Field respMap:Ljava/util/concurrent/ConcurrentHashMap;
+         4: bipush        -4
+         6: invokestatic  #70                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+         9: aload_2
+        10: invokevirtual #76                 // Method java/util/concurrent/ConcurrentHashMap.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+        13: pop
+        14: invokestatic  #109                // Method com/oudmon/ble/base/bluetooth/queue/BleThreadManager.getInstance:()Lcom/oudmon/ble/base/bluetooth/queue/BleThreadManager;
+        17: new           #114                // class com/oudmon/ble/base/bluetooth/queue/BleDataBean
+        20: dup
+        21: aload_0
+        22: bipush        -4
+        24: new           #141                // class com/oudmon/ble/base/communication/bigData/bean/WifiInfoReq
+        27: dup
+        28: aload_1
+        29: invokespecial #143                // Method com/oudmon/ble/base/communication/bigData/bean/WifiInfoReq."<init>":(Ljava/lang/String;)V
+        32: invokevirtual #146                // Method com/oudmon/ble/base/communication/bigData/bean/WifiInfoReq.getSubData:()[B
+        35: invokespecial #124                // Method addHeader:(I[B)[B
+        38: aload_0
+        39: getfield      #66                 // Field mPackageLength:I
+        42: invokespecial #128                // Method com/oudmon/ble/base/bluetooth/queue/BleDataBean."<init>":([BI)V
+        45: invokevirtual #131                // Method com/oudmon/ble/base/bluetooth/queue/BleThreadManager.addData:(Lcom/oudmon/ble/base/bluetooth/queue/BleDataBean;)V
+        48: return
+      LineNumberTable:
+        line 198: 0
+        line 199: 14
+        line 200: 48
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      49     0  this   Lcom/oudmon/ble/base/communication/LargeDataHandler;
+            0      49     1   url   Ljava/lang/String;
+            0      49     2 response   Lcom/oudmon/ble/base/communication/ILargeDataResponse;
+      LocalVariableTypeTable:
+        Start  Length  Slot  Name   Signature
+            0      49     2 response   Lcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/BatteryResponse;>;
+    Signature: #312                         // (Ljava/lang/String;Lcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/BatteryResponse;>;)V
+
+  public void syncDeviceInfo(com.oudmon.ble.base.communication.ILargeDataResponse<com.oudmon.ble.base.communication.bigData.resp.DeviceInfoResponse>);
+    descriptor: (Lcom/oudmon/ble/base/communication/ILargeDataResponse;)V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=6, locals=2, args_size=2
+         0: aload_0
+         1: getfield      #50                 // Field respMap:Ljava/util/concurrent/ConcurrentHashMap;
+         4: bipush        67
+         6: invokestatic  #70                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+         9: aload_1
+        10: invokevirtual #76                 // Method java/util/concurrent/ConcurrentHashMap.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+        13: pop
+        14: invokestatic  #109                // Method com/oudmon/ble/base/bluetooth/queue/BleThreadManager.getInstance:()Lcom/oudmon/ble/base/bluetooth/queue/BleThreadManager;
+        17: new           #114                // class com/oudmon/ble/base/bluetooth/queue/BleDataBean
+        20: dup
+        21: aload_0
+        22: bipush        67
+        24: iconst_2
+        25: newarray       byte
+        27: invokespecial #124                // Method addHeader:(I[B)[B
+        30: aload_0
+        31: getfield      #66                 // Field mPackageLength:I
+        34: sipush        200
+        37: invokespecial #138                // Method com/oudmon/ble/base/bluetooth/queue/BleDataBean."<init>":([BII)V
+        40: invokevirtual #131                // Method com/oudmon/ble/base/bluetooth/queue/BleThreadManager.addData:(Lcom/oudmon/ble/base/bluetooth/queue/BleDataBean;)V
+        43: return
+      LineNumberTable:
+        line 204: 0
+        line 205: 14
+        line 206: 43
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      44     0  this   Lcom/oudmon/ble/base/communication/LargeDataHandler;
+            0      44     1 response   Lcom/oudmon/ble/base/communication/ILargeDataResponse;
+      LocalVariableTypeTable:
+        Start  Length  Slot  Name   Signature
+            0      44     1 response   Lcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/DeviceInfoResponse;>;
+    Signature: #335                         // (Lcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/DeviceInfoResponse;>;)V
+
+  public void aiVoiceWake(boolean, boolean, com.oudmon.ble.base.communication.ILargeDataResponse<com.oudmon.ble.base.communication.bigData.resp.GlassesAiVoiceRsp>);
+    descriptor: (ZZLcom/oudmon/ble/base/communication/ILargeDataResponse;)V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=9, locals=5, args_size=4
+         0: aload_0
+         1: getfield      #50                 // Field respMap:Ljava/util/concurrent/ConcurrentHashMap;
+         4: bipush        68
+         6: invokestatic  #70                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+         9: aload_3
+        10: invokevirtual #76                 // Method java/util/concurrent/ConcurrentHashMap.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+        13: pop
+        14: iload_1
+        15: ifeq          70
+        18: iconst_2
+        19: newarray       byte
+        21: astore        4
+        23: aload         4
+        25: iconst_0
+        26: iconst_2
+        27: bastore
+        28: aload         4
+        30: iconst_1
+        31: iload_2
+        32: ifeq          39
+        35: iconst_1
+        36: goto          40
+        39: iconst_0
+        40: i2b
+        41: bastore
+        42: invokestatic  #109                // Method com/oudmon/ble/base/bluetooth/queue/BleThreadManager.getInstance:()Lcom/oudmon/ble/base/bluetooth/queue/BleThreadManager;
+        45: new           #114                // class com/oudmon/ble/base/bluetooth/queue/BleDataBean
+        48: dup
+        49: aload_0
+        50: bipush        68
+        52: aload         4
+        54: invokespecial #124                // Method addHeader:(I[B)[B
+        57: aload_0
+        58: getfield      #66                 // Field mPackageLength:I
+        61: invokespecial #128                // Method com/oudmon/ble/base/bluetooth/queue/BleDataBean."<init>":([BI)V
+        64: invokevirtual #131                // Method com/oudmon/ble/base/bluetooth/queue/BleThreadManager.addData:(Lcom/oudmon/ble/base/bluetooth/queue/BleDataBean;)V
+        67: goto          104
+        70: invokestatic  #109                // Method com/oudmon/ble/base/bluetooth/queue/BleThreadManager.getInstance:()Lcom/oudmon/ble/base/bluetooth/queue/BleThreadManager;
+        73: new           #114                // class com/oudmon/ble/base/bluetooth/queue/BleDataBean
+        76: dup
+        77: aload_0
+        78: bipush        68
+        80: iconst_2
+        81: newarray       byte
+        83: dup
+        84: iconst_0
+        85: iconst_1
+        86: bastore
+        87: dup
+        88: iconst_1
+        89: iconst_0
+        90: bastore
+        91: invokespecial #124                // Method addHeader:(I[B)[B
+        94: aload_0
+        95: getfield      #66                 // Field mPackageLength:I
+        98: invokespecial #128                // Method com/oudmon/ble/base/bluetooth/queue/BleDataBean."<init>":([BI)V
+       101: invokevirtual #131                // Method com/oudmon/ble/base/bluetooth/queue/BleThreadManager.addData:(Lcom/oudmon/ble/base/bluetooth/queue/BleDataBean;)V
+       104: return
+      LineNumberTable:
+        line 210: 0
+        line 211: 14
+        line 212: 18
+        line 213: 23
+        line 214: 28
+        line 215: 42
+        line 216: 67
+        line 217: 70
+        line 219: 104
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+           23      44     4  data   [B
+            0     105     0  this   Lcom/oudmon/ble/base/communication/LargeDataHandler;
+            0     105     1 write   Z
+            0     105     2 isOpen   Z
+            0     105     3 response   Lcom/oudmon/ble/base/communication/ILargeDataResponse;
+      LocalVariableTypeTable:
+        Start  Length  Slot  Name   Signature
+            0     105     3 response   Lcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/GlassesAiVoiceRsp;>;
+      StackMapTable: number_of_entries = 4
+        frame_type = 255 /* full_frame */
+          offset_delta = 39
+          locals = [ class com/oudmon/ble/base/communication/LargeDataHandler, int, int, class com/oudmon/ble/base/communication/ILargeDataResponse, class "[B" ]
+          stack = [ class "[B", int ]
+        frame_type = 255 /* full_frame */
+          offset_delta = 0
+          locals = [ class com/oudmon/ble/base/communication/LargeDataHandler, int, int, class com/oudmon/ble/base/communication/ILargeDataResponse, class "[B" ]
+          stack = [ class "[B", int, int ]
+        frame_type = 250 /* chop */
+          offset_delta = 29
+        frame_type = 33 /* same */
+    Signature: #347                         // (ZZLcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/GlassesAiVoiceRsp;>;)V
+
+  public void aiVoicePlay(int, com.oudmon.ble.base.communication.ILargeDataResponse<com.oudmon.ble.base.communication.bigData.resp.GlassesAiVoicePlayStatusRsp>);
+    descriptor: (ILcom/oudmon/ble/base/communication/ILargeDataResponse;)V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=6, locals=4, args_size=3
+         0: iconst_2
+         1: newarray       byte
+         3: astore_3
+         4: aload_3
+         5: iconst_0
+         6: iconst_2
+         7: bastore
+         8: aload_3
+         9: iconst_1
+        10: iload_1
+        11: i2b
+        12: bastore
+        13: invokestatic  #109                // Method com/oudmon/ble/base/bluetooth/queue/BleThreadManager.getInstance:()Lcom/oudmon/ble/base/bluetooth/queue/BleThreadManager;
+        16: new           #114                // class com/oudmon/ble/base/bluetooth/queue/BleDataBean
+        19: dup
+        20: aload_0
+        21: bipush        72
+        23: aload_3
+        24: invokespecial #124                // Method addHeader:(I[B)[B
+        27: aload_0
+        28: getfield      #66                 // Field mPackageLength:I
+        31: invokespecial #128                // Method com/oudmon/ble/base/bluetooth/queue/BleDataBean."<init>":([BI)V
+        34: invokevirtual #131                // Method com/oudmon/ble/base/bluetooth/queue/BleThreadManager.addData:(Lcom/oudmon/ble/base/bluetooth/queue/BleDataBean;)V
+        37: return
+      LineNumberTable:
+        line 223: 0
+        line 224: 4
+        line 225: 8
+        line 226: 13
+        line 227: 37
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      38     0  this   Lcom/oudmon/ble/base/communication/LargeDataHandler;
+            0      38     1 status   I
+            0      38     2 response   Lcom/oudmon/ble/base/communication/ILargeDataResponse;
+            4      34     3  data   [B
+      LocalVariableTypeTable:
+        Start  Length  Slot  Name   Signature
+            0      38     2 response   Lcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/GlassesAiVoicePlayStatusRsp;>;
+    Signature: #351                         // (ILcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/GlassesAiVoicePlayStatusRsp;>;)V
+
+  public void wearCheck(boolean, boolean, com.oudmon.ble.base.communication.ILargeDataResponse<com.oudmon.ble.base.communication.bigData.resp.GlassesWearRsp>);
+    descriptor: (ZZLcom/oudmon/ble/base/communication/ILargeDataResponse;)V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=9, locals=5, args_size=4
+         0: aload_0
+         1: getfield      #50                 // Field respMap:Ljava/util/concurrent/ConcurrentHashMap;
+         4: bipush        70
+         6: invokestatic  #70                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+         9: aload_3
+        10: invokevirtual #76                 // Method java/util/concurrent/ConcurrentHashMap.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+        13: pop
+        14: iload_1
+        15: ifeq          70
+        18: iconst_2
+        19: newarray       byte
+        21: astore        4
+        23: aload         4
+        25: iconst_0
+        26: iconst_2
+        27: bastore
+        28: aload         4
+        30: iconst_1
+        31: iload_2
+        32: ifeq          39
+        35: iconst_1
+        36: goto          40
+        39: iconst_0
+        40: i2b
+        41: bastore
+        42: invokestatic  #109                // Method com/oudmon/ble/base/bluetooth/queue/BleThreadManager.getInstance:()Lcom/oudmon/ble/base/bluetooth/queue/BleThreadManager;
+        45: new           #114                // class com/oudmon/ble/base/bluetooth/queue/BleDataBean
+        48: dup
+        49: aload_0
+        50: bipush        70
+        52: aload         4
+        54: invokespecial #124                // Method addHeader:(I[B)[B
+        57: aload_0
+        58: getfield      #66                 // Field mPackageLength:I
+        61: invokespecial #128                // Method com/oudmon/ble/base/bluetooth/queue/BleDataBean."<init>":([BI)V
+        64: invokevirtual #131                // Method com/oudmon/ble/base/bluetooth/queue/BleThreadManager.addData:(Lcom/oudmon/ble/base/bluetooth/queue/BleDataBean;)V
+        67: goto          104
+        70: invokestatic  #109                // Method com/oudmon/ble/base/bluetooth/queue/BleThreadManager.getInstance:()Lcom/oudmon/ble/base/bluetooth/queue/BleThreadManager;
+        73: new           #114                // class com/oudmon/ble/base/bluetooth/queue/BleDataBean
+        76: dup
+        77: aload_0
+        78: bipush        70
+        80: iconst_2
+        81: newarray       byte
+        83: dup
+        84: iconst_0
+        85: iconst_1
+        86: bastore
+        87: dup
+        88: iconst_1
+        89: iconst_0
+        90: bastore
+        91: invokespecial #124                // Method addHeader:(I[B)[B
+        94: aload_0
+        95: getfield      #66                 // Field mPackageLength:I
+        98: invokespecial #128                // Method com/oudmon/ble/base/bluetooth/queue/BleDataBean."<init>":([BI)V
+       101: invokevirtual #131                // Method com/oudmon/ble/base/bluetooth/queue/BleThreadManager.addData:(Lcom/oudmon/ble/base/bluetooth/queue/BleDataBean;)V
+       104: return
+      LineNumberTable:
+        line 230: 0
+        line 231: 14
+        line 232: 18
+        line 233: 23
+        line 234: 28
+        line 235: 42
+        line 236: 67
+        line 237: 70
+        line 239: 104
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+           23      44     4  data   [B
+            0     105     0  this   Lcom/oudmon/ble/base/communication/LargeDataHandler;
+            0     105     1 write   Z
+            0     105     2 isOpen   Z
+            0     105     3 response   Lcom/oudmon/ble/base/communication/ILargeDataResponse;
+      LocalVariableTypeTable:
+        Start  Length  Slot  Name   Signature
+            0     105     3 response   Lcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/GlassesWearRsp;>;
+      StackMapTable: number_of_entries = 4
+        frame_type = 255 /* full_frame */
+          offset_delta = 39
+          locals = [ class com/oudmon/ble/base/communication/LargeDataHandler, int, int, class com/oudmon/ble/base/communication/ILargeDataResponse, class "[B" ]
+          stack = [ class "[B", int ]
+        frame_type = 255 /* full_frame */
+          offset_delta = 0
+          locals = [ class com/oudmon/ble/base/communication/LargeDataHandler, int, int, class com/oudmon/ble/base/communication/ILargeDataResponse, class "[B" ]
+          stack = [ class "[B", int, int ]
+        frame_type = 250 /* chop */
+          offset_delta = 29
+        frame_type = 33 /* same */
+    Signature: #354                         // (ZZLcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/GlassesWearRsp;>;)V
+
+  public void wearFunctionSupport(com.oudmon.ble.base.communication.ILargeDataResponse<com.oudmon.ble.base.communication.bigData.resp.GlassesTouchSupportRsp>);
+    descriptor: (Lcom/oudmon/ble/base/communication/ILargeDataResponse;)V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=9, locals=2, args_size=2
+         0: aload_0
+         1: getfield      #50                 // Field respMap:Ljava/util/concurrent/ConcurrentHashMap;
+         4: bipush        71
+         6: invokestatic  #70                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+         9: aload_1
+        10: invokevirtual #76                 // Method java/util/concurrent/ConcurrentHashMap.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+        13: pop
+        14: invokestatic  #109                // Method com/oudmon/ble/base/bluetooth/queue/BleThreadManager.getInstance:()Lcom/oudmon/ble/base/bluetooth/queue/BleThreadManager;
+        17: new           #114                // class com/oudmon/ble/base/bluetooth/queue/BleDataBean
+        20: dup
+        21: aload_0
+        22: bipush        71
+        24: iconst_2
+        25: newarray       byte
+        27: dup
+        28: iconst_0
+        29: iconst_1
+        30: bastore
+        31: dup
+        32: iconst_1
+        33: iconst_0
+        34: bastore
+        35: invokespecial #124                // Method addHeader:(I[B)[B
+        38: aload_0
+        39: getfield      #66                 // Field mPackageLength:I
+        42: invokespecial #128                // Method com/oudmon/ble/base/bluetooth/queue/BleDataBean."<init>":([BI)V
+        45: invokevirtual #131                // Method com/oudmon/ble/base/bluetooth/queue/BleThreadManager.addData:(Lcom/oudmon/ble/base/bluetooth/queue/BleDataBean;)V
+        48: return
+      LineNumberTable:
+        line 242: 0
+        line 243: 14
+        line 244: 48
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      49     0  this   Lcom/oudmon/ble/base/communication/LargeDataHandler;
+            0      49     1 response   Lcom/oudmon/ble/base/communication/ILargeDataResponse;
+      LocalVariableTypeTable:
+        Start  Length  Slot  Name   Signature
+            0      49     1 response   Lcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/GlassesTouchSupportRsp;>;
+    Signature: #357                         // (Lcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/GlassesTouchSupportRsp;>;)V
+
+  public void glassesControl(byte[], com.oudmon.ble.base.communication.ILargeDataResponse<com.oudmon.ble.base.communication.bigData.resp.GlassModelControlResponse>);
+    descriptor: ([BLcom/oudmon/ble/base/communication/ILargeDataResponse;)V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=8, locals=3, args_size=3
+         0: aload_0
+         1: getfield      #50                 // Field respMap:Ljava/util/concurrent/ConcurrentHashMap;
+         4: bipush        65
+         6: invokestatic  #70                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+         9: aload_2
+        10: invokevirtual #76                 // Method java/util/concurrent/ConcurrentHashMap.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+        13: pop
+        14: invokestatic  #109                // Method com/oudmon/ble/base/bluetooth/queue/BleThreadManager.getInstance:()Lcom/oudmon/ble/base/bluetooth/queue/BleThreadManager;
+        17: new           #114                // class com/oudmon/ble/base/bluetooth/queue/BleDataBean
+        20: dup
+        21: aload_0
+        22: bipush        65
+        24: new           #147                // class com/oudmon/ble/base/communication/bigData/bean/GlassModelControl
+        27: dup
+        28: aload_1
+        29: invokespecial #149                // Method com/oudmon/ble/base/communication/bigData/bean/GlassModelControl."<init>":([B)V
+        32: invokevirtual #152                // Method com/oudmon/ble/base/communication/bigData/bean/GlassModelControl.getSubData:()[B
+        35: invokespecial #124                // Method addHeader:(I[B)[B
+        38: aload_0
+        39: getfield      #66                 // Field mPackageLength:I
+        42: invokespecial #128                // Method com/oudmon/ble/base/bluetooth/queue/BleDataBean."<init>":([BI)V
+        45: invokevirtual #131                // Method com/oudmon/ble/base/bluetooth/queue/BleThreadManager.addData:(Lcom/oudmon/ble/base/bluetooth/queue/BleDataBean;)V
+        48: return
+      LineNumberTable:
+        line 248: 0
+        line 249: 14
+        line 250: 48
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      49     0  this   Lcom/oudmon/ble/base/communication/LargeDataHandler;
+            0      49     1 sendData   [B
+            0      49     2 response   Lcom/oudmon/ble/base/communication/ILargeDataResponse;
+      LocalVariableTypeTable:
+        Start  Length  Slot  Name   Signature
+            0      49     2 response   Lcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/GlassModelControlResponse;>;
+    Signature: #362                         // ([BLcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/GlassModelControlResponse;>;)V
+
+  public void speakSoundSwitch(boolean);
+    descriptor: (Z)V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=6, locals=3, args_size=2
+         0: iconst_2
+         1: newarray       byte
+         3: astore_2
+         4: aload_2
+         5: iconst_0
+         6: iconst_2
+         7: bastore
+         8: iload_1
+         9: ifeq          19
+        12: aload_2
+        13: iconst_1
+        14: iconst_2
+        15: bastore
+        16: goto          23
+        19: aload_2
+        20: iconst_1
+        21: iconst_1
+        22: bastore
+        23: invokestatic  #109                // Method com/oudmon/ble/base/bluetooth/queue/BleThreadManager.getInstance:()Lcom/oudmon/ble/base/bluetooth/queue/BleThreadManager;
+        26: new           #114                // class com/oudmon/ble/base/bluetooth/queue/BleDataBean
+        29: dup
+        30: aload_0
+        31: bipush        82
+        33: aload_2
+        34: invokespecial #124                // Method addHeader:(I[B)[B
+        37: aload_0
+        38: getfield      #66                 // Field mPackageLength:I
+        41: invokespecial #128                // Method com/oudmon/ble/base/bluetooth/queue/BleDataBean."<init>":([BI)V
+        44: invokevirtual #131                // Method com/oudmon/ble/base/bluetooth/queue/BleThreadManager.addData:(Lcom/oudmon/ble/base/bluetooth/queue/BleDataBean;)V
+        47: return
+      LineNumberTable:
+        line 254: 0
+        line 255: 4
+        line 256: 8
+        line 257: 12
+        line 259: 19
+        line 261: 23
+        line 262: 47
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      48     0  this   Lcom/oudmon/ble/base/communication/LargeDataHandler;
+            0      48     1 phone   Z
+            4      44     2  data   [B
+      StackMapTable: number_of_entries = 2
+        frame_type = 252 /* append */
+          offset_delta = 19
+          locals = [ class "[B" ]
+        frame_type = 3 /* same */
+
+  public void removeGlassesControlCallback();
+    descriptor: ()V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=2, locals=1, args_size=1
+         0: aload_0
+         1: getfield      #50                 // Field respMap:Ljava/util/concurrent/ConcurrentHashMap;
+         4: bipush        65
+         6: invokestatic  #70                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+         9: invokevirtual #98                 // Method java/util/concurrent/ConcurrentHashMap.remove:(Ljava/lang/Object;)Ljava/lang/Object;
+        12: pop
+        13: return
+      LineNumberTable:
+        line 265: 0
+        line 266: 13
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      14     0  this   Lcom/oudmon/ble/base/communication/LargeDataHandler;
+
+  public void getPictureThumbnails(com.oudmon.ble.base.communication.ILargeDataImageResponse);
+    descriptor: (Lcom/oudmon/ble/base/communication/ILargeDataImageResponse;)V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=6, locals=2, args_size=2
+         0: aload_0
+         1: getfield      #50                 // Field respMap:Ljava/util/concurrent/ConcurrentHashMap;
+         4: bipush        -3
+         6: invokestatic  #70                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+         9: new           #153                // class com/oudmon/ble/base/communication/LargeDataHandler$3
+        12: dup
+        13: aload_0
+        14: aload_1
+        15: invokespecial #155                // Method com/oudmon/ble/base/communication/LargeDataHandler$3."<init>":(Lcom/oudmon/ble/base/communication/LargeDataHandler;Lcom/oudmon/ble/base/communication/ILargeDataImageResponse;)V
+        18: invokevirtual #76                 // Method java/util/concurrent/ConcurrentHashMap.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+        21: pop
+        22: aload_0
+        23: iconst_0
+        24: invokespecial #3                  // Method syncPictureThumbnails:(I)V
+        27: return
+      LineNumberTable:
+        line 270: 0
+        line 292: 22
+        line 293: 27
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      28     0  this   Lcom/oudmon/ble/base/communication/LargeDataHandler;
+            0      28     1 listener   Lcom/oudmon/ble/base/communication/ILargeDataImageResponse;
+
+  public void syncHeartBeat(int);
+    descriptor: (I)V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=6, locals=3, args_size=2
+         0: iconst_2
+         1: newarray       byte
+         3: astore_2
+         4: aload_2
+         5: iconst_0
+         6: iload_1
+         7: i2b
+         8: bastore
+         9: aload_2
+        10: iconst_1
+        11: iconst_1
+        12: bastore
+        13: invokestatic  #109                // Method com/oudmon/ble/base/bluetooth/queue/BleThreadManager.getInstance:()Lcom/oudmon/ble/base/bluetooth/queue/BleThreadManager;
+        16: new           #114                // class com/oudmon/ble/base/bluetooth/queue/BleDataBean
+        19: dup
+        20: aload_0
+        21: bipush        69
+        23: aload_2
+        24: invokespecial #124                // Method addHeader:(I[B)[B
+        27: aload_0
+        28: getfield      #66                 // Field mPackageLength:I
+        31: invokespecial #128                // Method com/oudmon/ble/base/bluetooth/queue/BleDataBean."<init>":([BI)V
+        34: invokevirtual #131                // Method com/oudmon/ble/base/bluetooth/queue/BleThreadManager.addData:(Lcom/oudmon/ble/base/bluetooth/queue/BleDataBean;)V
+        37: return
+      LineNumberTable:
+        line 304: 0
+        line 305: 4
+        line 306: 9
+        line 307: 13
+        line 308: 37
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      38     0  this   Lcom/oudmon/ble/base/communication/LargeDataHandler;
+            0      38     1  type   I
+            4      34     2 cmdData   [B
+
+  public void syncClassicBluetooth(com.oudmon.ble.base.communication.ILargeDataResponse<com.oudmon.ble.base.communication.bigData.resp.ClassBluetoothResponse>);
+    descriptor: (Lcom/oudmon/ble/base/communication/ILargeDataResponse;)V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=6, locals=3, args_size=2
+         0: aload_0
+         1: getfield      #50                 // Field respMap:Ljava/util/concurrent/ConcurrentHashMap;
+         4: bipush        46
+         6: invokestatic  #70                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+         9: aload_1
+        10: invokevirtual #76                 // Method java/util/concurrent/ConcurrentHashMap.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+        13: pop
+        14: iconst_1
+        15: newarray       byte
+        17: astore_2
+        18: invokestatic  #109                // Method com/oudmon/ble/base/bluetooth/queue/BleThreadManager.getInstance:()Lcom/oudmon/ble/base/bluetooth/queue/BleThreadManager;
+        21: new           #114                // class com/oudmon/ble/base/bluetooth/queue/BleDataBean
+        24: dup
+        25: aload_0
+        26: bipush        46
+        28: aload_2
+        29: invokespecial #124                // Method addHeader:(I[B)[B
+        32: aload_0
+        33: getfield      #66                 // Field mPackageLength:I
+        36: invokespecial #128                // Method com/oudmon/ble/base/bluetooth/queue/BleDataBean."<init>":([BI)V
+        39: invokevirtual #131                // Method com/oudmon/ble/base/bluetooth/queue/BleThreadManager.addData:(Lcom/oudmon/ble/base/bluetooth/queue/BleDataBean;)V
+        42: return
+      LineNumberTable:
+        line 312: 0
+        line 313: 14
+        line 314: 18
+        line 315: 42
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      43     0  this   Lcom/oudmon/ble/base/communication/LargeDataHandler;
+            0      43     1 response   Lcom/oudmon/ble/base/communication/ILargeDataResponse;
+           18      25     2 cmdData   [B
+      LocalVariableTypeTable:
+        Start  Length  Slot  Name   Signature
+            0      43     1 response   Lcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/ClassBluetoothResponse;>;
+    Signature: #374                         // (Lcom/oudmon/ble/base/communication/ILargeDataResponse<Lcom/oudmon/ble/base/communication/bigData/resp/ClassBluetoothResponse;>;)V
+
+  public java.util.concurrent.ConcurrentHashMap<java.lang.Integer, com.oudmon.ble.base.communication.ILargeDataResponse> getRespMap();
+    descriptor: ()Ljava/util/concurrent/ConcurrentHashMap;
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: aload_0
+         1: getfield      #50                 // Field respMap:Ljava/util/concurrent/ConcurrentHashMap;
+         4: areturn
+      LineNumberTable:
+        line 319: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       5     0  this   Lcom/oudmon/ble/base/communication/LargeDataHandler;
+    Signature: #377                         // ()Ljava/util/concurrent/ConcurrentHashMap<Ljava/lang/Integer;Lcom/oudmon/ble/base/communication/ILargeDataResponse;>;
+
+  public java.util.concurrent.ConcurrentHashMap<java.lang.Integer, com.oudmon.ble.base.communication.ILargeDataResponse> getNoClearMap();
+    descriptor: ()Ljava/util/concurrent/ConcurrentHashMap;
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=3, locals=1, args_size=1
+         0: aload_0
+         1: getfield      #53                 // Field noClearMap:Ljava/util/concurrent/ConcurrentHashMap;
+         4: invokevirtual #167                // Method java/util/concurrent/ConcurrentHashMap.isEmpty:()Z
+         7: ifeq          27
+        10: aload_0
+        11: getfield      #53                 // Field noClearMap:Ljava/util/concurrent/ConcurrentHashMap;
+        14: bipush        115
+        16: invokestatic  #70                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+        19: aload_0
+        20: getfield      #22                 // Field deviceNotifyListener:Lcom/oudmon/ble/base/communication/bigData/resp/GlassesDeviceNotifyListener;
+        23: invokevirtual #76                 // Method java/util/concurrent/ConcurrentHashMap.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+        26: pop
+        27: aload_0
+        28: getfield      #53                 // Field noClearMap:Ljava/util/concurrent/ConcurrentHashMap;
+        31: areturn
+      LineNumberTable:
+        line 323: 0
+        line 324: 10
+        line 326: 27
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0      32     0  this   Lcom/oudmon/ble/base/communication/LargeDataHandler;
+      StackMapTable: number_of_entries = 1
+        frame_type = 27 /* same */
+    Signature: #377                         // ()Ljava/util/concurrent/ConcurrentHashMap<Ljava/lang/Integer;Lcom/oudmon/ble/base/communication/ILargeDataResponse;>;
+
+  public void cleanMap();
+    descriptor: ()V
+    flags: (0x0001) ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: aload_0
+         1: getfield      #50                 // Field respMap:Ljava/util/concurrent/ConcurrentHashMap;
+         4: invokevirtual #171                // Method java/util/concurrent/ConcurrentHashMap.clear:()V
+         7: return
+      LineNumberTable:
+        line 330: 0
+        line 331: 7
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       8     0  this   Lcom/oudmon/ble/base/communication/LargeDataHandler;
+
+  static java.util.concurrent.ConcurrentHashMap access$000(com.oudmon.ble.base.communication.LargeDataHandler);
+    descriptor: (Lcom/oudmon/ble/base/communication/LargeDataHandler;)Ljava/util/concurrent/ConcurrentHashMap;
+    flags: (0x1008) ACC_STATIC, ACC_SYNTHETIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: aload_0
+         1: getfield      #9                  // Field batterySparseArray:Ljava/util/concurrent/ConcurrentHashMap;
+         4: areturn
+      LineNumberTable:
+        line 44: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       5     0    x0   Lcom/oudmon/ble/base/communication/LargeDataHandler;
+
+  static void access$100(com.oudmon.ble.base.communication.LargeDataHandler, int);
+    descriptor: (Lcom/oudmon/ble/base/communication/LargeDataHandler;I)V
+    flags: (0x1008) ACC_STATIC, ACC_SYNTHETIC
+    Code:
+      stack=2, locals=2, args_size=2
+         0: aload_0
+         1: iload_1
+         2: invokespecial #3                  // Method syncPictureThumbnails:(I)V
+         5: return
+      LineNumberTable:
+        line 44: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       6     0    x0   Lcom/oudmon/ble/base/communication/LargeDataHandler;
+            0       6     1    x1   I
+
+  static {};
+    descriptor: ()V
+    flags: (0x0008) ACC_STATIC
+    Code:
+      stack=1, locals=0, args_size=0
+         0: ldc           #229                // String de5bf728-d711-4e47-af26-65e3012a5dc7
+         2: invokestatic  #231                // Method java/util/UUID.fromString:(Ljava/lang/String;)Ljava/util/UUID;
+         5: putstatic     #31                 // Field SERIAL_PORT_SERVICE:Ljava/util/UUID;
+         8: ldc           #237                // String de5bf729-d711-4e47-af26-65e3012a5dc7
+        10: invokestatic  #231                // Method java/util/UUID.fromString:(Ljava/lang/String;)Ljava/util/UUID;
+        13: putstatic     #35                 // Field SERIAL_PORT_CHARACTER_NOTIFY:Ljava/util/UUID;
+        16: ldc           #239                // String de5bf72a-d711-4e47-af26-65e3012a5dc7
+        18: invokestatic  #231                // Method java/util/UUID.fromString:(Ljava/lang/String;)Ljava/util/UUID;
+        21: putstatic     #217                // Field SERIAL_PORT_CHARACTER_WRITE:Ljava/util/UUID;
+        24: return
+      LineNumberTable:
+        line 86: 0
+        line 87: 8
+        line 88: 16
+}
+SourceFile: "LargeDataHandler.java"
+InnerClasses:
+  #38;                                    // class com/oudmon/ble/base/communication/LargeDataHandler$1
+  public static #398= #396 of #29;        // ListenerCallback=class com/oudmon/ble/base/request/EnableNotifyRequest$ListenerCallback of class com/oudmon/ble/base/request/EnableNotifyRequest
+  #135;                                   // class com/oudmon/ble/base/communication/LargeDataHandler$2
+  #153;                                   // class com/oudmon/ble/base/communication/LargeDataHandler$3

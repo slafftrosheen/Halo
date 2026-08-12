@@ -2,6 +2,8 @@ package com.halo.app.ui.screens.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -11,10 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.halo.app.ui.glass.components.HaloStateOrb
-import com.halo.app.ui.glass.components.HaloGlassCard
-import com.halo.app.ui.glass.components.HaloGlassSection
-import com.halo.app.ui.glass.components.HaloGlassChip
+import com.halo.app.ui.glass.components.*
 import com.halo.app.ui.glass.material.HaloGlassColors
 import com.halo.app.ui.glass.material.HaloTypography
 
@@ -26,6 +25,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
         modifier = Modifier
             .fillMaxSize()
             .background(HaloGlassColors.Background)
+            .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
         // Header
@@ -34,42 +34,78 @@ fun HomeScreen(viewModel: HomeViewModel) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = "HALO", color = HaloGlassColors.TextPrimary, fontSize = 28.sp, fontWeight = FontWeight.Bold)
-            HaloGlassChip.Success(text = "Ready")
+            Text(
+                text = "HALO", 
+                style = HaloTypography.displayMedium,
+                color = HaloGlassColors.TextPrimary
+            )
+            HaloGlassChip.Success(text = if (uiState.isDeviceConnected) "Connected" else "Standalone")
         }
 
-        // State Orb
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = uiState.systemStatus,
+            style = HaloTypography.bodyMedium,
+            color = HaloGlassColors.TextSecondary
+        )
+
+        // Primary Action: State Orb / Floating Mic
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 24.dp),
+                .padding(vertical = 32.dp),
             contentAlignment = Alignment.Center
         ) {
-            HaloStateOrb(state = uiState.runtimeState, size = 120.dp)
+            HaloFloatingMic(
+                state = uiState.runtimeState,
+                onClick = { 
+                    if (uiState.runtimeState == com.halo.app.ui.glass.material.HaloRuntimeState.Idle) {
+                        viewModel.startListening()
+                    } else {
+                        viewModel.stopListening()
+                    }
+                }
+            )
         }
 
-        // Recent Events Section
-        HaloGlassSection(
-            title = "Recent Events",
-            modifier = Modifier.fillMaxWidth()
-        ) {
+        // Quick Status Section
+        HaloGlassSection(title = "Quick Status") {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                HaloGlassMetric(
+                    label = "Battery",
+                    value = uiState.batteryPercent?.let { "$it%" } ?: "--",
+                    modifier = Modifier.weight(1f)
+                )
+                HaloGlassDivider(modifier = Modifier.height(40.dp).width(1.dp))
+                HaloGlassMetric(
+                    label = "Provider",
+                    value = uiState.activeProvider,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Recent Activity Section
+        HaloGlassSection(title = "Recent Activity") {
             if (uiState.recentEvents.isEmpty()) {
-                Text("No recent activity.", color = HaloGlassColors.TextSecondary, style = HaloTypography.bodyMedium)
+                Text(
+                    text = "No recent interactions.", 
+                    color = HaloGlassColors.TextSecondary, 
+                    style = HaloTypography.bodyMedium,
+                    modifier = Modifier.padding(8.dp)
+                )
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    uiState.recentEvents.forEach { event ->
+                    uiState.recentEvents.take(3).forEach { event ->
                         TimelineEventCard(event)
                     }
                 }
             }
-        }
-
-        // Runtime State
-        HaloGlassSection(
-            title = "Runtime",
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("State: ${uiState.runtimeState.name}", color = HaloGlassColors.TextPrimary)
         }
     }
 }
@@ -77,14 +113,19 @@ fun HomeScreen(viewModel: HomeViewModel) {
 @Composable
 private fun TimelineEventCard(event: TimelinePreviewEvent) {
     HaloGlassCard(onClick = { }) {
-        Column {
+        Column(modifier = Modifier.padding(4.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(event.command, color = HaloGlassColors.TextPrimary, style = HaloTypography.bodyMedium)
-                Text(event.status, color = HaloGlassColors.TextSecondary, style = HaloTypography.labelMedium)
+                Text(
+                    text = event.command, 
+                    color = HaloGlassColors.TextPrimary, 
+                    style = HaloTypography.bodyLarge,
+                    fontWeight = FontWeight.Medium
+                )
+                HaloGlassChip.Info(text = event.status)
             }
         }
     }

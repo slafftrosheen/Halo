@@ -9,6 +9,8 @@ import android.bluetooth.BluetoothGattDescriptor
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.content.Context
+import com.halo.drivers.heycyan.codec.HeyCyanProtocolCapture
+import com.halo.drivers.heycyan.codec.PacketDirection
 import com.halo.drivers.heycyan.codec.PacketTracer
 import com.halo.sdk.driver.DriverState
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -253,6 +255,19 @@ class HeyCyanGattClient(
         val currentGatt = gatt ?: return false
         val characteristic = characteristics[characteristicUuid] ?: return false
 
+        val writeType = if (characteristic.properties and BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE != 0) {
+            "WRITE_NO_RESPONSE"
+        } else {
+            "WRITE"
+        }
+
+        HeyCyanProtocolCapture.instance.recordFrame(
+            characteristicUuid = characteristicUuid,
+            payload = payload,
+            direction = PacketDirection.TX,
+            writeType = writeType
+        )
+
         tracer.onTx(characteristicUuid, payload)
         characteristic.value = payload
         return currentGatt.writeCharacteristic(characteristic)
@@ -317,6 +332,13 @@ class HeyCyanGattClient(
 
     private fun emitNotification(characteristic: BluetoothGattCharacteristic, value: ByteArray) {
         val payload = value.copyOf()
+        
+        HeyCyanProtocolCapture.instance.recordFrame(
+            characteristicUuid = characteristic.uuid,
+            payload = payload,
+            direction = PacketDirection.RX
+        )
+
         tracer.onRx(characteristic.uuid, payload)
         _incomingBytes.tryEmit(characteristic.uuid to payload)
     }

@@ -34,7 +34,7 @@ interface HeyCyanMediaApi {
     suspend fun getMediaConfig(): Result<HeyCyanMediaManifest>
 
     /**
-     * Downloads a single media file from `GET /files/<filename>` to [destination].
+     * Downloads a single media file from `GET /files/<filename>` to [destinationPath].
      *
      * The implementation MUST stream — it must not buffer the entire file in memory.
      * HTTP response → counting stream → SHA-256 stream → destination.
@@ -46,6 +46,15 @@ interface HeyCyanMediaApi {
         destinationPath: String,
         progress: (MediaDownloadProgress) -> Unit = {},
     ): Result<MediaDownloadResult>
+
+    /**
+     * Downloads a single media file from `GET /files/<filename>` directly into a [MediaWriteSession].
+     */
+    suspend fun download(
+        media: HeyCyanMedia,
+        session: com.halo.drivers.heycyan.media.repository.MediaWriteSession,
+        progress: (MediaDownloadProgress) -> Unit = {},
+    ): Result<MediaDownloadResult> = download(media, session.identity, progress)
 }
 
 /**

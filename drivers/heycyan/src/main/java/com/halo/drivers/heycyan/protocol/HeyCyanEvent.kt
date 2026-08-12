@@ -59,6 +59,40 @@ sealed interface HeyCyanEvent {
         val password: String
     ) : HeyCyanEvent
 
+    /**
+     * Aproprietary HeyCyan frame that has been structurally decoded
+     * but whose semantic meaning is still being established.
+     */
+    data class DecodedProprietaryFrame(
+        val family: com.halo.drivers.heycyan.codec.HeyCyanPacketFamily,
+        val length: Int,
+        val rawHex: String,
+        val fields: Map<String, Int>,
+        val confidence: String = "OBSERVED"
+    ) : HeyCyanEvent
+
+    data class ObservedProprietaryFrame(
+        val header: Int,
+        val family: Int,
+        val subtype: Int,
+        val payload: ByteArray
+    ) : HeyCyanEvent {
+        override fun equals(other: Any?): Boolean =
+            other is ObservedProprietaryFrame &&
+                header == other.header &&
+                family == other.family &&
+                subtype == other.subtype &&
+                payload.contentEquals(other.payload)
+
+        override fun hashCode(): Int {
+            var result = header
+            result = 31 * result + family
+            result = 31 * result + subtype
+            result = 31 * result + payload.contentHashCode()
+            return result
+        }
+    }
+
     class AiImageData(
         val bytes: ByteArray
     ) : HeyCyanEvent {

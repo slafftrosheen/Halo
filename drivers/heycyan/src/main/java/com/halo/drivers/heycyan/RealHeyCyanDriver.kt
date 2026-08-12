@@ -48,6 +48,7 @@ class RealHeyCyanDriver(
 
     init {
         android.util.Log.i("RealHeyCyanDriver", "Initializing RealHeyCyanDriver")
+        HeyCyanProtocolCapture.instance = HeyCyanProtocolCapture(ConsoleLogger())
     }
 
     private val captureRecorder = CaptureSessionRecorder(
@@ -226,20 +227,21 @@ class RealHeyCyanDriver(
                     payload = payload
                 )
 
-                val observation = HeyCyanPacketObservation(
-                    characteristicUuid = characteristicUuid,
-                    payload = payload.copyOf()
-                )
-
                 val event = eventRouter.decode(
-                    characteristicUuid = observation.characteristicUuid,
-                    payload = observation.payload
+                    characteristicUuid = characteristicUuid,
+                    payload = payload,
+                    timestampMillis = System.currentTimeMillis()
                 )
 
                 when (event) {
+                    is HeyCyanEvent.DecodedProprietaryFrame -> {
+                        // Evidence preserved in event; can be used for state matching later
+                        handleDecodedEvent(event)
+                    }
+
                     is HeyCyanEvent.Unknown -> {
                         // Preserve evidence; don't discard it.
-                        android.util.Log.d("RealHeyCyanDriver", "Unknown event on $characteristicUuid: ${observation.hex()}")
+                        android.util.Log.d("RealHeyCyanDriver", "Unknown event on $characteristicUuid: ${payload.joinToString("") { "%02X".format(it) }}")
                     }
 
                     else -> {

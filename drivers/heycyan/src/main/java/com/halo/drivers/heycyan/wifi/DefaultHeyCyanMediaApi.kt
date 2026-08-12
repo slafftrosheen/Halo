@@ -112,66 +112,86 @@ class DefaultHeyCyanMediaApi(
         destinationPath: String,
         progress: (MediaDownloadProgress) -> Unit,
     ): Result<MediaDownloadResult> = withContext(Dispatchers.IO) {
-        runCatching {
-            val filename = media.filename
-            val url = URL("$baseUrl$FILES_PATH$filename")
-            val conn = url.openConnection() as HttpURLConnection
-            conn.connectTimeout = connectTimeoutMillis
-            conn.readTimeout = readTimeoutMillis
-            conn.requestMethod = "GET"
-
-            try {
-                val code = conn.responseCode
-                if (code !in 200..299) {
-                    throw HeyCyanHttpException(
-                        statusCode = code,
-                        message = "GET $FILES_PATH$filename returned HTTP $code",
-                    )
-                }
-
-                val totalBytes = conn.contentLengthLong.let { if (it > 0) it else null }
-                val digest = MessageDigest.getInstance("SHA-256")
-                var bytesReceived = 0L
-
-                // Stream — never call bodyAsBytes() or readBytes() for potentially large files
-                val outputBuffer = java.io.ByteArrayOutputStream()
-                conn.inputStream.use { input ->
-                    val buffer = ByteArray(bufferSize)
-                    var read: Int
-                    while (input.read(buffer).also { read = it } != -1) {
-                        if (!isActive) throw CancellationException("Download cancelled: $filename")
-                        outputBuffer.write(buffer, 0, read)
-                        digest.update(buffer, 0, read)
-                        bytesReceived += read
-                        progress(MediaDownloadProgress(bytesReceived, totalBytes))
-                    }
-                }
-
-                val sha256 = digest.digest().joinToString("") { "%02x".format(it) }
-                val integrity = MediaIntegrity(
-                    expectedBytes = totalBytes,
-                    actualBytes = bytesReceived,
-                    sha256 = sha256,
-                )
-
-                // Integrity check: if Content-Length was provided, verify it
-                if (totalBytes != null && bytesReceived != totalBytes) {
-                    throw HeyCyanIntegrityException(
-                        mediaId = media.id,
-                        expected = totalBytes,
-                        actual = bytesReceived,
-                    )
-                }
-
-                MediaDownloadResult(
-                    media = media,
-                    bytesWritten = bytesReceived,
-                    destination = MediaLocation(destinationPath),
-                    integrity = integrity,
-                )
-            } finally {
-                conn.disconnect()
+        val file = java.io.File(destinationPath)
+        file.parentFile?.mkdirs()
+        java.io.FileOutputStream(file).use { outputStream ->
+            downloadInternal(media, destinationPath, progress) { buffer, offset, len ->
+                outputStream.write(buffer, offset, len)
             }
+        }
+    }
+
+    override suspend fun download(
+        media: HeyCyanMedia,
+        session: com.halo.drivers.heycyan.media.repository.MediaWriteSession,
+        progress: (MediaDownloadProgress) -> Unit,
+    ): Result<MediaDownloadResult> = withContext(Dispatchers.IO) {
+        downloadInternal(media, session.identity, progress) { buffer, offset, len ->
+            session.write(buffer, offset, len)
+        }
+    }
+
+    private suspend fun downloadInternal(
+        media: HeyCyanMedia,
+        destinationPath: String,
+        progress: (MediaDownloadProgress) -> Unit,
+        writeBlock: suspend (ByteArray, Int, Int) -> Unit,
+    ): Result<MediaDownloadResult> = runCatching {
+        val filename = media.filename
+        val url = URL("$baseUrl$FILES_PATH$filename")
+        val conn = url.openConnection() as HttpURLConnection
+        conn.connectTimeout = connectTimeoutMillis
+        conn.readTimeout = readTimeoutMillis
+        conn.requestMethod = "GET"
+
+        try {
+            val code = conn.responseCode
+            if (code !in 200..299) {
+                throw HeyCyanHttpException(
+                    statusCode = code,
+                    message = "GET $FILES_PATH$filename returned HTTP $code",
+                )
+            }
+
+            val totalBytes = conn.contentLengthLong.let { if (it > 0) it else null }
+            val digest = MessageDigest.getInstance("SHA-256")
+            var bytesReceived = 0L
+
+            conn.inputStream.use { input ->
+                val buffer = ByteArray(bufferSize)
+                var read: Int
+                while (input.read(buffer).also { read = it } != -1) {
+                    if (!kotlinx.coroutines.currentCoroutineContext().isActive) throw CancellationException("Download cancelled: $filename")
+                    writeBlock(buffer, 0, read)
+                    digest.update(buffer, 0, read)
+                    bytesReceived += read
+                    progress(MediaDownloadProgress(bytesReceived, totalBytes))
+                }
+            }
+
+            val sha256 = digest.digest().joinToString("") { "%02x".format(it) }
+            val integrity = MediaIntegrity(
+                expectedBytes = totalBytes,
+                actualBytes = bytesReceived,
+                sha256 = sha256,
+            )
+
+            if (totalBytes != null && bytesReceived != totalBytes) {
+                throw HeyCyanIntegrityException(
+                    mediaId = media.id,
+                    expected = totalBytes,
+                    actual = bytesReceived,
+                )
+            }
+
+            MediaDownloadResult(
+                media = media,
+                bytesWritten = bytesReceived,
+                destination = MediaLocation(destinationPath),
+                integrity = integrity,
+            )
+        } finally {
+            conn.disconnect()
         }
     }
 

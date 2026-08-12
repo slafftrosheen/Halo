@@ -12,7 +12,9 @@ data class RawHeyCyanFrame(
     val timestampMillis: Long,
     val direction: PacketDirection,
     val characteristicUuid: UUID,
-    val bytes: ByteArray
+    val bytes: ByteArray,
+    val operation: String? = null,
+    val writeType: String? = null
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -21,6 +23,8 @@ data class RawHeyCyanFrame(
         if (timestampMillis != other.timestampMillis) return false
         if (direction != other.direction) return false
         if (characteristicUuid != other.characteristicUuid) return false
+        if (operation != other.operation) return false
+        if (writeType != other.writeType) return false
         if (!bytes.contentEquals(other.bytes)) return false
 
         return true
@@ -31,6 +35,8 @@ data class RawHeyCyanFrame(
         result = 31 * result + direction.hashCode()
         result = 31 * result + characteristicUuid.hashCode()
         result = 31 * result + bytes.contentHashCode()
+        result = 31 * result + (operation?.hashCode() ?: 0)
+        result = 31 * result + (writeType?.hashCode() ?: 0)
         return result
     }
 

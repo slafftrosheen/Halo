@@ -1,0 +1,9 @@
+Archive:  /mnt/data/glasses_sdk_20250723_v01.aar
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+     7209  1980-02-01 00:00   R.txt
+      773  1980-02-01 00:00   AndroidManifest.xml
+   437967  1980-02-01 00:00   classes.jar
+       96  1980-02-01 00:00   META-INF/com/android/build/gradle/aar-metadata.properties
+---------                     -------
+   446045                     4 files

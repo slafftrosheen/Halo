@@ -52,16 +52,33 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
         
         // Developer Section
         HaloGlassSection(title = "Developer") {
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("Developer Mode", color = HaloGlassColors.TextPrimary, style = HaloTypography.bodyMedium)
-                Switch(
-                    checked = uiState.devMode,
-                    onCheckedChange = { viewModel.setDevMode(it) }
-                )
+            Column {
+                Row(
+                    Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Developer Mode", color = HaloGlassColors.TextPrimary, style = HaloTypography.bodyMedium)
+                    Switch(
+                        checked = uiState.devMode,
+                        onCheckedChange = { viewModel.setDevMode(it) }
+                    )
+                }
+                
+                if (uiState.devMode) {
+                    HaloGlassDivider()
+                    SettingItem("Protocol Lab", "Open", clickable = true) {
+                        viewModel.navigateTo("protocol_lab")
+                    }
+                    HaloGlassDivider()
+                    SettingItem("Console", "Inspect", clickable = true) {
+                        viewModel.navigateTo("console")
+                    }
+                    HaloGlassDivider()
+                    SettingItem("Runtime Inspector", "Debug", clickable = true) {
+                        viewModel.navigateTo("inspector")
+                    }
+                }
             }
         }
         
@@ -75,11 +92,16 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
 }
 
 @Composable
-private fun SettingItem(label: String, value: String, clickable: Boolean) {
+private fun SettingItem(
+    label: String, 
+    value: String, 
+    clickable: Boolean,
+    onClick: () -> Unit = {}
+) {
     Row(
         Modifier
             .fillMaxWidth()
-            .clickable(enabled = clickable) { }
+            .clickable(enabled = clickable) { onClick() }
             .padding(vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically

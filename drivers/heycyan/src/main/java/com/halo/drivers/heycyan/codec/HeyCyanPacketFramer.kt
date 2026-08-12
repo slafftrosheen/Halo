@@ -51,4 +51,28 @@ class HeyCyanPacketFramer(
             )
         )
     }
+
+    /**
+     * Bypasses protocol verification for forensic capture purposes.
+     * 
+     * DANGER: This is for research only. It assumes the payload is already
+     * a valid wire frame OR it wraps it in a simplistic AA header if it looks like SDK data.
+     */
+    fun frameForForensics(command: EncodedCommand): Result<ByteArray> {
+        // If it already looks like a framed packet (AA... or BC...), pass it through
+        if (command.payload.isNotEmpty() && (command.payload[0].toInt() and 0xFF) == 0xAA) {
+            return Result.success(command.payload)
+        }
+
+        // Simplistic framing hypothesis for research
+        val totalLength = (4 + command.payload.size).toByte()
+        val packet = ByteArray(totalLength.toInt())
+        packet[0] = 0xAA.toByte()
+        packet[1] = totalLength
+        packet[2] = command.commandId.toByte()
+        command.payload.copyInto(packet, destinationOffset = 3)
+        packet[packet.size - 1] = 0x00.toByte() // Null checksum hypothesis
+
+        return Result.success(packet)
+    }
 }

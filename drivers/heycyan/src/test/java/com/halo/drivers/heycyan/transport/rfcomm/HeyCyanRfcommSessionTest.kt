@@ -20,23 +20,25 @@ class HeyCyanRfcommSessionTest {
     fun setUp() {
         transport = FakeHeyCyanRfcommTransport()
         encoder = MemoMindPacketEncoder()
-        session = DefaultHeyCyanRfcommSession(
-            transport = transport,
-            mapper = DefaultHeyCyanRfcommCommandMapper(),
-            encoder = encoder,
-        )
     }
 
     @Test
     fun requestSendsEncodedPacketAndCorrelatesResponse() = runTest {
+        session = DefaultHeyCyanRfcommSession(
+            transport = transport,
+            mapper = DefaultHeyCyanRfcommCommandMapper(),
+            encoder = encoder,
+            scope = backgroundScope
+        )
+
         // Emit response matching GetBattery (0x13) when transport receives write
         val responsePacket = MemoMindPacket(command = 0x13, payload = byteArrayOf(0x50))
         val encodedResponse = encoder.encode(responsePacket)
 
-        // Launch response emission asynchronously
-        launch {
-            // Wait for session.request to be ready (waiting for mutex or first{})
-            kotlinx.coroutines.delay(100)
+        // Launch response emission asynchronously in backgroundScope
+        backgroundScope.launch {
+            // Wait for session.request to be ready
+            kotlinx.coroutines.delay(10)
             // Simulate incoming packet from device
             transport.emitIncoming(encodedResponse)
         }

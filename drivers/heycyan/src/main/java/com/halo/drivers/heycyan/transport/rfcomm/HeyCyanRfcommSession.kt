@@ -4,16 +4,12 @@ import com.halo.drivers.heycyan.codec.HeyCyanEventDecoder
 import com.halo.drivers.heycyan.protocol.HeyCyanCommand
 import com.halo.drivers.heycyan.protocol.HeyCyanDeviceStateStore
 import com.halo.drivers.heycyan.protocol.HeyCyanEvent
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -49,9 +45,10 @@ class DefaultHeyCyanRfcommSession(
     private val decoder: MemoMindPacketDecoder = MemoMindPacketDecoder(),
     private val eventDecoder: HeyCyanEventDecoder = HeyCyanEventDecoder(),
     private val stateStore: HeyCyanDeviceStateStore? = null,
-    private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO),
+    scope: CoroutineScope? = null,
 ) : HeyCyanRfcommSession {
 
+    private val sessionScope = scope ?: CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val requestMutex = Mutex()
     private val incomingPackets = MutableSharedFlow<MemoMindPacket>(extraBufferCapacity = 64)
     private var readerJob: Job? = null
@@ -62,7 +59,7 @@ class DefaultHeyCyanRfcommSession(
 
     private fun startReader() {
         readerJob?.cancel()
-        readerJob = scope.launch {
+        readerJob = sessionScope.launch {
             transport.incoming.collect { bytes ->
                 val packets = decoder.feed(bytes)
                 for (packet in packets) {

@@ -13,16 +13,16 @@ class HeyCyanEventRouterTest {
     )
 
     @Test
-    fun `de5bf729 packets remain unknown until channel decoder is verified`() {
+    fun `de5bf729 packets are recognized as proprietary frames`() {
         val payload = byteArrayOf(
             0xBC.toByte(),
-            0x59.toByte(),
-            0x28.toByte(),
-            0x00.toByte(),
-            0x52.toByte(),
-            0x48.toByte(),
-            0x4B.toByte(),
-            0x41.toByte()
+            0x73,
+            0x0E,
+            0x00,
+            0x52,
+            0x48,
+            0x4B,
+            0x41
         )
 
         val event = router.decode(
@@ -30,24 +30,13 @@ class HeyCyanEventRouterTest {
             payload
         )
 
-        assertTrue(event is HeyCyanEvent.Unknown)
+        assertTrue(event is HeyCyanEvent.DecodedProprietaryFrame)
 
-        val unknown = event as HeyCyanEvent.Unknown
+        val frame = event as HeyCyanEvent.DecodedProprietaryFrame
 
-        assertEquals(
-            "de5bf729-d711-4e47-af26-65e3012a5dc7",
-            unknown.characteristicUuid
-        )
-
-        // Verify payload is preserved byte-for-byte
-        assertEquals(payload.size, unknown.payload.size)
-        for (i in payload.indices) {
-            assertEquals(
-                "Mismatch at byte $i",
-                payload[i].toInt() and 0xFF,
-                unknown.payload[i].toInt() and 0xFF
-            )
-        }
+        assertEquals(HeyCyanPacketFamily.BC73_0E, frame.family)
+        assertEquals(payload.size, frame.length)
+        assertEquals("BC730E0052484B41", frame.rawHex)
     }
 
     @Test

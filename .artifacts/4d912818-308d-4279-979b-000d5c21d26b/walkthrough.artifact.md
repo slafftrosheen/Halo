@@ -1,21 +1,32 @@
-# Walkthrough - Fixed List Visibility & Navigation Insets
+# Walkthrough - UI Alignment with Alpha Specification
 
-I have fixed the issue where the discovered devices list was missing and ensured the app's navigation bar is no longer overlapped by the system navbar.
+I have aligned the Halo UI with the **Alpha Specification** and **Glass Design System**, focusing on premium glassmorphic presentation and clear navigation.
 
 ## Changes
 
-### UI Fixes
-- **HaloGlassSurface.kt**: Removed the restrictive `fillMaxSize()` from the default content area. This prevents the "Device Status" card from expanding to fill the entire screen and pushing the list section off-screen.
-- **ProtocolLabScreen.kt**:
-    - Verified that the "Discovered Devices" section now has a proper `weight(1f)` and `fillMaxSize()` for its internal `LazyColumn`.
-    - Both "Device Status" and "Discovered Devices" sections now share the screen space correctly.
-- **HaloGlassNavigation.kt**: Added `navigationBarsPadding()` to the navigation bar. This ensures that the navigation icons are always visible and positioned correctly above the Android system buttons.
+### 1. Glass Component System
+- **HaloFloatingMic**: Migrated the legacy microphone component to the Glass system. It now uses `HaloGlassMaterials.Strong` and handles its own state-aware animations (pulsing during capture/processing).
+- **Consolidation**: Moved `HaloFloatingMic` to the `com.halo.app.ui.glass.components` package to ensure all interactive elements follow the same material rules.
 
-### Navigation Cleanup
-- **AppNavigation.kt**: Removed the global `navigationBarsPadding()` from the `Scaffold` root to allow the app background to flow edge-to-edge while the specific UI elements (like the navbar) handle their own insets.
+### 2. Navigation Refactor
+- **Bottom Navigation**: Streamlined the bottom bar to include only primary user screens: **Home**, **Activity**, **Devices**, and **Settings**.
+- **Developer Access**: Moved **Protocol Lab**, **Console**, and **Runtime Inspector** into a "Developer" section within Settings (visible only when Developer Mode is enabled). This follows the Alpha Spec's requirement to hide engineering jargon from the main UI.
+
+### 3. Screen Enhancements
+- **Home Screen**:
+    - Replaced the placeholder "Ready" chip with a live "Connected/Standalone" indicator.
+    - Integrated the **HaloFloatingMic** as the centerpiece for manual runtime control.
+    - Added a **Quick Status** section displaying Battery and Active Provider using `HaloGlassMetric`.
+- **Console Screen**: Implemented a functional tab system (System, Engines, Logs, Board, Perf) with high-contrast selection states.
+- **Activity Screen**: Made timeline events **expandable**. Tapping an event now reveals technical details like **Latency**, **ID**, and a full **Description**.
 
 ## Verification Results
 
-### Manual Verification
-1.  **Device List**: The "DISCOVERED DEVICES" header and the scrollable list of devices should now be visible below the "DEVICE STATUS" section.
-2.  **Navigation Bar**: The app's bottom navigation icons should be fully visible and not covered by the system "Home/Back" buttons.
+### Visual & Functional Check
+- Bottom nav correctly displays 4 items.
+- Home screen properly visualizes runtime state via the pulsing orb.
+- Settings screen dynamically shows developer options based on the "Developer Mode" toggle.
+- Activity screen events correctly toggle between collapsed (summary) and expanded (detail) views.
+
+> [!NOTE]
+> The "Quick Status" section on Home is now wired directly to the `DeviceContext` in the `RuntimeSnapshot`, providing real-time hardware status feedback.
