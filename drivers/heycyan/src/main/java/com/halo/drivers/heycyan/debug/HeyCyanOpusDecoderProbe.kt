@@ -19,7 +19,15 @@ class HeyCyanOpusDecoderProbe {
     var decodedByteCount = 0L
         private set
 
+    var rfcValidFrames = 0
+        private set
+    var rfcInvalidFrames = 0
+        private set
+
     private var baseTimestampUs = -1L
+    
+    private val parser = com.halo.drivers.heycyan.codec.HeyCyanOpusFrameParser()
+    private var lastOutputFormat: MediaFormat? = null
     
     private var pcmOutputStream: java.io.FileOutputStream? = null
     private var pcmFile: java.io.File? = null
@@ -37,13 +45,16 @@ class HeyCyanOpusDecoderProbe {
             val format = MediaFormat.createAudioFormat(MediaFormat.MIMETYPE_AUDIO_OPUS, 48000, 1)
             
             // Opus CSD-0 (OpusHead)
-            // 19 bytes: "OpusHead" (8), version=1, channels=1, preskip=312, rate=16000, gain=0, channel_mapping=0
+            // 19 bytes: "OpusHead" (8), version=1, channels=1, preskip=312, rate=48000, gain=0, channel_mapping=0
+            // Note: 48000 is used here as a placeholder hint for Android MediaCodec. The true encoded
+            // sample rate is under structural validation. We must wait for INFO_OUTPUT_FORMAT_CHANGED.
+            val rate = 48000
             val csd0 = byteArrayOf(
                 'O'.code.toByte(), 'p'.code.toByte(), 'u'.code.toByte(), 's'.code.toByte(),
                 'H'.code.toByte(), 'e'.code.toByte(), 'a'.code.toByte(), 'd'.code.toByte(),
                 1, 1,
                 (312 and 0xFF).toByte(), ((312 shr 8) and 0xFF).toByte(),
-                (16000 and 0xFF).toByte(), ((16000 shr 8) and 0xFF).toByte(), ((16000 shr 16) and 0xFF).toByte(), ((16000 shr 24) and 0xFF).toByte(),
+                (rate and 0xFF).toByte(), ((rate shr 8) and 0xFF).toByte(), ((rate shr 16) and 0xFF).toByte(), ((rate shr 24) and 0xFF).toByte(),
                 0, 0, 0
             )
             format.setByteBuffer("csd-0", ByteBuffer.wrap(csd0))
@@ -72,6 +83,13 @@ class HeyCyanOpusDecoderProbe {
     
     fun decodePacket(payload: ByteArray, timestampUs: Long) {
         if (!isInitialized) initialize()
+
+        val analysis = parser.parse(payload)
+        if (analysis.isRfcValid) {
+            rfcValidFrames++
+        } else {
+            rfcInvalidFrames++
+        }
         
         val codec = decoder ?: return
         try {
@@ -115,11 +133,13 @@ class HeyCyanOpusDecoderProbe {
                         }
                         
                         if (successfulDecodes % 10 == 0) {
-                            HeyCyanLogger.i("OpusDecoderProbe", "Successfully decoded $successfulDecodes Opus frames. Total PCM output: $decodedByteCount bytes")
+                            val formatStr = lastOutputFormat?.let { "fmt=[rate=${it.getInteger(MediaFormat.KEY_SAMPLE_RATE)}, ch=${it.getInteger(MediaFormat.KEY_CHANNEL_COUNT)}]" } ?: "fmt=unknown"
+                            HeyCyanLogger.i("OpusDecoderProbe", "Decoded $successfulDecodes frames (RFC valid: $rfcValidFrames, invalid: $rfcInvalidFrames). PCM: $decodedByteCount bytes. $formatStr")
                         }
                     }
                     codec.releaseOutputBuffer(outputBufferId, false)
                 } else if (outputBufferId == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+                    lastOutputFormat = codec.outputFormat
                     HeyCyanLogger.i("OpusDecoderProbe", "Output format changed: ${codec.outputFormat}")
                 }
             }

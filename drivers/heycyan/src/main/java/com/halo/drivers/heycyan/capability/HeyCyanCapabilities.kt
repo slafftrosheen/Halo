@@ -14,7 +14,7 @@ package com.halo.drivers.heycyan.capability
  *   Photo                   AVAILABLE
  *   Video                   AVAILABLE
  *   Audio recording         AVAILABLE_WITH_LIMITATION  (recorded, not live)
- *   Live audio input        UNSUPPORTED
+ *   Live audio input        STRUCTURAL_VALIDATION
  *   AI Photo                BLOCKED_BY_PROTOCOL
  *   Wi-Fi media transfer    AVAILABLE_WITH_LIMITATION  (BLE trigger only; HTTP in PR-026)
  */
@@ -68,15 +68,16 @@ object HeyCyanCapabilities {
     )
 
     /**
-     * Live audio input over BLE is explicitly UNSUPPORTED.
-     * The CyanBridge SDK does not expose PCM streaming over BLE;
-     * audio is only accessible after recording via Wi-Fi transfer.
+     * Live audio input over BLE is currently under STRUCTURAL_VALIDATION.
+     * The `BC 59` packet streams real-time Opus-compatible frames, but
+     * the proprietary `4B 41` framing requires structural validation and
+     * the trigger for initiating the stream is currently unknown.
      */
     val liveAudio = HeyCyanCapability(
         id = "heycyan.audio.live_input",
         name = "Live audio input",
-        status = HeyCyanCapabilityStatus.UNSUPPORTED,
-        description = "HeyCyan does not expose live BLE PCM input.",
+        status = HeyCyanCapabilityStatus.STRUCTURAL_VALIDATION,
+        description = "HeyCyan exposes a BC59 audio stream, currently under structural validation.",
     )
 
     /**

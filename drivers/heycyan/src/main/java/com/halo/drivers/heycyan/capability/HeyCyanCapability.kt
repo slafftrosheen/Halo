@@ -21,6 +21,12 @@ enum class HeyCyanCapabilityStatus {
      */
     BLOCKED_BY_PROTOCOL,
 
+    /**
+     * The transport is known and functioning, but the structural format of the data
+     * (e.g. framing, codec, timing) is actively being analyzed and validated.
+     */
+    STRUCTURAL_VALIDATION,
+
     /** The device hardware explicitly does not support this capability. */
     UNSUPPORTED,
 

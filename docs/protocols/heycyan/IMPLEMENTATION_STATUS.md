@@ -42,7 +42,7 @@
 - `BC 73 08`: Discrete command/state events (Camera, AI long-press)
 - `BC 73 0E`: Ordered control parameters (Swipes, Double-tap)
 - `BC 73 02`: Short event frames (AI/Recording interaction)
-- `BC 59 28`: High-rate long frame data stream (likely Audio/Sensor)
+- `BC 59 28`: High-rate real-time audio stream (48kHz mono PCM verified via decoder, but framing strictness under STRUCTURAL_VALIDATION)
 
 ---
 
@@ -69,7 +69,7 @@
 
 - **Sequence Fields**: Whether the device uses per-packet monotonic counters.
 - **Touch Semantics**: Exact mapping of `candidateAction` values to gesture vectors.
-- **BC 59 28 Codec**: Audio encoding (Opus/PCM/etc.) and sample rate.
+- **BC 59 28 Framing**: The stream encodes 20ms audio payloads, but proprietary `4B 41` headers require structural validation against RFC 6716 Code-3 framing rules.
 - **Handshake**: Whether an application-level "Hello" packet is required.
 
 ---

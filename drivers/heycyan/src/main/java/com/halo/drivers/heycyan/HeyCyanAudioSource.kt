@@ -6,44 +6,60 @@ import com.halo.sdk.host.AudioSource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 
+import com.halo.drivers.heycyan.protocol.HeyCyanEvent
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.launch
+
 /**
- * HeyCyan audio source — deliberately empty.
+ * HeyCyan passive audio source.
  *
- * Status: Live BLE Microphone = UNSUPPORTED_BY_DEVICE
+ * Status: Live BLE Microphone = STRUCTURAL_VALIDATION
  *
- * The HeyCyan smart glasses do NOT support live audio streaming over BLE.
- * There is no PCM, codec, or audio data path available through the BLE
- * protocol. This has been confirmed through:
- *
- * 1. SDK analysis: No audio streaming API exists in the HeyCyan SDK
- * 2. CyanBridge forensics: Audio is recorded on-device, not streamed
- * 3. Protocol analysis: GATT characteristics carry only command/event frames
+ * The HeyCyan smart glasses emit a continuous stream of real-time audio 
+ * over BLE via the `BC 59` notification characteristic. The stream contains
+ * Opus-compatible data (verified via Android MediaCodec producing PCM), but
+ * the exact RFC 6716 packet framing is still under structural validation
+ * due to proprietary `4B 41` framing signatures.
  *
  * What HeyCyan DOES support for audio:
  * - On-device audio recording (mode 0x04 start / 0x05 stop)
  * - Transfer recorded audio files via WiFi (.opus format)
  * - Playback of recorded audio after transfer
+ * - **Passive live stream (`BC 59`)**: Trigger unknown, currently under analysis.
  *
- * For the Halo cognitive loop, use PhoneMicrophoneAudioSource
- * (Android hardware microphone) as the live audio input source.
- * The cognitive pipeline is:
+ * This AudioSource is currently PASSIVE. It does not actively send a start/stop
+ * command because the exact physical trigger or BLE command that initiates the
+ * `BC 59` stream is unknown. It will consume decoded BC59 frames once the parser
+ * proves the framing.
  *
- * ```
- * Phone Mic → PCM → VAD → Wake Word → Speech Recognition → Intent
- * ```
- *
- * HeyCyan glasses provide:
- * - Button events (single/double/long press) for interaction triggers
- * - On-device recording for later analysis
- * - Camera/video for visual context
- *
- * Do NOT attempt to fake a live audio capability from this source.
- * See: HEYCYAN_FUNCTIONALITY_MATRIX.md
+ * Do not connect this source to the cognitive loop yet.
  */
-class HeyCyanAudioSource(private val driver: Driver) : AudioSource {
-    override val frames: Flow<AudioFrame> = emptyFlow()
+class HeyCyanAudioSource(
+    private val driver: com.halo.drivers.heycyan.RealHeyCyanDriver
+) : AudioSource {
+    private val decoder = com.halo.drivers.heycyan.codec.HeyCyanAudioStreamDecoder()
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    override suspend fun start() = Unit
+    override val frames: Flow<AudioFrame> = decoder.frames
 
-    override suspend fun stop() = Unit
+    init {
+        scope.launch {
+            driver.heyCyanEvents
+                .filterIsInstance<HeyCyanEvent.RawAudioFrame>()
+                .collect { event ->
+                    decoder.decodePacket(event.payload, System.nanoTime() / 1000)
+                }
+        }
+    }
+
+    override suspend fun start() {
+        decoder.initialize()
+    }
+
+    override suspend fun stop() {
+        decoder.release()
+    }
 }
