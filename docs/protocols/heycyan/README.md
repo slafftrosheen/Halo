@@ -1,26 +1,35 @@
 # Halo / HeyCyan Protocol Reverse-Engineering Package
 
-Status: working protocol reference, compiled from the currently available vendor SDK documentation, manual BLE captures, and existing Halo/CyanBridge findings.
+Status: Canonical protocol reference, compiled from vendor SDK documentation, decompiled vendor AAR bytecodes, physical BLE captures, and cross-platform iOS findings.
 
 ## Documents
 
-- `01_VENDOR_SDK_COMMAND_REFERENCE.md` — commands and response semantics explicitly documented by the Qingcheng/QC Wireless Android SDK PDF.
-- `02_COMMAND_CORRELATION_TABLE.md` — correlation of documented SDK operations with manually observed BLE packets.
-- `03_PACKET_FAMILIES_AND_FIELD_MAP.md` — currently observed `BC 73` / `BC 59` structures and field-level observations.
-- `04_EXPERIMENT_PLAN_AND_OPEN_QUESTIONS.md` — controlled captures needed to turn hypotheses into verified protocol facts.
+- `00_README.md` — Evidence package overview and entry points.
+- `01_WIRE_PROTOCOL_VERIFIED.md` — Verified `0xBC` wire framing, CRC16 calculation, action constants, and golden vectors.
+- `02_COMMAND_REFERENCE.md` — Verified command payloads and parameter ranges.
+- `03_DEVICE_REPORTING.md` — Generic `0x73` device reporting notifications and length-payload structures.
+- `04_NOTIFICATION_SEMANTICS.md` — Notification payload semantics and correlation notes.
+- `05_TRANSPORT.md` — GATT topology, primary & candidate UUID sets, and Wi-Fi transfer architecture.
+- `06_AAR_REVERSE_ENGINEERING.md` — Reverse-engineering findings from `glasses_sdk_20250723_v01.aar`.
+- `07_NEXT_EXPERIMENTS.md` — Controlled hardware validation protocol.
+- `08_REPO_INTEGRATION_GUIDE.md` — Halo driver module boundaries and implementation guide.
+- `09_EVIDENCE_MATRIX.md` — Complete evidence provenance matrix.
+- `10_COMMAND_VECTORS.txt` — Golden command vectors list.
+- `IOS_SDK_PARITY_AND_BEHAVIOR.md` — iOS SDK API parity, multi-packet AI transfer, pacing, and reconnect state machine.
+- `VENDOR_AAR_REVERSE_ENGINEERING.md` — Reverse engineering breakthrough, javap disassembly, and golden vector tables.
 
-## Evidence rules
+## Evidence Hierarchy
 
-Three evidence levels are deliberately kept separate:
+Five explicit evidence levels govern all protocol statements in this repository:
 
-1. **DOCUMENTED** — explicitly stated by the vendor SDK documentation.
-2. **OBSERVED** — directly present in a manual capture.
-3. **CORRELATED / INFERRED** — a relationship between documented behavior and observed packets that still needs a TX/RX capture or another controlled experiment.
+1. **VENDOR-DOCUMENTED** — Explicitly documented in vendor SDK guides or header files.
+2. **VENDOR-IMPLEMENTATION-VERIFIED** — Reconstructed directly from decompiled vendor AAR bytecode disassembly (`LargeDataHandler`, `GlassModelControl`, `CRC16`).
+3. **PHYSICAL-CAPTURE-VERIFIED** — Directly observed in reproducible real-device BLE capture logs.
+4. **HARDWARE-VERIFIED** — Confirmed by independent physical device execution (Halo transmitting command -> physical device action -> response event).
+5. **CORRELATED / INFERRED** — Hypothesized relationship between operations and raw traffic requiring further physical testing.
 
-Do not collapse inferred fields into production protocol constants until verified.
+## Verified Epistemic Boundary
 
-## Important architectural distinction
+Vendor AAR source reconstruction establishes that `glassesControl()` payloads are encapsulated by the `BC 41 LEN CRC PAYLOAD` wire encoder. Physical Halo TX capture has not yet independently confirmed that Halo emits the same frame for a live operation on physical hardware.
 
-The vendor SDK's `glassesControl()` payloads such as `02 01 01` are an SDK command layer. The manually captured `BC 73 ...` and `BC 59 ...` frames are observed BLE traffic. We currently do not have enough evidence to state that the SDK payload bytes appear unchanged on the BLE wire.
-
-The next decisive experiment is simultaneous TX + RX capture for each operation.
+The next decisive experiment is isolated physical TX + RX capture for each operation.

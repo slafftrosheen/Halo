@@ -1,6 +1,8 @@
 package com.halo.drivers.heycyan.codec
 
+import com.halo.drivers.heycyan.codec.HeyCyanCommand as WireCommand
 import com.halo.drivers.heycyan.protocol.HeyCyanCommand
+import com.halo.drivers.heycyan.protocol.HeyCyanMode
 import java.util.UUID
 
 /**
@@ -99,6 +101,45 @@ class HeyCyanCommandEncoder(
                 byteArrayOf(command.mode.value.toByte())
         }
 
+    /**
+     * Encodes a semantic command into its complete verified wire frame byte array (BC 41 ...).
+     */
+    fun encodeWireFrame(command: HeyCyanCommand): ByteArray =
+        when (command) {
+            HeyCyanCommand.TakePhoto ->
+                WireCommand.photo()
+
+            HeyCyanCommand.StartVideo ->
+                WireCommand.videoStart()
+
+            HeyCyanCommand.StopVideo ->
+                WireCommand.videoStop()
+
+            HeyCyanCommand.StartAudio ->
+                WireCommand.recordStart()
+
+            HeyCyanCommand.StopAudio ->
+                WireCommand.recordStop()
+
+            HeyCyanCommand.GetMediaCounts ->
+                WireCommand.mediaCount()
+
+            is HeyCyanCommand.SetMode -> when (command.mode) {
+                HeyCyanMode.PHOTO -> WireCommand.photo()
+                HeyCyanMode.VIDEO -> WireCommand.videoStart()
+                HeyCyanMode.VIDEO_STOP -> WireCommand.videoStop()
+                HeyCyanMode.AUDIO -> WireCommand.recordStart()
+                HeyCyanMode.AUDIO_STOP -> WireCommand.recordStop()
+                HeyCyanMode.AI_PHOTO -> WireCommand.ai()
+                HeyCyanMode.TRANSFER -> HeyCyanWireFrameCodec.encode(HeyCyanWireFrameCodec.ACTION_GLASSES_CONTROL, byteArrayOf(0x02, 0x07))
+            }
+
+            else -> HeyCyanWireFrameCodec.encode(
+                action = HeyCyanWireFrameCodec.ACTION_GLASSES_CONTROL,
+                payload = encodePayload(command)
+            )
+        }
+
     fun encode(command: HeyCyanCommand): Result<EncodedCommand> = runCatching {
         if (definitions.isNotEmpty()) {
             val def = definitions.firstOrNull { it.command == command }
@@ -139,7 +180,6 @@ class HeyCyanCommandEncoder(
         encodePayload(command)
 
     private companion object {
-        // setDeviceMode values — verified from CyanBridge.
         const val MODE_PHOTO: Byte = 0x01
         const val MODE_VIDEO: Byte = 0x02
         const val MODE_VIDEO_STOP: Byte = 0x03
@@ -148,11 +188,6 @@ class HeyCyanCommandEncoder(
         const val MODE_AI_PHOTO: Byte = 0x06
         const val MODE_TRANSFER: Byte = 0x07
 
-        /*
-         * These command identifiers are currently documented as
-         * CyanBridge-derived/inferred and
-         * NOT yet verified as fully decoded wire packets.
-         */
         const val COMMAND_GET_VERSION: Byte = 0x10
         const val COMMAND_GET_MAC: Byte = 0x11
         const val COMMAND_SET_DATETIME: Byte = 0x12

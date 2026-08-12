@@ -21,12 +21,34 @@ class HeyCyanCharacteristicResolver {
         services: List<DiscoveredService>
     ): HeyCyanGattEndpoints {
 
+        // First check for active Android AAR / Physical Capture service (de5bf728-d711-4e47-af26-65e3012a5dc7)
         val primary = services.firstOrNull {
             it.uuid == HeyCyanProtocolConstants.PRIMARY_SERVICE
+        } ?: services.firstOrNull {
+            it.uuid == HeyCyanProtocolConstants.ALTERNATE_IOS_PRIMARY_SERVICE
         }
 
         val secondary = services.firstOrNull {
-            it.uuid == HeyCyanProtocolConstants.SECONDARY_SERVICE
+            it.uuid == HeyCyanProtocolConstants.ALTERNATE_IOS_SECONDARY_SERVICE
+        }
+
+        if (primary != null && primary.uuid == HeyCyanProtocolConstants.PRIMARY_SERVICE) {
+            // Direct resolution for verified active Android profile
+            val writeChar = primary.characteristics.firstOrNull {
+                it.uuid == HeyCyanProtocolConstants.WRITE_CHARACTERISTIC || it.properties.canWrite || it.properties.canWriteWithoutResponse
+            }?.uuid
+
+            val notifyChar = primary.characteristics.firstOrNull {
+                it.uuid == HeyCyanProtocolConstants.NOTIFY_CHARACTERISTIC || it.properties.canNotify || it.properties.canIndicate
+            }?.uuid
+
+            return HeyCyanGattEndpoints(
+                commandWrite = writeChar,
+                notification = notifyChar,
+                dataTransfer = null,
+                uartTx = null,
+                uartRx = null
+            )
         }
 
         fun findSingle(
@@ -70,7 +92,7 @@ class HeyCyanCharacteristicResolver {
             commandWrite = primary?.let { primaryService ->
                 findSingle(
                     primaryService.characteristics,
-                    { it.properties.canWrite }
+                    { it.properties.canWrite || it.properties.canWriteWithoutResponse }
                 )
             },
 

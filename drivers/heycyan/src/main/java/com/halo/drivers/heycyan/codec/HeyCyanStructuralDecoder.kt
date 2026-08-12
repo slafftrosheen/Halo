@@ -1,120 +1,114 @@
 package com.halo.drivers.heycyan.codec
 
-import java.util.UUID
-
 /**
- * Structural decoder for observed HeyCyan packet families.
+ * Structural decoder for HeyCyan protocol frames.
  *
- * This layer performs pattern-based structural parsing without enforcing
- * semantic interpretation. It preserves all bytes and labels fields
- * using neutral terminology consistent with the behavioral corpus.
+ * Architecture:
+ * LAYER 1: Generic Wire Frame Parsing via [HeyCyanWireFrameCodec]
+ *          Extracts action byte, payload length LE, CRC16 LE, payload, and CRC validity.
+ *
+ * LAYER 2: Action-Specific Classification via [HeyCyanActionFamily]
+ *          Classifies frame action and preserves uninterpreted raw payload bytes.
  */
 class HeyCyanStructuralDecoder {
 
     fun decode(frame: RawHeyCyanFrame): DecodedHeyCyanFrame {
-        val bytes = frame.bytes
-        if (bytes.size < 3 || (bytes[0].toInt() and 0xFF) != 0xBC) {
+        val result = HeyCyanWireFrameCodec.decode(frame.bytes)
+        if (result !is WireFrameDecodeResult.Success) {
             return DecodedHeyCyanFrame(
-                family = HeyCyanPacketFamily.UNKNOWN,
+                actionFamily = HeyCyanActionFamily.UNKNOWN,
+                action = 0x00,
+                payloadLength = 0,
+                crc16 = 0,
+                isValidCrc = false,
+                payload = byteArrayOf(),
                 raw = frame,
                 fields = emptyMap()
             )
         }
 
-        val familyByte = bytes[1].toInt() and 0xFF
-        val subtypeByte = bytes[2].toInt() and 0xFF
+        val action = result.action
+        val payload = result.payload
+        val family = HeyCyanActionFamily.fromActionByte(action)
 
-        return when {
-            familyByte == 0x73 && subtypeByte == 0x0E -> decodeBC73_0E(frame)
-            familyByte == 0x73 && subtypeByte == 0x08 -> decodeBC73_08(frame)
-            familyByte == 0x73 && subtypeByte == 0x05 -> decodeBC73_05(frame)
-            familyByte == 0x73 && subtypeByte == 0x02 -> decodeBC73_02(frame)
-            familyByte == 0x59 && subtypeByte == 0x28 -> decodeBC59_28(frame)
-            else -> DecodedHeyCyanFrame(
-                family = HeyCyanPacketFamily.UNKNOWN,
-                raw = frame,
-                fields = emptyMap()
-            )
-        }
-    }
-
-    private fun decodeBC73_0E(frame: RawHeyCyanFrame): DecodedHeyCyanFrame {
-        val bytes = frame.bytes
         val fields = mutableMapOf<String, Int>()
-        
-        // Verified Wire Format: BC 73 <length LE: 0E 00> <CRC16 LE> <payload: 14 bytes>
-        // Legacy template note: BC 73 0E 00 [crc_lo] [crc_hi] 12 01 00 10 XX 02 00 0F 0F 03 00 10 0A YY
-        if (bytes.size >= 20) {
-            val length = (bytes[2].toInt() and 0xFF) or ((bytes[3].toInt() and 0xFF) shl 8)
-            val crc16 = (bytes[4].toInt() and 0xFF) or ((bytes[5].toInt() and 0xFF) shl 8)
-            fields["payloadLength"] = length
-            fields["crc16"] = crc16
-            fields["unknown04"] = bytes[4].toInt() and 0xFF // CRC16 low byte
-            fields["unknown05"] = bytes[5].toInt() and 0xFF // CRC16 high byte
-            fields["candidateAction"] = bytes[10].toInt() and 0xFF
-            fields["unknown19"] = bytes[19].toInt() and 0xFF
+        fields["action"] = action.toInt() and 0xFF
+        fields["payloadLength"] = result.payloadLength
+        fields["crc16"] = result.crc16
+        fields["isValidCrc"] = if (result.isValidCrc) 1 else 0
+
+        // Extract raw payload byte offsets safely without enforcing unverified semantics
+        if (payload.isNotEmpty()) {
+            fields["payloadByte0"] = payload[0].toInt() and 0xFF
+        }
+        if (payload.size >= 5) {
+            fields["payloadByte4"] = payload[4].toInt() and 0xFF
+        }
+        if (payload.size >= 14) {
+            fields["payloadByte13"] = payload[13].toInt() and 0xFF
         }
 
         return DecodedHeyCyanFrame(
-            family = HeyCyanPacketFamily.BC73_0E,
+            actionFamily = family,
+            action = action,
+            payloadLength = result.payloadLength,
+            crc16 = result.crc16,
+            isValidCrc = result.isValidCrc,
+            payload = payload,
             raw = frame,
             fields = fields
-        )
-    }
-
-    private fun decodeBC73_08(frame: RawHeyCyanFrame): DecodedHeyCyanFrame {
-        val bytes = frame.bytes
-        val fields = mutableMapOf<String, Int>()
-
-        // Observed in camera and AI interactions. Length varies but prefix is stable.
-        if (bytes.size >= 4) {
-             // Exact field mapping for BC73_08 still requires correlation.
-             // Preserving raw bytes is the priority.
-        }
-
-        return DecodedHeyCyanFrame(
-            family = HeyCyanPacketFamily.BC73_08,
-            raw = frame,
-            fields = fields
-        )
-    }
-
-    private fun decodeBC73_05(frame: RawHeyCyanFrame): DecodedHeyCyanFrame {
-        return DecodedHeyCyanFrame(
-            family = HeyCyanPacketFamily.BC73_05,
-            raw = frame,
-            fields = emptyMap()
-        )
-    }
-
-    private fun decodeBC73_02(frame: RawHeyCyanFrame): DecodedHeyCyanFrame {
-        return DecodedHeyCyanFrame(
-            family = HeyCyanPacketFamily.BC73_02,
-            raw = frame,
-            fields = emptyMap()
-        )
-    }
-
-    private fun decodeBC59_28(frame: RawHeyCyanFrame): DecodedHeyCyanFrame {
-        return DecodedHeyCyanFrame(
-            family = HeyCyanPacketFamily.BC59_28,
-            raw = frame,
-            fields = emptyMap()
         )
     }
 }
 
 data class DecodedHeyCyanFrame(
-    val family: HeyCyanPacketFamily,
+    val actionFamily: HeyCyanActionFamily,
+    val action: Byte,
+    val payloadLength: Int,
+    val crc16: Int,
+    val isValidCrc: Boolean,
+    val payload: ByteArray,
     val raw: RawHeyCyanFrame,
     val fields: Map<String, Int>
-)
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is DecodedHeyCyanFrame) return false
+        if (actionFamily != other.actionFamily) return false
+        if (action != other.action) return false
+        if (payloadLength != other.payloadLength) return false
+        if (crc16 != other.crc16) return false
+        if (isValidCrc != other.isValidCrc) return false
+        if (!payload.contentEquals(other.payload)) return false
+        if (raw != other.raw) return false
+        if (fields != other.fields) return false
+        return true
+    }
 
-enum class HeyCyanPacketFamily {
-    BC73_0E,
-    BC73_08,
-    BC73_05,
-    BC73_02,
-    BC59_28,
-    UNKNOWN
+    override fun hashCode(): Int {
+        var result = actionFamily.hashCode()
+        result = 31 * result + action.toInt()
+        result = 31 * result + payloadLength
+        result = 31 * result + crc16
+        result = 31 * result + isValidCrc.hashCode()
+        result = 31 * result + payload.contentHashCode()
+        result = 31 * result + raw.hashCode()
+        result = 31 * result + fields.hashCode()
+        return result
+    }
+}
+
+/**
+ * Action classification for HeyCyan wire frames based on vendor action byte.
+ */
+enum class HeyCyanActionFamily(val actionByte: Byte?) {
+    DEVICE_DATA_REPORTING(HeyCyanWireFrameCodec.ACTION_DEVICE_DATA_REPORTING),
+    GLASSES_CONTROL(HeyCyanWireFrameCodec.ACTION_GLASSES_CONTROL),
+    DEVICE_INFO(HeyCyanWireFrameCodec.ACTION_DEVICE_INFO),
+    UNKNOWN(null);
+
+    companion object {
+        fun fromActionByte(action: Byte): HeyCyanActionFamily =
+            entries.firstOrNull { it.actionByte == action } ?: UNKNOWN
+    }
 }

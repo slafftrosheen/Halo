@@ -4,10 +4,24 @@ import java.util.UUID
 
 object HeyCyanProtocolConstants {
 
+    /** Active Android AAR & Physical Capture GATT Service UUID */
     val PRIMARY_SERVICE: UUID =
+        UUID.fromString("de5bf728-d711-4e47-af26-65e3012a5dc7")
+
+    /** Active Android AAR & Physical Capture RX Notify Characteristic UUID */
+    val NOTIFY_CHARACTERISTIC: UUID =
+        UUID.fromString("de5bf729-d711-4e47-af26-65e3012a5dc7")
+
+    /** Active Android AAR & Physical Capture TX Write Characteristic UUID */
+    val WRITE_CHARACTERISTIC: UUID =
+        UUID.fromString("de5bf72a-d711-4e47-af26-65e3012a5dc7")
+
+    /** Alternate candidate iOS Primary Service UUID */
+    val ALTERNATE_IOS_PRIMARY_SERVICE: UUID =
         UUID.fromString("7905FFF0-B5CE-4E99-A40F-4B1E122D00D0")
 
-    val SECONDARY_SERVICE: UUID =
+    /** Alternate candidate iOS Secondary Service UUID */
+    val ALTERNATE_IOS_SECONDARY_SERVICE: UUID =
         UUID.fromString("6E40FFF0-B5A3-F393-E0A9-E50E24DCCA9E")
 
     val CCCD: UUID =

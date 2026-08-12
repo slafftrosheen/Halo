@@ -64,8 +64,10 @@ sealed interface HeyCyanEvent {
      * but whose semantic meaning is still being established.
      */
     data class DecodedProprietaryFrame(
-        val family: com.halo.drivers.heycyan.codec.HeyCyanPacketFamily,
+        val actionFamily: com.halo.drivers.heycyan.codec.HeyCyanActionFamily,
+        val action: Byte,
         val length: Int,
+        val isValidCrc: Boolean,
         val rawHex: String,
         val fields: Map<String, Int>,
         val confidence: String = "OBSERVED"

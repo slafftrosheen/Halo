@@ -33,10 +33,12 @@ class HeyCyanEventRouter(
          */
         if (characteristicUuid == DE5BF729) {
             val decoded = structuralDecoder.decode(rawFrame)
-            if (decoded.family != HeyCyanPacketFamily.UNKNOWN) {
+            if (decoded.actionFamily != HeyCyanActionFamily.UNKNOWN) {
                 return HeyCyanEvent.DecodedProprietaryFrame(
-                    family = decoded.family,
-                    length = decoded.raw.bytes.size,
+                    actionFamily = decoded.actionFamily,
+                    action = decoded.action,
+                    length = decoded.payloadLength,
+                    isValidCrc = decoded.isValidCrc,
                     rawHex = decoded.raw.hex(),
                     fields = decoded.fields
                 )

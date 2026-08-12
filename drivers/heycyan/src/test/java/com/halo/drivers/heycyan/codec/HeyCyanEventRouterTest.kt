@@ -17,12 +17,14 @@ class HeyCyanEventRouterTest {
         val payload = byteArrayOf(
             0xBC.toByte(),
             0x73,
-            0x0E,
+            0x04,
             0x00,
             0x52,
             0x48,
             0x4B,
-            0x41
+            0x41,
+            0x00,
+            0x00
         )
 
         val event = router.decode(
@@ -34,9 +36,10 @@ class HeyCyanEventRouterTest {
 
         val frame = event as HeyCyanEvent.DecodedProprietaryFrame
 
-        assertEquals(HeyCyanPacketFamily.BC73_0E, frame.family)
-        assertEquals(payload.size, frame.length)
-        assertEquals("BC730E0052484B41", frame.rawHex)
+        assertEquals(HeyCyanActionFamily.DEVICE_DATA_REPORTING, frame.actionFamily)
+        assertEquals(0x73.toByte(), frame.action)
+        assertEquals(4, frame.length)
+        assertEquals("BC73040052484B410000", frame.rawHex)
     }
 
     @Test

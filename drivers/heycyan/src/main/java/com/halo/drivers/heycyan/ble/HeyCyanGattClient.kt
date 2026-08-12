@@ -1,4 +1,4 @@
-﻿package com.halo.drivers.heycyan.ble
+package com.halo.drivers.heycyan.ble
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
@@ -10,6 +10,7 @@ import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.content.Context
 import com.halo.drivers.heycyan.codec.HeyCyanProtocolCapture
+import com.halo.drivers.heycyan.codec.NoOpPacketTracer
 import com.halo.drivers.heycyan.codec.PacketDirection
 import com.halo.drivers.heycyan.codec.PacketTracer
 import com.halo.sdk.driver.DriverState
@@ -33,9 +34,9 @@ import java.util.UUID
  * by Android is reported to the tracer before any notification subscription is made.
  */
 @SuppressLint("MissingPermission") // Caller (HostGraph) is responsible for ensuring permissions
-class HeyCyanGattClient(
-    private val context: Context,
-    private val tracer: PacketTracer
+open class HeyCyanGattClient(
+    private val context: Context? = null,
+    private val tracer: PacketTracer = NoOpPacketTracer
 ) {
 
     companion object {
@@ -48,8 +49,10 @@ class HeyCyanGattClient(
         val descriptor: BluetoothGattDescriptor
     )
 
-    private val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-    private val adapter = bluetoothManager.adapter
+    private val bluetoothManager by lazy {
+        context?.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
+    }
+    private val adapter by lazy { bluetoothManager?.adapter }
 
     private var gatt: BluetoothGatt? = null
     private var serviceDiscoveryStarted = false
@@ -209,7 +212,7 @@ class HeyCyanGattClient(
         android.util.Log.i("HeyCyanGattClient", "Connecting to $macAddress")
         _state.value = DriverState.Connecting
         val device: BluetoothDevice = try {
-            adapter.getRemoteDevice(macAddress)
+            adapter?.getRemoteDevice(macAddress) ?: throw IllegalStateException("BluetoothAdapter unavailable")
         } catch (error: Throwable) {
             _state.value = DriverState.Error(error)
             return
@@ -251,7 +254,7 @@ class HeyCyanGattClient(
         }
     }
 
-    fun write(characteristicUuid: UUID, payload: ByteArray): Boolean {
+    open fun write(characteristicUuid: UUID, payload: ByteArray): Boolean {
         val currentGatt = gatt ?: return false
         val characteristic = characteristics[characteristicUuid] ?: return false
 

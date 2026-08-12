@@ -44,11 +44,10 @@ data class CommandDescriptor(
 object HeyCyanCommandCatalog {
 
     private val referenceEvidence = ProtocolEvidenceReference(
-        source = "CyanBridge + HeyCyanSmartGlassesSDK",
-        // NOTE: MemoMindPacketEncoder is the RFCOMM control-frame encoder (FA 00 ...),
-        // NOT the BLE GATT command encoder. BLE framing remains separately unresolved.
-        // Command IDs and mode values are sourced from MemoMindGattClient and SDK operations.
-        locator = "MemoMindGattClient / HeyCyanSmartGlassesSDK device operations",
+        source = "CyanBridge + HeyCyanSmartGlassesSDK AAR Disassembly",
+        // Verified: Vendor AAR bytecode disassembly (glasses_sdk_20250723_v01.aar) establishes
+        // complete wire framing (0xBC + Action + Length LE + CRC16 LE + Payload).
+        locator = "LargeDataHandler.addHeader / GlassModelControl / CRC16.calcCrc16",
         kind = EvidenceKind.AUTHORITATIVE_SOURCE,
         confidence = ProtocolConfidence.HIGH,
     )

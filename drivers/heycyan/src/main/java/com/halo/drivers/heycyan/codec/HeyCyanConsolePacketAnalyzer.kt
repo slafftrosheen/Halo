@@ -34,11 +34,11 @@ class HeyCyanConsolePacketAnalyzer(
         
         val hex = payload.joinToString("") { "%02X".format(it) }
         
-        if (decoded.family != HeyCyanPacketFamily.UNKNOWN) {
+        if (decoded.actionFamily != HeyCyanActionFamily.UNKNOWN) {
             val fieldsStr = decoded.fields.entries.joinToString(", ") { "${it.key}=0x${"%02X".format(it.value)}" }
             logger.info(
                 "HeyCyanRX",
-                "Frame #$count [${decoded.family}] len=${payload.size} raw=$hex fields={$fieldsStr} confidence=OBSERVED"
+                "Frame #$count [${decoded.actionFamily}] len=${payload.size} raw=$hex fields={$fieldsStr} confidence=OBSERVED"
             )
         } else {
             logger.info(

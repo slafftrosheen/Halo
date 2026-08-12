@@ -1,4 +1,4 @@
-﻿package com.halo.drivers.heycyan.codec
+package com.halo.drivers.heycyan.codec
 
 import java.util.UUID
 
@@ -46,4 +46,9 @@ interface PacketTracer {
     fun onRx(characteristicUuid: UUID, bytes: ByteArray)
     fun onRfcomm(channel: String, direction: PacketDirection, bytes: ByteArray) = Unit
     fun onRfcommStateChanged(channel: String, connected: Boolean) = Unit
+}
+
+object NoOpPacketTracer : PacketTracer {
+    override fun onTx(characteristicUuid: UUID, bytes: ByteArray) {}
+    override fun onRx(characteristicUuid: UUID, bytes: ByteArray) {}
 }

@@ -1,7 +1,6 @@
 package com.halo.drivers.heycyan.codec
 
 import com.halo.drivers.heycyan.protocol.HeyCyanEvent
-import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -76,7 +75,7 @@ class HeyCyanSdkProtocolTest {
             0xFA.toByte(),
             0xA6.toByte(),
             0x12,
-            0x01
+            0x01, 0x00, 0x10, 0x01, 0x02, 0x00, 0x0F, 0x0F, 0x03, 0x00, 0x10, 0x0A, 0x03
         )
 
         val event = router.decode(
@@ -87,8 +86,9 @@ class HeyCyanSdkProtocolTest {
         assertTrue(event is HeyCyanEvent.DecodedProprietaryFrame)
 
         val frame = event as HeyCyanEvent.DecodedProprietaryFrame
-        assertEquals(HeyCyanPacketFamily.BC73_0E, frame.family)
-        assertEquals("BC730E00FAA61201", frame.rawHex)
+        assertEquals(HeyCyanActionFamily.DEVICE_DATA_REPORTING, frame.actionFamily)
+        assertEquals(0x73.toByte(), frame.action)
+        assertEquals(14, frame.length)
     }
 
     @Test
