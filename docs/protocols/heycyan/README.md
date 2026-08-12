@@ -2,6 +2,8 @@
 
 Status: Canonical protocol reference, compiled from vendor SDK documentation, decompiled vendor AAR bytecodes, physical BLE captures, and cross-platform iOS findings.
 
+**Acknowledgments**: A significant portion of this reverse-engineering and protocol mapping was greatly assisted by the findings in the [FerSaiyan/Alternative-HeyCyan-App-and-SDK](https://github.com/FerSaiyan/Alternative-HeyCyan-App-and-SDK) repository.
+
 ## Documents
 
 - `00_README.md` — Evidence package overview and entry points.
