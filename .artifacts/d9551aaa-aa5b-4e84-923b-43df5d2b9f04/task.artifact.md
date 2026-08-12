@@ -1,0 +1,6 @@
+- [x] Add HALO-TX-TRACE logs to `HeyCyanCommandExecutor.kt`
+- [x] Add HALO-TX-TRACE logs to `HeyCyanGattCommandTransport.kt`
+- [x] Add HALO-TX-TRACE logs to `HeyCyanRfcommTransport.kt` (No production impl found, added to logic)
+- [x] Implement `HeyCyanPacketFramer.frame` using `HeyCyanWireFrameCodec`
+- [x] Verify `HeyCyanCommandEncoder` returns correct action bytes
+- [x] Run automated tests to verify changes
