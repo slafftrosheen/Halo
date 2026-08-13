@@ -31,16 +31,16 @@ import kotlinx.coroutines.flow.stateIn
 import com.halo.sdk.driver.DeviceCapabilities as SdkDeviceCapabilities
 
 @Composable
-fun DevicesScreen(viewModel: DevicesViewModel) {
+fun DevicesScreen(viewModel: DevicesViewModel, onNavigate: (String) -> Unit = {}, onBack: () -> Unit = {}) {
     val uiState by viewModel.uiState.collectAsState()
     
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp),
-        contentPadding = PaddingValues(top = 16.dp, bottom = 120.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
+    com.halo.app.ui.glass.components.HaloGlassLazyPage(title = "") {
+        item {
+            com.halo.app.ui.glass.components.HaloGlassBackHeader(
+                title = "Devices",
+                onBack = onBack
+            )
+        }
         item {
             Text(
                 text = "GLASSES",
@@ -92,44 +92,27 @@ fun DevicesScreen(viewModel: DevicesViewModel) {
                     title = "Device Status",
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("Battery", style = HaloTypography.bodyMedium, color = HaloGlassColors.TextSecondary)
-                        Text(uiState.battery, style = HaloTypography.bodyMedium, color = HaloGlassColors.TextPrimary)
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("Connection", style = HaloTypography.bodyMedium, color = HaloGlassColors.TextSecondary)
-                        Text(uiState.connectionType, style = HaloTypography.bodyMedium, color = HaloGlassColors.Accent)
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("Audio", style = HaloTypography.bodyMedium, color = HaloGlassColors.TextSecondary)
-                        Text(uiState.audioStatus, style = HaloTypography.bodyMedium, color = HaloGlassColors.TextPrimary)
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("Camera", style = HaloTypography.bodyMedium, color = HaloGlassColors.TextSecondary)
-                        Text(uiState.cameraStatus, style = HaloTypography.bodyMedium, color = HaloGlassColors.TextPrimary)
-                    }
+                    com.halo.app.ui.glass.components.HaloGlassSettingRow(
+                        title = "Battery",
+                        value = uiState.battery
+                    )
+                    com.halo.app.ui.glass.components.HaloGlassDivider()
+                    com.halo.app.ui.glass.components.HaloGlassSettingRow(
+                        title = "Connection",
+                        value = uiState.connectionType
+                    )
+                    com.halo.app.ui.glass.components.HaloGlassDivider()
+                    com.halo.app.ui.glass.components.HaloGlassSettingRow(
+                        title = "Audio",
+                        value = uiState.audioStatus
+                    )
+                    com.halo.app.ui.glass.components.HaloGlassDivider()
+                    com.halo.app.ui.glass.components.HaloGlassSettingRow(
+                        title = "Camera",
+                        value = uiState.cameraStatus
+                    )
                 }
             }
-            // Removed dead Device Details button
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.halo.app.ui.screens.discovery
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.halo.app.di.ManualDependencyGraph
@@ -64,6 +65,7 @@ class PairingViewModel(
 
     fun connect() {
         val address = _uiState.value.selectedAddress ?: return
+        Log.d("PairingViewModel", "Connecting to: $address")
         stopScan()
         
         _uiState.update { it.copy(statusMessage = "Connecting to $address...") }
@@ -72,11 +74,15 @@ class PairingViewModel(
             try {
                 val host = ManualDependencyGraph.wearableHost
                 if (host is com.halo.drivers.heycyan.HeyCyanHost) {
+                    Log.d("PairingViewModel", "Setting target device and connecting")
                     host.setTargetDevice(address)
                     host.connect()
                     _uiState.update { it.copy(statusMessage = "Connected successfully") }
+                } else {
+                    Log.w("PairingViewModel", "WearableHost is not HeyCyanHost: ${host::class.simpleName}")
                 }
             } catch (e: Exception) {
+                Log.e("PairingViewModel", "Connection failed", e)
                 _uiState.update { it.copy(statusMessage = "Connection failed: ${e.message}") }
             }
         }

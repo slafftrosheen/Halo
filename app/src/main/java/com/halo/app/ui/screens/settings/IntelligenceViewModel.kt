@@ -1,5 +1,6 @@
 package com.halo.app.ui.screens.settings
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.halo.sdk.provider.*
@@ -38,6 +39,7 @@ class IntelligenceViewModel(
     private val storage: Storage
 ) : ViewModel() {
 
+    private val _refreshTrigger = MutableStateFlow(0)
     private val _availableModels = MutableStateFlow<List<AiModel>>(emptyList())
     private val _isRefreshing = MutableStateFlow(false)
 
@@ -45,8 +47,9 @@ class IntelligenceViewModel(
         aiProviderRouter.selectedProviderId,
         aiProviderRouter.selectedModelId,
         _availableModels,
-        _isRefreshing
-    ) { selectedProviderId, selectedModelId, models, refreshing ->
+        _isRefreshing,
+        _refreshTrigger
+    ) { selectedProviderId, selectedModelId, models, refreshing, _ ->
         val allProviders = aiProviderRouter.getAllProviders()
         val activeProvider = allProviders.find { it.id == selectedProviderId }
         
@@ -89,14 +92,17 @@ class IntelligenceViewModel(
     val navigationEvents: SharedFlow<String> = _navigationEvents.asSharedFlow()
 
     fun selectProvider(id: String) {
+        Log.d("IntelligenceViewModel", "selectProvider: $id")
         aiProviderRouter.selectProvider(id)
     }
 
     fun selectModel(modelId: String?) {
+        Log.d("IntelligenceViewModel", "selectModel: $modelId")
         aiProviderRouter.selectModel(modelId)
     }
 
     fun refreshModels() {
+        Log.d("IntelligenceViewModel", "refreshModels")
         viewModelScope.launch {
             val selectedId = aiProviderRouter.selectedProviderId.value ?: return@launch
             val provider = aiProviderRouter.getAllProviders().find { it.id == selectedId } ?: return@launch
@@ -135,19 +141,26 @@ class IntelligenceViewModel(
     }
 
     fun setMemoryEnabled(enabled: Boolean) {
+        Log.d("IntelligenceViewModel", "setMemoryEnabled: $enabled")
         storage.putBoolean("ai_memory_enabled", enabled)
+        _refreshTrigger.update { it + 1 }
     }
 
     fun setToolsEnabled(enabled: Boolean) {
+        Log.d("IntelligenceViewModel", "setToolsEnabled: $enabled")
         storage.putBoolean("ai_tools_enabled", enabled)
+        _refreshTrigger.update { it + 1 }
     }
 
     fun setAgentEnabled(enabled: Boolean) {
+        Log.d("IntelligenceViewModel", "setAgentEnabled: $enabled")
         storage.putBoolean("ai_agent_enabled", enabled)
+        _refreshTrigger.update { it + 1 }
     }
 
     fun setTemperature(temp: Float) {
         storage.putInt("ai_temperature", (temp * 100).toInt())
+        _refreshTrigger.update { it + 1 }
     }
 
     private fun loadPolicy(): AiContextPolicy {
@@ -175,6 +188,7 @@ class IntelligenceViewModel(
         audio: Boolean? = null,
         video: Boolean? = null
     ) {
+        Log.d("IntelligenceViewModel", "updatePolicy")
         conversation?.let { storage.putBoolean("policy_conversation", it) }
         deviceState?.let { storage.putBoolean("policy_device_state", it) }
         recentEvents?.let { storage.putBoolean("policy_recent_events", it) }
@@ -185,13 +199,11 @@ class IntelligenceViewModel(
         audio?.let { storage.putBoolean("policy_audio", it) }
         video?.let { storage.putBoolean("policy_video", it) }
         
-        // Trigger state refresh if needed, but since combine observes storage changes
-        // we might need a signal or just rely on the fact that storage.putBoolean 
-        // doesn't trigger flows.
-        // Actually, for Alpha, we'll just manually refresh or use a Trigger flow.
+        _refreshTrigger.update { it + 1 }
     }
 
     fun navigateTo(route: String) {
+        Log.d("IntelligenceViewModel", "navigateTo: $route")
         viewModelScope.launch {
             _navigationEvents.emit(route)
         }

@@ -26,11 +26,13 @@ class CognitiveSession(
     private var activeJob: Job? = null
 
     fun submit(request: AiRequest, policy: AiContextPolicy = AiContextPolicy.CONSERVATIVE) {
+        println("[CognitiveSession] submit: $request")
         activeJob?.cancel()
         activeJob = scope.launch {
             val requestId = UUID.randomUUID().toString()
             try {
                 // 1. Preparing Context
+                println("[CognitiveSession] Preparing context")
                 _state.value = CognitiveSessionState.PreparingContext
                 eventBus.publish(CognitiveRequestStarted(requestId = requestId))
                 
@@ -41,6 +43,7 @@ class CognitiveSession(
                 val modelId = request.modelId ?: providerRouter.selectedModelId.value
                 
                 val provider = providerRouter.getAllProviders().find { it.id == providerId }
+                println("[CognitiveSession] Provider: $providerId, Model: $modelId, Found: ${provider != null}")
                 val supportsStreaming = provider?.getCapabilities()?.contains(AiCapability.STREAMING) == true
 
                 _state.value = CognitiveSessionState.Reasoning(providerId, modelId)
@@ -51,6 +54,7 @@ class CognitiveSession(
                 ))
                 
                 if (supportsStreaming && provider != null) {
+                    println("[CognitiveSession] Starting streaming")
                     var accumulatedText = ""
                     provider.stream(request, context)
                         .collect { event ->
@@ -71,13 +75,20 @@ class CognitiveSession(
                     val finalResponse = AiResponse(text = accumulatedText, providerId = providerId, modelId = modelId)
                     _state.value = CognitiveSessionState.Completed(finalResponse)
                     eventBus.publish(CognitiveCompleted(requestId = requestId, response = accumulatedText))
-                } else {
+                    println("[CognitiveSession] Streaming completed")
+                } else if (provider != null) {
+                    println("[CognitiveSession] Executing one-shot")
                     val response = providerRouter.execute(request, context)
                     _state.value = CognitiveSessionState.Completed(response)
                     eventBus.publish(CognitiveCompleted(requestId = requestId, response = response.text))
+                    println("[CognitiveSession] Execution completed")
+                } else {
+                    println("[CognitiveSession] No provider available to execute request")
+                    throw Exception("No provider available")
                 }
                 
             } catch (e: Exception) {
+                println("[CognitiveSession] Session failed: ${e.message}")
                 val message = mapErrorMessage(e)
                 _state.value = CognitiveSessionState.Failed(message)
                 eventBus.publish(CognitiveFailed(requestId = requestId, message = message))

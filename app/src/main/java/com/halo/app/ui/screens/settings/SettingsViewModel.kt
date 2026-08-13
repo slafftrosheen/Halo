@@ -1,5 +1,6 @@
 package com.halo.app.ui.screens.settings
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -170,10 +171,12 @@ class SettingsViewModel(
     }
 
     fun selectAiProvider(id: String) {
+        Log.d("SettingsViewModel", "selectAiProvider: $id")
         aiProviderRouter.selectProvider(id)
     }
 
     fun navigateTo(route: String) {
+        Log.d("SettingsViewModel", "navigateTo: $route")
         viewModelScope.launch {
             _navigationEvents.emit(route)
         }

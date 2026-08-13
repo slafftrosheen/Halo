@@ -9,7 +9,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 import com.halo.app.ui.glass.material.HaloGlassMaterial
@@ -32,6 +31,11 @@ fun HaloGlassSurface(
 ) {
     Box(
         modifier = modifier
+            .shadow(
+                elevation = material.elevation,
+                shape = shape,
+                clip = false
+            )
             .background(
                 color = material.containerColor,
                 shape = shape
@@ -41,10 +45,6 @@ fun HaloGlassSurface(
                 color = material.borderColor,
                 shape = shape
             )
-            .graphicsLayer { 
-                shadowElevation = material.elevation.toPx()
-            }
-            .shadow(material.elevation, shape)
             .drawBehind {
                 // Draw gradient highlights for glass effect
                 if (material.highlightBrush != null) {

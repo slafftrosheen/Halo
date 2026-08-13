@@ -22,88 +22,91 @@ import androidx.compose.foundation.lazy.items
  * Unified Intelligence Hub for Halo.
  * Manages active provider, model selection, and cognitive capabilities.
  */
+import androidx.compose.animation.AnimatedVisibility
+
 @Composable
-fun IntelligenceScreen(viewModel: IntelligenceViewModel) {
+fun IntelligenceScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit = {}) {
     val uiState by viewModel.uiState.collectAsState()
     var showProviderPicker by remember { mutableStateOf(false) }
     var showModelPicker by remember { mutableStateOf(false) }
     var advancedExpanded by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(HaloGlassColors.Background)
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp)
-            .padding(bottom = 120.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
-    ) {
-        Text("Intelligence", style = HaloTypography.displayMedium, color = HaloGlassColors.TextPrimary)
+    HaloGlassPage(title = "") {
+        HaloGlassBackHeader(
+            title = "Intelligence",
+            onBack = onBack
+        )
 
         // 1. ACTIVE PROVIDER
         HaloGlassSection(title = "ACTIVE PROVIDER") {
-            Column(Modifier.padding(8.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(uiState.activeProviderName, style = HaloTypography.bodyLarge, color = HaloGlassColors.TextPrimary)
-                        Text(
-                            text = if (uiState.activeModelId != null) uiState.activeModelId!! else "Default Model",
-                            style = HaloTypography.labelMedium,
-                            color = HaloGlassColors.TextSecondary
-                        )
-                    }
-                    HaloGlassChip(
-                        text = uiState.activeProviderStatus.state.name,
-                        material = when(uiState.activeProviderStatus.state) {
-                            ProviderStatus.State.READY -> com.halo.app.ui.glass.material.HaloGlassMaterials.Interactive.copy(
-                                containerColor = HaloGlassColors.Success.copy(alpha = 0.2f),
-                                contentColor = HaloGlassColors.Success
-                            )
-                            else -> com.halo.app.ui.glass.material.HaloGlassMaterials.Interactive.copy(
-                                containerColor = HaloGlassColors.Warning.copy(alpha = 0.2f),
-                                contentColor = HaloGlassColors.Warning
-                            )
-                        }
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(uiState.activeProviderName.ifEmpty { "None" }, style = HaloTypography.bodyLarge, color = HaloGlassColors.TextPrimary)
+                    Text(
+                        text = if (uiState.activeModelId != null) uiState.activeModelId!! else "Default Model",
+                        style = HaloTypography.labelMedium,
+                        color = HaloGlassColors.TextSecondary
                     )
                 }
+                
+                val statusText = when(uiState.activeProviderStatus.state) {
+                    ProviderStatus.State.READY -> "READY"
+                    ProviderStatus.State.UNCONFIGURED -> "UNCONFIGURED"
+                    ProviderStatus.State.UNAVAILABLE -> "UNAVAILABLE"
+                    ProviderStatus.State.ERROR -> "ERROR"
+                }
+
+                HaloGlassChip(
+                    text = statusText,
+                    material = when(uiState.activeProviderStatus.state) {
+                        ProviderStatus.State.READY -> com.halo.app.ui.glass.material.HaloGlassMaterials.Interactive.copy(
+                            containerColor = HaloGlassColors.Success.copy(alpha = 0.2f),
+                            contentColor = HaloGlassColors.Success
+                        )
+                        else -> com.halo.app.ui.glass.material.HaloGlassMaterials.Interactive.copy(
+                            containerColor = HaloGlassColors.Warning.copy(alpha = 0.2f),
+                            contentColor = HaloGlassColors.Warning
+                        )
+                    }
+                )
             }
         }
 
         // 2. CAPABILITIES
         HaloGlassSection(title = "CAPABILITIES") {
-            Column(Modifier.padding(8.dp)) {
-                CapabilityRow("Text", uiState.capabilities.contains(AiCapability.TEXT))
-                HaloGlassDivider()
-                CapabilityRow("Vision", uiState.capabilities.contains(AiCapability.IMAGE))
-                HaloGlassDivider()
-                CapabilityRow("Audio", uiState.capabilities.contains(AiCapability.AUDIO))
-                HaloGlassDivider()
-                CapabilityRow("Tools", uiState.capabilities.contains(AiCapability.TOOLS))
-            }
+            CapabilityRow("Text", uiState.capabilities.contains(AiCapability.TEXT))
+            HaloGlassDivider()
+            CapabilityRow("Vision", uiState.capabilities.contains(AiCapability.IMAGE))
+            HaloGlassDivider()
+            CapabilityRow("Audio", uiState.capabilities.contains(AiCapability.AUDIO))
+            HaloGlassDivider()
+            CapabilityRow("Tools", uiState.capabilities.contains(AiCapability.TOOLS))
         }
 
         // 3. MODEL SELECTION
         HaloGlassSection(title = "MODEL") {
-            Column(Modifier.padding(8.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        uiState.activeModelId ?: "Default",
-                        style = HaloTypography.bodyMedium,
-                        color = HaloGlassColors.TextPrimary
-                    )
-                    HaloGlassButton(
-                        text = "Change",
-                        onClick = { showModelPicker = true }
-                    )
-                }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .defaultMinSize(minHeight = 52.dp)
+                    .clickable { showModelPicker = true }
+                    .padding(horizontal = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    uiState.activeModelId ?: "Default",
+                    style = HaloTypography.bodyMedium,
+                    color = HaloGlassColors.TextPrimary
+                )
+                HaloGlassButton(
+                    text = "Change",
+                    onClick = { showModelPicker = true }
+                )
             }
         }
 
@@ -111,13 +114,17 @@ fun IntelligenceScreen(viewModel: IntelligenceViewModel) {
         HaloGlassSection(title = "PROVIDER") {
             Column(Modifier.padding(8.dp)) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .defaultMinSize(minHeight = 52.dp)
+                        .clickable { showProviderPicker = true }
+                        .padding(horizontal = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(Modifier.weight(1f)) {
                         Text(
-                            uiState.activeProviderName,
+                            uiState.activeProviderName.ifEmpty { "None" },
                             style = HaloTypography.bodyMedium,
                             color = HaloGlassColors.TextPrimary
                         )
@@ -172,7 +179,11 @@ fun IntelligenceScreen(viewModel: IntelligenceViewModel) {
         HaloGlassCard {
             Column(Modifier.padding(8.dp)) {
                 Row(
-                    modifier = Modifier.fillMaxWidth().clickable { advancedExpanded = !advancedExpanded },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .defaultMinSize(minHeight = 56.dp)
+                        .clickable { advancedExpanded = !advancedExpanded }
+                        .padding(horizontal = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -180,39 +191,41 @@ fun IntelligenceScreen(viewModel: IntelligenceViewModel) {
                     Text(if (advancedExpanded) "−" else "+", style = HaloTypography.bodyLarge, color = HaloGlassColors.TextMuted)
                 }
                 
-                if (advancedExpanded) {
-                    Spacer(Modifier.height(16.dp))
-                    AdvancedToggle("Memory", "Long-term cognitive context", uiState.isMemoryEnabled) {
-                        viewModel.setMemoryEnabled(it)
-                    }
-                    HaloGlassDivider()
-                    AdvancedToggle("Tools", "Model-requested actions", uiState.isToolsEnabled) {
-                        viewModel.setToolsEnabled(it)
-                    }
-                    HaloGlassDivider()
-                    
-                    Spacer(Modifier.height(16.dp))
-                    Text("Temperature: ${String.format(java.util.Locale.ROOT, "%.1f", uiState.temperature)}", style = HaloTypography.bodySmall, color = HaloGlassColors.TextSecondary)
-                    Slider(
-                        value = uiState.temperature,
-                        onValueChange = { viewModel.setTemperature(it) },
-                        valueRange = 0f..1.2f
-                    )
+                AnimatedVisibility(visible = advancedExpanded) {
+                    Column {
+                        Spacer(Modifier.height(16.dp))
+                        AdvancedToggle("Memory", "Long-term cognitive context", uiState.isMemoryEnabled) {
+                            viewModel.setMemoryEnabled(it)
+                        }
+                        HaloGlassDivider()
+                        AdvancedToggle("Tools", "Model-requested actions", uiState.isToolsEnabled) {
+                            viewModel.setToolsEnabled(it)
+                        }
+                        HaloGlassDivider()
+                        
+                        Spacer(Modifier.height(16.dp))
+                        Text("Temperature: ${String.format(java.util.Locale.ROOT, "%.1f", uiState.temperature)}", style = HaloTypography.bodySmall, color = HaloGlassColors.TextSecondary)
+                        Slider(
+                            value = uiState.temperature,
+                            onValueChange = { viewModel.setTemperature(it) },
+                            valueRange = 0f..1.2f
+                        )
 
-                    Spacer(Modifier.height(24.dp))
-                    Text("CONTEXT POLICY", style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
-                    Spacer(Modifier.height(8.dp))
-                    
-                    AdvancedToggle("Conversation", "Include chat history", uiState.policy.includeConversation) {
-                        viewModel.updatePolicy(conversation = it)
-                    }
-                    HaloGlassDivider()
-                    AdvancedToggle("Recent Events", "Timeline context", uiState.policy.includeRecentEvents) {
-                        viewModel.updatePolicy(recentEvents = it)
-                    }
-                    HaloGlassDivider()
-                    AdvancedToggle("Images", "Camera snapshot context", uiState.policy.includeImages) {
-                        viewModel.updatePolicy(images = it)
+                        Spacer(Modifier.height(24.dp))
+                        Text("CONTEXT POLICY", style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
+                        Spacer(Modifier.height(8.dp))
+                        
+                        AdvancedToggle("Conversation", "Include chat history", uiState.policy.includeConversation) {
+                            viewModel.updatePolicy(conversation = it)
+                        }
+                        HaloGlassDivider()
+                        AdvancedToggle("Recent Events", "Timeline context", uiState.policy.includeRecentEvents) {
+                            viewModel.updatePolicy(recentEvents = it)
+                        }
+                        HaloGlassDivider()
+                        AdvancedToggle("Images", "Camera snapshot context", uiState.policy.includeImages) {
+                            viewModel.updatePolicy(images = it)
+                        }
                     }
                 }
             }

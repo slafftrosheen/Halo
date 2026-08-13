@@ -29,17 +29,22 @@ import androidx.compose.foundation.lazy.items
 import com.halo.app.ui.glass.components.HaloGlassDivider
 
 @Composable
-fun RuntimeInspectorScreen(viewModel: RuntimeInspectorViewModel) {
+fun RuntimeInspectorScreen(viewModel: RuntimeInspectorViewModel, onBack: () -> Unit = {}) {
     val state by viewModel.uiState.collectAsState()
     
     Column(Modifier.fillMaxSize().background(HaloGlassColors.Background)) {
+        com.halo.app.ui.glass.components.HaloGlassBackHeader(
+            title = "Runtime Inspector",
+            onBack = onBack,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
         // Header
         Row(
             Modifier.fillMaxWidth().padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Runtime Inspector", color = HaloGlassColors.TextPrimary, style = HaloTypography.displayMedium)
+            Text("Recording", color = HaloGlassColors.TextPrimary, style = HaloTypography.bodyLarge)
             Switch(checked = state.isRecording, onCheckedChange = { viewModel.setRecording(it) })
         }
         

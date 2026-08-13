@@ -1,5 +1,6 @@
 package com.halo.app.ui.shell
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -10,7 +11,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.compose.*
@@ -50,87 +50,122 @@ fun AppShell() {
     val pairingViewModel = ManualDependencyGraph.pairingViewModel
     val protocolLabViewModel = ManualDependencyGraph.protocolLabViewModel
 
+    fun navigateSafely(route: String) {
+        if (navController.currentDestination?.route != route) {
+            navController.navigate(route) {
+                launchSingleTop = true
+            }
+        }
+    }
+
     LaunchedEffect(Unit) {
         settingsViewModel.navigationEvents.collectLatest { route ->
-            navController.navigate(route)
+            Log.d("AppShell", "Navigation from settings: $route")
+            navigateSafely(route)
         }
     }
 
     LaunchedEffect(Unit) {
         pairingViewModel.navigationEvents.collectLatest { event ->
+            Log.d("AppShell", "Navigation from pairing: $event")
             if (event == "back") navController.popBackStack()
         }
     }
 
     LaunchedEffect(Unit) {
         ManualDependencyGraph.homeViewModel.navigationEvents.collectLatest { route ->
-            navController.navigate(route)
+            Log.d("AppShell", "Navigation from home: $route")
+            navigateSafely(route)
         }
     }
 
     LaunchedEffect(Unit) {
         intelligenceViewModel.navigationEvents.collectLatest { route ->
-            navController.navigate(route)
+            Log.d("AppShell", "Navigation from intelligence: $route")
+            navigateSafely(route)
         }
     }
     
     LaunchedEffect(Unit) {
         devicesViewModel.navigationEvents.collectLatest { route ->
-            navController.navigate(route)
+            navigateSafely(route)
         }
     }
 
     LaunchedEffect(Unit) {
         protocolLabViewModel.navigationEvents.collectLatest { route ->
-            navController.navigate(route)
+            navigateSafely(route)
         }
     }
     
-    Box(modifier = Modifier.fillMaxSize()) {
-        NavHost(
-            navController = navController,
-            startDestination = Screen.Home.route,
-            modifier = Modifier.fillMaxSize()
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        containerColor = com.halo.app.ui.glass.material.HaloGlassColors.Background,
+        bottomBar = {
+            HaloGlassNavigation(
+                navController = navController,
+                items = bottomNavItems.map { 
+                    NavigationItem(it.route, it.title, it.icon) 
+                }
+            )
+        },
+        contentWindowInsets = WindowInsets.safeDrawing
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
         ) {
-            composable(Screen.Home.route) {
-                HomeScreen(viewModel = ManualDependencyGraph.homeViewModel)
-            }
-            composable(Screen.Activity.route) {
-                ActivityScreen(viewModel = ManualDependencyGraph.activityViewModel)
-            }
-            composable(Screen.Devices.route) {
-                DevicesScreen(viewModel = ManualDependencyGraph.devicesViewModel)
-            }
-            composable(Screen.Settings.route) {
-                SettingsScreen(viewModel = ManualDependencyGraph.settingsViewModel)
-            }
-            composable("ai_settings") {
-                com.halo.app.ui.screens.settings.IntelligenceScreen(viewModel = ManualDependencyGraph.intelligenceViewModel)
-            }
-            composable("permissions") {
-                com.halo.app.ui.screens.settings.PermissionsScreen()
-            }
-            composable("discovery") {
-                com.halo.app.ui.screens.discovery.PairingScreen(viewModel = ManualDependencyGraph.pairingViewModel)
-            }
-            composable(Screen.ProtocolLab.route) {
-                ProtocolLabScreen(viewModel = ManualDependencyGraph.protocolLabViewModel)
-            }
-            composable("console") {
-                ConsoleScreen(viewModel = ManualDependencyGraph.consoleViewModel)
-            }
-            composable("inspector") {
-                RuntimeInspectorScreen(viewModel = ManualDependencyGraph.runtimeInspectorViewModel)
+            NavHost(
+                navController = navController,
+                startDestination = Screen.Home.route,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                composable(Screen.Home.route) {
+                    HomeScreen(viewModel = ManualDependencyGraph.homeViewModel)
+                }
+                composable(Screen.Activity.route) {
+                    ActivityScreen(viewModel = ManualDependencyGraph.activityViewModel)
+                }
+                composable(Screen.Devices.route) {
+                    DevicesScreen(viewModel = ManualDependencyGraph.devicesViewModel)
+                }
+                composable(Screen.Settings.route) {
+                    SettingsScreen(viewModel = ManualDependencyGraph.settingsViewModel)
+                }
+                composable("ai_settings") {
+                    IntelligenceScreen(
+                        viewModel = ManualDependencyGraph.intelligenceViewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable("permissions") {
+                    com.halo.app.ui.screens.settings.PermissionsScreen(
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable("discovery") {
+                    com.halo.app.ui.screens.discovery.PairingScreen(viewModel = ManualDependencyGraph.pairingViewModel)
+                }
+                composable(Screen.ProtocolLab.route) {
+                    ProtocolLabScreen(
+                        viewModel = ManualDependencyGraph.protocolLabViewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable("console") {
+                    ConsoleScreen(
+                        viewModel = ManualDependencyGraph.consoleViewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable("inspector") {
+                    RuntimeInspectorScreen(
+                        viewModel = ManualDependencyGraph.runtimeInspectorViewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
             }
         }
-        
-        // Navigation Pill Overlay
-        HaloGlassNavigation(
-            navController = navController,
-            items = bottomNavItems.map { 
-                NavigationItem(it.route, it.title, it.icon) 
-            },
-            modifier = Modifier.align(Alignment.BottomCenter)
-        )
     }
 }

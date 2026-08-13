@@ -34,76 +34,45 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
     val uiState by viewModel.uiState.collectAsState()
     var comingSoonFeature by remember { mutableStateOf<String?>(null) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(HaloGlassColors.Background)
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp)
-            .padding(bottom = 160.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text("Settings", style = HaloTypography.displayMedium, color = HaloGlassColors.TextPrimary)
+    HaloGlassPage(title = "Settings") {
         
         // HALO Section
         HaloGlassSection(title = "HALO") {
-            SettingItem("Intelligence", uiState.provider, clickable = true) {
-                viewModel.navigateTo("ai_settings")
-            }
+            HaloGlassSettingRow("Intelligence", uiState.provider, onClick = { viewModel.navigateTo("ai_settings") })
             HaloGlassDivider()
-            SettingItem("Glasses", uiState.deviceName, clickable = true) {
-                viewModel.navigateTo("devices")
-            }
+            HaloGlassSettingRow("Glasses", uiState.deviceName, onClick = { viewModel.navigateTo("devices") })
             HaloGlassDivider()
-            SettingItem("Voice", "Not configured", clickable = true) {
-                comingSoonFeature = "Voice configuration"
-            }
+            HaloGlassSettingRow("Voice", "Not configured", onClick = { comingSoonFeature = "Voice configuration" })
             HaloGlassDivider()
-            SettingItem("Permissions", "Manage", clickable = true) {
-                viewModel.navigateTo("permissions")
-            }
+            HaloGlassSettingRow("Permissions", "Manage", onClick = { viewModel.navigateTo("permissions") })
             HaloGlassDivider()
-            SettingItem("Privacy", "Review", clickable = true) {
-                comingSoonFeature = "Privacy center"
-            }
+            HaloGlassSettingRow("Privacy", "Review", onClick = { comingSoonFeature = "Privacy center" })
             HaloGlassDivider()
-            SettingItem("Appearance", "Dark", clickable = true) {
-                comingSoonFeature = "Appearance settings"
-            }
+            HaloGlassSettingRow("Appearance", "Dark", onClick = { comingSoonFeature = "Appearance settings" })
         }
         
         // DIAGNOSTICS Section
         if (uiState.devMode) {
             HaloGlassSection(title = "DIAGNOSTICS") {
-                Column {
-                    SettingItem("Protocol Lab", "Open", clickable = true) {
-                        viewModel.navigateTo("protocol_lab")
-                    }
-                    HaloGlassDivider()
-                    SettingItem("Runtime Inspector", "Debug", clickable = true) {
-                        viewModel.navigateTo("inspector")
-                    }
-                    HaloGlassDivider()
-                    SettingItem("Console", "Inspect", clickable = true) {
-                        viewModel.navigateTo("console")
-                    }
-                }
+                HaloGlassSettingRow("Protocol Lab", "Open", onClick = { viewModel.navigateTo("protocol_lab") })
+                HaloGlassDivider()
+                HaloGlassSettingRow("Runtime Inspector", "Debug", onClick = { viewModel.navigateTo("inspector") })
+                HaloGlassDivider()
+                HaloGlassSettingRow("Console", "Inspect", onClick = { viewModel.navigateTo("console") })
             }
         }
 
         // SYSTEM Section
         HaloGlassSection(title = "SYSTEM") {
-            Row(
-                Modifier.fillMaxWidth().padding(vertical = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("Developer Mode", color = HaloGlassColors.TextPrimary, style = HaloTypography.bodyMedium)
-                Switch(
-                    checked = uiState.devMode,
-                    onCheckedChange = { viewModel.setDevMode(it) }
-                )
-            }
+            HaloGlassSettingRow(
+                title = "Developer Mode",
+                trailing = {
+                    Switch(
+                        checked = uiState.devMode,
+                        onCheckedChange = { viewModel.setDevMode(it) }
+                    )
+                }
+            )
         }
     }
 
@@ -131,33 +100,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
 }
 
 @Composable
-private fun SettingItem(
-    label: String, 
-    value: String, 
-    clickable: Boolean,
-    onClick: () -> Unit = {}
-) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .clickable(enabled = clickable) { onClick() }
-            .padding(vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(label, color = HaloGlassColors.TextPrimary, style = HaloTypography.bodyMedium)
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(value, color = HaloGlassColors.TextSecondary, style = HaloTypography.bodyMedium)
-            if (clickable) {
-                Spacer(Modifier.width(4.dp))
-                Icon(Icons.Default.ChevronRight, contentDescription = null, tint = HaloGlassColors.TextMuted)
-            }
-        }
-    }
-}
-
-@Composable
-fun PermissionsScreen() {
+fun PermissionsScreen(onBack: () -> Unit = {}) {
     val context = LocalContext.current
     
     val micGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
@@ -165,19 +108,10 @@ fun PermissionsScreen() {
     val btScanGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED
     val locationGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(HaloGlassColors.Background)
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp)
-            .padding(bottom = 160.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text(
-            "Permissions",
-            style = HaloTypography.displayMedium,
-            color = HaloGlassColors.TextPrimary
+    HaloGlassPage(title = "") {
+        HaloGlassBackHeader(
+            title = "Permissions",
+            onBack = onBack
         )
         Spacer(Modifier.height(8.dp))
         Text(

@@ -1,5 +1,6 @@
 package com.halo.app.ui.screens.home
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.halo.app.ui.glass.material.HaloRuntimeState
 import com.halo.sdk.runtime.*
@@ -75,10 +76,18 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
         } else {
             "No provider"
         }
+
+        val finalContextualText = if (sessionState != CognitiveSessionState.Idle) {
+            contextualText
+        } else if (!isConnected) {
+            "Glasses disconnected"
+        } else {
+            contextualText
+        }
         
         return HomeUiState(
             connectionState = if (isConnected) "Connected" else "Disconnected",
-            contextualText = if (!isConnected) "Glasses disconnected" else contextualText,
+            contextualText = finalContextualText,
             runtimeState = uiRuntimeState,
             recentEvents = snapshot.timeline.map { 
                 TimelinePreviewEvent(it.title, it.status, it.timestamp.toEpochMilli())
@@ -115,22 +124,26 @@ class HomeViewModel(
     )
 
     fun submitText(text: String) {
+        Log.d("HomeViewModel", "submitText: $text")
         viewModelScope.launch {
             cognitiveSession.submit(AiRequest(text = text))
         }
     }
     
     fun cancelSession() {
+        Log.d("HomeViewModel", "cancelSession")
         cognitiveSession.cancel()
     }
 
     fun startListening() {
+        Log.d("HomeViewModel", "startListening")
         viewModelScope.launch {
             commandBus.dispatch(StartListening)
         }
     }
     
     fun stopListening() {
+        Log.d("HomeViewModel", "stopListening")
         viewModelScope.launch {
             commandBus.dispatch(StopListening)
         }
@@ -140,12 +153,14 @@ class HomeViewModel(
     val navigationEvents: SharedFlow<String> = _navigationEvents.asSharedFlow()
 
     fun navigateToIntelligence() {
+        Log.d("HomeViewModel", "navigateToIntelligence")
         viewModelScope.launch {
             _navigationEvents.emit("ai_settings")
         }
     }
 
     fun navigateToDevices() {
+        Log.d("HomeViewModel", "navigateToDevices")
         viewModelScope.launch {
             _navigationEvents.emit("devices")
         }

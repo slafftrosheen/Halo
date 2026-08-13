@@ -37,7 +37,6 @@ fun HomeScreen(viewModel: HomeViewModel) {
             .background(HaloGlassColors.Background)
             .verticalScroll(rememberScrollState())
             .padding(24.dp)
-            .padding(bottom = 140.dp) // padding for navigation pill overlay
     ) {
         // TOP Header
         Row(
@@ -120,8 +119,6 @@ fun HomeScreen(viewModel: HomeViewModel) {
         }
 
         Spacer(modifier = Modifier.height(32.dp))
-
-        Spacer(modifier = Modifier.weight(1f))
 
         // TEXT INPUT SURFACE
         HaloGlassCard {

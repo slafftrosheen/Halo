@@ -22,31 +22,18 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 @Composable
-fun ProtocolLabScreen(viewModel: ProtocolLabViewModel) {
+fun ProtocolLabScreen(viewModel: ProtocolLabViewModel, onBack: () -> Unit = {}) {
     val state by viewModel.uiState.collectAsState()
     
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(HaloGlassColors.Background)
-    ) {
-        // Header
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text("Protocol Lab", color = HaloGlassColors.TextPrimary, style = HaloTypography.displayMedium)
+    com.halo.app.ui.glass.components.HaloGlassLazyPage(title = "") {
+        item {
+            com.halo.app.ui.glass.components.HaloGlassBackHeader(
+                title = "Protocol Lab",
+                onBack = onBack
+            )
         }
         
-        Box(modifier = Modifier.weight(1f)) {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = 32.dp)
-            ) {
-                // Connection Section
+        // Connection Section
                 item {
                     HaloGlassSection(
                         title = "Connection", 
@@ -256,8 +243,6 @@ fun ProtocolLabScreen(viewModel: ProtocolLabViewModel) {
                             }
                         }
                     }
-                }
-            }
         }
     }
 }

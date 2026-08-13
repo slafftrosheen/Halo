@@ -3,12 +3,11 @@ package com.halo.app.ui.glass.components
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.halo.app.ui.glass.material.HaloGlassColors
 import com.halo.app.ui.glass.material.HaloGlassMaterial
@@ -16,7 +15,7 @@ import com.halo.app.ui.glass.material.HaloGlassMaterials
 import com.halo.app.ui.glass.material.HaloGlassTokens
 
 /**
- * A glass section that groups content under a title.
+ * A glass section that groups content under a title with vertical layout.
  */
 @Composable
 fun HaloGlassSection(
@@ -31,25 +30,40 @@ fun HaloGlassSection(
         color = HaloGlassColors.TextSecondary
     ),
     spacing: Dp = HaloGlassTokens.md,
-    content: @Composable BoxScope.() -> Unit
+    content: @Composable ColumnScope.() -> Unit
 ) {
-    Column(modifier = modifier) {
+    Column(
+        modifier = modifier.fillMaxWidth()
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = HaloGlassTokens.md, vertical = HaloGlassTokens.sm),
-            horizontalArrangement = Arrangement.SpaceBetween
+                .padding(
+                    horizontal = HaloGlassTokens.md,
+                    vertical = HaloGlassTokens.sm
+                ),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = title.uppercase(), style = titleStyle)
+            Text(
+                text = title.uppercase(),
+                style = titleStyle
+            )
+
             trailing()
         }
-        
+
         HaloGlassSurface(
             modifier = surfaceModifier.fillMaxWidth(),
             material = material,
-            shape = HaloGlassTokens.mediumShape,
-            content = content
-        )
+            shape = HaloGlassTokens.mediumShape
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(spacing),
+                content = content
+            )
+        }
     }
 }
 
@@ -61,7 +75,7 @@ object HaloGlassSection {
     fun Standard(
         modifier: Modifier = Modifier,
         title: String,
-        content: @Composable BoxScope.() -> Unit
+        content: @Composable ColumnScope.() -> Unit
     ) {
         HaloGlassSection(
             modifier = modifier,
@@ -75,7 +89,7 @@ object HaloGlassSection {
     fun Background(
         modifier: Modifier = Modifier,
         title: String,
-        content: @Composable BoxScope.() -> Unit
+        content: @Composable ColumnScope.() -> Unit
     ) {
         HaloGlassSection(
             modifier = modifier,
@@ -89,7 +103,7 @@ object HaloGlassSection {
     fun Elevated(
         modifier: Modifier = Modifier,
         title: String,
-        content: @Composable BoxScope.() -> Unit
+        content: @Composable ColumnScope.() -> Unit
     ) {
         HaloGlassSection(
             modifier = modifier,
@@ -103,7 +117,7 @@ object HaloGlassSection {
     fun Strong(
         modifier: Modifier = Modifier,
         title: String,
-        content: @Composable BoxScope.() -> Unit
+        content: @Composable ColumnScope.() -> Unit
     ) {
         HaloGlassSection(
             modifier = modifier,

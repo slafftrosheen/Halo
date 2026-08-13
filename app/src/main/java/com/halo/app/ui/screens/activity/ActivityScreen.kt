@@ -26,20 +26,8 @@ import com.halo.sdk.runtime.RuntimeSnapshotSource
 fun ActivityScreen(viewModel: ActivityViewModel) {
     val uiState by viewModel.uiState.collectAsState()
     
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp),
-        contentPadding = PaddingValues(top = 16.dp, bottom = 120.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
+    HaloGlassLazyPage(title = "Activity") {
         item {
-            Text(
-                text = "Activity",
-                style = HaloTypography.displayMedium,
-                color = HaloGlassColors.TextPrimary
-            )
-            Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = "Cognitive timeline and runtime events",
                 style = HaloTypography.bodyMedium,

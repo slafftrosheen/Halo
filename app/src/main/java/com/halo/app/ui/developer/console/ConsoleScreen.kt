@@ -16,7 +16,7 @@ import com.halo.app.ui.glass.material.HaloGlassMaterials
 import com.halo.app.ui.glass.material.HaloTypography
 
 @Composable
-fun ConsoleScreen(viewModel: ConsoleViewModel) {
+fun ConsoleScreen(viewModel: ConsoleViewModel, onBack: () -> Unit = {}) {
     val uiState by viewModel.uiState.collectAsState()
 
     Column(
@@ -24,11 +24,16 @@ fun ConsoleScreen(viewModel: ConsoleViewModel) {
             .fillMaxSize()
             .background(HaloGlassColors.Background)
     ) {
+        HaloGlassBackHeader(
+            title = "Console",
+            onBack = onBack,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
         // Top Tabs
         Row(
             Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             ConsoleTab.values().forEachIndexed { index, tab ->

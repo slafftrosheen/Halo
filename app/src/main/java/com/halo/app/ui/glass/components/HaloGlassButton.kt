@@ -1,20 +1,21 @@
 package com.halo.app.ui.glass.components
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.halo.app.ui.glass.material.HaloGlassColors
 import com.halo.app.ui.glass.material.HaloGlassMaterial
 import com.halo.app.ui.glass.material.HaloGlassMaterials
 import com.halo.app.ui.glass.material.HaloGlassTokens
-import androidx.compose.foundation.gestures.detectTapGestures
 
 /**
  * Glass button component that replaces the legacy HaloButton.
@@ -30,7 +31,8 @@ fun HaloGlassButton(
     contentColor: Color = Color.Unspecified,
     material: HaloGlassMaterial = HaloGlassMaterials.Interactive
 ) {
-    var isPressed by remember { mutableStateOf(false) }
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
     
     // Determine colors
     val buttonContentColor = if (contentColor != Color.Unspecified) {
@@ -49,24 +51,16 @@ fun HaloGlassButton(
     
     HaloGlassSurface(
         modifier = modifier
+            .defaultMinSize(minWidth = 88.dp, minHeight = 48.dp)
             .clickable(
-                onClick = { if (enabled) onClick() },
-                enabled = enabled
-            )
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onPress = { 
-                        isPressed = true
-                        try {
-                            awaitRelease()
-                        } finally {
-                            isPressed = false
-                        }
-                    }
-                )
-            },
+                interactionSource = interactionSource,
+                indication = null,
+                enabled = enabled,
+                onClick = onClick
+            ),
         material = material.copy(
-            containerColor = buttonContainerColor
+            containerColor = buttonContainerColor,
+            elevation = if (isPressed) 2.dp else material.elevation
         ),
         shape = HaloGlassTokens.pillShape
     ) {
@@ -74,7 +68,7 @@ fun HaloGlassButton(
             modifier = Modifier
                 .padding(
                     horizontal = HaloGlassTokens.md,
-                    vertical = HaloGlassTokens.xs
+                    vertical = 8.dp
                 )
                 .align(Alignment.Center)
         ) {

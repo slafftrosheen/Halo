@@ -1,5 +1,6 @@
 package com.halo.app.ui.glass.components
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -41,12 +42,26 @@ fun HaloGlassNavigation(
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
+    val currentRoute = currentDestination?.route
+
+    fun getPrimaryRoute(route: String?): String? {
+        return when (route) {
+            "ai_settings", "permissions", "protocol_lab", "console", "inspector" -> "settings"
+            "discovery" -> "devices"
+            else -> route
+        }
+    }
 
     Box(
         modifier = modifier
             .fillMaxWidth()
             .navigationBarsPadding()
-            .padding(bottom = 24.dp, start = 24.dp, end = 24.dp),
+            .padding(
+                start = 24.dp,
+                end = 24.dp,
+                top = 8.dp,
+                bottom = 12.dp
+            ),
         contentAlignment = Alignment.BottomCenter
     ) {
         Row(
@@ -60,12 +75,15 @@ fun HaloGlassNavigation(
             verticalAlignment = Alignment.CenterVertically
         ) {
             items.forEach { item ->
-                val selected = currentDestination?.hierarchy?.any { it.route == item.route } == true
+                val isDirectMatch = currentDestination?.hierarchy?.any { it.route == item.route } == true
+                val isPrimaryMatch = getPrimaryRoute(currentRoute) == item.route
+                val selected = isDirectMatch || isPrimaryMatch
                 
                 Column(
                     modifier = Modifier
                         .weight(1f)
                         .clickable {
+                            Log.d("HaloGlassNavigation", "Navigating to: ${item.route}")
                             navController.navigate(item.route) {
                                 popUpTo(navController.graph.findStartDestination().id) {
                                     saveState = true
