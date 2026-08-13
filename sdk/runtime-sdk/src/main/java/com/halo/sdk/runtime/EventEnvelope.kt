@@ -6,7 +6,7 @@ data class EventEnvelope<T : HaloEvent>(
     val event: T,
     val createdAt: Long,
     val sourceEngine: EngineId,
-    val correlationId: UUID?,
+    val intentId: UUID?,
     val parentId: EventId?,
     val traceId: String?,
     val spanId: String?,

@@ -19,7 +19,7 @@ class RecordingEventBus(
             event = event,
             createdAt = System.currentTimeMillis(),
             sourceEngine = EngineId("unknown"),
-            correlationId = null,
+            intentId = null,
             parentId = null,
             traceId = null,
             spanId = null,
