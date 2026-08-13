@@ -43,9 +43,12 @@ class HaloRuntime(
         graph.reasoningEngine.start()
 
         /*
-         * Planning/execution orchestration
+         * Planning and execution engines
          */
-        graph.runtimeOrchestrator.start()
+        graph.planningEngine.initialize(graph.engineContext)
+        graph.executionEngine.initialize(graph.engineContext)
+        graph.planningEngine.start()
+        graph.executionEngine.start()
 
         /*
          * Audio perception
@@ -56,10 +59,6 @@ class HaloRuntime(
 
         graph.audioPerceptionEngine.start()
 
-        /*
-         * AI Handoff
-         */
-        graph.aiHandoffOrchestrator.start()
 
         /*
          * Kernel
@@ -81,9 +80,12 @@ class HaloRuntime(
         graph.audioPerceptionEngine.stop()
 
         /*
-         * Stop orchestration.
+         * Stop execution and planning.
          */
-        graph.runtimeOrchestrator.stop()
+        graph.executionEngine.stop()
+        graph.executionEngine.dispose()
+        graph.planningEngine.stop()
+        graph.planningEngine.dispose()
 
         /*
          * Stop cognition.

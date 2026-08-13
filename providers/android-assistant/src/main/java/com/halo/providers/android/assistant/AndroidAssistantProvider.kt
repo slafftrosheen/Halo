@@ -19,6 +19,7 @@ class AndroidAssistantProvider(
 
     override val id: String = "android.system.assistant"
     override val displayName: String = "Phone Assistant"
+    override val isLocal: Boolean = true
 
     private val _status = MutableStateFlow(ProviderStatus.READY)
     override val status: StateFlow<ProviderStatus> = _status.asStateFlow()

@@ -1,5 +1,6 @@
 package com.halo.engines.ai
 
+import com.halo.sdk.provider.AiContextPolicy
 import org.junit.Assert.*
 import org.junit.Test
 

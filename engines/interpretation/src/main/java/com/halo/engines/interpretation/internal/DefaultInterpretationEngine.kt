@@ -18,7 +18,7 @@ import com.halo.runtime.cognition.blackboard.InterpretationKnowledge
 import com.halo.runtime.cognition.blackboard.Knowledge
 import com.halo.runtime.cognition.blackboard.KnowledgeId
 import com.halo.runtime.cognition.blackboard.KnowledgeSource
-import com.halo.runtime.cognition.blackboard.ObservationPayload
+import com.halo.runtime.cognition.blackboard.ObservationKnowledge
 import com.halo.runtime.cognition.blackboard.SpeechKnowledge
 import com.halo.runtime.cognition.context.ContextAssembler
 import com.halo.runtime.services.Services
@@ -189,7 +189,7 @@ open class DefaultInterpretationEngine(
 
     private fun Observation.asKnowledge(): Knowledge = Knowledge(
         id = KnowledgeId(UUID.randomUUID().toString()),
-        payload = ObservationPayload(this),
+        payload = ObservationKnowledge(this),
         confidence = Confidence(
             lexical = confidence,
             contextual = 1f,
@@ -200,6 +200,7 @@ open class DefaultInterpretationEngine(
             Source.CAMERA -> KnowledgeSource.CAMERA
             Source.GPS -> KnowledgeSource.GPS
             Source.USER -> KnowledgeSource.USER
+            Source.ROBOT,
             Source.BLUETOOTH,
             Source.OS,
             Source.SYSTEM -> KnowledgeSource.SENSOR

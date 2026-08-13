@@ -126,11 +126,15 @@ class OllamaProvider(
             try {
                 client.newCall(httpRequest).execute().use { response ->
                     if (!response.isSuccessful) {
-                        throw IOException("Unexpected code $response")
+                        val errorType = when (response.code) {
+                            404 -> AiErrorType.MODEL_UNAVAILABLE
+                            else -> AiErrorType.LOCAL_MODEL_UNAVAILABLE
+                        }
+                        throw AiProviderException(errorType, "Ollama error: ${response.code}")
                     }
-                    val json = response.body?.string() ?: throw IOException("Empty body")
+                    val json = response.body?.string() ?: throw AiProviderException(AiErrorType.INVALID_RESPONSE, "Empty body")
                     val ollamaResponse = generateResponseAdapter.fromJson(json) 
-                        ?: throw IOException("Failed to parse response")
+                        ?: throw AiProviderException(AiErrorType.INVALID_RESPONSE, "Failed to parse response")
 
                     AIResponseLegacy(
                         text = ollamaResponse.response,
@@ -140,12 +144,8 @@ class OllamaProvider(
                 }
             } catch (e: Exception) {
                 if (e is kotlinx.coroutines.CancellationException) throw e
-                Log.e(TAG, "Completion failed", e)
-                AIResponseLegacy(
-                    text = "Error: ${e.message}",
-                    finishReason = "error",
-                    latencyMs = System.currentTimeMillis() - startTime
-                )
+                if (e is AiProviderException) throw e
+                throw AiProviderException(AiErrorType.LOCAL_MODEL_UNAVAILABLE, "Ollama completion failed", e)
             }
         }
     }
@@ -165,9 +165,15 @@ class OllamaProvider(
 
         try {
             client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) throw IOException("Unexpected code $response")
+                if (!response.isSuccessful) {
+                    val errorType = when (response.code) {
+                        404 -> AiErrorType.MODEL_UNAVAILABLE
+                        else -> AiErrorType.LOCAL_MODEL_UNAVAILABLE
+                    }
+                    throw AiProviderException(errorType, "Ollama error: ${response.code}")
+                }
 
-                val source = response.body?.source() ?: throw IOException("Empty body")
+                val source = response.body?.source() ?: throw AiProviderException(AiErrorType.INVALID_RESPONSE, "Empty body")
                 while (!source.exhausted()) {
                     currentCoroutineContext().ensureActive()
                     val line = source.readUtf8LineStrict()
@@ -188,8 +194,8 @@ class OllamaProvider(
             }
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
-            Log.e(TAG, "Streaming failed", e)
-            throw e
+            if (e is AiProviderException) throw e
+            throw AiProviderException(AiErrorType.LOCAL_MODEL_UNAVAILABLE, "Ollama stream failed", e)
         }
     }.flowOn(Dispatchers.IO)
 

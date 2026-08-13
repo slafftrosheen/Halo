@@ -20,6 +20,8 @@ import com.halo.app.ui.glass.components.NavigationItem
 import com.halo.app.ui.screens.home.HomeScreen
 import com.halo.app.ui.screens.activity.ActivityScreen
 import com.halo.app.ui.screens.devices.DevicesScreen
+import com.halo.app.ui.screens.devices.HeyCyanControlScreen
+import com.halo.app.ui.screens.devices.BuddyBotControlScreen
 import com.halo.app.ui.screens.settings.SettingsScreen
 import com.halo.app.ui.screens.settings.IntelligenceScreen
 import com.halo.app.ui.developer.protocol.ProtocolLabScreen
@@ -129,6 +131,18 @@ fun AppShell() {
                 }
                 composable(Screen.Devices.route) {
                     DevicesScreen(viewModel = ManualDependencyGraph.devicesViewModel)
+                }
+                composable("device/heycyan") {
+                    HeyCyanControlScreen(
+                        viewModel = ManualDependencyGraph.devicesViewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable("device/buddybot") {
+                    BuddyBotControlScreen(
+                        viewModel = ManualDependencyGraph.devicesViewModel,
+                        onBack = { navController.popBackStack() }
+                    )
                 }
                 composable(Screen.Settings.route) {
                     SettingsScreen(viewModel = ManualDependencyGraph.settingsViewModel)

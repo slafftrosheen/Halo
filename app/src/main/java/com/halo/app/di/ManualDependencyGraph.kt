@@ -68,14 +68,7 @@ object ManualDependencyGraph {
     val aiEngine get() = engineGraph.aiEngine
     val aiProviderRouter get() = engineGraph.aiProviderRouter
     val reflectionEngine get() = engineGraph.reflectionEngine
-    val runtimeOrchestrator get() = engineGraph.runtimeOrchestrator
-    val aiHandoffOrchestrator by lazy {
-        com.halo.app.runtime.AiHandoffOrchestrator(
-            infra.eventBus,
-            aiProviderRouter,
-            infra.scope
-        )
-    }
+
     val speechSessionManager get() = engineGraph.speechSessionManager
     val speechPerceptionBridge get() = engineGraph.speechPerceptionBridge
 

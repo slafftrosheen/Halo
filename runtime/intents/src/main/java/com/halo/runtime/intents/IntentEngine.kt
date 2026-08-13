@@ -44,7 +44,6 @@ class IntentEngine(
             eventBus.observe(SpeechRecognized::class.java).collect {
                 val intent = parser.parse(it.text)
                 eventBus.publish(IntentRecognized(timestamp = System.currentTimeMillis(), intent = intent))
-                pluginManager.dispatch(intent)
             }
         }
     }

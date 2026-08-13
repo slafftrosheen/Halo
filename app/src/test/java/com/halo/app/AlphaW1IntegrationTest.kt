@@ -4,12 +4,14 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.halo.app.di.ManualDependencyGraph
 import com.halo.sdk.runtime.ObservationCreated
-import com.halo.sdk.runtime.OutcomePublished
+import com.halo.runtime.cognition.OutcomePublished
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
+import kotlinx.coroutines.CoroutineStart
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -64,8 +66,16 @@ class AlphaW1IntegrationTest {
         graph.audioPerceptionEngine.initialize(context)
         graph.audioPerceptionEngine.start()
         
-        // Ensure the orchestrator is started (happens in graph by lazy)
-        val orchestrator = graph.runtimeOrchestrator
+        val engineGraph = graph.engineGraph
+        engineGraph.interpretationEngine.initialize(context)
+        engineGraph.reasoningEngine.initialize(context)
+        engineGraph.planningEngine.initialize(context)
+        engineGraph.executionEngine.initialize(context)
+        
+        engineGraph.interpretationEngine.start()
+        engineGraph.reasoningEngine.start()
+        engineGraph.planningEngine.start()
+        engineGraph.executionEngine.start()
         
         delay(100)
 
@@ -73,7 +83,7 @@ class AlphaW1IntegrationTest {
         val eventBus = graph.eventBus
         
         // Listen for OutcomePublished
-        val outcomeDeferred = launch {
+        val outcomeDeferred = async(start = CoroutineStart.UNDISPATCHED) {
             val outcomeEvent = eventBus.observe(OutcomePublished::class.java).first()
             assertTrue(outcomeEvent.outcome.contains("Success") || outcomeEvent.outcome.contains("Failure"))
         }
@@ -90,9 +100,13 @@ class AlphaW1IntegrationTest {
         eventBus.publish(ObservationCreated(observation = observation))
         
         // 4. Wait for OutcomePublished
-        outcomeDeferred.join()
+        outcomeDeferred.await()
         
         graph.audioPerceptionEngine.stop()
+        engineGraph.interpretationEngine.stop()
+        engineGraph.reasoningEngine.stop()
+        engineGraph.planningEngine.stop()
+        engineGraph.executionEngine.stop()
         }
     }
 }

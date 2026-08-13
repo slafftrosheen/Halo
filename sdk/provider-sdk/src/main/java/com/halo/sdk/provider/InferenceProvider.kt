@@ -21,6 +21,7 @@ interface InferenceProvider : AiProvider {
 
     override val id: String get() = metadata.id
     override val displayName: String get() = metadata.displayName
+    override val isLocal: Boolean get() = metadata.local
 
     override suspend fun getStatus(): ProviderStatus {
         return if (health()) ProviderStatus.READY else ProviderStatus.UNAVAILABLE

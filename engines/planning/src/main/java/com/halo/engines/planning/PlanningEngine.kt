@@ -19,6 +19,17 @@ import com.halo.runtime.cognition.NavigationTask
 import com.halo.runtime.cognition.SystemTask
 import com.halo.runtime.cognition.Task
 import com.halo.runtime.cognition.WebTask
+import com.halo.sdk.runtime.*
+import com.halo.libraries.common.core.Identifier
+import com.halo.libraries.common.core.Version
+import com.halo.runtime.cognition.GoalCreated
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 
 /**
  * Deterministic Goal -> ExecutionPlan compiler.
@@ -34,7 +45,90 @@ import com.halo.runtime.cognition.WebTask
  *   - call an LLM
  *   - publish execution results
  */
-class PlanningEngine {
+import com.halo.runtime.cognition.blackboard.Blackboard
+import com.halo.runtime.cognition.blackboard.Knowledge
+import com.halo.runtime.cognition.blackboard.KnowledgeId
+import com.halo.runtime.cognition.blackboard.KnowledgeSource
+import com.halo.runtime.cognition.blackboard.PlanKnowledge
+import kotlinx.datetime.Clock
+
+class PlanningEngine(
+    private val eventBus: EventBus,
+    private val blackboard: Blackboard
+) : Engine {
+
+    override val metadata = EngineMetadata(
+        id = Identifier("engine.planning.core"),
+        version = Version(1, 0, 0),
+        description = "Core Deterministic Planning Engine"
+    )
+
+    private val _health = MutableStateFlow(EngineHealth.Healthy)
+    override val health: StateFlow<EngineHealth> = _health
+
+    private val _state = MutableStateFlow<EngineState>(EngineState.Created)
+    override val state: StateFlow<EngineState> = _state
+
+    override val dependencies: Set<ServiceKey<*>> = emptySet()
+
+    private var context: EngineContext? = null
+    private var job: Job? = null
+
+    override suspend fun initialize(context: EngineContext) {
+        this.context = context
+        _state.value = EngineState.Initializing
+    }
+
+    override suspend fun start() {
+        if (job?.isActive == true) return
+        
+        val runtimeContext = requireNotNull(context)
+        _state.value = EngineState.Running
+        
+        job = CoroutineScope(runtimeContext.runtime.scheduler.compute).launch {
+            eventBus.observe(GoalCreated::class.java).collect { event ->
+                try {
+                    val goal = event.goal
+                    if (goal != null) {
+                        val plan = createPlan(goal)
+                        
+                        // Publish to Blackboard
+                        blackboard.publish(
+                            Knowledge(
+                                id = KnowledgeId(plan.id.toString()),
+                                payload = PlanKnowledge(plan),
+                                confidence = com.halo.runtime.cognition.blackboard.Confidence(1.0f, 1.0f, 1.0f),
+                                source = KnowledgeSource.RULE,
+                                createdAt = Clock.System.now()
+                            )
+                        )
+                        eventBus.publish(PlanGenerated(id = java.util.UUID.randomUUID().toString(), planId = plan.id.toString()))
+                    }
+                } catch (e: Exception) {
+                    runtimeContext.runtime.logger.error("planning", "Failed to generate plan for goal", e)
+                }
+            }
+        }
+    }
+
+    override suspend fun stop() {
+        withContext(NonCancellable) {
+            job?.cancel()
+            job = null
+            if (_state.value != EngineState.Disposed) {
+                _state.value = EngineState.Stopped
+            }
+        }
+    }
+
+    override suspend fun dispose() {
+        withContext(NonCancellable) {
+            job?.cancel()
+            job = null
+            context = null
+            _state.value = EngineState.Disposed
+        }
+    }
 
     fun createPlan(goal: Goal): ExecutionPlan {
         val task = createTask(goal)
@@ -120,14 +214,6 @@ class PlanningEngine {
         }
     }
 
-    /**
-     * Planning must not invent an executable command for an unsupported
-     * semantic goal.
-     *
-     * A SystemTask with a textual "Execute Goal..." command is dangerous
-     * because it looks executable while containing no actual capability
-     * contract.
-     */
     private fun unsupportedGoal(goal: Goal): SystemTask {
         return SystemTask(
             command = "UNSUPPORTED_GOAL:${goal.type}"

@@ -1,8 +1,6 @@
 package com.halo.app.di
 
 import android.content.Context
-import com.halo.engines.agents.RecoveryPolicy
-import com.halo.engines.agents.RuntimeOrchestrator
 import com.halo.engines.execution.ExecutionEngine
 import com.halo.engines.execution.service.ExecutionScheduler
 import com.halo.engines.execution.service.CapabilityRegistry
@@ -17,9 +15,12 @@ import com.halo.engines.reasoning.ReasoningEngine
 import com.halo.engines.reasoning.service.GoalManager
 import com.halo.engines.reasoning.strategy.DefaultReasoningStrategy
 import com.halo.host.android.capability.AndroidApplicationCapability
-import com.halo.host.android.capability.AndroidDeviceCapability
 import com.halo.host.android.capability.AndroidMediaCapability
 import com.halo.host.android.capability.AndroidNavigationCapability
+import com.halo.engines.execution.capability.LocomotionCapability
+import com.halo.engines.execution.capability.CameraCapability
+import com.halo.sdk.runtime.embodiment.BuddyBotGateway
+import com.halo.sdk.runtime.embodiment.HeyCyanGateway
 import com.halo.app.capability.HeyCyanCapabilityBridge
 import com.halo.runtime.speech.SpeechPerceptionBridge
 import com.halo.runtime.speech.SpeechSessionManager
@@ -38,7 +39,12 @@ class EngineGraph(
 
     val capabilityRegistry by lazy {
         CapabilityRegistry().apply {
-            register(AndroidDeviceCapability(applicationContext))
+            val buddyBotGateway = BuddyBotGateway(infra.eventBus)
+            val heyCyanGateway = HeyCyanGateway(infra.eventBus)
+
+            register(LocomotionCapability(buddyBotGateway))
+            register(CameraCapability(heyCyanGateway))
+
             register(AndroidApplicationCapability(applicationContext))
             register(AndroidMediaCapability(applicationContext))
             register(AndroidNavigationCapability(applicationContext))
@@ -52,15 +58,19 @@ class EngineGraph(
     }
 
     val executionScheduler by lazy { ExecutionScheduler(capabilityRegistry) }
-    val executionEngine by lazy { ExecutionEngine(executionScheduler) }
-    val planningEngine by lazy { PlanningEngine() }
+    val executionEngine by lazy { ExecutionEngine(executionScheduler, infra.eventBus, infra.blackboard) }
+    val planningEngine by lazy { PlanningEngine(infra.eventBus, infra.blackboard) }
 
     val interpretationEngine by lazy {
         InterpretationEngine(infra.blackboard, infra.eventBus)
     }
 
-    val reasoningStrategy by lazy {
+    val defaultReasoningStrategy by lazy {
         DefaultReasoningStrategy(goalManager)
+    }
+
+    val reasoningStrategy by lazy {
+        com.halo.engines.reasoning.strategy.LlmReasoningStrategy(aiProviderRouter, goalManager, defaultReasoningStrategy)
     }
 
     val reasoningEngine by lazy {
@@ -73,14 +83,6 @@ class EngineGraph(
 
     val reflectionEngine by lazy { ReflectionEngine(EpisodicMemoryStore()) }
 
-    val runtimeOrchestrator by lazy {
-        RuntimeOrchestrator(
-            planningEngine = planningEngine,
-            executionEngine = executionEngine,
-            reflectionEngine = reflectionEngine,
-            eventBus = infra.eventBus
-        )
-    }
 
     val speechSessionManager by lazy {
         SpeechSessionManager(infra.eventBus, infra.commandBus, infra.scope)

@@ -36,7 +36,8 @@ data class DeviceTask(
     override val fallbackTasks: List<Task> = emptyList(),
     override val dependencies: List<Task> = emptyList(),
     override val isParallel: Boolean = false,
-    val action: String
+    val action: String,
+    val parameters: Map<String, String> = emptyMap()
 ) : Task
 
 data class ApplicationTask(

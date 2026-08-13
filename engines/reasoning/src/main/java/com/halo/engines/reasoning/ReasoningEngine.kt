@@ -34,7 +34,7 @@ import kotlinx.coroutines.withContext
  *         GoalCreated
  */
 class ReasoningEngine(
-    private val strategy: DefaultReasoningStrategy,
+    private val strategy: com.halo.engines.reasoning.strategy.LlmReasoningStrategy,
     private val blackboard: Blackboard,
     private val eventBus: EventBus
 ) : Engine {

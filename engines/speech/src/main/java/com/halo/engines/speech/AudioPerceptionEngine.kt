@@ -138,9 +138,21 @@ class AudioPerceptionEngine(
                 audioSource.state.collect { sourceState ->
                     when (sourceState) {
                         AudioSourceState.ACTIVE -> {
+                            val obs = Observation(
+                                modality = Modality.AUDIO,
+                                source = Source.MICROPHONE,
+                                payload = AudioObservationPayload(energy = 1.0f, isSpeechActive = true)
+                            )
+                            eventBus.publish(ObservationUpdated(observation = obs))
                             eventBus.publish(ListeningStarted())
                         }
                         AudioSourceState.IDLE -> {
+                            val obs = Observation(
+                                modality = Modality.AUDIO,
+                                source = Source.MICROPHONE,
+                                payload = AudioObservationPayload(energy = 0.0f, isSpeechActive = false)
+                            )
+                            eventBus.publish(ObservationUpdated(observation = obs))
                             // When source goes idle, we stop pipeline and signal end of capture
                             eventBus.publish(SpeechEnded())
                             // Transition to thinking/processing

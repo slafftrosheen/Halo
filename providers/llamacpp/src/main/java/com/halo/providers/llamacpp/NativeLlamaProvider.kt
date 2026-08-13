@@ -100,7 +100,8 @@ class NativeLlamaProvider(
                 AIResponseLegacy(result, "stop", System.currentTimeMillis() - startTime)
             } catch (e: Exception) {
                 if (e is kotlinx.coroutines.CancellationException) throw e
-                AIResponseLegacy("", "error", System.currentTimeMillis() - startTime)
+                if (e is AiProviderException) throw e
+                throw AiProviderException(AiErrorType.LOCAL_MODEL_UNAVAILABLE, "Native Llama completion failed", e)
             }
         }
     }
@@ -112,7 +113,7 @@ class NativeLlamaProvider(
     }
 
     private fun streamInternal(prompt: String): Flow<String> = flow {
-        if (!loadModelIfNeeded()) throw IllegalStateException("Engine not loaded")
+        if (!loadModelIfNeeded()) throw AiProviderException(AiErrorType.LOCAL_MODEL_UNAVAILABLE, "Native engine not loaded")
 
         val currentEngine = engine ?: return@flow
         try {
@@ -127,7 +128,8 @@ class NativeLlamaProvider(
             }
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
-            throw e
+            if (e is AiProviderException) throw e
+            throw AiProviderException(AiErrorType.LOCAL_MODEL_UNAVAILABLE, "Native Llama streaming failed", e)
         }
     }
 

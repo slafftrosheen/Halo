@@ -25,6 +25,7 @@ class OpenRouterProvider(
 
     override val id: String = "openrouter"
     override val displayName: String = "OpenRouter"
+    override val isLocal: Boolean = false
 
     private val _status = MutableStateFlow(ProviderStatus.UNCONFIGURED)
     override val status: StateFlow<ProviderStatus> = _status.asStateFlow()
@@ -50,7 +51,7 @@ class OpenRouterProvider(
     )
 
     override suspend fun generate(request: AiRequest, context: AiContext): AiResponse = withContext(Dispatchers.IO) {
-        val key = apiKey ?: throw IllegalStateException("OpenRouter API key not configured")
+        val key = apiKey ?: throw AiProviderException(AiErrorType.AUTHENTICATION_FAILED, "OpenRouter API key not configured")
         
         val modelId = request.modelId ?: selectedModelId
         val actualModel = resolveModel(modelId)
@@ -65,14 +66,19 @@ class OpenRouterProvider(
             .post(body)
             .build()
 
-        client.newCall(httpRequest).execute().use { response ->
-            if (!response.isSuccessful) {
-                val errorBody = response.body?.string()
-                Log.e("OpenRouter", "API Error: ${response.code} $errorBody")
-                throw RuntimeException("OpenRouter API error: ${response.code}")
-            }
-            
-            val responseBody = response.body?.string() ?: throw RuntimeException("Empty response")
+        try {
+            client.newCall(httpRequest).execute().use { response ->
+                if (!response.isSuccessful) {
+                    val errorType = when (response.code) {
+                        401, 403 -> AiErrorType.AUTHENTICATION_FAILED
+                        429 -> AiErrorType.RATE_LIMITED
+                        500, 502, 503, 504 -> AiErrorType.PROVIDER_UNAVAILABLE
+                        else -> AiErrorType.UNKNOWN_ERROR
+                    }
+                    throw AiProviderException(errorType, "OpenRouter API error: ${response.code}")
+                }
+                
+                val responseBody = response.body?.string() ?: throw AiProviderException(AiErrorType.INVALID_RESPONSE, "Empty response")
             val responseJson = JSONObject(responseBody)
             val choices = responseJson.getJSONArray("choices")
             val firstChoice = choices.getJSONObject(0)
@@ -104,10 +110,17 @@ class OpenRouterProvider(
                 modelId = responseJson.optString("model", actualModel)
             )
         }
+        } catch (e: java.net.SocketTimeoutException) {
+            throw AiProviderException(AiErrorType.TIMEOUT, "Request timed out", e)
+        } catch (e: java.net.UnknownHostException) {
+            throw AiProviderException(AiErrorType.NETWORK_UNAVAILABLE, "Network unavailable", e)
+        } catch (e: org.json.JSONException) {
+            throw AiProviderException(AiErrorType.INVALID_RESPONSE, "Failed to parse JSON response", e)
+        }
     }
 
     override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = flow {
-        val key = apiKey ?: throw IllegalStateException("OpenRouter API key not configured")
+        val key = apiKey ?: throw AiProviderException(AiErrorType.AUTHENTICATION_FAILED, "OpenRouter API key not configured")
         emit(AiStreamEvent.Started)
         
         val modelId = request.modelId ?: selectedModelId

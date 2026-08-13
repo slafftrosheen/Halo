@@ -9,11 +9,15 @@ import com.halo.runtime.services.Services
 import com.halo.runtime.cognition.blackboard.Blackboard
 import com.halo.engines.execution.service.ExecutionScheduler
 import com.halo.runtime.cognition.ExecutionContext
+import com.halo.runtime.cognition.OutcomePublished
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 
 /**
  * ExecutionEngine acts as the single deterministic driver for physical and digital actions in the Alpha Runtime.
@@ -25,8 +29,80 @@ import kotlinx.coroutines.launch
  *   (e.g., `AndroidDeviceCapability`) is provided by the host layer and injected into the [CapabilityRegistry].
  */
 class ExecutionEngine(
-    private val scheduler: ExecutionScheduler
-) {
+    private val scheduler: ExecutionScheduler,
+    private val eventBus: EventBus,
+    private val blackboard: Blackboard
+) : Engine {
+
+    override val metadata = EngineMetadata(
+        id = Identifier("engine.execution.core"),
+        version = Version(1, 0, 0),
+        description = "Core Deterministic Execution Engine"
+    )
+
+    private val _health = MutableStateFlow(EngineHealth.Healthy)
+    override val health: StateFlow<EngineHealth> = _health
+
+    private val _state = MutableStateFlow<EngineState>(EngineState.Created)
+    override val state: StateFlow<EngineState> = _state
+
+    override val dependencies: Set<ServiceKey<*>> = emptySet()
+
+    private var context: EngineContext? = null
+    private var job: Job? = null
+
+    override suspend fun initialize(context: EngineContext) {
+        this.context = context
+        _state.value = EngineState.Initializing
+    }
+
+    override suspend fun start() {
+        if (job?.isActive == true) return
+        
+        val runtimeContext = requireNotNull(context)
+        _state.value = EngineState.Running
+        
+        job = CoroutineScope(runtimeContext.runtime.scheduler.io).launch {
+            eventBus.observe(PlanGenerated::class.java).collect { event ->
+                try {
+                    val planKnowledge = blackboard.latest(com.halo.runtime.cognition.blackboard.PlanKnowledge::class)
+                    val plan = (planKnowledge?.payload as? com.halo.runtime.cognition.blackboard.PlanKnowledge)?.plan
+                    
+                    if (plan != null) {
+                        eventBus.publish(ExecutionStarted(id = java.util.UUID.randomUUID().toString(), planId = event.planId))
+                        val outcome = executePlan(plan)
+                        eventBus.publish(ExecutionFinished(id = java.util.UUID.randomUUID().toString(), planId = event.planId))
+                        eventBus.publish(OutcomePublished(outcome = outcome::class.simpleName ?: "Unknown"))
+                    }
+                } catch (e: Exception) {
+                    runtimeContext.runtime.logger.error("execution", "Failed to execute plan", e)
+                    val outcome = Outcome.PermanentFailure("Execution failed: ${e.message}", e)
+                    eventBus.publish(ExecutionFinished(id = java.util.UUID.randomUUID().toString(), planId = event.planId))
+                    eventBus.publish(OutcomePublished(outcome = outcome::class.simpleName ?: "PermanentFailure"))
+                }
+            }
+        }
+    }
+
+    override suspend fun stop() {
+        withContext(NonCancellable) {
+            job?.cancel()
+            job = null
+            if (_state.value != EngineState.Disposed) {
+                _state.value = EngineState.Stopped
+            }
+        }
+    }
+
+    override suspend fun dispose() {
+        withContext(NonCancellable) {
+            job?.cancel()
+            job = null
+            context = null
+            _state.value = EngineState.Disposed
+        }
+    }
+
     suspend fun executePlan(plan: ExecutionPlan): Outcome {
         var finalOutcome: Outcome = Outcome.Success("Plan executed successfully")
         

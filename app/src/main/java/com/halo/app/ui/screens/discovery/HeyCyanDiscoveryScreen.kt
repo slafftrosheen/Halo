@@ -1,6 +1,7 @@
 package com.halo.app.ui.screens.discovery
 
 import android.content.Context
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,9 +12,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -26,6 +24,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.halo.app.ui.glass.components.HaloGlassButton
+import com.halo.app.ui.glass.components.HaloGlassCard
+import com.halo.app.ui.glass.material.HaloGlassColors
+import com.halo.app.ui.glass.material.HaloGlassMaterials
+import com.halo.app.ui.glass.material.HaloTypography
 import com.halo.drivers.heycyan.HeyCyanDiscoverySession
 import com.halo.drivers.heycyan.CaptureScenario
 import com.halo.drivers.heycyan.ble.DiscoveredBleDevice
@@ -52,45 +55,52 @@ fun HeyCyanDiscoveryScreen(context: Context) {
     }
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(HaloGlassColors.Background)
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text("BLE PROTOCOL DISCOVERY", style = MaterialTheme.typography.headlineSmall)
-        Text("Raw BLE evidence collection. The selected device is not assumed to be HeyCyan. No protocol commands are sent.")
+        Text("BLE PROTOCOL DISCOVERY", style = HaloTypography.headlineMedium, color = HaloGlassColors.TextPrimary)
+        Text("Raw BLE evidence collection. The selected device is not assumed to be HeyCyan. No protocol commands are sent.", color = HaloGlassColors.TextSecondary, style = HaloTypography.bodyMedium)
 
-        Text("Scenario: ${selectedScenario.label}", style = MaterialTheme.typography.titleMedium)
-        Text(selectedScenario.instructions, style = MaterialTheme.typography.bodySmall)
+        Text("Scenario: ${selectedScenario.label}", style = HaloTypography.titleMedium, color = HaloGlassColors.TextPrimary)
+        Text(selectedScenario.instructions, style = HaloTypography.bodySmall, color = HaloGlassColors.TextSecondary)
         LazyColumn(
             modifier = Modifier.height(110.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(CaptureScenario.entries, key = { it.id }) { scenario ->
-                Button(
+                HaloGlassButton(
+                    text = scenario.label,
                     enabled = state == DriverState.Disconnected,
-                    onClick = { selectedScenario = scenario }
-                ) {
-                    Text(scenario.label)
-                }
+                    onClick = { selectedScenario = scenario },
+                    material = if (selectedScenario == scenario) HaloGlassMaterials.Interactive.copy(containerColor = HaloGlassColors.Accent.copy(alpha = 0.2f)) else HaloGlassMaterials.Interactive
+                )
             }
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = {
-                devices.clear()
-                session.clearSelection()
-                message = "Scanning..."
-                scanJob?.cancel()
-                scanJob = scope.launch {
-                    runCatching {
-                        session.scan().collect { device ->
-                            if (devices.none { it.advertisement.address == device.advertisement.address }) {
-                                devices += device
+            HaloGlassButton(
+                text = "Scan",
+                onClick = {
+                    devices.clear()
+                    session.clearSelection()
+                    message = "Scanning..."
+                    scanJob?.cancel()
+                    scanJob = scope.launch {
+                        runCatching {
+                            session.scan().collect { device ->
+                                if (devices.none { it.advertisement.address == device.advertisement.address }) {
+                                    devices += device
+                                }
                             }
-                        }
-                    }.onFailure { message = it.message }
+                        }.onFailure { message = it.message }
+                    }
                 }
-            }) { Text("Scan") }
-            Button(
+            )
+            HaloGlassButton(
+                text = "Connect",
                 enabled = selectedAddress != null && state is DriverState.Disconnected,
                 onClick = {
                     scope.launch {
@@ -104,8 +114,9 @@ fun HeyCyanDiscoveryScreen(context: Context) {
                             .onFailure { message = it.message }
                     }
                 }
-            ) { Text("Connect") }
-            Button(
+            )
+            HaloGlassButton(
+                text = "Save Capture",
                 enabled = state != DriverState.Disconnected || selectedAddress != null,
                 onClick = {
                     scope.launch {
@@ -116,29 +127,35 @@ fun HeyCyanDiscoveryScreen(context: Context) {
                             .onFailure { message = "Capture could not be saved: ${it.message ?: "unknown error"}" }
                     }
                 }
-            ) { Text("Save Capture") }
+            )
         }
 
-        Text("State: ${state.label()}")
-        message?.let { Text(it, color = MaterialTheme.colorScheme.secondary) }
+        Text("State: ${state.label()}", color = HaloGlassColors.TextPrimary, style = HaloTypography.bodyMedium)
+        message?.let { Text(it, color = HaloGlassColors.Info, style = HaloTypography.bodySmall) }
         Spacer(Modifier.height(4.dp))
 
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             items(devices, key = { it.advertisement.address }) { device ->
                 val advertisement = device.advertisement
-                Card(
+                val isSelected = selectedAddress == advertisement.address
+                
+                HaloGlassCard(
                     onClick = { session.select(device) },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    material = if (isSelected) HaloGlassMaterials.Interactive.copy(
+                        containerColor = HaloGlassColors.Accent.copy(alpha = 0.2f)
+                    ) else HaloGlassMaterials.Standard
                 ) {
                     Column(Modifier.padding(12.dp)) {
                         Text(
                             advertisement.name ?: "Unknown BLE device",
-                            style = MaterialTheme.typography.titleMedium
+                            style = HaloTypography.titleMedium,
+                            color = HaloGlassColors.TextPrimary
                         )
-                        Text(advertisement.address)
-                        Text("RSSI ${advertisement.rssi} dBm")
-                        if (selectedAddress == advertisement.address) {
-                            Text("Selected", color = MaterialTheme.colorScheme.primary)
+                        Text(advertisement.address, color = HaloGlassColors.TextMuted, style = HaloTypography.labelSmall)
+                        Text("RSSI ${advertisement.rssi} dBm", color = HaloGlassColors.TextSecondary, style = HaloTypography.bodySmall)
+                        if (isSelected) {
+                            Text("Selected", color = HaloGlassColors.Accent, style = HaloTypography.labelLarge)
                         }
                     }
                 }

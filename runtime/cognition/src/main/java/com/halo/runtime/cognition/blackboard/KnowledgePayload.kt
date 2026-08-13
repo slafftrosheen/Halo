@@ -43,7 +43,7 @@ data class InterpretationKnowledge(
     val interpretation: Interpretation
 ) : KnowledgePayload
 
-data class ObservationPayload(
+data class ObservationKnowledge(
     val observation: Observation
 ) : KnowledgePayload
 
@@ -58,6 +58,10 @@ data class GoalKnowledge(
 
 data class TaskPayload(
     val task: Task
+) : KnowledgePayload
+
+data class PlanKnowledge(
+    val plan: com.halo.runtime.cognition.ExecutionPlan
 ) : KnowledgePayload
 
 data class DecisionPayload(

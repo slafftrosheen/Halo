@@ -1,6 +1,7 @@
 package com.halo.sdk.runtime
 
 import java.util.UUID
+import com.halo.sdk.runtime.embodiment.ExecutionResult
 
 data class WakeWordDetected(override val id: String = UUID.randomUUID().toString(), override val timestamp: Long) : HaloEvent
 data class SpeechRecognized(override val id: String = UUID.randomUUID().toString(), override val timestamp: Long, val text: String, val locale: String) : HaloEvent
@@ -42,6 +43,13 @@ data class PlanGenerated(override val id: String = UUID.randomUUID().toString(),
 data class ExecutionStarted(override val id: String = UUID.randomUUID().toString(), val planId: String, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
 data class ExecutionFinished(override val id: String = UUID.randomUUID().toString(), val planId: String, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
 data class OutcomePublished(override val id: String = UUID.randomUUID().toString(), val outcome: String, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
+
+// Embodiment Events
+data class EmbodimentExecutionEvent(
+    override val id: String = UUID.randomUUID().toString(),
+    override val timestamp: Long = System.currentTimeMillis(),
+    val result: ExecutionResult
+) : HaloEvent
 
 // Metrics Events
 data class StageMetricsPublished(

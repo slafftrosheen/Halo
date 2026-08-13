@@ -89,6 +89,7 @@ sealed interface CognitiveSessionState {
 interface AiProvider {
     val id: String
     val displayName: String
+    val isLocal: Boolean
 
     val status: StateFlow<ProviderStatus>
 

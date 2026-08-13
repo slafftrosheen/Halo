@@ -7,7 +7,7 @@ import com.halo.runtime.cognition.blackboard.Blackboard
 import com.halo.runtime.cognition.blackboard.BlackboardQuery
 import com.halo.runtime.cognition.blackboard.Interpretation
 import com.halo.runtime.cognition.blackboard.InterpretationKnowledge
-import com.halo.runtime.cognition.blackboard.ObservationPayload
+import com.halo.runtime.cognition.blackboard.ObservationKnowledge
 import com.halo.cognition.language.PersonEntity
 import com.halo.cognition.language.PlaceEntity
 import com.halo.runtime.cognition.blackboard.GoalKnowledge
@@ -24,7 +24,7 @@ class DefaultWorkingMemory(
         activeTasks().lastOrNull()
 
     override suspend fun latestObservation(): Observation? =
-        (blackboard.latest(ObservationPayload::class)?.payload as? ObservationPayload)
+        (blackboard.latest(ObservationKnowledge::class)?.payload as? ObservationKnowledge)
             ?.observation
 
     override suspend fun latestInterpretation(): Interpretation? =

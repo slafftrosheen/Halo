@@ -46,6 +46,15 @@ class DefaultAiProviderRouter(
     )
     override val selectedModelId: StateFlow<String?> = _selectedModelId.asStateFlow()
 
+    private val _routingPolicy = MutableStateFlow<AiRoutingPolicy>(
+        storage.getString("ai_routing_policy")?.let { enumValueOf<AiRoutingPolicy>(it) } ?: AiRoutingPolicy.AUTOMATIC
+    )
+    
+    fun setRoutingPolicy(policy: AiRoutingPolicy) {
+        _routingPolicy.value = policy
+        storage.putString("ai_routing_policy", policy.name)
+    }
+
     override fun selectProvider(id: String) {
         if (providers.any { it.id == id }) {
             _selectedProviderId.value = id
@@ -68,15 +77,20 @@ class DefaultAiProviderRouter(
      * otherwise falls back to the first available provider that supports them.
      */
     override suspend fun execute(request: AiRequest, context: AiContext): AiResponse {
+        val policy = _routingPolicy.value
         val selectedId = _selectedProviderId.value
-        val selected = providers.find { it.id == selectedId }
+        val preferredProvider = providers.find { it.id == selectedId }
+
+        val provider = selectProviderForRequest(policy, preferredProvider, request)
         
-        val provider = if (selected != null && selected.status.value.state == ProviderStatus.State.READY && supports(selected, request)) {
-            selected
-        } else {
-            providers
-                .firstOrNull { it.status.value.state == ProviderStatus.State.READY && supports(it, request) }
-        } ?: throw IllegalStateException("No available AI provider found for requested capabilities")
+        if (provider == null) {
+            val reason = when (policy) {
+                AiRoutingPolicy.LOCAL_ONLY -> "No local AI providers available"
+                AiRoutingPolicy.EXPLICIT -> "Explicitly selected provider ($selectedId) is unavailable"
+                else -> "No available AI provider found for requested capabilities"
+            }
+            throw AiProviderException(AiErrorType.PROVIDER_UNAVAILABLE, reason)
+        }
 
         val modelId = request.modelId ?: _selectedModelId.value
         val finalRequest = if (request.modelId == null && modelId != null) {
@@ -85,7 +99,52 @@ class DefaultAiProviderRouter(
             request
         }
 
-        return provider.generate(finalRequest, context)
+        return try {
+            provider.generate(finalRequest, context)
+        } catch (e: AiProviderException) {
+            if (policy == AiRoutingPolicy.PREFERRED_WITH_FALLBACK || policy == AiRoutingPolicy.AUTOMATIC) {
+                val fallbackProvider = getFallbackProvider(provider, request, policy)
+                if (fallbackProvider != null) {
+                    return fallbackProvider.generate(finalRequest, context)
+                }
+            }
+            throw e
+        }
+    }
+
+    private fun selectProviderForRequest(policy: AiRoutingPolicy, preferred: AiProvider?, request: AiRequest): AiProvider? {
+        val readyProviders = providers.filter { it.status.value.state == ProviderStatus.State.READY && supports(it, request) }
+        
+        return when (policy) {
+            AiRoutingPolicy.EXPLICIT -> {
+                if (preferred != null && readyProviders.contains(preferred)) preferred else null
+            }
+            AiRoutingPolicy.LOCAL_ONLY -> {
+                val localProviders = readyProviders.filter { it.isLocal }
+                if (preferred != null && localProviders.contains(preferred)) preferred else localProviders.firstOrNull()
+            }
+            AiRoutingPolicy.AUTOMATIC, AiRoutingPolicy.PREFERRED_WITH_FALLBACK -> {
+                if (preferred != null && readyProviders.contains(preferred)) {
+                    preferred
+                } else {
+                    readyProviders.firstOrNull()
+                }
+            }
+        }
+    }
+
+    private fun getFallbackProvider(failedProvider: AiProvider, request: AiRequest, policy: AiRoutingPolicy): AiProvider? {
+        val readyProviders = providers.filter { 
+            it.id != failedProvider.id && 
+            it.status.value.state == ProviderStatus.State.READY && 
+            supports(it, request) 
+        }
+        
+        return if (policy == AiRoutingPolicy.LOCAL_ONLY) {
+            readyProviders.firstOrNull { it.isLocal }
+        } else {
+            readyProviders.firstOrNull()
+        }
     }
 
     private fun supports(provider: AiProvider, request: AiRequest): Boolean {

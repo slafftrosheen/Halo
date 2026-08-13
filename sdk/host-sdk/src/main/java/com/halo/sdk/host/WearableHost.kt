@@ -73,4 +73,5 @@ sealed interface ObservationSource {
     data object HeyCyanGlasses : ObservationSource
     data object Replay : ObservationSource
     data object Debug : ObservationSource
+    data object BuddyBot : ObservationSource
 }
