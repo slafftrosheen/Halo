@@ -7,6 +7,7 @@ import com.halo.runtime.observer.DefaultTimelineEventMapper
 import com.halo.runtime.observer.DefaultRuntimeHealthEvaluator
 import com.halo.runtime.observer.DefaultSnapshotAssembler
 import com.halo.sdk.runtime.ProviderSnapshot
+import com.halo.sdk.provider.AiProviderRouter
 
 /**
  * Owns all observability infrastructure: timeline, replay, snapshots, tracing.
@@ -15,8 +16,7 @@ import com.halo.sdk.runtime.ProviderSnapshot
 class ObserverGraph(
     private val applicationContext: Context,
     private val infra: InfrastructureGraph,
-    private val engineGraph: EngineGraph,
-    private val providerGraph: ProviderGraph
+    private val engineGraph: EngineGraph
 ) {
 
     val timelineEventMapper by lazy { DefaultTimelineEventMapper() }
@@ -61,13 +61,19 @@ class ObserverGraph(
             traceRecorder,
             snapshotAssembler,
             {
-                val inference = providerGraph.providers.inference
-                val aiProviders = providerGraph.providers.aiProviders
+                val router = engineGraph.aiProviderRouter
+                val selectedId = router.selectedProviderId.value
+                val selectedModelId = router.selectedModelId.value
                 
-                listOf(
-                    ProviderSnapshot(inference.metadata.id, inference.metadata.displayName, "Healthy")
-                ) + aiProviders.map { 
-                    ProviderSnapshot(it.id, it.name, "Active")
+                router.getAllProviders().map { provider ->
+                    val status = provider.status.value
+                    ProviderSnapshot(
+                        id = provider.id,
+                        name = provider.displayName,
+                        status = status.state.name,
+                        isSelected = provider.id == selectedId,
+                        activeModel = if (provider.id == selectedId) selectedModelId else null
+                    )
                 }
             },
             java.time.Clock.systemUTC(),

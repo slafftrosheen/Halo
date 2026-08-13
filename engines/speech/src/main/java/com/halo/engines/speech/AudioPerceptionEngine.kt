@@ -4,6 +4,7 @@ import com.halo.libraries.common.core.Identifier
 import com.halo.libraries.common.core.Version
 import com.halo.sdk.runtime.*
 import com.halo.runtime.services.Services
+import com.halo.sdk.host.AudioSourceState
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -12,6 +13,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -119,7 +122,7 @@ class AudioPerceptionEngine(
             } catch (exception: Exception) {
                 reportCaptureFailure(
                     eventBus = eventBus,
-                    reason = "Unable to start microphone: ${
+                    reason = "Unable to start audio source: ${
                         exception.message ?: "Audio initialization failed"
                     }",
                     throwable = exception
@@ -128,8 +131,27 @@ class AudioPerceptionEngine(
             }
 
             _health.value = EngineHealth.Healthy
-            eventBus.publish(ListeningStarted())
             audioPipeline.reset()
+            
+            // Bridge source lifecycle to event bus
+            scope.launch {
+                audioSource.state.collect { sourceState ->
+                    when (sourceState) {
+                        AudioSourceState.ACTIVE -> {
+                            eventBus.publish(ListeningStarted())
+                        }
+                        AudioSourceState.IDLE -> {
+                            // When source goes idle, we stop pipeline and signal end of capture
+                            eventBus.publish(SpeechEnded())
+                            // Transition to thinking/processing
+                            eventBus.publish(RecognitionFinished())
+                        }
+                        AudioSourceState.ERROR -> {
+                            reportCaptureFailure(eventBus, "Audio source reported error", RuntimeException("Source Error"))
+                        }
+                    }
+                }
+            }
             
             audioSource.frames.collect { rawFrame ->
                 metrics.framesProcessed++

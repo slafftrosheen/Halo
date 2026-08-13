@@ -113,7 +113,7 @@ BC73 08 discrete command/state/device reports
 BC73 05 discrete event family
 BC73 0E ordered control parameters. Immediately after connection: `12 01 00 10 05 02 00 0F 0F 03 00 10 0A XX` where XX alternates between 01 and 03.
 BC73 02 short event frames
-`BC 59` — verified real-time device-originated audio stream. Payloads observed at 40-byte fixed transport size, consistently beginning `4B 41`. `0x4B` is structurally compatible with an Opus TOC byte (config 9 / mono / code 3). However, `0x41` equates to `v=1, p=0, M=16` in strict RFC 6716 Code 3, which contradicts the observed 20ms cadence. Therefore, the native Opus framing remains under strict structural validation. Android MediaCodec successfully decodes this stream into 48kHz mono PCM. **The physical trigger is now known to be autonomous: the glasses initiate it after sending a `0x73` payload `0x03` event.**
+`BC 59` — verified real-time device-originated audio stream. Payloads observed at 40-byte fixed transport size. Android MediaCodec successfully decodes this stream into 48kHz mono PCM. **The physical trigger is now known to be autonomous: the glasses initiate it after sending a `0x73` payload `0x03` event.**
 
 BC73 02 examples around audio had final byte increasing like 23,24,26,27,28,29,2A; likely sequence/event counter, not proven audio state.
 
@@ -143,3 +143,21 @@ Never promote an inferred command to a stable semantic without evidence.
 - **Exact media-count offsets:** `[02 04]` response `BC 41 0B 00 A0 E9 02 04 ...` has `total = bytesToInt(subData, 7, 9)`, `currIndex = bytesToInt(subData, 9, 11)`.
 - **Full P2P role/IP behavior:** `groupOwnerAddress` is usually the phone. The BLE-reported IP from notify `0x08` (bytes 7..10) is the correct glasses IP.
 - **Trigger for `BC 59` live audio stream:** Autonomous device-originated event. Voice start (`0x03`) begins the stream; Voice end (`0x0A`) stops it.
+
+## 12. Verification Summary (PR-022)
+
+### VERIFIED
+- **BC59 Action Code:** `ACTION_GPT_UPLOAD` (0x59).
+- **Stream Origin:** Device-originated autonomous stream.
+- **Transport:** 40-byte fixed payloads over Notify characteristic `de5bf729`.
+- **Payload Nature:** Raw Opus packets (typically prefixed with `4B 41` but decoded as standard Opus).
+- **Decoder Result:** Successfully decoded by Android `MediaCodec` into 48kHz mono PCM.
+- **Lifecycle Relationship:** Triggered by `BC 73` payload `0x03` (Start) and terminated by `0x0A` (End).
+
+### IMPLEMENTATION DETAIL
+- **Halo Decoder:** `RawOpusAudioDecoder` using Android `MediaCodec` with `csd-0` (OpusHead) initialization.
+- **Handoff:** Automatic trigger of `AndroidAssistantProvider` via `AiHandoffOrchestrator` upon voice session termination.
+
+### REMAINING
+- **Codec Configuration:** Exact proprietary meanings of any non-RFC framing bytes (e.g., if `4B 41` carries session metadata beyond Opus TOC).
+- **Sequence Numbers:** The protocol does not appear to expose sequence numbers in `BC 59` frames; ordering is preserved via host-observed arrival.

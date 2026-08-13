@@ -49,7 +49,8 @@ fun ConsoleScreen(viewModel: ConsoleViewModel) {
             when (ConsoleTab.values()[uiState.selectedTab]) {
                 ConsoleTab.Runtime -> RuntimeTabContent(uiState)
                 ConsoleTab.Engines -> EnginesTabContent(uiState)
-                ConsoleTab.Logs -> LogsTabContent()
+                ConsoleTab.Logs -> LogsTabContent(uiState.logs)
+                ConsoleTab.Blackboard -> BlackboardTabContent(uiState.blackboardFacts)
                 else -> PlaceholderContent(ConsoleTab.values()[uiState.selectedTab].label)
             }
         }
@@ -99,9 +100,34 @@ private fun EnginesTabContent(state: ConsoleUiState) {
 }
 
 @Composable
-private fun LogsTabContent() {
-    Box(Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
-        Text("Log stream initializing...", color = HaloGlassColors.TextSecondary, style = HaloTypography.monoMedium)
+private fun LogsTabContent(logs: List<String>) {
+    if (logs.isEmpty()) {
+        Box(Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+            Text("No logs yet.", color = HaloGlassColors.TextSecondary, style = HaloTypography.monoMedium)
+        }
+    } else {
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            items(logs.reversed()) { log ->
+                Text(log, color = HaloGlassColors.TextPrimary, style = HaloTypography.monoSmall)
+            }
+        }
+    }
+}
+
+@Composable
+private fun BlackboardTabContent(facts: List<String>) {
+    if (facts.isEmpty()) {
+        Box(Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+            Text("Blackboard is empty.", color = HaloGlassColors.TextSecondary, style = HaloTypography.monoMedium)
+        }
+    } else {
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            items(facts.reversed()) { fact ->
+                HaloGlassCard {
+                    Text(fact, color = HaloGlassColors.TextPrimary, style = HaloTypography.bodySmall, modifier = Modifier.padding(8.dp))
+                }
+            }
+        }
     }
 }
 

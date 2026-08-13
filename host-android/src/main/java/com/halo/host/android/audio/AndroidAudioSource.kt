@@ -6,10 +6,14 @@ import android.media.AudioRecord
 import android.media.MediaRecorder
 import com.halo.sdk.host.AudioFrame
 import com.halo.sdk.host.AudioSource
+import com.halo.sdk.host.AudioSourceState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.sync.Mutex
@@ -17,6 +21,9 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 class AndroidAudioSource : AudioSource {
+    private val _state = MutableStateFlow(AudioSourceState.IDLE)
+    override val state: StateFlow<AudioSourceState> = _state.asStateFlow()
+
     @Volatile
     private var isRecording = false
 
@@ -65,8 +72,10 @@ class AndroidAudioSource : AudioSource {
 
                     audioRecord = recorder
                     isRecording = true
+                    _state.value = AudioSourceState.ACTIVE
                 } catch (exception: Exception) {
                     runCatching { recorder.release() }
+                    _state.value = AudioSourceState.ERROR
                     throw IllegalStateException("Unable to start AudioRecord", exception)
                 }
             }
@@ -78,6 +87,7 @@ class AndroidAudioSource : AudioSource {
             var releaseImmediately: AudioRecord? = null
             recorderMutex.withLock {
                 isRecording = false
+                _state.value = AudioSourceState.IDLE
                 val recorder = audioRecord ?: pendingRelease ?: return@withLock
                 audioRecord = null
 

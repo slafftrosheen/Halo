@@ -6,22 +6,29 @@ import com.halo.engines.speech.AlwaysWakeDetector
 import com.halo.providers.android.stt.AndroidSpeechRecognitionProvider
 import com.halo.providers.android.tts.AndroidTTSProvider
 import com.halo.providers.android.assistant.AndroidAssistantProvider
+import com.halo.providers.openrouter.OpenRouterProvider
 import com.halo.providers.llamacpp.NativeLlamaProvider
 import com.halo.providers.llamacpp.ModelDownloadManager
 
+import com.halo.providers.llamacpp.OllamaProvider
+
 class AndroidProviderFactory(
     private val context: Context,
-    private val modelDownloadManager: ModelDownloadManager
+    private val modelDownloadManager: ModelDownloadManager,
+    private val storage: com.halo.sdk.runtime.Storage
 ) : ProviderFactory {
 
     override fun createProviders(): Providers {
         return Providers(
-            inference = NativeLlamaProvider(context, modelDownloadManager),
+            inference = NativeLlamaProvider(context, modelDownloadManager, storage),
             speechRecognition = AndroidSpeechRecognitionProvider(context),
             speechSynthesis = AndroidTTSProvider(context),
             wakeWord = AlwaysWakeDetector(),
             aiProviders = listOf(
-                AndroidAssistantProvider(context)
+                AndroidAssistantProvider(context),
+                OpenRouterProvider(storage),
+                OllamaProvider(storage),
+                NativeLlamaProvider(context, modelDownloadManager, storage)
             )
         )
     }

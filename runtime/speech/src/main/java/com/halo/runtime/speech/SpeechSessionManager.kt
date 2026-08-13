@@ -8,9 +8,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterIsInstance
 import com.halo.engines.speech.SpeechSegmentCaptured
+import com.halo.engines.speech.ListeningStarted
+import com.halo.engines.speech.SpeechEnded
 import com.halo.engines.speech.RecognitionStarted
 import com.halo.engines.speech.SpeechRecognized
 import com.halo.engines.speech.RecognitionFinished
+import com.halo.engines.speech.HandoffStarted
 import com.halo.engines.speech.RecognitionTimeoutEvent
 import com.halo.engines.speech.RecognitionFailed
 import com.halo.engines.speech.SpeechRecognizedPayload
@@ -60,6 +63,16 @@ class SpeechSessionManager(
     private fun observeRecognitionEvents() {
         // Domain Events -> State Translation
         scope.launch {
+            eventBus.observe(ListeningStarted::class.java).collect {
+                _sessionState.value = SpeechSessionState.Capturing
+            }
+        }
+        scope.launch {
+            eventBus.observe(SpeechEnded::class.java).collect {
+                _sessionState.value = SpeechSessionState.Thinking
+            }
+        }
+        scope.launch {
             eventBus.observe(RecognitionStarted::class.java).collect {
                 _sessionState.value = SpeechSessionState.Recognizing
             }
@@ -70,8 +83,13 @@ class SpeechSessionManager(
             }
         }
         scope.launch {
+            eventBus.observe(HandoffStarted::class.java).collect {
+                _sessionState.value = SpeechSessionState.Handoff
+            }
+        }
+        scope.launch {
             eventBus.observe(RecognitionFinished::class.java).collect {
-                // Keep Thinking until TTS starts or outcome finishes
+                // Keep Thinking or Handoff until TTS starts or outcome finishes
             }
         }
         scope.launch {

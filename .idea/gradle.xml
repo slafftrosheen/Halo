@@ -48,6 +48,7 @@
             <option value="$PROJECT_DIR$/providers/android-stt" />
             <option value="$PROJECT_DIR$/providers/android-tts" />
             <option value="$PROJECT_DIR$/providers/llamacpp" />
+            <option value="$PROJECT_DIR$/providers/openrouter" />
             <option value="$PROJECT_DIR$/runtime" />
             <option value="$PROJECT_DIR$/runtime/cognition" />
             <option value="$PROJECT_DIR$/runtime/commands" />

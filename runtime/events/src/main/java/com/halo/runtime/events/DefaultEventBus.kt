@@ -13,6 +13,7 @@ class DefaultEventBus : EventBus {
     private val stream = MutableSharedFlow<HaloEvent>(replay = 0, extraBufferCapacity = 128)
 
     override suspend fun publish(event: HaloEvent) {
+        println("[EVENT] ${event.javaClass.simpleName}: $event")
         stream.emit(event)
     }
 

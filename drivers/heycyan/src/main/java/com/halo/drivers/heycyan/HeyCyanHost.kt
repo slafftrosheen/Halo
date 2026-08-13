@@ -19,7 +19,8 @@ import kotlinx.coroutines.flow.*
  */
 class HeyCyanHost(
     private val driver: RealHeyCyanDriver,
-    override val audioOutput: AudioOutput
+    override val audioOutput: AudioOutput,
+    private val storage: com.halo.sdk.runtime.Storage
 ) : WearableHost {
     init {
         Log.i("HeyCyanHost", "Initializing HeyCyanHost")
@@ -29,7 +30,7 @@ class HeyCyanHost(
     override val audioSource: AudioSource = HeyCyanAudioSource(driver)
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-    private var selectedAddress: String? = null
+    private var selectedAddress: String? = storage.getString("last_heycyan_address")
 
     override val buttons: Flow<ButtonEvent> = driver.heyCyanEvents
         .filterIsInstance<HeyCyanEvent.ButtonPressed>()
@@ -73,6 +74,7 @@ class HeyCyanHost(
 
     fun setTargetDevice(address: String) {
         selectedAddress = address
+        storage.putString("last_heycyan_address", address)
     }
 
     override suspend fun connect() {
@@ -83,6 +85,8 @@ class HeyCyanHost(
         
         try {
             driver.connect(address, HeyCyanConnectionMode.RUNTIME)
+            // The driver handles state updates which will be reflected in _deviceContext
+            Log.i("HeyCyanHost", "Connected to $address")
         } catch (e: Exception) {
             Log.e("HeyCyanHost", "Failed to connect to $address", e)
             _connectivity.value = ConnectionState.Failed(e.message ?: "Unknown error")

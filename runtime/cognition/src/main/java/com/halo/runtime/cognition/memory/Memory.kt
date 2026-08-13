@@ -4,8 +4,10 @@ import java.util.UUID
 import kotlin.time.Duration
 import kotlinx.datetime.Instant
 
-sealed interface Memory {
-    val id: UUID
+import com.halo.sdk.runtime.Memory as SdkMemory
+
+sealed interface Memory : SdkMemory {
+    override val id: UUID
     val importance: Float
     val recency: Instant
     val confidence: Float

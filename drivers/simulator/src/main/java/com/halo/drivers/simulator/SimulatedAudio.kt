@@ -3,11 +3,18 @@ package com.halo.drivers.simulator
 import com.halo.sdk.host.AudioFrame
 import com.halo.sdk.host.AudioOutput
 import com.halo.sdk.host.AudioSource
+import com.halo.sdk.host.AudioSourceState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 class SimulatedAudioSource(private val clock: SimulatedClock) : AudioSource {
+    private val _state = MutableStateFlow(AudioSourceState.IDLE)
+    override val state: StateFlow<AudioSourceState> = _state.asStateFlow()
+
     private val _frames = MutableSharedFlow<AudioFrame>(extraBufferCapacity = 128)
     override val frames: Flow<AudioFrame> = _frames.asSharedFlow()
 
@@ -15,10 +22,12 @@ class SimulatedAudioSource(private val clock: SimulatedClock) : AudioSource {
 
     override suspend fun start() {
         started = true
+        _state.value = AudioSourceState.ACTIVE
     }
 
     override suspend fun stop() {
         started = false
+        _state.value = AudioSourceState.IDLE
     }
 
     suspend fun inject(

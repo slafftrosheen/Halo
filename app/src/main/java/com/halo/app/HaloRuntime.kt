@@ -57,6 +57,11 @@ class HaloRuntime(
         graph.audioPerceptionEngine.start()
 
         /*
+         * AI Handoff
+         */
+        graph.aiHandoffOrchestrator.start()
+
+        /*
          * Kernel
          */
         graph.microkernel.boot()

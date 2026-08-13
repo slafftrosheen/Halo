@@ -1,5 +1,4 @@
 package com.halo.runtime.cognition
 
-data class DeviceState(
-    val properties: Map<String, Any> = emptyMap()
-)
+/** Compatibility alias for SDK DeviceState */
+typealias DeviceState = com.halo.sdk.runtime.DeviceState

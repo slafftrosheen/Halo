@@ -152,9 +152,9 @@ class DevicesViewModel(private val snapshotManager: RuntimeSnapshotSource) : Vie
                 isConnected = isConnected,
                 deviceName = snapshot.deviceContext.name ?: if (isConnected) "Unknown device" else "No glasses connected",
                 battery = snapshot.deviceContext.batteryPercent?.let { "$it%" } ?: "Unknown",
-                connectionType = if (isConnected) "BLE" else "Disconnected",
-                audioStatus = if (caps.contains("Audio")) "Supported" else "Not reported",
-                cameraStatus = if (caps.contains("Camera")) "Supported" else "Not reported"
+                connectionType = if (isConnected) "Active" else "Disconnected",
+                audioStatus = if (caps.contains("Audio") || isConnected) "Available" else "Not reported",
+                cameraStatus = if (caps.contains("Camera")) "Available" else "Not reported"
             )
         }
         .stateIn(

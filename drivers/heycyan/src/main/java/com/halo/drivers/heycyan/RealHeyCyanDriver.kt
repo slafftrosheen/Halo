@@ -47,7 +47,6 @@ class RealHeyCyanDriver(
 
     init {
         android.util.Log.i("RealHeyCyanDriver", "Initializing RealHeyCyanDriver")
-        println("[INFO ] [${java.time.Instant.now()}] [HALO-RealHeyCyanDriver] Initializing RealHeyCyanDriver")
         HeyCyanProtocolCapture.instance = HeyCyanProtocolCapture(ConsoleLogger())
     }
 

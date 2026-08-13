@@ -81,6 +81,34 @@ class DefaultTimelineEventMapper : TimelineEventMapper {
                 timestamp = timestamp,
                 status = "Published"
             )
+            is CognitiveRequestStarted -> TimelineEvent(
+                id = event.id,
+                title = "Cognitive Request",
+                description = "Started",
+                timestamp = timestamp,
+                status = "Started"
+            )
+            is CognitiveReasoningStarted -> TimelineEvent(
+                id = event.id,
+                title = "Reasoning",
+                description = "Provider: ${event.providerId}",
+                timestamp = timestamp,
+                status = "Started"
+            )
+            is CognitiveCompleted -> TimelineEvent(
+                id = event.id,
+                title = "Cognitive Response",
+                description = event.response ?: "Completed",
+                timestamp = timestamp,
+                status = "Success"
+            )
+            is CognitiveFailed -> TimelineEvent(
+                id = event.id,
+                title = "Cognitive Failed",
+                description = event.message,
+                timestamp = timestamp,
+                status = "Failed"
+            )
             is StageMetricsPublished -> TimelineEvent(
                 id = event.id,
                 title = event.stage.name,

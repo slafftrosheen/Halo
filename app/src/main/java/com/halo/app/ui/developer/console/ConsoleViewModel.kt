@@ -12,13 +12,27 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import java.util.Locale
 
-class ConsoleUiMapper(private val selectedTab: Int) : RuntimeUiMapper<ConsoleUiState> {
+import com.halo.app.devtools.RecordingEventBus
+import com.halo.sdk.runtime.EventBus
+import com.halo.runtime.cognition.blackboard.Blackboard
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.flowOf
+
+class ConsoleUiMapper(
+    private val selectedTab: Int,
+    private val logs: List<String> = emptyList(),
+    private val blackboardFacts: List<String> = emptyList()
+) : RuntimeUiMapper<ConsoleUiState> {
     override fun map(snapshot: RuntimeSnapshot): ConsoleUiState {
+        val runtime = Runtime.getRuntime()
+        val usedMemory = (runtime.totalMemory() - runtime.freeMemory()) / (1024 * 1024)
+        val maxMemory = runtime.maxMemory() / (1024 * 1024)
+        
         return ConsoleUiState(
             selectedTab = selectedTab,
             uptime = formatDuration(snapshot.health.uptime),
-            memoryUsage = "128 MB",
-            threadCount = 0,
+            memoryUsage = "$usedMemory / $maxMemory MB",
+            threadCount = Thread.activeCount(),
             engines = snapshot.engines.map {
                 EngineStatus(
                     name = it.id,
@@ -26,7 +40,9 @@ class ConsoleUiMapper(private val selectedTab: Int) : RuntimeUiMapper<ConsoleUiS
                     latencyMs = it.metrics.latencyMs,
                     queueSize = it.metrics.queueSize
                 )
-            }
+            },
+            logs = logs,
+            blackboardFacts = blackboardFacts
         )
     }
 
@@ -39,16 +55,32 @@ class ConsoleUiMapper(private val selectedTab: Int) : RuntimeUiMapper<ConsoleUiS
 }
 
 class ConsoleViewModel(
-    private val snapshotManager: RuntimeSnapshotSource
+    private val snapshotManager: RuntimeSnapshotSource,
+    private val eventBus: EventBus,
+    private val blackboard: Blackboard
 ) : ViewModel() {
 
     private val _selectedTab = MutableStateFlow(0)
 
+    private val logsFlow = if (eventBus is RecordingEventBus) {
+        eventBus.history.map { history ->
+            history.map { "[${it.createdAt}] ${it.event::class.simpleName}" }
+        }
+    } else {
+        flowOf(emptyList<String>())
+    }
+
+    private val blackboardFlow = blackboard.flow.map { facts ->
+        facts.map { "[${it.createdAt}] ${it.payload::class.simpleName}" }
+    }
+
     val uiState: StateFlow<ConsoleUiState> = combine(
         snapshotManager.snapshot,
-        _selectedTab
-    ) { snapshot, tab ->
-        ConsoleUiMapper(tab).map(snapshot)
+        _selectedTab,
+        logsFlow,
+        blackboardFlow
+    ) { snapshot, tab, logs, facts ->
+        ConsoleUiMapper(tab, logs, facts).map(snapshot)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),

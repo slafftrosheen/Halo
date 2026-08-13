@@ -16,6 +16,18 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
+import androidx.lifecycle.viewModelScope
+import com.halo.runtime.cognition.blackboard.Blackboard
+import com.halo.sdk.runtime.RuntimeSnapshotSource
+import com.halo.sdk.runtime.SpeechSessionState
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
+
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import com.halo.app.ui.glass.components.HaloGlassDivider
+
 @Composable
 fun RuntimeInspectorScreen(viewModel: RuntimeInspectorViewModel) {
     val state by viewModel.uiState.collectAsState()
@@ -35,7 +47,25 @@ fun RuntimeInspectorScreen(viewModel: RuntimeInspectorViewModel) {
         
         // Graph Section
         HaloGlassSection(title = "Cognitive Pipeline", modifier = Modifier.weight(1f)) {
-            Text("Observation → Interpretation → Reasoning → Planning → Execution", color = HaloGlassColors.TextSecondary)
+            val stages = listOf("Observation", "Interpretation", "Reasoning", "Planning", "Execution")
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                stages.forEachIndexed { index, name ->
+                    val isActive = state.activePipelineStage == name
+                    Text(
+                        text = name,
+                        color = if (isActive) HaloGlassColors.Accent else HaloGlassColors.TextMuted,
+                        style = if (isActive) HaloTypography.bodyLarge else HaloTypography.bodySmall,
+                        fontWeight = if (isActive) androidx.compose.ui.text.font.FontWeight.Bold else null
+                    )
+                    if (index < stages.size - 1) {
+                        Text("→", color = HaloGlassColors.TextMuted)
+                    }
+                }
+            }
         }
         
         Spacer(Modifier.height(16.dp))
@@ -43,23 +73,61 @@ fun RuntimeInspectorScreen(viewModel: RuntimeInspectorViewModel) {
         // Blackboard
         HaloGlassSection(title = "Blackboard Contents", modifier = Modifier.weight(1f)) {
             if (state.blackboard.isEmpty()) {
-                Text("No active thoughts", color = HaloGlassColors.TextMuted)
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("No active thoughts", color = HaloGlassColors.TextMuted)
+                }
             } else {
-                state.blackboard.forEach { item ->
-                    Text(item, color = HaloGlassColors.TextSecondary, style = HaloTypography.bodySmall)
-                    Spacer(Modifier.height(4.dp))
+                LazyColumn {
+                    items(state.blackboard.reversed()) { item ->
+                        Text(item, color = HaloGlassColors.TextSecondary, style = HaloTypography.bodySmall)
+                        Spacer(Modifier.height(4.dp))
+                        HaloGlassDivider()
+                        Spacer(modifier = Modifier.height(4.dp))
+                    }
                 }
             }
         }
     }
 }
 
-data class InspectorState(val isRecording: Boolean = false, val blackboard: List<String> = emptyList())
+data class InspectorState(
+    val isRecording: Boolean = false, 
+    val blackboard: List<String> = emptyList(),
+    val activePipelineStage: String = "Idle"
+)
 
-class RuntimeInspectorViewModel : ViewModel() {
-    private val _state = MutableStateFlow(InspectorState())
-    val uiState: StateFlow<InspectorState> = _state.asStateFlow()
+class RuntimeInspectorViewModel(
+    private val blackboard: Blackboard,
+    private val snapshotManager: RuntimeSnapshotSource
+) : ViewModel() {
+    private val _isRecording = MutableStateFlow(false)
+
+    val uiState: StateFlow<InspectorState> = combine(
+        _isRecording,
+        blackboard.flow,
+        snapshotManager.snapshot
+    ) { recording, facts, snapshot ->
+        val stage = when (snapshot.speech) {
+            is SpeechSessionState.Capturing -> "Observation"
+            is SpeechSessionState.Recognizing -> "Interpretation"
+            is SpeechSessionState.Thinking -> "Reasoning"
+            is SpeechSessionState.Processing -> "Planning"
+            is SpeechSessionState.Speaking -> "Execution"
+            else -> "Idle"
+        }
+
+        InspectorState(
+            isRecording = recording,
+            blackboard = facts.map { "[${it.source}] ${it.payload::class.simpleName}" },
+            activePipelineStage = stage
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = InspectorState()
+    )
+
     fun setRecording(recording: Boolean) { 
-        _state.update { it.copy(isRecording = recording) }
+        _isRecording.update { recording }
     }
 }

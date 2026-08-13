@@ -12,5 +12,7 @@ data class ConsoleUiState(
     val uptime: String = "00:00:00",
     val memoryUsage: String = "0 MB",
     val threadCount: Int = 0,
-    val engines: List<EngineStatus> = emptyList()
+    val engines: List<EngineStatus> = emptyList(),
+    val logs: List<String> = emptyList(),
+    val blackboardFacts: List<String> = emptyList()
 )

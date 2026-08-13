@@ -120,7 +120,7 @@ class RawOpusAudioDecoder {
                                 samples = shortArray,
                                 sampleRate = currentSampleRate,
                                 channels = currentChannels,
-                                timestamp = System.currentTimeMillis()
+                                timestamp = System.nanoTime()
                             )
                             _frames.tryEmit(frame)
                         }

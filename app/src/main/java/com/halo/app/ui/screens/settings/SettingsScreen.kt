@@ -2,6 +2,7 @@ package com.halo.app.ui.screens.settings
 
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -17,9 +18,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import com.halo.app.ui.glass.components.HaloGlassSection
-import com.halo.app.ui.glass.components.HaloGlassDivider
-import com.halo.app.ui.glass.components.HaloGlassChip
+import com.halo.app.ui.glass.components.*
 import com.halo.app.ui.glass.material.HaloGlassColors
 import com.halo.app.ui.glass.material.HaloTypography
 
@@ -33,6 +32,7 @@ import androidx.compose.ui.platform.LocalContext
 @Composable
 fun SettingsScreen(viewModel: SettingsViewModel) {
     val uiState by viewModel.uiState.collectAsState()
+    var comingSoonFeature by remember { mutableStateOf<String?>(null) }
 
     Column(
         modifier = Modifier
@@ -40,43 +40,42 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             .background(HaloGlassColors.Background)
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
-            .padding(bottom = 120.dp),
+            .padding(bottom = 160.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text("Settings", style = HaloTypography.displayMedium, color = HaloGlassColors.TextPrimary)
         
         // HALO Section
         HaloGlassSection(title = "HALO") {
-            SettingItem("Assistant", uiState.provider, clickable = true) {
+            SettingItem("Intelligence", uiState.provider, clickable = true) {
                 viewModel.navigateTo("ai_settings")
             }
             HaloGlassDivider()
-            SettingItem("Voice", "Not configured", clickable = false)
+            SettingItem("Glasses", uiState.deviceName, clickable = true) {
+                viewModel.navigateTo("devices")
+            }
             HaloGlassDivider()
-            SettingItem("Glasses", uiState.deviceName, clickable = false)
+            SettingItem("Voice", "Not configured", clickable = true) {
+                comingSoonFeature = "Voice configuration"
+            }
             HaloGlassDivider()
-            SettingItem("Privacy", "Review", clickable = true)
+            SettingItem("Permissions", "Manage", clickable = true) {
+                viewModel.navigateTo("permissions")
+            }
             HaloGlassDivider()
-            SettingItem("Appearance", "Dark", clickable = true)
+            SettingItem("Privacy", "Review", clickable = true) {
+                comingSoonFeature = "Privacy center"
+            }
+            HaloGlassDivider()
+            SettingItem("Appearance", "Dark", clickable = true) {
+                comingSoonFeature = "Appearance settings"
+            }
         }
         
-        // DEVELOPER Section
-        HaloGlassSection(title = "DEVELOPER") {
-            Column {
-                Row(
-                    Modifier.fillMaxWidth().padding(vertical = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Developer Mode", color = HaloGlassColors.TextPrimary, style = HaloTypography.bodyMedium)
-                    Switch(
-                        checked = uiState.devMode,
-                        onCheckedChange = { viewModel.setDevMode(it) }
-                    )
-                }
-                
-                if (uiState.devMode) {
-                    HaloGlassDivider()
+        // DIAGNOSTICS Section
+        if (uiState.devMode) {
+            HaloGlassSection(title = "DIAGNOSTICS") {
+                Column {
                     SettingItem("Protocol Lab", "Open", clickable = true) {
                         viewModel.navigateTo("protocol_lab")
                     }
@@ -88,11 +87,46 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                     SettingItem("Console", "Inspect", clickable = true) {
                         viewModel.navigateTo("console")
                     }
-                    HaloGlassDivider()
-                    SettingItem("Audio Diagnostics", "Not configured", clickable = false)
                 }
             }
         }
+
+        // SYSTEM Section
+        HaloGlassSection(title = "SYSTEM") {
+            Row(
+                Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Developer Mode", color = HaloGlassColors.TextPrimary, style = HaloTypography.bodyMedium)
+                Switch(
+                    checked = uiState.devMode,
+                    onCheckedChange = { viewModel.setDevMode(it) }
+                )
+            }
+        }
+    }
+
+    comingSoonFeature?.let { feature ->
+        HaloGlassDialog(
+            title = "Coming Soon",
+            onDismissRequest = { comingSoonFeature = null },
+            content = {
+                Column(Modifier.padding(16.dp)) {
+                    Text(
+                        "$feature is currently under development for the next Halo update.",
+                        color = HaloGlassColors.TextPrimary,
+                        style = HaloTypography.bodyMedium
+                    )
+                    Spacer(Modifier.height(24.dp))
+                    HaloGlassButton(
+                        text = "Understood",
+                        onClick = { comingSoonFeature = null },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        )
     }
 }
 
@@ -137,7 +171,7 @@ fun PermissionsScreen() {
             .background(HaloGlassColors.Background)
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
-            .padding(bottom = 120.dp),
+            .padding(bottom = 160.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(

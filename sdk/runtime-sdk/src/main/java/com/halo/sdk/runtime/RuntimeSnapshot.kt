@@ -69,7 +69,9 @@ data class TimelineEvent(
 data class ProviderSnapshot(
     val id: String,
     val name: String,
-    val status: String
+    val status: String,
+    val isSelected: Boolean = false,
+    val activeModel: String? = null
 )
 
 data class FactSummary(

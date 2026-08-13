@@ -94,9 +94,7 @@ class MainActivity : ComponentActivity() {
 
         lifecycleScope.launch {
             val host = ManualDependencyGraph.wearableHost
-            if (host !is com.halo.drivers.heycyan.HeyCyanHost) {
-                host.connect()
-            }
+            host.connect()
         }
     }
 

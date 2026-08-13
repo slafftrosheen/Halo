@@ -62,16 +62,6 @@ fun ActivityScreen(viewModel: ActivityViewModel) {
                 ActivityEventItem(event)
             }
         }
-        
-        if (uiState.hasMore) {
-            item {
-                HaloGlassButton(
-                    text = "Load More",
-                    onClick = { viewModel.loadMore() },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        }
     }
 }
 
@@ -166,7 +156,7 @@ fun Long.format(): String {
     val secs = (this / 1000) % 60
     val mins = (this / 1000 / 60) % 60
     val hours = (this / 1000 / 60 / 60) % 24
-    return String.format("%02d:%02d:%02d", hours, mins, secs)
+    return String.format(java.util.Locale.ROOT, "%02d:%02d:%02d", hours, mins, secs)
 }
 
 data class ActivityUiState(
@@ -195,8 +185,4 @@ class ActivityViewModel(private val snapshotManager: RuntimeSnapshotSource) : Vi
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = ActivityUiState()
         )
-    
-    fun loadMore() {
-        // No-op for now, until pagination is supported in the timeline
-    }
 }

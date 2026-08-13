@@ -1,35 +1,41 @@
 package com.halo.providers.llamacpp
 
 import android.util.Log
-import com.halo.sdk.provider.AIRequestLegacy
-import com.halo.sdk.provider.AIResponseLegacy
-
+import com.halo.sdk.provider.*
+import com.halo.sdk.runtime.Storage
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.ensureActive
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.logging.HttpLoggingInterceptor
+import org.json.JSONObject
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
-import com.halo.sdk.provider.InferenceProvider
-
 class OllamaProvider(
-    private val baseUrl: String = "http://10.0.2.2:11434",
-    private val modelId: String = "llama3"
+    private val storage: Storage
 ) : InferenceProvider {
 
     private val TAG = "OllamaProvider"
     private val JSON = "application/json; charset=utf-8".toMediaType()
+
+    private val _status = MutableStateFlow(ProviderStatus.UNAVAILABLE)
+    override val status: StateFlow<ProviderStatus> = _status.asStateFlow()
+
+    private val baseUrl: String get() = storage.getString("ollama_endpoint") ?: "http://10.0.2.2:11434"
+    private val modelId: String get() = storage.getString("ollama_model") ?: "llama3"
 
     private val client: OkHttpClient by lazy {
         val logging = HttpLoggingInterceptor { Log.d(TAG, it) }
@@ -49,17 +55,17 @@ class OllamaProvider(
     private val generateRequestAdapter = moshi.adapter(OllamaGenerateRequest::class.java)
     private val generateResponseAdapter = moshi.adapter(OllamaGenerateResponse::class.java)
 
-    override val metadata = com.halo.sdk.provider.ProviderMetadata(
+    override val metadata = ProviderMetadata(
         id = "provider.ollama",
         displayName = "Ollama",
         local = true,
         supportsStreaming = true
     )
 
-    suspend fun connect() {
-        Log.i(TAG, "Connecting to Ollama at $baseUrl")
-        // Just warm up the client
-        client.connectionPool.idleConnectionCount() 
+    override suspend fun getStatus(): ProviderStatus {
+        val current = if (health()) ProviderStatus.READY else ProviderStatus.UNAVAILABLE
+        _status.value = current
+        return current
     }
 
     override suspend fun health(): Boolean {
@@ -71,18 +77,30 @@ class OllamaProvider(
                     .build()
 
                 client.newCall(request).execute().use { response ->
-                    val isHealthy = response.isSuccessful
-                    Log.i(TAG, "Health check result: $isHealthy")
-                    isHealthy
+                    response.isSuccessful
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Health check failed: ${e.message}")
                 false
             }
         }
     }
 
+    override suspend fun generate(request: AiRequest, context: AiContext): AiResponse {
+        val conversation = AIConversation(
+            id = "legacy",
+            messages = context.conversation.toMutableList()
+        )
+        val legacyRequest = AIRequestLegacy(conversation)
+        val model = request.modelId ?: modelId
+        val legacyResponse = completeWithModel(legacyRequest, model)
+        return AiResponse(text = legacyResponse.text, providerId = id, modelId = model)
+    }
+
     override suspend fun complete(request: AIRequestLegacy): AIResponseLegacy {
+        return completeWithModel(request, modelId)
+    }
+
+    private suspend fun completeWithModel(request: AIRequestLegacy, model: String): AIResponseLegacy {
         return withContext(Dispatchers.IO) {
             val startTime = System.currentTimeMillis()
             val prompt = request.conversation.messages.joinToString("\n") {
@@ -90,7 +108,7 @@ class OllamaProvider(
             }
             
             val ollamaRequest = OllamaGenerateRequest(
-                model = modelId,
+                model = model,
                 prompt = prompt,
                 stream = false,
                 options = mapOf(
@@ -175,12 +193,41 @@ class OllamaProvider(
         }
     }.flowOn(Dispatchers.IO)
 
-    override suspend fun close() {
-        Log.i(TAG, "Disconnecting from Ollama")
-        client.connectionPool.evictAll()
+    override suspend fun listModels(): List<AiModel> = withContext(Dispatchers.IO) {
+        try {
+            val request = Request.Builder()
+                .url("$baseUrl/api/tags")
+                .get()
+                .build()
+
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) return@withContext emptyList()
+                val json = response.body?.string() ?: return@withContext emptyList()
+                val obj = JSONObject(json)
+                val models = obj.getJSONArray("models")
+                val result = mutableListOf<AiModel>()
+                for (i in 0 until models.length()) {
+                    val m = models.getJSONObject(i)
+                    val name = m.getString("name")
+                    result.add(AiModel(
+                        id = name,
+                        displayName = name,
+                        providerId = id,
+                        inputCapabilities = setOf(AiCapability.TEXT),
+                        contextLength = 4096,
+                        supportsStreaming = true,
+                        supportsTools = false
+                    ))
+                }
+                result
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
     }
 
-    fun disconnect() {
+    override suspend fun close() {
+        Log.i(TAG, "Disconnecting from Ollama")
         client.connectionPool.evictAll()
     }
 }

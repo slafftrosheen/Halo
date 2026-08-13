@@ -7,11 +7,12 @@ package com.halo.app.di
 class HostGraph(
     private val context: android.content.Context,
     private val infra: InfrastructureGraph,
-    private val providerGraph: ProviderGraph
+    private val providerGraph: ProviderGraph,
+    private val storage: com.halo.sdk.runtime.Storage
 ) {
 
     val wearableHost: com.halo.sdk.host.WearableHost by lazy {
-        HostFactory.create(HostType.HEYCYAN, context)
+        HostFactory.create(HostType.HEYCYAN, context, storage)
     }
 
     val audioPipeline by lazy {

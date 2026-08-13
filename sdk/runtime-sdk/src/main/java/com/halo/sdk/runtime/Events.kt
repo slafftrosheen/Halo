@@ -6,6 +6,14 @@ data class WakeWordDetected(override val id: String = UUID.randomUUID().toString
 data class SpeechRecognized(override val id: String = UUID.randomUUID().toString(), override val timestamp: Long, val text: String, val locale: String) : HaloEvent
 data class IntentRecognized(override val id: String = UUID.randomUUID().toString(), override val timestamp: Long, val intent: HaloIntent) : HaloEvent
 data class AIResponseGenerated(override val id: String = UUID.randomUUID().toString(), override val timestamp: Long, val response: String) : HaloEvent
+
+// Cognitive Session Events
+data class CognitiveRequestStarted(override val id: String = UUID.randomUUID().toString(), val requestId: String, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
+data class CognitiveReasoningStarted(override val id: String = UUID.randomUUID().toString(), val requestId: String, val providerId: String, val modelId: String?, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
+data class CognitiveTokenReceived(override val id: String = UUID.randomUUID().toString(), val requestId: String, val token: String, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
+data class CognitiveCompleted(override val id: String = UUID.randomUUID().toString(), val requestId: String, val response: String?, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
+data class CognitiveFailed(override val id: String = UUID.randomUUID().toString(), val requestId: String, val message: String, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
+
 data class DeviceCommand(override val id: String = UUID.randomUUID().toString(), override val timestamp: Long, val command: String) : HaloEvent
 data class TtsRequested(override val id: String = UUID.randomUUID().toString(), override val timestamp: Long, val text: String) : HaloEvent
 

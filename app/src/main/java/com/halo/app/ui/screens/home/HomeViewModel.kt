@@ -1,20 +1,13 @@
 package com.halo.app.ui.screens.home
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.halo.app.ui.glass.material.HaloRuntimeState
-import com.halo.sdk.runtime.CommandBus
-import com.halo.sdk.runtime.RuntimeSnapshot
-import com.halo.sdk.runtime.RuntimeSnapshotSource
-import com.halo.sdk.runtime.RuntimeUiMapper
-import com.halo.sdk.runtime.SpeechSessionState
-import com.halo.sdk.runtime.StartListening
-import com.halo.sdk.runtime.StopListening
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import com.halo.sdk.runtime.*
+import com.halo.sdk.provider.*
+import com.halo.runtime.cognition.session.CognitiveSession
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import androidx.lifecycle.viewModelScope
 
 data class TimelinePreviewEvent(
     val command: String,
@@ -31,27 +24,38 @@ data class HomeUiState(
     val activeProviderStatus: String = "Unavailable",
     val batteryPercent: Int? = null,
     val isCharging: Boolean = false,
-    val capabilities: List<String> = emptyList()
+    val capabilities: List<String> = emptyList(),
+    val sessionState: CognitiveSessionState = CognitiveSessionState.Idle
 )
 
 class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
-    override fun map(snapshot: RuntimeSnapshot): HomeUiState {
-        val isReady = snapshot.runtimeState == com.halo.sdk.runtime.RuntimeState.Running
+    fun map(snapshot: RuntimeSnapshot, sessionState: CognitiveSessionState): HomeUiState {
+        val isReady = snapshot.runtimeState == RuntimeState.Running
         
         val uiRuntimeState = when (snapshot.speech) {
             is SpeechSessionState.PassiveListening -> HaloRuntimeState.Idle
-            is SpeechSessionState.Capturing, is SpeechSessionState.Recognizing -> HaloRuntimeState.Capturing
-            is SpeechSessionState.Processing -> HaloRuntimeState.Recognizing
+            is SpeechSessionState.Capturing -> HaloRuntimeState.Capturing
+            is SpeechSessionState.Recognizing -> HaloRuntimeState.Recognizing
+            is SpeechSessionState.Thinking -> HaloRuntimeState.Reasoning
+            is SpeechSessionState.Processing -> HaloRuntimeState.Planning
             is SpeechSessionState.Speaking -> HaloRuntimeState.Speaking
             else -> HaloRuntimeState.Idle
         }
         
-        val contextualText = when (uiRuntimeState) {
-            HaloRuntimeState.Idle -> if (isReady) "Ready when you are" else "Initializing..."
-            HaloRuntimeState.Capturing -> "Listening"
-            HaloRuntimeState.Recognizing -> "Thinking"
-            HaloRuntimeState.Speaking -> "Speaking"
-            else -> "Processing..."
+        val contextualText = when (sessionState) {
+            is CognitiveSessionState.PreparingContext -> "Preparing context..."
+            is CognitiveSessionState.Reasoning -> "Reasoning..."
+            is CognitiveSessionState.Streaming -> sessionState.text
+            is CognitiveSessionState.Completed -> sessionState.response.text ?: "Completed"
+            is CognitiveSessionState.Failed -> "Error: ${sessionState.message}"
+            else -> when (uiRuntimeState) {
+                HaloRuntimeState.Idle -> if (isReady) "Ready when you are" else "Initializing..."
+                HaloRuntimeState.Capturing -> "Listening"
+                HaloRuntimeState.Recognizing -> "Thinking"
+                HaloRuntimeState.Reasoning -> "Reasoning"
+                HaloRuntimeState.Speaking -> "Speaking"
+                else -> "Processing..."
+            }
         }
         
         val isConnected = snapshot.deviceContext.connected
@@ -62,11 +66,14 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
             snapshot.deviceContext.capabilities
         }
 
-        val provider = snapshot.providers.find { it.name.contains("Assistant") } ?: snapshot.providers.firstOrNull()
-        val providerStatus = when {
-            provider == null -> "Unavailable"
-            provider.name.contains("Assistant") -> "HANDOFF"
-            else -> "READY"
+        val selectedProvider = snapshot.providers.find { it.isSelected } ?: snapshot.providers.firstOrNull()
+        val providerStatus = selectedProvider?.status ?: "Unavailable"
+        
+        val activeProviderText = if (selectedProvider != null) {
+            val modelSuffix = selectedProvider.activeModel?.let { " · $it" } ?: ""
+            "${selectedProvider.name}$modelSuffix"
+        } else {
+            "No provider"
         }
         
         return HomeUiState(
@@ -76,29 +83,46 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
             recentEvents = snapshot.timeline.map { 
                 TimelinePreviewEvent(it.title, it.status, it.timestamp.toEpochMilli())
             },
-            activeProvider = provider?.name ?: "No provider",
+            activeProvider = activeProviderText,
             activeProviderStatus = providerStatus,
             batteryPercent = snapshot.deviceContext.batteryPercent,
             isCharging = snapshot.deviceContext.charging,
-            capabilities = caps
+            capabilities = caps,
+            sessionState = sessionState
         )
     }
+
+    override fun map(snapshot: RuntimeSnapshot): HomeUiState = map(snapshot, CognitiveSessionState.Idle)
 }
 
 class HomeViewModel(
     private val snapshotManager: RuntimeSnapshotSource,
-    private val commandBus: CommandBus
+    private val commandBus: CommandBus,
+    private val cognitiveSession: CognitiveSession
 ) : ViewModel() {
 
     private val mapper = HomeUiMapper()
     
-    val uiState: StateFlow<HomeUiState> = snapshotManager.snapshot
-        .map { mapper.map(it) }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = HomeUiState()
-        )
+    val uiState: StateFlow<HomeUiState> = combine(
+        snapshotManager.snapshot,
+        cognitiveSession.state
+    ) { snapshot, sessionState ->
+        mapper.map(snapshot, sessionState)
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = HomeUiState()
+    )
+
+    fun submitText(text: String) {
+        viewModelScope.launch {
+            cognitiveSession.submit(AiRequest(text = text))
+        }
+    }
+    
+    fun cancelSession() {
+        cognitiveSession.cancel()
+    }
 
     fun startListening() {
         viewModelScope.launch {
@@ -109,6 +133,21 @@ class HomeViewModel(
     fun stopListening() {
         viewModelScope.launch {
             commandBus.dispatch(StopListening)
+        }
+    }
+
+    private val _navigationEvents = MutableSharedFlow<String>()
+    val navigationEvents: SharedFlow<String> = _navigationEvents.asSharedFlow()
+
+    fun navigateToIntelligence() {
+        viewModelScope.launch {
+            _navigationEvents.emit("ai_settings")
+        }
+    }
+
+    fun navigateToDevices() {
+        viewModelScope.launch {
+            _navigationEvents.emit("devices")
         }
     }
 }

@@ -11,6 +11,7 @@ import com.halo.app.ui.screens.activity.ActivityViewModel
 import com.halo.app.ui.screens.devices.DevicesViewModel
 import com.halo.app.ui.developer.protocol.ProtocolLabViewModel
 import com.halo.app.ui.developer.inspector.RuntimeInspectorViewModel
+import com.halo.sdk.provider.AiProviderRouter
 
 /**
  * Thin façade that wires sub-graphs together. This is the sole composition root.
@@ -26,10 +27,11 @@ object ManualDependencyGraph {
     // ─── Sub-graphs ─────────────────────────────────────────────
 
     val infra by lazy { InfrastructureGraph() }
-    val providerGraph by lazy { ProviderGraph(applicationContext) }
-    val hostGraph by lazy { HostGraph(applicationContext, infra, providerGraph) }
+    val storage by lazy { com.halo.host.android.AndroidStorage(applicationContext) }
+    val providerGraph by lazy { ProviderGraph(applicationContext, storage) }
+    val hostGraph by lazy { HostGraph(applicationContext, infra, providerGraph, storage) }
     val engineGraph by lazy { EngineGraph(applicationContext, infra, providerGraph) }
-    val observerGraph by lazy { ObserverGraph(applicationContext, infra, engineGraph, providerGraph) }
+    val observerGraph by lazy { ObserverGraph(applicationContext, infra, engineGraph) }
 
     // ─── Convenience accessors (preserve existing API) ──────────
 
@@ -67,8 +69,24 @@ object ManualDependencyGraph {
     val aiProviderRouter get() = engineGraph.aiProviderRouter
     val reflectionEngine get() = engineGraph.reflectionEngine
     val runtimeOrchestrator get() = engineGraph.runtimeOrchestrator
+    val aiHandoffOrchestrator by lazy {
+        com.halo.app.runtime.AiHandoffOrchestrator(
+            infra.eventBus,
+            aiProviderRouter,
+            infra.scope
+        )
+    }
     val speechSessionManager get() = engineGraph.speechSessionManager
     val speechPerceptionBridge get() = engineGraph.speechPerceptionBridge
+
+    val cognitiveSession by lazy {
+        com.halo.runtime.cognition.session.CognitiveSession(
+            eventBus,
+            blackboard,
+            aiProviderRouter,
+            infra.scope
+        )
+    }
 
     val processManager get() = observerGraph.processManager
     val timelineEventMapper get() = observerGraph.timelineEventMapper
@@ -97,21 +115,40 @@ object ManualDependencyGraph {
 
     // ─── ViewModels ─────────────────────────────────────────────
 
-    val homeViewModel by lazy { HomeViewModel(runtimeSnapshotManager, commandBus) }
-    val consoleViewModel by lazy { ConsoleViewModel(runtimeSnapshotManager) }
-    val settingsViewModel by lazy { SettingsViewModel(runtimeSnapshotManager, aiProviderRouter) }
+    val homeViewModel by lazy { HomeViewModel(runtimeSnapshotManager, commandBus, cognitiveSession) }
+    val consoleViewModel by lazy { ConsoleViewModel(runtimeSnapshotManager, eventBus, blackboard) }
+    val settingsViewModel by lazy { SettingsViewModel(runtimeSnapshotManager, aiProviderRouter, storage) }
     val activityViewModel by lazy { ActivityViewModel(runtimeSnapshotManager) }
     val devicesViewModel by lazy { DevicesViewModel(runtimeSnapshotManager) }
     val protocolLabViewModel by lazy { ProtocolLabViewModel(heyCyanDriver) }
-    val runtimeInspectorViewModel by lazy { RuntimeInspectorViewModel() }
+    val pairingViewModel by lazy { com.halo.app.ui.screens.discovery.PairingViewModel(heyCyanDriver) }
+    val intelligenceViewModel by lazy {
+        com.halo.app.ui.screens.settings.IntelligenceViewModel(
+            runtimeSnapshotManager,
+            aiProviderRouter,
+            cognitiveSession,
+            storage
+        )
+    }
+    val runtimeInspectorViewModel by lazy { RuntimeInspectorViewModel(blackboard, runtimeSnapshotManager) }
 
     // ─── Kernel ─────────────────────────────────────────────────
 
     val microkernel by lazy {
         processManager.register(androidWakeWordProcess)
+        processManager.register(workingMemoryProcess)
+        processManager.register(
+            com.halo.host.android.AudioPerceptionProcess(perceptionBus)
+        )
+        processManager.register(
+            com.halo.engines.interpretation.RuleInterpretationProcess(perceptionBus, cognitiveBus)
+        )
+        processManager.register(
+            com.halo.engines.agents.ReasoningServiceProcess(perceptionBus, cognitiveBus, providerGraph.providers.inference)
+        )
+
         speechSessionManager.start()
         runtimeReplayRecorder.startRecording()
-        processManager.register(workingMemoryProcess)
 
         HaloMicrokernel(
             infra.scope,

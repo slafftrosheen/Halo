@@ -2,7 +2,7 @@ package com.halo.engines.ai
 
 import com.halo.libraries.common.core.Identifier
 import com.halo.libraries.common.core.Version
-import com.halo.sdk.provider.AiRequest
+import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +20,8 @@ interface AIEngineInterface : Engine {
  * Implementation of AIEngine that delegates to AiProviderRouter.
  */
 class AIEngine(
-    private val router: AiProviderRouter
+    private val router: AiProviderRouter,
+    private val storage: Storage
 ) : AIEngineInterface {
 
     override val metadata = EngineMetadata(
@@ -37,10 +38,11 @@ class AIEngine(
 
     override val dependencies: Set<ServiceKey<*>> = emptySet()
     
-    private var context: EngineContext? = null
+    private var engineContext: EngineContext? = null
+    private var policy = AiContextPolicy.CONSERVATIVE
 
     override suspend fun initialize(context: EngineContext) {
-        this.context = context
+        this.engineContext = context
         _state.value = EngineState.Initializing
         _health.value = EngineHealth.Healthy
     }
@@ -54,14 +56,39 @@ class AIEngine(
     }
 
     override suspend fun reason(input: String): String {
-        return router.execute(AiRequest(text = input, systemContext = "Reason about this.")).text
+        return router.execute(AiRequest(text = input), buildContext("Reason about this.")).text ?: ""
     }
 
     override suspend fun summarize(input: String): String {
-        return router.execute(AiRequest(text = input, systemContext = "Summarize this.")).text
+        return router.execute(AiRequest(text = input), buildContext("Summarize this.")).text ?: ""
     }
 
     override suspend fun generate(prompt: String): String {
-        return router.execute(AiRequest(text = prompt)).text
+        return router.execute(AiRequest(text = prompt), buildContext()).text ?: ""
+    }
+
+    private fun buildContext(systemContext: String? = null): AiContext {
+        val conversation = mutableListOf<AIMessage>()
+        
+        if (systemContext != null) {
+            conversation.add(AIMessage(Role.SYSTEM, systemContext))
+        }
+
+        // In a real implementation, this would aggregate data from various engines.
+        
+        return AiContext(
+            conversation = conversation,
+            deviceState = if (policy.includeDeviceState) {
+                DeviceState(
+                    properties = mapOf(
+                        "platform" to "Android",
+                        "timestamp" to System.currentTimeMillis()
+                    )
+                )
+            } else null,
+            recentEvents = if (policy.includeRecentEvents) emptyList() else emptyList(),
+            memories = if (policy.includeMemories) emptyList() else emptyList(),
+            availableTools = if (policy.includeAvailableTools) emptyList() else emptyList()
+        )
     }
 }

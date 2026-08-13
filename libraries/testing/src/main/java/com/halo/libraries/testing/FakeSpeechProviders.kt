@@ -2,17 +2,11 @@ package com.halo.libraries.testing
 
 import com.halo.sdk.host.AudioBuffer
 import com.halo.sdk.host.AudioFrame
-import com.halo.sdk.provider.AIRequestLegacy
-import com.halo.sdk.provider.AIResponseLegacy
-import com.halo.sdk.provider.BufferedSpeechRecognitionProvider
-import com.halo.sdk.provider.InferenceProvider
-import com.halo.sdk.provider.RecognitionResult
-import com.halo.sdk.provider.SpeechRequest
-import com.halo.sdk.provider.SpeechResult
-import com.halo.sdk.provider.SpeechSynthesisProvider
-import com.halo.sdk.provider.WakeWordDetector
-import com.halo.sdk.provider.WakeWordResult
+import com.halo.sdk.provider.*
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 
@@ -71,7 +65,9 @@ class FakeWakeWordDetector(
 class FakeInferenceProvider(
     private val response: String = "Test response"
 ) : InferenceProvider {
-    override val metadata = com.halo.sdk.provider.ProviderMetadata(
+    override val status: StateFlow<ProviderStatus> = MutableStateFlow(ProviderStatus.READY).asStateFlow()
+
+    override val metadata = ProviderMetadata(
         id = "provider.test.inference",
         displayName = "Test inference"
     )
@@ -82,4 +78,6 @@ class FakeInferenceProvider(
     override fun stream(prompt: String): Flow<String> = flow { emit(response) }
 
     override suspend fun health(): Boolean = true
+
+    override suspend fun listModels(): List<AiModel> = emptyList()
 }

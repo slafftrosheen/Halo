@@ -8,6 +8,7 @@ data class SpeechStarted(override val id: String = UUID.randomUUID().toString(),
 data class SpeechEnded(override val id: String = UUID.randomUUID().toString(), override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
 data class RecognitionStarted(override val id: String = UUID.randomUUID().toString(), override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
 data class RecognitionFinished(override val id: String = UUID.randomUUID().toString(), override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
+data class HandoffStarted(override val id: String = UUID.randomUUID().toString(), override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
 data class RecognitionFailed(override val id: String = UUID.randomUUID().toString(), val reason: String, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
 data class RecognitionTimeoutEvent(
     override val id: String = UUID.randomUUID().toString(),

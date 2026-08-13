@@ -73,6 +73,7 @@ include(":providers:llamacpp")
 include(":providers:android-stt")
 include(":providers:android-tts")
 include(":providers:android-assistant")
+include(":providers:openrouter")
 
 include(":libraries:common")
 include(":libraries:halo-cognition-language")

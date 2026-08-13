@@ -21,7 +21,7 @@ import com.halo.app.ui.screens.home.HomeScreen
 import com.halo.app.ui.screens.activity.ActivityScreen
 import com.halo.app.ui.screens.devices.DevicesScreen
 import com.halo.app.ui.screens.settings.SettingsScreen
-import com.halo.app.ui.screens.settings.AiSettingsScreen
+import com.halo.app.ui.screens.settings.IntelligenceScreen
 import com.halo.app.ui.developer.protocol.ProtocolLabScreen
 import com.halo.app.ui.developer.inspector.RuntimeInspectorScreen
 import com.halo.app.ui.developer.console.ConsoleScreen
@@ -44,12 +44,32 @@ val bottomNavItems = listOf(Screen.Home, Screen.Activity, Screen.Devices, Screen
 @Composable
 fun AppShell() {
     val navController = rememberNavController()
+    val intelligenceViewModel = ManualDependencyGraph.intelligenceViewModel
     val settingsViewModel = ManualDependencyGraph.settingsViewModel
     val devicesViewModel = ManualDependencyGraph.devicesViewModel
+    val pairingViewModel = ManualDependencyGraph.pairingViewModel
     val protocolLabViewModel = ManualDependencyGraph.protocolLabViewModel
 
     LaunchedEffect(Unit) {
         settingsViewModel.navigationEvents.collectLatest { route ->
+            navController.navigate(route)
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        pairingViewModel.navigationEvents.collectLatest { event ->
+            if (event == "back") navController.popBackStack()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        ManualDependencyGraph.homeViewModel.navigationEvents.collectLatest { route ->
+            navController.navigate(route)
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        intelligenceViewModel.navigationEvents.collectLatest { route ->
             navController.navigate(route)
         }
     }
@@ -85,12 +105,13 @@ fun AppShell() {
                 SettingsScreen(viewModel = ManualDependencyGraph.settingsViewModel)
             }
             composable("ai_settings") {
-                AiSettingsScreen(viewModel = ManualDependencyGraph.settingsViewModel)
+                com.halo.app.ui.screens.settings.IntelligenceScreen(viewModel = ManualDependencyGraph.intelligenceViewModel)
+            }
+            composable("permissions") {
+                com.halo.app.ui.screens.settings.PermissionsScreen()
             }
             composable("discovery") {
-                com.halo.app.ui.screens.discovery.HeyCyanDiscoveryScreen(
-                    context = androidx.compose.ui.platform.LocalContext.current
-                )
+                com.halo.app.ui.screens.discovery.PairingScreen(viewModel = ManualDependencyGraph.pairingViewModel)
             }
             composable(Screen.ProtocolLab.route) {
                 ProtocolLabScreen(viewModel = ManualDependencyGraph.protocolLabViewModel)
