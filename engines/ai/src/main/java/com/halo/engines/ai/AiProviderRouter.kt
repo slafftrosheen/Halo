@@ -12,6 +12,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.Job
 
 import kotlin.time.Duration.Companion.seconds
 
@@ -24,9 +26,11 @@ class DefaultAiProviderRouter(
 ) : AiProviderRouter {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    init {
-        // Periodically refresh provider statuses
-        scope.launch {
+    private var pollingJob: Job? = null
+
+    override fun start() {
+        if (pollingJob?.isActive == true) return
+        pollingJob = scope.launch {
             while (isActive) {
                 providers.forEach { provider ->
                     runCatching { provider.getStatus() }
@@ -34,6 +38,11 @@ class DefaultAiProviderRouter(
                 delay(30.seconds)
             }
         }
+    }
+
+    override fun stop() {
+        pollingJob?.cancel()
+        pollingJob = null
     }
 
     private val _selectedProviderId = MutableStateFlow<String?>(
@@ -47,7 +56,9 @@ class DefaultAiProviderRouter(
     override val selectedModelId: StateFlow<String?> = _selectedModelId.asStateFlow()
 
     private val _routingPolicy = MutableStateFlow<AiRoutingPolicy>(
-        storage.getString("ai_routing_policy")?.let { enumValueOf<AiRoutingPolicy>(it) } ?: AiRoutingPolicy.AUTOMATIC
+        storage.getString("ai_routing_policy")?.let { 
+            runCatching { enumValueOf<AiRoutingPolicy>(it) }.getOrDefault(AiRoutingPolicy.AUTOMATIC)
+        } ?: AiRoutingPolicy.AUTOMATIC
     )
     
     fun setRoutingPolicy(policy: AiRoutingPolicy) {
@@ -59,6 +70,9 @@ class DefaultAiProviderRouter(
         if (providers.any { it.id == id }) {
             _selectedProviderId.value = id
             storage.putString("active_ai_provider", id)
+            scope.launch {
+                runCatching { providers.find { it.id == id }?.getStatus() }
+            }
         }
     }
 
@@ -112,8 +126,14 @@ class DefaultAiProviderRouter(
         }
     }
 
-    private fun selectProviderForRequest(policy: AiRoutingPolicy, preferred: AiProvider?, request: AiRequest): AiProvider? {
-        val readyProviders = providers.filter { it.status.value.state == ProviderStatus.State.READY && supports(it, request) }
+    private suspend fun selectProviderForRequest(policy: AiRoutingPolicy, preferred: AiProvider?, request: AiRequest): AiProvider? {
+        val readyProviders = mutableListOf<AiProvider>()
+        for (provider in providers) {
+            val state = provider.status.value.state
+            if ((state == ProviderStatus.State.READY || state == ProviderStatus.State.STANDBY || state == ProviderStatus.State.LOADING) && supports(provider, request)) {
+                readyProviders.add(provider)
+            }
+        }
         
         return when (policy) {
             AiRoutingPolicy.EXPLICIT -> {
@@ -133,11 +153,13 @@ class DefaultAiProviderRouter(
         }
     }
 
-    private fun getFallbackProvider(failedProvider: AiProvider, request: AiRequest, policy: AiRoutingPolicy): AiProvider? {
-        val readyProviders = providers.filter { 
-            it.id != failedProvider.id && 
-            it.status.value.state == ProviderStatus.State.READY && 
-            supports(it, request) 
+    private suspend fun getFallbackProvider(failedProvider: AiProvider, request: AiRequest, policy: AiRoutingPolicy): AiProvider? {
+        val readyProviders = mutableListOf<AiProvider>()
+        for (provider in providers) {
+            val state = provider.status.value.state
+            if (provider.id != failedProvider.id && (state == ProviderStatus.State.READY || state == ProviderStatus.State.STANDBY || state == ProviderStatus.State.LOADING) && supports(provider, request)) {
+                readyProviders.add(provider)
+            }
         }
         
         return if (policy == AiRoutingPolicy.LOCAL_ONLY) {
@@ -147,8 +169,11 @@ class DefaultAiProviderRouter(
         }
     }
 
-    private fun supports(provider: AiProvider, request: AiRequest): Boolean {
-        // In the future, validate modality against provider.getCapabilities()
-        return true 
+    private suspend fun supports(provider: AiProvider, request: AiRequest): Boolean {
+        val caps = provider.getCapabilities()
+        if (request.image != null && !caps.contains(AiCapability.IMAGE) && !caps.contains(AiCapability.MULTIMODAL)) return false
+        if (request.audio != null && !caps.contains(AiCapability.AUDIO) && !caps.contains(AiCapability.MULTIMODAL)) return false
+        if (request.video != null && !caps.contains(AiCapability.VIDEO) && !caps.contains(AiCapability.MULTIMODAL)) return false
+        return true
     }
 }

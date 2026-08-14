@@ -36,4 +36,9 @@ interface EmbodimentSession {
      * This will fail if the session is not in the READY state.
      */
     suspend fun dispatch(intent: EmbodimentIntent)
+    
+    /**
+     * Terminate the session completely and clean up any resources (scopes, listeners).
+     */
+    suspend fun dispose()
 }

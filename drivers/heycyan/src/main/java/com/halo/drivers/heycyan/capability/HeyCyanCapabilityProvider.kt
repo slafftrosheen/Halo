@@ -66,8 +66,8 @@ class HeyCyanCapabilityProvider(
             "heycyan.device_info" -> HeyCyanOperation.GetDeviceInfo
             "heycyan.media_inventory" -> HeyCyanOperation.GetMediaInventory
             "heycyan.camera.photo" -> HeyCyanOperation.TakePhoto
-            "heycyan.camera.video" -> HeyCyanOperation.ToggleVideo
-            "heycyan.audio.recording" -> HeyCyanOperation.PrepareVoiceRouting
+            "heycyan.camera.video" -> HeyCyanOperation.StartVideo
+            "heycyan.audio.recording" -> HeyCyanOperation.StartRecording
             "heycyan.ai_photo" -> HeyCyanOperation.GenerateAIPhoto
             "heycyan.wifi_transfer" -> HeyCyanOperation.EnterWifiTransferMode
             // heycyan.audio.live_input has no operation — device doesn't support it

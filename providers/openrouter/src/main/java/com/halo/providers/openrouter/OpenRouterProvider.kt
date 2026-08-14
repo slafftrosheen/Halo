@@ -43,6 +43,22 @@ class OpenRouterProvider(
         return current
     }
 
+    override suspend fun testConnection(): Boolean = withContext(Dispatchers.IO) {
+        val key = apiKey ?: return@withContext false
+        val httpRequest = Request.Builder()
+            .url("https://openrouter.ai/api/v1/auth/key")
+            .header("Authorization", "Bearer $key")
+            .get()
+            .build()
+        try {
+            client.newCall(httpRequest).execute().use { response ->
+                response.isSuccessful
+            }
+        } catch (e: Exception) {
+            false
+        }
+    }
+
     override suspend fun getCapabilities(): Set<AiCapability> = setOf(
         AiCapability.TEXT,
         AiCapability.IMAGE,

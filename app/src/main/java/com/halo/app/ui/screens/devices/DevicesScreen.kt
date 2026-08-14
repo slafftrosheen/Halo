@@ -37,14 +37,30 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+enum class PhotoActionState {
+    READY,
+    CAPTURING,
+    COMPLETED,
+    FAILED
+}
+
 data class GenericDeviceUiState(
     val id: String,
     val name: String,
     val type: String,
     val isConnected: Boolean,
     val battery: String,
+    val batteryAgeText: String = "Live",
+    val isBatteryStale: Boolean = false,
     val firmware: String,
-    val lastSeen: String
+    val lastSeen: String,
+    val photoState: PhotoActionState = PhotoActionState.READY,
+    val videoState: com.halo.drivers.heycyan.protocol.VideoRecordingState = com.halo.drivers.heycyan.protocol.VideoRecordingState.IDLE,
+    val audioState: com.halo.drivers.heycyan.protocol.AudioRecordingState = com.halo.drivers.heycyan.protocol.AudioRecordingState.IDLE,
+    val healthStateText: String = "Healthy",
+    val healthWarning: String? = null,
+    val wearStateText: String = "Unknown",
+    val volumeText: String = "Normal"
 )
 
 data class DevicesUiState(
@@ -55,33 +71,78 @@ class DevicesViewModel(
     val deviceRegistry: com.halo.sdk.runtime.embodiment.DeviceRegistry,
     val sessionManager: com.halo.sdk.runtime.embodiment.DeviceSessionManager,
     private val eventBus: com.halo.sdk.runtime.EventBus,
-    private val snapshotSource: com.halo.sdk.runtime.RuntimeSnapshotSource
+    private val snapshotSource: com.halo.sdk.runtime.RuntimeSnapshotSource,
+    private val heyCyanDriver: com.halo.drivers.heycyan.RealHeyCyanDriver? = null
 ) : ViewModel() {
+    
+    private fun formatLastSeen(lastSeenMs: Long): String {
+        val diff = System.currentTimeMillis() - lastSeenMs
+        if (diff < 60_000) return "Just now"
+        val minutes = diff / 60_000
+        if (minutes < 60) return "$minutes min ago"
+        val hours = minutes / 60
+        if (hours < 24) return "$hours hours ago"
+        val days = hours / 24
+        return "$days days ago"
+    }
     
     private val _uiState = MutableStateFlow(DevicesUiState())
     val uiState: StateFlow<DevicesUiState> = _uiState.asStateFlow()
 
+    private val _photoStates = MutableStateFlow<Map<String, PhotoActionState>>(emptyMap())
+
     init {
         viewModelScope.launch {
-            // Combine saved devices and active sessions
-            sessionManager.activeSessions.collect { activeSessions ->
+            // Combine saved devices, active sessions, and live driver state
+            kotlinx.coroutines.flow.combine(
+                sessionManager.activeSessions,
+                heyCyanDriver?.deviceState ?: MutableStateFlow(com.halo.drivers.heycyan.protocol.HeyCyanDeviceState()),
+                _photoStates
+            ) { activeSessions, driverState, photoStates ->
                 val savedDevices = deviceRegistry.getSavedDevices()
                 
-                val updatedDevices = savedDevices.map { record ->
+                savedDevices.map { record ->
                     val session = activeSessions.find { it.identity.deviceId == record.identity.deviceId }
                     val isConnected = session?.state?.value == com.halo.sdk.runtime.embodiment.SessionState.READY
                     
+                    val batteryState = driverState.battery
+                    val batteryText = if (batteryState != null) "${batteryState.level}%${if (batteryState.charging) " (Charging)" else ""}" else "Unknown"
+                    val batteryDiffMs = if (batteryState != null) System.currentTimeMillis() - batteryState.timestampMs else Long.MAX_VALUE
+                    val isStale = batteryDiffMs > 300_000L // > 5 minutes
+                    val batteryAgeText = when {
+                        !isConnected && batteryState != null -> "Last known battery (${formatLastSeen(batteryState.timestampMs)})"
+                        batteryState == null -> "No data"
+                        isStale -> "Stale (last reported ${formatLastSeen(batteryState.timestampMs)})"
+                        else -> "Updated ${formatLastSeen(batteryState.timestampMs)}"
+                    }
+
+                    val healthWarn = when (driverState.healthState) {
+                        com.halo.drivers.heycyan.protocol.DeviceHealthState.WARNING_MEMORY_INSUFFICIENT -> "Warning: Device memory insufficient"
+                        com.halo.drivers.heycyan.protocol.DeviceHealthState.UNBOUND -> "Warning: Device unbound from app"
+                        com.halo.drivers.heycyan.protocol.DeviceHealthState.ERROR -> "Device error detected"
+                        else -> null
+                    }
+
                     GenericDeviceUiState(
                         id = record.identity.deviceId,
                         name = record.identity.displayName,
                         type = record.identity.deviceType,
                         isConnected = isConnected,
-                        battery = "Unknown",
-                        firmware = record.firmwareVersion ?: "Unknown",
-                        lastSeen = if (isConnected) "Now" else "Last seen ${record.lastSeenMs}ms ago"
+                        battery = batteryText,
+                        batteryAgeText = batteryAgeText,
+                        isBatteryStale = isStale,
+                        firmware = driverState.version?.firmware ?: record.firmwareVersion ?: "Unknown",
+                        lastSeen = if (isConnected) "Now" else "Last seen ${formatLastSeen(record.lastSeenMs)}",
+                        photoState = photoStates[record.identity.deviceId] ?: PhotoActionState.READY,
+                        videoState = driverState.videoRecordingState,
+                        audioState = driverState.audioRecordingState,
+                        healthStateText = driverState.healthState.name,
+                        healthWarning = healthWarn,
+                        wearStateText = driverState.wearState.name,
+                        volumeText = driverState.volumeState?.let { "Music ${it.musicCurrent}, Call ${it.callCurrent}" } ?: "Normal"
                     )
                 }
-                
+            }.collect { updatedDevices ->
                 _uiState.value = DevicesUiState(devices = updatedDevices)
             }
         }
@@ -96,9 +157,62 @@ class DevicesViewModel(
         }
     }
 
+    fun takePhoto(deviceId: String) {
+        val currentPhotoState = _photoStates.value[deviceId] ?: PhotoActionState.READY
+        if (currentPhotoState == PhotoActionState.CAPTURING) return // Prevent double execution while CAPTURING
+        
+        _photoStates.value = _photoStates.value + (deviceId to PhotoActionState.CAPTURING)
+        
+        viewModelScope.launch {
+            val intent = com.halo.sdk.runtime.embodiment.EmbodimentIntent(
+                intentId = java.util.UUID.randomUUID().toString(),
+                targetDeviceId = deviceId,
+                kind = com.halo.sdk.runtime.embodiment.IntentKind.CAPTURE_PHOTO
+            )
+            
+            eventBus.publish(com.halo.sdk.runtime.IntentCreated(
+                intentId = intent.intentId,
+                intentKind = intent.kind.name
+            ))
+            
+            val session = sessionManager.activeSessions.value.find { it.identity.deviceId == deviceId }
+            if (session != null && session.state.value == com.halo.sdk.runtime.embodiment.SessionState.READY) {
+                try {
+                    session.dispatch(intent)
+                    _photoStates.value = _photoStates.value + (deviceId to PhotoActionState.COMPLETED)
+                    kotlinx.coroutines.delay(2000L)
+                    _photoStates.value = _photoStates.value + (deviceId to PhotoActionState.READY)
+                } catch (e: Exception) {
+                    _photoStates.value = _photoStates.value + (deviceId to PhotoActionState.FAILED)
+                    kotlinx.coroutines.delay(3000L)
+                    _photoStates.value = _photoStates.value + (deviceId to PhotoActionState.READY)
+                }
+            } else {
+                _photoStates.value = _photoStates.value + (deviceId to PhotoActionState.FAILED)
+                kotlinx.coroutines.delay(3000L)
+                _photoStates.value = _photoStates.value + (deviceId to PhotoActionState.READY)
+            }
+        }
+    }
+
+    fun startVideo(deviceId: String) {
+        dispatchEmbodimentIntent(deviceId, com.halo.sdk.runtime.embodiment.EmbodimentIntent(
+            intentId = java.util.UUID.randomUUID().toString(),
+            targetDeviceId = deviceId,
+            kind = com.halo.sdk.runtime.embodiment.IntentKind.START_VIDEO
+        ))
+    }
+
+    fun stopVideo(deviceId: String) {
+        dispatchEmbodimentIntent(deviceId, com.halo.sdk.runtime.embodiment.EmbodimentIntent(
+            intentId = java.util.UUID.randomUUID().toString(),
+            targetDeviceId = deviceId,
+            kind = com.halo.sdk.runtime.embodiment.IntentKind.STOP_VIDEO
+        ))
+    }
+
     fun dispatchEmbodimentIntent(deviceId: String, intent: com.halo.sdk.runtime.embodiment.EmbodimentIntent) {
         viewModelScope.launch {
-            // Publish IntentCreated to let the cognitive timeline track this manual action
             eventBus.publish(com.halo.sdk.runtime.IntentCreated(
                 intentId = intent.intentId,
                 intentKind = intent.kind.name
@@ -132,6 +246,17 @@ class DevicesViewModel(
         viewModelScope.launch {
             sessionManager.getSession(deviceId)?.disconnect()
         }
+    }
+
+    fun forgetDevice(deviceId: String) {
+        viewModelScope.launch {
+            sessionManager.getSession(deviceId)?.disconnect()
+            deviceRegistry.removeDevice(deviceId)
+            _navigationEvents.emit("devices")
+        }
+    }
+
+    fun toggleAutoConnect(deviceId: String, enabled: Boolean) {
     }
 }
 

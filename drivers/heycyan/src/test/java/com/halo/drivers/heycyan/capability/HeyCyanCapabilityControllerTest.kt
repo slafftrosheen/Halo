@@ -99,16 +99,16 @@ class HeyCyanCapabilityControllerTest {
     @Test
     fun videoCannotToggleWhileAudioIsActive() = runTest {
         stateStore.apply(HeyCyanEvent.ModeChanged(mode = HeyCyanMode.AUDIO.value))
-        val result = controller.execute(HeyCyanOperation.ToggleVideo)
+        val result = controller.execute(HeyCyanOperation.StartVideo)
         assertTrue(result.isFailure)
         val failure = (result.exceptionOrNull() as HeyCyanCapabilityException).failure
         assertTrue(failure is HeyCyanOperationFailure.DeviceRejected)
     }
 
     @Test
-    fun audioCannotToggleWhileVideoIsActive() = runTest {
+    fun audioCannotStartWhileVideoIsActive() = runTest {
         stateStore.apply(HeyCyanEvent.ModeChanged(mode = HeyCyanMode.VIDEO.value))
-        val result = controller.execute(HeyCyanOperation.PrepareVoiceRouting)
+        val result = controller.execute(HeyCyanOperation.StartRecording)
         assertTrue(result.isFailure)
         val failure = (result.exceptionOrNull() as HeyCyanCapabilityException).failure
         assertTrue(failure is HeyCyanOperationFailure.DeviceRejected)
@@ -122,14 +122,14 @@ class HeyCyanCapabilityControllerTest {
 
     @Test
     fun videoToggleMapsToCommand() = runTest {
-        controller.execute(HeyCyanOperation.ToggleVideo)
-        assertEquals(HeyCyanCommand.ToggleVideo, executor.executedCommands.first())
+        controller.execute(HeyCyanOperation.StartVideo)
+        assertEquals(HeyCyanCommand.StartVideo, executor.executedCommands.first())
     }
 
     @Test
-    fun audioToggleMapsToCommand() = runTest {
-        controller.execute(HeyCyanOperation.PrepareVoiceRouting)
-        assertEquals(HeyCyanCommand.PrepareVoiceRouting, executor.executedCommands.first())
+    fun audioStartMapsToCommand() = runTest {
+        controller.execute(HeyCyanOperation.StartRecording)
+        assertEquals(HeyCyanCommand.StartRecording, executor.executedCommands.first())
     }
 
     @Test

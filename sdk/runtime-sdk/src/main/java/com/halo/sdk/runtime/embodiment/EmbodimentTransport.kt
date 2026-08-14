@@ -2,6 +2,10 @@ package com.halo.sdk.runtime.embodiment
 
 import kotlinx.coroutines.flow.StateFlow
 
+enum class TransportConnectionState {
+    CONNECTING, CONNECTED, DISCONNECTED, ERROR
+}
+
 /**
  * Represents a raw physical or network transport (e.g., BLE, WebSocket, Serial).
  * A transport does NOT understand semantic intents or JSON structures. It only
@@ -14,7 +18,7 @@ interface EmbodimentTransport {
      * Note: A transport can only be CONNECTED, CONNECTING, DISCONNECTED, ERROR.
      * It does not know about READY.
      */
-    val connectionState: StateFlow<SessionState>
+    val connectionState: StateFlow<TransportConnectionState>
 
     /**
      * Attempt to establish the physical connection.

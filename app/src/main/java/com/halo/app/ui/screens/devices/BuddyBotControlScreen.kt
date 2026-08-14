@@ -39,9 +39,15 @@ fun BuddyBotControlScreen(deviceId: String, viewModel: DevicesViewModel, onBack:
                 title = "Connection",
                 modifier = Modifier.fillMaxWidth()
             ) {
-                HaloGlassSettingRow(title = "Auto-connect", value = "ON")
+                Row(modifier = Modifier.fillMaxWidth().clickable { viewModel.toggleAutoConnect(deviceId, false) }.padding(vertical = 12.dp, horizontal = 16.dp)) {
+                    Text("Auto-connect", style = HaloTypography.bodyLarge, color = HaloGlassColors.TextPrimary)
+                    Spacer(modifier = Modifier.weight(1f))
+                    Text("ON", style = HaloTypography.bodyLarge, color = HaloGlassColors.TextSecondary)
+                }
                 HaloGlassDivider()
-                HaloGlassSettingRow(title = "Forget", value = "")
+                Row(modifier = Modifier.fillMaxWidth().clickable { viewModel.forgetDevice(deviceId) }.padding(vertical = 12.dp, horizontal = 16.dp)) {
+                    Text("Forget", style = HaloTypography.bodyLarge, color = HaloGlassColors.Danger)
+                }
                 HaloGlassDivider()
                 // Provide clickable row to connect/disconnect
                 Row(
@@ -90,7 +96,8 @@ fun BuddyBotControlScreen(deviceId: String, viewModel: DevicesViewModel, onBack:
                             )
                         }
                     },
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                    enabled = isConnected
                 )
                 
                 com.halo.app.ui.glass.components.HaloGlassButton(
@@ -107,7 +114,8 @@ fun BuddyBotControlScreen(deviceId: String, viewModel: DevicesViewModel, onBack:
                             )
                         }
                     },
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                    enabled = isConnected
                 )
             }
         }

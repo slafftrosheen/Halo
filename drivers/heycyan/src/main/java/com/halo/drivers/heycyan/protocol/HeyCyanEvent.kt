@@ -27,6 +27,18 @@ sealed interface HeyCyanEvent {
 
     data object VoiceActivationStarted : HeyCyanEvent
     data object VoiceActivationEnded : HeyCyanEvent
+    data object VoicePlaybackPause : HeyCyanEvent
+    data object AiImageRecognition : HeyCyanEvent
+    data class OtaProgress(val payload: ByteArray) : HeyCyanEvent {
+        override fun equals(other: Any?) = other is OtaProgress && payload.contentEquals(other.payload)
+        override fun hashCode() = payload.contentHashCode()
+    }
+    data object UnbindApp : HeyCyanEvent
+    data object MemoryInsufficient : HeyCyanEvent
+    data class VolumeChange(val payload: ByteArray) : HeyCyanEvent {
+        override fun equals(other: Any?) = other is VolumeChange && payload.contentEquals(other.payload)
+        override fun hashCode() = payload.contentHashCode()
+    }
 
     data class ButtonPressed(
         val type: ButtonType

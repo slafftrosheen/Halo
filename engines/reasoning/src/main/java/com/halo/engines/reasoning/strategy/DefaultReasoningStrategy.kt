@@ -19,6 +19,13 @@ import com.halo.cognition.language.SearchIntent
 import com.halo.icl.ontology.Goal
 import com.halo.icl.ontology.GoalType
 import com.halo.icl.ontology.GoalPayload
+import com.halo.icl.ontology.NavigationPayload
+import com.halo.icl.ontology.MediaPayload
+import com.halo.icl.ontology.MemoryPayload
+import com.halo.icl.ontology.SearchPayload
+import com.halo.icl.ontology.CommunicationPayload
+import com.halo.icl.ontology.DevicePayload
+import com.halo.icl.ontology.ConversationPayload
 import com.halo.engines.reasoning.service.GoalManager
 import com.halo.runtime.cognition.blackboard.Interpretation
 
@@ -97,11 +104,4 @@ class DefaultReasoningStrategy(
         entities.filterIsInstance<T>().firstOrNull()
 }
 
-// Local payload implementations matching com.halo.icl.ontology.Goal
-data class NavigationPayload(val destination: String) : GoalPayload
-data class MediaPayload(val query: String, val action: String) : GoalPayload
-data class MemoryPayload(val fact: String) : GoalPayload
-data class SearchPayload(val query: String) : GoalPayload
-data class CommunicationPayload(val target: String) : GoalPayload
-data class DevicePayload(val action: String, val target: String) : GoalPayload
-data class ConversationPayload(val topic: String) : GoalPayload
+// Local payload definitions removed. Now using com.halo.icl.ontology payloads.

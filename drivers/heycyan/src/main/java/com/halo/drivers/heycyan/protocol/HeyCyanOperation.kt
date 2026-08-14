@@ -22,9 +22,17 @@ sealed interface HeyCyanOperation {
     /** Trigger a still photo capture. Mode 0x01. */
     data object TakePhoto : HeyCyanOperation
 
-    /** Execute video-related action (observed toggle). Action 0x02. */
-    data object ToggleVideo : HeyCyanOperation
+    /** Start video recording. */
+    data object StartVideo : HeyCyanOperation
 
+    /** Stop video recording. */
+    data object StopVideo : HeyCyanOperation
+
+    /** Start audio/mic recording. */
+    data object StartRecording : HeyCyanOperation
+
+    /** Stop audio/mic recording. */
+    data object StopRecording : HeyCyanOperation
     /**
      * Prepare voice routing (Bluetooth SCO activation).
      * Action 0x0B (previously incorrectly labelled ToggleAudio).
@@ -74,14 +82,23 @@ fun HeyCyanOperation.toCommand(): HeyCyanCommand =
         HeyCyanOperation.TakePhoto ->
             HeyCyanCommand.TakePhoto
 
-        HeyCyanOperation.ToggleVideo ->
-            HeyCyanCommand.ToggleVideo
+        HeyCyanOperation.StartVideo ->
+            HeyCyanCommand.StartVideo
+
+        HeyCyanOperation.StopVideo ->
+            HeyCyanCommand.StopVideo
+
+        HeyCyanOperation.StartRecording ->
+            HeyCyanCommand.StartRecording
+
+        HeyCyanOperation.StopRecording ->
+            HeyCyanCommand.StopRecording
 
         HeyCyanOperation.PrepareVoiceRouting ->
             HeyCyanCommand.PrepareVoiceRouting
 
         HeyCyanOperation.GenerateAIPhoto ->
-            HeyCyanCommand.SetMode(HeyCyanMode.AI_PHOTO)
+            HeyCyanCommand.AiThumbnail
 
         HeyCyanOperation.EnterWifiTransferMode,
         HeyCyanOperation.SynchronizeMedia ->

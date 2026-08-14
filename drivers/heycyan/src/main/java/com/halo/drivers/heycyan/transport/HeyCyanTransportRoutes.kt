@@ -88,21 +88,37 @@ object HeyCyanTransportRoutes {
             evidence = listOf(sdkEvidence),
             reason = "Camera control capture action.",
         ),
-        HeyCyanOperation.ToggleVideo to HeyCyanOperationRoute(
-            operation = HeyCyanOperation.ToggleVideo,
+        HeyCyanOperation.StartVideo to HeyCyanOperationRoute(
+            operation = HeyCyanOperation.StartVideo,
             preferred = HeyCyanTransportType.BLE_GATT,
             fallback = null,
             retrySafety = RetrySafety.NOT_IDEMPOTENT,
             evidence = listOf(sdkEvidence),
-            reason = "Video recording toggle action.",
+            reason = "Video recording start action.",
         ),
-        HeyCyanOperation.PrepareVoiceRouting to HeyCyanOperationRoute(
-            operation = HeyCyanOperation.PrepareVoiceRouting,
+        HeyCyanOperation.StopVideo to HeyCyanOperationRoute(
+            operation = HeyCyanOperation.StopVideo,
+            preferred = HeyCyanTransportType.BLE_GATT,
+            fallback = null,
+            retrySafety = RetrySafety.IDEMPOTENT,
+            evidence = listOf(sdkEvidence),
+            reason = "Video recording stop action.",
+        ),
+        HeyCyanOperation.StartRecording to HeyCyanOperationRoute(
+            operation = HeyCyanOperation.StartRecording,
             preferred = HeyCyanTransportType.BLE_GATT,
             fallback = null,
             retrySafety = RetrySafety.NOT_IDEMPOTENT,
             evidence = listOf(sdkEvidence),
-            reason = "Audio recording toggle action.",
+            reason = "Audio recording start action.",
+        ),
+        HeyCyanOperation.StopRecording to HeyCyanOperationRoute(
+            operation = HeyCyanOperation.StopRecording,
+            preferred = HeyCyanTransportType.BLE_GATT,
+            fallback = null,
+            retrySafety = RetrySafety.IDEMPOTENT,
+            evidence = listOf(sdkEvidence),
+            reason = "Audio recording stop action.",
         ),
         HeyCyanOperation.GenerateAIPhoto to HeyCyanOperationRoute(
             operation = HeyCyanOperation.GenerateAIPhoto,

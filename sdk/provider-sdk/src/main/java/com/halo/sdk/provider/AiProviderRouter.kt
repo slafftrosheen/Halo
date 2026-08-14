@@ -18,4 +18,7 @@ interface AiProviderRouter {
         request: AiRequest, 
         context: AiContext = AiContext.EMPTY
     ): AiResponse
+    
+    fun start()
+    fun stop()
 }

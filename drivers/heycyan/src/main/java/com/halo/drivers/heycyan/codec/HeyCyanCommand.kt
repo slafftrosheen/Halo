@@ -35,6 +35,21 @@ object HeyCyanCommand {
         payload = HeyCyanWireFrameCodec.PAYLOAD_VIDEO_STOP
     )
 
+    fun recordStart(): ByteArray = HeyCyanWireFrameCodec.encode(
+        action = HeyCyanWireFrameCodec.ACTION_GLASSES_CONTROL,
+        payload = HeyCyanWireFrameCodec.PAYLOAD_RECORD_START
+    )
+
+    fun recordStop(): ByteArray = HeyCyanWireFrameCodec.encode(
+        action = HeyCyanWireFrameCodec.ACTION_GLASSES_CONTROL,
+        payload = HeyCyanWireFrameCodec.PAYLOAD_RECORD_STOP
+    )
+
+    fun aiThumbnail(): ByteArray = HeyCyanWireFrameCodec.encode(
+        action = HeyCyanWireFrameCodec.ACTION_GLASSES_CONTROL,
+        payload = HeyCyanWireFrameCodec.PAYLOAD_AI_THUMBNAIL
+    )
+
     /**
      * Constructs a WIFI_TRANSFER command wire frame.
      * Output: BC 41 04 00 93 5C 02 01 04 01

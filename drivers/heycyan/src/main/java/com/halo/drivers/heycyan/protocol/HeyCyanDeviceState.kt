@@ -1,5 +1,45 @@
 package com.halo.drivers.heycyan.protocol
 
+enum class VideoRecordingState {
+    IDLE,
+    STARTING,
+    RECORDING,
+    STOPPING,
+    ERROR,
+    UNKNOWN
+}
+
+enum class AudioRecordingState {
+    IDLE,
+    RECORDING,
+    ERROR
+}
+
+enum class DeviceHealthState {
+    HEALTHY,
+    WARNING_MEMORY_INSUFFICIENT,
+    UNBOUND,
+    ERROR
+}
+
+enum class WearState {
+    WORN,
+    NOT_WORN,
+    UNKNOWN
+}
+
+data class VolumeState(
+    val musicCurrent: Int = 0,
+    val callCurrent: Int = 0,
+    val systemCurrent: Int = 0
+)
+
+data class HardwareInputState(
+    val lastButton: String? = null,
+    val lastTouchGesture: String? = null,
+    val lastInputTimestampMs: Long? = null
+)
+
 data class HeyCyanDeviceState(
     val connection: HeyCyanConnectionState =
         HeyCyanConnectionState.DISCONNECTED,
@@ -22,12 +62,25 @@ data class HeyCyanDeviceState(
     val operation: com.halo.drivers.heycyan.capability.HeyCyanOperationState =
         com.halo.drivers.heycyan.capability.HeyCyanOperationState.Idle,
 
+    val videoRecordingState: VideoRecordingState = VideoRecordingState.IDLE,
+
+    val audioRecordingState: AudioRecordingState = AudioRecordingState.IDLE,
+
+    val healthState: DeviceHealthState = DeviceHealthState.HEALTHY,
+
+    val wearState: WearState = WearState.UNKNOWN,
+
+    val volumeState: VolumeState? = null,
+
+    val hardwareInputState: HardwareInputState = HardwareInputState(),
+
     val lastEventAtMillis: Long? = null,
 )
 
 data class BatteryState(
     val level: Int,
     val charging: Boolean,
+    val timestampMs: Long = System.currentTimeMillis()
 )
 
 data class VersionInfo(
@@ -51,13 +104,5 @@ data class WiFiCredentials(
 
 /**
  * Type alias for [MediaCounts] using the PR-025 semantic naming.
- *
- * Response format (event 0x02):
- *   bytes 1-2 → photo count (UInt16 LE)
- *   bytes 3-4 → video count (UInt16 LE)
- *   bytes 5-6 → audio count (UInt16 LE)
- *   byte 7    → mediaType  (raw; meaning not yet established)
- *
- * Do not drop mediaType — store as opaque metadata.
  */
 typealias MediaInventory = MediaCounts

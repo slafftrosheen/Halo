@@ -39,7 +39,34 @@ class AlphaW1IntegrationTest {
                     }
                     override fun stream(text: String): kotlinx.coroutines.flow.Flow<com.halo.sdk.host.AudioFrame> = kotlinx.coroutines.flow.emptyFlow()
                     override suspend fun health(): Boolean = true
-                }
+                },
+                inference = object : com.halo.sdk.provider.InferenceProvider {
+                    override val status = kotlinx.coroutines.flow.MutableStateFlow(com.halo.sdk.provider.ProviderStatus.READY)
+                    override suspend fun complete(request: com.halo.sdk.provider.AIRequestLegacy): com.halo.sdk.provider.AIResponseLegacy {
+                        return com.halo.sdk.provider.AIResponseLegacy(text = "{\"intent\": \"NavigateIntent\", \"target\": \"home\"}", finishReason = "stop", latencyMs = 100)
+                    }
+                    override fun stream(prompt: String): kotlinx.coroutines.flow.Flow<String> = kotlinx.coroutines.flow.emptyFlow()
+                    override suspend fun health(): Boolean = true
+                    override suspend fun listModels() = emptyList<com.halo.sdk.provider.AiModel>()
+                },
+                aiProviders = listOf(
+                    object : com.halo.sdk.provider.AiProvider {
+                        override val id = "test-ai"
+                        override val displayName = "Test AI"
+                        override val isLocal = true
+                        override val status = kotlinx.coroutines.flow.MutableStateFlow(com.halo.sdk.provider.ProviderStatus.READY)
+                        override suspend fun getStatus() = com.halo.sdk.provider.ProviderStatus.READY
+                        override suspend fun getCapabilities() = setOf(com.halo.sdk.provider.AiCapability.TEXT, com.halo.sdk.provider.AiCapability.AUDIO, com.halo.sdk.provider.AiCapability.MULTIMODAL)
+                        override suspend fun generate(request: com.halo.sdk.provider.AiRequest, context: com.halo.sdk.provider.AiContext): com.halo.sdk.provider.AiResponse {
+                            return com.halo.sdk.provider.AiResponse(
+                                text = "{\"intent\": \"NavigateIntent\", \"target\": \"home\"}",
+                                providerId = id
+                            )
+                        }
+                        override fun stream(request: com.halo.sdk.provider.AiRequest, context: com.halo.sdk.provider.AiContext) = kotlinx.coroutines.flow.emptyFlow<com.halo.sdk.provider.AiStreamEvent>()
+                        override suspend fun listModels() = emptyList<com.halo.sdk.provider.AiModel>()
+                    }
+                )
             )
         }
     }
@@ -76,6 +103,7 @@ class AlphaW1IntegrationTest {
         engineGraph.reasoningEngine.start()
         engineGraph.planningEngine.start()
         engineGraph.executionEngine.start()
+        graph.aiProviderRouter.start()
         
         delay(100)
 
@@ -107,6 +135,7 @@ class AlphaW1IntegrationTest {
         engineGraph.reasoningEngine.stop()
         engineGraph.planningEngine.stop()
         engineGraph.executionEngine.stop()
+        graph.aiProviderRouter.stop()
         }
     }
 }

@@ -107,6 +107,8 @@ interface AiProvider {
     ): Flow<AiStreamEvent>
 
     suspend fun listModels(): List<AiModel>
+    
+    suspend fun testConnection(): Boolean = getStatus().state == ProviderStatus.State.READY
 }
 
 /**
@@ -118,6 +120,8 @@ data class ProviderStatus(
 ) {
     enum class State {
         READY,
+        STANDBY,
+        LOADING,
         UNCONFIGURED,
         UNAVAILABLE,
         ERROR

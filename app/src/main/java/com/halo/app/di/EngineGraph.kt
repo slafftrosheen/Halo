@@ -54,7 +54,10 @@ class EngineGraph(
                     providerGraph.providers.speechSynthesis
                 )
             )
-            register(HeyCyanCapabilityBridge(ManualDependencyGraph.heyCyanDriver.capabilityProvider))
+            register(com.halo.app.capability.HeyCyanCapabilityBridge(
+                ManualDependencyGraph.heyCyanDriver.capabilityProvider,
+                ManualDependencyGraph.heyCyanDriver.deviceState
+            ))
         }
     }
 

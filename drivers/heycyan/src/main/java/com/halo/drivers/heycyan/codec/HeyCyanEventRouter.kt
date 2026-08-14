@@ -54,8 +54,15 @@ class HeyCyanEventRouter(
                 if (decoded.actionFamily == HeyCyanActionFamily.DEVICE_DATA_REPORTING) {
                     if (decoded.payload.isNotEmpty()) {
                         when (decoded.payload[0]) {
+                            0x02.toByte() -> return HeyCyanEvent.AiImageRecognition
                             0x03.toByte() -> return HeyCyanEvent.VoiceActivationStarted
+                            0x04.toByte() -> return HeyCyanEvent.OtaProgress(decoded.payload.copyOfRange(1, decoded.payload.size))
+                            // 0x05 BatteryUpdated is already decoded in responseDecoder, but if reported here we'd handle it.
                             0x0A.toByte() -> return HeyCyanEvent.VoiceActivationEnded
+                            0x0C.toByte() -> return HeyCyanEvent.VoicePlaybackPause
+                            0x0D.toByte() -> return HeyCyanEvent.UnbindApp
+                            0x0E.toByte() -> return HeyCyanEvent.MemoryInsufficient
+                            0x12.toByte() -> return HeyCyanEvent.VolumeChange(decoded.payload.copyOfRange(1, decoded.payload.size))
                         }
                     }
                 }
@@ -78,8 +85,14 @@ class HeyCyanEventRouter(
             is HeyCyanResponse.VoiceState -> {
                 if (decoded.payload.isNotEmpty()) {
                     when (decoded.payload[0]) {
+                        0x02.toByte() -> HeyCyanEvent.AiImageRecognition
                         0x03.toByte() -> HeyCyanEvent.VoiceActivationStarted
+                        0x04.toByte() -> HeyCyanEvent.OtaProgress(decoded.payload.copyOfRange(1, decoded.payload.size))
                         0x0A.toByte() -> HeyCyanEvent.VoiceActivationEnded
+                        0x0C.toByte() -> HeyCyanEvent.VoicePlaybackPause
+                        0x0D.toByte() -> HeyCyanEvent.UnbindApp
+                        0x0E.toByte() -> HeyCyanEvent.MemoryInsufficient
+                        0x12.toByte() -> HeyCyanEvent.VolumeChange(decoded.payload.copyOfRange(1, decoded.payload.size))
                         else -> HeyCyanEvent.Unknown(characteristicUuid.toString(), payload.copyOf())
                     }
                 } else {

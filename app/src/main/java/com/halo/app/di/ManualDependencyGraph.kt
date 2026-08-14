@@ -130,7 +130,7 @@ object ManualDependencyGraph {
     }
     val devicesViewModel by lazy { 
         android.util.Log.d("ManualDependencyGraph", "Creating DevicesViewModel")
-        DevicesViewModel(deviceRegistry, deviceSessionManager, eventBus, runtimeSnapshotManager) 
+        DevicesViewModel(deviceRegistry, deviceSessionManager, eventBus, runtimeSnapshotManager, heyCyanDriver) 
     }
     val protocolLabViewModel by lazy { 
         android.util.Log.d("ManualDependencyGraph", "Creating ProtocolLabViewModel")

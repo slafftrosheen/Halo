@@ -45,7 +45,19 @@ class NativeLlamaProvider(
     )
 
     override suspend fun getStatus(): ProviderStatus {
-        val current = if (health()) ProviderStatus.READY else ProviderStatus.UNAVAILABLE
+        val activeId = downloadManager.activeModelId.value
+        val current = if (activeId == null) {
+            ProviderStatus.UNCONFIGURED
+        } else if (engine != null && loadedModelId == activeId) {
+            ProviderStatus.READY
+        } else {
+            val file = downloadManager.getModelFile(activeId)
+            if (file != null && file.exists()) {
+                ProviderStatus(ProviderStatus.State.STANDBY, "Model downloaded, ready to load")
+            } else {
+                ProviderStatus(ProviderStatus.State.UNAVAILABLE, "Model not downloaded")
+            }
+        }
         _status.value = current
         return current
     }
@@ -63,18 +75,24 @@ class NativeLlamaProvider(
         engine = null
 
         return try {
+            _status.value = ProviderStatus(ProviderStatus.State.LOADING, "Loading model into memory...")
             val helper = LlamaHelper(context.contentResolver, scope, llamaEventFlow)
             helper.load(file.absolutePath, contextSize, systemPrompt, {})
             engine = helper
             loadedModelId = activeId
+            _status.value = ProviderStatus.READY
             true
         } catch (e: Exception) {
+            _status.value = ProviderStatus(ProviderStatus.State.ERROR, "Failed to load model: ${e.message}")
             false
         }
     }
 
     override suspend fun health(): Boolean {
-        return downloadManager.activeModelId.value != null && loadModelIfNeeded()
+        val activeId = downloadManager.activeModelId.value
+        if (activeId == null) return false
+        val file = downloadManager.getModelFile(activeId)
+        return file != null && file.exists()
     }
 
     override suspend fun generate(request: AiRequest, context: AiContext): AiResponse {

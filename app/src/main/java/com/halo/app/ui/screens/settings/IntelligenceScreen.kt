@@ -23,13 +23,26 @@ import androidx.compose.foundation.lazy.items
  * Manages active provider, model selection, and cognitive capabilities.
  */
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import kotlinx.coroutines.flow.collectLatest
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun IntelligenceScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit = {}) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
     var showProviderPicker by remember { mutableStateOf(false) }
     var showModelPicker by remember { mutableStateOf(false) }
     var advancedExpanded by remember { mutableStateOf(false) }
+
+    LaunchedEffect(viewModel) {
+        viewModel.testConnectionResult.collectLatest { success ->
+            val message = if (success) "Connection test successful!" else "Connection test failed."
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+        }
+    }
 
     HaloGlassPage(title = "") {
         HaloGlassBackHeader(
@@ -55,6 +68,8 @@ fun IntelligenceScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit = {}
                 
                 val statusText = when(uiState.activeProviderStatus.state) {
                     ProviderStatus.State.READY -> "READY"
+                    ProviderStatus.State.STANDBY -> "STANDBY"
+                    ProviderStatus.State.LOADING -> "LOADING"
                     ProviderStatus.State.UNCONFIGURED -> "UNCONFIGURED"
                     ProviderStatus.State.UNAVAILABLE -> "UNAVAILABLE"
                     ProviderStatus.State.ERROR -> "ERROR"
@@ -66,6 +81,14 @@ fun IntelligenceScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit = {}
                         ProviderStatus.State.READY -> com.halo.app.ui.glass.material.HaloGlassMaterials.Interactive.copy(
                             containerColor = HaloGlassColors.Success.copy(alpha = 0.2f),
                             contentColor = HaloGlassColors.Success
+                        )
+                        ProviderStatus.State.STANDBY -> com.halo.app.ui.glass.material.HaloGlassMaterials.Interactive.copy(
+                            containerColor = HaloGlassColors.Success.copy(alpha = 0.1f),
+                            contentColor = HaloGlassColors.TextSecondary
+                        )
+                        ProviderStatus.State.LOADING -> com.halo.app.ui.glass.material.HaloGlassMaterials.Interactive.copy(
+                            containerColor = HaloGlassColors.Accent.copy(alpha = 0.2f),
+                            contentColor = HaloGlassColors.Accent
                         )
                         else -> com.halo.app.ui.glass.material.HaloGlassMaterials.Interactive.copy(
                             containerColor = HaloGlassColors.Warning.copy(alpha = 0.2f),
@@ -143,6 +166,13 @@ fun IntelligenceScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit = {}
                         onClick = { showProviderPicker = true }
                     )
                 }
+                
+                Spacer(Modifier.height(16.dp))
+                HaloGlassButton(
+                    text = "Test Connection",
+                    onClick = { viewModel.testConnection() },
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
+                )
 
                 if (uiState.activeProviderId == "openrouter") {
                     Spacer(Modifier.height(16.dp))
@@ -153,6 +183,7 @@ fun IntelligenceScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit = {}
                         modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
                         textStyle = HaloTypography.bodySmall,
                         placeholder = { Text("sk-or-...") },
+                        visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = HaloGlassColors.Accent,
                             unfocusedBorderColor = HaloGlassColors.Glass

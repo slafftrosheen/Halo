@@ -47,7 +47,7 @@ sealed class HeyCyanResponse {
  */
 class HeyCyanResponseDecoder {
 
-    fun decode(frame: ByteArray): HeyCyanResponse? {
+    fun decode(frame: ByteArray): HeyCyanResponse? = runCatching {
         if (frame.size < 6 || frame[0] != 0xBC.toByte()) return null
         
         val action = frame[1]
@@ -160,5 +160,5 @@ class HeyCyanResponseDecoder {
                 HeyCyanResponse.Unknown(action, frame.copyOfRange(6, frame.size))
             }
         }
-    }
+    }.getOrNull()
 }

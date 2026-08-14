@@ -24,11 +24,11 @@ class AndroidProviderFactory(
             speechRecognition = AndroidSpeechRecognitionProvider(context),
             speechSynthesis = AndroidTTSProvider(context),
             wakeWord = AlwaysWakeDetector(),
-            aiProviders = listOf(
-                AndroidAssistantProvider(context),
-                OpenRouterProvider(storage),
-                OllamaProvider(storage),
-                NativeLlamaProvider(context, modelDownloadManager, storage)
+            aiProviders = listOfNotNull(
+                runCatching { AndroidAssistantProvider(context) }.getOrNull(),
+                runCatching { OpenRouterProvider(storage) }.getOrNull(),
+                runCatching { OllamaProvider(storage) }.getOrNull(),
+                runCatching { NativeLlamaProvider(context, modelDownloadManager, storage) }.getOrNull()
             )
         )
     }

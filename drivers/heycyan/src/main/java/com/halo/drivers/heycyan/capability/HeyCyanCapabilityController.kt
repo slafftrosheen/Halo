@@ -78,9 +78,10 @@ class HeyCyanCapabilityController(
         }
 
         // Guard: video/audio recording exclusion
-        // If we are toggling Video, we must not be in Audio recording state (if known).
+        // If we are starting Video, we must not be in Audio recording state.
         val currentState = stateStore.state.value
-        if (operation == HeyCyanOperation.ToggleVideo && currentState.mode == HeyCyanMode.AUDIO) {
+        
+        if (operation == HeyCyanOperation.StartVideo && currentState.mode == HeyCyanMode.AUDIO) {
             return failure(
                 operation = operation,
                 failure = HeyCyanOperationFailure.DeviceRejected(
@@ -90,12 +91,61 @@ class HeyCyanCapabilityController(
             )
         }
 
+        if (operation == HeyCyanOperation.StartVideo && (currentState.mode == HeyCyanMode.VIDEO || currentState.videoRecordingState == com.halo.drivers.heycyan.protocol.VideoRecordingState.RECORDING || currentState.videoRecordingState == com.halo.drivers.heycyan.protocol.VideoRecordingState.STARTING)) {
+            return failure(
+                operation = operation,
+                failure = HeyCyanOperationFailure.DeviceRejected(
+                    "HeyCyan is already starting or recording video.",
+                ),
+                timestamp = now,
+            )
+        }
 
-        if (operation == HeyCyanOperation.PrepareVoiceRouting && currentState.mode == HeyCyanMode.VIDEO) {
+        if (operation == HeyCyanOperation.StopVideo && (currentState.mode != HeyCyanMode.VIDEO && currentState.videoRecordingState == com.halo.drivers.heycyan.protocol.VideoRecordingState.IDLE)) {
+            return failure(
+                operation = operation,
+                failure = HeyCyanOperationFailure.DeviceRejected(
+                    "HeyCyan is not currently recording video.",
+                ),
+                timestamp = now,
+            )
+        }
+
+        if (operation == HeyCyanOperation.StopVideo && currentState.videoRecordingState == com.halo.drivers.heycyan.protocol.VideoRecordingState.STOPPING) {
+            return failure(
+                operation = operation,
+                failure = HeyCyanOperationFailure.DeviceRejected(
+                    "HeyCyan is already stopping video recording.",
+                ),
+                timestamp = now,
+            )
+        }
+
+        if (operation == HeyCyanOperation.StartRecording && currentState.mode == HeyCyanMode.VIDEO) {
             return failure(
                 operation = operation,
                 failure = HeyCyanOperationFailure.DeviceRejected(
                     "HeyCyan cannot record audio while video recording is active.",
+                ),
+                timestamp = now,
+            )
+        }
+
+        if (operation == HeyCyanOperation.StartRecording && currentState.mode == HeyCyanMode.AUDIO) {
+            return failure(
+                operation = operation,
+                failure = HeyCyanOperationFailure.DeviceRejected(
+                    "HeyCyan is already recording audio.",
+                ),
+                timestamp = now,
+            )
+        }
+
+        if (operation == HeyCyanOperation.StopRecording && currentState.mode != HeyCyanMode.AUDIO) {
+            return failure(
+                operation = operation,
+                failure = HeyCyanOperationFailure.DeviceRejected(
+                    "HeyCyan is not currently recording audio.",
                 ),
                 timestamp = now,
             )
@@ -134,8 +184,8 @@ class HeyCyanCapabilityController(
             HeyCyanOperation.GetDeviceInfo -> HeyCyanCapabilities.deviceInfo
             HeyCyanOperation.GetMediaInventory -> HeyCyanCapabilities.mediaInventory
             HeyCyanOperation.TakePhoto -> HeyCyanCapabilities.photo
-            HeyCyanOperation.ToggleVideo -> HeyCyanCapabilities.video
-            HeyCyanOperation.PrepareVoiceRouting -> HeyCyanCapabilities.audioRecording
+            HeyCyanOperation.StartVideo, HeyCyanOperation.StopVideo -> HeyCyanCapabilities.video
+            HeyCyanOperation.StartRecording, HeyCyanOperation.StopRecording, HeyCyanOperation.PrepareVoiceRouting -> HeyCyanCapabilities.audioRecording
             HeyCyanOperation.GenerateAIPhoto -> HeyCyanCapabilities.aiPhoto
             HeyCyanOperation.EnterWifiTransferMode, HeyCyanOperation.SynchronizeMedia -> HeyCyanCapabilities.wifiTransfer
         }

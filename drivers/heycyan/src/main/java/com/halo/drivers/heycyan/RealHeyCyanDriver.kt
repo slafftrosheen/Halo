@@ -42,7 +42,8 @@ import com.halo.drivers.heycyan.capability.toOperationFailure
  * real capture evidence promotes them.
  */
 class RealHeyCyanDriver(
-    private val context: Context
+    private val context: Context,
+    private val eventBus: com.halo.sdk.runtime.EventBus? = null
 ) : Driver {
 
     init {
@@ -261,6 +262,15 @@ class RealHeyCyanDriver(
                     )
                 )
                 emitDeviceEvent(event)
+                eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(
+                    observation = com.halo.sdk.runtime.Observation(
+                        modality = com.halo.sdk.runtime.Modality.SYSTEM,
+                        source = com.halo.sdk.runtime.Source.BLUETOOTH,
+                        payload = object : com.halo.sdk.runtime.ObservationPayload {},
+                        sourceDeviceId = "heycyan",
+                        metadata = mapOf("battery" to event.level, "charging" to event.isCharging)
+                    )
+                ))
             }
 
             is HeyCyanEvent.ButtonPressed -> {
@@ -271,11 +281,83 @@ class RealHeyCyanDriver(
                     )
                 )
                 emitDeviceEvent(event)
+                eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(
+                    observation = com.halo.sdk.runtime.Observation(
+                        modality = com.halo.sdk.runtime.Modality.SYSTEM,
+                        source = com.halo.sdk.runtime.Source.BLUETOOTH,
+                        payload = object : com.halo.sdk.runtime.ObservationPayload {},
+                        sourceDeviceId = "heycyan",
+                        metadata = mapOf("button" to event.type.name)
+                    )
+                ))
+            }
+
+            is HeyCyanEvent.AiImageRecognition -> {
+                emitDeviceEvent(event)
+                eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(
+                    observation = com.halo.sdk.runtime.Observation(
+                        modality = com.halo.sdk.runtime.Modality.VIDEO,
+                        source = com.halo.sdk.runtime.Source.CAMERA,
+                        payload = object : com.halo.sdk.runtime.ObservationPayload {},
+                        sourceDeviceId = "heycyan",
+                        metadata = mapOf("action" to "AI_IMAGE_RECOGNITION")
+                    )
+                ))
+            }
+
+            is HeyCyanEvent.VoiceActivationStarted -> {
+                emitDeviceEvent(event)
+                eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(
+                    observation = com.halo.sdk.runtime.Observation(
+                        modality = com.halo.sdk.runtime.Modality.AUDIO,
+                        source = com.halo.sdk.runtime.Source.MICROPHONE,
+                        payload = object : com.halo.sdk.runtime.ObservationPayload {},
+                        sourceDeviceId = "heycyan",
+                        metadata = mapOf("event" to "MICROPHONE_ACTIVE")
+                    )
+                ))
+            }
+
+            is HeyCyanEvent.VoiceActivationEnded -> {
+                emitDeviceEvent(event)
+                eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(
+                    observation = com.halo.sdk.runtime.Observation(
+                        modality = com.halo.sdk.runtime.Modality.AUDIO,
+                        source = com.halo.sdk.runtime.Source.MICROPHONE,
+                        payload = object : com.halo.sdk.runtime.ObservationPayload {},
+                        sourceDeviceId = "heycyan",
+                        metadata = mapOf("event" to "MICROPHONE_INACTIVE")
+                    )
+                ))
+            }
+
+            is HeyCyanEvent.VoicePlaybackPause -> {
+                emitDeviceEvent(event)
+                eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(
+                    observation = com.halo.sdk.runtime.Observation(
+                        modality = com.halo.sdk.runtime.Modality.SYSTEM,
+                        source = com.halo.sdk.runtime.Source.BLUETOOTH,
+                        payload = object : com.halo.sdk.runtime.ObservationPayload {},
+                        sourceDeviceId = "heycyan",
+                        metadata = mapOf("event" to "VOICE_PLAYBACK_PAUSE")
+                    )
+                ))
+            }
+
+            is HeyCyanEvent.MemoryInsufficient -> {
+                emitDeviceEvent(event)
+                eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(
+                    observation = com.halo.sdk.runtime.Observation(
+                        modality = com.halo.sdk.runtime.Modality.SYSTEM,
+                        source = com.halo.sdk.runtime.Source.BLUETOOTH,
+                        payload = object : com.halo.sdk.runtime.ObservationPayload {},
+                        sourceDeviceId = "heycyan",
+                        metadata = mapOf("fault" to "MEMORY_INSUFFICIENT")
+                    )
+                ))
             }
 
             else -> {
-                // Keep HeyCyan-specific events available through
-                // the protocol event stream.
                 emitDeviceEvent(event)
             }
         }

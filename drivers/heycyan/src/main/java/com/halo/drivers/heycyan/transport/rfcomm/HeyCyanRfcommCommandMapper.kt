@@ -38,9 +38,25 @@ class DefaultHeyCyanRfcommCommandMapper : HeyCyanRfcommCommandMapper {
                 command = 0x01,
                 payload = byteArrayOf(HeyCyanMode.PHOTO.value.toByte()),
             )
-            is HeyCyanCommand.ToggleVideo -> MemoMindPacket(
+            is HeyCyanCommand.StartVideo -> MemoMindPacket(
                 command = 0x01,
                 payload = byteArrayOf(0x02)
+            )
+            is HeyCyanCommand.StopVideo -> MemoMindPacket(
+                command = 0x01,
+                payload = byteArrayOf(0x03)
+            )
+            is HeyCyanCommand.StartRecording -> MemoMindPacket(
+                command = 0x01,
+                payload = byteArrayOf(0x08)
+            )
+            is HeyCyanCommand.StopRecording -> MemoMindPacket(
+                command = 0x01,
+                payload = byteArrayOf(0x0C)
+            )
+            is HeyCyanCommand.AiThumbnail -> MemoMindPacket(
+                command = 0x01,
+                payload = byteArrayOf(0x06, 0x02, 0x02, 0x02)
             )
             is HeyCyanCommand.PrepareVoiceRouting -> MemoMindPacket(
                 command = 0x01,

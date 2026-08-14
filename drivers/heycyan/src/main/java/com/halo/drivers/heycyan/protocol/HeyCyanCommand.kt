@@ -16,7 +16,11 @@ sealed interface HeyCyanCommand {
 
     // Transient Actions (observed to be toggles on hardware)
     data object TakePhoto : HeyCyanCommand
-    data object ToggleVideo : HeyCyanCommand
+    data object StartVideo : HeyCyanCommand
+    data object StopVideo : HeyCyanCommand
+    data object StartRecording : HeyCyanCommand
+    data object StopRecording : HeyCyanCommand
+    data object AiThumbnail : HeyCyanCommand
     data object PrepareVoiceRouting : HeyCyanCommand
 
     // Network / Transfer

@@ -68,6 +68,20 @@ class OllamaProvider(
         return current
     }
 
+    override suspend fun testConnection(): Boolean = withContext(Dispatchers.IO) {
+        val request = Request.Builder()
+            .url("$baseUrl/api/tags")
+            .get()
+            .build()
+        try {
+            client.newCall(request).execute().use { response ->
+                response.isSuccessful
+            }
+        } catch (e: Exception) {
+            false
+        }
+    }
+
     override suspend fun health(): Boolean {
         return withContext(Dispatchers.IO) {
             try {

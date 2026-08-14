@@ -43,6 +43,9 @@ class IntelligenceViewModel(
     private val _availableModels = MutableStateFlow<List<AiModel>>(emptyList())
     private val _isRefreshing = MutableStateFlow(false)
 
+    private val _testConnectionResult = MutableSharedFlow<Boolean>()
+    val testConnectionResult: SharedFlow<Boolean> = _testConnectionResult.asSharedFlow()
+
     val uiState: StateFlow<IntelligenceUiState> = combine(
         combine(
             snapshotManager.snapshot,
@@ -121,6 +124,18 @@ class IntelligenceViewModel(
                 _availableModels.value = provider.listModels()
             } finally {
                 _isRefreshing.value = false
+            }
+        }
+    }
+
+    fun testConnection() {
+        viewModelScope.launch {
+            val selectedId = aiProviderRouter.selectedProviderId.value ?: return@launch
+            val provider = aiProviderRouter.getAllProviders().find { it.id == selectedId } ?: return@launch
+            try {
+                _testConnectionResult.emit(provider.testConnection())
+            } catch (e: Exception) {
+                _testConnectionResult.emit(false)
             }
         }
     }

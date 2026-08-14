@@ -113,6 +113,7 @@ class AudioPerceptionEngine(
     }
 
     private suspend fun runCaptureLoop(eventBus: EventBus) {
+        var bridgeJob: Job? = null
         try {
             try {
                 sourceStartAttempted.set(true)
@@ -134,7 +135,7 @@ class AudioPerceptionEngine(
             audioPipeline.reset()
             
             // Bridge source lifecycle to event bus
-            scope.launch {
+            bridgeJob = scope.launch {
                 audioSource.state.collect { sourceState ->
                     when (sourceState) {
                         AudioSourceState.ACTIVE -> {
@@ -180,6 +181,7 @@ class AudioPerceptionEngine(
             )
         } finally {
             withContext(NonCancellable) {
+                bridgeJob?.cancel()
                 stopAudioSource()
                 audioPipeline.reset()
             }

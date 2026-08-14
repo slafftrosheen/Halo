@@ -51,10 +51,10 @@ class HeyCyanCapabilityRuntimeAdapter(
         "heycyan.device.info" -> HeyCyanOperation.GetDeviceInfo
         "heycyan.media.inventory" -> HeyCyanOperation.GetMediaInventory
         "heycyan.camera.photo" -> HeyCyanOperation.TakePhoto
-        "heycyan.video.start" -> HeyCyanOperation.ToggleVideo
-        "heycyan.video.stop" -> HeyCyanOperation.ToggleVideo
-        "heycyan.audio.record.start" -> HeyCyanOperation.PrepareVoiceRouting
-        "heycyan.audio.record.stop" -> HeyCyanOperation.PrepareVoiceRouting
+        "heycyan.video.start" -> HeyCyanOperation.StartVideo
+        "heycyan.video.stop" -> HeyCyanOperation.StopVideo
+        "heycyan.audio.record.start" -> HeyCyanOperation.StartRecording
+        "heycyan.audio.record.stop" -> HeyCyanOperation.StopRecording
         "heycyan.camera.ai_photo" -> HeyCyanOperation.GenerateAIPhoto
         "heycyan.transfer.mode" -> HeyCyanOperation.EnterWifiTransferMode
         "heycyan.media.sync" -> HeyCyanOperation.SynchronizeMedia

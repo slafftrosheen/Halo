@@ -19,8 +19,8 @@ enum class HostType {
 object HostFactory {
     private var heyCyanDriver: RealHeyCyanDriver? = null
 
-    fun getHeyCyanDriver(context: Context): RealHeyCyanDriver {
-        return heyCyanDriver ?: RealHeyCyanDriver(context).also { heyCyanDriver = it }
+    fun getHeyCyanDriver(context: Context, eventBus: com.halo.sdk.runtime.EventBus? = null): RealHeyCyanDriver {
+        return heyCyanDriver ?: RealHeyCyanDriver(context, eventBus).also { heyCyanDriver = it }
     }
 
     fun create(type: HostType, context: Context, storage: com.halo.sdk.runtime.Storage): WearableHost {

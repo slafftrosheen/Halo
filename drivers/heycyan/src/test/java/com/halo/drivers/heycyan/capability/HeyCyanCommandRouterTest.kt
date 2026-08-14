@@ -83,7 +83,7 @@ class HeyCyanCommandRouterTest {
             HeyCyanCapabilityException(HeyCyanOperationFailure.DeviceRejected("Video active"))
         )
 
-        val result = router.execute(HeyCyanOperation.PrepareVoiceRouting)
+        val result = router.execute(HeyCyanOperation.StartRecording)
         assertTrue(result.isFailure)
         assertEquals(1, bleExecutor.invocationCount)
         assertEquals(0, rfcommExecutor.invocationCount)

@@ -73,17 +73,33 @@ class DefaultHeyCyanCommandExecutor(
                     action = com.halo.drivers.heycyan.protocol.HeyCyanCommandCatalog.ACTION_GLASSES_CONTROL
                     payload = byteArrayOf(0x02, 0x01, 0x01)
                 }
-                is HeyCyanCommand.ToggleVideo -> {
+                is HeyCyanCommand.StartVideo -> {
                     action = com.halo.drivers.heycyan.protocol.HeyCyanCommandCatalog.ACTION_GLASSES_CONTROL
                     payload = byteArrayOf(0x02, 0x01, 0x02)
                 }
-                is HeyCyanCommand.EnterWifiTransferMode -> {
+                is HeyCyanCommand.StopVideo -> {
                     action = com.halo.drivers.heycyan.protocol.HeyCyanCommandCatalog.ACTION_GLASSES_CONTROL
                     payload = byteArrayOf(0x02, 0x01, 0x03)
                 }
+                is HeyCyanCommand.StartRecording -> {
+                    action = com.halo.drivers.heycyan.protocol.HeyCyanCommandCatalog.ACTION_GLASSES_CONTROL
+                    payload = byteArrayOf(0x02, 0x01, 0x08)
+                }
+                is HeyCyanCommand.StopRecording -> {
+                    action = com.halo.drivers.heycyan.protocol.HeyCyanCommandCatalog.ACTION_GLASSES_CONTROL
+                    payload = byteArrayOf(0x02, 0x01, 0x0C)
+                }
+                is HeyCyanCommand.AiThumbnail -> {
+                    action = com.halo.drivers.heycyan.protocol.HeyCyanCommandCatalog.ACTION_GLASSES_CONTROL
+                    payload = byteArrayOf(0x02, 0x01, 0x06, 0x02, 0x02, 0x02)
+                }
+                is HeyCyanCommand.EnterWifiTransferMode -> {
+                    action = com.halo.drivers.heycyan.protocol.HeyCyanCommandCatalog.ACTION_GLASSES_CONTROL
+                    payload = byteArrayOf(0x02, 0x01, 0x04, 0x01)
+                }
                 is HeyCyanCommand.PrepareVoiceRouting -> {
                     action = com.halo.drivers.heycyan.protocol.HeyCyanCommandCatalog.ACTION_GLASSES_CONTROL
-                    payload = byteArrayOf(0x02, 0x01, 0x05)
+                    payload = byteArrayOf(0x02, 0x01, 0x0B)
                 }
                 is HeyCyanCommand.SetDateTime -> {
                     action = com.halo.drivers.heycyan.protocol.HeyCyanCommandCatalog.ACTION_SYNC_TIME

@@ -4,6 +4,13 @@ import com.halo.cognition.language.*
 import com.halo.engines.reasoning.service.GoalManager
 import com.halo.icl.ontology.Goal
 import com.halo.icl.ontology.GoalType
+import com.halo.icl.ontology.NavigationPayload
+import com.halo.icl.ontology.MediaPayload
+import com.halo.icl.ontology.MemoryPayload
+import com.halo.icl.ontology.SearchPayload
+import com.halo.icl.ontology.CommunicationPayload
+import com.halo.icl.ontology.DevicePayload
+import com.halo.icl.ontology.ConversationPayload
 import com.halo.runtime.cognition.blackboard.Interpretation
 import com.halo.sdk.provider.AiContext
 import com.halo.sdk.provider.AiErrorType

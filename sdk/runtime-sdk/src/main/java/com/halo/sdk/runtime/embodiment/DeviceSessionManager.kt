@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.asStateFlow
  * when needed and routing intents to the correct active session.
  */
 class DeviceSessionManager(
-    private val registry: DeviceRegistry
+    val registry: DeviceRegistry
 ) {
     private val _sessions = mutableMapOf<String, EmbodimentSession>()
     
@@ -42,17 +42,32 @@ class DeviceSessionManager(
     }
 
     /**
-     * Try to auto-connect to any saved devices marked as autoConnect.
+     * Try to auto-connect to any saved devices marked as autoConnect, with a simple retry mechanism.
      */
     suspend fun autoConnectSavedDevices() {
         val saved = registry.getSavedDevices()
         for (record in saved) {
             if (record.autoConnect) {
-                // In a real implementation, we would instantiate the correct transport
-                // based on the deviceType and try to connect.
                 val session = _sessions[record.identity.deviceId]
                 if (session != null && session.state.value == SessionState.DISCONNECTED) {
-                    session.connect()
+                    // Try to connect up to 3 times with 5 second delays
+                    for (attempt in 1..3) {
+                        try {
+                            session.connect()
+                            // Assuming session.connect() doesn't block forever, check state
+                            if (session.state.value != SessionState.DISCONNECTED) {
+                                break // Connecting or Ready
+                            }
+                        } catch (e: Exception) {
+                            // Suppress
+                        }
+                        kotlinx.coroutines.delay(5000L * attempt) // 5s, 10s, 15s backoff
+                        
+                        // Check if we managed to connect in the meantime
+                        if (session.state.value != SessionState.DISCONNECTED) {
+                            break
+                        }
+                    }
                 }
             }
         }
