@@ -63,7 +63,8 @@ data class TimelineEvent(
     val title: String,
     val description: String,
     val timestamp: Instant,
-    val status: String
+    val status: String,
+    val intentId: String? = null
 )
 
 data class ProviderSnapshot(

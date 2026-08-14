@@ -18,6 +18,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * ExecutionEngine acts as the single deterministic driver for physical and digital actions in the Alpha Runtime.
@@ -50,6 +52,7 @@ class ExecutionEngine(
 
     private var context: EngineContext? = null
     private var job: Job? = null
+    private val executionMutex = Mutex()
 
     override suspend fun initialize(context: EngineContext) {
         this.context = context
@@ -69,10 +72,12 @@ class ExecutionEngine(
                     val plan = (planKnowledge?.payload as? com.halo.runtime.cognition.blackboard.PlanKnowledge)?.plan
                     
                     if (plan != null) {
-                        eventBus.publish(ExecutionStarted(id = java.util.UUID.randomUUID().toString(), planId = event.planId))
-                        val outcome = executePlan(plan)
-                        eventBus.publish(ExecutionFinished(id = java.util.UUID.randomUUID().toString(), planId = event.planId))
-                        eventBus.publish(OutcomePublished(outcome = outcome::class.simpleName ?: "Unknown"))
+                        executionMutex.withLock {
+                            eventBus.publish(ExecutionStarted(id = java.util.UUID.randomUUID().toString(), planId = event.planId))
+                            val outcome = executePlan(plan)
+                            eventBus.publish(ExecutionFinished(id = java.util.UUID.randomUUID().toString(), planId = event.planId))
+                            eventBus.publish(OutcomePublished(outcome = outcome::class.simpleName ?: "Unknown"))
+                        }
                     }
                 } catch (e: Exception) {
                     runtimeContext.runtime.logger.error("execution", "Failed to execute plan", e)

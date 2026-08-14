@@ -1,5 +1,11 @@
 package com.halo.sdk.runtime
 
+enum class ExecutionMode {
+    LIVE,
+    SIMULATION,
+    REPLAY
+}
+
 interface RuntimeContext {
     val eventBus: EventBus
     val commandBus: CommandBus
@@ -13,4 +19,6 @@ interface RuntimeContext {
         get() = RuntimePowerMode.BALANCED
     val metrics: RuntimeMetricsSink
         get() = NoopRuntimeMetrics
+    val executionMode: ExecutionMode
+        get() = ExecutionMode.LIVE
 }

@@ -84,31 +84,70 @@ private fun ActivityEventItem(event: ActivityEvent) {
                 HaloGlassDivider()
                 Spacer(modifier = Modifier.height(16.dp))
                 
-                Text(
-                    text = "STATUS",
-                    style = HaloTypography.labelSmall,
-                    color = HaloGlassColors.TextSecondary
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = event.status,
-                    style = HaloTypography.bodyLarge,
-                    color = if (event.status == "Success") HaloGlassColors.Success else HaloGlassColors.TextPrimary
-                )
-                
-                Spacer(modifier = Modifier.height(24.dp))
-                
-                Text(
-                    text = "DESCRIPTION",
-                    style = HaloTypography.labelSmall,
-                    color = HaloGlassColors.TextSecondary
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = event.description,
-                    color = HaloGlassColors.TextPrimary,
-                    style = HaloTypography.bodyMedium
-                )
+                if (event.subEvents.isNotEmpty()) {
+                    Text(
+                        text = "TIMELINE",
+                        style = HaloTypography.labelSmall,
+                        color = HaloGlassColors.TextSecondary
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    event.subEvents.forEach { subEvent ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = subEvent.command,
+                                color = HaloGlassColors.TextPrimary,
+                                style = HaloTypography.bodySmall
+                            )
+                            Text(
+                                text = subEvent.timestamp.format(),
+                                color = HaloGlassColors.TextSecondary,
+                                style = HaloTypography.labelSmall
+                            )
+                        }
+                        if (subEvent.description.isNotBlank()) {
+                            Text(
+                                text = subEvent.description,
+                                color = HaloGlassColors.TextSecondary,
+                                style = HaloTypography.labelSmall,
+                                modifier = Modifier.padding(bottom = 4.dp)
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                } else {
+                    Text(
+                        text = "STATUS",
+                        style = HaloTypography.labelSmall,
+                        color = HaloGlassColors.TextSecondary
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = event.status,
+                        style = HaloTypography.bodyLarge,
+                        color = if (event.status == "Success") HaloGlassColors.Success else HaloGlassColors.TextPrimary
+                    )
+                    
+                    Spacer(modifier = Modifier.height(24.dp))
+                    
+                    Text(
+                        text = "DESCRIPTION",
+                        style = HaloTypography.labelSmall,
+                        color = HaloGlassColors.TextSecondary
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = event.description,
+                        color = HaloGlassColors.TextPrimary,
+                        style = HaloTypography.bodyMedium
+                    )
+                }
                 
                 Spacer(modifier = Modifier.height(24.dp))
                 
@@ -137,7 +176,8 @@ data class ActivityEvent(
     val command: String,
     val description: String,
     val timestamp: Long,
-    val status: String
+    val status: String,
+    val subEvents: List<ActivityEvent> = emptyList()
 )
 
 fun Long.format(): String {
@@ -155,16 +195,48 @@ data class ActivityUiState(
 class ActivityViewModel(private val snapshotManager: RuntimeSnapshotSource) : ViewModel() {
     val uiState: StateFlow<ActivityUiState> = snapshotManager.snapshot
         .map { snapshot ->
-            ActivityUiState(
-                events = snapshot.timeline.map {
+            // Group timeline events by intentId, falling back to id for ungrouped events
+            val groupedEvents = snapshot.timeline
+                .groupBy { it.intentId ?: it.id }
+                .map { (groupId, events) ->
+                    // Sort events in this group chronologically
+                    val sortedEvents = events.sortedBy { it.timestamp }
+                    val firstEvent = sortedEvents.first()
+                    val lastEvent = sortedEvents.last()
+                    
+                    val title = if (events.size > 1 && sortedEvents.any { it.title == "Intent Created" }) {
+                        "Intent: " + sortedEvents.find { it.title == "Intent Created" }?.description?.substringBefore(" [") 
+                    } else {
+                        firstEvent.title
+                    }
+                    
+                    val description = if (events.size > 1) {
+                        "${events.size} operations • Final state: ${lastEvent.status}"
+                    } else {
+                        firstEvent.description
+                    }
+
                     ActivityEvent(
-                        id = it.id,
-                        command = it.title,
-                        description = it.description,
-                        timestamp = it.timestamp.toEpochMilli(),
-                        status = it.status
+                        id = groupId,
+                        command = title,
+                        description = description,
+                        timestamp = lastEvent.timestamp.toEpochMilli(),
+                        status = lastEvent.status,
+                        subEvents = sortedEvents.map { 
+                            ActivityEvent(
+                                id = it.id, 
+                                command = it.title, 
+                                description = it.description, 
+                                timestamp = it.timestamp.toEpochMilli(), 
+                                status = it.status,
+                                subEvents = emptyList()
+                            )
+                        }
                     )
-                }.sortedByDescending { it.timestamp },
+                }.sortedByDescending { it.timestamp }
+
+            ActivityUiState(
+                events = groupedEvents,
                 hasMore = false
             )
         }

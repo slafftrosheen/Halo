@@ -32,15 +32,16 @@ import com.halo.runtime.speech.SpeechSessionManager
 class EngineGraph(
     private val applicationContext: Context,
     private val infra: InfrastructureGraph,
-    private val providerGraph: ProviderGraph
+    private val providerGraph: ProviderGraph,
+    private val deviceSessionManager: com.halo.sdk.runtime.embodiment.DeviceSessionManager
 ) {
 
     val goalManager by lazy { GoalManager() }
 
     val capabilityRegistry by lazy {
         CapabilityRegistry().apply {
-            val buddyBotGateway = BuddyBotGateway(infra.eventBus)
-            val heyCyanGateway = HeyCyanGateway(infra.eventBus)
+            val buddyBotGateway = BuddyBotGateway(infra.eventBus, deviceSessionManager)
+            val heyCyanGateway = HeyCyanGateway(infra.eventBus, deviceSessionManager)
 
             register(LocomotionCapability(buddyBotGateway))
             register(CameraCapability(heyCyanGateway))

@@ -1,44 +1,37 @@
 package com.halo.sdk.runtime.embodiment
 
-import com.halo.sdk.runtime.EventBus
-import kotlinx.coroutines.flow.Flow
+import com.halo.sdk.runtime.*
 
-/**
- * HeyCyanGateway translates semantic EmbodimentIntents (e.g. CAPTURE_PHOTO)
- * into protocol-specific actions, insulating the Halo cognitive layer from BLE details.
- */
-class HeyCyanGateway(private val eventBus: EventBus) : EmbodimentGateway {
-
+class HeyCyanGateway(
+    private val eventBus: EventBus,
+    private val sessionManager: DeviceSessionManager,
+    private val executionMode: ExecutionMode = ExecutionMode.LIVE
+) : EmbodimentGateway {
+    
     override suspend fun dispatch(intent: EmbodimentIntent) {
-        when (intent.kind) {
-            IntentKind.CAPTURE_PHOTO -> {
-                // Here we would emit the semantic HeyCyan action to the actual BLE layer.
-                // For now, this is where the translation happens.
-                sendHeyCyanCommand("PHOTO")
-            }
-            IntentKind.START_VIDEO -> {
-                sendHeyCyanCommand("VIDEO_START")
-            }
-            IntentKind.STOP_VIDEO -> {
-                sendHeyCyanCommand("VIDEO_STOP")
-            }
-            IntentKind.START_AUDIO_RECORDING -> {
-                sendHeyCyanCommand("RECORD_START")
-            }
-            IntentKind.STOP_AUDIO_RECORDING -> {
-                sendHeyCyanCommand("RECORD_STOP")
-            }
-            IntentKind.FETCH_MEDIA_COUNT -> {
-                sendHeyCyanCommand("MEDIA_COUNT")
-            }
-            else -> {
-                // Ignore intents not supported by HeyCyan
-            }
+        if (executionMode == ExecutionMode.REPLAY) {
+            // Execution event will be injected by the replay player
+            return
         }
-    }
 
-    private fun sendHeyCyanCommand(command: String) {
-        // In a real implementation, this forwards the semantic command string 
-        // to the HeyCyan BLE protocol encoder. 
+        val activeSession = sessionManager.activeSessions.value.find { 
+            it.identity.deviceType == "HeyCyan" 
+        }
+
+        if (activeSession != null && activeSession.state.value == SessionState.READY) {
+            activeSession.dispatch(intent)
+        } else {
+            val deviceIdentity = DeviceIdentity("unavailable", "HeyCyan", "Unavailable")
+            eventBus.publish(EmbodimentExecutionEvent(
+                device = deviceIdentity,
+                result = ExecutionResult(
+                    intentId = intent.intentId,
+                    status = ExecutionStatus.FAILED,
+                    reason = "No active session",
+                    timestamp = System.currentTimeMillis(),
+                    embodimentId = deviceIdentity.deviceId
+                )
+            ))
+        }
     }
 }

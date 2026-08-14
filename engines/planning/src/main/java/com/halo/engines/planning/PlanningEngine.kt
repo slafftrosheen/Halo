@@ -214,9 +214,7 @@ class PlanningEngine(
         }
     }
 
-    private fun unsupportedGoal(goal: Goal): SystemTask {
-        return SystemTask(
-            command = "UNSUPPORTED_GOAL:${goal.type}"
-        )
+    private fun unsupportedGoal(goal: Goal): Nothing {
+        throw IllegalArgumentException("Unsupported goal type or missing payload: ${goal.type}")
     }
 }

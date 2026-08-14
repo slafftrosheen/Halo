@@ -28,9 +28,11 @@ import com.halo.app.ui.glass.material.HaloGlassColors
 import com.halo.app.ui.glass.material.HaloTypography
 import com.halo.sdk.runtime.RuntimeSnapshotSource
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -49,60 +51,41 @@ data class DevicesUiState(
     val devices: List<GenericDeviceUiState> = emptyList()
 )
 
-class DevicesViewModel(private val snapshotManager: RuntimeSnapshotSource) : ViewModel() {
+class DevicesViewModel(
+    val deviceRegistry: com.halo.sdk.runtime.embodiment.DeviceRegistry,
+    val sessionManager: com.halo.sdk.runtime.embodiment.DeviceSessionManager,
+    private val eventBus: com.halo.sdk.runtime.EventBus,
+    private val snapshotSource: com.halo.sdk.runtime.RuntimeSnapshotSource
+) : ViewModel() {
     
-    // Mock persisted devices that Halo knows about
-    private val persistedDevices = listOf(
-        GenericDeviceUiState(
-            id = "heycyan_1",
-            name = "HeyCyan BW-AG1 Pro",
-            type = "HeyCyan",
-            isConnected = false,
-            battery = "Unknown",
-            firmware = "v1.2.4",
-            lastSeen = "2 hours ago"
-        ),
-        GenericDeviceUiState(
-            id = "buddybot_1",
-            name = "BuddyBot",
-            type = "BuddyBot",
-            isConnected = false,
-            battery = "Unknown",
-            firmware = "v0.9.1",
-            lastSeen = "1 day ago"
-        )
-    )
+    private val _uiState = MutableStateFlow(DevicesUiState())
+    val uiState: StateFlow<DevicesUiState> = _uiState.asStateFlow()
 
-    val uiState: StateFlow<DevicesUiState> = snapshotManager.snapshot
-        .map { snapshot ->
-            val activeContext = snapshot.deviceContext
-            val isConnected = activeContext.connected
-            val activeName = activeContext.name ?: "Unknown device"
-            val activeBattery = activeContext.batteryPercent?.let { "$it%" } ?: "Unknown"
-            
-            // Map the active runtime state onto our persisted devices if they match.
-            // (Assuming for now that if connected, it's HeyCyan unless we check capabilities, 
-            // but we'll mock HeyCyan active if the name contains HeyCyan or just generically)
-            val updatedDevices = persistedDevices.map { device ->
-                if (isConnected && (activeName.contains("HeyCyan", ignoreCase = true) && device.id == "heycyan_1")) {
-                    device.copy(isConnected = true, battery = activeBattery, lastSeen = "Now")
-                } else if (isConnected && (activeName.contains("BuddyBot", ignoreCase = true) && device.id == "buddybot_1")) {
-                    device.copy(isConnected = true, battery = activeBattery, lastSeen = "Now")
-                } else if (isConnected && device.id == "heycyan_1" && activeName == "Unknown device") {
-                    // Fallback mock logic: assume unknown connection is HeyCyan for the demo
-                    device.copy(isConnected = true, battery = activeBattery, lastSeen = "Now")
-                } else {
-                    device
+    init {
+        viewModelScope.launch {
+            // Combine saved devices and active sessions
+            sessionManager.activeSessions.collect { activeSessions ->
+                val savedDevices = deviceRegistry.getSavedDevices()
+                
+                val updatedDevices = savedDevices.map { record ->
+                    val session = activeSessions.find { it.identity.deviceId == record.identity.deviceId }
+                    val isConnected = session?.state?.value == com.halo.sdk.runtime.embodiment.SessionState.READY
+                    
+                    GenericDeviceUiState(
+                        id = record.identity.deviceId,
+                        name = record.identity.displayName,
+                        type = record.identity.deviceType,
+                        isConnected = isConnected,
+                        battery = "Unknown",
+                        firmware = record.firmwareVersion ?: "Unknown",
+                        lastSeen = if (isConnected) "Now" else "Last seen ${record.lastSeenMs}ms ago"
+                    )
                 }
+                
+                _uiState.value = DevicesUiState(devices = updatedDevices)
             }
-            
-            DevicesUiState(devices = updatedDevices)
         }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = DevicesUiState(devices = persistedDevices)
-        )
+    }
 
     private val _navigationEvents = MutableSharedFlow<String>()
     val navigationEvents = _navigationEvents.asSharedFlow()
@@ -113,9 +96,42 @@ class DevicesViewModel(private val snapshotManager: RuntimeSnapshotSource) : Vie
         }
     }
 
-    fun dispatchEmbodimentIntent(intent: com.halo.sdk.runtime.embodiment.EmbodimentIntent) {
-        // In a real implementation this would push to the EventBus or CommandBus
-        // For now, it represents the boundary where UI sends semantic intents
+    fun dispatchEmbodimentIntent(deviceId: String, intent: com.halo.sdk.runtime.embodiment.EmbodimentIntent) {
+        viewModelScope.launch {
+            // Publish IntentCreated to let the cognitive timeline track this manual action
+            eventBus.publish(com.halo.sdk.runtime.IntentCreated(
+                intentId = intent.intentId,
+                intentKind = intent.kind.name
+            ))
+            
+            val session = sessionManager.activeSessions.value.find { it.identity.deviceId == deviceId }
+            if (session != null && session.state.value == com.halo.sdk.runtime.embodiment.SessionState.READY) {
+                session.dispatch(intent)
+            } else {
+                eventBus.publish(com.halo.sdk.runtime.EmbodimentExecutionEvent(
+                    device = com.halo.sdk.runtime.DeviceIdentity(deviceId, "Unknown", "Unknown"),
+                    result = com.halo.sdk.runtime.embodiment.ExecutionResult(
+                        intentId = intent.intentId,
+                        status = com.halo.sdk.runtime.embodiment.ExecutionStatus.FAILED,
+                        reason = "No active session",
+                        timestamp = System.currentTimeMillis(),
+                        embodimentId = deviceId
+                    )
+                ))
+            }
+        }
+    }
+
+    fun connectDevice(deviceId: String) {
+        viewModelScope.launch {
+            sessionManager.getSession(deviceId)?.connect()
+        }
+    }
+
+    fun disconnectDevice(deviceId: String) {
+        viewModelScope.launch {
+            sessionManager.getSession(deviceId)?.disconnect()
+        }
     }
 }
 
@@ -137,11 +153,7 @@ fun DevicesScreen(viewModel: DevicesViewModel, onNavigate: (String) -> Unit = {}
             DeviceRow(
                 device = device,
                 onClick = {
-                    if (device.type == "HeyCyan") {
-                        viewModel.navigateTo("device/heycyan")
-                    } else if (device.type == "BuddyBot") {
-                        viewModel.navigateTo("device/buddybot")
-                    }
+                    viewModel.navigateTo("device/${device.id}")
                 }
             )
             Spacer(modifier = Modifier.height(12.dp))

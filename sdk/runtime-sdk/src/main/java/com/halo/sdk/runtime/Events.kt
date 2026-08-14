@@ -45,9 +45,16 @@ data class ExecutionFinished(override val id: String = UUID.randomUUID().toStrin
 data class OutcomePublished(override val id: String = UUID.randomUUID().toString(), val outcome: String, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
 
 // Embodiment Events
+data class DeviceIdentity(
+    val deviceId: String,
+    val deviceType: String,
+    val displayName: String
+)
+
 data class EmbodimentExecutionEvent(
     override val id: String = UUID.randomUUID().toString(),
     override val timestamp: Long = System.currentTimeMillis(),
+    val device: DeviceIdentity,
     val result: ExecutionResult
 ) : HaloEvent
 
@@ -100,6 +107,99 @@ data class RecoveryFailed(
     override val id: String = UUID.randomUUID().toString(),
     val observationId: String,
     val recoveryAction: String,
+    val reason: String,
+    override val timestamp: Long = System.currentTimeMillis()
+) : HaloEvent
+
+// Semantic Tracing & Reliability Events (Batch 08)
+data class ObservationReceived(
+    override val id: String = UUID.randomUUID().toString(),
+    val observationId: String,
+    val source: String,
+    val content: String,
+    override val timestamp: Long = System.currentTimeMillis()
+) : HaloEvent
+
+data class InterpretationProduced(
+    override val id: String = UUID.randomUUID().toString(),
+    val observationId: String,
+    val interpretation: String,
+    override val timestamp: Long = System.currentTimeMillis()
+) : HaloEvent
+
+data class IntentCreated(
+    override val id: String = UUID.randomUUID().toString(),
+    val intentId: String,
+    val intentKind: String,
+    override val timestamp: Long = System.currentTimeMillis()
+) : HaloEvent
+
+data class IntentResolved(
+    override val id: String = UUID.randomUUID().toString(),
+    val intentId: String,
+    val deviceId: String,
+    override val timestamp: Long = System.currentTimeMillis()
+) : HaloEvent
+
+data class IntentDispatched(
+    override val id: String = UUID.randomUUID().toString(),
+    val intentId: String,
+    val deviceId: String,
+    override val timestamp: Long = System.currentTimeMillis()
+) : HaloEvent
+
+data class DeviceConnected(
+    override val id: String = UUID.randomUUID().toString(),
+    val deviceId: String,
+    val sessionId: String,
+    override val timestamp: Long = System.currentTimeMillis()
+) : HaloEvent
+
+data class DeviceReady(
+    override val id: String = UUID.randomUUID().toString(),
+    val deviceId: String,
+    override val timestamp: Long = System.currentTimeMillis()
+) : HaloEvent
+
+data class DeviceDisconnected(
+    override val id: String = UUID.randomUUID().toString(),
+    val deviceId: String,
+    override val timestamp: Long = System.currentTimeMillis()
+) : HaloEvent
+
+data class CapabilityUpdated(
+    override val id: String = UUID.randomUUID().toString(),
+    val deviceId: String,
+    val capabilities: List<String>,
+    override val timestamp: Long = System.currentTimeMillis()
+) : HaloEvent
+
+data class RuntimeStateChanged(
+    override val id: String = UUID.randomUUID().toString(),
+    val deviceId: String,
+    val state: String,
+    override val timestamp: Long = System.currentTimeMillis()
+) : HaloEvent
+
+data class ProviderRequest(
+    override val id: String = UUID.randomUUID().toString(),
+    val requestId: String,
+    val providerId: String,
+    override val timestamp: Long = System.currentTimeMillis()
+) : HaloEvent
+
+data class ProviderResult(
+    override val id: String = UUID.randomUUID().toString(),
+    val requestId: String,
+    val success: Boolean,
+    val reason: String? = null,
+    override val timestamp: Long = System.currentTimeMillis()
+) : HaloEvent
+
+data class ProviderFailure(
+    override val id: String = UUID.randomUUID().toString(),
+    val requestId: String,
+    val providerId: String,
     val reason: String,
     override val timestamp: Long = System.currentTimeMillis()
 ) : HaloEvent

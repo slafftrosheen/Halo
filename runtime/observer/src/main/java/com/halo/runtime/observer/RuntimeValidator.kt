@@ -2,6 +2,7 @@ package com.halo.runtime.observer
 
 import com.halo.sdk.runtime.ObservationTrace
 import com.halo.sdk.runtime.RuntimeStage
+import com.halo.sdk.runtime.HaloEvent
 
 sealed interface ValidationResult {
     data object Valid : ValidationResult
@@ -62,6 +63,44 @@ class RuntimeValidator {
             }
         }
         
+        return ValidationResult.Valid
+    }
+
+    private val intentStates = mutableMapOf<String, String>()
+    private val terminalStates = setOf("SUCCEEDED", "FAILED", "DENIED", "REJECTED")
+
+    fun validateSemanticEvent(event: HaloEvent): ValidationResult {
+        when (event) {
+            is com.halo.sdk.runtime.IntentCreated -> {
+                intentStates[event.intentId] = "CREATED"
+            }
+            is com.halo.sdk.runtime.IntentDispatched -> {
+                val currentState = intentStates[event.intentId]
+                if (currentState == null) {
+                    return ValidationResult.Error("IntentDispatched for unknown intent: ${event.intentId}")
+                }
+                intentStates[event.intentId] = "DISPATCHED"
+            }
+            is com.halo.sdk.runtime.EmbodimentExecutionEvent -> {
+                val intentId = event.result.intentId
+                val currentState = intentStates[intentId]
+                val incomingState = event.result.status.name
+                
+                if (currentState == null) {
+                    return ValidationResult.Error("ExecutionResult for unknown intent: $intentId")
+                }
+                if (terminalStates.contains(currentState)) {
+                    return ValidationResult.Error("Duplicate terminal state for intent $intentId: $incomingState after $currentState")
+                }
+                if (currentState != "DISPATCHED" && currentState != "CREATED") {
+                    return ValidationResult.Error("ExecutionResult for intent $intentId without preceding creation/dispatch. Current: $currentState")
+                }
+                
+                if (terminalStates.contains(incomingState)) {
+                    intentStates[intentId] = incomingState
+                }
+            }
+        }
         return ValidationResult.Valid
     }
 }

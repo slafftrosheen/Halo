@@ -30,7 +30,7 @@ object ManualDependencyGraph {
     val storage by lazy { com.halo.host.android.AndroidStorage(applicationContext) }
     val providerGraph by lazy { ProviderGraph(applicationContext, storage) }
     val hostGraph by lazy { HostGraph(applicationContext, infra, providerGraph, storage) }
-    val engineGraph by lazy { EngineGraph(applicationContext, infra, providerGraph) }
+    val engineGraph by lazy { EngineGraph(applicationContext, infra, providerGraph, deviceSessionManager) }
     val observerGraph by lazy { ObserverGraph(applicationContext, infra, engineGraph) }
 
     // ─── Convenience accessors (preserve existing API) ──────────
@@ -108,6 +108,10 @@ object ManualDependencyGraph {
 
     // ─── ViewModels ─────────────────────────────────────────────
 
+    val deviceRegistry by lazy { com.halo.sdk.runtime.embodiment.InMemoryDeviceRegistry() }
+    val deviceSessionManager by lazy { com.halo.sdk.runtime.embodiment.DeviceSessionManager(deviceRegistry) }
+
+
     val homeViewModel by lazy { 
         android.util.Log.d("ManualDependencyGraph", "Creating HomeViewModel")
         HomeViewModel(runtimeSnapshotManager, commandBus, cognitiveSession) 
@@ -126,7 +130,7 @@ object ManualDependencyGraph {
     }
     val devicesViewModel by lazy { 
         android.util.Log.d("ManualDependencyGraph", "Creating DevicesViewModel")
-        DevicesViewModel(runtimeSnapshotManager) 
+        DevicesViewModel(deviceRegistry, deviceSessionManager, eventBus, runtimeSnapshotManager) 
     }
     val protocolLabViewModel by lazy { 
         android.util.Log.d("ManualDependencyGraph", "Creating ProtocolLabViewModel")
@@ -147,7 +151,7 @@ object ManualDependencyGraph {
     }
     val runtimeInspectorViewModel by lazy { 
         android.util.Log.d("ManualDependencyGraph", "Creating RuntimeInspectorViewModel")
-        RuntimeInspectorViewModel(blackboard, runtimeSnapshotManager) 
+        RuntimeInspectorViewModel(runtimeSnapshotManager) 
     }
 
     // ─── Kernel ─────────────────────────────────────────────────

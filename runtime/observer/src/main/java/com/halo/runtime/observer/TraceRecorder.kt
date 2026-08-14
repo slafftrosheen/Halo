@@ -97,5 +97,16 @@ class TraceRecorder(
                 _tracesFlow.value = deque.toList()
             }
         }
+        
+        scope.launch {
+            eventBus.observe(HaloEvent::class.java).collect { event ->
+                val result = validator.validateSemanticEvent(event)
+                when (result) {
+                    is ValidationResult.Error -> eventBus.publish(TraceValidationFailed(observationId = event.id, message = result.message))
+                    is ValidationResult.Warning -> eventBus.publish(TraceValidationWarning(observationId = event.id, message = result.message))
+                    is ValidationResult.Valid -> {}
+                }
+            }
+        }
     }
 }

@@ -102,16 +102,14 @@ data class InspectorState(
 )
 
 class RuntimeInspectorViewModel(
-    private val blackboard: Blackboard,
     private val snapshotManager: RuntimeSnapshotSource
 ) : ViewModel() {
     private val _isRecording = MutableStateFlow(false)
 
     val uiState: StateFlow<InspectorState> = combine(
         _isRecording,
-        blackboard.flow,
         snapshotManager.snapshot
-    ) { recording, facts, snapshot ->
+    ) { recording, snapshot ->
         val stage = when (snapshot.speech) {
             is SpeechSessionState.Capturing -> "Observation"
             is SpeechSessionState.Recognizing -> "Interpretation"
@@ -123,7 +121,7 @@ class RuntimeInspectorViewModel(
 
         InspectorState(
             isRecording = recording,
-            blackboard = facts.map { "[${it.source}] ${it.payload::class.simpleName}" },
+            blackboard = snapshot.blackboard.recentFacts.map { "[${it.type}] ${it.id}" },
             activePipelineStage = stage
         )
     }.stateIn(

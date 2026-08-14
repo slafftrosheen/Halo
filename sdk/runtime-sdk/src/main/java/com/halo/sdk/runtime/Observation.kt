@@ -51,7 +51,7 @@ data class SpeechObservationPayload(
 ) : ObservationPayload
 
 data class AudioObservationPayload(
-    val energy: Float,
+    val energy: Float?,
     val isSpeechActive: Boolean
 ) : ObservationPayload
 

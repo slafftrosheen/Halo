@@ -44,28 +44,37 @@ class IntelligenceViewModel(
     private val _isRefreshing = MutableStateFlow(false)
 
     val uiState: StateFlow<IntelligenceUiState> = combine(
-        aiProviderRouter.selectedProviderId,
-        aiProviderRouter.selectedModelId,
-        _availableModels,
-        _isRefreshing,
-        _refreshTrigger
-    ) { selectedProviderId, selectedModelId, models, refreshing, _ ->
+        combine(
+            snapshotManager.snapshot,
+            aiProviderRouter.selectedProviderId,
+            aiProviderRouter.selectedModelId,
+            ::Triple
+        ),
+        combine(
+            _availableModels,
+            _isRefreshing,
+            _refreshTrigger,
+            ::Triple
+        )
+    ) { (snapshot, selectedProviderId, selectedModelId), (models, refreshing, _) ->
         val allProviders = aiProviderRouter.getAllProviders()
         val activeProvider = allProviders.find { it.id == selectedProviderId }
+        val snapshotProvider = snapshot.providers.find { it.id == selectedProviderId }
         
         IntelligenceUiState(
             activeProviderId = selectedProviderId ?: "",
-            activeProviderName = activeProvider?.displayName ?: "None",
+            activeProviderName = snapshotProvider?.name ?: activeProvider?.displayName ?: "None",
             activeProviderStatus = activeProvider?.status?.value ?: ProviderStatus.UNAVAILABLE,
             capabilities = activeProvider?.getCapabilities() ?: emptySet(),
-            activeModelId = selectedModelId,
-            providers = allProviders.map {
+            activeModelId = snapshotProvider?.activeModel ?: selectedModelId,
+            providers = allProviders.map { routerProv ->
+                val snap = snapshot.providers.find { it.id == routerProv.id }
                 AiProviderUiState(
-                    id = it.id,
-                    name = it.displayName,
-                    status = it.status.value,
-                    isSelected = it.id == selectedProviderId,
-                    capabilities = it.getCapabilities()
+                    id = routerProv.id,
+                    name = snap?.name ?: routerProv.displayName,
+                    status = routerProv.status.value,
+                    isSelected = routerProv.id == selectedProviderId,
+                    capabilities = routerProv.getCapabilities()
                 )
             },
             availableModels = models,

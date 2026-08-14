@@ -11,8 +11,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.*
 import com.halo.app.di.ManualDependencyGraph
 import com.halo.app.ui.glass.components.HaloGlassNavigation
@@ -132,17 +134,32 @@ fun AppShell() {
                 composable(Screen.Devices.route) {
                     DevicesScreen(viewModel = ManualDependencyGraph.devicesViewModel)
                 }
-                composable("device/heycyan") {
-                    HeyCyanControlScreen(
-                        viewModel = ManualDependencyGraph.devicesViewModel,
-                        onBack = { navController.popBackStack() }
-                    )
-                }
-                composable("device/buddybot") {
-                    BuddyBotControlScreen(
-                        viewModel = ManualDependencyGraph.devicesViewModel,
-                        onBack = { navController.popBackStack() }
-                    )
+                composable("device/{deviceId}") { backStackEntry ->
+                    val deviceId = backStackEntry.arguments?.getString("deviceId")
+                    if (deviceId != null) {
+                        val devicesState by ManualDependencyGraph.devicesViewModel.uiState.collectAsState()
+                        val deviceType = devicesState.devices.find { it.id == deviceId }?.type
+                        when (deviceType) {
+                            "HeyCyan" -> {
+                                HeyCyanControlScreen(
+                                    deviceId = deviceId,
+                                    viewModel = ManualDependencyGraph.devicesViewModel,
+                                    onBack = { navController.popBackStack() }
+                                )
+                            }
+                            "BuddyBot" -> {
+                                BuddyBotControlScreen(
+                                    deviceId = deviceId,
+                                    viewModel = ManualDependencyGraph.devicesViewModel,
+                                    onBack = { navController.popBackStack() }
+                                )
+                            }
+                            else -> {
+                                // Fallback or generic screen could go here
+                                Text("Unknown device type for $deviceId", modifier = Modifier.padding(32.dp))
+                            }
+                        }
+                    }
                 }
                 composable(Screen.Settings.route) {
                     SettingsScreen(viewModel = ManualDependencyGraph.settingsViewModel)

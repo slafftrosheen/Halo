@@ -116,6 +116,108 @@ class DefaultTimelineEventMapper : TimelineEventMapper {
                 timestamp = timestamp,
                 status = if (event.success) "Success" else "Failed"
             )
+            is ObservationReceived -> TimelineEvent(
+                id = event.id,
+                title = "Observation",
+                description = "${event.source}: ${event.content}",
+                timestamp = timestamp,
+                status = "Received"
+            )
+            is InterpretationProduced -> TimelineEvent(
+                id = event.id,
+                title = "Interpretation",
+                description = event.interpretation,
+                timestamp = timestamp,
+                status = "Produced"
+            )
+            is IntentCreated -> TimelineEvent(
+                id = event.id,
+                title = "Intent Created",
+                description = "${event.intentKind} [${event.intentId}]",
+                timestamp = timestamp,
+                status = "Created",
+                intentId = event.intentId
+            )
+            is IntentResolved -> TimelineEvent(
+                id = event.id,
+                title = "Intent Resolved",
+                description = "Device: ${event.deviceId}",
+                timestamp = timestamp,
+                status = "Resolved",
+                intentId = event.intentId
+            )
+            is IntentDispatched -> TimelineEvent(
+                id = event.id,
+                title = "Intent Dispatched",
+                description = "To: ${event.deviceId}",
+                timestamp = timestamp,
+                status = "Dispatched",
+                intentId = event.intentId
+            )
+            is DeviceConnected -> TimelineEvent(
+                id = event.id,
+                title = "Device Connected",
+                description = "${event.deviceId} (${event.sessionId})",
+                timestamp = timestamp,
+                status = "Connected"
+            )
+            is DeviceReady -> TimelineEvent(
+                id = event.id,
+                title = "Device Ready",
+                description = event.deviceId,
+                timestamp = timestamp,
+                status = "Ready"
+            )
+            is DeviceDisconnected -> TimelineEvent(
+                id = event.id,
+                title = "Device Disconnected",
+                description = event.deviceId,
+                timestamp = timestamp,
+                status = "Disconnected"
+            )
+            is CapabilityUpdated -> TimelineEvent(
+                id = event.id,
+                title = "Capabilities Updated",
+                description = "${event.deviceId}: ${event.capabilities.size} capabilities",
+                timestamp = timestamp,
+                status = "Updated"
+            )
+            is RuntimeStateChanged -> TimelineEvent(
+                id = event.id,
+                title = "State Changed",
+                description = "${event.deviceId} -> ${event.state}",
+                timestamp = timestamp,
+                status = "Changed"
+            )
+            is ProviderRequest -> TimelineEvent(
+                id = event.id,
+                title = "Provider Request",
+                description = "${event.providerId} [${event.requestId}]",
+                timestamp = timestamp,
+                status = "Started"
+            )
+            is ProviderResult -> TimelineEvent(
+                id = event.id,
+                title = "Provider Result",
+                description = if (event.success) "Success" else "Failed: ${event.reason}",
+                timestamp = timestamp,
+                status = if (event.success) "Success" else "Failed"
+            )
+            is ProviderFailure -> TimelineEvent(
+                id = event.id,
+                title = "Provider Error",
+                description = "${event.providerId}: ${event.reason}",
+                timestamp = timestamp,
+                status = "Failed"
+            )
+            is com.halo.sdk.runtime.EmbodimentExecutionEvent -> TimelineEvent(
+                id = event.id,
+                title = "Execution Result",
+                description = "${event.device.displayName}: ${event.result.status}",
+                timestamp = timestamp,
+                status = event.result.status.name,
+                intentId = event.result.intentId
+            )
             else -> null
         }
     }
