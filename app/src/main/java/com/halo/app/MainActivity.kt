@@ -73,8 +73,14 @@ class MainActivity : ComponentActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             add(Manifest.permission.BLUETOOTH_SCAN)
             add(Manifest.permission.BLUETOOTH_CONNECT)
+            // Request location as well for better compatibility on some vendor stacks
+            add(Manifest.permission.ACCESS_FINE_LOCATION)
         } else {
             add(Manifest.permission.ACCESS_FINE_LOCATION)
+            add(Manifest.permission.ACCESS_COARSE_LOCATION)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            add(Manifest.permission.NEARBY_WIFI_DEVICES)
         }
     }.toTypedArray()
 

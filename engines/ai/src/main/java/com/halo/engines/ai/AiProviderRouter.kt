@@ -2,6 +2,7 @@ package com.halo.engines.ai
 
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.Storage
+import com.halo.sdk.runtime.RuntimeLogger
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -22,7 +23,8 @@ import kotlin.time.Duration.Companion.seconds
  */
 class DefaultAiProviderRouter(
     private val providers: List<AiProvider>,
-    private val storage: Storage
+    private val storage: Storage,
+    private val logger: RuntimeLogger? = null
 ) : AiProviderRouter {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -86,22 +88,41 @@ class DefaultAiProviderRouter(
      */
     override fun getAllProviders(): List<AiProvider> = providers
 
-    /**
-     * Executes a request using the selected provider if it supports the capabilities,
-     * otherwise falls back to the first available provider that supports them.
-     */
+    override suspend fun getEligibleProvider(request: AiRequest): AiProvider {
+        val policy = _routingPolicy.value
+        val selectedId = _selectedProviderId.value
+        val preferredProvider = providers.find { it.id == selectedId }
+        
+        val (provider, rejections) = selectProviderWithDetails(policy, preferredProvider, request)
+        if (provider != null) return provider
+
+        val details = rejections.joinToString("\n") { "- ${it.providerId}: ${it.reason}" }
+        logger?.error("AiProviderRouter", "No eligible provider found. Details:\n$details")
+        
+        val reason = when (policy) {
+            AiRoutingPolicy.LOCAL_ONLY -> "No local AI providers available.\nDetails:\n$details"
+            AiRoutingPolicy.EXPLICIT -> "Explicitly selected provider ($selectedId) is unavailable or unsupported.\nDetails:\n$details"
+            else -> "No available AI provider found for requested capabilities.\nDetails:\n$details"
+        }
+        throw AiProviderException(AiErrorType.PROVIDER_UNAVAILABLE, reason)
+    }
     override suspend fun execute(request: AiRequest, context: AiContext): AiResponse {
         val policy = _routingPolicy.value
         val selectedId = _selectedProviderId.value
         val preferredProvider = providers.find { it.id == selectedId }
 
-        val provider = selectProviderForRequest(policy, preferredProvider, request)
+        logger?.info("AiProviderRouter", "Executing request with policy=$policy, selectedId=$selectedId")
+
+        val (provider, rejections) = selectProviderWithDetails(policy, preferredProvider, request)
         
         if (provider == null) {
+            val details = rejections.joinToString("\n") { "- ${it.providerId}: ${it.reason}" }
+            logger?.error("AiProviderRouter", "No suitable provider found. Details:\n$details")
+            
             val reason = when (policy) {
-                AiRoutingPolicy.LOCAL_ONLY -> "No local AI providers available"
-                AiRoutingPolicy.EXPLICIT -> "Explicitly selected provider ($selectedId) is unavailable"
-                else -> "No available AI provider found for requested capabilities"
+                AiRoutingPolicy.LOCAL_ONLY -> "No local AI providers available.\nDetails:\n$details"
+                AiRoutingPolicy.EXPLICIT -> "Explicitly selected provider ($selectedId) is unavailable or unsupported.\nDetails:\n$details"
+                else -> "No available AI provider found for requested capabilities.\nDetails:\n$details"
             }
             throw AiProviderException(AiErrorType.PROVIDER_UNAVAILABLE, reason)
         }
@@ -126,24 +147,53 @@ class DefaultAiProviderRouter(
         }
     }
 
-    private suspend fun selectProviderForRequest(policy: AiRoutingPolicy, preferred: AiProvider?, request: AiRequest): AiProvider? {
+    private data class ProviderRejection(val providerId: String, val reason: String)
+
+    private suspend fun selectProviderWithDetails(policy: AiRoutingPolicy, preferred: AiProvider?, request: AiRequest): Pair<AiProvider?, List<ProviderRejection>> {
         val readyProviders = mutableListOf<AiProvider>()
+        val rejections = mutableListOf<ProviderRejection>()
+
         for (provider in providers) {
-            val state = provider.status.value.state
-            if ((state == ProviderStatus.State.READY || state == ProviderStatus.State.STANDBY || state == ProviderStatus.State.LOADING) && supports(provider, request)) {
-                readyProviders.add(provider)
+            val status = provider.status.value
+            val state = status.state
+            
+            logger?.debug("AiProviderRouter", "Checking provider=${provider.id} state=$state")
+
+            if (state != ProviderStatus.State.READY && state != ProviderStatus.State.STANDBY && state != ProviderStatus.State.LOADING) {
+                rejections.add(ProviderRejection(provider.id, "Status is $state (${status.message ?: "No message"})"))
+                continue
             }
+
+            val caps = provider.getCapabilities()
+            val unsupported = mutableListOf<String>()
+            if (request.text != null && !caps.contains(AiCapability.TEXT) && !caps.contains(AiCapability.MULTIMODAL)) unsupported.add("TEXT")
+            if (request.image != null && !caps.contains(AiCapability.IMAGE) && !caps.contains(AiCapability.MULTIMODAL)) unsupported.add("IMAGE")
+            if (request.audio != null && !caps.contains(AiCapability.AUDIO) && !caps.contains(AiCapability.MULTIMODAL)) unsupported.add("AUDIO")
+            if (request.video != null && !caps.contains(AiCapability.VIDEO) && !caps.contains(AiCapability.MULTIMODAL)) unsupported.add("VIDEO")
+            
+            if (unsupported.isNotEmpty()) {
+                rejections.add(ProviderRejection(provider.id, "Missing capabilities: ${unsupported.joinToString()}"))
+                continue
+            }
+
+            if (policy == AiRoutingPolicy.LOCAL_ONLY && !provider.isLocal) {
+                rejections.add(ProviderRejection(provider.id, "Not a local provider (policy is LOCAL_ONLY)"))
+                continue
+            }
+
+            if (policy == AiRoutingPolicy.EXPLICIT && preferred != null && provider.id != preferred.id) {
+                rejections.add(ProviderRejection(provider.id, "Not the explicitly selected provider (policy is EXPLICIT)"))
+                continue
+            }
+
+            readyProviders.add(provider)
         }
         
-        return when (policy) {
+        val result = when (policy) {
             AiRoutingPolicy.EXPLICIT -> {
                 if (preferred != null && readyProviders.contains(preferred)) preferred else null
             }
-            AiRoutingPolicy.LOCAL_ONLY -> {
-                val localProviders = readyProviders.filter { it.isLocal }
-                if (preferred != null && localProviders.contains(preferred)) preferred else localProviders.firstOrNull()
-            }
-            AiRoutingPolicy.AUTOMATIC, AiRoutingPolicy.PREFERRED_WITH_FALLBACK -> {
+            AiRoutingPolicy.LOCAL_ONLY, AiRoutingPolicy.AUTOMATIC, AiRoutingPolicy.PREFERRED_WITH_FALLBACK -> {
                 if (preferred != null && readyProviders.contains(preferred)) {
                     preferred
                 } else {
@@ -151,6 +201,13 @@ class DefaultAiProviderRouter(
                 }
             }
         }
+        
+        logger?.info("AiProviderRouter", "Selected provider=${result?.id} for policy=$policy")
+        return Pair(result, rejections)
+    }
+
+    private suspend fun selectProviderForRequest(policy: AiRoutingPolicy, preferred: AiProvider?, request: AiRequest): AiProvider? {
+        return selectProviderWithDetails(policy, preferred, request).first
     }
 
     private suspend fun getFallbackProvider(failedProvider: AiProvider, request: AiRequest, policy: AiRoutingPolicy): AiProvider? {
@@ -171,6 +228,7 @@ class DefaultAiProviderRouter(
 
     private suspend fun supports(provider: AiProvider, request: AiRequest): Boolean {
         val caps = provider.getCapabilities()
+        if (request.text != null && !caps.contains(AiCapability.TEXT) && !caps.contains(AiCapability.MULTIMODAL)) return false
         if (request.image != null && !caps.contains(AiCapability.IMAGE) && !caps.contains(AiCapability.MULTIMODAL)) return false
         if (request.audio != null && !caps.contains(AiCapability.AUDIO) && !caps.contains(AiCapability.MULTIMODAL)) return false
         if (request.video != null && !caps.contains(AiCapability.VIDEO) && !caps.contains(AiCapability.MULTIMODAL)) return false

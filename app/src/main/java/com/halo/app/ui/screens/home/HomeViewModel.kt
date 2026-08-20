@@ -68,7 +68,9 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
         }
 
         val selectedProvider = snapshot.providers.find { it.isSelected } ?: snapshot.providers.firstOrNull()
-        val providerStatus = selectedProvider?.status ?: "Unavailable"
+        val providerStatus = selectedProvider?.let {
+            it.statusMessage ?: it.status
+        } ?: "Unavailable"
         
         val activeProviderText = if (selectedProvider != null) {
             val modelSuffix = selectedProvider.activeModel?.let { " · $it" } ?: ""

@@ -31,20 +31,22 @@ class CognitiveSession(
         activeJob = scope.launch {
             val requestId = UUID.randomUUID().toString()
             try {
-                // 1. Preparing Context
+                // 1. Provider Eligibility Check (Fail Fast)
+                val provider = providerRouter.getEligibleProvider(request)
+
+                val providerId = provider.id
+                val modelId = request.modelId ?: providerRouter.selectedModelId.value
+                
+                // 2. Preparing Context
                 println("[CognitiveSession] Preparing context")
                 _state.value = CognitiveSessionState.PreparingContext
                 eventBus.publish(CognitiveRequestStarted(requestId = requestId))
                 
                 val context = buildContext(policy)
                 
-                // 2. Reasoning
-                val providerId = providerRouter.selectedProviderId.value ?: "unknown"
-                val modelId = request.modelId ?: providerRouter.selectedModelId.value
-                
-                val provider = providerRouter.getAllProviders().find { it.id == providerId }
-                println("[CognitiveSession] Provider: $providerId, Model: $modelId, Found: ${provider != null}")
-                val supportsStreaming = provider?.getCapabilities()?.contains(AiCapability.STREAMING) == true
+                // 3. Reasoning
+                println("[CognitiveSession] Provider: $providerId, Model: $modelId")
+                val supportsStreaming = provider.getCapabilities().contains(AiCapability.STREAMING)
 
                 _state.value = CognitiveSessionState.Reasoning(providerId, modelId)
                 eventBus.publish(CognitiveReasoningStarted(
@@ -53,7 +55,7 @@ class CognitiveSession(
                     modelId = modelId
                 ))
                 
-                if (supportsStreaming && provider != null) {
+                if (supportsStreaming) {
                     println("[CognitiveSession] Starting streaming")
                     var accumulatedText = ""
                     provider.stream(request, context)
@@ -76,15 +78,12 @@ class CognitiveSession(
                     _state.value = CognitiveSessionState.Completed(finalResponse)
                     eventBus.publish(CognitiveCompleted(requestId = requestId, response = accumulatedText))
                     println("[CognitiveSession] Streaming completed")
-                } else if (provider != null) {
+                } else {
                     println("[CognitiveSession] Executing one-shot")
                     val response = providerRouter.execute(request, context)
                     _state.value = CognitiveSessionState.Completed(response)
                     eventBus.publish(CognitiveCompleted(requestId = requestId, response = response.text))
                     println("[CognitiveSession] Execution completed")
-                } else {
-                    println("[CognitiveSession] No provider available to execute request")
-                    throw Exception("No provider available")
                 }
                 
             } catch (e: Exception) {
@@ -99,6 +98,7 @@ class CognitiveSession(
     private fun mapErrorMessage(e: Exception): String {
         val msg = e.message ?: ""
         return when {
+            e is AiProviderException -> msg
             msg.contains("401") -> "Invalid API key"
             msg.contains("403") -> "Access denied"
             msg.contains("429") -> "Provider rate limit exceeded"

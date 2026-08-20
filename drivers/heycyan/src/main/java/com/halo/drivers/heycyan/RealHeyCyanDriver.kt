@@ -135,16 +135,39 @@ class RealHeyCyanDriver(
                 )
             }
             stateStore.updateConnection(com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.CONNECTING)
-            android.util.Log.i("RealHeyCyanDriver", "Starting GATT connection...")
+            android.util.Log.i("RealHeyCyanDriver", "Starting GATT connection (with settling delay)...")
+            
+            // Allow stack to settle, especially if a scan was just stopped
+            kotlinx.coroutines.delay(1000L)
+
             val gattReady = runCatching {
                 gattClient.connect(selectedAddress)
                 gattClient.awaitReady()
                 true
             }.onFailure {
-                android.util.Log.w("RealHeyCyanDriver", "GATT connection failed", it)
+                android.util.Log.w("RealHeyCyanDriver", "GATT connection failed (attempt 1)", it)
             }.getOrDefault(false)
 
             android.util.Log.i("RealHeyCyanDriver", "Transport status: GATT=$gattReady")
+
+            if (!gattReady) {
+                 android.util.Log.i("RealHeyCyanDriver", "GATT failed, attempting retry in 2s...")
+                 kotlinx.coroutines.delay(2000L)
+                 val retryReady = runCatching {
+                     gattClient.connect(selectedAddress)
+                     gattClient.awaitReady()
+                     true
+                 }.onFailure {
+                     android.util.Log.e("RealHeyCyanDriver", "GATT connection failed (attempt 2)", it)
+                 }.getOrDefault(false)
+                 
+                 if (retryReady) {
+                     android.util.Log.i("RealHeyCyanDriver", "GATT retry succeeded")
+                     stateStore.updateConnection(com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.READY)
+                     startReading()
+                     return
+                 }
+            }
 
             if (gattReady) {
                 stateStore.updateConnection(com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.READY)
@@ -340,6 +363,19 @@ class RealHeyCyanDriver(
                         payload = object : com.halo.sdk.runtime.ObservationPayload {},
                         sourceDeviceId = "heycyan",
                         metadata = mapOf("event" to "VOICE_PLAYBACK_PAUSE")
+                    )
+                ))
+            }
+
+            is HeyCyanEvent.ModeChanged -> {
+                emitDeviceEvent(event)
+                eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(
+                    observation = com.halo.sdk.runtime.Observation(
+                        modality = com.halo.sdk.runtime.Modality.SYSTEM,
+                        source = com.halo.sdk.runtime.Source.BLUETOOTH,
+                        payload = object : com.halo.sdk.runtime.ObservationPayload {},
+                        sourceDeviceId = "heycyan",
+                        metadata = mapOf("event" to "MODE_CHANGED", "mode" to event.mode)
                     )
                 ))
             }

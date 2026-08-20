@@ -1,7 +1,7 @@
 package com.halo.drivers.heycyan.capability
 
 import com.halo.drivers.heycyan.debug.HeyCyanLogger
-import com.halo.drivers.heycyan.protocol.HeyCyanOperation
+import com.halo.sdk.runtime.embodiment.heycyan.HeyCyanOperation
 
 /**
  * Adapts [HeyCyanCapabilityController] to the generic [CapabilityProvider] interface.

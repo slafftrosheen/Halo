@@ -50,20 +50,45 @@ enum class ButtonEvent {
     Released
 }
 
+enum class DeviceConnectionState {
+    DISCONNECTED,
+    DISCOVERING,
+    CONNECTING,
+    CONNECTED,
+    READY,
+    DISCONNECTING,
+    ERROR
+}
+
 data class DeviceContext(
+    val deviceId: String? = null,
     val name: String? = null,
+    val deviceType: String? = null,
     val batteryPercent: Int? = null,
     val wearing: Boolean = false,
     val connected: Boolean = false,
     val charging: Boolean = false,
     val temperatureCelsius: Float? = null,
-    val capabilities: List<String> = emptyList()
+    val capabilities: List<String> = emptyList(),
+    val transport: String? = null,
+    val lastSeenMs: Long? = null,
+    val freshness: Freshness = Freshness.UNKNOWN,
+    val state: DeviceConnectionState = DeviceConnectionState.DISCONNECTED
 )
+
+enum class Freshness {
+    FRESH,
+    STALE,
+    UNKNOWN
+}
 
 sealed interface ConnectionState {
     data object Disconnected : ConnectionState
+    data object Discovering : ConnectionState
     data object Connecting : ConnectionState
     data object Connected : ConnectionState
+    data object Ready : ConnectionState
+    data object Disconnecting : ConnectionState
     data class Failed(val reason: String) : ConnectionState
 }
 

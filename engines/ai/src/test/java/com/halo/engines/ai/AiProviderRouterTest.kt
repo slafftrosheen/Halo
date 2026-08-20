@@ -24,17 +24,18 @@ class AiProviderRouterTest {
         override fun clear() { data.clear() }
     }
 
-    private class MockProvider(
+    private open class MockProvider(
         override val id: String,
         override val displayName: String,
         private val initialStatus: ProviderStatus = ProviderStatus.READY,
         override val isLocal: Boolean = true,
-        val throwsException: Boolean = false
+        val throwsException: Boolean = false,
+        val supportedCapabilities: Set<AiCapability> = setOf(AiCapability.TEXT)
     ) : AiProvider {
         override val status: StateFlow<ProviderStatus> = MutableStateFlow(initialStatus)
         
         override suspend fun getStatus() = status.value
-        override suspend fun getCapabilities() = setOf(AiCapability.TEXT)
+        override suspend fun getCapabilities() = supportedCapabilities
         override suspend fun generate(request: AiRequest, context: AiContext): AiResponse {
             if (throwsException) throw AiProviderException(AiErrorType.PROVIDER_UNAVAILABLE, "Simulated failure")
             return AiResponse("Response from $id", providerId = id)
@@ -128,5 +129,47 @@ class AiProviderRouterTest {
         // Even though p1 is READY, it throws on execution, router should catch and fallback to p2
         val response = router.execute(AiRequest(text = "Hello"), AiContext.EMPTY)
         assertEquals("p2", response.providerId)
+    }
+
+    @Test
+    fun `router skips providers without required capability`() = runTest {
+        val storage = FakeStorage()
+        val pText = MockProvider("p1", "Text Only", supportedCapabilities = setOf(AiCapability.TEXT))
+        val pImage = MockProvider("p2", "Image Only", supportedCapabilities = setOf(AiCapability.IMAGE))
+        
+        val router = DefaultAiProviderRouter(listOf(pText, pImage), storage)
+        router.setRoutingPolicy(AiRoutingPolicy.AUTOMATIC)
+        
+        // Request TEXT
+        val resp1 = router.execute(AiRequest(text = "hello"))
+        assertEquals("p1", resp1.providerId)
+        
+        // Request IMAGE
+        val resp2 = router.execute(AiRequest(image = byteArrayOf(1, 2, 3)))
+        assertEquals("p2", resp2.providerId)
+    }
+
+    @Test
+    fun `getEligibleProvider returns null if no provider supports request`() = runTest {
+        val storage = FakeStorage()
+        val pText = MockProvider("p1", "Text Only")
+        val router = DefaultAiProviderRouter(listOf(pText), storage)
+        
+        val eligible = router.getEligibleProvider(AiRequest(image = byteArrayOf(1)))
+        assertNull(eligible)
+    }
+
+    @Test
+    fun `execute throws with detailed reason if no provider matches`() = runTest {
+        val storage = FakeStorage()
+        val pText = MockProvider("p1", "Text Only", initialStatus = ProviderStatus.UNAVAILABLE)
+        val router = DefaultAiProviderRouter(listOf(pText), storage)
+        
+        try {
+            router.execute(AiRequest(text = "hello"))
+            fail("Should have thrown")
+        } catch (e: AiProviderException) {
+            assertTrue(e.message?.contains("requested capabilities") == true)
+        }
     }
 }

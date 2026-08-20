@@ -2,7 +2,7 @@ package com.halo.drivers.heycyan.transport
 
 import com.halo.drivers.heycyan.protocol.HeyCyanCommand
 import com.halo.drivers.heycyan.protocol.HeyCyanEvent
-import com.halo.drivers.heycyan.protocol.HeyCyanOperation
+import com.halo.sdk.runtime.embodiment.heycyan.HeyCyanOperation
 
 /**
  * Result of executing a low-level command across a transport channel.

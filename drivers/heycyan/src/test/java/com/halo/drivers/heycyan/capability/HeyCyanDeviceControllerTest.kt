@@ -5,7 +5,7 @@ import com.halo.drivers.heycyan.media.sync.HeyCyanMediaDiffer
 import com.halo.drivers.heycyan.media.sync.HeyCyanMediaSyncResult
 import com.halo.drivers.heycyan.media.sync.HeyCyanMediaSynchronizer
 import com.halo.drivers.heycyan.media.sync.MediaSyncRequest
-import com.halo.drivers.heycyan.protocol.HeyCyanOperation
+import com.halo.sdk.runtime.embodiment.heycyan.HeyCyanOperation
 import com.halo.drivers.heycyan.wifi.HeyCyanMediaApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals

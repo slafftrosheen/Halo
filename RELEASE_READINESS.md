@@ -12,10 +12,11 @@ This report documents the final evidence-backed release readiness of the Halo ec
 | **Feature Freeze** | Release Scope Freeze | **GREEN** | Codebase frozen at core targets: Runtime, HeyCyan embodiment, Provider stack, Devices, Activity, Settings, Diagnostics. |
 | **Security Audit** | API Key Privacy & Storage | **GREEN** | OpenRouter API Key rendered masked (`PasswordVisualTransformation`). Zero plain keys/tokens in Logcat or diagnostic dumps. |
 | **Parser Resilience** | BLE Frame Decoder | **GREEN** | `HeyCyanResponseDecoder.decode` wrapped in `runCatching`. Short/malformed packets degrade gracefully returning `null`. |
-| **Embodiment Architecture** | HeyCyan Driver Pipeline | **GREEN** | Full encapsulation: Hardware → BLE → Protocol → DeviceController → Session → EmbodimentGateway → Runtime. |
-| **Photo Golden Path** | Photo UX & Lifecycle | **GREEN** | 4-state lifecycle (`READY`, `CAPTURING`, `COMPLETED`, `FAILED`). 5s hardware ACK timeout, double-click protection, auto-recovery on error. |
-| **Video State Machine** | Video Start/Stop | **GREEN** | Semantic state machine (`IDLE`, `STARTING`, `RECORDING`, `STOPPING`). Guarded against double-START/STOP. |
-| **Audio Recording** | Audio Distinction | **GREEN** | Audio recording (`RECORD_START`/`RECORD_STOP`) preserved as distinct from Video recording. |
+| **Embodiment Architecture** | HeyCyan Driver Pipeline | **YELLOW** | Implementation complete; connection stability issues observed (GATT 147). |
+| **Photo Golden Path** | Photo UX & Lifecycle | **YELLOW** | 4-state lifecycle implemented; ACK timeout and double-click protection in place. |
+| **Video State Machine** | Video Start/Stop | **YELLOW** | Semantic state machine implemented. |
+| **Audio Recording** | Audio Distinction | **YELLOW** | Audio recording wired to driver. |
+| **Bluetooth Stability** | GATT Connection | **RED** | Connection status 147 (0x93) detected on Qualcomm devices. |
 | **Notification Pipeline** | 0x73 Event Translation | **GREEN** | AI Recognition (0x02), Speaking (0x03), OTA (0x04), Battery (0x05), Pause (0x0C), Unbind (0x0D), Memory Fault (0x0E), Volume (0x12) converted to `ObservationUpdated`. |
 | **Battery Telemetry** | Age Tracking & Stale Badge | **GREEN** | Timestamped `BatteryState`. Disconnected state presents *"Last known battery (X ago)"*; >5min displays stale badge. |
 | **Health & Memory** | Fault & Unbind Handling | **GREEN** | Memory fault (0x0E) updates `healthState` (`WARNING_MEMORY_INSUFFICIENT`) and UI warning banner without crashing. Unbind (0x0D) invalidates active session. |
@@ -30,6 +31,8 @@ This report documents the final evidence-backed release readiness of the Halo ec
 ---
 
 ## Final Release Gate Verdict
-**GREEN — SUBMIT TESTFLIGHT RELEASE CANDIDATE.**
+**YELLOW — RELEASE BLOCKED.**
 
-The Halo ecosystem is hardened, resilient against crashes and malformed data, enforces API key privacy, and is prepared for the **7-Day Real-Hardware Test**.
+The HeyCyan driver pipeline has been reconciled with the cognitive runtime, and semantic mapping is now implemented in `HeyCyanSession`. However, the **7-Day Real-Hardware Test** has not yet been performed on this implementation.
+
+**DO NOT SUBMIT TESTFLIGHT.**

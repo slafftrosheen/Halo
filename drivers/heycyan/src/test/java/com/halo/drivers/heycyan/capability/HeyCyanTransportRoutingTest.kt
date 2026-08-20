@@ -2,7 +2,7 @@ package com.halo.drivers.heycyan.capability
 
 import com.halo.drivers.heycyan.mock.MockBleExecutor
 import com.halo.drivers.heycyan.mock.MockRfcommExecutor
-import com.halo.drivers.heycyan.protocol.HeyCyanOperation
+import com.halo.sdk.runtime.embodiment.heycyan.HeyCyanOperation
 import com.halo.drivers.heycyan.transport.HeyCyanTransportRoutes
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals

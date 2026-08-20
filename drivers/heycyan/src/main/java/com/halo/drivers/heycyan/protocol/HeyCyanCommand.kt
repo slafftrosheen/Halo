@@ -1,5 +1,7 @@
 package com.halo.drivers.heycyan.protocol
 
+import com.halo.sdk.runtime.embodiment.heycyan.HeyCyanOperation
+
 /**
  * Commands sent to the HeyCyan glasses over BLE.
  * These map to the QCOperatorDeviceMode values and proprietary vendor commands.
@@ -30,3 +32,43 @@ sealed interface HeyCyanCommand {
     // Legacy/Fallback Mode Control (maintained for potential explicit state support)
     data class SetMode(val mode: HeyCyanMode) : HeyCyanCommand
 }
+
+/**
+ * Maps a semantic HeyCyanOperation to the corresponding low-level HeyCyanCommand.
+ */
+fun HeyCyanOperation.toCommand(): HeyCyanCommand =
+    when (this) {
+        HeyCyanOperation.GetBattery ->
+            HeyCyanCommand.GetBattery
+
+        HeyCyanOperation.GetDeviceInfo ->
+            HeyCyanCommand.GetDeviceInfo
+
+        HeyCyanOperation.GetMediaInventory ->
+            HeyCyanCommand.GetMediaCounts
+
+        HeyCyanOperation.TakePhoto ->
+            HeyCyanCommand.TakePhoto
+
+        HeyCyanOperation.StartVideo ->
+            HeyCyanCommand.StartVideo
+
+        HeyCyanOperation.StopVideo ->
+            HeyCyanCommand.StopVideo
+
+        HeyCyanOperation.StartRecording ->
+            HeyCyanCommand.StartRecording
+
+        HeyCyanOperation.StopRecording ->
+            HeyCyanCommand.StopRecording
+
+        HeyCyanOperation.PrepareVoiceRouting ->
+            HeyCyanCommand.PrepareVoiceRouting
+
+        HeyCyanOperation.GenerateAIPhoto ->
+            HeyCyanCommand.AiThumbnail
+
+        HeyCyanOperation.EnterWifiTransferMode,
+        HeyCyanOperation.SynchronizeMedia ->
+            HeyCyanCommand.EnterWifiTransferMode
+    }

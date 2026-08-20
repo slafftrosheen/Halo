@@ -21,7 +21,8 @@ data class PairingUiState(
 )
 
 class PairingViewModel(
-    private val driver: RealHeyCyanDriver = ManualDependencyGraph.heyCyanDriver
+    private val driver: RealHeyCyanDriver = ManualDependencyGraph.heyCyanDriver,
+    private val deviceRegistry: com.halo.sdk.runtime.embodiment.DeviceRegistry = ManualDependencyGraph.deviceRegistry
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PairingUiState())
@@ -43,14 +44,24 @@ class PairingViewModel(
         
         scanJob = viewModelScope.launch {
             val seen = mutableSetOf<String>()
-            driver.scanner.scan().collect { advertisement ->
-                if (seen.add(advertisement.address)) {
-                    val device = DiscoveredBleDevice(advertisement, System.currentTimeMillis())
-                    _uiState.update { state ->
-                        state.copy(devices = state.devices + device)
+            driver.scanner.scan()
+                .catch { e ->
+                    Log.e("PairingViewModel", "Scan failed", e)
+                    _uiState.update { 
+                        it.copy(
+                            isScanning = false, 
+                            statusMessage = "Scan failed: ${e.message ?: "Unknown error"}"
+                        ) 
                     }
                 }
-            }
+                .collect { advertisement ->
+                    if (seen.add(advertisement.address)) {
+                        val device = DiscoveredBleDevice(advertisement, System.currentTimeMillis())
+                        _uiState.update { state ->
+                            state.copy(devices = state.devices + device)
+                        }
+                    }
+                }
         }
     }
 
@@ -77,6 +88,22 @@ class PairingViewModel(
                     Log.d("PairingViewModel", "Setting target device and connecting")
                     host.setTargetDevice(address)
                     host.connect()
+
+                    // Save to registry so it appears in Devices screen
+                    val discoveredDevice = _uiState.value.devices.find { it.advertisement.address == address }
+                    val deviceName = discoveredDevice?.advertisement?.name ?: "HeyCyan Glasses"
+                    
+                    deviceRegistry.saveDevice(
+                        com.halo.sdk.runtime.embodiment.DeviceRecord(
+                            identity = com.halo.sdk.runtime.DeviceIdentity(
+                                deviceId = address,
+                                displayName = deviceName,
+                                deviceType = "HEYCYAN_GLASSES"
+                            ),
+                            lastSeenMs = System.currentTimeMillis()
+                        )
+                    )
+
                     _uiState.update { it.copy(statusMessage = "Connected successfully") }
                 } else {
                     Log.w("PairingViewModel", "WearableHost is not HeyCyanHost: ${host::class.simpleName}")

@@ -41,6 +41,7 @@ interface PacketTracer {
     ) = Unit
 
     fun onDescriptorWrite(descriptorUuid: UUID, status: Int) = Unit
+    fun onCharacteristicWrite(characteristicUuid: UUID, status: Int) = Unit
     fun onMtuChanged(mtu: Int) = Unit
     fun onTx(characteristicUuid: UUID, bytes: ByteArray)
     fun onRx(characteristicUuid: UUID, bytes: ByteArray)

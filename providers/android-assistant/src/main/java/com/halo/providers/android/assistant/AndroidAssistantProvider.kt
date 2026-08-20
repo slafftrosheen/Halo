@@ -27,7 +27,12 @@ class AndroidAssistantProvider(
     override suspend fun getStatus(): ProviderStatus {
         val intent = android.content.Intent(android.content.Intent.ACTION_ASSIST)
         val resolveInfo = context.packageManager.resolveActivity(intent, 0)
-        val current = if (resolveInfo != null) ProviderStatus.READY else ProviderStatus.UNAVAILABLE
+        
+        val current = if (resolveInfo != null) {
+            ProviderStatus(ProviderStatus.State.UNAVAILABLE, "Inline cognitive reasoning not supported by OS assistant")
+        } else {
+            ProviderStatus(ProviderStatus.State.UNAVAILABLE, "No system assistant app found")
+        }
         _status.value = current
         return current
     }

@@ -3,7 +3,7 @@ package com.halo.drivers.heycyan.mock
 import com.halo.drivers.heycyan.capability.HeyCyanBleExecutor
 import com.halo.drivers.heycyan.capability.HeyCyanCapabilityException
 import com.halo.drivers.heycyan.capability.HeyCyanOperationFailure
-import com.halo.drivers.heycyan.protocol.HeyCyanOperation
+import com.halo.sdk.runtime.embodiment.heycyan.HeyCyanOperation
 
 /**
  * In-process mock BLE executor for unit testing.

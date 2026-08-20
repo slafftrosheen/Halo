@@ -59,6 +59,9 @@ fun IntelligenceScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit = {}
             ) {
                 Column {
                     Text(uiState.activeProviderName.ifEmpty { "None" }, style = HaloTypography.bodyLarge, color = HaloGlassColors.TextPrimary)
+                    uiState.activeProviderStatus.message?.let {
+                        Text(it, style = HaloTypography.labelSmall, color = HaloGlassColors.Warning)
+                    }
                     Text(
                         text = if (uiState.activeModelId != null) uiState.activeModelId!! else "Default Model",
                         style = HaloTypography.labelMedium,
@@ -336,7 +339,23 @@ private fun ProviderPickerDialog(
                             Modifier.fillMaxWidth().clickable { onSelect(provider.id) }.padding(vertical = 12.dp),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(provider.name, color = HaloGlassColors.TextPrimary)
+                            Column {
+                                Text(provider.name, color = HaloGlassColors.TextPrimary)
+                                
+                                val isReady = provider.status.state == ProviderStatus.State.READY || provider.status.state == ProviderStatus.State.STANDBY || provider.status.state == ProviderStatus.State.LOADING
+                                val statusText = when {
+                                    provider.isSelected && isReady -> "Selected / Ready"
+                                    provider.isSelected && !isReady -> "Selected / Unavailable"
+                                    !provider.isSelected && isReady -> "Available / Not selected"
+                                    else -> "Failed"
+                                }
+                                
+                                Text(statusText, style = HaloTypography.labelSmall, color = if (isReady) HaloGlassColors.Success else HaloGlassColors.Warning)
+
+                                provider.status.message?.let {
+                                    Text(it, style = HaloTypography.labelSmall, color = HaloGlassColors.Warning)
+                                }
+                            }
                             if (provider.isSelected) Text("●", color = HaloGlassColors.Accent)
                         }
                     }

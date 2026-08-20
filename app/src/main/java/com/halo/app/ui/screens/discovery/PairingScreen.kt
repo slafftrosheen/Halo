@@ -70,17 +70,29 @@ fun PairingScreen(viewModel: PairingViewModel) {
 
         Spacer(Modifier.height(24.dp))
 
+        val isActive = uiState.connectionState is ConnectionState.Connected || uiState.connectionState is ConnectionState.Ready
+
         // Device List
         Box(modifier = Modifier.weight(1f)) {
-            if (uiState.devices.isEmpty() && !uiState.isScanning) {
+            if (uiState.devices.isEmpty() && !uiState.isScanning && !isActive) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No devices found", color = HaloGlassColors.TextMuted)
+                    Text(
+                        text = uiState.statusMessage ?: "No BLE devices found",
+                        color = if (uiState.statusMessage?.contains("fail", ignoreCase = true) == true) HaloGlassColors.Danger else HaloGlassColors.TextMuted
+                    )
                 }
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    if (isActive) {
+                        item {
+                            Text("Active Device", style = HaloTypography.labelMedium, color = HaloGlassColors.TextSecondary)
+                            Spacer(Modifier.height(8.dp))
+                        }
+                    }
+
                     items(uiState.devices, key = { it.advertisement.address }) { device ->
                         val isSelected = uiState.selectedAddress == device.advertisement.address
                         HaloGlassCard(
@@ -113,21 +125,26 @@ fun PairingScreen(viewModel: PairingViewModel) {
             modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            uiState.statusMessage?.let {
-                Text(it, color = HaloGlassColors.Info, style = HaloTypography.bodySmall)
+            val showStatusInFooter = uiState.devices.isNotEmpty() || uiState.isScanning || isActive
+            val currentStatusMsg = uiState.statusMessage
+            if (showStatusInFooter && currentStatusMsg != null) {
+                Text(currentStatusMsg, color = HaloGlassColors.Info, style = HaloTypography.bodySmall)
                 Spacer(Modifier.height(12.dp))
             }
 
             HaloGlassButton(
                 text = "Connect Glasses",
                 onClick = { viewModel.connect() },
-                enabled = uiState.selectedAddress != null && uiState.connectionState == ConnectionState.Disconnected,
+                enabled = uiState.selectedAddress != null && (uiState.connectionState is ConnectionState.Disconnected || uiState.connectionState is ConnectionState.Failed),
                 modifier = Modifier.fillMaxWidth()
             )
             
-            if (uiState.connectionState is ConnectionState.Connected) {
+            if (uiState.connectionState is ConnectionState.Ready) {
                 Spacer(Modifier.height(8.dp))
                 Text("Device is active", color = HaloGlassColors.Success, style = HaloTypography.labelLarge)
+            } else if (uiState.connectionState is ConnectionState.Connected) {
+                Spacer(Modifier.height(8.dp))
+                Text("Connected (Initializing...)", color = HaloGlassColors.Info, style = HaloTypography.labelLarge)
             }
         }
     }

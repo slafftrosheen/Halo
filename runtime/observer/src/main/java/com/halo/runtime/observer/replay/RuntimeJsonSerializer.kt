@@ -6,6 +6,8 @@ import com.halo.sdk.runtime.HaloEvent
 import com.halo.sdk.runtime.ObservationPayload
 import com.halo.sdk.runtime.RuntimeLifecycleEvent
 import com.halo.sdk.runtime.EngineLifecycleEvent
+import com.halo.sdk.host.ObservationSource
+import com.halo.sdk.host.ConnectionState
 
 class PolymorphicInterfaceAdapter<T : Any>(private val baseType: Class<T>) : JsonAdapter<T>() {
     private var moshi: Moshi? = null
@@ -59,13 +61,11 @@ class PolymorphicAdapterFactory : JsonAdapter.Factory {
         val rawType = Types.getRawType(type)
         if (rawType == HaloEvent::class.java || 
             rawType == RuntimeLifecycleEvent::class.java || 
-            rawType == EngineLifecycleEvent::class.java) {
-            val adapter = PolymorphicInterfaceAdapter(HaloEvent::class.java)
-            adapter.setMoshi(moshi)
-            return adapter
-        }
-        if (rawType == ObservationPayload::class.java) {
-            val adapter = PolymorphicInterfaceAdapter(ObservationPayload::class.java)
+            rawType == EngineLifecycleEvent::class.java ||
+            rawType == ObservationPayload::class.java ||
+            rawType == ObservationSource::class.java ||
+            rawType == ConnectionState::class.java) {
+            val adapter = PolymorphicInterfaceAdapter(rawType as Class<Any>)
             adapter.setMoshi(moshi)
             return adapter
         }

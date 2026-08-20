@@ -71,6 +71,7 @@ class ObserverGraph(
                         id = provider.id,
                         name = provider.displayName,
                         status = status.state.name,
+                        statusMessage = status.message,
                         isSelected = provider.id == selectedId,
                         activeModel = if (provider.id == selectedId) selectedModelId else null
                     )

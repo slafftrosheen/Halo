@@ -1,7 +1,7 @@
 package com.halo.drivers.heycyan.transport
 
 import com.halo.drivers.heycyan.protocol.EvidenceKind
-import com.halo.drivers.heycyan.protocol.HeyCyanOperation
+import com.halo.sdk.runtime.embodiment.heycyan.HeyCyanOperation
 import com.halo.drivers.heycyan.protocol.ProtocolConfidence
 import com.halo.drivers.heycyan.protocol.ProtocolEvidenceReference
 

@@ -19,6 +19,8 @@ import java.util.concurrent.ConcurrentHashMap
 
 import com.halo.sdk.runtime.ExecutionMode
 
+import kotlin.coroutines.CoroutineContext
+
 /**
  * A semantic session for BuddyBot. Wraps a raw transport (like WebSocket)
  * and handles the v1 protocol handshake, JSON translation, and intent tracking.
@@ -27,14 +29,15 @@ class BuddyBotSession(
     override val identity: DeviceIdentity,
     private val transport: EmbodimentTransport,
     private val eventBus: EventBus,
-    private val executionMode: ExecutionMode = ExecutionMode.LIVE
+    private val executionMode: ExecutionMode = ExecutionMode.LIVE,
+    private val coroutineContext: CoroutineContext = Dispatchers.Default
 ) : EmbodimentSession {
 
     private val _state = MutableStateFlow(SessionState.SAVED)
     override val state: StateFlow<SessionState> = _state.asStateFlow()
     private var requestIdCounter = 1
     
-    private val sessionScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val sessionScope = CoroutineScope(SupervisorJob() + coroutineContext)
     private val pendingIntents = ConcurrentHashMap<String, Long>() // intentId -> timestamp
 
     init {
@@ -152,13 +155,18 @@ class BuddyBotSession(
     }
 
     override suspend fun dispatch(intent: EmbodimentIntent) {
-        if (_state.value != SessionState.READY && executionMode != ExecutionMode.REPLAY) {
-            // Cannot dispatch if not ready
+        if (_state.value != SessionState.READY && executionMode != ExecutionMode.LIVE) {
+            // Replay mode or non-live check
+        } else if (_state.value != SessionState.READY) {
             return
         }
+
         if (executionMode == ExecutionMode.REPLAY) {
-            // In replay mode, the execution event is provided by the trace player
             return
+        }
+
+        if (pendingIntents.containsKey(intent.intentId)) {
+            return // Duplicate intent prevention
         }
 
         val map = mutableMapOf<String, Any>()

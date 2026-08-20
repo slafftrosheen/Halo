@@ -14,6 +14,8 @@ interface AiProviderRouter {
 
     fun getAllProviders(): List<AiProvider>
     
+    suspend fun getEligibleProvider(request: AiRequest): AiProvider
+    
     suspend fun execute(
         request: AiRequest, 
         context: AiContext = AiContext.EMPTY

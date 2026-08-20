@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -18,18 +19,17 @@ class BuddyBotSessionTest {
     private lateinit var identity: DeviceIdentity
     private lateinit var transport: FakeTransport
     private lateinit var eventBus: FakeEventBus
-    private lateinit var session: BuddyBotSession
 
     @Before
     fun setUp() {
         identity = DeviceIdentity("buddy-id", "BuddyBot", "robot")
         transport = FakeTransport()
         eventBus = FakeEventBus()
-        session = BuddyBotSession(identity, transport, eventBus)
     }
 
     @Test
     fun sessionSendsHandshakeOnConnect() = runTest {
+        val session = BuddyBotSession(identity, transport, eventBus, coroutineContext = UnconfinedTestDispatcher(testScheduler))
         transport.emitState(TransportConnectionState.CONNECTED)
         advanceUntilIdle()
         
@@ -38,6 +38,7 @@ class BuddyBotSessionTest {
 
     @Test
     fun sessionBecomesReadyOnHandshakeAck() = runTest {
+        val session = BuddyBotSession(identity, transport, eventBus, coroutineContext = UnconfinedTestDispatcher(testScheduler))
         transport.emitState(TransportConnectionState.CONNECTED)
         advanceUntilIdle()
         
@@ -49,6 +50,7 @@ class BuddyBotSessionTest {
 
     @Test
     fun sessionHandlesVariousExecutionStatuses() = runTest {
+        val session = BuddyBotSession(identity, transport, eventBus, coroutineContext = UnconfinedTestDispatcher(testScheduler))
         transport.emitState(TransportConnectionState.CONNECTED)
         transport.receiveMessage("{\"type\":\"handshake_ack\"}")
         advanceUntilIdle()
@@ -63,6 +65,26 @@ class BuddyBotSessionTest {
             val event = eventBus.events.find { (it as? EmbodimentExecutionEvent)?.result?.intentId == intentId } as? EmbodimentExecutionEvent
             assertEquals(statusStr, event?.result?.status?.name)
         }
+    }
+
+    @Test
+    fun sessionPreventsDuplicateIntents() = runTest {
+        val session = BuddyBotSession(identity, transport, eventBus, coroutineContext = UnconfinedTestDispatcher(testScheduler))
+        transport.emitState(TransportConnectionState.CONNECTED)
+        transport.receiveMessage("{\"type\":\"handshake_ack\"}")
+        advanceUntilIdle()
+        
+        val intent = EmbodimentIntent(
+            intentId = "intent-dup",
+            kind = IntentKind.MOVE,
+            driveMode = DriveMode.FORWARD
+        )
+        
+        session.dispatch(intent)
+        session.dispatch(intent) // Duplicate
+        advanceUntilIdle()
+        
+        assertEquals(1, transport.sentMessages.count { it.contains("intent-dup") })
     }
 
     private class FakeTransport : EmbodimentTransport {

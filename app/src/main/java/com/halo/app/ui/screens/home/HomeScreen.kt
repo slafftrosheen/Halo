@@ -171,8 +171,13 @@ fun HomeScreen(viewModel: HomeViewModel) {
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            val isProviderReady = uiState.activeProviderStatus == "READY" || uiState.activeProviderStatus == "STANDBY" || uiState.activeProviderStatus == "LOADING"
             Text("Intelligence: ", style = HaloTypography.labelMedium, color = HaloGlassColors.TextSecondary)
-            Text(uiState.activeProvider, style = HaloTypography.labelMedium, color = HaloGlassColors.Accent)
+            Text(
+                text = uiState.activeProvider, 
+                style = HaloTypography.labelMedium, 
+                color = if (isProviderReady) HaloGlassColors.Accent else HaloGlassColors.Warning
+            )
         }
 
         Spacer(modifier = Modifier.height(24.dp))

@@ -3,7 +3,7 @@ package com.halo.drivers.heycyan.mock
 import com.halo.drivers.heycyan.capability.HeyCyanCapabilityException
 import com.halo.drivers.heycyan.capability.HeyCyanOperationFailure
 import com.halo.drivers.heycyan.capability.HeyCyanRfcommExecutor
-import com.halo.drivers.heycyan.protocol.HeyCyanOperation
+import com.halo.sdk.runtime.embodiment.heycyan.HeyCyanOperation
 
 /**
  * In-process mock RFCOMM executor for unit testing.

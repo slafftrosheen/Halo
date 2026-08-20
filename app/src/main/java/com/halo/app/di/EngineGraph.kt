@@ -96,6 +96,6 @@ class EngineGraph(
         SpeechPerceptionBridge(infra.eventBus, infra.scope)
     }
 
-    val aiProviderRouter by lazy { DefaultAiProviderRouter(providerGraph.providers.aiProviders, ManualDependencyGraph.storage) }
+    val aiProviderRouter by lazy { DefaultAiProviderRouter(providerGraph.providers.aiProviders, ManualDependencyGraph.storage, infra.logger) }
     val aiEngine by lazy { AIEngine(aiProviderRouter, ManualDependencyGraph.storage) }
 }

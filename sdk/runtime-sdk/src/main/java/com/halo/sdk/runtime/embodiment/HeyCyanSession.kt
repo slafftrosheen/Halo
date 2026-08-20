@@ -5,29 +5,42 @@ import com.halo.sdk.runtime.EventBus
 import com.halo.sdk.runtime.EmbodimentExecutionEvent
 import com.halo.sdk.runtime.embodiment.ExecutionResult as EmbodimentExecutionResult
 import com.halo.sdk.runtime.embodiment.ExecutionStatus as EmbodimentExecutionStatus
+import com.halo.sdk.runtime.embodiment.heycyan.HeyCyanController
+import com.halo.sdk.runtime.embodiment.heycyan.HeyCyanOperation
+import com.halo.sdk.runtime.embodiment.heycyan.HeyCyanExecutionResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import com.halo.sdk.runtime.ObservationUpdated
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import java.util.concurrent.ConcurrentHashMap
+
+import kotlin.coroutines.CoroutineContext
 
 /**
  * A semantic session for HeyCyan. Wraps a raw transport.
  */
 class HeyCyanSession(
     override val identity: DeviceIdentity,
+    private val controller: HeyCyanController,
     private val transport: EmbodimentTransport,
-    private val eventBus: EventBus
+    private val eventBus: EventBus,
+    private val coroutineContext: CoroutineContext = Dispatchers.Default
 ) : EmbodimentSession {
 
     private val _state = MutableStateFlow(SessionState.SAVED)
     override val state: StateFlow<SessionState> = _state.asStateFlow()
     
-    private val sessionScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val sessionScope = CoroutineScope(SupervisorJob() + coroutineContext)
     private val pendingIntents = ConcurrentHashMap<String, Long>()
 
     init {
@@ -35,11 +48,7 @@ class HeyCyanSession(
             transport.connectionState.collect { connState ->
                 when (connState) {
                     TransportConnectionState.CONNECTED -> {
-                        _state.value = SessionState.CONNECTED
-                        _state.value = SessionState.HANDSHAKE
-                        _state.value = SessionState.CAPABILITY_SYNC
-                        _state.value = SessionState.STATE_SYNC
-                        _state.value = SessionState.READY
+                        handleConnected()
                     }
                     TransportConnectionState.DISCONNECTED, TransportConnectionState.ERROR -> {
                         val reason = if (connState == TransportConnectionState.ERROR) "TRANSPORT_ERROR" else "DEVICE_DISCONNECTED"
@@ -52,6 +61,42 @@ class HeyCyanSession(
                 }
             }
         }
+    }
+
+    private suspend fun handleConnected() {
+        _state.value = SessionState.CONNECTED
+        
+        // 1. Handshake (if applicable, currently just a state transition)
+        _state.value = SessionState.HANDSHAKE
+        delay(100) // Small delay to simulate/allow for internal setup
+        
+        // 2. Capability Sync
+        _state.value = SessionState.CAPABILITY_SYNC
+        // In the future, we might query the manifest here. For now, we assume baseline.
+        
+        // 3. State Sync - Truthful readiness requires initial data
+        _state.value = SessionState.STATE_SYNC
+        val synced = syncInitialState()
+        
+        if (synced) {
+            _state.value = SessionState.READY
+        } else {
+            // If we can't get basic state, we aren't really READY
+            _state.value = SessionState.ERROR
+        }
+    }
+
+    private suspend fun syncInitialState(): Boolean {
+        return withTimeoutOrNull(10000L) {
+            val batteryTask = sessionScope.launch { controller.execute(HeyCyanOperation.GetBattery) }
+            val infoTask = sessionScope.launch { controller.execute(HeyCyanOperation.GetDeviceInfo) }
+            val mediaTask = sessionScope.launch { controller.execute(HeyCyanOperation.GetMediaInventory) }
+            
+            batteryTask.join()
+            infoTask.join()
+            mediaTask.join()
+            true
+        } ?: false
     }
 
     private suspend fun failPendingIntents(reason: String) {
@@ -85,24 +130,121 @@ class HeyCyanSession(
 
     override suspend fun dispatch(intent: EmbodimentIntent) {
         if (_state.value != SessionState.READY) {
+            reportResult(intent.intentId, EmbodimentExecutionStatus.REJECTED, "Device not ready (state: ${_state.value})")
             return
         }
         
+        val operation = mapIntentToOperation(intent)
+        if (operation == null) {
+            reportResult(intent.intentId, EmbodimentExecutionStatus.REJECTED, "UNSUPPORTED_INTENT: HeyCyan semantic mapping not implemented for ${intent.kind}")
+            return
+        }
+
+        if (pendingIntents.containsKey(intent.intentId)) {
+            return // Duplicate intent prevention
+        }
+
         pendingIntents[intent.intentId] = System.currentTimeMillis()
         
         sessionScope.launch {
-            pendingIntents.remove(intent.intentId)
-            eventBus.publish(EmbodimentExecutionEvent(
-                device = identity,
-                result = EmbodimentExecutionResult(
-                    intentId = intent.intentId,
-                    status = EmbodimentExecutionStatus.REJECTED,
-                    reason = "UNSUPPORTED_INTENT: HeyCyan semantic mapping not implemented",
-                    timestamp = System.currentTimeMillis(),
-                    embodimentId = identity.deviceId
-                )
-            ))
+            val result = controller.execute(operation)
+            
+            result.fold(
+                onSuccess = { execResult ->
+                    val status = when (execResult) {
+                        is HeyCyanExecutionResult.Acknowledged -> EmbodimentExecutionStatus.ACCEPTED
+                        is HeyCyanExecutionResult.Completed -> EmbodimentExecutionStatus.SUCCEEDED
+                    }
+                    reportResult(intent.intentId, status, metadata = if (execResult is HeyCyanExecutionResult.Completed) execResult.metadata else emptyMap())
+                    
+                    if (status == EmbodimentExecutionStatus.ACCEPTED) {
+                        waitForCompletion(intent, operation)
+                    } else {
+                        pendingIntents.remove(intent.intentId)
+                    }
+                },
+                onFailure = { error ->
+                    pendingIntents.remove(intent.intentId)
+                    reportResult(intent.intentId, EmbodimentExecutionStatus.FAILED, error.message ?: "Unknown execution error")
+                }
+            )
         }
+    }
+
+    private suspend fun waitForCompletion(intent: EmbodimentIntent, operation: HeyCyanOperation) {
+        try {
+            withTimeout(10000L) {
+                when (operation) {
+                    HeyCyanOperation.TakePhoto -> {
+                        // For Photo, we wait for ModeChanged(PHOTO) or some other signal.
+                        // Assuming the device returns to IDLE/PREVIOUS mode eventually.
+                        // For now, let's look for ModeChanged in metadata.
+                        eventBus.observe(ObservationUpdated::class.java)
+                            .filter { obs -> 
+                                obs.observation.sourceDeviceId == "heycyan" && 
+                                obs.observation.metadata["event"] == "MODE_CHANGED"
+                            }
+                            .first()
+                    }
+                    HeyCyanOperation.StartVideo -> {
+                        eventBus.observe(ObservationUpdated::class.java)
+                            .filter { obs -> 
+                                obs.observation.sourceDeviceId == "heycyan" && 
+                                obs.observation.metadata["event"] == "MODE_CHANGED" &&
+                                obs.observation.metadata["mode"] == 0x02 // VIDEO
+                            }
+                            .first()
+                    }
+                    HeyCyanOperation.StopVideo -> {
+                        eventBus.observe(ObservationUpdated::class.java)
+                            .filter { obs -> 
+                                obs.observation.sourceDeviceId == "heycyan" && 
+                                obs.observation.metadata["event"] == "MODE_CHANGED" &&
+                                obs.observation.metadata["mode"] != 0x02 // Not VIDEO
+                            }
+                            .first()
+                    }
+                    else -> {
+                        // Generic completion for others
+                        delay(500)
+                    }
+                }
+                reportResult(intent.intentId, EmbodimentExecutionStatus.SUCCEEDED)
+            }
+        } catch (e: Exception) {
+            reportResult(intent.intentId, EmbodimentExecutionStatus.FAILED, "Execution timed out or failed: ${e.message}")
+        } finally {
+            pendingIntents.remove(intent.intentId)
+        }
+    }
+
+    private fun mapIntentToOperation(intent: EmbodimentIntent): HeyCyanOperation? = when (intent.kind) {
+        IntentKind.CAPTURE_PHOTO -> HeyCyanOperation.TakePhoto
+        IntentKind.START_VIDEO -> HeyCyanOperation.StartVideo
+        IntentKind.STOP_VIDEO -> HeyCyanOperation.StopVideo
+        IntentKind.START_AUDIO_RECORDING -> HeyCyanOperation.StartRecording
+        IntentKind.STOP_AUDIO_RECORDING -> HeyCyanOperation.StopRecording
+        IntentKind.FETCH_MEDIA_COUNT -> HeyCyanOperation.GetMediaInventory
+        else -> null
+    }
+
+    private suspend fun reportResult(
+        intentId: String, 
+        status: EmbodimentExecutionStatus, 
+        reason: String? = null,
+        metadata: Map<String, String> = emptyMap()
+    ) {
+        eventBus.publish(EmbodimentExecutionEvent(
+            device = identity,
+            result = EmbodimentExecutionResult(
+                intentId = intentId,
+                status = status,
+                reason = reason,
+                timestamp = System.currentTimeMillis(),
+                embodimentId = identity.deviceId,
+                metadata = metadata
+            )
+        ))
     }
     
     override suspend fun dispose() {

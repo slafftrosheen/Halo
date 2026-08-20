@@ -1,7 +1,7 @@
 package com.halo.drivers.heycyan.capability
 
 import com.halo.drivers.heycyan.protocol.HeyCyanMode
-import com.halo.drivers.heycyan.protocol.HeyCyanOperation
+import com.halo.sdk.runtime.embodiment.heycyan.HeyCyanOperation
 import com.halo.drivers.heycyan.protocol.HeyCyanDeviceStateStore
 import com.halo.drivers.heycyan.protocol.toCommand
 import kotlinx.coroutines.flow.Flow

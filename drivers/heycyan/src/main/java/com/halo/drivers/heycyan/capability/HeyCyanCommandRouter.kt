@@ -1,6 +1,6 @@
 package com.halo.drivers.heycyan.capability
 
-import com.halo.drivers.heycyan.protocol.HeyCyanOperation
+import com.halo.sdk.runtime.embodiment.heycyan.HeyCyanOperation
 import com.halo.drivers.heycyan.transport.HeyCyanExecutionFailure
 import com.halo.drivers.heycyan.transport.HeyCyanOperationRoute
 import com.halo.drivers.heycyan.transport.HeyCyanTransportRoutes

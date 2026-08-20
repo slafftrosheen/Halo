@@ -120,54 +120,88 @@ fun HeyCyanControlScreen(deviceId: String, viewModel: DevicesViewModel, onBack: 
                 title = "QUICK ACTIONS",
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Row(
+                Column(
                     modifier = Modifier.fillMaxWidth().padding(8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // Photo Button with States & Double-Click Lock
-                    val photoState = device?.photoState ?: PhotoActionState.READY
-                    val isPhotoCapturing = photoState == PhotoActionState.CAPTURING
-                    val photoText = when (photoState) {
-                        PhotoActionState.READY -> "Take Photo"
-                        PhotoActionState.CAPTURING -> "Capturing..."
-                        PhotoActionState.COMPLETED -> "Captured!"
-                        PhotoActionState.FAILED -> "Failed"
-                    }
-                    
-                    HaloGlassButton(
-                        text = photoText,
-                        onClick = {
-                            if (isConnected && !isPhotoCapturing) {
-                                viewModel.takePhoto(deviceId)
-                            }
-                        },
-                        modifier = Modifier.weight(1f),
-                        enabled = isConnected && !isPhotoCapturing
-                    )
-
-                    // Video Toggle Button
-                    val isVideoRecording = device?.videoState == com.halo.drivers.heycyan.protocol.VideoRecordingState.RECORDING
-                    val isVideoStarting = device?.videoState == com.halo.drivers.heycyan.protocol.VideoRecordingState.STARTING
-                    val videoText = when {
-                        isVideoStarting -> "Starting Video..."
-                        isVideoRecording -> "Stop Video"
-                        else -> "Start Video"
-                    }
-
-                    HaloGlassButton(
-                        text = videoText,
-                        onClick = {
-                            if (isConnected && !isVideoStarting) {
-                                if (isVideoRecording) {
-                                    viewModel.stopVideo(deviceId)
-                                } else {
-                                    viewModel.startVideo(deviceId)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        // Photo Button with States & Double-Click Lock
+                        val photoState = device?.photoState ?: PhotoActionState.READY
+                        val isPhotoCapturing = photoState == PhotoActionState.CAPTURING
+                        val photoText = when (photoState) {
+                            PhotoActionState.READY -> "Take Photo"
+                            PhotoActionState.CAPTURING -> "Capturing..."
+                            PhotoActionState.COMPLETED -> "Captured!"
+                            PhotoActionState.FAILED -> "Failed"
+                        }
+                        
+                        HaloGlassButton(
+                            text = photoText,
+                            onClick = {
+                                if (isConnected && !isPhotoCapturing) {
+                                    viewModel.takePhoto(deviceId)
                                 }
-                            }
-                        },
-                        modifier = Modifier.weight(1f),
-                        enabled = isConnected && !isVideoStarting
-                    )
+                            },
+                            modifier = Modifier.weight(1f),
+                            enabled = isConnected && !isPhotoCapturing
+                        )
+    
+                        // Video Toggle Button
+                        val isVideoRecording = device?.videoState == com.halo.drivers.heycyan.protocol.VideoRecordingState.RECORDING
+                        val isVideoStarting = device?.videoState == com.halo.drivers.heycyan.protocol.VideoRecordingState.STARTING
+                        val isVideoStopping = device?.videoState == com.halo.drivers.heycyan.protocol.VideoRecordingState.STOPPING
+                        val videoText = when {
+                            isVideoStarting -> "Starting Video..."
+                            isVideoStopping -> "Stopping Video..."
+                            isVideoRecording -> "Stop Video"
+                            else -> "Start Video"
+                        }
+    
+                        HaloGlassButton(
+                            text = videoText,
+                            onClick = {
+                                if (isConnected && !isVideoStarting && !isVideoStopping) {
+                                    if (isVideoRecording) {
+                                        viewModel.stopVideo(deviceId)
+                                    } else {
+                                        viewModel.startVideo(deviceId)
+                                    }
+                                }
+                            },
+                            modifier = Modifier.weight(1f),
+                            enabled = isConnected && !isVideoStarting && !isVideoStopping
+                        )
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        // Audio Toggle Button
+                        val isAudioRecording = device?.audioState == com.halo.drivers.heycyan.protocol.AudioRecordingState.RECORDING
+                        val audioText = if (isAudioRecording) "Stop Audio" else "Start Audio"
+
+                        HaloGlassButton(
+                            text = audioText,
+                            onClick = {
+                                if (isConnected) {
+                                    if (isAudioRecording) {
+                                        viewModel.stopAudioRecording(deviceId)
+                                    } else {
+                                        viewModel.startAudioRecording(deviceId)
+                                    }
+                                }
+                            },
+                            modifier = Modifier.weight(1f),
+                            enabled = isConnected
+                        )
+                        
+                        // Empty space to maintain button sizing
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
                 }
             }
         }

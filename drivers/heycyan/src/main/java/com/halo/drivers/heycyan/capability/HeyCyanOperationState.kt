@@ -1,6 +1,6 @@
 package com.halo.drivers.heycyan.capability
 
-import com.halo.drivers.heycyan.protocol.HeyCyanOperation
+import com.halo.sdk.runtime.embodiment.heycyan.HeyCyanOperation
 
 /**
  * Lifecycle state of a single HeyCyanOperation execution.

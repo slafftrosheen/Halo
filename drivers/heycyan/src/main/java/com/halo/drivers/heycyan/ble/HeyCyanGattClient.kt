@@ -172,6 +172,16 @@ open class HeyCyanGattClient(
             writeNextDescriptor(gatt ?: this@HeyCyanGattClient.gatt)
         }
 
+        override fun onCharacteristicWrite(
+            gatt: BluetoothGatt?,
+            characteristic: BluetoothGattCharacteristic?,
+            status: Int
+        ) {
+            if (characteristic == null) return
+            android.util.Log.d("HeyCyanGattClient", "onCharacteristicWrite: uuid=${characteristic.uuid}, status=$status")
+            tracer.onCharacteristicWrite(characteristic.uuid, status)
+        }
+
         @Suppress("DEPRECATION")
         override fun onCharacteristicChanged(
             gatt: BluetoothGatt,
@@ -222,7 +232,13 @@ open class HeyCyanGattClient(
         pendingDescriptorWrites.clear()
         descriptorWriteInFlight = null
         serviceDiscoveryStarted = false
-        gatt = device.connectGatt(context, false, gattCallback)
+        
+        // Close existing gatt if any
+        gatt?.close()
+        gatt = null
+
+        android.util.Log.i("HeyCyanGattClient", "Initiating GATT connection with TRANSPORT_LE")
+        gatt = device.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
 
         if (gatt == null) {
             _state.value = DriverState.Error(RuntimeException("Unable to create GATT connection"))

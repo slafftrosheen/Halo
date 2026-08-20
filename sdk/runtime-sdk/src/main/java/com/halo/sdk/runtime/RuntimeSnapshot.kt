@@ -71,6 +71,7 @@ data class ProviderSnapshot(
     val id: String,
     val name: String,
     val status: String,
+    val statusMessage: String? = null,
     val isSelected: Boolean = false,
     val activeModel: String? = null
 )

@@ -6,7 +6,9 @@ import com.halo.sdk.host.AudioOutput
 import com.halo.sdk.host.AudioSource
 import com.halo.sdk.host.ButtonEvent
 import com.halo.sdk.host.ConnectionState
+import com.halo.sdk.host.DeviceConnectionState
 import com.halo.sdk.host.DeviceContext
+import com.halo.sdk.host.Freshness
 import com.halo.sdk.host.WearableHost
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -49,12 +51,41 @@ class HeyCyanHost(
         // Sync device context from driver state
         driver.deviceState
             .onEach { state ->
+                val heyCyanConn = state.connection
+                val isConnected = heyCyanConn == com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.CONNECTED || 
+                                  heyCyanConn == com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.READY
+                
+                val deviceConnState = when(heyCyanConn) {
+                    com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.DISCONNECTED -> DeviceConnectionState.DISCONNECTED
+                    com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.SCANNING -> DeviceConnectionState.DISCOVERING
+                    com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.CONNECTING -> DeviceConnectionState.CONNECTING
+                    com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.CONNECTED -> DeviceConnectionState.CONNECTED
+                    com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.READY -> DeviceConnectionState.READY
+                    com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.DISCONNECTING -> DeviceConnectionState.DISCONNECTING
+                    com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.ERROR -> DeviceConnectionState.ERROR
+                    com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.UNBOUND -> DeviceConnectionState.ERROR
+                    com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.RECONNECTING -> DeviceConnectionState.CONNECTING
+                }
+
+                val currentLastSeen = _deviceContext.value.lastSeenMs
+                val newFreshness = when {
+                    isConnected -> Freshness.FRESH
+                    currentLastSeen != null -> Freshness.STALE
+                    else -> Freshness.UNKNOWN
+                }
+
                 _deviceContext.value = DeviceContext(
-                    name = "HeyCyan", // In a real scenario, this comes from BLE Advertisement or Device Info
+                    deviceId = selectedAddress,
+                    name = "HeyCyan", 
+                    deviceType = "HEYCYAN_GLASSES",
                     batteryPercent = state.battery?.level,
-                    connected = state.connection == com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.READY,
+                    connected = isConnected,
                     charging = state.battery?.charging ?: false,
-                    capabilities = emptyList() // The actual capabilities are yet to be decoded
+                    capabilities = emptyList(), // The actual capabilities are yet to be decoded
+                    transport = "BLE",
+                    lastSeenMs = if (isConnected) System.currentTimeMillis() else currentLastSeen,
+                    freshness = newFreshness,
+                    state = deviceConnState
                 )
             }
             .launchIn(scope)
@@ -63,7 +94,7 @@ class HeyCyanHost(
         driver.state
             .onEach { state ->
                 _connectivity.value = when(state) {
-                    is com.halo.sdk.driver.DriverState.Ready -> ConnectionState.Connected
+                    is com.halo.sdk.driver.DriverState.Ready -> ConnectionState.Ready
                     is com.halo.sdk.driver.DriverState.Connecting -> ConnectionState.Connecting
                     is com.halo.sdk.driver.DriverState.Error -> ConnectionState.Failed(state.cause.message ?: "Unknown error")
                     else -> ConnectionState.Disconnected

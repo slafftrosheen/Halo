@@ -4,7 +4,7 @@ import com.halo.drivers.heycyan.capability.HeyCyanCapabilityController
 import com.halo.drivers.heycyan.media.HeyCyanMedia
 import com.halo.drivers.heycyan.media.HeyCyanMediaManifest
 import com.halo.drivers.heycyan.media.MediaDownloadResult
-import com.halo.drivers.heycyan.protocol.HeyCyanOperation
+import com.halo.sdk.runtime.embodiment.heycyan.HeyCyanOperation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

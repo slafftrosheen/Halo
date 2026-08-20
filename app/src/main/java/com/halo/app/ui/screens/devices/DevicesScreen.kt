@@ -211,6 +211,22 @@ class DevicesViewModel(
         ))
     }
 
+    fun startAudioRecording(deviceId: String) {
+        dispatchEmbodimentIntent(deviceId, com.halo.sdk.runtime.embodiment.EmbodimentIntent(
+            intentId = java.util.UUID.randomUUID().toString(),
+            targetDeviceId = deviceId,
+            kind = com.halo.sdk.runtime.embodiment.IntentKind.START_AUDIO_RECORDING
+        ))
+    }
+
+    fun stopAudioRecording(deviceId: String) {
+        dispatchEmbodimentIntent(deviceId, com.halo.sdk.runtime.embodiment.EmbodimentIntent(
+            intentId = java.util.UUID.randomUUID().toString(),
+            targetDeviceId = deviceId,
+            kind = com.halo.sdk.runtime.embodiment.IntentKind.STOP_AUDIO_RECORDING
+        ))
+    }
+
     fun dispatchEmbodimentIntent(deviceId: String, intent: com.halo.sdk.runtime.embodiment.EmbodimentIntent) {
         viewModelScope.launch {
             eventBus.publish(com.halo.sdk.runtime.IntentCreated(
@@ -298,43 +314,82 @@ fun DevicesScreen(viewModel: DevicesViewModel, onNavigate: (String) -> Unit = {}
 
 @Composable
 fun DeviceRow(device: GenericDeviceUiState, onClick: () -> Unit) {
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(HaloGlassColors.GlassElevated)
             .clickable(onClick = onClick)
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(16.dp)
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = device.name,
-                style = HaloTypography.titleMedium,
-                color = HaloGlassColors.TextPrimary
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .background(
-                            if (device.isConnected) HaloGlassColors.Accent else HaloGlassColors.Danger,
-                            CircleShape
-                        )
-                )
-                Spacer(modifier = Modifier.width(6.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = if (device.isConnected) "Connected" else "Offline • Last seen ${device.lastSeen}",
-                    style = HaloTypography.bodyMedium,
-                    color = HaloGlassColors.TextSecondary
+                    text = device.name,
+                    style = HaloTypography.titleMedium,
+                    color = HaloGlassColors.TextPrimary
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .background(
+                                if (device.isConnected) HaloGlassColors.Accent else HaloGlassColors.Danger,
+                                CircleShape
+                            )
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = if (device.isConnected) "Connected" else "Offline • ${device.lastSeen}",
+                        style = HaloTypography.bodyMedium,
+                        color = HaloGlassColors.TextSecondary
+                    )
+                }
+            }
+            Text(
+                text = ">",
+                style = HaloTypography.titleLarge,
+                color = HaloGlassColors.TextMuted
+            )
+        }
+        
+        if (device.healthWarning != null) {
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(HaloGlassColors.Warning.copy(alpha = 0.2f))
+                    .padding(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = device.healthWarning,
+                    style = HaloTypography.labelSmall,
+                    color = HaloGlassColors.Warning
                 )
             }
         }
-        Text(
-            text = ">",
-            style = HaloTypography.titleLarge,
-            color = HaloGlassColors.TextMuted
-        )
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Battery: ${device.battery}",
+                style = HaloTypography.labelSmall,
+                color = HaloGlassColors.TextPrimary
+            )
+            if (device.isBatteryStale || !device.isConnected) {
+                Text(
+                    text = device.batteryAgeText,
+                    style = HaloTypography.labelSmall,
+                    color = HaloGlassColors.Warning
+                )
+            }
+        }
     }
 }
