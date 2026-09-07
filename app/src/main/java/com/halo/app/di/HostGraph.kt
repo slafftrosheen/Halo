@@ -1,8 +1,10 @@
 package com.halo.app.di
 
+import com.halo.drivers.heycyan.RealHeyCyanDriver
+
 /**
- * Owns the WearableHost, AudioPipeline, and AudioPerceptionEngine.
- * Wires the host → audio source → pipeline → engine chain.
+ * Owns the WearableHost, physical driver, audio pipeline, and audio perception
+ * chain for the current host instance.
  */
 class HostGraph(
     private val context: android.content.Context,
@@ -10,6 +12,19 @@ class HostGraph(
     private val providerGraph: ProviderGraph,
     private val storage: com.halo.sdk.runtime.Storage
 ) {
+
+    /** Single driver instance shared by host, capabilities, and UI tooling. */
+    val heyCyanDriver: RealHeyCyanDriver by lazy {
+        RealHeyCyanDriver(context, infra.eventBus)
+    }
+
+    private val hostFactory by lazy {
+        HostFactory(
+            context = context,
+            storage = storage,
+            heyCyanDriver = heyCyanDriver
+        )
+    }
 
     val wearableHost: com.halo.sdk.host.WearableHost by lazy {
         HostFactory.create(

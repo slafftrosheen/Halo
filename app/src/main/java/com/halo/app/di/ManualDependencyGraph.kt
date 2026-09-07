@@ -30,7 +30,7 @@ object ManualDependencyGraph {
     val storage by lazy { com.halo.host.android.AndroidStorage(applicationContext) }
     val providerGraph by lazy { ProviderGraph(applicationContext, storage) }
     val hostGraph by lazy { HostGraph(applicationContext, infra, providerGraph, storage) }
-    val engineGraph by lazy { EngineGraph(applicationContext, infra, providerGraph, deviceSessionManager) }
+    val engineGraph by lazy { EngineGraph(applicationContext, infra, providerGraph, deviceSessionManager, hostGraph.heyCyanDriver) }
     val observerGraph by lazy { ObserverGraph(applicationContext, infra, engineGraph) }
 
     // ─── Convenience accessors (preserve existing API) ──────────
@@ -56,7 +56,7 @@ object ManualDependencyGraph {
     }
     val audioPipeline get() = hostGraph.audioPipeline
     val audioPerceptionEngine get() = hostGraph.audioPerceptionEngine
-    val heyCyanDriver get() = HostFactory.getHeyCyanDriver(applicationContext)
+    val heyCyanDriver get() = hostGraph.heyCyanDriver
 
     val goalManager get() = engineGraph.goalManager
     val capabilityRegistry get() = engineGraph.capabilityRegistry
@@ -108,37 +108,37 @@ object ManualDependencyGraph {
 
     // ─── ViewModels ─────────────────────────────────────────────
 
-    val deviceRegistry by lazy { com.halo.sdk.runtime.embodiment.InMemoryDeviceRegistry() }
+    val deviceRegistry by lazy { com.halo.sdk.runtime.embodiment.PersistentDeviceRegistry(storage) }
     val deviceSessionManager by lazy { com.halo.sdk.runtime.embodiment.DeviceSessionManager(deviceRegistry) }
 
 
-    val homeViewModel by lazy { 
+    val homeViewModel by lazy {
         android.util.Log.d("ManualDependencyGraph", "Creating HomeViewModel")
-        HomeViewModel(runtimeSnapshotManager, commandBus, cognitiveSession) 
+        HomeViewModel(runtimeSnapshotManager, commandBus, cognitiveSession)
     }
-    val consoleViewModel by lazy { 
+    val consoleViewModel by lazy {
         android.util.Log.d("ManualDependencyGraph", "Creating ConsoleViewModel")
-        ConsoleViewModel(runtimeSnapshotManager, eventBus, blackboard) 
+        ConsoleViewModel(runtimeSnapshotManager, eventBus, blackboard)
     }
-    val settingsViewModel by lazy { 
+    val settingsViewModel by lazy {
         android.util.Log.d("ManualDependencyGraph", "Creating SettingsViewModel")
-        SettingsViewModel(runtimeSnapshotManager, aiProviderRouter, storage) 
+        SettingsViewModel(runtimeSnapshotManager, aiProviderRouter, storage)
     }
-    val activityViewModel by lazy { 
+    val activityViewModel by lazy {
         android.util.Log.d("ManualDependencyGraph", "Creating ActivityViewModel")
-        ActivityViewModel(runtimeSnapshotManager) 
+        ActivityViewModel(runtimeSnapshotManager)
     }
-    val devicesViewModel by lazy { 
+    val devicesViewModel by lazy {
         android.util.Log.d("ManualDependencyGraph", "Creating DevicesViewModel")
-        DevicesViewModel(deviceRegistry, deviceSessionManager, eventBus, runtimeSnapshotManager, heyCyanDriver) 
+        DevicesViewModel(deviceRegistry, deviceSessionManager, eventBus, runtimeSnapshotManager, heyCyanDriver)
     }
-    val protocolLabViewModel by lazy { 
+    val protocolLabViewModel by lazy {
         android.util.Log.d("ManualDependencyGraph", "Creating ProtocolLabViewModel")
-        ProtocolLabViewModel(heyCyanDriver) 
+        ProtocolLabViewModel(heyCyanDriver)
     }
-    val pairingViewModel by lazy { 
+    val pairingViewModel by lazy {
         android.util.Log.d("ManualDependencyGraph", "Creating PairingViewModel")
-        com.halo.app.ui.screens.discovery.PairingViewModel(heyCyanDriver) 
+        com.halo.app.ui.screens.discovery.PairingViewModel(heyCyanDriver)
     }
     val intelligenceViewModel by lazy {
         android.util.Log.d("ManualDependencyGraph", "Creating IntelligenceViewModel")
@@ -150,9 +150,9 @@ object ManualDependencyGraph {
             modelDownloadManager
         )
     }
-    val runtimeInspectorViewModel by lazy { 
+    val runtimeInspectorViewModel by lazy {
         android.util.Log.d("ManualDependencyGraph", "Creating RuntimeInspectorViewModel")
-        RuntimeInspectorViewModel(runtimeSnapshotManager) 
+        RuntimeInspectorViewModel(runtimeSnapshotManager)
     }
 
     val androidSpeaker by lazy {

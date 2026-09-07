@@ -8,13 +8,8 @@ import com.halo.drivers.heycyan.protocol.HeyCyanCommandTransport
 /**
  * Executes a low-level [HeyCyanCommand] through the encode → frame → transport pipeline.
  *
- * This is the boundary between the semantic capability layer and the unresolved
- * BLE wire framing. The [HeyCyanPacketFramer] will return [Result.failure] with
- * [com.halo.drivers.heycyan.protocol.ProtocolNotVerifiedException] for any command
- * whose checksum or exact packet format has not been established from real-device
- * captures or authoritative vendor documentation.
- *
- * No guessed packets are ever transmitted.
+ * This is the boundary between the semantic capability layer and the evidence-backed
+ * BLE wire protocol. Unsupported or unverified commands fail before transport.
  */
 interface HeyCyanCommandExecutor {
     suspend fun execute(command: HeyCyanCommand): Result<Unit>
@@ -23,19 +18,8 @@ interface HeyCyanCommandExecutor {
 /**
  * Default implementation of [HeyCyanCommandExecutor].
  *
- * Pipeline:
- *   HeyCyanCommand
- *       ↓
- *   HeyCyanCommandEncoder   (command → EncodedCommand with commandId + payload)
- *       ↓
- *   HeyCyanPacketFramer     (EncodedCommand → BLE bytes; BLOCKED if checksum unresolved)
- *       ↓
- *   HeyCyanCommandTransport (bytes → BLE GATT write)
- *
- * IMPORTANT PROTOCOL CONSTRAINT:
- *   The [HeyCyanPacketFramer] will always return failure when no checksum implementation
- *   is provided, because the BLE packet framing is not yet established from evidence.
- *   This is intentional — zero guessed packets leave Halo.
+ * No guessed packets are ever transmitted. A command must have an explicit,
+ * evidence-backed catalog mapping before it can reach the BLE transport.
  */
 class DefaultHeyCyanCommandExecutor(
     private val transport: HeyCyanCommandTransport,
@@ -101,10 +85,15 @@ class DefaultHeyCyanCommandExecutor(
                     action = com.halo.drivers.heycyan.protocol.HeyCyanCommandCatalog.ACTION_GLASSES_CONTROL
                     payload = byteArrayOf(0x02, 0x01, 0x0B)
                 }
-                is HeyCyanCommand.SetDateTime -> {
-                    action = com.halo.drivers.heycyan.protocol.HeyCyanCommandCatalog.ACTION_SYNC_TIME
-                    payload = byteArrayOf() // Needs proper implementation, omitting for now
-                }
+                // SetDateTime intentionally has no transmit mapping yet.
+                // Falling through to the evidence gate is safer than sending
+                // ACTION_SYNC_TIME with an empty payload.
+                is HeyCyanCommand.SetDateTime -> return Result.failure(
+                    com.halo.drivers.heycyan.protocol.ProtocolNotVerifiedException(
+                        operation = command.toString(),
+                        detail = "Date/time synchronization payload has not been verified; transmission blocked"
+                    )
+                )
                 else -> return Result.failure(
                     com.halo.drivers.heycyan.protocol.ProtocolNotVerifiedException(
                         operation = command.toString(),
@@ -114,10 +103,8 @@ class DefaultHeyCyanCommandExecutor(
             }
 
             val framed = com.halo.drivers.heycyan.codec.HeyCyanWireFrameCodec.encode(action, payload)
-
             HeyCyanLogger.i("HALO-TX-TRACE", "HeyCyan dispatch transport=${transport.javaClass.simpleName}")
-            val result = transport.send(framed)
-            return result
+            return transport.send(framed)
         } finally {
             HeyCyanProtocolCapture.instance.endOperation()
         }
