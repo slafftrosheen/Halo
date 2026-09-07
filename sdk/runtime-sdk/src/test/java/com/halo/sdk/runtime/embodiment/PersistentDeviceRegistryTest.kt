@@ -58,6 +58,20 @@ class PersistentDeviceRegistryTest {
     }
 
     @Test
+    fun idsThatDifferOnlyByStorageUnsafeCharactersRemainIndependent() = runTest {
+        val storage = FakeStorage()
+        val registry = PersistentDeviceRegistry(storage)
+        registry.saveDevice(record(id = "AA:BB"))
+        registry.saveDevice(record(id = "AA_BB", autoConnect = false))
+
+        val devices = registry.getSavedDevices()
+
+        assertEquals(2, devices.size)
+        assertTrue(registry.getDevice("AA:BB")!!.autoConnect)
+        assertFalse(registry.getDevice("AA_BB")!!.autoConnect)
+    }
+
+    @Test
     fun removeDeletesDeviceAndItsRecord() = runTest {
         val storage = FakeStorage()
         val registry = PersistentDeviceRegistry(storage)
