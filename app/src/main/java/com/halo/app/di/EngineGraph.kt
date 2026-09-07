@@ -33,7 +33,8 @@ class EngineGraph(
     private val applicationContext: Context,
     private val infra: InfrastructureGraph,
     private val providerGraph: ProviderGraph,
-    private val deviceSessionManager: com.halo.sdk.runtime.embodiment.DeviceSessionManager
+    private val deviceSessionManager: com.halo.sdk.runtime.embodiment.DeviceSessionManager,
+    private val heyCyanDriver: com.halo.drivers.heycyan.RealHeyCyanDriver
 ) {
 
     val goalManager by lazy { GoalManager() }
@@ -54,9 +55,9 @@ class EngineGraph(
                     providerGraph.providers.speechSynthesis
                 )
             )
-            register(com.halo.app.capability.HeyCyanCapabilityBridge(
-                ManualDependencyGraph.heyCyanDriver.capabilityProvider,
-                ManualDependencyGraph.heyCyanDriver.deviceState
+            register(HeyCyanCapabilityBridge(
+                heyCyanDriver.capabilityProvider,
+                heyCyanDriver.deviceState
             ))
         }
     }
@@ -86,7 +87,6 @@ class EngineGraph(
     }
 
     val reflectionEngine by lazy { ReflectionEngine(EpisodicMemoryStore()) }
-
 
     val speechSessionManager by lazy {
         SpeechSessionManager(infra.eventBus, infra.commandBus, infra.scope)
