@@ -22,7 +22,9 @@ import kotlinx.coroutines.flow.*
 class HeyCyanHost(
     private val driver: RealHeyCyanDriver,
     override val audioOutput: AudioOutput,
-    private val storage: com.halo.sdk.runtime.Storage
+    private val storage: com.halo.sdk.runtime.Storage,
+    private val sessionManager: com.halo.sdk.runtime.embodiment.DeviceSessionManager? = null,
+    private val eventBus: com.halo.sdk.runtime.EventBus? = null
 ) : WearableHost {
     init {
         Log.i("HeyCyanHost", "Initializing HeyCyanHost")
@@ -94,13 +96,41 @@ class HeyCyanHost(
         driver.state
             .onEach { state ->
                 _connectivity.value = when(state) {
-                    is com.halo.sdk.driver.DriverState.Ready -> ConnectionState.Ready
+                    is com.halo.sdk.driver.DriverState.Ready -> {
+                        val address = selectedAddress
+                        if (address != null) {
+                            ensureSessionRegistered(address)
+                        }
+                        ConnectionState.Ready
+                    }
                     is com.halo.sdk.driver.DriverState.Connecting -> ConnectionState.Connecting
                     is com.halo.sdk.driver.DriverState.Error -> ConnectionState.Failed(state.cause.message ?: "Unknown error")
                     else -> ConnectionState.Disconnected
                 }
             }
             .launchIn(scope)
+    }
+
+    private fun ensureSessionRegistered(address: String) {
+        val sm = sessionManager ?: return
+        val bus = eventBus ?: return
+        if (sm.getSession(address) == null) {
+            val identity = com.halo.sdk.runtime.DeviceIdentity(
+                deviceId = address,
+                displayName = "HeyCyan Glasses",
+                deviceType = "HEYCYAN_GLASSES"
+            )
+            val transport = com.halo.drivers.heycyan.transport.HeyCyanEmbodimentTransport(driver)
+            val controllerAdapter = com.halo.drivers.heycyan.capability.HeyCyanCapabilityControllerAdapter(driver.capabilityController)
+            val session = com.halo.sdk.runtime.embodiment.HeyCyanSession(
+                identity = identity,
+                controller = controllerAdapter,
+                transport = transport,
+                eventBus = bus
+            )
+            sm.registerSession(session)
+            Log.i("HeyCyanHost", "Registered active HeyCyanSession for $address in DeviceSessionManager")
+        }
     }
 
     fun setTargetDevice(address: String) {

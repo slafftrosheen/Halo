@@ -139,15 +139,16 @@ fun AppShell() {
                     if (deviceId != null) {
                         val devicesState by ManualDependencyGraph.devicesViewModel.uiState.collectAsState()
                         val deviceType = devicesState.devices.find { it.id == deviceId }?.type
-                        when (deviceType) {
-                            "HeyCyan" -> {
+                        when {
+                            deviceType?.contains("HeyCyan", ignoreCase = true) == true ||
+                            deviceType?.contains("Glasses", ignoreCase = true) == true -> {
                                 HeyCyanControlScreen(
                                     deviceId = deviceId,
                                     viewModel = ManualDependencyGraph.devicesViewModel,
                                     onBack = { navController.popBackStack() }
                                 )
                             }
-                            "BuddyBot" -> {
+                            deviceType?.contains("BuddyBot", ignoreCase = true) == true -> {
                                 BuddyBotControlScreen(
                                     deviceId = deviceId,
                                     viewModel = ManualDependencyGraph.devicesViewModel,
@@ -155,8 +156,11 @@ fun AppShell() {
                                 )
                             }
                             else -> {
-                                // Fallback or generic screen could go here
-                                Text("Unknown device type for $deviceId", modifier = Modifier.padding(32.dp))
+                                HeyCyanControlScreen(
+                                    deviceId = deviceId,
+                                    viewModel = ManualDependencyGraph.devicesViewModel,
+                                    onBack = { navController.popBackStack() }
+                                )
                             }
                         }
                     }

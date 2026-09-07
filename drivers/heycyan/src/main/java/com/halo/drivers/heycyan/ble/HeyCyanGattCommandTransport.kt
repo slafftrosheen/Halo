@@ -5,14 +5,19 @@ import com.halo.drivers.heycyan.debug.HeyCyanLogger
 import com.halo.drivers.heycyan.protocol.HeyCyanCommandTransport
 import java.util.UUID
 
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+
 class HeyCyanGattCommandTransport(
     private val gatt: HeyCyanGattClient,
     private val commandCharacteristic: UUID?,
 ) : HeyCyanCommandTransport {
 
+    private val writeMutex = Mutex()
+
     override suspend fun send(
         bytes: ByteArray
-    ): Result<Unit> {
+    ): Result<Unit> = writeMutex.withLock {
         val characteristicUuid = commandCharacteristic ?: gatt.findCharacteristicByProperty(
             BluetoothGattCharacteristic.PROPERTY_WRITE or
             BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE
