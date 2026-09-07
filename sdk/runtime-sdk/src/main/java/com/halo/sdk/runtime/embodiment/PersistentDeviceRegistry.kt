@@ -4,13 +4,13 @@ import com.halo.sdk.runtime.DeviceIdentity
 import com.halo.sdk.runtime.Storage
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.nio.charset.StandardCharsets
 
 /**
  * Storage-backed [DeviceRegistry] for host applications.
  *
- * The registry keeps device identity and user preferences separate from the
- * physical host implementation. Android-specific persistence remains outside
- * the runtime module through the [Storage] interface.
+ * Device identity and user preferences remain independent from any physical host.
+ * Android-specific persistence stays outside the runtime module through [Storage].
  */
 class PersistentDeviceRegistry(
     private val storage: Storage,
@@ -26,6 +26,7 @@ class PersistentDeviceRegistry(
         const val FIELD_AUTOCONNECT = "auto_connect"
         const val FIELD_FIRMWARE = "firmware"
         const val FIELD_LAST_SEEN = "last_seen"
+        const val INDEX_SEPARATOR = "|"
     }
 
     override suspend fun getSavedDevices(): List<DeviceRecord> = mutex.withLock {
@@ -95,7 +96,7 @@ class PersistentDeviceRegistry(
         storage.putString("$base.$FIELD_NAME", record.identity.displayName)
         storage.putString("$base.$FIELD_TYPE", record.identity.deviceType)
         storage.putBoolean("$base.$FIELD_AUTOCONNECT", record.autoConnect)
-        storage.putString("$base.$FIELD_FIRMWARE", record.firmwareVersion)
+        record.firmwareVersion?.let { storage.putString("$base.$FIELD_FIRMWARE", it) }
         storage.putString("$base.$FIELD_LAST_SEEN", record.lastSeenMs.toString())
     }
 
@@ -111,17 +112,10 @@ class PersistentDeviceRegistry(
     private fun key(deviceId: String): String = "$storagePrefix${encodeId(deviceId)}"
 
     /**
-     * Storage keys must not contain arbitrary BLE identifiers verbatim.
-     * Keep them deterministic and filesystem/preferences-safe.
+     * Encode the complete identifier as deterministic hex. This avoids collisions
+     * between identifiers such as `AA:BB` and `AA_BB` caused by character replacement.
      */
-    private fun encodeId(deviceId: String): String = buildString {
-        deviceId.forEach { char ->
-            when {
-                char.isLetterOrDigit() || char == '-' || char == '_' -> append(char)
-                else -> append('_')
-            }
-        }
-    }
-
-    private const val INDEX_SEPARATOR = "|"
+    private fun encodeId(deviceId: String): String =
+        deviceId.toByteArray(StandardCharsets.UTF_8)
+            .joinToString(separator = "") { byte -> "%02x".format(byte.toInt() and 0xFF) }
 }
