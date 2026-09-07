@@ -24,19 +24,19 @@ jobs:
       run: chmod +x gradlew
 
     - name: Run Detekt
-      run: ./gradlew detekt --continue
-      continue-on-error: true
+      run: ./gradlew detekt
 
     - name: Run Ktlint
-      run: ./gradlew ktlintCheck --continue
-      continue-on-error: true
+      run: ./gradlew ktlintCheck
 
     - name: Run Android Lint
-      run: ./gradlew lintDebug --continue
-      continue-on-error: true
+      run: ./gradlew lintDebug
 
     - name: Run Unit Tests
       run: ./gradlew testDebugUnitTest
+
+    - name: Run HeyCyan Driver Unit Tests
+      run: ./gradlew :drivers:heycyan:testDebugUnitTest
 
     - name: Build Debug APK
       run: ./gradlew assembleDebug
