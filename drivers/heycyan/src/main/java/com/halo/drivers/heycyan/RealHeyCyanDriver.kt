@@ -204,7 +204,20 @@ class RealHeyCyanDriver(
             android.util.Log.e("RealHeyCyanDriver", "Connection failed", error)
             stateStore.updateConnection(com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.ERROR)
             gattClient.fail(error)
-            captureRecorder.abort()
+            runCatching { captureRecorder.stop() }
+                .onSuccess { file ->
+                    android.util.Log.i(
+                        "RealHeyCyanDriver",
+                        "Persisted failed HeyCyan capture: ${file?.absolutePath ?: "no active capture"}"
+                    )
+                }
+                .onFailure { persistError ->
+                    android.util.Log.e(
+                        "RealHeyCyanDriver",
+                        "Failed to persist HeyCyan failure capture",
+                        persistError
+                    )
+                }
             throw error
         }
     }
@@ -260,12 +273,10 @@ class RealHeyCyanDriver(
 
                 when (event) {
                     is HeyCyanEvent.DecodedProprietaryFrame -> {
-                        // Evidence preserved in event; can be used for state matching later
                         handleDecodedEvent(event)
                     }
 
                     is HeyCyanEvent.Unknown -> {
-                        // Preserve evidence; don't discard it.
                         android.util.Log.d("RealHeyCyanDriver", "Unknown event on $characteristicUuid: ${payload.joinToString("") { "%02X".format(it) }}")
                     }
 
