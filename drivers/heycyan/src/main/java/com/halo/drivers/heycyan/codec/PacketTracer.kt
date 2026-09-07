@@ -12,6 +12,15 @@ interface PacketTracer {
     fun onConnectionStateChanged(status: Int, newState: Int) = Unit
     fun onReady() = Unit
     fun onMtuRequested(mtu: Int) = Unit
+
+    fun onGattStage(
+        attemptId: Long,
+        stage: CaptureGattStage,
+        phase: CaptureStagePhase,
+        status: Int? = null,
+        detail: String? = null
+    ) = Unit
+
     fun onDiscoveredService(serviceUuid: UUID) = Unit
 
     fun onDiscoveredService(serviceUuid: UUID, serviceType: Int) {

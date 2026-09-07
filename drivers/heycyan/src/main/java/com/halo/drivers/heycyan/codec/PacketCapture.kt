@@ -11,7 +11,22 @@ enum class PacketTransport {
     RFCOMM
 }
 
-const val CURRENT_CAPTURE_FORMAT_VERSION = 2
+enum class CaptureGattStage {
+    CONNECT,
+    MTU,
+    SERVICE_DISCOVERY,
+    CCCD,
+    READY,
+    TEARDOWN
+}
+
+enum class CaptureStagePhase {
+    STARTED,
+    SUCCEEDED,
+    FAILED
+}
+
+const val CURRENT_CAPTURE_FORMAT_VERSION = 3
 
 data class BlePacket(
     val sequence: Long,
@@ -119,6 +134,7 @@ enum class CaptureEventKind {
     SESSION_FINISHED,
     ADVERTISEMENT,
     CONNECTION_STATE_CHANGED,
+    GATT_STAGE,
     SERVICE_DISCOVERED,
     CHARACTERISTIC_DISCOVERED,
     DESCRIPTOR_DISCOVERED,
@@ -146,5 +162,9 @@ data class CaptureEvent(
     val mtu: Int? = null,
     val newState: Int? = null,
     val transport: PacketTransport? = null,
-    val transportChannel: String? = null
+    val transportChannel: String? = null,
+    val attemptId: Long? = null,
+    val gattStage: CaptureGattStage? = null,
+    val stagePhase: CaptureStagePhase? = null,
+    val detail: String? = null
 )

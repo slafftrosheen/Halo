@@ -9,6 +9,8 @@ import android.bluetooth.BluetoothGattDescriptor
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.content.Context
+import com.halo.drivers.heycyan.codec.CaptureGattStage
+import com.halo.drivers.heycyan.codec.CaptureStagePhase
 import com.halo.drivers.heycyan.codec.HeyCyanProtocolCapture
 import com.halo.drivers.heycyan.codec.NoOpPacketTracer
 import com.halo.drivers.heycyan.codec.PacketDirection
@@ -28,12 +30,13 @@ import java.util.ArrayDeque
 import java.util.UUID
 
 /**
- * Handles low-level GATT connection, complete service discovery, and raw BLE IO.
+ * Handles low-level GATT connection, service discovery, and raw BLE IO.
  *
- * No UUID is assumed here. Every service, characteristic, and descriptor returned
- * by Android is reported to the tracer before any notification subscription is made.
+ * Every connection attempt has a monotonically increasing id. Stale callbacks
+ * from a previous BluetoothGatt instance are ignored, preventing an old attempt
+ * from corrupting the state of a newer attempt during recovery.
  */
-@SuppressLint("MissingPermission") // Caller (HostGraph) is responsible for ensuring permissions
+@SuppressLint("MissingPermission")
 open class HeyCyanGattClient(
     private val context: Context? = null,
     private val tracer: PacketTracer = NoOpPacketTracer
@@ -55,12 +58,11 @@ open class HeyCyanGattClient(
     private val adapter by lazy { bluetoothManager?.adapter }
 
     private var gatt: BluetoothGatt? = null
+    private var connectionAttemptId = 0L
+    private var activeAttemptId = 0L
     private var serviceDiscoveryStarted = false
     private var descriptorWriteInFlight: PendingDescriptorWrite? = null
     private val pendingDescriptorWrites = ArrayDeque<PendingDescriptorWrite>()
-
-    // Store characteristics by UUID for future writes. Protocol command routing is
-    // intentionally not implemented until captures identify the correct endpoint.
     private val characteristics = mutableMapOf<UUID, BluetoothGattCharacteristic>()
 
     private val _state = MutableStateFlow<DriverState>(DriverState.Disconnected)
@@ -71,30 +73,77 @@ open class HeyCyanGattClient(
 
     private val gattCallback = object : BluetoothGattCallback() {
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
-            android.util.Log.i("HeyCyanGattClient", "onConnectionStateChange: status=$status, newState=$newState")
+            val attempt = if (gatt === this@HeyCyanGattClient.gatt) activeAttemptId else null
             tracer.onConnectionStateChanged(status, newState)
+            android.util.Log.i(
+                "HeyCyanGattClient",
+                "onConnectionStateChange: attempt=$attempt status=$status newState=$newState"
+            )
+
+            if (gatt !== this@HeyCyanGattClient.gatt) {
+                android.util.Log.w(
+                    "HeyCyanGattClient",
+                    "Ignoring stale GATT callback for retired connection"
+                )
+                runCatching { gatt.close() }
+                return
+            }
+
             if (status != BluetoothGatt.GATT_SUCCESS) {
-                failGatt(gatt, RuntimeException("GATT connection error: $status"))
+                tracer.onGattStage(
+                    activeAttemptId,
+                    CaptureGattStage.CONNECT,
+                    CaptureStagePhase.FAILED,
+                    status,
+                    "newState=$newState"
+                )
+                failGatt(
+                    gatt,
+                    RuntimeException("GATT connection error: status=$status attempt=$activeAttemptId")
+                )
                 return
             }
 
             when (newState) {
                 BluetoothProfile.STATE_CONNECTED -> {
-                    this@HeyCyanGattClient.gatt = gatt
+                    tracer.onGattStage(
+                        activeAttemptId,
+                        CaptureGattStage.CONNECT,
+                        CaptureStagePhase.SUCCEEDED,
+                        status,
+                        "newState=$newState"
+                    )
                     _state.value = DriverState.Connected
                     serviceDiscoveryStarted = false
                     pendingDescriptorWrites.clear()
                     descriptorWriteInFlight = null
 
-                    // Request the largest MTU supported by Android. The effective
-                    // value is reported by onMtuChanged before service discovery.
                     tracer.onMtuRequested(REQUESTED_MTU)
+                    tracer.onGattStage(
+                        activeAttemptId,
+                        CaptureGattStage.MTU,
+                        CaptureStagePhase.STARTED,
+                        detail = "requestedMtu=$REQUESTED_MTU"
+                    )
                     if (!gatt.requestMtu(REQUESTED_MTU)) {
+                        tracer.onGattStage(
+                            activeAttemptId,
+                            CaptureGattStage.MTU,
+                            CaptureStagePhase.FAILED,
+                            detail = "requestMtu returned false"
+                        )
                         discoverServices(gatt)
                     }
                 }
 
                 BluetoothProfile.STATE_DISCONNECTED -> {
+                    tracer.onGattStage(
+                        activeAttemptId,
+                        CaptureGattStage.TEARDOWN,
+                        CaptureStagePhase.SUCCEEDED,
+                        status,
+                        "remote disconnected"
+                    )
                     clearGatt(gatt)
                     _state.value = DriverState.Disconnected
                 }
@@ -102,26 +151,62 @@ open class HeyCyanGattClient(
         }
 
         override fun onMtuChanged(gatt: BluetoothGatt, mtu: Int, status: Int) {
+            if (!isCurrentGatt(gatt)) return
+            android.util.Log.i(
+                "HeyCyanGattClient",
+                "onMtuChanged: attempt=$activeAttemptId mtu=$mtu status=$status"
+            )
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 tracer.onMtuChanged(mtu)
+                tracer.onGattStage(
+                    activeAttemptId,
+                    CaptureGattStage.MTU,
+                    CaptureStagePhase.SUCCEEDED,
+                    status,
+                    "mtu=$mtu"
+                )
+            } else {
+                tracer.onGattStage(
+                    activeAttemptId,
+                    CaptureGattStage.MTU,
+                    CaptureStagePhase.FAILED,
+                    status,
+                    "mtu=$mtu"
+                )
             }
             discoverServices(gatt)
         }
 
         override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
-            android.util.Log.i("HeyCyanGattClient", "onServicesDiscovered: status=$status")
+            if (!isCurrentGatt(gatt)) return
+            android.util.Log.i(
+                "HeyCyanGattClient",
+                "onServicesDiscovered: attempt=$activeAttemptId status=$status"
+            )
             if (status != BluetoothGatt.GATT_SUCCESS) {
-                failGatt(gatt, RuntimeException("Service discovery failed: $status"))
+                tracer.onGattStage(
+                    activeAttemptId,
+                    CaptureGattStage.SERVICE_DISCOVERY,
+                    CaptureStagePhase.FAILED,
+                    status
+                )
+                failGatt(gatt, RuntimeException("Service discovery failed: status=$status attempt=$activeAttemptId"))
                 return
             }
 
+            tracer.onGattStage(
+                activeAttemptId,
+                CaptureGattStage.SERVICE_DISCOVERY,
+                CaptureStagePhase.SUCCEEDED,
+                status,
+                "serviceCount=${gatt.services.size}"
+            )
             serviceDiscoveryStarted = true
             pendingDescriptorWrites.clear()
             descriptorWriteInFlight = null
 
             for (service in gatt.services) {
                 tracer.onDiscoveredService(service.uuid, service.type)
-
                 for (characteristic in service.characteristics) {
                     tracer.onDiscoveredCharacteristic(
                         service.uuid,
@@ -145,7 +230,6 @@ open class HeyCyanGattClient(
                     val supportsIndications = characteristic.properties and
                         BluetoothGattCharacteristic.PROPERTY_INDICATE != 0
                     val cccd = characteristic.getDescriptor(CCCD_UUID)
-
                     val charUuid = characteristic.uuid.toString().lowercase()
                     val isRelevantNotifyChar = charUuid.contains("de5bf729") ||
                         charUuid.startsWith("0000fee3") ||
@@ -155,9 +239,7 @@ open class HeyCyanGattClient(
 
                     if ((supportsNotifications || supportsIndications) && cccd != null && isRelevantNotifyChar) {
                         gatt.setCharacteristicNotification(characteristic, true)
-                        pendingDescriptorWrites.add(
-                            PendingDescriptorWrite(characteristic, cccd)
-                        )
+                        pendingDescriptorWrites.add(PendingDescriptorWrite(characteristic, cccd))
                     }
                 }
             }
@@ -170,13 +252,43 @@ open class HeyCyanGattClient(
             descriptor: BluetoothGattDescriptor?,
             status: Int
         ) {
-            if (descriptor == null) return
+            val currentGatt = gatt ?: this@HeyCyanGattClient.gatt
+            if (descriptor == null || currentGatt == null || !isCurrentGatt(currentGatt)) return
 
             tracer.onDescriptorWrite(descriptor.uuid, status)
-            if (descriptorWriteInFlight?.descriptor?.uuid != descriptor.uuid) return
+            if (descriptorWriteInFlight?.descriptor !== descriptor) {
+                android.util.Log.w(
+                    "HeyCyanGattClient",
+                    "Ignoring unexpected descriptor callback: attempt=$activeAttemptId uuid=${descriptor.uuid} status=$status"
+                )
+                return
+            }
 
+            val inFlight = descriptorWriteInFlight
             descriptorWriteInFlight = null
-            writeNextDescriptor(gatt ?: this@HeyCyanGattClient.gatt)
+            if (status != BluetoothGatt.GATT_SUCCESS) {
+                tracer.onGattStage(
+                    activeAttemptId,
+                    CaptureGattStage.CCCD,
+                    CaptureStagePhase.FAILED,
+                    status,
+                    "characteristic=${inFlight?.characteristic?.uuid} descriptor=${descriptor.uuid}"
+                )
+                failGatt(
+                    currentGatt,
+                    RuntimeException("CCCD write failed: status=$status attempt=$activeAttemptId uuid=${descriptor.uuid}")
+                )
+                return
+            }
+
+            tracer.onGattStage(
+                activeAttemptId,
+                CaptureGattStage.CCCD,
+                CaptureStagePhase.SUCCEEDED,
+                status,
+                "characteristic=${inFlight?.characteristic?.uuid} descriptor=${descriptor.uuid}"
+            )
+            writeNextDescriptor(currentGatt)
         }
 
         override fun onCharacteristicWrite(
@@ -184,8 +296,11 @@ open class HeyCyanGattClient(
             characteristic: BluetoothGattCharacteristic?,
             status: Int
         ) {
-            if (characteristic == null) return
-            android.util.Log.d("HeyCyanGattClient", "onCharacteristicWrite: uuid=${characteristic.uuid}, status=$status")
+            if (characteristic == null || gatt == null || !isCurrentGatt(gatt)) return
+            android.util.Log.d(
+                "HeyCyanGattClient",
+                "onCharacteristicWrite: attempt=$activeAttemptId uuid=${characteristic.uuid} status=$status"
+            )
             tracer.onCharacteristicWrite(characteristic.uuid, status)
         }
 
@@ -194,16 +309,16 @@ open class HeyCyanGattClient(
             gatt: BluetoothGatt,
             characteristic: BluetoothGattCharacteristic
         ) {
+            if (!isCurrentGatt(gatt)) return
             characteristic.value?.let { emitNotification(characteristic, it) }
         }
 
-        // Android 13+ delivers the notification payload directly through this
-        // overload. Keeping both callbacks supports the module's minSdk of 26.
         override fun onCharacteristicChanged(
             gatt: BluetoothGatt,
             characteristic: BluetoothGattCharacteristic,
             value: ByteArray
         ) {
+            if (!isCurrentGatt(gatt)) return
             emitNotification(characteristic, value)
         }
     }
@@ -215,53 +330,112 @@ open class HeyCyanGattClient(
     }
 
     fun fail(cause: Throwable) {
+        val current = gatt
+        if (current != null) {
+            tracer.onGattStage(
+                activeAttemptId,
+                CaptureGattStage.TEARDOWN,
+                CaptureStagePhase.STARTED,
+                detail = "forced failure cleanup"
+            )
+            clearGatt(current)
+            tracer.onGattStage(
+                activeAttemptId,
+                CaptureGattStage.TEARDOWN,
+                CaptureStagePhase.SUCCEEDED,
+                detail = "forced failure cleanup complete"
+            )
+        }
         _state.value = DriverState.Error(cause)
     }
 
     fun connect(macAddress: String) {
-        if (_state.value != DriverState.Disconnected && 
-            _state.value != DriverState.Scanning && 
-            _state.value !is DriverState.Error) {
-            android.util.Log.d("HeyCyanGattClient", "Skipping connect, already in state: ${_state.value}")
+        if (_state.value != DriverState.Disconnected &&
+            _state.value != DriverState.Scanning &&
+            _state.value !is DriverState.Error
+        ) {
+            android.util.Log.d(
+                "HeyCyanGattClient",
+                "Skipping connect, already in state: ${_state.value}"
+            )
             return
         }
 
-        android.util.Log.i("HeyCyanGattClient", "Connecting to $macAddress")
-        _state.value = DriverState.Connecting
         val device: BluetoothDevice = try {
-            adapter?.getRemoteDevice(macAddress) ?: throw IllegalStateException("BluetoothAdapter unavailable")
+            adapter?.getRemoteDevice(macAddress)
+                ?: throw IllegalStateException("BluetoothAdapter unavailable")
         } catch (error: Throwable) {
             _state.value = DriverState.Error(error)
             return
         }
 
-        characteristics.clear()
+        val retiredGatt = gatt
+        if (retiredGatt != null) {
+            tracer.onGattStage(
+                activeAttemptId,
+                CaptureGattStage.TEARDOWN,
+                CaptureStagePhase.STARTED,
+                detail = "retiring prior GATT before reconnect"
+            )
+            android.util.Log.i("HeyCyanGattClient", "Closing retired GATT before new attempt")
+            runCatching { retiredGatt.disconnect() }
+            runCatching { retiredGatt.close() }
+            tracer.onGattStage(
+                activeAttemptId,
+                CaptureGattStage.TEARDOWN,
+                CaptureStagePhase.SUCCEEDED,
+                detail = "retired prior GATT"
+            )
+        }
+
+        connectionAttemptId += 1L
+        activeAttemptId = connectionAttemptId
+        gatt = null
+        serviceDiscoveryStarted = false
         pendingDescriptorWrites.clear()
         descriptorWriteInFlight = null
-        serviceDiscoveryStarted = false
-        
-        // Close existing gatt if any
-        gatt?.close()
-        gatt = null
+        characteristics.clear()
+        _state.value = DriverState.Connecting
 
-        android.util.Log.i("HeyCyanGattClient", "Initiating GATT connection with TRANSPORT_LE")
-        gatt = device.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
+        tracer.onGattStage(
+            activeAttemptId,
+            CaptureGattStage.CONNECT,
+            CaptureStagePhase.STARTED,
+            detail = "address=$macAddress transport=LE"
+        )
+        android.util.Log.i(
+            "HeyCyanGattClient",
+            "Initiating GATT connection: attempt=$activeAttemptId address=$macAddress transport=LE"
+        )
+        val newGatt = device.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
+        gatt = newGatt
 
-        if (gatt == null) {
-            _state.value = DriverState.Error(RuntimeException("Unable to create GATT connection"))
+        if (newGatt == null) {
+            tracer.onGattStage(
+                activeAttemptId,
+                CaptureGattStage.CONNECT,
+                CaptureStagePhase.FAILED,
+                detail = "connectGatt returned null"
+            )
+            _state.value = DriverState.Error(
+                RuntimeException("Unable to create GATT connection attempt=$activeAttemptId")
+            )
         }
     }
 
     suspend fun awaitReady(timeoutMillis: Long = 30_000L) {
         val terminalState = withTimeout(timeoutMillis) {
-            state.filter { it == DriverState.Ready || it is DriverState.Error || it == DriverState.Disconnected }
-                .first()
+            state.filter {
+                it == DriverState.Ready || it is DriverState.Error || it == DriverState.Disconnected
+            }.first()
         }
 
         when (terminalState) {
             DriverState.Ready -> Unit
             is DriverState.Error -> throw terminalState.cause
-            DriverState.Disconnected -> throw IllegalStateException("GATT disconnected before discovery completed")
+            DriverState.Disconnected -> throw IllegalStateException(
+                "GATT disconnected before discovery completed (attempt=$activeAttemptId)"
+            )
             else -> error("Unexpected terminal GATT state: $terminalState")
         }
     }
@@ -272,7 +446,24 @@ open class HeyCyanGattClient(
         withTimeoutOrNull(timeoutMillis) {
             state.filter { it == DriverState.Disconnected }.first()
         } ?: run {
-            clearGatt(gatt)
+            val current = gatt
+            if (current != null) {
+                tracer.onGattStage(
+                    activeAttemptId,
+                    CaptureGattStage.TEARDOWN,
+                    CaptureStagePhase.STARTED,
+                    detail = "disconnect timeout forced close"
+                )
+            }
+            clearGatt(current)
+            if (current != null) {
+                tracer.onGattStage(
+                    activeAttemptId,
+                    CaptureGattStage.TEARDOWN,
+                    CaptureStagePhase.SUCCEEDED,
+                    detail = "disconnect timeout forced close complete"
+                )
+            }
             _state.value = DriverState.Disconnected
         }
     }
@@ -293,15 +484,13 @@ open class HeyCyanGattClient(
             direction = PacketDirection.TX,
             writeType = writeType
         )
-
         tracer.onTx(characteristicUuid, payload)
         characteristic.value = payload
         return currentGatt.writeCharacteristic(characteristic)
     }
 
-    fun findCharacteristicByProperty(property: Int): BluetoothGattCharacteristic? {
-        return characteristics.values.firstOrNull { it.properties and property != 0 }
-    }
+    fun findCharacteristicByProperty(property: Int): BluetoothGattCharacteristic? =
+        characteristics.values.firstOrNull { it.properties and property != 0 }
 
     fun disconnect() {
         val currentGatt = gatt
@@ -311,32 +500,50 @@ open class HeyCyanGattClient(
             return
         }
 
-        if (_state.value != DriverState.Disconnected) {
-            _state.value = DriverState.Disconnecting
-        }
+        tracer.onGattStage(
+            activeAttemptId,
+            CaptureGattStage.TEARDOWN,
+            CaptureStagePhase.STARTED,
+            detail = "disconnect requested"
+        )
+        if (_state.value != DriverState.Disconnected) _state.value = DriverState.Disconnecting
         currentGatt.disconnect()
     }
 
+    private fun isCurrentGatt(candidate: BluetoothGatt): Boolean = candidate === gatt
+
     private fun discoverServices(gatt: BluetoothGatt) {
-        if (serviceDiscoveryStarted) return
+        if (!isCurrentGatt(gatt) || serviceDiscoveryStarted) return
         serviceDiscoveryStarted = true
+        tracer.onGattStage(
+            activeAttemptId,
+            CaptureGattStage.SERVICE_DISCOVERY,
+            CaptureStagePhase.STARTED
+        )
         if (!gatt.discoverServices()) {
-            failGatt(gatt, RuntimeException("Unable to start service discovery"))
+            tracer.onGattStage(
+                activeAttemptId,
+                CaptureGattStage.SERVICE_DISCOVERY,
+                CaptureStagePhase.FAILED,
+                detail = "discoverServices returned false"
+            )
+            failGatt(gatt, RuntimeException("Unable to start service discovery attempt=$activeAttemptId"))
         }
     }
 
     private fun writeNextDescriptor(gatt: BluetoothGatt?) {
-        if (gatt == null || descriptorWriteInFlight != null) return
+        if (gatt == null || !isCurrentGatt(gatt) || descriptorWriteInFlight != null) return
 
-        val next = if (pendingDescriptorWrites.isEmpty()) {
-            null
-        } else {
-            pendingDescriptorWrites.removeFirst()
-        }
-
+        val next = if (pendingDescriptorWrites.isEmpty()) null else pendingDescriptorWrites.removeFirst()
         if (next == null) {
             _state.value = DriverState.Ready
+            tracer.onGattStage(
+                activeAttemptId,
+                CaptureGattStage.READY,
+                CaptureStagePhase.SUCCEEDED
+            )
             tracer.onReady()
+            android.util.Log.i("HeyCyanGattClient", "GATT ready: attempt=$activeAttemptId")
             return
         }
 
@@ -349,29 +556,63 @@ open class HeyCyanGattClient(
             BluetoothGattDescriptor.ENABLE_INDICATION_VALUE
         }
 
+        tracer.onGattStage(
+            activeAttemptId,
+            CaptureGattStage.CCCD,
+            CaptureStagePhase.STARTED,
+            detail = "characteristic=${next.characteristic.uuid} descriptor=${next.descriptor.uuid}"
+        )
+        android.util.Log.d(
+            "HeyCyanGattClient",
+            "Writing CCCD: attempt=$activeAttemptId characteristic=${next.characteristic.uuid} descriptor=${next.descriptor.uuid}"
+        )
         if (!gatt.writeDescriptor(next.descriptor)) {
             tracer.onDescriptorWrite(next.descriptor.uuid, BluetoothGatt.GATT_FAILURE)
+            tracer.onGattStage(
+                activeAttemptId,
+                CaptureGattStage.CCCD,
+                CaptureStagePhase.FAILED,
+                BluetoothGatt.GATT_FAILURE,
+                "characteristic=${next.characteristic.uuid} descriptor=${next.descriptor.uuid} writeDescriptor returned false"
+            )
             descriptorWriteInFlight = null
-            writeNextDescriptor(gatt)
+            failGatt(
+                gatt,
+                RuntimeException("Unable to start CCCD write attempt=$activeAttemptId uuid=${next.descriptor.uuid}")
+            )
         }
     }
 
     private fun emitNotification(characteristic: BluetoothGattCharacteristic, value: ByteArray) {
         val payload = value.copyOf()
-        
         HeyCyanProtocolCapture.instance.recordFrame(
             characteristicUuid = characteristic.uuid,
             payload = payload,
             direction = PacketDirection.RX
         )
-
         tracer.onRx(characteristic.uuid, payload)
         _incomingBytes.tryEmit(characteristic.uuid to payload)
     }
 
     private fun failGatt(gatt: BluetoothGatt, cause: Throwable) {
+        if (!isCurrentGatt(gatt)) {
+            runCatching { gatt.close() }
+            return
+        }
         _state.value = DriverState.Error(cause)
+        tracer.onGattStage(
+            activeAttemptId,
+            CaptureGattStage.TEARDOWN,
+            CaptureStagePhase.STARTED,
+            detail = "error cleanup: ${cause.message}"
+        )
         clearGatt(gatt)
+        tracer.onGattStage(
+            activeAttemptId,
+            CaptureGattStage.TEARDOWN,
+            CaptureStagePhase.SUCCEEDED,
+            detail = "error cleanup complete"
+        )
     }
 
     private fun clearGatt(gattToClose: BluetoothGatt?) {
@@ -379,9 +620,7 @@ open class HeyCyanGattClient(
         descriptorWriteInFlight = null
         characteristics.clear()
         serviceDiscoveryStarted = false
-        if (this.gatt === gattToClose || gattToClose == null) {
-            this.gatt = null
-        }
-        gattToClose?.close()
+        if (this.gatt === gattToClose || gattToClose == null) this.gatt = null
+        if (gattToClose != null) runCatching { gattToClose.close() }
     }
 }
