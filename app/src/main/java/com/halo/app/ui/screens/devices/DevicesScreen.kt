@@ -29,12 +29,8 @@ import com.halo.app.ui.glass.material.HaloTypography
 import com.halo.sdk.runtime.RuntimeSnapshotSource
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 enum class PhotoActionState {
@@ -71,7 +67,7 @@ class DevicesViewModel(
     val deviceRegistry: com.halo.sdk.runtime.embodiment.DeviceRegistry,
     val sessionManager: com.halo.sdk.runtime.embodiment.DeviceSessionManager,
     private val eventBus: com.halo.sdk.runtime.EventBus,
-    private val snapshotSource: com.halo.sdk.runtime.RuntimeSnapshotSource,
+    private val snapshotSource: RuntimeSnapshotSource,
     private val heyCyanDriver: com.halo.drivers.heycyan.RealHeyCyanDriver? = null
 ) : ViewModel() {
     
@@ -87,42 +83,37 @@ class DevicesViewModel(
     }
     
     private val _uiState = MutableStateFlow(DevicesUiState())
-    val uiState: StateFlow<DevicesUiState> = _uiState.asStateFlow()
+    val uiState = _uiState.asStateFlow()
 
     private val _photoStates = MutableStateFlow<Map<String, PhotoActionState>>(emptyMap())
 
     init {
         viewModelScope.launch {
-            // Combine saved devices, active sessions, and live driver state
             kotlinx.coroutines.flow.combine(
                 sessionManager.activeSessions,
                 heyCyanDriver?.deviceState ?: MutableStateFlow(com.halo.drivers.heycyan.protocol.HeyCyanDeviceState()),
                 _photoStates
             ) { activeSessions, driverState, photoStates ->
                 val savedDevices = deviceRegistry.getSavedDevices()
-                
                 savedDevices.map { record ->
                     val session = activeSessions.find { it.identity.deviceId == record.identity.deviceId }
                     val isConnected = session?.state?.value == com.halo.sdk.runtime.embodiment.SessionState.READY
-                    
                     val batteryState = driverState.battery
                     val batteryText = if (batteryState != null) "${batteryState.level}%${if (batteryState.charging) " (Charging)" else ""}" else "Unknown"
                     val batteryDiffMs = if (batteryState != null) System.currentTimeMillis() - batteryState.timestampMs else Long.MAX_VALUE
-                    val isStale = batteryDiffMs > 300_000L // > 5 minutes
+                    val isStale = batteryDiffMs > 300_000L
                     val batteryAgeText = when {
                         !isConnected && batteryState != null -> "Last known battery (${formatLastSeen(batteryState.timestampMs)})"
                         batteryState == null -> "No data"
                         isStale -> "Stale (last reported ${formatLastSeen(batteryState.timestampMs)})"
                         else -> "Updated ${formatLastSeen(batteryState.timestampMs)}"
                     }
-
                     val healthWarn = when (driverState.healthState) {
                         com.halo.drivers.heycyan.protocol.DeviceHealthState.WARNING_MEMORY_INSUFFICIENT -> "Warning: Device memory insufficient"
                         com.halo.drivers.heycyan.protocol.DeviceHealthState.UNBOUND -> "Warning: Device unbound from app"
                         com.halo.drivers.heycyan.protocol.DeviceHealthState.ERROR -> "Device error detected"
                         else -> null
                     }
-
                     GenericDeviceUiState(
                         id = record.identity.deviceId,
                         name = record.identity.displayName,
@@ -152,118 +143,60 @@ class DevicesViewModel(
     val navigationEvents = _navigationEvents.asSharedFlow()
 
     fun navigateTo(route: String) {
-        viewModelScope.launch {
-            _navigationEvents.emit(route)
-        }
+        viewModelScope.launch { _navigationEvents.emit(route) }
     }
 
     fun takePhoto(deviceId: String) {
         val currentPhotoState = _photoStates.value[deviceId] ?: PhotoActionState.READY
-        if (currentPhotoState == PhotoActionState.CAPTURING) return // Prevent double execution while CAPTURING
-        
+        if (currentPhotoState == PhotoActionState.CAPTURING) return
         _photoStates.value = _photoStates.value + (deviceId to PhotoActionState.CAPTURING)
-        
         viewModelScope.launch {
             val intent = com.halo.sdk.runtime.embodiment.EmbodimentIntent(
                 intentId = java.util.UUID.randomUUID().toString(),
                 targetDeviceId = deviceId,
                 kind = com.halo.sdk.runtime.embodiment.IntentKind.CAPTURE_PHOTO
             )
-            
-            eventBus.publish(com.halo.sdk.runtime.IntentCreated(
-                intentId = intent.intentId,
-                intentKind = intent.kind.name
-            ))
-            
+            eventBus.publish(com.halo.sdk.runtime.IntentCreated(intentId = intent.intentId, intentKind = intent.kind.name))
             val session = sessionManager.activeSessions.value.find { it.identity.deviceId == deviceId }
             if (session != null && session.state.value == com.halo.sdk.runtime.embodiment.SessionState.READY) {
                 try {
                     session.dispatch(intent)
                     _photoStates.value = _photoStates.value + (deviceId to PhotoActionState.COMPLETED)
                     kotlinx.coroutines.delay(2000L)
-                    _photoStates.value = _photoStates.value + (deviceId to PhotoActionState.READY)
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     _photoStates.value = _photoStates.value + (deviceId to PhotoActionState.FAILED)
                     kotlinx.coroutines.delay(3000L)
-                    _photoStates.value = _photoStates.value + (deviceId to PhotoActionState.READY)
                 }
             } else {
                 _photoStates.value = _photoStates.value + (deviceId to PhotoActionState.FAILED)
                 kotlinx.coroutines.delay(3000L)
-                _photoStates.value = _photoStates.value + (deviceId to PhotoActionState.READY)
             }
+            _photoStates.value = _photoStates.value + (deviceId to PhotoActionState.READY)
         }
     }
 
-    fun startVideo(deviceId: String) {
-        dispatchEmbodimentIntent(deviceId, com.halo.sdk.runtime.embodiment.EmbodimentIntent(
-            intentId = java.util.UUID.randomUUID().toString(),
-            targetDeviceId = deviceId,
-            kind = com.halo.sdk.runtime.embodiment.IntentKind.START_VIDEO
-        ))
-    }
-
-    fun stopVideo(deviceId: String) {
-        dispatchEmbodimentIntent(deviceId, com.halo.sdk.runtime.embodiment.EmbodimentIntent(
-            intentId = java.util.UUID.randomUUID().toString(),
-            targetDeviceId = deviceId,
-            kind = com.halo.sdk.runtime.embodiment.IntentKind.STOP_VIDEO
-        ))
-    }
-
-    fun startAudioRecording(deviceId: String) {
-        dispatchEmbodimentIntent(deviceId, com.halo.sdk.runtime.embodiment.EmbodimentIntent(
-            intentId = java.util.UUID.randomUUID().toString(),
-            targetDeviceId = deviceId,
-            kind = com.halo.sdk.runtime.embodiment.IntentKind.START_AUDIO_RECORDING
-        ))
-    }
-
-    fun stopAudioRecording(deviceId: String) {
-        dispatchEmbodimentIntent(deviceId, com.halo.sdk.runtime.embodiment.EmbodimentIntent(
-            intentId = java.util.UUID.randomUUID().toString(),
-            targetDeviceId = deviceId,
-            kind = com.halo.sdk.runtime.embodiment.IntentKind.STOP_AUDIO_RECORDING
-        ))
-    }
+    fun startVideo(deviceId: String) = dispatchEmbodimentIntent(deviceId, com.halo.sdk.runtime.embodiment.EmbodimentIntent(java.util.UUID.randomUUID().toString(), deviceId, com.halo.sdk.runtime.embodiment.IntentKind.START_VIDEO))
+    fun stopVideo(deviceId: String) = dispatchEmbodimentIntent(deviceId, com.halo.sdk.runtime.embodiment.EmbodimentIntent(java.util.UUID.randomUUID().toString(), deviceId, com.halo.sdk.runtime.embodiment.IntentKind.STOP_VIDEO))
+    fun startAudioRecording(deviceId: String) = dispatchEmbodimentIntent(deviceId, com.halo.sdk.runtime.embodiment.EmbodimentIntent(java.util.UUID.randomUUID().toString(), deviceId, com.halo.sdk.runtime.embodiment.IntentKind.START_AUDIO_RECORDING))
+    fun stopAudioRecording(deviceId: String) = dispatchEmbodimentIntent(deviceId, com.halo.sdk.runtime.embodiment.EmbodimentIntent(java.util.UUID.randomUUID().toString(), deviceId, com.halo.sdk.runtime.embodiment.IntentKind.STOP_AUDIO_RECORDING))
 
     fun dispatchEmbodimentIntent(deviceId: String, intent: com.halo.sdk.runtime.embodiment.EmbodimentIntent) {
         viewModelScope.launch {
-            eventBus.publish(com.halo.sdk.runtime.IntentCreated(
-                intentId = intent.intentId,
-                intentKind = intent.kind.name
-            ))
-            
+            eventBus.publish(com.halo.sdk.runtime.IntentCreated(intentId = intent.intentId, intentKind = intent.kind.name))
             val session = sessionManager.activeSessions.value.find { it.identity.deviceId == deviceId }
             if (session != null && session.state.value == com.halo.sdk.runtime.embodiment.SessionState.READY) {
                 session.dispatch(intent)
             } else {
                 eventBus.publish(com.halo.sdk.runtime.EmbodimentExecutionEvent(
                     device = com.halo.sdk.runtime.DeviceIdentity(deviceId, "Unknown", "Unknown"),
-                    result = com.halo.sdk.runtime.embodiment.ExecutionResult(
-                        intentId = intent.intentId,
-                        status = com.halo.sdk.runtime.embodiment.ExecutionStatus.FAILED,
-                        reason = "No active session",
-                        timestamp = System.currentTimeMillis(),
-                        embodimentId = deviceId
-                    )
+                    result = com.halo.sdk.runtime.embodiment.ExecutionResult(intentId = intent.intentId, status = com.halo.sdk.runtime.embodiment.ExecutionStatus.FAILED, reason = "No active session", timestamp = System.currentTimeMillis(), embodimentId = deviceId)
                 ))
             }
         }
     }
 
-    fun connectDevice(deviceId: String) {
-        viewModelScope.launch {
-            sessionManager.getSession(deviceId)?.connect()
-        }
-    }
-
-    fun disconnectDevice(deviceId: String) {
-        viewModelScope.launch {
-            sessionManager.getSession(deviceId)?.disconnect()
-        }
-    }
-
+    fun connectDevice(deviceId: String) { viewModelScope.launch { sessionManager.getSession(deviceId)?.connect() } }
+    fun disconnectDevice(deviceId: String) { viewModelScope.launch { sessionManager.getSession(deviceId)?.disconnect() } }
     fun forgetDevice(deviceId: String) {
         viewModelScope.launch {
             sessionManager.getSession(deviceId)?.disconnect()
@@ -273,42 +206,31 @@ class DevicesViewModel(
     }
 
     fun toggleAutoConnect(deviceId: String, enabled: Boolean) {
+        viewModelScope.launch {
+            val registry = deviceRegistry as? com.halo.sdk.runtime.embodiment.PersistentDeviceRegistry
+            if (registry != null) {
+                registry.setAutoConnect(deviceId, enabled)
+            } else {
+                deviceRegistry.getDevice(deviceId)?.let { current ->
+                    deviceRegistry.saveDevice(current.copy(autoConnect = enabled))
+                }
+            }
+        }
     }
 }
 
 @Composable
 fun DevicesScreen(viewModel: DevicesViewModel, onNavigate: (String) -> Unit = {}, onBack: () -> Unit = {}) {
     val uiState by viewModel.uiState.collectAsState()
-    
     HaloGlassLazyPage(title = "") {
-        item {
-            HaloGlassBackHeader(
-                title = "Devices",
-                onBack = onBack
-            )
-        }
-        
+        item { HaloGlassBackHeader(title = "Devices", onBack = onBack) }
         item { Spacer(modifier = Modifier.height(16.dp)) }
-
         items(uiState.devices) { device ->
-            DeviceRow(
-                device = device,
-                onClick = {
-                    viewModel.navigateTo("device/${device.id}")
-                }
-            )
+            DeviceRow(device = device, onClick = { viewModel.navigateTo("device/${device.id}") })
             Spacer(modifier = Modifier.height(12.dp))
         }
-
         item { Spacer(modifier = Modifier.height(24.dp)) }
-
-        item {
-            HaloGlassButton(
-                text = "Add device",
-                onClick = { viewModel.navigateTo("discovery") },
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
+        item { HaloGlassButton(text = "Add device", onClick = { viewModel.navigateTo("discovery") }, modifier = Modifier.fillMaxWidth()) }
     }
 }
 
@@ -324,72 +246,26 @@ fun DeviceRow(device: GenericDeviceUiState, onClick: () -> Unit) {
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = device.name,
-                    style = HaloTypography.titleMedium,
-                    color = HaloGlassColors.TextPrimary
-                )
+                Text(text = device.name, style = HaloTypography.titleMedium, color = HaloGlassColors.TextPrimary)
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .background(
-                                if (device.isConnected) HaloGlassColors.Accent else HaloGlassColors.Danger,
-                                CircleShape
-                            )
-                    )
+                    Box(modifier = Modifier.size(8.dp).background(if (device.isConnected) HaloGlassColors.Accent else HaloGlassColors.Danger, CircleShape))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = if (device.isConnected) "Connected" else "Offline • ${device.lastSeen}",
-                        style = HaloTypography.bodyMedium,
-                        color = HaloGlassColors.TextSecondary
-                    )
+                    Text(text = if (device.isConnected) "Connected" else "Offline • ${device.lastSeen}", style = HaloTypography.bodyMedium, color = HaloGlassColors.TextSecondary)
                 }
             }
-            Text(
-                text = ">",
-                style = HaloTypography.titleLarge,
-                color = HaloGlassColors.TextMuted
-            )
+            Text(text = ">", style = HaloTypography.titleLarge, color = HaloGlassColors.TextMuted)
         }
-        
         if (device.healthWarning != null) {
             Spacer(modifier = Modifier.height(12.dp))
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(HaloGlassColors.Warning.copy(alpha = 0.2f))
-                    .padding(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = device.healthWarning,
-                    style = HaloTypography.labelSmall,
-                    color = HaloGlassColors.Warning
-                )
+            Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(HaloGlassColors.Warning.copy(alpha = 0.2f)).padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(text = device.healthWarning, style = HaloTypography.labelSmall, color = HaloGlassColors.Warning)
             }
         }
-        
         Spacer(modifier = Modifier.height(8.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Battery: ${device.battery}",
-                style = HaloTypography.labelSmall,
-                color = HaloGlassColors.TextPrimary
-            )
-            if (device.isBatteryStale || !device.isConnected) {
-                Text(
-                    text = device.batteryAgeText,
-                    style = HaloTypography.labelSmall,
-                    color = HaloGlassColors.Warning
-                )
-            }
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Text(text = "Battery: ${device.battery}", style = HaloTypography.labelSmall, color = HaloGlassColors.TextPrimary)
+            if (device.isBatteryStale || !device.isConnected) Text(text = device.batteryAgeText, style = HaloTypography.labelSmall, color = HaloGlassColors.Warning)
         }
     }
 }
