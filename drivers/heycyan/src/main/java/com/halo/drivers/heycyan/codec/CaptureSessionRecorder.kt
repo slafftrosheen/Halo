@@ -51,10 +51,10 @@ class CaptureSessionRecorder(
             this.deviceAddress = deviceAddress
             this.deviceName = deviceName
             this.metadata = metadata
-            this.requestedMtu = null
-            this.mtu = null
-            this.nextSequence = 0L
-            this.nextPacketSequence = 0L
+            requestedMtu = null
+            mtu = null
+            nextSequence = 0L
+            nextPacketSequence = 0L
             packets.clear()
             advertisements.clear()
             timeline.clear()
@@ -99,14 +99,11 @@ class CaptureSessionRecorder(
             synchronized(lock) { active = false }
             file
         } catch (error: Throwable) {
-            // A duplicate or filesystem failure must not crash the UI coroutine.
-            // Leave no active session behind; the next explicit capture can retry.
             abort()
             throw error
         }
     }
 
-    /** Ends the in-memory session without persisting partial evidence. */
     fun abort() {
         synchronized(lock) {
             active = false
@@ -154,6 +151,27 @@ class CaptureSessionRecorder(
         }
     }
 
+    override fun onGattStage(
+        attemptId: Long,
+        stage: CaptureGattStage,
+        phase: CaptureStagePhase,
+        status: Int?,
+        detail: String?
+    ) {
+        synchronized(lock) {
+            if (!active) return
+            appendEvent(
+                kind = CaptureEventKind.GATT_STAGE,
+                timestamp = now(),
+                status = status,
+                attemptId = attemptId,
+                gattStage = stage,
+                stagePhase = phase,
+                detail = detail
+            )
+        }
+    }
+
     override fun onReady() {
         synchronized(lock) {
             if (active) appendEvent(CaptureEventKind.READY, now())
@@ -169,7 +187,9 @@ class CaptureSessionRecorder(
     override fun onDiscoveredService(serviceUuid: UUID, serviceType: Int) {
         synchronized(lock) {
             if (!active) return
-            services.getOrPut(serviceUuid.toString()) { MutableService(serviceUuid.toString(), serviceType) }
+            services.getOrPut(serviceUuid.toString()) {
+                MutableService(serviceUuid.toString(), serviceType)
+            }
             appendEvent(
                 kind = CaptureEventKind.SERVICE_DISCOVERED,
                 timestamp = now(),
@@ -293,18 +313,17 @@ class CaptureSessionRecorder(
 
     override fun onRfcommStateChanged(channel: String, connected: Boolean) {
         synchronized(lock) {
-            if (active) {
-                appendEvent(
-                    kind = if (connected) {
-                        CaptureEventKind.RFCOMM_CHANNEL_CONNECTED
-                    } else {
-                        CaptureEventKind.RFCOMM_CHANNEL_DISCONNECTED
-                    },
-                    timestamp = now(),
-                    transport = PacketTransport.RFCOMM,
-                    transportChannel = channel
-                )
-            }
+            if (!active) return
+            appendEvent(
+                kind = if (connected) {
+                    CaptureEventKind.RFCOMM_CHANNEL_CONNECTED
+                } else {
+                    CaptureEventKind.RFCOMM_CHANNEL_DISCONNECTED
+                },
+                timestamp = now(),
+                transport = PacketTransport.RFCOMM,
+                transportChannel = channel
+            )
         }
     }
 
@@ -335,7 +354,11 @@ class CaptureSessionRecorder(
         mtu: Int? = null,
         newState: Int? = null,
         transport: PacketTransport? = null,
-        transportChannel: String? = null
+        transportChannel: String? = null,
+        attemptId: Long? = null,
+        gattStage: CaptureGattStage? = null,
+        stagePhase: CaptureStagePhase? = null,
+        detail: String? = null
     ) {
         timeline += CaptureEvent(
             sequence = nextSequence++,
@@ -353,7 +376,11 @@ class CaptureSessionRecorder(
             mtu = mtu,
             newState = newState,
             transport = transport,
-            transportChannel = transportChannel
+            transportChannel = transportChannel,
+            attemptId = attemptId,
+            gattStage = gattStage,
+            stagePhase = stagePhase,
+            detail = detail
         )
     }
 
@@ -367,7 +394,7 @@ class CaptureSessionRecorder(
         metadata = metadata,
         advertisements = advertisements.toList(),
         packets = packets.toList(),
-        services = services.values.map { service -> service.toInfo() },
+        services = services.values.map { it.toInfo() },
         requestedMtu = requestedMtu,
         mtu = mtu,
         timeline = timeline.toList()
@@ -408,6 +435,16 @@ class CompositePacketTracer(
         it.onConnectionStateChanged(status, newState)
     }
 
+    override fun onGattStage(
+        attemptId: Long,
+        stage: CaptureGattStage,
+        phase: CaptureStagePhase,
+        status: Int?,
+        detail: String?
+    ) = tracers.forEach {
+        it.onGattStage(attemptId, stage, phase, status, detail)
+    }
+
     override fun onReady() = tracers.forEach(PacketTracer::onReady)
 
     override fun onDiscoveredService(serviceUuid: UUID) = tracers.forEach {
@@ -418,7 +455,11 @@ class CompositePacketTracer(
         it.onDiscoveredService(serviceUuid, serviceType)
     }
 
-    override fun onDiscoveredCharacteristic(serviceUuid: UUID, characteristicUuid: UUID, properties: Int) = tracers.forEach {
+    override fun onDiscoveredCharacteristic(
+        serviceUuid: UUID,
+        characteristicUuid: UUID,
+        properties: Int
+    ) = tracers.forEach {
         it.onDiscoveredCharacteristic(serviceUuid, characteristicUuid, properties)
     }
 
@@ -442,6 +483,10 @@ class CompositePacketTracer(
 
     override fun onDescriptorWrite(descriptorUuid: UUID, status: Int) = tracers.forEach {
         it.onDescriptorWrite(descriptorUuid, status)
+    }
+
+    override fun onCharacteristicWrite(characteristicUuid: UUID, status: Int) = tracers.forEach {
+        it.onCharacteristicWrite(characteristicUuid, status)
     }
 
     override fun onMtuChanged(mtu: Int) = tracers.forEach { it.onMtuChanged(mtu) }
