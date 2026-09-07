@@ -1,11 +1,16 @@
 package com.halo.drivers.heycyan.protocol
 
 /**
- * Authoritative mapping of HeyCyan hardware command actions.
- * Verified directly from vendor SDK `LargeDataHandler.java`.
+ * Authoritative HeyCyan action identifiers extracted from the vendor SDK
+ * `LargeDataHandler.java`.
+ *
+ * An action identifier alone does NOT make a command executable. The executor
+ * must also have an evidence-backed payload definition before transmission is
+ * permitted.
  */
 object HeyCyanCommandCatalog {
     const val ACTION_BT_MAC_PROTOCOL = 0x2E.toByte()
+    /** Action ID exists in the vendor SDK; executable payload remains unverified. */
     const val ACTION_SYNC_TIME = 0x40.toByte()
     const val ACTION_GLASSES_CONTROL = 0x41.toByte()
     const val ACTION_GLASSES_BATTERY = 0x42.toByte()
