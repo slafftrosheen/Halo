@@ -2,11 +2,12 @@ package com.halo.sdk.runtime.embodiment
 
 import com.halo.sdk.runtime.DeviceIdentity
 import com.halo.sdk.runtime.Storage
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
 
 class PersistentDeviceRegistryTest {
     private class FakeStorage : Storage {
@@ -21,10 +22,7 @@ class PersistentDeviceRegistryTest {
         override fun clear() { values.clear() }
     }
 
-    private fun record(
-        id: String = "AA:BB:CC:DD:EE:FF",
-        autoConnect: Boolean = true
-    ) = DeviceRecord(
+    private fun record(id: String = "AA:BB:CC:DD:EE:FF", autoConnect: Boolean = true) = DeviceRecord(
         identity = DeviceIdentity(id, "HeyCyan", "Test Glasses"),
         autoConnect = autoConnect,
         firmwareVersion = "1.2.3",
@@ -32,16 +30,14 @@ class PersistentDeviceRegistryTest {
     )
 
     @Test
-    fun saveAndReloadPreservesDevice() = kotlinx.coroutines.test.runTest {
+    fun saveAndReloadPreservesDevice() = runTest {
         val storage = FakeStorage()
-        val first = PersistentDeviceRegistry(storage)
-        first.saveDevice(record())
+        PersistentDeviceRegistry(storage).saveDevice(record())
 
-        val reloaded = PersistentDeviceRegistry(storage)
-        val result = reloaded.getDevice("AA:BB:CC:DD:EE:FF")
+        val result = PersistentDeviceRegistry(storage).getDevice("AA:BB:CC:DD:EE:FF")
 
         assertNotNull(result)
-        assertEquals("Test Glasses", result.identity.displayName)
+        assertEquals("Test Glasses", result!!.identity.displayName)
         assertEquals("HeyCyan", result.identity.deviceType)
         assertEquals("1.2.3", result.firmwareVersion)
         assertEquals(1234L, result.lastSeenMs)
@@ -49,7 +45,7 @@ class PersistentDeviceRegistryTest {
     }
 
     @Test
-    fun saveUpdatesAutoConnectWithoutCreatingDuplicate() = kotlinx.coroutines.test.runTest {
+    fun saveUpdatesAutoConnectWithoutCreatingDuplicate() = runTest {
         val storage = FakeStorage()
         val registry = PersistentDeviceRegistry(storage)
         registry.saveDevice(record())
@@ -62,14 +58,14 @@ class PersistentDeviceRegistryTest {
     }
 
     @Test
-    fun removeDeletesDeviceAndItsRecord() = kotlinx.coroutines.test.runTest {
+    fun removeDeletesDeviceAndItsRecord() = runTest {
         val storage = FakeStorage()
         val registry = PersistentDeviceRegistry(storage)
         registry.saveDevice(record())
 
         registry.removeDevice("AA:BB:CC:DD:EE:FF")
 
-        assertEquals(emptyList(), registry.getSavedDevices())
+        assertEquals(emptyList<DeviceRecord>(), registry.getSavedDevices())
         assertEquals(null, registry.getDevice("AA:BB:CC:DD:EE:FF"))
     }
 }
