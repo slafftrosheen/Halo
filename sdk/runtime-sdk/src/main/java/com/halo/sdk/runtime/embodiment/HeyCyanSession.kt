@@ -88,13 +88,12 @@ class HeyCyanSession(
 
     private suspend fun syncInitialState(): Boolean {
         return withTimeoutOrNull(10000L) {
-            val batteryTask = sessionScope.launch { controller.execute(HeyCyanOperation.GetBattery) }
-            val infoTask = sessionScope.launch { controller.execute(HeyCyanOperation.GetDeviceInfo) }
-            val mediaTask = sessionScope.launch { controller.execute(HeyCyanOperation.GetMediaInventory) }
-            
-            batteryTask.join()
-            infoTask.join()
-            mediaTask.join()
+            runCatching { controller.execute(HeyCyanOperation.GetBattery) }
+            delay(300L)
+            runCatching { controller.execute(HeyCyanOperation.GetDeviceInfo) }
+            delay(300L)
+            runCatching { controller.execute(HeyCyanOperation.GetMediaInventory) }
+            delay(300L)
             true
         } ?: false
     }

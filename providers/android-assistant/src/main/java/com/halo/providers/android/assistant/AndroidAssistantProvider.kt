@@ -29,7 +29,7 @@ class AndroidAssistantProvider(
         val resolveInfo = context.packageManager.resolveActivity(intent, 0)
         
         val current = if (resolveInfo != null) {
-            ProviderStatus(ProviderStatus.State.UNAVAILABLE, "Inline cognitive reasoning not supported by OS assistant")
+            ProviderStatus(ProviderStatus.State.READY, "System assistant available for handoff")
         } else {
             ProviderStatus(ProviderStatus.State.UNAVAILABLE, "No system assistant app found")
         }

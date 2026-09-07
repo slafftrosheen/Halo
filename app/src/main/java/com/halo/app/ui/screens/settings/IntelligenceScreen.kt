@@ -209,6 +209,94 @@ fun IntelligenceScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit = {}
             }
         }
 
+        // ON-DEVICE GGUF MODELS (Hugging Face / llama.cpp)
+        var customUrl by remember { mutableStateOf("") }
+        var customName by remember { mutableStateOf("") }
+
+        HaloGlassSection(title = "ON-DEVICE MODELS (GGUF)") {
+            Column(Modifier.padding(8.dp)) {
+                uiState.localModels.forEach { model ->
+                    val dlState = uiState.downloadStates[model.id] ?: com.halo.providers.llamacpp.DownloadState.NotDownloaded
+                    val isSelected = uiState.activeLocalModelId == model.id
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(model.name, style = HaloTypography.bodyMedium, color = HaloGlassColors.TextPrimary)
+                                if (isSelected) {
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("(ACTIVE)", style = HaloTypography.labelSmall, color = HaloGlassColors.Success)
+                                }
+                            }
+                            Text(model.description, style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
+                            if (model.sizeMb > 0) {
+                                Text("${model.sizeMb} MB", style = HaloTypography.labelSmall, color = HaloGlassColors.Accent)
+                            }
+                        }
+
+                        when (dlState) {
+                            com.halo.providers.llamacpp.DownloadState.Downloaded -> {
+                                if (isSelected) {
+                                    HaloGlassChip(text = "Active", material = com.halo.app.ui.glass.material.HaloGlassMaterials.Interactive.copy(containerColor = HaloGlassColors.Success.copy(alpha = 0.2f), contentColor = HaloGlassColors.Success))
+                                } else {
+                                    HaloGlassButton(text = "Use Model", onClick = { viewModel.setActiveLocalModel(model.id) })
+                                }
+                            }
+                            com.halo.providers.llamacpp.DownloadState.Downloading -> {
+                                HaloGlassChip(text = "Downloading...", material = com.halo.app.ui.glass.material.HaloGlassMaterials.Interactive.copy(containerColor = HaloGlassColors.Accent.copy(alpha = 0.2f), contentColor = HaloGlassColors.Accent))
+                            }
+                            else -> {
+                                HaloGlassButton(text = "Download", onClick = { viewModel.downloadModel(model.id) })
+                            }
+                        }
+                    }
+                    HaloGlassDivider()
+                }
+
+                Spacer(Modifier.height(12.dp))
+                Text("FETCH FROM HUGGING FACE", style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
+                OutlinedTextField(
+                    value = customUrl,
+                    onValueChange = { customUrl = it },
+                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                    textStyle = HaloTypography.bodySmall,
+                    placeholder = { Text("https://huggingface.co/org/repo/resolve/main/model.gguf") },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = HaloGlassColors.Accent,
+                        unfocusedBorderColor = HaloGlassColors.Glass
+                    )
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = customName,
+                    onValueChange = { customName = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    textStyle = HaloTypography.bodySmall,
+                    placeholder = { Text("Model Display Name (e.g. Llama-3-GGUF)") },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = HaloGlassColors.Accent,
+                        unfocusedBorderColor = HaloGlassColors.Glass
+                    )
+                )
+                Spacer(Modifier.height(12.dp))
+                HaloGlassButton(
+                    text = "Download GGUF from Hugging Face",
+                    onClick = {
+                        viewModel.downloadCustomUrl(customUrl, customName)
+                        customUrl = ""
+                        customName = ""
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+
         // 5. ADVANCED
         HaloGlassCard {
             Column(Modifier.padding(8.dp)) {

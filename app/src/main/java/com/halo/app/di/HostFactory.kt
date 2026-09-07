@@ -23,14 +23,22 @@ object HostFactory {
         return heyCyanDriver ?: RealHeyCyanDriver(context, eventBus).also { heyCyanDriver = it }
     }
 
-    fun create(type: HostType, context: Context, storage: com.halo.sdk.runtime.Storage): WearableHost {
+    fun create(
+        type: HostType,
+        context: Context,
+        storage: com.halo.sdk.runtime.Storage,
+        sessionManager: com.halo.sdk.runtime.embodiment.DeviceSessionManager? = null,
+        eventBus: com.halo.sdk.runtime.EventBus? = null
+    ): WearableHost {
         return when (type) {
             HostType.HEYCYAN -> {
-                val driver = getHeyCyanDriver(context)
+                val driver = getHeyCyanDriver(context, eventBus)
                 HeyCyanHost(
                     driver = driver,
                     audioOutput = HeyCyanAudioOutput(driver),
-                    storage = storage
+                    storage = storage,
+                    sessionManager = sessionManager,
+                    eventBus = eventBus
                 )
             }
             HostType.ANDROID -> com.halo.host.android.AndroidHost()

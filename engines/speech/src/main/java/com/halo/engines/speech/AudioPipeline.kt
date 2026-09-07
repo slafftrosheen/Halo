@@ -28,6 +28,41 @@ class AudioPipeline(
     val state: StateFlow<SpeechState> = _state
     private var liveListeningJob: Job? = null
 
+    init {
+        scope.launch {
+            eventBus.observe(ListeningStarted::class.java).collect {
+                onListeningStarted()
+            }
+        }
+        scope.launch {
+            eventBus.observe(SpeechEnded::class.java).collect {
+                onSpeechEnded()
+            }
+        }
+    }
+
+    private fun onListeningStarted() {
+        if (_state.value == SpeechState.Recognizing) return
+        _state.value = SpeechState.Recognizing
+        scope.launch { eventBus.publish(RecognitionStarted(id = UUID.randomUUID().toString())) }
+        if (sttProvider.mode == SpeechRecognitionMode.LIVE) {
+            startLiveListening()
+        }
+    }
+
+    private fun onSpeechEnded() {
+        if (sttProvider.mode == SpeechRecognitionMode.BUFFERED) {
+            val segment = buffer.snapshot()
+            buffer.clear()
+            if (segment.audioBuffer.frames.isNotEmpty()) {
+                _state.value = SpeechState.Recognizing
+                scope.launch { processSegment(segment) }
+            } else {
+                _state.value = SpeechState.Idle
+            }
+        }
+    }
+
     fun processFrame(frame: AudioFrame) {
         val currentState = _state.value
         

@@ -7,7 +7,7 @@ import com.halo.sdk.host.ObservationSource
 value class ObservationId(val value: String)
 
 enum class Modality {
-    AUDIO, VIDEO, TEXT, SENSOR, NETWORK, SYSTEM, UNKNOWN
+    AUDIO, VIDEO, IMAGE, TEXT, SENSOR, NETWORK, SYSTEM, UNKNOWN
 }
 
 enum class Source {
@@ -49,6 +49,25 @@ data class SpeechObservationPayload(
     val transcript: String,
     val language: String
 ) : ObservationPayload
+
+data class ImageObservationPayload(
+    val imageBytes: ByteArray,
+    val mimeType: String = "image/jpeg"
+) : ObservationPayload {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is ImageObservationPayload) return false
+        if (!imageBytes.contentEquals(other.imageBytes)) return false
+        if (mimeType != other.mimeType) return false
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = imageBytes.contentHashCode()
+        result = 31 * result + mimeType.hashCode()
+        return result
+    }
+}
 
 data class AudioObservationPayload(
     val energy: Float?,

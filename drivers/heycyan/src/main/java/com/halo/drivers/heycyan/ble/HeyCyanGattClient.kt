@@ -146,7 +146,14 @@ open class HeyCyanGattClient(
                         BluetoothGattCharacteristic.PROPERTY_INDICATE != 0
                     val cccd = characteristic.getDescriptor(CCCD_UUID)
 
-                    if ((supportsNotifications || supportsIndications) && cccd != null) {
+                    val charUuid = characteristic.uuid.toString().lowercase()
+                    val isRelevantNotifyChar = charUuid.contains("de5bf729") ||
+                        charUuid.startsWith("0000fee3") ||
+                        charUuid.startsWith("6e400003") ||
+                        charUuid.startsWith("0000ae02") ||
+                        charUuid.startsWith("0000ae04")
+
+                    if ((supportsNotifications || supportsIndications) && cccd != null && isRelevantNotifyChar) {
                         gatt.setCharacteristicNotification(characteristic, true)
                         pendingDescriptorWrites.add(
                             PendingDescriptorWrite(characteristic, cccd)

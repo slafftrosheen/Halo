@@ -10,6 +10,10 @@ import com.halo.runtime.cognition.session.CognitiveSession
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
+import com.halo.providers.llamacpp.ModelDownloadManager
+import com.halo.providers.llamacpp.CognitiveModel
+import com.halo.providers.llamacpp.DownloadState
+
 data class IntelligenceUiState(
     val activeProviderId: String = "",
     val activeProviderName: String = "None",
@@ -25,6 +29,9 @@ data class IntelligenceUiState(
     val ollamaModel: String = "",
     val llamacppModel: String = "",
     val llamacppContext: Int = 4096,
+    val localModels: List<CognitiveModel> = emptyList(),
+    val downloadStates: Map<String, DownloadState> = emptyMap(),
+    val activeLocalModelId: String? = null,
     val isMemoryEnabled: Boolean = true,
     val isToolsEnabled: Boolean = true,
     val isAgentEnabled: Boolean = false,
@@ -36,7 +43,8 @@ class IntelligenceViewModel(
     private val snapshotManager: RuntimeSnapshotSource,
     private val aiProviderRouter: AiProviderRouter,
     private val cognitiveSession: CognitiveSession,
-    private val storage: Storage
+    private val storage: Storage,
+    private val modelDownloadManager: ModelDownloadManager? = null
 ) : ViewModel() {
 
     private val _refreshTrigger = MutableStateFlow(0)
@@ -46,20 +54,17 @@ class IntelligenceViewModel(
     private val _testConnectionResult = MutableSharedFlow<Boolean>()
     val testConnectionResult: SharedFlow<Boolean> = _testConnectionResult.asSharedFlow()
 
+    init {
+        modelDownloadManager?.refreshStates()
+    }
+
     val uiState: StateFlow<IntelligenceUiState> = combine(
-        combine(
-            snapshotManager.snapshot,
-            aiProviderRouter.selectedProviderId,
-            aiProviderRouter.selectedModelId,
-            ::Triple
-        ),
-        combine(
-            _availableModels,
-            _isRefreshing,
-            _refreshTrigger,
-            ::Triple
-        )
-    ) { (snapshot, selectedProviderId, selectedModelId), (models, refreshing, _) ->
+        snapshotManager.snapshot,
+        aiProviderRouter.selectedProviderId,
+        aiProviderRouter.selectedModelId,
+        modelDownloadManager?.downloadStates ?: MutableStateFlow(emptyMap()),
+        modelDownloadManager?.activeModelId ?: MutableStateFlow(null)
+    ) { snapshot, selectedProviderId, selectedModelId, dlStates, activeLocalId ->
         val allProviders = aiProviderRouter.getAllProviders()
         val activeProvider = allProviders.find { it.id == selectedProviderId }
         val snapshotProvider = snapshot.providers.find { it.id == selectedProviderId }
@@ -80,14 +85,17 @@ class IntelligenceViewModel(
                     capabilities = routerProv.getCapabilities()
                 )
             },
-            availableModels = models,
-            isRefreshingModels = refreshing,
+            availableModels = _availableModels.value,
+            isRefreshingModels = _isRefreshing.value,
             openRouterKey = storage.getString("openrouter_api_key") ?: "",
             openRouterModel = storage.getString("openrouter_model") ?: "openrouter/auto",
             ollamaEndpoint = storage.getString("ollama_endpoint") ?: "http://10.0.2.2:11434",
             ollamaModel = storage.getString("ollama_model") ?: "llama3",
-            llamacppModel = storage.getString("llamacpp_model") ?: "qwen2-0.5b",
+            llamacppModel = storage.getString("llamacpp_model") ?: "qwen1.5-0.5b",
             llamacppContext = storage.getInt("llamacpp_context", 4096),
+            localModels = modelDownloadManager?.getAllModels() ?: emptyList(),
+            downloadStates = dlStates,
+            activeLocalModelId = activeLocalId ?: storage.getString("llamacpp_model"),
             isMemoryEnabled = storage.getBoolean("ai_memory_enabled", true),
             isToolsEnabled = storage.getBoolean("ai_tools_enabled", true),
             isAgentEnabled = storage.getBoolean("ai_agent_enabled", false),
@@ -99,6 +107,22 @@ class IntelligenceViewModel(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = IntelligenceUiState()
     )
+
+    fun downloadModel(modelId: String) {
+        Log.d("IntelligenceViewModel", "downloadModel: $modelId")
+        modelDownloadManager?.downloadModel(modelId)
+    }
+
+    fun downloadCustomUrl(url: String, name: String) {
+        Log.d("IntelligenceViewModel", "downloadCustomUrl: $url")
+        modelDownloadManager?.downloadCustomUrl(url, name)
+    }
+
+    fun setActiveLocalModel(modelId: String) {
+        Log.d("IntelligenceViewModel", "setActiveLocalModel: $modelId")
+        modelDownloadManager?.setActiveModel(modelId)
+        setLlamacppModel(modelId)
+    }
 
     private val _navigationEvents = MutableSharedFlow<String>()
     val navigationEvents: SharedFlow<String> = _navigationEvents.asSharedFlow()

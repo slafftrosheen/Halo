@@ -150,13 +150,17 @@ class AiProviderRouterTest {
     }
 
     @Test
-    fun `getEligibleProvider returns null if no provider supports request`() = runTest {
+    fun `getEligibleProvider throws if no provider supports request`() = runTest {
         val storage = FakeStorage()
         val pText = MockProvider("p1", "Text Only")
         val router = DefaultAiProviderRouter(listOf(pText), storage)
         
-        val eligible = router.getEligibleProvider(AiRequest(image = byteArrayOf(1)))
-        assertNull(eligible)
+        try {
+            router.getEligibleProvider(AiRequest(image = byteArrayOf(1)))
+            fail("Expected AiProviderException")
+        } catch (e: AiProviderException) {
+            assertEquals(AiErrorType.PROVIDER_UNAVAILABLE, e.type)
+        }
     }
 
     @Test

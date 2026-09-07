@@ -13,7 +13,8 @@ data class CognitiveModel(
     val name: String,
     val description: String,
     val downloadUrl: String,
-    val sizeMb: Int
+    val sizeMb: Int,
+    val isCustom: Boolean = false
 )
 
 val AvailableModels = listOf(
@@ -48,19 +49,26 @@ class ModelDownloadManager(private val context: Context) {
     private val prefs = context.getSharedPreferences("halo_models", Context.MODE_PRIVATE)
     private val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
     
-    // Simplistic tracking for Alpha
     private val _downloadStates = MutableStateFlow<Map<String, DownloadState>>(emptyMap())
     val downloadStates: StateFlow<Map<String, DownloadState>> = _downloadStates
     
-    private val _activeModelId = MutableStateFlow<String?>(prefs.getString("active_model", null))
+    private val _activeModelId = MutableStateFlow<String?>(prefs.getString("active_model", "qwen1.5-0.5b"))
     val activeModelId: StateFlow<String?> = _activeModelId
 
+    private val _customModels = MutableStateFlow<List<CognitiveModel>>(emptyList())
+    val customModels: StateFlow<List<CognitiveModel>> = _customModels
+
     init {
+        loadCustomModels()
         refreshStates()
     }
 
+    fun getAllModels(): List<CognitiveModel> {
+        return AvailableModels + _customModels.value
+    }
+
     fun getModelFile(modelId: String): File? {
-        val model = AvailableModels.find { it.id == modelId } ?: return null
+        val model = getAllModels().find { it.id == modelId } ?: return null
         val fileName = model.downloadUrl.substringAfterLast("/")
         val file = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), fileName)
         return if (file.exists()) file else null
@@ -68,7 +76,7 @@ class ModelDownloadManager(private val context: Context) {
 
     fun refreshStates() {
         val states = mutableMapOf<String, DownloadState>()
-        AvailableModels.forEach { model ->
+        getAllModels().forEach { model ->
             val file = getModelFile(model.id)
             if (file != null && file.exists()) {
                 states[model.id] = DownloadState.Downloaded
@@ -80,20 +88,45 @@ class ModelDownloadManager(private val context: Context) {
     }
 
     fun downloadModel(modelId: String) {
-        val model = AvailableModels.find { it.id == modelId } ?: return
+        val model = getAllModels().find { it.id == modelId } ?: return
+        downloadUrl(model.id, model.name, model.downloadUrl)
+    }
+
+    fun downloadCustomUrl(url: String, name: String) {
+        if (url.isBlank()) return
+        val id = "custom_" + url.hashCode().toString().replace("-", "n")
+        val modelName = name.ifBlank { url.substringAfterLast("/") }
         
-        val uri = Uri.parse(model.downloadUrl)
+        val customModel = CognitiveModel(
+            id = id,
+            name = modelName,
+            description = "Custom GGUF Model from Hugging Face",
+            downloadUrl = url,
+            sizeMb = 0,
+            isCustom = true
+        )
+        
+        val list = _customModels.value.filter { it.id != id } + customModel
+        _customModels.value = list
+        saveCustomModels()
+
+        downloadUrl(id, modelName, url)
+    }
+
+    private fun downloadUrl(id: String, name: String, url: String) {
+        val uri = Uri.parse(url)
+        val fileName = url.substringAfterLast("/")
         val request = DownloadManager.Request(uri).apply {
-            setTitle("Downloading ${model.name}")
-            setDescription("Halo is downloading a cognitive model.")
+            setTitle("Downloading $name")
+            setDescription("Halo on-device GGUF model download.")
             setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-            setDestinationInExternalFilesDir(context, Environment.DIRECTORY_DOWNLOADS, model.downloadUrl.substringAfterLast("/"))
+            setDestinationInExternalFilesDir(context, Environment.DIRECTORY_DOWNLOADS, fileName)
         }
         
         downloadManager.enqueue(request)
         
         val currentStates = _downloadStates.value.toMutableMap()
-        currentStates[modelId] = DownloadState.Downloading
+        currentStates[id] = DownloadState.Downloading
         _downloadStates.value = currentStates
     }
 
@@ -103,5 +136,30 @@ class ModelDownloadManager(private val context: Context) {
             _activeModelId.value = modelId
             prefs.edit().putString("active_model", modelId).apply()
         }
+    }
+
+    private fun loadCustomModels() {
+        val json = prefs.getString("custom_models_json", "") ?: ""
+        if (json.isNotBlank()) {
+            val items = json.split(";;;").mapNotNull { entry ->
+                val parts = entry.split("|||")
+                if (parts.size >= 3) {
+                    CognitiveModel(
+                        id = parts[0],
+                        name = parts[1],
+                        description = "Custom GGUF Model",
+                        downloadUrl = parts[2],
+                        sizeMb = 0,
+                        isCustom = true
+                    )
+                } else null
+            }
+            _customModels.value = items
+        }
+    }
+
+    private fun saveCustomModels() {
+        val encoded = _customModels.value.joinToString(";;;") { "${it.id}|||${it.name}|||${it.downloadUrl}" }
+        prefs.edit().putString("custom_models_json", encoded).apply()
     }
 }

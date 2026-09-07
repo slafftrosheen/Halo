@@ -25,17 +25,47 @@ class CognitiveSession(
 
     private var activeJob: Job? = null
 
+    init {
+        scope.launch {
+            eventBus.observe(SpeechRecognized::class.java).collect { speech ->
+                if (speech.text.isNotBlank()) {
+                    println("[CognitiveSession] Auto-submitting recognized speech: ${speech.text}")
+                    submit(AiRequest(text = speech.text))
+                }
+            }
+        }
+    }
+
     fun submit(request: AiRequest, policy: AiContextPolicy = AiContextPolicy.CONSERVATIVE) {
         println("[CognitiveSession] submit: $request")
         activeJob?.cancel()
         activeJob = scope.launch {
             val requestId = UUID.randomUUID().toString()
             try {
+                var finalRequest = request
+                if (finalRequest.image == null) {
+                    val latestObsKnowledge = blackboard.flow.value
+                        .mapNotNull { it.payload as? com.halo.runtime.cognition.blackboard.ObservationKnowledge }
+                        .map { it.observation }
+                        .findLast { it.payload is ImageObservationPayload }
+                    
+                    if (latestObsKnowledge != null && (System.currentTimeMillis() - latestObsKnowledge.timestamp) < 60_000L) {
+                        val imgPayload = latestObsKnowledge.payload as ImageObservationPayload
+                        if (imgPayload.imageBytes.isNotEmpty()) {
+                            finalRequest = finalRequest.copy(
+                                image = imgPayload.imageBytes,
+                                mimeTypes = listOf(imgPayload.mimeType)
+                            )
+                            println("[CognitiveSession] Attached image observation (${imgPayload.imageBytes.size} bytes) to request")
+                        }
+                    }
+                }
+
                 // 1. Provider Eligibility Check (Fail Fast)
-                val provider = providerRouter.getEligibleProvider(request)
+                val provider = providerRouter.getEligibleProvider(finalRequest)
 
                 val providerId = provider.id
-                val modelId = request.modelId ?: providerRouter.selectedModelId.value
+                val modelId = finalRequest.modelId ?: providerRouter.selectedModelId.value
                 
                 // 2. Preparing Context
                 println("[CognitiveSession] Preparing context")
@@ -58,7 +88,7 @@ class CognitiveSession(
                 if (supportsStreaming) {
                     println("[CognitiveSession] Starting streaming")
                     var accumulatedText = ""
-                    provider.stream(request, context)
+                    provider.stream(finalRequest, context)
                         .collect { event ->
                             when (event) {
                                 is AiStreamEvent.Started -> {
@@ -77,12 +107,19 @@ class CognitiveSession(
                     val finalResponse = AiResponse(text = accumulatedText, providerId = providerId, modelId = modelId)
                     _state.value = CognitiveSessionState.Completed(finalResponse)
                     eventBus.publish(CognitiveCompleted(requestId = requestId, response = accumulatedText))
+                    if (accumulatedText.isNotBlank()) {
+                        eventBus.publish(TtsRequested(text = accumulatedText, timestamp = System.currentTimeMillis()))
+                    }
                     println("[CognitiveSession] Streaming completed")
                 } else {
                     println("[CognitiveSession] Executing one-shot")
-                    val response = providerRouter.execute(request, context)
+                    val response = providerRouter.execute(finalRequest, context)
                     _state.value = CognitiveSessionState.Completed(response)
                     eventBus.publish(CognitiveCompleted(requestId = requestId, response = response.text))
+                    val responseText = response.text
+                    if (!responseText.isNullOrBlank() && responseText != "HANDOFF_STARTED") {
+                        eventBus.publish(TtsRequested(text = responseText, timestamp = System.currentTimeMillis()))
+                    }
                     println("[CognitiveSession] Execution completed")
                 }
                 

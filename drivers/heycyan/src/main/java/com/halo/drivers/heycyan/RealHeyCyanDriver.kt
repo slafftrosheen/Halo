@@ -24,6 +24,8 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.io.File
 import com.halo.drivers.heycyan.HeyCyanConnectionMode
@@ -79,18 +81,20 @@ class RealHeyCyanDriver(
     private val eventScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var readJob: kotlinx.coroutines.Job? = null
 
-    val capabilityProvider: CapabilityProvider by lazy {
-        HeyCyanCapabilityProvider(
-            HeyCyanCapabilityController(
-                executor = DefaultHeyCyanCommandExecutor(
-                    transport = HeyCyanGattCommandTransport(
-                        gatt = gattClient,
-                        commandCharacteristic = HeyCyanProtocolConstants.WRITE_CHARACTERISTIC
-                    )
-                ),
-                stateStore = stateStore
-            )
+    val capabilityController: HeyCyanCapabilityController by lazy {
+        HeyCyanCapabilityController(
+            executor = DefaultHeyCyanCommandExecutor(
+                transport = HeyCyanGattCommandTransport(
+                    gatt = gattClient,
+                    commandCharacteristic = HeyCyanProtocolConstants.WRITE_CHARACTERISTIC
+                )
+            ),
+            stateStore = stateStore
         )
+    }
+
+    val capabilityProvider: CapabilityProvider by lazy {
+        HeyCyanCapabilityProvider(capabilityController)
     }
 
     override suspend fun initialize() = Unit
@@ -151,8 +155,15 @@ class RealHeyCyanDriver(
             android.util.Log.i("RealHeyCyanDriver", "Transport status: GATT=$gattReady")
 
             if (!gattReady) {
-                 android.util.Log.i("RealHeyCyanDriver", "GATT failed, attempting retry in 2s...")
-                 kotlinx.coroutines.delay(2000L)
+                 android.util.Log.i("RealHeyCyanDriver", "GATT direct connect failed, executing scan fallback for $selectedAddress...")
+                 runCatching {
+                     kotlinx.coroutines.withTimeoutOrNull(3000L) {
+                         scanner.scan()
+                             .filter { it.address.equals(selectedAddress, ignoreCase = true) }
+                             .first()
+                     }
+                 }
+                 kotlinx.coroutines.delay(500L)
                  val retryReady = runCatching {
                      gattClient.connect(selectedAddress)
                      gattClient.awaitReady()

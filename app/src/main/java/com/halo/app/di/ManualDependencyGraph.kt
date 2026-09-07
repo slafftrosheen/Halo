@@ -146,7 +146,8 @@ object ManualDependencyGraph {
             runtimeSnapshotManager,
             aiProviderRouter,
             cognitiveSession,
-            storage
+            storage,
+            modelDownloadManager
         )
     }
     val runtimeInspectorViewModel by lazy { 
@@ -154,9 +155,16 @@ object ManualDependencyGraph {
         RuntimeInspectorViewModel(runtimeSnapshotManager) 
     }
 
+    val androidSpeaker by lazy {
+        com.halo.host.android.audio.AndroidSpeaker(applicationContext, infra.eventBus).apply {
+            start()
+        }
+    }
+
     // ─── Kernel ─────────────────────────────────────────────────
 
     val microkernel by lazy {
+        androidSpeaker
         processManager.register(androidWakeWordProcess)
         processManager.register(workingMemoryProcess)
         processManager.register(
@@ -170,6 +178,7 @@ object ManualDependencyGraph {
         )
 
         speechSessionManager.start()
+        speechPerceptionBridge.start()
         runtimeReplayRecorder.startRecording()
 
         HaloMicrokernel(
