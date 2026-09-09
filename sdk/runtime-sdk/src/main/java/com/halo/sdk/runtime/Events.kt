@@ -43,6 +43,41 @@ data class TtsFailed(
     override val timestamp: Long = System.currentTimeMillis()
 ) : HaloEvent
 
+// Tool Execution Events
+data class ToolCallRequested(
+    override val id: String = UUID.randomUUID().toString(),
+    val requestId: String,
+    val toolCallId: String,
+    val toolId: String,
+    override val timestamp: Long = System.currentTimeMillis()
+) : HaloEvent
+
+data class ToolCallAuthorized(
+    override val id: String = UUID.randomUUID().toString(),
+    val requestId: String,
+    val toolCallId: String,
+    val toolId: String,
+    override val timestamp: Long = System.currentTimeMillis()
+) : HaloEvent
+
+data class ToolCallCompleted(
+    override val id: String = UUID.randomUUID().toString(),
+    val requestId: String,
+    val toolCallId: String,
+    val toolId: String,
+    val success: Boolean,
+    override val timestamp: Long = System.currentTimeMillis()
+) : HaloEvent
+
+data class ToolCallRejected(
+    override val id: String = UUID.randomUUID().toString(),
+    val requestId: String,
+    val toolCallId: String,
+    val toolId: String,
+    val reason: String,
+    override val timestamp: Long = System.currentTimeMillis()
+) : HaloEvent
+
 // Runtime Lifecycle Events
 sealed interface RuntimeLifecycleEvent : HaloEvent
 data class RuntimeBooting(override val id: String = UUID.randomUUID().toString(), override val timestamp: Long = System.currentTimeMillis()) : RuntimeLifecycleEvent

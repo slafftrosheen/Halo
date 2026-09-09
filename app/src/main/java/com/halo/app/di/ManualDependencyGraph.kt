@@ -76,12 +76,22 @@ object ManualDependencyGraph {
         com.halo.runtime.cognition.conversation.InMemoryConversationStore()
     }
 
+    val toolRegistry by lazy {
+        com.halo.runtime.cognition.tools.ToolRegistry(
+            listOf(
+                com.halo.runtime.cognition.tools.EchoToolExecutor(),
+                com.halo.runtime.cognition.tools.CurrentTimeToolExecutor()
+            )
+        )
+    }
+
     val cognitiveSession by lazy {
         com.halo.runtime.cognition.session.CognitiveSession(
             eventBus,
             blackboard,
             aiProviderRouter,
             conversationStore,
+            toolRegistry,
             infra.scope
         )
     }

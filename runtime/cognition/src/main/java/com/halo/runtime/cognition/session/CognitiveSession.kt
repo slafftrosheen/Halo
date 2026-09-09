@@ -4,6 +4,9 @@ import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.*
 import com.halo.runtime.cognition.blackboard.Blackboard
 import com.halo.runtime.cognition.conversation.ConversationStore
+import com.halo.runtime.cognition.tools.ToolExecutionLimits
+import com.halo.runtime.cognition.tools.ToolExecutionResult
+import com.halo.runtime.cognition.tools.ToolRegistry
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,6 +24,7 @@ class CognitiveSession(
     private val blackboard: Blackboard,
     private val providerRouter: AiProviderRouter,
     private val conversationStore: ConversationStore,
+    private val toolRegistry: ToolRegistry? = null,
     private val scope: CoroutineScope
 ) {
     private val _state = MutableStateFlow<CognitiveSessionState>(CognitiveSessionState.Idle)
@@ -80,7 +84,7 @@ class CognitiveSession(
                 _state.value = CognitiveSessionState.PreparingContext
                 eventBus.publish(CognitiveRequestStarted(requestId = requestId))
                 
-                val context = buildContext(policy)
+                val context = buildContext(provider, policy)
                 
                 // 3. Reasoning
                 println("[CognitiveSession] Provider: $providerId, Model: $modelId")
@@ -93,7 +97,7 @@ class CognitiveSession(
                     modelId = modelId
                 ))
                 
-                if (supportsStreaming) {
+                val initialResponse: AiResponse = if (supportsStreaming) {
                     println("[CognitiveSession] Starting streaming")
                     var completedResponse: AiResponse? = null
                     var accumulatedText = ""
@@ -117,73 +121,60 @@ class CognitiveSession(
                             }
                         }
 
-                    val response = completedResponse
+                    val streamResp = completedResponse
                         ?: throw AiProviderException(
                             AiErrorType.INVALID_RESPONSE,
                             "Provider stream ended without Completed event"
                         )
 
-                    if (response.text.isBlank() && response.toolCalls.isEmpty()) {
+                    if (streamResp.text.isBlank() && streamResp.toolCalls.isEmpty()) {
                         throw AiProviderException(
                             AiErrorType.EMPTY_RESPONSE,
                             "Provider stream completed with no usable response"
                         )
                     }
-
-                    _state.value = CognitiveSessionState.Completed(response)
-                    eventBus.publish(CognitiveCompleted(requestId = requestId, response = response.text))
-
-                    val responseText = response.text.trim()
-                    val userText = finalRequest.text?.trim().orEmpty()
-                    if (responseText.isNotBlank() && responseText != "HANDOFF_STARTED") {
-                        if (userText.isNotBlank()) {
-                            val turn = conversationStore.append(
-                                userText = userText,
-                                assistantText = responseText
-                            )
-                            eventBus.publish(
-                                ConversationTurnCompleted(
-                                    turnId = turn.id,
-                                    userText = turn.userText,
-                                    assistantText = turn.assistantText
-                                )
-                            )
-                        }
-                        eventBus.publish(TtsRequested(text = responseText, timestamp = System.currentTimeMillis()))
-                    }
-                    println("[CognitiveSession] Streaming completed")
+                    streamResp
                 } else {
                     println("[CognitiveSession] Executing one-shot")
-                    val response = providerRouter.execute(finalRequest, context)
-                    if (response.text.isBlank() && response.toolCalls.isEmpty()) {
+                    val resp = providerRouter.execute(finalRequest, context)
+                    if (resp.text.isBlank() && resp.toolCalls.isEmpty()) {
                         throw AiProviderException(
                             AiErrorType.EMPTY_RESPONSE,
                             "Provider returned no usable response"
                         )
                     }
-                    _state.value = CognitiveSessionState.Completed(response)
-                    eventBus.publish(CognitiveCompleted(requestId = requestId, response = response.text))
-
-                    val responseText = response.text.trim()
-                    val userText = finalRequest.text?.trim().orEmpty()
-                    if (responseText.isNotBlank() && responseText != "HANDOFF_STARTED") {
-                        if (userText.isNotBlank()) {
-                            val turn = conversationStore.append(
-                                userText = userText,
-                                assistantText = responseText
-                            )
-                            eventBus.publish(
-                                ConversationTurnCompleted(
-                                    turnId = turn.id,
-                                    userText = turn.userText,
-                                    assistantText = turn.assistantText
-                                )
-                            )
-                        }
-                        eventBus.publish(TtsRequested(text = responseText, timestamp = System.currentTimeMillis()))
-                    }
-                    println("[CognitiveSession] Execution completed")
+                    resp
                 }
+
+                // 4. Handle Tool Calls Loop if Present
+                val response = if (initialResponse.toolCalls.isNotEmpty()) {
+                    executeToolLoop(requestId, finalRequest, context, initialResponse, provider, policy)
+                } else {
+                    initialResponse
+                }
+
+                _state.value = CognitiveSessionState.Completed(response)
+                eventBus.publish(CognitiveCompleted(requestId = requestId, response = response.text))
+
+                val responseText = response.text.trim()
+                val userText = finalRequest.text?.trim().orEmpty()
+                if (responseText.isNotBlank() && responseText != "HANDOFF_STARTED") {
+                    if (userText.isNotBlank()) {
+                        val turn = conversationStore.append(
+                            userText = userText,
+                            assistantText = responseText
+                        )
+                        eventBus.publish(
+                            ConversationTurnCompleted(
+                                turnId = turn.id,
+                                userText = turn.userText,
+                                assistantText = turn.assistantText
+                            )
+                        )
+                    }
+                    eventBus.publish(TtsRequested(text = responseText, timestamp = System.currentTimeMillis()))
+                }
+                println("[CognitiveSession] Generation completed")
             } catch (e: CancellationException) {
                 _state.value = CognitiveSessionState.Idle
                 throw e
@@ -194,6 +185,138 @@ class CognitiveSession(
                 eventBus.publish(CognitiveFailed(requestId = requestId, message = message))
             }
         }
+    }
+
+    private suspend fun executeToolLoop(
+        requestId: String,
+        initialRequest: AiRequest,
+        initialContext: AiContext,
+        initialResponse: AiResponse,
+        provider: AiProvider,
+        policy: AiContextPolicy
+    ): AiResponse {
+        var response = initialResponse
+        var currentContext = initialContext
+        var round = 0
+        var totalToolCalls = 0
+
+        while (response.toolCalls.isNotEmpty()) {
+            if (++round > ToolExecutionLimits.MAX_TOOL_ROUNDS) {
+                throw AiProviderException(
+                    AiErrorType.GENERATION_FAILED,
+                    "Maximum tool execution rounds (${ToolExecutionLimits.MAX_TOOL_ROUNDS}) exceeded"
+                )
+            }
+
+            _state.value = CognitiveSessionState.ExecutingTool(response.toolCalls.first().functionName)
+
+            val toolMessages = mutableListOf<AIMessage>()
+            val callsToExecute = response.toolCalls.take(ToolExecutionLimits.MAX_TOOL_CALLS_PER_ROUND)
+
+            for (toolCall in callsToExecute) {
+                if (++totalToolCalls > ToolExecutionLimits.MAX_TOTAL_TOOL_CALLS) {
+                    throw AiProviderException(
+                        AiErrorType.GENERATION_FAILED,
+                        "Maximum total tool calls (${ToolExecutionLimits.MAX_TOTAL_TOOL_CALLS}) exceeded"
+                    )
+                }
+
+                eventBus.publish(
+                    ToolCallRequested(
+                        requestId = requestId,
+                        toolCallId = toolCall.id,
+                        toolId = toolCall.functionName
+                    )
+                )
+
+                if (!policy.includeAvailableTools || toolRegistry == null) {
+                    eventBus.publish(
+                        ToolCallRejected(
+                            requestId = requestId,
+                            toolCallId = toolCall.id,
+                            toolId = toolCall.functionName,
+                            reason = "Tools disabled by runtime policy"
+                        )
+                    )
+                    toolMessages.add(
+                        AIMessage(
+                            role = Role.TOOL,
+                            content = "Tool execution rejected: Tools disabled by runtime policy"
+                        )
+                    )
+                    continue
+                }
+
+                eventBus.publish(
+                    ToolCallAuthorized(
+                        requestId = requestId,
+                        toolCallId = toolCall.id,
+                        toolId = toolCall.functionName
+                    )
+                )
+
+                val result = toolRegistry.execute(toolCall)
+
+                when (result) {
+                    is ToolExecutionResult.Success -> {
+                        eventBus.publish(
+                            ToolCallCompleted(
+                                requestId = requestId,
+                                toolCallId = toolCall.id,
+                                toolId = toolCall.functionName,
+                                success = true
+                            )
+                        )
+                        toolMessages.add(
+                            AIMessage(
+                                role = Role.TOOL,
+                                content = result.output.take(ToolExecutionLimits.MAX_TOOL_OUTPUT_CHARS)
+                            )
+                        )
+                    }
+                    is ToolExecutionResult.Rejected -> {
+                        eventBus.publish(
+                            ToolCallRejected(
+                                requestId = requestId,
+                                toolCallId = toolCall.id,
+                                toolId = toolCall.functionName,
+                                reason = result.reason
+                            )
+                        )
+                        toolMessages.add(
+                            AIMessage(
+                                role = Role.TOOL,
+                                content = "Tool execution rejected: ${result.reason}"
+                            )
+                        )
+                    }
+                    is ToolExecutionResult.Failed -> {
+                        eventBus.publish(
+                            ToolCallCompleted(
+                                requestId = requestId,
+                                toolCallId = toolCall.id,
+                                toolId = toolCall.functionName,
+                                success = false
+                            )
+                        )
+                        toolMessages.add(
+                            AIMessage(
+                                role = Role.TOOL,
+                                content = "Tool execution failed: ${result.message}"
+                            )
+                        )
+                    }
+                }
+            }
+
+            val updatedConversation = currentContext.conversation + AIMessage(Role.ASSISTANT, response.text) + toolMessages
+            currentContext = currentContext.copy(conversation = updatedConversation)
+
+            _state.value = CognitiveSessionState.Reasoning(provider.id, response.modelId)
+            response = providerRouter.execute(initialRequest, currentContext)
+        }
+
+        return response
     }
 
     private fun mapErrorMessage(e: Exception): String {
@@ -220,9 +343,15 @@ class CognitiveSession(
         }
     }
 
-    private fun buildContext(policy: AiContextPolicy): AiContext {
+    private suspend fun buildContext(provider: AiProvider, policy: AiContextPolicy): AiContext {
         val conversation = if (policy.includeConversation) {
             conversationStore.recentMessages(maxTurns = 10)
+        } else {
+            emptyList()
+        }
+
+        val tools = if (policy.includeAvailableTools && provider.getCapabilities().contains(AiCapability.TOOLS)) {
+            toolRegistry?.definitions() ?: emptyList()
         } else {
             emptyList()
         }
@@ -232,7 +361,7 @@ class CognitiveSession(
             deviceState = if (policy.includeDeviceState) com.halo.sdk.runtime.DeviceState() else null,
             recentEvents = if (policy.includeRecentEvents) emptyList() else emptyList(),
             memories = if (policy.includeMemories) emptyList() else emptyList(),
-            availableTools = if (policy.includeAvailableTools) emptyList() else emptyList()
+            availableTools = tools
         )
     }
 }

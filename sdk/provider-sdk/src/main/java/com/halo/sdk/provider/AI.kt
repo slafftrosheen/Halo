@@ -107,6 +107,7 @@ sealed interface CognitiveSessionState {
         val providerId: String,
         val modelId: String? = null
     ) : CognitiveSessionState
+    data class ExecutingTool(val toolId: String) : CognitiveSessionState
     data class Streaming(val text: String) : CognitiveSessionState
     data class Completed(val response: AiResponse) : CognitiveSessionState
     data class Failed(val message: String) : CognitiveSessionState
