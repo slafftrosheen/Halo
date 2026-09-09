@@ -140,17 +140,18 @@ class RealHeyCyanDriver(
             }
             stateStore.updateConnection(com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.CONNECTING)
             android.util.Log.i("RealHeyCyanDriver", "Starting GATT connection (with settling delay)...")
-
-            // Allow stack to settle, especially if a scan was just stopped
             kotlinx.coroutines.delay(1000L)
 
-            val firstAttemptReady = runCatching {
+            val firstAttemptReady = try {
                 gattClient.connect(selectedAddress)
                 gattClient.awaitReady()
                 true
-            }.onFailure {
-                android.util.Log.w("RealHeyCyanDriver", "GATT connection failed (attempt 1)", it)
-            }.getOrDefault(false)
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Throwable) {
+                android.util.Log.w("RealHeyCyanDriver", "GATT connection failed (attempt 1)", error)
+                false
+            }
 
             android.util.Log.i("RealHeyCyanDriver", "Transport status: GATT=$firstAttemptReady")
 
@@ -161,26 +162,29 @@ class RealHeyCyanDriver(
                     "RealHeyCyanDriver",
                     "GATT direct connect failed, executing scan fallback for $selectedAddress..."
                 )
-                runCatching {
+                try {
                     kotlinx.coroutines.withTimeoutOrNull(3000L) {
                         scanner.scan()
                             .filter { it.address.equals(selectedAddress, ignoreCase = true) }
                             .first()
                     }
+                } catch (error: CancellationException) {
+                    throw error
+                } catch (error: Throwable) {
+                    android.util.Log.w("RealHeyCyanDriver", "GATT fallback scan failed", error)
                 }
                 kotlinx.coroutines.delay(500L)
 
-                runCatching {
+                try {
                     gattClient.connect(selectedAddress)
                     gattClient.awaitReady()
                     true
-                }.onSuccess { retryReady ->
-                    if (retryReady) {
-                        android.util.Log.i("RealHeyCyanDriver", "GATT retry succeeded")
-                    }
-                }.onFailure {
-                    android.util.Log.e("RealHeyCyanDriver", "GATT connection failed (attempt 2)", it)
-                }.getOrDefault(false)
+                } catch (error: CancellationException) {
+                    throw error
+                } catch (error: Throwable) {
+                    android.util.Log.e("RealHeyCyanDriver", "GATT connection failed (attempt 2)", error)
+                    false
+                }
             }
 
             check(gattReady) {
@@ -217,11 +221,9 @@ class RealHeyCyanDriver(
 
     private suspend fun finalizeGattConnection(mode: HeyCyanConnectionMode) {
         stateStore.updateConnection(com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.READY)
-
         if (mode == HeyCyanConnectionMode.RUNTIME) {
             startReading()
         }
-
         if (canDecodeEvents(mode)) {
             _events.emit(DeviceEvent.Ready(System.currentTimeMillis()))
         }
@@ -249,180 +251,120 @@ class RealHeyCyanDriver(
         _events.emit(event)
     }
 
-    /**
-     * Emits decoded HeyCyan events to the protocol event stream.
-     * Consumers can observe these events for application-level state management.
-     */
     private suspend fun emitDeviceEvent(event: HeyCyanEvent) {
         _heyCyanEvents.emit(event)
     }
 
     private fun startReading() {
         readJob?.cancel()
-
         readJob = eventScope.launch {
             android.util.Log.i("RealHeyCyanDriver", "Starting event reader loop")
-
             gattClient.incomingBytes.collect { (characteristicUuid, payload) ->
-
-                packetAnalyzer.onRx(
-                    characteristicUuid = characteristicUuid,
-                    payload = payload
-                )
-
+                packetAnalyzer.onRx(characteristicUuid = characteristicUuid, payload = payload)
                 val event = eventRouter.decode(
                     characteristicUuid = characteristicUuid,
                     payload = payload,
                     timestampMillis = System.currentTimeMillis()
                 )
-
                 when (event) {
-                    is HeyCyanEvent.DecodedProprietaryFrame -> {
-                        handleDecodedEvent(event)
-                    }
-
-                    is HeyCyanEvent.Unknown -> {
-                        android.util.Log.d("RealHeyCyanDriver", "Unknown event on $characteristicUuid: ${payload.joinToString("") { "%02X".format(it) }}")
-                    }
-
-                    else -> {
-                        handleDecodedEvent(event)
-                    }
+                    is HeyCyanEvent.DecodedProprietaryFrame -> handleDecodedEvent(event)
+                    is HeyCyanEvent.Unknown -> android.util.Log.d(
+                        "RealHeyCyanDriver",
+                        "Unknown event on $characteristicUuid: ${payload.joinToString("") { "%02X".format(it) }}"
+                    )
+                    else -> handleDecodedEvent(event)
                 }
             }
         }
     }
 
-    private suspend fun handleDecodedEvent(
-        event: HeyCyanEvent
-    ) {
+    private suspend fun handleDecodedEvent(event: HeyCyanEvent) {
         val timestamp = System.currentTimeMillis()
-
-        stateStore.apply(
-            event = event,
-            timestamp = timestamp,
-        )
-
+        stateStore.apply(event = event, timestamp = timestamp)
         when (event) {
             is HeyCyanEvent.BatteryUpdated -> {
-                _events.emit(
-                    DeviceEvent.BatteryLevel(
-                        timestamp = timestamp,
-                        level = event.level,
-                    )
-                )
+                _events.emit(DeviceEvent.BatteryLevel(timestamp = timestamp, level = event.level))
                 emitDeviceEvent(event)
-                eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(
-                    observation = com.halo.sdk.runtime.Observation(
-                        modality = com.halo.sdk.runtime.Modality.SYSTEM,
-                        source = com.halo.sdk.runtime.Source.BLUETOOTH,
-                        payload = object : com.halo.sdk.runtime.ObservationPayload {},
-                        sourceDeviceId = "heycyan",
-                        metadata = mapOf("battery" to event.level, "charging" to event.isCharging)
-                    )
-                ))
+                eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(observation = com.halo.sdk.runtime.Observation(
+                    modality = com.halo.sdk.runtime.Modality.SYSTEM,
+                    source = com.halo.sdk.runtime.Source.BLUETOOTH,
+                    payload = object : com.halo.sdk.runtime.ObservationPayload {},
+                    sourceDeviceId = "heycyan",
+                    metadata = mapOf("battery" to event.level, "charging" to event.isCharging)
+                )))
             }
-
             is HeyCyanEvent.ButtonPressed -> {
-                _events.emit(
-                    DeviceEvent.ButtonClick(
-                        timestamp = timestamp,
-                        buttonId = event.type.toButtonId(),
-                    )
-                )
+                _events.emit(DeviceEvent.ButtonClick(timestamp = timestamp, buttonId = event.type.toButtonId()))
                 emitDeviceEvent(event)
-                eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(
-                    observation = com.halo.sdk.runtime.Observation(
-                        modality = com.halo.sdk.runtime.Modality.SYSTEM,
-                        source = com.halo.sdk.runtime.Source.BLUETOOTH,
-                        payload = object : com.halo.sdk.runtime.ObservationPayload {},
-                        sourceDeviceId = "heycyan",
-                        metadata = mapOf("button" to event.type.name)
-                    )
-                ))
+                eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(observation = com.halo.sdk.runtime.Observation(
+                    modality = com.halo.sdk.runtime.Modality.SYSTEM,
+                    source = com.halo.sdk.runtime.Source.BLUETOOTH,
+                    payload = object : com.halo.sdk.runtime.ObservationPayload {},
+                    sourceDeviceId = "heycyan",
+                    metadata = mapOf("button" to event.type.name)
+                )))
             }
-
             is HeyCyanEvent.AiImageRecognition -> {
                 emitDeviceEvent(event)
-                eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(
-                    observation = com.halo.sdk.runtime.Observation(
-                        modality = com.halo.sdk.runtime.Modality.VIDEO,
-                        source = com.halo.sdk.runtime.Source.CAMERA,
-                        payload = object : com.halo.sdk.runtime.ObservationPayload {},
-                        sourceDeviceId = "heycyan",
-                        metadata = mapOf("action" to "AI_IMAGE_RECOGNITION")
-                    )
-                ))
+                eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(observation = com.halo.sdk.runtime.Observation(
+                    modality = com.halo.sdk.runtime.Modality.VIDEO,
+                    source = com.halo.sdk.runtime.Source.CAMERA,
+                    payload = object : com.halo.sdk.runtime.ObservationPayload {},
+                    sourceDeviceId = "heycyan",
+                    metadata = mapOf("action" to "AI_IMAGE_RECOGNITION")
+                )))
             }
-
             is HeyCyanEvent.VoiceActivationStarted -> {
                 emitDeviceEvent(event)
-                eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(
-                    observation = com.halo.sdk.runtime.Observation(
-                        modality = com.halo.sdk.runtime.Modality.AUDIO,
-                        source = com.halo.sdk.runtime.Source.MICROPHONE,
-                        payload = object : com.halo.sdk.runtime.ObservationPayload {},
-                        sourceDeviceId = "heycyan",
-                        metadata = mapOf("event" to "MICROPHONE_ACTIVE")
-                    )
-                ))
+                eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(observation = com.halo.sdk.runtime.Observation(
+                    modality = com.halo.sdk.runtime.Modality.AUDIO,
+                    source = com.halo.sdk.runtime.Source.MICROPHONE,
+                    payload = object : com.halo.sdk.runtime.ObservationPayload {},
+                    sourceDeviceId = "heycyan",
+                    metadata = mapOf("event" to "MICROPHONE_ACTIVE")
+                )))
             }
-
             is HeyCyanEvent.VoiceActivationEnded -> {
                 emitDeviceEvent(event)
-                eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(
-                    observation = com.halo.sdk.runtime.Observation(
-                        modality = com.halo.sdk.runtime.Modality.AUDIO,
-                        source = com.halo.sdk.runtime.Source.MICROPHONE,
-                        payload = object : com.halo.sdk.runtime.ObservationPayload {},
-                        sourceDeviceId = "heycyan",
-                        metadata = mapOf("event" to "MICROPHONE_INACTIVE")
-                    )
-                ))
+                eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(observation = com.halo.sdk.runtime.Observation(
+                    modality = com.halo.sdk.runtime.Modality.AUDIO,
+                    source = com.halo.sdk.runtime.Source.MICROPHONE,
+                    payload = object : com.halo.sdk.runtime.ObservationPayload {},
+                    sourceDeviceId = "heycyan",
+                    metadata = mapOf("event" to "MICROPHONE_INACTIVE")
+                )))
             }
-
             is HeyCyanEvent.VoicePlaybackPause -> {
                 emitDeviceEvent(event)
-                eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(
-                    observation = com.halo.sdk.runtime.Observation(
-                        modality = com.halo.sdk.runtime.Modality.SYSTEM,
-                        source = com.halo.sdk.runtime.Source.BLUETOOTH,
-                        payload = object : com.halo.sdk.runtime.ObservationPayload {},
-                        sourceDeviceId = "heycyan",
-                        metadata = mapOf("event" to "VOICE_PLAYBACK_PAUSE")
-                    )
-                ))
+                eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(observation = com.halo.sdk.runtime.Observation(
+                    modality = com.halo.sdk.runtime.Modality.SYSTEM,
+                    source = com.halo.sdk.runtime.Source.BLUETOOTH,
+                    payload = object : com.halo.sdk.runtime.ObservationPayload {},
+                    sourceDeviceId = "heycyan",
+                    metadata = mapOf("event" to "VOICE_PLAYBACK_PAUSE")
+                )))
             }
-
             is HeyCyanEvent.ModeChanged -> {
                 emitDeviceEvent(event)
-                eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(
-                    observation = com.halo.sdk.runtime.Observation(
-                        modality = com.halo.sdk.runtime.Modality.SYSTEM,
-                        source = com.halo.sdk.runtime.Source.BLUETOOTH,
-                        payload = object : com.halo.sdk.runtime.ObservationPayload {},
-                        sourceDeviceId = "heycyan",
-                        metadata = mapOf("event" to "MODE_CHANGED", "mode" to event.mode)
-                    )
-                ))
+                eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(observation = com.halo.sdk.runtime.Observation(
+                    modality = com.halo.sdk.runtime.Modality.SYSTEM,
+                    source = com.halo.sdk.runtime.Source.BLUETOOTH,
+                    payload = object : com.halo.sdk.runtime.ObservationPayload {},
+                    sourceDeviceId = "heycyan",
+                    metadata = mapOf("event" to "MODE_CHANGED", "mode" to event.mode)
+                )))
             }
-
             is HeyCyanEvent.MemoryInsufficient -> {
                 emitDeviceEvent(event)
-                eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(
-                    observation = com.halo.sdk.runtime.Observation(
-                        modality = com.halo.sdk.runtime.Modality.SYSTEM,
-                        source = com.halo.sdk.runtime.Source.BLUETOOTH,
-                        payload = object : com.halo.sdk.runtime.ObservationPayload {},
-                        sourceDeviceId = "heycyan",
-                        metadata = mapOf("fault" to "MEMORY_INSUFFICIENT")
-                    )
-                ))
+                eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(observation = com.halo.sdk.runtime.Observation(
+                    modality = com.halo.sdk.runtime.Modality.SYSTEM,
+                    source = com.halo.sdk.runtime.Source.BLUETOOTH,
+                    payload = object : com.halo.sdk.runtime.ObservationPayload {},
+                    sourceDeviceId = "heycyan",
+                    metadata = mapOf("fault" to "MEMORY_INSUFFICIENT")
+                )))
             }
-
-            else -> {
-                emitDeviceEvent(event)
-            }
+            else -> emitDeviceEvent(event)
         }
     }
 
@@ -435,47 +377,31 @@ class RealHeyCyanDriver(
         ButtonType.UNKNOWN -> -1
     }
 
-    private fun isUsableDiscoveryTransport(rfcommChannels: List<String>, gattReady: Boolean): Boolean {
-        return rfcommChannels.isNotEmpty() || gattReady
-    }
+    private fun isUsableDiscoveryTransport(rfcommChannels: List<String>, gattReady: Boolean): Boolean =
+        rfcommChannels.isNotEmpty() || gattReady
 
     private fun shouldReadBluetoothAdapterName(sdkInt: Int, permissionChecker: (String) -> Int): Boolean {
-        return if (sdkInt >= Build.VERSION_CODES.S) {
-            permissionChecker(android.Manifest.permission.BLUETOOTH_CONNECT) == android.content.pm.PackageManager.PERMISSION_GRANTED
-        } else {
-            true
-        }
+        return sdkInt < Build.VERSION_CODES.S ||
+            permissionChecker(android.Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
     }
 
     @SuppressLint("MissingPermission")
-    private fun readBluetoothAdapterName(): String? {
-        if (!shouldReadBluetoothAdapterName(
-                sdkInt = Build.VERSION.SDK_INT,
-                permissionChecker = context::checkSelfPermission
-            )
-        ) {
-            return null
+    private fun captureMetadata(): Map<String, String> {
+        val manager = context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
+        val adapter = manager?.adapter
+        val name = if (shouldReadBluetoothAdapterName(Build.VERSION.SDK_INT) {
+            adapter?.name
+        } else {
+            null
         }
-
-        return runCatching {
-            context.getSystemService(BluetoothManager::class.java)?.adapter?.name
-        }.getOrNull()
-    }
-
-    private fun captureMetadata(): CaptureMetadata {
-        val packageInfo = runCatching {
-            context.packageManager.getPackageInfo(context.packageName, 0)
-        }.getOrNull()
-        val bluetoothAdapter = readBluetoothAdapterName()
-
-        return CaptureMetadata(
-            haloVersion = packageInfo?.versionName,
-            androidVersion = "Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})",
-            phoneModel = listOf(Build.MANUFACTURER, Build.MODEL)
-                .filter { it.isNotBlank() }
-                .joinToString(" ")
-                .ifBlank { null },
-            bluetoothAdapter = bluetoothAdapter
+        return mapOf(
+            "sdkInt" to Build.VERSION.SDK_INT.toString(),
+            "adapterName" to (name ?: "unknown")
         )
     }
+
+    private fun canDecodeEvents(mode: HeyCyanConnectionMode): Boolean =
+        mode == HeyCyanConnectionMode.RUNTIME
+
+    private fun captureMetadata(): Map<String, String> = emptyMap()
 }
