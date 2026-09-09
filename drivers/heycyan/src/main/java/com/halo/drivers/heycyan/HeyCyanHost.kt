@@ -97,7 +97,11 @@ class HeyCyanHost(
         val sm = sessionManager ?: return
         val bus = eventBus ?: return
         if (sm.getSession(address) == null) {
-            val identity = com.halo.sdk.runtime.DeviceIdentity(address, "HeyCyan Glasses", "HEYCYAN_GLASSES")
+            val identity = com.halo.sdk.runtime.DeviceIdentity(
+                deviceId = address,
+                deviceType = "HEYCYAN_GLASSES",
+                displayName = "HeyCyan Glasses"
+            )
             val transport = com.halo.drivers.heycyan.transport.HeyCyanEmbodimentTransport(driver)
             val controllerAdapter = com.halo.drivers.heycyan.capability.HeyCyanCapabilityControllerAdapter(driver.capabilityController)
             val session = com.halo.sdk.runtime.embodiment.HeyCyanSession(
