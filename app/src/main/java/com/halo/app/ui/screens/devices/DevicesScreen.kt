@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -15,10 +16,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.halo.app.ui.glass.components.HaloGlassBackHeader
@@ -29,8 +27,10 @@ import com.halo.app.ui.glass.material.HaloTypography
 import com.halo.sdk.runtime.RuntimeSnapshotSource
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 enum class PhotoActionState {
@@ -56,7 +56,8 @@ data class GenericDeviceUiState(
     val healthStateText: String = "Healthy",
     val healthWarning: String? = null,
     val wearStateText: String = "Unknown",
-    val volumeText: String = "Normal"
+    val volumeText: String = "Normal",
+    val autoConnect: Boolean = true,
 )
 
 data class DevicesUiState(
@@ -67,10 +68,10 @@ class DevicesViewModel(
     val deviceRegistry: com.halo.sdk.runtime.embodiment.DeviceRegistry,
     val sessionManager: com.halo.sdk.runtime.embodiment.DeviceSessionManager,
     private val eventBus: com.halo.sdk.runtime.EventBus,
-    private val snapshotSource: com.halo.sdk.runtime.RuntimeSnapshotSource,
+    private val snapshotSource: RuntimeSnapshotSource,
     private val heyCyanDriver: com.halo.drivers.heycyan.RealHeyCyanDriver? = null
 ) : ViewModel() {
-    
+
     private fun formatLastSeen(lastSeenMs: Long): String {
         val diff = System.currentTimeMillis() - lastSeenMs
         if (diff < 60_000) return "Just now"
@@ -81,16 +82,14 @@ class DevicesViewModel(
         val days = hours / 24
         return "$days days ago"
     }
-    
+
     private val _uiState = MutableStateFlow(DevicesUiState())
     val uiState: StateFlow<DevicesUiState> = _uiState.asStateFlow()
-
     private val _photoStates = MutableStateFlow<Map<String, PhotoActionState>>(emptyMap())
 
     init {
         viewModelScope.launch {
-            // Combine saved devices, active sessions, and live driver state
-            kotlinx.coroutines.flow.combine(
+            combine(
                 sessionManager.activeSessions,
                 heyCyanDriver?.deviceState ?: MutableStateFlow(com.halo.drivers.heycyan.protocol.HeyCyanDeviceState()),
                 _photoStates
@@ -131,7 +130,8 @@ class DevicesViewModel(
                         healthStateText = driverState.healthState.name,
                         healthWarning = healthWarn,
                         wearStateText = driverState.wearState.name,
-                        volumeText = driverState.volumeState?.let { "Music ${it.musicCurrent}, Call ${it.callCurrent}" } ?: "Normal"
+                        volumeText = driverState.volumeState?.let { "Music ${it.musicCurrent}, Call ${it.callCurrent}" } ?: "Normal",
+                        autoConnect = record.autoConnect,
                     )
                 }
             }.collect { updatedDevices ->
@@ -175,33 +175,10 @@ class DevicesViewModel(
         }
     }
 
-    fun startVideo(deviceId: String) {
-        dispatchEmbodimentIntent(deviceId, com.halo.sdk.runtime.embodiment.EmbodimentIntent(
-            intentId = java.util.UUID.randomUUID().toString(), targetDeviceId = deviceId,
-            kind = com.halo.sdk.runtime.embodiment.IntentKind.START_VIDEO
-        ))
-    }
-
-    fun stopVideo(deviceId: String) {
-        dispatchEmbodimentIntent(deviceId, com.halo.sdk.runtime.embodiment.EmbodimentIntent(
-            intentId = java.util.UUID.randomUUID().toString(), targetDeviceId = deviceId,
-            kind = com.halo.sdk.runtime.embodiment.IntentKind.STOP_VIDEO
-        ))
-    }
-
-    fun startAudioRecording(deviceId: String) {
-        dispatchEmbodimentIntent(deviceId, com.halo.sdk.runtime.embodiment.EmbodimentIntent(
-            intentId = java.util.UUID.randomUUID().toString(), targetDeviceId = deviceId,
-            kind = com.halo.sdk.runtime.embodiment.IntentKind.START_AUDIO_RECORDING
-        ))
-    }
-
-    fun stopAudioRecording(deviceId: String) {
-        dispatchEmbodimentIntent(deviceId, com.halo.sdk.runtime.embodiment.EmbodimentIntent(
-            intentId = java.util.UUID.randomUUID().toString(), targetDeviceId = deviceId,
-            kind = com.halo.sdk.runtime.embodiment.IntentKind.STOP_AUDIO_RECORDING
-        ))
-    }
+    fun startVideo(deviceId: String) = dispatchEmbodimentIntent(deviceId, com.halo.sdk.runtime.embodiment.EmbodimentIntent(UUID.randomUUID().toString(), deviceId, com.halo.sdk.runtime.embodiment.IntentKind.START_VIDEO))
+    fun stopVideo(deviceId: String) = dispatchEmbodimentIntent(deviceId, com.halo.sdk.runtime.embodiment.EmbodimentIntent(UUID.randomUUID().toString(), deviceId, com.halo.sdk.runtime.embodiment.IntentKind.STOP_VIDEO))
+    fun startAudioRecording(deviceId: String) = dispatchEmbodimentIntent(deviceId, com.halo.sdk.runtime.embodiment.EmbodimentIntent(UUID.randomUUID().toString(), deviceId, com.halo.sdk.runtime.embodiment.IntentKind.START_AUDIO_RECORDING))
+    fun stopAudioRecording(deviceId: String) = dispatchEmbodimentIntent(deviceId, com.halo.sdk.runtime.embodiment.EmbodimentIntent(UUID.randomUUID().toString(), deviceId, com.halo.sdk.runtime.embodiment.IntentKind.STOP_AUDIO_RECORDING))
 
     fun dispatchEmbodimentIntent(deviceId: String, intent: com.halo.sdk.runtime.embodiment.EmbodimentIntent) {
         viewModelScope.launch {
@@ -244,18 +221,14 @@ class DevicesViewModel(
 fun DevicesScreen(viewModel: DevicesViewModel, onNavigate: (String) -> Unit = {}, onBack: () -> Unit = {}) {
     val uiState by viewModel.uiState.collectAsState()
     HaloGlassLazyPage(title = "") {
-        item {
-            HaloGlassBackHeader(title = "Devices", onBack = onBack)
-        }
+        item { HaloGlassBackHeader(title = "Devices", onBack = onBack) }
         item { Spacer(modifier = Modifier.height(16.dp)) }
         items(uiState.devices) { device ->
             DeviceRow(device = device, onClick = { viewModel.navigateTo("device/${device.id}") })
             Spacer(modifier = Modifier.height(12.dp))
         }
         item { Spacer(modifier = Modifier.height(24.dp)) }
-        item {
-            HaloGlassButton(text = "Add device", onClick = { viewModel.navigateTo("discovery") }, modifier = Modifier.fillMaxWidth())
-        }
+        item { HaloGlassButton(text = "Add device", onClick = { viewModel.navigateTo("discovery") }, modifier = Modifier.fillMaxWidth()) }
     }
 }
 
@@ -279,9 +252,7 @@ fun DeviceRow(device: GenericDeviceUiState, onClick: () -> Unit) {
         }
         if (device.healthWarning != null) {
             Spacer(modifier = Modifier.height(12.dp))
-            Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(HaloGlassColors.Warning.copy(alpha = 0.2f)).padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(text = device.healthWarning, style = HaloTypography.labelSmall, color = HaloGlassColors.Warning)
-            }
+            Text(text = device.healthWarning, style = HaloTypography.labelSmall, color = HaloGlassColors.Warning)
         }
         Spacer(modifier = Modifier.height(8.dp))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -289,6 +260,11 @@ fun DeviceRow(device: GenericDeviceUiState, onClick: () -> Unit) {
             if (device.isBatteryStale || !device.isConnected) {
                 Text(text = device.batteryAgeText, style = HaloTypography.labelSmall, color = HaloGlassColors.Warning)
             }
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Text(text = "Auto-connect", style = HaloTypography.labelSmall, color = HaloGlassColors.TextSecondary)
+            Switch(checked = device.autoConnect, onCheckedChange = { enabled -> onClick(); })
         }
     }
 }
