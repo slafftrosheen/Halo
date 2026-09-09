@@ -68,17 +68,29 @@ class ModelDownloadManager(private val context: Context) {
     }
 
     fun getModelFile(modelId: String): File? {
-        val model = getAllModels().find { it.id == modelId } ?: return null
-        val fileName = model.downloadUrl.substringAfterLast("/")
-        val file = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), fileName)
-        return if (file.exists()) file else null
+        val model = getAllModels().find { it.id == modelId }
+        val fileName = if (model != null) {
+            model.downloadUrl.substringAfterLast("/")
+        } else {
+            "$modelId.gguf"
+        }
+        
+        val candidates = listOf(
+            File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), fileName),
+            File(context.getExternalFilesDir(null), "Download/$fileName"),
+            File(context.getExternalFilesDir(null), fileName),
+            File(context.filesDir, fileName),
+            File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), fileName)
+        )
+        
+        return candidates.firstOrNull { it.exists() && it.length() > 0 }
     }
 
     fun refreshStates() {
         val states = mutableMapOf<String, DownloadState>()
         getAllModels().forEach { model ->
             val file = getModelFile(model.id)
-            if (file != null && file.exists()) {
+            if (file != null && file.exists() && file.length() > 0) {
                 states[model.id] = DownloadState.Downloaded
             } else {
                 states[model.id] = _downloadStates.value[model.id] ?: DownloadState.NotDownloaded
@@ -121,6 +133,8 @@ class ModelDownloadManager(private val context: Context) {
             setDescription("Halo on-device GGUF model download.")
             setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
             setDestinationInExternalFilesDir(context, Environment.DIRECTORY_DOWNLOADS, fileName)
+            setAllowedOverMetered(true)
+            setAllowedOverRoaming(true)
         }
         
         downloadManager.enqueue(request)
@@ -131,11 +145,9 @@ class ModelDownloadManager(private val context: Context) {
     }
 
     fun setActiveModel(modelId: String) {
-        val file = getModelFile(modelId)
-        if (file != null && file.exists()) {
-            _activeModelId.value = modelId
-            prefs.edit().putString("active_model", modelId).apply()
-        }
+        _activeModelId.value = modelId
+        prefs.edit().putString("active_model", modelId).apply()
+        refreshStates()
     }
 
     private fun loadCustomModels() {

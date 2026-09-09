@@ -6,28 +6,50 @@ import com.halo.drivers.heycyan.HeyCyanHost
 import com.halo.drivers.heycyan.RealHeyCyanDriver
 import com.halo.drivers.simulator.SimulatedWearableHost
 import com.halo.sdk.host.WearableHost
+import com.halo.sdk.runtime.EventBus
 import com.halo.sdk.runtime.Storage
+import com.halo.sdk.runtime.embodiment.DeviceSessionManager
 
 /**
  * Creates host adapters from explicit dependencies.
- *
- * HostFactory is intentionally stateless. Device/driver lifetime belongs to
- * HostGraph, which is the composition root for the current host instance.
  */
 class HostFactory(
     private val context: Context,
     private val storage: Storage,
-    private val heyCyanDriver: RealHeyCyanDriver
+    private val heyCyanDriver: RealHeyCyanDriver,
+    private val sessionManager: DeviceSessionManager? = null,
+    private val eventBus: EventBus? = null
 ) {
     fun create(type: HostType): WearableHost {
         return when (type) {
             HostType.HEYCYAN -> HeyCyanHost(
                 driver = heyCyanDriver,
                 audioOutput = HeyCyanAudioOutput(heyCyanDriver),
-                storage = storage
+                storage = storage,
+                sessionManager = sessionManager,
+                eventBus = eventBus
             )
             HostType.ANDROID -> com.halo.host.android.AndroidHost()
             HostType.REPLAY, HostType.SIMULATOR -> SimulatedWearableHost()
+        }
+    }
+
+    companion object {
+        private var sharedDriver: RealHeyCyanDriver? = null
+
+        fun getHeyCyanDriver(context: Context, eventBus: EventBus? = null): RealHeyCyanDriver {
+            return sharedDriver ?: RealHeyCyanDriver(context, eventBus).also { sharedDriver = it }
+        }
+
+        fun create(
+            type: HostType,
+            context: Context,
+            storage: Storage,
+            sessionManager: DeviceSessionManager? = null,
+            eventBus: EventBus? = null
+        ): WearableHost {
+            val driver = getHeyCyanDriver(context, eventBus)
+            return HostFactory(context, storage, driver, sessionManager, eventBus).create(type)
         }
     }
 }
@@ -37,35 +59,4 @@ enum class HostType {
     HEYCYAN,
     REPLAY,
     SIMULATOR
-}
-
-object HostFactory {
-    private var heyCyanDriver: RealHeyCyanDriver? = null
-
-    fun getHeyCyanDriver(context: Context, eventBus: com.halo.sdk.runtime.EventBus? = null): RealHeyCyanDriver {
-        return heyCyanDriver ?: RealHeyCyanDriver(context, eventBus).also { heyCyanDriver = it }
-    }
-
-    fun create(
-        type: HostType,
-        context: Context,
-        storage: com.halo.sdk.runtime.Storage,
-        sessionManager: com.halo.sdk.runtime.embodiment.DeviceSessionManager? = null,
-        eventBus: com.halo.sdk.runtime.EventBus? = null
-    ): WearableHost {
-        return when (type) {
-            HostType.HEYCYAN -> {
-                val driver = getHeyCyanDriver(context, eventBus)
-                HeyCyanHost(
-                    driver = driver,
-                    audioOutput = HeyCyanAudioOutput(driver),
-                    storage = storage,
-                    sessionManager = sessionManager,
-                    eventBus = eventBus
-                )
-            }
-            HostType.ANDROID -> com.halo.host.android.AndroidHost()
-            HostType.REPLAY, HostType.SIMULATOR -> SimulatedWearableHost()
-        }
-    }
 }

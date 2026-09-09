@@ -154,7 +154,7 @@ class DefaultAiProviderRouter(
         val rejections = mutableListOf<ProviderRejection>()
 
         for (provider in providers) {
-            val status = provider.status.value
+            val status = provider.getStatus()
             val state = status.state
             
             logger?.debug("AiProviderRouter", "Checking provider=${provider.id} state=$state")
@@ -195,9 +195,14 @@ class DefaultAiProviderRouter(
             }
             AiRoutingPolicy.LOCAL_ONLY, AiRoutingPolicy.AUTOMATIC, AiRoutingPolicy.PREFERRED_WITH_FALLBACK -> {
                 if (preferred != null && readyProviders.contains(preferred)) {
-                    preferred
+                    val prefState = preferred.status.value.state
+                    if (prefState == ProviderStatus.State.READY) {
+                        preferred
+                    } else {
+                        readyProviders.find { it.status.value.state == ProviderStatus.State.READY } ?: preferred
+                    }
                 } else {
-                    readyProviders.firstOrNull()
+                    readyProviders.find { it.status.value.state == ProviderStatus.State.READY } ?: readyProviders.firstOrNull()
                 }
             }
         }

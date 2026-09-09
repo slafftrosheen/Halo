@@ -164,7 +164,7 @@ class RealHeyCyanDriver(
                 )
                 try {
                     kotlinx.coroutines.withTimeoutOrNull(3000L) {
-                        scanner.scan()
+                        scanner.scan(selectedAddress)
                             .filter { it.address.equals(selectedAddress, ignoreCase = true) }
                             .first()
                     }
@@ -193,9 +193,25 @@ class RealHeyCyanDriver(
 
             finalizeGattConnection(mode)
         } catch (error: CancellationException) {
-            android.util.Log.i("RealHeyCyanDriver", "Connection cancelled")
-            stateStore.updateConnection(com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.DISCONNECTED)
+            android.util.Log.i("RealHeyCyanDriver", "Connection cancelled for $selectedAddress")
+
+            runCatching {
+                gattClient.disconnect()
+            }
+
+            runCatching {
+                rfcommClient.disconnect()
+            }
+
+            readJob?.cancel()
+            readJob = null
+
+            stateStore.updateConnection(
+                com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.DISCONNECTED
+            )
+
             captureRecorder.abort()
+
             throw error
         } catch (error: Throwable) {
             android.util.Log.e("RealHeyCyanDriver", "Connection failed", error)
@@ -231,13 +247,34 @@ class RealHeyCyanDriver(
 
     override suspend fun disconnect() {
         android.util.Log.i("RealHeyCyanDriver", "Disconnecting...")
-        rfcommClient.disconnect()
-        gattClient.disconnect()
-        gattClient.awaitDisconnected()
+
         readJob?.cancel()
         readJob = null
-        stateStore.updateConnection(com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.DISCONNECTED)
-        runCatching { captureRecorder.stop() }
+
+        runCatching {
+            rfcommClient.disconnect()
+        }
+
+        try {
+            gattClient.disconnect()
+            gattClient.awaitDisconnected()
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Throwable) {
+            android.util.Log.w(
+                "RealHeyCyanDriver",
+                "GATT disconnect failed",
+                error
+            )
+        }
+
+        stateStore.updateConnection(
+            com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.DISCONNECTED
+        )
+
+        runCatching {
+            captureRecorder.stop()
+        }
     }
 
     override suspend fun shutdown() {
@@ -259,21 +296,27 @@ class RealHeyCyanDriver(
         readJob?.cancel()
         readJob = eventScope.launch {
             android.util.Log.i("RealHeyCyanDriver", "Starting event reader loop")
-            gattClient.incomingBytes.collect { (characteristicUuid, payload) ->
-                packetAnalyzer.onRx(characteristicUuid = characteristicUuid, payload = payload)
-                val event = eventRouter.decode(
-                    characteristicUuid = characteristicUuid,
-                    payload = payload,
-                    timestampMillis = System.currentTimeMillis()
-                )
-                when (event) {
-                    is HeyCyanEvent.DecodedProprietaryFrame -> handleDecodedEvent(event)
-                    is HeyCyanEvent.Unknown -> android.util.Log.d(
-                        "RealHeyCyanDriver",
-                        "Unknown event on $characteristicUuid: ${payload.joinToString("") { "%02X".format(it) }}"
+            try {
+                gattClient.incomingBytes.collect { (characteristicUuid, payload) ->
+                    packetAnalyzer.onRx(characteristicUuid = characteristicUuid, payload = payload)
+                    val event = eventRouter.decode(
+                        characteristicUuid = characteristicUuid,
+                        payload = payload,
+                        timestampMillis = System.currentTimeMillis()
                     )
-                    else -> handleDecodedEvent(event)
+                    when (event) {
+                        is HeyCyanEvent.DecodedProprietaryFrame -> handleDecodedEvent(event)
+                        is HeyCyanEvent.Unknown -> android.util.Log.d(
+                            "RealHeyCyanDriver",
+                            "Unknown event on $characteristicUuid: ${payload.joinToString("") { "%02X".format(it) }}"
+                        )
+                        else -> handleDecodedEvent(event)
+                    }
                 }
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Throwable) {
+                android.util.Log.e("RealHeyCyanDriver", "GATT reader failed", error)
             }
         }
     }
@@ -386,22 +429,21 @@ class RealHeyCyanDriver(
     }
 
     @SuppressLint("MissingPermission")
-    private fun captureMetadata(): Map<String, String> {
+    private fun captureMetadata(): com.halo.drivers.heycyan.codec.CaptureMetadata {
         val manager = context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
         val adapter = manager?.adapter
-        val name = if (shouldReadBluetoothAdapterName(Build.VERSION.SDK_INT) {
+        val name = if (shouldReadBluetoothAdapterName(Build.VERSION.SDK_INT) { p -> context.checkSelfPermission(p) }) {
             adapter?.name
         } else {
             null
         }
-        return mapOf(
-            "sdkInt" to Build.VERSION.SDK_INT.toString(),
-            "adapterName" to (name ?: "unknown")
+        return com.halo.drivers.heycyan.codec.CaptureMetadata(
+            androidVersion = Build.VERSION.RELEASE,
+            phoneModel = Build.MODEL,
+            bluetoothAdapter = name ?: "unknown"
         )
     }
 
     private fun canDecodeEvents(mode: HeyCyanConnectionMode): Boolean =
         mode == HeyCyanConnectionMode.RUNTIME
-
-    private fun captureMetadata(): Map<String, String> = emptyMap()
 }

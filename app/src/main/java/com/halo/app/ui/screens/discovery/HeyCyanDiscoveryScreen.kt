@@ -89,13 +89,17 @@ fun HeyCyanDiscoveryScreen(context: Context) {
                     message = "Scanning..."
                     scanJob?.cancel()
                     scanJob = scope.launch {
-                        runCatching {
+                        try {
                             session.scan().collect { device ->
                                 if (devices.none { it.advertisement.address == device.advertisement.address }) {
                                     devices += device
                                 }
                             }
-                        }.onFailure { message = it.message }
+                        } catch (e: kotlinx.coroutines.CancellationException) {
+                            throw e
+                        } catch (e: Throwable) {
+                            message = e.message
+                        }
                     }
                 }
             )
@@ -104,14 +108,17 @@ fun HeyCyanDiscoveryScreen(context: Context) {
                 enabled = selectedAddress != null && state is DriverState.Disconnected,
                 onClick = {
                     scope.launch {
-                        runCatching {
+                        try {
                             session.connectSelected(
                                 scenario = selectedScenario.id,
                                 captureId = selectedScenario.id
                             )
+                            message = "Connected; GATT discovery and subscriptions complete."
+                        } catch (e: kotlinx.coroutines.CancellationException) {
+                            throw e
+                        } catch (e: Throwable) {
+                            message = e.message
                         }
-                            .onSuccess { message = "Connected; GATT discovery and subscriptions complete." }
-                            .onFailure { message = it.message }
                     }
                 }
             )

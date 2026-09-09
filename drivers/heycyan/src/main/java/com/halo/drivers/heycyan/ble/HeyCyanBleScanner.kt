@@ -3,6 +3,7 @@
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.ScanCallback
+import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
 import android.content.Context
@@ -14,10 +15,6 @@ import java.util.Collections
 
 /**
  * Handles discovery of nearby BLE devices.
- *
- * Protocol-specific service UUID filtering is intentionally not used here. During
- * protocol discovery we need to observe the device advertisement first rather than
- * assume that a particular service UUID is correct.
  */
 data class BleAdvertisement(
     val address: String,
@@ -39,10 +36,10 @@ class HeyCyanBleScanner(
 
     private val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
     private val adapter = bluetoothManager.adapter
-    private val scanner = adapter.bluetoothLeScanner
+    private val scanner = adapter?.bluetoothLeScanner
 
-    @SuppressLint("MissingPermission") // Caller is responsible for ensuring permissions
-    fun scan(): Flow<BleAdvertisement> = callbackFlow {
+    @SuppressLint("MissingPermission")
+    fun scan(targetAddress: String? = null): Flow<BleAdvertisement> = callbackFlow {
         if (scanner == null) {
             close(IllegalStateException("Bluetooth is not enabled or supported"))
             return@callbackFlow
@@ -52,6 +49,16 @@ class HeyCyanBleScanner(
         val scanSettings = ScanSettings.Builder()
             .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
             .build()
+
+        val filters = if (!targetAddress.isNullOrBlank()) {
+            try {
+                listOf(ScanFilter.Builder().setDeviceAddress(targetAddress).build())
+            } catch (e: Exception) {
+                null
+            }
+        } else {
+            null
+        }
 
         val callback = object : ScanCallback() {
             override fun onScanResult(callbackType: Int, result: ScanResult?) {
@@ -83,11 +90,20 @@ class HeyCyanBleScanner(
             }
         }
 
-        // An empty filter list means that every advertising BLE device is reported.
-        scanner.startScan(emptyList(), scanSettings, callback)
+        try {
+            if (filters != null) {
+                scanner.startScan(filters, scanSettings, callback)
+            } else {
+                scanner.startScan(callback)
+            }
+        } catch (e: Exception) {
+            scanner.startScan(callback)
+        }
 
         awaitClose {
-            scanner.stopScan(callback)
+            try {
+                scanner.stopScan(callback)
+            } catch (e: Exception) {}
         }
     }
 }

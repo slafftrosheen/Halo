@@ -16,6 +16,7 @@ import com.halo.drivers.heycyan.codec.NoOpPacketTracer
 import com.halo.drivers.heycyan.codec.PacketDirection
 import com.halo.drivers.heycyan.codec.PacketTracer
 import com.halo.sdk.driver.DriverState
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -424,10 +425,14 @@ open class HeyCyanGattClient(
     }
 
     suspend fun awaitReady(timeoutMillis: Long = 30_000L) {
-        val terminalState = withTimeout(timeoutMillis) {
-            state.filter {
-                it == DriverState.Ready || it is DriverState.Error || it == DriverState.Disconnected
-            }.first()
+        val terminalState = try {
+            withTimeout(timeoutMillis) {
+                state.filter {
+                    it == DriverState.Ready || it is DriverState.Error || it == DriverState.Disconnected
+                }.first()
+            }
+        } catch (error: CancellationException) {
+            throw error
         }
 
         when (terminalState) {
@@ -443,28 +448,35 @@ open class HeyCyanGattClient(
     suspend fun awaitDisconnected(timeoutMillis: Long = 5_000L) {
         if (_state.value == DriverState.Disconnected) return
 
-        withTimeoutOrNull(timeoutMillis) {
-            state.filter { it == DriverState.Disconnected }.first()
-        } ?: run {
+        try {
+            withTimeoutOrNull(timeoutMillis) {
+                state.filter { it == DriverState.Disconnected }.first()
+            } ?: run {
+                val current = gatt
+                if (current != null) {
+                    tracer.onGattStage(
+                        activeAttemptId,
+                        CaptureGattStage.TEARDOWN,
+                        CaptureStagePhase.STARTED,
+                        detail = "disconnect timeout forced close"
+                    )
+                }
+                clearGatt(current)
+                if (current != null) {
+                    tracer.onGattStage(
+                        activeAttemptId,
+                        CaptureGattStage.TEARDOWN,
+                        CaptureStagePhase.SUCCEEDED,
+                        detail = "disconnect timeout forced close complete"
+                    )
+                }
+                _state.value = DriverState.Disconnected
+            }
+        } catch (error: CancellationException) {
             val current = gatt
-            if (current != null) {
-                tracer.onGattStage(
-                    activeAttemptId,
-                    CaptureGattStage.TEARDOWN,
-                    CaptureStagePhase.STARTED,
-                    detail = "disconnect timeout forced close"
-                )
-            }
             clearGatt(current)
-            if (current != null) {
-                tracer.onGattStage(
-                    activeAttemptId,
-                    CaptureGattStage.TEARDOWN,
-                    CaptureStagePhase.SUCCEEDED,
-                    detail = "disconnect timeout forced close complete"
-                )
-            }
             _state.value = DriverState.Disconnected
+            throw error
         }
     }
 

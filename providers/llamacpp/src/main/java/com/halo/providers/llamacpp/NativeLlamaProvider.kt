@@ -52,8 +52,8 @@ class NativeLlamaProvider(
             ProviderStatus.READY
         } else {
             val file = downloadManager.getModelFile(activeId)
-            if (file != null && file.exists()) {
-                ProviderStatus(ProviderStatus.State.STANDBY, "Model downloaded, ready to load")
+            if (file != null && file.exists() && file.length() > 0) {
+                ProviderStatus(ProviderStatus.State.STANDBY, "Model downloaded (${file.length() / 1024 / 1024} MB), ready to load")
             } else {
                 ProviderStatus(ProviderStatus.State.UNAVAILABLE, "Model not downloaded")
             }
@@ -62,13 +62,26 @@ class NativeLlamaProvider(
         return current
     }
 
+    override suspend fun testConnection(): Boolean {
+        return try {
+            val loaded = loadModelIfNeeded()
+            Log.d("NativeLlamaProvider", "testConnection loadModelIfNeeded result=$loaded")
+            loaded
+        } catch (e: Exception) {
+            Log.e("NativeLlamaProvider", "testConnection error", e)
+            false
+        }
+    }
+
     suspend fun loadModelIfNeeded(): Boolean {
         val activeId = downloadManager.activeModelId.value
+        Log.d("NativeLlamaProvider", "loadModelIfNeeded activeId=$activeId")
         if (activeId == null) return false
 
         if (loadedModelId == activeId && engine != null) return true
 
         val file = downloadManager.getModelFile(activeId)
+        Log.d("NativeLlamaProvider", "getModelFile activeId=$activeId file=${file?.absolutePath} exists=${file?.exists()}")
         if (file == null || !file.exists()) return false
         
         engine?.release()
@@ -76,13 +89,16 @@ class NativeLlamaProvider(
 
         return try {
             _status.value = ProviderStatus(ProviderStatus.State.LOADING, "Loading model into memory...")
+            Log.i("NativeLlamaProvider", "Loading GGUF model: ${file.absolutePath} (${file.length()} bytes)")
             val helper = LlamaHelper(context.contentResolver, scope, llamaEventFlow)
             helper.load(file.absolutePath, contextSize, systemPrompt, {})
             engine = helper
             loadedModelId = activeId
             _status.value = ProviderStatus.READY
+            Log.i("NativeLlamaProvider", "Successfully loaded GGUF model: $activeId")
             true
         } catch (e: Exception) {
+            Log.e("NativeLlamaProvider", "Failed to load GGUF model: ${file.absolutePath}", e)
             _status.value = ProviderStatus(ProviderStatus.State.ERROR, "Failed to load model: ${e.message}")
             false
         }
@@ -152,7 +168,7 @@ class NativeLlamaProvider(
     }
 
     override suspend fun listModels(): List<AiModel> {
-        return AvailableModels.map { model ->
+        return downloadManager.getAllModels().map { model ->
             AiModel(
                 id = model.id,
                 displayName = model.name,

@@ -233,10 +233,12 @@ class HeyCyanSession(
                 }
                 reportResult(intent.intentId, EmbodimentExecutionStatus.SUCCEEDED)
             }
+        } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
+            reportResult(intent.intentId, EmbodimentExecutionStatus.FAILED, "Execution timed out")
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            reportResult(intent.intentId, EmbodimentExecutionStatus.FAILED, "Execution timed out or failed: ${e.message}")
+            reportResult(intent.intentId, EmbodimentExecutionStatus.FAILED, "Execution failed: ${e.message}")
         } finally {
             pendingIntents.remove(intent.intentId)
         }
