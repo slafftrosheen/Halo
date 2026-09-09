@@ -72,11 +72,11 @@ class RealHeyCyanDriver(
 
     private val _events = MutableSharedFlow<DeviceEvent>(extraBufferCapacity = 64)
     override val events: Flow<DeviceEvent> = _events.asSharedFlow()
-    
+
     private val _heyCyanEvents =
         MutableSharedFlow<HeyCyanEvent>(extraBufferCapacity = 64)
     val heyCyanEvents: Flow<HeyCyanEvent> = _heyCyanEvents.asSharedFlow()
-    
+
     override val state: StateFlow<DriverState> = gattClient.state
     private val eventScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var readJob: kotlinx.coroutines.Job? = null
@@ -140,11 +140,11 @@ class RealHeyCyanDriver(
             }
             stateStore.updateConnection(com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.CONNECTING)
             android.util.Log.i("RealHeyCyanDriver", "Starting GATT connection (with settling delay)...")
-            
+
             // Allow stack to settle, especially if a scan was just stopped
             kotlinx.coroutines.delay(1000L)
 
-            val gattReady = runCatching {
+            val firstAttemptReady = runCatching {
                 gattClient.connect(selectedAddress)
                 gattClient.awaitReady()
                 true
@@ -152,49 +152,42 @@ class RealHeyCyanDriver(
                 android.util.Log.w("RealHeyCyanDriver", "GATT connection failed (attempt 1)", it)
             }.getOrDefault(false)
 
-            android.util.Log.i("RealHeyCyanDriver", "Transport status: GATT=$gattReady")
+            android.util.Log.i("RealHeyCyanDriver", "Transport status: GATT=$firstAttemptReady")
 
-            if (!gattReady) {
-                 android.util.Log.i("RealHeyCyanDriver", "GATT direct connect failed, executing scan fallback for $selectedAddress...")
-                 runCatching {
-                     kotlinx.coroutines.withTimeoutOrNull(3000L) {
-                         scanner.scan()
-                             .filter { it.address.equals(selectedAddress, ignoreCase = true) }
-                             .first()
-                     }
-                 }
-                 kotlinx.coroutines.delay(500L)
-                 val retryReady = runCatching {
-                     gattClient.connect(selectedAddress)
-                     gattClient.awaitReady()
-                     true
-                 }.onFailure {
-                     android.util.Log.e("RealHeyCyanDriver", "GATT connection failed (attempt 2)", it)
-                 }.getOrDefault(false)
-                 
-                 if (retryReady) {
-                     android.util.Log.i("RealHeyCyanDriver", "GATT retry succeeded")
-                     stateStore.updateConnection(com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.READY)
-                     startReading()
-                     return
-                 }
+            val gattReady = if (firstAttemptReady) {
+                true
+            } else {
+                android.util.Log.i(
+                    "RealHeyCyanDriver",
+                    "GATT direct connect failed, executing scan fallback for $selectedAddress..."
+                )
+                runCatching {
+                    kotlinx.coroutines.withTimeoutOrNull(3000L) {
+                        scanner.scan()
+                            .filter { it.address.equals(selectedAddress, ignoreCase = true) }
+                            .first()
+                    }
+                }
+                kotlinx.coroutines.delay(500L)
+
+                runCatching {
+                    gattClient.connect(selectedAddress)
+                    gattClient.awaitReady()
+                    true
+                }.onSuccess { retryReady ->
+                    if (retryReady) {
+                        android.util.Log.i("RealHeyCyanDriver", "GATT retry succeeded")
+                    }
+                }.onFailure {
+                    android.util.Log.e("RealHeyCyanDriver", "GATT connection failed (attempt 2)", it)
+                }.getOrDefault(false)
             }
 
-            if (gattReady) {
-                stateStore.updateConnection(com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.READY)
-            }
-            if (gattReady && mode == HeyCyanConnectionMode.RUNTIME) {
-                startReading()
-            }
             check(gattReady) {
                 "No usable HeyCyan transport connected for $selectedAddress"
             }
-            if (mode == HeyCyanConnectionMode.RUNTIME) {
-                check(gattReady) { "Runtime mode requires verified BLE GATT readiness" }
-            }
-            if (canDecodeEvents(mode)) {
-                _events.emit(DeviceEvent.Ready(System.currentTimeMillis()))
-            }
+
+            finalizeGattConnection(mode)
         } catch (error: CancellationException) {
             android.util.Log.i("RealHeyCyanDriver", "Connection cancelled")
             stateStore.updateConnection(com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.DISCONNECTED)
@@ -219,6 +212,18 @@ class RealHeyCyanDriver(
                     )
                 }
             throw error
+        }
+    }
+
+    private suspend fun finalizeGattConnection(mode: HeyCyanConnectionMode) {
+        stateStore.updateConnection(com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.READY)
+
+        if (mode == HeyCyanConnectionMode.RUNTIME) {
+            startReading()
+        }
+
+        if (canDecodeEvents(mode)) {
+            _events.emit(DeviceEvent.Ready(System.currentTimeMillis()))
         }
     }
 
@@ -257,7 +262,7 @@ class RealHeyCyanDriver(
 
         readJob = eventScope.launch {
             android.util.Log.i("RealHeyCyanDriver", "Starting event reader loop")
-            
+
             gattClient.incomingBytes.collect { (characteristicUuid, payload) ->
 
                 packetAnalyzer.onRx(
@@ -292,7 +297,7 @@ class RealHeyCyanDriver(
         event: HeyCyanEvent
     ) {
         val timestamp = System.currentTimeMillis()
-        
+
         stateStore.apply(
             event = event,
             timestamp = timestamp,
