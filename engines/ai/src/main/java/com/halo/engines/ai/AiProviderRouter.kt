@@ -135,15 +135,40 @@ class DefaultAiProviderRouter(
         }
 
         return try {
-            provider.generate(finalRequest, context)
+            val response = provider.generate(finalRequest, context)
+            validateResponse(provider, response)
+            response
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
         } catch (e: AiProviderException) {
             if (policy == AiRoutingPolicy.PREFERRED_WITH_FALLBACK || policy == AiRoutingPolicy.AUTOMATIC) {
                 val fallbackProvider = getFallbackProvider(provider, request, policy)
                 if (fallbackProvider != null) {
-                    return fallbackProvider.generate(finalRequest, context)
+                    val fallbackResp = fallbackProvider.generate(finalRequest, context)
+                    validateResponse(fallbackProvider, fallbackResp)
+                    return fallbackResp
                 }
             }
             throw e
+        }
+    }
+
+    private fun validateResponse(
+        provider: AiProvider,
+        response: AiResponse
+    ) {
+        if (response.providerId != provider.id) {
+            throw AiProviderException(
+                AiErrorType.GENERATION_FAILED,
+                "Provider identity mismatch: expected=${provider.id}, actual=${response.providerId}"
+            )
+        }
+
+        if (response.text.isBlank() && response.toolCalls.isEmpty()) {
+            throw AiProviderException(
+                AiErrorType.EMPTY_RESPONSE,
+                "Provider returned neither text nor tool calls"
+            )
         }
     }
 

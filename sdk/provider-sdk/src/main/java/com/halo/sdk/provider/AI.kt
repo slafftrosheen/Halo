@@ -37,6 +37,12 @@ data class AiRequest(
     val modelId: String? = null
 )
 
+fun AiRequest.validateForTextGeneration() {
+    require(!text.isNullOrBlank()) {
+        "Text generation request must contain non-empty text"
+    }
+}
+
 /**
  * Call to a specific tool requested by the model.
  */
@@ -46,15 +52,38 @@ data class ToolCall(
     val arguments: Map<String, Any>
 )
 
+data class AiGenerationMetrics(
+    val startedAtMs: Long,
+    val firstTokenAtMs: Long? = null,
+    val completedAtMs: Long? = null,
+    val inputTokens: Int? = null,
+    val outputTokens: Int? = null
+) {
+    val timeToFirstTokenMs: Long?
+        get() = if (firstTokenAtMs != null) {
+            firstTokenAtMs - startedAtMs
+        } else {
+            null
+        }
+
+    val totalDurationMs: Long?
+        get() = if (completedAtMs != null) {
+            completedAtMs - startedAtMs
+        } else {
+            null
+        }
+}
+
 /**
  * Modern multimodal AI response.
  */
 data class AiResponse(
-    val text: String?,
+    val text: String,
     val toolCalls: List<ToolCall> = emptyList(),
     val finishReason: String? = null,
     val providerId: String,
-    val modelId: String? = null
+    val modelId: String? = null,
+    val metrics: AiGenerationMetrics? = null
 )
 
 /**

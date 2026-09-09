@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.Storage
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
@@ -29,6 +30,8 @@ class NativeLlamaProvider(
     private val scope = CoroutineScope(Dispatchers.IO)
     private val llamaEventFlow = MutableSharedFlow<LlamaHelper.LLMEvent>()
     private var loadedModelId: String? = null
+    
+    private val modelLoadMutex = Mutex()
     private val inferenceMutex = Mutex()
 
     private val _status = MutableStateFlow(ProviderStatus.UNAVAILABLE)
@@ -73,22 +76,43 @@ class NativeLlamaProvider(
         }
     }
 
-    suspend fun loadModelIfNeeded(): Boolean {
+    suspend fun loadModelIfNeeded(): Boolean = modelLoadMutex.withLock {
         val activeId = downloadManager.activeModelId.value
-        Log.d("NativeLlamaProvider", "loadModelIfNeeded activeId=$activeId")
-        if (activeId == null) return false
+        if (activeId == null) {
+            _status.value = ProviderStatus.UNCONFIGURED
+            return@withLock false
+        }
 
-        if (loadedModelId == activeId && engine != null) return true
+        if (loadedModelId == activeId && engine != null) {
+            _status.value = ProviderStatus.READY
+            return@withLock true
+        }
 
         val file = downloadManager.getModelFile(activeId)
-        Log.d("NativeLlamaProvider", "getModelFile activeId=$activeId file=${file?.absolutePath} exists=${file?.exists()}")
-        if (file == null || !file.exists()) return false
-        
-        engine?.release()
-        engine = null
+        if (file == null) {
+            _status.value = ProviderStatus(ProviderStatus.State.ERROR, "Model file not found: $activeId")
+            return@withLock false
+        }
 
-        return try {
-            _status.value = ProviderStatus(ProviderStatus.State.LOADING, "Loading model into memory...")
+        if (!file.exists()) {
+            _status.value = ProviderStatus(ProviderStatus.State.ERROR, "Model file does not exist: ${file.absolutePath}")
+            return@withLock false
+        }
+
+        if (!file.isFile) {
+            _status.value = ProviderStatus(ProviderStatus.State.ERROR, "Model path is not a file: ${file.absolutePath}")
+            return@withLock false
+        }
+
+        if (file.length() <= 0L) {
+            _status.value = ProviderStatus(ProviderStatus.State.ERROR, "Model file is empty: ${file.absolutePath}")
+            return@withLock false
+        }
+
+        _status.value = ProviderStatus(ProviderStatus.State.LOADING, "Loading $activeId...")
+        releaseCurrentModel()
+
+        return@withLock try {
             Log.i("NativeLlamaProvider", "Loading GGUF model: ${file.absolutePath} (${file.length()} bytes)")
             val helper = LlamaHelper(context.contentResolver, scope, llamaEventFlow)
             helper.load(file.absolutePath, contextSize, systemPrompt, {})
@@ -97,28 +121,191 @@ class NativeLlamaProvider(
             _status.value = ProviderStatus.READY
             Log.i("NativeLlamaProvider", "Successfully loaded GGUF model: $activeId")
             true
-        } catch (e: Exception) {
-            Log.e("NativeLlamaProvider", "Failed to load GGUF model: ${file.absolutePath}", e)
-            _status.value = ProviderStatus(ProviderStatus.State.ERROR, "Failed to load model: ${e.message}")
+        } catch (error: CancellationException) {
+            releaseCurrentModel()
+            _status.value = ProviderStatus(ProviderStatus.State.UNAVAILABLE, "Model loading cancelled")
+            throw error
+        } catch (error: Throwable) {
+            releaseCurrentModel()
+            Log.e("NativeLlamaProvider", "Failed loading model ${file.absolutePath}", error)
+            _status.value = ProviderStatus(ProviderStatus.State.ERROR, "Model load failed: ${error.message ?: error::class.simpleName}")
             false
         }
     }
 
-    override suspend fun health(): Boolean {
-        val activeId = downloadManager.activeModelId.value
-        if (activeId == null) return false
-        val file = downloadManager.getModelFile(activeId)
-        return file != null && file.exists()
+    private fun releaseCurrentModel() {
+        runCatching {
+            engine?.release()
+        }
+        engine = null
+        loadedModelId = null
     }
 
-    override suspend fun generate(request: AiRequest, context: AiContext): AiResponse {
-        val conversation = AIConversation(
-            id = "legacy",
-            messages = context.conversation.toMutableList()
-        )
-        val legacyRequest = AIRequestLegacy(conversation)
-        val legacyResponse = complete(legacyRequest)
-        return AiResponse(text = legacyResponse.text, providerId = id)
+    override suspend fun health(): Boolean {
+        val activeId = downloadManager.activeModelId.value ?: return false
+        val file = downloadManager.getModelFile(activeId)
+        return file != null && file.exists() && file.length() > 0
+    }
+
+    private fun buildPrompt(
+        request: AiRequest,
+        context: AiContext
+    ): String {
+        val system = systemPrompt
+        val history = context.conversation.joinToString("\n") {
+            "${it.role.name.lowercase()}: ${it.content}"
+        }
+        return buildString {
+            append("<|im_start|>system\n")
+            append(system)
+            append("<|im_end|>\n")
+            if (history.isNotBlank()) {
+                append(history)
+                append("\n")
+            }
+            append("<|im_start|>user\n")
+            append(request.text!!.trim())
+            append("<|im_end|>\n")
+            append("<|im_start|>assistant\n")
+        }
+    }
+
+    override suspend fun generate(
+        request: AiRequest,
+        context: AiContext
+    ): AiResponse {
+        request.validateForTextGeneration()
+
+        val modelId = request.modelId
+            ?: downloadManager.activeModelId.value
+            ?: throw AiProviderException(
+                AiErrorType.MODEL_NOT_SELECTED,
+                "No local llama.cpp model is selected"
+            )
+
+        if (loadedModelId != modelId || engine == null) {
+            val loaded = loadModelIfNeeded()
+            if (!loaded) {
+                throw AiProviderException(
+                    AiErrorType.MODEL_LOAD_FAILED,
+                    status.value.message ?: "Unable to load local model"
+                )
+            }
+        }
+
+        val startedAt = System.currentTimeMillis()
+        val prompt = buildPrompt(request, context)
+
+        return inferenceMutex.withLock {
+            try {
+                val text = buildString {
+                    streamInternal(prompt).collect { token ->
+                        append(token)
+                    }
+                }.trim()
+
+                if (text.isBlank()) {
+                    throw AiProviderException(
+                        AiErrorType.EMPTY_RESPONSE,
+                        "llama.cpp returned an empty response"
+                    )
+                }
+
+                val completedAt = System.currentTimeMillis()
+
+                AiResponse(
+                    text = text,
+                    providerId = id,
+                    modelId = modelId,
+                    finishReason = "stop",
+                    metrics = AiGenerationMetrics(
+                        startedAtMs = startedAt,
+                        completedAtMs = completedAt
+                    )
+                )
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: AiProviderException) {
+                throw error
+            } catch (error: Throwable) {
+                Log.e("NativeLlamaProvider", "Generation failed", error)
+                throw AiProviderException(
+                    AiErrorType.GENERATION_FAILED,
+                    "Native llama.cpp generation failed",
+                    error
+                )
+            }
+        }
+    }
+
+    override fun stream(
+        request: AiRequest,
+        context: AiContext
+    ): Flow<AiStreamEvent> = flow {
+        request.validateForTextGeneration()
+
+        emit(AiStreamEvent.Started)
+
+        val startedAt = System.currentTimeMillis()
+        var firstTokenAt: Long? = null
+        val output = StringBuilder()
+
+        try {
+            val modelId = request.modelId
+                ?: downloadManager.activeModelId.value
+                ?: throw AiProviderException(
+                    AiErrorType.MODEL_NOT_SELECTED,
+                    "No llama.cpp model selected"
+                )
+
+            if (loadedModelId != modelId || engine == null) {
+                if (!loadModelIfNeeded()) {
+                    throw AiProviderException(
+                        AiErrorType.MODEL_LOAD_FAILED,
+                        status.value.message ?: "Unable to load llama.cpp model"
+                    )
+                }
+            }
+
+            val prompt = buildPrompt(request, context)
+
+            inferenceMutex.withLock {
+                streamInternal(prompt).collect { token ->
+                    if (firstTokenAt == null) {
+                        firstTokenAt = System.currentTimeMillis()
+                    }
+                    output.append(token)
+                    emit(AiStreamEvent.Token(token))
+                }
+            }
+
+            val text = output.toString().trim()
+
+            if (text.isBlank()) {
+                throw AiProviderException(
+                    AiErrorType.EMPTY_RESPONSE,
+                    "llama.cpp produced no response text"
+                )
+            }
+
+            val response = AiResponse(
+                text = text,
+                providerId = id,
+                modelId = modelId,
+                finishReason = "stop",
+                metrics = AiGenerationMetrics(
+                    startedAtMs = startedAt,
+                    firstTokenAtMs = firstTokenAt,
+                    completedAtMs = System.currentTimeMillis()
+                )
+            )
+
+            emit(AiStreamEvent.Completed(response))
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Throwable) {
+            emit(AiStreamEvent.Failed(error))
+        }
     }
 
     override suspend fun complete(request: AIRequestLegacy): AIResponseLegacy {
@@ -133,7 +320,7 @@ class NativeLlamaProvider(
                 }
                 AIResponseLegacy(result, "stop", System.currentTimeMillis() - startTime)
             } catch (e: Exception) {
-                if (e is kotlinx.coroutines.CancellationException) throw e
+                if (e is CancellationException) throw e
                 if (e is AiProviderException) throw e
                 throw AiProviderException(AiErrorType.LOCAL_MODEL_UNAVAILABLE, "Native Llama completion failed", e)
             }
@@ -147,23 +334,38 @@ class NativeLlamaProvider(
     }
 
     private fun streamInternal(prompt: String): Flow<String> = flow {
-        if (!loadModelIfNeeded()) throw AiProviderException(AiErrorType.LOCAL_MODEL_UNAVAILABLE, "Native engine not loaded")
+        val currentEngine = engine ?: throw AiProviderException(
+            AiErrorType.MODEL_NOT_READY,
+            "Native llama.cpp engine is not loaded"
+        )
 
-        val currentEngine = engine ?: return@flow
         try {
-            val formattedPrompt = "<|im_start|>user\n$prompt<|im_end|>\n<|im_start|>assistant\n"
-            currentEngine.predict(formattedPrompt, "", false)
+            currentEngine.predict(prompt, "", false)
             
             llamaEventFlow.takeWhile { event ->
                 currentCoroutineContext().ensureActive()
                 event !is LlamaHelper.LLMEvent.Done && event !is LlamaHelper.LLMEvent.Error
             }.collect { event ->
-                if (event is LlamaHelper.LLMEvent.Ongoing) emit(event.word)
+                currentCoroutineContext().ensureActive()
+                when (event) {
+                    is LlamaHelper.LLMEvent.Ongoing -> {
+                        if (event.word.isNotEmpty()) {
+                            emit(event.word)
+                        }
+                    }
+                    is LlamaHelper.LLMEvent.Error -> {
+                        throw AiProviderException(
+                            AiErrorType.GENERATION_FAILED,
+                            "llama.cpp generation error"
+                        )
+                    }
+                    else -> Unit
+                }
             }
         } catch (e: Exception) {
-            if (e is kotlinx.coroutines.CancellationException) throw e
+            if (e is CancellationException) throw e
             if (e is AiProviderException) throw e
-            throw AiProviderException(AiErrorType.LOCAL_MODEL_UNAVAILABLE, "Native Llama streaming failed", e)
+            throw AiProviderException(AiErrorType.GENERATION_FAILED, "Native llama.cpp streaming failed", e)
         }
     }
 
@@ -183,9 +385,7 @@ class NativeLlamaProvider(
 
     override suspend fun close() {
         inferenceMutex.withLock {
-            engine?.release()
-            engine = null
-            loadedModelId = null
+            releaseCurrentModel()
         }
         scope.coroutineContext[kotlinx.coroutines.Job]?.cancel()
     }
