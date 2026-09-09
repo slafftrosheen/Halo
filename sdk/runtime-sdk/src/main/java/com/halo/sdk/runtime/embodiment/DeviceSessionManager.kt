@@ -1,6 +1,6 @@
 package com.halo.sdk.runtime.embodiment
 
-import com.halo.sdk.runtime.DeviceIdentity
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -58,8 +58,10 @@ class DeviceSessionManager(
                             if (session.state.value != SessionState.DISCONNECTED) {
                                 break // Connecting or Ready
                             }
+                        } catch (e: CancellationException) {
+                            throw e
                         } catch (e: Exception) {
-                            // Suppress
+                            // Suppress connection failures and continue retrying
                         }
                         kotlinx.coroutines.delay(5000L * attempt) // 5s, 10s, 15s backoff
                         
