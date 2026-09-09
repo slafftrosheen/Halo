@@ -1,6 +1,7 @@
 package com.halo.runtime.kernel
 
 import com.halo.sdk.runtime.*
+import kotlinx.coroutines.CancellationException
 
 class LifecycleManager {
     
@@ -13,6 +14,8 @@ class LifecycleManager {
         while (attempts < 4) {
             try {
                 return action()
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 attempts++
                 if (attempts > 3) {
@@ -23,6 +26,8 @@ class LifecycleManager {
                 if (engine is RecoverableEngine) {
                     try {
                         engine.recover()
+                    } catch (recoverError: CancellationException) {
+                        throw recoverError
                     } catch (recoverError: Exception) {
                         // ignore recover error and just retry
                     }
@@ -64,6 +69,8 @@ class LifecycleManager {
             try {
                 node.engine.stop()
                 context.eventBus.publish(EngineStopped(engineId = node.engine.metadata.id.value))
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 context.eventBus.publish(EngineFailed(engineId = node.engine.metadata.id.value, reason = e.message ?: "Unknown error during stop"))
             }
