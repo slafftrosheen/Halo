@@ -12,6 +12,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -88,11 +89,29 @@ class HeyCyanSession(
 
     private suspend fun syncInitialState(): Boolean {
         return withTimeoutOrNull(10000L) {
-            runCatching { controller.execute(HeyCyanOperation.GetBattery) }
+            try {
+                controller.execute(HeyCyanOperation.GetBattery)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                // Best-effort state sync: continue with the remaining probes.
+            }
             delay(300L)
-            runCatching { controller.execute(HeyCyanOperation.GetDeviceInfo) }
+            try {
+                controller.execute(HeyCyanOperation.GetDeviceInfo)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                // Best-effort state sync: continue with the remaining probes.
+            }
             delay(300L)
-            runCatching { controller.execute(HeyCyanOperation.GetMediaInventory) }
+            try {
+                controller.execute(HeyCyanOperation.GetMediaInventory)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                // Best-effort state sync: continue with the remaining probes.
+            }
             delay(300L)
             true
         } ?: false
@@ -118,13 +137,21 @@ class HeyCyanSession(
     override suspend fun connect() {
         if (_state.value == SessionState.CONNECTING || _state.value == SessionState.READY) return
         _state.value = SessionState.CONNECTING
-        transport.connect()
+        try {
+            transport.connect()
+        } catch (e: CancellationException) {
+            _state.value = SessionState.DISCONNECTED
+            throw e
+        }
     }
 
     override suspend fun disconnect() {
         _state.value = SessionState.DISCONNECTING
-        transport.disconnect()
-        _state.value = SessionState.DISCONNECTED
+        try {
+            transport.disconnect()
+        } finally {
+            _state.value = SessionState.DISCONNECTED
+        }
     }
 
     override suspend fun dispatch(intent: EmbodimentIntent) {
@@ -175,9 +202,6 @@ class HeyCyanSession(
             withTimeout(10000L) {
                 when (operation) {
                     HeyCyanOperation.TakePhoto -> {
-                        // For Photo, we wait for ModeChanged(PHOTO) or some other signal.
-                        // Assuming the device returns to IDLE/PREVIOUS mode eventually.
-                        // For now, let's look for ModeChanged in metadata.
                         eventBus.observe(ObservationUpdated::class.java)
                             .filter { obs -> 
                                 obs.observation.sourceDeviceId == "heycyan" && 
@@ -204,12 +228,13 @@ class HeyCyanSession(
                             .first()
                     }
                     else -> {
-                        // Generic completion for others
                         delay(500)
                     }
                 }
                 reportResult(intent.intentId, EmbodimentExecutionStatus.SUCCEEDED)
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             reportResult(intent.intentId, EmbodimentExecutionStatus.FAILED, "Execution timed out or failed: ${e.message}")
         } finally {
