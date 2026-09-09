@@ -9,7 +9,6 @@ import com.halo.providers.android.assistant.AndroidAssistantProvider
 import com.halo.providers.openrouter.OpenRouterProvider
 import com.halo.providers.llamacpp.NativeLlamaProvider
 import com.halo.providers.llamacpp.ModelDownloadManager
-
 import com.halo.providers.llamacpp.OllamaProvider
 
 class AndroidProviderFactory(
@@ -19,16 +18,24 @@ class AndroidProviderFactory(
 ) : ProviderFactory {
 
     override fun createProviders(): Providers {
+        val llamaProvider = NativeLlamaProvider(
+            context = context,
+            downloadManager = modelDownloadManager,
+            storage = storage
+        )
+
         return Providers(
-            inference = NativeLlamaProvider(context, modelDownloadManager, storage),
-            speechRecognition = AndroidSpeechRecognitionProvider(context),
+            inference = llamaProvider,
+            speechRecognition = AndroidSpeechRecognitionProvider(context) {
+                storage.getString("speech_locale") ?: java.util.Locale.getDefault().toLanguageTag()
+            },
             speechSynthesis = AndroidTTSProvider(context),
             wakeWord = AlwaysWakeDetector(),
             aiProviders = listOfNotNull(
                 runCatching { AndroidAssistantProvider(context) }.getOrNull(),
                 runCatching { OpenRouterProvider(storage) }.getOrNull(),
                 runCatching { OllamaProvider(storage) }.getOrNull(),
-                runCatching { NativeLlamaProvider(context, modelDownloadManager, storage) }.getOrNull()
+                llamaProvider
             )
         )
     }

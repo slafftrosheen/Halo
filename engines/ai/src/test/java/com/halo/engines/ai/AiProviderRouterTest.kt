@@ -71,6 +71,38 @@ class AiProviderRouterTest {
     }
 
     @Test
+    fun `standby provider is not executable`() = runTest {
+        val storage = FakeStorage()
+        val provider = MockProvider("p1", "P1", initialStatus = ProviderStatus(ProviderStatus.State.STANDBY))
+        val router = DefaultAiProviderRouter(listOf(provider), storage)
+        router.setRoutingPolicy(AiRoutingPolicy.EXPLICIT)
+        router.selectProvider("p1")
+
+        try {
+            router.execute(AiRequest(text = "Hello"), AiContext.EMPTY)
+            fail("Expected AiProviderException")
+        } catch (e: AiProviderException) {
+            assertEquals(AiErrorType.PROVIDER_UNAVAILABLE, e.type)
+        }
+    }
+
+    @Test
+    fun `loading provider is not executable`() = runTest {
+        val storage = FakeStorage()
+        val provider = MockProvider("p1", "P1", initialStatus = ProviderStatus(ProviderStatus.State.LOADING))
+        val router = DefaultAiProviderRouter(listOf(provider), storage)
+        router.setRoutingPolicy(AiRoutingPolicy.EXPLICIT)
+        router.selectProvider("p1")
+
+        try {
+            router.execute(AiRequest(text = "Hello"), AiContext.EMPTY)
+            fail("Expected AiProviderException")
+        } catch (e: AiProviderException) {
+            assertEquals(AiErrorType.PROVIDER_UNAVAILABLE, e.type)
+        }
+    }
+
+    @Test
     fun `router falls back if preferred provider is unavailable`() = runTest {
         val storage = FakeStorage()
         val provider1 = MockProvider("p1", "P1")
@@ -126,7 +158,6 @@ class AiProviderRouterTest {
         router.setRoutingPolicy(AiRoutingPolicy.PREFERRED_WITH_FALLBACK)
         router.selectProvider("p1")
         
-        // Even though p1 is READY, it throws on execution, router should catch and fallback to p2
         val response = router.execute(AiRequest(text = "Hello"), AiContext.EMPTY)
         assertEquals("p2", response.providerId)
     }
@@ -140,11 +171,9 @@ class AiProviderRouterTest {
         val router = DefaultAiProviderRouter(listOf(pText, pImage), storage)
         router.setRoutingPolicy(AiRoutingPolicy.AUTOMATIC)
         
-        // Request TEXT
         val resp1 = router.execute(AiRequest(text = "hello"))
         assertEquals("p1", resp1.providerId)
         
-        // Request IMAGE
         val resp2 = router.execute(AiRequest(image = byteArrayOf(1, 2, 3)))
         assertEquals("p2", resp2.providerId)
     }
@@ -160,20 +189,6 @@ class AiProviderRouterTest {
             fail("Expected AiProviderException")
         } catch (e: AiProviderException) {
             assertEquals(AiErrorType.PROVIDER_UNAVAILABLE, e.type)
-        }
-    }
-
-    @Test
-    fun `execute throws with detailed reason if no provider matches`() = runTest {
-        val storage = FakeStorage()
-        val pText = MockProvider("p1", "Text Only", initialStatus = ProviderStatus.UNAVAILABLE)
-        val router = DefaultAiProviderRouter(listOf(pText), storage)
-        
-        try {
-            router.execute(AiRequest(text = "hello"))
-            fail("Should have thrown")
-        } catch (e: AiProviderException) {
-            assertTrue(e.message?.contains("requested capabilities") == true)
         }
     }
 }

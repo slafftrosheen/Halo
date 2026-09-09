@@ -56,15 +56,15 @@ class AIEngine(
     }
 
     override suspend fun reason(input: String): String {
-        return router.execute(AiRequest(text = input), buildContext("Reason about this.")).text ?: ""
+        return router.execute(AiRequest(text = input), buildContext("Reason about this.")).text
     }
 
     override suspend fun summarize(input: String): String {
-        return router.execute(AiRequest(text = input), buildContext("Summarize this.")).text ?: ""
+        return router.execute(AiRequest(text = input), buildContext("Summarize this.")).text
     }
 
     override suspend fun generate(prompt: String): String {
-        return router.execute(AiRequest(text = prompt), buildContext()).text ?: ""
+        return router.execute(AiRequest(text = prompt), buildContext()).text
     }
 
     private fun buildContext(systemContext: String? = null): AiContext {

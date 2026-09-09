@@ -3,6 +3,8 @@ package com.halo.runtime.cognition.session
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.*
 import com.halo.runtime.cognition.blackboard.Blackboard
+import com.halo.runtime.cognition.conversation.ConversationStore
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,6 +20,7 @@ class CognitiveSession(
     private val eventBus: EventBus,
     private val blackboard: Blackboard,
     private val providerRouter: AiProviderRouter,
+    private val conversationStore: ConversationStore,
     private val scope: CoroutineScope
 ) {
     private val _state = MutableStateFlow<CognitiveSessionState>(CognitiveSessionState.Idle)
@@ -28,16 +31,21 @@ class CognitiveSession(
     init {
         scope.launch {
             eventBus.observe(SpeechRecognized::class.java).collect { speech ->
-                if (speech.text.isNotBlank()) {
-                    println("[CognitiveSession] Auto-submitting recognized speech: ${speech.text}")
-                    submit(AiRequest(text = speech.text))
+                if (activeJob?.isActive == true) {
+                    println("[CognitiveSession] Ignoring speech during active AI generation")
+                    return@collect
+                }
+                val text = speech.text.trim()
+                if (text.isNotEmpty()) {
+                    println("[CognitiveSession] Auto-submitting recognized speech")
+                    submit(AiRequest(text = text))
                 }
             }
         }
     }
 
     fun submit(request: AiRequest, policy: AiContextPolicy = AiContextPolicy.CONSERVATIVE) {
-        println("[CognitiveSession] submit: $request")
+        println("[CognitiveSession] submit request")
         activeJob?.cancel()
         activeJob = scope.launch {
             val requestId = UUID.randomUUID().toString()
@@ -87,7 +95,9 @@ class CognitiveSession(
                 
                 if (supportsStreaming) {
                     println("[CognitiveSession] Starting streaming")
+                    var completedResponse: AiResponse? = null
                     var accumulatedText = ""
+
                     provider.stream(finalRequest, context)
                         .collect { event ->
                             when (event) {
@@ -99,30 +109,84 @@ class CognitiveSession(
                                     _state.value = CognitiveSessionState.Streaming(accumulatedText)
                                     eventBus.publish(CognitiveTokenReceived(requestId = requestId, token = event.text))
                                 }
+                                is AiStreamEvent.Completed -> {
+                                    completedResponse = event.response
+                                }
                                 is AiStreamEvent.Failed -> throw event.error
-                                else -> {}
+                                is AiStreamEvent.ToolCallDelta -> {}
                             }
                         }
-                    
-                    val finalResponse = AiResponse(text = accumulatedText, providerId = providerId, modelId = modelId)
-                    _state.value = CognitiveSessionState.Completed(finalResponse)
-                    eventBus.publish(CognitiveCompleted(requestId = requestId, response = accumulatedText))
-                    if (accumulatedText.isNotBlank()) {
-                        eventBus.publish(TtsRequested(text = accumulatedText, timestamp = System.currentTimeMillis()))
+
+                    val response = completedResponse
+                        ?: throw AiProviderException(
+                            AiErrorType.INVALID_RESPONSE,
+                            "Provider stream ended without Completed event"
+                        )
+
+                    if (response.text.isBlank() && response.toolCalls.isEmpty()) {
+                        throw AiProviderException(
+                            AiErrorType.EMPTY_RESPONSE,
+                            "Provider stream completed with no usable response"
+                        )
+                    }
+
+                    _state.value = CognitiveSessionState.Completed(response)
+                    eventBus.publish(CognitiveCompleted(requestId = requestId, response = response.text))
+
+                    val responseText = response.text.trim()
+                    val userText = finalRequest.text?.trim().orEmpty()
+                    if (responseText.isNotBlank() && responseText != "HANDOFF_STARTED") {
+                        if (userText.isNotBlank()) {
+                            val turn = conversationStore.append(
+                                userText = userText,
+                                assistantText = responseText
+                            )
+                            eventBus.publish(
+                                ConversationTurnCompleted(
+                                    turnId = turn.id,
+                                    userText = turn.userText,
+                                    assistantText = turn.assistantText
+                                )
+                            )
+                        }
+                        eventBus.publish(TtsRequested(text = responseText, timestamp = System.currentTimeMillis()))
                     }
                     println("[CognitiveSession] Streaming completed")
                 } else {
                     println("[CognitiveSession] Executing one-shot")
                     val response = providerRouter.execute(finalRequest, context)
+                    if (response.text.isBlank() && response.toolCalls.isEmpty()) {
+                        throw AiProviderException(
+                            AiErrorType.EMPTY_RESPONSE,
+                            "Provider returned no usable response"
+                        )
+                    }
                     _state.value = CognitiveSessionState.Completed(response)
                     eventBus.publish(CognitiveCompleted(requestId = requestId, response = response.text))
-                    val responseText = response.text
-                    if (!responseText.isNullOrBlank() && responseText != "HANDOFF_STARTED") {
+
+                    val responseText = response.text.trim()
+                    val userText = finalRequest.text?.trim().orEmpty()
+                    if (responseText.isNotBlank() && responseText != "HANDOFF_STARTED") {
+                        if (userText.isNotBlank()) {
+                            val turn = conversationStore.append(
+                                userText = userText,
+                                assistantText = responseText
+                            )
+                            eventBus.publish(
+                                ConversationTurnCompleted(
+                                    turnId = turn.id,
+                                    userText = turn.userText,
+                                    assistantText = turn.assistantText
+                                )
+                            )
+                        }
                         eventBus.publish(TtsRequested(text = responseText, timestamp = System.currentTimeMillis()))
                     }
                     println("[CognitiveSession] Execution completed")
                 }
-                
+            } catch (e: CancellationException) {
+                _state.value = CognitiveSessionState.Idle
+                throw e
             } catch (e: Exception) {
                 println("[CognitiveSession] Session failed: ${e.message}")
                 val message = mapErrorMessage(e)
@@ -150,18 +214,18 @@ class CognitiveSession(
         _state.value = CognitiveSessionState.Idle
     }
 
-    private suspend fun buildContext(policy: AiContextPolicy): AiContext {
-        // Aggregates data from Blackboard based on policy
-        val facts = blackboard.flow.value
-        
+    fun clearConversation() {
+        scope.launch {
+            conversationStore.clear()
+        }
+    }
+
+    private fun buildContext(policy: AiContextPolicy): AiContext {
         val conversation = if (policy.includeConversation) {
-            facts.filter { it.payload is com.halo.runtime.cognition.blackboard.SpeechKnowledge }
-                .takeLast(10)
-                .map { 
-                    val speech = it.payload as com.halo.runtime.cognition.blackboard.SpeechKnowledge
-                    AIMessage(Role.USER, speech.transcript) 
-                }
-        } else emptyList()
+            conversationStore.recentMessages(maxTurns = 10)
+        } else {
+            emptyList()
+        }
 
         return AiContext(
             conversation = conversation,

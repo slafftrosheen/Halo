@@ -72,11 +72,16 @@ object ManualDependencyGraph {
     val speechSessionManager get() = engineGraph.speechSessionManager
     val speechPerceptionBridge get() = engineGraph.speechPerceptionBridge
 
+    val conversationStore by lazy {
+        com.halo.runtime.cognition.conversation.InMemoryConversationStore()
+    }
+
     val cognitiveSession by lazy {
         com.halo.runtime.cognition.session.CognitiveSession(
             eventBus,
             blackboard,
             aiProviderRouter,
+            conversationStore,
             infra.scope
         )
     }

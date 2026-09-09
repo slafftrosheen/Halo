@@ -15,8 +15,33 @@ data class CognitiveTokenReceived(override val id: String = UUID.randomUUID().to
 data class CognitiveCompleted(override val id: String = UUID.randomUUID().toString(), val requestId: String, val response: String?, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
 data class CognitiveFailed(override val id: String = UUID.randomUUID().toString(), val requestId: String, val message: String, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
 
+data class ConversationTurnCompleted(
+    override val id: String = UUID.randomUUID().toString(),
+    val turnId: String,
+    val userText: String,
+    val assistantText: String,
+    override val timestamp: Long = System.currentTimeMillis()
+) : HaloEvent
+
 data class DeviceCommand(override val id: String = UUID.randomUUID().toString(), override val timestamp: Long, val command: String) : HaloEvent
 data class TtsRequested(override val id: String = UUID.randomUUID().toString(), override val timestamp: Long, val text: String) : HaloEvent
+
+data class TtsStarted(
+    override val id: String = UUID.randomUUID().toString(),
+    val textLength: Int,
+    override val timestamp: Long = System.currentTimeMillis()
+) : HaloEvent
+
+data class TtsCompleted(
+    override val id: String = UUID.randomUUID().toString(),
+    override val timestamp: Long = System.currentTimeMillis()
+) : HaloEvent
+
+data class TtsFailed(
+    override val id: String = UUID.randomUUID().toString(),
+    val message: String,
+    override val timestamp: Long = System.currentTimeMillis()
+) : HaloEvent
 
 // Runtime Lifecycle Events
 sealed interface RuntimeLifecycleEvent : HaloEvent

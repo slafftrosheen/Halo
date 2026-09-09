@@ -13,8 +13,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.CancellationException
 
 import kotlin.time.Duration.Companion.seconds
 
@@ -92,6 +92,31 @@ class DefaultAiProviderRouter(
         val policy = _routingPolicy.value
         val selectedId = _selectedProviderId.value
         val preferredProvider = providers.find { it.id == selectedId }
+
+        if (policy == AiRoutingPolicy.EXPLICIT) {
+            val provider = providers.find { it.id == selectedId }
+                ?: throw AiProviderException(
+                    AiErrorType.PROVIDER_UNAVAILABLE,
+                    "Explicitly selected provider not found: $selectedId"
+                )
+
+            val status = provider.getStatus()
+            if (status.state != ProviderStatus.State.READY) {
+                throw AiProviderException(
+                    AiErrorType.PROVIDER_UNAVAILABLE,
+                    "Explicitly selected provider is not ready: ${provider.id}, state=${status.state}, message=${status.message}"
+                )
+            }
+
+            if (!supports(provider, request)) {
+                throw AiProviderException(
+                    AiErrorType.UNSUPPORTED_CAPABILITY,
+                    "Explicitly selected provider does not support this request"
+                )
+            }
+
+            return provider
+        }
         
         val (provider, rejections) = selectProviderWithDetails(policy, preferredProvider, request)
         if (provider != null) return provider
@@ -101,17 +126,36 @@ class DefaultAiProviderRouter(
         
         val reason = when (policy) {
             AiRoutingPolicy.LOCAL_ONLY -> "No local AI providers available.\nDetails:\n$details"
-            AiRoutingPolicy.EXPLICIT -> "Explicitly selected provider ($selectedId) is unavailable or unsupported.\nDetails:\n$details"
             else -> "No available AI provider found for requested capabilities.\nDetails:\n$details"
         }
         throw AiProviderException(AiErrorType.PROVIDER_UNAVAILABLE, reason)
     }
+
     override suspend fun execute(request: AiRequest, context: AiContext): AiResponse {
         val policy = _routingPolicy.value
         val selectedId = _selectedProviderId.value
         val preferredProvider = providers.find { it.id == selectedId }
 
         logger?.info("AiProviderRouter", "Executing request with policy=$policy, selectedId=$selectedId")
+
+        if (policy == AiRoutingPolicy.EXPLICIT) {
+            val provider = getEligibleProvider(request)
+            val modelId = request.modelId ?: _selectedModelId.value
+            val finalRequest = if (request.modelId == null && modelId != null) request.copy(modelId = modelId) else request
+
+            logger?.info("AiProviderRouter", "AI execute start provider=${provider.id} model=${finalRequest.modelId}")
+            return try {
+                val response = provider.generate(finalRequest, context)
+                validateResponse(provider, response)
+                logger?.info("AiProviderRouter", "AI execute complete provider=${response.providerId} model=${response.modelId} chars=${response.text.length}")
+                response
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                logger?.error("AiProviderRouter", "AI execute failed provider=${provider.id} message=${e.message}")
+                throw e
+            }
+        }
 
         val (provider, rejections) = selectProviderWithDetails(policy, preferredProvider, request)
         
@@ -121,7 +165,6 @@ class DefaultAiProviderRouter(
             
             val reason = when (policy) {
                 AiRoutingPolicy.LOCAL_ONLY -> "No local AI providers available.\nDetails:\n$details"
-                AiRoutingPolicy.EXPLICIT -> "Explicitly selected provider ($selectedId) is unavailable or unsupported.\nDetails:\n$details"
                 else -> "No available AI provider found for requested capabilities.\nDetails:\n$details"
             }
             throw AiProviderException(AiErrorType.PROVIDER_UNAVAILABLE, reason)
@@ -134,11 +177,13 @@ class DefaultAiProviderRouter(
             request
         }
 
+        logger?.info("AiProviderRouter", "AI execute start provider=${provider.id} model=${finalRequest.modelId}")
         return try {
             val response = provider.generate(finalRequest, context)
             validateResponse(provider, response)
+            logger?.info("AiProviderRouter", "AI execute complete provider=${response.providerId} model=${response.modelId} chars=${response.text.length}")
             response
-        } catch (e: kotlinx.coroutines.CancellationException) {
+        } catch (e: CancellationException) {
             throw e
         } catch (e: AiProviderException) {
             if (policy == AiRoutingPolicy.PREFERRED_WITH_FALLBACK || policy == AiRoutingPolicy.AUTOMATIC) {
@@ -159,7 +204,7 @@ class DefaultAiProviderRouter(
     ) {
         if (response.providerId != provider.id) {
             throw AiProviderException(
-                AiErrorType.GENERATION_FAILED,
+                AiErrorType.INVALID_RESPONSE,
                 "Provider identity mismatch: expected=${provider.id}, actual=${response.providerId}"
             )
         }
@@ -174,7 +219,11 @@ class DefaultAiProviderRouter(
 
     private data class ProviderRejection(val providerId: String, val reason: String)
 
-    private suspend fun selectProviderWithDetails(policy: AiRoutingPolicy, preferred: AiProvider?, request: AiRequest): Pair<AiProvider?, List<ProviderRejection>> {
+    private suspend fun selectProviderWithDetails(
+        policy: AiRoutingPolicy,
+        preferred: AiProvider?,
+        request: AiRequest
+    ): Pair<AiProvider?, List<ProviderRejection>> {
         val readyProviders = mutableListOf<AiProvider>()
         val rejections = mutableListOf<ProviderRejection>()
 
@@ -184,8 +233,13 @@ class DefaultAiProviderRouter(
             
             logger?.debug("AiProviderRouter", "Checking provider=${provider.id} state=$state")
 
-            if (state != ProviderStatus.State.READY && state != ProviderStatus.State.STANDBY && state != ProviderStatus.State.LOADING) {
-                rejections.add(ProviderRejection(provider.id, "Status is $state (${status.message ?: "No message"})"))
+            if (state != ProviderStatus.State.READY) {
+                rejections.add(
+                    ProviderRejection(
+                        provider.id,
+                        "Provider is not executable: state=$state (${status.message ?: "No message"})"
+                    )
+                )
                 continue
             }
 
@@ -206,11 +260,6 @@ class DefaultAiProviderRouter(
                 continue
             }
 
-            if (policy == AiRoutingPolicy.EXPLICIT && preferred != null && provider.id != preferred.id) {
-                rejections.add(ProviderRejection(provider.id, "Not the explicitly selected provider (policy is EXPLICIT)"))
-                continue
-            }
-
             readyProviders.add(provider)
         }
         
@@ -220,14 +269,9 @@ class DefaultAiProviderRouter(
             }
             AiRoutingPolicy.LOCAL_ONLY, AiRoutingPolicy.AUTOMATIC, AiRoutingPolicy.PREFERRED_WITH_FALLBACK -> {
                 if (preferred != null && readyProviders.contains(preferred)) {
-                    val prefState = preferred.status.value.state
-                    if (prefState == ProviderStatus.State.READY) {
-                        preferred
-                    } else {
-                        readyProviders.find { it.status.value.state == ProviderStatus.State.READY } ?: preferred
-                    }
+                    preferred
                 } else {
-                    readyProviders.find { it.status.value.state == ProviderStatus.State.READY } ?: readyProviders.firstOrNull()
+                    readyProviders.firstOrNull()
                 }
             }
         }
@@ -236,19 +280,23 @@ class DefaultAiProviderRouter(
         return Pair(result, rejections)
     }
 
-    private suspend fun selectProviderForRequest(policy: AiRoutingPolicy, preferred: AiProvider?, request: AiRequest): AiProvider? {
-        return selectProviderWithDetails(policy, preferred, request).first
-    }
-
-    private suspend fun getFallbackProvider(failedProvider: AiProvider, request: AiRequest, policy: AiRoutingPolicy): AiProvider? {
+    private suspend fun getFallbackProvider(
+        failedProvider: AiProvider,
+        request: AiRequest,
+        policy: AiRoutingPolicy
+    ): AiProvider? {
         val readyProviders = mutableListOf<AiProvider>()
+
         for (provider in providers) {
-            val state = provider.status.value.state
-            if (provider.id != failedProvider.id && (state == ProviderStatus.State.READY || state == ProviderStatus.State.STANDBY || state == ProviderStatus.State.LOADING) && supports(provider, request)) {
+            if (provider.id == failedProvider.id) continue
+
+            val state = provider.getStatus().state
+
+            if (state == ProviderStatus.State.READY && supports(provider, request)) {
                 readyProviders.add(provider)
             }
         }
-        
+
         return if (policy == AiRoutingPolicy.LOCAL_ONLY) {
             readyProviders.firstOrNull { it.isLocal }
         } else {

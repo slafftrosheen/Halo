@@ -47,7 +47,7 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
             is CognitiveSessionState.PreparingContext -> "Preparing context..."
             is CognitiveSessionState.Reasoning -> "Reasoning..."
             is CognitiveSessionState.Streaming -> sessionState.text
-            is CognitiveSessionState.Completed -> sessionState.response.text ?: "Completed"
+            is CognitiveSessionState.Completed -> sessionState.response.text.ifBlank { "Completed" }
             is CognitiveSessionState.Failed -> "Error: ${sessionState.message}"
             else -> when (uiRuntimeState) {
                 HaloRuntimeState.Idle -> if (isReady) "Ready when you are" else "Initializing..."
@@ -126,10 +126,15 @@ class HomeViewModel(
     )
 
     fun submitText(text: String) {
-        Log.d("HomeViewModel", "submitText: $text")
+        Log.d("HomeViewModel", "submitText invoked")
         viewModelScope.launch {
             cognitiveSession.submit(AiRequest(text = text))
         }
+    }
+    
+    fun clearConversation() {
+        Log.d("HomeViewModel", "clearConversation")
+        cognitiveSession.clearConversation()
     }
     
     fun cancelSession() {

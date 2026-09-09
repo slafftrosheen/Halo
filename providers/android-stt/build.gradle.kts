@@ -16,4 +16,7 @@ dependencies {
     implementation("androidx.core:core-ktx:1.12.0")
     implementation(project(":sdk:provider-sdk"))
     implementation(project(":sdk:host-sdk"))
+
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
 }

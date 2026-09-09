@@ -1,0 +1,40 @@
+package com.halo.app.di
+
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
+import com.halo.providers.llamacpp.ModelDownloadManager
+import com.halo.sdk.runtime.Storage
+import org.junit.Assert.assertSame
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+
+@RunWith(RobolectricTestRunner::class)
+class AndroidProviderFactoryTest {
+
+    private class FakeStorage : Storage {
+        private val data = mutableMapOf<String, Any?>()
+        override fun getString(key: String, defaultValue: String?) = data[key] as? String ?: defaultValue
+        override fun putString(key: String, value: String?) { data[key] = value }
+        override fun getInt(key: String, defaultValue: Int) = data[key] as? Int ?: defaultValue
+        override fun putInt(key: String, value: Int) { data[key] = value }
+        override fun getBoolean(key: String, defaultValue: Boolean) = data[key] as? Boolean ?: defaultValue
+        override fun putBoolean(key: String, value: Boolean) { data[key] = value }
+        override fun remove(key: String) { data.remove(key) }
+        override fun clear() { data.clear() }
+    }
+
+    @Test
+    fun `inference provider is identical object instance in aiProviders`() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val storage = FakeStorage()
+        val downloadManager = ModelDownloadManager(context)
+        val factory = AndroidProviderFactory(context, downloadManager, storage)
+
+        val providers = factory.createProviders()
+        val inference = providers.inference
+        val aiProvider = providers.aiProviders.first { it.id == inference.id }
+
+        assertSame(inference, aiProvider)
+    }
+}

@@ -12,30 +12,44 @@ import com.halo.sdk.provider.RecognitionResult
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import java.util.Locale
 
 class AndroidSpeechRecognitionProvider(
-    private val context: Context
+    private val context: Context,
+    private val getLocale: () -> String = { Locale.getDefault().toLanguageTag() }
 ) : LiveSpeechRecognitionProvider {
 
     private var speechRecognizer: SpeechRecognizer? = null
+    @Volatile private var listening = false
+    @Volatile private var cancellationRequested = false
+
+    private val configuredLocale: String
+        get() = getLocale()
 
     override fun startListening(): Flow<RecognitionEvent> = callbackFlow {
-        // Run on main thread (SpeechRecognizer requirement)
         val handler = android.os.Handler(android.os.Looper.getMainLooper())
         
         fun cleanup() {
+            listening = false
             speechRecognizer?.cancel()
             speechRecognizer?.destroy()
             speechRecognizer = null
         }
-        
+
         handler.post {
+            if (listening) {
+                cleanup()
+            }
+            listening = true
+            cancellationRequested = false
+
             val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
                 putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE, configuredLocale)
                 putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
             }
             
-            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context).apply {
+            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context.applicationContext).apply {
                 setRecognitionListener(object : RecognitionListener {
                     override fun onReadyForSpeech(params: Bundle?) {
                         trySend(RecognitionEvent.Ready)
@@ -50,20 +64,29 @@ class AndroidSpeechRecognitionProvider(
                     }
                     
                     override fun onError(error: Int) {
+                        if (cancellationRequested || error == SpeechRecognizer.ERROR_CLIENT) {
+                            listening = false
+                            close()
+                            return
+                        }
+                        listening = false
                         trySend(RecognitionEvent.Error("Speech recognition failed with error code: $error"))
                         close()
                     }
 
                     override fun onResults(results: Bundle?) {
+                        listening = false
                         val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                        val text = matches?.firstOrNull() ?: ""
-                        trySend(RecognitionEvent.Final(RecognitionResult(text, "en-US", 1.0f)))
+                        val text = matches?.firstOrNull()?.trim() ?: ""
+                        if (text.isNotBlank()) {
+                            trySend(RecognitionEvent.Final(RecognitionResult(text, configuredLocale, 1.0f)))
+                        }
                         close()
                     }
 
                     override fun onPartialResults(partialResults: Bundle?) {
                         val matches = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                        val text = matches?.firstOrNull() ?: ""
+                        val text = matches?.firstOrNull()?.trim() ?: ""
                         if (text.isNotBlank()) {
                             trySend(RecognitionEvent.Partial(text))
                         }
@@ -83,15 +106,19 @@ class AndroidSpeechRecognitionProvider(
     }
 
     override suspend fun stopListening() {
+        cancellationRequested = true
         val handler = android.os.Handler(android.os.Looper.getMainLooper())
         handler.post {
+            listening = false
             speechRecognizer?.stopListening()
         }
     }
 
     override suspend fun close() {
+        cancellationRequested = true
         val handler = android.os.Handler(android.os.Looper.getMainLooper())
         handler.post {
+            listening = false
             speechRecognizer?.cancel()
             speechRecognizer?.destroy()
             speechRecognizer = null
