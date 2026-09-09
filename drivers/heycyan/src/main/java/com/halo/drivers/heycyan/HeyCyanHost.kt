@@ -10,15 +10,12 @@ import com.halo.sdk.host.DeviceConnectionState
 import com.halo.sdk.host.DeviceContext
 import com.halo.sdk.host.Freshness
 import com.halo.sdk.host.WearableHost
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.*
 
-/**
- * Implementation of [WearableHost] for HeyCyan glasses.
- * Wraps [RealHeyCyanDriver] to expose standard host interfaces.
- */
 class HeyCyanHost(
     private val driver: RealHeyCyanDriver,
     override val audioOutput: AudioOutput,
@@ -26,38 +23,28 @@ class HeyCyanHost(
     private val sessionManager: com.halo.sdk.runtime.embodiment.DeviceSessionManager? = null,
     private val eventBus: com.halo.sdk.runtime.EventBus? = null
 ) : WearableHost {
-    init {
-        Log.i("HeyCyanHost", "Initializing HeyCyanHost")
-    }
+    init { Log.i("HeyCyanHost", "Initializing HeyCyanHost") }
     override val id: String = "heycyan-glasses"
-    
     override val audioSource: AudioSource = HeyCyanAudioSource(driver)
-
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var selectedAddress: String? = storage.getString("last_heycyan_address")
 
     override val buttons: Flow<ButtonEvent> = driver.heyCyanEvents
         .filterIsInstance<HeyCyanEvent.ButtonPressed>()
-        .map {
-            // All HeyCyan button interactions trigger cognitive intent
-            ButtonEvent.Pressed
-        }
+        .map { ButtonEvent.Pressed }
 
     private val _deviceContext = MutableStateFlow(DeviceContext())
     override val deviceContext: StateFlow<DeviceContext> = _deviceContext
-
     private val _connectivity = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected)
     override val connectivity: StateFlow<ConnectionState> = _connectivity
 
     init {
-        // Sync device context from driver state
         driver.deviceState
             .onEach { state ->
                 val heyCyanConn = state.connection
-                val isConnected = heyCyanConn == com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.CONNECTED || 
-                                  heyCyanConn == com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.READY
-                
-                val deviceConnState = when(heyCyanConn) {
+                val isConnected = heyCyanConn == com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.CONNECTED ||
+                    heyCyanConn == com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.READY
+                val deviceConnState = when (heyCyanConn) {
                     com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.DISCONNECTED -> DeviceConnectionState.DISCONNECTED
                     com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.SCANNING -> DeviceConnectionState.DISCOVERING
                     com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.CONNECTING -> DeviceConnectionState.CONNECTING
@@ -68,22 +55,20 @@ class HeyCyanHost(
                     com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.UNBOUND -> DeviceConnectionState.ERROR
                     com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.RECONNECTING -> DeviceConnectionState.CONNECTING
                 }
-
                 val currentLastSeen = _deviceContext.value.lastSeenMs
                 val newFreshness = when {
                     isConnected -> Freshness.FRESH
                     currentLastSeen != null -> Freshness.STALE
                     else -> Freshness.UNKNOWN
                 }
-
                 _deviceContext.value = DeviceContext(
                     deviceId = selectedAddress,
-                    name = "HeyCyan", 
+                    name = "HeyCyan",
                     deviceType = "HEYCYAN_GLASSES",
                     batteryPercent = state.battery?.level,
                     connected = isConnected,
                     charging = state.battery?.charging ?: false,
-                    capabilities = emptyList(), // The actual capabilities are yet to be decoded
+                    capabilities = emptyList(),
                     transport = "BLE",
                     lastSeenMs = if (isConnected) System.currentTimeMillis() else currentLastSeen,
                     freshness = newFreshness,
@@ -91,16 +76,13 @@ class HeyCyanHost(
                 )
             }
             .launchIn(scope)
-            
-        // Sync connectivity state
+
         driver.state
             .onEach { state ->
-                _connectivity.value = when(state) {
+                _connectivity.value = when (state) {
                     is com.halo.sdk.driver.DriverState.Ready -> {
                         val address = selectedAddress
-                        if (address != null) {
-                            ensureSessionRegistered(address)
-                        }
+                        if (address != null) ensureSessionRegistered(address)
                         ConnectionState.Ready
                     }
                     is com.halo.sdk.driver.DriverState.Connecting -> ConnectionState.Connecting
@@ -117,8 +99,8 @@ class HeyCyanHost(
         if (sm.getSession(address) == null) {
             val identity = com.halo.sdk.runtime.DeviceIdentity(
                 deviceId = address,
-                displayName = "HeyCyan Glasses",
-                deviceType = "HEYCYAN_GLASSES"
+                deviceType = "HEYCYAN_GLASSES",
+                displayName = "HeyCyan Glasses"
             )
             val transport = com.halo.drivers.heycyan.transport.HeyCyanEmbodimentTransport(driver)
             val controllerAdapter = com.halo.drivers.heycyan.capability.HeyCyanCapabilityControllerAdapter(driver.capabilityController)
@@ -143,11 +125,11 @@ class HeyCyanHost(
             Log.w("HeyCyanHost", "Connect called without selected address")
             return
         }
-        
         try {
             driver.connect(address, HeyCyanConnectionMode.RUNTIME)
-            // The driver handles state updates which will be reflected in _deviceContext
             Log.i("HeyCyanHost", "Connected to $address")
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Log.e("HeyCyanHost", "Failed to connect to $address", e)
             _connectivity.value = ConnectionState.Failed(e.message ?: "Unknown error")
