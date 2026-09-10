@@ -217,6 +217,18 @@ class AiProviderRouterTest {
     }
 
     @Test
+    fun `router falls back on transient generation failure`() = runTest {
+        val storage = FakeStorage()
+        val primary = MockProvider("p1", "P1", throwsException = true, failureType = AiErrorType.GENERATION_FAILED)
+        val fallback = MockProvider("p2", "P2")
+        val router = DefaultAiProviderRouter(listOf(primary, fallback), storage)
+        router.setRoutingPolicy(AiRoutingPolicy.PREFERRED_WITH_FALLBACK)
+        router.selectProvider("p1")
+        val response = router.execute(AiRequest(text = "Hello"), AiContext.EMPTY)
+        assertEquals("p2", response.providerId)
+    }
+
+    @Test
     fun `router does not fallback on invalid request`() = runTest {
         val storage = FakeStorage()
         val primary = MockProvider("p1", "P1", throwsException = true, failureType = AiErrorType.INVALID_REQUEST)
@@ -229,6 +241,23 @@ class AiProviderRouterTest {
             fail("Expected INVALID_REQUEST")
         } catch (e: AiProviderException) {
             assertEquals(AiErrorType.INVALID_REQUEST, e.type)
+        }
+        assertTrue(fallback.receivedRequests.isEmpty())
+    }
+
+    @Test
+    fun `router does not fallback on authentication failure`() = runTest {
+        val storage = FakeStorage()
+        val primary = MockProvider("p1", "P1", throwsException = true, failureType = AiErrorType.AUTHENTICATION_FAILED)
+        val fallback = MockProvider("p2", "P2")
+        val router = DefaultAiProviderRouter(listOf(primary, fallback), storage)
+        router.setRoutingPolicy(AiRoutingPolicy.PREFERRED_WITH_FALLBACK)
+        router.selectProvider("p1")
+        try {
+            router.execute(AiRequest(text = "Hello"), AiContext.EMPTY)
+            fail("Expected AUTHENTICATION_FAILED")
+        } catch (e: AiProviderException) {
+            assertEquals(AiErrorType.AUTHENTICATION_FAILED, e.type)
         }
         assertTrue(fallback.receivedRequests.isEmpty())
     }
