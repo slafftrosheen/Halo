@@ -9,6 +9,12 @@ data class AiProviderUiState(
     val status: ProviderStatus,
     val isSelected: Boolean,
     val capabilities: Set<AiCapability>,
-    /** True when this provider only hands work to an external assistant. */
-    val isHandoff: Boolean = false
+    /**
+     * True when this provider only hands work to an external assistant.
+     *
+     * The current Android assistant provider is the only handoff-only
+     * provider exposed by the Android host. Keep this derived here until the
+     * UI projection is moved to the provider-type boundary in the view model.
+     */
+    val isHandoff: Boolean = id == "android.system.assistant"
 )
