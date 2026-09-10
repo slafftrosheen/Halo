@@ -2,13 +2,21 @@ package com.halo.app.ui.screens.home
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
-import com.halo.app.ui.glass.material.HaloRuntimeState
-import com.halo.sdk.runtime.*
-import com.halo.sdk.provider.*
-import com.halo.runtime.cognition.session.CognitiveSession
-import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import androidx.lifecycle.viewModelScope
+import com.halo.app.ui.glass.material.HaloRuntimeState
+import com.halo.sdk.provider.*
+import com.halo.sdk.runtime.*
+import com.halo.runtime.cognition.session.CognitiveSession
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.launch
 
 data class TimelinePreviewEvent(
     val command: String,
@@ -39,7 +47,7 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
         activeSessions: List<com.halo.sdk.runtime.embodiment.EmbodimentSession> = emptyList()
     ): HomeUiState {
         val isReady = snapshot.runtimeState == RuntimeState.Running
-        
+
         val uiRuntimeState = when (snapshot.speech) {
             is SpeechSessionState.PassiveListening -> HaloRuntimeState.Idle
             is SpeechSessionState.Capturing -> HaloRuntimeState.Capturing
@@ -49,7 +57,7 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
             is SpeechSessionState.Speaking -> HaloRuntimeState.Speaking
             else -> HaloRuntimeState.Idle
         }
-        
+
         val contextualText = when (sessionState) {
             is CognitiveSessionState.PreparingContext -> "Preparing context..."
             is CognitiveSessionState.Reasoning -> "Reasoning..."
@@ -65,30 +73,33 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
                 else -> "Processing..."
             }
         }
-        
+
         val activeSession = activeSessions.firstOrNull()
-        val isConnected = if (activeSession != null) {
-            val sState = activeSession.state.value
-            sState == com.halo.sdk.runtime.embodiment.SessionState.CONNECTED ||
-                sState == com.halo.sdk.runtime.embodiment.SessionState.HANDSHAKE ||
-                sState == com.halo.sdk.runtime.embodiment.SessionState.CAPABILITY_SYNC ||
-                sState == com.halo.sdk.runtime.embodiment.SessionState.STATE_SYNC ||
-                sState == com.halo.sdk.runtime.embodiment.SessionState.READY
-        } else {
-            snapshot.deviceContext.connected
+        val activeSessionState = activeSession?.state?.value
+        val isConnected = when (activeSessionState) {
+            com.halo.sdk.runtime.embodiment.SessionState.CONNECTING,
+            com.halo.sdk.runtime.embodiment.SessionState.CONNECTED,
+            com.halo.sdk.runtime.embodiment.SessionState.HANDSHAKE,
+            com.halo.sdk.runtime.embodiment.SessionState.CAPABILITY_SYNC,
+            com.halo.sdk.runtime.embodiment.SessionState.STATE_SYNC,
+            com.halo.sdk.runtime.embodiment.SessionState.READY -> true
+            null -> snapshot.deviceContext.connected
+            else -> false
         }
 
-        val connectionText = if (activeSession != null) {
-            when (activeSession.state.value) {
-                com.halo.sdk.runtime.embodiment.SessionState.READY -> "Ready"
-                com.halo.sdk.runtime.embodiment.SessionState.CONNECTED -> "Connected"
-                com.halo.sdk.runtime.embodiment.SessionState.CONNECTING -> "Connecting"
-                com.halo.sdk.runtime.embodiment.SessionState.DISCONNECTING -> "Disconnecting"
-                com.halo.sdk.runtime.embodiment.SessionState.ERROR -> "Error"
-                else -> "Disconnected"
-            }
-        } else {
-            if (isConnected) "Connected" else "Disconnected"
+        val connectionText = when (activeSessionState) {
+            com.halo.sdk.runtime.embodiment.SessionState.SAVED -> "Saved"
+            com.halo.sdk.runtime.embodiment.SessionState.DISCOVERED -> "Discovered"
+            com.halo.sdk.runtime.embodiment.SessionState.CONNECTING -> "Connecting"
+            com.halo.sdk.runtime.embodiment.SessionState.CONNECTED -> "Connected"
+            com.halo.sdk.runtime.embodiment.SessionState.HANDSHAKE -> "Handshaking"
+            com.halo.sdk.runtime.embodiment.SessionState.CAPABILITY_SYNC -> "Syncing capabilities"
+            com.halo.sdk.runtime.embodiment.SessionState.STATE_SYNC -> "Syncing state"
+            com.halo.sdk.runtime.embodiment.SessionState.READY -> "Ready"
+            com.halo.sdk.runtime.embodiment.SessionState.DISCONNECTING -> "Disconnecting"
+            com.halo.sdk.runtime.embodiment.SessionState.DISCONNECTED -> "Disconnected"
+            com.halo.sdk.runtime.embodiment.SessionState.ERROR -> "Error"
+            null -> if (snapshot.deviceContext.connected) "Connected" else "Disconnected"
         }
 
         val caps = if (snapshot.deviceContext.capabilities.isEmpty()) {
@@ -99,7 +110,7 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
 
         val selectedDiag = diagnostics.find { it.providerId == selectedProviderId }
             ?: diagnostics.find { it.selected }
-        
+
         val activeProviderText = if (selectedDiag != null) {
             val modelSuffix = selectedModelId?.let { " · $it" }
                 ?: selectedDiag.selectedModelId?.let { " · $it" }
@@ -126,12 +137,12 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
         } else {
             contextualText
         }
-        
+
         return HomeUiState(
             connectionState = connectionText,
             contextualText = finalContextualText,
             runtimeState = uiRuntimeState,
-            recentEvents = snapshot.timeline.map { 
+            recentEvents = snapshot.timeline.map {
                 TimelinePreviewEvent(it.title, it.status, it.timestamp.toEpochMilli())
             },
             activeProvider = activeProviderText,
@@ -155,12 +166,12 @@ class HomeViewModel(
 ) : ViewModel() {
 
     private val mapper = HomeUiMapper()
-    
+
     val uiState: StateFlow<HomeUiState> = combine(
         snapshotManager.snapshot,
         cognitiveSession.state,
-        aiProviderRouter?.selectedProviderId ?: MutableStateFlow(null),
-        aiProviderRouter?.selectedModelId ?: MutableStateFlow(null),
+        aiProviderRouter?.selectedProviderId ?: MutableStateFlow<String?>(null),
+        aiProviderRouter?.selectedModelId ?: MutableStateFlow<String?>(null),
         aiProviderRouter?.diagnosticsFlow ?: MutableStateFlow(emptyList<AiProviderDiagnostic>()),
         deviceSessionManager?.activeSessions ?: MutableStateFlow(emptyList<com.halo.sdk.runtime.embodiment.EmbodimentSession>())
     ) { args ->
@@ -190,16 +201,19 @@ class HomeViewModel(
 
     fun submitText(text: String) {
         Log.d("HomeViewModel", "submitText invoked")
+        val normalized = text.trim()
+        if (normalized.isBlank()) return
         viewModelScope.launch {
-            cognitiveSession.submit(AiRequest(text = text))
+            runCatching { cognitiveSession.submit(AiRequest(text = normalized)) }
+                .onFailure { Log.e("HomeViewModel", "Text submission failed", it) }
         }
     }
-    
+
     fun clearConversation() {
         Log.d("HomeViewModel", "clearConversation")
         cognitiveSession.clearConversation()
     }
-    
+
     fun cancelSession() {
         Log.d("HomeViewModel", "cancelSession")
         cognitiveSession.cancel()
@@ -208,14 +222,16 @@ class HomeViewModel(
     fun startListening() {
         Log.d("HomeViewModel", "startListening")
         viewModelScope.launch {
-            commandBus.dispatch(StartListening)
+            runCatching { commandBus.dispatch(StartListening) }
+                .onFailure { Log.e("HomeViewModel", "Failed to start listening", it) }
         }
     }
-    
+
     fun stopListening() {
         Log.d("HomeViewModel", "stopListening")
         viewModelScope.launch {
-            commandBus.dispatch(StopListening)
+            runCatching { commandBus.dispatch(StopListening) }
+                .onFailure { Log.e("HomeViewModel", "Failed to stop listening", it) }
         }
     }
 
@@ -224,15 +240,11 @@ class HomeViewModel(
 
     fun navigateToIntelligence() {
         Log.d("HomeViewModel", "navigateToIntelligence")
-        viewModelScope.launch {
-            _navigationEvents.emit("ai_settings")
-        }
+        viewModelScope.launch { _navigationEvents.emit("ai_settings") }
     }
 
     fun navigateToDevices() {
         Log.d("HomeViewModel", "navigateToDevices")
-        viewModelScope.launch {
-            _navigationEvents.emit("devices")
-        }
+        viewModelScope.launch { _navigationEvents.emit("devices") }
     }
 }
