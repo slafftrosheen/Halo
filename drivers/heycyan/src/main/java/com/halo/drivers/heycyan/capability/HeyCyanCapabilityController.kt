@@ -53,8 +53,20 @@ class HeyCyanCapabilityController(
      * Execute a semantic [HeyCyanOperation].
      */
     suspend fun execute(operation: HeyCyanOperation): Result<Unit> {
-        val capability = capabilityFor(operation)
         val now = System.currentTimeMillis()
+
+        // Guard: SynchronizeMedia is a media-service operation, not a physical BLE command
+        if (operation == HeyCyanOperation.SynchronizeMedia) {
+            return failure(
+                operation = operation,
+                failure = HeyCyanOperationFailure.Unsupported(
+                    "SynchronizeMedia is a media-service operation and must be executed by HeyCyanMediaSynchronizer"
+                ),
+                timestamp = now,
+            )
+        }
+
+        val capability = capabilityFor(operation)
 
         // Guard: unsupported by device hardware
         if (capability.status == HeyCyanCapabilityStatus.UNSUPPORTED) {
@@ -65,8 +77,10 @@ class HeyCyanCapabilityController(
             )
         }
 
-        // Guard: protocol not established
-        if (capability.status == HeyCyanCapabilityStatus.BLOCKED_BY_PROTOCOL) {
+        // Guard: protocol not established or structural validation in progress
+        if (capability.status == HeyCyanCapabilityStatus.BLOCKED_BY_PROTOCOL ||
+            capability.status == HeyCyanCapabilityStatus.STRUCTURAL_VALIDATION
+        ) {
             return failure(
                 operation = operation,
                 failure = HeyCyanOperationFailure.ProtocolNotEstablished(
@@ -146,16 +160,6 @@ class HeyCyanCapabilityController(
                 operation = operation,
                 failure = HeyCyanOperationFailure.DeviceRejected(
                     "HeyCyan is not currently recording audio.",
-                ),
-                timestamp = now,
-            )
-        }
-
-        if (operation == HeyCyanOperation.SynchronizeMedia) {
-            return failure(
-                operation = operation,
-                failure = HeyCyanOperationFailure.Unsupported(
-                    "SynchronizeMedia is a media-service operation and must be executed by HeyCyanMediaSynchronizer"
                 ),
                 timestamp = now,
             )

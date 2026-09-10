@@ -24,7 +24,7 @@ Service 2: 6e40fff0-b5a3-f393-e0a9-e50e24dcca9e
 
 Vendor `WriteRequest.getNoRspInstance()` selects Android `WRITE_TYPE_NO_RESPONSE`.
 
-The Halo capture logs also show GATT MTU negotiation to 517 and successful notification descriptor writes. The capture corpus additionally reports an RFCOMM transport status, so Halo should not assume every device operation necessarily uses the same path without tracing the actual call path.
+The Halo capture logs also show GATT MTU negotiation to 517 and successful notification descriptor writes. The historical RFCOMM research, candidate UUIDs, and packet framing are archived for reference in [RFCOMM_RESEARCH_ARCHIVE.md](file:///c:/Users/slavd/HaloEco/Halo/docs/protocols/heycyan/RFCOMM_RESEARCH_ARCHIVE.md); production runtime operates exclusively over BLE GATT.
 
 ## Wi-Fi media transfer
 

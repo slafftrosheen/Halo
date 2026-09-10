@@ -21,9 +21,9 @@ class HaloRuntime(
             "HaloRuntime is already running"
         }
 
+        val connectivity = graph.wearableHost.connectivity.value
         check(
-            graph.wearableHost.connectivity.value
-                is ConnectionState.Connected
+            connectivity is ConnectionState.Connected || connectivity is ConnectionState.Ready
         ) {
             "Runtime requires a connected host; discovery and physical device selection are separate workflows"
         }

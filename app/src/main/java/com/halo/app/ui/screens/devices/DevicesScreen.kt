@@ -89,6 +89,7 @@ class DevicesViewModel(
     val uiState: StateFlow<DevicesUiState> = _uiState.asStateFlow()
 
     private val _photoStates = MutableStateFlow<Map<String, PhotoActionState>>(emptyMap())
+    private val activePhotoIntents = java.util.concurrent.ConcurrentHashMap<String, String>()
 
     init {
         viewModelScope.launch {
@@ -145,12 +146,15 @@ class DevicesViewModel(
         viewModelScope.launch {
             eventBus.observe(com.halo.sdk.runtime.EmbodimentExecutionEvent::class.java).collect { event ->
                 val deviceId = event.device.deviceId
-                if (_photoStates.value[deviceId] == PhotoActionState.CAPTURING) {
+                val expectedIntentId = activePhotoIntents[deviceId]
+                if (expectedIntentId != null && event.result.intentId == expectedIntentId) {
                     if (event.result.status == com.halo.sdk.runtime.embodiment.ExecutionStatus.SUCCEEDED) {
+                        activePhotoIntents.remove(deviceId)
                         _photoStates.value = _photoStates.value + (deviceId to PhotoActionState.COMPLETED)
                         kotlinx.coroutines.delay(2000L)
                         _photoStates.value = _photoStates.value + (deviceId to PhotoActionState.READY)
                     } else if (event.result.status == com.halo.sdk.runtime.embodiment.ExecutionStatus.FAILED) {
+                        activePhotoIntents.remove(deviceId)
                         _photoStates.value = _photoStates.value + (deviceId to PhotoActionState.FAILED)
                         kotlinx.coroutines.delay(3000L)
                         _photoStates.value = _photoStates.value + (deviceId to PhotoActionState.READY)
@@ -176,6 +180,7 @@ class DevicesViewModel(
             intentId = java.util.UUID.randomUUID().toString(), targetDeviceId = deviceId,
             kind = com.halo.sdk.runtime.embodiment.IntentKind.CAPTURE_PHOTO
         )
+        activePhotoIntents[deviceId] = intent.intentId
         dispatchEmbodimentIntent(deviceId, intent)
     }
 
@@ -212,7 +217,17 @@ class DevicesViewModel(
             eventBus.publish(com.halo.sdk.runtime.IntentCreated(intentId = intent.intentId, intentKind = intent.kind.name))
             val session = sessionManager.activeSessions.value.find { it.identity.deviceId == deviceId }
             if (session != null && session.state.value == com.halo.sdk.runtime.embodiment.SessionState.READY) {
-                session.dispatch(intent)
+                try {
+                    session.dispatch(intent)
+                } catch (e: Exception) {
+                    eventBus.publish(com.halo.sdk.runtime.EmbodimentExecutionEvent(
+                        device = com.halo.sdk.runtime.DeviceIdentity(deviceId, "Unknown", "Unknown"),
+                        result = com.halo.sdk.runtime.embodiment.ExecutionResult(
+                            intentId = intent.intentId, status = com.halo.sdk.runtime.embodiment.ExecutionStatus.FAILED,
+                            reason = "Dispatch error: ${e.message}", timestamp = System.currentTimeMillis(), embodimentId = deviceId
+                        )
+                    ))
+                }
             } else {
                 eventBus.publish(com.halo.sdk.runtime.EmbodimentExecutionEvent(
                     device = com.halo.sdk.runtime.DeviceIdentity(deviceId, "Unknown", "Unknown"),

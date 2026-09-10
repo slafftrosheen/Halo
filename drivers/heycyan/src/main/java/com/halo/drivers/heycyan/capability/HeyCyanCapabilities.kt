@@ -57,7 +57,7 @@ object HeyCyanCapabilities {
     val liveAudio = HeyCyanCapability(
         id = HeyCyanCapabilityIds.AUDIO_LIVE_INPUT,
         name = "Live audio input",
-        status = HeyCyanCapabilityStatus.STRUCTURAL_VALIDATION,
+        status = HeyCyanCapabilityStatus.BLOCKED_BY_PROTOCOL,
         description = "Observed BC59 audio stream; complete framing and trigger remain unresolved.",
     )
 

@@ -128,14 +128,25 @@ class HeyCyanCapabilityControllerTest {
     }
 
     @Test
-    fun `synchronize media is never translated into transfer mode command`() {
-        val exception = assertThrows(IllegalStateException::class.java) {
-            HeyCyanOperation.SynchronizeMedia.toCommand()
-        }
+    fun `synchronize media returns unsupported failure and never hits transport`() = runTest {
+        val result = controller.execute(HeyCyanOperation.SynchronizeMedia)
+        assertTrue(result.isFailure)
+        val exception = result.exceptionOrNull()
+        assertTrue(exception is HeyCyanCapabilityException)
+        val failure = (exception as HeyCyanCapabilityException).failure
+        assertTrue(failure is HeyCyanOperationFailure.Unsupported)
+        assertTrue(executor.executedCommands.isEmpty())
+    }
 
-        assertTrue(
-            exception.message!!.contains("HeyCyanMediaSynchronizer")
-        )
+    @Test
+    fun `prepare voice routing is rejected as protocol blocked and never hits transport`() = runTest {
+        val result = controller.execute(HeyCyanOperation.PrepareVoiceRouting)
+        assertTrue(result.isFailure)
+        val exception = result.exceptionOrNull()
+        assertTrue(exception is HeyCyanCapabilityException)
+        val failure = (exception as HeyCyanCapabilityException).failure
+        assertTrue(failure is HeyCyanOperationFailure.ProtocolNotEstablished)
+        assertTrue(executor.executedCommands.isEmpty())
     }
 
     @Test

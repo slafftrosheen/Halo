@@ -29,7 +29,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.io.File
 import com.halo.drivers.heycyan.HeyCyanConnectionMode
-import com.halo.drivers.heycyan.rfcomm.HeyCyanRfcommClient
 import com.halo.drivers.heycyan.capability.*
 import com.halo.drivers.heycyan.ble.HeyCyanGattCommandTransport
 import com.halo.drivers.heycyan.protocol.HeyCyanProtocolConstants
@@ -62,7 +61,6 @@ class RealHeyCyanDriver(
     )
     val scanner = HeyCyanBleScanner(context)
     private val gattClient = HeyCyanGattClient(context, tracer)
-    private val rfcommClient = HeyCyanRfcommClient(context, tracer)
 
     private val packetAnalyzer = HeyCyanConsolePacketAnalyzer(ConsoleLogger())
     private val eventRouter = HeyCyanEventRouter(HeyCyanResponseDecoder())
@@ -199,10 +197,6 @@ class RealHeyCyanDriver(
                 gattClient.disconnect()
             }
 
-            runCatching {
-                rfcommClient.disconnect()
-            }
-
             readJob?.cancel()
             readJob = null
 
@@ -251,10 +245,6 @@ class RealHeyCyanDriver(
         readJob?.cancel()
         readJob = null
 
-        runCatching {
-            rfcommClient.disconnect()
-        }
-
         try {
             gattClient.disconnect()
             gattClient.awaitDisconnected()
@@ -280,7 +270,6 @@ class RealHeyCyanDriver(
     override suspend fun shutdown() {
         android.util.Log.i("RealHeyCyanDriver", "Shutting down...")
         disconnect()
-        rfcommClient.shutdown()
         eventScope.coroutineContext[kotlinx.coroutines.Job]?.cancel()
     }
 
@@ -419,9 +408,6 @@ class RealHeyCyanDriver(
         ButtonType.CAMERA_BUTTON -> 4
         ButtonType.UNKNOWN -> -1
     }
-
-    private fun isUsableDiscoveryTransport(rfcommChannels: List<String>, gattReady: Boolean): Boolean =
-        rfcommChannels.isNotEmpty() || gattReady
 
     private fun shouldReadBluetoothAdapterName(sdkInt: Int, permissionChecker: (String) -> Int): Boolean {
         return sdkInt < Build.VERSION_CODES.S ||

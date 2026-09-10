@@ -199,7 +199,7 @@ class HeyCyanSession(
 
     private suspend fun waitForCompletion(intent: EmbodimentIntent, operation: HeyCyanOperation) {
         try {
-            withTimeout(10000L) {
+            withTimeout(30000L) {
                 when (operation) {
                     HeyCyanOperation.TakePhoto -> {
                         eventBus.observe(ObservationUpdated::class.java)

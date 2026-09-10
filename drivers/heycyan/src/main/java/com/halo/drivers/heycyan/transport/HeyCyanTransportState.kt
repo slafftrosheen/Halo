@@ -1,7 +1,15 @@
 package com.halo.drivers.heycyan.transport
 
 /**
- * Normalized transport state across BLE GATT, RFCOMM, and Wi-Fi.
+ * Transport types available in the HeyCyan driver architecture.
+ */
+enum class HeyCyanTransportType {
+    BLE_GATT,
+    WIFI,
+}
+
+/**
+ * Normalized transport state across BLE GATT and Wi-Fi.
  */
 enum class HeyCyanTransportState {
     UNAVAILABLE,
@@ -21,10 +29,9 @@ data class HeyCyanTransportStatus(
 )
 
 /**
- * Complete transport status snapshot across all 3 device transports.
+ * Complete transport status snapshot across device transports.
  */
 data class HeyCyanTransportSnapshot(
     val ble: HeyCyanTransportStatus = HeyCyanTransportStatus(HeyCyanTransportType.BLE_GATT, HeyCyanTransportState.DISCONNECTED),
-    val rfcomm: HeyCyanTransportStatus = HeyCyanTransportStatus(HeyCyanTransportType.RFCOMM, HeyCyanTransportState.DISCONNECTED),
     val wifi: HeyCyanTransportStatus = HeyCyanTransportStatus(HeyCyanTransportType.WIFI, HeyCyanTransportState.DISCONNECTED),
 )

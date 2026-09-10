@@ -1,0 +1,1812 @@
+diff --git a/app/src/main/java/com/halo/app/HaloRuntime.kt b/app/src/main/java/com/halo/app/HaloRuntime.kt
+index edc1743..d1cd4ec 100644
+--- a/app/src/main/java/com/halo/app/HaloRuntime.kt
++++ b/app/src/main/java/com/halo/app/HaloRuntime.kt
+@@ -21,9 +21,9 @@ class HaloRuntime(
+             "HaloRuntime is already running"
+         }
+ 
++        val connectivity = graph.wearableHost.connectivity.value
+         check(
+-            graph.wearableHost.connectivity.value
+-                is ConnectionState.Connected
++            connectivity is ConnectionState.Connected || connectivity is ConnectionState.Ready
+         ) {
+             "Runtime requires a connected host; discovery and physical device selection are separate workflows"
+         }
+diff --git a/app/src/main/java/com/halo/app/ui/screens/devices/DevicesScreen.kt b/app/src/main/java/com/halo/app/ui/screens/devices/DevicesScreen.kt
+index 60f2838..4b0a2e5 100644
+--- a/app/src/main/java/com/halo/app/ui/screens/devices/DevicesScreen.kt
++++ b/app/src/main/java/com/halo/app/ui/screens/devices/DevicesScreen.kt
+@@ -89,6 +89,7 @@ class DevicesViewModel(
+     val uiState: StateFlow<DevicesUiState> = _uiState.asStateFlow()
+ 
+     private val _photoStates = MutableStateFlow<Map<String, PhotoActionState>>(emptyMap())
++    private val activePhotoIntents = java.util.concurrent.ConcurrentHashMap<String, String>()
+ 
+     init {
+         viewModelScope.launch {
+@@ -145,12 +146,15 @@ class DevicesViewModel(
+         viewModelScope.launch {
+             eventBus.observe(com.halo.sdk.runtime.EmbodimentExecutionEvent::class.java).collect { event ->
+                 val deviceId = event.device.deviceId
+-                if (_photoStates.value[deviceId] == PhotoActionState.CAPTURING) {
++                val expectedIntentId = activePhotoIntents[deviceId]
++                if (expectedIntentId != null && event.result.intentId == expectedIntentId) {
+                     if (event.result.status == com.halo.sdk.runtime.embodiment.ExecutionStatus.SUCCEEDED) {
++                        activePhotoIntents.remove(deviceId)
+                         _photoStates.value = _photoStates.value + (deviceId to PhotoActionState.COMPLETED)
+                         kotlinx.coroutines.delay(2000L)
+                         _photoStates.value = _photoStates.value + (deviceId to PhotoActionState.READY)
+                     } else if (event.result.status == com.halo.sdk.runtime.embodiment.ExecutionStatus.FAILED) {
++                        activePhotoIntents.remove(deviceId)
+                         _photoStates.value = _photoStates.value + (deviceId to PhotoActionState.FAILED)
+                         kotlinx.coroutines.delay(3000L)
+                         _photoStates.value = _photoStates.value + (deviceId to PhotoActionState.READY)
+@@ -176,6 +180,7 @@ class DevicesViewModel(
+             intentId = java.util.UUID.randomUUID().toString(), targetDeviceId = deviceId,
+             kind = com.halo.sdk.runtime.embodiment.IntentKind.CAPTURE_PHOTO
+         )
++        activePhotoIntents[deviceId] = intent.intentId
+         dispatchEmbodimentIntent(deviceId, intent)
+     }
+ 
+@@ -212,7 +217,17 @@ class DevicesViewModel(
+             eventBus.publish(com.halo.sdk.runtime.IntentCreated(intentId = intent.intentId, intentKind = intent.kind.name))
+             val session = sessionManager.activeSessions.value.find { it.identity.deviceId == deviceId }
+             if (session != null && session.state.value == com.halo.sdk.runtime.embodiment.SessionState.READY) {
+-                session.dispatch(intent)
++                try {
++                    session.dispatch(intent)
++                } catch (e: Exception) {
++                    eventBus.publish(com.halo.sdk.runtime.EmbodimentExecutionEvent(
++                        device = com.halo.sdk.runtime.DeviceIdentity(deviceId, "Unknown", "Unknown"),
++                        result = com.halo.sdk.runtime.embodiment.ExecutionResult(
++                            intentId = intent.intentId, status = com.halo.sdk.runtime.embodiment.ExecutionStatus.FAILED,
++                            reason = "Dispatch error: ${e.message}", timestamp = System.currentTimeMillis(), embodimentId = deviceId
++                        )
++                    ))
++                }
+             } else {
+                 eventBus.publish(com.halo.sdk.runtime.EmbodimentExecutionEvent(
+                     device = com.halo.sdk.runtime.DeviceIdentity(deviceId, "Unknown", "Unknown"),
+diff --git a/docs/protocols/heycyan/05_TRANSPORT.md b/docs/protocols/heycyan/05_TRANSPORT.md
+index e782491..af8cd10 100644
+--- a/docs/protocols/heycyan/05_TRANSPORT.md
++++ b/docs/protocols/heycyan/05_TRANSPORT.md
+@@ -24,7 +24,7 @@ Service 2: 6e40fff0-b5a3-f393-e0a9-e50e24dcca9e
+ 
+ Vendor `WriteRequest.getNoRspInstance()` selects Android `WRITE_TYPE_NO_RESPONSE`.
+ 
+-The Halo capture logs also show GATT MTU negotiation to 517 and successful notification descriptor writes. The capture corpus additionally reports an RFCOMM transport status, so Halo should not assume every device operation necessarily uses the same path without tracing the actual call path.
++The Halo capture logs also show GATT MTU negotiation to 517 and successful notification descriptor writes. The historical RFCOMM research, candidate UUIDs, and packet framing are archived for reference in [RFCOMM_RESEARCH_ARCHIVE.md](file:///c:/Users/slavd/HaloEco/Halo/docs/protocols/heycyan/RFCOMM_RESEARCH_ARCHIVE.md); production runtime operates exclusively over BLE GATT.
+ 
+ ## Wi-Fi media transfer
+ 
+diff --git a/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/HeyCyanTransportPlan.kt b/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/HeyCyanTransportPlan.kt
+deleted file mode 100644
+index 8b10720..0000000
+--- a/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/HeyCyanTransportPlan.kt
++++ /dev/null
+@@ -1,29 +0,0 @@
+-package com.halo.drivers.heycyan
+-
+-enum class HeyCyanTransport {
+-    RFCOMM,
+-    BLE_GATT
+-}
+-
+-data class HeyCyanTransportPlan(
+-    val attemptOrder: List<HeyCyanTransport>,
+-    val gattRequired: Boolean
+-) {
+-    companion object {
+-        fun forMode(mode: HeyCyanConnectionMode): HeyCyanTransportPlan = when (mode) {
+-            HeyCyanConnectionMode.DISCOVERY -> HeyCyanTransportPlan(
+-                attemptOrder = listOf(HeyCyanTransport.RFCOMM, HeyCyanTransport.BLE_GATT),
+-                gattRequired = false
+-            )
+-            HeyCyanConnectionMode.RUNTIME -> HeyCyanTransportPlan(
+-                attemptOrder = listOf(HeyCyanTransport.RFCOMM, HeyCyanTransport.BLE_GATT),
+-                gattRequired = true
+-            )
+-        }
+-    }
+-}
+-
+-internal fun isUsableDiscoveryTransport(
+-    rfcommChannels: List<String>,
+-    gattReady: Boolean
+-): Boolean = rfcommChannels.isNotEmpty() || gattReady
+diff --git a/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/RealHeyCyanDriver.kt b/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/RealHeyCyanDriver.kt
+index 115bb8e..06894d3 100644
+--- a/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/RealHeyCyanDriver.kt
++++ b/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/RealHeyCyanDriver.kt
+@@ -29,7 +29,6 @@ import kotlinx.coroutines.flow.first
+ import kotlinx.coroutines.launch
+ import java.io.File
+ import com.halo.drivers.heycyan.HeyCyanConnectionMode
+-import com.halo.drivers.heycyan.rfcomm.HeyCyanRfcommClient
+ import com.halo.drivers.heycyan.capability.*
+ import com.halo.drivers.heycyan.ble.HeyCyanGattCommandTransport
+ import com.halo.drivers.heycyan.protocol.HeyCyanProtocolConstants
+@@ -62,7 +61,6 @@ class RealHeyCyanDriver(
+     )
+     val scanner = HeyCyanBleScanner(context)
+     private val gattClient = HeyCyanGattClient(context, tracer)
+-    private val rfcommClient = HeyCyanRfcommClient(context, tracer)
+ 
+     private val packetAnalyzer = HeyCyanConsolePacketAnalyzer(ConsoleLogger())
+     private val eventRouter = HeyCyanEventRouter(HeyCyanResponseDecoder())
+@@ -199,10 +197,6 @@ class RealHeyCyanDriver(
+                 gattClient.disconnect()
+             }
+ 
+-            runCatching {
+-                rfcommClient.disconnect()
+-            }
+-
+             readJob?.cancel()
+             readJob = null
+ 
+@@ -251,10 +245,6 @@ class RealHeyCyanDriver(
+         readJob?.cancel()
+         readJob = null
+ 
+-        runCatching {
+-            rfcommClient.disconnect()
+-        }
+-
+         try {
+             gattClient.disconnect()
+             gattClient.awaitDisconnected()
+@@ -280,7 +270,6 @@ class RealHeyCyanDriver(
+     override suspend fun shutdown() {
+         android.util.Log.i("RealHeyCyanDriver", "Shutting down...")
+         disconnect()
+-        rfcommClient.shutdown()
+         eventScope.coroutineContext[kotlinx.coroutines.Job]?.cancel()
+     }
+ 
+@@ -420,9 +409,6 @@ class RealHeyCyanDriver(
+         ButtonType.UNKNOWN -> -1
+     }
+ 
+-    private fun isUsableDiscoveryTransport(rfcommChannels: List<String>, gattReady: Boolean): Boolean =
+-        rfcommChannels.isNotEmpty() || gattReady
+-
+     private fun shouldReadBluetoothAdapterName(sdkInt: Int, permissionChecker: (String) -> Int): Boolean {
+         return sdkInt < Build.VERSION_CODES.S ||
+             permissionChecker(android.Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
+diff --git a/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/capability/HeyCyanCapabilities.kt b/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/capability/HeyCyanCapabilities.kt
+index 3ffef55..3cbdebb 100644
+--- a/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/capability/HeyCyanCapabilities.kt
++++ b/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/capability/HeyCyanCapabilities.kt
+@@ -57,7 +57,7 @@ object HeyCyanCapabilities {
+     val liveAudio = HeyCyanCapability(
+         id = HeyCyanCapabilityIds.AUDIO_LIVE_INPUT,
+         name = "Live audio input",
+-        status = HeyCyanCapabilityStatus.STRUCTURAL_VALIDATION,
++        status = HeyCyanCapabilityStatus.BLOCKED_BY_PROTOCOL,
+         description = "Observed BC59 audio stream; complete framing and trigger remain unresolved.",
+     )
+ 
+diff --git a/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/capability/HeyCyanCapabilityController.kt b/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/capability/HeyCyanCapabilityController.kt
+index 74b96d3..b6fef38 100644
+--- a/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/capability/HeyCyanCapabilityController.kt
++++ b/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/capability/HeyCyanCapabilityController.kt
+@@ -65,8 +65,10 @@ class HeyCyanCapabilityController(
+             )
+         }
+ 
+-        // Guard: protocol not established
+-        if (capability.status == HeyCyanCapabilityStatus.BLOCKED_BY_PROTOCOL) {
++        // Guard: protocol not established or structural validation in progress
++        if (capability.status == HeyCyanCapabilityStatus.BLOCKED_BY_PROTOCOL ||
++            capability.status == HeyCyanCapabilityStatus.STRUCTURAL_VALIDATION
++        ) {
+             return failure(
+                 operation = operation,
+                 failure = HeyCyanOperationFailure.ProtocolNotEstablished(
+diff --git a/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/rfcomm/HeyCyanRfcommChannel.kt b/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/rfcomm/HeyCyanRfcommChannel.kt
+deleted file mode 100644
+index c365814..0000000
+--- a/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/rfcomm/HeyCyanRfcommChannel.kt
++++ /dev/null
+@@ -1,105 +0,0 @@
+-package com.halo.drivers.heycyan.rfcomm
+-
+-import java.util.UUID
+-
+-/**
+- * Candidate RFCOMM channels observed in the external HeyCyan research source.
+- *
+- * These identifiers are transport candidates only. They do not promote any
+- * command or frame meaning into Halo's production protocol definitions.
+- */
+-data class HeyCyanRfcommChannel(
+-    val name: String,
+-    val uuid: UUID,
+-    val required: Boolean
+-) {
+-    companion object {
+-        val PRIMARY = HeyCyanRfcommChannel(
+-            name = "primary",
+-            uuid = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb"),
+-            required = false
+-        )
+-
+-        val EXTRA = HeyCyanRfcommChannel(
+-            name = "extra",
+-            uuid = UUID.fromString("00002026-0000-1000-8000-00805f9b34fb"),
+-            required = false
+-        )
+-
+-        val RECORD = HeyCyanRfcommChannel(
+-            name = "record",
+-            uuid = UUID.fromString("00002024-0000-1000-8000-00805f9b34fb"),
+-            required = false
+-        )
+-
+-        val CANDIDATES = listOf(PRIMARY, EXTRA, RECORD)
+-    }
+-}
+-
+-enum class RfcommDirection {
+-    TX,
+-    RX
+-}
+-
+-data class RfcommChunk(
+-    val channel: String,
+-    val direction: RfcommDirection,
+-    val bytes: ByteArray
+-) {
+-    init {
+-        require(channel.isNotBlank()) { "RFCOMM channel must not be blank" }
+-    }
+-
+-    fun copyBytes(): ByteArray = bytes.copyOf()
+-}
+-
+-/**
+- * Reassembles complete RFCOMM control frames without interpreting group/opcode.
+- * Incomplete or non-frame bytes remain observable as raw chunks.
+- */
+-class RfcommControlFrameAssembler {
+-    private val pending = ArrayList<Byte>()
+-
+-    fun append(bytes: ByteArray): List<ByteArray> {
+-        pending.ensureCapacity(pending.size + bytes.size)
+-        bytes.forEach { pending += it }
+-        val frames = mutableListOf<ByteArray>()
+-
+-        while (pending.size >= 4) {
+-            val start = findFramePrefix()
+-            if (start < 0) {
+-                pending.clear()
+-                break
+-            }
+-            if (start > 0) repeat(start) { pending.removeAt(0) }
+-            if (pending.size < 4) break
+-
+-            val frameLength = ((pending[2].toInt() and 0xFF) shl 8) or
+-                (pending[3].toInt() and 0xFF)
+-            if (frameLength < 4) {
+-                pending.removeAt(0)
+-                continue
+-            }
+-            if (pending.size < frameLength) break
+-
+-            frames += ByteArray(frameLength) { pending.removeAt(0) }
+-        }
+-
+-        return frames
+-    }
+-
+-    fun reset() {
+-        pending.clear()
+-    }
+-
+-    private fun findFramePrefix(): Int {
+-        for (index in 0 until pending.size - 1) {
+-            if (pending[index].toInt() and 0xFF == 0xFA &&
+-                pending[index + 1].toInt() and 0xFF == 0x00
+-            ) {
+-                return index
+-            }
+-        }
+-        return -1
+-    }
+-}
+diff --git a/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/rfcomm/HeyCyanRfcommClient.kt b/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/rfcomm/HeyCyanRfcommClient.kt
+deleted file mode 100644
+index b70b728..0000000
+--- a/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/rfcomm/HeyCyanRfcommClient.kt
++++ /dev/null
+@@ -1,201 +0,0 @@
+-package com.halo.drivers.heycyan.rfcomm
+-
+-import android.Manifest
+-import android.annotation.SuppressLint
+-import android.bluetooth.BluetoothAdapter
+-import android.bluetooth.BluetoothManager
+-import android.bluetooth.BluetoothSocket
+-import android.content.Context
+-import android.content.pm.PackageManager
+-import com.halo.drivers.heycyan.codec.PacketDirection
+-import com.halo.drivers.heycyan.codec.PacketTracer
+-import com.halo.sdk.driver.DriverState
+-import kotlinx.coroutines.CancellationException
+-import kotlinx.coroutines.CoroutineScope
+-import kotlinx.coroutines.Dispatchers
+-import kotlinx.coroutines.Job
+-import kotlinx.coroutines.SupervisorJob
+-import kotlinx.coroutines.cancel
+-import kotlinx.coroutines.flow.MutableStateFlow
+-import kotlinx.coroutines.flow.StateFlow
+-import kotlinx.coroutines.flow.asStateFlow
+-import kotlinx.coroutines.isActive
+-import kotlinx.coroutines.launch
+-import kotlinx.coroutines.sync.Mutex
+-import kotlinx.coroutines.sync.withLock
+-import kotlinx.coroutines.withContext
+-import kotlinx.coroutines.withTimeout
+-import java.io.IOException
+-import java.io.InputStream
+-
+-/**
+- * Raw RFCOMM transport for physical HeyCyan discovery.
+- *
+- * The channel UUIDs are transport candidates from the external research
+- * reference. This class records bytes only; it does not decode group/opcode,
+- * send commands, or claim a protocol meaning for any payload.
+- */
+-class HeyCyanRfcommClient(
+-    private val context: Context,
+-    private val tracer: PacketTracer,
+-    private val connectTimeoutMillis: Long = DEFAULT_CONNECT_TIMEOUT_MILLIS
+-) {
+-    private val operationMutex = Mutex()
+-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+-    private val readJobs = mutableListOf<Job>()
+-    private val sockets = linkedMapOf<String, BluetoothSocket>()
+-    private val _state = MutableStateFlow<DriverState>(DriverState.Disconnected)
+-    private val _connectedChannels = MutableStateFlow<List<String>>(emptyList())
+-
+-    val state: StateFlow<DriverState> = _state.asStateFlow()
+-    val connectedChannels: StateFlow<List<String>> = _connectedChannels.asStateFlow()
+-
+-    @SuppressLint("MissingPermission")
+-    suspend fun connect(address: String): Result<List<String>> {
+-        require(address.isNotBlank()) { "Bluetooth address must not be blank" }
+-        if (!hasConnectPermission()) {
+-            return Result.failure(SecurityException("BLUETOOTH_CONNECT permission is required"))
+-        }
+-
+-        return try {
+-            operationMutex.withLock {
+-                disconnectLocked()
+-                _state.value = DriverState.Connecting
+-
+-                val adapter = bluetoothAdapter()
+-                    ?: throw IOException("BluetoothAdapter is not available")
+-                val device = runCatching { adapter.getRemoteDevice(address) }
+-                    .getOrElse { throw IOException("Invalid Bluetooth address: $address", it) }
+-
+-                runCatching { adapter.cancelDiscovery() }
+-                val opened = mutableListOf<String>()
+-
+-                for (channel in HeyCyanRfcommChannel.CANDIDATES) {
+-                    try {
+-                        val socket = connectSocket(device, channel)
+-                        sockets[channel.name] = socket
+-                        opened += channel.name
+-                        tracer.onRfcommStateChanged(channel.name, connected = true)
+-                        if (channel.name == HeyCyanRfcommChannel.PRIMARY.name) {
+-                            _state.value = DriverState.Connected
+-                        }
+-                        startReader(channel.name, socket.inputStream)
+-                    } catch (cancelled: CancellationException) {
+-                        throw cancelled
+-                    } catch (error: Throwable) {
+-                        if (channel.required) {
+-                            throw IOException(
+-                                "Required RFCOMM channel '${channel.name}' failed: ${error.message}",
+-                                error
+-                            )
+-                        }
+-                        // Auxiliary channels are evidence opportunities, not a
+-                        // reason to report the primary transport as successful.
+-                    }
+-                }
+-
+-                if (opened.isEmpty()) {
+-                    throw IOException("No RFCOMM channel connected for $address")
+-                }
+-
+-                _connectedChannels.value = opened.toList()
+-                _state.value = DriverState.Ready
+-                opened.toList()
+-            }.let { Result.success(it) }
+-        } catch (cancelled: CancellationException) {
+-            disconnect()
+-            throw cancelled
+-        } catch (error: Throwable) {
+-            disconnect()
+-            _state.value = DriverState.Error(error)
+-            Result.failure(error)
+-        }
+-    }
+-
+-    suspend fun disconnect() {
+-        operationMutex.withLock {
+-            if (_state.value != DriverState.Disconnected) {
+-                _state.value = DriverState.Disconnecting
+-            }
+-            disconnectLocked()
+-            _state.value = DriverState.Disconnected
+-        }
+-    }
+-
+-    fun shutdown() {
+-        readJobs.forEach(Job::cancel)
+-        readJobs.clear()
+-        sockets.values.forEach { socket -> runCatching { socket.close() } }
+-        sockets.clear()
+-        _connectedChannels.value = emptyList()
+-        _state.value = DriverState.Disconnected
+-        scope.cancel()
+-    }
+-
+-    private fun bluetoothAdapter(): BluetoothAdapter? =
+-        (context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager)?.adapter
+-
+-    private fun hasConnectPermission(): Boolean =
+-        android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S ||
+-            context.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) ==
+-            PackageManager.PERMISSION_GRANTED
+-
+-    @SuppressLint("MissingPermission")
+-    private suspend fun connectSocket(
+-        device: android.bluetooth.BluetoothDevice,
+-        channel: HeyCyanRfcommChannel
+-    ): BluetoothSocket = withContext(Dispatchers.IO) {
+-        val socket = device.createRfcommSocketToServiceRecord(channel.uuid)
+-        try {
+-            withTimeout(connectTimeoutMillis) { socket.connect() }
+-            socket
+-        } catch (cancelled: CancellationException) {
+-            runCatching { socket.close() }
+-            throw cancelled
+-        } catch (error: Throwable) {
+-            runCatching { socket.close() }
+-            throw IOException("RFCOMM ${channel.name} connect failed", error)
+-        }
+-    }
+-
+-    private fun startReader(channel: String, input: InputStream) {
+-        readJobs += scope.launch {
+-            val buffer = ByteArray(READ_BUFFER_SIZE)
+-            try {
+-                while (isActive) {
+-                    val count = input.read(buffer)
+-                    if (count < 0) break
+-                    if (count == 0) continue
+-                    tracer.onRfcomm(
+-                        channel = channel,
+-                        direction = PacketDirection.RX,
+-                        bytes = buffer.copyOf(count)
+-                    )
+-                }
+-            } catch (_: IOException) {
+-                // Disconnect and remote-close are both normal during capture.
+-            } finally {
+-                runCatching { input.close() }
+-                if (channel == HeyCyanRfcommChannel.PRIMARY.name && _state.value == DriverState.Ready) {
+-                    _state.value = DriverState.Disconnected
+-                }
+-            }
+-        }
+-    }
+-
+-    private fun disconnectLocked() {
+-        readJobs.forEach(Job::cancel)
+-        readJobs.clear()
+-        sockets.keys.forEach { channel ->
+-            tracer.onRfcommStateChanged(channel, connected = false)
+-        }
+-        sockets.values.forEach { socket -> runCatching { socket.close() } }
+-        sockets.clear()
+-        _connectedChannels.value = emptyList()
+-    }
+-
+-    private companion object {
+-        const val DEFAULT_CONNECT_TIMEOUT_MILLIS = 8_000L
+-        const val READ_BUFFER_SIZE = 4 * 1024
+-    }
+-}
+diff --git a/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/transport/HeyCyanCommandResult.kt b/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/transport/HeyCyanCommandResult.kt
+deleted file mode 100644
+index 1367c8c..0000000
+--- a/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/transport/HeyCyanCommandResult.kt
++++ /dev/null
+@@ -1,78 +0,0 @@
+-package com.halo.drivers.heycyan.transport
+-
+-import com.halo.drivers.heycyan.protocol.HeyCyanCommand
+-import com.halo.drivers.heycyan.protocol.HeyCyanEvent
+-import com.halo.sdk.runtime.embodiment.heycyan.HeyCyanOperation
+-
+-/**
+- * Result of executing a low-level command across a transport channel.
+- */
+-sealed interface HeyCyanCommandResult {
+-
+-    data class Acknowledged(
+-        val command: HeyCyanCommand,
+-    ) : HeyCyanCommandResult
+-
+-    data class Response(
+-        val command: HeyCyanCommand,
+-        val event: HeyCyanEvent?,
+-    ) : HeyCyanCommandResult
+-
+-    data class Rejected(
+-        val command: HeyCyanCommand,
+-        val reason: String,
+-    ) : HeyCyanCommandResult
+-}
+-
+-/**
+- * Retry safety classification for transport routing and fallback rules.
+- */
+-enum class RetrySafety {
+-    /** Safe to retry/fallback automatically (e.g., GetBattery, GetVersion, GetMediaCounts). */
+-    IDEMPOTENT,
+-
+-    /** NOT safe to retry automatically to prevent duplicate physical actions (e.g., TakePhoto, StartVideo). */
+-    NOT_IDEMPOTENT,
+-
+-    /** Unknown retry safety — do not retry automatically. */
+-    UNKNOWN,
+-}
+-
+-/**
+- * Execution failures for unified routing and transport dispatch.
+- */
+-sealed interface HeyCyanExecutionFailure {
+-
+-    data class TransportUnavailable(
+-        val transport: HeyCyanTransportType,
+-    ) : HeyCyanExecutionFailure
+-
+-    data class TransportFailure(
+-        val transport: HeyCyanTransportType,
+-        val message: String,
+-    ) : HeyCyanExecutionFailure
+-
+-    data class DeviceRejected(
+-        val operation: HeyCyanOperation,
+-        val reason: String,
+-    ) : HeyCyanExecutionFailure
+-
+-    data class Unsupported(
+-        val operation: HeyCyanOperation,
+-    ) : HeyCyanExecutionFailure
+-
+-    data class ProtocolUnavailable(
+-        val operation: HeyCyanOperation,
+-        val transport: HeyCyanTransportType,
+-    ) : HeyCyanExecutionFailure
+-
+-    /**
+-     * Non-idempotent operation was transmitted over transport, but confirmation timed out.
+-     * MUST NOT automatically fallback or retry to prevent duplicate physical actions.
+-     */
+-    data class UnknownOutcome(
+-        val operation: HeyCyanOperation,
+-        val transport: HeyCyanTransportType,
+-        val reason: String,
+-    ) : HeyCyanExecutionFailure
+-}
+diff --git a/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/transport/HeyCyanTransportRoutes.kt b/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/transport/HeyCyanTransportRoutes.kt
+deleted file mode 100644
+index a175329..0000000
+--- a/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/transport/HeyCyanTransportRoutes.kt
++++ /dev/null
+@@ -1,160 +0,0 @@
+-package com.halo.drivers.heycyan.transport
+-
+-import com.halo.drivers.heycyan.protocol.EvidenceKind
+-import com.halo.sdk.runtime.embodiment.heycyan.HeyCyanOperation
+-import com.halo.drivers.heycyan.protocol.ProtocolConfidence
+-import com.halo.drivers.heycyan.protocol.ProtocolEvidenceReference
+-
+-/**
+- * Transport types available in the HeyCyan driver architecture.
+- */
+-enum class HeyCyanTransportType {
+-    BLE_GATT,
+-    RFCOMM,
+-    WIFI,
+-}
+-
+-/**
+- * Explicit route mapping a semantic operation to its preferred and fallback transports,
+- * with evidence and retry safety classifications.
+- */
+-data class HeyCyanOperationRoute(
+-    val operation: HeyCyanOperation,
+-    val preferred: HeyCyanTransportType,
+-    val fallback: HeyCyanTransportType?,
+-    val retrySafety: RetrySafety,
+-    val evidence: List<ProtocolEvidenceReference>,
+-    val reason: String,
+-)
+-
+-/**
+- * Transport preference and optional fallback for a device capability.
+- */
+-data class HeyCyanCapabilityTransport(
+-    val capabilityId: String,
+-    val preferred: HeyCyanTransportType,
+-    val fallback: HeyCyanTransportType? = null,
+-)
+-
+-/**
+- * Source-backed transport routes establishing preferred paths per operation and capability.
+- */
+-object HeyCyanTransportRoutes {
+-
+-    private val sdkEvidence = ProtocolEvidenceReference(
+-        source = "HeyCyanSmartGlassesSDK",
+-        locator = "MemoMindGattClient / setDeviceMode",
+-        kind = EvidenceKind.AUTHORITATIVE_SOURCE,
+-        confidence = ProtocolConfidence.HIGH,
+-    )
+-
+-    private val wifiEvidence = ProtocolEvidenceReference(
+-        source = "CyanBridge",
+-        locator = "AlbumDownloader / WiFiTransferManager",
+-        kind = EvidenceKind.AUTHORITATIVE_SOURCE,
+-        confidence = ProtocolConfidence.HIGH,
+-    )
+-
+-    val operationRoutes: Map<HeyCyanOperation, HeyCyanOperationRoute> = mapOf(
+-        HeyCyanOperation.GetBattery to HeyCyanOperationRoute(
+-            operation = HeyCyanOperation.GetBattery,
+-            preferred = HeyCyanTransportType.BLE_GATT,
+-            fallback = HeyCyanTransportType.RFCOMM,
+-            retrySafety = RetrySafety.IDEMPOTENT,
+-            evidence = listOf(sdkEvidence),
+-            reason = "Idempotent device state query.",
+-        ),
+-        HeyCyanOperation.GetDeviceInfo to HeyCyanOperationRoute(
+-            operation = HeyCyanOperation.GetDeviceInfo,
+-            preferred = HeyCyanTransportType.BLE_GATT,
+-            fallback = HeyCyanTransportType.RFCOMM,
+-            retrySafety = RetrySafety.IDEMPOTENT,
+-            evidence = listOf(sdkEvidence),
+-            reason = "Idempotent device info query.",
+-        ),
+-        HeyCyanOperation.GetMediaInventory to HeyCyanOperationRoute(
+-            operation = HeyCyanOperation.GetMediaInventory,
+-            preferred = HeyCyanTransportType.BLE_GATT,
+-            fallback = HeyCyanTransportType.RFCOMM,
+-            retrySafety = RetrySafety.IDEMPOTENT,
+-            evidence = listOf(sdkEvidence),
+-            reason = "Idempotent media count query.",
+-        ),
+-        HeyCyanOperation.TakePhoto to HeyCyanOperationRoute(
+-            operation = HeyCyanOperation.TakePhoto,
+-            preferred = HeyCyanTransportType.BLE_GATT,
+-            fallback = null, // NOT_IDEMPOTENT — no fallback to prevent duplicate photo capture!
+-            retrySafety = RetrySafety.NOT_IDEMPOTENT,
+-            evidence = listOf(sdkEvidence),
+-            reason = "Camera control capture action.",
+-        ),
+-        HeyCyanOperation.StartVideo to HeyCyanOperationRoute(
+-            operation = HeyCyanOperation.StartVideo,
+-            preferred = HeyCyanTransportType.BLE_GATT,
+-            fallback = null,
+-            retrySafety = RetrySafety.NOT_IDEMPOTENT,
+-            evidence = listOf(sdkEvidence),
+-            reason = "Video recording start action.",
+-        ),
+-        HeyCyanOperation.StopVideo to HeyCyanOperationRoute(
+-            operation = HeyCyanOperation.StopVideo,
+-            preferred = HeyCyanTransportType.BLE_GATT,
+-            fallback = null,
+-            retrySafety = RetrySafety.IDEMPOTENT,
+-            evidence = listOf(sdkEvidence),
+-            reason = "Video recording stop action.",
+-        ),
+-        HeyCyanOperation.StartRecording to HeyCyanOperationRoute(
+-            operation = HeyCyanOperation.StartRecording,
+-            preferred = HeyCyanTransportType.BLE_GATT,
+-            fallback = null,
+-            retrySafety = RetrySafety.NOT_IDEMPOTENT,
+-            evidence = listOf(sdkEvidence),
+-            reason = "Audio recording start action.",
+-        ),
+-        HeyCyanOperation.StopRecording to HeyCyanOperationRoute(
+-            operation = HeyCyanOperation.StopRecording,
+-            preferred = HeyCyanTransportType.BLE_GATT,
+-            fallback = null,
+-            retrySafety = RetrySafety.IDEMPOTENT,
+-            evidence = listOf(sdkEvidence),
+-            reason = "Audio recording stop action.",
+-        ),
+-        HeyCyanOperation.GenerateAIPhoto to HeyCyanOperationRoute(
+-            operation = HeyCyanOperation.GenerateAIPhoto,
+-            preferred = HeyCyanTransportType.BLE_GATT,
+-            fallback = null,
+-            retrySafety = RetrySafety.NOT_IDEMPOTENT,
+-            evidence = listOf(sdkEvidence),
+-            reason = "AI photo trigger.",
+-        ),
+-        HeyCyanOperation.EnterWifiTransferMode to HeyCyanOperationRoute(
+-            operation = HeyCyanOperation.EnterWifiTransferMode,
+-            preferred = HeyCyanTransportType.BLE_GATT,
+-            fallback = HeyCyanTransportType.RFCOMM,
+-            retrySafety = RetrySafety.UNKNOWN,
+-            evidence = listOf(sdkEvidence),
+-            reason = "Enables Wi-Fi transfer mode.",
+-        ),
+-        HeyCyanOperation.SynchronizeMedia to HeyCyanOperationRoute(
+-            operation = HeyCyanOperation.SynchronizeMedia,
+-            preferred = HeyCyanTransportType.WIFI,
+-            fallback = null,
+-            retrySafety = RetrySafety.IDEMPOTENT,
+-            evidence = listOf(wifiEvidence),
+-            reason = "Full Wi-Fi media synchronization.",
+-        ),
+-    )
+-
+-    val capabilityRoutes = listOf(
+-        HeyCyanCapabilityTransport("heycyan.battery", HeyCyanTransportType.BLE_GATT, HeyCyanTransportType.RFCOMM),
+-        HeyCyanCapabilityTransport("heycyan.device_info", HeyCyanTransportType.BLE_GATT, HeyCyanTransportType.RFCOMM),
+-        HeyCyanCapabilityTransport("heycyan.media_inventory", HeyCyanTransportType.BLE_GATT, HeyCyanTransportType.RFCOMM),
+-        HeyCyanCapabilityTransport("heycyan.camera.photo", HeyCyanTransportType.BLE_GATT, null),
+-        HeyCyanCapabilityTransport("heycyan.camera.video", HeyCyanTransportType.BLE_GATT, null),
+-        HeyCyanCapabilityTransport("heycyan.audio.recording", HeyCyanTransportType.BLE_GATT, null),
+-        HeyCyanCapabilityTransport("heycyan.wifi_transfer", HeyCyanTransportType.WIFI, null),
+-    )
+-
+-    fun routeForOperation(operation: HeyCyanOperation): HeyCyanOperationRoute? = operationRoutes[operation]
+-}
+diff --git a/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/transport/HeyCyanTransportState.kt b/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/transport/HeyCyanTransportState.kt
+index 8a9d32b..7d856d8 100644
+--- a/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/transport/HeyCyanTransportState.kt
++++ b/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/transport/HeyCyanTransportState.kt
+@@ -1,7 +1,15 @@
+ package com.halo.drivers.heycyan.transport
+ 
+ /**
+- * Normalized transport state across BLE GATT, RFCOMM, and Wi-Fi.
++ * Transport types available in the HeyCyan driver architecture.
++ */
++enum class HeyCyanTransportType {
++    BLE_GATT,
++    WIFI,
++}
++
++/**
++ * Normalized transport state across BLE GATT and Wi-Fi.
+  */
+ enum class HeyCyanTransportState {
+     UNAVAILABLE,
+@@ -21,10 +29,9 @@ data class HeyCyanTransportStatus(
+ )
+ 
+ /**
+- * Complete transport status snapshot across all 3 device transports.
++ * Complete transport status snapshot across device transports.
+  */
+ data class HeyCyanTransportSnapshot(
+     val ble: HeyCyanTransportStatus = HeyCyanTransportStatus(HeyCyanTransportType.BLE_GATT, HeyCyanTransportState.DISCONNECTED),
+-    val rfcomm: HeyCyanTransportStatus = HeyCyanTransportStatus(HeyCyanTransportType.RFCOMM, HeyCyanTransportState.DISCONNECTED),
+     val wifi: HeyCyanTransportStatus = HeyCyanTransportStatus(HeyCyanTransportType.WIFI, HeyCyanTransportState.DISCONNECTED),
+ )
+diff --git a/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/transport/rfcomm/HeyCyanRfcommCommandMapper.kt b/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/transport/rfcomm/HeyCyanRfcommCommandMapper.kt
+deleted file mode 100644
+index 22e495f..0000000
+--- a/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/transport/rfcomm/HeyCyanRfcommCommandMapper.kt
++++ /dev/null
+@@ -1,72 +0,0 @@
+-package com.halo.drivers.heycyan.transport.rfcomm
+-
+-import com.halo.drivers.heycyan.protocol.HeyCyanCommand
+-import com.halo.drivers.heycyan.protocol.HeyCyanMode
+-
+-/**
+- * Maps high-level [HeyCyanCommand] instances to raw [MemoMindPacket]s.
+- *
+- * Mappings are source-backed from CyanBridge / MemoMindGattClient / SDK forensics:
+- *   - GetBattery     -> 0x13
+- *   - GetVersion/Info-> 0x10
+- *   - GetMacAddress  -> 0x11
+- *   - GetMediaCounts -> 0x14
+- *   - SetMode(mode)  -> 0x01 [mode.value]
+- *   - SetDateTime    -> 0x12
+- */
+-interface HeyCyanRfcommCommandMapper {
+-    fun map(command: HeyCyanCommand): Result<MemoMindPacket>
+-}
+-
+-/**
+- * Default implementation of [HeyCyanRfcommCommandMapper].
+- */
+-class DefaultHeyCyanRfcommCommandMapper : HeyCyanRfcommCommandMapper {
+-
+-    override fun map(command: HeyCyanCommand): Result<MemoMindPacket> = runCatching {
+-        when (command) {
+-            HeyCyanCommand.GetBattery -> MemoMindPacket(command = 0x13)
+-            HeyCyanCommand.GetVersion,
+-            HeyCyanCommand.GetDeviceInfo -> MemoMindPacket(command = 0x10)
+-            HeyCyanCommand.GetMacAddress -> MemoMindPacket(command = 0x11)
+-            HeyCyanCommand.GetMediaCounts -> MemoMindPacket(command = 0x14)
+-            is HeyCyanCommand.SetMode -> MemoMindPacket(
+-                command = 0x01,
+-                payload = byteArrayOf(command.mode.value.toByte()),
+-            )
+-            is HeyCyanCommand.TakePhoto -> MemoMindPacket(
+-                command = 0x01,
+-                payload = byteArrayOf(HeyCyanMode.PHOTO.value.toByte()),
+-            )
+-            is HeyCyanCommand.StartVideo -> MemoMindPacket(
+-                command = 0x01,
+-                payload = byteArrayOf(0x02)
+-            )
+-            is HeyCyanCommand.StopVideo -> MemoMindPacket(
+-                command = 0x01,
+-                payload = byteArrayOf(0x03)
+-            )
+-            is HeyCyanCommand.StartRecording -> MemoMindPacket(
+-                command = 0x01,
+-                payload = byteArrayOf(0x08)
+-            )
+-            is HeyCyanCommand.StopRecording -> MemoMindPacket(
+-                command = 0x01,
+-                payload = byteArrayOf(0x0C)
+-            )
+-            is HeyCyanCommand.AiThumbnail -> MemoMindPacket(
+-                command = 0x01,
+-                payload = byteArrayOf(0x06, 0x02, 0x02, 0x02)
+-            )
+-            is HeyCyanCommand.PrepareVoiceRouting -> MemoMindPacket(
+-                command = 0x01,
+-                payload = byteArrayOf(0x02, 0x01, 0x0B)
+-            )
+-            is HeyCyanCommand.EnterWifiTransferMode -> MemoMindPacket(
+-                command = 0x01,
+-                payload = byteArrayOf(0x02, 0x01, 0x04, 0x01)
+-            )
+-            else -> throw UnsupportedOperationException("HeyCyan RFCOMM command mapping not established for $command")
+-        }
+-    }
+-}
+diff --git a/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/transport/rfcomm/HeyCyanRfcommSession.kt b/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/transport/rfcomm/HeyCyanRfcommSession.kt
+deleted file mode 100644
+index 67ef668..0000000
+--- a/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/transport/rfcomm/HeyCyanRfcommSession.kt
++++ /dev/null
+@@ -1,116 +0,0 @@
+-package com.halo.drivers.heycyan.transport.rfcomm
+-
+-import com.halo.drivers.heycyan.codec.HeyCyanEventDecoder
+-import com.halo.drivers.heycyan.protocol.HeyCyanCommand
+-import com.halo.drivers.heycyan.protocol.HeyCyanDeviceStateStore
+-import com.halo.drivers.heycyan.protocol.HeyCyanEvent
+-import kotlinx.coroutines.*
+-import kotlinx.coroutines.flow.MutableSharedFlow
+-import kotlinx.coroutines.flow.asSharedFlow
+-import kotlinx.coroutines.flow.first
+-import kotlinx.coroutines.sync.Mutex
+-import kotlinx.coroutines.sync.withLock
+-import kotlin.time.Duration
+-import kotlin.time.Duration.Companion.seconds
+-
+-/**
+- * Response received over RFCOMM for a command.
+- */
+-data class MemoMindResponse(
+-    val packet: MemoMindPacket,
+-    val receivedAtMillis: Long,
+-)
+-
+-/**
+- * High-level command session over RFCOMM channel.
+- * Serializes request/response cycles using a Mutex to guarantee correlation.
+- */
+-interface HeyCyanRfcommSession {
+-    suspend fun request(
+-        command: HeyCyanCommand,
+-        timeout: Duration = 5.seconds,
+-    ): Result<MemoMindResponse>
+-}
+-
+-/**
+- * Default implementation of [HeyCyanRfcommSession].
+- *
+- * Single stream reader feeds packetDecoder. Incoming packets update [HeyCyanDeviceStateStore]
+- * via [HeyCyanEventDecoder] and resolve pending correlated requests.
+- */
+-class DefaultHeyCyanRfcommSession(
+-    private val transport: HeyCyanRfcommTransport,
+-    private val mapper: HeyCyanRfcommCommandMapper = DefaultHeyCyanRfcommCommandMapper(),
+-    private val encoder: MemoMindPacketEncoder = MemoMindPacketEncoder(),
+-    private val decoder: MemoMindPacketDecoder = MemoMindPacketDecoder(),
+-    private val eventDecoder: HeyCyanEventDecoder = HeyCyanEventDecoder(),
+-    private val stateStore: HeyCyanDeviceStateStore? = null,
+-    scope: CoroutineScope? = null,
+-) : HeyCyanRfcommSession {
+-
+-    private val sessionScope = scope ?: CoroutineScope(Dispatchers.IO + SupervisorJob())
+-    private val requestMutex = Mutex()
+-    private val incomingPackets = MutableSharedFlow<MemoMindPacket>(extraBufferCapacity = 64)
+-    private var readerJob: Job? = null
+-
+-    init {
+-        startReader()
+-    }
+-
+-    private fun startReader() {
+-        readerJob?.cancel()
+-        readerJob = sessionScope.launch {
+-            transport.incoming.collect { bytes ->
+-                val packets = decoder.feed(bytes)
+-                for (packet in packets) {
+-                    incomingPackets.emit(packet)
+-
+-                    // Pass response to event decoder & state store
+-                    val event = mapPacketToEvent(packet)
+-                    if (event != null && stateStore != null) {
+-                        stateStore.apply(event)
+-                    }
+-                }
+-            }
+-        }
+-    }
+-
+-    override suspend fun request(
+-        command: HeyCyanCommand,
+-        timeout: Duration,
+-    ): Result<MemoMindResponse> = requestMutex.withLock {
+-        runCatching {
+-            val mappedPacket = mapper.map(command).getOrThrow()
+-            val encodedBytes = encoder.encode(mappedPacket)
+-
+-            // Send command frame
+-            transport.write(encodedBytes).getOrThrow()
+-
+-            // Wait for matching response packet or timeout
+-            val responsePacket = withTimeoutOrNull(timeout) {
+-                incomingPackets.first { incoming ->
+-                    incoming.command == mappedPacket.command
+-                }
+-            } ?: throw IllegalStateException("Timeout waiting for RFCOMM response to command 0x${mappedPacket.command.toString(16)}")
+-
+-            MemoMindResponse(
+-                packet = responsePacket,
+-                receivedAtMillis = System.currentTimeMillis(),
+-            )
+-        }
+-    }
+-
+-    private fun mapPacketToEvent(packet: MemoMindPacket): HeyCyanEvent? {
+-        // Construct raw frame for HeyCyanEventDecoder compatibility
+-        val totalLen = 4 + packet.payload.size
+-        val raw = ByteArray(totalLen)
+-        raw[0] = 0xAA.toByte()
+-        raw[1] = totalLen.toByte()
+-        raw[2] = packet.command.toByte()
+-        packet.payload.copyInto(raw, destinationOffset = 3)
+-        raw[totalLen - 1] = 0x00.toByte()
+-
+-        val decoded = eventDecoder.decode(payload = raw)
+-        return decoded.event
+-    }
+-}
+diff --git a/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/transport/rfcomm/HeyCyanRfcommTransport.kt b/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/transport/rfcomm/HeyCyanRfcommTransport.kt
+deleted file mode 100644
+index af0dfa2..0000000
+--- a/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/transport/rfcomm/HeyCyanRfcommTransport.kt
++++ /dev/null
+@@ -1,62 +0,0 @@
+-package com.halo.drivers.heycyan.transport.rfcomm
+-
+-import kotlinx.coroutines.flow.Flow
+-
+-/**
+- * Connection states for RFCOMM control transport.
+- */
+-enum class RfcommConnectionState {
+-    DISCONNECTED,
+-    CONNECTING,
+-    CONNECTED,
+-    DISCONNECTING,
+-    FAILED,
+-}
+-
+-/**
+- * Remote Bluetooth RFCOMM device descriptor.
+- */
+-data class HeyCyanRfcommDevice(
+-    val address: String,
+-    val name: String?,
+-)
+-
+-/**
+- * Transport-independent interface for HeyCyan RFCOMM control protocol operations.
+- *
+- * Exposes socket connection lifecycle and raw byte I/O streams without referencing
+- * Android SDK types (BluetoothSocket, BluetoothDevice, Context, etc.).
+- */
+-interface HeyCyanRfcommTransport {
+-
+-    /** Current connection lifecycle state. */
+-    val state: Flow<RfcommConnectionState>
+-
+-    /** Connect to a remote RFCOMM device. */
+-    suspend fun connect(device: HeyCyanRfcommDevice): Result<Unit>
+-
+-    /** Disconnect from the RFCOMM channel. */
+-    suspend fun disconnect()
+-
+-    /** Transmit raw byte frame over RFCOMM channel. */
+-    suspend fun write(bytes: ByteArray): Result<Unit>
+-
+-    /** Incoming raw byte stream from RFCOMM channel. */
+-    val incoming: Flow<ByteArray>
+-}
+-
+-/**
+- * Source-derived RFCOMM constants for HeyCyan SPP communication.
+- */
+-object HeyCyanRfcommConstants {
+-    /**
+-     * Standard Serial Port Profile (SPP) UUID used by CyanBridge for RFCOMM control sockets.
+-     * Sourced from CyanBridge HeyCyanRfcommChannel.PRIMARY.
+-     */
+-    val SERVICE_UUID: java.util.UUID =
+-        java.util.UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
+-
+-    /** Frame header prefix for MemoMind RFCOMM packets: 0xFA 0x00 */
+-    const val FRAME_HEADER_0 = 0xFA.toByte()
+-    const val FRAME_HEADER_1 = 0x00.toByte()
+-}
+diff --git a/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/transport/rfcomm/MemoMindPacket.kt b/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/transport/rfcomm/MemoMindPacket.kt
+deleted file mode 100644
+index adf12b2..0000000
+--- a/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/transport/rfcomm/MemoMindPacket.kt
++++ /dev/null
+@@ -1,28 +0,0 @@
+-package com.halo.drivers.heycyan.transport.rfcomm
+-
+-/**
+- * Raw RFCOMM control frame packet model for the MemoMind protocol.
+- *
+- * Framing format (`FA 00`):
+- *   [0xFA, 0x00, LengthHigh, LengthLow, Command, Payload..., Checksum]
+- *
+- * Distinct from BLE GATT packets — this is strictly for RFCOMM control channel communication.
+- */
+-data class MemoMindPacket(
+-    val command: Int,
+-    val payload: ByteArray = byteArrayOf(),
+-) {
+-    init {
+-        require(command in 0..0xFF) { "MemoMind command byte must be in 0..255 range" }
+-    }
+-
+-    override fun equals(other: Any?): Boolean {
+-        if (this === other) return true
+-        if (other !is MemoMindPacket) return false
+-        return command == other.command && payload.contentEquals(other.payload)
+-    }
+-
+-    override fun hashCode(): Int {
+-        return 31 * command + payload.contentHashCode()
+-    }
+-}
+diff --git a/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/transport/rfcomm/MemoMindPacketDecoder.kt b/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/transport/rfcomm/MemoMindPacketDecoder.kt
+deleted file mode 100644
+index edef737..0000000
+--- a/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/transport/rfcomm/MemoMindPacketDecoder.kt
++++ /dev/null
+@@ -1,104 +0,0 @@
+-package com.halo.drivers.heycyan.transport.rfcomm
+-
+-import java.io.ByteArrayOutputStream
+-
+-/**
+- * Result wrapper for decoded stream frames.
+- */
+-sealed interface MemoMindDecodeResult {
+-    data class Packet(val packet: MemoMindPacket) : MemoMindDecodeResult
+-    data class Malformed(val bytes: ByteArray, val reason: String) : MemoMindDecodeResult
+-}
+-
+-/**
+- * Stateful stream decoder for MemoMind RFCOMM control packets.
+- *
+- * Handles streaming fragmentation, partial packets split across reads,
+- * back-to-back packets in a single buffer, and garbage recovery before header.
+- */
+-class MemoMindPacketDecoder(
+-    private val checksumCalculator: MemoMindChecksum = DefaultMemoMindChecksum(),
+-) {
+-    private val buffer = ByteArrayOutputStream()
+-
+-    /**
+-     * Feeds incoming bytes from the RFCOMM socket into the stream decoder.
+-     *
+-     * @return List of fully decoded [MemoMindPacket]s extracted from accumulated stream bytes.
+-     */
+-    @Synchronized
+-    fun feed(bytes: ByteArray): List<MemoMindPacket> {
+-        buffer.write(bytes)
+-        val extracted = mutableListOf<MemoMindPacket>()
+-
+-        var currentBytes = buffer.toByteArray()
+-        while (currentBytes.size >= 5) { // Minimum packet size: FA 00 + LenH + LenL + Cmd + CS = 6 (or min 5)
+-            val headerIndex = findHeader(currentBytes)
+-            if (headerIndex < 0) {
+-                // No FA 00 header found — clear buffer
+-                buffer.reset()
+-                break
+-            }
+-
+-            if (headerIndex > 0) {
+-                // Discard garbage before header
+-                currentBytes = currentBytes.copyOfRange(headerIndex, currentBytes.size)
+-                buffer.reset()
+-                buffer.write(currentBytes)
+-            }
+-
+-            if (currentBytes.size < 4) {
+-                break // Wait for more bytes to read total length
+-            }
+-
+-            val length = ((currentBytes[2].toInt() and 0xFF) shl 8) or (currentBytes[3].toInt() and 0xFF)
+-            if (length < 5 || length > 4096) {
+-                // Invalid length — discard invalid header byte and resume search
+-                currentBytes = currentBytes.copyOfRange(2, currentBytes.size)
+-                buffer.reset()
+-                buffer.write(currentBytes)
+-                continue
+-            }
+-
+-            if (currentBytes.size < length) {
+-                // Partial packet — wait for remaining bytes
+-                break
+-            }
+-
+-            // Extract complete packet slice
+-            val rawPacket = currentBytes.copyOfRange(0, length)
+-            val expectedChecksum = rawPacket[length - 1]
+-            val computedChecksum = checksumCalculator.calculate(rawPacket.copyOfRange(0, length - 1))
+-
+-            if (expectedChecksum == computedChecksum) {
+-                val command = rawPacket[4].toInt() and 0xFF
+-                val payload = if (length > 6) rawPacket.copyOfRange(5, length - 1) else byteArrayOf()
+-                extracted.add(MemoMindPacket(command = command, payload = payload))
+-            }
+-
+-            // Advance buffer past extracted packet
+-            val remaining = currentBytes.copyOfRange(length, currentBytes.size)
+-            buffer.reset()
+-            buffer.write(remaining)
+-            currentBytes = remaining
+-        }
+-
+-        return extracted
+-    }
+-
+-    @Synchronized
+-    fun reset() {
+-        buffer.reset()
+-    }
+-
+-    private fun findHeader(bytes: ByteArray): Int {
+-        for (i in 0 until bytes.size - 1) {
+-            if (bytes[i] == HeyCyanRfcommConstants.FRAME_HEADER_0 &&
+-                bytes[i + 1] == HeyCyanRfcommConstants.FRAME_HEADER_1
+-            ) {
+-                return i
+-            }
+-        }
+-        return -1
+-    }
+-}
+diff --git a/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/transport/rfcomm/MemoMindPacketEncoder.kt b/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/transport/rfcomm/MemoMindPacketEncoder.kt
+deleted file mode 100644
+index 6184a60..0000000
+--- a/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/transport/rfcomm/MemoMindPacketEncoder.kt
++++ /dev/null
+@@ -1,53 +0,0 @@
+-package com.halo.drivers.heycyan.transport.rfcomm
+-
+-/**
+- * Checksum calculation strategy for MemoMind RFCOMM control packets.
+- */
+-interface MemoMindChecksum {
+-    fun calculate(bytes: ByteArray): Byte
+-}
+-
+-/**
+- * Default checksum calculator: 8-bit sum modulo 256 of all frame bytes.
+- */
+-class DefaultMemoMindChecksum : MemoMindChecksum {
+-    override fun calculate(bytes: ByteArray): Byte {
+-        var sum = 0
+-        for (b in bytes) {
+-            sum = (sum + (b.toInt() and 0xFF)) and 0xFF
+-        }
+-        return sum.toByte()
+-    }
+-}
+-
+-/**
+- * Source-faithful encoder for MemoMind RFCOMM packets.
+- *
+- * Encodes [MemoMindPacket] into `FA 00` framed byte arrays:
+- *   [0xFA, 0x00, LenH, LenL, Command, Payload..., Checksum]
+- */
+-class MemoMindPacketEncoder(
+-    private val checksumCalculator: MemoMindChecksum = DefaultMemoMindChecksum(),
+-) {
+-    fun encode(packet: MemoMindPacket): ByteArray {
+-        val totalLength = 2 + 2 + 1 + packet.payload.size + 1 // FA 00 + Len(2) + Cmd(1) + Payload + CS(1)
+-        val frame = ByteArray(totalLength)
+-
+-        frame[0] = HeyCyanRfcommConstants.FRAME_HEADER_0
+-        frame[1] = HeyCyanRfcommConstants.FRAME_HEADER_1
+-        frame[2] = ((totalLength ushr 8) and 0xFF).toByte()
+-        frame[3] = (totalLength and 0xFF).toByte()
+-        frame[4] = packet.command.toByte()
+-
+-        if (packet.payload.isNotEmpty()) {
+-            packet.payload.copyInto(frame, destinationOffset = 5)
+-        }
+-
+-        // Checksum computed over all preceding bytes [0 .. totalLength-2]
+-        val payloadForChecksum = frame.copyOfRange(0, totalLength - 1)
+-        val cs = checksumCalculator.calculate(payloadForChecksum)
+-        frame[totalLength - 1] = cs
+-
+-        return frame
+-    }
+-}
+diff --git a/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/transport/rfcomm/RfcommPacketTrace.kt b/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/transport/rfcomm/RfcommPacketTrace.kt
+deleted file mode 100644
+index 0c6c5b8..0000000
+--- a/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/transport/rfcomm/RfcommPacketTrace.kt
++++ /dev/null
+@@ -1,40 +0,0 @@
+-package com.halo.drivers.heycyan.transport.rfcomm
+-
+-import com.halo.drivers.heycyan.codec.PacketDirection
+-
+-/**
+- * Transport kind discriminator for capture logging.
+- */
+-enum class TransportKind {
+-    BLE_GATT,
+-    RFCOMM,
+-    WIFI_HTTP,
+-}
+-
+-/**
+- * Forensic packet trace entry for RFCOMM communications.
+- * Raw bytes are formatted as uppercase hex strings.
+- */
+-data class RfcommPacketTrace(
+-    val timestamp: Long,
+-    val direction: PacketDirection,
+-    val bytes: ByteArray,
+-) {
+-    val hexString: String
+-        get() = bytes.joinToString("") { "%02X".format(it) }
+-
+-    override fun equals(other: Any?): Boolean {
+-        if (this === other) return true
+-        if (other !is RfcommPacketTrace) return false
+-        return timestamp == other.timestamp &&
+-            direction == other.direction &&
+-            bytes.contentEquals(other.bytes)
+-    }
+-
+-    override fun hashCode(): Int {
+-        var result = timestamp.hashCode()
+-        result = 31 * result + direction.hashCode()
+-        result = 31 * result + bytes.contentHashCode()
+-        return result
+-    }
+-}
+diff --git a/drivers/heycyan/src/test/java/com/halo/drivers/heycyan/HeyCyanTransportPlanTest.kt b/drivers/heycyan/src/test/java/com/halo/drivers/heycyan/HeyCyanTransportPlanTest.kt
+deleted file mode 100644
+index 66f9c1f..0000000
+--- a/drivers/heycyan/src/test/java/com/halo/drivers/heycyan/HeyCyanTransportPlanTest.kt
++++ /dev/null
+@@ -1,18 +0,0 @@
+-package com.halo.drivers.heycyan
+-
+-import org.junit.Assert.assertEquals
+-import org.junit.Assert.assertFalse
+-import org.junit.Test
+-
+-class HeyCyanTransportPlanTest {
+-    @Test
+-    fun discoveryAttemptsRfcommBeforeGattAndDoesNotRequireGatt() {
+-        val plan = HeyCyanTransportPlan.forMode(HeyCyanConnectionMode.DISCOVERY)
+-
+-        assertEquals(
+-            listOf(HeyCyanTransport.RFCOMM, HeyCyanTransport.BLE_GATT),
+-            plan.attemptOrder
+-        )
+-        assertFalse(plan.gattRequired)
+-    }
+-}
+diff --git a/drivers/heycyan/src/test/java/com/halo/drivers/heycyan/capability/HeyCyanCapabilityControllerTest.kt b/drivers/heycyan/src/test/java/com/halo/drivers/heycyan/capability/HeyCyanCapabilityControllerTest.kt
+index 9d4596b..cbb6dfd 100644
+--- a/drivers/heycyan/src/test/java/com/halo/drivers/heycyan/capability/HeyCyanCapabilityControllerTest.kt
++++ b/drivers/heycyan/src/test/java/com/halo/drivers/heycyan/capability/HeyCyanCapabilityControllerTest.kt
+@@ -128,14 +128,25 @@ class HeyCyanCapabilityControllerTest {
+     }
+ 
+     @Test
+-    fun `synchronize media is never translated into transfer mode command`() {
+-        val exception = assertThrows(IllegalStateException::class.java) {
+-            HeyCyanOperation.SynchronizeMedia.toCommand()
+-        }
++    fun `synchronize media returns unsupported failure and never hits transport`() = runTest {
++        val result = controller.execute(HeyCyanOperation.SynchronizeMedia)
++        assertTrue(result.isFailure)
++        val exception = result.exceptionOrNull()
++        assertTrue(exception is HeyCyanCapabilityException)
++        val failure = (exception as HeyCyanCapabilityException).failure
++        assertTrue(failure is HeyCyanOperationFailure.Unsupported)
++        assertTrue(executor.executedCommands.isEmpty())
++    }
+ 
+-        assertTrue(
+-            exception.message!!.contains("HeyCyanMediaSynchronizer")
+-        )
++    @Test
++    fun `prepare voice routing is rejected as protocol blocked and never hits transport`() = runTest {
++        val result = controller.execute(HeyCyanOperation.PrepareVoiceRouting)
++        assertTrue(result.isFailure)
++        val exception = result.exceptionOrNull()
++        assertTrue(exception is HeyCyanCapabilityException)
++        val failure = (exception as HeyCyanCapabilityException).failure
++        assertTrue(failure is HeyCyanOperationFailure.ProtocolNotEstablished)
++        assertTrue(executor.executedCommands.isEmpty())
+     }
+ 
+     @Test
+diff --git a/drivers/heycyan/src/test/java/com/halo/drivers/heycyan/rfcomm/HeyCyanRfcommChannelTest.kt b/drivers/heycyan/src/test/java/com/halo/drivers/heycyan/rfcomm/HeyCyanRfcommChannelTest.kt
+deleted file mode 100644
+index a6f0f3c..0000000
+--- a/drivers/heycyan/src/test/java/com/halo/drivers/heycyan/rfcomm/HeyCyanRfcommChannelTest.kt
++++ /dev/null
+@@ -1,25 +0,0 @@
+-package com.halo.drivers.heycyan.rfcomm
+-
+-import org.junit.Assert.assertEquals
+-import org.junit.Assert.assertFalse
+-import org.junit.Assert.assertTrue
+-import org.junit.Test
+-import java.util.UUID
+-
+-class HeyCyanRfcommChannelTest {
+-    @Test
+-    fun candidateChannelsKeepReferenceTransportSeparateFromProtocolMeaning() {
+-        assertEquals(
+-            UUID.fromString("00001101-0000-1000-8000-00805f9b34fb"),
+-            HeyCyanRfcommChannel.PRIMARY.uuid
+-        )
+-        assertFalse(HeyCyanRfcommChannel.PRIMARY.required)
+-        assertEquals(
+-            listOf("primary", "extra", "record"),
+-            HeyCyanRfcommChannel.CANDIDATES.map { it.name }
+-        )
+-        assertTrue(HeyCyanRfcommChannel.CANDIDATES.drop(1).all { !it.required })
+-    }
+-}
+-
+-private val UUID_PLACEHOLDER: UUID? = null
+diff --git a/drivers/heycyan/src/test/java/com/halo/drivers/heycyan/rfcomm/RfcommControlFrameAssemblerTest.kt b/drivers/heycyan/src/test/java/com/halo/drivers/heycyan/rfcomm/RfcommControlFrameAssemblerTest.kt
+deleted file mode 100644
+index 7fa89ba..0000000
+--- a/drivers/heycyan/src/test/java/com/halo/drivers/heycyan/rfcomm/RfcommControlFrameAssemblerTest.kt
++++ /dev/null
+@@ -1,45 +0,0 @@
+-package com.halo.drivers.heycyan.rfcomm
+-
+-import org.junit.Assert.assertArrayEquals
+-import org.junit.Assert.assertEquals
+-import org.junit.Test
+-
+-class RfcommControlFrameAssemblerTest {
+-    @Test
+-    fun assemblerWaitsForCompleteLengthPrefixedFrameAcrossChunks() {
+-        val assembler = RfcommControlFrameAssembler()
+-        val frame = byteArrayOf(
+-            0xFA.toByte(), 0x00, 0x00, 0x09,
+-            0x01, 0x02, 0x01, 0x01, 0x05
+-        )
+-
+-        assertEquals(emptyList<ByteArray>(), assembler.append(frame.copyOfRange(0, 4)))
+-        val frames = assembler.append(frame.copyOfRange(4, frame.size))
+-
+-        assertEquals(1, frames.size)
+-        assertArrayEquals(frame, frames.single())
+-    }
+-
+-    @Test
+-    fun assemblerDropsLeadingNoiseButPreservesFollowingFrame() {
+-        val assembler = RfcommControlFrameAssembler()
+-        val frame = byteArrayOf(
+-            0xFA.toByte(), 0x00, 0x00, 0x09,
+-            0x01, 0x02, 0x06, 0x01, 0x0A
+-        )
+-
+-        val frames = assembler.append(byteArrayOf(0x52, 0x91.toByte(), 0x00) + frame)
+-
+-        assertEquals(1, frames.size)
+-        assertArrayEquals(frame, frames.single())
+-    }
+-}
+-
+-private operator fun ByteArray.plus(other: ByteArray): ByteArray =
+-    ByteArray(size + other.size).also {
+-        copyInto(it)
+-        other.copyInto(it, destinationOffset = size)
+-    }
+-
+-private fun ByteArray.copyOfRange(fromIndex: Int, toIndex: Int): ByteArray =
+-    java.util.Arrays.copyOfRange(this, fromIndex, toIndex)
+diff --git a/drivers/heycyan/src/test/java/com/halo/drivers/heycyan/transport/rfcomm/FakeHeyCyanRfcommTransport.kt b/drivers/heycyan/src/test/java/com/halo/drivers/heycyan/transport/rfcomm/FakeHeyCyanRfcommTransport.kt
+deleted file mode 100644
+index e6404ec..0000000
+--- a/drivers/heycyan/src/test/java/com/halo/drivers/heycyan/transport/rfcomm/FakeHeyCyanRfcommTransport.kt
++++ /dev/null
+@@ -1,45 +0,0 @@
+-package com.halo.drivers.heycyan.transport.rfcomm
+-
+-import kotlinx.coroutines.flow.MutableSharedFlow
+-import kotlinx.coroutines.flow.MutableStateFlow
+-import kotlinx.coroutines.flow.StateFlow
+-import kotlinx.coroutines.flow.asSharedFlow
+-import kotlinx.coroutines.flow.asStateFlow
+-
+-/**
+- * Fake implementation of [HeyCyanRfcommTransport] for hardware-free unit tests.
+- */
+-class FakeHeyCyanRfcommTransport : HeyCyanRfcommTransport {
+-
+-    private val _state = MutableStateFlow(RfcommConnectionState.DISCONNECTED)
+-    override val state: StateFlow<RfcommConnectionState> = _state.asStateFlow()
+-
+-    val writes = mutableListOf<ByteArray>()
+-
+-    private val _incoming = MutableSharedFlow<ByteArray>(extraBufferCapacity = 64)
+-    override val incoming = _incoming.asSharedFlow()
+-
+-    var shouldFailConnect = false
+-
+-    override suspend fun connect(device: HeyCyanRfcommDevice): Result<Unit> {
+-        if (shouldFailConnect) {
+-            _state.value = RfcommConnectionState.FAILED
+-            return Result.failure(IllegalStateException("Simulated RFCOMM connect failure"))
+-        }
+-        _state.value = RfcommConnectionState.CONNECTED
+-        return Result.success(Unit)
+-    }
+-
+-    override suspend fun disconnect() {
+-        _state.value = RfcommConnectionState.DISCONNECTED
+-    }
+-
+-    override suspend fun write(bytes: ByteArray): Result<Unit> {
+-        writes.add(bytes.copyOf())
+-        return Result.success(Unit)
+-    }
+-
+-    suspend fun emitIncoming(bytes: ByteArray) {
+-        _incoming.emit(bytes)
+-    }
+-}
+diff --git a/drivers/heycyan/src/test/java/com/halo/drivers/heycyan/transport/rfcomm/HeyCyanRfcommCommandMapperTest.kt b/drivers/heycyan/src/test/java/com/halo/drivers/heycyan/transport/rfcomm/HeyCyanRfcommCommandMapperTest.kt
+deleted file mode 100644
+index 4f9adac..0000000
+--- a/drivers/heycyan/src/test/java/com/halo/drivers/heycyan/transport/rfcomm/HeyCyanRfcommCommandMapperTest.kt
++++ /dev/null
+@@ -1,39 +0,0 @@
+-package com.halo.drivers.heycyan.transport.rfcomm
+-
+-import com.halo.drivers.heycyan.protocol.HeyCyanCommand
+-import com.halo.drivers.heycyan.protocol.HeyCyanMode
+-import org.junit.Assert.assertEquals
+-import org.junit.Assert.assertTrue
+-import org.junit.Test
+-
+-class HeyCyanRfcommCommandMapperTest {
+-
+-    private val mapper = DefaultHeyCyanRfcommCommandMapper()
+-
+-    @Test
+-    fun mapsGetBatteryToCommand0x13() {
+-        val result = mapper.map(HeyCyanCommand.GetBattery)
+-        assertTrue(result.isSuccess)
+-        val packet = result.getOrThrow()
+-        assertEquals(0x13, packet.command)
+-        assertTrue(packet.payload.isEmpty())
+-    }
+-
+-    @Test
+-    fun mapsGetVersionToCommand0x10() {
+-        val result = mapper.map(HeyCyanCommand.GetVersion)
+-        assertTrue(result.isSuccess)
+-        val packet = result.getOrThrow()
+-        assertEquals(0x10, packet.command)
+-    }
+-
+-    @Test
+-    fun mapsSetPhotoModeToCommand0x01Payload0x01() {
+-        val result = mapper.map(HeyCyanCommand.SetMode(HeyCyanMode.PHOTO))
+-        assertTrue(result.isSuccess)
+-        val packet = result.getOrThrow()
+-        assertEquals(0x01, packet.command)
+-        assertEquals(1, packet.payload.size)
+-        assertEquals(0x01.toByte(), packet.payload[0])
+-    }
+-}
+diff --git a/drivers/heycyan/src/test/java/com/halo/drivers/heycyan/transport/rfcomm/HeyCyanRfcommSessionTest.kt b/drivers/heycyan/src/test/java/com/halo/drivers/heycyan/transport/rfcomm/HeyCyanRfcommSessionTest.kt
+deleted file mode 100644
+index 2df5d8f..0000000
+--- a/drivers/heycyan/src/test/java/com/halo/drivers/heycyan/transport/rfcomm/HeyCyanRfcommSessionTest.kt
++++ /dev/null
+@@ -1,56 +0,0 @@
+-package com.halo.drivers.heycyan.transport.rfcomm
+-
+-import com.halo.drivers.heycyan.protocol.HeyCyanCommand
+-import kotlinx.coroutines.launch
+-import kotlinx.coroutines.yield
+-import kotlinx.coroutines.test.runTest
+-import org.junit.Assert.assertEquals
+-import org.junit.Assert.assertTrue
+-import org.junit.Before
+-import org.junit.Test
+-import kotlin.time.Duration.Companion.seconds
+-
+-class HeyCyanRfcommSessionTest {
+-
+-    private lateinit var transport: FakeHeyCyanRfcommTransport
+-    private lateinit var encoder: MemoMindPacketEncoder
+-    private lateinit var session: DefaultHeyCyanRfcommSession
+-
+-    @Before
+-    fun setUp() {
+-        transport = FakeHeyCyanRfcommTransport()
+-        encoder = MemoMindPacketEncoder()
+-    }
+-
+-    @Test
+-    fun requestSendsEncodedPacketAndCorrelatesResponse() = runTest {
+-        session = DefaultHeyCyanRfcommSession(
+-            transport = transport,
+-            mapper = DefaultHeyCyanRfcommCommandMapper(),
+-            encoder = encoder,
+-            scope = backgroundScope
+-        )
+-
+-        // Emit response matching GetBattery (0x13) when transport receives write
+-        val responsePacket = MemoMindPacket(command = 0x13, payload = byteArrayOf(0x50))
+-        val encodedResponse = encoder.encode(responsePacket)
+-
+-        // Launch response emission asynchronously in backgroundScope
+-        backgroundScope.launch {
+-            // Wait for session.request to be ready
+-            kotlinx.coroutines.delay(10)
+-            // Simulate incoming packet from device
+-            transport.emitIncoming(encodedResponse)
+-        }
+-
+-        val result = session.request(HeyCyanCommand.GetBattery, timeout = 2.seconds)
+-        if (result.isFailure) {
+-            throw result.exceptionOrNull()!!
+-        }
+-        assertTrue(result.isSuccess)
+-        val response = result.getOrThrow()
+-        assertEquals(0x13, response.packet.command)
+-        assertEquals(1, response.packet.payload.size)
+-        assertEquals(0x50.toByte(), response.packet.payload[0])
+-    }
+-}
+diff --git a/drivers/heycyan/src/test/java/com/halo/drivers/heycyan/transport/rfcomm/MemoMindPacketDecoderTest.kt b/drivers/heycyan/src/test/java/com/halo/drivers/heycyan/transport/rfcomm/MemoMindPacketDecoderTest.kt
+deleted file mode 100644
+index dbd0a1c..0000000
+--- a/drivers/heycyan/src/test/java/com/halo/drivers/heycyan/transport/rfcomm/MemoMindPacketDecoderTest.kt
++++ /dev/null
+@@ -1,71 +0,0 @@
+-package com.halo.drivers.heycyan.transport.rfcomm
+-
+-import org.junit.Assert.assertEquals
+-import org.junit.Assert.assertTrue
+-import org.junit.Before
+-import org.junit.Test
+-
+-class MemoMindPacketDecoderTest {
+-
+-    private lateinit var encoder: MemoMindPacketEncoder
+-    private lateinit var decoder: MemoMindPacketDecoder
+-
+-    @Before
+-    fun setUp() {
+-        encoder = MemoMindPacketEncoder()
+-        decoder = MemoMindPacketDecoder()
+-    }
+-
+-    @Test
+-    fun decodesSinglePacket() {
+-        val packet = MemoMindPacket(command = 0x13, payload = byteArrayOf(0x50))
+-        val encoded = encoder.encode(packet)
+-
+-        val decodedList = decoder.feed(encoded)
+-        assertEquals(1, decodedList.size)
+-        assertEquals(packet, decodedList.first())
+-    }
+-
+-    @Test
+-    fun decodesPacketSplitAcrossReads() {
+-        val packet = MemoMindPacket(command = 0x01, payload = byteArrayOf(0x02, 0x03))
+-        val encoded = encoder.encode(packet)
+-
+-        val half1 = encoded.copyOfRange(0, 3)
+-        val half2 = encoded.copyOfRange(3, encoded.size)
+-
+-        val res1 = decoder.feed(half1)
+-        assertTrue(res1.isEmpty())
+-
+-        val res2 = decoder.feed(half2)
+-        assertEquals(1, res2.size)
+-        assertEquals(packet, res2.first())
+-    }
+-
+-    @Test
+-    fun decodesMultiplePacketsInSingleRead() {
+-        val packet1 = MemoMindPacket(command = 0x10, payload = byteArrayOf())
+-        val packet2 = MemoMindPacket(command = 0x14, payload = byteArrayOf())
+-
+-        val bytes1 = encoder.encode(packet1)
+-        val bytes2 = encoder.encode(packet2)
+-        val combined = bytes1 + bytes2
+-
+-        val decoded = decoder.feed(combined)
+-        assertEquals(2, decoded.size)
+-        assertEquals(packet1, decoded[0])
+-        assertEquals(packet2, decoded[1])
+-    }
+-
+-    @Test
+-    fun recoversFromGarbagePrecedingHeader() {
+-        val packet = MemoMindPacket(command = 0x13, payload = byteArrayOf())
+-        val encoded = encoder.encode(packet)
+-        val garbage = byteArrayOf(0x12, 0x34, 0x56)
+-        val noisyStream = garbage + encoded
+-
+-        val decoded = decoder.feed(noisyStream)
+-        assertEquals(1, decoded.size)
+-        assertEquals(packet, decoded.first())
+-    }
+-}
+diff --git a/drivers/heycyan/src/test/java/com/halo/drivers/heycyan/transport/rfcomm/MemoMindPacketEncoderTest.kt b/drivers/heycyan/src/test/java/com/halo/drivers/heycyan/transport/rfcomm/MemoMindPacketEncoderTest.kt
+deleted file mode 100644
+index 0205060..0000000
+--- a/drivers/heycyan/src/test/java/com/halo/drivers/heycyan/transport/rfcomm/MemoMindPacketEncoderTest.kt
++++ /dev/null
+@@ -1,33 +0,0 @@
+-package com.halo.drivers.heycyan.transport.rfcomm
+-
+-import org.junit.Assert.assertEquals
+-import org.junit.Test
+-
+-class MemoMindPacketEncoderTest {
+-
+-    private val encoder = MemoMindPacketEncoder()
+-
+-    @Test
+-    fun encodesHeaderPrefixFA00() {
+-        val packet = MemoMindPacket(command = 0x13, payload = byteArrayOf())
+-        val encoded = encoder.encode(packet)
+-
+-        assertEquals(0xFA.toByte(), encoded[0])
+-        assertEquals(0x00.toByte(), encoded[1])
+-    }
+-
+-    @Test
+-    fun encodesCorrectLengthAndCommand() {
+-        val payload = byteArrayOf(0x01, 0x02)
+-        val packet = MemoMindPacket(command = 0x01, payload = payload)
+-        val encoded = encoder.encode(packet)
+-
+-        // Total len: FA 00 (2) + Len (2) + Cmd (1) + Payload (2) + CS (1) = 8 bytes
+-        assertEquals(8, encoded.size)
+-        assertEquals(0x00.toByte(), encoded[2])
+-        assertEquals(0x08.toByte(), encoded[3])
+-        assertEquals(0x01.toByte(), encoded[4])
+-        assertEquals(0x01.toByte(), encoded[5])
+-        assertEquals(0x02.toByte(), encoded[6])
+-    }
+-}
+diff --git a/drivers/heycyan/src/test/java/com/halo/drivers/heycyan/transport/rfcomm/MemoMindPacketGoldenVectorTest.kt b/drivers/heycyan/src/test/java/com/halo/drivers/heycyan/transport/rfcomm/MemoMindPacketGoldenVectorTest.kt
+deleted file mode 100644
+index 952fc26..0000000
+--- a/drivers/heycyan/src/test/java/com/halo/drivers/heycyan/transport/rfcomm/MemoMindPacketGoldenVectorTest.kt
++++ /dev/null
+@@ -1,48 +0,0 @@
+-package com.halo.drivers.heycyan.transport.rfcomm
+-
+-import org.junit.Assert.assertEquals
+-import org.junit.Test
+-
+-class MemoMindPacketGoldenVectorTest {
+-
+-    private val encoder = MemoMindPacketEncoder()
+-    private val decoder = MemoMindPacketDecoder()
+-
+-    private fun ByteArray.toHex(): String = joinToString("") { "%02X".format(it) }
+-
+-    @Test
+-    fun getBatteryGoldenVector() {
+-        // Command 0x13 (GetBattery), empty payload
+-        // FA 00 + Len(00 06) + Cmd(13) + CS(FA+00+00+06+13 = 113 = 0x73.. Wait: FA+00+00+06+13:
+-        // FA(250) + 00 + 00 + 06 + 19 = 275 -> 275 & 0xFF = 19 (0x13).
+-        val packet = MemoMindPacket(command = 0x13, payload = byteArrayOf())
+-        val encoded = encoder.encode(packet)
+-
+-        val hex = encoded.toHex()
+-        assertTrue("Golden vector must start with FA00", hex.startsWith("FA00"))
+-        assertEquals(12, hex.length) // 6 bytes = 12 hex chars
+-
+-        // Roundtrip verify byte for byte match
+-        val decoded = decoder.feed(encoded)
+-        assertEquals(1, decoded.size)
+-        assertEquals(packet, decoded.first())
+-    }
+-
+-    @Test
+-    fun setPhotoModeGoldenVector() {
+-        // Command 0x01 (SetMode), payload 0x01 (Photo)
+-        val packet = MemoMindPacket(command = 0x01, payload = byteArrayOf(0x01))
+-        val encoded = encoder.encode(packet)
+-
+-        val hex = encoded.toHex()
+-        assertTrue("Golden vector must start with FA00", hex.startsWith("FA00"))
+-
+-        val decoded = decoder.feed(encoded)
+-        assertEquals(1, decoded.size)
+-        assertEquals(packet, decoded.first())
+-    }
+-}
+-
+-private fun assertTrue(message: String, condition: Boolean) {
+-    org.junit.Assert.assertTrue(message, condition)
+-}
+diff --git a/sdk/runtime-sdk/src/main/java/com/halo/sdk/runtime/embodiment/HeyCyanSession.kt b/sdk/runtime-sdk/src/main/java/com/halo/sdk/runtime/embodiment/HeyCyanSession.kt
+index e44e2b0..7aa324f 100644
+--- a/sdk/runtime-sdk/src/main/java/com/halo/sdk/runtime/embodiment/HeyCyanSession.kt
++++ b/sdk/runtime-sdk/src/main/java/com/halo/sdk/runtime/embodiment/HeyCyanSession.kt
+@@ -199,7 +199,7 @@ class HeyCyanSession(
+ 
+     private suspend fun waitForCompletion(intent: EmbodimentIntent, operation: HeyCyanOperation) {
+         try {
+-            withTimeout(10000L) {
++            withTimeout(30000L) {
+                 when (operation) {
+                     HeyCyanOperation.TakePhoto -> {
+                         eventBus.observe(ObservationUpdated::class.java)
