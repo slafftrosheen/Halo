@@ -2,13 +2,14 @@ package com.halo.engines.speech
 
 import com.halo.sdk.provider.BufferedSpeechRecognitionProvider
 import com.halo.sdk.provider.LiveSpeechRecognitionProvider
-import com.halo.sdk.provider.SpeechRecognitionMode
 import com.halo.sdk.provider.RecognitionEvent
+import com.halo.sdk.provider.SpeechRecognitionMode
 import com.halo.sdk.provider.SpeechRecognitionProvider
 import com.halo.sdk.provider.WakeWordDetector
 import com.halo.sdk.runtime.EventBus
 import com.halo.sdk.runtime.SpeechState
 import com.halo.sdk.host.AudioFrame
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -51,37 +52,42 @@ class AudioPipeline(
     }
 
     private fun onSpeechEnded() {
-        if (sttProvider.mode == SpeechRecognitionMode.BUFFERED) {
-            val segment = buffer.snapshot()
-            buffer.clear()
-            if (segment.audioBuffer.frames.isNotEmpty()) {
-                _state.value = SpeechState.Recognizing
-                scope.launch { processSegment(segment) }
-            } else {
-                _state.value = SpeechState.Idle
-            }
+        // A LIVE provider owns its endpointing. The audio source becoming idle must
+        // not cancel the recognition flow or manufacture a RecognitionFinished event.
+        // Android SpeechRecognizer commonly closes its callbackFlow after onResults/onError.
+        if (sttProvider.mode == SpeechRecognitionMode.LIVE) {
+            return
+        }
+
+        val segment = buffer.snapshot()
+        buffer.clear()
+        if (segment.audioBuffer.frames.isNotEmpty()) {
+            _state.value = SpeechState.Recognizing
+            scope.launch { processSegment(segment) }
+        } else {
+            _state.value = SpeechState.Idle
         }
     }
 
     fun processFrame(frame: AudioFrame) {
         val currentState = _state.value
-        
+
         if (vad.isSpeech(frame)) {
             if (currentState == SpeechState.Idle) {
                 _state.value = SpeechState.Listening
                 scope.launch { eventBus.publish(SpeechStarted()) }
             }
-            
+
             if (sttProvider.mode == SpeechRecognitionMode.BUFFERED) {
                 buffer.append(frame)
             }
-            
+
             if (currentState != SpeechState.WakeDetected && currentState != SpeechState.Recognizing) {
                 val wwResult = wakeWordDetector.process(frame)
                 if (wwResult.detected) {
                     _state.value = SpeechState.WakeDetected
                     scope.launch { eventBus.publish(RecognitionStarted(id = UUID.randomUUID().toString())) }
-                    
+
                     if (sttProvider.mode == SpeechRecognitionMode.LIVE) {
                         _state.value = SpeechState.Recognizing
                         startLiveListening()
@@ -91,10 +97,10 @@ class AudioPipeline(
         } else if (currentState == SpeechState.Listening || currentState == SpeechState.WakeDetected || currentState == SpeechState.Recognizing) {
             if (sttProvider.mode == SpeechRecognitionMode.BUFFERED) {
                 scope.launch { eventBus.publish(SpeechEnded()) }
-                
+
                 val segment = buffer.snapshot()
                 buffer.clear()
-                
+
                 if (currentState == SpeechState.WakeDetected || currentState == SpeechState.Recognizing) {
                     _state.value = SpeechState.Recognizing
                     scope.launch { processSegment(segment) }
@@ -102,20 +108,21 @@ class AudioPipeline(
                     _state.value = SpeechState.Idle
                 }
             } else if (sttProvider.mode == SpeechRecognitionMode.LIVE) {
-                // For live providers, we let the provider handle its own endpointing.
-                // We just keep the state until the provider stops.
-                scope.launch { eventBus.publish(SpeechEnded()) }
+                // Do not emit SpeechEnded for every non-speech frame. The Android
+                // SpeechRecognizer performs its own endpointing; repeatedly emitting
+                // SpeechEnded caused the pipeline to race recognition lifecycle state.
+                // The provider's Final/Error/Stopped events are the authoritative end.
             }
         }
     }
 
     private fun startLiveListening() {
-        if (sttProvider !is LiveSpeechRecognitionProvider) return
-        
-        liveListeningJob?.cancel()
+        val provider = sttProvider as? LiveSpeechRecognitionProvider ?: return
+        if (liveListeningJob?.isActive == true) return
+
         liveListeningJob = scope.launch {
             try {
-                sttProvider.startListening().collect { event ->
+                provider.startListening().collect { event ->
                     when (event) {
                         is RecognitionEvent.Ready -> {
                             _state.value = SpeechState.Listening
@@ -124,14 +131,16 @@ class AudioPipeline(
                             _state.value = SpeechState.Recognizing
                         }
                         is RecognitionEvent.Partial -> {
-                            // Can emit partial event here if required in the future
+                            // Can emit partial event here if required in the future.
                         }
                         is RecognitionEvent.Final -> {
                             _state.value = SpeechState.Thinking
-                            eventBus.publish(SpeechRecognized(
-                                id = UUID.randomUUID().toString(),
-                                text = event.result.text
-                            ))
+                            eventBus.publish(
+                                SpeechRecognized(
+                                    id = UUID.randomUUID().toString(),
+                                    text = event.result.text
+                                )
+                            )
                             eventBus.publish(RecognitionFinished(id = UUID.randomUUID().toString()))
                         }
                         is RecognitionEvent.Error -> {
@@ -145,27 +154,45 @@ class AudioPipeline(
                         }
                     }
                 }
-            } catch (e: Exception) {
-                eventBus.publish(RecognitionFailed(reason = e.message ?: "Live recognition failed"))
+            } catch (cancellation: CancellationException) {
+                // Cancellation is normal lifecycle control (reset/stop). Do not publish
+                // it as a user-visible recognition failure.
+                if (_state.value != SpeechState.Idle && _state.value != SpeechState.Thinking) {
+                    _state.value = SpeechState.Idle
+                }
+                throw cancellation
+            } catch (exception: Exception) {
+                eventBus.publish(
+                    RecognitionFailed(reason = exception.message ?: "Live recognition failed")
+                )
                 _state.value = SpeechState.Idle
+            } finally {
+                liveListeningJob = null
             }
         }
     }
 
     private suspend fun processSegment(segment: SpeechSegment) {
-        if (sttProvider !is BufferedSpeechRecognitionProvider) return
-        
+        val provider = sttProvider as? BufferedSpeechRecognitionProvider ?: return
+
         try {
-            val result = sttProvider.recognize(segment.audioBuffer)
+            val result = provider.recognize(segment.audioBuffer)
             _state.value = SpeechState.Thinking
-            eventBus.publish(SpeechRecognized(
-                id = UUID.randomUUID().toString(),
-                text = result.text
-            ))
+            eventBus.publish(
+                SpeechRecognized(
+                    id = UUID.randomUUID().toString(),
+                    text = result.text
+                )
+            )
             eventBus.publish(RecognitionFinished(id = UUID.randomUUID().toString()))
-        } catch (e: Exception) {
+        } catch (cancellation: CancellationException) {
+            // Parent/runtime shutdown cancellation is not an STT failure.
+            throw cancellation
+        } catch (exception: Exception) {
             _state.value = SpeechState.Idle
-            eventBus.publish(RecognitionFailed(reason = e.message ?: "Recognition failed"))
+            eventBus.publish(
+                RecognitionFailed(reason = exception.message ?: "Recognition failed")
+            )
         }
     }
 
