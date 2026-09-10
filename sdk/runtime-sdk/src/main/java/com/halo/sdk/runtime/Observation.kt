@@ -37,7 +37,7 @@ data class Observation(
     val confidence: Float = 1.0f,
     val timestamp: Long = System.currentTimeMillis(),
     val metadata: Map<String, Any> = emptyMap()
-) : Any
+)
 
 data class ObservationCreated(
     override val id: String = UUID.randomUUID().toString(),

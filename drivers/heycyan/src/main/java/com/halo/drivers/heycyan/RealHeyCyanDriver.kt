@@ -424,10 +424,9 @@ class RealHeyCyanDriver(
             runCatching { adapter.name }.getOrNull()
         } else null
         return com.halo.drivers.heycyan.codec.CaptureMetadata(
-            platform = "Android",
-            apiLevel = Build.VERSION.SDK_INT,
-            adapterName = adapterName,
-            transport = "BLE_GATT"
+            androidVersion = "Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})",
+            phoneModel = "${Build.MANUFACTURER} ${Build.MODEL}",
+            bluetoothAdapter = adapterName
         )
     }
 
