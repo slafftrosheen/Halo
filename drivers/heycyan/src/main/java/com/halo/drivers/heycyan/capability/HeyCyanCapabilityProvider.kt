@@ -27,53 +27,49 @@ class HeyCyanCapabilityProvider(
         capabilityId: String,
         request: CapabilityRequest,
     ): CapabilityOutcome {
-
         HeyCyanLogger.i(
             "HALO-TX-TRACE",
-            "Capability execution requested: $capabilityId"
+            "Capability execution requested: $capabilityId",
         )
 
         val capability = HeyCyanCapabilities.find(capabilityId)
             ?: return CapabilityOutcome.Failure(
-                "Unknown HeyCyan capability: $capabilityId"
+                "Unknown HeyCyan capability: $capabilityId",
             )
 
         return when (capability.status) {
-
             HeyCyanCapabilityStatus.UNSUPPORTED ->
                 CapabilityOutcome.Failure(
-                    "Unsupported HeyCyan capability: ${capability.id}"
+                    "Unsupported HeyCyan capability: ${capability.id}",
                 )
 
             HeyCyanCapabilityStatus.BLOCKED_BY_PROTOCOL ->
                 CapabilityOutcome.Failure(
-                    "Capability blocked by unresolved protocol: ${capability.id}"
+                    "Capability blocked by unresolved protocol: ${capability.id}",
                 )
 
             HeyCyanCapabilityStatus.STRUCTURAL_VALIDATION ->
                 CapabilityOutcome.Failure(
-                    "Capability is still under structural validation: ${capability.id}"
+                    "Capability is still under structural validation: ${capability.id}",
                 )
 
             HeyCyanCapabilityStatus.PLATFORM_LIMITED ->
                 CapabilityOutcome.Failure(
-                    "Capability is limited by the host platform: ${capability.id}"
+                    "Capability is limited by the host platform: ${capability.id}",
                 )
 
             HeyCyanCapabilityStatus.AVAILABLE,
             HeyCyanCapabilityStatus.AVAILABLE_WITH_LIMITATION -> {
                 val operation = directOperationFor(capability.id)
                     ?: return CapabilityOutcome.Failure(
-                        "Capability ${capability.id} requires a concrete semantic operation"
+                        "Capability ${capability.id} requires a concrete semantic operation",
                     )
 
                 controller.execute(operation).fold(
-                    onSuccess = {
-                        CapabilityOutcome.Success
-                    },
+                    onSuccess = { CapabilityOutcome.Success },
                     onFailure = {
                         CapabilityOutcome.Failure(
-                            it.message ?: "HeyCyan operation failed"
+                            it.message ?: "HeyCyan operation failed",
                         )
                     },
                 )
@@ -88,34 +84,17 @@ class HeyCyanCapabilityProvider(
      * Video and audio are aggregate capabilities and intentionally return null.
      * Their Start/Stop operations are dispatched through EmbodimentIntent.
      */
-    private fun directOperationFor(
-        capabilityId: String
-    ): HeyCyanOperation? =
+    private fun directOperationFor(capabilityId: String): HeyCyanOperation? =
         when (capabilityId) {
-            HeyCyanCapabilityIds.BATTERY ->
-                HeyCyanOperation.GetBattery
-
-            HeyCyanCapabilityIds.DEVICE_INFO ->
-                HeyCyanOperation.GetDeviceInfo
-
-            HeyCyanCapabilityIds.MEDIA_INVENTORY ->
-                HeyCyanOperation.GetMediaInventory
-
-            HeyCyanCapabilityIds.CAMERA_PHOTO ->
-                HeyCyanOperation.TakePhoto
-
-            HeyCyanCapabilityIds.AI_PHOTO ->
-                HeyCyanOperation.GenerateAIPhoto
-
-            HeyCyanCapabilityIds.WIFI_TRANSFER ->
-                HeyCyanOperation.EnterWifiTransferMode
-
+            HeyCyanCapabilityIds.BATTERY -> HeyCyanOperation.GetBattery
+            HeyCyanCapabilityIds.DEVICE_INFO -> HeyCyanOperation.GetDeviceInfo
+            HeyCyanCapabilityIds.MEDIA_INVENTORY -> HeyCyanOperation.GetMediaInventory
+            HeyCyanCapabilityIds.CAMERA_PHOTO -> HeyCyanOperation.TakePhoto
+            HeyCyanCapabilityIds.WIFI_TRANSFER -> HeyCyanOperation.EnterWifiTransferMode
             HeyCyanCapabilityIds.CAMERA_VIDEO,
             HeyCyanCapabilityIds.AUDIO_RECORDING,
-            HeyCyanCapabilityIds.AUDIO_LIVE_INPUT ->
-                null
-
-            else ->
-                null
+            HeyCyanCapabilityIds.AUDIO_LIVE_INPUT,
+            HeyCyanCapabilityIds.AI_PHOTO -> null
+            else -> null
         }
 }

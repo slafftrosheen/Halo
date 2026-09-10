@@ -4,20 +4,16 @@ import com.halo.drivers.heycyan.protocol.HeyCyanCommand
 import com.halo.drivers.heycyan.protocol.HeyCyanDeviceStateStore
 import com.halo.drivers.heycyan.protocol.HeyCyanEvent
 import com.halo.drivers.heycyan.protocol.HeyCyanMode
-import com.halo.drivers.heycyan.protocol.toCommand
+import com.halo.drivers.heycyan.protocol.HeyCyanModeCommand
 import com.halo.sdk.runtime.embodiment.heycyan.HeyCyanOperation
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
-import org.junit.Assert.assertThrows
 import org.junit.Before
 import org.junit.Test
 
-/**
- * Unit tests for [HeyCyanCapabilityController].
- */
+/** Unit tests for [HeyCyanCapabilityController]. */
 class HeyCyanCapabilityControllerTest {
 
     class FakeCommandExecutor : HeyCyanCommandExecutor {
@@ -27,14 +23,6 @@ class HeyCyanCapabilityControllerTest {
         override suspend fun execute(command: HeyCyanCommand): Result<Unit> {
             executedCommands.add(command)
             return resultToReturn
-        }
-    }
-
-    class FakeCommandTransport {
-        val sentPackets = mutableListOf<ByteArray>()
-        suspend fun send(bytes: ByteArray): Result<Unit> {
-            sentPackets.add(bytes)
-            return Result.success(Unit)
         }
     }
 
@@ -52,52 +40,72 @@ class HeyCyanCapabilityControllerTest {
 
     @Test
     fun photoCapabilityIsAvailable() {
-        val cap = HeyCyanCapabilities.photo
-        assertEquals(HeyCyanCapabilityStatus.AVAILABLE, cap.status)
+        assertEquals(
+            HeyCyanCapabilityStatus.AVAILABLE,
+            HeyCyanCapabilities.photo.status,
+        )
     }
 
     @Test
     fun videoCapabilityIsAvailable() {
-        val cap = HeyCyanCapabilities.video
-        assertEquals(HeyCyanCapabilityStatus.AVAILABLE, cap.status)
+        assertEquals(
+            HeyCyanCapabilityStatus.AVAILABLE,
+            HeyCyanCapabilities.video.status,
+        )
     }
 
     @Test
-    fun audioRecordingCapabilityIsAvailable() {
-        val cap = HeyCyanCapabilities.audioRecording
-        assertEquals(HeyCyanCapabilityStatus.AVAILABLE_WITH_LIMITATION, cap.status)
+    fun audioRecordingCapabilityIsAvailableWithLimitation() {
+        assertEquals(
+            HeyCyanCapabilityStatus.AVAILABLE_WITH_LIMITATION,
+            HeyCyanCapabilities.audioRecording.status,
+        )
+    }
+
+    @Test
+    fun liveAudioIsBlockedUntilProtocolIsEstablished() {
+        assertEquals(
+            HeyCyanCapabilityStatus.BLOCKED_BY_PROTOCOL,
+            HeyCyanCapabilities.liveAudio.status,
+        )
     }
 
     @Test
     fun aiPhotoIsExplicitlyBlockedByProtocol() {
-        val cap = HeyCyanCapabilities.aiPhoto
-        assertEquals(HeyCyanCapabilityStatus.BLOCKED_BY_PROTOCOL, cap.status)
+        assertEquals(
+            HeyCyanCapabilityStatus.BLOCKED_BY_PROTOCOL,
+            HeyCyanCapabilities.aiPhoto.status,
+        )
     }
 
     @Test
-    fun wifiTransferIsExposed() {
-        val cap = HeyCyanCapabilities.wifiTransfer
-        assertNotNull(cap)
-        assertEquals(HeyCyanCapabilityStatus.AVAILABLE_WITH_LIMITATION, cap.status)
+    fun wifiTransferIsExposedWithLimitation() {
+        assertEquals(
+            HeyCyanCapabilityStatus.AVAILABLE_WITH_LIMITATION,
+            HeyCyanCapabilities.wifiTransfer.status,
+        )
     }
 
     @Test
     fun `canonical capability ids contain exactly the exposed capability surface`() {
-        val actual = HeyCyanCapabilities.all.map { it.id }.toSet()
-
         assertEquals(
             HeyCyanCapabilityIds.all,
-            actual
+            HeyCyanCapabilities.all.map { it.id }.toSet(),
         )
+    }
+
+    @Test
+    fun `every exposed capability has a canonical id`() {
+        HeyCyanCapabilities.all.forEach { capability ->
+            assertTrue(capability.id in HeyCyanCapabilityIds.all)
+        }
     }
 
     @Test
     fun `video aggregate capability is not directly executable`() = runTest {
         val provider = HeyCyanCapabilityProvider(controller)
 
-        val result = provider.execute(
-            HeyCyanCapabilityIds.CAMERA_VIDEO
-        )
+        val result = provider.execute(HeyCyanCapabilityIds.CAMERA_VIDEO)
 
         assertTrue(result is CapabilityOutcome.Failure)
         assertTrue(executor.executedCommands.isEmpty())
@@ -107,9 +115,7 @@ class HeyCyanCapabilityControllerTest {
     fun `audio aggregate capability is not directly executable`() = runTest {
         val provider = HeyCyanCapabilityProvider(controller)
 
-        val result = provider.execute(
-            HeyCyanCapabilityIds.AUDIO_RECORDING
-        )
+        val result = provider.execute(HeyCyanCapabilityIds.AUDIO_RECORDING)
 
         assertTrue(result is CapabilityOutcome.Failure)
         assertTrue(executor.executedCommands.isEmpty())
@@ -119,17 +125,26 @@ class HeyCyanCapabilityControllerTest {
     fun `live audio never reaches command executor`() = runTest {
         val provider = HeyCyanCapabilityProvider(controller)
 
-        val result = provider.execute(
-            HeyCyanCapabilityIds.AUDIO_LIVE_INPUT
-        )
+        val result = provider.execute(HeyCyanCapabilityIds.AUDIO_LIVE_INPUT)
 
         assertTrue(result is CapabilityOutcome.Failure)
         assertTrue(executor.executedCommands.isEmpty())
     }
 
     @Test
-    fun `synchronize media returns unsupported failure and never hits transport`() = runTest {
+    fun `ai photo never reaches command executor`() = runTest {
+        val provider = HeyCyanCapabilityProvider(controller)
+
+        val result = provider.execute(HeyCyanCapabilityIds.AI_PHOTO)
+
+        assertTrue(result is CapabilityOutcome.Failure)
+        assertTrue(executor.executedCommands.isEmpty())
+    }
+
+    @Test
+    fun `synchronize media is never translated to a BLE command`() = runTest {
         val result = controller.execute(HeyCyanOperation.SynchronizeMedia)
+
         assertTrue(result.isFailure)
         val exception = result.exceptionOrNull()
         assertTrue(exception is HeyCyanCapabilityException)
@@ -139,8 +154,19 @@ class HeyCyanCapabilityControllerTest {
     }
 
     @Test
-    fun `prepare voice routing is rejected as protocol blocked and never hits transport`() = runTest {
+    fun `synchronize media command mapping fails fast`() {
+        val exception = runCatching {
+            HeyCyanOperation.SynchronizeMedia.toCommand()
+        }.exceptionOrNull()
+
+        assertNotNull(exception)
+        assertTrue(exception is IllegalStateException)
+    }
+
+    @Test
+    fun `prepare voice routing is blocked by unresolved live audio protocol`() = runTest {
         val result = controller.execute(HeyCyanOperation.PrepareVoiceRouting)
+
         assertTrue(result.isFailure)
         val exception = result.exceptionOrNull()
         assertTrue(exception is HeyCyanCapabilityException)
@@ -153,27 +179,32 @@ class HeyCyanCapabilityControllerTest {
     fun aiPhotoIsRejectedAsProtocolBlocked() = runTest {
         val result = controller.execute(HeyCyanOperation.GenerateAIPhoto)
         assertTrue(result.isFailure)
-        val exception = result.exceptionOrNull()
-        assertNotNull(exception)
-        assertTrue(exception is HeyCyanCapabilityException)
+        assertTrue(result.exceptionOrNull() is HeyCyanCapabilityException)
+        assertTrue(executor.executedCommands.isEmpty())
     }
 
     @Test
-    fun videoCannotToggleWhileAudioIsActive() = runTest {
+    fun videoCannotStartWhileAudioIsActive() = runTest {
         stateStore.apply(HeyCyanEvent.ModeChanged(mode = HeyCyanMode.AUDIO.value))
+
         val result = controller.execute(HeyCyanOperation.StartVideo)
+
         assertTrue(result.isFailure)
         val failure = (result.exceptionOrNull() as HeyCyanCapabilityException).failure
         assertTrue(failure is HeyCyanOperationFailure.DeviceRejected)
+        assertTrue(executor.executedCommands.isEmpty())
     }
 
     @Test
     fun audioCannotStartWhileVideoIsActive() = runTest {
         stateStore.apply(HeyCyanEvent.ModeChanged(mode = HeyCyanMode.VIDEO.value))
+
         val result = controller.execute(HeyCyanOperation.StartRecording)
+
         assertTrue(result.isFailure)
         val failure = (result.exceptionOrNull() as HeyCyanCapabilityException).failure
         assertTrue(failure is HeyCyanOperationFailure.DeviceRejected)
+        assertTrue(executor.executedCommands.isEmpty())
     }
 
     @Test
@@ -183,23 +214,36 @@ class HeyCyanCapabilityControllerTest {
     }
 
     @Test
-    fun videoToggleMapsToCommand() = runTest {
-        controller.execute(HeyCyanOperation.StartVideo)
-        assertEquals(HeyCyanCommand.StartVideo, executor.executedCommands.first())
+    fun videoOperationsMapToConcreteCommands() {
+        assertEquals(
+            HeyCyanCommand.StartVideo,
+            HeyCyanOperation.StartVideo.toCommand(),
+        )
+        assertEquals(
+            HeyCyanCommand.StopVideo,
+            HeyCyanOperation.StopVideo.toCommand(),
+        )
     }
 
     @Test
-    fun audioStartMapsToCommand() = runTest {
-        controller.execute(HeyCyanOperation.StartRecording)
-        assertEquals(HeyCyanCommand.StartRecording, executor.executedCommands.first())
+    fun audioOperationsMapToConcreteCommands() {
+        assertEquals(
+            HeyCyanCommand.StartRecording,
+            HeyCyanOperation.StartRecording.toCommand(),
+        )
+        assertEquals(
+            HeyCyanCommand.StopRecording,
+            HeyCyanOperation.StopRecording.toCommand(),
+        )
     }
 
     @Test
-    fun transferMapsToMode07() = runTest {
+    fun transferMapsToExplicitWifiTransferCommand() = runTest {
         controller.execute(HeyCyanOperation.EnterWifiTransferMode)
-        val cmd = executor.executedCommands.firstOrNull()
-        assertNotNull(cmd)
-        assertEquals(HeyCyanCommand.EnterWifiTransferMode, cmd)
+        assertEquals(
+            HeyCyanCommand.EnterWifiTransferMode,
+            executor.executedCommands.first(),
+        )
     }
 
     @Test
@@ -213,26 +257,35 @@ class HeyCyanCapabilityControllerTest {
 
     @Test
     fun successfulOperationTransitionsToSucceeded() = runTest {
-        executor.resultToReturn = Result.success(Unit)
         controller.execute(HeyCyanOperation.TakePhoto)
+
         val state = controller.operationState.value
         assertTrue(state is HeyCyanOperationState.Succeeded)
-        assertEquals(HeyCyanOperation.TakePhoto, (state as HeyCyanOperationState.Succeeded).operation)
+        assertEquals(
+            HeyCyanOperation.TakePhoto,
+            (state as HeyCyanOperationState.Succeeded).operation,
+        )
     }
 
     @Test
     fun failedOperationTransitionsToFailed() = runTest {
         executor.resultToReturn = Result.failure(RuntimeException("transport error"))
+
         controller.execute(HeyCyanOperation.TakePhoto)
+
         val state = controller.operationState.value
         assertTrue(state is HeyCyanOperationState.Failed)
     }
 
     @Test
-    fun providerExposesAllCapabilities() {
+    fun providerExposesExactlyCanonicalCapabilitySurface() {
         val provider = HeyCyanCapabilityProvider(controller)
         val caps = provider.capabilities()
+
         assertEquals(HeyCyanCapabilities.all.size, caps.size)
+        assertEquals(
+            HeyCyanCapabilityIds.all,
+            caps.map { it.id }.toSet(),
+        )
     }
 }
-
