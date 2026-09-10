@@ -4,9 +4,15 @@ import android.app.DownloadManager
 import android.content.Context
 import android.net.Uri
 import android.os.Environment
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import java.io.File
+
 
 data class CognitiveModel(
     val id: String,
@@ -28,6 +34,9 @@ enum class DownloadState { NotDownloaded, Downloading, Downloaded, Failed }
 class ModelDownloadManager(private val context: Context) {
     private val prefs = context.getSharedPreferences("halo_models", Context.MODE_PRIVATE)
     private val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+    private val scope = CoroutineScope(Dispatchers.IO)
+    private val activeDownloads = mutableMapOf<Long, String>()
+    private val downloadJobs = mutableMapOf<Long, Job>()
 
     private val _downloadStates = MutableStateFlow<Map<String, DownloadState>>(emptyMap())
     val downloadStates: StateFlow<Map<String, DownloadState>> = _downloadStates
@@ -41,7 +50,6 @@ class ModelDownloadManager(private val context: Context) {
     init {
         loadCustomModels()
         refreshStates()
-        selectPersistedOrFirstDownloaded()
     }
 
     fun getAllModels(): List<CognitiveModel> = AvailableModels + _customModels.value
@@ -51,8 +59,8 @@ class ModelDownloadManager(private val context: Context) {
         val fileName = model?.downloadUrl?.substringAfterLast("/") ?: "$modelId.gguf"
         val candidates = listOfNotNull(
             context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)?.let { File(it, fileName) },
-            File(context.getExternalFilesDir(null), "Download/$fileName"),
-            File(context.getExternalFilesDir(null), fileName),
+            context.getExternalFilesDir(null)?.let { File(it, "Download/$fileName") },
+            context.getExternalFilesDir(null)?.let { File(it, fileName) },
             File(context.filesDir, fileName),
             runCatching { File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), fileName) }.getOrNull()
         )
@@ -62,8 +70,11 @@ class ModelDownloadManager(private val context: Context) {
     fun refreshStates() {
         val states = mutableMapOf<String, DownloadState>()
         getAllModels().forEach { model ->
-            states[model.id] = if (getModelFile(model.id) != null) DownloadState.Downloaded
-            else _downloadStates.value[model.id] ?: DownloadState.NotDownloaded
+            states[model.id] = if (getModelFile(model.id) != null) {
+                DownloadState.Downloaded
+            } else {
+                _downloadStates.value[model.id] ?: DownloadState.NotDownloaded
+            }
         }
         _downloadStates.value = states
         selectPersistedOrFirstDownloaded()
@@ -90,12 +101,16 @@ class ModelDownloadManager(private val context: Context) {
         if (url.isBlank()) return
         val id = "custom_" + url.hashCode().toString().replace("-", "n")
         val modelName = name.ifBlank { url.substringAfterLast("/") }
-        _customModels.value = _customModels.value.filter { it.id != id } + CognitiveModel(id, modelName, "Custom GGUF Model from Hugging Face", url, 0, true)
+        _customModels.value = _customModels.value.filter { it.id != id } +
+            CognitiveModel(id, modelName, "Custom GGUF Model from Hugging Face", url, 0, true)
         saveCustomModels()
         downloadUrl(id, modelName, url)
     }
 
     private fun downloadUrl(id: String, name: String, url: String) {
+        val existing = activeDownloads.entries.firstOrNull { it.value == id }
+        if (existing != null) return
+
         val request = DownloadManager.Request(Uri.parse(url)).apply {
             setTitle("Downloading $name")
             setDescription("Halo on-device GGUF model download.")
@@ -104,8 +119,51 @@ class ModelDownloadManager(private val context: Context) {
             setAllowedOverMetered(true)
             setAllowedOverRoaming(true)
         }
-        downloadManager.enqueue(request)
+        val downloadId = downloadManager.enqueue(request)
+        activeDownloads[downloadId] = id
         _downloadStates.value = _downloadStates.value.toMutableMap().apply { put(id, DownloadState.Downloading) }
+        pollDownload(downloadId, id)
+    }
+
+    private fun pollDownload(downloadId: Long, modelId: String) {
+        downloadJobs.remove(downloadId)?.cancel()
+        downloadJobs[downloadId] = scope.launch {
+            try {
+                while (true) {
+                    val query = DownloadManager.Query().setFilterById(downloadId)
+                    val terminal = downloadManager.query(query).use { cursor ->
+                        if (!cursor.moveToFirst()) {
+                            setState(modelId, DownloadState.Failed)
+                            true
+                        } else {
+                            when (cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))) {
+                                DownloadManager.STATUS_SUCCESSFUL -> {
+                                    refreshStates()
+                                    if (getModelFile(modelId) == null) setState(modelId, DownloadState.Failed)
+                                    else setState(modelId, DownloadState.Downloaded)
+                                    true
+                                }
+                                DownloadManager.STATUS_FAILED -> {
+                                    setState(modelId, DownloadState.Failed)
+                                    true
+                                }
+                                else -> false
+                            }
+                        }
+                    }
+                    if (terminal) break
+                    delay(1000L)
+                }
+            } finally {
+                activeDownloads.remove(downloadId)
+                downloadJobs.remove(downloadId)
+                refreshStates()
+            }
+        }
+    }
+
+    private fun setState(modelId: String, state: DownloadState) {
+        _downloadStates.value = _downloadStates.value.toMutableMap().apply { put(modelId, state) }
     }
 
     fun setActiveModel(modelId: String) {
@@ -126,6 +184,8 @@ class ModelDownloadManager(private val context: Context) {
     }
 
     private fun saveCustomModels() {
-        prefs.edit().putString("custom_models_json", _customModels.value.joinToString(";;;") { "${it.id}|||${it.name}|||${it.downloadUrl}" }).apply()
+        prefs.edit().putString("custom_models_json", _customModels.value.joinToString(";;;") {
+            "${it.id}|||${it.name}|||${it.downloadUrl}"
+        }).apply()
     }
 }
