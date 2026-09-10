@@ -36,7 +36,7 @@ class DeviceSessionManager(
         stateJobs[session.identity.deviceId] = stateScope.launch {
             session.state.collect {
                 _stateRevision.value += 1
-                _activeSessionsFlow.value = _sessions.values.toList()
+                updateFlow()
             }
         }
         updateFlow()
