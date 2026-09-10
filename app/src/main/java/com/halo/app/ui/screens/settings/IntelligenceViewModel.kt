@@ -63,12 +63,13 @@ class IntelligenceViewModel(
         aiProviderRouter.selectedProviderId,
         aiProviderRouter.selectedModelId,
         modelDownloadManager?.downloadStates ?: MutableStateFlow(emptyMap()),
-        modelDownloadManager?.activeModelId ?: MutableStateFlow(null)
-    ) { snapshot, selectedProviderId, selectedModelId, dlStates, activeLocalId ->
+        modelDownloadManager?.activeModelId ?: MutableStateFlow(null),
+        _refreshTrigger
+    ) { snapshot, selectedProviderId, selectedModelId, dlStates, activeLocalId, _ ->
         val allProviders = aiProviderRouter.getAllProviders()
         val activeProvider = allProviders.find { it.id == selectedProviderId }
         val snapshotProvider = snapshot.providers.find { it.id == selectedProviderId }
-        
+
         IntelligenceUiState(
             activeProviderId = selectedProviderId ?: "",
             activeProviderName = snapshotProvider?.name ?: activeProvider?.displayName ?: "None",
@@ -142,12 +143,13 @@ class IntelligenceViewModel(
         viewModelScope.launch {
             val selectedId = aiProviderRouter.selectedProviderId.value ?: return@launch
             val provider = aiProviderRouter.getAllProviders().find { it.id == selectedId } ?: return@launch
-            
+
             _isRefreshing.value = true
             try {
                 _availableModels.value = provider.listModels()
             } finally {
                 _isRefreshing.value = false
+                _refreshTrigger.update { it + 1 }
             }
         }
     }
@@ -158,34 +160,43 @@ class IntelligenceViewModel(
             val provider = aiProviderRouter.getAllProviders().find { it.id == selectedId } ?: return@launch
             try {
                 _testConnectionResult.emit(provider.testConnection())
+                provider.getStatus()
+                _refreshTrigger.update { it + 1 }
             } catch (e: Exception) {
                 _testConnectionResult.emit(false)
+                _refreshTrigger.update { it + 1 }
             }
         }
     }
 
     fun setOpenRouterKey(key: String) {
         storage.putString("openrouter_api_key", key)
+        _refreshTrigger.update { it + 1 }
     }
 
     fun setOpenRouterModel(model: String) {
         storage.putString("openrouter_model", model)
+        _refreshTrigger.update { it + 1 }
     }
 
     fun setOllamaEndpoint(endpoint: String) {
-        storage.putString("ollama_endpoint", endpoint)
+        storage.putString("ollama_endpoint", endpoint.trimEnd('/'))
+        _refreshTrigger.update { it + 1 }
     }
 
     fun setOllamaModel(model: String) {
         storage.putString("ollama_model", model)
+        _refreshTrigger.update { it + 1 }
     }
 
     fun setLlamacppModel(model: String) {
         storage.putString("llamacpp_model", model)
+        _refreshTrigger.update { it + 1 }
     }
 
     fun setLlamacppContext(size: Int) {
         storage.putInt("llamacpp_context", size)
+        _refreshTrigger.update { it + 1 }
     }
 
     fun setMemoryEnabled(enabled: Boolean) {
@@ -246,7 +257,7 @@ class IntelligenceViewModel(
         images?.let { storage.putBoolean("policy_images", it) }
         audio?.let { storage.putBoolean("policy_audio", it) }
         video?.let { storage.putBoolean("policy_video", it) }
-        
+
         _refreshTrigger.update { it + 1 }
     }
 
