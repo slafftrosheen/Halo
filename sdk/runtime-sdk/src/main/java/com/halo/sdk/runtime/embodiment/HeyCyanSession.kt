@@ -22,7 +22,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import java.util.concurrent.ConcurrentHashMap
-
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -189,40 +188,48 @@ class HeyCyanSession(
 
     /**
      * The current driver contract returns Acknowledged for a successful command.
-     * Completion is therefore observed from the device event stream. Because the
-     * existing event schema does not carry an intent ID, completion is deliberately
-     * constrained to the expected operation-specific device signal rather than any
-     * arbitrary observation from the device.
+     * Completion is therefore observed from the device event stream. Until the
+     * driver carries a per-command correlation id, matching accepts the canonical
+     * runtime device identity and the legacy HeyCyan source id emitted by the
+     * current driver. Mode values are normalized to strings because protocol
+     * decoders may expose them as either numeric or string metadata.
      */
     private suspend fun waitForCompletion(
         intentId: String,
         operation: HeyCyanOperation,
     ) {
+        fun ObservationUpdated.belongsToThisDevice(): Boolean =
+            observation.sourceDeviceId == identity.deviceId ||
+                observation.sourceDeviceId == "heycyan"
+
+        fun ObservationUpdated.modeString(): String? =
+            observation.metadata["mode"]?.toString()
+
         try {
             val completed = withTimeoutOrNull(30000L) {
                 when (operation) {
                     HeyCyanOperation.TakePhoto -> {
                         eventBus.observe(ObservationUpdated::class.java)
                             .first { obs ->
-                                obs.observation.sourceDeviceId == identity.deviceId &&
+                                obs.belongsToThisDevice() &&
                                     obs.observation.metadata["event"] == "MODE_CHANGED" &&
-                                    obs.observation.metadata["mode"] == "1"
+                                    obs.modeString() == "1"
                             }
                     }
                     HeyCyanOperation.StartVideo -> {
                         eventBus.observe(ObservationUpdated::class.java)
                             .first { obs ->
-                                obs.observation.sourceDeviceId == identity.deviceId &&
+                                obs.belongsToThisDevice() &&
                                     obs.observation.metadata["event"] == "MODE_CHANGED" &&
-                                    obs.observation.metadata["mode"] == "2"
+                                    obs.modeString() == "2"
                             }
                     }
                     HeyCyanOperation.StopVideo -> {
                         eventBus.observe(ObservationUpdated::class.java)
                             .first { obs ->
-                                obs.observation.sourceDeviceId == identity.deviceId &&
+                                obs.belongsToThisDevice() &&
                                     obs.observation.metadata["event"] == "MODE_CHANGED" &&
-                                    obs.observation.metadata["mode"] != "2"
+                                    obs.modeString() != "2"
                             }
                     }
                     else -> {
