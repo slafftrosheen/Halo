@@ -1,6 +1,16 @@
 package com.halo.runtime.cognition.response
 
-import com.halo.sdk.provider.*
+import com.halo.sdk.provider.AiCapability
+import com.halo.sdk.provider.AiContext
+import com.halo.sdk.provider.AiErrorType
+import com.halo.sdk.provider.AiModel
+import com.halo.sdk.provider.AiProvider
+import com.halo.sdk.provider.AiProviderException
+import com.halo.sdk.provider.AiRequest
+import com.halo.sdk.provider.AiResponse
+import com.halo.sdk.provider.AiResponseValidator
+import com.halo.sdk.provider.AiStreamEvent
+import com.halo.sdk.provider.ProviderStatus
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
@@ -12,11 +22,14 @@ import org.junit.Test
 class AiResponseValidatorTest {
 
     private class FakeProvider(
-        override val id: String = "fake.provider"
+        override val id: String = "fake"
     ) : AiProvider {
 
-        override val displayName: String = "Fake Provider"
-        override val isLocal: Boolean = true
+        override val displayName =
+            "Fake Provider"
+
+        override val isLocal =
+            true
 
         override val status =
             MutableStateFlow(
@@ -26,8 +39,11 @@ class AiResponseValidatorTest {
         override suspend fun getStatus(): ProviderStatus =
             status.value
 
-        override suspend fun getCapabilities(): Set<AiCapability> =
-            setOf(AiCapability.TEXT)
+        override suspend fun getCapabilities():
+            Set<AiCapability> =
+            setOf(
+                AiCapability.TEXT
+            )
 
         override suspend fun generate(
             request: AiRequest,
@@ -44,90 +60,112 @@ class AiResponseValidatorTest {
         ): Flow<AiStreamEvent> =
             emptyFlow()
 
-        override suspend fun listModels(): List<AiModel> =
+        override suspend fun listModels():
+            List<AiModel> =
             emptyList()
 
-        override suspend fun testConnection(): Boolean =
+        override suspend fun testConnection():
+            Boolean =
             true
     }
 
     @Test
-    fun `valid response passes`() = runTest {
+    fun `valid response passes`() =
+        runTest {
 
-        val provider =
-            FakeProvider()
+            val provider =
+                FakeProvider()
 
-        val response =
-            AiResponse(
-                text = "hello",
-                providerId = provider.id
-            )
+            val response =
+                AiResponse(
+                    text = "hello",
+                    providerId =
+                        provider.id
+                )
 
-        val result =
-            AiResponseValidator.validate(
-                provider,
-                response
-            )
+            val result =
+                AiResponseValidator.validate(
+                    provider,
+                    response
+                )
 
-        assertEquals(
-            "hello",
-            result.text
-        )
-    }
-
-    @Test
-    fun `provider identity mismatch fails`() = runTest {
-
-        val provider =
-            FakeProvider("provider.a")
-
-        val response =
-            AiResponse(
-                text = "hello",
-                providerId = "provider.b"
-            )
-
-        try {
-            AiResponseValidator.validate(
-                provider,
-                response
-            )
-            fail(
-                "Expected INVALID_RESPONSE"
-            )
-        } catch (e: AiProviderException) {
             assertEquals(
-                AiErrorType.INVALID_RESPONSE,
-                e.type
+                "hello",
+                result.text
             )
         }
-    }
 
     @Test
-    fun `empty response fails`() = runTest {
+    fun `identity mismatch fails`() =
+        runTest {
 
-        val provider =
-            FakeProvider()
+            val provider =
+                FakeProvider(
+                    "provider-a"
+                )
 
-        val response =
-            AiResponse(
-                text = "",
-                providerId = provider.id
-            )
+            val response =
+                AiResponse(
+                    text = "hello",
+                    providerId =
+                        "provider-b"
+                )
 
-        try {
-            AiResponseValidator.validate(
-                provider,
-                response
-            )
-            fail(
-                "Expected EMPTY_RESPONSE"
-            )
-        } catch (e: AiProviderException) {
-            assertEquals(
-                AiErrorType.EMPTY_RESPONSE,
-                e.type
-            )
+            try {
+
+                AiResponseValidator.validate(
+                    provider,
+                    response
+                )
+
+                fail(
+                    "Expected INVALID_RESPONSE"
+                )
+
+            } catch (
+                e: AiProviderException
+            ) {
+
+                assertEquals(
+                    AiErrorType.INVALID_RESPONSE,
+                    e.type
+                )
+            }
         }
-    }
+
+    @Test
+    fun `empty response fails`() =
+        runTest {
+
+            val provider =
+                FakeProvider()
+
+            val response =
+                AiResponse(
+                    text = "",
+                    providerId =
+                        provider.id
+                )
+
+            try {
+
+                AiResponseValidator.validate(
+                    provider,
+                    response
+                )
+
+                fail(
+                    "Expected EMPTY_RESPONSE"
+                )
+
+            } catch (
+                e: AiProviderException
+            ) {
+
+                assertEquals(
+                    AiErrorType.EMPTY_RESPONSE,
+                    e.type
+                )
+            }
+        }
 }
