@@ -67,9 +67,11 @@ class IntelligenceViewModel(
         aiProviderRouter.selectedProviderId,
         aiProviderRouter.selectedModelId,
         modelDownloadManager?.downloadStates ?: MutableStateFlow(emptyMap()),
-        modelDownloadManager?.activeModelId ?: MutableStateFlow(null),
-        _refreshTrigger
-    ) { snapshot, selectedProviderId, selectedModelId, dlStates, activeLocalId, _ ->
+        combine(
+            modelDownloadManager?.activeModelId ?: MutableStateFlow(null),
+            _refreshTrigger
+        ) { activeId, _ -> activeId }
+    ) { snapshot, selectedProviderId, selectedModelId, dlStates, activeLocalId ->
         val allProviders = aiProviderRouter.getAllProviders()
         val activeProvider = allProviders.find { it.id == selectedProviderId }
         val snapshotProvider = snapshot.providers.find { it.id == selectedProviderId }
