@@ -13,6 +13,7 @@ import com.halo.sdk.provider.AiCapability
 import com.halo.sdk.provider.AiContext
 import com.halo.sdk.provider.AiContextPolicy
 import com.halo.sdk.provider.AiErrorType
+import com.halo.sdk.provider.AiExecutionOutcome
 import com.halo.sdk.provider.AiProvider
 import com.halo.sdk.provider.AiProviderException
 import com.halo.sdk.provider.AiRequest
@@ -43,6 +44,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.util.UUID
 
@@ -61,136 +63,48 @@ class CognitiveSession(
     private val toolAuthorizer: ToolAuthorizer? = null,
     private val scope: CoroutineScope
 ) {
-
-    private val _state =
-        MutableStateFlow<CognitiveSessionState>(CognitiveSessionState.Idle)
-
-    val state: StateFlow<CognitiveSessionState> =
-        _state.asStateFlow()
-
+    private val _state = MutableStateFlow<CognitiveSessionState>(CognitiveSessionState.Idle)
+    val state: StateFlow<CognitiveSessionState> = _state.asStateFlow()
     private var activeJob: Job? = null
 
     init {
         scope.launch {
-            eventBus
-                .observe(SpeechRecognized::class.java)
-                .collect { speech ->
-
-                    if (activeJob?.isActive == true) {
-                        return@collect
-                    }
-
-                    val text = speech.text.trim()
-
-                    if (text.isNotEmpty()) {
-                        submit(
-                            AiRequest(text = text)
-                        )
-                    }
-                }
+            eventBus.observe(SpeechRecognized::class.java).collect { speech ->
+                if (activeJob?.isActive == true) return@collect
+                speech.text.trim().takeIf { it.isNotEmpty() }?.let { submit(AiRequest(text = it)) }
+            }
         }
     }
 
-    fun submit(
-        request: AiRequest,
-        policy: AiContextPolicy = AiContextPolicy.CONSERVATIVE
-    ) {
+    fun submit(request: AiRequest, policy: AiContextPolicy = AiContextPolicy.CONSERVATIVE) {
         activeJob?.cancel()
-
         activeJob = scope.launch {
             val requestId = UUID.randomUUID().toString()
-
             try {
+                val target = providerRouter.resolveExecutionTarget(request)
+                val provider = target.provider
+                val finalRequest = request.copy(modelId = target.modelId)
+                val capabilities = target.providerCapabilities
 
-                /*
-                 * ---------------------------------------------------------
-                 * 1. Resolve execution target ONCE via Router
-                 * ---------------------------------------------------------
-                 */
+                _state.value = CognitiveSessionState.PreparingContext
+                eventBus.publish(CognitiveRequestStarted(requestId = requestId))
 
-                val target =
-                    providerRouter.resolveExecutionTarget(
-                        request
-                    )
-
-                val provider =
-                    target.provider
-
-                val modelId =
-                    target.modelId
-
-                val finalRequest =
-                    request.copy(
-                        modelId = modelId
-                    )
-
-                /*
-                 * ---------------------------------------------------------
-                 * 2. Snapshot provider capabilities from target
-                 * ---------------------------------------------------------
-                 */
-
-                val capabilities =
-                    target.providerCapabilities
-
-                /*
-                 * ---------------------------------------------------------
-                 * 3. Assemble immutable context & bind multimodal inputs
-                 * ---------------------------------------------------------
-                 */
-
-                _state.value =
-                    CognitiveSessionState.PreparingContext
-
-                eventBus.publish(
-                    CognitiveRequestStarted(
-                        requestId = requestId
-                    )
-                )
-
-                val assembly =
-                    contextAssembler.assemble(
-                        policy = policy,
-                        capabilities = capabilities
-                    )
-
-                val context =
-                    assembly.context
-
-                val requestWithContext =
-                    bindAssembledContext(
-                        request = finalRequest,
-                        assembly = assembly
-                    )
+                val assembly = contextAssembler.assemble(policy = policy, capabilities = capabilities)
+                val context = assembly.context
+                val requestWithContext = bindAssembledContext(finalRequest, assembly)
 
                 eventBus.publish(
                     ContextAssembled(
                         requestId = requestId,
-                        conversationCount =
-                            context.conversation.size,
-                        recentEventCount =
-                            context.recentEvents.size,
-                        memoryCount =
-                            context.memories.size,
-                        toolCount =
-                            context.availableTools.size,
-                        omissions =
-                            assembly.omissions.size
+                        conversationCount = context.conversation.size,
+                        recentEventCount = context.recentEvents.size,
+                        memoryCount = context.memories.size,
+                        toolCount = context.availableTools.size,
+                        omissions = assembly.omissions.size
                     )
                 )
 
-                /*
-                 * ---------------------------------------------------------
-                 * 4. Initial provider generation
-                 * ---------------------------------------------------------
-                 */
-
-                _state.value =
-                    CognitiveSessionState.Reasoning(
-                        providerId = target.providerId,
-                        modelId = target.modelId
-                    )
-
+                _state.value = CognitiveSessionState.Reasoning(target.providerId, target.modelId)
                 eventBus.publish(
                     CognitiveReasoningStarted(
                         requestId = requestId,
@@ -199,86 +113,56 @@ class CognitiveSession(
                     )
                 )
 
-                var response =
-                    executeProviderRequest(
-                        provider = provider,
-                        capabilities = capabilities,
-                        expectedModelId = target.modelId,
-                        request = requestWithContext,
-                        context = context,
-                        requestId = requestId
-                    )
-
-                /*
-                 * ---------------------------------------------------------
-                 * 5. Tool loop
-                 *
-                 * IMPORTANT:
-                 * provider is the SAME INSTANCE selected above.
-                 * target is immutable.
-                 * router is NOT called again.
-                 * ---------------------------------------------------------
-                 */
-
-                if (response.toolCalls.isNotEmpty()) {
-                    response =
-                        executeToolLoop(
-                            requestId = requestId,
-                            target = target,
-                            request = requestWithContext,
-                            initialContext = context,
-                            initialResponse = response,
-                            provider = provider,
-                            capabilities = capabilities,
-                            policy = policy
+                var response = when (val outcome = executeProviderRequest(
+                    provider = provider,
+                    capabilities = capabilities,
+                    expectedModelId = target.modelId,
+                    request = requestWithContext,
+                    context = context,
+                    requestId = requestId
+                )) {
+                    is AiExecutionOutcome.Response -> outcome.response
+                    is AiExecutionOutcome.HandoffStarted -> {
+                        _state.value = CognitiveSessionState.Completed(
+                            AiResponse(
+                                text = "",
+                                providerId = outcome.providerId,
+                                modelId = outcome.modelId,
+                                finishReason = "handoff"
+                            )
                         )
+                        eventBus.publish(CognitiveCompleted(requestId = requestId, response = ""))
+                        return@launch
+                    }
                 }
 
-                /*
-                 * ---------------------------------------------------------
-                 * 6. Finalize transaction
-                 * ---------------------------------------------------------
-                 */
-
-                response =
-                    AiResponseValidator.validate(
+                if (response.toolCalls.isNotEmpty()) {
+                    response = executeToolLoop(
+                        requestId = requestId,
+                        target = target,
+                        request = requestWithContext,
+                        initialContext = context,
+                        initialResponse = response,
                         provider = provider,
                         capabilities = capabilities,
-                        expectedModelId = target.modelId,
-                        response = response
+                        policy = policy
                     )
+                }
 
-                _state.value =
-                    CognitiveSessionState.Completed(response)
-
-                eventBus.publish(
-                    CognitiveCompleted(
-                        requestId = requestId,
-                        response = response.text
-                    )
+                response = AiResponseValidator.validate(
+                    provider = provider,
+                    capabilities = capabilities,
+                    expectedModelId = target.modelId,
+                    response = response
                 )
+                _state.value = CognitiveSessionState.Completed(response)
+                eventBus.publish(CognitiveCompleted(requestId = requestId, response = response.text))
 
-                val responseText =
-                    response.text.trim()
-
-                val userText =
-                    finalRequest.text
-                        ?.trim()
-                        .orEmpty()
-
-                if (
-                    responseText.isNotBlank() &&
-                    responseText != "HANDOFF_STARTED"
-                ) {
-
+                val responseText = response.text.trim()
+                val userText = finalRequest.text?.trim().orEmpty()
+                if (responseText.isNotBlank()) {
                     if (userText.isNotBlank()) {
-
-                        val turn =
-                            conversationStore.append(
-                                userText = userText,
-                                assistantText = responseText
-                            )
-
+                        val turn = conversationStore.append(userText = userText, assistantText = responseText)
                         eventBus.publish(
                             ConversationTurnCompleted(
                                 turnId = turn.id,
@@ -287,68 +171,25 @@ class CognitiveSession(
                             )
                         )
                     }
-
-                    eventBus.publish(
-                        TtsRequested(
-                            text = responseText,
-                            timestamp =
-                                System.currentTimeMillis()
-                        )
-                    )
+                    eventBus.publish(TtsRequested(text = responseText, timestamp = System.currentTimeMillis()))
                 }
-
             } catch (e: CancellationException) {
-
-                _state.value =
-                    CognitiveSessionState.Idle
-
+                _state.value = CognitiveSessionState.Idle
                 throw e
-
             } catch (e: Exception) {
-
-                val message =
-                    mapErrorMessage(e)
-
-                _state.value =
-                    CognitiveSessionState.Failed(message)
-
-                eventBus.publish(
-                    CognitiveFailed(
-                        requestId = requestId,
-                        message = message
-                    )
-                )
+                val message = mapErrorMessage(e)
+                _state.value = CognitiveSessionState.Failed(message)
+                eventBus.publish(CognitiveFailed(requestId = requestId, message = message))
             }
         }
     }
 
-    private fun bindAssembledContext(
-        request: AiRequest,
-        assembly: ContextAssemblyResult
-    ): AiRequest {
-        val image =
-            assembly.image
-                ?: return request
-
-        if (request.image != null) {
-            return request
-        }
-
-        return request.copy(
-            image = image.imageBytes,
-            mimeTypes =
-                listOf(
-                    image.mimeType
-                )
-        )
+    private fun bindAssembledContext(request: AiRequest, assembly: ContextAssemblyResult): AiRequest {
+        val image = assembly.image ?: return request
+        if (request.image != null) return request
+        return request.copy(image = image.imageBytes, mimeTypes = listOf(image.mimeType))
     }
 
-    /**
-     * Executes provider generation without re-entering routing.
-     *
-     * This method is the ONLY generation path used by the session after
-     * the provider has already been resolved.
-     */
     private suspend fun executeProviderRequest(
         provider: AiProvider,
         capabilities: Set<AiCapability>,
@@ -356,104 +197,52 @@ class CognitiveSession(
         request: AiRequest,
         context: AiContext,
         requestId: String
-    ): AiResponse {
-
+    ): AiExecutionOutcome {
         request.validateAgainst(capabilities)
-
-        return if (
-            capabilities.contains(
-                AiCapability.STREAMING
-            )
-        ) {
-
-            var completedResponse: AiResponse? =
-                null
-
+        val response = if (capabilities.contains(AiCapability.STREAMING)) {
+            var completedResponse: AiResponse? = null
             val accumulatedText = StringBuilder()
-
-            provider
-                .stream(
-                    request = request,
-                    context = context
-                )
-                .collect { event ->
-
-                    when (event) {
-
-                        is AiStreamEvent.Started -> {
-                            _state.value =
-                                CognitiveSessionState.Streaming("")
-                        }
-
-                        is AiStreamEvent.Token -> {
-
-                            accumulatedText.append(event.text)
-
-                            _state.value =
-                                CognitiveSessionState.Streaming(
-                                    accumulatedText.toString()
-                                )
-
-                            eventBus.publish(
-                                CognitiveTokenReceived(
-                                    requestId = requestId,
-                                    token = event.text
-                                )
-                            )
-                        }
-
-                        is AiStreamEvent.Completed -> {
-                            completedResponse =
-                                event.response
-                        }
-
-                        is AiStreamEvent.Failed -> {
-                            throw event.error
-                        }
-
-                        is AiStreamEvent.ToolCallDelta -> {
-                            // Final tool calls are read from Completed.response.
-                        }
+            provider.stream(request, context).collect { event ->
+                when (event) {
+                    is AiStreamEvent.Started -> _state.value = CognitiveSessionState.Streaming("")
+                    is AiStreamEvent.Token -> {
+                        accumulatedText.append(event.text)
+                        _state.value = CognitiveSessionState.Streaming(accumulatedText.toString())
+                        eventBus.publish(CognitiveTokenReceived(requestId = requestId, token = event.text))
                     }
+                    is AiStreamEvent.Completed -> completedResponse = event.response
+                    is AiStreamEvent.Failed -> throw event.error
+                    is AiStreamEvent.ToolCallDelta -> Unit
                 }
-
-            val response =
-                completedResponse
-                    ?: throw AiProviderException(
-                        AiErrorType.INVALID_RESPONSE,
-                        "Provider stream ended without Completed event"
-                    )
-
-            AiResponseValidator.validate(
-                provider = provider,
-                capabilities = capabilities,
-                expectedModelId = expectedModelId,
-                response = response
+            }
+            completedResponse ?: throw AiProviderException(
+                AiErrorType.INVALID_RESPONSE,
+                "Provider stream ended without Completed event"
             )
-
         } else {
+            provider.generate(request, context)
+        }
 
-            val response =
-                provider.generate(
-                    request = request,
-                    context = context
-                )
+        val validated = AiResponseValidator.validate(
+            provider = provider,
+            capabilities = capabilities,
+            expectedModelId = expectedModelId,
+            response = response
+        )
 
-            AiResponseValidator.validate(
-                provider = provider,
-                capabilities = capabilities,
-                expectedModelId = expectedModelId,
-                response = response
+        return if (validated.finishReason.equals("handoff", ignoreCase = true)) {
+            AiExecutionOutcome.HandoffStarted(
+                providerId = provider.id,
+                modelId = expectedModelId
             )
+        } else {
+            AiExecutionOutcome.Response(validated)
         }
     }
 
-    /**
-     * Executes the tool loop using the original provider and model.
-     */
     private suspend fun executeToolLoop(
         requestId: String,
-        target: AiExecutionTarget,
+        target: com.halo.sdk.provider.AiExecutionTarget,
         request: AiRequest,
         initialContext: AiContext,
         initialResponse: AiResponse,
@@ -461,382 +250,118 @@ class CognitiveSession(
         capabilities: Set<AiCapability>,
         policy: AiContextPolicy
     ): AiResponse {
-
-        var response =
-            initialResponse
-
-        var currentContext =
-            initialContext
-
+        var response = initialResponse
+        var currentContext = initialContext
         var round = 0
-
         var totalToolCalls = 0
 
         while (response.toolCalls.isNotEmpty()) {
-
             round++
-
-            if (
-                round >
-                ToolExecutionLimits.MAX_TOOL_ROUNDS
-            ) {
-                throw AiProviderException(
-                    AiErrorType.GENERATION_FAILED,
-                    "Maximum tool execution rounds " +
-                        "(${ToolExecutionLimits.MAX_TOOL_ROUNDS}) exceeded"
-                )
+            if (round > ToolExecutionLimits.MAX_TOOL_ROUNDS) {
+                throw AiProviderException(AiErrorType.GENERATION_FAILED, "Maximum tool execution rounds (${ToolExecutionLimits.MAX_TOOL_ROUNDS}) exceeded")
             }
-
             if (response.toolCalls.size > ToolExecutionLimits.MAX_TOOL_CALLS_PER_ROUND) {
-                throw AiProviderException(
-                    AiErrorType.INVALID_RESPONSE,
-                    "Provider returned ${response.toolCalls.size} tool calls; maximum is " +
-                        ToolExecutionLimits.MAX_TOOL_CALLS_PER_ROUND
-                )
+                throw AiProviderException(AiErrorType.INVALID_RESPONSE, "Provider returned ${response.toolCalls.size} tool calls; maximum is ${ToolExecutionLimits.MAX_TOOL_CALLS_PER_ROUND}")
             }
 
             val calls = response.toolCalls
-
-            _state.value =
-                CognitiveSessionState.ExecutingTool(
-                    calls.first().functionName
-                )
-
-            val toolMessages =
-                mutableListOf<AIMessage>()
+            _state.value = CognitiveSessionState.ExecutingTool(calls.first().functionName)
+            val toolMessages = mutableListOf<AIMessage>()
 
             for (toolCall in calls) {
-
                 totalToolCalls++
-
-                if (
-                    totalToolCalls >
-                    ToolExecutionLimits.MAX_TOTAL_TOOL_CALLS
-                ) {
-                    throw AiProviderException(
-                        AiErrorType.GENERATION_FAILED,
-                        "Maximum total tool calls " +
-                            "(${ToolExecutionLimits.MAX_TOTAL_TOOL_CALLS}) exceeded"
-                    )
+                if (totalToolCalls > ToolExecutionLimits.MAX_TOTAL_TOOL_CALLS) {
+                    throw AiProviderException(AiErrorType.GENERATION_FAILED, "Maximum total tool calls (${ToolExecutionLimits.MAX_TOTAL_TOOL_CALLS}) exceeded")
                 }
+                eventBus.publish(ToolCallRequested(requestId = requestId, toolCallId = toolCall.id, toolId = toolCall.functionName))
 
-                /*
-                 * ---------------------------------------------------------
-                 * Requested
-                 * ---------------------------------------------------------
-                 */
-
-                eventBus.publish(
-                    ToolCallRequested(
-                        requestId = requestId,
-                        toolCallId = toolCall.id,
-                        toolId = toolCall.functionName
-                    )
-                )
-
-                /*
-                 * ---------------------------------------------------------
-                 * Policy gate
-                 * ---------------------------------------------------------
-                 */
-
-                if (
-                    !policy.includeAvailableTools ||
-                    toolRegistry == null ||
-                    toolAuthorizer == null
-                ) {
-
-                    val reason =
-                        when {
-                            !policy.includeAvailableTools ->
-                                "Tools disabled by runtime policy"
-
-                            toolRegistry == null ->
-                                "Tool registry unavailable"
-
-                            else ->
-                                "Tool authorization service unavailable"
-                        }
-
-                    eventBus.publish(
-                        ToolCallRejected(
-                            requestId = requestId,
-                            toolCallId = toolCall.id,
-                            toolId = toolCall.functionName,
-                            reason = reason
-                        )
-                    )
-
-                    toolMessages.add(
-                        AIMessage(
-                            role = Role.TOOL,
-                            content =
-                                "Tool execution rejected: $reason",
-                            toolCallId = toolCall.id
-                        )
-                    )
-
+                if (!policy.includeAvailableTools || toolRegistry == null || toolAuthorizer == null) {
+                    val reason = when {
+                        !policy.includeAvailableTools -> "Tools disabled by runtime policy"
+                        toolRegistry == null -> "Tool registry unavailable"
+                        else -> "Tool authorization service unavailable"
+                    }
+                    eventBus.publish(ToolCallRejected(requestId, toolCall.id, toolCall.functionName, reason))
+                    toolMessages.add(AIMessage(Role.TOOL, "Tool execution rejected: $reason", toolCallId = toolCall.id))
                     continue
                 }
 
-                /*
-                 * ---------------------------------------------------------
-                 * Authorization
-                 * ---------------------------------------------------------
-                 */
-
-                val authorization =
-                    toolAuthorizer.authorize(
-                        toolCall
-                    )
-
+                val authorization = toolAuthorizer.authorize(toolCall)
                 when (authorization) {
-
                     is ToolAuthorization.Rejected -> {
-
-                        eventBus.publish(
-                            ToolCallRejected(
-                                requestId = requestId,
-                                toolCallId = toolCall.id,
-                                toolId = toolCall.functionName,
-                                reason =
-                                    authorization.reason
-                            )
-                        )
-
-                        toolMessages.add(
-                        AIMessage(
-                            role = Role.TOOL,
-                            content =
-                                "Tool execution rejected: " +
-                                    authorization.reason,
-                            toolCallId = toolCall.id
-                            )
-                        )
-
+                        eventBus.publish(ToolCallRejected(requestId, toolCall.id, toolCall.functionName, authorization.reason))
+                        toolMessages.add(AIMessage(Role.TOOL, "Tool execution rejected: ${authorization.reason}", toolCallId = toolCall.id))
                         continue
                     }
-
                     is ToolAuthorization.Authorized -> {
-
-                        /*
-                         * Authorized event is emitted ONLY AFTER
-                         * the authorizer actually approved the call.
-                         */
-                        eventBus.publish(
-                            ToolCallAuthorized(
-                                requestId = requestId,
-                                toolCallId = toolCall.id,
-                                toolId = toolCall.functionName
-                            )
-                        )
+                        eventBus.publish(ToolCallAuthorized(requestId, toolCall.id, toolCall.functionName))
                     }
                 }
 
-                /*
-                 * ---------------------------------------------------------
-                 * Execution
-                 * ---------------------------------------------------------
-                 */
-
-                val authorized =
-                    authorization as ToolAuthorization.Authorized
-
-                val result =
-                    toolRegistry.executeAuthorized(
-                        authorized
-                    )
-
-                when (result) {
-
+                val authorized = authorization as ToolAuthorization.Authorized
+                when (val result = toolRegistry.executeAuthorized(authorized)) {
                     is ToolExecutionResult.Success -> {
-
-                        eventBus.publish(
-                            ToolCallCompleted(
-                                requestId = requestId,
-                                toolCallId = toolCall.id,
-                                toolId = toolCall.functionName,
-                                success = true
-                            )
-                        )
-
-                        toolMessages.add(
-                        AIMessage(
-                            role = Role.TOOL,
-                            content =
-                                    result.output.take(
-                                        ToolExecutionLimits
-                                            .MAX_TOOL_OUTPUT_CHARS
-                                    ),
-                            toolCallId = toolCall.id
-                            )
-                        )
+                        eventBus.publish(ToolCallCompleted(requestId, toolCall.id, toolCall.functionName, true))
+                        toolMessages.add(AIMessage(Role.TOOL, result.output.take(ToolExecutionLimits.MAX_TOOL_OUTPUT_CHARS), toolCallId = toolCall.id))
                     }
-
                     is ToolExecutionResult.Rejected -> {
-
-                        eventBus.publish(
-                            ToolCallRejected(
-                                requestId = requestId,
-                                toolCallId = toolCall.id,
-                                toolId = toolCall.functionName,
-                                reason = result.reason
-                            )
-                        )
-
-                        toolMessages.add(
-                        AIMessage(
-                            role = Role.TOOL,
-                            content =
-                                "Tool execution rejected: " +
-                                    result.reason,
-                            toolCallId = toolCall.id
-                            )
-                        )
+                        eventBus.publish(ToolCallRejected(requestId, toolCall.id, toolCall.functionName, result.reason))
+                        toolMessages.add(AIMessage(Role.TOOL, "Tool execution rejected: ${result.reason}", toolCallId = toolCall.id))
                     }
-
                     is ToolExecutionResult.Failed -> {
-
-                        eventBus.publish(
-                            ToolCallCompleted(
-                                requestId = requestId,
-                                toolCallId = toolCall.id,
-                                toolId = toolCall.functionName,
-                                success = false
-                            )
-                        )
-
-                        toolMessages.add(
-                        AIMessage(
-                            role = Role.TOOL,
-                            content =
-                                "Tool execution failed: " +
-                                    result.message,
-                            toolCallId = toolCall.id
-                            )
-                        )
+                        eventBus.publish(ToolCallCompleted(requestId, toolCall.id, toolCall.functionName, false))
+                        toolMessages.add(AIMessage(Role.TOOL, "Tool execution failed: ${result.message}", toolCallId = toolCall.id))
                     }
                 }
             }
 
-            /*
-             * Do not create fake empty assistant messages.
-             */
-            val updatedConversation =
-                buildList {
-
-                    addAll(
-                        currentContext.conversation
-                    )
-
+            currentContext = currentContext.copy(
+                conversation = buildList {
+                    addAll(currentContext.conversation)
                     if (response.text.isNotBlank() || response.toolCalls.isNotEmpty()) {
-                        add(
-                            AIMessage(
-                                role = Role.ASSISTANT,
-                                content = response.text,
-                                toolCalls = response.toolCalls
-                            )
-                        )
+                        add(AIMessage(Role.ASSISTANT, response.text, toolCalls = response.toolCalls))
                     }
-
                     addAll(toolMessages)
                 }
+            )
 
-            currentContext =
-                currentContext.copy(
-                    conversation =
-                        updatedConversation
+            response = when (val outcome = executeProviderRequest(
+                provider = provider,
+                capabilities = capabilities,
+                expectedModelId = target.modelId,
+                request = request.copy(modelId = target.modelId),
+                context = currentContext,
+                requestId = requestId
+            )) {
+                is AiExecutionOutcome.Response -> outcome.response
+                is AiExecutionOutcome.HandoffStarted -> throw AiProviderException(
+                    AiErrorType.INVALID_RESPONSE,
+                    "Assistant handoff cannot occur during a tool execution transaction"
                 )
-
-            /*
-             * ---------------------------------------------------------
-             * CRITICAL:
-             * No providerRouter.execute() here.
-             *
-             * The same provider instance and modelId are reused.
-             * ---------------------------------------------------------
-             */
-
-            val followUpRequest =
-                request.copy(
-                    modelId = target.modelId
-                )
-
-            _state.value =
-                CognitiveSessionState.Reasoning(
-                    providerId = target.providerId,
-                    modelId = target.modelId
-                )
-
-            response =
-                executeProviderRequest(
-                    provider = provider,
-                    capabilities = capabilities,
-                    expectedModelId = target.modelId,
-                    request = followUpRequest,
-                    context = currentContext,
-                    requestId = requestId
-                )
+            }
         }
-
         return response
     }
 
-    private fun mapErrorMessage(
-        e: Exception
-    ): String {
-
-        if (e is AiProviderException) {
-            return e.message
-                ?: "AI provider request failed"
-        }
-
-        val message =
-            e.message.orEmpty()
-
+    private fun mapErrorMessage(e: Exception): String {
+        if (e is AiProviderException) return e.message ?: "AI provider request failed"
+        val message = e.message.orEmpty()
         return when {
-
-            message.contains(
-                "401",
-                ignoreCase = true
-            ) ->
-                "Invalid API key"
-
-            message.contains(
-                "403",
-                ignoreCase = true
-            ) ->
-                "Access denied"
-
-            message.contains(
-                "429",
-                ignoreCase = true
-            ) ->
-                "Provider rate limit exceeded"
-
-            message.contains(
-                "Unable to resolve host",
-                ignoreCase = true
-            ) ->
-                "Cannot reach provider"
-
-            else ->
-                "Intelligence provider failed: " +
-                    (e.localizedMessage
-                        ?: "Unknown error")
+            message.contains("401", ignoreCase = true) -> "Invalid API key"
+            message.contains("403", ignoreCase = true) -> "Access denied"
+            message.contains("429", ignoreCase = true) -> "Provider rate limit exceeded"
+            message.contains("Unable to resolve host", ignoreCase = true) -> "Cannot reach provider"
+            else -> "Intelligence provider failed: ${e.localizedMessage ?: "Unknown error"}"
         }
     }
 
     fun cancel() {
         activeJob?.cancel()
         activeJob = null
-        _state.value =
-            CognitiveSessionState.Idle
+        _state.value = CognitiveSessionState.Idle
     }
 
     fun clearConversation() {
-        scope.launch {
-            conversationStore.clear()
-        }
+        scope.launch { conversationStore.clear() }
     }
 }

@@ -8,7 +8,7 @@ import com.halo.providers.llamacpp.ModelDownloadManager
  * The [Providers] data class replaces ProviderRegistry — no service locator.
  */
 class ProviderGraph(
-    applicationContext: android.content.Context,
+    applicationContext: Context,
     storage: com.halo.sdk.runtime.Storage
 ) {
 

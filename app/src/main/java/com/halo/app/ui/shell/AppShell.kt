@@ -13,6 +13,8 @@ import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -35,8 +37,6 @@ import com.halo.app.ui.screens.home.HomeScreen
 import com.halo.app.ui.screens.settings.IntelligenceScreen
 import com.halo.app.ui.screens.settings.SettingsScreen
 import kotlinx.coroutines.flow.collectLatest
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 
 sealed class Screen(val route: String, val title: String, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
     data object Home : Screen("home", "Home", Icons.Default.Home)

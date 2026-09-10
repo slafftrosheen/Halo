@@ -9,21 +9,34 @@ import kotlinx.coroutines.flow.flow
 
 class FakeProvider(
     private val providerId: String
-) : InferenceProvider {
+) : AiInferenceProvider {
     override val status: StateFlow<ProviderStatus> = MutableStateFlow(ProviderStatus.READY).asStateFlow()
-    
-    override suspend fun health(): Boolean = true
+    override val id: String = "provider.test.$providerId"
+    override val displayName: String = "Test provider $providerId"
+    override val isLocal: Boolean = true
 
-    override suspend fun complete(request: AIRequestLegacy): AIResponseLegacy {
-        return AIResponseLegacy(
+    override suspend fun getCapabilities(): Set<AiCapability> =
+        setOf(AiCapability.TEXT, AiCapability.STREAMING)
+
+    override suspend fun generate(request: AiRequest, context: AiContext): AiResponse =
+        AiResponse(
             text = "Mock provider response from $providerId",
-            finishReason = "stop",
-            latencyMs = 100
+            providerId = id,
+            modelId = request.modelId
         )
-    }
 
-    override fun stream(prompt: String): Flow<String> = flow {
-        emit("Mock provider stream from $providerId")
+    override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = flow {
+        emit(AiStreamEvent.Started)
+        emit(AiStreamEvent.Token("Mock provider stream from $providerId"))
+        emit(
+            AiStreamEvent.Completed(
+                AiResponse(
+                    text = "Mock provider stream from $providerId",
+                    providerId = id,
+                    modelId = request.modelId
+                )
+            )
+        )
     }
 
     override suspend fun listModels(): List<AiModel> = emptyList()
