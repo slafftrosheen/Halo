@@ -33,6 +33,13 @@ class DefaultContextAssembler(
 
         const val MAX_IMAGE_CONTEXT_BYTES =
             8 * 1024 * 1024
+
+        val SUPPORTED_IMAGE_MIME_TYPES =
+            setOf(
+                "image/jpeg",
+                "image/png",
+                "image/webp"
+            )
     }
 
     override suspend fun assemble(
@@ -285,6 +292,17 @@ class DefaultContextAssembler(
                                     source = "IMAGE",
                                     reason =
                                         "Image observation contains no bytes"
+                                )
+                        }
+
+                        payload.mimeType !in SUPPORTED_IMAGE_MIME_TYPES -> {
+
+                            omissions +=
+                                ContextOmission(
+                                    source = "IMAGE",
+                                    reason =
+                                        "Unsupported image MIME type: " +
+                                            payload.mimeType
                                 )
                         }
 

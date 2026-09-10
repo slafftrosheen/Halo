@@ -44,6 +44,32 @@ fun AiRequest.validateForTextGeneration() {
 }
 
 /**
+ * Verifies that all bound inputs are supported by the selected provider.
+ *
+ * This belongs beside the provider contract so direct provider callers cannot
+ * bypass the same capability boundary enforced by routing.
+ */
+fun AiRequest.validateAgainst(capabilities: Set<AiCapability>) {
+    fun supports(capability: AiCapability): Boolean =
+        capabilities.contains(capability) ||
+            capabilities.contains(AiCapability.MULTIMODAL)
+
+    fun requireSupported(present: Boolean, capability: AiCapability, label: String) {
+        if (present && !supports(capability)) {
+            throw AiProviderException(
+                AiErrorType.UNSUPPORTED_CAPABILITY,
+                "Provider does not support $label input"
+            )
+        }
+    }
+
+    requireSupported(!text.isNullOrBlank(), AiCapability.TEXT, "text")
+    requireSupported(image != null, AiCapability.IMAGE, "image")
+    requireSupported(audio != null, AiCapability.AUDIO, "audio")
+    requireSupported(video != null, AiCapability.VIDEO, "video")
+}
+
+/**
  * Call to a specific tool requested by the model.
  */
 data class ToolCall(

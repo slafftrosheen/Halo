@@ -6,6 +6,7 @@ plugins {
 dependencies {
     implementation(project(":sdk:runtime-sdk"))
     implementation(project(":sdk:provider-sdk"))
+    implementation(project(":runtime:cognition"))
     implementation(project(":libraries:common"))
     implementation(project(":engines:provider"))
     implementation(libs.kotlinx.coroutines.core)

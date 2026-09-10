@@ -157,6 +157,27 @@ class ContextAssemblerTest {
     }
 
     @Test
+    fun `image context is omitted for unsupported MIME type`() = runTest {
+        val blackboard = DefaultBlackboard()
+        val assembler = DefaultContextAssembler(InMemoryConversationStore(), blackboard)
+        val image = Observation(
+            modality = Modality.IMAGE,
+            source = Source.CAMERA,
+            timestamp = System.currentTimeMillis(),
+            payload = ImageObservationPayload(byteArrayOf(1, 2, 3), "image/gif")
+        )
+        blackboard.publish(createKnowledge(ObservationKnowledge(image)))
+
+        val result = assembler.assemble(
+            policy = AiContextPolicy(includeImages = true),
+            capabilities = setOf(AiCapability.IMAGE)
+        )
+
+        assertNull(result.image)
+        assertTrue(result.omissions.any { it.reason.contains("Unsupported image MIME type") })
+    }
+
+    @Test
     fun `stale image observation is omitted based on age limit`() = runTest {
         val store = InMemoryConversationStore()
         val blackboard = DefaultBlackboard()

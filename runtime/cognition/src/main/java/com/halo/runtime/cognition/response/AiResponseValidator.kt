@@ -13,8 +13,10 @@ import com.halo.sdk.provider.AiResponse
  */
 object AiResponseValidator {
 
-    suspend fun validate(
+    fun validate(
         provider: AiProvider,
+        capabilities: Set<AiCapability>,
+        expectedModelId: String,
         response: AiResponse
     ): AiResponse {
 
@@ -26,8 +28,6 @@ object AiResponseValidator {
                 "Provider identity mismatch: expected=${provider.id}, actual=${response.providerId}"
             )
         }
-
-        val capabilities = provider.getCapabilities()
 
         if (response.toolCalls.isNotEmpty() &&
             !capabilities.contains(AiCapability.TOOLS)
@@ -47,9 +47,18 @@ object AiResponseValidator {
             )
         }
 
+        if (response.modelId != null && response.modelId != expectedModelId) {
+            throw AiProviderException(
+                AiErrorType.INVALID_RESPONSE,
+                "Model identity mismatch: expected=$expectedModelId, actual=${response.modelId}"
+            )
+        }
+
         return response.copy(
             providerId = provider.id,
-            modelId = response.modelId
+            // Some backends omit this field. The transaction target is the
+            // authoritative identity in that case, never an ambiguous null.
+            modelId = expectedModelId
         )
     }
 }

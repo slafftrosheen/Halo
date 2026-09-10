@@ -1,5 +1,6 @@
 package com.halo.engines.ai
 
+import com.halo.runtime.cognition.response.AiResponseValidator
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.Storage
 import com.halo.sdk.runtime.RuntimeLogger
@@ -160,15 +161,15 @@ class DefaultAiProviderRouter(
 
         if (policy == AiRoutingPolicy.EXPLICIT) {
             val provider = getEligibleProvider(request)
-            val modelId = request.modelId ?: _selectedModelId.value
-            val finalRequest = if (request.modelId == null && modelId != null) request.copy(modelId = modelId) else request
+            val finalRequest = bindSelectedModel(request)
             val requestId = UUID.randomUUID().toString()
 
             logger?.info("AiProviderRouter", "AI execute start provider=${provider.id} model=${finalRequest.modelId}")
             eventBus?.publish(ProviderRequest(requestId = requestId, providerId = provider.id))
             return try {
+                finalRequest.validateAgainst(provider.getCapabilities())
                 val response = provider.generate(finalRequest, context)
-                validateResponse(provider, response)
+                validateResponse(provider, finalRequest.modelId, response)
                 logger?.info("AiProviderRouter", "AI execute complete provider=${response.providerId} model=${response.modelId} chars=${response.text.length}")
                 eventBus?.publish(ProviderResult(requestId = requestId, success = true))
                 response
@@ -194,19 +195,15 @@ class DefaultAiProviderRouter(
             throw AiProviderException(AiErrorType.PROVIDER_UNAVAILABLE, reason)
         }
 
-        val modelId = request.modelId ?: _selectedModelId.value
-        val finalRequest = if (request.modelId == null && modelId != null) {
-            request.copy(modelId = modelId)
-        } else {
-            request
-        }
+        val finalRequest = bindSelectedModel(request)
         val requestId = UUID.randomUUID().toString()
 
         logger?.info("AiProviderRouter", "AI execute start provider=${provider.id} model=${finalRequest.modelId}")
         eventBus?.publish(ProviderRequest(requestId = requestId, providerId = provider.id))
         return try {
+            finalRequest.validateAgainst(provider.getCapabilities())
             val response = provider.generate(finalRequest, context)
-            validateResponse(provider, response)
+            validateResponse(provider, finalRequest.modelId, response)
             logger?.info("AiProviderRouter", "AI execute complete provider=${response.providerId} model=${response.modelId} chars=${response.text.length}")
             eventBus?.publish(ProviderResult(requestId = requestId, success = true))
             response
@@ -220,8 +217,9 @@ class DefaultAiProviderRouter(
                     val fallbackRequestId = UUID.randomUUID().toString()
                     eventBus?.publish(ProviderRequest(requestId = fallbackRequestId, providerId = fallbackProvider.id))
                     try {
+                        finalRequest.validateAgainst(fallbackProvider.getCapabilities())
                         val fallbackResp = fallbackProvider.generate(finalRequest, context)
-                        validateResponse(fallbackProvider, fallbackResp)
+                        validateResponse(fallbackProvider, finalRequest.modelId, fallbackResp)
                         eventBus?.publish(ProviderResult(requestId = fallbackRequestId, success = true))
                         return fallbackResp
                     } catch (fbErr: CancellationException) {
@@ -238,9 +236,23 @@ class DefaultAiProviderRouter(
 
     private suspend fun validateResponse(
         provider: AiProvider,
+        expectedModelId: String?,
         response: AiResponse
     ) {
-        AiResponseValidator.validate(provider, response)
+        val modelId = expectedModelId
+            ?: throw AiProviderException(AiErrorType.MODEL_NOT_SELECTED, "No AI model selected")
+        val capabilities = provider.getCapabilities()
+        response.let { AiResponseValidator.validate(provider, capabilities, modelId, it) }
+    }
+
+    private fun bindSelectedModel(request: AiRequest): AiRequest {
+        val modelId = request.modelId
+            ?: _selectedModelId.value
+            ?: throw AiProviderException(
+                AiErrorType.MODEL_NOT_SELECTED,
+                "No AI model selected"
+            )
+        return request.copy(modelId = modelId)
     }
 
     private data class ProviderRejection(val providerId: String, val reason: String)

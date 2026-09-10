@@ -71,7 +71,7 @@ class CognitiveSessionToolTest {
 
     private class FakeRouter(private val provider: AiProvider) : AiProviderRouter {
         override val selectedProviderId = MutableStateFlow<String?>(provider.id)
-        override val selectedModelId = MutableStateFlow<String?>(null)
+        override val selectedModelId = MutableStateFlow<String?>("test-model")
         override fun selectProvider(id: String) {}
         override fun selectModel(modelId: String?) {}
         override fun getAllProviders() = listOf(provider)

@@ -3,6 +3,7 @@ package com.halo.runtime.cognition.session
 import com.halo.runtime.cognition.context.ContextAssembler
 import com.halo.runtime.cognition.context.ContextAssemblyResult
 import com.halo.runtime.cognition.conversation.ConversationStore
+import com.halo.runtime.cognition.response.AiResponseValidator
 import com.halo.runtime.cognition.tools.ToolAuthorization
 import com.halo.runtime.cognition.tools.ToolAuthorizer
 import com.halo.runtime.cognition.tools.ToolExecutionLimits
@@ -16,8 +17,8 @@ import com.halo.sdk.provider.AiProvider
 import com.halo.sdk.provider.AiProviderException
 import com.halo.sdk.provider.AiRequest
 import com.halo.sdk.provider.AiResponse
-import com.halo.sdk.provider.AiResponseValidator
 import com.halo.sdk.provider.AiStreamEvent
+import com.halo.sdk.provider.validateAgainst
 import com.halo.sdk.provider.AIMessage
 import com.halo.sdk.provider.CognitiveSessionState
 import com.halo.sdk.provider.Role
@@ -113,6 +114,10 @@ class CognitiveSession(
                 val modelId =
                     request.modelId
                         ?: providerRouter.selectedModelId.value
+                        ?: throw AiProviderException(
+                            AiErrorType.MODEL_NOT_SELECTED,
+                            "No AI model selected"
+                        )
 
                 val target = AiExecutionTarget(
                     providerId = provider.id,
@@ -120,7 +125,7 @@ class CognitiveSession(
                 )
 
                 val finalRequest =
-                    if (request.modelId == null && modelId != null) {
+                    if (request.modelId == null) {
                         request.copy(modelId = modelId)
                     } else {
                         request
@@ -204,6 +209,8 @@ class CognitiveSession(
                 var response =
                     executeProviderRequest(
                         provider = provider,
+                        capabilities = capabilities,
+                        expectedModelId = target.modelId,
                         request = requestWithContext,
                         context = context,
                         requestId = requestId
@@ -229,6 +236,7 @@ class CognitiveSession(
                             initialContext = context,
                             initialResponse = response,
                             provider = provider,
+                            capabilities = capabilities,
                             policy = policy
                         )
                 }
@@ -242,6 +250,8 @@ class CognitiveSession(
                 response =
                     AiResponseValidator.validate(
                         provider = provider,
+                        capabilities = capabilities,
+                        expectedModelId = target.modelId,
                         response = response
                     )
 
@@ -332,8 +342,7 @@ class CognitiveSession(
         }
 
         return request.copy(
-            image =
-                image.imageBytes.copyOf(),
+            image = image.imageBytes,
             mimeTypes =
                 listOf(
                     image.mimeType
@@ -349,13 +358,14 @@ class CognitiveSession(
      */
     private suspend fun executeProviderRequest(
         provider: AiProvider,
+        capabilities: Set<AiCapability>,
+        expectedModelId: String,
         request: AiRequest,
         context: AiContext,
         requestId: String
     ): AiResponse {
 
-        val capabilities =
-            provider.getCapabilities()
+        request.validateAgainst(capabilities)
 
         return if (
             capabilities.contains(
@@ -366,7 +376,7 @@ class CognitiveSession(
             var completedResponse: AiResponse? =
                 null
 
-            var accumulatedText = ""
+            val accumulatedText = StringBuilder()
 
             provider
                 .stream(
@@ -384,12 +394,11 @@ class CognitiveSession(
 
                         is AiStreamEvent.Token -> {
 
-                            accumulatedText +=
-                                event.text
+                            accumulatedText.append(event.text)
 
                             _state.value =
                                 CognitiveSessionState.Streaming(
-                                    accumulatedText
+                                    accumulatedText.toString()
                                 )
 
                             eventBus.publish(
@@ -424,6 +433,8 @@ class CognitiveSession(
 
             AiResponseValidator.validate(
                 provider = provider,
+                capabilities = capabilities,
+                expectedModelId = expectedModelId,
                 response = response
             )
 
@@ -437,6 +448,8 @@ class CognitiveSession(
 
             AiResponseValidator.validate(
                 provider = provider,
+                capabilities = capabilities,
+                expectedModelId = expectedModelId,
                 response = response
             )
         }
@@ -452,6 +465,7 @@ class CognitiveSession(
         initialContext: AiContext,
         initialResponse: AiResponse,
         provider: AiProvider,
+        capabilities: Set<AiCapability>,
         policy: AiContextPolicy
     ): AiResponse {
 
@@ -754,6 +768,8 @@ class CognitiveSession(
             response =
                 executeProviderRequest(
                     provider = provider,
+                    capabilities = capabilities,
+                    expectedModelId = target.modelId,
                     request = followUpRequest,
                     context = currentContext,
                     requestId = requestId

@@ -17,6 +17,28 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class CognitiveSessionConversationTest {
 
+    @Test
+    fun `request fails before provider execution when no model is selected`() = runTest {
+        val eventBus = FakeEventBus()
+        val store = InMemoryConversationStore()
+        val provider = RecordingProvider()
+        val router = FakeRouter(provider)
+        router.selectedModelId.value = null
+        val session = CognitiveSession(
+            eventBus = eventBus,
+            providerRouter = router,
+            conversationStore = store,
+            contextAssembler = com.halo.runtime.cognition.context.DefaultContextAssembler(store, DefaultBlackboard(), null),
+            scope = this
+        )
+
+        session.submit(AiRequest(text = "hello"))
+        advanceUntilIdle()
+
+        assertEquals(0, provider.capturedRequests.size)
+        assertTrue(session.state.value is CognitiveSessionState.Failed)
+    }
+
     private class FakeEventBus : EventBus {
         val published = mutableListOf<HaloEvent>()
         override suspend fun publish(event: HaloEvent) { published.add(event) }
@@ -63,7 +85,7 @@ class CognitiveSessionConversationTest {
 
     private class FakeRouter(private val provider: AiProvider) : AiProviderRouter {
         override val selectedProviderId = MutableStateFlow<String?>(provider.id)
-        override val selectedModelId = MutableStateFlow<String?>(null)
+        override val selectedModelId = MutableStateFlow<String?>("test-model")
         override fun selectProvider(id: String) {}
         override fun selectModel(modelId: String?) {}
         override fun getAllProviders() = listOf(provider)

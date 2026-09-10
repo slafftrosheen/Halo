@@ -8,7 +8,6 @@ import com.halo.sdk.provider.AiProvider
 import com.halo.sdk.provider.AiProviderException
 import com.halo.sdk.provider.AiRequest
 import com.halo.sdk.provider.AiResponse
-import com.halo.sdk.provider.AiResponseValidator
 import com.halo.sdk.provider.AiStreamEvent
 import com.halo.sdk.provider.ProviderStatus
 import kotlinx.coroutines.flow.Flow
@@ -85,8 +84,10 @@ class AiResponseValidatorTest {
 
             val result =
                 AiResponseValidator.validate(
-                    provider,
-                    response
+                    provider = provider,
+                    capabilities = provider.getCapabilities(),
+                    expectedModelId = "model-a",
+                    response = response
                 )
 
             assertEquals(
@@ -114,8 +115,10 @@ class AiResponseValidatorTest {
             try {
 
                 AiResponseValidator.validate(
-                    provider,
-                    response
+                    provider = provider,
+                    capabilities = provider.getCapabilities(),
+                    expectedModelId = "model-a",
+                    response = response
                 )
 
                 fail(
@@ -150,8 +153,10 @@ class AiResponseValidatorTest {
             try {
 
                 AiResponseValidator.validate(
-                    provider,
-                    response
+                    provider = provider,
+                    capabilities = provider.getCapabilities(),
+                    expectedModelId = "model-a",
+                    response = response
                 )
 
                 fail(
@@ -166,6 +171,27 @@ class AiResponseValidatorTest {
                     AiErrorType.EMPTY_RESPONSE,
                     e.type
                 )
-            }
+    }
+
+    @Test
+    fun `model identity mismatch fails`() = runTest {
+        val provider = FakeProvider()
+
+        try {
+            AiResponseValidator.validate(
+                provider = provider,
+                capabilities = provider.getCapabilities(),
+                expectedModelId = "model-a",
+                response = AiResponse(
+                    text = "hello",
+                    providerId = provider.id,
+                    modelId = "model-b"
+                )
+            )
+            fail("Expected INVALID_RESPONSE")
+        } catch (e: AiProviderException) {
+            assertEquals(AiErrorType.INVALID_RESPONSE, e.type)
+        }
+    }
         }
 }
