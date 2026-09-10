@@ -10,20 +10,17 @@ import com.halo.sdk.provider.WakeWordDetector
 /**
  * Typed container for all provider instances created by a [ProviderFactory].
  *
- * AI inference and external-assistant handoff are represented explicitly by
- * [AiProviderRegistry]; the legacy [aiProviders] list remains as a compatibility
- * surface for components that have not migrated to the typed registry yet.
+ * The registry is the canonical AI composition boundary. [aiProviders] remains
+ * temporarily available for UI/diagnostics and legacy callers.
  */
 data class Providers(
     val inference: AiInferenceProvider,
     val speechRecognition: SpeechRecognitionProvider,
     val speechSynthesis: SpeechSynthesisProvider,
     val wakeWord: WakeWordDetector,
-    val aiProviders: List<AiProvider> = emptyList()
-) {
-    val aiRegistry: AiProviderRegistry
-        get() = AiProviderRegistry.from(aiProviders)
-}
+    val aiProviders: List<AiProvider> = emptyList(),
+    val aiRegistry: AiProviderRegistry = AiProviderRegistry.from(aiProviders)
+)
 
 interface ProviderFactory {
     fun createProviders(): Providers
