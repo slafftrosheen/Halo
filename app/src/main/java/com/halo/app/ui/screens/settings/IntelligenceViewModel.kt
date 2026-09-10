@@ -3,6 +3,7 @@ package com.halo.app.ui.screens.settings
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.halo.providers.android.assistant.AndroidAssistantProvider
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.RuntimeSnapshotSource
 import com.halo.sdk.runtime.Storage
@@ -35,7 +36,8 @@ data class IntelligenceUiState(
     val isToolsEnabled: Boolean = true,
     val isAgentEnabled: Boolean = false,
     val temperature: Float = 0.7f,
-    val policy: AiContextPolicy = AiContextPolicy.CONSERVATIVE
+    val policy: AiContextPolicy = AiContextPolicy.CONSERVATIVE,
+    val assistantPackage: String? = null
 )
 
 class IntelligenceViewModel(
@@ -50,6 +52,8 @@ class IntelligenceViewModel(
     private val _isRefreshing = MutableStateFlow(false)
     private val _testConnectionResult = MutableSharedFlow<Boolean>()
     val testConnectionResult: SharedFlow<Boolean> = _testConnectionResult.asSharedFlow()
+    private val _assistantPackage = MutableStateFlow<String?>(null)
+    val assistantPackage: StateFlow<String?> = _assistantPackage.asStateFlow()
 
     init {
         if (storage.getString("openrouter_model").isNullOrBlank()) {
@@ -62,6 +66,7 @@ class IntelligenceViewModel(
                 if (providerId != null) {
                     syncStoredModelSelection(providerId)
                     refreshModelsFor(providerId)
+                    refreshAssistantInfo(providerId)
                 }
             }
         }
@@ -87,6 +92,17 @@ class IntelligenceViewModel(
         }
     }
 
+    private suspend fun refreshAssistantInfo(providerId: String) {
+        if (providerId != "android.system.assistant") {
+            _assistantPackage.value = null
+            return
+        }
+        val provider = aiProviderRouter.getAllProviders()
+            .firstOrNull { it.id == providerId }
+        val assistant = provider as? AndroidAssistantProvider
+        _assistantPackage.value = assistant?.assistantPackageName()
+    }
+
     val uiState: StateFlow<IntelligenceUiState> = combine(
         snapshotManager.snapshot,
         aiProviderRouter.selectedProviderId,
@@ -95,8 +111,9 @@ class IntelligenceViewModel(
         combine(
             modelDownloadManager?.activeModelId ?: MutableStateFlow<String?>(null),
             _refreshTrigger
-        ) { activeId, _ -> activeId }
-    ) { snapshot, selectedProviderId, selectedModelId, dlStates, activeLocalId ->
+        ) { activeId, _ -> activeId },
+        _assistantPackage
+    ) { snapshot, selectedProviderId, selectedModelId, dlStates, activeLocalId, assistantPkg ->
         val allProviders = aiProviderRouter.getAllProviders()
         val activeProvider = allProviders.find { it.id == selectedProviderId }
         val snapshotProvider = snapshot.providers.find { it.id == selectedProviderId }
@@ -134,9 +151,19 @@ class IntelligenceViewModel(
             isToolsEnabled = storage.getBoolean("ai_tools_enabled", true),
             isAgentEnabled = storage.getBoolean("ai_agent_enabled", false),
             temperature = storage.getInt("ai_temperature", 70) / 100f,
-            policy = loadPolicy()
+            policy = loadPolicy(),
+            assistantPackage = assistantPkg
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), IntelligenceUiState())
+
+    fun handoffToAssistant(prompt: String? = null) {
+        val provider = aiProviderRouter.getAllProviders()
+            .firstOrNull { it.id == "android.system.assistant" } as? AndroidAssistantProvider
+            ?: return
+        runCatching { provider.handoff(prompt) }
+            .onFailure { error -> Log.w("IntelligenceViewModel", "Assistant handoff failed", error) }
+        _refreshTrigger.update { it + 1 }
+    }
 
     fun downloadModel(modelId: String) {
         modelDownloadManager?.downloadModel(modelId)
@@ -172,6 +199,7 @@ class IntelligenceViewModel(
         viewModelScope.launch {
             syncStoredModelSelection(id)
             refreshModelsFor(id)
+            refreshAssistantInfo(id)
         }
     }
 
