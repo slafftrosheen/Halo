@@ -50,6 +50,16 @@ class AiProviderRouterTest {
         )
     }
 
+    private class HandoffMockProvider : MockProvider(
+        id = "handoff",
+        displayName = "External Assistant"
+    ), AiHandoffProvider {
+        var handoffCount = 0
+        override fun isAvailable() = true
+        override fun assistantPackageName() = "com.example.assistant"
+        override fun handoff(prompt: String?) { handoffCount++ }
+    }
+
     @Test
     fun `router selects preferred provider from storage`() = runTest {
         val storage = FakeStorage()
@@ -68,13 +78,11 @@ class AiProviderRouterTest {
         val p1 = MockProvider("p1", "P1", modelId = "model-p1")
         val p2 = MockProvider("p2", "P2", modelId = "model-p2")
         val router = DefaultAiProviderRouter(listOf(p1, p2), storage)
-
         router.selectProvider("p1")
         router.selectModel("model-p1")
         router.selectProvider("p2")
         router.selectModel("model-p2")
         router.selectProvider("p1")
-
         assertEquals("model-p1", router.selectedModelId.value)
         assertEquals("model-p1", storage.getString("active_ai_model"))
     }
@@ -85,17 +93,45 @@ class AiProviderRouterTest {
         val p1 = MockProvider("p1", "P1", modelId = "model-p1")
         val p2 = MockProvider("p2", "P2", modelId = "model-p2")
         val router = DefaultAiProviderRouter(listOf(p1, p2), storage)
-
         router.selectProvider("p1")
         router.selectModel("model-p1")
         router.selectProvider("p2")
         router.selectModel("model-p2")
-
         val restored = DefaultAiProviderRouter(listOf(p1, p2), storage)
         restored.selectProvider("p1")
         assertEquals("model-p1", restored.selectedModelId.value)
         restored.selectProvider("p2")
         assertEquals("model-p2", restored.selectedModelId.value)
+    }
+
+    @Test
+    fun `handoff provider is excluded from explicit cognitive inference`() = runTest {
+        val storage = FakeStorage()
+        val handoff = HandoffMockProvider()
+        val inference = MockProvider("p1", "P1")
+        val router = DefaultAiProviderRouter(listOf(handoff, inference), storage)
+        router.setRoutingPolicy(AiRoutingPolicy.EXPLICIT)
+        router.selectProvider("handoff")
+        try {
+            router.execute(AiRequest(text = "Hello"), AiContext.EMPTY)
+            fail("Expected UNSUPPORTED_CAPABILITY")
+        } catch (e: AiProviderException) {
+            assertEquals(AiErrorType.UNSUPPORTED_CAPABILITY, e.type)
+        }
+        assertEquals(0, handoff.handoffCount)
+    }
+
+    @Test
+    fun `automatic routing skips handoff provider`() = runTest {
+        val storage = FakeStorage()
+        val handoff = HandoffMockProvider()
+        val inference = MockProvider("p1", "P1")
+        val router = DefaultAiProviderRouter(listOf(handoff, inference), storage)
+        router.setRoutingPolicy(AiRoutingPolicy.AUTOMATIC)
+        router.selectProvider("handoff")
+        val response = router.execute(AiRequest(text = "Hello"), AiContext.EMPTY)
+        assertEquals("p1", response.providerId)
+        assertEquals(0, handoff.handoffCount)
     }
 
     @Test
@@ -188,7 +224,6 @@ class AiProviderRouterTest {
         val router = DefaultAiProviderRouter(listOf(primary, fallback), storage)
         router.setRoutingPolicy(AiRoutingPolicy.PREFERRED_WITH_FALLBACK)
         router.selectProvider("p1")
-
         try {
             router.execute(AiRequest(text = "Hello"), AiContext.EMPTY)
             fail("Expected INVALID_REQUEST")
@@ -206,7 +241,6 @@ class AiProviderRouterTest {
         val router = DefaultAiProviderRouter(listOf(primary, fallback), storage)
         router.setRoutingPolicy(AiRoutingPolicy.PREFERRED_WITH_FALLBACK)
         router.selectProvider("p1")
-
         try {
             router.execute(AiRequest(text = "Hello"), AiContext.EMPTY)
             fail("Expected UNSUPPORTED_CAPABILITY")
@@ -219,7 +253,6 @@ class AiProviderRouterTest {
     @Test
     fun `fallback resolves its own advertised model`() = runTest {
         val storage = FakeStorage()
-        storage.putString("active_ai_model", "model-a")
         val primary = MockProvider("p1", "P1", throwsException = true, modelId = "model-a")
         val fallback = MockProvider("p2", "P2", modelId = "model-b")
         val router = DefaultAiProviderRouter(listOf(primary, fallback), storage)
