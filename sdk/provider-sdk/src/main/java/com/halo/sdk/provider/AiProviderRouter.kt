@@ -1,5 +1,6 @@
 package com.halo.sdk.provider
 
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 /**
@@ -29,6 +30,7 @@ interface AiProviderRouter {
     val selectedProviderId: StateFlow<String?>
     val selectedModelId: StateFlow<String?>
     val diagnosticsFlow: StateFlow<List<AiProviderDiagnostic>>
+        get() = MutableStateFlow(emptyList())
 
     fun selectProvider(id: String)
 

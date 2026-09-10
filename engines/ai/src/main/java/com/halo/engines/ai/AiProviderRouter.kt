@@ -47,7 +47,20 @@ class DefaultAiProviderRouter(
     )
     override val selectedModelId: StateFlow<String?> = _selectedModelId.asStateFlow()
 
-    private val _diagnosticsFlow = MutableStateFlow<List<AiProviderDiagnostic>>(emptyList())
+    private val _diagnosticsFlow = MutableStateFlow<List<AiProviderDiagnostic>>(
+        providers.map { provider ->
+            AiProviderDiagnostic(
+                providerId = provider.id,
+                displayName = provider.displayName,
+                state = ProviderStatus.State.LOADING,
+                message = null,
+                capabilities = emptySet(),
+                selected = provider.id == (_selectedProviderId.value),
+                selectedModelId = if (provider.id == _selectedProviderId.value) _selectedModelId.value else null,
+                local = provider.isLocal
+            )
+        }
+    )
     override val diagnosticsFlow: StateFlow<List<AiProviderDiagnostic>> = _diagnosticsFlow.asStateFlow()
 
     init {
@@ -90,6 +103,9 @@ class DefaultAiProviderRouter(
             if (providerChanged) {
                 _selectedModelId.value = null
                 storage.putString("active_ai_model", null)
+            }
+            _diagnosticsFlow.value = _diagnosticsFlow.value.map {
+                it.copy(selected = it.providerId == id)
             }
             scope.launch {
                 refreshDiagnostics()
