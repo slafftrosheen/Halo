@@ -320,7 +320,7 @@ class RealHeyCyanDriver(
                 eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(observation = com.halo.sdk.runtime.Observation(
                     modality = com.halo.sdk.runtime.Modality.SYSTEM,
                     source = com.halo.sdk.runtime.Source.BLUETOOTH,
-                    payload = object : com.halo.sdk.runtime.ObservationPayload {},
+                    payload = com.halo.sdk.runtime.BatteryObservationPayload(event.level),
                     sourceDeviceId = "heycyan",
                     metadata = mapOf("battery" to event.level, "charging" to event.isCharging)
                 )))
@@ -331,7 +331,7 @@ class RealHeyCyanDriver(
                 eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(observation = com.halo.sdk.runtime.Observation(
                     modality = com.halo.sdk.runtime.Modality.SYSTEM,
                     source = com.halo.sdk.runtime.Source.BLUETOOTH,
-                    payload = object : com.halo.sdk.runtime.ObservationPayload {},
+                    payload = com.halo.sdk.runtime.SystemObservationPayload("BUTTON_PRESSED"),
                     sourceDeviceId = "heycyan",
                     metadata = mapOf("button" to event.type.name)
                 )))
@@ -341,7 +341,7 @@ class RealHeyCyanDriver(
                 eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(observation = com.halo.sdk.runtime.Observation(
                     modality = com.halo.sdk.runtime.Modality.VIDEO,
                     source = com.halo.sdk.runtime.Source.CAMERA,
-                    payload = object : com.halo.sdk.runtime.ObservationPayload {},
+                    payload = com.halo.sdk.runtime.SystemObservationPayload("AI_IMAGE_RECOGNITION"),
                     sourceDeviceId = "heycyan",
                     metadata = mapOf("action" to "AI_IMAGE_RECOGNITION")
                 )))
@@ -351,7 +351,7 @@ class RealHeyCyanDriver(
                 eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(observation = com.halo.sdk.runtime.Observation(
                     modality = com.halo.sdk.runtime.Modality.AUDIO,
                     source = com.halo.sdk.runtime.Source.MICROPHONE,
-                    payload = object : com.halo.sdk.runtime.ObservationPayload {},
+                    payload = com.halo.sdk.runtime.SystemObservationPayload("MICROPHONE_ACTIVE"),
                     sourceDeviceId = "heycyan",
                     metadata = mapOf("event" to "MICROPHONE_ACTIVE")
                 )))
@@ -361,7 +361,7 @@ class RealHeyCyanDriver(
                 eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(observation = com.halo.sdk.runtime.Observation(
                     modality = com.halo.sdk.runtime.Modality.AUDIO,
                     source = com.halo.sdk.runtime.Source.MICROPHONE,
-                    payload = object : com.halo.sdk.runtime.ObservationPayload {},
+                    payload = com.halo.sdk.runtime.SystemObservationPayload("MICROPHONE_INACTIVE"),
                     sourceDeviceId = "heycyan",
                     metadata = mapOf("event" to "MICROPHONE_INACTIVE")
                 )))
@@ -371,7 +371,7 @@ class RealHeyCyanDriver(
                 eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(observation = com.halo.sdk.runtime.Observation(
                     modality = com.halo.sdk.runtime.Modality.SYSTEM,
                     source = com.halo.sdk.runtime.Source.BLUETOOTH,
-                    payload = object : com.halo.sdk.runtime.ObservationPayload {},
+                    payload = com.halo.sdk.runtime.SystemObservationPayload("VOICE_PLAYBACK_PAUSE"),
                     sourceDeviceId = "heycyan",
                     metadata = mapOf("event" to "VOICE_PLAYBACK_PAUSE")
                 )))
@@ -381,7 +381,7 @@ class RealHeyCyanDriver(
                 eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(observation = com.halo.sdk.runtime.Observation(
                     modality = com.halo.sdk.runtime.Modality.SYSTEM,
                     source = com.halo.sdk.runtime.Source.BLUETOOTH,
-                    payload = object : com.halo.sdk.runtime.ObservationPayload {},
+                    payload = com.halo.sdk.runtime.SystemObservationPayload("MODE_CHANGED"),
                     sourceDeviceId = "heycyan",
                     metadata = mapOf("event" to "MODE_CHANGED", "mode" to event.mode)
                 )))
@@ -391,7 +391,7 @@ class RealHeyCyanDriver(
                 eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(observation = com.halo.sdk.runtime.Observation(
                     modality = com.halo.sdk.runtime.Modality.SYSTEM,
                     source = com.halo.sdk.runtime.Source.BLUETOOTH,
-                    payload = object : com.halo.sdk.runtime.ObservationPayload {},
+                    payload = com.halo.sdk.runtime.SystemObservationPayload("MEMORY_INSUFFICIENT"),
                     sourceDeviceId = "heycyan",
                     metadata = mapOf("fault" to "MEMORY_INSUFFICIENT")
                 )))
@@ -418,17 +418,21 @@ class RealHeyCyanDriver(
     private fun captureMetadata(): com.halo.drivers.heycyan.codec.CaptureMetadata {
         val manager = context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
         val adapter = manager?.adapter
-        val name = if (shouldReadBluetoothAdapterName(Build.VERSION.SDK_INT) { p -> context.checkSelfPermission(p) }) {
-            adapter?.name
-        } else {
-            null
-        }
+        val adapterName = if (adapter != null && shouldReadBluetoothAdapterName(Build.VERSION.SDK_INT) { permission ->
+                context.checkSelfPermission(permission)
+            }) {
+            runCatching { adapter.name }.getOrNull()
+        } else null
         return com.halo.drivers.heycyan.codec.CaptureMetadata(
-            androidVersion = Build.VERSION.RELEASE,
-            phoneModel = Build.MODEL,
-            bluetoothAdapter = name ?: "unknown"
+            platform = "Android",
+            apiLevel = Build.VERSION.SDK_INT,
+            adapterName = adapterName,
+            transport = "BLE_GATT"
         )
     }
+
+    private fun shouldReadBluetoothAdapterName(permissionChecker: (String) -> Int): Boolean =
+        shouldReadBluetoothAdapterName(Build.VERSION.SDK_INT, permissionChecker)
 
     private fun canDecodeEvents(mode: HeyCyanConnectionMode): Boolean =
         mode == HeyCyanConnectionMode.RUNTIME
