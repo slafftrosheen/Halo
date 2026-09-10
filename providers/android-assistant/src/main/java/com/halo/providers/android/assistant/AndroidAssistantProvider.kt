@@ -22,7 +22,7 @@ import kotlinx.coroutines.flow.emptyFlow
  */
 class AndroidAssistantProvider(
     private val context: Context
-) : AiProvider {
+) : AiProvider, AiHandoffProvider {
 
     companion object {
         const val HANDOFF_ACTION = "com.halo.assistant.HANDOFF"
@@ -45,17 +45,11 @@ class AndroidAssistantProvider(
         supportsTools = false
     )
 
-    /** True when a concrete ACTION_ASSIST target exists. */
-    fun isAvailable(): Boolean = resolveAssistantPackage() != null
+    override fun isAvailable(): Boolean = resolveAssistantPackage() != null
 
-    /** Returns the resolved assistant package, when Android exposes one. */
-    fun assistantPackageName(): String? = resolveAssistantPackage()
+    override fun assistantPackageName(): String? = resolveAssistantPackage()
 
-    /**
-     * Launches the configured Android assistant. The prompt is supplied only as a
-     * best-effort, non-standard extra; callers must not expect a response callback.
-     */
-    fun handoff(prompt: String? = null) {
+    override fun handoff(prompt: String?) {
         val assistIntent = buildAssistIntent(prompt)
         context.startActivity(assistIntent)
     }
