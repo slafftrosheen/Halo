@@ -4,73 +4,118 @@ import com.halo.drivers.heycyan.debug.HeyCyanLogger
 import com.halo.sdk.runtime.embodiment.heycyan.HeyCyanOperation
 
 /**
- * Adapts [HeyCyanCapabilityController] to the generic [CapabilityProvider] interface.
+ * Runtime-facing HeyCyan capability adapter.
  *
- * This class is the boundary between the Halo Runtime / Devices UI and the HeyCyan
- * driver internals. Consumers see [DeviceCapabilityDescriptor]s and issue string-keyed
- * execute calls; they never reference BLE, GATT, or HeyCyan-specific types.
- *
- * Capability surface exposed:
- *
- *   heycyan.battery           AVAILABLE
- *   heycyan.device_info       AVAILABLE
- *   heycyan.media_inventory   AVAILABLE
- *   heycyan.camera.photo      AVAILABLE
- *   heycyan.camera.video      AVAILABLE
- *   heycyan.audio.recording   AVAILABLE_WITH_LIMITATION
- *   heycyan.audio.live_input  UNSUPPORTED
- *   heycyan.ai_photo          BLOCKED_BY_PROTOCOL
- *   heycyan.wifi_transfer     AVAILABLE_WITH_LIMITATION
+ * The capability surface is descriptive.
+ * Execution must still resolve to a concrete HeyCyanOperation.
  */
 class HeyCyanCapabilityProvider(
     private val controller: HeyCyanCapabilityController,
 ) : CapabilityProvider {
 
     override fun capabilities(): List<DeviceCapabilityDescriptor> =
-        HeyCyanCapabilities.all.map { it.toDescriptor() }
+        HeyCyanCapabilities.all.map { capability ->
+            DeviceCapabilityDescriptor(
+                id = capability.id,
+                name = capability.name,
+                status = capability.status,
+                description = capability.description,
+            )
+        }
 
     override suspend fun execute(
         capabilityId: String,
         request: CapabilityRequest,
     ): CapabilityOutcome {
-        HeyCyanLogger.i("HALO-TX-TRACE", "Capability execution requested: $capabilityId")
-        val operation = capabilityIdToOperation(capabilityId)
-            ?: return CapabilityOutcome.Failure("Unknown HeyCyan capability: $capabilityId")
 
-        return controller.execute(operation).fold(
-            onSuccess = { CapabilityOutcome.Success },
-            onFailure = { CapabilityOutcome.Failure(it.message ?: "HeyCyan operation failed") },
+        HeyCyanLogger.i(
+            "HALO-TX-TRACE",
+            "Capability execution requested: $capabilityId"
         )
+
+        val capability = HeyCyanCapabilities.find(capabilityId)
+            ?: return CapabilityOutcome.Failure(
+                "Unknown HeyCyan capability: $capabilityId"
+            )
+
+        return when (capability.status) {
+
+            HeyCyanCapabilityStatus.UNSUPPORTED ->
+                CapabilityOutcome.Failure(
+                    "Unsupported HeyCyan capability: ${capability.id}"
+                )
+
+            HeyCyanCapabilityStatus.BLOCKED_BY_PROTOCOL ->
+                CapabilityOutcome.Failure(
+                    "Capability blocked by unresolved protocol: ${capability.id}"
+                )
+
+            HeyCyanCapabilityStatus.STRUCTURAL_VALIDATION ->
+                CapabilityOutcome.Failure(
+                    "Capability is still under structural validation: ${capability.id}"
+                )
+
+            HeyCyanCapabilityStatus.PLATFORM_LIMITED ->
+                CapabilityOutcome.Failure(
+                    "Capability is limited by the host platform: ${capability.id}"
+                )
+
+            HeyCyanCapabilityStatus.AVAILABLE,
+            HeyCyanCapabilityStatus.AVAILABLE_WITH_LIMITATION -> {
+                val operation = directOperationFor(capability.id)
+                    ?: return CapabilityOutcome.Failure(
+                        "Capability ${capability.id} requires a concrete semantic operation"
+                    )
+
+                controller.execute(operation).fold(
+                    onSuccess = {
+                        CapabilityOutcome.Success
+                    },
+                    onFailure = {
+                        CapabilityOutcome.Failure(
+                            it.message ?: "HeyCyan operation failed"
+                        )
+                    },
+                )
+            }
+        }
     }
 
-    // -------------------------------------------------------------------------
-    // Private helpers
-    // -------------------------------------------------------------------------
-
-    private fun HeyCyanCapability.toDescriptor() = DeviceCapabilityDescriptor(
-        id = id,
-        name = name,
-        status = status,
-        description = description,
-    )
-
     /**
-     * Maps a capability ID string to its corresponding [HeyCyanOperation].
+     * Only capabilities whose public API has one unambiguous operation should
+     * be executable directly through CapabilityProvider.
      *
-     * Note: the live_input capability has no corresponding operation because it is
-     * UNSUPPORTED — there is no valid execution path for it.
+     * Video and audio are aggregate capabilities and intentionally return null.
+     * Their Start/Stop operations are dispatched through EmbodimentIntent.
      */
-    private fun capabilityIdToOperation(capabilityId: String): HeyCyanOperation? =
+    private fun directOperationFor(
+        capabilityId: String
+    ): HeyCyanOperation? =
         when (capabilityId) {
-            "heycyan.battery" -> HeyCyanOperation.GetBattery
-            "heycyan.device_info" -> HeyCyanOperation.GetDeviceInfo
-            "heycyan.media_inventory" -> HeyCyanOperation.GetMediaInventory
-            "heycyan.camera.photo" -> HeyCyanOperation.TakePhoto
-            "heycyan.camera.video" -> HeyCyanOperation.StartVideo
-            "heycyan.audio.recording" -> HeyCyanOperation.StartRecording
-            "heycyan.ai_photo" -> HeyCyanOperation.GenerateAIPhoto
-            "heycyan.wifi_transfer" -> HeyCyanOperation.EnterWifiTransferMode
-            // heycyan.audio.live_input has no operation — device doesn't support it
-            else -> null
+            HeyCyanCapabilityIds.BATTERY ->
+                HeyCyanOperation.GetBattery
+
+            HeyCyanCapabilityIds.DEVICE_INFO ->
+                HeyCyanOperation.GetDeviceInfo
+
+            HeyCyanCapabilityIds.MEDIA_INVENTORY ->
+                HeyCyanOperation.GetMediaInventory
+
+            HeyCyanCapabilityIds.CAMERA_PHOTO ->
+                HeyCyanOperation.TakePhoto
+
+            HeyCyanCapabilityIds.AI_PHOTO ->
+                HeyCyanOperation.GenerateAIPhoto
+
+            HeyCyanCapabilityIds.WIFI_TRANSFER ->
+                HeyCyanOperation.EnterWifiTransferMode
+
+            HeyCyanCapabilityIds.CAMERA_VIDEO,
+            HeyCyanCapabilityIds.AUDIO_RECORDING,
+            HeyCyanCapabilityIds.AUDIO_LIVE_INPUT ->
+                null
+
+            else ->
+                null
         }
 }

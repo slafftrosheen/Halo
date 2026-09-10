@@ -151,6 +151,16 @@ class HeyCyanCapabilityController(
             )
         }
 
+        if (operation == HeyCyanOperation.SynchronizeMedia) {
+            return failure(
+                operation = operation,
+                failure = HeyCyanOperationFailure.Unsupported(
+                    "SynchronizeMedia is a media-service operation and must be executed by HeyCyanMediaSynchronizer"
+                ),
+                timestamp = now,
+            )
+        }
+
         // Dispatch
         _operationState.value = HeyCyanOperationState.Running(operation)
         _events.emit(HeyCyanOperationEvent.Started(operation, now))
@@ -185,7 +195,8 @@ class HeyCyanCapabilityController(
             HeyCyanOperation.GetMediaInventory -> HeyCyanCapabilities.mediaInventory
             HeyCyanOperation.TakePhoto -> HeyCyanCapabilities.photo
             HeyCyanOperation.StartVideo, HeyCyanOperation.StopVideo -> HeyCyanCapabilities.video
-            HeyCyanOperation.StartRecording, HeyCyanOperation.StopRecording, HeyCyanOperation.PrepareVoiceRouting -> HeyCyanCapabilities.audioRecording
+            HeyCyanOperation.StartRecording, HeyCyanOperation.StopRecording -> HeyCyanCapabilities.audioRecording
+            HeyCyanOperation.PrepareVoiceRouting -> HeyCyanCapabilities.liveAudio
             HeyCyanOperation.GenerateAIPhoto -> HeyCyanCapabilities.aiPhoto
             HeyCyanOperation.EnterWifiTransferMode, HeyCyanOperation.SynchronizeMedia -> HeyCyanCapabilities.wifiTransfer
         }

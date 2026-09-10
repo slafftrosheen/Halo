@@ -103,7 +103,7 @@ class DefaultHeyCyanCommandExecutor(
             }
 
             val framed = com.halo.drivers.heycyan.codec.HeyCyanWireFrameCodec.encode(action, payload)
-            HeyCyanLogger.i("HALO-TX-TRACE", "HeyCyan dispatch transport=${transport.javaClass.simpleName}")
+            HeyCyanLogger.i("HALO-TX-TRACE", "HeyCyan dispatch transport=${transport::class.simpleName}")
             return transport.send(framed)
         } finally {
             HeyCyanProtocolCapture.instance.endOperation()

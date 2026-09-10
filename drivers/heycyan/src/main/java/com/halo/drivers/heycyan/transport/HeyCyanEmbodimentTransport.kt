@@ -41,9 +41,21 @@ class HeyCyanEmbodimentTransport(
         driver.disconnect()
     }
 
-    override suspend fun send(message: String): Boolean = true
+    /**
+     * Generic transport messaging is intentionally unsupported.
+     *
+     * HeyCyan physical commands must go through:
+     *
+     *   HeyCyanCapabilityController
+     *       -> HeyCyanCommandExecutor
+     *       -> HeyCyanGattCommandTransport
+     *
+     * These generic methods must never report success because doing so would create
+     * a false execution result in the Runtime.
+     */
+    override suspend fun send(message: String): Boolean = false
 
-    override suspend fun send(bytes: ByteArray): Boolean = true
+    override suspend fun send(bytes: ByteArray): Boolean = false
 
     override fun onMessageReceived(handler: (String) -> Unit) {}
 

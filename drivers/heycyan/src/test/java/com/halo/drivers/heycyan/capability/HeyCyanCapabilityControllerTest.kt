@@ -4,12 +4,14 @@ import com.halo.drivers.heycyan.protocol.HeyCyanCommand
 import com.halo.drivers.heycyan.protocol.HeyCyanDeviceStateStore
 import com.halo.drivers.heycyan.protocol.HeyCyanEvent
 import com.halo.drivers.heycyan.protocol.HeyCyanMode
+import com.halo.drivers.heycyan.protocol.toCommand
 import com.halo.sdk.runtime.embodiment.heycyan.HeyCyanOperation
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
+import org.junit.Assert.assertThrows
 import org.junit.Before
 import org.junit.Test
 
@@ -80,11 +82,60 @@ class HeyCyanCapabilityControllerTest {
     }
 
     @Test
-    fun liveAudioHasNoOperationMappingInProvider() = runTest {
+    fun `canonical capability ids contain exactly the exposed capability surface`() {
+        val actual = HeyCyanCapabilities.all.map { it.id }.toSet()
+
+        assertEquals(
+            HeyCyanCapabilityIds.all,
+            actual
+        )
+    }
+
+    @Test
+    fun `video aggregate capability is not directly executable`() = runTest {
         val provider = HeyCyanCapabilityProvider(controller)
-        val outcome = provider.execute("heycyan.audio.live_input")
-        assertTrue(outcome is CapabilityOutcome.Failure)
+
+        val result = provider.execute(
+            HeyCyanCapabilityIds.CAMERA_VIDEO
+        )
+
+        assertTrue(result is CapabilityOutcome.Failure)
         assertTrue(executor.executedCommands.isEmpty())
+    }
+
+    @Test
+    fun `audio aggregate capability is not directly executable`() = runTest {
+        val provider = HeyCyanCapabilityProvider(controller)
+
+        val result = provider.execute(
+            HeyCyanCapabilityIds.AUDIO_RECORDING
+        )
+
+        assertTrue(result is CapabilityOutcome.Failure)
+        assertTrue(executor.executedCommands.isEmpty())
+    }
+
+    @Test
+    fun `live audio never reaches command executor`() = runTest {
+        val provider = HeyCyanCapabilityProvider(controller)
+
+        val result = provider.execute(
+            HeyCyanCapabilityIds.AUDIO_LIVE_INPUT
+        )
+
+        assertTrue(result is CapabilityOutcome.Failure)
+        assertTrue(executor.executedCommands.isEmpty())
+    }
+
+    @Test
+    fun `synchronize media is never translated into transfer mode command`() {
+        val exception = assertThrows(IllegalStateException::class.java) {
+            HeyCyanOperation.SynchronizeMedia.toCommand()
+        }
+
+        assertTrue(
+            exception.message!!.contains("HeyCyanMediaSynchronizer")
+        )
     }
 
     @Test
@@ -170,7 +221,7 @@ class HeyCyanCapabilityControllerTest {
     fun providerExposesAllCapabilities() {
         val provider = HeyCyanCapabilityProvider(controller)
         val caps = provider.capabilities()
-        // battery, deviceInfo, mediaInventory, photo, video, audioRecording, liveAudio, aiPhoto, wifiTransfer
-        assertEquals(9, caps.size)
+        assertEquals(HeyCyanCapabilities.all.size, caps.size)
     }
 }
+

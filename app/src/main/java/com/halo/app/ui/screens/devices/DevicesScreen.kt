@@ -141,6 +141,23 @@ class DevicesViewModel(
                 _uiState.value = DevicesUiState(devices = updatedDevices)
             }
         }
+
+        viewModelScope.launch {
+            eventBus.observe(com.halo.sdk.runtime.EmbodimentExecutionEvent::class.java).collect { event ->
+                val deviceId = event.device.deviceId
+                if (_photoStates.value[deviceId] == PhotoActionState.CAPTURING) {
+                    if (event.result.status == com.halo.sdk.runtime.embodiment.ExecutionStatus.SUCCEEDED) {
+                        _photoStates.value = _photoStates.value + (deviceId to PhotoActionState.COMPLETED)
+                        kotlinx.coroutines.delay(2000L)
+                        _photoStates.value = _photoStates.value + (deviceId to PhotoActionState.READY)
+                    } else if (event.result.status == com.halo.sdk.runtime.embodiment.ExecutionStatus.FAILED) {
+                        _photoStates.value = _photoStates.value + (deviceId to PhotoActionState.FAILED)
+                        kotlinx.coroutines.delay(3000L)
+                        _photoStates.value = _photoStates.value + (deviceId to PhotoActionState.READY)
+                    }
+                }
+            }
+        }
     }
 
     private val _navigationEvents = MutableSharedFlow<String>()
@@ -154,28 +171,12 @@ class DevicesViewModel(
         val currentPhotoState = _photoStates.value[deviceId] ?: PhotoActionState.READY
         if (currentPhotoState == PhotoActionState.CAPTURING) return
         _photoStates.value = _photoStates.value + (deviceId to PhotoActionState.CAPTURING)
-        viewModelScope.launch {
-            val intent = com.halo.sdk.runtime.embodiment.EmbodimentIntent(
-                intentId = java.util.UUID.randomUUID().toString(), targetDeviceId = deviceId,
-                kind = com.halo.sdk.runtime.embodiment.IntentKind.CAPTURE_PHOTO
-            )
-            eventBus.publish(com.halo.sdk.runtime.IntentCreated(intentId = intent.intentId, intentKind = intent.kind.name))
-            val session = sessionManager.activeSessions.value.find { it.identity.deviceId == deviceId }
-            if (session != null && session.state.value == com.halo.sdk.runtime.embodiment.SessionState.READY) {
-                try {
-                    session.dispatch(intent)
-                    _photoStates.value = _photoStates.value + (deviceId to PhotoActionState.COMPLETED)
-                    kotlinx.coroutines.delay(2000L)
-                } catch (_: Exception) {
-                    _photoStates.value = _photoStates.value + (deviceId to PhotoActionState.FAILED)
-                    kotlinx.coroutines.delay(3000L)
-                }
-            } else {
-                _photoStates.value = _photoStates.value + (deviceId to PhotoActionState.FAILED)
-                kotlinx.coroutines.delay(3000L)
-            }
-            _photoStates.value = _photoStates.value + (deviceId to PhotoActionState.READY)
-        }
+        
+        val intent = com.halo.sdk.runtime.embodiment.EmbodimentIntent(
+            intentId = java.util.UUID.randomUUID().toString(), targetDeviceId = deviceId,
+            kind = com.halo.sdk.runtime.embodiment.IntentKind.CAPTURE_PHOTO
+        )
+        dispatchEmbodimentIntent(deviceId, intent)
     }
 
     fun startVideo(deviceId: String) {

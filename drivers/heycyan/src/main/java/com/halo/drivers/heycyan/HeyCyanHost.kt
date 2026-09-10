@@ -15,6 +15,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 
 class HeyCyanHost(
     private val driver: RealHeyCyanDriver,
@@ -39,6 +40,16 @@ class HeyCyanHost(
     override val connectivity: StateFlow<ConnectionState> = _connectivity
 
     init {
+        scope.launch {
+            val sm = sessionManager
+            if (sm != null) {
+                val saved = sm.registry.getSavedDevices().filter { it.identity.deviceType == "HEYCYAN_GLASSES" }
+                for (record in saved) {
+                    ensureSessionRegistered(record.identity.deviceId)
+                }
+            }
+        }
+
         driver.deviceState
             .onEach { state ->
                 val heyCyanConn = state.connection
@@ -68,7 +79,7 @@ class HeyCyanHost(
                     batteryPercent = state.battery?.level,
                     connected = isConnected,
                     charging = state.battery?.charging ?: false,
-                    capabilities = emptyList(),
+                    capabilities = com.halo.drivers.heycyan.capability.HeyCyanCapabilities.all.map { it.id },
                     transport = "BLE",
                     lastSeenMs = if (isConnected) System.currentTimeMillis() else currentLastSeen,
                     freshness = newFreshness,

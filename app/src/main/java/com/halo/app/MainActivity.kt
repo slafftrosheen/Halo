@@ -92,7 +92,8 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             val host = ManualDependencyGraph.wearableHost
             host.connectivity.collect { state ->
-                if (state is com.halo.sdk.host.ConnectionState.Connected && !runtime.isStarted()) {
+                val isConnectedOrReady = state is com.halo.sdk.host.ConnectionState.Connected || state is com.halo.sdk.host.ConnectionState.Ready
+                if (isConnectedOrReady && !runtime.isStarted()) {
                     runtime.start()
                 }
             }

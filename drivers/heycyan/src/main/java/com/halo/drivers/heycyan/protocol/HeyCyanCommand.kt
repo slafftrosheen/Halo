@@ -68,7 +68,12 @@ fun HeyCyanOperation.toCommand(): HeyCyanCommand =
         HeyCyanOperation.GenerateAIPhoto ->
             HeyCyanCommand.AiThumbnail
 
-        HeyCyanOperation.EnterWifiTransferMode,
-        HeyCyanOperation.SynchronizeMedia ->
+        HeyCyanOperation.EnterWifiTransferMode ->
             HeyCyanCommand.EnterWifiTransferMode
+
+        HeyCyanOperation.SynchronizeMedia ->
+            throw IllegalStateException(
+                "SynchronizeMedia is not a BLE command. " +
+                "It must be handled by HeyCyanMediaSynchronizer."
+            )
     }
