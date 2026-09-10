@@ -81,7 +81,9 @@ fun IntelligenceScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit = {}
                         Text("No models currently available", style = HaloTypography.labelSmall, color = HaloGlassColors.Warning)
                     }
                 }
-                HaloGlassButton(text = "Change", onClick = { showModelPicker = true })
+                if (uiState.activeProviderId != "android.system.assistant") {
+                    HaloGlassButton(text = "Change", onClick = { showModelPicker = true })
+                }
             }
         }
 
@@ -100,11 +102,37 @@ fun IntelligenceScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit = {}
                 }
 
                 Spacer(Modifier.height(12.dp))
-                HaloGlassButton(
-                    text = if (uiState.activeProviderId == "android.system.assistant") "Open Assistant" else "Test Connection",
-                    onClick = if (uiState.activeProviderId == "android.system.assistant") viewModel::testConnection else viewModel::testConnection,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                if (uiState.activeProviderId == "android.system.assistant") {
+                    HaloGlassButton(
+                        text = "Open Assistant",
+                        onClick = { viewModel.handoffToAssistant() },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        uiState.assistantPackage?.let { "Detected assistant: $it" } ?: "No Android assistant detected",
+                        style = HaloTypography.labelSmall,
+                        color = if (uiState.assistantPackage != null) HaloGlassColors.TextSecondary else HaloGlassColors.Warning
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    HaloGlassButton(
+                        text = "Test Availability",
+                        onClick = viewModel::testConnection,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        "Halo may supply a best-effort prompt extra, but Android does not guarantee prompt injection or a response channel for third-party assistants.",
+                        style = HaloTypography.labelSmall,
+                        color = HaloGlassColors.TextSecondary
+                    )
+                } else {
+                    HaloGlassButton(
+                        text = "Test Connection",
+                        onClick = viewModel::testConnection,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
 
                 when (uiState.activeProviderId) {
                     "openrouter" -> {
@@ -140,14 +168,6 @@ fun IntelligenceScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit = {}
                         )
                         Spacer(Modifier.height(6.dp))
                         Text("Physical phone: use the PC's LAN IP. The emulator may use 10.0.2.2.", style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
-                    }
-                    "android.system.assistant" -> {
-                        Spacer(Modifier.height(10.dp))
-                        Text(
-                            "Android assistant mode is a handoff. Halo cannot rely on a public API to inject arbitrary prompt text into Gemini or ChatGPT and read the generated response back. The provider does, however, detect whether an Android assistant is available and reports the assistant package in its handoff response.",
-                            style = HaloTypography.labelSmall,
-                            color = HaloGlassColors.TextSecondary
-                        )
                     }
                 }
             }
