@@ -1,243 +1,188 @@
 package com.halo.app.ui.screens.settings
 
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.unit.dp
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import com.halo.app.ui.glass.components.*
-import com.halo.app.ui.glass.material.HaloGlassColors
-import com.halo.app.ui.glass.material.HaloTypography
-
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import android.Manifest
 import android.content.pm.PackageManager
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.compose.ui.platform.LocalContext
+import com.halo.app.ui.glass.components.HaloGlassBackHeader
+import com.halo.app.ui.glass.components.HaloGlassButton
+import com.halo.app.ui.glass.components.HaloGlassDivider
+import com.halo.app.ui.glass.components.HaloGlassPage
+import com.halo.app.ui.glass.components.HaloGlassSection
+import com.halo.app.ui.glass.components.HaloGlassSettingRow
+import com.halo.app.ui.glass.components.HaloGlassChip
+import com.halo.app.ui.glass.material.HaloGlassColors
+import com.halo.app.ui.glass.material.HaloTypography
+import androidx.compose.material3.Icon
+import androidx.compose.ui.Alignment
 
 @Composable
 fun SettingsScreen(viewModel: SettingsViewModel) {
     val uiState by viewModel.uiState.collectAsState()
-    var comingSoonFeature by remember { mutableStateOf<String?>(null) }
 
     HaloGlassPage(title = "Settings") {
-        
-        // HALO Section
         HaloGlassSection(title = "HALO") {
-            HaloGlassSettingRow("Intelligence", uiState.provider, onClick = { viewModel.navigateTo("ai_settings") })
-            HaloGlassDivider()
-            HaloGlassSettingRow("Glasses", uiState.deviceName, onClick = { viewModel.navigateTo("devices") })
-            HaloGlassDivider()
-            HaloGlassSettingRow("Voice", "Not configured", onClick = { comingSoonFeature = "Voice configuration" })
-            HaloGlassDivider()
-            HaloGlassSettingRow("Permissions", "Manage", onClick = { viewModel.navigateTo("permissions") })
-            HaloGlassDivider()
-            HaloGlassSettingRow("Privacy", "Review", onClick = { comingSoonFeature = "Privacy center" })
-            HaloGlassDivider()
-            HaloGlassSettingRow("Appearance", "Dark", onClick = { comingSoonFeature = "Appearance settings" })
-        }
-        
-        // DIAGNOSTICS Section
-        if (uiState.devMode) {
-            HaloGlassSection(title = "DIAGNOSTICS") {
-                HaloGlassSettingRow("Protocol Lab", "Open", onClick = { viewModel.navigateTo("protocol_lab") })
-                HaloGlassDivider()
-                HaloGlassSettingRow("Runtime Inspector", "Debug", onClick = { viewModel.navigateTo("inspector") })
-                HaloGlassDivider()
-                HaloGlassSettingRow("Console", "Inspect", onClick = { viewModel.navigateTo("console") })
-            }
-        }
-
-        // SYSTEM Section
-        HaloGlassSection(title = "SYSTEM") {
             HaloGlassSettingRow(
-                title = "Developer Mode",
-                trailing = {
-                    Switch(
-                        checked = uiState.devMode,
-                        onCheckedChange = { viewModel.setDevMode(it) }
-                    )
-                }
+                title = "Intelligence",
+                trailingText = uiState.provider,
+                onClick = { viewModel.navigateTo("ai_settings") }
+            )
+            HaloGlassDivider()
+            HaloGlassSettingRow(
+                title = "Devices",
+                trailingText = uiState.deviceName,
+                onClick = { viewModel.navigateTo("devices") }
+            )
+            HaloGlassDivider()
+            HaloGlassSettingRow(
+                title = "Permissions",
+                trailingText = "Manage",
+                onClick = { viewModel.navigateTo("permissions") }
             )
         }
-    }
 
-    comingSoonFeature?.let { feature ->
-        HaloGlassDialog(
-            title = "Coming Soon",
-            onDismissRequest = { comingSoonFeature = null },
-            content = {
-                Column(Modifier.padding(16.dp)) {
-                    Text(
-                        "$feature is currently under development for the next Halo update.",
-                        color = HaloGlassColors.TextPrimary,
-                        style = HaloTypography.bodyMedium
-                    )
-                    Spacer(Modifier.height(24.dp))
-                    HaloGlassButton(
-                        text = "Understood",
-                        onClick = { comingSoonFeature = null },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
+        HaloGlassSection(title = "DEVELOPER") {
+            HaloGlassSettingRow(
+                title = "Developer Mode",
+                trailingText = if (uiState.devMode) "On" else "Off",
+                onClick = { viewModel.setDevMode(!uiState.devMode) }
+            )
+            if (uiState.devMode) {
+                HaloGlassDivider()
+                HaloGlassSettingRow(
+                    title = "Protocol Lab",
+                    trailingText = "Open",
+                    onClick = { viewModel.navigateTo("protocol_lab") }
+                )
+                HaloGlassDivider()
+                HaloGlassSettingRow(
+                    title = "Runtime Inspector",
+                    trailingText = "Open",
+                    onClick = { viewModel.navigateTo("inspector") }
+                )
+                HaloGlassDivider()
+                HaloGlassSettingRow(
+                    title = "Runtime Console",
+                    trailingText = "Open",
+                    onClick = { viewModel.navigateTo("console") }
+                )
             }
-        )
+        }
+
+        HaloGlassSection(title = "ABOUT") {
+            Column(Modifier.fillMaxWidth().padding(8.dp)) {
+                Text("Halo", style = HaloTypography.titleMedium, color = HaloGlassColors.TextPrimary)
+                Spacer(Modifier.height(4.dp))
+                Text(uiState.version, style = HaloTypography.labelMedium, color = HaloGlassColors.TextMuted)
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    "Portable cognitive runtime for wearable devices. Runtime first; Android is a host.",
+                    style = HaloTypography.bodySmall,
+                    color = HaloGlassColors.TextSecondary
+                )
+            }
+        }
     }
 }
 
 @Composable
 fun PermissionsScreen(onBack: () -> Unit = {}) {
     val context = LocalContext.current
-    
     val micGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
-    val btConnectGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
-    val btScanGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED
-    val locationGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+    val btGranted = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+        ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED
+    } else {
+        ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+    }
 
     HaloGlassPage(title = "") {
-        HaloGlassBackHeader(
-            title = "Permissions",
-            onBack = onBack
-        )
+        HaloGlassBackHeader(title = "Permissions", onBack = onBack)
         Spacer(Modifier.height(8.dp))
         Text(
-            "Current device permissions status",
+            "Permissions used by the active host",
             style = HaloTypography.bodyMedium,
             color = HaloGlassColors.TextSecondary
         )
-        
-        HaloGlassSection(title = "Audio Permissions") {
-            PermissionItem(
-                icon = Icons.Default.Mic,
-                label = "Microphone",
-                description = "Required for voice commands and listening mode",
-                granted = micGranted
-            )
+
+        HaloGlassSection(title = "AUDIO") {
+            PermissionItem(Icons.Default.Mic, "Microphone", "Voice capture", micGranted)
             HaloGlassDivider()
+            PermissionItem(Icons.Default.VolumeUp, "Speaker", "Response audio", true)
+        }
+
+        HaloGlassSection(title = "DEVICE ACCESS") {
             PermissionItem(
-                icon = Icons.Default.VolumeUp,
-                label = "Speaker Output",
-                description = "Required for audio playback and responses",
-                granted = true // Always granted on Android
+                Icons.Default.Security,
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) "Bluetooth LE" else "Bluetooth / Location",
+                "Required for wearable discovery and control",
+                btGranted
             )
         }
-        
-        HaloGlassSection(title = "System Permissions") {
-            PermissionItem(
-                icon = Icons.Default.Security,
-                label = "BLE Communication",
-                description = "Required for device pairing and data transfer",
-                granted = btConnectGranted && btScanGranted
-            )
-            
-            // Only show Location if Android < 12 (API 31) where it was strictly required for BLE scans,
-            // or if it's already granted on newer devices.
-            val locationRequired = android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S
-            if (locationRequired || locationGranted) {
-                HaloGlassDivider()
-                PermissionItem(
-                    icon = Icons.Default.Settings,
-                    label = "Location Services",
-                    description = "Required for BLE discovery on older Android versions",
-                    granted = locationGranted
-                )
-            }
-        }
-        
-        HaloGlassSection(title = "Device Capabilities") {
-            CapabilityRow(
-                name = "Speech Recognition",
-                status = CapabilityStatus.Supported,
-                supported = true
-            )
+
+        HaloGlassSection(title = "HOST CAPABILITIES") {
+            CapabilityLine("Speech recognition", true)
             HaloGlassDivider()
-            CapabilityRow(
-                name = "Text-to-Speech",
-                status = CapabilityStatus.Supported,
-                supported = true
-            )
+            CapabilityLine("Text-to-speech", true)
             HaloGlassDivider()
-            CapabilityRow(
-                name = "Visual Recognition",
-                status = CapabilityStatus.Unsupported,
-                supported = false
-            )
+            CapabilityLine("Camera visual input", false)
         }
     }
 }
 
 @Composable
 private fun PermissionItem(
-    icon: ImageVector,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
     description: String,
     granted: Boolean
 ) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .padding(vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
+    androidx.compose.foundation.layout.Row(
+        Modifier.fillMaxWidth().padding(vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(icon, contentDescription = label, tint = HaloGlassColors.Accent, modifier = Modifier.size(20.dp))
-            Spacer(Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(label, color = HaloGlassColors.TextPrimary, style = HaloTypography.bodyMedium)
-                Text(description, color = HaloGlassColors.TextMuted, style = HaloTypography.labelMedium)
-            }
+        Icon(icon, contentDescription = label, tint = HaloGlassColors.Accent, modifier = Modifier.padding(start = 4.dp))
+        Column(Modifier.weight(1f)) {
+            Text(label, style = HaloTypography.bodyMedium, color = HaloGlassColors.TextPrimary)
+            Text(description, style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
         }
         Text(
-            text = if (granted) "Allowed" else "Not allowed",
-            style = HaloTypography.labelMedium,
+            if (granted) "Allowed" else "Not allowed",
+            style = HaloTypography.labelSmall,
             color = if (granted) HaloGlassColors.Success else HaloGlassColors.Warning
         )
     }
 }
 
 @Composable
-private fun CapabilityRow(
-    name: String,
-    status: CapabilityStatus,
-    supported: Boolean
-) {
-    Row(
-        Modifier.fillMaxWidth(),
+private fun CapabilityLine(name: String, supported: Boolean) {
+    androidx.compose.foundation.layout.Row(
+        Modifier.fillMaxWidth().padding(vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(name, color = HaloGlassColors.TextPrimary, style = HaloTypography.bodyMedium)
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            if (supported) {
-                Text(
-                    text = "Supported",
-                    color = HaloGlassColors.Success,
-                    style = HaloTypography.labelMedium
-                )
-            } else {
-                HaloGlassChip.Danger(text = "Unsupported")
-            }
+        Text(name, style = HaloTypography.bodyMedium, color = HaloGlassColors.TextPrimary)
+        if (supported) {
+            Text("Supported", style = HaloTypography.labelSmall, color = HaloGlassColors.Success)
+        } else {
+            HaloGlassChip.Danger("Unsupported")
         }
     }
-}
-
-
-
-enum class CapabilityStatus {
-    Supported, PartiallySupported, Unsupported
 }
