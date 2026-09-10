@@ -82,10 +82,7 @@ open class HeyCyanGattClient(
             )
 
             if (gatt !== this@HeyCyanGattClient.gatt) {
-                android.util.Log.w(
-                    "HeyCyanGattClient",
-                    "Ignoring stale GATT callback for retired connection"
-                )
+                android.util.Log.w("HeyCyanGattClient", "Ignoring stale GATT callback for retired connection")
                 runCatching { gatt.close() }
                 return
             }
@@ -118,7 +115,6 @@ open class HeyCyanGattClient(
                     serviceDiscoveryStarted = false
                     pendingDescriptorWrites.clear()
                     descriptorWriteInFlight = null
-
                     tracer.onMtuRequested(REQUESTED_MTU)
                     tracer.onGattStage(
                         activeAttemptId,
@@ -355,10 +351,7 @@ open class HeyCyanGattClient(
             _state.value != DriverState.Scanning &&
             _state.value !is DriverState.Error
         ) {
-            android.util.Log.d(
-                "HeyCyanGattClient",
-                "Skipping connect, already in state: ${_state.value}"
-            )
+            android.util.Log.d("HeyCyanGattClient", "Skipping connect, already in state: ${_state.value}")
             return
         }
 
@@ -425,14 +418,10 @@ open class HeyCyanGattClient(
     }
 
     suspend fun awaitReady(timeoutMillis: Long = 30_000L) {
-        val terminalState = try {
-            withTimeout(timeoutMillis) {
-                state.filter {
-                    it == DriverState.Ready || it is DriverState.Error || it == DriverState.Disconnected
-                }.first()
-            }
-        } catch (error: CancellationException) {
-            throw error
+        val terminalState = withTimeout(timeoutMillis) {
+            state.filter {
+                it == DriverState.Ready || it is DriverState.Error || it == DriverState.Disconnected
+            }.first()
         }
 
         when (terminalState) {
@@ -448,35 +437,28 @@ open class HeyCyanGattClient(
     suspend fun awaitDisconnected(timeoutMillis: Long = 5_000L) {
         if (_state.value == DriverState.Disconnected) return
 
-        try {
-            withTimeoutOrNull(timeoutMillis) {
-                state.filter { it == DriverState.Disconnected }.first()
-            } ?: run {
-                val current = gatt
-                if (current != null) {
-                    tracer.onGattStage(
-                        activeAttemptId,
-                        CaptureGattStage.TEARDOWN,
-                        CaptureStagePhase.STARTED,
-                        detail = "disconnect timeout forced close"
-                    )
-                }
-                clearGatt(current)
-                if (current != null) {
-                    tracer.onGattStage(
-                        activeAttemptId,
-                        CaptureGattStage.TEARDOWN,
-                        CaptureStagePhase.SUCCEEDED,
-                        detail = "disconnect timeout forced close complete"
-                    )
-                }
-                _state.value = DriverState.Disconnected
-            }
-        } catch (error: CancellationException) {
+        withTimeoutOrNull(timeoutMillis) {
+            state.filter { it == DriverState.Disconnected }.first()
+        } ?: run {
             val current = gatt
+            if (current != null) {
+                tracer.onGattStage(
+                    activeAttemptId,
+                    CaptureGattStage.TEARDOWN,
+                    CaptureStagePhase.STARTED,
+                    detail = "disconnect timeout forced close"
+                )
+            }
             clearGatt(current)
+            if (current != null) {
+                tracer.onGattStage(
+                    activeAttemptId,
+                    CaptureGattStage.TEARDOWN,
+                    CaptureStagePhase.SUCCEEDED,
+                    detail = "disconnect timeout forced close complete"
+                )
+            }
             _state.value = DriverState.Disconnected
-            throw error
         }
     }
 
@@ -518,7 +500,9 @@ open class HeyCyanGattClient(
             CaptureStagePhase.STARTED,
             detail = "disconnect requested"
         )
-        if (_state.value != DriverState.Disconnected) _state.value = DriverState.Disconnecting
+        if (_state.value != DriverState.Disconnected) {
+            _state.value = DriverState.Disconnecting
+        }
         currentGatt.disconnect()
     }
 
@@ -632,7 +616,11 @@ open class HeyCyanGattClient(
         descriptorWriteInFlight = null
         characteristics.clear()
         serviceDiscoveryStarted = false
-        if (this.gatt === gattToClose || gattToClose == null) this.gatt = null
-        if (gattToClose != null) runCatching { gattToClose.close() }
+        if (this.gatt === gattToClose || gattToClose == null) {
+            this.gatt = null
+        }
+        if (gattToClose != null) {
+            runCatching { gattToClose.close() }
+        }
     }
 }
