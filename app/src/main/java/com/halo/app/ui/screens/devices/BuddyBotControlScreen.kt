@@ -626,6 +626,11 @@ fun BuddyBotControlScreen(
                     title = "Last seen",
                     value = device?.lastSeen ?: "Never"
                 )
+                HaloGlassDivider()
+                HaloGlassSettingRow(
+                    title = "Health",
+                    value = device?.healthStateText ?: "Unknown"
+                )
             }
         }
 

@@ -43,7 +43,8 @@ class DefaultAiProviderRouter(
     override val selectedProviderId: StateFlow<String?> = _selectedProviderId.asStateFlow()
 
     private val _selectedModelId = MutableStateFlow<String?>(
-        storage.getString("active_ai_model")
+        storage.getString("active_ai_provider")?.let { storage.getString("active_ai_model_$it") }
+            ?: storage.getString("active_ai_model")
     )
     override val selectedModelId: StateFlow<String?> = _selectedModelId.asStateFlow()
 
@@ -101,11 +102,21 @@ class DefaultAiProviderRouter(
             _selectedProviderId.value = id
             storage.putString("active_ai_provider", id)
             if (providerChanged) {
-                _selectedModelId.value = null
-                storage.putString("active_ai_model", null)
+                val restoredModel = storage.getString("active_ai_model_$id")
+                _selectedModelId.value = restoredModel
+                storage.putString("active_ai_model", restoredModel)
+            } else if (_selectedModelId.value == null) {
+                val restoredModel = storage.getString("active_ai_model_$id")
+                if (restoredModel != null) {
+                    _selectedModelId.value = restoredModel
+                    storage.putString("active_ai_model", restoredModel)
+                }
             }
             _diagnosticsFlow.value = _diagnosticsFlow.value.map {
-                it.copy(selected = it.providerId == id)
+                it.copy(
+                    selected = it.providerId == id,
+                    selectedModelId = if (it.providerId == id) _selectedModelId.value else null
+                )
             }
             scope.launch {
                 refreshDiagnostics()
@@ -116,6 +127,13 @@ class DefaultAiProviderRouter(
     override fun selectModel(modelId: String?) {
         _selectedModelId.value = modelId
         storage.putString("active_ai_model", modelId)
+        val currentProvider = _selectedProviderId.value
+        if (currentProvider != null) {
+            storage.putString("active_ai_model_$currentProvider", modelId)
+        }
+        _diagnosticsFlow.value = _diagnosticsFlow.value.map {
+            if (it.selected) it.copy(selectedModelId = modelId) else it
+        }
         scope.launch {
             refreshDiagnostics()
         }
@@ -618,6 +636,10 @@ class DefaultAiProviderRouter(
                     reason = e.message ?: "Execution failed"
                 )
             )
+
+            if (e is AiProviderException && (e.type == AiErrorType.INVALID_REQUEST || e.type == AiErrorType.UNSUPPORTED_CAPABILITY)) {
+                throw e
+            }
 
             if (policy == AiRoutingPolicy.PREFERRED_WITH_FALLBACK || policy == AiRoutingPolicy.AUTOMATIC) {
                 val fallbackTarget = getFallbackExecutionTarget(request, failedProviderId = target.providerId)
