@@ -64,20 +64,27 @@ class FakeWakeWordDetector(
 
 class FakeInferenceProvider(
     private val response: String = "Test response"
-) : InferenceProvider {
+) : AiInferenceProvider {
+    override val id: String = "provider.test.inference"
+    override val displayName: String = "Test inference"
+    override val isLocal: Boolean = true
     override val status: StateFlow<ProviderStatus> = MutableStateFlow(ProviderStatus.READY).asStateFlow()
 
-    override val metadata = ProviderMetadata(
-        id = "provider.test.inference",
-        displayName = "Test inference"
-    )
+    override suspend fun getCapabilities(): Set<AiCapability> =
+        setOf(AiCapability.TEXT, AiCapability.STREAMING)
 
-    override suspend fun complete(request: AIRequestLegacy): AIResponseLegacy =
-        AIResponseLegacy(response, "stop", 0L)
+    override suspend fun generate(request: AiRequest, context: AiContext): AiResponse =
+        AiResponse(
+            text = response,
+            providerId = id,
+            modelId = request.modelId
+        )
 
-    override fun stream(prompt: String): Flow<String> = flow { emit(response) }
-
-    override suspend fun health(): Boolean = true
+    override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = flow {
+        emit(AiStreamEvent.Started)
+        emit(AiStreamEvent.Token(response))
+        emit(AiStreamEvent.Completed(AiResponse(response, providerId = id, modelId = request.modelId)))
+    }
 
     override suspend fun listModels(): List<AiModel> = emptyList()
 }
