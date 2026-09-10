@@ -8,5 +8,7 @@ data class AiProviderUiState(
     val name: String,
     val status: ProviderStatus,
     val isSelected: Boolean,
-    val capabilities: Set<AiCapability>
+    val capabilities: Set<AiCapability>,
+    /** True when this provider only hands work to an external assistant. */
+    val isHandoff: Boolean = false
 )
