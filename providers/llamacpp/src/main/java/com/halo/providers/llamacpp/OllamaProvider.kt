@@ -22,9 +22,15 @@ import org.json.JSONObject
 import java.net.URI
 import java.util.concurrent.TimeUnit
 
+/**
+ * Local Ollama inference backend.
+ *
+ * The runtime-facing contract is [AiInferenceProvider]. Legacy completion/stream
+ * helpers remain as concrete methods for callers that have not migrated yet.
+ */
 class OllamaProvider(
     private val storage: Storage
-) : InferenceProvider {
+) : AiInferenceProvider {
     private val TAG = "OllamaProvider"
     private val JSON = "application/json; charset=utf-8".toMediaType()
     private val defaultEndpoint = "http://10.0.2.2:11434"
@@ -48,7 +54,9 @@ class OllamaProvider(
     private val generateRequestAdapter = moshi.adapter(OllamaGenerateRequest::class.java)
     private val generateResponseAdapter = moshi.adapter(OllamaGenerateResponse::class.java)
 
-    override val metadata = ProviderMetadata(id = "provider.ollama", displayName = "Ollama", local = true, supportsStreaming = true)
+    override val id: String = "provider.ollama"
+    override val displayName: String = "Ollama"
+    override val isLocal: Boolean = true
 
     override suspend fun getStatus(): ProviderStatus {
         val endpoint = normalizedEndpointOrNull() ?: return ProviderStatus(ProviderStatus.State.UNCONFIGURED, "Ollama endpoint is not configured").also { _status.value = it }
@@ -63,8 +71,10 @@ class OllamaProvider(
         return status
     }
 
+    override suspend fun getCapabilities(): Set<AiCapability> = setOf(AiCapability.TEXT, AiCapability.STREAMING)
+
     override suspend fun testConnection(): Boolean = getStatus().state == ProviderStatus.State.READY
-    override suspend fun health(): Boolean = fetchModels(normalizedEndpointOrNull()).error == null
+    suspend fun health(): Boolean = fetchModels(normalizedEndpointOrNull()).error == null
 
     override suspend fun generate(request: AiRequest, context: AiContext): AiResponse {
         request.validateForTextGeneration()
@@ -74,7 +84,7 @@ class OllamaProvider(
         return AiResponse(text = legacy.text, providerId = id, modelId = model)
     }
 
-    override suspend fun complete(request: AIRequestLegacy): AIResponseLegacy = completeWithModel(request, modelId)
+    suspend fun complete(request: AIRequestLegacy): AIResponseLegacy = completeWithModel(request, modelId)
 
     private suspend fun completeWithModel(request: AIRequestLegacy, model: String): AIResponseLegacy = withContext(Dispatchers.IO) {
         val endpoint = normalizedEndpointOrNull() ?: throw AiProviderException(AiErrorType.LOCAL_MODEL_UNAVAILABLE, "Ollama endpoint is not configured")
@@ -93,7 +103,7 @@ class OllamaProvider(
         catch (e: Exception) { throw AiProviderException(AiErrorType.LOCAL_MODEL_UNAVAILABLE, "Ollama completion failed: ${e.message ?: "network error"}", e) }
     }
 
-    override fun stream(prompt: String): Flow<String> = flow {
+    fun stream(prompt: String): Flow<String> = flow {
         val endpoint = normalizedEndpointOrNull() ?: throw AiProviderException(AiErrorType.LOCAL_MODEL_UNAVAILABLE, "Ollama endpoint is not configured")
         val body = generateRequestAdapter.toJson(OllamaGenerateRequest(model = modelId, prompt = prompt, stream = true)).toRequestBody(JSON)
         try {
@@ -149,7 +159,7 @@ class OllamaProvider(
         }.getOrNull()
     }
 
-    override suspend fun close() {
+    suspend fun close() {
         Log.i(TAG, "Disconnecting from Ollama")
         client.connectionPool.evictAll()
     }
