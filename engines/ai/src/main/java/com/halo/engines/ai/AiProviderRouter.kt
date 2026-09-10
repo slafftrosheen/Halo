@@ -32,7 +32,7 @@ class DefaultAiProviderRouter(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var pollingJob: Job? = null
 
-    private val _selectedProviderId = MutableStateFlow<String?>(
+    private val _selectedProviderId = MutableStateFlow(
         storage.getString("active_ai_provider")?.takeIf { id -> providers.any { it.id == id } }
             ?: providers.firstOrNull()?.id
     )
@@ -161,9 +161,8 @@ class DefaultAiProviderRouter(
             try {
                 return resolveTargetForProvider(preferredProvider, request, allowSelectedModelFallback = false)
             } catch (e: AiProviderException) {
-                if (e.type == AiErrorType.MODEL_NOT_FOUND || e.type == AiErrorType.MODEL_UNAVAILABLE ||
-                    e.type == AiErrorType.UNSUPPORTED_CAPABILITY || e.type == AiErrorType.INVALID_REQUEST ||
-                    e.type == AiErrorType.CONTEXT_TOO_LARGE) throw e
+                if (e.type == AiErrorType.MODEL_NOT_FOUND || e.type == AiErrorType.UNSUPPORTED_CAPABILITY ||
+                    e.type == AiErrorType.INVALID_REQUEST || e.type == AiErrorType.CONTEXT_TOO_LARGE) throw e
             }
         }
         return getFallbackExecutionTarget(request, failedProviderId = preferredProvider?.id)
@@ -199,9 +198,8 @@ class DefaultAiProviderRouter(
             result.getOrNull()?.let { return it }
             val error = result.exceptionOrNull()
             if (provider.id == preferredProvider?.id && error is AiProviderException) {
-                if (error.type == AiErrorType.MODEL_NOT_FOUND || error.type == AiErrorType.MODEL_UNAVAILABLE ||
-                    error.type == AiErrorType.UNSUPPORTED_CAPABILITY || error.type == AiErrorType.INVALID_REQUEST ||
-                    error.type == AiErrorType.CONTEXT_TOO_LARGE) throw error
+                if (error.type == AiErrorType.MODEL_NOT_FOUND || error.type == AiErrorType.UNSUPPORTED_CAPABILITY ||
+                    error.type == AiErrorType.INVALID_REQUEST || error.type == AiErrorType.CONTEXT_TOO_LARGE) throw error
             }
             failures += "${provider.id}: ${error?.message ?: "target unavailable"}"
         }
@@ -269,16 +267,20 @@ class DefaultAiProviderRouter(
             (request.video == null || AiCapability.VIDEO in capabilities)
     }
 
+    /** Only transient backend/model failures may trigger transparent provider fallback. */
     private fun fallbackEligible(error: Throwable): Boolean =
         error is AiProviderException && error.type in setOf(
             AiErrorType.PROVIDER_UNAVAILABLE,
             AiErrorType.MODEL_UNAVAILABLE,
-            AiErrorType.MODEL_NOT_READY,
             AiErrorType.MODEL_LOAD_FAILED,
+            AiErrorType.MODEL_NOT_READY,
+            AiErrorType.GENERATION_FAILED,
+            AiErrorType.EMPTY_RESPONSE,
+            AiErrorType.RATE_LIMITED,
             AiErrorType.TIMEOUT,
             AiErrorType.NETWORK_UNAVAILABLE,
             AiErrorType.NETWORK_ERROR,
-            AiErrorType.RATE_LIMITED,
+            AiErrorType.LOCAL_MODEL_UNAVAILABLE,
             AiErrorType.UNKNOWN_ERROR
         )
 
