@@ -96,6 +96,14 @@ class EngineGraph(
         SpeechPerceptionBridge(infra.eventBus, infra.scope)
     }
 
-    val aiProviderRouter by lazy { DefaultAiProviderRouter(providerGraph.providers.aiProviders, ManualDependencyGraph.storage, infra.eventBus, infra.logger) }
+    /** Cognitive inference sees only the typed inference registry; handoff providers cannot enter execution routing. */
+    val aiProviderRouter by lazy {
+        DefaultAiProviderRouter(
+            providerRegistry = providerGraph.providers.aiRegistry,
+            storage = ManualDependencyGraph.storage,
+            eventBus = infra.eventBus,
+            logger = infra.logger
+        )
+    }
     val aiEngine by lazy { AIEngine(aiProviderRouter, ManualDependencyGraph.storage) }
 }
