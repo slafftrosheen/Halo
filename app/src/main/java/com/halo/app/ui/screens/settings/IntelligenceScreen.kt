@@ -35,6 +35,8 @@ fun IntelligenceScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit = {}
         }
     }
 
+    val activeIsHandoff = uiState.providers.firstOrNull { it.id == uiState.activeProviderId }?.isHandoff == true
+
     HaloGlassPage(title = "") {
         HaloGlassBackHeader(title = "Intelligence", onBack = onBack)
 
@@ -48,7 +50,11 @@ fun IntelligenceScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit = {}
                     Column(Modifier.weight(1f)) {
                         Text(uiState.activeProviderName, style = HaloTypography.bodyLarge, color = HaloGlassColors.TextPrimary)
                         Spacer(Modifier.height(4.dp))
-                        Text(uiState.activeModelId ?: "No model selected", style = HaloTypography.labelMedium, color = HaloGlassColors.TextSecondary)
+                        Text(
+                            if (activeIsHandoff) "System assistant handoff" else (uiState.activeModelId ?: "No model selected"),
+                            style = HaloTypography.labelMedium,
+                            color = HaloGlassColors.TextSecondary
+                        )
                     }
                     ProviderStatusChip(uiState.activeProviderStatus)
                 }
@@ -76,14 +82,20 @@ fun IntelligenceScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit = {}
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(Modifier.weight(1f)) {
-                    Text(uiState.activeModelId ?: "No model selected", style = HaloTypography.bodyMedium, color = HaloGlassColors.TextPrimary)
-                    if (uiState.isRefreshingModels) {
+                    Text(
+                        if (activeIsHandoff) "No model required" else (uiState.activeModelId ?: "No model selected"),
+                        style = HaloTypography.bodyMedium,
+                        color = HaloGlassColors.TextPrimary
+                    )
+                    if (activeIsHandoff) {
+                        Text("Halo hands this request to the Android system assistant.", style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
+                    } else if (uiState.isRefreshingModels) {
                         Text("Refreshing models…", style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
-                    } else if (uiState.availableModels.isEmpty() && uiState.activeProviderId != "android.system.assistant") {
+                    } else if (uiState.availableModels.isEmpty()) {
                         Text("No models currently available", style = HaloTypography.labelSmall, color = HaloGlassColors.Warning)
                     }
                 }
-                if (uiState.activeProviderId != "android.system.assistant") {
+                if (!activeIsHandoff) {
                     HaloGlassButton(text = "Change", onClick = { showModelPicker = true })
                 }
             }
@@ -104,7 +116,7 @@ fun IntelligenceScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit = {}
                 }
 
                 Spacer(Modifier.height(12.dp))
-                if (uiState.activeProviderId == "android.system.assistant") {
+                if (activeIsHandoff) {
                     HaloGlassButton(
                         text = "Open Assistant",
                         onClick = { viewModel.handoffToAssistant() },
@@ -346,13 +358,27 @@ private fun ProviderPickerDialog(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(Modifier.weight(1f)) {
-                            Text(provider.name, color = HaloGlassColors.TextPrimary)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(provider.name, color = HaloGlassColors.TextPrimary)
+                                if (provider.isHandoff) {
+                                    Spacer(Modifier.width(8.dp))
+                                    HaloGlassChip(
+                                        text = "ASSISTANT",
+                                        material = HaloGlassMaterials.Interactive.copy(
+                                            containerColor = HaloGlassColors.Accent.copy(alpha = 0.16f),
+                                            contentColor = HaloGlassColors.Accent
+                                        )
+                                    )
+                                }
+                            }
                             val isReady = provider.status.state == ProviderStatus.State.READY ||
                                 provider.status.state == ProviderStatus.State.STANDBY ||
                                 provider.status.state == ProviderStatus.State.LOADING
                             val statusText = when {
+                                provider.isSelected && provider.isHandoff && isReady -> "Selected / Handoff ready"
                                 provider.isSelected && isReady -> "Selected / Ready"
                                 provider.isSelected -> "Selected / Unavailable"
+                                provider.isHandoff && isReady -> "Available / Handoff"
                                 isReady -> "Available / Not selected"
                                 else -> "Unavailable"
                             }
