@@ -48,17 +48,12 @@ class NativeLlamaProvider(
 
     override suspend fun getStatus(): ProviderStatus {
         val activeId = downloadManager.activeModelId.value
-        val current = if (activeId == null) {
-            ProviderStatus.UNCONFIGURED
-        } else if (engine != null && loadedModelId == activeId) {
-            ProviderStatus.READY
-        } else {
-            val file = downloadManager.getModelFile(activeId)
-            if (file != null && file.exists() && file.length() > 0) {
-                ProviderStatus(ProviderStatus.State.STANDBY, "Model downloaded (${file.length() / 1024 / 1024} MB), ready to load")
-            } else {
-                ProviderStatus(ProviderStatus.State.UNAVAILABLE, "Model not downloaded")
-            }
+        val current = when {
+            activeId == null -> ProviderStatus.UNCONFIGURED
+            engine != null && loadedModelId == activeId -> ProviderStatus.READY
+            downloadManager.getModelFile(activeId) != null ->
+                ProviderStatus(ProviderStatus.State.READY, "Model downloaded; ready to load: $activeId")
+            else -> ProviderStatus(ProviderStatus.State.UNAVAILABLE, "Model not downloaded: $activeId")
         }
         _status.value = current
         return current
@@ -84,7 +79,7 @@ class NativeLlamaProvider(
 
         val file = downloadManager.getModelFile(activeId)
         if (file == null || !file.exists() || !file.isFile || file.length() <= 0L) {
-            _status.value = ProviderStatus(ProviderStatus.State.ERROR, "Model file not found: $activeId")
+            _status.value = ProviderStatus(ProviderStatus.State.UNAVAILABLE, "Model file not found: $activeId")
             return@withLock false
         }
 
@@ -116,11 +111,8 @@ class NativeLlamaProvider(
         loadedModelId = null
     }
 
-    override suspend fun health(): Boolean {
-        val activeId = downloadManager.activeModelId.value ?: return false
-        val file = downloadManager.getModelFile(activeId)
-        return file != null && file.exists() && file.length() > 0
-    }
+    override suspend fun health(): Boolean =
+        downloadManager.activeModelId.value?.let { downloadManager.getModelFile(it) }?.let { it.exists() && it.length() > 0 } == true
 
     private fun buildPrompt(request: AiRequest, context: AiContext): String {
         val history = context.conversation.joinToString("\n") { "${it.role.name.lowercase()}: ${it.content}" }
@@ -138,11 +130,10 @@ class NativeLlamaProvider(
     private suspend fun requireSelectedModel(request: AiRequest): String {
         val activeModelId = downloadManager.activeModelId.value
             ?: throw AiProviderException(AiErrorType.MODEL_NOT_SELECTED, "No local llama.cpp model is selected")
-        val requestedModelId = request.modelId
-        if (requestedModelId != null && requestedModelId != activeModelId) {
+        if (request.modelId != null && request.modelId != activeModelId) {
             throw AiProviderException(
                 AiErrorType.MODEL_NOT_FOUND,
-                "Selected llama.cpp model '$requestedModelId' is not the active local model '$activeModelId'"
+                "Selected llama.cpp model '${request.modelId}' is not the active local model '$activeModelId'"
             )
         }
         return activeModelId
@@ -200,7 +191,12 @@ class NativeLlamaProvider(
     override suspend fun complete(request: AIRequestLegacy): AIResponseLegacy = inferenceMutex.withLock {
         val startTime = System.currentTimeMillis()
         try {
-            val result = buildString { streamInternal(request.conversation.messages.joinToString("\n") { "${it.role.name.lowercase()}: ${it.content}" }).collect { append(it) } }
+            if (!loadModelIfNeeded()) {
+                throw AiProviderException(AiErrorType.MODEL_LOAD_FAILED, status.value.message ?: "Unable to load local model")
+            }
+            val result = buildString {
+                streamInternal(request.conversation.messages.joinToString("\n") { "${it.role.name.lowercase()}: ${it.content}" }).collect { append(it) }
+            }
             AIResponseLegacy(result, "stop", System.currentTimeMillis() - startTime)
         } catch (e: Exception) {
             if (e is CancellationException) throw e
@@ -235,10 +231,14 @@ class NativeLlamaProvider(
         }
     }
 
-    override suspend fun listModels(): List<AiModel> = downloadManager.getAllModels().map { model ->
-        AiModel(id = model.id, displayName = model.name, providerId = id,
-            inputCapabilities = setOf(AiCapability.TEXT), contextLength = 4096,
-            supportsStreaming = true, supportsTools = false)
+    override suspend fun listModels(): List<AiModel> {
+        val downloaded = downloadManager.getAllModels().filter { downloadManager.getModelFile(it.id) != null }
+        val activeId = downloadManager.activeModelId.value
+        return downloaded.sortedWith(compareByDescending<CognitiveModel> { it.id == activeId }.thenBy { it.name }).map { model ->
+            AiModel(id = model.id, displayName = model.name, providerId = id,
+                inputCapabilities = setOf(AiCapability.TEXT), contextLength = 4096,
+                supportsStreaming = true, supportsTools = false)
+        }
     }
 
     override suspend fun close() {
