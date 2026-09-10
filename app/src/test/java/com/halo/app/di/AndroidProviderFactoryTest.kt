@@ -5,6 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.halo.providers.llamacpp.ModelDownloadManager
 import com.halo.sdk.runtime.Storage
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -36,5 +37,21 @@ class AndroidProviderFactoryTest {
         val aiProvider = providers.aiProviders.first { it.id == inference.id }
 
         assertSame(inference, aiProvider)
+    }
+
+    @Test
+    fun `registry preserves typed inference boundary`() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val storage = FakeStorage()
+        val downloadManager = ModelDownloadManager(context)
+        val providers = AndroidProviderFactory(context, downloadManager, storage).createProviders()
+
+        assertTrue(providers.aiRegistry.inference.any { it === providers.inference })
+        assertTrue(providers.aiRegistry.inference.all { provider ->
+            providers.aiProviders.any { it === provider }
+        })
+        assertTrue(providers.aiRegistry.handoff.all { provider ->
+            providers.aiProviders.any { it === provider }
+        })
     }
 }
