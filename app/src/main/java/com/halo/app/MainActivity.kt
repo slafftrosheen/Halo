@@ -17,13 +17,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import com.halo.app.di.ManualDependencyGraph
-import com.halo.app.ui.shell.PermissionsScreen
 import com.halo.app.ui.shell.AppShell
+import com.halo.app.ui.shell.PermissionsScreen
 import com.halo.app.ui.theme.BrainToolTheme
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
-
     private var hasRequiredPermissions by mutableStateOf(false)
     private lateinit var runtime: HaloRuntime
 
@@ -31,9 +30,7 @@ class MainActivity : ComponentActivity() {
         ActivityResultContracts.RequestMultiplePermissions()
     ) {
         hasRequiredPermissions = areRequiredPermissionsGranted()
-        if (hasRequiredPermissions) {
-            startAlphaLoop()
-        }
+        if (hasRequiredPermissions) startRuntimeLoop()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -42,11 +39,9 @@ class MainActivity : ComponentActivity() {
 
         ManualDependencyGraph.init(this)
         runtime = HaloRuntime(ManualDependencyGraph)
-
         hasRequiredPermissions = areRequiredPermissionsGranted()
-        if (hasRequiredPermissions) {
-            startAlphaLoop()
-        }
+
+        if (hasRequiredPermissions) startRuntimeLoop()
 
         setContent {
             BrainToolTheme {
@@ -57,8 +52,10 @@ class MainActivity : ComponentActivity() {
                     if (hasRequiredPermissions) {
                         AppShell()
                     } else {
+                        // One canonical permission surface is used for onboarding.
                         PermissionsScreen(
-                            onPermissionsGranted = {
+                            onBack = {},
+                            onRequestPermissions = {
                                 permissionLauncher.launch(requiredPermissions())
                             }
                         )
@@ -73,8 +70,6 @@ class MainActivity : ComponentActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             add(Manifest.permission.BLUETOOTH_SCAN)
             add(Manifest.permission.BLUETOOTH_CONNECT)
-            // Request location as well for better compatibility on some vendor stacks
-            add(Manifest.permission.ACCESS_FINE_LOCATION)
         } else {
             add(Manifest.permission.ACCESS_FINE_LOCATION)
             add(Manifest.permission.ACCESS_COARSE_LOCATION)
@@ -88,27 +83,25 @@ class MainActivity : ComponentActivity() {
         checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
     }
 
-    private fun startAlphaLoop() {
+    private fun startRuntimeLoop() {
         lifecycleScope.launch {
             val host = ManualDependencyGraph.wearableHost
             host.connectivity.collect { state ->
-                val isConnectedOrReady = state is com.halo.sdk.host.ConnectionState.Connected || state is com.halo.sdk.host.ConnectionState.Ready
-                if (isConnectedOrReady && !runtime.isStarted()) {
+                val connected = state is com.halo.sdk.host.ConnectionState.Connected ||
+                    state is com.halo.sdk.host.ConnectionState.Ready
+                if (connected && !runtime.isStarted()) {
                     runtime.start()
                 }
             }
         }
 
         lifecycleScope.launch {
-            val host = ManualDependencyGraph.wearableHost
-            host.connect()
+            ManualDependencyGraph.wearableHost.connect()
         }
     }
 
     override fun onDestroy() {
+        lifecycleScope.launch { runtime.stop() }
         super.onDestroy()
-        lifecycleScope.launch {
-            runtime.stop()
-        }
     }
 }
