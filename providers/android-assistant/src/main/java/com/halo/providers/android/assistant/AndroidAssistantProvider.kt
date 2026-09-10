@@ -15,14 +15,18 @@ import kotlinx.coroutines.flow.emptyFlow
 /**
  * Android assistant bridge.
  *
- * This provider intentionally represents the device assistant as a handoff target.
- * Android exposes assistant selection through ROLE_ASSISTANT and launching through
- * ACTION_ASSIST, but does not expose a generic public API for Halo to send arbitrary
- * prompt text to a third-party assistant and capture its generated answer.
+ * Halo treats the device assistant as an external cognitive actor. Android exposes
+ * assistant selection and ACTION_ASSIST launching, but does not expose a generic
+ * public API for sending arbitrary prompt text to a third-party assistant and
+ * reading its generated response back into Halo.
  */
 class AndroidAssistantProvider(
     private val context: Context
 ) : AiProvider {
+
+    companion object {
+        const val HANDOFF_ACTION = "com.halo.assistant.HANDOFF"
+    }
 
     override val id: String = "android.system.assistant"
     override val displayName: String = "Android Assistant"
@@ -41,9 +45,23 @@ class AndroidAssistantProvider(
         supportsTools = false
     )
 
+    /** True when a concrete ACTION_ASSIST target exists. */
+    fun isAvailable(): Boolean = resolveAssistantPackage() != null
+
+    /** Returns the resolved assistant package, when Android exposes one. */
+    fun assistantPackageName(): String? = resolveAssistantPackage()
+
+    /**
+     * Launches the configured Android assistant. The prompt is supplied only as a
+     * best-effort, non-standard extra; callers must not expect a response callback.
+     */
+    fun handoff(prompt: String? = null) {
+        val assistIntent = buildAssistIntent(prompt)
+        context.startActivity(assistIntent)
+    }
+
     override suspend fun getStatus(): ProviderStatus {
-        val assistIntent = Intent(Intent.ACTION_ASSIST)
-        val resolveInfo = context.packageManager.resolveActivity(assistIntent, 0)
+        val packageName = resolveAssistantPackage()
         val roleHeld = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             context.getSystemService(RoleManager::class.java)
                 ?.isRoleHeld(RoleManager.ROLE_ASSISTANT) == true
@@ -52,17 +70,17 @@ class AndroidAssistantProvider(
         }
 
         val current = when {
-            roleHeld && resolveInfo != null -> ProviderStatus(
-                ProviderStatus.State.READY,
-                "Default Android assistant available: ${resolveInfo.activityInfo.packageName}"
-            )
-            resolveInfo != null -> ProviderStatus(
-                ProviderStatus.State.READY,
-                "Android assistant handoff available: ${resolveInfo.activityInfo.packageName}"
-            )
-            else -> ProviderStatus(
+            packageName == null -> ProviderStatus(
                 ProviderStatus.State.UNAVAILABLE,
                 "No Android assistant activity can handle ACTION_ASSIST"
+            )
+            roleHeld -> ProviderStatus(
+                ProviderStatus.State.READY,
+                "Default Android assistant: $packageName"
+            )
+            else -> ProviderStatus(
+                ProviderStatus.State.READY,
+                "Android assistant handoff available: $packageName"
             )
         }
         _status.value = current
@@ -81,26 +99,15 @@ class AndroidAssistantProvider(
             )
         }
 
-        val assistIntent = Intent(Intent.ACTION_ASSIST).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            putExtra(Intent.EXTRA_ASSIST_CONTEXT, Bundle())
-
-            // This extra is deliberately namespaced by Halo. Android does not
-            // define it as a standard prompt-injection contract for assistants.
-            // It is useful to OEM/assistant integrations that explicitly opt in,
-            // while the provider remains truthful about the generic API boundary.
-            putExtra("com.halo.assistant.PROMPT", prompt)
-        }
-
-        val resolveInfo = this.context.packageManager.resolveActivity(assistIntent, 0)
+        val packageName = resolveAssistantPackage()
             ?: throw AiProviderException(
                 AiErrorType.MODEL_UNAVAILABLE,
                 "No Android assistant activity can handle ACTION_ASSIST"
             )
 
-        this.context.startActivity(assistIntent)
+        handoff(prompt)
         return AiResponse(
-            text = "Assistant handoff launched (${resolveInfo.activityInfo.packageName}). No generic public Android API returns the assistant's generated response to Halo.",
+            text = "Assistant handoff launched ($packageName). Android does not provide a generic public response channel for Halo.",
             providerId = id,
             modelId = handoffModel.id,
             finishReason = "handoff"
@@ -110,4 +117,21 @@ class AndroidAssistantProvider(
     override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = emptyFlow()
 
     override suspend fun listModels(): List<AiModel> = listOf(handoffModel)
+
+    private fun buildAssistIntent(prompt: String?): Intent = Intent(Intent.ACTION_ASSIST).apply {
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        putExtra(Intent.EXTRA_ASSIST_CONTEXT, Bundle())
+        prompt?.trim()?.takeIf { it.isNotBlank() }?.let {
+            // Not an Android-standard assistant prompt contract. This is a best-effort
+            // OEM integration hook and must never be treated as guaranteed behavior.
+            putExtra("com.halo.assistant.PROMPT", it)
+        }
+        putExtra("com.halo.assistant.ACTION", HANDOFF_ACTION)
+    }
+
+    private fun resolveAssistantPackage(): String? {
+        val resolveInfo = context.packageManager.resolveActivity(Intent(Intent.ACTION_ASSIST), 0)
+            ?: return null
+        return resolveInfo.activityInfo?.packageName
+    }
 }
