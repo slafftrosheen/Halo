@@ -1,6 +1,7 @@
 package com.halo.runtime.cognition.session
 
 import com.halo.runtime.cognition.context.ContextAssembler
+import com.halo.runtime.cognition.context.ContextAssemblyResult
 import com.halo.runtime.cognition.conversation.ConversationStore
 import com.halo.runtime.cognition.tools.ToolAuthorization
 import com.halo.runtime.cognition.tools.ToolAuthorizer
@@ -136,7 +137,7 @@ class CognitiveSession(
 
                 /*
                  * ---------------------------------------------------------
-                 * 3. Assemble immutable context
+                 * 3. Assemble immutable context & bind multimodal inputs
                  * ---------------------------------------------------------
                  */
 
@@ -157,6 +158,12 @@ class CognitiveSession(
 
                 val context =
                     assembly.context
+
+                val requestWithContext =
+                    bindAssembledContext(
+                        request = finalRequest,
+                        assembly = assembly
+                    )
 
                 eventBus.publish(
                     ContextAssembled(
@@ -197,7 +204,7 @@ class CognitiveSession(
                 var response =
                     executeProviderRequest(
                         provider = provider,
-                        request = finalRequest,
+                        request = requestWithContext,
                         context = context,
                         requestId = requestId
                     )
@@ -218,7 +225,7 @@ class CognitiveSession(
                         executeToolLoop(
                             requestId = requestId,
                             target = target,
-                            request = finalRequest,
+                            request = requestWithContext,
                             initialContext = context,
                             initialResponse = response,
                             provider = provider,
@@ -310,6 +317,28 @@ class CognitiveSession(
                 )
             }
         }
+    }
+
+    private fun bindAssembledContext(
+        request: AiRequest,
+        assembly: ContextAssemblyResult
+    ): AiRequest {
+        val image =
+            assembly.image
+                ?: return request
+
+        if (request.image != null) {
+            return request
+        }
+
+        return request.copy(
+            image =
+                image.imageBytes.copyOf(),
+            mimeTypes =
+                listOf(
+                    image.mimeType
+                )
+        )
     }
 
     /**

@@ -110,6 +110,31 @@ class ContextAssemblerTest {
     }
 
     @Test
+    fun `fresh image is returned when provider supports images`() = runTest {
+        val store = InMemoryConversationStore()
+        val blackboard = DefaultBlackboard()
+
+        val imageBytes = byteArrayOf(1, 2, 3, 4)
+        val imageObs = Observation(
+            modality = Modality.IMAGE,
+            source = Source.CAMERA,
+            payload = ImageObservationPayload(imageBytes, "image/jpeg"),
+            timestamp = System.currentTimeMillis()
+        )
+        blackboard.publish(createKnowledge(ObservationKnowledge(imageObs)))
+
+        val assembler = DefaultContextAssembler(store, blackboard)
+        val result = assembler.assemble(
+            policy = AiContextPolicy(includeImages = true),
+            capabilities = setOf(AiCapability.TEXT, AiCapability.IMAGE)
+        )
+
+        assertNotNull(result.image)
+        assertEquals("image/jpeg", result.image?.mimeType)
+        assertArrayEquals(imageBytes, result.image?.imageBytes)
+    }
+
+    @Test
     fun `image context is omitted if provider lacks IMAGE capability`() = runTest {
         val store = InMemoryConversationStore()
         val blackboard = DefaultBlackboard()
@@ -150,7 +175,7 @@ class ContextAssemblerTest {
             capabilities = setOf(AiCapability.TEXT, AiCapability.MULTIMODAL)
         )
 
-        assertTrue(result.omissions.any { it.source == "IMAGE" && it.reason.contains("exceeded freshness limit") })
+        assertTrue(result.omissions.any { it.source == "IMAGE" && it.reason.contains("stale") })
     }
 
     @Test

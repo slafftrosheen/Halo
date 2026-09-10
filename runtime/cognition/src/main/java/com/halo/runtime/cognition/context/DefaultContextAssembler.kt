@@ -8,7 +8,15 @@ import com.halo.sdk.provider.AiCapability
 import com.halo.sdk.provider.AiContext
 import com.halo.sdk.provider.AiContextPolicy
 import com.halo.sdk.provider.ToolDefinition
-import com.halo.sdk.runtime.*
+import com.halo.sdk.runtime.DeviceState
+import com.halo.sdk.runtime.HaloEvent
+import com.halo.sdk.runtime.ImageObservationPayload
+import com.halo.sdk.runtime.Memory
+import com.halo.sdk.runtime.Modality
+import com.halo.sdk.runtime.Observation
+import com.halo.sdk.runtime.ObservationUpdated
+import com.halo.sdk.runtime.SpeechRecognized
+import com.halo.sdk.runtime.SpeechObservationPayload
 
 class DefaultContextAssembler(
     private val conversationStore: ConversationStore,
@@ -17,119 +25,376 @@ class DefaultContextAssembler(
 ) : ContextAssembler {
 
     companion object {
+
         const val MAX_RECENT_AI_EVENTS = 20
-        const val MAX_IMAGE_CONTEXT_AGE_MS = 60_000L
+
+        const val MAX_IMAGE_CONTEXT_AGE_MS =
+            60_000L
+
+        const val MAX_IMAGE_CONTEXT_BYTES =
+            8 * 1024 * 1024
     }
 
     override suspend fun assemble(
         policy: AiContextPolicy,
         capabilities: Set<AiCapability>
     ): ContextAssemblyResult {
-        val omissions = mutableListOf<ContextOmission>()
 
-        // 1. Conversation Assembly
-        val conversation = if (policy.includeConversation) {
-            conversationStore.recentMessages(maxTurns = 10)
-        } else {
-            emptyList()
-        }
+        val omissions =
+            mutableListOf<ContextOmission>()
 
-        // 2. Device State Assembly
-        val deviceState = if (policy.includeDeviceState) {
-            val latestObs = blackboard.flow.value
-                .mapNotNull { (it.payload as? ObservationKnowledge)?.observation }
-                .lastOrNull()
-            
-            val props = mutableMapOf<String, Any>()
-            if (latestObs != null) {
-                props["last_observation_modality"] = latestObs.modality.name
-                props["last_observation_source"] = latestObs.source.name
-            }
-            DeviceState(properties = props)
-        } else {
-            null
-        }
+        /*
+         * -------------------------------------------------------------
+         * Conversation
+         * -------------------------------------------------------------
+         */
 
-        // 3. Recent Events Assembly
-        val recentEvents = if (policy.includeRecentEvents) {
-            val facts = blackboard.flow.value
-            facts.mapNotNull { knowledge ->
-                val payload = knowledge.payload
-                when (payload) {
-                    is ObservationKnowledge -> sanitizeObservationEvent(payload.observation)
-                    else -> null
-                }
-            }.takeLast(MAX_RECENT_AI_EVENTS)
-        } else {
-            emptyList()
-        }
-
-        // 4. Memories
-        val memories: List<Memory> = if (policy.includeMemories) {
-            omissions.add(ContextOmission("MEMORIES", "Memory subsystem not yet populated"))
-            emptyList()
-        } else {
-            emptyList()
-        }
-
-        // 5. Tools Assembly & Capability Filtering
-        val tools: List<ToolDefinition> = if (policy.includeAvailableTools) {
-            if (capabilities.contains(AiCapability.TOOLS)) {
-                toolRegistry?.definitions() ?: emptyList()
+        val conversation =
+            if (policy.includeConversation) {
+                conversationStore.recentMessages(
+                    maxTurns = 10
+                )
             } else {
-                omissions.add(ContextOmission("TOOLS", "Provider lacks TOOLS capability"))
                 emptyList()
             }
-        } else {
-            emptyList()
-        }
 
-        // 6. Image Observation Assembly & Capability Filtering
-        if (policy.includeImages) {
-            val supportsImages = capabilities.contains(AiCapability.IMAGE) || capabilities.contains(AiCapability.MULTIMODAL)
-            if (!supportsImages) {
-                omissions.add(ContextOmission("IMAGE", "Provider lacks IMAGE/MULTIMODAL capability"))
+        /*
+         * -------------------------------------------------------------
+         * Blackboard snapshot
+         *
+         * Take exactly one snapshot for the entire assembly operation.
+         * This avoids observing different blackboard generations while
+         * assembling the same request.
+         * -------------------------------------------------------------
+         */
+
+        val blackboardSnapshot =
+            blackboard.flow.value
+
+        val observations =
+            blackboardSnapshot
+                .mapNotNull {
+                    (it.payload as? ObservationKnowledge)
+                        ?.observation
+                }
+
+        /*
+         * -------------------------------------------------------------
+         * Device state
+         * -------------------------------------------------------------
+         */
+
+        val latestObservation =
+            observations.lastOrNull()
+
+        val deviceState =
+            if (policy.includeDeviceState) {
+
+                val properties =
+                    mutableMapOf<String, Any>()
+
+                latestObservation?.let { observation ->
+
+                    properties[
+                        "last_observation_modality"
+                    ] =
+                        observation.modality.name
+
+                    properties[
+                        "last_observation_source"
+                    ] =
+                        observation.source.name
+                }
+
+                DeviceState(
+                    properties = properties
+                )
+
             } else {
-                val latestImageObs = blackboard.flow.value
-                    .mapNotNull { (it.payload as? ObservationKnowledge)?.observation }
-                    .findLast { it.payload is ImageObservationPayload }
+                null
+            }
 
-                if (latestImageObs != null) {
-                    val age = System.currentTimeMillis() - latestImageObs.timestamp
-                    if (age > MAX_IMAGE_CONTEXT_AGE_MS) {
-                        omissions.add(ContextOmission("IMAGE", "Latest image observation exceeded freshness limit (${age}ms > ${MAX_IMAGE_CONTEXT_AGE_MS}ms)"))
+        /*
+         * -------------------------------------------------------------
+         * Recent events
+         * -------------------------------------------------------------
+         */
+
+        val recentEvents =
+            if (policy.includeRecentEvents) {
+
+                observations
+                    .mapNotNull {
+                        sanitizeObservationEvent(
+                            it
+                        )
+                    }
+                    .takeLast(
+                        MAX_RECENT_AI_EVENTS
+                    )
+
+            } else {
+                emptyList()
+            }
+
+        /*
+         * -------------------------------------------------------------
+         * Memories
+         * -------------------------------------------------------------
+         */
+
+        val memories:
+            List<Memory> =
+            if (policy.includeMemories) {
+
+                omissions +=
+                    ContextOmission(
+                        source = "MEMORIES",
+                        reason =
+                            "Memory subsystem is not populated"
+                    )
+
+                emptyList()
+
+            } else {
+                emptyList()
+            }
+
+        /*
+         * -------------------------------------------------------------
+         * Tools
+         * -------------------------------------------------------------
+         */
+
+        val tools:
+            List<ToolDefinition> =
+            if (
+                policy.includeAvailableTools
+            ) {
+
+                if (
+                    capabilities.contains(
+                        AiCapability.TOOLS
+                    )
+                ) {
+
+                    toolRegistry
+                        ?.definitions()
+                        .orEmpty()
+
+                } else {
+
+                    omissions +=
+                        ContextOmission(
+                            source = "TOOLS",
+                            reason =
+                                "Provider lacks TOOLS capability"
+                        )
+
+                    emptyList()
+                }
+
+            } else {
+                emptyList()
+            }
+
+        /*
+         * -------------------------------------------------------------
+         * Image binding
+         * -------------------------------------------------------------
+         */
+
+        var imageContext:
+            ImageContext? = null
+
+        if (policy.includeImages) {
+
+            val supportsImages =
+                capabilities.contains(
+                    AiCapability.IMAGE
+                ) ||
+                    capabilities.contains(
+                        AiCapability.MULTIMODAL
+                    )
+
+            if (!supportsImages) {
+
+                omissions +=
+                    ContextOmission(
+                        source = "IMAGE",
+                        reason =
+                            "Provider lacks IMAGE/MULTIMODAL capability"
+                    )
+
+            } else {
+
+                val latestImage =
+                    observations
+                        .asReversed()
+                        .firstOrNull {
+                            it.payload is ImageObservationPayload
+                        }
+
+                if (latestImage == null) {
+
+                    omissions +=
+                        ContextOmission(
+                            source = "IMAGE",
+                            reason =
+                                "No image observation available"
+                        )
+
+                } else {
+
+                    val payload =
+                        latestImage.payload
+                            as ImageObservationPayload
+
+                    val age =
+                        System.currentTimeMillis() -
+                            latestImage.timestamp
+
+                    when {
+
+                        age < 0L -> {
+
+                            omissions +=
+                                ContextOmission(
+                                    source = "IMAGE",
+                                    reason =
+                                        "Image timestamp is in the future"
+                                )
+                        }
+
+                        age >
+                            MAX_IMAGE_CONTEXT_AGE_MS -> {
+
+                            omissions +=
+                                ContextOmission(
+                                    source = "IMAGE",
+                                    reason =
+                                        "Image observation is stale: " +
+                                            "${age}ms"
+                                )
+                        }
+
+                        payload.imageBytes.isEmpty() -> {
+
+                            omissions +=
+                                ContextOmission(
+                                    source = "IMAGE",
+                                    reason =
+                                        "Image observation contains no bytes"
+                                )
+                        }
+
+                        payload.imageBytes.size >
+                            MAX_IMAGE_CONTEXT_BYTES -> {
+
+                            omissions +=
+                                ContextOmission(
+                                    source = "IMAGE",
+                                    reason =
+                                        "Image exceeds maximum context size: " +
+                                            "${payload.imageBytes.size} bytes"
+                                )
+                        }
+
+                        else -> {
+
+                            imageContext =
+                                ImageContext(
+                                    imageBytes =
+                                        payload.imageBytes.copyOf(),
+                                    mimeType =
+                                        payload.mimeType,
+                                    timestampMs =
+                                        latestImage.timestamp
+                                )
+                        }
                     }
                 }
             }
         }
 
-        val context = AiContext(
-            conversation = conversation,
-            deviceState = deviceState,
-            recentEvents = recentEvents,
-            memories = memories,
-            availableTools = tools
-        )
+        val context =
+            AiContext(
+                conversation =
+                    conversation,
+                deviceState =
+                    deviceState,
+                recentEvents =
+                    recentEvents,
+                memories =
+                    memories,
+                availableTools =
+                    tools
+            )
 
         return ContextAssemblyResult(
             context = context,
-            omissions = omissions
+            omissions = omissions,
+            image = imageContext
         )
     }
 
-    private fun sanitizeObservationEvent(obs: Observation): HaloEvent? {
-        val payload = obs.payload
-        if (payload is SpeechObservationPayload) {
-            return SpeechRecognized(text = sanitizeText(payload.transcript), timestamp = obs.timestamp, locale = payload.language)
+    private fun sanitizeObservationEvent(
+        observation: Observation
+    ): HaloEvent? {
+
+        val payload =
+            observation.payload
+
+        if (
+            payload is SpeechObservationPayload
+        ) {
+
+            return SpeechRecognized(
+                text =
+                    sanitizeText(
+                        payload.transcript
+                    ),
+                timestamp =
+                    observation.timestamp,
+                locale =
+                    payload.language
+            )
         }
-        if (obs.modality == Modality.SYSTEM && obs.metadata.containsKey("battery")) {
-            return ObservationUpdated(observation = obs)
+
+        if (
+            observation.modality ==
+                Modality.SYSTEM &&
+            observation.metadata.containsKey(
+                "battery"
+            )
+        ) {
+
+            return ObservationUpdated(
+                observation = observation
+            )
         }
+
         return null
     }
 
-    private fun sanitizeText(text: String): String {
-        return text.replace(Regex("(?i)sk-[a-zA-Z0-9_-]{20,}"), "[REDACTED_API_KEY]")
-            .replace(Regex("/data/user/\\d+/"), "/data/.../")
+    private fun sanitizeText(
+        text: String
+    ): String {
+
+        return text
+
+            .replace(
+                Regex(
+                    "(?i)sk-[a-zA-Z0-9_-]{20,}"
+                ),
+                "[REDACTED_API_KEY]"
+            )
+
+            .replace(
+                Regex(
+                    "/data/user/\\d+/"
+                ),
+                "/data/.../"
+            )
     }
 }
