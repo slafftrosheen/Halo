@@ -54,7 +54,8 @@ class HeyCyanBleScanner(
             try {
                 listOf(ScanFilter.Builder().setDeviceAddress(targetAddress).build())
             } catch (e: Exception) {
-                null
+                close(IllegalArgumentException("Invalid BLE target address: $targetAddress", e))
+                return@callbackFlow
             }
         } else {
             null
@@ -96,14 +97,20 @@ class HeyCyanBleScanner(
             } else {
                 scanner.startScan(callback)
             }
+        } catch (e: SecurityException) {
+            close(SecurityException("BLE scan permission is unavailable", e))
+            return@callbackFlow
         } catch (e: Exception) {
-            scanner.startScan(callback)
+            close(e)
+            return@callbackFlow
         }
 
         awaitClose {
             try {
                 scanner.stopScan(callback)
-            } catch (e: Exception) {}
+            } catch (_: Exception) {
+                // Scanner cleanup is best-effort after flow cancellation/error.
+            }
         }
     }
 }
