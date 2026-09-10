@@ -211,6 +211,8 @@ data class ProviderStatus(
         STANDBY,
         LOADING,
         UNCONFIGURED,
+        OFFLINE,
+        MODEL_MISSING,
         UNAVAILABLE,
         ERROR
     }
@@ -219,6 +221,9 @@ data class ProviderStatus(
         val READY = ProviderStatus(State.READY)
         val UNAVAILABLE = ProviderStatus(State.UNAVAILABLE)
         val UNCONFIGURED = ProviderStatus(State.UNCONFIGURED)
+        val OFFLINE = ProviderStatus(State.OFFLINE)
+        val MODEL_MISSING = ProviderStatus(State.MODEL_MISSING)
+        val LOADING = ProviderStatus(State.LOADING)
     }
 }
 

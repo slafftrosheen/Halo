@@ -144,7 +144,7 @@ object ManualDependencyGraph {
 
     val homeViewModel by lazy {
         android.util.Log.d("ManualDependencyGraph", "Creating HomeViewModel")
-        HomeViewModel(runtimeSnapshotManager, commandBus, cognitiveSession)
+        HomeViewModel(runtimeSnapshotManager, commandBus, cognitiveSession, aiProviderRouter, deviceSessionManager)
     }
     val consoleViewModel by lazy {
         android.util.Log.d("ManualDependencyGraph", "Creating ConsoleViewModel")

@@ -74,6 +74,8 @@ fun IntelligenceScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit = {}
                     ProviderStatus.State.STANDBY -> "STANDBY"
                     ProviderStatus.State.LOADING -> "LOADING"
                     ProviderStatus.State.UNCONFIGURED -> "UNCONFIGURED"
+                    ProviderStatus.State.OFFLINE -> "OFFLINE"
+                    ProviderStatus.State.MODEL_MISSING -> "MODEL MISSING"
                     ProviderStatus.State.UNAVAILABLE -> "UNAVAILABLE"
                     ProviderStatus.State.ERROR -> "ERROR"
                 }
@@ -363,8 +365,9 @@ fun IntelligenceScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit = {}
     }
 
     if (showModelPicker) {
-        ModelPickerDialog(
+        HaloGlassModelPickerDialog(
             models = uiState.availableModels,
+            selectedModelId = uiState.activeModelId,
             onSelect = { viewModel.selectModel(it); showModelPicker = false },
             onRefresh = { viewModel.refreshModels() },
             isRefreshing = uiState.isRefreshingModels,
@@ -445,46 +448,6 @@ private fun ProviderPickerDialog(
                                 }
                             }
                             if (provider.isSelected) Text("●", color = HaloGlassColors.Accent)
-                        }
-                    }
-                }
-            }
-        }
-    )
-}
-
-@Composable
-private fun ModelPickerDialog(
-    models: List<AiModel>,
-    onSelect: (String) -> Unit,
-    onRefresh: () -> Unit,
-    isRefreshing: Boolean,
-    onDismiss: () -> Unit
-) {
-    HaloGlassDialog(
-        onDismissRequest = onDismiss,
-        content = {
-            Column(Modifier.padding(16.dp)) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Select Model", style = HaloTypography.titleLarge, color = HaloGlassColors.TextPrimary)
-                    HaloGlassButton(text = if (isRefreshing) "..." else "Refresh", onClick = onRefresh)
-                }
-                Spacer(Modifier.height(16.dp))
-                if (models.isEmpty()) {
-                    Text("No models found. Try refreshing.", color = HaloGlassColors.TextMuted)
-                } else {
-                    LazyColumn(Modifier.fillMaxWidth().heightIn(max = 400.dp)) {
-                        items(models) { model: AiModel ->
-                            Row(
-                                Modifier.fillMaxWidth().clickable { onSelect(model.id) }.padding(vertical = 12.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Column {
-                                    Text(model.displayName, color = HaloGlassColors.TextPrimary)
-                                    Text(model.id, style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
-                                }
-                                if (model.isFree) HaloGlassChip(text = "Free", material = com.halo.app.ui.glass.material.HaloGlassMaterials.Interactive.copy(containerColor = HaloGlassColors.Success.copy(alpha = 0.1f), contentColor = HaloGlassColors.Success))
-                            }
                         }
                     }
                 }

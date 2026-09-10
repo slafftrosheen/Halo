@@ -28,6 +28,7 @@ interface AiProviderRouter {
 
     val selectedProviderId: StateFlow<String?>
     val selectedModelId: StateFlow<String?>
+    val diagnosticsFlow: StateFlow<List<AiProviderDiagnostic>>
 
     fun selectProvider(id: String)
 

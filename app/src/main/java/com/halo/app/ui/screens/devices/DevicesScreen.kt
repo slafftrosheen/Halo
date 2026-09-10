@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 enum class PhotoActionState { READY, CAPTURING, COMPLETED, FAILED }
@@ -89,6 +90,7 @@ class DevicesViewModel(
                         sessionState == com.halo.sdk.runtime.embodiment.SessionState.READY
                     val stateText = when (sessionState) {
                         com.halo.sdk.runtime.embodiment.SessionState.SAVED -> "Saved"
+                        com.halo.sdk.runtime.embodiment.SessionState.DISCOVERED -> "Discovered"
                         com.halo.sdk.runtime.embodiment.SessionState.CONNECTING -> "Connecting"
                         com.halo.sdk.runtime.embodiment.SessionState.CONNECTED -> "Connected"
                         com.halo.sdk.runtime.embodiment.SessionState.HANDSHAKE -> "Handshaking"
@@ -248,7 +250,7 @@ fun DevicesScreen(viewModel: DevicesViewModel, onNavigate: (String) -> Unit = {}
             Spacer(Modifier.height(12.dp))
         }
         item { Spacer(Modifier.height(24.dp)) }
-        item { HaloGlassButton("Add device", { viewModel.navigateTo("discovery") }, Modifier.fillMaxWidth()) }
+        item { HaloGlassButton(text = "Add device", onClick = { viewModel.navigateTo("discovery") }, modifier = Modifier.fillMaxWidth()) }
     }
 }
 

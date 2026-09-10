@@ -37,23 +37,6 @@ class DefaultAiProviderRouter(
 
     private var pollingJob: Job? = null
 
-    override fun start() {
-        if (pollingJob?.isActive == true) return
-        pollingJob = scope.launch {
-            while (isActive) {
-                providers.forEach { provider ->
-                    runCatching { provider.getStatus() }
-                }
-                delay(30.seconds)
-            }
-        }
-    }
-
-    override fun stop() {
-        pollingJob?.cancel()
-        pollingJob = null
-    }
-
     private val _selectedProviderId = MutableStateFlow<String?>(
         storage.getString("active_ai_provider") ?: providers.firstOrNull()?.id
     )
@@ -63,6 +46,30 @@ class DefaultAiProviderRouter(
         storage.getString("active_ai_model")
     )
     override val selectedModelId: StateFlow<String?> = _selectedModelId.asStateFlow()
+
+    private val _diagnosticsFlow = MutableStateFlow<List<AiProviderDiagnostic>>(emptyList())
+    override val diagnosticsFlow: StateFlow<List<AiProviderDiagnostic>> = _diagnosticsFlow.asStateFlow()
+
+    init {
+        scope.launch {
+            refreshDiagnostics()
+        }
+    }
+
+    override fun start() {
+        if (pollingJob?.isActive == true) return
+        pollingJob = scope.launch {
+            while (isActive) {
+                refreshDiagnostics()
+                delay(30.seconds)
+            }
+        }
+    }
+
+    override fun stop() {
+        pollingJob?.cancel()
+        pollingJob = null
+    }
 
     private val _routingPolicy = MutableStateFlow<AiRoutingPolicy>(
         storage.getString("ai_routing_policy")?.let { 
@@ -81,14 +88,11 @@ class DefaultAiProviderRouter(
             _selectedProviderId.value = id
             storage.putString("active_ai_provider", id)
             if (providerChanged) {
-                // A model ID is provider-scoped. Never carry an unverified
-                // selection across providers; the caller must select one of
-                // the new provider's advertised models.
                 _selectedModelId.value = null
                 storage.putString("active_ai_model", null)
             }
             scope.launch {
-                runCatching { providers.find { it.id == id }?.getStatus() }
+                refreshDiagnostics()
             }
         }
     }
@@ -96,13 +100,16 @@ class DefaultAiProviderRouter(
     override fun selectModel(modelId: String?) {
         _selectedModelId.value = modelId
         storage.putString("active_ai_model", modelId)
+        scope.launch {
+            refreshDiagnostics()
+        }
     }
 
     override fun getAllProviders(): List<AiProvider> = providers
 
-    override suspend fun diagnostics(): List<AiProviderDiagnostic> {
+    suspend fun refreshDiagnostics(): List<AiProviderDiagnostic> {
         val selectedId = _selectedProviderId.value
-        return providers.map { provider ->
+        val list = providers.map { provider ->
             val status = provider.getStatus()
             AiProviderDiagnostic(
                 providerId = provider.id,
@@ -115,6 +122,12 @@ class DefaultAiProviderRouter(
                 local = provider.isLocal
             )
         }
+        _diagnosticsFlow.value = list
+        return list
+    }
+
+    override suspend fun diagnostics(): List<AiProviderDiagnostic> {
+        return refreshDiagnostics()
     }
 
     override suspend fun getEligibleProvider(request: AiRequest): AiProvider {

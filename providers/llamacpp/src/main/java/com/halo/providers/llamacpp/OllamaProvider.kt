@@ -60,25 +60,38 @@ class OllamaProvider(
     )
 
     override suspend fun getStatus(): ProviderStatus {
+        val endpoint = baseUrl
+        if (endpoint.isBlank()) {
+            val status = ProviderStatus(ProviderStatus.State.UNCONFIGURED, "Ollama endpoint is not configured")
+            _status.value = status
+            return status
+        }
+
         val models = listModels()
         val selected = models.firstOrNull { it.id == modelId }
         val current = when {
-            models.isEmpty() -> ProviderStatus.UNAVAILABLE
-            selected == null -> ProviderStatus(ProviderStatus.State.ERROR, "Ollama reachable, but '$modelId' is not installed")
-            else -> ProviderStatus(ProviderStatus.State.READY, "Connected • $modelId")
+            models.isEmpty() -> ProviderStatus(ProviderStatus.State.OFFLINE, "Unable to reach Ollama at $endpoint")
+            selected == null -> ProviderStatus(ProviderStatus.State.MODEL_MISSING, "Ollama reachable at $endpoint, but model '$modelId' is not pulled")
+            else -> ProviderStatus(ProviderStatus.State.READY, "Connected to $endpoint • $modelId")
         }
         _status.value = current
         return current
     }
 
     override suspend fun testConnection(): Boolean = withContext(Dispatchers.IO) {
+        val endpoint = baseUrl
+        if (endpoint.isBlank()) {
+            _status.value = ProviderStatus(ProviderStatus.State.UNCONFIGURED, "Ollama endpoint is not configured")
+            return@withContext false
+        }
+
         val models = listModels()
         val selected = models.firstOrNull { it.id == modelId }
         val success = selected != null
         _status.value = when {
-            success -> ProviderStatus(ProviderStatus.State.READY, "Connected • $modelId")
-            models.isNotEmpty() -> ProviderStatus(ProviderStatus.State.ERROR, "Connected, but '$modelId' is not installed")
-            else -> ProviderStatus.UNAVAILABLE
+            success -> ProviderStatus(ProviderStatus.State.READY, "Connected to $endpoint • $modelId")
+            models.isNotEmpty() -> ProviderStatus(ProviderStatus.State.MODEL_MISSING, "Connected to $endpoint, but model '$modelId' is not pulled")
+            else -> ProviderStatus(ProviderStatus.State.OFFLINE, "Unable to reach Ollama at $endpoint")
         }
         success
     }

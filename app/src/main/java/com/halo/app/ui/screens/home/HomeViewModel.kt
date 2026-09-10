@@ -30,7 +30,14 @@ data class HomeUiState(
 )
 
 class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
-    fun map(snapshot: RuntimeSnapshot, sessionState: CognitiveSessionState): HomeUiState {
+    fun map(
+        snapshot: RuntimeSnapshot,
+        sessionState: CognitiveSessionState,
+        selectedProviderId: String? = null,
+        selectedModelId: String? = null,
+        diagnostics: List<AiProviderDiagnostic> = emptyList(),
+        activeSessions: List<com.halo.sdk.runtime.embodiment.EmbodimentSession> = emptyList()
+    ): HomeUiState {
         val isReady = snapshot.runtimeState == RuntimeState.Running
         
         val uiRuntimeState = when (snapshot.speech) {
@@ -59,25 +66,58 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
             }
         }
         
-        val isConnected = snapshot.deviceContext.connected
-        
+        val activeSession = activeSessions.firstOrNull()
+        val isConnected = if (activeSession != null) {
+            val sState = activeSession.state.value
+            sState == com.halo.sdk.runtime.embodiment.SessionState.CONNECTED ||
+                sState == com.halo.sdk.runtime.embodiment.SessionState.HANDSHAKE ||
+                sState == com.halo.sdk.runtime.embodiment.SessionState.CAPABILITY_SYNC ||
+                sState == com.halo.sdk.runtime.embodiment.SessionState.STATE_SYNC ||
+                sState == com.halo.sdk.runtime.embodiment.SessionState.READY
+        } else {
+            snapshot.deviceContext.connected
+        }
+
+        val connectionText = if (activeSession != null) {
+            when (activeSession.state.value) {
+                com.halo.sdk.runtime.embodiment.SessionState.READY -> "Ready"
+                com.halo.sdk.runtime.embodiment.SessionState.CONNECTED -> "Connected"
+                com.halo.sdk.runtime.embodiment.SessionState.CONNECTING -> "Connecting"
+                com.halo.sdk.runtime.embodiment.SessionState.DISCONNECTING -> "Disconnecting"
+                com.halo.sdk.runtime.embodiment.SessionState.ERROR -> "Error"
+                else -> "Disconnected"
+            }
+        } else {
+            if (isConnected) "Connected" else "Disconnected"
+        }
+
         val caps = if (snapshot.deviceContext.capabilities.isEmpty()) {
             listOf("Not reported")
         } else {
             snapshot.deviceContext.capabilities
         }
 
-        val selectedProvider = snapshot.providers.find { it.isSelected } ?: snapshot.providers.firstOrNull()
-        val providerStatus = selectedProvider?.let {
-            it.statusMessage ?: it.status
-        } ?: "Unavailable"
+        val selectedDiag = diagnostics.find { it.providerId == selectedProviderId }
+            ?: diagnostics.find { it.selected }
         
-        val activeProviderText = if (selectedProvider != null) {
-            val modelSuffix = selectedProvider.activeModel?.let { " · $it" } ?: ""
-            "${selectedProvider.name}$modelSuffix"
+        val activeProviderText = if (selectedDiag != null) {
+            val modelSuffix = selectedModelId?.let { " · $it" }
+                ?: selectedDiag.selectedModelId?.let { " · $it" }
+                ?: ""
+            "${selectedDiag.displayName}$modelSuffix"
         } else {
-            "No provider"
+            val snapProvider = snapshot.providers.find { it.isSelected } ?: snapshot.providers.firstOrNull()
+            if (snapProvider != null) {
+                val modelSuffix = snapProvider.activeModel?.let { " · $it" } ?: ""
+                "${snapProvider.name}$modelSuffix"
+            } else {
+                "No provider"
+            }
         }
+
+        val providerStatus = selectedDiag?.state?.name
+            ?: snapshot.providers.find { it.isSelected }?.status
+            ?: "Unavailable"
 
         val finalContextualText = if (sessionState != CognitiveSessionState.Idle) {
             contextualText
@@ -88,7 +128,7 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
         }
         
         return HomeUiState(
-            connectionState = if (isConnected) "Connected" else "Disconnected",
+            connectionState = connectionText,
             contextualText = finalContextualText,
             runtimeState = uiRuntimeState,
             recentEvents = snapshot.timeline.map { 
@@ -109,16 +149,39 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
 class HomeViewModel(
     private val snapshotManager: RuntimeSnapshotSource,
     private val commandBus: CommandBus,
-    private val cognitiveSession: CognitiveSession
+    private val cognitiveSession: CognitiveSession,
+    private val aiProviderRouter: AiProviderRouter? = null,
+    private val deviceSessionManager: com.halo.sdk.runtime.embodiment.DeviceSessionManager? = null
 ) : ViewModel() {
 
     private val mapper = HomeUiMapper()
     
     val uiState: StateFlow<HomeUiState> = combine(
         snapshotManager.snapshot,
-        cognitiveSession.state
-    ) { snapshot, sessionState ->
-        mapper.map(snapshot, sessionState)
+        cognitiveSession.state,
+        aiProviderRouter?.selectedProviderId ?: MutableStateFlow(null),
+        aiProviderRouter?.selectedModelId ?: MutableStateFlow(null),
+        aiProviderRouter?.diagnosticsFlow ?: MutableStateFlow(emptyList<AiProviderDiagnostic>()),
+        deviceSessionManager?.activeSessions ?: MutableStateFlow(emptyList<com.halo.sdk.runtime.embodiment.EmbodimentSession>())
+    ) { args ->
+        @Suppress("UNCHECKED_CAST")
+        val snapshot = args[0] as RuntimeSnapshot
+        val sessionState = args[1] as CognitiveSessionState
+        val selectedProviderId = args[2] as String?
+        val selectedModelId = args[3] as String?
+        @Suppress("UNCHECKED_CAST")
+        val diagnostics = args[4] as List<AiProviderDiagnostic>
+        @Suppress("UNCHECKED_CAST")
+        val activeSessions = args[5] as List<com.halo.sdk.runtime.embodiment.EmbodimentSession>
+
+        mapper.map(
+            snapshot = snapshot,
+            sessionState = sessionState,
+            selectedProviderId = selectedProviderId,
+            selectedModelId = selectedModelId,
+            diagnostics = diagnostics,
+            activeSessions = activeSessions
+        )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),

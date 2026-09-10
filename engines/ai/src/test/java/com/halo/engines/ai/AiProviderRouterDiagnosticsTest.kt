@@ -111,6 +111,20 @@ class AiProviderRouterDiagnosticsTest {
     }
 
     @Test
+    fun `diagnosticsFlow emits updated diagnostics on provider select`() = runTest {
+        val storage = FakeStorage()
+        val p1 = MockProvider("p1", "P1 Local", isLocal = true)
+        val p2 = MockProvider("p2", "P2 Remote", isLocal = false)
+        val router = DefaultAiProviderRouter(listOf(p1, p2), storage)
+
+        router.selectProvider("p2")
+
+        val currentList = router.diagnosticsFlow.value
+        val selected = currentList.find { it.selected }
+        assertEquals("p2", selected?.providerId)
+    }
+
+    @Test
     fun `error presenter maps semantic errors to clear messages`() {
         val presenter = DefaultAiErrorPresenter()
 

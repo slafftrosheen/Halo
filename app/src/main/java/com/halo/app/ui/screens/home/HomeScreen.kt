@@ -101,12 +101,21 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 }
             }
 
-            Text(
-                text = uiState.contextualText,
-                style = HaloTypography.bodyLarge,
-                color = HaloGlassColors.TextPrimary,
+            HaloMarkdownText(
+                markdown = uiState.contextualText,
+                textColor = HaloGlassColors.TextPrimary,
                 modifier = Modifier.padding(horizontal = 8.dp)
             )
+
+            if (uiState.sessionState is com.halo.sdk.provider.CognitiveSessionState.Completed ||
+                uiState.sessionState is com.halo.sdk.provider.CognitiveSessionState.Streaming) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "via ${uiState.activeProvider}",
+                    style = HaloTypography.labelSmall,
+                    color = HaloGlassColors.TextMuted
+                )
+            }
             
             if (uiState.sessionState is com.halo.sdk.provider.CognitiveSessionState.Reasoning) {
                 Spacer(Modifier.height(16.dp))
