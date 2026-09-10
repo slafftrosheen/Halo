@@ -20,6 +20,8 @@ interface AiProviderRouter {
         request: AiRequest, 
         context: AiContext = AiContext.EMPTY
     ): AiResponse
+
+    suspend fun diagnostics(): List<AiProviderDiagnostic> = emptyList()
     
     fun start()
     fun stop()

@@ -74,6 +74,35 @@ data class AiGenerationMetrics(
         }
 }
 
+data class AiExecutionMetadata(
+    val requestId: String,
+    val providerId: String,
+    val modelId: String?,
+    val startedAtMs: Long,
+    val completedAtMs: Long?,
+    val success: Boolean,
+    val finishReason: String?,
+    val errorType: AiErrorType? = null
+)
+
+data class AiProviderDiagnostic(
+    val providerId: String,
+    val displayName: String,
+    val state: ProviderStatus.State,
+    val message: String?,
+    val capabilities: Set<AiCapability>,
+    val selected: Boolean,
+    val selectedModelId: String?,
+    val local: Boolean
+)
+
+data class AiRuntimeSnapshot(
+    val selectedProviderId: String?,
+    val selectedModelId: String?,
+    val routingPolicy: AiRoutingPolicy,
+    val providers: List<AiProviderDiagnostic>
+)
+
 /**
  * Modern multimodal AI response.
  */

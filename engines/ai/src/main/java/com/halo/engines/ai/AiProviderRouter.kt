@@ -3,6 +3,10 @@ package com.halo.engines.ai
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.Storage
 import com.halo.sdk.runtime.RuntimeLogger
+import com.halo.sdk.runtime.EventBus
+import com.halo.sdk.runtime.ProviderRequest
+import com.halo.sdk.runtime.ProviderResult
+import com.halo.sdk.runtime.ProviderFailure
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -15,6 +19,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.CancellationException
+import java.util.UUID
 
 import kotlin.time.Duration.Companion.seconds
 
@@ -24,6 +29,7 @@ import kotlin.time.Duration.Companion.seconds
 class DefaultAiProviderRouter(
     private val providers: List<AiProvider>,
     private val storage: Storage,
+    private val eventBus: EventBus? = null,
     private val logger: RuntimeLogger? = null
 ) : AiProviderRouter {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -83,10 +89,24 @@ class DefaultAiProviderRouter(
         storage.putString("active_ai_model", modelId)
     }
 
-    /**
-     * Returns all registered providers.
-     */
     override fun getAllProviders(): List<AiProvider> = providers
+
+    override suspend fun diagnostics(): List<AiProviderDiagnostic> {
+        val selectedId = _selectedProviderId.value
+        return providers.map { provider ->
+            val status = provider.getStatus()
+            AiProviderDiagnostic(
+                providerId = provider.id,
+                displayName = provider.displayName,
+                state = status.state,
+                message = status.message,
+                capabilities = provider.getCapabilities(),
+                selected = provider.id == selectedId,
+                selectedModelId = if (provider.id == selectedId) _selectedModelId.value else null,
+                local = provider.isLocal
+            )
+        }
+    }
 
     override suspend fun getEligibleProvider(request: AiRequest): AiProvider {
         val policy = _routingPolicy.value
@@ -142,17 +162,21 @@ class DefaultAiProviderRouter(
             val provider = getEligibleProvider(request)
             val modelId = request.modelId ?: _selectedModelId.value
             val finalRequest = if (request.modelId == null && modelId != null) request.copy(modelId = modelId) else request
+            val requestId = UUID.randomUUID().toString()
 
             logger?.info("AiProviderRouter", "AI execute start provider=${provider.id} model=${finalRequest.modelId}")
+            eventBus?.publish(ProviderRequest(requestId = requestId, providerId = provider.id))
             return try {
                 val response = provider.generate(finalRequest, context)
                 validateResponse(provider, response)
                 logger?.info("AiProviderRouter", "AI execute complete provider=${response.providerId} model=${response.modelId} chars=${response.text.length}")
+                eventBus?.publish(ProviderResult(requestId = requestId, success = true))
                 response
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Throwable) {
                 logger?.error("AiProviderRouter", "AI execute failed provider=${provider.id} message=${e.message}")
+                eventBus?.publish(ProviderFailure(requestId = requestId, providerId = provider.id, reason = e.message ?: "Execution failed"))
                 throw e
             }
         }
@@ -176,22 +200,36 @@ class DefaultAiProviderRouter(
         } else {
             request
         }
+        val requestId = UUID.randomUUID().toString()
 
         logger?.info("AiProviderRouter", "AI execute start provider=${provider.id} model=${finalRequest.modelId}")
+        eventBus?.publish(ProviderRequest(requestId = requestId, providerId = provider.id))
         return try {
             val response = provider.generate(finalRequest, context)
             validateResponse(provider, response)
             logger?.info("AiProviderRouter", "AI execute complete provider=${response.providerId} model=${response.modelId} chars=${response.text.length}")
+            eventBus?.publish(ProviderResult(requestId = requestId, success = true))
             response
         } catch (e: CancellationException) {
             throw e
         } catch (e: AiProviderException) {
+            eventBus?.publish(ProviderFailure(requestId = requestId, providerId = provider.id, reason = e.message ?: "Provider failure"))
             if (policy == AiRoutingPolicy.PREFERRED_WITH_FALLBACK || policy == AiRoutingPolicy.AUTOMATIC) {
                 val fallbackProvider = getFallbackProvider(provider, request, policy)
                 if (fallbackProvider != null) {
-                    val fallbackResp = fallbackProvider.generate(finalRequest, context)
-                    validateResponse(fallbackProvider, fallbackResp)
-                    return fallbackResp
+                    val fallbackRequestId = UUID.randomUUID().toString()
+                    eventBus?.publish(ProviderRequest(requestId = fallbackRequestId, providerId = fallbackProvider.id))
+                    try {
+                        val fallbackResp = fallbackProvider.generate(finalRequest, context)
+                        validateResponse(fallbackProvider, fallbackResp)
+                        eventBus?.publish(ProviderResult(requestId = fallbackRequestId, success = true))
+                        return fallbackResp
+                    } catch (fbErr: CancellationException) {
+                        throw fbErr
+                    } catch (fbErr: Throwable) {
+                        eventBus?.publish(ProviderFailure(requestId = fallbackRequestId, providerId = fallbackProvider.id, reason = fbErr.message ?: "Fallback failure"))
+                        throw fbErr
+                    }
                 }
             }
             throw e
