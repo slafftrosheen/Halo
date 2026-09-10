@@ -18,10 +18,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import com.halo.sdk.runtime.ObservationUpdated
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import java.util.concurrent.ConcurrentHashMap
 
@@ -86,29 +84,11 @@ class HeyCyanSession(
 
     private suspend fun syncInitialState(): Boolean =
         withTimeoutOrNull(10000L) {
-            try {
-                controller.execute(HeyCyanOperation.GetBattery)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (_: Exception) {
-                // Best-effort state sync.
-            }
+            runCatching { controller.execute(HeyCyanOperation.GetBattery) }
             delay(300L)
-            try {
-                controller.execute(HeyCyanOperation.GetDeviceInfo)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (_: Exception) {
-                // Best-effort state sync.
-            }
+            runCatching { controller.execute(HeyCyanOperation.GetDeviceInfo) }
             delay(300L)
-            try {
-                controller.execute(HeyCyanOperation.GetMediaInventory)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (_: Exception) {
-                // Best-effort state sync.
-            }
+            runCatching { controller.execute(HeyCyanOperation.GetMediaInventory) }
             delay(300L)
             true
         } ?: false
@@ -117,18 +97,7 @@ class HeyCyanSession(
         val keys = pendingIntents.keys().toList()
         for (intentId in keys) {
             pendingIntents.remove(intentId)
-            eventBus.publish(
-                EmbodimentExecutionEvent(
-                    device = identity,
-                    result = EmbodimentExecutionResult(
-                        intentId = intentId,
-                        status = EmbodimentExecutionStatus.FAILED,
-                        reason = reason,
-                        timestamp = System.currentTimeMillis(),
-                        embodimentId = identity.deviceId,
-                    )
-                )
-            )
+            reportResult(intentId, EmbodimentExecutionStatus.FAILED, reason)
         }
     }
 
@@ -178,13 +147,12 @@ class HeyCyanSession(
 
         sessionScope.launch {
             try {
-                val result = controller.execute(operation)
-                result.fold(
+                controller.execute(operation).fold(
                     onSuccess = { executionResult ->
                         when (executionResult) {
                             is HeyCyanExecutionResult.Acknowledged -> {
                                 reportResult(intent.intentId, EmbodimentExecutionStatus.ACCEPTED)
-                                waitForCompletion(intent, operation)
+                                waitForCompletion(intent.intentId, operation)
                             }
                             is HeyCyanExecutionResult.Completed -> {
                                 reportResult(
@@ -219,54 +187,63 @@ class HeyCyanSession(
         }
     }
 
+    /**
+     * The current driver contract returns Acknowledged for a successful command.
+     * Completion is therefore observed from the device event stream. Because the
+     * existing event schema does not carry an intent ID, completion is deliberately
+     * constrained to the expected operation-specific device signal rather than any
+     * arbitrary observation from the device.
+     */
     private suspend fun waitForCompletion(
-        intent: EmbodimentIntent,
+        intentId: String,
         operation: HeyCyanOperation,
     ) {
         try {
-            withTimeout(30000L) {
+            val completed = withTimeoutOrNull(30000L) {
                 when (operation) {
                     HeyCyanOperation.TakePhoto -> {
                         eventBus.observe(ObservationUpdated::class.java)
-                            .filter { obs ->
+                            .first { obs ->
                                 obs.observation.sourceDeviceId == identity.deviceId &&
                                     obs.observation.metadata["event"] == "MODE_CHANGED" &&
-                                    obs.observation.metadata["operationIntentId"] == intent.intentId
+                                    obs.observation.metadata["mode"] == "1"
                             }
-                            .first()
                     }
                     HeyCyanOperation.StartVideo -> {
                         eventBus.observe(ObservationUpdated::class.java)
-                            .filter { obs ->
+                            .first { obs ->
                                 obs.observation.sourceDeviceId == identity.deviceId &&
                                     obs.observation.metadata["event"] == "MODE_CHANGED" &&
-                                    obs.observation.metadata["mode"] == "2" &&
-                                    obs.observation.metadata["operationIntentId"] == intent.intentId
+                                    obs.observation.metadata["mode"] == "2"
                             }
-                            .first()
                     }
                     HeyCyanOperation.StopVideo -> {
                         eventBus.observe(ObservationUpdated::class.java)
-                            .filter { obs ->
+                            .first { obs ->
                                 obs.observation.sourceDeviceId == identity.deviceId &&
                                     obs.observation.metadata["event"] == "MODE_CHANGED" &&
-                                    obs.observation.metadata["mode"] != "2" &&
-                                    obs.observation.metadata["operationIntentId"] == intent.intentId
+                                    obs.observation.metadata["mode"] != "2"
                             }
-                            .first()
                     }
-                    else -> delay(500L)
+                    else -> {
+                        delay(500L)
+                        true
+                    }
                 }
-                reportResult(intent.intentId, EmbodimentExecutionStatus.SUCCEEDED)
+                true
+            } ?: false
+
+            if (completed) {
+                reportResult(intentId, EmbodimentExecutionStatus.SUCCEEDED)
+            } else {
+                reportResult(intentId, EmbodimentExecutionStatus.FAILED, "Execution timed out")
             }
-        } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
-            reportResult(intent.intentId, EmbodimentExecutionStatus.FAILED, "Execution timed out")
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            reportResult(intent.intentId, EmbodimentExecutionStatus.FAILED, "Execution failed: ${e.message}")
+            reportResult(intentId, EmbodimentExecutionStatus.FAILED, "Execution failed: ${e.message}")
         } finally {
-            pendingIntents.remove(intent.intentId)
+            pendingIntents.remove(intentId)
         }
     }
 
