@@ -35,14 +35,12 @@ class HeyCyanSessionTest {
     @Test
     fun sessionLifecycleTransitionsToReadyAfterInitialSync() = runTest {
         val session = HeyCyanSession(identity, controller, transport, eventBus, coroutineContext = UnconfinedTestDispatcher(testScheduler))
-        
-        // Initial state update on transport connect
+
         transport.emitState(TransportConnectionState.CONNECTED)
-        
         advanceUntilIdle()
-        
+
         assertEquals(SessionState.READY, session.state.value)
-        assertEquals(3, controller.executionCount.get()) // Battery, Info, Media
+        assertEquals(3, controller.executionCount.get())
     }
 
     @Test
@@ -50,34 +48,33 @@ class HeyCyanSessionTest {
         val session = HeyCyanSession(identity, controller, transport, eventBus, coroutineContext = UnconfinedTestDispatcher(testScheduler))
         transport.emitState(TransportConnectionState.CONNECTED)
         advanceUntilIdle()
-        
+
         val intent = EmbodimentIntent(
             intentId = "intent-1",
             kind = IntentKind.CAPTURE_PHOTO,
             targetDeviceId = "test-id"
         )
-        
-        println("Dispatching intent...")
+
         session.dispatch(intent)
-        
-        // Simulate device notification (ModeChanged)
-        println("Publishing ObservationUpdated...")
+
+        // The runtime contract is that an observation belongs to the concrete
+        // device identity used by the session. Do not use the old generic
+        // "heycyan" source id here; that would hide a real routing bug.
         eventBus.publish(ObservationUpdated(
             observation = Observation(
                 modality = Modality.SYSTEM,
                 source = Source.BLUETOOTH,
-                payload = object : ObservationPayload {},
-                sourceDeviceId = "heycyan",
+                payload = SystemObservationPayload("MODE_CHANGED"),
+                sourceDeviceId = "test-id",
                 metadata = mapOf("event" to "MODE_CHANGED", "mode" to 0x01)
             )
         ))
-        
+
         advanceUntilIdle()
-        
-        println("Events in bus: ${eventBus.events.map { (it as? EmbodimentExecutionEvent)?.result?.let { r -> "${r.status}:${r.reason}" } ?: it.javaClass.simpleName }}")
-        
-        // Verify event bus publication (SUCCEEDED)
-        val succeededEvent = eventBus.events.find { (it as? EmbodimentExecutionEvent)?.result?.status == ExecutionStatus.SUCCEEDED } as? EmbodimentExecutionEvent
+
+        val succeededEvent = eventBus.events.find {
+            (it as? EmbodimentExecutionEvent)?.result?.status == ExecutionStatus.SUCCEEDED
+        } as? EmbodimentExecutionEvent
         assertEquals("intent-1", succeededEvent?.result?.intentId)
     }
 
@@ -86,26 +83,24 @@ class HeyCyanSessionTest {
         val session = HeyCyanSession(identity, controller, transport, eventBus, coroutineContext = UnconfinedTestDispatcher(testScheduler))
         transport.emitState(TransportConnectionState.CONNECTED)
         advanceUntilIdle()
-        
+
         val intent = EmbodimentIntent(
             intentId = "intent-timeout",
             kind = IntentKind.CAPTURE_PHOTO,
             targetDeviceId = "test-id"
         )
-        
+
         session.dispatch(intent)
         advanceUntilIdle()
-        
-        // Advance time past 10s timeout
+
         testScheduler.advanceTimeBy(11000)
         advanceUntilIdle()
-        
-        // Verify event bus publication (FAILED)
-        val failedEvent = eventBus.events.find { (it as? EmbodimentExecutionEvent)?.result?.status == ExecutionStatus.FAILED } as? EmbodimentExecutionEvent
+
+        val failedEvent = eventBus.events.find {
+            (it as? EmbodimentExecutionEvent)?.result?.status == ExecutionStatus.FAILED
+        } as? EmbodimentExecutionEvent
         assertEquals("intent-timeout", failedEvent?.result?.intentId)
     }
-
-    // Helper Fakes
 
     private class FakeTransport : EmbodimentTransport {
         private val _state = MutableStateFlow(TransportConnectionState.DISCONNECTED)
@@ -116,7 +111,7 @@ class HeyCyanSessionTest {
         override suspend fun send(bytes: ByteArray): Boolean = true
         override fun onMessageReceived(handler: (String) -> Unit) {}
         override fun onBytesReceived(handler: (ByteArray) -> Unit) {}
-        
+
         fun emitState(state: TransportConnectionState) {
             _state.value = state
         }
@@ -125,7 +120,7 @@ class HeyCyanSessionTest {
     private class FakeController : HeyCyanController {
         val executionCount = AtomicInteger(0)
         var lastOperation: HeyCyanOperation? = null
-        
+
         override suspend fun execute(operation: HeyCyanOperation): Result<HeyCyanExecutionResult> {
             executionCount.incrementAndGet()
             lastOperation = operation
@@ -136,13 +131,15 @@ class HeyCyanSessionTest {
     private class FakeEventBus : EventBus {
         val events = mutableListOf<HaloEvent>()
         private val _stream = MutableSharedFlow<HaloEvent>()
-        
-        override suspend fun publish(event: HaloEvent) { 
-            events.add(event) 
+
+        override suspend fun publish(event: HaloEvent) {
+            events.add(event)
             _stream.emit(event)
         }
+
         override fun events(): Flow<HaloEvent> = _stream
-        override fun <T : HaloEvent> observe(type: Class<T>): Flow<T> = 
+
+        override fun <T : HaloEvent> observe(type: Class<T>): Flow<T> =
             _stream.filter { type.isInstance(it) }.map { it as T }
     }
 }
