@@ -19,6 +19,7 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.logging.HttpLoggingInterceptor
 import org.json.JSONObject
+import java.net.URI
 import java.util.concurrent.TimeUnit
 
 class OllamaProvider(
@@ -27,12 +28,13 @@ class OllamaProvider(
 
     private val TAG = "OllamaProvider"
     private val JSON = "application/json; charset=utf-8".toMediaType()
+    private val defaultEndpoint = "http://10.0.2.2:11434"
 
     private val _status = MutableStateFlow(ProviderStatus.UNAVAILABLE)
     override val status: StateFlow<ProviderStatus> = _status.asStateFlow()
 
     private val baseUrl: String
-        get() = storage.getString("ollama_endpoint")?.trimEnd('/')?.ifBlank { null } ?: "http://10.0.2.2:11434"
+        get() = storage.getString("ollama_endpoint")?.trim()?.trimEnd('/')?.ifBlank { null } ?: defaultEndpoint
     private val modelId: String
         get() = storage.getString("ollama_model")?.trim()?.ifBlank { null } ?: "llama3"
 
@@ -60,50 +62,68 @@ class OllamaProvider(
     )
 
     override suspend fun getStatus(): ProviderStatus {
-        val endpoint = baseUrl
-        if (endpoint.isBlank()) {
+        val endpoint = normalizedEndpointOrNull()
+        if (endpoint == null) {
             val status = ProviderStatus(ProviderStatus.State.UNCONFIGURED, "Ollama endpoint is not configured")
             _status.value = status
             return status
         }
 
-        val models = listModels()
-        val selected = models.firstOrNull { it.id == modelId }
-        val current = when {
-            models.isEmpty() -> ProviderStatus(ProviderStatus.State.OFFLINE, "Unable to reach Ollama at $endpoint")
-            selected == null -> ProviderStatus(ProviderStatus.State.MODEL_MISSING, "Ollama reachable at $endpoint, but model '$modelId' is not pulled")
-            else -> ProviderStatus(ProviderStatus.State.READY, "Connected to $endpoint • $modelId")
+        val probe = fetchModels(endpoint)
+        val status = when {
+            probe.error != null -> ProviderStatus(
+                ProviderStatus.State.OFFLINE,
+                "Ollama unreachable at $endpoint: ${probe.error}"
+            )
+            probe.models.isEmpty() -> ProviderStatus(
+                ProviderStatus.State.OFFLINE,
+                "Ollama responded at $endpoint but returned no models"
+            )
+            probe.models.none { it.id == modelId } -> ProviderStatus(
+                ProviderStatus.State.MODEL_MISSING,
+                "Connected to $endpoint, but model '$modelId' is not pulled"
+            )
+            else -> ProviderStatus(
+                ProviderStatus.State.READY,
+                "Connected to $endpoint • $modelId"
+            )
         }
-        _status.value = current
-        return current
+        _status.value = status
+        return status
     }
 
-    override suspend fun testConnection(): Boolean = withContext(Dispatchers.IO) {
-        val endpoint = baseUrl
-        if (endpoint.isBlank()) {
+    override suspend fun testConnection(): Boolean {
+        val endpoint = normalizedEndpointOrNull()
+        if (endpoint == null) {
             _status.value = ProviderStatus(ProviderStatus.State.UNCONFIGURED, "Ollama endpoint is not configured")
-            return@withContext false
+            return false
         }
 
-        val models = listModels()
-        val selected = models.firstOrNull { it.id == modelId }
-        val success = selected != null
+        val probe = fetchModels(endpoint)
+        val selected = probe.models.firstOrNull { it.id == modelId }
+        val success = probe.error == null && selected != null
         _status.value = when {
-            success -> ProviderStatus(ProviderStatus.State.READY, "Connected to $endpoint • $modelId")
-            models.isNotEmpty() -> ProviderStatus(ProviderStatus.State.MODEL_MISSING, "Connected to $endpoint, but model '$modelId' is not pulled")
-            else -> ProviderStatus(ProviderStatus.State.OFFLINE, "Unable to reach Ollama at $endpoint")
+            probe.error != null -> ProviderStatus(
+                ProviderStatus.State.OFFLINE,
+                "Cannot reach Ollama at $endpoint: ${probe.error}"
+            )
+            probe.models.isEmpty() -> ProviderStatus(
+                ProviderStatus.State.OFFLINE,
+                "Ollama responded at $endpoint but returned no models"
+            )
+            selected == null -> ProviderStatus(
+                ProviderStatus.State.MODEL_MISSING,
+                "Connected to $endpoint, but model '$modelId' is not pulled"
+            )
+            else -> ProviderStatus(
+                ProviderStatus.State.READY,
+                "Connected to $endpoint • $modelId"
+            )
         }
-        success
+        return success
     }
 
-    override suspend fun health(): Boolean = withContext(Dispatchers.IO) {
-        try {
-            val request = Request.Builder().url("$baseUrl/api/tags").get().build()
-            client.newCall(request).execute().use { it.isSuccessful }
-        } catch (_: Exception) {
-            false
-        }
-    }
+    override suspend fun health(): Boolean = fetchModels(normalizedEndpointOrNull()).error == null
 
     override suspend fun generate(request: AiRequest, context: AiContext): AiResponse {
         request.validateForTextGeneration()
@@ -119,6 +139,8 @@ class OllamaProvider(
         completeWithModel(request, modelId)
 
     private suspend fun completeWithModel(request: AIRequestLegacy, model: String): AIResponseLegacy = withContext(Dispatchers.IO) {
+        val endpoint = normalizedEndpointOrNull()
+            ?: throw AiProviderException(AiErrorType.LOCAL_MODEL_UNAVAILABLE, "Ollama endpoint is not configured")
         val startTime = System.currentTimeMillis()
         val prompt = request.conversation.messages.joinToString("\n") {
             "${it.role.name.lowercase()}: ${it.content}"
@@ -130,7 +152,7 @@ class OllamaProvider(
             options = mapOf("temperature" to request.temperature, "num_predict" to request.maxTokens)
         )
         val body = generateRequestAdapter.toJson(ollamaRequest).toRequestBody(JSON)
-        val httpRequest = Request.Builder().url("$baseUrl/api/generate").post(body).build()
+        val httpRequest = Request.Builder().url("$endpoint/api/generate").post(body).build()
         try {
             client.newCall(httpRequest).execute().use { response ->
                 if (!response.isSuccessful) {
@@ -149,14 +171,16 @@ class OllamaProvider(
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
             if (e is AiProviderException) throw e
-            throw AiProviderException(AiErrorType.LOCAL_MODEL_UNAVAILABLE, "Ollama completion failed", e)
+            throw AiProviderException(AiErrorType.LOCAL_MODEL_UNAVAILABLE, "Ollama completion failed: ${e.message ?: "network error"}", e)
         }
     }
 
     override fun stream(prompt: String): Flow<String> = flow {
+        val endpoint = normalizedEndpointOrNull()
+            ?: throw AiProviderException(AiErrorType.LOCAL_MODEL_UNAVAILABLE, "Ollama endpoint is not configured")
         val ollamaRequest = OllamaGenerateRequest(model = modelId, prompt = prompt, stream = true)
         val body = generateRequestAdapter.toJson(ollamaRequest).toRequestBody(JSON)
-        val request = Request.Builder().url("$baseUrl/api/generate").post(body).build()
+        val request = Request.Builder().url("$endpoint/api/generate").post(body).build()
         try {
             client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) {
@@ -179,37 +203,62 @@ class OllamaProvider(
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
             if (e is AiProviderException) throw e
-            throw AiProviderException(AiErrorType.LOCAL_MODEL_UNAVAILABLE, "Ollama stream failed", e)
+            throw AiProviderException(AiErrorType.LOCAL_MODEL_UNAVAILABLE, "Ollama stream failed: ${e.message ?: "network error"}", e)
         }
     }.flowOn(Dispatchers.IO)
 
-    override suspend fun listModels(): List<AiModel> = withContext(Dispatchers.IO) {
+    override suspend fun listModels(): List<AiModel> = fetchModels(normalizedEndpointOrNull()).models
+
+    private data class ModelProbe(
+        val models: List<AiModel>,
+        val error: String?
+    )
+
+    private suspend fun fetchModels(endpoint: String?): ModelProbe = withContext(Dispatchers.IO) {
+        if (endpoint == null) return@withContext ModelProbe(emptyList(), "endpoint is not configured")
         try {
-            val request = Request.Builder().url("$baseUrl/api/tags").get().build()
+            val request = Request.Builder().url("$endpoint/api/tags").get().build()
             client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) return@withContext emptyList()
-                val json = response.body?.string() ?: return@withContext emptyList()
-                val models = JSONObject(json).optJSONArray("models") ?: return@withContext emptyList()
-                buildList {
+                if (!response.isSuccessful) {
+                    return@withContext ModelProbe(emptyList(), "HTTP ${response.code}")
+                }
+                val json = response.body?.string() ?: return@withContext ModelProbe(emptyList(), "empty response")
+                val models = JSONObject(json).optJSONArray("models") ?: return@withContext ModelProbe(emptyList(), "missing models list")
+                val result = buildList {
                     for (i in 0 until models.length()) {
                         val name = models.getJSONObject(i).optString("name").trim()
                         if (name.isNotEmpty()) {
-                            add(AiModel(
-                                id = name,
-                                displayName = name,
-                                providerId = id,
-                                inputCapabilities = setOf(AiCapability.TEXT),
-                                contextLength = 4096,
-                                supportsStreaming = true,
-                                supportsTools = false
-                            ))
+                            add(
+                                AiModel(
+                                    id = name,
+                                    displayName = name,
+                                    providerId = id,
+                                    inputCapabilities = setOf(AiCapability.TEXT),
+                                    contextLength = 4096,
+                                    supportsStreaming = true,
+                                    supportsTools = false
+                                )
+                            )
                         }
                     }
                 }
+                ModelProbe(result, null)
             }
-        } catch (_: Exception) {
-            emptyList()
+        } catch (e: Exception) {
+            ModelProbe(emptyList(), e.message ?: e.javaClass.simpleName)
         }
+    }
+
+    private fun normalizedEndpointOrNull(): String? {
+        val raw = storage.getString("ollama_endpoint")?.trim()?.trimEnd('/')
+            ?: defaultEndpoint
+        if (raw.isBlank()) return null
+        return runCatching {
+            val uri = URI(raw)
+            require(uri.scheme == "http" || uri.scheme == "https")
+            require(!uri.host.isNullOrBlank())
+            raw
+        }.getOrNull()
     }
 
     override suspend fun close() {
