@@ -2,7 +2,7 @@ package com.halo.runtime.cognition.session
 
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.*
-import com.halo.runtime.cognition.blackboard.Blackboard
+import com.halo.runtime.cognition.context.ContextAssembler
 import com.halo.runtime.cognition.conversation.ConversationStore
 import com.halo.runtime.cognition.tools.ToolExecutionLimits
 import com.halo.runtime.cognition.tools.ToolExecutionResult
@@ -21,9 +21,9 @@ import java.util.UUID
  */
 class CognitiveSession(
     private val eventBus: EventBus,
-    private val blackboard: Blackboard,
     private val providerRouter: AiProviderRouter,
     private val conversationStore: ConversationStore,
+    private val contextAssembler: ContextAssembler,
     private val toolRegistry: ToolRegistry? = null,
     private val scope: CoroutineScope
 ) {
@@ -54,24 +54,7 @@ class CognitiveSession(
         activeJob = scope.launch {
             val requestId = UUID.randomUUID().toString()
             try {
-                var finalRequest = request
-                if (finalRequest.image == null) {
-                    val latestObsKnowledge = blackboard.flow.value
-                        .mapNotNull { it.payload as? com.halo.runtime.cognition.blackboard.ObservationKnowledge }
-                        .map { it.observation }
-                        .findLast { it.payload is ImageObservationPayload }
-                    
-                    if (latestObsKnowledge != null && (System.currentTimeMillis() - latestObsKnowledge.timestamp) < 60_000L) {
-                        val imgPayload = latestObsKnowledge.payload as ImageObservationPayload
-                        if (imgPayload.imageBytes.isNotEmpty()) {
-                            finalRequest = finalRequest.copy(
-                                image = imgPayload.imageBytes,
-                                mimeTypes = listOf(imgPayload.mimeType)
-                            )
-                            println("[CognitiveSession] Attached image observation (${imgPayload.imageBytes.size} bytes) to request")
-                        }
-                    }
-                }
+                val finalRequest = request
 
                 // 1. Provider Eligibility Check (Fail Fast)
                 val provider = providerRouter.getEligibleProvider(finalRequest)
@@ -84,7 +67,18 @@ class CognitiveSession(
                 _state.value = CognitiveSessionState.PreparingContext
                 eventBus.publish(CognitiveRequestStarted(requestId = requestId))
                 
-                val context = buildContext(provider, policy)
+                val assemblyResult = contextAssembler.assemble(policy, provider.getCapabilities())
+                val context = assemblyResult.context
+                eventBus.publish(
+                    ContextAssembled(
+                        requestId = requestId,
+                        conversationCount = context.conversation.size,
+                        recentEventCount = context.recentEvents.size,
+                        memoryCount = context.memories.size,
+                        toolCount = context.availableTools.size,
+                        omissions = assemblyResult.omissions.size
+                    )
+                )
                 
                 // 3. Reasoning
                 println("[CognitiveSession] Provider: $providerId, Model: $modelId")
@@ -341,27 +335,5 @@ class CognitiveSession(
         scope.launch {
             conversationStore.clear()
         }
-    }
-
-    private suspend fun buildContext(provider: AiProvider, policy: AiContextPolicy): AiContext {
-        val conversation = if (policy.includeConversation) {
-            conversationStore.recentMessages(maxTurns = 10)
-        } else {
-            emptyList()
-        }
-
-        val tools = if (policy.includeAvailableTools && provider.getCapabilities().contains(AiCapability.TOOLS)) {
-            toolRegistry?.definitions() ?: emptyList()
-        } else {
-            emptyList()
-        }
-
-        return AiContext(
-            conversation = conversation,
-            deviceState = if (policy.includeDeviceState) com.halo.sdk.runtime.DeviceState() else null,
-            recentEvents = if (policy.includeRecentEvents) emptyList() else emptyList(),
-            memories = if (policy.includeMemories) emptyList() else emptyList(),
-            availableTools = tools
-        )
     }
 }

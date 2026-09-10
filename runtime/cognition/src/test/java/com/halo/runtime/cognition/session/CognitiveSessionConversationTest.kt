@@ -81,11 +81,12 @@ class CognitiveSessionConversationTest {
         val router = FakeRouter(provider)
         val store = InMemoryConversationStore()
 
+        val assembler = com.halo.runtime.cognition.context.DefaultContextAssembler(store, blackboard)
         val session = CognitiveSession(
             eventBus = eventBus,
-            blackboard = blackboard,
             providerRouter = router,
             conversationStore = store,
+            contextAssembler = assembler,
             scope = this
         )
 
@@ -110,11 +111,12 @@ class CognitiveSessionConversationTest {
         val router = FakeRouter(provider)
         val store = InMemoryConversationStore()
 
+        val assembler = com.halo.runtime.cognition.context.DefaultContextAssembler(store, blackboard)
         val session = CognitiveSession(
             eventBus = eventBus,
-            blackboard = blackboard,
             providerRouter = router,
             conversationStore = store,
+            contextAssembler = assembler,
             scope = this
         )
 
@@ -147,11 +149,12 @@ class CognitiveSessionConversationTest {
         val router = FakeRouter(provider)
         val store = InMemoryConversationStore()
 
+        val assembler = com.halo.runtime.cognition.context.DefaultContextAssembler(store, blackboard)
         val session = CognitiveSession(
             eventBus = eventBus,
-            blackboard = blackboard,
             providerRouter = router,
             conversationStore = store,
+            contextAssembler = assembler,
             scope = this
         )
 
@@ -169,11 +172,12 @@ class CognitiveSessionConversationTest {
         val router = FakeRouter(provider)
         val store = InMemoryConversationStore()
 
+        val assembler = com.halo.runtime.cognition.context.DefaultContextAssembler(store, blackboard)
         val session = CognitiveSession(
             eventBus = eventBus,
-            blackboard = blackboard,
             providerRouter = router,
             conversationStore = store,
+            contextAssembler = assembler,
             scope = this
         )
 
@@ -198,11 +202,12 @@ class CognitiveSessionConversationTest {
         val router = FakeRouter(provider)
         val store = InMemoryConversationStore()
 
+        val assembler = com.halo.runtime.cognition.context.DefaultContextAssembler(store, blackboard)
         val session = CognitiveSession(
             eventBus = eventBus,
-            blackboard = blackboard,
             providerRouter = router,
             conversationStore = store,
+            contextAssembler = assembler,
             scope = this
         )
 

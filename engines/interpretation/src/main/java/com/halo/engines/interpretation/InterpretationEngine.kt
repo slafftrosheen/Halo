@@ -16,9 +16,5 @@ class InterpretationEngine(
 ) : com.halo.engines.interpretation.internal.DefaultInterpretationEngine(
     pipeline = pipeline,
     blackboard = blackboard,
-    contextAssembler = com.halo.runtime.cognition.context.DefaultContextAssembler(
-        blackboard = blackboard,
-        workingMemory = workingMemory
-    ),
     eventBus = eventBus
 )

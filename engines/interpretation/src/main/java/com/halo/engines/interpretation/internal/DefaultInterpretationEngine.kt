@@ -42,7 +42,6 @@ import kotlinx.datetime.Instant
 open class DefaultInterpretationEngine(
     private val pipeline: RulePipeline,
     private val blackboard: Blackboard,
-    private val contextAssembler: ContextAssembler,
     private val eventBus: com.halo.sdk.runtime.EventBus
 ) : InterpretationEngine {
     override val metadata = EngineMetadata(
@@ -150,7 +149,23 @@ open class DefaultInterpretationEngine(
             blackboard.publish(observation.asKnowledge())
         }
 
-        val result = pipeline.execute(contextAssembler.build(observation))
+        val result = pipeline.execute(
+            com.halo.runtime.cognition.context.CognitiveContext(
+                observation = observation,
+                workingMemory = com.halo.runtime.cognition.workingmemory.WorkingMemorySnapshot(
+                    currentGoal = null,
+                    activeTask = null,
+                    latestObservation = observation,
+                    latestInterpretation = null,
+                    focusedPerson = null,
+                    currentLocation = null,
+                    recentKnowledge = emptyList()
+                ),
+                goals = emptyList(),
+                tasks = emptyList(),
+                timestamp = Instant.fromEpochMilliseconds(observation.timestamp)
+            )
+        )
         val interpretation = result.interpretation
         val createdAt = Instant.fromEpochMilliseconds(observation.timestamp)
 

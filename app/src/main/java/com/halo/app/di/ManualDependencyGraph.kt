@@ -85,12 +85,20 @@ object ManualDependencyGraph {
         )
     }
 
+    val contextAssembler by lazy {
+        com.halo.runtime.cognition.context.DefaultContextAssembler(
+            conversationStore = conversationStore,
+            blackboard = blackboard,
+            toolRegistry = toolRegistry
+        )
+    }
+
     val cognitiveSession by lazy {
         com.halo.runtime.cognition.session.CognitiveSession(
             eventBus,
-            blackboard,
             aiProviderRouter,
             conversationStore,
+            contextAssembler,
             toolRegistry,
             infra.scope
         )

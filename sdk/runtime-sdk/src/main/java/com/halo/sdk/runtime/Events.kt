@@ -43,6 +43,18 @@ data class TtsFailed(
     override val timestamp: Long = System.currentTimeMillis()
 ) : HaloEvent
 
+// Context Events
+data class ContextAssembled(
+    override val id: String = UUID.randomUUID().toString(),
+    val requestId: String,
+    val conversationCount: Int,
+    val recentEventCount: Int,
+    val memoryCount: Int,
+    val toolCount: Int,
+    val omissions: Int,
+    override val timestamp: Long = System.currentTimeMillis()
+) : HaloEvent
+
 // Tool Execution Events
 data class ToolCallRequested(
     override val id: String = UUID.randomUUID().toString(),

@@ -90,11 +90,12 @@ class CognitiveSessionToolTest {
         val store = InMemoryConversationStore()
         val registry = ToolRegistry(listOf(EchoToolExecutor()))
 
+        val assembler = com.halo.runtime.cognition.context.DefaultContextAssembler(store, blackboard, registry)
         val session = CognitiveSession(
             eventBus = eventBus,
-            blackboard = blackboard,
             providerRouter = router,
             conversationStore = store,
+            contextAssembler = assembler,
             toolRegistry = registry,
             scope = this
         )
@@ -127,11 +128,12 @@ class CognitiveSessionToolTest {
         val store = InMemoryConversationStore()
         val registry = ToolRegistry(listOf(EchoToolExecutor()))
 
+        val assembler = com.halo.runtime.cognition.context.DefaultContextAssembler(store, blackboard, registry)
         val session = CognitiveSession(
             eventBus = eventBus,
-            blackboard = blackboard,
             providerRouter = router,
             conversationStore = store,
+            contextAssembler = assembler,
             toolRegistry = registry,
             scope = this
         )
@@ -154,11 +156,12 @@ class CognitiveSessionToolTest {
         val store = InMemoryConversationStore()
         val registry = ToolRegistry(listOf(EchoToolExecutor()))
 
+        val assembler = com.halo.runtime.cognition.context.DefaultContextAssembler(store, blackboard, registry)
         val session = CognitiveSession(
             eventBus = eventBus,
-            blackboard = blackboard,
             providerRouter = router,
             conversationStore = store,
+            contextAssembler = assembler,
             toolRegistry = registry,
             scope = this
         )
@@ -187,11 +190,12 @@ class CognitiveSessionToolTest {
         val store = InMemoryConversationStore()
         val registry = ToolRegistry(listOf(EchoToolExecutor()))
 
+        val assembler = com.halo.runtime.cognition.context.DefaultContextAssembler(store, blackboard, registry)
         val session = CognitiveSession(
             eventBus = eventBus,
-            blackboard = blackboard,
             providerRouter = router,
             conversationStore = store,
+            contextAssembler = assembler,
             toolRegistry = registry,
             scope = this
         )
