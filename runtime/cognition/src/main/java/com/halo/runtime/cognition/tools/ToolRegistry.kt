@@ -46,6 +46,14 @@ class ToolRegistry(
             )
         }
 
+        if (estimateArgumentChars(toolCall.arguments) > ToolExecutionLimits.MAX_TOOL_ARGUMENT_TOTAL_CHARS) {
+            return ToolExecutionResult.Rejected(
+                toolCallId = toolCall.id,
+                toolId = toolCall.functionName,
+                reason = "Tool arguments exceed maximum total size"
+            )
+        }
+
         if (!contains(toolCall.functionName)) {
             return ToolExecutionResult.Rejected(
                 toolCallId = toolCall.id,
@@ -90,7 +98,7 @@ class ToolRegistry(
         }
 
         return try {
-            withTimeout(ToolExecutionLimits.MAX_TOOL_EXECUTION_TIME_MS) {
+            withTimeout(ToolExecutionLimits.MAX_TOOL_EXECUTION_TIMEOUT_MS) {
                 executor.execute(toolCall)
             }
         } catch (e: TimeoutCancellationException) {
@@ -106,14 +114,6 @@ class ToolRegistry(
                 toolCallId = toolCall.id,
                 toolId = toolCall.functionName,
                 message = t.message ?: "Tool execution failed"
-            )
-        }
-
-        if (estimateArgumentChars(toolCall.arguments) > ToolExecutionLimits.MAX_TOOL_ARGUMENT_TOTAL_CHARS) {
-            return ToolExecutionResult.Rejected(
-                toolCallId = toolCall.id,
-                toolId = toolCall.functionName,
-                reason = "Tool arguments exceed maximum total size"
             )
         }
     }

@@ -77,6 +77,41 @@ class AiProviderRouterTest {
     }
 
     @Test
+    fun `changing provider clears provider scoped model`() = runTest {
+        val storage = FakeStorage()
+
+        val p1 = MockProvider(
+            id = "p1",
+            displayName = "P1",
+            modelId = "model-p1"
+        )
+
+        val p2 = MockProvider(
+            id = "p2",
+            displayName = "P2",
+            modelId = "model-p2"
+        )
+
+        val router = DefaultAiProviderRouter(
+            listOf(p1, p2),
+            storage
+        )
+
+        router.selectProvider("p1")
+        router.selectModel("model-p1")
+
+        assertEquals(
+            "model-p1",
+            router.selectedModelId.value
+        )
+
+        router.selectProvider("p2")
+
+        assertNull(router.selectedModelId.value)
+        assertNull(storage.getString("active_ai_model"))
+    }
+
+    @Test
     fun `standby provider is not executable`() = runTest {
         val storage = FakeStorage()
         val provider = MockProvider("p1", "P1", initialStatus = ProviderStatus(ProviderStatus.State.STANDBY))
@@ -203,6 +238,48 @@ class AiProviderRouterTest {
 
         assertEquals("p2", response.providerId)
         assertEquals("model-b", fallback.receivedRequests.single().modelId)
+    }
+
+    @Test
+    fun `automatic routing skips provider with incompatible models`() = runTest {
+        val storage = FakeStorage()
+
+        val textProvider = MockProvider(
+            id = "p1",
+            displayName = "Text Provider",
+            supportedCapabilities = setOf(AiCapability.TEXT),
+            modelId = "text-model"
+        )
+
+        val usableProvider = MockProvider(
+            id = "p2",
+            displayName = "Image Provider",
+            supportedCapabilities = setOf(
+                AiCapability.TEXT,
+                AiCapability.IMAGE
+            ),
+            modelId = "vision-model"
+        )
+
+        val router = DefaultAiProviderRouter(
+            listOf(textProvider, usableProvider),
+            storage
+        )
+
+        router.setRoutingPolicy(AiRoutingPolicy.AUTOMATIC)
+
+        val response = router.execute(
+            AiRequest(
+                text = "What is this?",
+                image = byteArrayOf(1, 2, 3)
+            ),
+            AiContext.EMPTY
+        )
+
+        assertEquals(
+            "p2",
+            response.providerId
+        )
     }
 
     @Test

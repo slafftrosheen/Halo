@@ -10,4 +10,5 @@ object ToolExecutionLimits {
     const val MAX_TOOL_ARGUMENT_COLLECTION_ITEMS = 100
     const val MAX_TOOL_ARGUMENT_TOTAL_CHARS = 8_000
     const val MAX_TOOL_EXECUTION_TIME_MS = 10_000L
+    const val MAX_TOOL_EXECUTION_TIMEOUT_MS = 10_000L
 }

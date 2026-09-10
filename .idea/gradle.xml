@@ -59,6 +59,7 @@
             <option value="$PROJECT_DIR$/runtime/lifecycle" />
             <option value="$PROJECT_DIR$/runtime/observer" />
             <option value="$PROJECT_DIR$/runtime/plugins" />
+            <option value="$PROJECT_DIR$/runtime/provider-core" />
             <option value="$PROJECT_DIR$/runtime/queries" />
             <option value="$PROJECT_DIR$/runtime/registry" />
             <option value="$PROJECT_DIR$/runtime/scheduler" />
