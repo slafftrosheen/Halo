@@ -29,13 +29,21 @@ class DefaultAiProviderRouter(
     private val eventBus: EventBus? = null,
     private val logger: RuntimeLogger? = null
 ) : AiProviderRouter {
+    /** Compatibility constructor for tests/legacy callers; routing still derives a typed registry immediately. */
+    constructor(
+        providers: List<AiProvider>,
+        storage: Storage,
+        eventBus: EventBus? = null,
+        logger: RuntimeLogger? = null
+    ) : this(AiProviderRegistry.from(providers), storage, eventBus, logger)
+
     private val inferenceProviders: List<AiInferenceProvider> = providerRegistry.inference
     private val allProviders: List<AiProvider> = providerRegistry.all
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var pollingJob: Job? = null
 
     private val _selectedProviderId = MutableStateFlow(
-        storage.getString("active_ai_provider")?.takeIf { id -> inferenceProviders.any { it.id == id } }
+        storage.getString("active_ai_provider")?.takeIf { id -> allProviders.any { it.id == id } }
             ?: inferenceProviders.firstOrNull()?.id
     )
     override val selectedProviderId: StateFlow<String?> = _selectedProviderId.asStateFlow()
@@ -80,7 +88,7 @@ class DefaultAiProviderRouter(
     }
 
     override fun selectProvider(id: String) {
-        if (inferenceProviders.none { it.id == id }) return
+        if (allProviders.none { it.id == id }) return
         _selectedProviderId.value = id
         storage.putString("active_ai_provider", id)
         _selectedModelId.value = selectedModelsByProvider.value[id]
@@ -100,7 +108,7 @@ class DefaultAiProviderRouter(
         scope.launch { refreshDiagnostics() }
     }
 
-    /** UI/diagnostics can see both inference and handoff providers; execution never routes through handoff entries. */
+    /** UI/diagnostics can see both inference and handoff providers; execution only routes inference providers. */
     override fun getAllProviders(): List<AiProvider> = allProviders
 
     override suspend fun refreshDiagnostics(): List<AiProviderDiagnostic> {
@@ -130,19 +138,33 @@ class DefaultAiProviderRouter(
     override suspend fun getEligibleProvider(request: AiRequest): AiProvider = resolveExecutionTarget(request).provider
 
     override suspend fun resolveExecutionTarget(request: AiRequest): AiExecutionTarget {
-        val preferredProvider = inferenceProviders.firstOrNull { it.id == _selectedProviderId.value }
+        val selectedProvider = allProviders.firstOrNull { it.id == _selectedProviderId.value }
+        if (selectedProvider is AiHandoffProvider && selectedProvider !is AiInferenceProvider) {
+            if (_routingPolicy.value == AiRoutingPolicy.EXPLICIT) {
+                throw AiProviderException(
+                    AiErrorType.UNSUPPORTED_CAPABILITY,
+                    "Provider ${selectedProvider.id} is a handoff target, not a normal inference backend"
+                )
+            }
+        }
+        val preferredProvider = selectedProvider as? AiInferenceProvider
         return when (_routingPolicy.value) {
-            AiRoutingPolicy.EXPLICIT -> resolveExplicitTarget(preferredProvider, request)
+            AiRoutingPolicy.EXPLICIT -> resolveExplicitTarget(preferredProvider, selectedProvider, request)
             AiRoutingPolicy.PREFERRED_WITH_FALLBACK -> resolvePreferredWithFallbackTarget(preferredProvider, request)
             AiRoutingPolicy.LOCAL_ONLY -> resolveAutomaticTarget(preferredProvider, request, localOnly = true)
             AiRoutingPolicy.AUTOMATIC -> resolveAutomaticTarget(preferredProvider, request, localOnly = false)
         }
     }
 
-    private suspend fun resolveExplicitTarget(preferredProvider: AiInferenceProvider?, request: AiRequest): AiExecutionTarget {
+    private suspend fun resolveExplicitTarget(
+        preferredProvider: AiInferenceProvider?,
+        selectedProvider: AiProvider?,
+        request: AiRequest
+    ): AiExecutionTarget {
         val provider = preferredProvider ?: throw AiProviderException(
-            AiErrorType.PROVIDER_UNAVAILABLE,
-            "Explicitly selected provider not found: ${_selectedProviderId.value}"
+            if (selectedProvider is AiHandoffProvider) AiErrorType.UNSUPPORTED_CAPABILITY else AiErrorType.PROVIDER_UNAVAILABLE,
+            if (selectedProvider is AiHandoffProvider) "Provider ${selectedProvider.id} is a handoff target, not a normal inference backend"
+            else "Explicitly selected provider not found: ${_selectedProviderId.value}"
         )
         val status = provider.getStatus()
         if (status.state != ProviderStatus.State.READY) {
@@ -335,7 +357,7 @@ class DefaultAiProviderRouter(
                 "openrouter" -> storage.putString("openrouter_model", modelId)
                 "provider.ollama" -> storage.putString("ollama_model", modelId)
                 "provider.llamacpp.native" -> storage.putString("llamacpp_model", modelId)
-                else -> storage.putString("ai_model_$providerId", modelId)
+                else -> storage.putString("ai_model_${providerId}", modelId)
             }
         }
     }
