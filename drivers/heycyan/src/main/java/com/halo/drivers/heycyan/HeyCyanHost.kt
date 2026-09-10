@@ -41,6 +41,8 @@ class HeyCyanHost(
     init {
         scope.launch {
             val sm = sessionManager ?: return@launch
+            selectedAddress?.let { migrateLegacySavedDevice(sm, it) }
+
             val saved = sm.registry.getSavedDevices().filter { it.identity.deviceType == "HEYCYAN_GLASSES" }
             saved.forEach { ensureSessionRegistered(it.identity.deviceId) }
 
@@ -113,6 +115,25 @@ class HeyCyanHost(
             .launchIn(scope)
     }
 
+    private suspend fun migrateLegacySavedDevice(
+        manager: com.halo.sdk.runtime.embodiment.DeviceSessionManager,
+        address: String
+    ) {
+        val legacyId = "heycyan"
+        if (address.equals(legacyId, ignoreCase = true)) return
+        val legacy = manager.registry.getDevice(legacyId) ?: return
+        if (manager.registry.getDevice(address) != null) return
+
+        manager.registry.saveDevice(
+            legacy.copy(
+                identity = legacy.identity.copy(deviceId = address),
+                lastSeenMs = legacy.lastSeenMs
+            )
+        )
+        manager.registry.removeDevice(legacyId)
+        Log.i("HeyCyanHost", "Migrated legacy HeyCyan saved identity to $address")
+    }
+
     private fun ensureSessionRegistered(address: String) {
         val sm = sessionManager ?: return
         val bus = eventBus ?: return
@@ -132,6 +153,9 @@ class HeyCyanHost(
     fun setTargetDevice(address: String) {
         selectedAddress = address
         storage.putString("last_heycyan_address", address)
+        sessionManager?.let { manager ->
+            scope.launch { migrateLegacySavedDevice(manager, address) }
+        }
     }
 
     override suspend fun connect() {
