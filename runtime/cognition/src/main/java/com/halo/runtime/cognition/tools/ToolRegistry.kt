@@ -2,6 +2,9 @@ package com.halo.runtime.cognition.tools
 
 import com.halo.sdk.provider.ToolCall
 import com.halo.sdk.provider.ToolDefinition
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.withTimeout
 
 /**
  * Registry of executable runtime tools.
@@ -34,16 +37,13 @@ class ToolRegistry(
         toolCall: ToolCall
     ): ToolExecutionResult.Rejected? {
 
-        for ((key, value) in toolCall.arguments) {
-            if (value is String &&
-                value.length > ToolExecutionLimits.MAX_TOOL_ARGUMENT_STRING_CHARS
-            ) {
-                return ToolExecutionResult.Rejected(
-                    toolCallId = toolCall.id,
-                    toolId = toolCall.functionName,
-                    reason = "Argument '$key' exceeds maximum length limit"
-                )
-            }
+        val argumentViolation = validateArgumentValue(toolCall.arguments, depth = 0)
+        if (argumentViolation != null) {
+            return ToolExecutionResult.Rejected(
+                toolCallId = toolCall.id,
+                toolId = toolCall.functionName,
+                reason = argumentViolation
+            )
         }
 
         if (!contains(toolCall.functionName)) {
@@ -90,7 +90,17 @@ class ToolRegistry(
         }
 
         return try {
-            executor.execute(toolCall)
+            withTimeout(ToolExecutionLimits.MAX_TOOL_EXECUTION_TIME_MS) {
+                executor.execute(toolCall)
+            }
+        } catch (e: TimeoutCancellationException) {
+            ToolExecutionResult.Failed(
+                toolCallId = toolCall.id,
+                toolId = toolCall.functionName,
+                message = "Tool execution timed out"
+            )
+        } catch (e: CancellationException) {
+            throw e
         } catch (t: Throwable) {
             ToolExecutionResult.Failed(
                 toolCallId = toolCall.id,
@@ -98,5 +108,55 @@ class ToolRegistry(
                 message = t.message ?: "Tool execution failed"
             )
         }
+
+        if (estimateArgumentChars(toolCall.arguments) > ToolExecutionLimits.MAX_TOOL_ARGUMENT_TOTAL_CHARS) {
+            return ToolExecutionResult.Rejected(
+                toolCallId = toolCall.id,
+                toolId = toolCall.functionName,
+                reason = "Tool arguments exceed maximum total size"
+            )
+        }
+    }
+
+    private fun validateArgumentValue(value: Any?, depth: Int): String? {
+        if (depth > ToolExecutionLimits.MAX_TOOL_ARGUMENT_DEPTH) {
+            return "Tool arguments exceed maximum nesting depth"
+        }
+
+        return when (value) {
+            is String -> if (value.length > ToolExecutionLimits.MAX_TOOL_ARGUMENT_STRING_CHARS) {
+                "Tool argument exceeds maximum string length"
+            } else {
+                null
+            }
+            is Map<*, *> -> {
+                if (value.size > ToolExecutionLimits.MAX_TOOL_ARGUMENT_COLLECTION_ITEMS) {
+                    "Tool arguments exceed maximum collection size"
+                } else {
+                    value.entries.firstNotNullOfOrNull { (key, nested) ->
+                        validateArgumentValue(key, depth + 1) ?: validateArgumentValue(nested, depth + 1)
+                    }
+                }
+            }
+            is Iterable<*> -> {
+                val values = value.toList()
+                if (values.size > ToolExecutionLimits.MAX_TOOL_ARGUMENT_COLLECTION_ITEMS) {
+                    "Tool arguments exceed maximum collection size"
+                } else {
+                    values.firstNotNullOfOrNull { validateArgumentValue(it, depth + 1) }
+                }
+            }
+            is Array<*> -> validateArgumentValue(value.asList(), depth)
+            else -> null
+        }
+    }
+
+    private fun estimateArgumentChars(value: Any?): Int = when (value) {
+        null -> 0
+        is String -> value.length
+        is Map<*, *> -> value.entries.sumOf { estimateArgumentChars(it.key) + estimateArgumentChars(it.value) }
+        is Iterable<*> -> value.sumOf(::estimateArgumentChars)
+        is Array<*> -> value.sumOf(::estimateArgumentChars)
+        else -> value.toString().length
     }
 }

@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.CancellationException
 import android.util.Log
 
 class OpenRouterProvider(
@@ -84,15 +85,7 @@ class OpenRouterProvider(
 
         try {
             client.newCall(httpRequest).execute().use { response ->
-                if (!response.isSuccessful) {
-                    val errorType = when (response.code) {
-                        401, 403 -> AiErrorType.AUTHENTICATION_FAILED
-                        429 -> AiErrorType.RATE_LIMITED
-                        500, 502, 503, 504 -> AiErrorType.PROVIDER_UNAVAILABLE
-                        else -> AiErrorType.UNKNOWN_ERROR
-                    }
-                    throw AiProviderException(errorType, "OpenRouter API error: ${response.code}")
-                }
+                if (!response.isSuccessful) throw httpError(response.code)
                 
                 val responseBody = response.body?.string() ?: throw AiProviderException(AiErrorType.INVALID_RESPONSE, "Empty response")
             val responseJson = JSONObject(responseBody)
@@ -153,9 +146,12 @@ class OpenRouterProvider(
 
         try {
             client.newCall(httpRequest).execute().use { response ->
-                if (!response.isSuccessful) throw RuntimeException("Stream failed: ${response.code}")
+                if (!response.isSuccessful) throw httpError(response.code)
                 
                 val source = response.body?.source() ?: throw RuntimeException("No body")
+                val accumulatedText = StringBuilder()
+                val assembledToolCalls = linkedMapOf<Int, StreamToolCall>()
+                var finishReason: String? = null
                 while (!source.exhausted()) {
                     val line = source.readUtf8Line() ?: break
                     if (line.startsWith("data: ")) {
@@ -168,16 +164,33 @@ class OpenRouterProvider(
                             val delta = choices.getJSONObject(0).getJSONObject("delta")
                             val text = delta.optString("content")
                             if (text.isNotEmpty()) {
+                                accumulatedText.append(text)
                                 emit(AiStreamEvent.Token(text))
                             }
+
+                            finishReason = choices.getJSONObject(0)
+                                .optString("finish_reason")
+                                .takeIf { it.isNotBlank() }
+                                ?: finishReason
                             
                             val toolCalls = delta.optJSONArray("tool_calls")
                             if (toolCalls != null) {
                                 for (i in 0 until toolCalls.length()) {
                                     val tc = toolCalls.getJSONObject(i)
                                     val func = tc.optJSONObject("function")
+                                    val index = tc.getInt("index")
+                                    val assembled = assembledToolCalls.getOrPut(index) {
+                                        StreamToolCall(
+                                            id = tc.optString("id").ifBlank { "tool-$index" }
+                                        )
+                                    }
+                                    func?.optString("name")
+                                        ?.takeIf { it.isNotBlank() }
+                                        ?.let { assembled.name = it }
+                                    func?.optString("arguments")
+                                        ?.let { assembled.arguments.append(it) }
                                     emit(AiStreamEvent.ToolCallDelta(
-                                        index = tc.getInt("index"),
+                                        index = index,
                                         name = func?.optString("name"),
                                         argumentsDelta = func?.optString("arguments")
                                     ))
@@ -186,10 +199,35 @@ class OpenRouterProvider(
                         }
                     }
                 }
+
+                emit(
+                    AiStreamEvent.Completed(
+                        AiResponse(
+                            text = accumulatedText.toString(),
+                            toolCalls = assembledToolCalls.values.mapNotNull { call ->
+                                call.name?.let { name ->
+                                    ToolCall(call.id, name, parseArguments(call.arguments.toString()))
+                                }
+                            },
+                            finishReason = finishReason,
+                            providerId = id,
+                            modelId = actualModel
+                        )
+                    )
+                )
             }
-            // Logic for completing the stream would go here (assembling the full response)
-        } catch (e: Exception) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: AiProviderException) {
             emit(AiStreamEvent.Failed(e))
+        } catch (e: java.net.SocketTimeoutException) {
+            emit(AiStreamEvent.Failed(AiProviderException(AiErrorType.TIMEOUT, "Request timed out", e)))
+        } catch (e: java.net.UnknownHostException) {
+            emit(AiStreamEvent.Failed(AiProviderException(AiErrorType.NETWORK_UNAVAILABLE, "Network unavailable", e)))
+        } catch (e: org.json.JSONException) {
+            emit(AiStreamEvent.Failed(AiProviderException(AiErrorType.INVALID_RESPONSE, "Failed to parse stream response", e)))
+        } catch (e: Exception) {
+            emit(AiStreamEvent.Failed(AiProviderException(AiErrorType.UNKNOWN_ERROR, "OpenRouter stream failed", e)))
         }
     }.flowOn(Dispatchers.IO)
 
@@ -256,10 +294,26 @@ class OpenRouterProvider(
 
         // Conversation history
         context.conversation.forEach { msg ->
-            messages.put(JSONObject().apply {
+            val message = JSONObject().apply {
                 put("role", msg.role.name.lowercase())
                 put("content", msg.content)
-            })
+                msg.toolCallId?.let { put("tool_call_id", it) }
+                if (msg.toolCalls.isNotEmpty()) {
+                    put("tool_calls", JSONArray().apply {
+                        msg.toolCalls.forEach { call ->
+                            put(JSONObject().apply {
+                                put("id", call.id)
+                                put("type", "function")
+                                put("function", JSONObject().apply {
+                                    put("name", call.functionName)
+                                    put("arguments", JSONObject(call.arguments).toString())
+                                })
+                            })
+                        }
+                    })
+                }
+            }
+            messages.put(message)
         }
 
         // Current user input
@@ -274,7 +328,8 @@ class OpenRouterProvider(
                 array.put(JSONObject().apply {
                     put("type", "image_url")
                     put("image_url", JSONObject().apply {
-                        put("url", "data:image/jpeg;base64,${android.util.Base64.encodeToString(request.image, android.util.Base64.NO_WRAP)}")
+                        val mimeType = request.mimeTypes.firstOrNull() ?: "image/jpeg"
+                        put("url", "data:$mimeType;base64,${android.util.Base64.encodeToString(request.image, android.util.Base64.NO_WRAP)}")
                     })
                 })
                 array
@@ -302,7 +357,7 @@ class OpenRouterProvider(
                         put("function", JSONObject().apply {
                             put("name", tool.id)
                             put("description", tool.description)
-                            // Map parameters if needed
+                            put("parameters", JSONObject(tool.parameters))
                         })
                     })
                 }
@@ -333,4 +388,20 @@ class OpenRouterProvider(
             emptyMap()
         }
     }
+
+    private fun httpError(statusCode: Int): AiProviderException {
+        val errorType = when (statusCode) {
+            401, 403 -> AiErrorType.AUTHENTICATION_FAILED
+            429 -> AiErrorType.RATE_LIMITED
+            500, 502, 503, 504 -> AiErrorType.PROVIDER_UNAVAILABLE
+            else -> AiErrorType.UNKNOWN_ERROR
+        }
+        return AiProviderException(errorType, "OpenRouter API error: $statusCode")
+    }
+
+    private class StreamToolCall(
+        val id: String,
+        var name: String? = null,
+        val arguments: StringBuilder = StringBuilder()
+    )
 }

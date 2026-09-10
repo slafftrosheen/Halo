@@ -219,10 +219,7 @@ class DefaultContextAssembler(
             val supportsImages =
                 capabilities.contains(
                     AiCapability.IMAGE
-                ) ||
-                    capabilities.contains(
-                        AiCapability.MULTIMODAL
-                    )
+                )
 
             if (!supportsImages) {
 
@@ -230,7 +227,7 @@ class DefaultContextAssembler(
                     ContextOmission(
                         source = "IMAGE",
                         reason =
-                            "Provider lacks IMAGE/MULTIMODAL capability"
+                            "Provider lacks IMAGE capability"
                     )
 
             } else {

@@ -494,11 +494,15 @@ class CognitiveSession(
                 )
             }
 
-            val calls =
-                response.toolCalls.take(
-                    ToolExecutionLimits
-                        .MAX_TOOL_CALLS_PER_ROUND
+            if (response.toolCalls.size > ToolExecutionLimits.MAX_TOOL_CALLS_PER_ROUND) {
+                throw AiProviderException(
+                    AiErrorType.INVALID_RESPONSE,
+                    "Provider returned ${response.toolCalls.size} tool calls; maximum is " +
+                        ToolExecutionLimits.MAX_TOOL_CALLS_PER_ROUND
                 )
+            }
+
+            val calls = response.toolCalls
 
             _state.value =
                 CognitiveSessionState.ExecutingTool(
@@ -574,7 +578,8 @@ class CognitiveSession(
                         AIMessage(
                             role = Role.TOOL,
                             content =
-                                "Tool execution rejected: $reason"
+                                "Tool execution rejected: $reason",
+                            toolCallId = toolCall.id
                         )
                     )
 
@@ -607,11 +612,12 @@ class CognitiveSession(
                         )
 
                         toolMessages.add(
-                            AIMessage(
-                                role = Role.TOOL,
-                                content =
-                                    "Tool execution rejected: " +
-                                        authorization.reason
+                        AIMessage(
+                            role = Role.TOOL,
+                            content =
+                                "Tool execution rejected: " +
+                                    authorization.reason,
+                            toolCallId = toolCall.id
                             )
                         )
 
@@ -662,13 +668,14 @@ class CognitiveSession(
                         )
 
                         toolMessages.add(
-                            AIMessage(
-                                role = Role.TOOL,
-                                content =
+                        AIMessage(
+                            role = Role.TOOL,
+                            content =
                                     result.output.take(
                                         ToolExecutionLimits
                                             .MAX_TOOL_OUTPUT_CHARS
-                                    )
+                                    ),
+                            toolCallId = toolCall.id
                             )
                         )
                     }
@@ -685,11 +692,12 @@ class CognitiveSession(
                         )
 
                         toolMessages.add(
-                            AIMessage(
-                                role = Role.TOOL,
-                                content =
-                                    "Tool execution rejected: " +
-                                        result.reason
+                        AIMessage(
+                            role = Role.TOOL,
+                            content =
+                                "Tool execution rejected: " +
+                                    result.reason,
+                            toolCallId = toolCall.id
                             )
                         )
                     }
@@ -706,11 +714,12 @@ class CognitiveSession(
                         )
 
                         toolMessages.add(
-                            AIMessage(
-                                role = Role.TOOL,
-                                content =
-                                    "Tool execution failed: " +
-                                        result.message
+                        AIMessage(
+                            role = Role.TOOL,
+                            content =
+                                "Tool execution failed: " +
+                                    result.message,
+                            toolCallId = toolCall.id
                             )
                         )
                     }
@@ -727,11 +736,12 @@ class CognitiveSession(
                         currentContext.conversation
                     )
 
-                    if (response.text.isNotBlank()) {
+                    if (response.text.isNotBlank() || response.toolCalls.isNotEmpty()) {
                         add(
                             AIMessage(
                                 role = Role.ASSISTANT,
-                                content = response.text
+                                content = response.text,
+                                toolCalls = response.toolCalls
                             )
                         )
                     }

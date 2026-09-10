@@ -193,7 +193,7 @@ class ContextAssemblerTest {
         val assembler = DefaultContextAssembler(store, blackboard)
         val result = assembler.assemble(
             policy = AiContextPolicy(includeImages = true),
-            capabilities = setOf(AiCapability.TEXT, AiCapability.MULTIMODAL)
+            capabilities = setOf(AiCapability.TEXT, AiCapability.IMAGE)
         )
 
         assertTrue(result.omissions.any { it.source == "IMAGE" && it.reason.contains("stale") })

@@ -17,12 +17,12 @@ class AiRequestCapabilityValidationTest {
     }
 
     @Test
-    fun `multimodal capability accepts bound inputs`() {
+    fun `explicit capabilities accept bound inputs`() {
         AiRequest(
             text = "describe this",
             image = byteArrayOf(1),
             audio = byteArrayOf(2),
             video = byteArrayOf(3)
-        ).validateAgainst(setOf(AiCapability.MULTIMODAL))
+        ).validateAgainst(setOf(AiCapability.TEXT, AiCapability.IMAGE, AiCapability.AUDIO, AiCapability.VIDEO))
     }
 }

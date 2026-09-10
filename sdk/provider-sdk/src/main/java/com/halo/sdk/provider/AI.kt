@@ -9,7 +9,11 @@ enum class Role {
 
 data class AIMessage(
     val role: Role,
-    val content: String
+    val content: String,
+    /** Tool calls emitted by an assistant message, preserved for provider protocols. */
+    val toolCalls: List<ToolCall> = emptyList(),
+    /** Correlates a TOOL result with the assistant tool call that requested it. */
+    val toolCallId: String? = null
 )
 
 /**
@@ -51,8 +55,7 @@ fun AiRequest.validateForTextGeneration() {
  */
 fun AiRequest.validateAgainst(capabilities: Set<AiCapability>) {
     fun supports(capability: AiCapability): Boolean =
-        capabilities.contains(capability) ||
-            capabilities.contains(AiCapability.MULTIMODAL)
+        capabilities.contains(capability)
 
     fun requireSupported(present: Boolean, capability: AiCapability, label: String) {
         if (present && !supports(capability)) {

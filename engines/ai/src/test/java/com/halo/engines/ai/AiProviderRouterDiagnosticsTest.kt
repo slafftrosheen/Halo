@@ -50,7 +50,7 @@ class AiProviderRouterDiagnosticsTest {
 
         override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = emptyFlow()
         override suspend fun listModels() = listOf(
-            AiModel(id = "m1", displayName = "Model 1", providerId = id, inputCapabilities = setOf(AiCapability.TEXT), contextLength = 4096, supportsStreaming = true, supportsTools = false)
+            AiModel(id = "test-model", displayName = "Model 1", providerId = id, inputCapabilities = setOf(AiCapability.TEXT), contextLength = 4096, supportsStreaming = true, supportsTools = false)
         )
     }
 

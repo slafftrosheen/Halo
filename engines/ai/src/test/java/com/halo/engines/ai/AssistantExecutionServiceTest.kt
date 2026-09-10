@@ -37,7 +37,9 @@ class AssistantExecutionServiceTest {
             return AiResponse(text = responseText, providerId = id)
         }
         override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = emptyFlow()
-        override suspend fun listModels() = emptyList<AiModel>()
+        override suspend fun listModels() = listOf(
+            AiModel("test-model", "Test Model", id, setOf(AiCapability.TEXT), 4096, false, false)
+        )
     }
 
     @Test

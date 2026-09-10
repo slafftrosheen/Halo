@@ -7,11 +7,19 @@ import com.halo.sdk.runtime.Memory
 /**
  * Definition of a tool/capability available to the AI.
  */
+enum class ToolRisk {
+    SAFE,
+    CONFIRMATION_REQUIRED,
+    DEVICE_CONTROL,
+    DANGEROUS
+}
+
 data class ToolDefinition(
     val id: String,
     val name: String,
     val description: String,
-    val parameters: Map<String, Any> = emptyMap()
+    val parameters: Map<String, Any> = emptyMap(),
+    val risk: ToolRisk = ToolRisk.SAFE
 )
 
 /**

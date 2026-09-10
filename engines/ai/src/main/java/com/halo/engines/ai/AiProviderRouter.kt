@@ -77,8 +77,16 @@ class DefaultAiProviderRouter(
 
     override fun selectProvider(id: String) {
         if (providers.any { it.id == id }) {
+            val providerChanged = _selectedProviderId.value != id
             _selectedProviderId.value = id
             storage.putString("active_ai_provider", id)
+            if (providerChanged) {
+                // A model ID is provider-scoped. Never carry an unverified
+                // selection across providers; the caller must select one of
+                // the new provider's advertised models.
+                _selectedModelId.value = null
+                storage.putString("active_ai_model", null)
+            }
             scope.launch {
                 runCatching { providers.find { it.id == id }?.getStatus() }
             }
@@ -161,15 +169,16 @@ class DefaultAiProviderRouter(
 
         if (policy == AiRoutingPolicy.EXPLICIT) {
             val provider = getEligibleProvider(request)
-            val finalRequest = bindSelectedModel(request)
+            val target = resolveExecutionTarget(provider, request)
+            val finalRequest = request.copy(modelId = target.modelId)
             val requestId = UUID.randomUUID().toString()
 
             logger?.info("AiProviderRouter", "AI execute start provider=${provider.id} model=${finalRequest.modelId}")
             eventBus?.publish(ProviderRequest(requestId = requestId, providerId = provider.id))
             return try {
-                finalRequest.validateAgainst(provider.getCapabilities())
+                validateRequestAgainstTarget(finalRequest, target)
                 val response = provider.generate(finalRequest, context)
-                validateResponse(provider, finalRequest.modelId, response)
+                validateResponse(target, response)
                 logger?.info("AiProviderRouter", "AI execute complete provider=${response.providerId} model=${response.modelId} chars=${response.text.length}")
                 eventBus?.publish(ProviderResult(requestId = requestId, success = true))
                 response
@@ -195,15 +204,16 @@ class DefaultAiProviderRouter(
             throw AiProviderException(AiErrorType.PROVIDER_UNAVAILABLE, reason)
         }
 
-        val finalRequest = bindSelectedModel(request)
+        val target = resolveExecutionTarget(provider, request)
+        val finalRequest = request.copy(modelId = target.modelId)
         val requestId = UUID.randomUUID().toString()
 
         logger?.info("AiProviderRouter", "AI execute start provider=${provider.id} model=${finalRequest.modelId}")
         eventBus?.publish(ProviderRequest(requestId = requestId, providerId = provider.id))
         return try {
-            finalRequest.validateAgainst(provider.getCapabilities())
+            validateRequestAgainstTarget(finalRequest, target)
             val response = provider.generate(finalRequest, context)
-            validateResponse(provider, finalRequest.modelId, response)
+            validateResponse(target, response)
             logger?.info("AiProviderRouter", "AI execute complete provider=${response.providerId} model=${response.modelId} chars=${response.text.length}")
             eventBus?.publish(ProviderResult(requestId = requestId, success = true))
             response
@@ -214,12 +224,18 @@ class DefaultAiProviderRouter(
             if (policy == AiRoutingPolicy.PREFERRED_WITH_FALLBACK || policy == AiRoutingPolicy.AUTOMATIC) {
                 val fallbackProvider = getFallbackProvider(provider, request, policy)
                 if (fallbackProvider != null) {
+                    val fallbackTarget = resolveExecutionTarget(
+                        provider = fallbackProvider,
+                        request = request,
+                        preferSelectedModel = false
+                    )
+                    val fallbackRequest = request.copy(modelId = fallbackTarget.modelId)
                     val fallbackRequestId = UUID.randomUUID().toString()
                     eventBus?.publish(ProviderRequest(requestId = fallbackRequestId, providerId = fallbackProvider.id))
                     try {
-                        finalRequest.validateAgainst(fallbackProvider.getCapabilities())
-                        val fallbackResp = fallbackProvider.generate(finalRequest, context)
-                        validateResponse(fallbackProvider, finalRequest.modelId, fallbackResp)
+                        validateRequestAgainstTarget(fallbackRequest, fallbackTarget)
+                        val fallbackResp = fallbackProvider.generate(fallbackRequest, context)
+                        validateResponse(fallbackTarget, fallbackResp)
                         eventBus?.publish(ProviderResult(requestId = fallbackRequestId, success = true))
                         return fallbackResp
                     } catch (fbErr: CancellationException) {
@@ -234,25 +250,74 @@ class DefaultAiProviderRouter(
         }
     }
 
-    private suspend fun validateResponse(
-        provider: AiProvider,
-        expectedModelId: String?,
+    private fun validateResponse(
+        target: ProviderExecutionTarget,
         response: AiResponse
     ) {
-        val modelId = expectedModelId
-            ?: throw AiProviderException(AiErrorType.MODEL_NOT_SELECTED, "No AI model selected")
-        val capabilities = provider.getCapabilities()
-        response.let { AiResponseValidator.validate(provider, capabilities, modelId, it) }
+        AiResponseValidator.validate(
+            provider = target.provider,
+            capabilities = target.capabilities,
+            expectedModelId = target.modelId,
+            response = response
+        )
     }
 
-    private fun bindSelectedModel(request: AiRequest): AiRequest {
-        val modelId = request.modelId
-            ?: _selectedModelId.value
-            ?: throw AiProviderException(
+    private data class ProviderExecutionTarget(
+        val provider: AiProvider,
+        val modelId: String,
+        val model: AiModel,
+        val capabilities: Set<AiCapability>
+    )
+
+    private suspend fun resolveExecutionTarget(
+        provider: AiProvider,
+        request: AiRequest,
+        preferSelectedModel: Boolean = true
+    ): ProviderExecutionTarget {
+        val capabilities = provider.getCapabilities()
+        val models = provider.listModels()
+        val requestedModelId = request.modelId ?: _selectedModelId.value
+
+        val model = when {
+            requestedModelId == null -> throw AiProviderException(
                 AiErrorType.MODEL_NOT_SELECTED,
-                "No AI model selected"
+                "No AI model selected for provider ${provider.id}"
             )
-        return request.copy(modelId = modelId)
+            preferSelectedModel -> models.firstOrNull { it.id == requestedModelId }
+                ?: throw AiProviderException(
+                    AiErrorType.MODEL_NOT_FOUND,
+                    "Model $requestedModelId is not available from provider ${provider.id}"
+                )
+            else -> models.firstOrNull { it.id == requestedModelId && supportsModelInput(it, request) }
+                ?: models.firstOrNull { supportsModelInput(it, request) }
+                ?: throw AiProviderException(
+                    AiErrorType.MODEL_NOT_FOUND,
+                    "Provider ${provider.id} has no model compatible with this request"
+                )
+        }
+
+        return ProviderExecutionTarget(provider, model.id, model, capabilities)
+    }
+
+    private fun validateRequestAgainstTarget(
+        request: AiRequest,
+        target: ProviderExecutionTarget
+    ) {
+        request.validateAgainst(target.capabilities)
+        if (!supportsModelInput(target.model, request)) {
+            throw AiProviderException(
+                AiErrorType.UNSUPPORTED_CAPABILITY,
+                "Model ${target.modelId} does not support this request"
+            )
+        }
+    }
+
+    private fun supportsModelInput(model: AiModel, request: AiRequest): Boolean {
+        val capabilities = model.inputCapabilities
+        return (request.text.isNullOrBlank() || capabilities.contains(AiCapability.TEXT)) &&
+            (request.image == null || capabilities.contains(AiCapability.IMAGE)) &&
+            (request.audio == null || capabilities.contains(AiCapability.AUDIO)) &&
+            (request.video == null || capabilities.contains(AiCapability.VIDEO))
     }
 
     private data class ProviderRejection(val providerId: String, val reason: String)
@@ -283,10 +348,10 @@ class DefaultAiProviderRouter(
 
             val caps = provider.getCapabilities()
             val unsupported = mutableListOf<String>()
-            if (request.text != null && !caps.contains(AiCapability.TEXT) && !caps.contains(AiCapability.MULTIMODAL)) unsupported.add("TEXT")
-            if (request.image != null && !caps.contains(AiCapability.IMAGE) && !caps.contains(AiCapability.MULTIMODAL)) unsupported.add("IMAGE")
-            if (request.audio != null && !caps.contains(AiCapability.AUDIO) && !caps.contains(AiCapability.MULTIMODAL)) unsupported.add("AUDIO")
-            if (request.video != null && !caps.contains(AiCapability.VIDEO) && !caps.contains(AiCapability.MULTIMODAL)) unsupported.add("VIDEO")
+            if (request.text != null && !caps.contains(AiCapability.TEXT)) unsupported.add("TEXT")
+            if (request.image != null && !caps.contains(AiCapability.IMAGE)) unsupported.add("IMAGE")
+            if (request.audio != null && !caps.contains(AiCapability.AUDIO)) unsupported.add("AUDIO")
+            if (request.video != null && !caps.contains(AiCapability.VIDEO)) unsupported.add("VIDEO")
             
             if (unsupported.isNotEmpty()) {
                 rejections.add(ProviderRejection(provider.id, "Missing capabilities: ${unsupported.joinToString()}"))
@@ -344,10 +409,10 @@ class DefaultAiProviderRouter(
 
     private suspend fun supports(provider: AiProvider, request: AiRequest): Boolean {
         val caps = provider.getCapabilities()
-        if (request.text != null && !caps.contains(AiCapability.TEXT) && !caps.contains(AiCapability.MULTIMODAL)) return false
-        if (request.image != null && !caps.contains(AiCapability.IMAGE) && !caps.contains(AiCapability.MULTIMODAL)) return false
-        if (request.audio != null && !caps.contains(AiCapability.AUDIO) && !caps.contains(AiCapability.MULTIMODAL)) return false
-        if (request.video != null && !caps.contains(AiCapability.VIDEO) && !caps.contains(AiCapability.MULTIMODAL)) return false
+        if (request.text != null && !caps.contains(AiCapability.TEXT)) return false
+        if (request.image != null && !caps.contains(AiCapability.IMAGE)) return false
+        if (request.audio != null && !caps.contains(AiCapability.AUDIO)) return false
+        if (request.video != null && !caps.contains(AiCapability.VIDEO)) return false
         return true
     }
 }
