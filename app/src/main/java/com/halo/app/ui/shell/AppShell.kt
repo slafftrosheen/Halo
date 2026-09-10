@@ -9,15 +9,15 @@ import androidx.compose.material.icons.filled.Devices
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import androidx.navigation.NavType
-import androidx.compose.material3.Scaffold
 import com.halo.app.di.ManualDependencyGraph
 import com.halo.app.ui.developer.console.ConsoleScreen
 import com.halo.app.ui.developer.inspector.RuntimeInspectorScreen
@@ -32,11 +32,10 @@ import com.halo.app.ui.screens.devices.HeyCyanControlScreen
 import com.halo.app.ui.screens.discovery.PairingScreen
 import com.halo.app.ui.screens.home.HomeScreen
 import com.halo.app.ui.screens.settings.IntelligenceScreen
-import com.halo.app.ui.screens.settings.PermissionsScreen
 import com.halo.app.ui.screens.settings.SettingsScreen
 import kotlinx.coroutines.flow.collectLatest
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 
 sealed class Screen(val route: String, val title: String, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
     data object Home : Screen("home", "Home", Icons.Default.Home)
@@ -63,6 +62,9 @@ fun AppShell() {
         }
     }
 
+    LaunchedEffect(Unit) {
+        settingsViewModel.navigationEvents.collectLatest(::navigateSafely)
+    }
     LaunchedEffect(Unit) {
         intelligenceViewModel.navigationEvents.collectLatest(::navigateSafely)
     }
@@ -99,34 +101,34 @@ fun AppShell() {
                     ActivityScreen(ManualDependencyGraph.activityViewModel)
                 }
                 composable(Screen.Devices.route) {
-                    DevicesScreen(ManualDependencyGraph.devicesViewModel)
+                    DevicesScreen(devicesViewModel)
                 }
                 composable("device/{deviceId}", arguments = listOf(navArgument("deviceId") { type = NavType.StringType })) { entry ->
                     val deviceId = entry.arguments?.getString("deviceId")
-                    val devicesState by ManualDependencyGraph.devicesViewModel.uiState.collectAsState()
+                    val devicesState by devicesViewModel.uiState.collectAsState()
                     val deviceType = devicesState.devices.firstOrNull { it.id == deviceId }?.type.orEmpty()
                     when {
                         deviceId == null -> navController.popBackStack()
                         deviceType.contains("BuddyBot", ignoreCase = true) -> BuddyBotControlScreen(
                             deviceId = deviceId,
-                            viewModel = ManualDependencyGraph.devicesViewModel,
+                            viewModel = devicesViewModel,
                             onBack = { navController.popBackStack() }
                         )
                         deviceType.contains("HeyCyan", ignoreCase = true) ||
                             deviceType.contains("Glasses", ignoreCase = true) -> HeyCyanControlScreen(
                             deviceId = deviceId,
-                            viewModel = ManualDependencyGraph.devicesViewModel,
+                            viewModel = devicesViewModel,
                             onBack = { navController.popBackStack() }
                         )
                         else -> navController.popBackStack()
                     }
                 }
                 composable(Screen.Settings.route) {
-                    SettingsScreen(ManualDependencyGraph.settingsViewModel)
+                    SettingsScreen(settingsViewModel)
                 }
                 composable("ai_settings") {
                     IntelligenceScreen(
-                        viewModel = ManualDependencyGraph.intelligenceViewModel,
+                        viewModel = intelligenceViewModel,
                         onBack = { navController.popBackStack() }
                     )
                 }
@@ -134,7 +136,7 @@ fun AppShell() {
                     PermissionsScreen(onBack = { navController.popBackStack() })
                 }
                 composable("discovery") {
-                    PairingScreen(ManualDependencyGraph.pairingViewModel)
+                    PairingScreen(pairingViewModel)
                 }
                 composable("console") {
                     ConsoleScreen(ManualDependencyGraph.consoleViewModel, onBack = { navController.popBackStack() })
