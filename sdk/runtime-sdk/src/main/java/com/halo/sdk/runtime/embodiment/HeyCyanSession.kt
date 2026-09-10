@@ -199,8 +199,7 @@ class HeyCyanSession(
         operation: HeyCyanOperation,
     ) {
         fun ObservationUpdated.belongsToThisDevice(): Boolean =
-            observation.sourceDeviceId == identity.deviceId ||
-                observation.sourceDeviceId == "heycyan"
+            observation.sourceDeviceId == identity.deviceId
 
         fun ObservationUpdated.modeString(): String? =
             observation.metadata["mode"]?.toString()

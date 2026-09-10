@@ -12,4 +12,5 @@ dependencies {
     implementation(project(":runtime:cognition"))
     implementation(libs.moshi.kotlin)
     implementation(libs.moshi.adapters)
+    testImplementation(libs.junit)
 }

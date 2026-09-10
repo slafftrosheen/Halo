@@ -102,6 +102,74 @@ class HeyCyanSessionTest {
         assertEquals("intent-timeout", failedEvent?.result?.intentId)
     }
 
+    @Test
+    fun modeChangedFromAnotherDeviceDoesNotCompletePhoto() = runTest {
+        val session = HeyCyanSession(identity, controller, transport, eventBus, coroutineContext = UnconfinedTestDispatcher(testScheduler))
+        transport.emitState(TransportConnectionState.CONNECTED)
+        advanceUntilIdle()
+
+        val intent = EmbodimentIntent(
+            intentId = "intent-1",
+            kind = IntentKind.CAPTURE_PHOTO,
+            targetDeviceId = "test-id"
+        )
+
+        session.dispatch(intent)
+
+        eventBus.publish(
+            ObservationUpdated(
+                observation = Observation(
+                    modality = Modality.SYSTEM,
+                    source = Source.BLUETOOTH,
+                    payload = SystemObservationPayload("MODE_CHANGED"),
+                    sourceDeviceId = "other-device-id",
+                    metadata = mapOf("event" to "MODE_CHANGED", "mode" to 1)
+                )
+            )
+        )
+
+        advanceUntilIdle()
+
+        val succeededEvent = eventBus.events.find {
+            (it as? EmbodimentExecutionEvent)?.result?.status == ExecutionStatus.SUCCEEDED
+        }
+        assertEquals(null, succeededEvent)
+    }
+
+    @Test
+    fun modeChangedFromThisDeviceCompletesPhoto() = runTest {
+        val session = HeyCyanSession(identity, controller, transport, eventBus, coroutineContext = UnconfinedTestDispatcher(testScheduler))
+        transport.emitState(TransportConnectionState.CONNECTED)
+        advanceUntilIdle()
+
+        val intent = EmbodimentIntent(
+            intentId = "intent-1",
+            kind = IntentKind.CAPTURE_PHOTO,
+            targetDeviceId = "test-id"
+        )
+
+        session.dispatch(intent)
+
+        eventBus.publish(
+            ObservationUpdated(
+                observation = Observation(
+                    modality = Modality.SYSTEM,
+                    source = Source.BLUETOOTH,
+                    payload = SystemObservationPayload("MODE_CHANGED"),
+                    sourceDeviceId = "test-id",
+                    metadata = mapOf("event" to "MODE_CHANGED", "mode" to 1)
+                )
+            )
+        )
+
+        advanceUntilIdle()
+
+        val succeededEvent = eventBus.events.find {
+            (it as? EmbodimentExecutionEvent)?.result?.status == ExecutionStatus.SUCCEEDED
+        } as? EmbodimentExecutionEvent
+        assertEquals("intent-1", succeededEvent?.result?.intentId)
+    }
+
     private class FakeTransport : EmbodimentTransport {
         private val _state = MutableStateFlow(TransportConnectionState.DISCONNECTED)
         override val connectionState = _state

@@ -4,7 +4,7 @@ import com.halo.drivers.heycyan.protocol.HeyCyanCommand
 import com.halo.drivers.heycyan.protocol.HeyCyanDeviceStateStore
 import com.halo.drivers.heycyan.protocol.HeyCyanEvent
 import com.halo.drivers.heycyan.protocol.HeyCyanMode
-import com.halo.drivers.heycyan.protocol.HeyCyanModeCommand
+import com.halo.drivers.heycyan.protocol.toCommand
 import com.halo.sdk.runtime.embodiment.heycyan.HeyCyanOperation
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
