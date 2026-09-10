@@ -102,12 +102,30 @@ class BuddyBotSession(
                             ))
                         }
                     }
-                } else if (message.contains("\"type\":\"handshake_ack\"") || message.contains("\"type\": \"handshake_ack\"")) {
+                } else if (message.contains("\"type\":\"handshake_ack\"") || message.contains("\"type\": \"handshake_ack\"") ||
+                    (message.contains("\"type\":\"ack\"") && message.contains("\"ok\":true"))) {
                     _state.value = SessionState.READY
+                } else if (message.contains("\"type\":\"paired\"") || message.contains("\"type\": \"paired\"")) {
+                    val tokenMatch = Regex("\"token\"\\s*:\\s*\"([^\"]+)\"").find(message)
+                    tokenMatch?.groupValues?.get(1)?.let { token ->
+                        sessionToken = token
+                    }
                 }
             } catch (e: Exception) {
                 // Ignore parse errors
             }
+        }
+    }
+    
+    var sessionToken: String? = null
+        private set
+
+    val hasToken: Boolean get() = !sessionToken.isNullOrEmpty()
+
+    suspend fun pair(code: String) {
+        val pairJson = "{\"v\":1,\"id\":${requestIdCounter++},\"type\":\"pair\",\"code\":\"$code\"}"
+        sessionScope.launch {
+            transport.send(pairJson)
         }
     }
     
@@ -173,6 +191,7 @@ class BuddyBotSession(
         map["v"] = 1
         map["id"] = requestIdCounter++
         map["intentId"] = intent.intentId
+        sessionToken?.let { map["token"] = it }
         
         when (intent.kind) {
             IntentKind.MOVE -> {

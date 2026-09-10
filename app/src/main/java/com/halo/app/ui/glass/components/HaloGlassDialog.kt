@@ -25,10 +25,10 @@ fun HaloGlassDialog(
     modifier: Modifier = Modifier,
     title: String? = null,
     onDismissRequest: () -> Unit,
-    content: @Composable BoxScope.() -> Unit,
     material: HaloGlassMaterial = HaloGlassMaterials.Elevated,
     shape: Shape = HaloGlassTokens.xlShape,
-    properties: DialogProperties = DialogProperties()
+    properties: DialogProperties = DialogProperties(),
+    content: @Composable BoxScope.() -> Unit
 ) {
     Dialog(
         onDismissRequest = onDismissRequest,

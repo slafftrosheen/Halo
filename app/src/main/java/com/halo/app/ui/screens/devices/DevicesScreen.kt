@@ -61,7 +61,8 @@ class DevicesViewModel(
     val sessionManager: com.halo.sdk.runtime.embodiment.DeviceSessionManager,
     private val eventBus: com.halo.sdk.runtime.EventBus,
     private val snapshotSource: com.halo.sdk.runtime.RuntimeSnapshotSource,
-    private val heyCyanDriver: com.halo.drivers.heycyan.RealHeyCyanDriver? = null
+    private val heyCyanDriver: com.halo.drivers.heycyan.RealHeyCyanDriver? = null,
+    val buddyBotHost: com.halo.app.embodiment.BuddyBotHost? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DevicesUiState())
@@ -71,16 +72,24 @@ class DevicesViewModel(
     private val _registryRevision = MutableStateFlow(0L)
 
     init {
+        val heyCyanStateFlow = heyCyanDriver?.deviceState ?: MutableStateFlow(com.halo.drivers.heycyan.protocol.HeyCyanDeviceState())
+        val buddyBotTelemetryFlow = buddyBotHost?.telemetry ?: MutableStateFlow(com.halo.app.embodiment.BuddyBotTelemetry())
+        val deviceDriversFlow = combine(heyCyanStateFlow, buddyBotTelemetryFlow) { heyCyan, buddy ->
+            Pair(heyCyan, buddy)
+        }
+
         viewModelScope.launch {
             combine(
                 sessionManager.activeSessions,
                 sessionManager.stateRevision,
-                heyCyanDriver?.deviceState ?: MutableStateFlow(com.halo.drivers.heycyan.protocol.HeyCyanDeviceState()),
+                deviceDriversFlow,
                 _photoStates,
                 _registryRevision
-            ) { activeSessions, _, driverState, photoStates, _ ->
+            ) { activeSessions, _, (driverState, buddyBotTelemetry), photoStates, _ ->
                 val savedDevices = deviceRegistry.getSavedDevices()
                 savedDevices.map { record ->
+                    val isBuddyBot = record.identity.deviceId == "buddybot_1" ||
+                        record.identity.deviceType.contains("BuddyBot", ignoreCase = true)
                     val session = activeSessions.find { it.identity.deviceId == record.identity.deviceId }
                     val sessionState = session?.state?.value
                     val isConnected = sessionState == com.halo.sdk.runtime.embodiment.SessionState.CONNECTED ||
@@ -103,13 +112,34 @@ class DevicesViewModel(
                         null -> "Saved • no session"
                     }
                     val battery = driverState.battery
-                    val batteryText = battery?.let { "${it.level}%${if (it.charging) " • Charging" else ""}" } ?: "Unknown"
-                    val batteryAgeMs = battery?.let { System.currentTimeMillis() - it.timestampMs } ?: Long.MAX_VALUE
-                    val healthWarning = when (driverState.healthState) {
-                        com.halo.drivers.heycyan.protocol.DeviceHealthState.WARNING_MEMORY_INSUFFICIENT -> "Device memory insufficient"
-                        com.halo.drivers.heycyan.protocol.DeviceHealthState.UNBOUND -> "Device is unbound"
-                        com.halo.drivers.heycyan.protocol.DeviceHealthState.ERROR -> "Device error detected"
-                        else -> null
+                    val batteryText = if (isBuddyBot) {
+                        buddyBotTelemetry.batteryPercent?.let { "$it%" } ?: "Unknown"
+                    } else {
+                        battery?.let { "${it.level}%${if (it.charging) " • Charging" else ""}" } ?: "Unknown"
+                    }
+                    val batteryAgeMs = if (isBuddyBot) {
+                        if (buddyBotTelemetry.lastUpdateMs > 0L) System.currentTimeMillis() - buddyBotTelemetry.lastUpdateMs else Long.MAX_VALUE
+                    } else {
+                        battery?.let { System.currentTimeMillis() - it.timestampMs } ?: Long.MAX_VALUE
+                    }
+                    val healthWarning = if (isBuddyBot) {
+                        if (!buddyBotTelemetry.safetyFault.isNullOrEmpty() && buddyBotTelemetry.safetyFault != "none") {
+                            "Fault: ${buddyBotTelemetry.safetyFault}"
+                        } else if (buddyBotTelemetry.forwardMotionBlocked) {
+                            "Obstacle Blocked"
+                        } else null
+                    } else {
+                        when (driverState.healthState) {
+                            com.halo.drivers.heycyan.protocol.DeviceHealthState.WARNING_MEMORY_INSUFFICIENT -> "Device memory insufficient"
+                            com.halo.drivers.heycyan.protocol.DeviceHealthState.UNBOUND -> "Device is unbound"
+                            com.halo.drivers.heycyan.protocol.DeviceHealthState.ERROR -> "Device error detected"
+                            else -> null
+                        }
+                    }
+                    val healthStateText = if (isBuddyBot) {
+                        buddyBotTelemetry.safetyState ?: "Healthy"
+                    } else {
+                        driverState.healthState.name
                     }
                     GenericDeviceUiState(
                         id = record.identity.deviceId,
@@ -119,16 +149,24 @@ class DevicesViewModel(
                         connectionStateText = stateText,
                         autoConnect = record.autoConnect,
                         battery = batteryText,
-                        batteryAgeText = if (battery != null) "Updated ${formatLastSeen(battery.timestampMs)}" else "No data",
+                        batteryAgeText = if (isBuddyBot) {
+                            if (buddyBotTelemetry.lastUpdateMs > 0L) "Updated ${formatLastSeen(buddyBotTelemetry.lastUpdateMs)}" else "No data"
+                        } else {
+                            if (battery != null) "Updated ${formatLastSeen(battery.timestampMs)}" else "No data"
+                        },
                         isBatteryStale = batteryAgeMs > 300_000L,
-                        firmware = driverState.version?.firmware ?: record.firmwareVersion ?: "Unknown",
+                        firmware = if (isBuddyBot) {
+                            record.firmwareVersion ?: "v0.3.0"
+                        } else {
+                            driverState.version?.firmware ?: record.firmwareVersion ?: "Unknown"
+                        },
                         lastSeen = if (isConnected) "Now" else if (record.lastSeenMs > 0L) "Last seen ${formatLastSeen(record.lastSeenMs)}" else "Never",
                         photoState = photoStates[record.identity.deviceId] ?: PhotoActionState.READY,
                         videoState = driverState.videoRecordingState,
                         audioState = driverState.audioRecordingState,
-                        healthStateText = driverState.healthState.name,
+                        healthStateText = healthStateText,
                         healthWarning = healthWarning,
-                        wearStateText = driverState.wearState.name,
+                        wearStateText = if (isBuddyBot) "Active" else driverState.wearState.name,
                         volumeText = driverState.volumeState?.let { "Music ${it.musicCurrent}, Call ${it.callCurrent}" } ?: "Normal"
                     )
                 }

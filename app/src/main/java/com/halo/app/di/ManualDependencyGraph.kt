@@ -139,6 +139,15 @@ object ManualDependencyGraph {
     val deviceRegistry by lazy { com.halo.sdk.runtime.embodiment.PersistentDeviceRegistry(storage) }
     val deviceSessionManager by lazy { com.halo.sdk.runtime.embodiment.DeviceSessionManager(deviceRegistry) }
 
+    val buddyBotHost by lazy {
+        com.halo.app.embodiment.BuddyBotHost(
+            sessionManager = deviceSessionManager,
+            eventBus = infra.eventBus,
+            storage = storage,
+            scope = infra.scope
+        )
+    }
+
     val homeViewModel by lazy {
         android.util.Log.d("ManualDependencyGraph", "Creating HomeViewModel")
         HomeViewModel(runtimeSnapshotManager, commandBus, cognitiveSession, aiProviderRouter, deviceSessionManager)
@@ -157,7 +166,8 @@ object ManualDependencyGraph {
     }
     val devicesViewModel by lazy {
         android.util.Log.d("ManualDependencyGraph", "Creating DevicesViewModel")
-        DevicesViewModel(deviceRegistry, deviceSessionManager, eventBus, runtimeSnapshotManager, heyCyanDriver)
+        buddyBotHost.ensureDeviceRegistered()
+        DevicesViewModel(deviceRegistry, deviceSessionManager, eventBus, runtimeSnapshotManager, heyCyanDriver, buddyBotHost)
     }
     val protocolLabViewModel by lazy {
         android.util.Log.d("ManualDependencyGraph", "Creating ProtocolLabViewModel")

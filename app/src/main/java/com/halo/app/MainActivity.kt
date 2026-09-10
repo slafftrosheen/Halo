@@ -98,6 +98,15 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             ManualDependencyGraph.wearableHost.connect()
         }
+
+        lifecycleScope.launch {
+            val buddyBot = ManualDependencyGraph.buddyBotHost
+            buddyBot.ensureDeviceRegistered()
+            val device = ManualDependencyGraph.deviceRegistry.getDevice(buddyBot.deviceId)
+            if (device?.autoConnect == true) {
+                buddyBot.connect()
+            }
+        }
     }
 
     override fun onDestroy() {

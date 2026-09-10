@@ -7,6 +7,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     implementation(project(":libraries:common"))
     implementation(project(":libraries:halo-cognition-language"))
+    implementation(libs.okhttp)
     api(project(":sdk:host-sdk"))
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

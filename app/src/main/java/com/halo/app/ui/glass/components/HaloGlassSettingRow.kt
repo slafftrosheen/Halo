@@ -18,11 +18,13 @@ import com.halo.app.ui.glass.material.HaloGlassColors
 fun HaloGlassSettingRow(
     title: String,
     value: String? = null,
+    trailingText: String? = null,
     enabled: Boolean = true,
     onClick: (() -> Unit)? = null,
     trailing: @Composable (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    val displayValue = value ?: trailingText
     val clickModifier = if (onClick != null && enabled) {
         Modifier.clickable(onClick = onClick)
     } else {
@@ -50,9 +52,9 @@ fun HaloGlassSettingRow(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            if (value != null) {
+            if (displayValue != null) {
                 Text(
-                    text = value,
+                    text = displayValue,
                     color = HaloGlassColors.TextSecondary,
                     fontSize = 14.sp
                 )
