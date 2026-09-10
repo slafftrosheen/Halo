@@ -52,13 +52,38 @@ class IntelligenceViewModel(
     val testConnectionResult: SharedFlow<Boolean> = _testConnectionResult.asSharedFlow()
 
     init {
-        if (storage.getString("openrouter_model").isNullOrBlank()) storage.putString("openrouter_model", "openrouter/free")
+        if (storage.getString("openrouter_model").isNullOrBlank()) {
+            storage.putString("openrouter_model", "openrouter/free")
+        }
         modelDownloadManager?.refreshStates()
+
         viewModelScope.launch {
-            aiProviderRouter.selectedProviderId.collect { providerId -> if (providerId != null) refreshModelsFor(providerId) }
+            aiProviderRouter.selectedProviderId.collectLatest { providerId ->
+                if (providerId != null) {
+                    syncStoredModelSelection(providerId)
+                    refreshModelsFor(providerId)
+                }
+            }
         }
         viewModelScope.launch {
-            modelDownloadManager?.downloadStates?.collect { _refreshTrigger.update { it + 1 } }
+            modelDownloadManager?.downloadStates?.collect {
+                _refreshTrigger.update { it + 1 }
+            }
+        }
+    }
+
+    private suspend fun syncStoredModelSelection(providerId: String) {
+        val storedModelId = when (providerId) {
+            "openrouter" -> storage.getString("openrouter_model")?.trim()?.ifBlank { "openrouter/free" }
+            "provider.ollama" -> storage.getString("ollama_model")?.trim()?.ifBlank { null }
+            "provider.llamacpp.native" -> modelDownloadManager?.activeModelId?.value
+                ?: storage.getString("llamacpp_model")?.trim()?.ifBlank { null }
+            "android.system.assistant" -> "android-assistant/handoff"
+            else -> null
+        }
+
+        if (storedModelId != aiProviderRouter.selectedModelId.value) {
+            aiProviderRouter.selectModel(storedModelId)
         }
     }
 
@@ -81,7 +106,9 @@ class IntelligenceViewModel(
             activeProviderName = snapshotProvider?.name ?: activeProvider?.displayName ?: "None",
             activeProviderStatus = activeProvider?.status?.value ?: ProviderStatus.UNAVAILABLE,
             capabilities = activeProvider?.getCapabilities() ?: emptySet(),
-            activeModelId = snapshotProvider?.activeModel ?: selectedModelId ?: if (selectedProviderId == "provider.llamacpp.native") activeLocalId ?: storedLocalModel else null,
+            activeModelId = selectedModelId
+                ?: snapshotProvider?.activeModel
+                ?: if (selectedProviderId == "provider.llamacpp.native") activeLocalId ?: storedLocalModel else null,
             providers = allProviders.map { routerProv ->
                 val snap = snapshot.providers.find { it.id == routerProv.id }
                 AiProviderUiState(
@@ -111,13 +138,21 @@ class IntelligenceViewModel(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), IntelligenceUiState())
 
-    fun downloadModel(modelId: String) { modelDownloadManager?.downloadModel(modelId) }
-    fun downloadCustomUrl(url: String, name: String) { modelDownloadManager?.downloadCustomUrl(url, name); _refreshTrigger.update { it + 1 } }
+    fun downloadModel(modelId: String) {
+        modelDownloadManager?.downloadModel(modelId)
+    }
+
+    fun downloadCustomUrl(url: String, name: String) {
+        modelDownloadManager?.downloadCustomUrl(url, name)
+        _refreshTrigger.update { it + 1 }
+    }
 
     fun setActiveLocalModel(modelId: String) {
         modelDownloadManager?.setActiveModel(modelId)
         storage.putString("llamacpp_model", modelId)
-        if (aiProviderRouter.selectedProviderId.value == "provider.llamacpp.native") aiProviderRouter.selectModel(modelId)
+        if (aiProviderRouter.selectedProviderId.value == "provider.llamacpp.native") {
+            aiProviderRouter.selectModel(modelId)
+        }
         _refreshTrigger.update { it + 1 }
     }
 
@@ -128,18 +163,23 @@ class IntelligenceViewModel(
         aiProviderRouter.selectProvider(id)
         _availableModels.value = emptyList()
         _refreshTrigger.update { it + 1 }
-        viewModelScope.launch { refreshModelsFor(id) }
+        viewModelScope.launch {
+            syncStoredModelSelection(id)
+            refreshModelsFor(id)
+        }
     }
 
     fun selectModel(modelId: String?) {
-        aiProviderRouter.selectModel(modelId)
+        val providerId = aiProviderRouter.selectedProviderId.value
         when {
-            aiProviderRouter.selectedProviderId.value == "provider.llamacpp.native" && modelId != null -> {
-                modelDownloadManager?.setActiveModel(modelId); storage.putString("llamacpp_model", modelId)
+            providerId == "provider.llamacpp.native" && modelId != null -> {
+                modelDownloadManager?.setActiveModel(modelId)
+                storage.putString("llamacpp_model", modelId)
             }
-            aiProviderRouter.selectedProviderId.value == "provider.ollama" && modelId != null -> storage.putString("ollama_model", modelId)
-            aiProviderRouter.selectedProviderId.value == "openrouter" && modelId != null -> storage.putString("openrouter_model", modelId)
+            providerId == "provider.ollama" && modelId != null -> storage.putString("ollama_model", modelId)
+            providerId == "openrouter" && modelId != null -> storage.putString("openrouter_model", modelId)
         }
+        aiProviderRouter.selectModel(modelId)
         _refreshTrigger.update { it + 1 }
     }
 
@@ -152,10 +192,31 @@ class IntelligenceViewModel(
         val provider = aiProviderRouter.getAllProviders().find { it.id == providerId } ?: return
         _isRefreshing.value = true
         try {
-            _availableModels.value = provider.listModels()
-            if (providerId == "provider.ollama" && storage.getString("ollama_model").isNullOrBlank() && _availableModels.value.isNotEmpty()) {
-                storage.putString("ollama_model", _availableModels.value.first().id)
+            val models = provider.listModels()
+            _availableModels.value = models
+
+            val storedModelId = when (providerId) {
+                "openrouter" -> storage.getString("openrouter_model")?.trim()?.ifBlank { null }
+                "provider.ollama" -> storage.getString("ollama_model")?.trim()?.ifBlank { null }
+                "provider.llamacpp.native" -> modelDownloadManager?.activeModelId?.value
+                "android.system.assistant" -> "android-assistant/handoff"
+                else -> null
             }
+
+            if (storedModelId != null && models.any { it.id == storedModelId } &&
+                aiProviderRouter.selectedModelId.value != storedModelId
+            ) {
+                aiProviderRouter.selectModel(storedModelId)
+            } else if (storedModelId == null && aiProviderRouter.selectedModelId.value == null && models.size == 1) {
+                aiProviderRouter.selectModel(models.first().id)
+            }
+
+            if (providerId == "provider.ollama" && storage.getString("ollama_model").isNullOrBlank() && models.isNotEmpty()) {
+                storage.putString("ollama_model", models.first().id)
+            }
+        } catch (error: Exception) {
+            Log.w("IntelligenceViewModel", "Failed to refresh models for $providerId", error)
+            _availableModels.value = emptyList()
         } finally {
             _isRefreshing.value = false
             _refreshTrigger.update { it + 1 }
@@ -170,23 +231,70 @@ class IntelligenceViewModel(
                 _testConnectionResult.emit(provider.testConnection())
                 provider.getStatus()
                 refreshModelsFor(selectedId)
-            } catch (_: Exception) {
+            } catch (error: Exception) {
+                Log.w("IntelligenceViewModel", "Provider test failed: $selectedId", error)
                 _testConnectionResult.emit(false)
                 _refreshTrigger.update { it + 1 }
             }
         }
     }
 
-    fun setOpenRouterKey(key: String) { storage.putString("openrouter_api_key", key); _refreshTrigger.update { it + 1 } }
-    fun setOpenRouterModel(model: String) { storage.putString("openrouter_model", model); _refreshTrigger.update { it + 1 } }
-    fun setOllamaEndpoint(endpoint: String) { storage.putString("ollama_endpoint", endpoint.trimEnd('/')); _refreshTrigger.update { it + 1 } }
-    fun setOllamaModel(model: String) { storage.putString("ollama_model", model); _refreshTrigger.update { it + 1 } }
-    fun setLlamacppModel(model: String) { storage.putString("llamacpp_model", model); _refreshTrigger.update { it + 1 } }
-    fun setLlamacppContext(size: Int) { storage.putInt("llamacpp_context", size); _refreshTrigger.update { it + 1 } }
-    fun setMemoryEnabled(enabled: Boolean) { storage.putBoolean("ai_memory_enabled", enabled); _refreshTrigger.update { it + 1 } }
-    fun setToolsEnabled(enabled: Boolean) { storage.putBoolean("ai_tools_enabled", enabled); _refreshTrigger.update { it + 1 } }
-    fun setAgentEnabled(enabled: Boolean) { storage.putBoolean("ai_agent_enabled", enabled); _refreshTrigger.update { it + 1 } }
-    fun setTemperature(temp: Float) { storage.putInt("ai_temperature", (temp * 100).toInt()); _refreshTrigger.update { it + 1 } }
+    fun setOpenRouterKey(key: String) {
+        storage.putString("openrouter_api_key", key)
+        _refreshTrigger.update { it + 1 }
+    }
+
+    fun setOpenRouterModel(model: String) {
+        storage.putString("openrouter_model", model)
+        _refreshTrigger.update { it + 1 }
+    }
+
+    fun setOllamaEndpoint(endpoint: String) {
+        storage.putString("ollama_endpoint", endpoint.trimEnd('/'))
+        _refreshTrigger.update { it + 1 }
+    }
+
+    fun setOllamaModel(model: String) {
+        storage.putString("ollama_model", model)
+        if (aiProviderRouter.selectedProviderId.value == "provider.ollama") {
+            aiProviderRouter.selectModel(model.trim().ifBlank { null })
+        }
+        _refreshTrigger.update { it + 1 }
+    }
+
+    fun setLlamacppModel(model: String) {
+        storage.putString("llamacpp_model", model)
+        if (aiProviderRouter.selectedProviderId.value == "provider.llamacpp.native") {
+            modelDownloadManager?.setActiveModel(model)
+            aiProviderRouter.selectModel(model)
+        }
+        _refreshTrigger.update { it + 1 }
+    }
+
+    fun setLlamacppContext(size: Int) {
+        storage.putInt("llamacpp_context", size)
+        _refreshTrigger.update { it + 1 }
+    }
+
+    fun setMemoryEnabled(enabled: Boolean) {
+        storage.putBoolean("ai_memory_enabled", enabled)
+        _refreshTrigger.update { it + 1 }
+    }
+
+    fun setToolsEnabled(enabled: Boolean) {
+        storage.putBoolean("ai_tools_enabled", enabled)
+        _refreshTrigger.update { it + 1 }
+    }
+
+    fun setAgentEnabled(enabled: Boolean) {
+        storage.putBoolean("ai_agent_enabled", enabled)
+        _refreshTrigger.update { it + 1 }
+    }
+
+    fun setTemperature(temp: Float) {
+        storage.putInt("ai_temperature", (temp * 100).toInt())
+        _refreshTrigger.update { it + 1 }
+    }
 
     private fun loadPolicy() = AiContextPolicy(
         includeConversation = storage.getBoolean("policy_conversation", true),
@@ -200,7 +308,17 @@ class IntelligenceViewModel(
         includeVideo = storage.getBoolean("policy_video", false)
     )
 
-    fun updatePolicy(conversation: Boolean? = null, deviceState: Boolean? = null, recentEvents: Boolean? = null, memories: Boolean? = null, tools: Boolean? = null, location: Boolean? = null, images: Boolean? = null, audio: Boolean? = null, video: Boolean? = null) {
+    fun updatePolicy(
+        conversation: Boolean? = null,
+        deviceState: Boolean? = null,
+        recentEvents: Boolean? = null,
+        memories: Boolean? = null,
+        tools: Boolean? = null,
+        location: Boolean? = null,
+        images: Boolean? = null,
+        audio: Boolean? = null,
+        video: Boolean? = null
+    ) {
         conversation?.let { storage.putBoolean("policy_conversation", it) }
         deviceState?.let { storage.putBoolean("policy_device_state", it) }
         recentEvents?.let { storage.putBoolean("policy_recent_events", it) }
@@ -213,5 +331,7 @@ class IntelligenceViewModel(
         _refreshTrigger.update { it + 1 }
     }
 
-    fun navigateTo(route: String) { viewModelScope.launch { _navigationEvents.emit(route) } }
+    fun navigateTo(route: String) {
+        viewModelScope.launch { _navigationEvents.emit(route) }
+    }
 }
