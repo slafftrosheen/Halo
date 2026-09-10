@@ -1,6 +1,6 @@
 package com.halo.engines.ai
 
-import com.halo.runtime.cognition.response.AiResponseValidator
+import com.halo.runtime.provider.response.AiResponseValidator
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.Storage
 import com.halo.sdk.runtime.RuntimeLogger

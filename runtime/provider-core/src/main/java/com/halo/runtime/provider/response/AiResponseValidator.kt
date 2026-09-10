@@ -1,4 +1,4 @@
-package com.halo.runtime.cognition.response
+package com.halo.runtime.provider.response
 
 import com.halo.sdk.provider.AiCapability
 import com.halo.sdk.provider.AiErrorType
@@ -7,9 +7,10 @@ import com.halo.sdk.provider.AiProviderException
 import com.halo.sdk.provider.AiResponse
 
 /**
- * Central validation of provider responses.
+ * Shared validation at the provider-execution boundary.
  *
- * Every generation path must pass through this validator.
+ * It is intentionally outside cognition: both routing adapters and cognitive
+ * orchestration must enforce exactly the same response identity invariants.
  */
 object AiResponseValidator {
 
@@ -19,28 +20,21 @@ object AiResponseValidator {
         expectedModelId: String,
         response: AiResponse
     ): AiResponse {
-
-        if (response.providerId.isNotBlank() &&
-            response.providerId != provider.id
-        ) {
+        if (response.providerId.isNotBlank() && response.providerId != provider.id) {
             throw AiProviderException(
                 AiErrorType.INVALID_RESPONSE,
                 "Provider identity mismatch: expected=${provider.id}, actual=${response.providerId}"
             )
         }
 
-        if (response.toolCalls.isNotEmpty() &&
-            !capabilities.contains(AiCapability.TOOLS)
-        ) {
+        if (response.toolCalls.isNotEmpty() && !capabilities.contains(AiCapability.TOOLS)) {
             throw AiProviderException(
                 AiErrorType.INVALID_RESPONSE,
                 "Provider returned tool calls without TOOLS capability"
             )
         }
 
-        if (response.text.isBlank() &&
-            response.toolCalls.isEmpty()
-        ) {
+        if (response.text.isBlank() && response.toolCalls.isEmpty()) {
             throw AiProviderException(
                 AiErrorType.EMPTY_RESPONSE,
                 "Provider returned no usable response"
@@ -54,11 +48,6 @@ object AiResponseValidator {
             )
         }
 
-        return response.copy(
-            providerId = provider.id,
-            // Some backends omit this field. The transaction target is the
-            // authoritative identity in that case, never an ambiguous null.
-            modelId = expectedModelId
-        )
+        return response.copy(providerId = provider.id, modelId = expectedModelId)
     }
 }

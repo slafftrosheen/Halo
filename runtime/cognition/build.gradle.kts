@@ -6,6 +6,7 @@ plugins {
 dependencies { 
     implementation(project(":sdk:runtime-sdk"))
     implementation(project(":sdk:provider-sdk"))
+    implementation(project(":runtime:provider-core"))
     api(project(":libraries:halo-cognition-language"))
     api(libs.kotlinx.datetime)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")

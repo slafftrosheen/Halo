@@ -3,7 +3,7 @@ package com.halo.runtime.cognition.session
 import com.halo.runtime.cognition.context.ContextAssembler
 import com.halo.runtime.cognition.context.ContextAssemblyResult
 import com.halo.runtime.cognition.conversation.ConversationStore
-import com.halo.runtime.cognition.response.AiResponseValidator
+import com.halo.runtime.provider.response.AiResponseValidator
 import com.halo.runtime.cognition.tools.ToolAuthorization
 import com.halo.runtime.cognition.tools.ToolAuthorizer
 import com.halo.runtime.cognition.tools.ToolExecutionLimits

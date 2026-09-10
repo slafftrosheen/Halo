@@ -1,5 +1,6 @@
 package com.halo.runtime.cognition.response
 
+import com.halo.runtime.provider.response.AiResponseValidator
 import com.halo.sdk.provider.AiCapability
 import com.halo.sdk.provider.AiContext
 import com.halo.sdk.provider.AiErrorType

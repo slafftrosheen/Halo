@@ -13,7 +13,7 @@ import org.junit.Test
 class AiProviderRouterDiagnosticsTest {
 
     private class FakeStorage : Storage {
-        private val data = mutableMapOf<String, Any?>()
+        private val data = mutableMapOf<String, Any?>("active_ai_model" to "test-model")
         override fun getString(key: String, defaultValue: String?) = data[key] as? String ?: defaultValue
         override fun putString(key: String, value: String?) { data[key] = value }
         override fun getInt(key: String, defaultValue: Int) = data[key] as? Int ?: defaultValue
