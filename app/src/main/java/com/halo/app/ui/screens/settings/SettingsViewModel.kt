@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-/** System-level settings only. Provider/model configuration belongs to Intelligence. */
+/** System-level settings only. Provider/model configuration lives in Intelligence. */
 data class SettingsUiState(
     val version: String = "1.0.0",
     val provider: String = "Not configured",
