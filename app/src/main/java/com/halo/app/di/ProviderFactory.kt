@@ -18,7 +18,7 @@ data class Providers(
     val speechRecognition: SpeechRecognitionProvider,
     val speechSynthesis: SpeechSynthesisProvider,
     val wakeWord: WakeWordDetector,
-    val aiProviders: List<AiProvider> = emptyList(),
+    val aiProviders: List<AiProvider> = listOf(inference),
     val aiRegistry: AiProviderRegistry = AiProviderRegistry.from(aiProviders)
 )
 
