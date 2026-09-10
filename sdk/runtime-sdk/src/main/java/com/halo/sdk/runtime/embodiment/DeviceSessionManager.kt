@@ -4,6 +4,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,7 +20,7 @@ class DeviceSessionManager(
     val registry: DeviceRegistry
 ) {
     private val _sessions = mutableMapOf<String, EmbodimentSession>()
-    private val stateScope = CoroutineScope(Dispatchers.Default)
+    private val stateScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private val stateJobs = mutableMapOf<String, Job>()
 
     private val _activeSessionsFlow = MutableStateFlow<List<EmbodimentSession>>(emptyList())
@@ -32,7 +34,10 @@ class DeviceSessionManager(
         stateJobs.remove(session.identity.deviceId)?.cancel()
         _sessions[session.identity.deviceId] = session
         stateJobs[session.identity.deviceId] = stateScope.launch {
-            session.state.collect { _stateRevision.value += 1 }
+            session.state.collect {
+                _stateRevision.value += 1
+                _activeSessionsFlow.value = _sessions.values.toList()
+            }
         }
         updateFlow()
     }
@@ -50,13 +55,12 @@ class DeviceSessionManager(
         val record = registry.getDevice(deviceId) ?: return false
         if (!record.autoConnect) return false
         val session = _sessions[deviceId] ?: return false
-        if (session.state.value == SessionState.READY || session.state.value == SessionState.CONNECTED || session.state.value == SessionState.HANDSHAKE || session.state.value == SessionState.CAPABILITY_SYNC || session.state.value == SessionState.STATE_SYNC) {
-            return true
-        }
+        if (isConnectedOrConnecting(session.state.value)) return true
+
         for (attempt in 1..3) {
             try {
                 session.connect()
-                if (session.state.value != SessionState.DISCONNECTED && session.state.value != SessionState.SAVED && session.state.value != SessionState.ERROR) {
+                if (isConnectedOrConnecting(session.state.value)) {
                     return true
                 }
             } catch (e: CancellationException) {
@@ -64,7 +68,9 @@ class DeviceSessionManager(
             } catch (_: Exception) {
                 // Continue with bounded retry.
             }
-            kotlinx.coroutines.delay(5000L * attempt)
+            if (attempt < 3) {
+                delay(5000L * attempt)
+            }
         }
         return session.state.value == SessionState.READY
     }
@@ -73,6 +79,16 @@ class DeviceSessionManager(
         for (record in registry.getSavedDevices()) {
             autoConnectDevice(record.identity.deviceId)
         }
+    }
+
+    private fun isConnectedOrConnecting(state: SessionState): Boolean = when (state) {
+        SessionState.CONNECTING,
+        SessionState.CONNECTED,
+        SessionState.HANDSHAKE,
+        SessionState.CAPABILITY_SYNC,
+        SessionState.STATE_SYNC,
+        SessionState.READY -> true
+        else -> false
     }
 
     private fun updateFlow() {
