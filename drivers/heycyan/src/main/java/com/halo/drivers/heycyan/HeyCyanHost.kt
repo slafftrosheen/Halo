@@ -24,7 +24,6 @@ class HeyCyanHost(
     private val sessionManager: com.halo.sdk.runtime.embodiment.DeviceSessionManager? = null,
     private val eventBus: com.halo.sdk.runtime.EventBus? = null
 ) : WearableHost {
-    init { Log.i("HeyCyanHost", "Initializing HeyCyanHost") }
     override val id: String = "heycyan-glasses"
     override val audioSource: AudioSource = HeyCyanAudioSource(driver)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -35,18 +34,24 @@ class HeyCyanHost(
         .map { ButtonEvent.Pressed }
 
     private val _deviceContext = MutableStateFlow(DeviceContext())
-    override val deviceContext: StateFlow<DeviceContext> = _deviceContext
+    override val deviceContext: StateFlow<DeviceContext> = _deviceContext.asStateFlow()
     private val _connectivity = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected)
-    override val connectivity: StateFlow<ConnectionState> = _connectivity
+    override val connectivity: StateFlow<ConnectionState> = _connectivity.asStateFlow()
 
     init {
         scope.launch {
-            val sm = sessionManager
-            if (sm != null) {
-                val saved = sm.registry.getSavedDevices().filter { it.identity.deviceType == "HEYCYAN_GLASSES" }
-                for (record in saved) {
-                    ensureSessionRegistered(record.identity.deviceId)
-                }
+            val sm = sessionManager ?: return@launch
+            val saved = sm.registry.getSavedDevices().filter { it.identity.deviceType == "HEYCYAN_GLASSES" }
+            saved.forEach { ensureSessionRegistered(it.identity.deviceId) }
+
+            val target = selectedAddress
+                ?.let { id -> saved.firstOrNull { it.identity.deviceId == id } }
+                ?: saved.firstOrNull { it.autoConnect }
+
+            if (target != null && target.autoConnect) {
+                selectedAddress = target.identity.deviceId
+                runCatching { sm.autoConnectDevice(target.identity.deviceId) }
+                    .onFailure { Log.w("HeyCyanHost", "Saved device auto-connect failed", it) }
             }
         }
 
@@ -67,11 +72,6 @@ class HeyCyanHost(
                     com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.RECONNECTING -> DeviceConnectionState.CONNECTING
                 }
                 val currentLastSeen = _deviceContext.value.lastSeenMs
-                val newFreshness = when {
-                    isConnected -> Freshness.FRESH
-                    currentLastSeen != null -> Freshness.STALE
-                    else -> Freshness.UNKNOWN
-                }
                 _deviceContext.value = DeviceContext(
                     deviceId = selectedAddress,
                     name = "HeyCyan",
@@ -82,7 +82,7 @@ class HeyCyanHost(
                     capabilities = com.halo.drivers.heycyan.capability.HeyCyanCapabilities.all.map { it.id },
                     transport = "BLE",
                     lastSeenMs = if (isConnected) System.currentTimeMillis() else currentLastSeen,
-                    freshness = newFreshness,
+                    freshness = if (isConnected) Freshness.FRESH else if (currentLastSeen != null) Freshness.STALE else Freshness.UNKNOWN,
                     state = deviceConnState
                 )
             }
@@ -93,7 +93,14 @@ class HeyCyanHost(
                 _connectivity.value = when (state) {
                     is com.halo.sdk.driver.DriverState.Ready -> {
                         val address = selectedAddress
-                        if (address != null) ensureSessionRegistered(address)
+                        if (address != null) {
+                            ensureSessionRegistered(address)
+                            scope.launch {
+                                sessionManager?.registry?.getDevice(address)?.let { record ->
+                                    sessionManager.registry.saveDevice(record.copy(lastSeenMs = System.currentTimeMillis()))
+                                }
+                            }
+                        }
                         ConnectionState.Ready
                     }
                     is com.halo.sdk.driver.DriverState.Connecting -> ConnectionState.Connecting
@@ -108,21 +115,15 @@ class HeyCyanHost(
         val sm = sessionManager ?: return
         val bus = eventBus ?: return
         if (sm.getSession(address) == null) {
-            val identity = com.halo.sdk.runtime.DeviceIdentity(
-                deviceId = address,
-                deviceType = "HEYCYAN_GLASSES",
-                displayName = "HeyCyan Glasses"
-            )
+            val identity = com.halo.sdk.runtime.DeviceIdentity(address, "HEYCYAN_GLASSES", "HeyCyan Glasses")
             val transport = com.halo.drivers.heycyan.transport.HeyCyanEmbodimentTransport(driver)
             val controllerAdapter = com.halo.drivers.heycyan.capability.HeyCyanCapabilityControllerAdapter(driver.capabilityController)
-            val session = com.halo.sdk.runtime.embodiment.HeyCyanSession(
+            sm.registerSession(com.halo.sdk.runtime.embodiment.HeyCyanSession(
                 identity = identity,
                 controller = controllerAdapter,
                 transport = transport,
                 eventBus = bus
-            )
-            sm.registerSession(session)
-            Log.i("HeyCyanHost", "Registered active HeyCyanSession for $address in DeviceSessionManager")
+            ))
         }
     }
 
@@ -132,13 +133,9 @@ class HeyCyanHost(
     }
 
     override suspend fun connect() {
-        val address = selectedAddress ?: run {
-            Log.w("HeyCyanHost", "Connect called without selected address")
-            return
-        }
+        val address = selectedAddress ?: return
         try {
             driver.connect(address, HeyCyanConnectionMode.RUNTIME)
-            Log.i("HeyCyanHost", "Connected to $address")
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -147,7 +144,5 @@ class HeyCyanHost(
         }
     }
 
-    override suspend fun disconnect() {
-        driver.disconnect()
-    }
+    override suspend fun disconnect() = driver.disconnect()
 }
