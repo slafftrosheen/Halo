@@ -2,18 +2,42 @@ package com.halo.runtime.cognition.tools
 
 import com.halo.sdk.provider.ToolCall
 
+/**
+ * Default authorization implementation for the initial phone-first runtime.
+ *
+ * Authorization is based on registered tools and argument validation.
+ *
+ * This is intentionally conservative:
+ * - unknown tool -> reject
+ * - malformed/oversized arguments -> reject
+ * - registered tool -> authorize
+ *
+ * Physical/device-sensitive authorization can replace this later without
+ * changing CognitiveSession.
+ */
 class InMemoryToolAuthorizer(
-    private val allowedToolIds: Set<String> = setOf("halo.echo", "halo.current_time")
+    private val toolRegistry: ToolRegistry
 ) : ToolAuthorizer {
 
-    override suspend fun authorize(toolCall: ToolCall): ToolAuthorization {
-        return if (allowedToolIds.contains(toolCall.functionName)) {
-            ToolAuthorization.Authorized(toolCall)
-        } else {
-            ToolAuthorization.Rejected(
+    override suspend fun authorize(
+        toolCall: ToolCall
+    ): ToolAuthorization {
+        val validation = toolRegistry.validate(toolCall)
+
+        if (validation != null) {
+            return ToolAuthorization.Rejected(
                 toolCall = toolCall,
-                reason = "Tool is not authorized: ${toolCall.functionName}"
+                reason = validation.reason
             )
         }
+
+        if (!toolRegistry.contains(toolCall.functionName)) {
+            return ToolAuthorization.Rejected(
+                toolCall = toolCall,
+                reason = "Unknown tool: ${toolCall.functionName}"
+            )
+        }
+
+        return ToolAuthorization.Authorized(toolCall)
     }
 }

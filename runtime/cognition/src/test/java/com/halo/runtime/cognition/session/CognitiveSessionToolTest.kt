@@ -91,12 +91,14 @@ class CognitiveSessionToolTest {
         val registry = ToolRegistry(listOf(EchoToolExecutor()))
 
         val assembler = com.halo.runtime.cognition.context.DefaultContextAssembler(store, blackboard, registry)
+        val authorizer = InMemoryToolAuthorizer(registry)
         val session = CognitiveSession(
             eventBus = eventBus,
             providerRouter = router,
             conversationStore = store,
             contextAssembler = assembler,
             toolRegistry = registry,
+            toolAuthorizer = authorizer,
             scope = this
         )
 
@@ -129,12 +131,14 @@ class CognitiveSessionToolTest {
         val registry = ToolRegistry(listOf(EchoToolExecutor()))
 
         val assembler = com.halo.runtime.cognition.context.DefaultContextAssembler(store, blackboard, registry)
+        val authorizer = InMemoryToolAuthorizer(registry)
         val session = CognitiveSession(
             eventBus = eventBus,
             providerRouter = router,
             conversationStore = store,
             contextAssembler = assembler,
             toolRegistry = registry,
+            toolAuthorizer = authorizer,
             scope = this
         )
 
@@ -157,12 +161,14 @@ class CognitiveSessionToolTest {
         val registry = ToolRegistry(listOf(EchoToolExecutor()))
 
         val assembler = com.halo.runtime.cognition.context.DefaultContextAssembler(store, blackboard, registry)
+        val authorizer = InMemoryToolAuthorizer(registry)
         val session = CognitiveSession(
             eventBus = eventBus,
             providerRouter = router,
             conversationStore = store,
             contextAssembler = assembler,
             toolRegistry = registry,
+            toolAuthorizer = authorizer,
             scope = this
         )
 
@@ -191,12 +197,14 @@ class CognitiveSessionToolTest {
         val registry = ToolRegistry(listOf(EchoToolExecutor()))
 
         val assembler = com.halo.runtime.cognition.context.DefaultContextAssembler(store, blackboard, registry)
+        val authorizer = InMemoryToolAuthorizer(registry)
         val session = CognitiveSession(
             eventBus = eventBus,
             providerRouter = router,
             conversationStore = store,
             contextAssembler = assembler,
             toolRegistry = registry,
+            toolAuthorizer = authorizer,
             scope = this
         )
 

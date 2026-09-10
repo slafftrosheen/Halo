@@ -96,7 +96,7 @@ class CognitiveSessionRequestIntegrityTest {
         val blackboard = DefaultBlackboard()
         val store = InMemoryConversationStore()
         val registry = ToolRegistry(listOf(EchoToolExecutor()))
-        val authorizer = InMemoryToolAuthorizer(allowedToolIds = setOf("halo.echo"))
+        val authorizer = InMemoryToolAuthorizer(registry)
 
         val toolCall = ToolCall(id = "tc1", functionName = "halo.echo", arguments = mapOf("text" to "hi"))
         lateinit var router: SwitchableRouter

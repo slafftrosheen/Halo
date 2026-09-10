@@ -236,7 +236,7 @@ class DefaultAiProviderRouter(
         }
     }
 
-    private fun validateResponse(
+    private suspend fun validateResponse(
         provider: AiProvider,
         response: AiResponse
     ) {

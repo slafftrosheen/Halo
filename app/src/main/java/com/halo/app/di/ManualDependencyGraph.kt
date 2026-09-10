@@ -94,7 +94,9 @@ object ManualDependencyGraph {
     }
 
     val toolAuthorizer by lazy {
-        com.halo.runtime.cognition.tools.InMemoryToolAuthorizer()
+        com.halo.runtime.cognition.tools.InMemoryToolAuthorizer(
+            toolRegistry
+        )
     }
 
     val cognitiveSession by lazy {
