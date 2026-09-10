@@ -46,24 +46,32 @@ class DeviceSessionManager(
 
     fun getSession(deviceId: String): EmbodimentSession? = _sessions[deviceId]
 
-    suspend fun autoConnectSavedDevices() {
-        val saved = registry.getSavedDevices()
-        for (record in saved) {
-            if (!record.autoConnect) continue
-            val session = _sessions[record.identity.deviceId] ?: continue
-            if (session.state.value == SessionState.DISCONNECTED || session.state.value == SessionState.SAVED) {
-                for (attempt in 1..3) {
-                    try {
-                        session.connect()
-                        if (session.state.value != SessionState.DISCONNECTED && session.state.value != SessionState.SAVED) break
-                    } catch (e: CancellationException) {
-                        throw e
-                    } catch (_: Exception) {
-                        // Continue with bounded retry.
-                    }
-                    kotlinx.coroutines.delay(5000L * attempt)
+    suspend fun autoConnectDevice(deviceId: String): Boolean {
+        val record = registry.getDevice(deviceId) ?: return false
+        if (!record.autoConnect) return false
+        val session = _sessions[deviceId] ?: return false
+        if (session.state.value == SessionState.READY || session.state.value == SessionState.CONNECTED || session.state.value == SessionState.HANDSHAKE || session.state.value == SessionState.CAPABILITY_SYNC || session.state.value == SessionState.STATE_SYNC) {
+            return true
+        }
+        for (attempt in 1..3) {
+            try {
+                session.connect()
+                if (session.state.value != SessionState.DISCONNECTED && session.state.value != SessionState.SAVED && session.state.value != SessionState.ERROR) {
+                    return true
                 }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                // Continue with bounded retry.
             }
+            kotlinx.coroutines.delay(5000L * attempt)
+        }
+        return session.state.value == SessionState.READY
+    }
+
+    suspend fun autoConnectSavedDevices() {
+        for (record in registry.getSavedDevices()) {
+            autoConnectDevice(record.identity.deviceId)
         }
     }
 
