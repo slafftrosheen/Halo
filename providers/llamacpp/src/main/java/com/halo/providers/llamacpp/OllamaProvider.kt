@@ -31,13 +31,14 @@ class OllamaProvider(
     private val _status = MutableStateFlow(ProviderStatus.UNAVAILABLE)
     override val status: StateFlow<ProviderStatus> = _status.asStateFlow()
 
-    private val baseUrl: String get() = storage.getString("ollama_endpoint")?.trimEnd('/')?.ifBlank { null } ?: "http://10.0.2.2:11434"
-    private val modelId: String get() = storage.getString("ollama_model")?.trim()?.ifBlank { null } ?: "llama3"
+    private val baseUrl: String
+        get() = storage.getString("ollama_endpoint")?.trimEnd('/')?.ifBlank { null } ?: "http://10.0.2.2:11434"
+    private val modelId: String
+        get() = storage.getString("ollama_model")?.trim()?.ifBlank { null } ?: "llama3"
 
     private val client: OkHttpClient by lazy {
         val logging = HttpLoggingInterceptor { Log.d(TAG, it) }
         logging.level = HttpLoggingInterceptor.Level.BASIC
-
         OkHttpClient.Builder()
             .addInterceptor(logging)
             .connectTimeout(3, TimeUnit.SECONDS)
@@ -48,7 +49,6 @@ class OllamaProvider(
     private val moshi = com.squareup.moshi.Moshi.Builder()
         .addLast(com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory())
         .build()
-
     private val generateRequestAdapter = moshi.adapter(OllamaGenerateRequest::class.java)
     private val generateResponseAdapter = moshi.adapter(OllamaGenerateResponse::class.java)
 
@@ -64,7 +64,7 @@ class OllamaProvider(
         val selected = models.firstOrNull { it.id == modelId }
         val current = when {
             models.isEmpty() -> ProviderStatus.UNAVAILABLE
-            selected == null -> ProviderStatus(ProviderStatus.State.ERROR, "Ollama is reachable but model '$modelId' is not installed")
+            selected == null -> ProviderStatus(ProviderStatus.State.ERROR, "Ollama reachable, but '$modelId' is not installed")
             else -> ProviderStatus(ProviderStatus.State.READY, "Connected • $modelId")
         }
         _status.value = current
@@ -72,104 +72,71 @@ class OllamaProvider(
     }
 
     override suspend fun testConnection(): Boolean = withContext(Dispatchers.IO) {
-        try {
-            val models = listModels()
-            val selected = models.firstOrNull { it.id == modelId }
-            val success = selected != null
-            _status.value = if (success) {
-                ProviderStatus(ProviderStatus.State.READY, "Connected • $modelId")
-            } else if (models.isNotEmpty()) {
-                ProviderStatus(ProviderStatus.State.ERROR, "Connected, but model '$modelId' is not installed")
-            } else {
-                ProviderStatus.UNAVAILABLE
-            }
-            success
-        } catch (_: Exception) {
-            _status.value = ProviderStatus.UNAVAILABLE
-            false
+        val models = listModels()
+        val selected = models.firstOrNull { it.id == modelId }
+        val success = selected != null
+        _status.value = when {
+            success -> ProviderStatus(ProviderStatus.State.READY, "Connected • $modelId")
+            models.isNotEmpty() -> ProviderStatus(ProviderStatus.State.ERROR, "Connected, but '$modelId' is not installed")
+            else -> ProviderStatus.UNAVAILABLE
         }
+        success
     }
 
-    override suspend fun health(): Boolean {
-        return withContext(Dispatchers.IO) {
-            try {
-                val request = Request.Builder().url("$baseUrl/api/tags").get().build()
-                client.newCall(request).execute().use { it.isSuccessful }
-            } catch (_: Exception) {
-                false
-            }
+    override suspend fun health(): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val request = Request.Builder().url("$baseUrl/api/tags").get().build()
+            client.newCall(request).execute().use { it.isSuccessful }
+        } catch (_: Exception) {
+            false
         }
     }
 
     override suspend fun generate(request: AiRequest, context: AiContext): AiResponse {
         request.validateForTextGeneration()
         val model = request.modelId?.trim()?.ifBlank { null } ?: modelId
-        val messages = buildConversationPrompt(request, context)
-        val legacyRequest = AIRequestLegacy(
-            AIConversation(id = "runtime", messages = messages.toMutableList())
-        )
+        val messages = context.conversation.toMutableList()
+        messages += AIMessage(Role.USER, request.text!!)
+        val legacyRequest = AIRequestLegacy(AIConversation("runtime", messages))
         val legacyResponse = completeWithModel(legacyRequest, model)
         return AiResponse(text = legacyResponse.text, providerId = id, modelId = model)
-    }
-
-    private fun buildConversationPrompt(request: AiRequest, context: AiContext): List<AIMessage> {
-        val messages = context.conversation.toMutableList()
-        request.text?.let { text ->
-            messages += AIMessage(role = AIRole.USER, content = text)
-        }
-        return messages
     }
 
     override suspend fun complete(request: AIRequestLegacy): AIResponseLegacy =
         completeWithModel(request, modelId)
 
-    private suspend fun completeWithModel(request: AIRequestLegacy, model: String): AIResponseLegacy {
-        return withContext(Dispatchers.IO) {
-            val startTime = System.currentTimeMillis()
-            val prompt = request.conversation.messages.joinToString("\n") {
-                "${it.role.name.lowercase()}: ${it.content}"
-            }
-
-            val ollamaRequest = OllamaGenerateRequest(
-                model = model,
-                prompt = prompt,
-                stream = false,
-                options = mapOf(
-                    "temperature" to request.temperature,
-                    "num_predict" to request.maxTokens
-                )
-            )
-
-            val body = generateRequestAdapter.toJson(ollamaRequest).toRequestBody(JSON)
-            val httpRequest = Request.Builder()
-                .url("$baseUrl/api/generate")
-                .post(body)
-                .build()
-
-            try {
-                client.newCall(httpRequest).execute().use { response ->
-                    if (!response.isSuccessful) {
-                        val errorType = when (response.code) {
-                            404 -> AiErrorType.MODEL_UNAVAILABLE
-                            else -> AiErrorType.LOCAL_MODEL_UNAVAILABLE
-                        }
-                        throw AiProviderException(errorType, "Ollama error: ${response.code}")
-                    }
-                    val json = response.body?.string() ?: throw AiProviderException(AiErrorType.INVALID_RESPONSE, "Empty body")
-                    val ollamaResponse = generateResponseAdapter.fromJson(json)
-                        ?: throw AiProviderException(AiErrorType.INVALID_RESPONSE, "Failed to parse response")
-
-                    AIResponseLegacy(
-                        text = ollamaResponse.response,
-                        finishReason = if (ollamaResponse.done) "stop" else "length",
-                        latencyMs = System.currentTimeMillis() - startTime
-                    )
+    private suspend fun completeWithModel(request: AIRequestLegacy, model: String): AIResponseLegacy = withContext(Dispatchers.IO) {
+        val startTime = System.currentTimeMillis()
+        val prompt = request.conversation.messages.joinToString("\n") {
+            "${it.role.name.lowercase()}: ${it.content}"
+        }
+        val ollamaRequest = OllamaGenerateRequest(
+            model = model,
+            prompt = prompt,
+            stream = false,
+            options = mapOf("temperature" to request.temperature, "num_predict" to request.maxTokens)
+        )
+        val body = generateRequestAdapter.toJson(ollamaRequest).toRequestBody(JSON)
+        val httpRequest = Request.Builder().url("$baseUrl/api/generate").post(body).build()
+        try {
+            client.newCall(httpRequest).execute().use { response ->
+                if (!response.isSuccessful) {
+                    val errorType = if (response.code == 404) AiErrorType.MODEL_UNAVAILABLE else AiErrorType.LOCAL_MODEL_UNAVAILABLE
+                    throw AiProviderException(errorType, "Ollama error: ${response.code}")
                 }
-            } catch (e: Exception) {
-                if (e is kotlinx.coroutines.CancellationException) throw e
-                if (e is AiProviderException) throw e
-                throw AiProviderException(AiErrorType.LOCAL_MODEL_UNAVAILABLE, "Ollama completion failed", e)
+                val json = response.body?.string() ?: throw AiProviderException(AiErrorType.INVALID_RESPONSE, "Empty body")
+                val ollamaResponse = generateResponseAdapter.fromJson(json)
+                    ?: throw AiProviderException(AiErrorType.INVALID_RESPONSE, "Failed to parse response")
+                AIResponseLegacy(
+                    text = ollamaResponse.response,
+                    finishReason = if (ollamaResponse.done) "stop" else "length",
+                    latencyMs = System.currentTimeMillis() - startTime
+                )
             }
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            if (e is AiProviderException) throw e
+            throw AiProviderException(AiErrorType.LOCAL_MODEL_UNAVAILABLE, "Ollama completion failed", e)
         }
     }
 
@@ -177,22 +144,21 @@ class OllamaProvider(
         val ollamaRequest = OllamaGenerateRequest(model = modelId, prompt = prompt, stream = true)
         val body = generateRequestAdapter.toJson(ollamaRequest).toRequestBody(JSON)
         val request = Request.Builder().url("$baseUrl/api/generate").post(body).build()
-
         try {
             client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) {
                     val errorType = if (response.code == 404) AiErrorType.MODEL_UNAVAILABLE else AiErrorType.LOCAL_MODEL_UNAVAILABLE
                     throw AiProviderException(errorType, "Ollama error: ${response.code}")
                 }
-
                 val source = response.body?.source() ?: throw AiProviderException(AiErrorType.INVALID_RESPONSE, "Empty body")
                 while (!source.exhausted()) {
                     currentCoroutineContext().ensureActive()
                     val line = source.readUtf8LineStrict()
                     if (line.isNotBlank()) {
-                        runCatching { generateResponseAdapter.fromJson(line) }.getOrNull()?.let { ollamaResponse ->
-                            emit(ollamaResponse.response)
-                            if (ollamaResponse.done) return@use
+                        val parsed = runCatching { generateResponseAdapter.fromJson(line) }.getOrNull()
+                        if (parsed != null) {
+                            emit(parsed.response)
+                            if (parsed.done) break
                         }
                     }
                 }
@@ -210,12 +176,10 @@ class OllamaProvider(
             client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) return@withContext emptyList()
                 val json = response.body?.string() ?: return@withContext emptyList()
-                val obj = JSONObject(json)
-                val models = obj.optJSONArray("models") ?: return@withContext emptyList()
+                val models = JSONObject(json).optJSONArray("models") ?: return@withContext emptyList()
                 buildList {
                     for (i in 0 until models.length()) {
-                        val m = models.getJSONObject(i)
-                        val name = m.optString("name").trim()
+                        val name = models.getJSONObject(i).optString("name").trim()
                         if (name.isNotEmpty()) {
                             add(AiModel(
                                 id = name,
