@@ -15,6 +15,18 @@ data class ProviderHealth(
     val message: String? = null
 )
 
+/**
+ * Legacy inference contract retained only as a source-compatibility bridge.
+ *
+ * New runtime providers MUST implement [AiInferenceProvider] directly. In
+ * particular, do not use this interface for runtime service registration or
+ * provider routing: it predates the split between inference and assistant
+ * handoff and therefore cannot express that boundary correctly.
+ */
+@Deprecated(
+    message = "Use AiInferenceProvider. InferenceProvider is a legacy compatibility bridge.",
+    replaceWith = ReplaceWith("AiInferenceProvider")
+)
 interface InferenceProvider : AiProvider {
     val metadata: ProviderMetadata
         get() = ProviderMetadata(id = this::class.java.name)
@@ -34,7 +46,6 @@ interface InferenceProvider : AiProvider {
     }
 
     override suspend fun generate(request: AiRequest, context: AiContext): AiResponse {
-        // Bridge modern request to legacy completion if needed
         val conversation = AIConversation(
             id = "legacy",
             messages = context.conversation.toMutableList()
