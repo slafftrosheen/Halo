@@ -4,7 +4,6 @@ import com.halo.runtime.kernel.Process
 import com.halo.runtime.kernel.ProcessState
 import com.halo.runtime.kernel.bus.PerceptionBus
 import com.halo.runtime.kernel.bus.CognitiveBus
-import com.halo.icl.ontology.Goal
 import com.halo.icl.ontology.Observation
 import com.halo.icl.ontology.Thought
 import com.halo.icl.core.*
@@ -20,49 +19,64 @@ import com.halo.sdk.runtime.EngineHealth
 import com.halo.sdk.runtime.EngineMetrics
 import java.time.Duration
 import java.time.Instant
+import com.halo.sdk.provider.AiProviderRouter
+import com.halo.sdk.provider.AiRequest
+import com.halo.sdk.provider.AiContext
 
-import com.halo.sdk.provider.InferenceProvider
-
+/**
+ * Legacy kernel reasoning bridge kept for compatibility with the microkernel.
+ *
+ * The actual AI selection is delegated to the same AiProviderRouter used by
+ * CognitiveSession, so this process can never bypass the user's provider/model
+ * selection and accidentally invoke the native llama.cpp backend.
+ */
 class ReasoningServiceProcess(
     private val perceptionBus: PerceptionBus,
     private val cognitiveBus: CognitiveBus,
-    private val inferenceProvider: InferenceProvider
+    private val aiProviderRouter: AiProviderRouter
 ) : Process {
     override val id: String = "service.reasoning"
     override val name: String = "Reasoning Service"
-    
+
     private val _state = MutableStateFlow(ProcessState.Created)
     override val state: StateFlow<ProcessState> = _state
-    
+
     private val _metrics = MutableStateFlow(EngineMetrics(null, Duration.ZERO, 0, 0, 0.0))
     override val metrics: StateFlow<EngineMetrics> = _metrics
     private var eventsProcessed = 0L
 
     override suspend fun start(): Unit = coroutineScope {
         _state.value = ProcessState.Running
-        
+
         launch {
-            perceptionBus.subscribe(id).filterIsInstance<Observation>().collect { observation ->
-                // Example reasoning loop with NativeLlamaProvider
-                val prompt = "Observation: ${observation.modality} -> ${observation.rawData}\nWhat should I do?"
-                
-                inferenceProvider.stream(prompt).collect { token ->
-                    // For now, emit each token as a partial thought, or accumulate it
-                    // In a real system, you accumulate and emit the final thought
-                    val thought = Thought(
-                        id = CognitiveId(),
-                        created = Clock.System.now(),
-                        confidence = observation.confidence,
-                        provenance = Provenance(id, observation.id),
-                        edges = listOf(CognitiveEdge(observation.id, EdgeType.Derived)),
-                        content = token
-                    )
-                    cognitiveBus.publish(id, thought)
+            perceptionBus.subscribe(id)
+                .filterIsInstance<Observation>()
+                .collect { observation ->
+                    try {
+                        val request = AiRequest(
+                            text = "Observation: ${observation.modality} -> ${observation.rawData}\nWhat should I do?"
+                        )
+                        val response = aiProviderRouter.execute(request, AiContext.EMPTY)
+
+                        val thought = Thought(
+                            id = CognitiveId(),
+                            created = Clock.System.now(),
+                            confidence = observation.confidence,
+                            provenance = Provenance(id, observation.id),
+                            edges = listOf(CognitiveEdge(observation.id, EdgeType.Derived)),
+                            content = response.text
+                        )
+                        cognitiveBus.publish(id, thought)
+                        eventsProcessed++
+                        _metrics.value = _metrics.value.copy(eventsProcessed = eventsProcessed)
+                    } catch (error: kotlinx.coroutines.CancellationException) {
+                        throw error
+                    } catch (_: Exception) {
+                        // Provider/routing failures must not tear down the kernel process.
+                        eventsProcessed++
+                        _metrics.value = _metrics.value.copy(eventsProcessed = eventsProcessed)
+                    }
                 }
-                
-                eventsProcessed++
-                _metrics.value = _metrics.value.copy(eventsProcessed = eventsProcessed)
-            }
         }
         Unit
     }
