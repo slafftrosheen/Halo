@@ -88,7 +88,7 @@ class NativeLlamaProvider(
             return@withLock false
         }
 
-        _status.value = ProviderStatus(State.LOADING, "Loading $activeId...")
+        _status.value = ProviderStatus(ProviderStatus.State.LOADING, "Loading $activeId...")
         releaseCurrentModel()
         return@withLock try {
             Log.i("NativeLlamaProvider", "Loading GGUF model: ${file.absolutePath} (${file.length()} bytes)")
@@ -105,7 +105,7 @@ class NativeLlamaProvider(
         } catch (error: Throwable) {
             releaseCurrentModel()
             Log.e("NativeLlamaProvider", "Failed loading model ${file.absolutePath}", error)
-            _status.value = ProviderStatus(State.ERROR, "Model load failed: ${error.message ?: error::class.simpleName}")
+            _status.value = ProviderStatus(ProviderStatus.State.ERROR, "Model load failed: ${error.message ?: error::class.simpleName}")
             false
         }
     }
@@ -160,13 +160,8 @@ class NativeLlamaProvider(
             try {
                 val text = buildString { streamInternal(prompt).collect { append(it) } }.trim()
                 if (text.isBlank()) throw AiProviderException(AiErrorType.EMPTY_RESPONSE, "llama.cpp returned an empty response")
-                AiResponse(
-                    text = text,
-                    providerId = id,
-                    modelId = modelId,
-                    finishReason = "stop",
-                    metrics = AiGenerationMetrics(startedAtMs = startedAt, completedAtMs = System.currentTimeMillis())
-                )
+                AiResponse(text = text, providerId = id, modelId = modelId, finishReason = "stop",
+                    metrics = AiGenerationMetrics(startedAtMs = startedAt, completedAtMs = System.currentTimeMillis()))
             } catch (error: CancellationException) {
                 throw error
             } catch (error: AiProviderException) {
@@ -193,13 +188,8 @@ class NativeLlamaProvider(
             }
             val text = output.toString().trim()
             if (text.isBlank()) throw AiProviderException(AiErrorType.EMPTY_RESPONSE, "llama.cpp produced no response text")
-            emit(AiStreamEvent.Completed(AiResponse(
-                text = text,
-                providerId = id,
-                modelId = modelId,
-                finishReason = "stop",
-                metrics = AiGenerationMetrics(startedAtMs = startedAt, completedAtMs = System.currentTimeMillis())
-            )))
+            emit(AiStreamEvent.Completed(AiResponse(text = text, providerId = id, modelId = modelId, finishReason = "stop",
+                metrics = AiGenerationMetrics(startedAtMs = startedAt, completedAtMs = System.currentTimeMillis()))))
         } catch (error: CancellationException) {
             throw error
         } catch (error: Throwable) {
@@ -246,15 +236,9 @@ class NativeLlamaProvider(
     }
 
     override suspend fun listModels(): List<AiModel> = downloadManager.getAllModels().map { model ->
-        AiModel(
-            id = model.id,
-            displayName = model.name,
-            providerId = id,
-            inputCapabilities = setOf(AiCapability.TEXT),
-            contextLength = 4096,
-            supportsStreaming = true,
-            supportsTools = false
-        )
+        AiModel(id = model.id, displayName = model.name, providerId = id,
+            inputCapabilities = setOf(AiCapability.TEXT), contextLength = 4096,
+            supportsStreaming = true, supportsTools = false)
     }
 
     override suspend fun close() {
