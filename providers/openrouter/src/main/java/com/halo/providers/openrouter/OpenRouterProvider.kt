@@ -17,7 +17,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.CancellationException
-import android.util.Log
 
 class OpenRouterProvider(
     private val storage: Storage,
@@ -88,37 +87,37 @@ class OpenRouterProvider(
                 if (!response.isSuccessful) throw httpError(response.code)
                 
                 val responseBody = response.body?.string() ?: throw AiProviderException(AiErrorType.INVALID_RESPONSE, "Empty response")
-            val responseJson = JSONObject(responseBody)
-            val choices = responseJson.getJSONArray("choices")
-            val firstChoice = choices.getJSONObject(0)
-            val message = firstChoice.getJSONObject("message")
-            val content = message.optString("content")
-            
-            // Tool calls
-            val toolCalls = mutableListOf<ToolCall>()
-            val jsonToolCalls = message.optJSONArray("tool_calls")
-            if (jsonToolCalls != null) {
-                for (i in 0 until jsonToolCalls.length()) {
-                    val tc = jsonToolCalls.getJSONObject(i)
-                    val function = tc.getJSONObject("function")
-                    toolCalls.add(
-                        ToolCall(
-                            id = tc.getString("id"),
-                            functionName = function.getString("name"),
-                            arguments = parseArguments(function.getString("arguments"))
+                val responseJson = JSONObject(responseBody)
+                val choices = responseJson.getJSONArray("choices")
+                val firstChoice = choices.getJSONObject(0)
+                val message = firstChoice.getJSONObject("message")
+                val content = message.optString("content")
+                
+                // Tool calls
+                val toolCalls = mutableListOf<ToolCall>()
+                val jsonToolCalls = message.optJSONArray("tool_calls")
+                if (jsonToolCalls != null) {
+                    for (i in 0 until jsonToolCalls.length()) {
+                        val tc = jsonToolCalls.getJSONObject(i)
+                        val function = tc.getJSONObject("function")
+                        toolCalls.add(
+                            ToolCall(
+                                id = tc.getString("id"),
+                                functionName = function.getString("name"),
+                                arguments = parseArguments(function.getString("arguments"))
+                            )
                         )
-                    )
+                    }
                 }
-            }
 
-            AiResponse(
-                text = content,
-                toolCalls = toolCalls,
-                finishReason = firstChoice.optString("finish_reason"),
-                providerId = id,
-                modelId = responseJson.optString("model", actualModel)
-            )
-        }
+                AiResponse(
+                    text = content,
+                    toolCalls = toolCalls,
+                    finishReason = firstChoice.optString("finish_reason"),
+                    providerId = id,
+                    modelId = responseJson.optString("model", actualModel)
+                )
+            }
         } catch (e: java.net.SocketTimeoutException) {
             throw AiProviderException(AiErrorType.TIMEOUT, "Request timed out", e)
         } catch (e: java.net.UnknownHostException) {
@@ -242,36 +241,42 @@ class OpenRouterProvider(
 
         try {
             client.newCall(httpRequest).execute().use { response ->
-                if (!response.isSuccessful) return@withContext emptyList()
+                if (!response.isSuccessful) throw httpError(response.code)
                 
-                val responseBody = response.body?.string() ?: return@withContext emptyList()
+                val responseBody = response.body?.string() ?: throw AiProviderException(AiErrorType.INVALID_RESPONSE, "Empty response body from OpenRouter")
                 val responseJson = JSONObject(responseBody)
                 val data = responseJson.getJSONArray("data")
                 val models = mutableListOf<AiModel>()
                 
                 for (i in 0 until data.length()) {
                     val item = data.getJSONObject(i)
-                    val pricing = item.optJSONObject("pricing")
-                    val isFree = pricing?.optString("prompt") == "0" && pricing.optString("completion") == "0"
-                    
                     models.add(
                         AiModel(
                             id = item.getString("id"),
-                            displayName = item.getString("name"),
+                            displayName = item.optString("name", item.getString("id")),
                             providerId = id,
                             inputCapabilities = mapCapabilities(item),
-                            contextLength = item.optLong("context_length"),
-                            supportsStreaming = true, // OpenRouter generally supports streaming
-                            supportsTools = item.optJSONObject("architecture")?.optBoolean("instruct_type") ?: false,
-                            isFree = isFree
+                            contextLength = item.optLong("context_length").takeIf { it > 0L },
+                            supportsStreaming = supportsParameter(item, "stream"),
+                            supportsTools = supportsParameter(item, "tools"),
+                            isFree = isFreeModel(item)
                         )
                     )
                 }
                 models
             }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: AiProviderException) {
+            throw e
+        } catch (e: java.net.SocketTimeoutException) {
+            throw AiProviderException(AiErrorType.TIMEOUT, "OpenRouter model discovery timed out", e)
+        } catch (e: java.net.UnknownHostException) {
+            throw AiProviderException(AiErrorType.NETWORK_UNAVAILABLE, "OpenRouter model discovery: network unavailable", e)
+        } catch (e: org.json.JSONException) {
+            throw AiProviderException(AiErrorType.INVALID_RESPONSE, "OpenRouter returned invalid model metadata", e)
         } catch (e: Exception) {
-            Log.e("OpenRouter", "Failed to list models", e)
-            emptyList()
+            throw AiProviderException(AiErrorType.NETWORK_ERROR, "OpenRouter model discovery failed", e)
         }
     }
 
@@ -279,7 +284,11 @@ class OpenRouterProvider(
         if (modelId != "free") return modelId
         
         val models = listModels()
-        return models.firstOrNull { it.isFree }?.id ?: "openrouter/auto"
+        return models.firstOrNull { it.isFree }?.id
+            ?: throw AiProviderException(
+                AiErrorType.MODEL_UNAVAILABLE,
+                "No free OpenRouter model is currently available"
+            )
     }
 
     private fun buildRequestBody(request: AiRequest, context: AiContext, model: String, stream: Boolean): JSONObject {
@@ -350,6 +359,7 @@ class OpenRouterProvider(
             
             // Tools
             if (context.availableTools.isNotEmpty()) {
+                put("parallel_tool_calls", false)
                 val tools = JSONArray()
                 context.availableTools.forEach { tool ->
                     tools.put(JSONObject().apply {
@@ -366,12 +376,55 @@ class OpenRouterProvider(
         }
     }
 
+    private fun jsonStringArray(
+        json: JSONObject,
+        key: String
+    ): Set<String> {
+        val array = json.optJSONArray(key) ?: return emptySet()
+        return buildSet {
+            for (index in 0 until array.length()) {
+                val value = array.optString(index).trim()
+                if (value.isNotEmpty()) {
+                    add(value)
+                }
+            }
+        }
+    }
+
     private fun mapCapabilities(modelJson: JSONObject): Set<AiCapability> {
-        val caps = mutableSetOf(AiCapability.TEXT)
-        // Extract vision/audio/etc from description or metadata if available
-        // OpenRouter's /models doesn't have a clean modality flag in the data root, 
-        // but often mentions it in description or pricing fields.
-        return caps
+        val architecture = modelJson.optJSONObject("architecture")
+        val modalities = architecture?.let { jsonStringArray(it, "input_modalities") }.orEmpty()
+
+        val capabilities = mutableSetOf<AiCapability>()
+        if ("text" in modalities || modalities.isEmpty()) {
+            capabilities += AiCapability.TEXT
+        }
+        if ("image" in modalities) {
+            capabilities += AiCapability.IMAGE
+        }
+        if ("audio" in modalities) {
+            capabilities += AiCapability.AUDIO
+        }
+        if ("video" in modalities) {
+            capabilities += AiCapability.VIDEO
+        }
+        return capabilities
+    }
+
+    private fun supportsParameter(
+        modelJson: JSONObject,
+        parameter: String
+    ): Boolean {
+        return parameter in jsonStringArray(modelJson, "supported_parameters")
+    }
+
+    private fun isFreeModel(
+        modelJson: JSONObject
+    ): Boolean {
+        val pricing = modelJson.optJSONObject("pricing") ?: return false
+        val prompt = pricing.optString("prompt")
+        val completion = pricing.optString("completion")
+        return prompt == "0" && completion == "0"
     }
 
     private fun parseArguments(json: String): Map<String, Any> {

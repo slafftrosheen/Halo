@@ -104,41 +104,34 @@ class CognitiveSession(
 
                 /*
                  * ---------------------------------------------------------
-                 * 1. Resolve execution target ONCE
+                 * 1. Resolve execution target ONCE via Router
                  * ---------------------------------------------------------
                  */
 
+                val target =
+                    providerRouter.resolveExecutionTarget(
+                        request
+                    )
+
                 val provider =
-                    providerRouter.getEligibleProvider(request)
+                    target.provider
 
                 val modelId =
-                    request.modelId
-                        ?: providerRouter.selectedModelId.value
-                        ?: throw AiProviderException(
-                            AiErrorType.MODEL_NOT_SELECTED,
-                            "No AI model selected"
-                        )
-
-                val target = AiExecutionTarget(
-                    providerId = provider.id,
-                    modelId = modelId
-                )
+                    target.modelId
 
                 val finalRequest =
-                    if (request.modelId == null) {
-                        request.copy(modelId = modelId)
-                    } else {
-                        request
-                    }
+                    request.copy(
+                        modelId = modelId
+                    )
 
                 /*
                  * ---------------------------------------------------------
-                 * 2. Snapshot provider capabilities
+                 * 2. Snapshot provider capabilities from target
                  * ---------------------------------------------------------
                  */
 
                 val capabilities =
-                    provider.getCapabilities()
+                    target.providerCapabilities
 
                 /*
                  * ---------------------------------------------------------

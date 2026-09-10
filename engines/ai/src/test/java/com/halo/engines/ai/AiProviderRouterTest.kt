@@ -41,7 +41,7 @@ class AiProviderRouterTest {
         override suspend fun generate(request: AiRequest, context: AiContext): AiResponse {
             receivedRequests += request
             if (throwsException) throw AiProviderException(AiErrorType.PROVIDER_UNAVAILABLE, "Simulated failure")
-            return AiResponse("Response from $id", providerId = id)
+            return AiResponse("Response from $id", providerId = id, modelId = request.modelId)
         }
         override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = emptyFlow()
         override suspend fun listModels() = listOf(

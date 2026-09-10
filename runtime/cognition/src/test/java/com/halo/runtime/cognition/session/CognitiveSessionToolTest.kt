@@ -76,6 +76,22 @@ class CognitiveSessionToolTest {
         override fun selectModel(modelId: String?) {}
         override fun getAllProviders() = listOf(provider)
         override suspend fun getEligibleProvider(request: AiRequest) = provider
+        override suspend fun resolveExecutionTarget(request: AiRequest): AiExecutionTarget {
+            val model = AiModel(
+                id = request.modelId ?: selectedModelId.value ?: "test-model",
+                displayName = "Test Model",
+                providerId = provider.id,
+                inputCapabilities = setOf(AiCapability.TEXT, AiCapability.IMAGE),
+                contextLength = 4096,
+                supportsStreaming = true,
+                supportsTools = true
+            )
+            return AiExecutionTarget(
+                provider = provider,
+                model = model,
+                providerCapabilities = provider.getCapabilities()
+            )
+        }
         override suspend fun execute(request: AiRequest, context: AiContext) = provider.generate(request, context)
         override fun start() {}
         override fun stop() {}
