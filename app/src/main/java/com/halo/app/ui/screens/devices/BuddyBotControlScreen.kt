@@ -1,5 +1,6 @@
 package com.halo.app.ui.screens.devices
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -7,7 +8,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.clickable
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -23,6 +23,9 @@ import com.halo.app.ui.glass.components.HaloGlassSection
 import com.halo.app.ui.glass.components.HaloGlassSettingRow
 import com.halo.app.ui.glass.material.HaloGlassColors
 import com.halo.app.ui.glass.material.HaloTypography
+import com.halo.sdk.runtime.embodiment.DriveMode
+import com.halo.sdk.runtime.embodiment.EmbodimentIntent
+import com.halo.sdk.runtime.embodiment.IntentKind
 import java.util.UUID
 
 @Composable
@@ -35,6 +38,19 @@ fun BuddyBotControlScreen(
     val device = uiState.devices.find { it.id == deviceId }
     val isConnected = device?.isConnected == true
 
+    fun dispatch(kind: IntentKind, driveMode: DriveMode? = null) {
+        if (!isConnected) return
+        viewModel.dispatchEmbodimentIntent(
+            deviceId,
+            EmbodimentIntent(
+                intentId = UUID.randomUUID().toString(),
+                targetDeviceId = deviceId,
+                kind = kind,
+                driveMode = driveMode
+            )
+        )
+    }
+
     HaloGlassLazyPage(title = "") {
         item {
             HaloGlassBackHeader(
@@ -42,8 +58,6 @@ fun BuddyBotControlScreen(
                 onBack = onBack
             )
         }
-
-        item { Spacer(Modifier.height(8.dp)) }
 
         item {
             HaloGlassSection(title = "CONNECTION") {
@@ -59,11 +73,7 @@ fun BuddyBotControlScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Column {
-                        Text(
-                            "Status",
-                            style = HaloTypography.bodyLarge,
-                            color = HaloGlassColors.TextPrimary
-                        )
+                        Text("Status", style = HaloTypography.bodyLarge, color = HaloGlassColors.TextPrimary)
                         Spacer(Modifier.height(3.dp))
                         Text(
                             device?.connectionStateText ?: "Unknown",
@@ -83,13 +93,14 @@ fun BuddyBotControlScreen(
                         .fillMaxWidth()
                         .clickable { viewModel.toggleAutoConnect(deviceId, !(device?.autoConnect ?: false)) }
                         .padding(horizontal = 16.dp, vertical = 14.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text("Auto-connect", style = HaloTypography.bodyLarge, color = HaloGlassColors.TextPrimary)
                     Text(
                         if (device?.autoConnect == true) "ON" else "OFF",
                         style = HaloTypography.bodyMedium,
-                        color = HaloGlassColors.TextSecondary
+                        color = HaloGlassColors.Accent
                     )
                 }
                 HaloGlassDivider()
@@ -104,29 +115,15 @@ fun BuddyBotControlScreen(
             }
         }
 
-        item { Spacer(Modifier.height(8.dp)) }
-
         item {
             HaloGlassSection(title = "MANUAL CONTROL") {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(12.dp),
+                    modifier = Modifier.fillMaxWidth().padding(12.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     HaloGlassButton(
-                        text = "Move Forward",
-                        onClick = {
-                            viewModel.dispatchEmbodimentIntent(
-                                deviceId,
-                                com.halo.sdk.runtime.embodiment.EmbodimentIntent(
-                                    intentId = UUID.randomUUID().toString(),
-                                    targetDeviceId = deviceId,
-                                    kind = com.halo.sdk.runtime.embodiment.IntentKind.MOVE,
-                                    driveMode = com.halo.sdk.runtime.embodiment.DriveMode.FORWARD
-                                )
-                            )
-                        },
+                        text = "Forward",
+                        onClick = { dispatch(IntentKind.MOVE, DriveMode.FORWARD) },
                         modifier = Modifier.fillMaxWidth(),
                         enabled = isConnected
                     )
@@ -136,32 +133,13 @@ fun BuddyBotControlScreen(
                     ) {
                         HaloGlassButton(
                             text = "Stop",
-                            onClick = {
-                                viewModel.dispatchEmbodimentIntent(
-                                    deviceId,
-                                    com.halo.sdk.runtime.embodiment.EmbodimentIntent(
-                                        intentId = UUID.randomUUID().toString(),
-                                        targetDeviceId = deviceId,
-                                        kind = com.halo.sdk.runtime.embodiment.IntentKind.STOP
-                                    )
-                                )
-                            },
+                            onClick = { dispatch(IntentKind.STOP) },
                             modifier = Modifier.weight(1f),
                             enabled = isConnected
                         )
                         HaloGlassButton(
                             text = "Reverse",
-                            onClick = {
-                                viewModel.dispatchEmbodimentIntent(
-                                    deviceId,
-                                    com.halo.sdk.runtime.embodiment.EmbodimentIntent(
-                                        intentId = UUID.randomUUID().toString(),
-                                        targetDeviceId = deviceId,
-                                        kind = com.halo.sdk.runtime.embodiment.IntentKind.MOVE,
-                                        driveMode = com.halo.sdk.runtime.embodiment.DriveMode.REVERSE
-                                    )
-                                )
-                            },
+                            onClick = { dispatch(IntentKind.MOVE, DriveMode.REVERSE) },
                             modifier = Modifier.weight(1f),
                             enabled = isConnected
                         )
@@ -170,32 +148,16 @@ fun BuddyBotControlScreen(
             }
         }
 
-        item { Spacer(Modifier.height(8.dp)) }
-
         item {
             HaloGlassSection(title = "DEVICE STATE") {
-                HaloGlassSettingRow(
-                    title = "Battery",
-                    value = device?.battery ?: "Unknown"
-                )
+                HaloGlassSettingRow(title = "Battery", value = device?.battery ?: "Unknown")
                 HaloGlassDivider()
-                HaloGlassSettingRow(
-                    title = "Firmware",
-                    value = device?.firmware ?: "Unknown"
-                )
+                HaloGlassSettingRow(title = "Firmware", value = device?.firmware ?: "Unknown")
                 HaloGlassDivider()
-                HaloGlassSettingRow(
-                    title = "Last seen",
-                    value = device?.lastSeen ?: "Never"
-                )
+                HaloGlassSettingRow(title = "Last seen", value = device?.lastSeen ?: "Never")
                 HaloGlassDivider()
-                HaloGlassSettingRow(
-                    title = "Health",
-                    value = device?.healthStateText ?: "Unknown"
-                )
+                HaloGlassSettingRow(title = "Health", value = device?.healthStateText ?: "Unknown")
             }
         }
-
-        item { Spacer(Modifier.height(24.dp)) }
     }
 }
