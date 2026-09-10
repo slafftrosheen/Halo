@@ -37,7 +37,7 @@ data class Observation(
     val confidence: Float = 1.0f,
     val timestamp: Long = System.currentTimeMillis(),
     val metadata: Map<String, Any> = emptyMap()
-)
+) : Any
 
 data class ObservationCreated(
     override val id: String = UUID.randomUUID().toString(),
@@ -102,4 +102,13 @@ data class ImuObservationPayload(
     val accelXG: Float,
     val accelYG: Float,
     val accelZG: Float
+) : ObservationPayload
+
+/**
+ * Typed payload used for runtime/system observations that are primarily
+ * represented by [Observation.metadata]. Keeping the payload concrete makes
+ * replay serialization safe while preserving the metadata contract.
+ */
+data class SystemObservationPayload(
+    val event: String,
 ) : ObservationPayload
