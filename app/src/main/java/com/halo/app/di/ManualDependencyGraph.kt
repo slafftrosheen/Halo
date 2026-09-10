@@ -93,14 +93,19 @@ object ManualDependencyGraph {
         )
     }
 
+    val toolAuthorizer by lazy {
+        com.halo.runtime.cognition.tools.InMemoryToolAuthorizer()
+    }
+
     val cognitiveSession by lazy {
         com.halo.runtime.cognition.session.CognitiveSession(
-            eventBus,
-            aiProviderRouter,
-            conversationStore,
-            contextAssembler,
-            toolRegistry,
-            infra.scope
+            eventBus = eventBus,
+            providerRouter = aiProviderRouter,
+            conversationStore = conversationStore,
+            contextAssembler = contextAssembler,
+            toolRegistry = toolRegistry,
+            toolAuthorizer = toolAuthorizer,
+            scope = infra.scope
         )
     }
 

@@ -10,11 +10,9 @@ class ToolRegistry(
     fun definitions(): List<ToolDefinition> =
         executors.flatMap { it.definitions() }
 
-    suspend fun execute(
+    fun validate(
         toolCall: ToolCall
-    ): ToolExecutionResult {
-
-        // Validate argument string length limit
+    ): ToolExecutionResult.Rejected? {
         for ((key, value) in toolCall.arguments) {
             if (value is String && value.length > ToolExecutionLimits.MAX_TOOL_ARGUMENT_STRING_CHARS) {
                 return ToolExecutionResult.Rejected(
@@ -37,6 +35,23 @@ class ToolRegistry(
                 toolId = toolCall.functionName,
                 reason = "Unknown tool: ${toolCall.functionName}"
             )
+        }
+
+        return null
+    }
+
+    suspend fun execute(
+        toolCall: ToolCall
+    ): ToolExecutionResult {
+        val validationFailure = validate(toolCall)
+        if (validationFailure != null) {
+            return validationFailure
+        }
+
+        val executor = executors.first { executor ->
+            executor.definitions().any { definition ->
+                definition.name == toolCall.functionName || definition.id == toolCall.functionName
+            }
         }
 
         return executor.execute(toolCall)

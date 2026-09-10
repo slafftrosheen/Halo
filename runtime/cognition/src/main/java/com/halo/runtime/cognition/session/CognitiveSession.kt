@@ -4,6 +4,9 @@ import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.*
 import com.halo.runtime.cognition.context.ContextAssembler
 import com.halo.runtime.cognition.conversation.ConversationStore
+import com.halo.runtime.cognition.tools.InMemoryToolAuthorizer
+import com.halo.runtime.cognition.tools.ToolAuthorization
+import com.halo.runtime.cognition.tools.ToolAuthorizer
 import com.halo.runtime.cognition.tools.ToolExecutionLimits
 import com.halo.runtime.cognition.tools.ToolExecutionResult
 import com.halo.runtime.cognition.tools.ToolRegistry
@@ -25,6 +28,7 @@ class CognitiveSession(
     private val conversationStore: ConversationStore,
     private val contextAssembler: ContextAssembler,
     private val toolRegistry: ToolRegistry? = null,
+    private val toolAuthorizer: ToolAuthorizer = InMemoryToolAuthorizer(),
     private val scope: CoroutineScope
 ) {
     private val _state = MutableStateFlow<CognitiveSessionState>(CognitiveSessionState.Idle)
@@ -56,17 +60,19 @@ class CognitiveSession(
             try {
                 val finalRequest = request
 
-                // 1. Provider Eligibility Check (Fail Fast)
+                // 1. Resolve Target & Provider once (Immutable for entire request)
                 val provider = providerRouter.getEligibleProvider(finalRequest)
+                val target = AiExecutionTarget(
+                    providerId = provider.id,
+                    modelId = finalRequest.modelId ?: providerRouter.selectedModelId.value
+                )
+                val requestForExecution = finalRequest.copy(modelId = target.modelId)
 
-                val providerId = provider.id
-                val modelId = finalRequest.modelId ?: providerRouter.selectedModelId.value
-                
                 // 2. Preparing Context
                 println("[CognitiveSession] Preparing context")
                 _state.value = CognitiveSessionState.PreparingContext
                 eventBus.publish(CognitiveRequestStarted(requestId = requestId))
-                
+
                 val assemblyResult = contextAssembler.assemble(policy, provider.getCapabilities())
                 val context = assemblyResult.context
                 eventBus.publish(
@@ -79,70 +85,21 @@ class CognitiveSession(
                         omissions = assemblyResult.omissions.size
                     )
                 )
-                
-                // 3. Reasoning
-                println("[CognitiveSession] Provider: $providerId, Model: $modelId")
-                val supportsStreaming = provider.getCapabilities().contains(AiCapability.STREAMING)
 
-                _state.value = CognitiveSessionState.Reasoning(providerId, modelId)
+                // 3. Reasoning
+                println("[CognitiveSession] Provider: ${target.providerId}, Model: ${target.modelId}")
+                _state.value = CognitiveSessionState.Reasoning(target.providerId, target.modelId)
                 eventBus.publish(CognitiveReasoningStarted(
                     requestId = requestId,
-                    providerId = providerId,
-                    modelId = modelId
+                    providerId = target.providerId,
+                    modelId = target.modelId
                 ))
-                
-                val initialResponse: AiResponse = if (supportsStreaming) {
-                    println("[CognitiveSession] Starting streaming")
-                    var completedResponse: AiResponse? = null
-                    var accumulatedText = ""
 
-                    provider.stream(finalRequest, context)
-                        .collect { event ->
-                            when (event) {
-                                is AiStreamEvent.Started -> {
-                                    _state.value = CognitiveSessionState.Streaming("")
-                                }
-                                is AiStreamEvent.Token -> {
-                                    accumulatedText += event.text
-                                    _state.value = CognitiveSessionState.Streaming(accumulatedText)
-                                    eventBus.publish(CognitiveTokenReceived(requestId = requestId, token = event.text))
-                                }
-                                is AiStreamEvent.Completed -> {
-                                    completedResponse = event.response
-                                }
-                                is AiStreamEvent.Failed -> throw event.error
-                                is AiStreamEvent.ToolCallDelta -> {}
-                            }
-                        }
+                val initialResponse = executeDirect(provider, requestForExecution, context, requestId)
 
-                    val streamResp = completedResponse
-                        ?: throw AiProviderException(
-                            AiErrorType.INVALID_RESPONSE,
-                            "Provider stream ended without Completed event"
-                        )
-
-                    if (streamResp.text.isBlank() && streamResp.toolCalls.isEmpty()) {
-                        throw AiProviderException(
-                            AiErrorType.EMPTY_RESPONSE,
-                            "Provider stream completed with no usable response"
-                        )
-                    }
-                    streamResp
-                } else {
-                    println("[CognitiveSession] Executing one-shot")
-                    val resp = providerRouter.execute(finalRequest, context)
-                    if (resp.text.isBlank() && resp.toolCalls.isEmpty()) {
-                        throw AiProviderException(
-                            AiErrorType.EMPTY_RESPONSE,
-                            "Provider returned no usable response"
-                        )
-                    }
-                    resp
-                }
-
-                // 4. Handle Tool Calls Loop if Present
+                // 4. Handle Tool Calls Loop against same Provider target
                 val response = if (initialResponse.toolCalls.isNotEmpty()) {
-                    executeToolLoop(requestId, finalRequest, context, initialResponse, provider, policy)
+                    executeToolLoop(requestId, requestForExecution, context, initialResponse, provider, policy)
                 } else {
                     initialResponse
                 }
@@ -151,7 +108,7 @@ class CognitiveSession(
                 eventBus.publish(CognitiveCompleted(requestId = requestId, response = response.text))
 
                 val responseText = response.text.trim()
-                val userText = finalRequest.text?.trim().orEmpty()
+                val userText = requestForExecution.text?.trim().orEmpty()
                 if (responseText.isNotBlank() && responseText != "HANDOFF_STARTED") {
                     if (userText.isNotBlank()) {
                         val turn = conversationStore.append(
@@ -179,6 +136,66 @@ class CognitiveSession(
                 eventBus.publish(CognitiveFailed(requestId = requestId, message = message))
             }
         }
+    }
+
+    private suspend fun executeDirect(
+        provider: AiProvider,
+        request: AiRequest,
+        context: AiContext,
+        requestId: String
+    ): AiResponse {
+        val supportsStreaming = provider.getCapabilities().contains(AiCapability.STREAMING)
+        val response = if (supportsStreaming) {
+            println("[CognitiveSession] Starting streaming")
+            var completedResponse: AiResponse? = null
+            var accumulatedText = ""
+
+            provider.stream(request, context)
+                .collect { event ->
+                    when (event) {
+                        is AiStreamEvent.Started -> {
+                            _state.value = CognitiveSessionState.Streaming("")
+                        }
+                        is AiStreamEvent.Token -> {
+                            accumulatedText += event.text
+                            _state.value = CognitiveSessionState.Streaming(accumulatedText)
+                            eventBus.publish(CognitiveTokenReceived(requestId = requestId, token = event.text))
+                        }
+                        is AiStreamEvent.Completed -> {
+                            completedResponse = event.response
+                        }
+                        is AiStreamEvent.Failed -> throw event.error
+                        is AiStreamEvent.ToolCallDelta -> {}
+                    }
+                }
+
+            val streamResp = completedResponse
+                ?: throw AiProviderException(
+                    AiErrorType.INVALID_RESPONSE,
+                    "Provider stream ended without Completed event"
+                )
+
+            if (streamResp.text.isBlank() && streamResp.toolCalls.isEmpty()) {
+                throw AiProviderException(
+                    AiErrorType.EMPTY_RESPONSE,
+                    "Provider stream completed with no usable response"
+                )
+            }
+            streamResp
+        } else {
+            println("[CognitiveSession] Executing one-shot")
+            val resp = provider.generate(request, context)
+            if (resp.text.isBlank() && resp.toolCalls.isEmpty()) {
+                throw AiProviderException(
+                    AiErrorType.EMPTY_RESPONSE,
+                    "Provider returned no usable response"
+                )
+            }
+            resp
+        }
+
+        AiResponseValidator.validate(provider, response)
+        return response
     }
 
     private suspend fun executeToolLoop(
@@ -241,6 +258,47 @@ class CognitiveSession(
                     continue
                 }
 
+                // 1. ToolRegistry Validation
+                val validationFailure = toolRegistry.validate(toolCall)
+                if (validationFailure != null) {
+                    eventBus.publish(
+                        ToolCallRejected(
+                            requestId = requestId,
+                            toolCallId = toolCall.id,
+                            toolId = toolCall.functionName,
+                            reason = validationFailure.reason
+                        )
+                    )
+                    toolMessages.add(
+                        AIMessage(
+                            role = Role.TOOL,
+                            content = "Tool execution rejected: ${validationFailure.reason}"
+                        )
+                    )
+                    continue
+                }
+
+                // 2. ToolAuthorizer Authorization
+                val authResult = toolAuthorizer.authorize(toolCall)
+                if (authResult is ToolAuthorization.Rejected) {
+                    eventBus.publish(
+                        ToolCallRejected(
+                            requestId = requestId,
+                            toolCallId = toolCall.id,
+                            toolId = toolCall.functionName,
+                            reason = authResult.reason
+                        )
+                    )
+                    toolMessages.add(
+                        AIMessage(
+                            role = Role.TOOL,
+                            content = "Tool execution rejected: ${authResult.reason}"
+                        )
+                    )
+                    continue
+                }
+
+                // 3. Emit ToolCallAuthorized ONLY after real authorization
                 eventBus.publish(
                     ToolCallAuthorized(
                         requestId = requestId,
@@ -249,6 +307,7 @@ class CognitiveSession(
                     )
                 )
 
+                // 4. Execute
                 val result = toolRegistry.execute(toolCall)
 
                 when (result) {
@@ -307,7 +366,8 @@ class CognitiveSession(
             currentContext = currentContext.copy(conversation = updatedConversation)
 
             _state.value = CognitiveSessionState.Reasoning(provider.id, response.modelId)
-            response = providerRouter.execute(initialRequest, currentContext)
+            // Follow-up generation directly against same provider without re-entering router
+            response = executeDirect(provider, initialRequest, currentContext, requestId)
         }
 
         return response
