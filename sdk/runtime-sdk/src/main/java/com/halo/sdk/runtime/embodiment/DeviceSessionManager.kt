@@ -1,9 +1,13 @@
 package com.halo.sdk.runtime.embodiment
 
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 /**
  * Manages active embodiment sessions, ensuring devices are connected
@@ -13,68 +17,57 @@ class DeviceSessionManager(
     val registry: DeviceRegistry
 ) {
     private val _sessions = mutableMapOf<String, EmbodimentSession>()
-    
-    // Simplified state flow of active sessions for UI/Observer use
+    private val stateScope = CoroutineScope(Dispatchers.Default)
+    private val stateJobs = mutableMapOf<String, Job>()
+
     private val _activeSessionsFlow = MutableStateFlow<List<EmbodimentSession>>(emptyList())
     val activeSessions: StateFlow<List<EmbodimentSession>> = _activeSessionsFlow.asStateFlow()
 
-    /**
-     * Add a session to the manager.
-     */
+    /** Emits whenever a registered session changes state. */
+    private val _stateRevision = MutableStateFlow(0L)
+    val stateRevision: StateFlow<Long> = _stateRevision.asStateFlow()
+
     fun registerSession(session: EmbodimentSession) {
+        stateJobs.remove(session.identity.deviceId)?.cancel()
         _sessions[session.identity.deviceId] = session
+        stateJobs[session.identity.deviceId] = stateScope.launch {
+            session.state.collect {
+                _stateRevision.value += 1
+            }
+        }
         updateFlow()
     }
 
-    /**
-     * Remove a session.
-     */
     fun unregisterSession(deviceId: String) {
+        stateJobs.remove(deviceId)?.cancel()
         _sessions.remove(deviceId)
         updateFlow()
+        _stateRevision.value += 1
     }
 
-    /**
-     * Get the active session for a specific device identity.
-     */
-    fun getSession(deviceId: String): EmbodimentSession? {
-        return _sessions[deviceId]
-    }
+    fun getSession(deviceId: String): EmbodimentSession? = _sessions[deviceId]
 
-    /**
-     * Try to auto-connect to any saved devices marked as autoConnect, with a simple retry mechanism.
-     */
     suspend fun autoConnectSavedDevices() {
         val saved = registry.getSavedDevices()
         for (record in saved) {
-            if (record.autoConnect) {
-                val session = _sessions[record.identity.deviceId]
-                if (session != null && session.state.value == SessionState.DISCONNECTED) {
-                    // Try to connect up to 3 times with 5 second delays
-                    for (attempt in 1..3) {
-                        try {
-                            session.connect()
-                            // Assuming session.connect() doesn't block forever, check state
-                            if (session.state.value != SessionState.DISCONNECTED) {
-                                break // Connecting or Ready
-                            }
-                        } catch (e: CancellationException) {
-                            throw e
-                        } catch (e: Exception) {
-                            // Suppress connection failures and continue retrying
-                        }
-                        kotlinx.coroutines.delay(5000L * attempt) // 5s, 10s, 15s backoff
-                        
-                        // Check if we managed to connect in the meantime
-                        if (session.state.value != SessionState.DISCONNECTED) {
-                            break
-                        }
+            if (!record.autoConnect) continue
+            val session = _sessions[record.identity.deviceId] ?: continue
+            if (session.state.value == SessionState.DISCONNECTED || session.state.value == SessionState.SAVED) {
+                for (attempt in 1..3) {
+                    try {
+                        session.connect()
+                        if (session.state.value != SessionState.DISCONNECTED && session.state.value != SessionState.SAVED) break
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (_: Exception) {
+                        // Continue with bounded retry.
                     }
+                    kotlinx.coroutines.delay(5000L * attempt)
                 }
             }
         }
     }
-    
+
     private fun updateFlow() {
         _activeSessionsFlow.value = _sessions.values.toList()
     }
