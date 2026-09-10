@@ -1,5 +1,6 @@
 package com.halo.drivers.heycyan.transport
 
+import com.halo.drivers.heycyan.HeyCyanConnectionMode
 import com.halo.drivers.heycyan.RealHeyCyanDriver
 import com.halo.sdk.driver.DriverState
 import com.halo.sdk.runtime.embodiment.EmbodimentTransport
@@ -14,6 +15,7 @@ import kotlinx.coroutines.launch
 
 class HeyCyanEmbodimentTransport(
     private val driver: RealHeyCyanDriver,
+    private val address: String,
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 ) : EmbodimentTransport {
 
@@ -34,25 +36,13 @@ class HeyCyanEmbodimentTransport(
     }
 
     override suspend fun connect() {
-        // Connection lifecycle is owned by RealHeyCyanDriver
+        driver.connect(address, HeyCyanConnectionMode.RUNTIME)
     }
 
     override suspend fun disconnect() {
         driver.disconnect()
     }
 
-    /**
-     * Generic transport messaging is intentionally unsupported.
-     *
-     * HeyCyan physical commands must go through:
-     *
-     *   HeyCyanCapabilityController
-     *       -> HeyCyanCommandExecutor
-     *       -> HeyCyanGattCommandTransport
-     *
-     * These generic methods must never report success because doing so would create
-     * a false execution result in the Runtime.
-     */
     override suspend fun send(message: String): Boolean = false
 
     override suspend fun send(bytes: ByteArray): Boolean = false
