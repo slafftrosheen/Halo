@@ -11,7 +11,6 @@ import com.halo.app.ui.screens.activity.ActivityViewModel
 import com.halo.app.ui.screens.devices.DevicesViewModel
 import com.halo.app.ui.developer.protocol.ProtocolLabViewModel
 import com.halo.app.ui.developer.inspector.RuntimeInspectorViewModel
-import com.halo.sdk.provider.AiProviderRouter
 
 /**
  * Thin façade that wires sub-graphs together. This is the sole composition root.
@@ -120,7 +119,6 @@ object ManualDependencyGraph {
     val snapshotAssembler get() = observerGraph.snapshotAssembler
     val runtimeReplayRecorder get() = observerGraph.runtimeReplayRecorder
     val runtimeReplayPlayer get() = observerGraph.runtimeReplayPlayer
-    val runtimeSnapshotManager get() = observerGraph.runtimeSnapshotManager
 
     // ─── Processes ──────────────────────────────────────────────
 
@@ -140,7 +138,6 @@ object ManualDependencyGraph {
 
     val deviceRegistry by lazy { com.halo.sdk.runtime.embodiment.PersistentDeviceRegistry(storage) }
     val deviceSessionManager by lazy { com.halo.sdk.runtime.embodiment.DeviceSessionManager(deviceRegistry) }
-
 
     val homeViewModel by lazy {
         android.util.Log.d("ManualDependencyGraph", "Creating HomeViewModel")
@@ -185,6 +182,8 @@ object ManualDependencyGraph {
         RuntimeInspectorViewModel(runtimeSnapshotManager)
     }
 
+    val runtimeSnapshotManager get() = observerGraph.runtimeSnapshotManager
+
     val androidSpeaker by lazy {
         com.halo.host.android.audio.AndroidSpeaker(applicationContext, infra.eventBus).apply {
             start()
@@ -204,7 +203,7 @@ object ManualDependencyGraph {
             com.halo.engines.interpretation.RuleInterpretationProcess(perceptionBus, cognitiveBus)
         )
         processManager.register(
-            com.halo.engines.agents.ReasoningServiceProcess(perceptionBus, cognitiveBus, providerGraph.providers.inference)
+            com.halo.engines.agents.ReasoningServiceProcess(perceptionBus, cognitiveBus, aiProviderRouter)
         )
 
         speechSessionManager.start()
