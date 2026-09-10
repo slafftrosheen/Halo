@@ -59,18 +59,18 @@ class HeyCyanHost(
         driver.deviceState
             .onEach { state ->
                 val heyCyanConn = state.connection
-                val isConnected = heyCyanConn == com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.CONNECTED ||
-                    heyCyanConn == com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.READY
+                val isConnected = heyCyanConn == HeyCyanConnectionState.CONNECTED ||
+                    heyCyanConn == HeyCyanConnectionState.READY
                 val deviceConnState = when (heyCyanConn) {
-                    com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.DISCONNECTED -> DeviceConnectionState.DISCONNECTED
-                    com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.SCANNING -> DeviceConnectionState.DISCOVERING
-                    com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.CONNECTING -> DeviceConnectionState.CONNECTING
-                    com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.CONNECTED -> DeviceConnectionState.CONNECTED
-                    com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.READY -> DeviceConnectionState.READY
-                    com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.DISCONNECTING -> DeviceConnectionState.DISCONNECTING
-                    com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.ERROR -> DeviceConnectionState.ERROR
-                    com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.UNBOUND -> DeviceConnectionState.ERROR
-                    com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.RECONNECTING -> DeviceConnectionState.CONNECTING
+                    HeyCyanConnectionState.DISCONNECTED -> DeviceConnectionState.DISCONNECTED
+                    HeyCyanConnectionState.SCANNING -> DeviceConnectionState.DISCOVERING
+                    HeyCyanConnectionState.CONNECTING -> DeviceConnectionState.CONNECTING
+                    HeyCyanConnectionState.CONNECTED -> DeviceConnectionState.CONNECTED
+                    HeyCyanConnectionState.READY -> DeviceConnectionState.READY
+                    HeyCyanConnectionState.DISCONNECTING -> DeviceConnectionState.DISCONNECTING
+                    HeyCyanConnectionState.ERROR -> DeviceConnectionState.ERROR
+                    HeyCyanConnectionState.UNBOUND -> DeviceConnectionState.ERROR
+                    HeyCyanConnectionState.RECONNECTING -> DeviceConnectionState.CONNECTING
                 }
                 val currentLastSeen = _deviceContext.value.lastSeenMs
                 _deviceContext.value = DeviceContext(
@@ -125,10 +125,7 @@ class HeyCyanHost(
         if (manager.registry.getDevice(address) != null) return
 
         manager.registry.saveDevice(
-            legacy.copy(
-                identity = legacy.identity.copy(deviceId = address),
-                lastSeenMs = legacy.lastSeenMs
-            )
+            legacy.copy(identity = legacy.identity.copy(deviceId = address))
         )
         manager.registry.removeDevice(legacyId)
         Log.i("HeyCyanHost", "Migrated legacy HeyCyan saved identity to $address")
@@ -139,7 +136,7 @@ class HeyCyanHost(
         val bus = eventBus ?: return
         if (sm.getSession(address) == null) {
             val identity = com.halo.sdk.runtime.DeviceIdentity(address, "HEYCYAN_GLASSES", "HeyCyan Glasses")
-            val transport = com.halo.drivers.heycyan.transport.HeyCyanEmbodimentTransport(driver)
+            val transport = com.halo.drivers.heycyan.transport.HeyCyanEmbodimentTransport(driver, address)
             val controllerAdapter = com.halo.drivers.heycyan.capability.HeyCyanCapabilityControllerAdapter(driver.capabilityController)
             sm.registerSession(com.halo.sdk.runtime.embodiment.HeyCyanSession(
                 identity = identity,
@@ -161,7 +158,12 @@ class HeyCyanHost(
     override suspend fun connect() {
         val address = selectedAddress ?: return
         try {
-            driver.connect(address, HeyCyanConnectionMode.RUNTIME)
+            val session = sessionManager?.getSession(address)
+            if (session != null) {
+                session.connect()
+            } else {
+                driver.connect(address, HeyCyanConnectionMode.RUNTIME)
+            }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
