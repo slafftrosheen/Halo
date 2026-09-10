@@ -9,9 +9,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 
 /**
- * AI Provider that integrates with the Android system assistant.
+ * Bridge to the Android device's configured assistant.
  *
- * This implementation acts as a bridge to the default assistant app configured on the device.
+ * Android does not expose a general public API for injecting arbitrary text into
+ * another assistant app and receiving its generated response. Halo therefore
+ * models this provider as a handoff target rather than pretending it is an
+ * inference backend.
  */
 class AndroidAssistantProvider(
     private val context: Context
@@ -21,13 +24,22 @@ class AndroidAssistantProvider(
     override val displayName: String = "Phone Assistant"
     override val isLocal: Boolean = false
 
-    private val _status = MutableStateFlow(ProviderStatus.READY)
+    private val _status = MutableStateFlow(ProviderStatus.UNAVAILABLE)
     override val status: StateFlow<ProviderStatus> = _status.asStateFlow()
+
+    private val handoffModel = AiModel(
+        id = "android-assistant/handoff",
+        displayName = "System Assistant Handoff",
+        providerId = id,
+        inputCapabilities = setOf(AiCapability.TEXT),
+        contextLength = null,
+        supportsStreaming = false,
+        supportsTools = false
+    )
 
     override suspend fun getStatus(): ProviderStatus {
         val intent = android.content.Intent(android.content.Intent.ACTION_ASSIST)
         val resolveInfo = context.packageManager.resolveActivity(intent, 0)
-        
         val current = if (resolveInfo != null) {
             ProviderStatus(ProviderStatus.State.READY, "System assistant available for handoff")
         } else {
@@ -37,40 +49,24 @@ class AndroidAssistantProvider(
         return current
     }
 
-    override suspend fun getCapabilities(): Set<AiCapability> = setOf(
-        AiCapability.TEXT,
-        AiCapability.IMAGE,
-        AiCapability.AUDIO,
-        AiCapability.MULTIMODAL
-    )
+    override suspend fun getCapabilities(): Set<AiCapability> = setOf(AiCapability.TEXT)
 
     override suspend fun generate(request: AiRequest, context: AiContext): AiResponse {
-        // Implementation note: Android's public Assistant integration is primarily
-        // based on intents and assist context. 
-
-        android.util.Log.i("HALO-AI", "provider=$id operation=generate capability=TEXT")
-
-        // Launch assistant intent for handoff if text is provided
-        if (request.text != null) {
-            val intent = android.content.Intent(android.content.Intent.ACTION_ASSIST).apply {
-                flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
-                putExtra(android.content.Intent.EXTRA_ASSIST_CONTEXT, android.os.Bundle())
-            }
-            this.context.startActivity(intent)
-            
-            return AiResponse(
-                text = "HANDOFF_STARTED",
-                providerId = id
-            )
+        request.validateForTextGeneration()
+        val intent = android.content.Intent(android.content.Intent.ACTION_ASSIST).apply {
+            flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+            putExtra(android.content.Intent.EXTRA_ASSIST_CONTEXT, android.os.Bundle())
         }
-
+        this.context.startActivity(intent)
         return AiResponse(
-            text = "UNSUPPORTED",
-            providerId = id
+            text = "System assistant opened. Android does not expose a public API for injecting Halo's text into the assistant or receiving its response.",
+            providerId = id,
+            modelId = handoffModel.id,
+            finishReason = "handoff"
         )
     }
 
     override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = emptyFlow()
 
-    override suspend fun listModels(): List<AiModel> = emptyList()
+    override suspend fun listModels(): List<AiModel> = listOf(handoffModel)
 }
