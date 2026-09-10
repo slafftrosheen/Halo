@@ -7,6 +7,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 /**
@@ -31,9 +32,7 @@ class DeviceSessionManager(
         stateJobs.remove(session.identity.deviceId)?.cancel()
         _sessions[session.identity.deviceId] = session
         stateJobs[session.identity.deviceId] = stateScope.launch {
-            session.state.collect {
-                _stateRevision.value += 1
-            }
+            session.state.collect { _stateRevision.value += 1 }
         }
         updateFlow()
     }
