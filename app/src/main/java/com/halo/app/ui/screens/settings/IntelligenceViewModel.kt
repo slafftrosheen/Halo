@@ -91,9 +91,9 @@ class IntelligenceViewModel(
         snapshotManager.snapshot,
         aiProviderRouter.selectedProviderId,
         aiProviderRouter.selectedModelId,
-        modelDownloadManager?.downloadStates ?: MutableStateFlow(emptyMap()),
+        modelDownloadManager?.downloadStates ?: MutableStateFlow<Map<String, DownloadState>>(emptyMap()),
         combine(
-            modelDownloadManager?.activeModelId ?: MutableStateFlow(null),
+            modelDownloadManager?.activeModelId ?: MutableStateFlow<String?>(null),
             _refreshTrigger
         ) { activeId, _ -> activeId }
     ) { snapshot, selectedProviderId, selectedModelId, dlStates, activeLocalId ->
@@ -143,7 +143,12 @@ class IntelligenceViewModel(
     }
 
     fun downloadCustomUrl(url: String, name: String) {
-        modelDownloadManager?.downloadCustomUrl(url, name)
+        val normalizedUrl = url.trim()
+        val normalizedName = name.trim()
+        if (normalizedUrl.isBlank() || normalizedName.isBlank()) {
+            return
+        }
+        modelDownloadManager?.downloadCustomUrl(normalizedUrl, normalizedName)
         _refreshTrigger.update { it + 1 }
     }
 
@@ -173,6 +178,8 @@ class IntelligenceViewModel(
         val providerId = aiProviderRouter.selectedProviderId.value
         when {
             providerId == "provider.llamacpp.native" && modelId != null -> {
+                val known = modelDownloadManager?.getAllModels()?.any { it.id == modelId } == true
+                if (!known) return
                 modelDownloadManager?.setActiveModel(modelId)
                 storage.putString("llamacpp_model", modelId)
             }
@@ -245,28 +252,42 @@ class IntelligenceViewModel(
     }
 
     fun setOpenRouterModel(model: String) {
-        storage.putString("openrouter_model", model)
+        val normalized = model.trim()
+        if (normalized.isBlank()) return
+        storage.putString("openrouter_model", normalized)
+        if (aiProviderRouter.selectedProviderId.value == "openrouter") {
+            aiProviderRouter.selectModel(normalized)
+        }
         _refreshTrigger.update { it + 1 }
     }
 
     fun setOllamaEndpoint(endpoint: String) {
-        storage.putString("ollama_endpoint", endpoint.trimEnd('/'))
+        val normalized = endpoint.trim().trimEnd('/')
+        storage.putString("ollama_endpoint", normalized)
+        if (aiProviderRouter.selectedProviderId.value == "provider.ollama") {
+            aiProviderRouter.selectModel(storage.getString("ollama_model")?.trim()?.ifBlank { null })
+        }
+        _availableModels.value = emptyList()
         _refreshTrigger.update { it + 1 }
     }
 
     fun setOllamaModel(model: String) {
-        storage.putString("ollama_model", model)
+        val normalized = model.trim()
+        if (normalized.isBlank()) return
+        storage.putString("ollama_model", normalized)
         if (aiProviderRouter.selectedProviderId.value == "provider.ollama") {
-            aiProviderRouter.selectModel(model.trim().ifBlank { null })
+            aiProviderRouter.selectModel(normalized)
         }
         _refreshTrigger.update { it + 1 }
     }
 
     fun setLlamacppModel(model: String) {
-        storage.putString("llamacpp_model", model)
+        val normalized = model.trim()
+        if (normalized.isBlank()) return
+        storage.putString("llamacpp_model", normalized)
         if (aiProviderRouter.selectedProviderId.value == "provider.llamacpp.native") {
-            modelDownloadManager?.setActiveModel(model)
-            aiProviderRouter.selectModel(model)
+            modelDownloadManager?.setActiveModel(normalized)
+            aiProviderRouter.selectModel(normalized)
         }
         _refreshTrigger.update { it + 1 }
     }
