@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.takeWhile
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.nehuatl.llamacpp.LlamaHelper
@@ -25,7 +24,7 @@ class NativeLlamaProvider(
     private val context: Context,
     private val downloadManager: ModelDownloadManager,
     private val storage: Storage
-) : InferenceProvider {
+) : AiInferenceProvider {
     private var engine: LlamaHelper? = null
     private val scope = CoroutineScope(Dispatchers.IO)
     private val llamaEventFlow = MutableSharedFlow<LlamaHelper.LLMEvent>()
