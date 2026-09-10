@@ -5,7 +5,17 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import com.halo.sdk.provider.*
+import com.halo.sdk.provider.AiCapability
+import com.halo.sdk.provider.AiContext
+import com.halo.sdk.provider.AiHandoffProvider
+import com.halo.sdk.provider.AiProviderException
+import com.halo.sdk.provider.AiErrorType
+import com.halo.sdk.provider.AiModel
+import com.halo.sdk.provider.AiProvider
+import com.halo.sdk.provider.AiStreamEvent
+import com.halo.sdk.provider.ProviderStatus
+import com.halo.sdk.provider.AiRequest
+import com.halo.sdk.provider.AiResponse
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,10 +25,8 @@ import kotlinx.coroutines.flow.emptyFlow
 /**
  * Android assistant bridge.
  *
- * Halo treats the device assistant as an external cognitive actor. Android exposes
- * assistant selection and ACTION_ASSIST launching, but does not expose a generic
- * public API for sending arbitrary prompt text to a third-party assistant and
- * reading its generated response back into Halo.
+ * The system assistant is an external actor. Halo can detect it and launch it,
+ * but does not treat it as an inference backend with a guaranteed response path.
  */
 class AndroidAssistantProvider(
     private val context: Context
@@ -50,8 +58,7 @@ class AndroidAssistantProvider(
     override fun assistantPackageName(): String? = resolveAssistantPackage()
 
     override fun handoff(prompt: String?) {
-        val assistIntent = buildAssistIntent(prompt)
-        context.startActivity(assistIntent)
+        context.startActivity(buildAssistIntent(prompt))
     }
 
     override suspend fun getStatus(): ProviderStatus {
@@ -62,7 +69,6 @@ class AndroidAssistantProvider(
         } else {
             false
         }
-
         val current = when {
             packageName == null -> ProviderStatus(
                 ProviderStatus.State.UNAVAILABLE,
@@ -81,43 +87,31 @@ class AndroidAssistantProvider(
         return current
     }
 
-    override suspend fun getCapabilities(): Set<AiCapability> = setOf(AiCapability.TEXT)
+    /**
+     * Handoff providers are intentionally not inference providers.
+     * The method only satisfies the legacy AiProvider contract while the router
+     * excludes this provider from normal inference resolution.
+     */
+    override suspend fun getCapabilities(): Set<AiCapability> = emptySet()
 
     override suspend fun generate(request: AiRequest, context: AiContext): AiResponse {
-        request.validateForTextGeneration()
-        val prompt = request.text?.trim().orEmpty()
-        if (prompt.isBlank()) {
-            throw AiProviderException(
-                AiErrorType.INVALID_REQUEST,
-                "Assistant handoff requires non-empty text"
-            )
-        }
-
-        val packageName = resolveAssistantPackage()
-            ?: throw AiProviderException(
-                AiErrorType.MODEL_UNAVAILABLE,
-                "No Android assistant activity can handle ACTION_ASSIST"
-            )
-
-        handoff(prompt)
-        return AiResponse(
-            text = "Assistant handoff launched ($packageName). Android does not provide a generic public response channel for Halo.",
-            providerId = id,
-            modelId = handoffModel.id,
-            finishReason = "handoff"
+        throw AiProviderException(
+            AiErrorType.UNSUPPORTED_CAPABILITY,
+            "Android Assistant is a handoff target, not a normal inference backend"
         )
     }
 
     override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = emptyFlow()
 
-    override suspend fun listModels(): List<AiModel> = listOf(handoffModel)
+    override suspend fun listModels(): List<AiModel> = emptyList()
+
+    override suspend fun testConnection(): Boolean = isAvailable()
 
     private fun buildAssistIntent(prompt: String?): Intent = Intent(Intent.ACTION_ASSIST).apply {
         flags = Intent.FLAG_ACTIVITY_NEW_TASK
         putExtra(Intent.EXTRA_ASSIST_CONTEXT, Bundle())
         prompt?.trim()?.takeIf { it.isNotBlank() }?.let {
-            // Not an Android-standard assistant prompt contract. This is a best-effort
-            // OEM integration hook and must never be treated as guaranteed behavior.
+            // Non-standard OEM integration hook; Android does not guarantee this contract.
             putExtra("com.halo.assistant.PROMPT", it)
         }
         putExtra("com.halo.assistant.ACTION", HANDOFF_ACTION)
