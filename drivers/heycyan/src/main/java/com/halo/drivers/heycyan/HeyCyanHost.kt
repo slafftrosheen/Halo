@@ -47,7 +47,6 @@ class HeyCyanHost(
             val target = selectedAddress
                 ?.let { id -> saved.firstOrNull { it.identity.deviceId == id } }
                 ?: saved.firstOrNull { it.autoConnect }
-
             if (target != null && target.autoConnect) {
                 selectedAddress = target.identity.deviceId
                 runCatching { sm.autoConnectDevice(target.identity.deviceId) }
@@ -95,9 +94,12 @@ class HeyCyanHost(
                         val address = selectedAddress
                         if (address != null) {
                             ensureSessionRegistered(address)
-                            scope.launch {
-                                sessionManager?.registry?.getDevice(address)?.let { record ->
-                                    sessionManager.registry.saveDevice(record.copy(lastSeenMs = System.currentTimeMillis()))
+                            val manager = sessionManager
+                            if (manager != null) {
+                                scope.launch {
+                                    manager.registry.getDevice(address)?.let { record ->
+                                        manager.registry.saveDevice(record.copy(lastSeenMs = System.currentTimeMillis()))
+                                    }
                                 }
                             }
                         }
