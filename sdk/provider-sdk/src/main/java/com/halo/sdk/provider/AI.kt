@@ -10,15 +10,10 @@ enum class Role {
 data class AIMessage(
     val role: Role,
     val content: String,
-    /** Tool calls emitted by an assistant message, preserved for provider protocols. */
     val toolCalls: List<ToolCall> = emptyList(),
-    /** Correlates a TOOL result with the assistant tool call that requested it. */
     val toolCallId: String? = null
 )
 
-/**
- * Multimodal AI capabilities.
- */
 enum class AiCapability {
     TEXT,
     IMAGE,
@@ -29,9 +24,6 @@ enum class AiCapability {
     TOOLS
 }
 
-/**
- * Modern multimodal AI request.
- */
 data class AiRequest(
     val text: String? = null,
     val image: ByteArray? = null,
@@ -47,13 +39,9 @@ fun AiRequest.validateForTextGeneration() {
     }
 }
 
-/**
- * Verifies that all bound inputs are supported by the selected provider.
- */
 fun AiRequest.validateAgainst(capabilities: Set<AiCapability>) {
-    fun supports(capability: AiCapability): Boolean = capabilities.contains(capability)
     fun requireSupported(present: Boolean, capability: AiCapability, label: String) {
-        if (present && !supports(capability)) {
+        if (present && capability !in capabilities) {
             throw AiProviderException(
                 AiErrorType.UNSUPPORTED_CAPABILITY,
                 "Provider does not support $label input"
@@ -142,8 +130,9 @@ sealed interface CognitiveSessionState {
 }
 
 /**
- * Provider contract for actual inference backends.
- * External assistant handoff is modeled separately by AiHandoffProvider.
+ * Common metadata/diagnostic surface shared by all provider kinds.
+ * Concrete execution contracts are intentionally split between AiInferenceProvider
+ * and AiHandoffProvider.
  */
 interface AiProvider {
     val id: String
@@ -153,9 +142,6 @@ interface AiProvider {
 
     suspend fun getStatus(): ProviderStatus = status.value
     suspend fun getCapabilities(): Set<AiCapability>
-    suspend fun generate(request: AiRequest, context: AiContext): AiResponse
-    fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent>
-    suspend fun listModels(): List<AiModel>
     suspend fun testConnection(): Boolean = getStatus().state == ProviderStatus.State.READY
 }
 
