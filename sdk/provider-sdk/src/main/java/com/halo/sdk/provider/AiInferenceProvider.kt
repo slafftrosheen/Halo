@@ -1,13 +1,12 @@
 package com.halo.sdk.provider
 
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.StateFlow
 
 /**
  * Contract for providers that perform actual model inference.
  *
- * Kept separate from AiProvider so external assistant handoff does not need to
- * implement fake generation/model APIs.
+ * External assistant handoff is intentionally separate and is represented by
+ * [AiHandoffProvider].
  */
 interface AiInferenceProvider : AiProvider {
     override suspend fun getCapabilities(): Set<AiCapability>
