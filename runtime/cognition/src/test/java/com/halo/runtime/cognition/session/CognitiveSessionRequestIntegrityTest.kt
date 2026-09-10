@@ -152,6 +152,58 @@ class CognitiveSessionRequestIntegrityTest {
     }
 
     @Test
+    fun `cognitive session uses model ID from resolved target rather than router selection`() = runTest {
+        val eventBus = FakeEventBus()
+        val blackboard = DefaultBlackboard()
+        val store = InMemoryConversationStore()
+        val provider = RecordingProvider("p1", "Provider 1", finalResponseText = "Output")
+        
+        val router = object : AiProviderRouter {
+            override val selectedProviderId = MutableStateFlow<String?>("p1")
+            override val selectedModelId = MutableStateFlow<String?>("router-model-id")
+            override fun selectProvider(id: String) {}
+            override fun selectModel(modelId: String?) {}
+            override fun getAllProviders() = listOf(provider)
+            override suspend fun getEligibleProvider(request: AiRequest) = provider
+            override suspend fun resolveExecutionTarget(request: AiRequest): AiExecutionTarget {
+                val targetModel = AiModel(
+                    id = "target-model-id",
+                    displayName = "Target Model",
+                    providerId = provider.id,
+                    inputCapabilities = setOf(AiCapability.TEXT),
+                    contextLength = 4096,
+                    supportsStreaming = true,
+                    supportsTools = false
+                )
+                return AiExecutionTarget(
+                    provider = provider,
+                    model = targetModel,
+                    providerCapabilities = setOf(AiCapability.TEXT, AiCapability.STREAMING)
+                )
+            }
+            override suspend fun execute(request: AiRequest, context: AiContext) = provider.generate(request, context)
+            override fun start() {}
+            override fun stop() {}
+        }
+
+        val assembler = DefaultContextAssembler(store, blackboard)
+        val session = CognitiveSession(
+            eventBus = eventBus,
+            providerRouter = router,
+            conversationStore = store,
+            contextAssembler = assembler,
+            scope = this
+        )
+
+        session.submit(AiRequest(text = "Hello"))
+        advanceUntilIdle()
+
+        assertEquals(1, provider.capturedRequests.size)
+        // Request sent to provider must use target.model.id ("target-model-id"), NOT router.selectedModelId ("router-model-id")
+        assertEquals("target-model-id", provider.capturedRequests[0].modelId)
+    }
+
+    @Test
     fun `unauthorized tool is rejected and not authorized`() = runTest {
         val eventBus = FakeEventBus()
         val blackboard = DefaultBlackboard()
