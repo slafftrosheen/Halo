@@ -49,14 +49,9 @@ fun AiRequest.validateForTextGeneration() {
 
 /**
  * Verifies that all bound inputs are supported by the selected provider.
- *
- * This belongs beside the provider contract so direct provider callers cannot
- * bypass the same capability boundary enforced by routing.
  */
 fun AiRequest.validateAgainst(capabilities: Set<AiCapability>) {
-    fun supports(capability: AiCapability): Boolean =
-        capabilities.contains(capability)
-
+    fun supports(capability: AiCapability): Boolean = capabilities.contains(capability)
     fun requireSupported(present: Boolean, capability: AiCapability, label: String) {
         if (present && !supports(capability)) {
             throw AiProviderException(
@@ -65,16 +60,12 @@ fun AiRequest.validateAgainst(capabilities: Set<AiCapability>) {
             )
         }
     }
-
     requireSupported(!text.isNullOrBlank(), AiCapability.TEXT, "text")
     requireSupported(image != null, AiCapability.IMAGE, "image")
     requireSupported(audio != null, AiCapability.AUDIO, "audio")
     requireSupported(video != null, AiCapability.VIDEO, "video")
 }
 
-/**
- * Call to a specific tool requested by the model.
- */
 data class ToolCall(
     val id: String,
     val functionName: String,
@@ -89,18 +80,9 @@ data class AiGenerationMetrics(
     val outputTokens: Int? = null
 ) {
     val timeToFirstTokenMs: Long?
-        get() = if (firstTokenAtMs != null) {
-            firstTokenAtMs - startedAtMs
-        } else {
-            null
-        }
-
+        get() = firstTokenAtMs?.minus(startedAtMs)
     val totalDurationMs: Long?
-        get() = if (completedAtMs != null) {
-            completedAtMs - startedAtMs
-        } else {
-            null
-        }
+        get() = completedAtMs?.minus(startedAtMs)
 }
 
 data class AiExecutionMetadata(
@@ -132,9 +114,6 @@ data class AiRuntimeSnapshot(
     val providers: List<AiProviderDiagnostic>
 )
 
-/**
- * Modern multimodal AI response.
- */
 data class AiResponse(
     val text: String,
     val toolCalls: List<ToolCall> = emptyList(),
@@ -144,9 +123,6 @@ data class AiResponse(
     val metrics: AiGenerationMetrics? = null
 )
 
-/**
- * Events emitted during a streaming generation.
- */
 sealed interface AiStreamEvent {
     data object Started : AiStreamEvent
     data class Token(val text: String) : AiStreamEvent
@@ -155,16 +131,10 @@ sealed interface AiStreamEvent {
     data class Failed(val error: Throwable) : AiStreamEvent
 }
 
-/**
- * State of a single cognitive interaction session.
- */
 sealed interface CognitiveSessionState {
     data object Idle : CognitiveSessionState
     data object PreparingContext : CognitiveSessionState
-    data class Reasoning(
-        val providerId: String,
-        val modelId: String? = null
-    ) : CognitiveSessionState
+    data class Reasoning(val providerId: String, val modelId: String? = null) : CognitiveSessionState
     data class ExecutingTool(val toolId: String) : CognitiveSessionState
     data class Streaming(val text: String) : CognitiveSessionState
     data class Completed(val response: AiResponse) : CognitiveSessionState
@@ -172,36 +142,23 @@ sealed interface CognitiveSessionState {
 }
 
 /**
- * Generic AI provider interface for Halo's cognitive runtime.
+ * Provider contract for actual inference backends.
+ * External assistant handoff is modeled separately by AiHandoffProvider.
  */
 interface AiProvider {
     val id: String
     val displayName: String
     val isLocal: Boolean
-
     val status: StateFlow<ProviderStatus>
 
     suspend fun getStatus(): ProviderStatus = status.value
     suspend fun getCapabilities(): Set<AiCapability>
-
-    suspend fun generate(
-        request: AiRequest,
-        context: AiContext
-    ): AiResponse
-
-    fun stream(
-        request: AiRequest,
-        context: AiContext
-    ): Flow<AiStreamEvent>
-
+    suspend fun generate(request: AiRequest, context: AiContext): AiResponse
+    fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent>
     suspend fun listModels(): List<AiModel>
-    
     suspend fun testConnection(): Boolean = getStatus().state == ProviderStatus.State.READY
 }
 
-/**
- * Status of an AI provider.
- */
 data class ProviderStatus(
     val state: State,
     val message: String? = null
@@ -227,9 +184,6 @@ data class ProviderStatus(
     }
 }
 
-/**
- * Metadata for a specific AI model.
- */
 data class AiModel(
     val id: String,
     val displayName: String,
@@ -242,7 +196,6 @@ data class AiModel(
 )
 
 // Legacy compatibility (to be removed once migrated)
-
 data class AIConversation(
     val id: String,
     val messages: MutableList<AIMessage>
