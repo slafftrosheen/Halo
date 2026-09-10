@@ -48,12 +48,12 @@ class AlphaW1IntegrationTest {
                 override suspend fun generate(
                     request: com.halo.sdk.provider.AiRequest,
                     context: com.halo.sdk.provider.AiContext
-                ): com.halo.sdk.provider.AiResponse = {
-                    com.halo.sdk.provider.AiResponse(
+                ): com.halo.sdk.provider.AiResponse {
+                    return com.halo.sdk.provider.AiResponse(
                         text = "{\"intent\": \"NavigateIntent\", \"target\": \"home\"}",
                         providerId = id
                     )
-                }()
+                }
 
                 override fun stream(
                     request: com.halo.sdk.provider.AiRequest,
