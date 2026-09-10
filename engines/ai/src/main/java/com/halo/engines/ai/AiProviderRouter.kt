@@ -136,11 +136,19 @@ class DefaultAiProviderRouter(
         }
     }
 
+    private fun isHandoffOnly(provider: AiProvider): Boolean = provider is AiHandoffProvider
+
     private suspend fun resolveExplicitTarget(preferredProvider: AiProvider?, request: AiRequest): AiExecutionTarget {
         val provider = preferredProvider ?: throw AiProviderException(
             AiErrorType.PROVIDER_UNAVAILABLE,
             "Explicitly selected provider not found: ${_selectedProviderId.value}"
         )
+        if (isHandoffOnly(provider)) {
+            throw AiProviderException(
+                AiErrorType.UNSUPPORTED_CAPABILITY,
+                "Provider ${provider.id} is a handoff target, not a normal inference backend"
+            )
+        }
         val status = provider.getStatus()
         if (status.state != ProviderStatus.State.READY) {
             throw AiProviderException(AiErrorType.PROVIDER_UNAVAILABLE, "Explicit provider is not ready: ${provider.id}: ${status.state}")
@@ -149,7 +157,7 @@ class DefaultAiProviderRouter(
     }
 
     private suspend fun resolvePreferredWithFallbackTarget(preferredProvider: AiProvider?, request: AiRequest): AiExecutionTarget {
-        if (preferredProvider != null && preferredProvider.getStatus().state == ProviderStatus.State.READY) {
+        if (preferredProvider != null && !isHandoffOnly(preferredProvider) && preferredProvider.getStatus().state == ProviderStatus.State.READY) {
             try {
                 return resolveTargetForProvider(preferredProvider, request, allowSelectedModelFallback = false)
             } catch (e: AiProviderException) {
@@ -169,6 +177,10 @@ class DefaultAiProviderRouter(
         }
         val failures = mutableListOf<String>()
         for (provider in orderedProviders) {
+            if (isHandoffOnly(provider)) {
+                failures += "${provider.id}: external handoff target"
+                continue
+            }
             if (localOnly && !provider.isLocal) {
                 failures += "${provider.id}: not local"
                 continue
@@ -203,6 +215,12 @@ class DefaultAiProviderRouter(
     }
 
     private suspend fun resolveTargetForProvider(provider: AiProvider, request: AiRequest, allowSelectedModelFallback: Boolean): AiExecutionTarget {
+        if (isHandoffOnly(provider)) {
+            throw AiProviderException(
+                AiErrorType.UNSUPPORTED_CAPABILITY,
+                "Provider ${provider.id} is reserved for external assistant handoff"
+            )
+        }
         val providerCapabilities = provider.getCapabilities()
         request.validateAgainst(providerCapabilities)
         val models = provider.listModels()
@@ -230,7 +248,7 @@ class DefaultAiProviderRouter(
 
     private suspend fun getFallbackExecutionTarget(request: AiRequest, failedProviderId: String?): AiExecutionTarget? {
         val localOnly = _routingPolicy.value == AiRoutingPolicy.LOCAL_ONLY
-        for (provider in providers.filter { it.id != failedProviderId }) {
+        for (provider in providers.filter { it.id != failedProviderId && !isHandoffOnly(it) }) {
             if (localOnly && !provider.isLocal) continue
             if (runCatching { provider.getStatus() }.getOrNull()?.state != ProviderStatus.State.READY) continue
             val target = runCatching { resolveTargetForProvider(provider, request, allowSelectedModelFallback = true) }.getOrNull()
@@ -245,11 +263,24 @@ class DefaultAiProviderRouter(
 
     private fun supportsModelInput(model: AiModel, request: AiRequest): Boolean {
         val capabilities = model.inputCapabilities
-        return (request.text == null || AiCapability.TEXT in capabilities) &&
+        return (request.text.isNullOrBlank() || AiCapability.TEXT in capabilities) &&
             (request.image == null || AiCapability.IMAGE in capabilities) &&
             (request.audio == null || AiCapability.AUDIO in capabilities) &&
             (request.video == null || AiCapability.VIDEO in capabilities)
     }
+
+    private fun fallbackEligible(error: Throwable): Boolean =
+        error is AiProviderException && error.type in setOf(
+            AiErrorType.PROVIDER_UNAVAILABLE,
+            AiErrorType.MODEL_UNAVAILABLE,
+            AiErrorType.MODEL_NOT_READY,
+            AiErrorType.MODEL_LOAD_FAILED,
+            AiErrorType.TIMEOUT,
+            AiErrorType.NETWORK_UNAVAILABLE,
+            AiErrorType.NETWORK_ERROR,
+            AiErrorType.RATE_LIMITED,
+            AiErrorType.UNKNOWN_ERROR
+        )
 
     override suspend fun execute(request: AiRequest, context: AiContext): AiResponse {
         val policy = _routingPolicy.value
@@ -270,19 +301,7 @@ class DefaultAiProviderRouter(
             throw e
         } catch (e: Throwable) {
             eventBus?.publish(ProviderFailure(requestId = requestId, providerId = target.providerId, reason = e.message ?: "Execution failed"))
-            val shouldFallback = policy == AiRoutingPolicy.PREFERRED_WITH_FALLBACK || policy == AiRoutingPolicy.AUTOMATIC
-            val retryable = e is AiProviderException && e.type in setOf(
-                AiErrorType.PROVIDER_UNAVAILABLE,
-                AiErrorType.MODEL_UNAVAILABLE,
-                AiErrorType.MODEL_NOT_READY,
-                AiErrorType.MODEL_LOAD_FAILED,
-                AiErrorType.TIMEOUT,
-                AiErrorType.NETWORK_UNAVAILABLE,
-                AiErrorType.NETWORK_ERROR,
-                AiErrorType.RATE_LIMITED,
-                AiErrorType.UNKNOWN_ERROR
-            )
-            if (shouldFallback && retryable) {
+            if ((policy == AiRoutingPolicy.PREFERRED_WITH_FALLBACK || policy == AiRoutingPolicy.AUTOMATIC) && fallbackEligible(e)) {
                 val fallbackTarget = getFallbackExecutionTarget(request, failedProviderId = target.providerId)
                 if (fallbackTarget != null) {
                     val fallbackRequest = request.copy(modelId = fallbackTarget.modelId)
@@ -317,7 +336,7 @@ class DefaultAiProviderRouter(
                 "openrouter" -> storage.getString("openrouter_model")
                 "provider.ollama" -> storage.getString("ollama_model")
                 "provider.llamacpp.native" -> storage.getString("llamacpp_model")
-                "android.system.assistant" -> "android-assistant/handoff"
+                "android.system.assistant" -> null
                 else -> storage.getString("ai_model_${provider.id}")
             }?.trim()?.ifBlank { null }
             value?.let { provider.id to it }
