@@ -24,6 +24,7 @@ sealed interface HeyCyanCommand {
     data object StopRecording : HeyCyanCommand
     data object AiThumbnail : HeyCyanCommand
     data object PrepareVoiceRouting : HeyCyanCommand
+    data object RouteAudioToGlasses : HeyCyanCommand
 
     // Network / Transfer
     data object EnterWifiTransferMode : HeyCyanCommand
@@ -38,42 +39,21 @@ sealed interface HeyCyanCommand {
  */
 fun HeyCyanOperation.toCommand(): HeyCyanCommand =
     when (this) {
-        HeyCyanOperation.GetBattery ->
-            HeyCyanCommand.GetBattery
-
-        HeyCyanOperation.GetDeviceInfo ->
-            HeyCyanCommand.GetDeviceInfo
-
-        HeyCyanOperation.GetMediaInventory ->
-            HeyCyanCommand.GetMediaCounts
-
-        HeyCyanOperation.TakePhoto ->
-            HeyCyanCommand.TakePhoto
-
-        HeyCyanOperation.StartVideo ->
-            HeyCyanCommand.StartVideo
-
-        HeyCyanOperation.StopVideo ->
-            HeyCyanCommand.StopVideo
-
-        HeyCyanOperation.StartRecording ->
-            HeyCyanCommand.StartRecording
-
-        HeyCyanOperation.StopRecording ->
-            HeyCyanCommand.StopRecording
-
-        HeyCyanOperation.PrepareVoiceRouting ->
-            HeyCyanCommand.PrepareVoiceRouting
-
-        HeyCyanOperation.GenerateAIPhoto ->
-            HeyCyanCommand.AiThumbnail
-
-        HeyCyanOperation.EnterWifiTransferMode ->
-            HeyCyanCommand.EnterWifiTransferMode
-
+        HeyCyanOperation.GetBattery -> HeyCyanCommand.GetBattery
+        HeyCyanOperation.GetDeviceInfo -> HeyCyanCommand.GetDeviceInfo
+        HeyCyanOperation.GetMediaInventory -> HeyCyanCommand.GetMediaCounts
+        HeyCyanOperation.TakePhoto -> HeyCyanCommand.TakePhoto
+        HeyCyanOperation.StartVideo -> HeyCyanCommand.StartVideo
+        HeyCyanOperation.StopVideo -> HeyCyanCommand.StopVideo
+        HeyCyanOperation.StartRecording -> HeyCyanCommand.StartRecording
+        HeyCyanOperation.StopRecording -> HeyCyanCommand.StopRecording
+        HeyCyanOperation.PrepareVoiceRouting -> HeyCyanCommand.PrepareVoiceRouting
+        HeyCyanOperation.RouteAudioToGlasses -> HeyCyanCommand.RouteAudioToGlasses
+        HeyCyanOperation.GenerateAIPhoto -> HeyCyanCommand.AiThumbnail
+        HeyCyanOperation.EnterWifiTransferMode -> HeyCyanCommand.EnterWifiTransferMode
         HeyCyanOperation.SynchronizeMedia ->
             throw IllegalStateException(
                 "SynchronizeMedia is not a BLE command. " +
-                "It must be handled by HeyCyanMediaSynchronizer."
+                    "It must be handled by HeyCyanMediaSynchronizer."
             )
     }
