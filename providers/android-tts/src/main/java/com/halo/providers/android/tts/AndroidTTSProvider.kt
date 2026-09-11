@@ -250,12 +250,13 @@ class AndroidTTSProvider(
     override suspend fun health(): Boolean = isInitialized
 
     override suspend fun close() {
-        synthesizeMutex.withLock {
-            tts?.stop()
-            tts?.shutdown()
-            tts = null
-            isInitialized = false
-        }
+        // Do not acquire synthesizeMutex here: synthesize() may be waiting for
+        // an Android TTS callback while holding it. stop() is intentionally
+        // allowed to trigger that callback and release the suspended call.
+        tts?.stop()
+        tts?.shutdown()
+        tts = null
+        isInitialized = false
     }
 
     private companion object {
