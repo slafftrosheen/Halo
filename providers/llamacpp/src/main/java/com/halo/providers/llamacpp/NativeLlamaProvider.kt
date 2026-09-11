@@ -13,9 +13,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.nehuatl.llamacpp.LlamaHelper
@@ -27,7 +27,7 @@ class NativeLlamaProvider(
 ) : AiInferenceProvider {
     private var engine: LlamaHelper? = null
     private val scope = CoroutineScope(Dispatchers.IO)
-    private val llamaEventFlow = MutableSharedFlow<LlamaHelper.LLMEvent>()
+    private val llamaEventFlow = MutableSharedFlow<LlamaHelper.LLMEvent>(extraBufferCapacity = 64)
     private var loadedModelId: String? = null
     private val modelLoadMutex = Mutex()
     private val inferenceMutex = Mutex()
@@ -59,6 +59,8 @@ class NativeLlamaProvider(
 
     override suspend fun testConnection(): Boolean = try {
         loadModelIfNeeded()
+    } catch (e: CancellationException) {
+        throw e
     } catch (e: Exception) {
         Log.e("NativeLlamaProvider", "testConnection error", e)
         false
@@ -149,8 +151,16 @@ class NativeLlamaProvider(
             try {
                 val text = buildString { streamInternal(prompt).collect { append(it) } }.trim()
                 if (text.isBlank()) throw AiProviderException(AiErrorType.EMPTY_RESPONSE, "llama.cpp returned an empty response")
-                AiResponse(text = text, providerId = id, modelId = modelId, finishReason = "stop",
-                    metrics = AiGenerationMetrics(startedAtMs = startedAt, completedAtMs = System.currentTimeMillis()))
+                AiResponse(
+                    text = text,
+                    providerId = id,
+                    modelId = modelId,
+                    finishReason = "stop",
+                    metrics = AiGenerationMetrics(
+                        startedAtMs = startedAt,
+                        completedAtMs = System.currentTimeMillis()
+                    )
+                )
             } catch (error: CancellationException) {
                 throw error
             } catch (error: AiProviderException) {
@@ -168,7 +178,9 @@ class NativeLlamaProvider(
         val output = StringBuilder()
         try {
             val modelId = requireSelectedModel(request)
-            if (!loadModelIfNeeded()) throw AiProviderException(AiErrorType.MODEL_LOAD_FAILED, status.value.message ?: "Unable to load llama.cpp model")
+            if (!loadModelIfNeeded()) {
+                throw AiProviderException(AiErrorType.MODEL_LOAD_FAILED, status.value.message ?: "Unable to load llama.cpp model")
+            }
             inferenceMutex.withLock {
                 streamInternal(buildPrompt(request, context)).collect { token ->
                     output.append(token)
@@ -177,8 +189,20 @@ class NativeLlamaProvider(
             }
             val text = output.toString().trim()
             if (text.isBlank()) throw AiProviderException(AiErrorType.EMPTY_RESPONSE, "llama.cpp produced no response text")
-            emit(AiStreamEvent.Completed(AiResponse(text = text, providerId = id, modelId = modelId, finishReason = "stop",
-                metrics = AiGenerationMetrics(startedAtMs = startedAt, completedAtMs = System.currentTimeMillis()))))
+            emit(
+                AiStreamEvent.Completed(
+                    AiResponse(
+                        text = text,
+                        providerId = id,
+                        modelId = modelId,
+                        finishReason = "stop",
+                        metrics = AiGenerationMetrics(
+                            startedAtMs = startedAt,
+                            completedAtMs = System.currentTimeMillis()
+                        )
+                    )
+                )
+            )
         } catch (error: CancellationException) {
             throw error
         } catch (error: Throwable) {
@@ -193,12 +217,16 @@ class NativeLlamaProvider(
                 throw AiProviderException(AiErrorType.MODEL_LOAD_FAILED, status.value.message ?: "Unable to load local model")
             }
             val result = buildString {
-                streamInternal(request.conversation.messages.joinToString("\n") { "${it.role.name.lowercase()}: ${it.content}" }).collect { append(it) }
+                streamInternal(
+                    request.conversation.messages.joinToString("\n") { "${it.role.name.lowercase()}: ${it.content}" }
+                ).collect { append(it) }
             }
             AIResponseLegacy(result, "stop", System.currentTimeMillis() - startTime)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: AiProviderException) {
+            throw e
         } catch (e: Exception) {
-            if (e is CancellationException) throw e
-            if (e is AiProviderException) throw e
             throw AiProviderException(AiErrorType.LOCAL_MODEL_UNAVAILABLE, "Native Llama completion failed", e)
         }
     }
@@ -207,25 +235,57 @@ class NativeLlamaProvider(
         inferenceMutex.withLock { streamInternal(prompt).collect { emit(it) } }
     }
 
+    /**
+     * Executes one native prediction and consumes only the events belonging to
+     * that prediction. The previous implementation subscribed to the shared
+     * event stream after calling predict(), which created a race where fast
+     * native events could be missed and the flow could remain waiting for a
+     * future Done/Error event. That manifested on-device as an immediate
+     * generic "Native llama.cpp streaming failed" failure.
+     */
     private fun streamInternal(prompt: String): Flow<String> = flow {
-        val currentEngine = engine ?: throw AiProviderException(AiErrorType.MODEL_NOT_READY, "Native llama.cpp engine is not loaded")
-        try {
-            currentEngine.predict(prompt, "", false)
-            llamaEventFlow.takeWhile { event ->
+        val currentEngine = engine
+            ?: throw AiProviderException(AiErrorType.MODEL_NOT_READY, "Native llama.cpp engine is not loaded")
+
+        val collectorJob = kotlinx.coroutines.coroutineScope {
+            launchPrediction(currentEngine, prompt)
+            var emittedAny = false
+            while (true) {
                 currentCoroutineContext().ensureActive()
-                event !is LlamaHelper.LLMEvent.Done && event !is LlamaHelper.LLMEvent.Error
-            }.collect { event ->
-                currentCoroutineContext().ensureActive()
+                val event = llamaEventFlowReplayAwait()
                 when (event) {
-                    is LlamaHelper.LLMEvent.Ongoing -> if (event.word.isNotEmpty()) emit(event.word)
-                    is LlamaHelper.LLMEvent.Error -> throw AiProviderException(AiErrorType.GENERATION_FAILED, "llama.cpp generation error")
+                    is LlamaHelper.LLMEvent.Ongoing -> {
+                        if (event.word.isNotEmpty()) {
+                            emittedAny = true
+                            emit(event.word)
+                        }
+                    }
+                    is LlamaHelper.LLMEvent.Done -> return@coroutineScope Unit
+                    is LlamaHelper.LLMEvent.Error -> {
+                        throw AiProviderException(AiErrorType.GENERATION_FAILED, "llama.cpp generation error")
+                    }
                     else -> Unit
                 }
             }
-        } catch (e: Exception) {
-            if (e is CancellationException) throw e
-            if (e is AiProviderException) throw e
-            throw AiProviderException(AiErrorType.GENERATION_FAILED, "Native llama.cpp streaming failed", e)
+        }
+        @Suppress("UNUSED_VARIABLE")
+        collectorJob
+    }
+
+    private suspend fun launchPrediction(currentEngine: LlamaHelper, prompt: String) {
+        currentCoroutineContext().ensureActive()
+        currentEngine.predict(prompt, "", false)
+    }
+
+    private suspend fun llamaEventFlowReplayAwait(): LlamaHelper.LLMEvent {
+        return kotlinx.coroutines.suspendCancellableCoroutine { continuation ->
+            val collector = scope.launch {
+                llamaEventFlow.collect { event ->
+                    if (continuation.isActive) continuation.resume(event) {}
+                    this.cancel()
+                }
+            }
+            continuation.invokeOnCancellation { collector.cancel() }
         }
     }
 
@@ -233,9 +293,15 @@ class NativeLlamaProvider(
         val downloaded = downloadManager.getAllModels().filter { downloadManager.getModelFile(it.id) != null }
         val activeId = downloadManager.activeModelId.value
         return downloaded.sortedWith(compareByDescending<CognitiveModel> { it.id == activeId }.thenBy { it.name }).map { model ->
-            AiModel(id = model.id, displayName = model.name, providerId = id,
-                inputCapabilities = setOf(AiCapability.TEXT), contextLength = 4096,
-                supportsStreaming = true, supportsTools = false)
+            AiModel(
+                id = model.id,
+                displayName = model.name,
+                providerId = id,
+                inputCapabilities = setOf(AiCapability.TEXT),
+                contextLength = 4096,
+                supportsStreaming = true,
+                supportsTools = false
+            )
         }
     }
 
