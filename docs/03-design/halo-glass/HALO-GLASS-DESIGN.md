@@ -1,184 +1,218 @@
 # HALO-GLASS-DESIGN.md
-**Status**: ACTIVE  
-**Authority**: Single source of truth for Halo Glass design following PR-017/PR-018  
-**Last Updated**: 2026-08-10  
+
+**Status:** ACTIVE  
+**Authority:** Single source of truth for the Halo Glass visual language  
+**Last Updated:** 2026-09-11
 
 ---
 
-# HALO Glass Design System
+## 1. Design philosophy
 
-## 1. Design Philosophy
+Halo uses a premium dark glass interface with a restrained technical/pixel character. It should feel like an instrument for a cognitive runtime: calm at rest, precise under activity, and information-dense without becoming a dashboard.
 
-> **Halo uses a premium glassmorphic interface inspired by Apple's modern spatial/material design language, but it is not an Apple clone.**
+The target is **glass + signal**, not generic cyberpunk and not an Apple clone.
 
-### Visual Language
-```
-dark • translucent • layered • quiet • precise • soft • spatial • high contrast • subtle depth • minimal
-```
+Visual language:
 
-### Core Principles
-1. **Functional Glass** - Glass effects serve purpose, not decoration
-2. **Performance First** - Blur must not compromise 60fps
-3. **State Communication** - Visuals express runtime state clearly
-4. **Accessibility** - All visuals meet WCAG 2.1 AA contrast
+`dark · translucent · layered · quiet · precise · soft · spatial · high-contrast · technical · minimal`
 
----
+The pixel language is a secondary identity layer. Use small square markers, compact monospace metadata, stepped/rectilinear accents, and restrained status indicators. Do not cover the UI in pixel art.
 
-## 2. Material System: Five Glass Levels
+Core principles:
 
-| Level | Name | Alpha | Color | Blur | Elevation | Use |
-|-------|------|-------|-------|------|-----------|-----|
-| 1 | Background | ~55% | #080A0B | 20dp | 0dp | Full-screen backdrop |
-| 2 | Standard | ~66% | #141719 | 30dp | 4dp | Cards, sections |
-| 3 | Elevated | ~75% | #1B1F20 | 40dp | 12dp | Modals, sheets |
-| 4 | Strong | ~82% | #1B1F20 | 50dp | 20dp | Floating mic, critical UI |
-| 5 | Interactive | ~90% | #1B1F20 | 20dp | 8dp | Buttons, controls |
+1. **Functional glass** — depth and translucency communicate hierarchy.
+2. **Runtime first** — visual state must reflect real runtime/device state.
+3. **Signal, not decoration** — pixels, glow and motion are meaningful only when they communicate state.
+4. **Performance first** — never trade interaction quality for blur effects.
+5. **Accessibility first** — typography, contrast, touch targets and reduced-motion behavior remain usable.
 
----
+## 2. Material system
 
-## 3. Color Palette
+| Level | Name | Use |
+|---|---|---|
+| 1 | Background | Full-screen backdrop |
+| 2 | Standard glass | Cards and sections |
+| 3 | Elevated glass | Dialogs and sheets |
+| 4 | Strong glass | Critical/floating interaction |
+| 5 | Interactive glass | Buttons and controls |
 
-**Base:**
-- Background: #080A0B
-- Glass: #141719
-- Glass Elevated: #1B1F20
+The current Android implementation intentionally uses opaque/translucent Material surfaces rather than forcing platform blur everywhere. True backdrop blur is optional enhancement, never a prerequisite for readability.
 
-**Text:**
-- Primary: #F5F7F6
-- Secondary: #A5ADA9
-- Muted: #6B7471
+Limit expensive blur surfaces to roughly 2–3 per screen when platform support permits it.
 
-**Accent (Halo Green/Cyan Hybrid):**
-- Primary: #7DE2B1
-- Strong: #54D99A
-- Muted: #337DE2B1 (20% alpha)
+## 3. Color tokens
 
-**Semantic:**
-- Success: #7DE2B1
-- Warning: #F0B86B
-- Danger: #FF6B72
-- Info: #4EA8FF
+**Base**
+- Background: `#080A0B`
+- Glass: `#141719`
+- Elevated glass: `#1B1F20`
+- Signal surface: `#101516`
 
-**Borders:**
-- Subtle: #33FFFFFF (20%)
-- Standard: #4DFFFFFF (30%)
-- Strong: #80FFFFFF (50%)
+**Text**
+- Primary: `#F5F7F6`
+- Secondary: `#A5ADA9`
+- Muted: `#6B7471`
 
----
+**Halo signal**
+- Primary: `#7DE2B1`
+- Strong: `#54D99A`
+- Information: `#4EA8FF`
+- Warning: `#F0B86B`
+- Danger: `#FF6B72`
 
-## 4. Blur Strategy
+**Borders**
+- Subtle: white at ~20%
+- Standard: white at ~30%
+- Strong: white at ~50%
 
-- **API 31+**: RenderEffect.createBlurEffect() - Full backdrop blur
-- **API 29-30**: BlurMaskFilter (limited)
-- **API 24-28**: Fallback = translucent + gradient highlight + noise + shadow
+The green/cyan signal should remain sparse. A healthy screen should still look mostly graphite when no important runtime state is active.
 
-**Performance:** Max 2-3 glass surfaces with blur on screen, cache blur radius, test on target hardware.
+## 4. Pixel language
 
----
+Pixel treatment is deliberately small-scale:
 
-## 5. Spacing & Shapes
+- 4–8dp square signal markers for runtime/status state.
+- Monospace only for diagnostics, identifiers, compact metadata and developer surfaces.
+- Slightly stepped/rectilinear motifs may appear in backgrounds or state visualizations.
+- Avoid pixel fonts for normal body copy; readability wins.
+- Avoid permanent scanlines, CRT effects, noisy textures, particle fields or constant glow.
+- Never use a pixel motif to disguise missing functionality.
+
+A useful rule: **one strong signal is better than ten decorative ones.**
+
+## 5. Spacing and shapes
 
 ```kotlin
 object HaloSpacing {
-    val xxs = 2.dp; val xs = 4.dp; val sm = 8.dp; val md = 12.dp
-    val lg = 16.dp; val xl = 24.dp; val xxl = 32.dp; val xxxl = 48.dp
-}
-
-object HaloGlassShapes {
-    val small = RoundedCornerShape(12.dp)
-    val medium = RoundedCornerShape(18.dp)
-    val large = RoundedCornerShape(24.dp)
-    val xl = RoundedCornerShape(32.dp)
-    val pill = RoundedCornerShape(percent = 50)
-    val circle = CircleShape
+    val xxs = 2.dp
+    val xs = 4.dp
+    val sm = 8.dp
+    val md = 12.dp
+    val lg = 16.dp
+    val xl = 24.dp
+    val xxl = 32.dp
+    val xxxl = 48.dp
 }
 ```
 
----
+Preferred shapes:
 
-## 6. Motion
+- Small controls: 6–12dp
+- Cards/sections: 18dp
+- Dialogs/sheets: 24dp
+- Large floating surfaces: 32dp
+- Pills: reserved for status/chips, not every control
+
+Spacing should create hierarchy before borders or shadows do.
+
+## 6. Typography
+
+- Display: 32–40sp
+- Headline: 24–28sp
+- Title: 18–22sp
+- Body: 15–17sp
+- Label: 12–14sp
+- Diagnostic mono: 11–14sp
+
+Use normal sans-serif typography for primary interaction. Use monospace as a deliberate technical accent, not as the application-wide font.
+
+## 7. Runtime state visualization
+
+The central state visualization should communicate cognition without becoming a decorative animation:
+
+```text
+IDLE        ○   quiet ring
+LISTENING   ◉   short pulse
+CAPTURING   ●   waveform/signal
+RECOGNIZING ◌   processing indication
+REASONING   ◉   restrained pulse
+PLANNING    ◉   progressive segments
+EXECUTING   ◉   progress state
+SPEAKING    ◉   outward audio signal
+RECOVERING  ◌   amber recovery state
+STOPPED     ×   settled/disabled state
+```
+
+Forbidden: random glow, permanent pulsing, decorative particles, motion without state meaning.
+
+## 8. Components
+
+The shared Compose design system provides the visual primitives used by screens:
+
+- `HaloCard` — standard glass content surface
+- `HaloButton` — primary/secondary action
+- `HaloStatusChip` — state + square signal marker
+- `HaloTag` — compact metadata label
+- `HaloSection` — section heading + signal marker
+- `HaloMetricCard` / `HaloMetric` — compact runtime metrics
+- `HaloStatus` — label/value health state
+- `HaloTimelineItem` — activity timeline row
+- `HaloDialog` — elevated modal surface
+- `ConsoleSection` / `ConsoleRow` — technical/developer surfaces
+- `HaloPixelSignal` — intentionally small runtime/status marker
+
+New screens should reuse these primitives rather than introducing one-off card/button styles.
+
+## 9. Navigation
+
+Primary navigation:
+
+1. **Home** — runtime state and cognitive activity
+2. **Activity** — timeline/history
+3. **Devices** — saved devices and live device state
+4. **Settings** — system configuration
+
+Secondary/developer surfaces remain outside primary navigation:
+
+- Intelligence
+- Permissions
+- Discovery/pairing
+- Console
+- Runtime Inspector
+- Protocol Lab
+
+Developer tooling must never visually compete with the primary wearable workflow.
+
+## 10. Device UI
+
+Device pages must answer three questions immediately:
+
+1. **Is the device connected and healthy?**
+2. **What can it actually do right now?**
+3. **What actions can I safely perform?**
+
+Capabilities must be labeled truthfully as available, limited, structural/unverified, blocked, or unavailable. Do not render a button for a protocol action that is not verified.
+
+For HeyCyan, hardware input descriptions and capability status are informational unless a corresponding runtime command is actually implemented.
+
+## 11. Motion
+
+Target timings:
 
 | Type | Duration |
-|------|----------|
+|---|---:|
 | Immediate | 120ms |
 | Standard | 200ms |
 | Emphasized | 300ms |
 
-All animations respect `reduceMotion` accessibility setting.
+All motion must respect the platform's reduced-motion preference. State transitions should settle quickly; Halo is an instrument, not an animation showcase.
 
----
+## 12. Accessibility
 
-## 7. Typography Hierarchy
+- Text contrast target: ≥4.5:1
+- UI contrast target: ≥3:1
+- Support system font scaling up to 200% without clipping or overlap.
+- Minimum practical touch target: 48dp.
+- Do not encode state using color alone.
+- Support TalkBack semantics on interactive controls.
+- Respect reduced-motion preferences.
 
-- **Display**: 32-40sp (HALO logo, hero text)
-- **Headline**: 24-28sp (section titles)
-- **Title**: 18-22sp (card titles)
-- **Body**: 15-17sp (content text)
-- **Label**: 12-14sp (labels, buttons)
-- **Mono**: 12-14sp (Console, diagnostics)
+## 13. Performance guardrails
 
----
+- Prefer Material/alpha surfaces over universal runtime blur.
+- Avoid nested expensive effects.
+- Keep scrolling screens lazy.
+- Do not animate large blurred regions continuously.
+- Verify visual changes on the actual phone and wearable workflow before calling them final.
 
-## 8. Runtime State Visualization (HaloStateOrb)
-
-```text
-IDLE       ○ Thin ring, subtle 4s breath
-LISTENING  ◉ Filled dot, 1.5s pulse ring
-CAPTURING  ● Solid, waveform from center
-RECOGNIZING ◌ Ring, 3 dots orbiting 2s
-REASONING  ◉ Dot, 0.8s scale pulse
-PLANNING   ◉ Dot, ring segments fill clockwise
-EXECUTING  ◉ Dot, rotating progress ring
-SPEAKING   ◉ Dot, outward sonar pulses
-RECOVERING ◌ Amber ring, slow 4s breath
-STOPPED    ✕ Cross, fade to idle
-```
-
-**Forbidden:** Random glow, particles, permanent pulsing, decorative motion.
-
----
-
-## 9. Components
-
-| Component | Material | Description |
-|-----------|----------|-------------|
-| HaloGlassSurface | Variable | Base glass container |
-| HaloGlassCard | Standard/Elevated/Strong | Content containers |
-| HaloGlassSection | Standard | Titled sections |
-| HaloGlassButton | Interactive | Action buttons |
-| HaloGlassChip | Standard | Labels, status indicators |
-| HaloGlassDivider | Standard | Separators |
-| HaloGlassNavigation | Background | Bottom nav bar |
-| HaloGlassSheet | Elevated | Bottom sheets |
-| HaloGlassDialog | Elevated/Strong | Modal dialogs |
-| HaloGlassMetric | Standard | Label-value pairs |
-
----
-
-## 10. Navigation
-
-**Bottom Navigation:**
-1. Home (`home`) - Runtime, state visualization
-2. Activity (`activity`) - Cognitive timeline
-3. Devices (`devices`) - Device management
-4. Settings (`settings`) - Configuration
-
-**Developer Mode (Drawer only):**
-- Console (`console`)
-- Protocol Lab (`protocol-lab`)
-- Runtime Inspector (`runtime-inspector`)
-
-**BLE Capture is NOT a primary navigation item.**
-
----
-
-## 11. Accessibility
-
-- Color contrast ≥4.5:1 (text), ≥3:1 (UI)
-- Font scaling support up to 200%
-- All animations respect `reduceMotion` setting
-- Tested with TalkBack and Switch Access
-
----
-
-**End of HALO-GLASS-DESIGN.md** — This is the authoritative design specification. All UI implementations must follow this document.
+**End of HALO-GLASS-DESIGN.md** — authoritative visual guidance for Halo Glass.
