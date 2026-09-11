@@ -23,13 +23,13 @@ import kotlin.coroutines.resume
  *
  * HeyCyan speaker selection has two layers:
  * 1. The BLE host sends the verified HeyCyan speaker-switch command.
- * 2. Android routes the actual PCM/TTS stream through its Bluetooth audio path.
+ * 2. Android routes the actual TTS stream through its Bluetooth audio path.
  *
- * API 31+ exposes the supported communication-device API. We only select a
- * Bluetooth SCO/BLE headset when Android reports one as an available
- * communication device. We deliberately do not force SCO when only A2DP is
- * available: A2DP is a media route and should remain under Android's normal
- * media/assistant routing policy.
+ * HeyCyan may expose its Classic Bluetooth speaker as A2DP rather than as a
+ * communication device. Therefore TTS uses USAGE_MEDIA: unlike USAGE_ASSISTANT,
+ * this keeps the utterance eligible for Android's normal Bluetooth media route.
+ * When a SCO/BLE communication device is actually available, API 31+ still
+ * selects it explicitly because that is the more deterministic voice route.
  */
 class AndroidTTSProvider(
     private val context: Context
@@ -51,7 +51,9 @@ class AndroidTTSProvider(
             tts?.language = Locale.US
             tts?.setAudioAttributes(
                 AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_ASSISTANT)
+                    // Bluetooth Classic A2DP is a media route. USAGE_ASSISTANT
+                    // can remain on the phone speaker on some Android stacks.
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
                     .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
                     .build()
             )
@@ -81,6 +83,7 @@ class AndroidTTSProvider(
             ttsEngine.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
                 override fun onStart(id: String?) {
                     if (id == utteranceId) {
+                        logCurrentBluetoothOutputs("TTS started")
                         Log.d(TAG, "TTS started utterance=$utteranceId")
                     }
                 }
@@ -101,6 +104,7 @@ class AndroidTTSProvider(
                 }
             })
 
+            logCurrentBluetoothOutputs("TTS route before speak")
             val result = ttsEngine.speak(
                 request.text,
                 TextToSpeech.QUEUE_ADD,
@@ -120,10 +124,11 @@ class AndroidTTSProvider(
 
     /**
      * Prefer Android's explicit communication-device route for SCO/BLE headset
-     * output. A2DP is intentionally left to the system media route.
+     * output. A2DP is intentionally left to Android's media routing policy.
      */
     private fun prepareBluetoothCommunicationRoute(): RouteState {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+            logCurrentBluetoothOutputs("TTS route API<31")
             return RouteState.unmodified
         }
 
@@ -136,7 +141,7 @@ class AndroidTTSProvider(
             }
 
             if (communicationDevice == null) {
-                logCurrentBluetoothOutputs()
+                logCurrentBluetoothOutputs("No Bluetooth communication device; using media route")
                 return RouteState.unmodified
             }
 
@@ -150,7 +155,7 @@ class AndroidTTSProvider(
 
             Log.i(
                 TAG,
-                "TTS Bluetooth route selected type=${communicationDevice.type} " +
+                "TTS Bluetooth communication route selected type=${communicationDevice.type} " +
                     "name=${communicationDevice.productName}"
             )
             RouteState(previousMode, previousDevice, modified = true)
@@ -175,7 +180,7 @@ class AndroidTTSProvider(
         }
     }
 
-    private fun logCurrentBluetoothOutputs() {
+    private fun logCurrentBluetoothOutputs(reason: String) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return
         runCatching {
             val outputs = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
@@ -184,8 +189,23 @@ class AndroidTTSProvider(
                         it.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO ||
                         it.type == AudioDeviceInfo.TYPE_BLE_HEADSET
                 }
-                .joinToString { "type=${it.type},name=${it.productName}" }
-            Log.i(TAG, "Available Bluetooth audio outputs: ${outputs.ifBlank { "none" }}")
+                .joinToString { "type=${it.type},name=${it.productName},address=${it.address}" }
+
+            val communication = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                audioManager.communicationDevice?.let {
+                    "type=${it.type},name=${it.productName},address=${it.address}"
+                } ?: "none"
+            } else {
+                "legacy"
+            }
+
+            Log.i(
+                TAG,
+                "$reason | Bluetooth outputs=${outputs.ifBlank { "none" }} " +
+                    "| communicationDevice=$communication | mode=${audioManager.mode}"
+            )
+        }.onFailure { error ->
+            Log.w(TAG, "Unable to inspect Bluetooth audio outputs", error)
         }
     }
 
