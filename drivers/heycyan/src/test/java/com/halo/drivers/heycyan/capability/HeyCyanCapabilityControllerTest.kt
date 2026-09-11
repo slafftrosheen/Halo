@@ -1,6 +1,7 @@
 package com.halo.drivers.heycyan.capability
 
 import com.halo.drivers.heycyan.protocol.HeyCyanCommand
+import com.halo.drivers.heycyan.protocol.HeyCyanConnectionState
 import com.halo.drivers.heycyan.protocol.HeyCyanDeviceStateStore
 import com.halo.drivers.heycyan.protocol.HeyCyanEvent
 import com.halo.drivers.heycyan.protocol.HeyCyanMode
@@ -87,6 +88,14 @@ class HeyCyanCapabilityControllerTest {
     }
 
     @Test
+    fun `speaker output is exposed with limitation`() {
+        assertEquals(
+            HeyCyanCapabilityStatus.AVAILABLE_WITH_LIMITATION,
+            HeyCyanCapabilities.speakerOutput.status,
+        )
+    }
+
+    @Test
     fun `canonical capability ids contain exactly the exposed capability surface`() {
         assertEquals(
             HeyCyanCapabilityIds.all,
@@ -139,6 +148,26 @@ class HeyCyanCapabilityControllerTest {
 
         assertTrue(result is CapabilityOutcome.Failure)
         assertTrue(executor.executedCommands.isEmpty())
+    }
+
+    @Test
+    fun `speaker output is rejected until transport is ready`() = runTest {
+        val result = controller.execute(HeyCyanOperation.RouteAudioToGlasses)
+
+        assertTrue(result.isFailure)
+        val failure = (result.exceptionOrNull() as HeyCyanCapabilityException).failure
+        assertTrue(failure is HeyCyanOperationFailure.DeviceRejected)
+        assertTrue(executor.executedCommands.isEmpty())
+    }
+
+    @Test
+    fun `speaker output reaches executor when transport is ready`() = runTest {
+        stateStore.updateConnection(HeyCyanConnectionState.READY)
+
+        val result = controller.execute(HeyCyanOperation.RouteAudioToGlasses)
+
+        assertTrue(result.isSuccess)
+        assertEquals(HeyCyanCommand.RouteAudioToGlasses, executor.executedCommands.single())
     }
 
     @Test
