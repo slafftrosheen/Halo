@@ -85,9 +85,12 @@ class DefaultHeyCyanCommandExecutor(
                     action = com.halo.drivers.heycyan.protocol.HeyCyanCommandCatalog.ACTION_GLASSES_CONTROL
                     payload = byteArrayOf(0x02, 0x01, 0x0B)
                 }
-                // SetDateTime intentionally has no transmit mapping yet.
-                // Falling through to the evidence gate is safer than sending
-                // ACTION_SYNC_TIME with an empty payload.
+                is HeyCyanCommand.RouteAudioToGlasses -> {
+                    // Vendor LargeDataHandler.speakSoundSwitch(false):
+                    // ACTION_SPEAK_SOUND_SWITCH (0x52), payload { 0x02, 0x01 }.
+                    action = com.halo.drivers.heycyan.protocol.HeyCyanCommandCatalog.ACTION_SPEAK_SOUND_SWITCH
+                    payload = byteArrayOf(0x02, 0x01)
+                }
                 is HeyCyanCommand.SetDateTime -> return Result.failure(
                     com.halo.drivers.heycyan.protocol.ProtocolNotVerifiedException(
                         operation = command.toString(),
