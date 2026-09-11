@@ -29,7 +29,8 @@ import com.halo.drivers.heycyan.capability.CapabilityRequest
 import com.halo.drivers.heycyan.capability.HeyCyanCapabilityIds
 import com.halo.engines.speech.ListeningStarted
 import com.halo.providers.llamacpp.NativeLlamaProvider
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 /**
@@ -44,14 +45,19 @@ class EngineGraph(
     private val heyCyanDriver: com.halo.drivers.heycyan.RealHeyCyanDriver
 ) {
     init {
-        // Hide local-model load latency behind the listening phase. This stays at
-        // the Android composition boundary so the device-agnostic speech engine
-        // does not need to know that a local llama.cpp provider exists.
+        // Hide local-model load latency behind the listening phase. Do not use
+        // collectLatest here: a second listening session must never cancel a
+        // model load that is already warming up, otherwise repeated wake/listen
+        // cycles can turn one load into an unload/reload loop.
         val localProvider = providerGraph.providers.inference as? NativeLlamaProvider
         if (localProvider != null) {
+            var warmupJob: Job? = null
             infra.scope.launch {
-                infra.eventBus.observe(ListeningStarted::class.java).collectLatest {
-                    if (aiProviderRouter.selectedProviderId.value == localProvider.id) {
+                infra.eventBus.observe(ListeningStarted::class.java).collect {
+                    if (aiProviderRouter.selectedProviderId.value != localProvider.id) return@collect
+                    if (warmupJob?.isActive == true) return@collect
+
+                    warmupJob = launch {
                         runCatching { localProvider.loadModelIfNeeded() }
                             .onFailure { error ->
                                 infra.logger.warn(
