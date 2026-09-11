@@ -1,5 +1,6 @@
 package com.halo.providers.llamacpp
 
+import android.os.Build
 import android.util.Log
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.Storage
@@ -28,17 +29,21 @@ import java.util.concurrent.TimeUnit
  *
  * The runtime-facing contract is [AiInferenceProvider]. Legacy completion/stream
  * helpers remain as concrete methods for callers that have not migrated yet.
+ *
+ * The emulator host alias 10.0.2.2 is only a development convenience. A physical
+ * Android device must use an explicit LAN/local endpoint configured by the user.
  */
 class OllamaProvider(
     private val storage: Storage
 ) : AiInferenceProvider {
     private val TAG = "OllamaProvider"
     private val JSON = "application/json; charset=utf-8".toMediaType()
-    private val defaultEndpoint = "http://10.0.2.2:11434"
+    private val defaultEndpoint: String?
+        get() = if (isAndroidEmulator()) "http://10.0.2.2:11434" else null
     private val _status = MutableStateFlow(ProviderStatus.UNAVAILABLE)
     override val status: StateFlow<ProviderStatus> = _status.asStateFlow()
     private val baseUrl: String
-        get() = storage.getString("ollama_endpoint")?.trim()?.trimEnd('/')?.ifBlank { null } ?: defaultEndpoint
+        get() = storage.getString("ollama_endpoint")?.trim()?.trimEnd('/')?.ifBlank { null } ?: defaultEndpoint.orEmpty()
     private val modelId: String
         get() = storage.getString("ollama_model")?.trim()?.ifBlank { null } ?: "llama3"
     private val client: OkHttpClient by lazy {
@@ -60,7 +65,11 @@ class OllamaProvider(
     override val isLocal: Boolean = true
 
     override suspend fun getStatus(): ProviderStatus {
-        val endpoint = normalizedEndpointOrNull() ?: return ProviderStatus(ProviderStatus.State.UNCONFIGURED, "Ollama endpoint is not configured").also { _status.value = it }
+        val endpoint = normalizedEndpointOrNull()
+            ?: return ProviderStatus(
+                ProviderStatus.State.UNCONFIGURED,
+                "Ollama endpoint is not configured"
+            ).also { _status.value = it }
         val probe = fetchModels(endpoint)
         val status = when {
             probe.error != null -> ProviderStatus(ProviderStatus.State.OFFLINE, "Ollama unreachable at $endpoint: ${probe.error}")
@@ -75,7 +84,7 @@ class OllamaProvider(
     override suspend fun getCapabilities(): Set<AiCapability> = setOf(AiCapability.TEXT, AiCapability.STREAMING)
 
     override suspend fun testConnection(): Boolean = getStatus().state == ProviderStatus.State.READY
-    suspend fun health(): Boolean = fetchModels(normalizedEndpointOrNull()).error == null
+    suspend fun health(): Boolean = normalizedEndpointOrNull()?.let { fetchModels(it).error == null } == true
 
     override suspend fun generate(request: AiRequest, context: AiContext): AiResponse {
         request.validateForTextGeneration()
@@ -85,7 +94,53 @@ class OllamaProvider(
         return AiResponse(text = legacy.text, providerId = id, modelId = model)
     }
 
-    override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = emptyFlow()
+    override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = flow {
+        request.validateForTextGeneration()
+        emit(AiStreamEvent.Started)
+        val model = request.modelId?.trim()?.ifBlank { null } ?: modelId
+        val prompt = context.conversation.toMutableList().apply { add(AIMessage(Role.USER, request.text!!)) }
+            .joinToString("\n") { "${it.role.name.lowercase()}: ${it.content}" }
+        val endpoint = normalizedEndpointOrNull()
+            ?: throw AiProviderException(AiErrorType.LOCAL_MODEL_UNAVAILABLE, "Ollama endpoint is not configured")
+        val body = generateRequestAdapter.toJson(
+            OllamaGenerateRequest(model = model, prompt = prompt, stream = true)
+        ).toRequestBody(JSON)
+        val output = StringBuilder()
+        try {
+            client.newCall(Request.Builder().url("$endpoint/api/generate").post(body).build()).execute().use { response ->
+                if (!response.isSuccessful) {
+                    throw AiProviderException(
+                        if (response.code == 404) AiErrorType.MODEL_UNAVAILABLE else AiErrorType.LOCAL_MODEL_UNAVAILABLE,
+                        "Ollama error: ${response.code}"
+                    )
+                }
+                val source = response.body?.source()
+                    ?: throw AiProviderException(AiErrorType.INVALID_RESPONSE, "Empty body")
+                while (!source.exhausted()) {
+                    currentCoroutineContext().ensureActive()
+                    val line = source.readUtf8Line() ?: break
+                    if (line.isNotBlank()) {
+                        generateResponseAdapter.fromJson(line)?.let {
+                            if (it.response.isNotEmpty()) {
+                                output.append(it.response)
+                                emit(AiStreamEvent.Token(it.response))
+                            }
+                            if (it.done) return@use
+                        }
+                    }
+                }
+            }
+            val text = output.toString().trim()
+            if (text.isBlank()) throw AiProviderException(AiErrorType.EMPTY_RESPONSE, "Ollama produced no response text")
+            emit(AiStreamEvent.Completed(AiResponse(text = text, providerId = id, modelId = model, finishReason = "stop")))
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: AiProviderException) {
+            emit(AiStreamEvent.Failed(e))
+        } catch (e: Exception) {
+            emit(AiStreamEvent.Failed(AiProviderException(AiErrorType.LOCAL_MODEL_UNAVAILABLE, "Ollama stream failed: ${e.message ?: "network error"}", e)))
+        }
+    }.flowOn(Dispatchers.IO)
 
     suspend fun complete(request: AIRequestLegacy): AIResponseLegacy = completeWithModel(request, modelId)
 
@@ -115,7 +170,7 @@ class OllamaProvider(
                 val source = response.body?.source() ?: throw AiProviderException(AiErrorType.INVALID_RESPONSE, "Empty body")
                 while (!source.exhausted()) {
                     currentCoroutineContext().ensureActive()
-                    val line = source.readUtf8LineStrict()
+                    val line = source.readUtf8Line() ?: break
                     if (line.isNotBlank()) {
                         generateResponseAdapter.fromJson(line)?.let {
                             emit(it.response)
@@ -153,7 +208,7 @@ class OllamaProvider(
 
     private fun normalizedEndpointOrNull(): String? {
         val raw = storage.getString("ollama_endpoint")?.trim()?.trimEnd('/') ?: defaultEndpoint
-        if (raw.isBlank()) return null
+        if (raw.isNullOrBlank()) return null
         return runCatching {
             val uri = URI(raw)
             require(uri.scheme == "http" || uri.scheme == "https")
@@ -161,6 +216,12 @@ class OllamaProvider(
             raw
         }.getOrNull()
     }
+
+    private fun isAndroidEmulator(): Boolean =
+        Build.FINGERPRINT.contains("generic", ignoreCase = true) ||
+            Build.FINGERPRINT.contains("emulator", ignoreCase = true) ||
+            Build.MODEL.contains("Emulator", ignoreCase = true) ||
+            Build.MODEL.contains("Android SDK built for", ignoreCase = true)
 
     suspend fun close() {
         Log.i(TAG, "Disconnecting from Ollama")
