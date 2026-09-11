@@ -14,164 +14,80 @@ import kotlinx.coroutines.flow.asStateFlow
 /**
  * The HeyCyan semantic capability controller.
  *
- * This is the single entry point for all capability-level operations. It:
- *
- *  1. Guards blocked/unsupported capabilities before touching the transport.
- *  2. Enforces the video/audio recording exclusion constraint based on state.
- *  3. Drives the [operationState] state machine.
- *  4. Emits structured [HeyCyanOperationEvent]s for Timeline / Metrics / Runtime observers.
- *  5. Delegates to [HeyCyanCommandExecutor] which owns the encode→frame→transport pipeline.
- *
- * Architecture:
- *   HeyCyanCapabilityController
- *       ↓
- *   HeyCyanCommandExecutor
- *       ↓
- *   HeyCyanCommandEncoder → HeyCyanPacketFramer → HeyCyanCommandTransport
+ * This is the single entry point for capability-level operations and delegates
+ * verified wire encoding/transmission to HeyCyanCommandExecutor.
  */
 class HeyCyanCapabilityController(
     private val executor: HeyCyanCommandExecutor,
     private val stateStore: HeyCyanDeviceStateStore,
 ) {
+    private val _operationState = MutableStateFlow<HeyCyanOperationState>(HeyCyanOperationState.Idle)
+    val operationState: StateFlow<HeyCyanOperationState> = _operationState.asStateFlow()
 
-    private val _operationState =
-        MutableStateFlow<HeyCyanOperationState>(HeyCyanOperationState.Idle)
-
-    /** Current lifecycle state of the most recently dispatched operation. */
-    val operationState: StateFlow<HeyCyanOperationState> =
-        _operationState.asStateFlow()
-
-    private val _events =
-        MutableSharedFlow<HeyCyanOperationEvent>(extraBufferCapacity = 64)
-
-    /**
-     * Transport-agnostic operation event stream.
-     */
+    private val _events = MutableSharedFlow<HeyCyanOperationEvent>(extraBufferCapacity = 64)
     val events: Flow<HeyCyanOperationEvent> = _events.asSharedFlow()
 
-    /**
-     * Execute a semantic [HeyCyanOperation].
-     */
     suspend fun execute(operation: HeyCyanOperation): Result<Unit> {
         val now = System.currentTimeMillis()
 
-        // Guard: SynchronizeMedia is a media-service operation, not a physical BLE command
         if (operation == HeyCyanOperation.SynchronizeMedia) {
             return failure(
-                operation = operation,
-                failure = HeyCyanOperationFailure.Unsupported(
+                operation,
+                HeyCyanOperationFailure.Unsupported(
                     "SynchronizeMedia is a media-service operation and must be executed by HeyCyanMediaSynchronizer"
                 ),
-                timestamp = now,
+                now,
             )
         }
 
         val capability = capabilityFor(operation)
-
-        // Guard: unsupported by device hardware
         if (capability.status == HeyCyanCapabilityStatus.UNSUPPORTED) {
-            return failure(
-                operation = operation,
-                failure = HeyCyanOperationFailure.Unsupported(capability.id),
-                timestamp = now,
-            )
+            return failure(operation, HeyCyanOperationFailure.Unsupported(capability.id), now)
         }
-
-        // Guard: protocol not established or structural validation in progress
         if (capability.status == HeyCyanCapabilityStatus.BLOCKED_BY_PROTOCOL ||
             capability.status == HeyCyanCapabilityStatus.STRUCTURAL_VALIDATION
         ) {
             return failure(
-                operation = operation,
-                failure = HeyCyanOperationFailure.ProtocolNotEstablished(
-                    operation = operation,
-                    detail = capability.description,
-                ),
-                timestamp = now,
+                operation,
+                HeyCyanOperationFailure.ProtocolNotEstablished(operation, capability.description),
+                now,
             )
         }
 
-        // Guard: video/audio recording exclusion
-        // If we are starting Video, we must not be in Audio recording state.
         val currentState = stateStore.state.value
-        
         if (operation == HeyCyanOperation.StartVideo && currentState.mode == HeyCyanMode.AUDIO) {
-            return failure(
-                operation = operation,
-                failure = HeyCyanOperationFailure.DeviceRejected(
-                    "HeyCyan cannot record video while audio recording is active.",
-                ),
-                timestamp = now,
-            )
+            return failure(operation, HeyCyanOperationFailure.DeviceRejected("HeyCyan cannot record video while audio recording is active."), now)
         }
-
-        if (operation == HeyCyanOperation.StartVideo && (currentState.mode == HeyCyanMode.VIDEO || currentState.videoRecordingState == com.halo.drivers.heycyan.protocol.VideoRecordingState.RECORDING || currentState.videoRecordingState == com.halo.drivers.heycyan.protocol.VideoRecordingState.STARTING)) {
-            return failure(
-                operation = operation,
-                failure = HeyCyanOperationFailure.DeviceRejected(
-                    "HeyCyan is already starting or recording video.",
-                ),
-                timestamp = now,
-            )
+        if (operation == HeyCyanOperation.StartVideo &&
+            (currentState.mode == HeyCyanMode.VIDEO ||
+                currentState.videoRecordingState == com.halo.drivers.heycyan.protocol.VideoRecordingState.RECORDING ||
+                currentState.videoRecordingState == com.halo.drivers.heycyan.protocol.VideoRecordingState.STARTING)
+        ) {
+            return failure(operation, HeyCyanOperationFailure.DeviceRejected("HeyCyan is already starting or recording video."), now)
         }
-
-        if (operation == HeyCyanOperation.StopVideo && (currentState.mode != HeyCyanMode.VIDEO && currentState.videoRecordingState == com.halo.drivers.heycyan.protocol.VideoRecordingState.IDLE)) {
-            return failure(
-                operation = operation,
-                failure = HeyCyanOperationFailure.DeviceRejected(
-                    "HeyCyan is not currently recording video.",
-                ),
-                timestamp = now,
-            )
+        if (operation == HeyCyanOperation.StopVideo &&
+            currentState.mode != HeyCyanMode.VIDEO &&
+            currentState.videoRecordingState == com.halo.drivers.heycyan.protocol.VideoRecordingState.IDLE
+        ) {
+            return failure(operation, HeyCyanOperationFailure.DeviceRejected("HeyCyan is not currently recording video."), now)
         }
-
         if (operation == HeyCyanOperation.StopVideo && currentState.videoRecordingState == com.halo.drivers.heycyan.protocol.VideoRecordingState.STOPPING) {
-            return failure(
-                operation = operation,
-                failure = HeyCyanOperationFailure.DeviceRejected(
-                    "HeyCyan is already stopping video recording.",
-                ),
-                timestamp = now,
-            )
+            return failure(operation, HeyCyanOperationFailure.DeviceRejected("HeyCyan is already stopping video recording."), now)
         }
-
         if (operation == HeyCyanOperation.StartRecording && currentState.mode == HeyCyanMode.VIDEO) {
-            return failure(
-                operation = operation,
-                failure = HeyCyanOperationFailure.DeviceRejected(
-                    "HeyCyan cannot record audio while video recording is active.",
-                ),
-                timestamp = now,
-            )
+            return failure(operation, HeyCyanOperationFailure.DeviceRejected("HeyCyan cannot record audio while video recording is active."), now)
         }
-
         if (operation == HeyCyanOperation.StartRecording && currentState.mode == HeyCyanMode.AUDIO) {
-            return failure(
-                operation = operation,
-                failure = HeyCyanOperationFailure.DeviceRejected(
-                    "HeyCyan is already recording audio.",
-                ),
-                timestamp = now,
-            )
+            return failure(operation, HeyCyanOperationFailure.DeviceRejected("HeyCyan is already recording audio."), now)
         }
-
         if (operation == HeyCyanOperation.StopRecording && currentState.mode != HeyCyanMode.AUDIO) {
-            return failure(
-                operation = operation,
-                failure = HeyCyanOperationFailure.DeviceRejected(
-                    "HeyCyan is not currently recording audio.",
-                ),
-                timestamp = now,
-            )
+            return failure(operation, HeyCyanOperationFailure.DeviceRejected("HeyCyan is not currently recording audio."), now)
         }
 
-        // Dispatch
         _operationState.value = HeyCyanOperationState.Running(operation)
         _events.emit(HeyCyanOperationEvent.Started(operation, now))
 
-        val result = executor.execute(operation.toCommand())
-
-        return result
+        return executor.execute(operation.toCommand())
             .onSuccess {
                 val ts = System.currentTimeMillis()
                 _operationState.value = HeyCyanOperationState.Succeeded(operation)
@@ -180,30 +96,23 @@ class HeyCyanCapabilityController(
             .onFailure { error ->
                 val ts = System.currentTimeMillis()
                 val opFailure = error.toOperationFailure()
-                _operationState.value = HeyCyanOperationState.Failed(
-                    operation = operation,
-                    reason = opFailure,
-                )
+                _operationState.value = HeyCyanOperationState.Failed(operation, opFailure)
                 _events.emit(HeyCyanOperationEvent.Failed(operation, ts, opFailure))
             }
     }
 
-    // -------------------------------------------------------------------------
-    // Private helpers
-    // -------------------------------------------------------------------------
-
-    private fun capabilityFor(operation: HeyCyanOperation): HeyCyanCapability =
-        when (operation) {
-            HeyCyanOperation.GetBattery -> HeyCyanCapabilities.battery
-            HeyCyanOperation.GetDeviceInfo -> HeyCyanCapabilities.deviceInfo
-            HeyCyanOperation.GetMediaInventory -> HeyCyanCapabilities.mediaInventory
-            HeyCyanOperation.TakePhoto -> HeyCyanCapabilities.photo
-            HeyCyanOperation.StartVideo, HeyCyanOperation.StopVideo -> HeyCyanCapabilities.video
-            HeyCyanOperation.StartRecording, HeyCyanOperation.StopRecording -> HeyCyanCapabilities.audioRecording
-            HeyCyanOperation.PrepareVoiceRouting -> HeyCyanCapabilities.liveAudio
-            HeyCyanOperation.GenerateAIPhoto -> HeyCyanCapabilities.aiPhoto
-            HeyCyanOperation.EnterWifiTransferMode, HeyCyanOperation.SynchronizeMedia -> HeyCyanCapabilities.wifiTransfer
-        }
+    private fun capabilityFor(operation: HeyCyanOperation): HeyCyanCapability = when (operation) {
+        HeyCyanOperation.GetBattery -> HeyCyanCapabilities.battery
+        HeyCyanOperation.GetDeviceInfo -> HeyCyanCapabilities.deviceInfo
+        HeyCyanOperation.GetMediaInventory -> HeyCyanCapabilities.mediaInventory
+        HeyCyanOperation.TakePhoto -> HeyCyanCapabilities.photo
+        HeyCyanOperation.StartVideo, HeyCyanOperation.StopVideo -> HeyCyanCapabilities.video
+        HeyCyanOperation.StartRecording, HeyCyanOperation.StopRecording -> HeyCyanCapabilities.audioRecording
+        HeyCyanOperation.PrepareVoiceRouting -> HeyCyanCapabilities.liveAudio
+        HeyCyanOperation.RouteAudioToGlasses -> HeyCyanCapabilities.speakerOutput
+        HeyCyanOperation.GenerateAIPhoto -> HeyCyanCapabilities.aiPhoto
+        HeyCyanOperation.EnterWifiTransferMode, HeyCyanOperation.SynchronizeMedia -> HeyCyanCapabilities.wifiTransfer
+    }
 
     private suspend fun failure(
         operation: HeyCyanOperation,
