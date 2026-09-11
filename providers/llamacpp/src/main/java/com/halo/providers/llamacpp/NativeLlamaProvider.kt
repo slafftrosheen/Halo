@@ -65,7 +65,7 @@ class NativeLlamaProvider(
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
-        Log.e("NativeLlamaProvider", "testConnection error", e)
+        Log.e(TAG, "testConnection error", e)
         false
     }
 
@@ -86,7 +86,7 @@ class NativeLlamaProvider(
             return@withLock false
         }
 
-        _status.value = ProviderStatus(State.LOADING, "Loading $activeId...")
+        _status.value = ProviderStatus(ProviderStatus.State.LOADING, "Loading $activeId...")
         releaseCurrentModel()
         return@withLock try {
             Log.i(TAG, "Loading GGUF model: ${file.absolutePath} (${file.length()} bytes)")
