@@ -105,26 +105,45 @@ class DefaultAiProviderRouter(
             _selectedProviderId.value = id
             storage.putString("active_ai_provider", id)
             if (providerChanged) {
-                _selectedModelId.value = null
-                storage.putString("active_ai_model", null)
+                restoreStoredModel(id)
             }
-            scope.launch {
-                refreshDiagnostics()
-            }
+            scope.launch { refreshDiagnostics() }
         }
     }
 
     override fun selectModel(modelId: String?) {
         _selectedModelId.value = modelId
         storage.putString("active_ai_model", modelId)
-        scope.launch {
-            refreshDiagnostics()
+        val providerId = _selectedProviderId.value
+        if (providerId != null && modelId != null) {
+            persistProviderModel(providerId, modelId)
         }
+        scope.launch { refreshDiagnostics() }
     }
 
     override fun getAllProviders(): List<AiProvider> = allProviders
 
     override suspend fun diagnostics(): List<AiProviderDiagnostic> = refreshDiagnostics()
+
+    private fun restoreStoredModel(providerId: String) {
+        val modelId = when (providerId) {
+            "openrouter" -> storage.getString("openrouter_model")
+            "provider.ollama" -> storage.getString("ollama_model")
+            "provider.llamacpp.native" -> storage.getString("llamacpp_model")
+            else -> storage.getString("ai_model_$providerId")
+        }?.trim()?.ifBlank { null }
+        _selectedModelId.value = modelId
+        storage.putString("active_ai_model", modelId)
+    }
+
+    private fun persistProviderModel(providerId: String, modelId: String) {
+        when (providerId) {
+            "openrouter" -> storage.putString("openrouter_model", modelId)
+            "provider.ollama" -> storage.putString("ollama_model", modelId)
+            "provider.llamacpp.native" -> storage.putString("llamacpp_model", modelId)
+            else -> storage.putString("ai_model_$providerId", modelId)
+        }
+    }
 
     private suspend fun refreshDiagnostics(): List<AiProviderDiagnostic> {
         val selectedId = _selectedProviderId.value
@@ -322,7 +341,6 @@ class DefaultAiProviderRouter(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Throwable) {
-
             eventBus?.publish(
                 ProviderFailure(
                     requestId = requestId,
@@ -331,7 +349,7 @@ class DefaultAiProviderRouter(
                 )
             )
 
-            if (policy == AiRoutingPolicy.PREFERRED_WITH_FALLBACK || policy == AiRoutingPolicy.AUTOMATIC) {
+            if ((policy == AiRoutingPolicy.PREFERRED_WITH_FALLBACK || policy == AiRoutingPolicy.AUTOMATIC) && fallbackEligible(e)) {
                 val fallbackTarget = getFallbackExecutionTarget(request, failedProviderId = target.providerId)
                 if (fallbackTarget != null) {
                     val fallbackRequest = request.copy(modelId = fallbackTarget.modelId)
@@ -374,12 +392,7 @@ class DefaultAiProviderRouter(
 
     private fun persistStoredModels(models: Map<String, String>) {
         models.forEach { (providerId, modelId) ->
-            when (providerId) {
-                "openrouter" -> storage.putString("openrouter_model", modelId)
-                "provider.ollama" -> storage.putString("ollama_model", modelId)
-                "provider.llamacpp.native" -> storage.putString("llamacpp_model", modelId)
-                else -> storage.putString("ai_model_${providerId}", modelId)
-            }
+            persistProviderModel(providerId, modelId)
         }
     }
 }
