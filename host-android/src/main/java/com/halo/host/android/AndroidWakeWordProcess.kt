@@ -9,22 +9,16 @@ import android.speech.SpeechRecognizer
 import com.halo.runtime.kernel.Process
 import com.halo.runtime.kernel.ProcessState
 import com.halo.runtime.kernel.bus.PerceptionBus
-import com.halo.icl.ontology.Observation
-import com.halo.icl.core.CognitiveId
-import com.halo.icl.core.Confidence
-import com.halo.icl.core.Provenance
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.delay
-import kotlinx.datetime.Clock
 import android.media.AudioManager
-import kotlinx.coroutines.CoroutineScope
-import com.halo.sdk.runtime.EngineMetrics
-import com.halo.sdk.runtime.EngineSnapshot
+import java.util.concurrent.atomic.AtomicLong
 
 class AndroidWakeWordProcess(
     private val context: Context,
@@ -34,7 +28,7 @@ class AndroidWakeWordProcess(
     override val name: String,
     private val scope: CoroutineScope
 ) : Process {
-    
+
     private val _state = MutableStateFlow(ProcessState.Stopped)
     override val state: StateFlow<ProcessState> = _state
 
@@ -47,20 +41,21 @@ class AndroidWakeWordProcess(
     ))
     override val metrics: StateFlow<com.halo.sdk.runtime.EngineMetrics> = _metrics
 
+    private var speechRecognizer: SpeechRecognizer? = null
+    private var isListening = false
+    private var beepRestoreJob: Job? = null
+    private val sessionGeneration = AtomicLong(0L)
+
     override fun engineSnapshot(): com.halo.sdk.runtime.EngineSnapshot = com.halo.sdk.runtime.EngineSnapshot(
         id = id,
-        state = com.halo.sdk.runtime.EngineState.Running,
-        health = com.halo.sdk.runtime.EngineHealth.Healthy,
+        state = if (_state.value == ProcessState.Running) com.halo.sdk.runtime.EngineState.Running else com.halo.sdk.runtime.EngineState.Created,
+        health = if (_state.value == ProcessState.Crashed) com.halo.sdk.runtime.EngineHealth.Failing else com.halo.sdk.runtime.EngineHealth.Healthy,
         metrics = _metrics.value,
         lastActivity = java.time.Instant.now()
     )
 
-    private var speechRecognizer: SpeechRecognizer? = null
-    private var isListening = false
-    
-    override suspend fun start(): Unit = coroutineScope {
+    override suspend fun start(): Unit {
         _state.value = ProcessState.Running
-        
         withContext(Dispatchers.Main) {
             if (SpeechRecognizer.isRecognitionAvailable(context)) {
                 startListeningLoop()
@@ -71,80 +66,105 @@ class AndroidWakeWordProcess(
     }
 
     private fun startListeningLoop() {
-        if (_state.value != ProcessState.Running) return
-        
-        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context).apply {
-            setRecognitionListener(object : RecognitionListener {
-                override fun onReadyForSpeech(params: Bundle?) {
-                    // Delay unmuting to ensure the system beep is fully swallowed
-                    kotlinx.coroutines.GlobalScope.launch(Dispatchers.Main) {
-                        kotlinx.coroutines.delay(400)
-                        unmuteBeep()
-                    }
-                }
-                override fun onBeginningOfSpeech() {}
-                override fun onRmsChanged(rmsdB: Float) {}
-                override fun onBufferReceived(buffer: ByteArray?) {}
-                override fun onEndOfSpeech() {}
-                override fun onError(error: Int) {
-                    unmuteBeep()
-                    // Ignore errors like SPEECH_TIMEOUT and DO NOT restart loop
-                    // if (_state.value == ProcessState.Running) {
-                    //    restartLoop()
-                    // }
-                }
+        if (_state.value != ProcessState.Running || isListening) return
 
-                override fun onResults(results: Bundle?) {
-                    val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                    if (!matches.isNullOrEmpty()) {
-                        val text = matches[0].lowercase()
-                        if (text.contains("halo") || text.contains("hello")) {
-                            publishWakeWordEvent(text)
-                        }
-                    }
-                }
+        val generation = sessionGeneration.incrementAndGet()
+        val recognizer = SpeechRecognizer.createSpeechRecognizer(context.applicationContext)
+        speechRecognizer = recognizer
+        isListening = true
 
-                override fun onPartialResults(partialResults: Bundle?) {}
-                override fun onEvent(eventType: Int, params: Bundle?) {}
-            })
-        }
-        
+        recognizer.setRecognitionListener(object : RecognitionListener {
+            private fun current(): Boolean = sessionGeneration.get() == generation && recognizer === speechRecognizer
+
+            override fun onReadyForSpeech(params: Bundle?) {
+                if (!current()) return
+                beepRestoreJob?.cancel()
+                muteBeep()
+                beepRestoreJob = scope.launch(Dispatchers.Main) {
+                    delay(400L)
+                    if (current()) unmuteBeep()
+                }
+            }
+
+            override fun onBeginningOfSpeech() {}
+            override fun onRmsChanged(rmsdB: Float) {}
+            override fun onBufferReceived(buffer: ByteArray?) {}
+
+            override fun onEndOfSpeech() {
+                if (current()) {
+                    isListening = false
+                    scheduleRestart(generation)
+                }
+            }
+
+            override fun onError(error: Int) {
+                if (!current()) return
+                isListening = false
+                unmuteBeep()
+                scheduleRestart(generation)
+            }
+
+            override fun onResults(results: Bundle?) {
+                if (!current()) return
+                isListening = false
+                val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                val text = matches?.firstOrNull()?.trim()?.lowercase().orEmpty()
+                if (text.contains("halo") || text.contains("hello")) {
+                    publishWakeWordEvent(text)
+                }
+                scheduleRestart(generation)
+            }
+
+            override fun onPartialResults(partialResults: Bundle?) {}
+            override fun onEvent(eventType: Int, params: Bundle?) {}
+        })
+
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false)
         }
-        
+
         muteBeep()
-        speechRecognizer?.startListening(intent)
-        isListening = true
-    }
-    
-    private fun muteBeep() {
         try {
+            recognizer.startListening(intent)
+        } catch (error: RuntimeException) {
+            isListening = false
+            unmuteBeep()
+            recognizer.destroy()
+            if (currentProcessGeneration(generation)) speechRecognizer = null
+            if (_state.value == ProcessState.Running) _state.value = ProcessState.Crashed
+        }
+    }
+
+    private fun scheduleRestart(generation: Long) {
+        if (!currentProcessGeneration(generation) || _state.value != ProcessState.Running) return
+        scope.launch(Dispatchers.Main) {
+            delay(150L)
+            if (!currentProcessGeneration(generation) || isListening || _state.value != ProcessState.Running) return@launch
+            speechRecognizer?.destroy()
+            speechRecognizer = null
+            startListeningLoop()
+        }
+    }
+
+    private fun currentProcessGeneration(generation: Long): Boolean = sessionGeneration.get() == generation
+
+    private fun muteBeep() {
+        runCatching {
             val am = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
             am.adjustStreamVolume(AudioManager.STREAM_NOTIFICATION, AudioManager.ADJUST_MUTE, 0)
             am.adjustStreamVolume(AudioManager.STREAM_SYSTEM, AudioManager.ADJUST_MUTE, 0)
             am.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_MUTE, 0)
-        } catch (e: Exception) {
-            // Ignore if permission denied
         }
     }
 
     private fun unmuteBeep() {
-        try {
+        runCatching {
             val am = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
             am.adjustStreamVolume(AudioManager.STREAM_NOTIFICATION, AudioManager.ADJUST_UNMUTE, 0)
             am.adjustStreamVolume(AudioManager.STREAM_SYSTEM, AudioManager.ADJUST_UNMUTE, 0)
             am.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_UNMUTE, 0)
-        } catch (e: Exception) {
-            // Ignore if permission denied
         }
-    }
-    
-    private fun restartLoop() {
-        speechRecognizer?.destroy()
-        speechRecognizer = null
-        startListeningLoop()
     }
 
     private fun publishWakeWordEvent(word: String) {
@@ -155,24 +175,34 @@ class AndroidWakeWordProcess(
 
     override suspend fun pause() {
         _state.value = ProcessState.Paused
+        sessionGeneration.incrementAndGet()
         withContext(Dispatchers.Main) {
+            beepRestoreJob?.cancel()
+            isListening = false
             speechRecognizer?.cancel()
         }
     }
-    
+
     override suspend fun resume() {
         _state.value = ProcessState.Running
         withContext(Dispatchers.Main) {
+            isListening = false
+            speechRecognizer?.destroy()
+            speechRecognizer = null
             startListeningLoop()
         }
     }
-    
+
     override suspend fun stop() {
         _state.value = ProcessState.Stopped
+        sessionGeneration.incrementAndGet()
         withContext(Dispatchers.Main) {
+            beepRestoreJob?.cancel()
+            isListening = false
             speechRecognizer?.cancel()
             speechRecognizer?.destroy()
             speechRecognizer = null
+            unmuteBeep()
         }
     }
 }
