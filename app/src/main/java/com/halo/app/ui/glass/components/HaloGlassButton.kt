@@ -19,7 +19,7 @@ import com.halo.app.ui.glass.material.HaloGlassTokens
 
 /**
  * Glass button component that replaces the legacy HaloButton.
- * Uses the Halo Glass material system with interactive level for touch feedback.
+ * Uses the Halo Glass material system with a visible, state-aware touch response.
  */
 @Composable
 fun HaloGlassButton(
@@ -33,22 +33,24 @@ fun HaloGlassButton(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
-    
-    // Determine colors
-    val buttonContentColor = if (contentColor != Color.Unspecified) {
+
+    val baseContentColor = if (contentColor != Color.Unspecified) {
         contentColor
     } else {
         HaloGlassColors.TextPrimary
     }
-    
-    val buttonContainerColor = if (!enabled) {
-        material.containerColor.copy(alpha = 0.3f)
-    } else if (isPressed) {
-        material.containerColor.copy(alpha = 0.9f)
+    val buttonContentColor = if (enabled) {
+        baseContentColor
     } else {
-        material.containerColor
+        baseContentColor.copy(alpha = 0.45f)
     }
-    
+
+    val buttonContainerColor = when {
+        !enabled -> material.containerColor.copy(alpha = 0.22f)
+        isPressed -> material.containerColor.copy(alpha = 0.78f)
+        else -> material.containerColor
+    }
+
     HaloGlassSurface(
         modifier = modifier
             .defaultMinSize(minWidth = 88.dp, minHeight = 48.dp)
@@ -86,9 +88,6 @@ fun HaloGlassButton(
  * Extended glass button with different variants.
  */
 object HaloGlassButton {
-    /**
-     * Creates a primary glass button (uses accent background)
-     */
     @Composable
     fun Primary(
         modifier: Modifier = Modifier,
@@ -108,9 +107,6 @@ object HaloGlassButton {
         )
     }
 
-    /**
-     * Creates a secondary glass button (uses surface background)
-     */
     @Composable
     fun Secondary(
         modifier: Modifier = Modifier,
@@ -130,9 +126,6 @@ object HaloGlassButton {
         )
     }
 
-    /**
-     * Creates a ghost/transparent glass button (minimal styling)
-     */
     @Composable
     fun Ghost(
         modifier: Modifier = Modifier,
@@ -152,9 +145,6 @@ object HaloGlassButton {
         )
     }
 
-    /**
-     * Creates a danger glass button (uses danger color for destructive actions)
-     */
     @Composable
     fun Danger(
         modifier: Modifier = Modifier,
