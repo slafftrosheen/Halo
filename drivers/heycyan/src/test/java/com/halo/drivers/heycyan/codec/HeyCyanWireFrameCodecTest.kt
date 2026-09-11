@@ -45,6 +45,14 @@ class HeyCyanWireFrameCodecTest {
     }
 
     @Test
+    fun `calculates crc16 for glasses speaker switch payload`() {
+        val crc = HeyCyanWireFrameCodec.calculateCrc16(
+            HeyCyanWireFrameCodec.PAYLOAD_SPEAK_SOUND_TO_GLASSES
+        )
+        assertEquals(0x10C1, crc)
+    }
+
+    @Test
     fun `encodes photo command matching golden vector byte for byte`() {
         val encoded = HeyCyanWireFrameCodec.encode(
             action = HeyCyanWireFrameCodec.ACTION_GLASSES_CONTROL,
@@ -72,6 +80,15 @@ class HeyCyanWireFrameCodecTest {
     }
 
     @Test
+    fun `encodes glasses speaker switch matching verified wire vector`() {
+        val encoded = HeyCyanWireFrameCodec.encode(
+            action = HeyCyanWireFrameCodec.ACTION_SPEAK_SOUND_SWITCH,
+            payload = HeyCyanWireFrameCodec.PAYLOAD_SPEAK_SOUND_TO_GLASSES
+        )
+        assertArrayEquals(HeyCyanWireFrameCodec.GOLDEN_SPEAK_SOUND_TO_GLASSES, encoded)
+    }
+
+    @Test
     fun `decodes photo golden vector correctly with valid CRC`() {
         val result = HeyCyanWireFrameCodec.decode(HeyCyanWireFrameCodec.GOLDEN_PHOTO)
         assertTrue(result is WireFrameDecodeResult.Success)
@@ -85,8 +102,22 @@ class HeyCyanWireFrameCodecTest {
     }
 
     @Test
+    fun `decodes glasses speaker switch golden vector correctly`() {
+        val result = HeyCyanWireFrameCodec.decode(
+            HeyCyanWireFrameCodec.GOLDEN_SPEAK_SOUND_TO_GLASSES
+        )
+        assertTrue(result is WireFrameDecodeResult.Success)
+
+        val success = result as WireFrameDecodeResult.Success
+        assertEquals(HeyCyanWireFrameCodec.ACTION_SPEAK_SOUND_SWITCH, success.action)
+        assertEquals(2, success.payloadLength)
+        assertEquals(0x10C1, success.crc16)
+        assertArrayEquals(HeyCyanWireFrameCodec.PAYLOAD_SPEAK_SOUND_TO_GLASSES, success.payload)
+        assertTrue(success.isValidCrc)
+    }
+
+    @Test
     fun `decodes BC73 device reporting frame correctly as length 14`() {
-        // BC 73 0E 00 ... payload of 14 bytes
         val dummy14BytePayload = ByteArray(14) { (it + 1).toByte() }
         val encoded = HeyCyanWireFrameCodec.encode(
             action = HeyCyanWireFrameCodec.ACTION_DEVICE_DATA_REPORTING,
