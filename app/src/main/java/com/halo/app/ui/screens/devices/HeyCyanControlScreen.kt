@@ -175,6 +175,21 @@ fun HeyCyanControlScreen(
         }
 
         item {
+            HaloGlassSection(title = "AUDIO OUTPUT") {
+                HaloGlassSettingRow(title = "Speech target", value = "HeyCyan glasses")
+                HaloGlassDivider()
+                HaloGlassSettingRow(title = "Routing command", value = "Verified • 0x52")
+                HaloGlassDivider()
+                HaloGlassSettingRow(title = "Playback transport", value = "Android Bluetooth audio")
+                HaloGlassDivider()
+                HaloGlassSettingRow(
+                    title = "Output status",
+                    value = if (isConnected) "Ready for speech routing" else "Connect device to route speech"
+                )
+            }
+        }
+
+        item {
             HaloGlassSection(title = "HARDWARE INPUTS") {
                 HaloGlassSettingRow(title = "AI Button", value = "Input event • voice routing")
                 HaloGlassDivider()
@@ -199,6 +214,8 @@ fun HeyCyanControlScreen(
                 HaloGlassSettingRow(title = "Video capture", value = "Available")
                 HaloGlassDivider()
                 HaloGlassSettingRow(title = "Audio recording", value = "Available")
+                HaloGlassDivider()
+                HaloGlassSettingRow(title = "Speaker output", value = "Available with Bluetooth routing")
                 HaloGlassDivider()
                 HaloGlassSettingRow(title = "Live audio input", value = "Structural validation")
                 HaloGlassDivider()
