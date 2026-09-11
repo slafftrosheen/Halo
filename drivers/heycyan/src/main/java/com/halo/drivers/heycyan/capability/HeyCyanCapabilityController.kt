@@ -2,6 +2,7 @@ package com.halo.drivers.heycyan.capability
 
 import com.halo.drivers.heycyan.protocol.HeyCyanMode
 import com.halo.sdk.runtime.embodiment.heycyan.HeyCyanOperation
+import com.halo.drivers.heycyan.protocol.HeyCyanConnectionState
 import com.halo.drivers.heycyan.protocol.HeyCyanDeviceStateStore
 import com.halo.drivers.heycyan.protocol.toCommand
 import kotlinx.coroutines.flow.Flow
@@ -55,6 +56,17 @@ class HeyCyanCapabilityController(
         }
 
         val currentState = stateStore.state.value
+        if (operation == HeyCyanOperation.RouteAudioToGlasses &&
+            currentState.connection != HeyCyanConnectionState.READY
+        ) {
+            return failure(
+                operation,
+                HeyCyanOperationFailure.DeviceRejected(
+                    "HeyCyan must be connected and READY before speaker routing can be changed."
+                ),
+                now,
+            )
+        }
         if (operation == HeyCyanOperation.StartVideo && currentState.mode == HeyCyanMode.AUDIO) {
             return failure(operation, HeyCyanOperationFailure.DeviceRejected("HeyCyan cannot record video while audio recording is active."), now)
         }
