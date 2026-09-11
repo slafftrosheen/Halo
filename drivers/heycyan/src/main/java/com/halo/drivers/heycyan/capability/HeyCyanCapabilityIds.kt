@@ -14,6 +14,7 @@ object HeyCyanCapabilityIds {
     const val CAMERA_VIDEO = "heycyan.camera.video"
     const val AUDIO_RECORDING = "heycyan.audio.recording"
     const val AUDIO_LIVE_INPUT = "heycyan.audio.live_input"
+    const val AUDIO_SPEAKER_OUTPUT = "heycyan.audio.speaker_output"
     const val AI_PHOTO = "heycyan.ai_photo"
     const val WIFI_TRANSFER = "heycyan.wifi_transfer"
 
@@ -25,6 +26,7 @@ object HeyCyanCapabilityIds {
         CAMERA_VIDEO,
         AUDIO_RECORDING,
         AUDIO_LIVE_INPUT,
+        AUDIO_SPEAKER_OUTPUT,
         AI_PHOTO,
         WIFI_TRANSFER,
     )
