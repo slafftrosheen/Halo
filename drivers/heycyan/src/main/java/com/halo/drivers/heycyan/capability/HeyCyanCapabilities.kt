@@ -5,13 +5,9 @@ package com.halo.drivers.heycyan.capability
  *
  * A capability describes what the device can expose.
  * HeyCyanOperation describes what the runtime can ask it to do.
- *
- * These are intentionally not one-to-one:
- *   CAMERA_VIDEO        -> StartVideo / StopVideo
- *   AUDIO_RECORDING     -> StartRecording / StopRecording
+ * These are intentionally not one-to-one.
  */
 object HeyCyanCapabilities {
-
     val battery = HeyCyanCapability(
         id = HeyCyanCapabilityIds.BATTERY,
         name = "Battery",
@@ -61,6 +57,13 @@ object HeyCyanCapabilities {
         description = "Observed BC59 audio stream; complete framing and trigger remain unresolved.",
     )
 
+    val speakerOutput = HeyCyanCapability(
+        id = HeyCyanCapabilityIds.AUDIO_SPEAKER_OUTPUT,
+        name = "Speaker output",
+        status = HeyCyanCapabilityStatus.AVAILABLE_WITH_LIMITATION,
+        description = "Select the glasses as the speech playback target through the verified Classic Bluetooth audio path.",
+    )
+
     val aiPhoto = HeyCyanCapability(
         id = HeyCyanCapabilityIds.AI_PHOTO,
         name = "AI photo",
@@ -83,10 +86,10 @@ object HeyCyanCapabilities {
         video,
         audioRecording,
         liveAudio,
+        speakerOutput,
         aiPhoto,
         wifiTransfer,
     )
 
-    fun find(id: String): HeyCyanCapability? =
-        all.firstOrNull { it.id == id }
+    fun find(id: String): HeyCyanCapability? = all.firstOrNull { it.id == id }
 }
