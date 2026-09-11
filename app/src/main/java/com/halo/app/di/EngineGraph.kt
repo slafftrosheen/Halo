@@ -27,6 +27,10 @@ import com.halo.runtime.speech.SpeechPerceptionBridge
 import com.halo.runtime.speech.SpeechSessionManager
 import com.halo.drivers.heycyan.capability.CapabilityRequest
 import com.halo.drivers.heycyan.capability.HeyCyanCapabilityIds
+import com.halo.engines.speech.ListeningStarted
+import com.halo.providers.llamacpp.NativeLlamaProvider
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 /**
  * Owns all cognitive engines: interpretation, reasoning, planning, execution, reflection.
@@ -39,6 +43,28 @@ class EngineGraph(
     private val deviceSessionManager: com.halo.sdk.runtime.embodiment.DeviceSessionManager,
     private val heyCyanDriver: com.halo.drivers.heycyan.RealHeyCyanDriver
 ) {
+    init {
+        // Hide local-model load latency behind the listening phase. This stays at
+        // the Android composition boundary so the device-agnostic speech engine
+        // does not need to know that a local llama.cpp provider exists.
+        val localProvider = providerGraph.providers.inference as? NativeLlamaProvider
+        if (localProvider != null) {
+            infra.scope.launch {
+                infra.eventBus.observe(ListeningStarted::class.java).collectLatest {
+                    if (aiProviderRouter.selectedProviderId.value == localProvider.id) {
+                        runCatching { localProvider.loadModelIfNeeded() }
+                            .onFailure { error ->
+                                infra.logger.warn(
+                                    category = "ai",
+                                    message = "Local model warm-up failed: ${error.message ?: error::class.simpleName}"
+                                )
+                            }
+                    }
+                }
+            }
+        }
+    }
+
     val goalManager by lazy { GoalManager() }
 
     val capabilityRegistry by lazy {
