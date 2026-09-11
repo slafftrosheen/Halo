@@ -19,11 +19,14 @@ import com.halo.host.android.capability.AndroidMediaCapability
 import com.halo.host.android.capability.AndroidNavigationCapability
 import com.halo.engines.execution.capability.LocomotionCapability
 import com.halo.engines.execution.capability.CameraCapability
+import com.halo.engines.execution.capability.SpeechOutputRouter
 import com.halo.sdk.runtime.embodiment.BuddyBotGateway
 import com.halo.sdk.runtime.embodiment.HeyCyanGateway
 import com.halo.app.capability.HeyCyanCapabilityBridge
 import com.halo.runtime.speech.SpeechPerceptionBridge
 import com.halo.runtime.speech.SpeechSessionManager
+import com.halo.drivers.heycyan.capability.CapabilityRequest
+import com.halo.drivers.heycyan.capability.HeyCyanCapabilityIds
 
 /**
  * Owns all cognitive engines: interpretation, reasoning, planning, execution, reflection.
@@ -36,7 +39,6 @@ class EngineGraph(
     private val deviceSessionManager: com.halo.sdk.runtime.embodiment.DeviceSessionManager,
     private val heyCyanDriver: com.halo.drivers.heycyan.RealHeyCyanDriver
 ) {
-
     val goalManager by lazy { GoalManager() }
 
     val capabilityRegistry by lazy {
@@ -46,19 +48,33 @@ class EngineGraph(
 
             register(LocomotionCapability(buddyBotGateway))
             register(CameraCapability(heyCyanGateway))
-
             register(AndroidApplicationCapability(applicationContext))
             register(AndroidMediaCapability(applicationContext))
             register(AndroidNavigationCapability(applicationContext))
             register(
                 com.halo.engines.execution.capability.SpeechCapability(
-                    providerGraph.providers.speechSynthesis
+                    ttsProvider = providerGraph.providers.speechSynthesis,
+                    outputRouter = SpeechOutputRouter {
+                        heyCyanDriver.capabilityProvider.execute(
+                            HeyCyanCapabilityIds.AUDIO_SPEAKER_OUTPUT,
+                            CapabilityRequest.Empty,
+                        ).let { outcome ->
+                            when (outcome) {
+                                is com.halo.drivers.heycyan.capability.CapabilityOutcome.Success -> Result.success(Unit)
+                                is com.halo.drivers.heycyan.capability.CapabilityOutcome.Failure -> Result.failure(
+                                    IllegalStateException(outcome.message)
+                                )
+                            }
+                        }
+                    }
                 )
             )
-            register(HeyCyanCapabilityBridge(
-                heyCyanDriver.capabilityProvider,
-                heyCyanDriver.deviceState
-            ))
+            register(
+                HeyCyanCapabilityBridge(
+                    heyCyanDriver.capabilityProvider,
+                    heyCyanDriver.deviceState
+                )
+            )
         }
     }
 
@@ -66,35 +82,18 @@ class EngineGraph(
     val executionEngine by lazy { ExecutionEngine(executionScheduler, infra.eventBus, infra.blackboard) }
     val planningEngine by lazy { PlanningEngine(infra.eventBus, infra.blackboard) }
 
-    val interpretationEngine by lazy {
-        InterpretationEngine(infra.blackboard, infra.eventBus)
-    }
-
-    val defaultReasoningStrategy by lazy {
-        DefaultReasoningStrategy(goalManager)
-    }
-
+    val interpretationEngine by lazy { InterpretationEngine(infra.blackboard, infra.eventBus) }
+    val defaultReasoningStrategy by lazy { DefaultReasoningStrategy(goalManager) }
     val reasoningStrategy by lazy {
         com.halo.engines.reasoning.strategy.LlmReasoningStrategy(aiProviderRouter, goalManager, defaultReasoningStrategy)
     }
-
     val reasoningEngine by lazy {
-        ReasoningEngine(
-            strategy = reasoningStrategy,
-            blackboard = infra.blackboard,
-            eventBus = infra.eventBus
-        )
+        ReasoningEngine(strategy = reasoningStrategy, blackboard = infra.blackboard, eventBus = infra.eventBus)
     }
-
     val reflectionEngine by lazy { ReflectionEngine(EpisodicMemoryStore()) }
 
-    val speechSessionManager by lazy {
-        SpeechSessionManager(infra.eventBus, infra.commandBus, infra.scope)
-    }
-
-    val speechPerceptionBridge by lazy {
-        SpeechPerceptionBridge(infra.eventBus, infra.scope)
-    }
+    val speechSessionManager by lazy { SpeechSessionManager(infra.eventBus, infra.commandBus, infra.scope) }
+    val speechPerceptionBridge by lazy { SpeechPerceptionBridge(infra.eventBus, infra.scope) }
 
     /** Cognitive inference sees only the typed inference registry; handoff providers cannot enter execution routing. */
     val aiProviderRouter by lazy {
