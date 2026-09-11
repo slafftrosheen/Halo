@@ -14,6 +14,8 @@ import com.halo.sdk.provider.SpeechResult
 import com.halo.sdk.provider.SpeechSynthesisProvider
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.util.Locale
 import kotlin.coroutines.resume
@@ -38,6 +40,14 @@ class AndroidTTSProvider(
     private val audioManager =
         appContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
+    /**
+     * TextToSpeech owns one process-wide utterance listener per engine.
+     * Serialize synthesize() so concurrent calls cannot replace that listener,
+     * restore a previous route while another utterance is playing, or leave
+     * QUEUE_ADD utterances associated with the wrong route state.
+     */
+    private val synthesizeMutex = Mutex()
+
     private var tts: TextToSpeech? = null
     private var isInitialized = false
 
@@ -59,68 +69,77 @@ class AndroidTTSProvider(
     }
 
     override suspend fun synthesize(request: SpeechRequest): SpeechResult =
-        suspendCancellableCoroutine { continuation ->
-            val ttsEngine = tts
-            if (ttsEngine == null || !isInitialized) {
-                continuation.resume(SpeechResult(0, false))
-                return@suspendCancellableCoroutine
-            }
+        synthesizeMutex.withLock {
+            suspendCancellableCoroutine { continuation ->
+                val ttsEngine = tts
+                if (ttsEngine == null || !isInitialized) {
+                    continuation.resume(SpeechResult(0, false))
+                    return@suspendCancellableCoroutine
+                }
 
-            val routeState = prepareBluetoothCommunicationRoute()
-            val utteranceId = java.util.UUID.randomUUID().toString()
-            val startTime = System.currentTimeMillis()
+                val routeState = prepareBluetoothCommunicationRoute()
+                val utteranceId = java.util.UUID.randomUUID().toString()
+                val startTime = System.currentTimeMillis()
+                var routeRestored = false
 
-            fun finish(success: Boolean) {
-                if (!continuation.isActive) return
-                restoreBluetoothCommunicationRoute(routeState)
-                val duration = if (success) System.currentTimeMillis() - startTime else 0L
-                continuation.resume(SpeechResult(duration, success))
-            }
+                fun restoreRouteOnce() {
+                    if (routeRestored) return
+                    routeRestored = true
+                    restoreBluetoothCommunicationRoute(routeState)
+                }
 
-            ttsEngine.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-                override fun onStart(id: String?) {
-                    if (id == utteranceId) {
-                        logCurrentBluetoothOutputs("TTS started")
-                        Log.d(TAG, "TTS started utterance=$utteranceId")
+                fun finish(success: Boolean) {
+                    if (!continuation.isActive) return
+                    restoreRouteOnce()
+                    val duration = if (success) System.currentTimeMillis() - startTime else 0L
+                    continuation.resume(SpeechResult(duration, success))
+                }
+
+                ttsEngine.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+                    override fun onStart(id: String?) {
+                        if (id == utteranceId) {
+                            logCurrentBluetoothOutputs("TTS started")
+                            Log.d(TAG, "TTS started utterance=$utteranceId")
+                        }
                     }
-                }
 
-                override fun onDone(id: String?) {
-                    if (id == utteranceId) finish(true)
-                }
-
-                override fun onError(id: String?) {
-                    if (id == utteranceId) finish(false)
-                }
-
-                override fun onError(id: String?, errorCode: Int) {
-                    if (id == utteranceId) {
-                        Log.w(TAG, "TTS failed utterance=$utteranceId errorCode=$errorCode")
-                        finish(false)
+                    override fun onDone(id: String?) {
+                        if (id == utteranceId) finish(true)
                     }
+
+                    override fun onError(id: String?) {
+                        if (id == utteranceId) finish(false)
+                    }
+
+                    override fun onError(id: String?, errorCode: Int) {
+                        if (id == utteranceId) {
+                            Log.w(TAG, "TTS failed utterance=$utteranceId errorCode=$errorCode")
+                            finish(false)
+                        }
+                    }
+                })
+
+                logCurrentBluetoothOutputs("TTS route before speak")
+                val params = android.os.Bundle().apply {
+                    // TTS engines may otherwise choose their own legacy stream.
+                    // STREAM_MUSIC is the Android media path used by Classic A2DP.
+                    putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, AudioManager.STREAM_MUSIC)
                 }
-            })
+                val result = ttsEngine.speak(
+                    request.text,
+                    TextToSpeech.QUEUE_ADD,
+                    params,
+                    utteranceId
+                )
+                if (result == TextToSpeech.ERROR && continuation.isActive) {
+                    restoreRouteOnce()
+                    continuation.resume(SpeechResult(0, false))
+                }
 
-            logCurrentBluetoothOutputs("TTS route before speak")
-            val params = android.os.Bundle().apply {
-                // TTS engines may otherwise choose their own legacy stream.
-                // STREAM_MUSIC is the Android media path used by Classic A2DP.
-                putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, AudioManager.STREAM_MUSIC)
-            }
-            val result = ttsEngine.speak(
-                request.text,
-                TextToSpeech.QUEUE_ADD,
-                params,
-                utteranceId
-            )
-            if (result == TextToSpeech.ERROR && continuation.isActive) {
-                restoreBluetoothCommunicationRoute(routeState)
-                continuation.resume(SpeechResult(0, false))
-            }
-
-            continuation.invokeOnCancellation {
-                ttsEngine.stop()
-                restoreBluetoothCommunicationRoute(routeState)
+                continuation.invokeOnCancellation {
+                    ttsEngine.stop()
+                    restoreRouteOnce()
+                }
             }
         }
 
@@ -231,10 +250,12 @@ class AndroidTTSProvider(
     override suspend fun health(): Boolean = isInitialized
 
     override suspend fun close() {
-        tts?.stop()
-        tts?.shutdown()
-        tts = null
-        isInitialized = false
+        synthesizeMutex.withLock {
+            tts?.stop()
+            tts?.shutdown()
+            tts = null
+            isInitialized = false
+        }
     }
 
     private companion object {
