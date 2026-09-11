@@ -26,10 +26,9 @@ import kotlin.coroutines.resume
  * 2. Android routes the actual TTS stream through its Bluetooth audio path.
  *
  * HeyCyan may expose its Classic Bluetooth speaker as A2DP rather than as a
- * communication device. Therefore TTS uses USAGE_MEDIA: unlike USAGE_ASSISTANT,
- * this keeps the utterance eligible for Android's normal Bluetooth media route.
- * When a SCO/BLE communication device is actually available, API 31+ still
- * selects it explicitly because that is the more deterministic voice route.
+ * communication device. Therefore TTS uses USAGE_MEDIA and explicitly asks
+ * TextToSpeech for STREAM_MUSIC semantics. This keeps the utterance on the
+ * Android media route instead of treating it as a phone-call stream.
  */
 class AndroidTTSProvider(
     private val context: Context
@@ -51,8 +50,6 @@ class AndroidTTSProvider(
             tts?.language = Locale.US
             tts?.setAudioAttributes(
                 AudioAttributes.Builder()
-                    // Bluetooth Classic A2DP is a media route. USAGE_ASSISTANT
-                    // can remain on the phone speaker on some Android stacks.
                     .setUsage(AudioAttributes.USAGE_MEDIA)
                     .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
                     .build()
@@ -105,10 +102,15 @@ class AndroidTTSProvider(
             })
 
             logCurrentBluetoothOutputs("TTS route before speak")
+            val params = android.os.Bundle().apply {
+                // TTS engines may otherwise choose their own legacy stream.
+                // STREAM_MUSIC is the Android media path used by Classic A2DP.
+                putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, AudioManager.STREAM_MUSIC)
+            }
             val result = ttsEngine.speak(
                 request.text,
                 TextToSpeech.QUEUE_ADD,
-                null,
+                params,
                 utteranceId
             )
             if (result == TextToSpeech.ERROR && continuation.isActive) {
@@ -202,7 +204,8 @@ class AndroidTTSProvider(
             Log.i(
                 TAG,
                 "$reason | Bluetooth outputs=${outputs.ifBlank { "none" }} " +
-                    "| communicationDevice=$communication | mode=${audioManager.mode}"
+                    "| communicationDevice=$communication | mode=${audioManager.mode} " +
+                    "| musicActive=${audioManager.isMusicActive}"
             )
         }.onFailure { error ->
             Log.w(TAG, "Unable to inspect Bluetooth audio outputs", error)
