@@ -89,4 +89,39 @@ class AndroidProviderFactoryTest {
         assertSame(inference, providers.aiProviders.single())
         assertSame(inference, providers.aiRegistry.inference.single())
     }
+
+    @Test
+    fun `explicit aiProviders cannot accidentally remove typed inference provider`() {
+        val inference = object : AiInferenceProvider {
+            override val id: String = "typed-inference"
+            override val displayName: String = "Typed inference"
+            override val isLocal: Boolean = true
+            override val status = kotlinx.coroutines.flow.MutableStateFlow(com.halo.sdk.provider.ProviderStatus.READY)
+            override suspend fun getCapabilities() = setOf(com.halo.sdk.provider.AiCapability.TEXT)
+            override suspend fun generate(
+                request: com.halo.sdk.provider.AiRequest,
+                context: com.halo.sdk.provider.AiContext
+            ) = com.halo.sdk.provider.AiResponse(
+                text = request.text.orEmpty(),
+                providerId = id,
+                modelId = request.modelId
+            )
+            override fun stream(
+                request: com.halo.sdk.provider.AiRequest,
+                context: com.halo.sdk.provider.AiContext
+            ) = kotlinx.coroutines.flow.emptyFlow<com.halo.sdk.provider.AiStreamEvent>()
+            override suspend fun listModels() = emptyList<com.halo.sdk.provider.AiModel>()
+        }
+
+        val providers = Providers(
+            inference = inference,
+            speechRecognition = error("unused in this test"),
+            speechSynthesis = error("unused in this test"),
+            wakeWord = error("unused in this test"),
+            aiProviders = emptyList()
+        )
+
+        assertTrue(providers.aiProviders.isEmpty())
+        assertSame(inference, providers.aiRegistry.inference.single())
+    }
 }
