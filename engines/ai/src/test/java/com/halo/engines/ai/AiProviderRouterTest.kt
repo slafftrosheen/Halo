@@ -73,7 +73,7 @@ class AiProviderRouterTest {
     }
 
     @Test
-    fun `changing provider restores its own model instead of clearing all selections`() = runTest {
+    fun `changing provider restores its own model`() = runTest {
         val storage = FakeStorage()
         val p1 = MockProvider("p1", "P1", modelId = "model-p1")
         val p2 = MockProvider("p2", "P2", modelId = "model-p2")
@@ -275,6 +275,23 @@ class AiProviderRouterTest {
             fail("Expected UNSUPPORTED_CAPABILITY")
         } catch (e: AiProviderException) {
             assertEquals(AiErrorType.UNSUPPORTED_CAPABILITY, e.type)
+        }
+        assertTrue(fallback.receivedRequests.isEmpty())
+    }
+
+    @Test
+    fun `router does not fallback on context overflow`() = runTest {
+        val storage = FakeStorage()
+        val primary = MockProvider("p1", "P1", throwsException = true, failureType = AiErrorType.CONTEXT_TOO_LARGE)
+        val fallback = MockProvider("p2", "P2")
+        val router = DefaultAiProviderRouter(listOf(primary, fallback), storage)
+        router.setRoutingPolicy(AiRoutingPolicy.PREFERRED_WITH_FALLBACK)
+        router.selectProvider("p1")
+        try {
+            router.execute(AiRequest(text = "Hello"), AiContext.EMPTY)
+            fail("Expected CONTEXT_TOO_LARGE")
+        } catch (e: AiProviderException) {
+            assertEquals(AiErrorType.CONTEXT_TOO_LARGE, e.type)
         }
         assertTrue(fallback.receivedRequests.isEmpty())
     }
