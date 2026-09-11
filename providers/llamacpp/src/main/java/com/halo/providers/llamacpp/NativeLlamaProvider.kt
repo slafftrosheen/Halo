@@ -21,6 +21,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.nehuatl.llamacpp.LlamaHelper
+import java.util.UUID
 
 class NativeLlamaProvider(
     private val context: Context,
@@ -85,10 +86,10 @@ class NativeLlamaProvider(
             return@withLock false
         }
 
-        _status.value = ProviderStatus(ProviderStatus.State.LOADING, "Loading $activeId...")
+        _status.value = ProviderStatus(State.LOADING, "Loading $activeId...")
         releaseCurrentModel()
         return@withLock try {
-            Log.i("NativeLlamaProvider", "Loading GGUF model: ${file.absolutePath} (${file.length()} bytes)")
+            Log.i(TAG, "Loading GGUF model: ${file.absolutePath} (${file.length()} bytes)")
             val helper = LlamaHelper(context.contentResolver, scope, llamaEventFlow)
             helper.load(file.absolutePath, contextSize, systemPrompt, {})
             engine = helper
@@ -101,7 +102,7 @@ class NativeLlamaProvider(
             throw error
         } catch (error: Throwable) {
             releaseCurrentModel()
-            Log.e("NativeLlamaProvider", "Failed loading model ${file.absolutePath}", error)
+            Log.e(TAG, "Failed loading model ${file.absolutePath}", error)
             _status.value = ProviderStatus(ProviderStatus.State.ERROR, "Model load failed: ${error.message ?: error::class.simpleName}")
             false
         }
@@ -150,9 +151,12 @@ class NativeLlamaProvider(
         val startedAt = System.currentTimeMillis()
         val prompt = buildPrompt(request, context)
         return inferenceMutex.withLock {
+            val transactionId = UUID.randomUUID().toString().take(8)
             try {
-                val text = buildString { streamInternal(prompt).collect { append(it) } }.trim()
+                Log.i(TAG, "[$transactionId] generate start model=$modelId promptChars=${prompt.length} contextSize=$contextSize")
+                val text = buildString { streamInternal(prompt, transactionId).collect { append(it) } }.trim()
                 if (text.isBlank()) throw AiProviderException(AiErrorType.EMPTY_RESPONSE, "llama.cpp returned an empty response")
+                Log.i(TAG, "[$transactionId] generate complete outputChars=${text.length} durationMs=${System.currentTimeMillis() - startedAt}")
                 AiResponse(
                     text = text,
                     providerId = id,
@@ -161,10 +165,13 @@ class NativeLlamaProvider(
                     metrics = AiGenerationMetrics(startedAtMs = startedAt, completedAtMs = System.currentTimeMillis())
                 )
             } catch (error: CancellationException) {
+                Log.i(TAG, "[$transactionId] generate cancelled")
                 throw error
             } catch (error: AiProviderException) {
+                Log.e(TAG, "[$transactionId] generate failed type=${error.type} message=${error.message}", error)
                 throw error
             } catch (error: Throwable) {
+                Log.e(TAG, "[$transactionId] generate failed unexpectedly", error)
                 throw AiProviderException(AiErrorType.GENERATION_FAILED, "Native llama.cpp generation failed", error)
             }
         }
@@ -175,19 +182,22 @@ class NativeLlamaProvider(
         emit(AiStreamEvent.Started)
         val startedAt = System.currentTimeMillis()
         val output = StringBuilder()
+        val transactionId = UUID.randomUUID().toString().take(8)
         try {
             val modelId = requireSelectedModel(request)
             if (!loadModelIfNeeded()) {
                 throw AiProviderException(AiErrorType.MODEL_LOAD_FAILED, status.value.message ?: "Unable to load llama.cpp model")
             }
+            Log.i(TAG, "[$transactionId] stream start model=$modelId requestChars=${request.text?.length ?: 0}")
             inferenceMutex.withLock {
-                streamInternal(buildPrompt(request, context)).collect { token ->
+                streamInternal(buildPrompt(request, context), transactionId).collect { token ->
                     output.append(token)
                     emit(AiStreamEvent.Token(token))
                 }
             }
             val text = output.toString().trim()
             if (text.isBlank()) throw AiProviderException(AiErrorType.EMPTY_RESPONSE, "llama.cpp produced no response text")
+            Log.i(TAG, "[$transactionId] stream complete outputChars=${text.length} durationMs=${System.currentTimeMillis() - startedAt}")
             emit(
                 AiStreamEvent.Completed(
                     AiResponse(
@@ -200,34 +210,43 @@ class NativeLlamaProvider(
                 )
             )
         } catch (error: CancellationException) {
+            Log.i(TAG, "[$transactionId] stream cancelled")
             throw error
         } catch (error: Throwable) {
+            Log.e(TAG, "[$transactionId] stream failed", error)
             emit(AiStreamEvent.Failed(error))
         }
     }
 
     suspend fun complete(request: AIRequestLegacy): AIResponseLegacy = inferenceMutex.withLock {
         val startTime = System.currentTimeMillis()
+        val transactionId = UUID.randomUUID().toString().take(8)
         try {
             if (!loadModelIfNeeded()) {
                 throw AiProviderException(AiErrorType.MODEL_LOAD_FAILED, status.value.message ?: "Unable to load local model")
             }
+            Log.i(TAG, "[$transactionId] legacy completion start requestChars=${request.conversation.messages.sumOf { it.content.length }}")
             val result = buildString {
-                streamInternal(request.conversation.messages.joinToString("\n") { "${it.role.name.lowercase()}: ${it.content}" })
+                streamInternal(request.conversation.messages.joinToString("\n") { "${it.role.name.lowercase()}: ${it.content}" }, transactionId)
                     .collect { append(it) }
             }
+            Log.i(TAG, "[$transactionId] legacy completion complete outputChars=${result.length}")
             AIResponseLegacy(result, "stop", System.currentTimeMillis() - startTime)
         } catch (e: CancellationException) {
+            Log.i(TAG, "[$transactionId] legacy completion cancelled")
             throw e
         } catch (e: AiProviderException) {
+            Log.e(TAG, "[$transactionId] legacy completion failed type=${e.type} message=${e.message}", e)
             throw e
         } catch (e: Exception) {
+            Log.e(TAG, "[$transactionId] legacy completion failed", e)
             throw AiProviderException(AiErrorType.LOCAL_MODEL_UNAVAILABLE, "Native Llama completion failed", e)
         }
     }
 
     fun stream(prompt: String): Flow<String> = flow {
-        inferenceMutex.withLock { streamInternal(prompt).collect { emit(it) } }
+        val transactionId = UUID.randomUUID().toString().take(8)
+        inferenceMutex.withLock { streamInternal(prompt, transactionId).collect { emit(it) } }
     }
 
     /**
@@ -237,11 +256,14 @@ class NativeLlamaProvider(
      * has replay=0. The channel below preserves the complete event sequence for
      * this serialized inference transaction.
      */
-    private fun streamInternal(prompt: String): Flow<String> = kotlinx.coroutines.flow.channelFlow {
+    private fun streamInternal(prompt: String, transactionId: String): Flow<String> = kotlinx.coroutines.flow.channelFlow {
         val currentEngine = engine
             ?: throw AiProviderException(AiErrorType.MODEL_NOT_READY, "Native llama.cpp engine is not loaded")
 
         val eventChannel = Channel<LlamaHelper.LLMEvent>(Channel.UNLIMITED)
+        var eventCount = 0
+        var tokenCount = 0
+        var terminalEvent: String? = null
         val collector = launch {
             llamaEventFlow.collect { event ->
                 eventChannel.send(event)
@@ -250,23 +272,59 @@ class NativeLlamaProvider(
 
         try {
             currentCoroutineContext().ensureActive()
-            Log.d("NativeLlamaProvider", "Starting native prediction")
-            currentEngine.predict(prompt, "", false)
+            Log.d(TAG, "[$transactionId] predict begin promptChars=${prompt.length}")
+            try {
+                currentEngine.predict(prompt, "", false)
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Throwable) {
+                Log.e(TAG, "[$transactionId] native predict threw before terminal event", error)
+                throw AiProviderException(
+                    AiErrorType.GENERATION_FAILED,
+                    "llama.cpp predict() failed: ${error.message ?: error::class.simpleName}",
+                    error
+                )
+            }
+            Log.d(TAG, "[$transactionId] predict returned; awaiting native terminal event")
 
             for (event in eventChannel) {
                 currentCoroutineContext().ensureActive()
+                eventCount++
                 when (event) {
                     is LlamaHelper.LLMEvent.Ongoing -> {
-                        if (event.word.isNotEmpty()) send(event.word)
+                        if (event.word.isNotEmpty()) {
+                            tokenCount++
+                            send(event.word)
+                        }
                     }
-                    is LlamaHelper.LLMEvent.Done -> return@channelFlow
+                    is LlamaHelper.LLMEvent.Done -> {
+                        terminalEvent = "Done"
+                        Log.i(TAG, "[$transactionId] native generation done events=$eventCount tokens=$tokenCount")
+                        return@channelFlow
+                    }
                     is LlamaHelper.LLMEvent.Error -> {
-                        throw AiProviderException(AiErrorType.GENERATION_FAILED, "llama.cpp generation error")
+                        terminalEvent = "Error"
+                        Log.e(
+                            TAG,
+                            "[$transactionId] native generation emitted Error event=${event::class.qualifiedName} " +
+                                "events=$eventCount tokens=$tokenCount"
+                        )
+                        throw AiProviderException(
+                            AiErrorType.GENERATION_FAILED,
+                            "llama.cpp generation error event=${event::class.simpleName}"
+                        )
                     }
-                    else -> Unit
+                    else -> {
+                        if (eventCount <= 8) {
+                            Log.d(TAG, "[$transactionId] native event #$eventCount type=${event::class.qualifiedName}")
+                        }
+                    }
                 }
             }
         } finally {
+            if (terminalEvent == null) {
+                Log.w(TAG, "[$transactionId] native event stream ended without terminal event events=$eventCount tokens=$tokenCount")
+            }
             collector.cancel()
             eventChannel.close()
         }
@@ -291,5 +349,9 @@ class NativeLlamaProvider(
     suspend fun close() {
         inferenceMutex.withLock { releaseCurrentModel() }
         scope.coroutineContext[kotlinx.coroutines.Job]?.cancel()
+    }
+
+    private companion object {
+        private const val TAG = "NativeLlamaProvider"
     }
 }
