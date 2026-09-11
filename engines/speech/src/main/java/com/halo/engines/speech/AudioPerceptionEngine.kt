@@ -13,9 +13,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.isActive
+import kotlinx.coroutines.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -55,7 +53,7 @@ class AudioPerceptionEngine(
     private val lifecycleMutex = Mutex()
     private val sourceStartAttempted = AtomicBoolean(false)
     private var captureJob: Job? = null
-    
+
     val metrics = EngineMetrics()
 
     override suspend fun initialize(context: EngineContext) {
@@ -74,24 +72,18 @@ class AudioPerceptionEngine(
             check(_state.value != EngineState.Disposed) {
                 "AudioPerceptionEngine cannot be started after it is disposed"
             }
-            if (captureJob?.isActive == true) {
-                return@withLock
-            }
+            if (captureJob?.isActive == true) return@withLock
 
             _state.value = EngineState.Running
-
-            captureJob = scope.launch {
-                runCaptureLoop(eventBus)
-            }
+            _health.value = EngineHealth.Healthy
+            captureJob = scope.launch { runCaptureLoop(eventBus) }
         }
     }
 
     override suspend fun stop() {
         withContext(NonCancellable) {
             lifecycleMutex.withLock {
-                if (_state.value != EngineState.Disposed) {
-                    stopLocked()
-                }
+                if (_state.value != EngineState.Disposed) stopLocked()
             }
         }
     }
@@ -99,14 +91,9 @@ class AudioPerceptionEngine(
     override suspend fun dispose() {
         withContext(NonCancellable) {
             lifecycleMutex.withLock {
-                if (_state.value == EngineState.Disposed) {
-                    return@withLock
-                }
-
+                if (_state.value == EngineState.Disposed) return@withLock
                 stopLocked()
-                if (::scope.isInitialized) {
-                    scope.cancel()
-                }
+                if (::scope.isInitialized) scope.cancel()
                 _state.value = EngineState.Disposed
             }
         }
@@ -115,57 +102,74 @@ class AudioPerceptionEngine(
     private suspend fun runCaptureLoop(eventBus: EventBus) {
         var bridgeJob: Job? = null
         try {
+            sourceStartAttempted.set(true)
             try {
-                sourceStartAttempted.set(true)
                 audioSource.start()
             } catch (exception: CancellationException) {
+                sourceStartAttempted.set(false)
                 throw exception
             } catch (exception: Exception) {
+                sourceStartAttempted.set(false)
                 reportCaptureFailure(
-                    eventBus = eventBus,
-                    reason = "Unable to start audio source: ${
-                        exception.message ?: "Audio initialization failed"
-                    }",
-                    throwable = exception
+                    eventBus,
+                    "Unable to start audio source: ${exception.message ?: "Audio initialization failed"}",
+                    exception
                 )
                 return
             }
 
-            _health.value = EngineHealth.Healthy
             audioPipeline.reset()
-            
-            // Bridge source lifecycle to event bus
+            _health.value = EngineHealth.Healthy
+
             bridgeJob = scope.launch {
+                var active = false
                 audioSource.state.collect { sourceState ->
                     when (sourceState) {
                         AudioSourceState.ACTIVE -> {
-                            val obs = Observation(
-                                modality = Modality.AUDIO,
-                                source = Source.MICROPHONE,
-                                payload = AudioObservationPayload(energy = null, isSpeechActive = true)
+                            if (active) return@collect
+                            active = true
+                            eventBus.publish(
+                                ObservationUpdated(
+                                    observation = Observation(
+                                        modality = Modality.AUDIO,
+                                        source = Source.MICROPHONE,
+                                        payload = AudioObservationPayload(energy = null, isSpeechActive = true)
+                                    )
+                                )
                             )
-                            eventBus.publish(ObservationUpdated(observation = obs))
                             eventBus.publish(ListeningStarted())
                         }
+
                         AudioSourceState.IDLE -> {
-                            val obs = Observation(
-                                modality = Modality.AUDIO,
-                                source = Source.MICROPHONE,
-                                payload = AudioObservationPayload(energy = null, isSpeechActive = false)
+                            if (!active) return@collect
+                            active = false
+                            eventBus.publish(
+                                ObservationUpdated(
+                                    observation = Observation(
+                                        modality = Modality.AUDIO,
+                                        source = Source.MICROPHONE,
+                                        payload = AudioObservationPayload(energy = null, isSpeechActive = false)
+                                    )
+                                )
                             )
-                            eventBus.publish(ObservationUpdated(observation = obs))
-                            // When source goes idle, we stop pipeline and signal end of capture
-                            eventBus.publish(SpeechEnded())
-                            // Transition to thinking/processing
-                            eventBus.publish(RecognitionFinished())
+                            // The source becoming idle is transport lifecycle, not
+                            // recognition completion. LIVE STT owns its endpointing.
+                            if (audioPipelineStateIsBuffered()) {
+                                eventBus.publish(SpeechEnded())
+                            }
                         }
+
                         AudioSourceState.ERROR -> {
-                            reportCaptureFailure(eventBus, "Audio source reported error", RuntimeException("Source Error"))
+                            reportCaptureFailure(
+                                eventBus,
+                                "Audio source reported error",
+                                RuntimeException("Source Error")
+                            )
                         }
                     }
                 }
             }
-            
+
             audioSource.frames.collect { rawFrame ->
                 metrics.framesProcessed++
                 val frame = preprocessor.process(rawFrame)
@@ -175,9 +179,9 @@ class AudioPerceptionEngine(
             throw exception
         } catch (exception: Exception) {
             reportCaptureFailure(
-                eventBus = eventBus,
-                reason = "Audio capture failed: ${exception.message ?: "Unknown error"}",
-                throwable = exception
+                eventBus,
+                "Audio capture failed: ${exception.message ?: "Unknown error"}",
+                exception
             )
         } finally {
             withContext(NonCancellable) {
@@ -188,7 +192,13 @@ class AudioPerceptionEngine(
         }
     }
 
-
+    /**
+     * AudioPerceptionEngine only knows the pipeline instance, not its configured
+     * provider. SpeechEnded must not be broadcast from transport state when the
+     * pipeline is using LIVE recognition. Keep this conservative until the engine
+     * exposes an explicit endpointing mode in the SDK.
+     */
+    private fun audioPipelineStateIsBuffered(): Boolean = false
 
     private suspend fun reportCaptureFailure(
         eventBus: EventBus,
@@ -196,11 +206,13 @@ class AudioPerceptionEngine(
         throwable: Throwable
     ) {
         _health.value = EngineHealth.Degraded
-        context.runtime.logger.error(
-            category = "speech",
-            message = reason,
-            throwable = throwable
-        )
+        if (::context.isInitialized) {
+            context.runtime.logger.error(
+                category = "speech",
+                message = reason,
+                throwable = throwable
+            )
+        }
         publishFailure(eventBus, reason)
     }
 
@@ -210,11 +222,13 @@ class AudioPerceptionEngine(
         } catch (exception: CancellationException) {
             throw exception
         } catch (exception: Exception) {
-            context.runtime.logger.error(
-                category = "speech",
-                message = "Failed to publish speech failure",
-                throwable = exception
-            )
+            if (::context.isInitialized) {
+                context.runtime.logger.error(
+                    category = "speech",
+                    message = "Failed to publish speech failure",
+                    throwable = exception
+                )
+            }
         }
     }
 
@@ -223,28 +237,25 @@ class AudioPerceptionEngine(
         captureJob = null
 
         activeCaptureJob?.cancel()
-        withContext(NonCancellable) {
-            stopAudioSource()
-        }
+        withContext(NonCancellable) { stopAudioSource() }
         activeCaptureJob?.join()
-
+        audioPipeline.reset()
         _state.value = EngineState.Stopped
     }
 
     private suspend fun stopAudioSource() {
-        if (!sourceStartAttempted.compareAndSet(true, false)) {
-            return
-        }
-
+        if (!sourceStartAttempted.compareAndSet(true, false)) return
         try {
             audioSource.stop()
         } catch (exception: Exception) {
             _health.value = EngineHealth.Degraded
-            context.runtime.logger.error(
-                category = "speech",
-                message = "Failed to stop microphone capture",
-                throwable = exception
-            )
+            if (::context.isInitialized) {
+                context.runtime.logger.error(
+                    category = "speech",
+                    message = "Failed to stop microphone capture",
+                    throwable = exception
+                )
+            }
         }
     }
 }
