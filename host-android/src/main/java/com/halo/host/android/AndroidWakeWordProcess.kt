@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import android.media.AudioManager
+import com.halo.sdk.runtime.EngineHealth
 import java.util.concurrent.atomic.AtomicLong
 
 class AndroidWakeWordProcess(
@@ -49,7 +50,7 @@ class AndroidWakeWordProcess(
     override fun engineSnapshot(): com.halo.sdk.runtime.EngineSnapshot = com.halo.sdk.runtime.EngineSnapshot(
         id = id,
         state = if (_state.value == ProcessState.Running) com.halo.sdk.runtime.EngineState.Running else com.halo.sdk.runtime.EngineState.Created,
-        health = if (_state.value == ProcessState.Crashed) com.halo.sdk.runtime.EngineHealth.Failing else com.halo.sdk.runtime.EngineHealth.Healthy,
+        health = if (_state.value == ProcessState.Crashed) EngineHealth.Failed else EngineHealth.Healthy,
         metrics = _metrics.value,
         lastActivity = java.time.Instant.now()
     )

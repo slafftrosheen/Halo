@@ -206,7 +206,7 @@ class NativeLlamaProvider(
         }
     }
 
-    override suspend fun complete(request: AIRequestLegacy): AIResponseLegacy = inferenceMutex.withLock {
+    suspend fun complete(request: AIRequestLegacy): AIResponseLegacy = inferenceMutex.withLock {
         val startTime = System.currentTimeMillis()
         try {
             if (!loadModelIfNeeded()) {
