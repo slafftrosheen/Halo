@@ -60,7 +60,7 @@ class EngineGraph(
                             CapabilityRequest.Empty,
                         ).let { outcome ->
                             when (outcome) {
-                                is com.halo.drivers.heycyan.capability.CapabilityOutcome.Success -> Result.success(Unit)
+                                com.halo.drivers.heycyan.capability.CapabilityOutcome.Success -> Result.success(Unit)
                                 is com.halo.drivers.heycyan.capability.CapabilityOutcome.Failure -> Result.failure(
                                     IllegalStateException(outcome.message)
                                 )
