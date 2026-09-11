@@ -12,7 +12,10 @@ sealed interface HeyCyanOperation {
     data object StopVideo : HeyCyanOperation
     data object StartRecording : HeyCyanOperation
     data object StopRecording : HeyCyanOperation
+    /** Prepare the glasses' voice path; this is distinct from selecting speaker output. */
     data object PrepareVoiceRouting : HeyCyanOperation
+    /** Select the glasses as the playback target for speech/audio. */
+    data object RouteAudioToGlasses : HeyCyanOperation
     data object GenerateAIPhoto : HeyCyanOperation
     data object EnterWifiTransferMode : HeyCyanOperation
     data object SynchronizeMedia : HeyCyanOperation
