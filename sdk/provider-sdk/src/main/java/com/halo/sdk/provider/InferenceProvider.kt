@@ -45,7 +45,7 @@ interface InferenceProvider : AiProvider {
         return caps
     }
 
-    override suspend fun generate(request: AiRequest, context: AiContext): AiResponse {
+    suspend fun generate(request: AiRequest, context: AiContext): AiResponse {
         val conversation = AIConversation(
             id = "legacy",
             messages = context.conversation.toMutableList()
@@ -55,7 +55,7 @@ interface InferenceProvider : AiProvider {
         return AiResponse(text = legacyResponse.text, providerId = id)
     }
 
-    override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = emptyFlow()
+    fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = emptyFlow()
 
     suspend fun complete(request: AIRequestLegacy): AIResponseLegacy
     fun stream(prompt: String): Flow<String>

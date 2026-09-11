@@ -234,7 +234,11 @@ class IntelligenceViewModel(
         val provider = aiProviderRouter.getAllProviders().find { it.id == providerId } ?: return
         _isRefreshing.value = true
         try {
-            val models = provider.listModels()
+            val models = if (provider is AiInferenceProvider) {
+                provider.listModels()
+            } else {
+                emptyList()
+            }
             _availableModels.value = models
 
             val storedModelId = when (providerId) {

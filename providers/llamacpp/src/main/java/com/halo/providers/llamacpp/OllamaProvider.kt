@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
@@ -83,6 +84,8 @@ class OllamaProvider(
         val legacy = completeWithModel(AIRequestLegacy(AIConversation("runtime", messages)), model)
         return AiResponse(text = legacy.text, providerId = id, modelId = model)
     }
+
+    override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = emptyFlow()
 
     suspend fun complete(request: AIRequestLegacy): AIResponseLegacy = completeWithModel(request, modelId)
 

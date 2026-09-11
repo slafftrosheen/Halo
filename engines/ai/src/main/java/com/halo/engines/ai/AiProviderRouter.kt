@@ -54,7 +54,7 @@ class DefaultAiProviderRouter(
     override val selectedModelId: StateFlow<String?> = _selectedModelId.asStateFlow()
 
     private val _diagnosticsFlow = MutableStateFlow<List<AiProviderDiagnostic>>(
-        providers.map { provider ->
+        allProviders.map { provider ->
             AiProviderDiagnostic(
                 providerId = provider.id,
                 displayName = provider.displayName,
@@ -100,7 +100,7 @@ class DefaultAiProviderRouter(
     }
 
     override fun selectProvider(id: String) {
-        if (providers.any { it.id == id }) {
+        if (allProviders.any { it.id == id }) {
             val providerChanged = _selectedProviderId.value != id
             _selectedProviderId.value = id
             storage.putString("active_ai_provider", id)
@@ -122,9 +122,11 @@ class DefaultAiProviderRouter(
         }
     }
 
-    override fun getAllProviders(): List<AiProvider> = providers
+    override fun getAllProviders(): List<AiProvider> = allProviders
 
-    override suspend fun refreshDiagnostics(): List<AiProviderDiagnostic> {
+    override suspend fun diagnostics(): List<AiProviderDiagnostic> = refreshDiagnostics()
+
+    private suspend fun refreshDiagnostics(): List<AiProviderDiagnostic> {
         val selectedId = _selectedProviderId.value
         val list = allProviders.map { provider ->
             val status = runCatching { provider.getStatus() }.getOrElse {
@@ -145,8 +147,6 @@ class DefaultAiProviderRouter(
         _diagnosticsFlow.value = list
         return list
     }
-
-    override suspend fun diagnostics(): List<AiProviderDiagnostic> = refreshDiagnostics()
 
     override suspend fun getEligibleProvider(request: AiRequest): AiProvider = resolveExecutionTarget(request).provider
 
@@ -357,7 +357,7 @@ class DefaultAiProviderRouter(
     }
 
     private fun validateResponse(target: AiExecutionTarget, response: AiResponse) {
-        AiResponseValidator.validate(target.model, response)
+        AiResponseValidator.validate(target.provider, target.providerCapabilities, target.modelId, response)
     }
 
     private fun loadStoredModels(): Map<String, String> {

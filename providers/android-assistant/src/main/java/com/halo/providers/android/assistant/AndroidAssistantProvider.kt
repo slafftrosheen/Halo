@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import com.halo.sdk.provider.AiCapability
 import com.halo.sdk.provider.AiHandoffProvider
 import com.halo.sdk.provider.ProviderStatus
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,6 +28,12 @@ class AndroidAssistantProvider(
         const val HANDOFF_ACTION = "com.halo.assistant.HANDOFF"
     }
 
+    override val id: String = ID
+    override val displayName: String = DISPLAY_NAME
+    override val isLocal: Boolean = true
+
+    override suspend fun getCapabilities(): Set<AiCapability> = emptySet()
+
     override fun isAvailable(): Boolean = resolveAssistantPackage() != null
 
     override fun assistantPackageName(): String? = resolveAssistantPackage()
@@ -36,9 +43,9 @@ class AndroidAssistantProvider(
     }
 
     private val _status = MutableStateFlow(ProviderStatus.UNAVAILABLE)
-    val status: StateFlow<ProviderStatus> = _status.asStateFlow()
+    override val status: StateFlow<ProviderStatus> = _status.asStateFlow()
 
-    suspend fun getStatus(): ProviderStatus {
+    override suspend fun getStatus(): ProviderStatus {
         val packageName = resolveAssistantPackage()
         val roleHeld = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             context.getSystemService(RoleManager::class.java)

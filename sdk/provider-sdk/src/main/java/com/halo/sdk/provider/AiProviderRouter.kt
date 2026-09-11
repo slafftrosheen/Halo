@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
  * re-resolved later in the same transaction.
  */
 data class AiExecutionTarget(
-    val provider: AiProvider,
+    val provider: AiInferenceProvider,
     val model: AiModel,
     val providerCapabilities: Set<AiCapability>
 ) {

@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.Flow
  */
 interface AiInferenceProvider : AiProvider {
     override suspend fun getCapabilities(): Set<AiCapability>
-    override suspend fun generate(request: AiRequest, context: AiContext): AiResponse
-    override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent>
-    override suspend fun listModels(): List<AiModel>
+    suspend fun generate(request: AiRequest, context: AiContext): AiResponse
+    fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent>
+    suspend fun listModels(): List<AiModel>
 }

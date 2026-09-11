@@ -14,6 +14,7 @@ import com.halo.sdk.provider.AiContext
 import com.halo.sdk.provider.AiContextPolicy
 import com.halo.sdk.provider.AiErrorType
 import com.halo.sdk.provider.AiExecutionOutcome
+import com.halo.sdk.provider.AiInferenceProvider
 import com.halo.sdk.provider.AiProvider
 import com.halo.sdk.provider.AiProviderException
 import com.halo.sdk.provider.AiRequest
@@ -191,7 +192,7 @@ class CognitiveSession(
     }
 
     private suspend fun executeProviderRequest(
-        provider: AiProvider,
+        provider: AiInferenceProvider,
         capabilities: Set<AiCapability>,
         expectedModelId: String,
         request: AiRequest,
@@ -246,7 +247,7 @@ class CognitiveSession(
         request: AiRequest,
         initialContext: AiContext,
         initialResponse: AiResponse,
-        provider: AiProvider,
+        provider: AiInferenceProvider,
         capabilities: Set<AiCapability>,
         policy: AiContextPolicy
     ): AiResponse {
@@ -281,7 +282,7 @@ class CognitiveSession(
                         toolRegistry == null -> "Tool registry unavailable"
                         else -> "Tool authorization service unavailable"
                     }
-                    eventBus.publish(ToolCallRejected(requestId, toolCall.id, toolCall.functionName, reason))
+                    eventBus.publish(ToolCallRejected(requestId = requestId, toolCallId = toolCall.id, toolId = toolCall.functionName, reason = reason))
                     toolMessages.add(AIMessage(Role.TOOL, "Tool execution rejected: $reason", toolCallId = toolCall.id))
                     continue
                 }
@@ -289,27 +290,27 @@ class CognitiveSession(
                 val authorization = toolAuthorizer.authorize(toolCall)
                 when (authorization) {
                     is ToolAuthorization.Rejected -> {
-                        eventBus.publish(ToolCallRejected(requestId, toolCall.id, toolCall.functionName, authorization.reason))
+                        eventBus.publish(ToolCallRejected(requestId = requestId, toolCallId = toolCall.id, toolId = toolCall.functionName, reason = authorization.reason))
                         toolMessages.add(AIMessage(Role.TOOL, "Tool execution rejected: ${authorization.reason}", toolCallId = toolCall.id))
                         continue
                     }
                     is ToolAuthorization.Authorized -> {
-                        eventBus.publish(ToolCallAuthorized(requestId, toolCall.id, toolCall.functionName))
+                        eventBus.publish(ToolCallAuthorized(requestId = requestId, toolCallId = toolCall.id, toolId = toolCall.functionName))
                     }
                 }
 
                 val authorized = authorization as ToolAuthorization.Authorized
                 when (val result = toolRegistry.executeAuthorized(authorized)) {
                     is ToolExecutionResult.Success -> {
-                        eventBus.publish(ToolCallCompleted(requestId, toolCall.id, toolCall.functionName, true))
+                        eventBus.publish(ToolCallCompleted(requestId = requestId, toolCallId = toolCall.id, toolId = toolCall.functionName, success = true))
                         toolMessages.add(AIMessage(Role.TOOL, result.output.take(ToolExecutionLimits.MAX_TOOL_OUTPUT_CHARS), toolCallId = toolCall.id))
                     }
                     is ToolExecutionResult.Rejected -> {
-                        eventBus.publish(ToolCallRejected(requestId, toolCall.id, toolCall.functionName, result.reason))
+                        eventBus.publish(ToolCallRejected(requestId = requestId, toolCallId = toolCall.id, toolId = toolCall.functionName, reason = result.reason))
                         toolMessages.add(AIMessage(Role.TOOL, "Tool execution rejected: ${result.reason}", toolCallId = toolCall.id))
                     }
                     is ToolExecutionResult.Failed -> {
-                        eventBus.publish(ToolCallCompleted(requestId, toolCall.id, toolCall.functionName, false))
+                        eventBus.publish(ToolCallCompleted(requestId = requestId, toolCallId = toolCall.id, toolId = toolCall.functionName, success = false))
                         toolMessages.add(AIMessage(Role.TOOL, "Tool execution failed: ${result.message}", toolCallId = toolCall.id))
                     }
                 }

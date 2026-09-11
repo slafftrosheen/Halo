@@ -6,7 +6,7 @@ package com.halo.sdk.provider
  * Handoff is intentionally separate from normal inference: callers must not
  * assume a response channel, prompt injection support, or round-trip execution.
  */
-interface AiHandoffProvider {
+interface AiHandoffProvider : AiProvider {
     fun isAvailable(): Boolean
     fun assistantPackageName(): String?
     fun handoff(prompt: String? = null)

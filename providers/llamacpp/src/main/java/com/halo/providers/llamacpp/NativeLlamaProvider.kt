@@ -38,12 +38,11 @@ class NativeLlamaProvider(
     private val systemPrompt: String get() = storage.getString("ai_system_prompt") ?: "You are Halo, a helpful AI."
     private val contextSize: Int get() = storage.getInt("llamacpp_context", 4096)
 
-    override val metadata = ProviderMetadata(
-        id = "provider.llamacpp.native",
-        displayName = "llama.cpp (native)",
-        local = true,
-        supportsStreaming = true
-    )
+    override val id: String = "provider.llamacpp.native"
+    override val displayName: String = "llama.cpp (native)"
+    override val isLocal: Boolean = true
+
+    override suspend fun getCapabilities(): Set<AiCapability> = setOf(AiCapability.TEXT, AiCapability.STREAMING)
 
     override suspend fun getStatus(): ProviderStatus {
         val activeId = downloadManager.activeModelId.value
@@ -110,7 +109,7 @@ class NativeLlamaProvider(
         loadedModelId = null
     }
 
-    override suspend fun health(): Boolean =
+    suspend fun health(): Boolean =
         downloadManager.activeModelId.value?.let { downloadManager.getModelFile(it) }?.let { it.exists() && it.length() > 0 } == true
 
     private fun buildPrompt(request: AiRequest, context: AiContext): String {
@@ -187,7 +186,7 @@ class NativeLlamaProvider(
         }
     }
 
-    override suspend fun complete(request: AIRequestLegacy): AIResponseLegacy = inferenceMutex.withLock {
+    suspend fun complete(request: AIRequestLegacy): AIResponseLegacy = inferenceMutex.withLock {
         val startTime = System.currentTimeMillis()
         try {
             if (!loadModelIfNeeded()) {
@@ -204,7 +203,7 @@ class NativeLlamaProvider(
         }
     }
 
-    override fun stream(prompt: String): Flow<String> = flow {
+    fun stream(prompt: String): Flow<String> = flow {
         inferenceMutex.withLock { streamInternal(prompt).collect { emit(it) } }
     }
 
@@ -240,7 +239,7 @@ class NativeLlamaProvider(
         }
     }
 
-    override suspend fun close() {
+    suspend fun close() {
         inferenceMutex.withLock { releaseCurrentModel() }
         scope.coroutineContext[kotlinx.coroutines.Job]?.cancel()
     }
