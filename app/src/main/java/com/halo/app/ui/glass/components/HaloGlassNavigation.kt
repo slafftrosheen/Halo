@@ -9,18 +9,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.navigation.NavDestination.Companion.hierarchy
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.halo.app.ui.glass.material.HaloGlassColors
-import com.halo.app.ui.glass.material.HaloGlassTokens
 
 /**
  * Data model for a navigation item.
@@ -44,24 +41,17 @@ fun HaloGlassNavigation(
     val currentDestination = navBackStackEntry?.destination
     val currentRoute = currentDestination?.route
 
-    fun getPrimaryRoute(route: String?): String? {
-        return when (route) {
-            "ai_settings", "permissions", "protocol_lab", "console", "inspector" -> "settings"
-            "discovery" -> "devices"
-            else -> route
-        }
+    fun getPrimaryRoute(route: String?): String? = when (route) {
+        "ai_settings", "permissions", "protocol_lab", "console", "inspector" -> "settings"
+        "discovery" -> "devices"
+        else -> route
     }
 
     Box(
         modifier = modifier
             .fillMaxWidth()
             .navigationBarsPadding()
-            .padding(
-                start = 24.dp,
-                end = 24.dp,
-                top = 8.dp,
-                bottom = 12.dp
-            ),
+            .padding(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 12.dp),
         contentAlignment = Alignment.BottomCenter
     ) {
         Row(
@@ -78,18 +68,34 @@ fun HaloGlassNavigation(
                 val isDirectMatch = currentDestination?.hierarchy?.any { it.route == item.route } == true
                 val isPrimaryMatch = getPrimaryRoute(currentRoute) == item.route
                 val selected = isDirectMatch || isPrimaryMatch
-                
+
                 Column(
                     modifier = Modifier
                         .weight(1f)
                         .clickable {
-                            Log.d("HaloGlassNavigation", "Navigating to: ${item.route}")
-                            navController.navigate(item.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
+                            val destination = navController.currentDestination
+                            if (destination?.route == item.route || getPrimaryRoute(destination?.route) == item.route) {
+                                Log.d("HaloGlassNavigation", "Already at primary route: ${item.route}")
+                                return@clickable
+                            }
+
+                            val currentDestinationId = destination?.id ?: return@clickable
+                            Log.d(
+                                "HaloGlassNavigation",
+                                "Navigating: ${destination?.route} -> ${item.route} (id=$currentDestinationId)"
+                            )
+
+                            runCatching {
+                                navController.navigate(item.route) {
+                                    launchSingleTop = true
+                                    restoreState = true
                                 }
-                                launchSingleTop = true
-                                restoreState = true
+                            }.onFailure { error ->
+                                Log.e(
+                                    "HaloGlassNavigation",
+                                    "Navigation failed: ${destination?.route} -> ${item.route}",
+                                    error
+                                )
                             }
                         }
                         .padding(vertical = 8.dp),
