@@ -1,15 +1,28 @@
 package com.halo.app.ui.screens.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Devices
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -18,128 +31,155 @@ import com.halo.app.ui.glass.material.HaloGlassColors
 import com.halo.app.ui.glass.material.HaloGlassTokens
 import com.halo.app.ui.glass.material.HaloTypography
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Stop
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.foundation.clickable
-import androidx.compose.ui.graphics.Color
-
 @Composable
 fun HomeScreen(viewModel: HomeViewModel) {
     val uiState by viewModel.uiState.collectAsState()
     var textInput by remember { mutableStateOf("") }
+    val isActiveSession = uiState.sessionState != com.halo.sdk.provider.CognitiveSessionState.Idle &&
+        uiState.sessionState !is com.halo.sdk.provider.CognitiveSessionState.Completed &&
+        uiState.sessionState !is com.halo.sdk.provider.CognitiveSessionState.Failed
+    val isProviderReady = uiState.activeProviderStatus == "READY" ||
+        uiState.activeProviderStatus == "STANDBY" ||
+        uiState.activeProviderStatus == "LOADING"
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(HaloGlassColors.Background)
+            .background(
+                Brush.verticalGradient(
+                    0f to HaloGlassColors.BackgroundSecondary,
+                    0.34f to HaloGlassColors.Background,
+                    1f to HaloGlassColors.Background
+                )
+            )
             .verticalScroll(rememberScrollState())
-            .padding(24.dp)
+            .padding(horizontal = 20.dp, vertical = 16.dp)
     ) {
-        // TOP Header
         Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "HALO", 
-                style = HaloTypography.titleLarge,
-                color = HaloGlassColors.TextPrimary,
-                letterSpacing = 4.sp
-            )
-            
-            Text(
-                text = uiState.connectionState,
-                style = HaloTypography.labelMedium,
-                color = if (uiState.connectionState == "Connected") HaloGlassColors.Accent else HaloGlassColors.TextMuted
+            Column {
+                Text(
+                    text = "HALO",
+                    style = HaloTypography.titleLarge,
+                    color = HaloGlassColors.TextPrimary,
+                    letterSpacing = 4.sp
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = "COGNITIVE RUNTIME",
+                    style = HaloTypography.labelSmall,
+                    color = HaloGlassColors.TextMuted,
+                    letterSpacing = 1.4.sp
+                )
+            }
+            HaloGlassChip(
+                text = uiState.connectionState.uppercase(),
+                material = HaloGlassMaterials.Interactive.copy(
+                    containerColor = if (uiState.connectionState == "Connected")
+                        HaloGlassColors.Success.copy(alpha = 0.14f)
+                    else HaloGlassColors.Glass,
+                    contentColor = if (uiState.connectionState == "Connected")
+                        HaloGlassColors.Success else HaloGlassColors.TextSecondary
+                )
             )
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(Modifier.height(24.dp))
 
-        // CENTER Action: State Orb
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            HaloFloatingMic(
-                state = uiState.runtimeState,
-                onClick = { 
-                    if (uiState.sessionState is com.halo.sdk.provider.CognitiveSessionState.Idle || 
-                        uiState.sessionState is com.halo.sdk.provider.CognitiveSessionState.Completed ||
-                        uiState.sessionState is com.halo.sdk.provider.CognitiveSessionState.Failed) {
-                        viewModel.submitText("Summarize my recent activity.")
-                    } else {
-                        viewModel.cancelSession()
+        HaloGlassCard {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = when {
+                        isActiveSession -> "HALO IS THINKING"
+                        uiState.contextualText.isNotBlank() -> "READY FOR YOUR NEXT REQUEST"
+                        else -> "WHAT CAN I DO FOR YOU?"
+                    },
+                    style = HaloTypography.labelSmall,
+                    color = HaloGlassColors.TextMuted,
+                    letterSpacing = 1.1.sp
+                )
+                Spacer(Modifier.height(14.dp))
+                HaloFloatingMic(
+                    state = uiState.runtimeState,
+                    onClick = {
+                        if (!isActiveSession) {
+                            viewModel.submitText("Summarize my recent activity.")
+                        } else {
+                            viewModel.cancelSession()
+                        }
                     }
-                }
-            )
+                )
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    text = if (isActiveSession) "Tap to stop" else "Tap to speak",
+                    style = HaloTypography.labelSmall,
+                    color = HaloGlassColors.TextSecondary
+                )
+            }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        // Contextual Text / AI Response
-        Column(
-            modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // Context Indicators
-            if (uiState.sessionState != com.halo.sdk.provider.CognitiveSessionState.Idle) {
+        Spacer(Modifier.height(16.dp))
+
+        if (uiState.sessionState != com.halo.sdk.provider.CognitiveSessionState.Idle) {
+            HaloGlassSection(title = "CURRENT CONTEXT") {
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
-                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    ContextTag("🎙 Voice", true)
-                    ContextTag("📷 Camera", uiState.capabilities.contains("Camera"))
-                    ContextTag("● History", true)
+                    ContextTag("VOICE", true)
+                    ContextTag("CAMERA", uiState.capabilities.contains("Camera"))
+                    ContextTag("HISTORY", true)
+                }
+                Spacer(Modifier.height(4.dp))
+                HaloMarkdownText(
+                    markdown = uiState.contextualText.ifBlank { "Working…" },
+                    textColor = HaloGlassColors.TextPrimary,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                if (uiState.sessionState is com.halo.sdk.provider.CognitiveSessionState.Completed ||
+                    uiState.sessionState is com.halo.sdk.provider.CognitiveSessionState.Streaming) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = "via ${uiState.activeProvider}",
+                        style = HaloTypography.labelSmall,
+                        color = HaloGlassColors.TextMuted
+                    )
+                }
+                if (uiState.sessionState is com.halo.sdk.provider.CognitiveSessionState.Reasoning) {
+                    Spacer(Modifier.height(12.dp))
+                    LinearProgressIndicator(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = HaloGlassColors.Accent,
+                        trackColor = HaloGlassColors.Glass
+                    )
                 }
             }
-
-            HaloMarkdownText(
-                markdown = uiState.contextualText,
-                textColor = HaloGlassColors.TextPrimary,
-                modifier = Modifier.padding(horizontal = 8.dp)
-            )
-
-            if (uiState.sessionState is com.halo.sdk.provider.CognitiveSessionState.Completed ||
-                uiState.sessionState is com.halo.sdk.provider.CognitiveSessionState.Streaming) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "via ${uiState.activeProvider}",
-                    style = HaloTypography.labelSmall,
-                    color = HaloGlassColors.TextMuted
-                )
-            }
-            
-            if (uiState.sessionState is com.halo.sdk.provider.CognitiveSessionState.Reasoning) {
-                Spacer(Modifier.height(16.dp))
-                LinearProgressIndicator(
-                    modifier = Modifier.fillMaxWidth(0.5f),
-                    color = HaloGlassColors.Accent,
-                    trackColor = HaloGlassColors.Glass
-                )
-            }
+            Spacer(Modifier.height(16.dp))
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // TEXT INPUT SURFACE
         HaloGlassCard {
             Row(
-                modifier = Modifier.fillMaxWidth().padding(8.dp),
+                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 OutlinedTextField(
                     value = textInput,
                     onValueChange = { textInput = it },
                     modifier = Modifier.weight(1f),
-                    placeholder = { Text("What do you need?", style = HaloTypography.bodyMedium, color = HaloGlassColors.TextMuted) },
+                    placeholder = {
+                        Text(
+                            "Ask Halo anything…",
+                            style = HaloTypography.bodyMedium,
+                            color = HaloGlassColors.TextMuted
+                        )
+                    },
                     textStyle = HaloTypography.bodyMedium,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = HaloGlassColors.TextPrimary,
@@ -149,16 +189,13 @@ fun HomeScreen(viewModel: HomeViewModel) {
                     ),
                     maxLines = 3
                 )
-                
-                if (uiState.sessionState != com.halo.sdk.provider.CognitiveSessionState.Idle && 
-                    uiState.sessionState !is com.halo.sdk.provider.CognitiveSessionState.Completed &&
-                    uiState.sessionState !is com.halo.sdk.provider.CognitiveSessionState.Failed) {
-                    IconButton(onClick = { viewModel.cancelSession() }) {
+                if (isActiveSession) {
+                    IconButton(onClick = viewModel::cancelSession) {
                         Icon(Icons.Default.Stop, contentDescription = "Stop", tint = HaloGlassColors.Danger)
                     }
                 } else {
                     IconButton(
-                        onClick = { 
+                        onClick = {
                             if (textInput.isNotBlank()) {
                                 viewModel.submitText(textInput)
                                 textInput = ""
@@ -166,65 +203,99 @@ fun HomeScreen(viewModel: HomeViewModel) {
                         },
                         enabled = textInput.isNotBlank()
                     ) {
-                        Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Submit", tint = if (textInput.isNotBlank()) HaloGlassColors.Accent else HaloGlassColors.TextMuted)
+                        Icon(
+                            Icons.AutoMirrored.Filled.Send,
+                            contentDescription = "Submit",
+                            tint = if (textInput.isNotBlank()) HaloGlassColors.Accent else HaloGlassColors.TextMuted
+                        )
                     }
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(48.dp))
-        
-        // Intelligence Indicator
+        Spacer(Modifier.height(20.dp))
+
         Row(
-            modifier = Modifier.fillMaxWidth().clickable { viewModel.navigateToIntelligence() },
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            val isProviderReady = uiState.activeProviderStatus == "READY" || uiState.activeProviderStatus == "STANDBY" || uiState.activeProviderStatus == "LOADING"
-            Text("Intelligence: ", style = HaloTypography.labelMedium, color = HaloGlassColors.TextSecondary)
-            Text(
-                text = uiState.activeProvider, 
-                style = HaloTypography.labelMedium, 
-                color = if (isProviderReady) HaloGlassColors.Accent else HaloGlassColors.Warning
+            HaloGlassButton.Secondary(
+                modifier = Modifier.weight(1f),
+                text = "Devices",
+                onClick = viewModel::navigateToDevices
+            )
+            HaloGlassButton.Secondary(
+                modifier = Modifier.weight(1f),
+                text = "Intelligence",
+                onClick = viewModel::navigateToIntelligence
             )
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(Modifier.height(20.dp))
 
-        // Device Status
         HaloGlassSection(
-            title = "Device Status",
-            modifier = Modifier.clickable { viewModel.navigateToDevices() }
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("Wearable", style = HaloTypography.bodyMedium, color = HaloGlassColors.TextSecondary)
-                Text(uiState.connectionState, style = HaloTypography.bodyMedium, color = HaloGlassColors.TextPrimary)
+            title = "RUNTIME",
+            modifier = Modifier.clickable { viewModel.navigateToIntelligence() },
+            trailing = {
+                Text(
+                    if (isProviderReady) "ONLINE" else "CHECK",
+                    style = HaloTypography.labelSmall,
+                    color = if (isProviderReady) HaloGlassColors.Success else HaloGlassColors.Warning
+                )
             }
+        ) {
+            RuntimeMetricRow("Intelligence", uiState.activeProvider, isProviderReady)
+            HaloGlassDivider()
+            RuntimeMetricRow("Device", uiState.connectionState, uiState.connectionState == "Connected")
         }
-        
-        Spacer(modifier = Modifier.height(24.dp))
 
-        // Recent Activity
-        HaloGlassSection(title = "Timeline") {
+        Spacer(Modifier.height(16.dp))
+
+        HaloGlassSection(
+            title = "RECENT ACTIVITY",
+            modifier = Modifier.clickable { viewModel.navigateToActivity() },
+            trailing = {
+                Icon(Icons.Default.History, contentDescription = null, tint = HaloGlassColors.TextMuted)
+            }
+        ) {
             if (uiState.recentEvents.isEmpty()) {
                 Text(
-                    text = "No activity yet.",
-                    style = HaloTypography.bodyMedium,
-                    color = HaloGlassColors.TextMuted,
-                    modifier = Modifier.padding(vertical = 8.dp)
+                    "Your cognitive timeline will appear here.",
+                    style = HaloTypography.bodySmall,
+                    color = HaloGlassColors.TextMuted
                 )
             } else {
-                uiState.recentEvents.take(5).forEach { event ->
-                    Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                uiState.recentEvents.take(4).forEachIndexed { index, event ->
+                    if (index > 0) HaloGlassDivider()
+                    Column(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
                         Text(event.command, style = HaloTypography.labelLarge, color = HaloGlassColors.TextPrimary)
+                        Spacer(Modifier.height(2.dp))
                         Text(event.status, style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
                     }
                 }
             }
+        }
+
+        Spacer(Modifier.height(32.dp))
+    }
+}
+
+@Composable
+private fun RuntimeMetricRow(label: String, value: String, healthy: Boolean) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(label, style = HaloTypography.bodyMedium, color = HaloGlassColors.TextSecondary)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier
+                    .size(7.dp)
+                    .background(if (healthy) HaloGlassColors.Success else HaloGlassColors.Warning, HaloGlassTokens.circleShape)
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(value, style = HaloTypography.bodyMedium, color = HaloGlassColors.TextPrimary)
         }
     }
 }
@@ -232,13 +303,11 @@ fun HomeScreen(viewModel: HomeViewModel) {
 @Composable
 private fun ContextTag(label: String, active: Boolean) {
     if (!active) return
-    Text(
+    HaloGlassChip(
         text = label,
-        style = HaloTypography.labelSmall,
-        color = HaloGlassColors.Accent,
-        modifier = Modifier
-            .padding(horizontal = 4.dp)
-            .background(HaloGlassColors.Accent.copy(alpha = 0.1f), HaloGlassTokens.pillShape)
-            .padding(horizontal = 8.dp, vertical = 2.dp)
+        material = HaloGlassMaterials.Interactive.copy(
+            containerColor = HaloGlassColors.Accent.copy(alpha = 0.10f),
+            contentColor = HaloGlassColors.Accent
+        )
     )
 }
