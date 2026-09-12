@@ -17,7 +17,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import com.halo.sdk.runtime.ObservationUpdated
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -84,7 +83,16 @@ class HeyCyanSession(
     }
 
     override suspend fun connect() {
-        if (_state.value == SessionState.CONNECTING || _state.value == SessionState.READY) return
+        when (_state.value) {
+            SessionState.CONNECTING,
+            SessionState.CONNECTED,
+            SessionState.HANDSHAKE,
+            SessionState.CAPABILITY_SYNC,
+            SessionState.STATE_SYNC,
+            SessionState.READY -> return
+            else -> Unit
+        }
+
         _state.value = SessionState.CONNECTING
         try { transport.connect() } catch (e: CancellationException) {
             _state.value = SessionState.DISCONNECTED
@@ -109,9 +117,6 @@ class HeyCyanSession(
         if (pendingIntents.putIfAbsent(intent.intentId, System.currentTimeMillis()) != null) return
 
         sessionScope.launch {
-            // Subscribe before sending the physical command. HeyCyan can emit
-            // MODE_CHANGED immediately after the BLE write, so subscribing after
-            // the command creates a real completion race.
             val completion = async { waitForCompletionSignal(operation) }
             try {
                 controller.execute(operation).fold(
