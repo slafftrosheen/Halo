@@ -6,6 +6,7 @@ import android.util.Log
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.Storage
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -14,7 +15,6 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
@@ -30,8 +30,8 @@ class NativeLlamaProvider(
     private val storage: Storage
 ) : AiInferenceProvider {
     private var engine: LlamaHelper? = null
+    private var engineEvents: MutableSharedFlow<LlamaHelper.LLMEvent>? = null
     private val scope = CoroutineScope(Dispatchers.IO)
-    private val llamaEventFlow = MutableSharedFlow<LlamaHelper.LLMEvent>(extraBufferCapacity = 64)
     private var loadedModelId: String? = null
     private val modelLoadMutex = Mutex()
     private val inferenceMutex = Mutex()
@@ -92,12 +92,49 @@ class NativeLlamaProvider(
         return@withLock try {
             val modelUri = Uri.fromFile(file).toString()
             Log.i(TAG, "Loading GGUF model: uri=$modelUri scheme=${Uri.parse(modelUri).scheme} (${file.length()} bytes)")
-            val helper = LlamaHelper(context.contentResolver, scope, llamaEventFlow)
-            helper.load(modelUri, contextSize, systemPrompt, {})
-            engine = helper
-            loadedModelId = activeId
-            _status.value = ProviderStatus.READY
-            true
+
+            val events = MutableSharedFlow<LlamaHelper.LLMEvent>(extraBufferCapacity = 64)
+            val loadResult = CompletableDeferred<Boolean>()
+            val loadCollector = scope.launch {
+                events.collect { event ->
+                    when (event) {
+                        is LlamaHelper.LLMEvent.Error -> {
+                            Log.e(TAG, "Native llama.cpp model load error: ${event.message}")
+                            loadResult.complete(false)
+                        }
+                        is LlamaHelper.LLMEvent.Loaded -> {
+                            Log.i(TAG, "Native llama.cpp model load event received: ${event.path}")
+                        }
+                        else -> Unit
+                    }
+                }
+            }
+
+            try {
+                val helper = LlamaHelper(context.contentResolver, scope, events)
+                helper.load(modelUri, contextSize, systemPrompt) { contextId ->
+                    Log.i(TAG, "Native llama.cpp model ready contextId=$contextId model=$activeId")
+                    loadResult.complete(true)
+                }
+
+                val loaded = loadResult.await()
+                if (!loaded) {
+                    helper.release()
+                    _status.value = ProviderStatus(
+                        ProviderStatus.State.ERROR,
+                        "Native llama.cpp model initialization failed"
+                    )
+                    false
+                } else {
+                    engine = helper
+                    engineEvents = events
+                    loadedModelId = activeId
+                    _status.value = ProviderStatus.READY
+                    true
+                }
+            } finally {
+                loadCollector.cancel()
+            }
         } catch (error: CancellationException) {
             releaseCurrentModel()
             _status.value = ProviderStatus(ProviderStatus.State.UNAVAILABLE, "Model loading cancelled")
@@ -113,6 +150,7 @@ class NativeLlamaProvider(
     private fun releaseCurrentModel() {
         runCatching { engine?.release() }
         engine = null
+        engineEvents = null
         loadedModelId = null
     }
 
@@ -254,13 +292,15 @@ class NativeLlamaProvider(
     private fun streamInternal(prompt: String, transactionId: String): Flow<String> = kotlinx.coroutines.flow.channelFlow {
         val currentEngine = engine
             ?: throw AiProviderException(AiErrorType.MODEL_NOT_READY, "Native llama.cpp engine is not loaded")
+        val currentEvents = engineEvents
+            ?: throw AiProviderException(AiErrorType.MODEL_NOT_READY, "Native llama.cpp event stream is not ready")
 
         val eventChannel = Channel<LlamaHelper.LLMEvent>(Channel.UNLIMITED)
         var eventCount = 0
         var tokenCount = 0
         var terminalEvent: String? = null
         val collector = launch {
-            llamaEventFlow.collect { event ->
+            currentEvents.collect { event ->
                 eventChannel.send(event)
             }
         }
