@@ -46,6 +46,15 @@ fun HeyCyanControlScreen(
     val uiState by viewModel.uiState.collectAsState()
     val device = uiState.devices.find { it.id == deviceId }
     val isConnected = device?.isConnected == true
+    val connectionState = device?.connectionStateText ?: "Unknown"
+    val connectionColor = when {
+        connectionState == "Ready" -> HaloGlassColors.Success
+        connectionState.contains("Connecting", ignoreCase = true) ||
+            connectionState.contains("Syncing", ignoreCase = true) ||
+            connectionState.contains("Handshaking", ignoreCase = true) -> HaloGlassColors.Warning
+        connectionState == "Error" -> HaloGlassColors.Danger
+        else -> HaloGlassColors.TextMuted
+    }
 
     HaloGlassLazyPage(title = "") {
         item {
@@ -78,26 +87,40 @@ fun HeyCyanControlScreen(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(16.dp))
                     .background(HaloGlassColors.GlassElevated)
-                    .clickable {
-                        if (isConnected) viewModel.disconnectDevice(deviceId)
-                        else viewModel.connectDevice(deviceId)
-                    }
                     .padding(20.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Column {
+                Column(Modifier.weight(1f)) {
                     Text("Status", style = HaloTypography.labelMedium, color = HaloGlassColors.TextSecondary)
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        device?.connectionStateText ?: "Unknown",
+                        connectionState,
                         style = HaloTypography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
-                        color = if (isConnected) HaloGlassColors.Success else HaloGlassColors.TextPrimary
+                        color = connectionColor
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        when {
+                            connectionState == "Ready" -> "Device is ready for runtime actions"
+                            connectionState == "Error" -> "Reconnect to retry the session"
+                            isConnected -> "Session is active"
+                            else -> "No active device session"
+                        },
+                        style = HaloTypography.bodySmall,
+                        color = HaloGlassColors.TextMuted
                     )
                 }
+                Spacer(Modifier.width(12.dp))
                 HaloGlassChip(
-                    text = if (isConnected) "Disconnect" else "Connect",
-                    modifier = Modifier.clickable {
+                    text = when {
+                        connectionState.contains("Connecting", ignoreCase = true) ||
+                            connectionState.contains("Syncing", ignoreCase = true) ||
+                            connectionState.contains("Handshaking", ignoreCase = true) -> "Working..."
+                        isConnected -> "Disconnect"
+                        else -> "Connect"
+                    },
+                    modifier = Modifier.clickable(enabled = connectionState != "Disconnecting") {
                         if (isConnected) viewModel.disconnectDevice(deviceId)
                         else viewModel.connectDevice(deviceId)
                     }
@@ -160,7 +183,7 @@ fun HeyCyanControlScreen(
 
         item {
             HaloGlassSection(title = "DEVICE STATE") {
-                HaloGlassSettingRow(title = "Connection", value = device?.connectionStateText ?: "Unknown")
+                HaloGlassSettingRow(title = "Connection", value = connectionState)
                 HaloGlassDivider()
                 HaloGlassSettingRow(title = "Battery", value = "${device?.battery ?: "Unknown"}\n${device?.batteryAgeText ?: "No data"}")
                 HaloGlassDivider()
