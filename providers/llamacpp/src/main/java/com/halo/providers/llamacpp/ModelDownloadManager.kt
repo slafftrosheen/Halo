@@ -178,14 +178,23 @@ class ModelDownloadManager(private val context: Context) {
         if (json.isNotBlank()) {
             _customModels.value = json.split(";;;").mapNotNull { entry ->
                 val parts = entry.split("|||")
-                if (parts.size >= 3) CognitiveModel(parts[0], parts[1], "Custom GGUF Model", parts[2], 0, true) else null
+                if (parts.size < 5) return@mapNotNull null
+                CognitiveModel(
+                    id = parts[0],
+                    name = parts[1],
+                    description = parts[2],
+                    downloadUrl = parts[3],
+                    sizeMb = parts[4].toIntOrNull() ?: 0,
+                    isCustom = true
+                )
             }
         }
     }
 
     private fun saveCustomModels() {
-        prefs.edit().putString("custom_models_json", _customModels.value.joinToString(";;;") {
-            "${it.id}|||${it.name}|||${it.downloadUrl}"
-        }).apply()
+        val json = _customModels.value.joinToString(";;;") { model ->
+            listOf(model.id, model.name, model.description, model.downloadUrl, model.sizeMb.toString()).joinToString("|||")
+        }
+        prefs.edit().putString("custom_models_json", json).apply()
     }
 }
