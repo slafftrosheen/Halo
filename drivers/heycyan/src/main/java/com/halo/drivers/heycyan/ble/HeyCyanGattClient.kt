@@ -69,14 +69,23 @@ open class HeyCyanGattClient(
             tracer.onConnectionStateChanged(status, newState)
             android.util.Log.i("HeyCyanGattClient", "onConnectionStateChange: attempt=$attempt status=$status newState=$newState")
             if (gatt !== current) {
-                // Android can theoretically invoke the callback before connectGatt()
-                // returns. Record that terminal callback so the returned BluetoothGatt
-                // cannot be installed as a fresh, live connection after cleanup.
+                // connectGatt() can return only after Android has already delivered
+                // the first callback. Preserve an early CONNECTED callback rather
+                // than closing the newly-created GATT and manufacturing a failure.
                 if (current == null && _state.value == DriverState.Connecting) {
-                    earlyCallbackAttemptId = activeAttemptId
-                    earlyCallbackStatus = status
-                    earlyCallbackState = newState
-                    tracer.onGattStage(activeAttemptId, CaptureGattStage.CONNECT, CaptureStagePhase.FAILED, status, "early callback before connectGatt returned newState=$newState")
+                    if (status == BluetoothGatt.GATT_SUCCESS && newState == BluetoothProfile.STATE_CONNECTED) {
+                        earlyCallbackAttemptId = activeAttemptId
+                        earlyCallbackStatus = status
+                        earlyCallbackState = newState
+                        tracer.onGattStage(activeAttemptId, CaptureGattStage.CONNECT, CaptureStagePhase.SUCCEEDED, status, "early callback before connectGatt returned newState=$newState")
+                        return
+                    }
+                    if (status != BluetoothGatt.GATT_SUCCESS || newState == BluetoothProfile.STATE_DISCONNECTED) {
+                        earlyCallbackAttemptId = activeAttemptId
+                        earlyCallbackStatus = status
+                        earlyCallbackState = newState
+                        tracer.onGattStage(activeAttemptId, CaptureGattStage.CONNECT, CaptureStagePhase.FAILED, status, "early callback before connectGatt returned newState=$newState")
+                    }
                 } else {
                     android.util.Log.w("HeyCyanGattClient", "Ignoring stale GATT callback for retired connection")
                 }
@@ -91,19 +100,7 @@ open class HeyCyanGattClient(
             }
 
             when (newState) {
-                BluetoothProfile.STATE_CONNECTED -> {
-                    tracer.onGattStage(activeAttemptId, CaptureGattStage.CONNECT, CaptureStagePhase.SUCCEEDED, status, "newState=$newState")
-                    _state.value = DriverState.Connected
-                    serviceDiscoveryStarted = false
-                    pendingDescriptorWrites.clear()
-                    descriptorWriteInFlight = null
-                    tracer.onMtuRequested(REQUESTED_MTU)
-                    tracer.onGattStage(activeAttemptId, CaptureGattStage.MTU, CaptureStagePhase.STARTED, detail = "requestedMtu=$REQUESTED_MTU")
-                    if (!gatt.requestMtu(REQUESTED_MTU)) {
-                        tracer.onGattStage(activeAttemptId, CaptureGattStage.MTU, CaptureStagePhase.FAILED, detail = "requestMtu returned false")
-                        discoverServices(gatt)
-                    }
-                }
+                BluetoothProfile.STATE_CONNECTED -> handleConnected(gatt)
                 BluetoothProfile.STATE_DISCONNECTED -> {
                     tracer.onGattStage(activeAttemptId, CaptureGattStage.TEARDOWN, CaptureStagePhase.SUCCEEDED, status, "remote disconnected")
                     clearGatt(gatt)
@@ -230,7 +227,7 @@ open class HeyCyanGattClient(
         android.util.Log.i("HeyCyanGattClient", "Initiating GATT connection: attempt=$activeAttemptId address=$macAddress transport=LE")
         val newGatt = device.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
         val earlyAttempt = earlyCallbackAttemptId
-        if (earlyAttempt == activeAttemptId) {
+        if (earlyAttempt == activeAttemptId && earlyCallbackState == BluetoothProfile.STATE_DISCONNECTED) {
             android.util.Log.w("HeyCyanGattClient", "GATT attempt=$activeAttemptId terminated before connectGatt returned: status=$earlyCallbackStatus newState=$earlyCallbackState")
             runCatching { newGatt?.close() }
             gatt = null
@@ -241,6 +238,11 @@ open class HeyCyanGattClient(
         if (newGatt == null) {
             tracer.onGattStage(activeAttemptId, CaptureGattStage.CONNECT, CaptureStagePhase.FAILED, detail = "connectGatt returned null")
             _state.value = DriverState.Error(RuntimeException("Unable to create GATT connection attempt=$activeAttemptId"))
+            return
+        }
+        if (earlyAttempt == activeAttemptId && earlyCallbackState == BluetoothProfile.STATE_CONNECTED) {
+            android.util.Log.i("HeyCyanGattClient", "Completing early CONNECTED callback after connectGatt returned: attempt=$activeAttemptId")
+            handleConnected(newGatt)
         }
     }
 
@@ -292,6 +294,24 @@ open class HeyCyanGattClient(
     }
 
     private fun isCurrentGatt(candidate: BluetoothGatt): Boolean = candidate === gatt
+
+    private fun handleConnected(currentGatt: BluetoothGatt) {
+        if (gatt !== currentGatt) {
+            android.util.Log.w("HeyCyanGattClient", "Ignoring CONNECTED handling for non-current GATT")
+            return
+        }
+        tracer.onGattStage(activeAttemptId, CaptureGattStage.CONNECT, CaptureStagePhase.SUCCEEDED, BluetoothGatt.GATT_SUCCESS, "newState=${BluetoothProfile.STATE_CONNECTED}")
+        _state.value = DriverState.Connected
+        serviceDiscoveryStarted = false
+        pendingDescriptorWrites.clear()
+        descriptorWriteInFlight = null
+        tracer.onMtuRequested(REQUESTED_MTU)
+        tracer.onGattStage(activeAttemptId, CaptureGattStage.MTU, CaptureStagePhase.STARTED, detail = "requestedMtu=$REQUESTED_MTU")
+        if (!currentGatt.requestMtu(REQUESTED_MTU)) {
+            tracer.onGattStage(activeAttemptId, CaptureGattStage.MTU, CaptureStagePhase.FAILED, detail = "requestMtu returned false")
+            discoverServices(currentGatt)
+        }
+    }
 
     private fun discoverServices(gatt: BluetoothGatt) {
         if (!isCurrentGatt(gatt) || serviceDiscoveryStarted) return
