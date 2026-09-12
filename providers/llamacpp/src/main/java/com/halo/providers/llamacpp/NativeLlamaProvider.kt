@@ -163,7 +163,7 @@ class NativeLlamaProvider(
         } catch (error: Throwable) {
             releaseCurrentModel()
             Log.e(TAG, "Failed loading model ${file.absolutePath}", error)
-            _status.value = ProviderStatus(ProviderStatus.State.ERROR, "Model load failed: ${error.message ?: error::class.simpleName}")
+            _status.value = ProviderStatus(State.ERROR, "Model load failed: ${error.message ?: error::class.simpleName}")
             false
         }
     }
@@ -348,39 +348,49 @@ class NativeLlamaProvider(
             }
             Log.d(TAG, "[$transactionId] predict returned; awaiting native terminal event")
 
-            for (event in eventChannel) {
-                currentCoroutineContext().ensureActive()
-                eventCount++
-                when (event) {
-                    is LlamaHelper.LLMEvent.Ongoing -> {
-                        if (event.word.isNotEmpty()) {
-                            tokenCount++
-                            send(event.word)
+            val completed = withTimeoutOrNull(GENERATION_TIMEOUT_MS) {
+                for (event in eventChannel) {
+                    currentCoroutineContext().ensureActive()
+                    eventCount++
+                    when (event) {
+                        is LlamaHelper.LLMEvent.Ongoing -> {
+                            if (event.word.isNotEmpty()) {
+                                tokenCount++
+                                send(event.word)
+                            }
                         }
-                    }
-                    is LlamaHelper.LLMEvent.Done -> {
-                        terminalEvent = "Done"
-                        Log.i(TAG, "[$transactionId] native generation done events=$eventCount tokens=$tokenCount")
-                        return@channelFlow
-                    }
-                    is LlamaHelper.LLMEvent.Error -> {
-                        terminalEvent = "Error"
-                        Log.e(
-                            TAG,
-                            "[$transactionId] native generation emitted Error event=${event::class.qualifiedName} " +
-                                "events=$eventCount tokens=$tokenCount"
-                        )
-                        throw AiProviderException(
-                            AiErrorType.GENERATION_FAILED,
-                            "llama.cpp generation error event=${event::class.simpleName}"
-                        )
-                    }
-                    else -> {
-                        if (eventCount <= 8) {
-                            Log.d(TAG, "[$transactionId] native event #$eventCount type=${event::class.qualifiedName}")
+                        is LlamaHelper.LLMEvent.Done -> {
+                            terminalEvent = "Done"
+                            Log.i(TAG, "[$transactionId] native generation done events=$eventCount tokens=$tokenCount")
+                            return@withTimeoutOrNull true
+                        }
+                        is LlamaHelper.LLMEvent.Error -> {
+                            terminalEvent = "Error"
+                            Log.e(
+                                TAG,
+                                "[$transactionId] native generation emitted Error event=${event::class.qualifiedName} " +
+                                    "events=$eventCount tokens=$tokenCount message=${event.message}"
+                            )
+                            throw AiProviderException(
+                                AiErrorType.GENERATION_FAILED,
+                                "llama.cpp generation error: ${event.message ?: event::class.simpleName}"
+                            )
+                        }
+                        else -> {
+                            if (eventCount <= 8) {
+                                Log.d(TAG, "[$transactionId] native event #$eventCount type=${event::class.qualifiedName}")
+                            }
                         }
                     }
                 }
+                false
+            } ?: false
+
+            if (!completed) {
+                throw AiProviderException(
+                    AiErrorType.GENERATION_FAILED,
+                    "llama.cpp generation timed out after ${GENERATION_TIMEOUT_MS / 1000}s without a terminal event"
+                )
             }
         } finally {
             if (terminalEvent == null) {
@@ -415,5 +425,6 @@ class NativeLlamaProvider(
     private companion object {
         private const val TAG = "NativeLlamaProvider"
         private const val MODEL_LOAD_TIMEOUT_MS = 120_000L
+        private const val GENERATION_TIMEOUT_MS = 180_000L
     }
 }
