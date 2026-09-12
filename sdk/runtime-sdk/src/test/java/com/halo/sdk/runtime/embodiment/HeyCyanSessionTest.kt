@@ -116,15 +116,37 @@ class HeyCyanSessionTest {
         )
 
         session.dispatch(intent)
-        advanceUntilIdle()
-
-        testScheduler.advanceTimeBy(11000)
+        testScheduler.advanceTimeBy(30_001)
         advanceUntilIdle()
 
         val failedEvent = eventBus.events.find {
             (it as? EmbodimentExecutionEvent)?.result?.status == ExecutionStatus.FAILED
         } as? EmbodimentExecutionEvent
         assertEquals("intent-timeout", failedEvent?.result?.intentId)
+    }
+
+    @Test
+    fun transportLossFailsPendingDispatchAndDoesNotLeaveSessionReady() = runTest {
+        val session = HeyCyanSession(identity, controller, transport, eventBus, coroutineContext = UnconfinedTestDispatcher(testScheduler))
+        transport.emitState(TransportConnectionState.CONNECTED)
+        advanceUntilIdle()
+
+        val intent = EmbodimentIntent(
+            intentId = "intent-disconnect",
+            kind = IntentKind.CAPTURE_PHOTO,
+            targetDeviceId = "test-id"
+        )
+
+        session.dispatch(intent)
+        transport.emitState(TransportConnectionState.DISCONNECTED)
+        advanceUntilIdle()
+
+        assertEquals(SessionState.DISCONNECTED, session.state.value)
+        val failedEvent = eventBus.events.find {
+            (it as? EmbodimentExecutionEvent)?.result?.intentId == "intent-disconnect" &&
+                (it as? EmbodimentExecutionEvent)?.result?.status == ExecutionStatus.FAILED
+        } as? EmbodimentExecutionEvent
+        assertEquals("DEVICE_DISCONNECTED", failedEvent?.result?.reason)
     }
 
     @Test
