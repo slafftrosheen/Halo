@@ -37,8 +37,11 @@ fun HomeScreen(viewModel: HomeViewModel) {
         uiState.sessionState !is com.halo.sdk.provider.CognitiveSessionState.Completed &&
         uiState.sessionState !is com.halo.sdk.provider.CognitiveSessionState.Failed
     val isProviderReady = uiState.activeProviderStatus == "READY" ||
-        uiState.activeProviderStatus == "STANDBY" ||
-        uiState.activeProviderStatus == "LOADING"
+        uiState.activeProviderStatus == "STANDBY"
+    val isListening = uiState.runtimeState == HaloRuntimeState.Capturing ||
+        uiState.runtimeState == HaloRuntimeState.Recognizing
+    val isDeviceConnected = uiState.connectionState == "Connected" ||
+        uiState.connectionState == "Ready"
 
     Column(
         modifier = Modifier
@@ -66,8 +69,8 @@ fun HomeScreen(viewModel: HomeViewModel) {
             HaloGlassChip(
                 text = uiState.connectionState.uppercase(),
                 material = HaloGlassMaterials.Interactive.copy(
-                    containerColor = if (uiState.connectionState == "Connected") HaloGlassColors.Success.copy(alpha = 0.14f) else HaloGlassColors.Glass,
-                    contentColor = if (uiState.connectionState == "Connected") HaloGlassColors.Success else HaloGlassColors.TextSecondary
+                    containerColor = if (isDeviceConnected) HaloGlassColors.Success.copy(alpha = 0.14f) else HaloGlassColors.Glass,
+                    contentColor = if (isDeviceConnected) HaloGlassColors.Success else HaloGlassColors.TextSecondary
                 )
             )
         }
@@ -78,8 +81,9 @@ fun HomeScreen(viewModel: HomeViewModel) {
             Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = when {
+                        isListening -> "HALO IS LISTENING"
                         isActiveSession -> "HALO IS THINKING"
-                        uiState.contextualText.isNotBlank() -> "READY FOR YOUR NEXT REQUEST"
+                        uiState.contextualText == "Glasses disconnected" -> "CONNECT A DEVICE TO SPEAK"
                         else -> "WHAT CAN I DO FOR YOU?"
                     },
                     style = HaloTypography.labelSmall,
@@ -90,12 +94,23 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 HaloFloatingMic(
                     state = uiState.runtimeState,
                     onClick = {
-                        if (!isActiveSession) viewModel.submitText("Summarize my recent activity.")
-                        else viewModel.cancelSession()
+                        when {
+                            isActiveSession -> viewModel.cancelSession()
+                            isListening -> viewModel.stopListening()
+                            else -> viewModel.startListening()
+                        }
                     }
                 )
                 Spacer(Modifier.height(12.dp))
-                Text(if (isActiveSession) "Tap to stop" else "Tap to speak", style = HaloTypography.labelSmall, color = HaloGlassColors.TextSecondary)
+                Text(
+                    when {
+                        isActiveSession -> "Tap to stop"
+                        isListening -> "Listening… tap to stop"
+                        else -> "Tap to speak"
+                    },
+                    style = HaloTypography.labelSmall,
+                    color = HaloGlassColors.TextSecondary
+                )
             }
         }
 
@@ -125,7 +140,11 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 }
                 if (uiState.sessionState is com.halo.sdk.provider.CognitiveSessionState.Reasoning) {
                     Spacer(Modifier.height(12.dp))
-                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth(), color = HaloGlassColors.Accent, trackColor = HaloGlassColors.Glass)
+                    LinearProgressIndicator(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = HaloGlassColors.Accent,
+                        trackColor = HaloGlassColors.Glass
+                    )
                 }
             }
             Spacer(Modifier.height(16.dp))
@@ -161,7 +180,11 @@ fun HomeScreen(viewModel: HomeViewModel) {
                         },
                         enabled = textInput.isNotBlank()
                     ) {
-                        Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Submit", tint = if (textInput.isNotBlank()) HaloGlassColors.Accent else HaloGlassColors.TextMuted)
+                        Icon(
+                            Icons.AutoMirrored.Filled.Send,
+                            contentDescription = "Submit",
+                            tint = if (textInput.isNotBlank()) HaloGlassColors.Accent else HaloGlassColors.TextMuted
+                        )
                     }
                 }
             }
@@ -180,12 +203,24 @@ fun HomeScreen(viewModel: HomeViewModel) {
             title = "RUNTIME",
             modifier = Modifier.clickable { viewModel.navigateToIntelligence() },
             trailing = {
-                Text(if (isProviderReady) "ONLINE" else "CHECK", style = HaloTypography.labelSmall, color = if (isProviderReady) HaloGlassColors.Success else HaloGlassColors.Warning)
+                Text(
+                    if (isProviderReady) "ONLINE" else "CHECK",
+                    style = HaloTypography.labelSmall,
+                    color = if (isProviderReady) HaloGlassColors.Success else HaloGlassColors.Warning
+                )
             }
         ) {
             RuntimeMetricRow("Intelligence", uiState.activeProvider, isProviderReady)
             HaloGlassDivider()
-            RuntimeMetricRow("Device", uiState.connectionState, uiState.connectionState == "Connected")
+            RuntimeMetricRow("Device", uiState.connectionState, isDeviceConnected)
+            uiState.batteryPercent?.let { battery ->
+                HaloGlassDivider()
+                RuntimeMetricRow(
+                    "Battery",
+                    if (uiState.isCharging) "$battery% · CHARGING" else "$battery%",
+                    battery > 20
+                )
+            }
         }
 
         Spacer(Modifier.height(16.dp))
@@ -213,10 +248,21 @@ fun HomeScreen(viewModel: HomeViewModel) {
 
 @Composable
 private fun RuntimeMetricRow(label: String, value: String, healthy: Boolean) {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         Text(label, style = HaloTypography.bodyMedium, color = HaloGlassColors.TextSecondary)
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(7.dp).background(if (healthy) HaloGlassColors.Success else HaloGlassColors.Warning, HaloGlassTokens.circleShape))
+            Box(
+                Modifier
+                    .size(7.dp)
+                    .background(
+                        if (healthy) HaloGlassColors.Success else HaloGlassColors.Warning,
+                        HaloGlassTokens.circleShape
+                    )
+            )
             Spacer(Modifier.width(8.dp))
             Text(value, style = HaloTypography.bodyMedium, color = HaloGlassColors.TextPrimary)
         }
