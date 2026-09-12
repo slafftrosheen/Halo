@@ -10,9 +10,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Manages active embodiment sessions, ensuring devices are connected
@@ -58,12 +61,19 @@ class DeviceSessionManager(
         val record = registry.getDevice(deviceId) ?: return@withLock false
         if (!record.autoConnect) return@withLock false
         val session = _sessions[deviceId] ?: return@withLock false
-        if (isConnectedOrConnecting(session.state.value)) return@withLock true
+
+        if (session.state.value == SessionState.READY) return@withLock true
+
+        // If another owner has already started this session, do not start a second
+        // transport connection. Wait for that lifecycle to resolve to READY/error.
+        if (isConnectionInProgress(session.state.value)) {
+            return@withLock awaitReadyOrTerminal(session)
+        }
 
         for (attempt in 1..3) {
             try {
                 session.connect()
-                if (isConnectedOrConnecting(session.state.value)) {
+                if (awaitReadyOrTerminal(session)) {
                     return@withLock true
                 }
             } catch (e: CancellationException) {
@@ -71,6 +81,7 @@ class DeviceSessionManager(
             } catch (_: Exception) {
                 // Continue with bounded retry.
             }
+
             if (attempt < 3) {
                 delay(5000L * attempt)
             }
@@ -84,13 +95,30 @@ class DeviceSessionManager(
         }
     }
 
-    private fun isConnectedOrConnecting(state: SessionState): Boolean = when (state) {
+    private suspend fun awaitReadyOrTerminal(
+        session: EmbodimentSession,
+        timeoutMillis: Long = 15_000L
+    ): Boolean {
+        if (session.state.value == SessionState.READY) return true
+
+        val resolved = withTimeoutOrNull(timeoutMillis) {
+            session.state
+                .filter { state ->
+                    state == SessionState.READY ||
+                        state == SessionState.ERROR ||
+                        state == SessionState.DISCONNECTED
+                }
+                .first()
+        }
+        return resolved == SessionState.READY
+    }
+
+    private fun isConnectionInProgress(state: SessionState): Boolean = when (state) {
         SessionState.CONNECTING,
         SessionState.CONNECTED,
         SessionState.HANDSHAKE,
         SessionState.CAPABILITY_SYNC,
-        SessionState.STATE_SYNC,
-        SessionState.READY -> true
+        SessionState.STATE_SYNC -> true
         else -> false
     }
 
