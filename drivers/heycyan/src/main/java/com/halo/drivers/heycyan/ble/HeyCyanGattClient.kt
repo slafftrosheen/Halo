@@ -70,11 +70,16 @@ open class HeyCyanGattClient(
                 runCatching { gatt.close() }
                 return
             }
+
             if (status != BluetoothGatt.GATT_SUCCESS) {
-                tracer.onGattStage(activeAttemptId, CaptureGattStage.CONNECT, CaptureStagePhase.FAILED, status, "newState=$newState")
-                failGatt(gatt, RuntimeException("GATT connection error: status=$status attempt=$activeAttemptId"))
+                tracer.onGattStage(activeAttemptId, CaptureGattStage.CONNECT, CaptureStagePhase.FAILED, status, "newState=$newState ${HeyCyanGattErrorClassifier.describe(status)}")
+                // Keep the public state failed, but let the owner decide whether
+                // to retry. This avoids pretending every Android GATT error is a
+                // protocol-level failure.
+                failGatt(gatt, RuntimeException("GATT connection error: status=$status attempt=$activeAttemptId"), closeImmediately = true)
                 return
             }
+
             when (newState) {
                 BluetoothProfile.STATE_CONNECTED -> {
                     tracer.onGattStage(activeAttemptId, CaptureGattStage.CONNECT, CaptureStagePhase.SUCCEEDED, status, "newState=$newState")
@@ -307,15 +312,15 @@ open class HeyCyanGattClient(
         _incomingBytes.tryEmit(characteristic.uuid to payload)
     }
 
-    private fun failGatt(gatt: BluetoothGatt, cause: Throwable) {
+    private fun failGatt(gatt: BluetoothGatt, cause: Throwable, closeImmediately: Boolean = true) {
         if (!isCurrentGatt(gatt)) {
             runCatching { gatt.close() }
             return
         }
         _state.value = DriverState.Error(cause)
         tracer.onGattStage(activeAttemptId, CaptureGattStage.TEARDOWN, CaptureStagePhase.STARTED, detail = "error cleanup: ${cause.message}")
-        clearGatt(gatt)
-        tracer.onGattStage(activeAttemptId, CaptureGattStage.TEARDOWN, CaptureStagePhase.SUCCEEDED, detail = "error cleanup complete")
+        if (closeImmediately) clearGatt(gatt)
+        tracer.onGattStage(activeAttemptId, CaptureGattStage.TEARDOWN, CaptureStagePhase.SUCCEEDED, detail = if (closeImmediately) "error cleanup complete" else "error retained")
     }
 
     private fun retireCurrentGatt() {
