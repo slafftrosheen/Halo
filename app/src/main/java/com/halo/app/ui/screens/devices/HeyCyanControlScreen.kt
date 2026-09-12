@@ -141,8 +141,8 @@ fun HeyCyanControlScreen(
                             text = when (photoState) {
                                 PhotoActionState.READY -> "Take Photo"
                                 PhotoActionState.CAPTURING -> "Capturing..."
-                                PhotoActionState.COMPLETED -> "Captured!"
-                                PhotoActionState.FAILED -> "Failed"
+                                PhotoActionState.COMPLETED -> "Take Another"
+                                PhotoActionState.FAILED -> "Retry Photo"
                             },
                             onClick = { viewModel.takePhoto(deviceId) },
                             modifier = Modifier.weight(1f),
@@ -153,11 +153,12 @@ fun HeyCyanControlScreen(
                         val recording = videoState == VideoRecordingState.RECORDING
                         val transitioning = videoState == VideoRecordingState.STARTING || videoState == VideoRecordingState.STOPPING
                         HaloGlassButton(
-                            text = when {
-                                videoState == VideoRecordingState.STARTING -> "Starting..."
-                                videoState == VideoRecordingState.STOPPING -> "Stopping..."
-                                recording -> "Stop Video"
-                                else -> "Start Video"
+                            text = when (videoState) {
+                                VideoRecordingState.IDLE -> "Start Video"
+                                VideoRecordingState.STARTING -> "Starting..."
+                                VideoRecordingState.RECORDING -> "Stop Video"
+                                VideoRecordingState.STOPPING -> "Stopping..."
+                                VideoRecordingState.ERROR -> "Retry Video"
                             },
                             onClick = {
                                 if (recording) viewModel.stopVideo(deviceId) else viewModel.startVideo(deviceId)
@@ -167,15 +168,23 @@ fun HeyCyanControlScreen(
                         )
                     }
 
-                    val audioRecording = device?.audioState == AudioRecordingState.RECORDING
+                    val audioState = device?.audioState ?: AudioRecordingState.IDLE
+                    val audioRecording = audioState == AudioRecordingState.RECORDING
+                    val audioTransitioning = audioState == AudioRecordingState.STARTING || audioState == AudioRecordingState.STOPPING
                     HaloGlassButton(
-                        text = if (audioRecording) "Stop Audio" else "Start Audio",
+                        text = when (audioState) {
+                            AudioRecordingState.IDLE -> "Start Audio"
+                            AudioRecordingState.STARTING -> "Starting Audio..."
+                            AudioRecordingState.RECORDING -> "Stop Audio"
+                            AudioRecordingState.STOPPING -> "Stopping Audio..."
+                            AudioRecordingState.ERROR -> "Retry Audio"
+                        },
                         onClick = {
                             if (audioRecording) viewModel.stopAudioRecording(deviceId)
                             else viewModel.startAudioRecording(deviceId)
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        enabled = isConnected
+                        enabled = isConnected && !audioTransitioning
                     )
                 }
             }
