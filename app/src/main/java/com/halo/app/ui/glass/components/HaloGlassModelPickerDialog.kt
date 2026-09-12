@@ -153,10 +153,12 @@ fun HaloGlassModelPickerDialog(
                                         )
                                     }
                                     if (isSelected) {
-                                        Text(
-                                            text = "✓",
-                                            style = HaloTypography.titleLarge,
-                                            color = HaloGlassColors.Accent
+                                        HaloGlassChip(
+                                            text = "Selected",
+                                            material = com.halo.app.ui.glass.material.HaloGlassMaterials.Interactive.copy(
+                                                containerColor = HaloGlassColors.Accent.copy(alpha = 0.15f),
+                                                contentColor = HaloGlassColors.Accent
+                                            )
                                         )
                                     }
                                 }
