@@ -7,10 +7,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Devices
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Stop
-import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -23,11 +21,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.halo.app.ui.glass.components.*
 import com.halo.app.ui.glass.material.HaloGlassColors
+import com.halo.app.ui.glass.material.HaloGlassMaterials
 import com.halo.app.ui.glass.material.HaloGlassTokens
 import com.halo.app.ui.glass.material.HaloTypography
 
@@ -61,28 +59,15 @@ fun HomeScreen(viewModel: HomeViewModel) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
-                Text(
-                    text = "HALO",
-                    style = HaloTypography.titleLarge,
-                    color = HaloGlassColors.TextPrimary,
-                    letterSpacing = 4.sp
-                )
+                Text("HALO", style = HaloTypography.titleLarge, color = HaloGlassColors.TextPrimary, letterSpacing = 4.sp)
                 Spacer(Modifier.height(2.dp))
-                Text(
-                    text = "COGNITIVE RUNTIME",
-                    style = HaloTypography.labelSmall,
-                    color = HaloGlassColors.TextMuted,
-                    letterSpacing = 1.4.sp
-                )
+                Text("COGNITIVE RUNTIME", style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted, letterSpacing = 1.4.sp)
             }
             HaloGlassChip(
                 text = uiState.connectionState.uppercase(),
                 material = HaloGlassMaterials.Interactive.copy(
-                    containerColor = if (uiState.connectionState == "Connected")
-                        HaloGlassColors.Success.copy(alpha = 0.14f)
-                    else HaloGlassColors.Glass,
-                    contentColor = if (uiState.connectionState == "Connected")
-                        HaloGlassColors.Success else HaloGlassColors.TextSecondary
+                    containerColor = if (uiState.connectionState == "Connected") HaloGlassColors.Success.copy(alpha = 0.14f) else HaloGlassColors.Glass,
+                    contentColor = if (uiState.connectionState == "Connected") HaloGlassColors.Success else HaloGlassColors.TextSecondary
                 )
             )
         }
@@ -90,10 +75,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
         Spacer(Modifier.height(24.dp))
 
         HaloGlassCard {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+            Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = when {
                         isActiveSession -> "HALO IS THINKING"
@@ -108,19 +90,12 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 HaloFloatingMic(
                     state = uiState.runtimeState,
                     onClick = {
-                        if (!isActiveSession) {
-                            viewModel.submitText("Summarize my recent activity.")
-                        } else {
-                            viewModel.cancelSession()
-                        }
+                        if (!isActiveSession) viewModel.submitText("Summarize my recent activity.")
+                        else viewModel.cancelSession()
                     }
                 )
                 Spacer(Modifier.height(12.dp))
-                Text(
-                    text = if (isActiveSession) "Tap to stop" else "Tap to speak",
-                    style = HaloTypography.labelSmall,
-                    color = HaloGlassColors.TextSecondary
-                )
+                Text(if (isActiveSession) "Tap to stop" else "Tap to speak", style = HaloTypography.labelSmall, color = HaloGlassColors.TextSecondary)
             }
         }
 
@@ -146,40 +121,23 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 if (uiState.sessionState is com.halo.sdk.provider.CognitiveSessionState.Completed ||
                     uiState.sessionState is com.halo.sdk.provider.CognitiveSessionState.Streaming) {
                     Spacer(Modifier.height(8.dp))
-                    Text(
-                        text = "via ${uiState.activeProvider}",
-                        style = HaloTypography.labelSmall,
-                        color = HaloGlassColors.TextMuted
-                    )
+                    Text("via ${uiState.activeProvider}", style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
                 }
                 if (uiState.sessionState is com.halo.sdk.provider.CognitiveSessionState.Reasoning) {
                     Spacer(Modifier.height(12.dp))
-                    LinearProgressIndicator(
-                        modifier = Modifier.fillMaxWidth(),
-                        color = HaloGlassColors.Accent,
-                        trackColor = HaloGlassColors.Glass
-                    )
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth(), color = HaloGlassColors.Accent, trackColor = HaloGlassColors.Glass)
                 }
             }
             Spacer(Modifier.height(16.dp))
         }
 
         HaloGlassCard {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 OutlinedTextField(
                     value = textInput,
                     onValueChange = { textInput = it },
                     modifier = Modifier.weight(1f),
-                    placeholder = {
-                        Text(
-                            "Ask Halo anything…",
-                            style = HaloTypography.bodyMedium,
-                            color = HaloGlassColors.TextMuted
-                        )
-                    },
+                    placeholder = { Text("Ask Halo anything…", style = HaloTypography.bodyMedium, color = HaloGlassColors.TextMuted) },
                     textStyle = HaloTypography.bodyMedium,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = HaloGlassColors.TextPrimary,
@@ -203,11 +161,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
                         },
                         enabled = textInput.isNotBlank()
                     ) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.Send,
-                            contentDescription = "Submit",
-                            tint = if (textInput.isNotBlank()) HaloGlassColors.Accent else HaloGlassColors.TextMuted
-                        )
+                        Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Submit", tint = if (textInput.isNotBlank()) HaloGlassColors.Accent else HaloGlassColors.TextMuted)
                     }
                 }
             }
@@ -215,20 +169,9 @@ fun HomeScreen(viewModel: HomeViewModel) {
 
         Spacer(Modifier.height(20.dp))
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            HaloGlassButton.Secondary(
-                modifier = Modifier.weight(1f),
-                text = "Devices",
-                onClick = viewModel::navigateToDevices
-            )
-            HaloGlassButton.Secondary(
-                modifier = Modifier.weight(1f),
-                text = "Intelligence",
-                onClick = viewModel::navigateToIntelligence
-            )
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            HaloGlassButton.Secondary(modifier = Modifier.weight(1f), text = "Devices", onClick = viewModel::navigateToDevices)
+            HaloGlassButton.Secondary(modifier = Modifier.weight(1f), text = "Intelligence", onClick = viewModel::navigateToIntelligence)
         }
 
         Spacer(Modifier.height(20.dp))
@@ -237,11 +180,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
             title = "RUNTIME",
             modifier = Modifier.clickable { viewModel.navigateToIntelligence() },
             trailing = {
-                Text(
-                    if (isProviderReady) "ONLINE" else "CHECK",
-                    style = HaloTypography.labelSmall,
-                    color = if (isProviderReady) HaloGlassColors.Success else HaloGlassColors.Warning
-                )
+                Text(if (isProviderReady) "ONLINE" else "CHECK", style = HaloTypography.labelSmall, color = if (isProviderReady) HaloGlassColors.Success else HaloGlassColors.Warning)
             }
         ) {
             RuntimeMetricRow("Intelligence", uiState.activeProvider, isProviderReady)
@@ -253,17 +192,10 @@ fun HomeScreen(viewModel: HomeViewModel) {
 
         HaloGlassSection(
             title = "RECENT ACTIVITY",
-            modifier = Modifier.clickable { viewModel.navigateToActivity() },
-            trailing = {
-                Icon(Icons.Default.History, contentDescription = null, tint = HaloGlassColors.TextMuted)
-            }
+            trailing = { Icon(Icons.Default.History, contentDescription = null, tint = HaloGlassColors.TextMuted) }
         ) {
             if (uiState.recentEvents.isEmpty()) {
-                Text(
-                    "Your cognitive timeline will appear here.",
-                    style = HaloTypography.bodySmall,
-                    color = HaloGlassColors.TextMuted
-                )
+                Text("Your cognitive timeline will appear here.", style = HaloTypography.bodySmall, color = HaloGlassColors.TextMuted)
             } else {
                 uiState.recentEvents.take(4).forEachIndexed { index, event ->
                     if (index > 0) HaloGlassDivider()
@@ -275,25 +207,16 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 }
             }
         }
-
         Spacer(Modifier.height(32.dp))
     }
 }
 
 @Composable
 private fun RuntimeMetricRow(label: String, value: String, healthy: Boolean) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
         Text(label, style = HaloTypography.bodyMedium, color = HaloGlassColors.TextSecondary)
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                Modifier
-                    .size(7.dp)
-                    .background(if (healthy) HaloGlassColors.Success else HaloGlassColors.Warning, HaloGlassTokens.circleShape)
-            )
+            Box(Modifier.size(7.dp).background(if (healthy) HaloGlassColors.Success else HaloGlassColors.Warning, HaloGlassTokens.circleShape))
             Spacer(Modifier.width(8.dp))
             Text(value, style = HaloTypography.bodyMedium, color = HaloGlassColors.TextPrimary)
         }
