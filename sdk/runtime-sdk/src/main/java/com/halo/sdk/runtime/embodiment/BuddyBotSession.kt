@@ -16,7 +16,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 
-
 import com.halo.sdk.runtime.ExecutionMode
 
 import kotlin.coroutines.CoroutineContext
@@ -36,7 +35,7 @@ class BuddyBotSession(
     private val _state = MutableStateFlow(SessionState.SAVED)
     override val state: StateFlow<SessionState> = _state.asStateFlow()
     private var requestIdCounter = 1
-    
+
     private val sessionScope = CoroutineScope(SupervisorJob() + coroutineContext)
     private val pendingIntents = ConcurrentHashMap<String, Long>() // intentId -> timestamp
 
@@ -67,11 +66,11 @@ class BuddyBotSession(
                     val intentIdMatch = Regex("\"intentId\"\\s*:\\s*\"([^\"]+)\"").find(message)
                     val statusMatch = Regex("\"status\"\\s*:\\s*\"([^\"]+)\"").find(message)
                     val reasonMatch = Regex("\"reason\"\\s*:\\s*\"([^\"]+)\"").find(message)
-                    
+
                     val intentId = intentIdMatch?.groupValues?.get(1) ?: ""
                     val statusStr = statusMatch?.groupValues?.get(1) ?: ""
                     val reason = reasonMatch?.groupValues?.get(1)
-                    
+
                     val status = when (statusStr) {
                         "SUCCEEDED" -> ExecutionStatus.SUCCEEDED
                         "FAILED" -> ExecutionStatus.FAILED
@@ -80,13 +79,13 @@ class BuddyBotSession(
                         "ABORTED" -> ExecutionStatus.ABORTED
                         else -> ExecutionStatus.FAILED
                     }
-                    
+
                     val finalReason = if (statusStr != "SUCCEEDED" && statusStr != "FAILED" && statusStr != "DENIED" && statusStr != "REJECTED" && statusStr != "ABORTED") {
                         "UNKNOWN_EXECUTION_STATUS:$statusStr"
                     } else {
                         reason
                     }
-                    
+
                     if (intentId.isNotEmpty()) {
                         pendingIntents.remove(intentId)
                         sessionScope.launch {
@@ -116,7 +115,7 @@ class BuddyBotSession(
             }
         }
     }
-    
+
     var sessionToken: String? = null
         private set
 
@@ -128,14 +127,14 @@ class BuddyBotSession(
             transport.send(pairJson)
         }
     }
-    
+
     private fun sendHandshake() {
         val handshakeJson = "{\"v\":1,\"id\":${requestIdCounter++},\"type\":\"handshake\"}"
         sessionScope.launch {
             transport.send(handshakeJson)
         }
     }
-    
+
     private suspend fun failPendingIntents(reason: String) {
         val keys = pendingIntents.keys().toList()
         for (intentId in keys) {
@@ -192,7 +191,7 @@ class BuddyBotSession(
         map["id"] = requestIdCounter++
         map["intentId"] = intent.intentId
         sessionToken?.let { map["token"] = it }
-        
+
         when (intent.kind) {
             IntentKind.MOVE -> {
                 map["type"] = "move"
@@ -204,7 +203,13 @@ class BuddyBotSession(
                     else -> "stop"
                 }
                 map["mode"] = mode
-                map["durationMs"] = if (intent.durationMs > 0) intent.durationMs else 1000
+                // BuddyBot Wi-Fi protocol accepts bounded drive pulses of 50–250 ms.
+                // Keep the transport authoritative so every UI/engine caller is safe.
+                map["durationMs"] = if (intent.durationMs > 0) {
+                    intent.durationMs.coerceIn(50, 250)
+                } else {
+                    50
+                }
             }
             IntentKind.STOP -> {
                 map["type"] = "stop"
@@ -219,7 +224,7 @@ class BuddyBotSession(
                 map["type"] = "action"
                 val actionName = when (intent.action) {
                     ActionId.NOD_YES -> "wave"
-                    ActionId.SHAKE_NO -> "wave" // map reasonably
+                    ActionId.SHAKE_NO -> "wave"
                     ActionId.CELEBRATE -> "celebrate"
                     ActionId.LOOK_LEFT -> "look_left"
                     ActionId.LOOK_RIGHT -> "look_right"
