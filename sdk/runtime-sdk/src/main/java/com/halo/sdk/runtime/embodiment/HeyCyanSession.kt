@@ -120,7 +120,8 @@ class HeyCyanSession(
         }
         if (pendingIntents.putIfAbsent(intent.intentId, System.currentTimeMillis()) != null) return
 
-        val job = sessionScope.launch {
+        lateinit var job: Job
+        job = sessionScope.launch {
             val completion = async { waitForCompletionSignal(operation) }
             try {
                 controller.execute(operation).fold(
@@ -151,10 +152,11 @@ class HeyCyanSession(
                 reportResult(intent.intentId, EmbodimentExecutionStatus.FAILED, "Execution failed: ${e.message}")
             } finally {
                 pendingIntents.remove(intent.intentId)
-                dispatchJobs.remove(intent.intentId)
+                dispatchJobs.remove(intent.intentId, job)
             }
         }
         dispatchJobs[intent.intentId] = job
+        if (job.isCompleted) dispatchJobs.remove(intent.intentId, job)
     }
 
     private suspend fun waitForCompletionSignal(operation: HeyCyanOperation): Boolean {
