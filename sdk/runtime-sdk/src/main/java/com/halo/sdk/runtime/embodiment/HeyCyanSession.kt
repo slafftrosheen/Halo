@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import java.util.concurrent.ConcurrentHashMap
@@ -42,7 +43,7 @@ class HeyCyanSession(
 
     init {
         sessionScope.launch {
-            transport.connectionState.collect { connState ->
+            transport.connectionState.collectLatest { connState ->
                 when (connState) {
                     TransportConnectionState.CONNECTED -> handleConnected()
                     TransportConnectionState.DISCONNECTED, TransportConnectionState.ERROR -> {
