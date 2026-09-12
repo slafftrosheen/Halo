@@ -112,7 +112,7 @@ class NativeLlamaProvider(
 
             try {
                 val helper = LlamaHelper(context.contentResolver, scope, events)
-                helper.load(modelUri, contextSize, systemPrompt) { contextId ->
+                helper.load(modelUri, contextSize, null) { contextId ->
                     Log.i(TAG, "Native llama.cpp model ready contextId=$contextId model=$activeId")
                     loadResult.complete(true)
                 }
