@@ -43,19 +43,11 @@ fun IntelligenceScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit = {}
 
         HaloGlassSection(title = "ACTIVE PROVIDER") {
             Column(Modifier.fillMaxWidth().padding(12.dp)) {
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         Text(uiState.activeProviderName, style = HaloTypography.bodyLarge, color = HaloGlassColors.TextPrimary)
                         Spacer(Modifier.height(4.dp))
-                        Text(
-                            if (activeIsHandoff) "System assistant handoff" else (uiState.activeModelId ?: "No model selected"),
-                            style = HaloTypography.labelMedium,
-                            color = HaloGlassColors.TextSecondary
-                        )
+                        Text(if (activeIsHandoff) "System assistant handoff" else (uiState.activeModelId ?: "No model selected"), style = HaloTypography.labelMedium, color = HaloGlassColors.TextSecondary)
                     }
                     ProviderStatusChip(uiState.activeProviderStatus)
                 }
@@ -77,110 +69,48 @@ fun IntelligenceScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit = {}
         }
 
         HaloGlassSection(title = "MODEL") {
-            Row(
-                Modifier.fillMaxWidth().padding(8.dp).defaultMinSize(minHeight = 52.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Row(Modifier.fillMaxWidth().padding(8.dp).defaultMinSize(minHeight = 52.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text(
-                        if (activeIsHandoff) "No model required" else (uiState.activeModelId ?: "No model selected"),
-                        style = HaloTypography.bodyMedium,
-                        color = HaloGlassColors.TextPrimary
-                    )
-                    if (activeIsHandoff) {
-                        Text("Halo hands this request to the Android system assistant.", style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
-                    } else if (uiState.isRefreshingModels) {
-                        Text("Refreshing models…", style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
-                    } else if (uiState.availableModels.isEmpty()) {
-                        Text("No models currently available", style = HaloTypography.labelSmall, color = HaloGlassColors.Warning)
-                    }
+                    Text(if (activeIsHandoff) "No model required" else (uiState.activeModelId ?: "No model selected"), style = HaloTypography.bodyMedium, color = HaloGlassColors.TextPrimary)
+                    if (activeIsHandoff) Text("Halo hands this request to the Android system assistant.", style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
+                    else if (uiState.isRefreshingModels) Text("Refreshing models…", style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
+                    else if (uiState.availableModels.isEmpty()) Text("No models currently available", style = HaloTypography.labelSmall, color = HaloGlassColors.Warning)
                 }
-                if (!activeIsHandoff) {
-                    HaloGlassButton(text = "Change", onClick = { showModelPicker = true })
-                }
+                if (!activeIsHandoff) HaloGlassButton(text = "Change", onClick = { showModelPicker = true })
             }
         }
 
         HaloGlassSection(title = "PROVIDER") {
             Column(Modifier.padding(8.dp)) {
-                Row(
-                    Modifier.fillMaxWidth().defaultMinSize(minHeight = 52.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Row(Modifier.fillMaxWidth().defaultMinSize(minHeight = 52.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         Text(uiState.activeProviderName, style = HaloTypography.bodyMedium, color = HaloGlassColors.TextPrimary)
                         Text(providerDescription(uiState.activeProviderId), style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
                     }
                     HaloGlassButton(text = "Switch", onClick = { showProviderPicker = true })
                 }
-
                 Spacer(Modifier.height(12.dp))
                 if (activeIsHandoff) {
-                    HaloGlassButton(
-                        text = "Open Assistant",
-                        onClick = { viewModel.handoffToAssistant() },
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    HaloGlassButton(text = "Open Assistant", onClick = { viewModel.handoffToAssistant() }, modifier = Modifier.fillMaxWidth())
                     Spacer(Modifier.height(8.dp))
-                    Text(
-                        uiState.assistantPackage?.let { "Detected assistant: $it" } ?: "No Android assistant detected",
-                        style = HaloTypography.labelSmall,
-                        color = if (uiState.assistantPackage != null) HaloGlassColors.TextSecondary else HaloGlassColors.Warning
-                    )
+                    Text(uiState.assistantPackage?.let { "Detected assistant: $it" } ?: "No Android assistant detected", style = HaloTypography.labelSmall, color = if (uiState.assistantPackage != null) HaloGlassColors.TextSecondary else HaloGlassColors.Warning)
                     Spacer(Modifier.height(8.dp))
-                    HaloGlassButton(
-                        text = "Test Availability",
-                        onClick = viewModel::testConnection,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    HaloGlassButton(text = "Test Availability", onClick = viewModel::testConnection, modifier = Modifier.fillMaxWidth())
                     Spacer(Modifier.height(8.dp))
-                    Text(
-                        "Halo may supply a best-effort prompt extra, but Android does not guarantee prompt injection or a response channel for third-party assistants.",
-                        style = HaloTypography.labelSmall,
-                        color = HaloGlassColors.TextSecondary
-                    )
+                    Text("Halo may supply a best-effort prompt extra, but Android does not guarantee prompt injection or a response channel for third-party assistants.", style = HaloTypography.labelSmall, color = HaloGlassColors.TextSecondary)
                 } else {
-                    HaloGlassButton(
-                        text = "Test Connection",
-                        onClick = viewModel::testConnection,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    HaloGlassButton(text = "Test Connection", onClick = viewModel::testConnection, modifier = Modifier.fillMaxWidth())
                 }
-
                 when (uiState.activeProviderId) {
                     "openrouter" -> {
                         Spacer(Modifier.height(12.dp))
                         Text("API KEY", style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
-                        OutlinedTextField(
-                            value = uiState.openRouterKey,
-                            onValueChange = viewModel::setOpenRouterKey,
-                            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                            textStyle = HaloTypography.bodySmall,
-                            placeholder = { Text("sk-or-...") },
-                            visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = HaloGlassColors.Accent,
-                                unfocusedBorderColor = HaloGlassColors.Glass
-                            )
-                        )
+                        OutlinedTextField(value = uiState.openRouterKey, onValueChange = viewModel::setOpenRouterKey, modifier = Modifier.fillMaxWidth().padding(top = 4.dp), textStyle = HaloTypography.bodySmall, placeholder = { Text("sk-or-...") }, visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = HaloGlassColors.Accent, unfocusedBorderColor = HaloGlassColors.Glass))
                     }
                     "provider.ollama" -> {
                         Spacer(Modifier.height(12.dp))
                         Text("OLLAMA ENDPOINT", style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
-                        OutlinedTextField(
-                            value = uiState.ollamaEndpoint,
-                            onValueChange = viewModel::setOllamaEndpoint,
-                            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                            textStyle = HaloTypography.bodySmall,
-                            placeholder = { Text("http://192.168.1.100:11434") },
-                            singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = HaloGlassColors.Accent,
-                                unfocusedBorderColor = HaloGlassColors.Glass
-                            )
-                        )
+                        OutlinedTextField(value = uiState.ollamaEndpoint, onValueChange = viewModel::setOllamaEndpoint, modifier = Modifier.fillMaxWidth().padding(top = 4.dp), textStyle = HaloTypography.bodySmall, placeholder = { Text("http://192.168.1.100:11434") }, singleLine = true, colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = HaloGlassColors.Accent, unfocusedBorderColor = HaloGlassColors.Glass))
                         Spacer(Modifier.height(6.dp))
                         Text("Physical phone: use the PC's LAN IP. The emulator may use 10.0.2.2.", style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
                     }
@@ -190,36 +120,21 @@ fun IntelligenceScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit = {}
 
         HaloGlassSection(title = "ON-DEVICE MODELS (GGUF)") {
             Column(Modifier.padding(8.dp)) {
-                if (uiState.localModels.isEmpty()) {
-                    Text("No GGUF models registered.", style = HaloTypography.bodySmall, color = HaloGlassColors.TextMuted)
-                }
+                if (uiState.localModels.isEmpty()) Text("No GGUF models registered.", style = HaloTypography.bodySmall, color = HaloGlassColors.TextMuted)
                 uiState.localModels.forEach { model ->
                     val dlState = uiState.downloadStates[model.id] ?: com.halo.providers.llamacpp.DownloadState.NotDownloaded
                     val isSelected = uiState.activeLocalModelId == model.id
-                    Row(
-                        Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                    Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(model.name, style = HaloTypography.bodyMedium, color = HaloGlassColors.TextPrimary)
-                                if (isSelected) {
-                                    Spacer(Modifier.width(8.dp))
-                                    Text("ACTIVE", style = HaloTypography.labelSmall, color = HaloGlassColors.Success)
-                                }
+                                if (isSelected) { Spacer(Modifier.width(8.dp)); Text("ACTIVE", style = HaloTypography.labelSmall, color = HaloGlassColors.Success) }
                             }
                             Text(model.description, style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
                             if (model.sizeMb > 0) Text("${model.sizeMb} MB", style = HaloTypography.labelSmall, color = HaloGlassColors.Accent)
                         }
                         when (dlState) {
-                            com.halo.providers.llamacpp.DownloadState.Downloaded -> {
-                                if (isSelected) {
-                                    HaloGlassChip(text = "Active", material = HaloGlassMaterials.Interactive.copy(containerColor = HaloGlassColors.Success.copy(alpha = 0.2f), contentColor = HaloGlassColors.Success))
-                                } else {
-                                    HaloGlassButton(text = "Use", onClick = { viewModel.setActiveLocalModel(model.id) })
-                                }
-                            }
+                            com.halo.providers.llamacpp.DownloadState.Downloaded -> if (isSelected) HaloGlassChip(text = "Active", material = HaloGlassMaterials.Interactive.copy(containerColor = HaloGlassColors.Success.copy(alpha = 0.2f), contentColor = HaloGlassColors.Success)) else HaloGlassButton(text = "Use", onClick = { viewModel.setActiveLocalModel(model.id) })
                             com.halo.providers.llamacpp.DownloadState.Downloading -> HaloGlassChip(text = "Downloading", material = HaloGlassMaterials.Interactive.copy(containerColor = HaloGlassColors.Accent.copy(alpha = 0.2f), contentColor = HaloGlassColors.Accent))
                             com.halo.providers.llamacpp.DownloadState.Failed -> HaloGlassChip(text = "Failed", material = HaloGlassMaterials.Interactive.copy(containerColor = HaloGlassColors.Warning.copy(alpha = 0.2f), contentColor = HaloGlassColors.Warning))
                             else -> HaloGlassButton(text = "Download", onClick = { viewModel.downloadModel(model.id) })
@@ -227,39 +142,21 @@ fun IntelligenceScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit = {}
                     }
                     HaloGlassDivider()
                 }
-
                 Spacer(Modifier.height(12.dp))
                 Text("FETCH GGUF", style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
                 OutlinedTextField(value = customUrl, onValueChange = { customUrl = it }, modifier = Modifier.fillMaxWidth().padding(top = 4.dp), textStyle = HaloTypography.bodySmall, placeholder = { Text("https://huggingface.co/.../model.gguf") }, singleLine = true)
                 Spacer(Modifier.height(8.dp))
                 OutlinedTextField(value = customName, onValueChange = { customName = it }, modifier = Modifier.fillMaxWidth(), textStyle = HaloTypography.bodySmall, placeholder = { Text("Model display name") }, singleLine = true)
                 Spacer(Modifier.height(6.dp))
-                Text(
-                    if (customModelReady) "Ready to add this GGUF model to the local catalog." else "Enter both the GGUF URL and a display name to continue.",
-                    style = HaloTypography.labelSmall,
-                    color = if (customModelReady) HaloGlassColors.TextSecondary else HaloGlassColors.TextMuted
-                )
+                Text(if (customModelReady) "Ready to add this GGUF model to the local catalog." else "Enter both the GGUF URL and a display name to continue.", style = HaloTypography.labelSmall, color = if (customModelReady) HaloGlassColors.TextSecondary else HaloGlassColors.TextMuted)
                 Spacer(Modifier.height(10.dp))
-                HaloGlassButton(
-                    text = "Download GGUF",
-                    onClick = {
-                        viewModel.downloadCustomUrl(customUrl, customName)
-                        customUrl = ""
-                        customName = ""
-                    },
-                    enabled = customModelReady,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                HaloGlassButton(text = "Download GGUF", onClick = { viewModel.downloadCustomUrl(customUrl, customName); customUrl = ""; customName = "" }, enabled = customModelReady, modifier = Modifier.fillMaxWidth())
             }
         }
 
         HaloGlassCard {
             Column(Modifier.padding(8.dp)) {
-                Row(
-                    Modifier.fillMaxWidth().defaultMinSize(minHeight = 56.dp).clickable { advancedExpanded = !advancedExpanded },
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Row(Modifier.fillMaxWidth().defaultMinSize(minHeight = 56.dp).clickable { advancedExpanded = !advancedExpanded }, horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Text("Advanced Settings", style = HaloTypography.bodyMedium, color = HaloGlassColors.TextPrimary)
                     Text(if (advancedExpanded) "−" else "+", style = HaloTypography.bodyLarge, color = HaloGlassColors.TextMuted)
                 }
@@ -285,24 +182,8 @@ fun IntelligenceScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit = {}
         }
     }
 
-    if (showProviderPicker) {
-        ProviderPickerDialog(
-            providers = uiState.providers,
-            onSelect = { viewModel.selectProvider(it); showProviderPicker = false },
-            onDismiss = { showProviderPicker = false }
-        )
-    }
-
-    if (showModelPicker) {
-        HaloGlassModelPickerDialog(
-            models = uiState.availableModels,
-            selectedModelId = uiState.activeModelId,
-            onSelect = { viewModel.selectModel(it); showModelPicker = false },
-            onRefresh = viewModel::refreshModels,
-            isRefreshing = uiState.isRefreshingModels,
-            onDismiss = { showModelPicker = false }
-        )
-    }
+    if (showProviderPicker) ProviderPickerDialog(providers = uiState.providers, onSelect = { viewModel.selectProvider(it); showProviderPicker = false }, onDismiss = { showProviderPicker = false })
+    if (showModelPicker) HaloGlassModelPickerDialog(models = uiState.availableModels, selectedModelId = uiState.activeModelId, onSelect = { viewModel.selectModel(it); showModelPicker = false }, onRefresh = viewModel::refreshModels, isRefreshing = uiState.isRefreshingModels, onDismiss = { showModelPicker = false })
 }
 
 @Composable
@@ -360,52 +241,32 @@ private fun AdvancedToggle(title: String, description: String, checked: Boolean,
 }
 
 @Composable
-private fun ProviderPickerDialog(
-    providers: List<AiProviderUiState>,
-    onSelect: (String) -> Unit,
-    onDismiss: () -> Unit
-) {
+private fun ProviderPickerDialog(providers: List<AiProviderUiState>, onSelect: (String) -> Unit, onDismiss: () -> Unit) {
     HaloGlassDialog(title = "Select Provider", onDismissRequest = onDismiss) {
         Column(Modifier.padding(16.dp)) {
             LazyColumn(Modifier.fillMaxWidth().heightIn(max = 400.dp)) {
                 items(providers) { provider ->
-                    Row(
-                        Modifier.fillMaxWidth().clickable { onSelect(provider.id) }.padding(vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                    Row(Modifier.fillMaxWidth().clickable { onSelect(provider.id) }.padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(provider.name, color = HaloGlassColors.TextPrimary)
                                 if (provider.isHandoff) {
                                     Spacer(Modifier.width(8.dp))
-                                    HaloGlassChip(
-                                        text = "ASSISTANT",
-                                        material = HaloGlassMaterials.Interactive.copy(
-                                            containerColor = HaloGlassColors.Accent.copy(alpha = 0.16f),
-                                            contentColor = HaloGlassColors.Accent
-                                        )
-                                    )
+                                    HaloGlassChip(text = "ASSISTANT", material = HaloGlassMaterials.Interactive.copy(containerColor = HaloGlassColors.Accent.copy(alpha = 0.16f), contentColor = HaloGlassColors.Accent))
                                 }
                             }
-                            val isReady = provider.status.state == ProviderStatus.State.READY ||
-                                provider.status.state == ProviderStatus.State.STANDBY ||
-                                provider.status.state == ProviderStatus.State.LOADING
+                            val isReady = provider.status.state == ProviderStatus.State.READY || provider.status.state == ProviderStatus.State.STANDBY
                             val statusText = when {
                                 provider.isSelected && provider.isHandoff && isReady -> "Selected / Handoff ready"
                                 provider.isSelected && isReady -> "Selected / Ready"
                                 provider.isSelected -> "Selected / Unavailable"
                                 provider.isHandoff && isReady -> "Available / Handoff"
                                 isReady -> "Available / Not selected"
+                                provider.status.state == ProviderStatus.State.LOADING -> "Loading / Please wait"
                                 else -> "Unavailable"
                             }
-                            Text(
-                                statusText,
-                                style = HaloTypography.labelSmall,
-                                color = if (isReady) HaloGlassColors.Success else HaloGlassColors.Warning
-                            )
-                            provider.status.message?.let {
-                                Text(it, style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
-                            }
+                            Text(statusText, style = HaloTypography.labelSmall, color = if (isReady) HaloGlassColors.Success else if (provider.status.state == ProviderStatus.State.LOADING) HaloGlassColors.Accent else HaloGlassColors.Warning)
+                            provider.status.message?.let { Text(it, style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted) }
                         }
                         if (provider.isSelected) Text("●", color = HaloGlassColors.Accent)
                     }
