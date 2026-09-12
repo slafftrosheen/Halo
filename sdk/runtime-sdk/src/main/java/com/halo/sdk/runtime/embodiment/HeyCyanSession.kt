@@ -11,6 +11,7 @@ import com.halo.sdk.runtime.embodiment.heycyan.HeyCyanExecutionResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
@@ -40,6 +41,7 @@ class HeyCyanSession(
     override val state: StateFlow<SessionState> = _state.asStateFlow()
     private val sessionScope = CoroutineScope(SupervisorJob() + coroutineContext)
     private val pendingIntents = ConcurrentHashMap<String, Long>()
+    private val dispatchJobs = ConcurrentHashMap<String, Job>()
 
     init {
         sessionScope.launch {
@@ -78,7 +80,8 @@ class HeyCyanSession(
     private suspend fun failPendingIntents(reason: String) {
         val keys = pendingIntents.keys().toList()
         for (intentId in keys) {
-            pendingIntents.remove(intentId)
+            if (!pendingIntents.remove(intentId, pendingIntents[intentId])) continue
+            dispatchJobs.remove(intentId)?.cancel()
             reportResult(intentId, EmbodimentExecutionStatus.FAILED, reason)
         }
     }
@@ -117,7 +120,7 @@ class HeyCyanSession(
         }
         if (pendingIntents.putIfAbsent(intent.intentId, System.currentTimeMillis()) != null) return
 
-        sessionScope.launch {
+        val job = sessionScope.launch {
             val completion = async { waitForCompletionSignal(operation) }
             try {
                 controller.execute(operation).fold(
@@ -148,8 +151,10 @@ class HeyCyanSession(
                 reportResult(intent.intentId, EmbodimentExecutionStatus.FAILED, "Execution failed: ${e.message}")
             } finally {
                 pendingIntents.remove(intent.intentId)
+                dispatchJobs.remove(intent.intentId)
             }
         }
+        dispatchJobs[intent.intentId] = job
     }
 
     private suspend fun waitForCompletionSignal(operation: HeyCyanOperation): Boolean {
