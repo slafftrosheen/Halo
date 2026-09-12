@@ -16,7 +16,6 @@ import com.halo.drivers.heycyan.codec.NoOpPacketTracer
 import com.halo.drivers.heycyan.codec.PacketDirection
 import com.halo.drivers.heycyan.codec.PacketTracer
 import com.halo.sdk.driver.DriverState
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -54,6 +53,9 @@ open class HeyCyanGattClient(
     private var descriptorWriteInFlight: PendingDescriptorWrite? = null
     private val pendingDescriptorWrites = ArrayDeque<PendingDescriptorWrite>()
     private val characteristics = mutableMapOf<UUID, BluetoothGattCharacteristic>()
+    @Volatile private var earlyCallbackAttemptId: Long? = null
+    @Volatile private var earlyCallbackStatus: Int = BluetoothGatt.GATT_SUCCESS
+    @Volatile private var earlyCallbackState: Int = BluetoothProfile.STATE_DISCONNECTED
 
     private val _state = MutableStateFlow<DriverState>(DriverState.Disconnected)
     val state: StateFlow<DriverState> = _state.asStateFlow()
@@ -62,20 +64,28 @@ open class HeyCyanGattClient(
 
     private val gattCallback = object : BluetoothGattCallback() {
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
-            val attempt = if (gatt === this@HeyCyanGattClient.gatt) activeAttemptId else null
+            val current = this@HeyCyanGattClient.gatt
+            val attempt = if (gatt === current) activeAttemptId else null
             tracer.onConnectionStateChanged(status, newState)
             android.util.Log.i("HeyCyanGattClient", "onConnectionStateChange: attempt=$attempt status=$status newState=$newState")
-            if (gatt !== this@HeyCyanGattClient.gatt) {
-                android.util.Log.w("HeyCyanGattClient", "Ignoring stale GATT callback for retired connection")
+            if (gatt !== current) {
+                // Android can theoretically invoke the callback before connectGatt()
+                // returns. Record that terminal callback so the returned BluetoothGatt
+                // cannot be installed as a fresh, live connection after cleanup.
+                if (current == null && _state.value == DriverState.Connecting) {
+                    earlyCallbackAttemptId = activeAttemptId
+                    earlyCallbackStatus = status
+                    earlyCallbackState = newState
+                    tracer.onGattStage(activeAttemptId, CaptureGattStage.CONNECT, CaptureStagePhase.FAILED, status, "early callback before connectGatt returned newState=$newState")
+                } else {
+                    android.util.Log.w("HeyCyanGattClient", "Ignoring stale GATT callback for retired connection")
+                }
                 runCatching { gatt.close() }
                 return
             }
 
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 tracer.onGattStage(activeAttemptId, CaptureGattStage.CONNECT, CaptureStagePhase.FAILED, status, "newState=$newState ${HeyCyanGattErrorClassifier.describe(status)}")
-                // Keep the public state failed, but let the owner decide whether
-                // to retry. This avoids pretending every Android GATT error is a
-                // protocol-level failure.
                 failGatt(gatt, RuntimeException("GATT connection error: status=$status attempt=$activeAttemptId"), closeImmediately = true)
                 return
             }
@@ -210,12 +220,23 @@ open class HeyCyanGattClient(
         retireCurrentGatt()
         connectionAttemptId += 1L
         activeAttemptId = connectionAttemptId
+        earlyCallbackAttemptId = null
+        earlyCallbackStatus = BluetoothGatt.GATT_SUCCESS
+        earlyCallbackState = BluetoothProfile.STATE_DISCONNECTED
         gatt = null
         resetConnectionState()
         _state.value = DriverState.Connecting
         tracer.onGattStage(activeAttemptId, CaptureGattStage.CONNECT, CaptureStagePhase.STARTED, detail = "address=$macAddress transport=LE")
         android.util.Log.i("HeyCyanGattClient", "Initiating GATT connection: attempt=$activeAttemptId address=$macAddress transport=LE")
         val newGatt = device.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
+        val earlyAttempt = earlyCallbackAttemptId
+        if (earlyAttempt == activeAttemptId) {
+            android.util.Log.w("HeyCyanGattClient", "GATT attempt=$activeAttemptId terminated before connectGatt returned: status=$earlyCallbackStatus newState=$earlyCallbackState")
+            runCatching { newGatt?.close() }
+            gatt = null
+            _state.value = DriverState.Error(RuntimeException("GATT connection terminated before connectGatt returned: status=$earlyCallbackStatus attempt=$activeAttemptId"))
+            return
+        }
         gatt = newGatt
         if (newGatt == null) {
             tracer.onGattStage(activeAttemptId, CaptureGattStage.CONNECT, CaptureStagePhase.FAILED, detail = "connectGatt returned null")
