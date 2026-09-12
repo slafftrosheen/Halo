@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.halo.app.ui.glass.material.HaloGlassColors
 import com.halo.app.ui.glass.material.HaloGlassMaterial
@@ -15,7 +16,9 @@ import com.halo.app.ui.glass.material.HaloGlassMaterials
 import com.halo.app.ui.glass.material.HaloGlassTokens
 
 /**
- * A glass section that groups content under a title with vertical layout.
+ * Primary grouping primitive for Halo's glass UI.
+ * Keeps section chrome deliberately quiet so content, controls and state carry
+ * the visual hierarchy instead of a collection of heavy cards.
  */
 @Composable
 fun HaloGlassSection(
@@ -25,38 +28,33 @@ fun HaloGlassSection(
     trailing: @Composable () -> Unit = {},
     material: HaloGlassMaterial = HaloGlassMaterials.Standard,
     titleStyle: TextStyle = TextStyle(
-        fontSize = 12.sp,
-        fontWeight = FontWeight.Bold,
-        color = HaloGlassColors.TextSecondary
+        fontSize = 11.sp,
+        fontWeight = FontWeight.SemiBold,
+        color = HaloGlassColors.TextSecondary,
+        letterSpacing = 1.2.sp
     ),
-    spacing: Dp = HaloGlassTokens.md,
+    spacing: Dp = HaloGlassTokens.sm,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Column(
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(HaloGlassTokens.xs)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(
-                    horizontal = HaloGlassTokens.md,
-                    vertical = HaloGlassTokens.sm
-                ),
+                .padding(horizontal = HaloGlassTokens.sm, vertical = HaloGlassTokens.xs),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = title.uppercase(),
-                style = titleStyle
-            )
-
+            Text(text = title.uppercase(), style = titleStyle)
             trailing()
         }
 
         HaloGlassSurface(
             modifier = surfaceModifier.fillMaxWidth(),
             material = material,
-            shape = HaloGlassTokens.mediumShape
+            shape = HaloGlassTokens.largeShape
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -67,63 +65,52 @@ fun HaloGlassSection(
     }
 }
 
-/**
- * Predefined glass section variants.
- */
 object HaloGlassSection {
     @Composable
     fun Standard(
         modifier: Modifier = Modifier,
         title: String,
         content: @Composable ColumnScope.() -> Unit
-    ) {
-        HaloGlassSection(
-            modifier = modifier,
-            title = title,
-            material = HaloGlassMaterials.Standard,
-            content = content
-        )
-    }
+    ) = HaloGlassSection(
+        modifier = modifier,
+        title = title,
+        material = HaloGlassMaterials.Standard,
+        content = content
+    )
 
     @Composable
     fun Background(
         modifier: Modifier = Modifier,
         title: String,
         content: @Composable ColumnScope.() -> Unit
-    ) {
-        HaloGlassSection(
-            modifier = modifier,
-            title = title,
-            material = HaloGlassMaterials.Background,
-            content = content
-        )
-    }
+    ) = HaloGlassSection(
+        modifier = modifier,
+        title = title,
+        material = HaloGlassMaterials.Background,
+        content = content
+    )
 
     @Composable
     fun Elevated(
         modifier: Modifier = Modifier,
         title: String,
         content: @Composable ColumnScope.() -> Unit
-    ) {
-        HaloGlassSection(
-            modifier = modifier,
-            title = title,
-            material = HaloGlassMaterials.Elevated,
-            content = content
-        )
-    }
+    ) = HaloGlassSection(
+        modifier = modifier,
+        title = title,
+        material = HaloGlassMaterials.Elevated,
+        content = content
+    )
 
     @Composable
     fun Strong(
         modifier: Modifier = Modifier,
         title: String,
         content: @Composable ColumnScope.() -> Unit
-    ) {
-        HaloGlassSection(
-            modifier = modifier,
-            title = title,
-            material = HaloGlassMaterials.Strong,
-            content = content
-        )
-    }
+    ) = HaloGlassSection(
+        modifier = modifier,
+        title = title,
+        material = HaloGlassMaterials.Strong,
+        content = content
+    )
 }
