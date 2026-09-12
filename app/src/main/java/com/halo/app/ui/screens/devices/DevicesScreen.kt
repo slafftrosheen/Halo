@@ -350,6 +350,20 @@ fun DevicesScreen(
 
 @Composable
 fun DeviceRow(device: GenericDeviceUiState, onClick: () -> Unit) {
+    val statusColor = when {
+        device.healthWarning != null -> HaloGlassColors.Warning
+        device.connectionStateText == "Error" -> HaloGlassColors.Danger
+        device.isConnected -> HaloGlassColors.Success
+        device.connectionStateText == "Connecting" || device.connectionStateText.contains("Syncing") || device.connectionStateText == "Handshaking" -> HaloGlassColors.Warning
+        else -> HaloGlassColors.TextMuted
+    }
+    val statusBackground = statusColor.copy(alpha = if (device.isConnected) 0.12f else 0.09f)
+    val batteryColor = when {
+        device.battery == "Unknown" || device.battery == "No data" -> HaloGlassColors.TextMuted
+        device.isBatteryStale -> HaloGlassColors.Warning
+        else -> HaloGlassColors.TextPrimary
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -361,36 +375,50 @@ fun DeviceRow(device: GenericDeviceUiState, onClick: () -> Unit) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(device.name, style = HaloTypography.titleMedium, color = HaloGlassColors.TextPrimary)
-                Spacer(Modifier.height(4.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        Modifier
-                            .size(8.dp)
-                            .background(
-                                if (device.isConnected) HaloGlassColors.Success else HaloGlassColors.TextMuted,
-                                CircleShape
-                            )
-                    )
+                Spacer(Modifier.height(6.dp))
+                Row(
+                    modifier = Modifier
+                        .background(statusBackground, RoundedCornerShape(999.dp))
+                        .padding(horizontal = 9.dp, vertical = 5.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(Modifier.size(7.dp).background(statusColor, CircleShape))
                     Spacer(Modifier.width(6.dp))
-                    Text(device.connectionStateText, style = HaloTypography.bodyMedium, color = HaloGlassColors.TextSecondary)
+                    Text(device.connectionStateText, style = HaloTypography.labelSmall, color = statusColor)
                 }
             }
             Text("›", style = HaloTypography.titleLarge, color = HaloGlassColors.TextMuted)
         }
 
+        Spacer(Modifier.height(12.dp))
+        HaloGlassDivider()
         Spacer(Modifier.height(10.dp))
+
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("Battery: ${device.battery}", style = HaloTypography.labelSmall, color = HaloGlassColors.TextPrimary)
-            Text(if (device.autoConnect) "Auto-connect" else "Manual", style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
+            Column(Modifier.weight(1f)) {
+                Text("BATTERY", style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
+                Spacer(Modifier.height(2.dp))
+                Text(device.battery, style = HaloTypography.labelSmall, color = batteryColor)
+            }
+            Column(Modifier.weight(1f)) {
+                Text("LINK", style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
+                Spacer(Modifier.height(2.dp))
+                Text(device.lastSeen, style = HaloTypography.labelSmall, color = HaloGlassColors.TextSecondary)
+            }
+            Column(Modifier.weight(1f)) {
+                Text("MODE", style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
+                Spacer(Modifier.height(2.dp))
+                Text(if (device.autoConnect) "Auto-connect" else "Manual", style = HaloTypography.labelSmall, color = HaloGlassColors.TextSecondary)
+            }
         }
 
         if (device.healthWarning != null) {
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(10.dp))
             Text(device.healthWarning, style = HaloTypography.labelSmall, color = HaloGlassColors.Warning)
         }
-        if (device.isBatteryStale || !device.isConnected) {
+        if (device.isBatteryStale || (!device.isConnected && device.batteryAgeText != "No data")) {
             Spacer(Modifier.height(4.dp))
-            Text(device.batteryAgeText, style = HaloTypography.labelSmall, color = HaloGlassColors.Warning)
+            Text(device.batteryAgeText, style = HaloTypography.labelSmall, color = if (device.isBatteryStale) HaloGlassColors.Warning else HaloGlassColors.TextMuted)
         }
     }
 }
