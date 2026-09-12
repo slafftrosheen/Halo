@@ -309,7 +309,7 @@ class NativeLlamaProvider(
             currentCoroutineContext().ensureActive()
             Log.d(TAG, "[$transactionId] predict begin promptChars=${prompt.length}")
             try {
-                currentEngine.predict(prompt, "", false)
+                currentEngine.predict(prompt, "", true)
             } catch (error: CancellationException) {
                 throw error
             } catch (error: Throwable) {
