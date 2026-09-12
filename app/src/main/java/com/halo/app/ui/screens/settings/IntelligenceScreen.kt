@@ -36,6 +36,7 @@ fun IntelligenceScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit = {}
     }
 
     val activeIsHandoff = uiState.providers.firstOrNull { it.id == uiState.activeProviderId }?.isHandoff == true
+    val customModelReady = customUrl.trim().isNotBlank() && customName.trim().isNotBlank()
 
     HaloGlassPage(title = "") {
         HaloGlassBackHeader(title = "Intelligence", onBack = onBack)
@@ -232,8 +233,23 @@ fun IntelligenceScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit = {}
                 OutlinedTextField(value = customUrl, onValueChange = { customUrl = it }, modifier = Modifier.fillMaxWidth().padding(top = 4.dp), textStyle = HaloTypography.bodySmall, placeholder = { Text("https://huggingface.co/.../model.gguf") }, singleLine = true)
                 Spacer(Modifier.height(8.dp))
                 OutlinedTextField(value = customName, onValueChange = { customName = it }, modifier = Modifier.fillMaxWidth(), textStyle = HaloTypography.bodySmall, placeholder = { Text("Model display name") }, singleLine = true)
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    if (customModelReady) "Ready to add this GGUF model to the local catalog." else "Enter both the GGUF URL and a display name to continue.",
+                    style = HaloTypography.labelSmall,
+                    color = if (customModelReady) HaloGlassColors.TextSecondary else HaloGlassColors.TextMuted
+                )
                 Spacer(Modifier.height(10.dp))
-                HaloGlassButton(text = "Download GGUF", onClick = { viewModel.downloadCustomUrl(customUrl, customName); customUrl = ""; customName = "" }, modifier = Modifier.fillMaxWidth())
+                HaloGlassButton(
+                    text = "Download GGUF",
+                    onClick = {
+                        viewModel.downloadCustomUrl(customUrl, customName)
+                        customUrl = ""
+                        customName = ""
+                    },
+                    enabled = customModelReady,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
 
