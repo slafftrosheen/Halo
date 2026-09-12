@@ -55,7 +55,7 @@ class NativeLlamaProvider(
             engine != null && loadedModelId == activeId -> ProviderStatus.READY
             downloadManager.getModelFile(activeId) != null ->
                 ProviderStatus(ProviderStatus.State.READY, "Model downloaded; ready to load: $activeId")
-            else -> ProviderStatus(ProviderStatus.State.UNAVAILABLE, "Model not downloaded: $activeId")
+            else -> ProviderStatus(State = ProviderStatus.State.UNAVAILABLE, message = "Model not downloaded: $activeId")
         }
         _status.value = current
         return current
@@ -142,7 +142,7 @@ class NativeLlamaProvider(
         } catch (error: Throwable) {
             releaseCurrentModel()
             Log.e(TAG, "Failed loading model ${file.absolutePath}", error)
-            _status.value = ProviderStatus(ProviderStatus.State.ERROR, "Model load failed: ${error.message ?: error::class.simpleName}")
+            _status.value = ProviderStatus(State = ProviderStatus.State.ERROR, message = "Model load failed: ${error.message ?: error::class.simpleName}")
             false
         }
     }
@@ -296,16 +296,22 @@ class NativeLlamaProvider(
             ?: throw AiProviderException(AiErrorType.MODEL_NOT_READY, "Native llama.cpp event stream is not ready")
 
         val eventChannel = Channel<LlamaHelper.LLMEvent>(Channel.UNLIMITED)
+        val collectorReady = CompletableDeferred<Unit>()
         var eventCount = 0
         var tokenCount = 0
         var terminalEvent: String? = null
         val collector = launch {
+            collectorReady.complete(Unit)
             currentEvents.collect { event ->
                 eventChannel.send(event)
             }
         }
 
         try {
+            // launch() only schedules the collector. Explicitly wait until it has
+            // entered collect() so a very fast native prediction cannot emit its
+            // terminal event before the SharedFlow subscriber exists.
+            collectorReady.await()
             currentCoroutineContext().ensureActive()
             Log.d(TAG, "[$transactionId] predict begin promptChars=${prompt.length}")
             try {
