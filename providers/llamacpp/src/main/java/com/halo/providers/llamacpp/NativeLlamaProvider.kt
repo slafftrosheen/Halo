@@ -15,6 +15,7 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
@@ -57,7 +58,7 @@ class NativeLlamaProvider(
             engine != null && loadedModelId == activeId -> ProviderStatus.READY
             downloadManager.getModelFile(activeId) != null ->
                 ProviderStatus(ProviderStatus.State.READY, "Model downloaded; ready to load: $activeId")
-            else -> ProviderStatus(State.UNAVAILABLE, "Model not downloaded: $activeId")
+            else -> ProviderStatus(ProviderStatus.State.UNAVAILABLE, "Model not downloaded: $activeId")
         }
         _status.value = current
         return current
@@ -85,11 +86,11 @@ class NativeLlamaProvider(
 
         val file = downloadManager.getModelFile(activeId)
         if (file == null || !file.exists() || !file.isFile || file.length() <= 0L) {
-            _status.value = ProviderStatus(State.UNAVAILABLE, "Model file not found: $activeId")
+            _status.value = ProviderStatus(ProviderStatus.State.UNAVAILABLE, "Model file not found: $activeId")
             return@withLock false
         }
 
-        _status.value = ProviderStatus(State.LOADING, "Loading $activeId...")
+        _status.value = ProviderStatus(ProviderStatus.State.LOADING, "Loading $activeId...")
         releaseCurrentModel()
         return@withLock try {
             val modelUri = Uri.fromFile(file).toString()
@@ -125,20 +126,20 @@ class NativeLlamaProvider(
                 if (loadOutcome == null && !loadResult.isCompleted) {
                     Log.e(TAG, "Native llama.cpp model load timed out after ${MODEL_LOAD_TIMEOUT_MS}ms model=$activeId")
                     _status.value = ProviderStatus(
-                        State.ERROR,
+                        ProviderStatus.State.ERROR,
                         "Native llama.cpp model load timed out after ${MODEL_LOAD_TIMEOUT_MS / 1000}s"
                     )
                     false
                 } else if (loadOutcome != null) {
                     _status.value = ProviderStatus(
-                        State.ERROR,
+                        ProviderStatus.State.ERROR,
                         "Native llama.cpp model initialization failed: $loadOutcome"
                     )
                     false
                 } else if (downloadManager.activeModelId.value != activeId) {
                     Log.w(TAG, "Discarding stale llama.cpp engine: requested=$activeId active=${downloadManager.activeModelId.value}")
                     _status.value = ProviderStatus(
-                        State.UNAVAILABLE,
+                        ProviderStatus.State.UNAVAILABLE,
                         "Model selection changed while loading"
                     )
                     false
@@ -158,12 +159,12 @@ class NativeLlamaProvider(
             }
         } catch (error: CancellationException) {
             releaseCurrentModel()
-            _status.value = ProviderStatus(State.UNAVAILABLE, "Model loading cancelled")
+            _status.value = ProviderStatus(ProviderStatus.State.UNAVAILABLE, "Model loading cancelled")
             throw error
         } catch (error: Throwable) {
             releaseCurrentModel()
             Log.e(TAG, "Failed loading model ${file.absolutePath}", error)
-            _status.value = ProviderStatus(State.ERROR, "Model load failed: ${error.message ?: error::class.simpleName}")
+            _status.value = ProviderStatus(ProviderStatus.State.ERROR, "Model load failed: ${error.message ?: error::class.simpleName}")
             false
         }
     }
@@ -279,31 +280,7 @@ class NativeLlamaProvider(
         }
     }
 
-    override suspend fun complete(request: AIRequestLegacy): AIResponseLegacy = inferenceMutex.withLock {
-        val startTime = System.currentTimeMillis()
-        val transactionId = UUID.randomUUID().toString().take(8)
-        try {
-            if (!loadModelIfNeeded()) {
-                throw AiProviderException(AiErrorType.MODEL_LOAD_FAILED, status.value.message ?: "Unable to load local model")
-            }
-            Log.i(TAG, "[$transactionId] legacy completion start requestChars=${request.conversation.messages.sumOf { it.content.length }}")
-            val result = buildString {
-                streamInternal(request.conversation.messages.joinToString("\n") { "${it.role.name.lowercase()}: ${it.content}" }, transactionId)
-                    .collect { append(it) }
-            }
-            Log.i(TAG, "[$transactionId] legacy completion complete outputChars=${result.length}")
-            AIResponseLegacy(result, "stop", System.currentTimeMillis() - startTime)
-        } catch (e: CancellationException) {
-            Log.i(TAG, "[$transactionId] legacy completion cancelled")
-            throw e
-        } catch (e: AiProviderException) {
-            Log.e(TAG, "[$transactionId] legacy completion failed type=${e.type} message=${e.message}", e)
-            throw e
-        } catch (e: Exception) {
-            Log.e(TAG, "[$transactionId] legacy completion failed", e)
-            throw AiProviderException(AiErrorType.LOCAL_MODEL_UNAVAILABLE, "Native Llama completion failed", e)
-        }
-    }
+
 
     fun stream(prompt: String): Flow<String> = flow {
         val transactionId = UUID.randomUUID().toString().take(8)

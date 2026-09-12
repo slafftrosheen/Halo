@@ -3,7 +3,9 @@ package com.halo.app.ui.screens.devices
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -33,8 +35,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.input.pointer.consume
-import androidx.compose.ui.input.pointer.detectDragGestures
+
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import com.halo.app.embodiment.BuddyBotHost
@@ -133,8 +134,8 @@ fun BuddyBotControlScreen(
                     )
                 )
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    HaloGlassButton("Reset", { targetUrl = BuddyBotHost.DEFAULT_BUDDYBOT_URL }, Modifier.weight(1f), isPrimary = false)
-                    HaloGlassButton("Save", { buddyBotHost?.setTargetUrl(targetUrl.trim()); showUrlDialog = false }, Modifier.weight(1f))
+                    HaloGlassButton(text = "Reset", onClick = { targetUrl = BuddyBotHost.DEFAULT_BUDDYBOT_URL }, modifier = Modifier.weight(1f), isPrimary = false)
+                    HaloGlassButton(text = "Save", onClick = { buddyBotHost?.setTargetUrl(targetUrl.trim()); showUrlDialog = false }, modifier = Modifier.weight(1f))
                 }
             }
         }
@@ -408,7 +409,7 @@ private fun BuddyBotJoystick(enabled: Boolean, forwardBlocked: Boolean, offset: 
                         change.consume()
                         val center = Offset(size.width / 2f, size.height / 2f)
                         val requested = change.position - center
-                        val radius = size.minDimension * 0.34f
+                        val radius = min(size.width, size.height) * 0.34f
                         val length = hypot(requested.x, requested.y)
                         val scale = if (length > radius) radius / length else 1f
                         onMove(Offset(requested.x * scale, requested.y * scale))
@@ -447,12 +448,12 @@ private fun BuddyBotJoystick(enabled: Boolean, forwardBlocked: Boolean, offset: 
 }
 
 @Composable
-private fun DriveButton(text: String, enabled: Boolean, onClick: () -> Unit) {
+private fun RowScope.DriveButton(text: String, enabled: Boolean, onClick: () -> Unit) {
     HaloGlassButton(text = text, onClick = onClick, enabled = enabled, modifier = Modifier.weight(1f))
 }
 
 @Composable
-private fun MoodButton(label: String, mood: Mood, enabled: Boolean, onClick: (Mood) -> Unit) {
+private fun RowScope.MoodButton(label: String, mood: Mood, enabled: Boolean, onClick: (Mood) -> Unit) {
     HaloGlassButton(text = label, onClick = { onClick(mood) }, enabled = enabled, modifier = Modifier.weight(1f), isPrimary = false)
 }
 
@@ -473,7 +474,7 @@ private fun StatusLine(label: String, value: String, positive: Boolean) {
 }
 
 @Composable
-private fun Metric(label: String, value: String) {
+private fun RowScope.Metric(label: String, value: String) {
     Box(Modifier.weight(1f).clip(HaloGlassTokens.smallShape).background(HaloGlassColors.BackgroundSecondary).border(1.dp, HaloGlassColors.BorderSubtle, HaloGlassTokens.smallShape).padding(10.dp)) {
         Column {
             Text(label, style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)

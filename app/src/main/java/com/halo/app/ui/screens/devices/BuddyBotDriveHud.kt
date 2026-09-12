@@ -6,6 +6,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -96,11 +97,11 @@ fun BuddyBotDriveHud(
 }
 
 @Composable
-private fun HudMetric(label: String, value: String, valueColor: Color) {
+private fun RowScope.HudMetric(label: String, value: String, valueColor: Color) {
     Column(
         modifier = Modifier
             .weight(1f)
-            .background(HaloGlassColors.BackgroundTertiary, RoundedCornerShape(10.dp))
+            .background(HaloGlassColors.BackgroundSecondary, RoundedCornerShape(10.dp))
             .padding(horizontal = 10.dp, vertical = 8.dp)
     ) {
         Text(label, style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
@@ -143,7 +144,7 @@ private fun FrontRangeIndicator(
     Row(
         modifier
             .height(52.dp)
-            .background(HaloGlassColors.BackgroundTertiary.copy(alpha = 0.72f), RoundedCornerShape(12.dp))
+            .background(HaloGlassColors.BackgroundSecondary.copy(alpha = 0.72f), RoundedCornerShape(12.dp))
             .padding(horizontal = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)

@@ -159,6 +159,7 @@ fun HeyCyanControlScreen(
                                 VideoRecordingState.RECORDING -> "Stop Video"
                                 VideoRecordingState.STOPPING -> "Stopping..."
                                 VideoRecordingState.ERROR -> "Retry Video"
+                                VideoRecordingState.UNKNOWN -> "Unknown"
                             },
                             onClick = {
                                 if (recording) viewModel.stopVideo(deviceId) else viewModel.startVideo(deviceId)
@@ -170,13 +171,11 @@ fun HeyCyanControlScreen(
 
                     val audioState = device?.audioState ?: AudioRecordingState.IDLE
                     val audioRecording = audioState == AudioRecordingState.RECORDING
-                    val audioTransitioning = audioState == AudioRecordingState.STARTING || audioState == AudioRecordingState.STOPPING
+                    val audioTransitioning = false
                     HaloGlassButton(
                         text = when (audioState) {
                             AudioRecordingState.IDLE -> "Start Audio"
-                            AudioRecordingState.STARTING -> "Starting Audio..."
                             AudioRecordingState.RECORDING -> "Stop Audio"
-                            AudioRecordingState.STOPPING -> "Stopping Audio..."
                             AudioRecordingState.ERROR -> "Retry Audio"
                         },
                         onClick = {
