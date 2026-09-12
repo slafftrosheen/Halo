@@ -274,7 +274,7 @@ class NativeLlamaProvider(
             Log.i(TAG, "[$transactionId] stream cancelled")
             throw error
         } catch (error: Throwable) {
-            Log.e(TAG, "[$transactionId] stream failed", error)
+            Log.e(TAG, "[$transactionId] stream failed type=${error::class.qualifiedName} message=${error.message}", error)
             emit(AiStreamEvent.Failed(error))
         }
     }
@@ -327,10 +327,6 @@ class NativeLlamaProvider(
         }
 
         try {
-            // SharedFlow has no replay buffer here, so do not rely on coroutine
-            // scheduling to make the collector active before native predict().
-            // Waiting for subscriptionCount > 0 creates an explicit happens-before
-            // edge and prevents a fast native completion from being lost.
             currentEvents.subscriptionCount.first { it > 0 }
             currentCoroutineContext().ensureActive()
             Log.d(TAG, "[$transactionId] native event collector ready; predict begin promptChars=${prompt.length}")
