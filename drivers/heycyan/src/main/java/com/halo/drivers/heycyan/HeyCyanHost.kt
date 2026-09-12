@@ -26,7 +26,10 @@ class HeyCyanHost(
 ) : WearableHost {
     override val id: String = "heycyan-glasses"
     override val audioSource: AudioSource = HeyCyanAudioSource(driver)
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
+    // Registry/session work is persistence and transport orchestration, not UI.
+    // Keep it off the main thread so first composition cannot block rendering.
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var selectedAddress: String? = storage.getString("last_heycyan_address")
 
     override val buttons: Flow<ButtonEvent> = driver.heyCyanEvents
