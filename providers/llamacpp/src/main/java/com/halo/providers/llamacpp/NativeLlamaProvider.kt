@@ -85,11 +85,11 @@ class NativeLlamaProvider(
 
         val file = downloadManager.getModelFile(activeId)
         if (file == null || !file.exists() || !file.isFile || file.length() <= 0L) {
-            _status.value = ProviderStatus(ProviderStatus.State.UNAVAILABLE, "Model file not found: $activeId")
+            _status.value = ProviderStatus(State.UNAVAILABLE, "Model file not found: $activeId")
             return@withLock false
         }
 
-        _status.value = ProviderStatus(ProviderStatus.State.LOADING, "Loading $activeId...")
+        _status.value = ProviderStatus(State.LOADING, "Loading $activeId...")
         releaseCurrentModel()
         return@withLock try {
             val modelUri = Uri.fromFile(file).toString()
@@ -125,20 +125,20 @@ class NativeLlamaProvider(
                 if (loadOutcome == null && !loadResult.isCompleted) {
                     Log.e(TAG, "Native llama.cpp model load timed out after ${MODEL_LOAD_TIMEOUT_MS}ms model=$activeId")
                     _status.value = ProviderStatus(
-                        ProviderStatus.State.ERROR,
+                        State.ERROR,
                         "Native llama.cpp model load timed out after ${MODEL_LOAD_TIMEOUT_MS / 1000}s"
                     )
                     false
                 } else if (loadOutcome != null) {
                     _status.value = ProviderStatus(
-                        ProviderStatus.State.ERROR,
+                        State.ERROR,
                         "Native llama.cpp model initialization failed: $loadOutcome"
                     )
                     false
                 } else if (downloadManager.activeModelId.value != activeId) {
                     Log.w(TAG, "Discarding stale llama.cpp engine: requested=$activeId active=${downloadManager.activeModelId.value}")
                     _status.value = ProviderStatus(
-                        ProviderStatus.State.UNAVAILABLE,
+                        State.UNAVAILABLE,
                         "Model selection changed while loading"
                     )
                     false
@@ -158,7 +158,7 @@ class NativeLlamaProvider(
             }
         } catch (error: CancellationException) {
             releaseCurrentModel()
-            _status.value = ProviderStatus(ProviderStatus.State.UNAVAILABLE, "Model loading cancelled")
+            _status.value = ProviderStatus(State.UNAVAILABLE, "Model loading cancelled")
             throw error
         } catch (error: Throwable) {
             releaseCurrentModel()
