@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeoutOrNull
 import org.nehuatl.llamacpp.LlamaHelper
 import java.util.UUID
 
@@ -95,13 +96,13 @@ class NativeLlamaProvider(
             Log.i(TAG, "Loading GGUF model: uri=$modelUri scheme=${Uri.parse(modelUri).scheme} (${file.length()} bytes)")
 
             val events = MutableSharedFlow<LlamaHelper.LLMEvent>(extraBufferCapacity = 64)
-            val loadResult = CompletableDeferred<Boolean>()
+            val loadResult = CompletableDeferred<String?>()
             val loadCollector = scope.launch {
                 events.collect { event ->
                     when (event) {
                         is LlamaHelper.LLMEvent.Error -> {
                             Log.e(TAG, "Native llama.cpp model load error: ${event.message}")
-                            loadResult.complete(false)
+                            loadResult.complete(event.message ?: "Native llama.cpp model initialization failed")
                         }
                         is LlamaHelper.LLMEvent.Loaded -> {
                             Log.i(TAG, "Native llama.cpp model load event received: ${event.path}")
@@ -111,30 +112,49 @@ class NativeLlamaProvider(
                 }
             }
 
+            var helper: LlamaHelper? = null
+            var installed = false
             try {
-                val helper = LlamaHelper(context.contentResolver, scope, events)
+                helper = LlamaHelper(context.contentResolver, scope, events)
                 helper.load(modelUri, contextSize, null) { contextId ->
                     Log.i(TAG, "Native llama.cpp model ready contextId=$contextId model=$activeId")
-                    loadResult.complete(true)
+                    loadResult.complete(null)
                 }
 
-                val loaded = loadResult.await()
-                if (!loaded) {
-                    helper.release()
+                val loadOutcome = withTimeoutOrNull(MODEL_LOAD_TIMEOUT_MS) { loadResult.await() }
+                if (loadOutcome == null && !loadResult.isCompleted) {
+                    Log.e(TAG, "Native llama.cpp model load timed out after ${MODEL_LOAD_TIMEOUT_MS}ms model=$activeId")
                     _status.value = ProviderStatus(
                         ProviderStatus.State.ERROR,
-                        "Native llama.cpp model initialization failed"
+                        "Native llama.cpp model load timed out after ${MODEL_LOAD_TIMEOUT_MS / 1000}s"
+                    )
+                    false
+                } else if (loadOutcome != null) {
+                    _status.value = ProviderStatus(
+                        ProviderStatus.State.ERROR,
+                        "Native llama.cpp model initialization failed: $loadOutcome"
+                    )
+                    false
+                } else if (downloadManager.activeModelId.value != activeId) {
+                    Log.w(TAG, "Discarding stale llama.cpp engine: requested=$activeId active=${downloadManager.activeModelId.value}")
+                    _status.value = ProviderStatus(
+                        ProviderStatus.State.UNAVAILABLE,
+                        "Model selection changed while loading"
                     )
                     false
                 } else {
                     engine = helper
                     engineEvents = events
                     loadedModelId = activeId
+                    installed = true
                     _status.value = ProviderStatus.READY
                     true
                 }
             } finally {
                 loadCollector.cancel()
+                if (!installed) {
+                    runCatching { helper?.release() }
+                }
             }
         } catch (error: CancellationException) {
             releaseCurrentModel()
@@ -394,5 +414,6 @@ class NativeLlamaProvider(
 
     private companion object {
         private const val TAG = "NativeLlamaProvider"
+        private const val MODEL_LOAD_TIMEOUT_MS = 120_000L
     }
 }
