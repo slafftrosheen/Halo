@@ -38,6 +38,7 @@ class MainActivity : ComponentActivity() {
     private var hasRequiredPermissions by mutableStateOf(false)
     private var uiGraphReady by mutableStateOf(false)
     private var uiGraphError by mutableStateOf<String?>(null)
+    private var runtimeError by mutableStateOf<String?>(null)
     private lateinit var runtime: HaloRuntime
     private var runtimeLoopStarted = false
     private var uiGraphJob: Job? = null
@@ -63,9 +64,6 @@ class MainActivity : ComponentActivity() {
         runtime = HaloRuntime(ManualDependencyGraph)
         hasRequiredPermissions = areRequiredPermissionsGranted()
 
-        // Compose the first frame before constructing hosts/providers or starting
-        // device auto-connect. The startup logs showed BLE/bootstrap work competing
-        // with first composition and causing triple-digit skipped-frame bursts.
         setContent {
             BrainToolTheme {
                 Surface(
@@ -97,10 +95,42 @@ class MainActivity : ComponentActivity() {
                                     modifier = Modifier.padding(top = 8.dp)
                                 )
                                 Button(
-                                    onClick = { startUiGraphBootstrap(force = true) },
+                                    onClick = {
+                                        runtimeError = null
+                                        startUiGraphBootstrap(force = true)
+                                        startRuntimeLoop(force = true)
+                                    },
                                     modifier = Modifier.padding(top = 16.dp)
                                 ) {
                                     Text("Retry")
+                                }
+                            }
+                        }
+                        runtimeError != null -> Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.padding(24.dp)
+                            ) {
+                                Text(
+                                    text = "Halo runtime could not start.",
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                Text(
+                                    text = runtimeError ?: "Unknown runtime startup error",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.padding(top = 8.dp)
+                                )
+                                Button(
+                                    onClick = {
+                                        runtimeError = null
+                                        startRuntimeLoop(force = true)
+                                    },
+                                    modifier = Modifier.padding(top = 16.dp)
+                                ) {
+                                    Text("Retry runtime")
                                 }
                             }
                         }
@@ -129,9 +159,6 @@ class MainActivity : ComponentActivity() {
         uiGraphReady = false
         uiGraphError = null
 
-        // Home's ViewModel reaches RuntimeSnapshot/Observer/Engine/Provider graphs.
-        // Materialize that dependency chain on IO so AppShell never triggers it
-        // synchronously from the Compose main thread.
         uiGraphJob = lifecycleScope.launch(Dispatchers.IO) {
             try {
                 ManualDependencyGraph.homeViewModel
@@ -167,41 +194,63 @@ class MainActivity : ComponentActivity() {
         checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
     }
 
-    private fun startRuntimeLoop() {
-        if (runtimeLoopStarted) return
+    private fun startRuntimeLoop(force: Boolean = false) {
+        if (!force && runtimeLoopStarted) return
+        if (force) {
+            connectivityJob?.cancel()
+            hostConnectJob?.cancel()
+            buddyBotConnectJob?.cancel()
+        }
         runtimeLoopStarted = true
+        runtimeError = null
 
-        // Keep host construction, transport observation, and runtime startup off
-        // the UI dispatcher. Runtime.start() initializes the cognitive/audio graph
-        // and must not be allowed to recreate the startup jank seen in the log.
         connectivityJob = lifecycleScope.launch(Dispatchers.IO) {
-            val host = ManualDependencyGraph.wearableHost
+            try {
+                // The runtime must never start against a partially materialized UI graph.
+                uiGraphJob?.join()
+                if (!uiGraphReady) return@launch
 
-            host.connectivity.collect { state ->
-                val connected = state is com.halo.sdk.host.ConnectionState.Connected ||
-                    state is com.halo.sdk.host.ConnectionState.Ready
-                if (connected && !runtime.isStarted()) {
-                    // Do not initialize the runtime concurrently with the UI graph.
-                    // The UI graph is the first consumer of the same engine/provider
-                    // dependency chain; let it finish before starting the runtime.
-                    uiGraphJob?.join()
-                    if (!runtime.isStarted()) {
+                val host = ManualDependencyGraph.wearableHost
+                host.connectivity.collect { state ->
+                    val connected = state is com.halo.sdk.host.ConnectionState.Connected ||
+                        state is com.halo.sdk.host.ConnectionState.Ready
+                    if (connected && !runtime.isStarted()) {
                         runtime.start()
                     }
+                }
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Throwable) {
+                android.util.Log.e("MainActivity", "Runtime startup loop failed", error)
+                withContext(Dispatchers.Main.immediate) {
+                    runtimeError = error.message ?: error::class.java.simpleName
+                    runtimeLoopStarted = false
                 }
             }
         }
 
         hostConnectJob = lifecycleScope.launch(Dispatchers.IO) {
-            ManualDependencyGraph.wearableHost.connect()
+            try {
+                ManualDependencyGraph.wearableHost.connect()
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Throwable) {
+                android.util.Log.e("MainActivity", "Wearable host connection failed", error)
+            }
         }
 
         buddyBotConnectJob = lifecycleScope.launch(Dispatchers.IO) {
-            val buddyBot = ManualDependencyGraph.buddyBotHost
-            buddyBot.ensureDeviceRegistered()
-            val device = ManualDependencyGraph.deviceRegistry.getDevice(buddyBot.deviceId)
-            if (device?.autoConnect == true) {
-                buddyBot.connect()
+            try {
+                val buddyBot = ManualDependencyGraph.buddyBotHost
+                buddyBot.ensureDeviceRegistered()
+                val device = ManualDependencyGraph.deviceRegistry.getDevice(buddyBot.deviceId)
+                if (device?.autoConnect == true) {
+                    buddyBot.connect()
+                }
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Throwable) {
+                android.util.Log.e("MainActivity", "BuddyBot connection failed", error)
             }
         }
     }
@@ -211,7 +260,7 @@ class MainActivity : ComponentActivity() {
         connectivityJob?.cancel()
         hostConnectJob?.cancel()
         buddyBotConnectJob?.cancel()
-        lifecycleScope.launch { runtime.stop() }
+        lifecycleScope.launch(Dispatchers.IO) { runtime.stop() }
         super.onDestroy()
     }
 }
