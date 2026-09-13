@@ -166,7 +166,6 @@ object ManualDependencyGraph {
     }
     val devicesViewModel by lazy {
         android.util.Log.d("ManualDependencyGraph", "Creating DevicesViewModel")
-        buddyBotHost.ensureDeviceRegistered()
         DevicesViewModel(deviceRegistry, deviceSessionManager, eventBus, runtimeSnapshotManager, heyCyanDriver, buddyBotHost)
     }
     val protocolLabViewModel by lazy {
