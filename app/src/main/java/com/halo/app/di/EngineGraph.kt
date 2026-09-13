@@ -27,11 +27,6 @@ import com.halo.runtime.speech.SpeechPerceptionBridge
 import com.halo.runtime.speech.SpeechSessionManager
 import com.halo.drivers.heycyan.capability.CapabilityRequest
 import com.halo.drivers.heycyan.capability.HeyCyanCapabilityIds
-import com.halo.engines.speech.ListeningStarted
-import com.halo.providers.llamacpp.NativeLlamaProvider
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
 
 /**
  * Owns all cognitive engines: interpretation, reasoning, planning, execution, reflection.
@@ -44,32 +39,11 @@ class EngineGraph(
     private val deviceSessionManager: com.halo.sdk.runtime.embodiment.DeviceSessionManager,
     private val heyCyanDriver: com.halo.drivers.heycyan.RealHeyCyanDriver
 ) {
-    init {
-        // Hide local-model load latency behind the listening phase. Do not use
-        // collectLatest here: a second listening session must never cancel a
-        // model load that is already warming up, otherwise repeated wake/listen
-        // cycles can turn one load into an unload/reload loop.
-        val localProvider = providerGraph.providers.inference as? NativeLlamaProvider
-        if (localProvider != null) {
-            var warmupJob: Job? = null
-            infra.scope.launch {
-                infra.eventBus.observe(ListeningStarted::class.java).collect {
-                    if (aiProviderRouter.selectedProviderId.value != localProvider.id) return@collect
-                    if (warmupJob?.isActive == true) return@collect
-
-                    warmupJob = launch {
-                        runCatching { localProvider.loadModelIfNeeded() }
-                            .onFailure { error ->
-                                infra.logger.warn(
-                                    category = "ai",
-                                    message = "Local model warm-up failed: ${error.message ?: error::class.simpleName}"
-                                )
-                            }
-                    }
-                }
-            }
-        }
-    }
+    // Intentionally do not warm a multi-GB local model from a listening event.
+    // Listening is a latency-sensitive runtime path, while native GGUF loading can
+    // require several GB of additional native memory and can trigger process death
+    // before Java can report an OutOfMemoryError. NativeLlamaProvider remains
+    // responsible for the explicit, serialized load path and its RAM admission gate.
 
     val goalManager by lazy { GoalManager() }
 
