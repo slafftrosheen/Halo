@@ -195,15 +195,16 @@ object ManualDependencyGraph {
     val runtimeSnapshotManager get() = observerGraph.runtimeSnapshotManager
 
     val androidSpeaker by lazy {
-        com.halo.host.android.audio.AndroidSpeaker(applicationContext, infra.eventBus).apply {
-            start()
-        }
+        com.halo.host.android.audio.AndroidSpeaker(applicationContext, infra.eventBus)
     }
 
     // ─── Kernel ─────────────────────────────────────────────────
 
+    /**
+     * Construction is intentionally side-effect free. Runtime-owned services are
+     * started by HaloRuntime.start() and stopped by HaloRuntime.stop().
+     */
     val microkernel by lazy {
-        androidSpeaker
         processManager.register(androidWakeWordProcess)
         processManager.register(workingMemoryProcess)
         processManager.register(
@@ -215,10 +216,6 @@ object ManualDependencyGraph {
         processManager.register(
             com.halo.engines.agents.ReasoningServiceProcess(perceptionBus, cognitiveBus, aiProviderRouter)
         )
-
-        speechSessionManager.start()
-        speechPerceptionBridge.start()
-        runtimeReplayRecorder.startRecording()
 
         HaloMicrokernel(
             infra.scope,
