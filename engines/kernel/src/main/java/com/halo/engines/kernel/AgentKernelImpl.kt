@@ -8,13 +8,14 @@ import com.halo.runtime.kernel.service.*
 import com.halo.runtime.kernel.AgentContext
 import com.halo.runtime.cognition.AttentionState
 import com.halo.runtime.cognition.DeviceState
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.isActive
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 class AgentKernelImpl(
     private val scheduler: AgentScheduler,
@@ -41,6 +42,7 @@ class AgentKernelImpl(
 
     private lateinit var context: EngineContext
     private val scope = CoroutineScope(Dispatchers.Default)
+    private var kernelJob: Job? = null
 
     override suspend fun initialize(context: EngineContext) {
         this.context = context
@@ -48,17 +50,16 @@ class AgentKernelImpl(
     }
 
     override suspend fun start() {
+        if (kernelJob?.isActive == true) return
+
         _state.value = EngineState.Running
-        
-        // Kernel Loop
-        scope.launch {
+        kernelJob = scope.launch {
             while (isActive) {
                 val agent = scheduler.getNext()
                 if (agent != null) {
                     val budget = budgetManager.getBudget(agent.id)
                     if (budget != null && budget.tokensRemaining > 0) {
                         try {
-                            // Construct Agent Context
                             val agentContext = AgentContext(
                                 relevantMemories = emptyList(),
                                 relevantGoals = emptyList(),
@@ -68,26 +69,25 @@ class AgentKernelImpl(
                                 budget = budget,
                                 worldState = DeviceState(emptyMap())
                             )
-                            
-                            // Execute Agent Cycle
+
                             agent.perceive(agentContext)
                             agent.think(agentContext)
                             agent.plan(agentContext)
                             agent.execute(agentContext)
-                            
                         } catch (e: Exception) {
-                            // Kernel survives agent crash
-                            // Restart agent or backoff
+                            // Kernel survives agent crash.
                         }
                     }
                 } else {
-                    delay(10) // Idle wait
+                    delay(10)
                 }
             }
         }
     }
 
     override suspend fun stop() {
+        kernelJob?.cancel()
+        kernelJob = null
         _state.value = EngineState.Stopped
     }
 }
