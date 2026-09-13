@@ -8,12 +8,15 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import com.halo.app.di.ManualDependencyGraph
@@ -27,8 +30,10 @@ import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
     private var hasRequiredPermissions by mutableStateOf(false)
+    private var uiGraphReady by mutableStateOf(false)
     private lateinit var runtime: HaloRuntime
     private var runtimeLoopStarted = false
+    private var uiGraphJob: Job? = null
     private var connectivityJob: Job? = null
     private var hostConnectJob: Job? = null
     private var buddyBotConnectJob: Job? = null
@@ -37,7 +42,10 @@ class MainActivity : ComponentActivity() {
         ActivityResultContracts.RequestMultiplePermissions()
     ) {
         hasRequiredPermissions = areRequiredPermissionsGranted()
-        if (hasRequiredPermissions) startRuntimeLoop()
+        if (hasRequiredPermissions) {
+            startUiGraphBootstrap()
+            startRuntimeLoop()
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,21 +65,48 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    if (hasRequiredPermissions) {
-                        AppShell()
-                    } else {
-                        PermissionsScreen(
+                    when {
+                        !hasRequiredPermissions -> PermissionsScreen(
                             onBack = {},
                             onRequestPermissions = {
                                 permissionLauncher.launch(requiredPermissions())
                             }
                         )
+                        !uiGraphReady -> Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                        else -> AppShell()
                     }
                 }
             }
         }
 
-        if (hasRequiredPermissions) startRuntimeLoop()
+        if (hasRequiredPermissions) {
+            startUiGraphBootstrap()
+            startRuntimeLoop()
+        }
+    }
+
+    private fun startUiGraphBootstrap() {
+        if (uiGraphReady || uiGraphJob?.isActive == true) return
+
+        // Home's ViewModel reaches RuntimeSnapshot/Observer/Engine/Provider graphs.
+        // Materialize that dependency chain on IO so AppShell never triggers it
+        // synchronously from the Compose main thread.
+        uiGraphJob = lifecycleScope.launch(Dispatchers.IO) {
+            runCatching {
+                ManualDependencyGraph.homeViewModel
+            }.onSuccess {
+                withContext(Dispatchers.Main.immediate) {
+                    uiGraphReady = true
+                }
+            }.onFailure {
+                android.util.Log.e("MainActivity", "UI graph bootstrap failed", it)
+            }
+        }
     }
 
     private fun requiredPermissions(): Array<String> = buildList {
@@ -116,9 +151,6 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // Use the same lazily-created host instance as the connectivity observer.
-        // Both jobs are background-only; no BLE/bootstrap construction is allowed
-        // to happen as a side effect of the UI dispatcher.
         hostConnectJob = lifecycleScope.launch(Dispatchers.IO) {
             ManualDependencyGraph.wearableHost.connect()
         }
@@ -134,6 +166,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
+        uiGraphJob?.cancel()
         connectivityJob?.cancel()
         hostConnectJob?.cancel()
         buddyBotConnectJob?.cancel()
