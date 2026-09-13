@@ -26,7 +26,6 @@ import com.halo.app.ui.theme.BrainToolTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
     private var hasRequiredPermissions by mutableStateOf(false)
@@ -100,7 +99,7 @@ class MainActivity : ComponentActivity() {
             runCatching {
                 ManualDependencyGraph.homeViewModel
             }.onSuccess {
-                withContext(Dispatchers.Main.immediate) {
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main.immediate) {
                     uiGraphReady = true
                 }
             }.onFailure {
@@ -141,7 +140,13 @@ class MainActivity : ComponentActivity() {
                 val connected = state is com.halo.sdk.host.ConnectionState.Connected ||
                     state is com.halo.sdk.host.ConnectionState.Ready
                 if (connected && !runtime.isStarted()) {
-                    runtime.start()
+                    // Do not initialize the runtime concurrently with the UI graph.
+                    // The UI graph is the first consumer of the same engine/provider
+                    // dependency chain; let it finish before starting the runtime.
+                    uiGraphJob?.join()
+                    if (!runtime.isStarted()) {
+                        runtime.start()
+                    }
                 }
             }
         }
