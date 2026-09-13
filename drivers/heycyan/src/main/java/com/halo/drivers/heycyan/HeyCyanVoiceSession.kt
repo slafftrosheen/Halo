@@ -21,12 +21,14 @@ import kotlinx.coroutines.launch
  */
 class HeyCyanVoiceSession(
     private val events: Flow<HeyCyanEvent>,
-    private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
+    autoStart: Boolean = true
 ) {
     constructor(
         driver: RealHeyCyanDriver,
-        scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    ) : this(driver.heyCyanEvents, scope)
+        scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
+        autoStart: Boolean = true
+    ) : this(driver.heyCyanEvents, scope, autoStart)
 
     enum class State {
         IDLE,
@@ -40,9 +42,7 @@ class HeyCyanVoiceSession(
     private var observerJob: Job? = null
 
     init {
-        // Preserve the original standalone behaviour for tests and direct users,
-        // while allowing an owning AudioSource to stop and restart the collector.
-        start()
+        if (autoStart) start()
     }
 
     fun start() {
