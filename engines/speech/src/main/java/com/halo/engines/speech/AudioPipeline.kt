@@ -11,6 +11,7 @@ import com.halo.sdk.runtime.SpeechState
 import com.halo.sdk.host.AudioFrame
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,19 +28,30 @@ class AudioPipeline(
     private var buffer = AudioBuffer()
     private val _state = MutableStateFlow<SpeechState>(SpeechState.Idle)
     val state: StateFlow<SpeechState> = _state
+    private var observerJobs: List<Job> = emptyList()
     private var liveListeningJob: Job? = null
 
-    init {
-        scope.launch {
-            eventBus.observe(ListeningStarted::class.java).collect {
-                onListeningStarted()
+    fun start() {
+        if (observerJobs.any { it.isActive }) return
+
+        observerJobs = listOf(
+            scope.launch(start = CoroutineStart.UNDISPATCHED) {
+                eventBus.observe(ListeningStarted::class.java).collect {
+                    onListeningStarted()
+                }
+            },
+            scope.launch(start = CoroutineStart.UNDISPATCHED) {
+                eventBus.observe(SpeechEnded::class.java).collect {
+                    onSpeechEnded()
+                }
             }
-        }
-        scope.launch {
-            eventBus.observe(SpeechEnded::class.java).collect {
-                onSpeechEnded()
-            }
-        }
+        )
+    }
+
+    fun stop() {
+        observerJobs.forEach { it.cancel() }
+        observerJobs = emptyList()
+        reset()
     }
 
     private fun onListeningStarted() {
