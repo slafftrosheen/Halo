@@ -97,7 +97,7 @@ class DeviceSessionManager(
 
     private suspend fun awaitReadyOrTerminal(
         session: EmbodimentSession,
-        timeoutMillis: Long = 15_000L
+        timeoutMillis: Long = 30_000L
     ): Boolean {
         if (session.state.value == SessionState.READY) return true
 
