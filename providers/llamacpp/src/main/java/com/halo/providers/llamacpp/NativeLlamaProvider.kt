@@ -1,5 +1,6 @@
 package com.halo.providers.llamacpp
 
+import android.app.ActivityManager
 import android.content.Context
 import android.net.Uri
 import android.util.Log
@@ -90,7 +91,32 @@ class NativeLlamaProvider(
             return@withLock false
         }
 
-        _status.value = ProviderStatus(ProviderStatus.State.LOADING, "Loading $activeId...")
+        val modelBytes = file.length()
+        val memoryInfo = ActivityManager.MemoryInfo()
+        val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
+        activityManager?.getMemoryInfo(memoryInfo)
+        val totalMemoryBytes = memoryInfo.totalMem
+        val recommendedMaxBytes = if (totalMemoryBytes > 0L) {
+            minOf(
+                (totalMemoryBytes * MODEL_MEMORY_FRACTION).toLong(),
+                (totalMemoryBytes - RESERVED_MEMORY_BYTES).coerceAtLeast(0L)
+            )
+        } else {
+            Long.MAX_VALUE
+        }
+
+        if (modelBytes > recommendedMaxBytes) {
+            val modelMb = modelBytes / BYTES_PER_MB
+            val maxMb = recommendedMaxBytes / BYTES_PER_MB
+            val totalMb = totalMemoryBytes / BYTES_PER_MB
+            val message = "Model $activeId is ${modelMb}MB but this device has ${totalMb}MB RAM; " +
+                "native loading is limited to ${maxMb}MB to avoid process kills. Select a smaller GGUF model."
+            Log.e(TAG, message)
+            _status.value = ProviderStatus(ProviderStatus.State.ERROR, message)
+            return@withLock false
+        }
+
+        _status.value = ProviderStatus.State.LOADING.let { ProviderStatus(it, "Loading $activeId...") }
         releaseCurrentModel()
         return@withLock try {
             val modelUri = Uri.fromFile(file).toString()
@@ -280,8 +306,6 @@ class NativeLlamaProvider(
         }
     }
 
-
-
     fun stream(prompt: String): Flow<String> = flow {
         val transactionId = UUID.randomUUID().toString().take(8)
         inferenceMutex.withLock { streamInternal(prompt, transactionId).collect { emit(it) } }
@@ -399,5 +423,8 @@ class NativeLlamaProvider(
         private const val TAG = "NativeLlamaProvider"
         private const val MODEL_LOAD_TIMEOUT_MS = 120_000L
         private const val GENERATION_TIMEOUT_MS = 180_000L
+        private const val MODEL_MEMORY_FRACTION = 0.55
+        private const val RESERVED_MEMORY_BYTES = 1536L * 1024L * 1024L
+        private const val BYTES_PER_MB = 1024L * 1024L
     }
 }
