@@ -2,8 +2,10 @@ package com.halo.sdk.runtime.embodiment
 
 import com.halo.sdk.runtime.DeviceIdentity
 import com.halo.sdk.runtime.Storage
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import java.nio.charset.StandardCharsets
 
 /**
@@ -11,6 +13,10 @@ import java.nio.charset.StandardCharsets
  *
  * Device identity and user preferences remain independent from any physical host.
  * Android-specific persistence stays outside the runtime module through [Storage].
+ *
+ * Storage is a blocking abstraction, so every persistence operation is explicitly
+ * dispatched to [Dispatchers.IO]. Callers may safely invoke these suspend methods
+ * from UI-scoped coroutines without accidentally performing disk I/O on Main.
  */
 class PersistentDeviceRegistry(
     private val storage: Storage,
@@ -29,34 +35,45 @@ class PersistentDeviceRegistry(
         const val INDEX_SEPARATOR = "|"
     }
 
-    override suspend fun getSavedDevices(): List<DeviceRecord> = mutex.withLock {
-        readIds().mapNotNull(::readRecord)
+    override suspend fun getSavedDevices(): List<DeviceRecord> = withContext(Dispatchers.IO) {
+        mutex.withLock {
+            readIds().mapNotNull(::readRecord)
+        }
     }
 
-    override suspend fun getDevice(deviceId: String): DeviceRecord? = mutex.withLock {
-        readRecord(deviceId)
+    override suspend fun getDevice(deviceId: String): DeviceRecord? = withContext(Dispatchers.IO) {
+        mutex.withLock {
+            readRecord(deviceId)
+        }
     }
 
-    override suspend fun saveDevice(record: DeviceRecord) = mutex.withLock {
-        val ids = readIds().toMutableSet()
-        ids += record.identity.deviceId
-        writeIds(ids)
-        writeRecord(record)
+    override suspend fun saveDevice(record: DeviceRecord) = withContext(Dispatchers.IO) {
+        mutex.withLock {
+            val ids = readIds().toMutableSet()
+            ids += record.identity.deviceId
+            writeIds(ids)
+            writeRecord(record)
+        }
     }
 
-    override suspend fun removeDevice(deviceId: String) = mutex.withLock {
-        val ids = readIds().toMutableSet()
-        ids -= deviceId
-        writeIds(ids)
-        removeRecord(deviceId)
+    override suspend fun removeDevice(deviceId: String) = withContext(Dispatchers.IO) {
+        mutex.withLock {
+            val ids = readIds().toMutableSet()
+            ids -= deviceId
+            writeIds(ids)
+            removeRecord(deviceId)
+        }
     }
 
-    suspend fun setAutoConnect(deviceId: String, enabled: Boolean): DeviceRecord? = mutex.withLock {
-        val current = readRecord(deviceId) ?: return@withLock null
-        val updated = current.copy(autoConnect = enabled)
-        writeRecord(updated)
-        updated
-    }
+    suspend fun setAutoConnect(deviceId: String, enabled: Boolean): DeviceRecord? =
+        withContext(Dispatchers.IO) {
+            mutex.withLock {
+                val current = readRecord(deviceId) ?: return@withLock null
+                val updated = current.copy(autoConnect = enabled)
+                writeRecord(updated)
+                updated
+            }
+        }
 
     private fun readIds(): List<String> {
         return storage.getString(INDEX_KEY, "")
