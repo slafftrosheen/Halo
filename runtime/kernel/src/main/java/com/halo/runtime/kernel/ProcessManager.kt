@@ -28,6 +28,7 @@ class ProcessManager(
     val processes: List<Process> get() = _processes.value
 
     private val processJobs = ConcurrentHashMap<String, Job>()
+    private val startupAttempted = ConcurrentHashMap.newKeySet<String>()
 
     fun register(process: Process) {
         require(_processes.value.none { it.id == process.id }) {
@@ -37,16 +38,18 @@ class ProcessManager(
     }
 
     suspend fun startAll() {
+        startupAttempted.clear()
         try {
             _processes.value.forEach { process ->
+                startupAttempted += process.id
                 val job = startProcessWithRecovery(process)
                 awaitRunning(process, job)
             }
         } catch (error: Throwable) {
-            // A later process can fail after earlier processes are already Running.
-            // Do not leave a partially booted kernel alive when HaloRuntime.start()
-            // aborts before HaloMicrokernel.boot() completes.
-            runCatching { stopAll() }
+            // Only stop processes that this boot attempt actually touched. Calling
+            // stop() on every registered process can create unnecessary side effects
+            // for processes that have not been initialized yet.
+            runCatching { stopStartedProcesses() }
                 .onFailure {
                     logger.error(
                         "ProcessManager",
@@ -116,7 +119,15 @@ class ProcessManager(
     }
 
     suspend fun stopAll() {
+        stopStartedProcesses()
+        startupAttempted.clear()
+    }
+
+    private suspend fun stopStartedProcesses() {
+        val attemptedIds = startupAttempted.toSet()
         val snapshot = _processes.value
+            .filter { it.id in attemptedIds }
+
         snapshot.forEach { process ->
             runCatching { process.stop() }
                 .onFailure { logger.error("ProcessManager", "Failed to stop ${process.id}", it) }
