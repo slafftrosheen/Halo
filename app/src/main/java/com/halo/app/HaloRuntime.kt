@@ -46,20 +46,17 @@ class HaloRuntime(
         var speechSessionStarted = false
         var speechBridgeStarted = false
         var replayRecordingStarted = false
+        var androidSpeakerStarted = false
         var kernelBooted = false
 
         try {
             /*
              * Cognitive engines
              */
-            graph.interpretationEngine.initialize(
-                graph.engineContext
-            )
+            graph.interpretationEngine.initialize(graph.engineContext)
             interpretationInitialized = true
 
-            graph.reasoningEngine.initialize(
-                graph.engineContext
-            )
+            graph.reasoningEngine.initialize(graph.engineContext)
             reasoningInitialized = true
 
             checkHostStillConnected()
@@ -87,9 +84,7 @@ class HaloRuntime(
             /*
              * Audio perception
              */
-            graph.audioPerceptionEngine.initialize(
-                graph.engineContext
-            )
+            graph.audioPerceptionEngine.initialize(graph.engineContext)
             audioInitialized = true
 
             checkHostStillConnected()
@@ -99,8 +94,6 @@ class HaloRuntime(
 
             /*
              * Runtime-owned speech/replay services.
-             * These used to be hidden inside lazy microkernel construction,
-             * which made graph materialization perform runtime startup as a side effect.
              */
             graph.speechSessionManager.start()
             speechSessionStarted = true
@@ -110,6 +103,13 @@ class HaloRuntime(
 
             graph.runtimeReplayRecorder.startRecording()
             replayRecordingStarted = true
+
+            /*
+             * Android TTS is a runtime service. Start it explicitly rather than
+             * allowing lazy graph construction to initialize TextToSpeech.
+             */
+            graph.startAndroidSpeaker()
+            androidSpeakerStarted = true
 
             /*
              * Kernel
@@ -134,6 +134,7 @@ class HaloRuntime(
                     speechSessionStarted = speechSessionStarted,
                     speechBridgeStarted = speechBridgeStarted,
                     replayRecordingStarted = replayRecordingStarted,
+                    androidSpeakerStarted = androidSpeakerStarted,
                     kernelBooted = kernelBooted
                 )
             }
@@ -161,6 +162,7 @@ class HaloRuntime(
                 speechSessionStarted = true,
                 speechBridgeStarted = true,
                 replayRecordingStarted = true,
+                androidSpeakerStarted = true,
                 kernelBooted = true
             )
 
@@ -195,6 +197,7 @@ class HaloRuntime(
         speechSessionStarted: Boolean,
         speechBridgeStarted: Boolean,
         replayRecordingStarted: Boolean,
+        androidSpeakerStarted: Boolean,
         kernelBooted: Boolean
     ) {
         /*
@@ -203,6 +206,10 @@ class HaloRuntime(
          */
         if (kernelBooted) {
             runCatching { graph.microkernel.shutdown() }
+        }
+
+        if (androidSpeakerStarted) {
+            runCatching { graph.androidSpeaker.shutdown() }
         }
 
         if (replayRecordingStarted) {
