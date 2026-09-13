@@ -37,9 +37,24 @@ class ProcessManager(
     }
 
     suspend fun startAll() {
-        _processes.value.forEach { process ->
-            val job = startProcessWithRecovery(process)
-            awaitRunning(process, job)
+        try {
+            _processes.value.forEach { process ->
+                val job = startProcessWithRecovery(process)
+                awaitRunning(process, job)
+            }
+        } catch (error: Throwable) {
+            // A later process can fail after earlier processes are already Running.
+            // Do not leave a partially booted kernel alive when HaloRuntime.start()
+            // aborts before HaloMicrokernel.boot() completes.
+            runCatching { stopAll() }
+                .onFailure {
+                    logger.error(
+                        "ProcessManager",
+                        "Failed to clean up after process startup failure",
+                        it
+                    )
+                }
+            throw error
         }
     }
 
