@@ -43,6 +43,9 @@ class HaloRuntime(
         var executionStarted = false
         var audioInitialized = false
         var audioStarted = false
+        var speechSessionStarted = false
+        var speechBridgeStarted = false
+        var replayRecordingStarted = false
         var kernelBooted = false
 
         try {
@@ -95,6 +98,20 @@ class HaloRuntime(
             audioStarted = true
 
             /*
+             * Runtime-owned speech/replay services.
+             * These used to be hidden inside lazy microkernel construction,
+             * which made graph materialization perform runtime startup as a side effect.
+             */
+            graph.speechSessionManager.start()
+            speechSessionStarted = true
+
+            graph.speechPerceptionBridge.start()
+            speechBridgeStarted = true
+
+            graph.runtimeReplayRecorder.startRecording()
+            replayRecordingStarted = true
+
+            /*
              * Kernel
              */
             graph.microkernel.boot()
@@ -114,6 +131,9 @@ class HaloRuntime(
                     reasoningInitialized = reasoningInitialized,
                     interpretationStarted = interpretationStarted,
                     interpretationInitialized = interpretationInitialized,
+                    speechSessionStarted = speechSessionStarted,
+                    speechBridgeStarted = speechBridgeStarted,
+                    replayRecordingStarted = replayRecordingStarted,
                     kernelBooted = kernelBooted
                 )
             }
@@ -138,6 +158,9 @@ class HaloRuntime(
                 reasoningInitialized = true,
                 interpretationStarted = true,
                 interpretationInitialized = true,
+                speechSessionStarted = true,
+                speechBridgeStarted = true,
+                replayRecordingStarted = true,
                 kernelBooted = true
             )
 
@@ -169,6 +192,9 @@ class HaloRuntime(
         reasoningInitialized: Boolean,
         interpretationStarted: Boolean,
         interpretationInitialized: Boolean,
+        speechSessionStarted: Boolean,
+        speechBridgeStarted: Boolean,
+        replayRecordingStarted: Boolean,
         kernelBooted: Boolean
     ) {
         /*
@@ -177,6 +203,18 @@ class HaloRuntime(
          */
         if (kernelBooted) {
             runCatching { graph.microkernel.shutdown() }
+        }
+
+        if (replayRecordingStarted) {
+            runCatching { graph.runtimeReplayRecorder.stopRecording() }
+        }
+
+        if (speechBridgeStarted) {
+            runCatching { graph.speechPerceptionBridge.stop() }
+        }
+
+        if (speechSessionStarted) {
+            runCatching { graph.speechSessionManager.stop() }
         }
 
         if (audioStarted) {
