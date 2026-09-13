@@ -42,7 +42,8 @@ class DefaultAiProviderRouter(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var pollingJob: Job? = null
 
-    private val _selectedProviderId = MutableStateFlow<String?>(inferenceProviders.firstOrNull()?.id)
+    /* Null is intentional until persisted routing state has been restored. */
+    private val _selectedProviderId = MutableStateFlow<String?>(null)
     override val selectedProviderId: StateFlow<String?> = _selectedProviderId.asStateFlow()
 
     private val _selectedModelId = MutableStateFlow<String?>(null)
@@ -56,8 +57,8 @@ class DefaultAiProviderRouter(
                 state = ProviderStatus.State.LOADING,
                 message = null,
                 capabilities = emptySet(),
-                selected = provider.id == (_selectedProviderId.value),
-                selectedModelId = if (provider.id == _selectedProviderId.value) _selectedModelId.value else null,
+                selected = false,
+                selectedModelId = null,
                 local = provider.isLocal
             )
         }
@@ -76,15 +77,17 @@ class DefaultAiProviderRouter(
     private fun restoreStoredRoutingState() {
         val storedProvider = storage.getString("active_ai_provider")
             ?.takeIf { id -> allProviders.any { it.id == id } }
-        if (storedProvider != null) {
-            _selectedProviderId.value = storedProvider
-        }
+        val restoredProvider = storedProvider ?: inferenceProviders.firstOrNull()?.id
+
         _selectedModelId.value = storage.getString("active_ai_model")
             ?.trim()
             ?.ifBlank { null }
         _routingPolicy.value = storage.getString("ai_routing_policy")?.let {
             runCatching { enumValueOf<AiRoutingPolicy>(it) }.getOrDefault(AiRoutingPolicy.AUTOMATIC)
         } ?: AiRoutingPolicy.AUTOMATIC
+
+        /* Publish the provider only after model + policy restoration is complete. */
+        _selectedProviderId.value = restoredProvider
     }
 
     override fun start() {
