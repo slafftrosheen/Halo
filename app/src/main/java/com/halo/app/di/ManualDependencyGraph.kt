@@ -203,10 +203,12 @@ object ManualDependencyGraph {
     // ─── Kernel ─────────────────────────────────────────────────
 
     /**
-     * Construction is intentionally side-effect free. Runtime-owned speech and
-     * replay services are started by HaloRuntime.start().
+     * Kernel construction is deferred until runtime startup. The kernel no longer
+     * starts speech/replay services as an incidental side effect of construction.
      */
     val microkernel by lazy {
+        androidSpeaker
+
         processManager.register(androidWakeWordProcess)
         processManager.register(workingMemoryProcess)
         processManager.register(
