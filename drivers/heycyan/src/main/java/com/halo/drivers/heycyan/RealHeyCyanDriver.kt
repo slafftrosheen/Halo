@@ -83,6 +83,19 @@ class RealHeyCyanDriver(
             android.util.Log.i("RealHeyCyanDriver", "Starting GATT connection (with settling delay)...")
             kotlinx.coroutines.delay(1000L)
             val firstAttemptReady = try { gattClient.connect(selectedAddress); gattClient.awaitReady(); true } catch (error: CancellationException) { throw error } catch (error: Throwable) { android.util.Log.w("RealHeyCyanDriver", "GATT connection failed (attempt 1)", error); false }
+            if (!firstAttemptReady) {
+                // A timeout can leave Android's Bluetooth stack holding the previous GATT object.
+                // Do not start scanning/reconnect until that generation has reached a terminal
+                // state and the client has either observed disconnect or force-closed it.
+                android.util.Log.i("RealHeyCyanDriver", "Waiting for GATT attempt 1 teardown before fallback...")
+                runCatching {
+                    gattClient.disconnect()
+                    gattClient.awaitDisconnected()
+                }.onFailure { teardownError ->
+                    android.util.Log.w("RealHeyCyanDriver", "GATT attempt 1 teardown barrier failed", teardownError)
+                }
+                android.util.Log.i("RealHeyCyanDriver", "GATT attempt 1 teardown barrier complete; proceeding to fallback")
+            }
             android.util.Log.i("RealHeyCyanDriver", "Transport status: GATT=$firstAttemptReady")
             val gattReady = if (firstAttemptReady) true else {
                 android.util.Log.i("RealHeyCyanDriver", "GATT direct connect failed, executing scan fallback for $selectedAddress...")
@@ -141,7 +154,7 @@ class RealHeyCyanDriver(
             is HeyCyanEvent.VoiceActivationEnded -> { emitDeviceEvent(event); val deviceId = currentObservationDeviceId() ?: return; eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(observation = com.halo.sdk.runtime.Observation(modality = com.halo.sdk.runtime.Modality.AUDIO, source = com.halo.sdk.runtime.Source.MICROPHONE, payload = com.halo.sdk.runtime.SystemObservationPayload("MICROPHONE_INACTIVE"), sourceDeviceId = deviceId, metadata = mapOf("event" to "MICROPHONE_INACTIVE"))) }
             is HeyCyanEvent.VoicePlaybackPause -> { emitDeviceEvent(event); val deviceId = currentObservationDeviceId() ?: return; eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(observation = com.halo.sdk.runtime.Observation(modality = com.halo.sdk.runtime.Modality.SYSTEM, source = com.halo.sdk.runtime.Source.BLUETOOTH, payload = com.halo.sdk.runtime.SystemObservationPayload("VOICE_PLAYBACK_PAUSE"), sourceDeviceId = deviceId, metadata = mapOf("event" to "VOICE_PLAYBACK_PAUSE"))) }
             is HeyCyanEvent.ModeChanged -> { emitDeviceEvent(event); val deviceId = currentObservationDeviceId() ?: return; eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(observation = com.halo.sdk.runtime.Observation(modality = com.halo.sdk.runtime.Modality.SYSTEM, source = com.halo.sdk.runtime.Source.BLUETOOTH, payload = com.halo.sdk.runtime.SystemObservationPayload("MODE_CHANGED"), sourceDeviceId = deviceId, metadata = mapOf("event" to "MODE_CHANGED", "mode" to event.mode))) }
-            is HeyCyanEvent.MemoryInsufficient -> { emitDeviceEvent(event); val deviceId = currentObservationDeviceId() ?: return; eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(observation = com.halo.sdk.runtime.Observation(modality = com.halo.sdk.runtime.Modality.SYSTEM, source = com.halo.sdk.runtime.Source.BLUETOOTH, payload = com.halo.sdk.runtime.SystemObservationPayload("MEMORY_INSUFFICIENT"), sourceDeviceId = deviceId, metadata = mapOf("fault" to "MEMORY_INSUFFICIENT"))) }
+            is HeyCyanEvent.MemoryInsufficient -> { emitDeviceEvent(event); val deviceId = currentObservationDeviceId() ?: return; eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(observation = com.halo.sdk.runtime.Observation(modality = com.halo.sdk.runtime.Modality.SYSTEM, source = com.halo.sdk.runtime.Modality.SYSTEM.let { com.halo.sdk.runtime.Source.BLUETOOTH }, payload = com.halo.sdk.runtime.SystemObservationPayload("MEMORY_INSUFFICIENT"), sourceDeviceId = deviceId, metadata = mapOf("fault" to "MEMORY_INSUFFICIENT"))) }
             else -> emitDeviceEvent(event)
         }
     }
