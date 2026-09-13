@@ -23,9 +23,11 @@ import com.halo.app.di.ManualDependencyGraph
 import com.halo.app.ui.shell.AppShell
 import com.halo.app.ui.shell.PermissionsScreen
 import com.halo.app.ui.theme.BrainToolTheme
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
     private var hasRequiredPermissions by mutableStateOf(false)
@@ -96,14 +98,15 @@ class MainActivity : ComponentActivity() {
         // Materialize that dependency chain on IO so AppShell never triggers it
         // synchronously from the Compose main thread.
         uiGraphJob = lifecycleScope.launch(Dispatchers.IO) {
-            runCatching {
+            try {
                 ManualDependencyGraph.homeViewModel
-            }.onSuccess {
-                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main.immediate) {
+                withContext(Dispatchers.Main.immediate) {
                     uiGraphReady = true
                 }
-            }.onFailure {
-                android.util.Log.e("MainActivity", "UI graph bootstrap failed", it)
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Throwable) {
+                android.util.Log.e("MainActivity", "UI graph bootstrap failed", error)
             }
         }
     }
