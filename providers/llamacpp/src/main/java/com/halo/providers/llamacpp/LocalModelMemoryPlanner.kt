@@ -8,7 +8,6 @@ package com.halo.providers.llamacpp
  */
 internal object LocalModelMemoryPlanner {
     private const val BYTES_PER_MB = 1024L * 1024L
-    private const val BYTES_PER_GB = 1024L * BYTES_PER_MB
 
     /** Extra native/process headroom kept outside the model estimate. */
     const val PROCESS_RESERVE_BYTES = 1536L * BYTES_PER_MB
