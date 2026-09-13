@@ -20,11 +20,17 @@ import com.halo.app.di.ManualDependencyGraph
 import com.halo.app.ui.shell.AppShell
 import com.halo.app.ui.shell.PermissionsScreen
 import com.halo.app.ui.theme.BrainToolTheme
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private var hasRequiredPermissions by mutableStateOf(false)
     private lateinit var runtime: HaloRuntime
+    private var runtimeLoopStarted = false
+    private var connectivityJob: Job? = null
+    private var hostConnectJob: Job? = null
+    private var buddyBotConnectJob: Job? = null
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -41,8 +47,9 @@ class MainActivity : ComponentActivity() {
         runtime = HaloRuntime(ManualDependencyGraph)
         hasRequiredPermissions = areRequiredPermissionsGranted()
 
-        if (hasRequiredPermissions) startRuntimeLoop()
-
+        // Compose the first frame before constructing hosts/providers or starting
+        // device auto-connect. The startup logs showed BLE/bootstrap work competing
+        // with first composition and causing triple-digit skipped-frame bursts.
         setContent {
             BrainToolTheme {
                 Surface(
@@ -52,7 +59,6 @@ class MainActivity : ComponentActivity() {
                     if (hasRequiredPermissions) {
                         AppShell()
                     } else {
-                        // One canonical permission surface is used for onboarding.
                         PermissionsScreen(
                             onBack = {},
                             onRequestPermissions = {
@@ -63,6 +69,8 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+
+        if (hasRequiredPermissions) startRuntimeLoop()
     }
 
     private fun requiredPermissions(): Array<String> = buildList {
@@ -84,7 +92,10 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun startRuntimeLoop() {
-        lifecycleScope.launch {
+        if (runtimeLoopStarted) return
+        runtimeLoopStarted = true
+
+        connectivityJob = lifecycleScope.launch {
             val host = ManualDependencyGraph.wearableHost
             host.connectivity.collect { state ->
                 val connected = state is com.halo.sdk.host.ConnectionState.Connected ||
@@ -95,11 +106,13 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        lifecycleScope.launch {
+        // Transport bootstrap performs persistence, BLE setup and potential retry
+        // scans. Keep that work off the UI dispatcher.
+        hostConnectJob = lifecycleScope.launch(Dispatchers.IO) {
             ManualDependencyGraph.wearableHost.connect()
         }
 
-        lifecycleScope.launch {
+        buddyBotConnectJob = lifecycleScope.launch(Dispatchers.IO) {
             val buddyBot = ManualDependencyGraph.buddyBotHost
             buddyBot.ensureDeviceRegistered()
             val device = ManualDependencyGraph.deviceRegistry.getDevice(buddyBot.deviceId)
@@ -110,6 +123,9 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
+        connectivityJob?.cancel()
+        hostConnectJob?.cancel()
+        buddyBotConnectJob?.cancel()
         lifecycleScope.launch { runtime.stop() }
         super.onDestroy()
     }

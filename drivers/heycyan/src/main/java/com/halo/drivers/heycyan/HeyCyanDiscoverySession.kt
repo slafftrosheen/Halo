@@ -1,6 +1,5 @@
 package com.halo.drivers.heycyan
 
-import android.content.Context
 import com.halo.drivers.heycyan.ble.DiscoveredBleDevice
 import com.halo.sdk.driver.DriverState
 import kotlinx.coroutines.flow.Flow
@@ -14,10 +13,13 @@ import kotlinx.coroutines.flow.collect
  *
  * Discovery observes advertisements, while connection always requires an
  * explicitly selected address. No protocol commands are exposed here.
+ *
+ * The driver is injected deliberately: creating a driver as a constructor
+ * default would create a second GATT owner whenever this session is created
+ * alongside the application HostGraph.
  */
 class HeyCyanDiscoverySession(
-    context: Context,
-    private val driver: RealHeyCyanDriver = RealHeyCyanDriver(context)
+    private val driver: RealHeyCyanDriver
 ) {
     private val _selected = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
     private var selectedDevice: DiscoveredBleDevice? = null

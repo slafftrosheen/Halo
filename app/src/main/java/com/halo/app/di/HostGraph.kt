@@ -5,6 +5,10 @@ import com.halo.drivers.heycyan.RealHeyCyanDriver
 /**
  * Owns the WearableHost, physical driver, audio pipeline, and audio perception
  * chain for the current host instance.
+ *
+ * The physical driver has exactly one owner in the composition root. Every
+ * consumer (WearableHost, capability bridge, device UI and protocol tooling)
+ * receives this same instance so transport state cannot diverge.
  */
 class HostGraph(
     private val context: android.content.Context,
@@ -22,18 +26,14 @@ class HostGraph(
         HostFactory(
             context = context,
             storage = storage,
-            heyCyanDriver = heyCyanDriver
+            heyCyanDriver = heyCyanDriver,
+            sessionManager = ManualDependencyGraph.deviceSessionManager,
+            eventBus = infra.eventBus
         )
     }
 
     val wearableHost: com.halo.sdk.host.WearableHost by lazy {
-        HostFactory.create(
-            type = HostType.HEYCYAN, 
-            context = context, 
-            storage = storage,
-            sessionManager = ManualDependencyGraph.deviceSessionManager,
-            eventBus = infra.eventBus
-        )
+        hostFactory.create(HostType.HEYCYAN)
     }
 
     val audioPipeline by lazy {

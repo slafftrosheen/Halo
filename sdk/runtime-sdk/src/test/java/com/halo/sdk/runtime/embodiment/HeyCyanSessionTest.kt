@@ -44,6 +44,34 @@ class HeyCyanSessionTest {
     }
 
     @Test
+    fun disconnectDuringInitialSyncDoesNotReturnToReady() = runTest {
+        val session = HeyCyanSession(identity, controller, transport, eventBus, coroutineContext = UnconfinedTestDispatcher(testScheduler))
+
+        transport.emitState(TransportConnectionState.CONNECTED)
+        testScheduler.advanceTimeBy(100)
+        transport.emitState(TransportConnectionState.DISCONNECTED)
+        advanceUntilIdle()
+
+        assertEquals(SessionState.DISCONNECTED, session.state.value)
+    }
+
+    @Test
+    fun repeatedConnectCallsDoNotReconnectAnActiveSession() = runTest {
+        val session = HeyCyanSession(identity, controller, transport, eventBus, coroutineContext = UnconfinedTestDispatcher(testScheduler))
+
+        transport.emitState(TransportConnectionState.CONNECTED)
+        advanceUntilIdle()
+        assertEquals(SessionState.READY, session.state.value)
+
+        session.connect()
+        session.connect()
+        advanceUntilIdle()
+
+        assertEquals(0, transport.connectCount.get())
+        assertEquals(SessionState.READY, session.state.value)
+    }
+
+    @Test
     fun dispatchMapsIntentsToOperationsAndWaitsForCompletion() = runTest {
         val session = HeyCyanSession(identity, controller, transport, eventBus, coroutineContext = UnconfinedTestDispatcher(testScheduler))
         transport.emitState(TransportConnectionState.CONNECTED)
@@ -57,9 +85,6 @@ class HeyCyanSessionTest {
 
         session.dispatch(intent)
 
-        // The runtime contract is that an observation belongs to the concrete
-        // device identity used by the session. Do not use the old generic
-        // "heycyan" source id here; that would hide a real routing bug.
         eventBus.publish(ObservationUpdated(
             observation = Observation(
                 modality = Modality.SYSTEM,
@@ -91,15 +116,37 @@ class HeyCyanSessionTest {
         )
 
         session.dispatch(intent)
-        advanceUntilIdle()
-
-        testScheduler.advanceTimeBy(11000)
+        testScheduler.advanceTimeBy(30_001)
         advanceUntilIdle()
 
         val failedEvent = eventBus.events.find {
             (it as? EmbodimentExecutionEvent)?.result?.status == ExecutionStatus.FAILED
         } as? EmbodimentExecutionEvent
         assertEquals("intent-timeout", failedEvent?.result?.intentId)
+    }
+
+    @Test
+    fun transportLossFailsPendingDispatchAndDoesNotLeaveSessionReady() = runTest {
+        val session = HeyCyanSession(identity, controller, transport, eventBus, coroutineContext = UnconfinedTestDispatcher(testScheduler))
+        transport.emitState(TransportConnectionState.CONNECTED)
+        advanceUntilIdle()
+
+        val intent = EmbodimentIntent(
+            intentId = "intent-disconnect",
+            kind = IntentKind.CAPTURE_PHOTO,
+            targetDeviceId = "test-id"
+        )
+
+        session.dispatch(intent)
+        transport.emitState(TransportConnectionState.DISCONNECTED)
+        advanceUntilIdle()
+
+        assertEquals(SessionState.DISCONNECTED, session.state.value)
+        val failedEvent = eventBus.events.find {
+            (it as? EmbodimentExecutionEvent)?.result?.intentId == "intent-disconnect" &&
+                (it as? EmbodimentExecutionEvent)?.result?.status == ExecutionStatus.FAILED
+        } as? EmbodimentExecutionEvent
+        assertEquals("DEVICE_DISCONNECTED", failedEvent?.result?.reason)
     }
 
     @Test
@@ -173,7 +220,13 @@ class HeyCyanSessionTest {
     private class FakeTransport : EmbodimentTransport {
         private val _state = MutableStateFlow(TransportConnectionState.DISCONNECTED)
         override val connectionState = _state
-        override suspend fun connect() { _state.value = TransportConnectionState.CONNECTING }
+        val connectCount = AtomicInteger(0)
+
+        override suspend fun connect() {
+            connectCount.incrementAndGet()
+            _state.value = TransportConnectionState.CONNECTING
+        }
+
         override suspend fun disconnect() { _state.value = TransportConnectionState.DISCONNECTED }
         override suspend fun send(message: String): Boolean = true
         override suspend fun send(bytes: ByteArray): Boolean = true

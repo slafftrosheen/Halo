@@ -12,6 +12,9 @@ import com.halo.sdk.runtime.embodiment.DeviceSessionManager
 
 /**
  * Creates host adapters from explicit dependencies.
+ *
+ * This factory never creates or caches physical drivers. Driver lifetime is
+ * owned by the composition root and injected here explicitly.
  */
 class HostFactory(
     private val context: Context,
@@ -31,25 +34,6 @@ class HostFactory(
             )
             HostType.ANDROID -> com.halo.host.android.AndroidHost()
             HostType.REPLAY, HostType.SIMULATOR -> SimulatedWearableHost()
-        }
-    }
-
-    companion object {
-        private var sharedDriver: RealHeyCyanDriver? = null
-
-        fun getHeyCyanDriver(context: Context, eventBus: EventBus? = null): RealHeyCyanDriver {
-            return sharedDriver ?: RealHeyCyanDriver(context, eventBus).also { sharedDriver = it }
-        }
-
-        fun create(
-            type: HostType,
-            context: Context,
-            storage: Storage,
-            sessionManager: DeviceSessionManager? = null,
-            eventBus: EventBus? = null
-        ): WearableHost {
-            val driver = getHeyCyanDriver(context, eventBus)
-            return HostFactory(context, storage, driver, sessionManager, eventBus).create(type)
         }
     }
 }

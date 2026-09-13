@@ -1,6 +1,5 @@
 package com.halo.app.ui.screens.discovery
 
-import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -31,14 +30,15 @@ import com.halo.app.ui.glass.material.HaloGlassMaterials
 import com.halo.app.ui.glass.material.HaloTypography
 import com.halo.drivers.heycyan.HeyCyanDiscoverySession
 import com.halo.drivers.heycyan.CaptureScenario
+import com.halo.drivers.heycyan.RealHeyCyanDriver
 import com.halo.drivers.heycyan.ble.DiscoveredBleDevice
 import com.halo.sdk.driver.DriverState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 @Composable
-fun HeyCyanDiscoveryScreen(context: Context) {
-    val session = remember(context) { HeyCyanDiscoverySession(context) }
+fun HeyCyanDiscoveryScreen(driver: RealHeyCyanDriver) {
+    val session = remember(driver) { HeyCyanDiscoverySession(driver) }
     val scope = rememberCoroutineScope()
     val devices = remember { mutableStateListOf<DiscoveredBleDevice>() }
     val selectedAddress by session.selectedAddress.collectAsState()
@@ -50,7 +50,7 @@ fun HeyCyanDiscoveryScreen(context: Context) {
     DisposableEffect(session) {
         onDispose {
             scanJob?.cancel()
-            scope.launch { session.shutdown() }
+            scope.launch { session.clearSelection() }
         }
     }
 
@@ -145,7 +145,7 @@ fun HeyCyanDiscoveryScreen(context: Context) {
             items(devices, key = { it.advertisement.address }) { device ->
                 val advertisement = device.advertisement
                 val isSelected = selectedAddress == advertisement.address
-                
+
                 HaloGlassCard(
                     onClick = { session.select(device) },
                     modifier = Modifier.fillMaxWidth(),

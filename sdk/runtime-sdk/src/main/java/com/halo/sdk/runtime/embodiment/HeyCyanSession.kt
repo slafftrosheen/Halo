@@ -11,15 +11,16 @@ import com.halo.sdk.runtime.embodiment.heycyan.HeyCyanExecutionResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import com.halo.sdk.runtime.ObservationUpdated
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import java.util.concurrent.ConcurrentHashMap
@@ -40,10 +41,11 @@ class HeyCyanSession(
     override val state: StateFlow<SessionState> = _state.asStateFlow()
     private val sessionScope = CoroutineScope(SupervisorJob() + coroutineContext)
     private val pendingIntents = ConcurrentHashMap<String, Long>()
+    private val dispatchJobs = ConcurrentHashMap<String, Job>()
 
     init {
         sessionScope.launch {
-            transport.connectionState.collect { connState ->
+            transport.connectionState.collectLatest { connState ->
                 when (connState) {
                     TransportConnectionState.CONNECTED -> handleConnected()
                     TransportConnectionState.DISCONNECTED, TransportConnectionState.ERROR -> {
@@ -78,13 +80,23 @@ class HeyCyanSession(
     private suspend fun failPendingIntents(reason: String) {
         val keys = pendingIntents.keys().toList()
         for (intentId in keys) {
-            pendingIntents.remove(intentId)
+            if (!pendingIntents.remove(intentId, pendingIntents[intentId])) continue
+            dispatchJobs.remove(intentId)?.cancel()
             reportResult(intentId, EmbodimentExecutionStatus.FAILED, reason)
         }
     }
 
     override suspend fun connect() {
-        if (_state.value == SessionState.CONNECTING || _state.value == SessionState.READY) return
+        when (_state.value) {
+            SessionState.CONNECTING,
+            SessionState.CONNECTED,
+            SessionState.HANDSHAKE,
+            SessionState.CAPABILITY_SYNC,
+            SessionState.STATE_SYNC,
+            SessionState.READY -> return
+            else -> Unit
+        }
+
         _state.value = SessionState.CONNECTING
         try { transport.connect() } catch (e: CancellationException) {
             _state.value = SessionState.DISCONNECTED
@@ -108,10 +120,8 @@ class HeyCyanSession(
         }
         if (pendingIntents.putIfAbsent(intent.intentId, System.currentTimeMillis()) != null) return
 
-        sessionScope.launch {
-            // Subscribe before sending the physical command. HeyCyan can emit
-            // MODE_CHANGED immediately after the BLE write, so subscribing after
-            // the command creates a real completion race.
+        lateinit var job: Job
+        job = sessionScope.launch {
             val completion = async { waitForCompletionSignal(operation) }
             try {
                 controller.execute(operation).fold(
@@ -142,8 +152,11 @@ class HeyCyanSession(
                 reportResult(intent.intentId, EmbodimentExecutionStatus.FAILED, "Execution failed: ${e.message}")
             } finally {
                 pendingIntents.remove(intent.intentId)
+                dispatchJobs.remove(intent.intentId, job)
             }
         }
+        dispatchJobs[intent.intentId] = job
+        if (job.isCompleted) dispatchJobs.remove(intent.intentId, job)
     }
 
     private suspend fun waitForCompletionSignal(operation: HeyCyanOperation): Boolean {
