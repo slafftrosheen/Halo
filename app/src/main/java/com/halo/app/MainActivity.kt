@@ -23,6 +23,7 @@ import com.halo.app.ui.theme.BrainToolTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
     private var hasRequiredPermissions by mutableStateOf(false)
@@ -95,19 +96,29 @@ class MainActivity : ComponentActivity() {
         if (runtimeLoopStarted) return
         runtimeLoopStarted = true
 
-        connectivityJob = lifecycleScope.launch {
+        // Materialize the composition graph and collect transport state from a
+        // background dispatcher. The previous version touched wearableHost from
+        // the main dispatcher before host.connect() was moved to IO, so the lazy
+        // HostGraph/ProviderGraph construction could still block first startup.
+        connectivityJob = lifecycleScope.launch(Dispatchers.IO) {
             val host = ManualDependencyGraph.wearableHost
+
             host.connectivity.collect { state ->
                 val connected = state is com.halo.sdk.host.ConnectionState.Connected ||
                     state is com.halo.sdk.host.ConnectionState.Ready
                 if (connected && !runtime.isStarted()) {
-                    runtime.start()
+                    withContext(Dispatchers.Main.immediate) {
+                        if (!runtime.isStarted()) {
+                            runtime.start()
+                        }
+                    }
                 }
             }
         }
 
-        // Transport bootstrap performs persistence, BLE setup and potential retry
-        // scans. Keep that work off the UI dispatcher.
+        // Use the same lazily-created host instance as the connectivity observer.
+        // Both jobs are background-only; no BLE/bootstrap construction is allowed
+        // to happen as a side effect of the UI dispatcher.
         hostConnectJob = lifecycleScope.launch(Dispatchers.IO) {
             ManualDependencyGraph.wearableHost.connect()
         }
