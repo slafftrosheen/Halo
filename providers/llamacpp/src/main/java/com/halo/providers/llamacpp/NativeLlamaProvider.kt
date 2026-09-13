@@ -59,7 +59,7 @@ class NativeLlamaProvider(
             engine != null && loadedModelId == activeId -> ProviderStatus.READY
             downloadManager.getModelFile(activeId) != null ->
                 ProviderStatus(ProviderStatus.State.READY, "Model downloaded; ready to load: $activeId")
-            else -> ProviderStatus(ProviderStatus.State.UNAVAILABLE, "Model not downloaded: $activeId")
+            else -> ProviderStatus(State.UNAVAILABLE, "Model not downloaded: $activeId")
         }
         _status.value = current
         return current
@@ -415,7 +415,11 @@ class NativeLlamaProvider(
     }
 
     suspend fun close() {
-        inferenceMutex.withLock { releaseCurrentModel() }
+        modelLoadMutex.withLock {
+            inferenceMutex.withLock {
+                releaseCurrentModel()
+            }
+        }
         scope.coroutineContext[kotlinx.coroutines.Job]?.cancel()
     }
 
