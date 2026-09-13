@@ -1,18 +1,18 @@
 package com.halo.drivers.heycyan
 
-import com.halo.sdk.driver.Driver
+import com.halo.drivers.heycyan.protocol.HeyCyanEvent
 import com.halo.sdk.host.AudioFrame
 import com.halo.sdk.host.AudioSource
 import com.halo.sdk.host.AudioSourceState
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-
-import com.halo.drivers.heycyan.protocol.HeyCyanEvent
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.launch
 
@@ -21,15 +21,18 @@ import kotlinx.coroutines.launch
  *
  * Status: Live BLE Microphone = VERIFIED
  *
- * The HeyCyan smart glasses emit a continuous stream of real-time audio 
+ * The HeyCyan smart glasses emit a continuous stream of real-time audio
  * over BLE via the `BC 59` notification characteristic. The stream contains
  * raw Opus packets.
  *
  * This AudioSource captures the decoded BC59 frames as long as the voice session is active.
  */
 class HeyCyanAudioSource(
-    private val driver: com.halo.drivers.heycyan.RealHeyCyanDriver,
-    private val voiceSession: HeyCyanVoiceSession = HeyCyanVoiceSession(driver)
+    private val driver: RealHeyCyanDriver,
+    private val voiceSession: HeyCyanVoiceSession = HeyCyanVoiceSession(
+        driver = driver,
+        autoStart = false
+    )
 ) : AudioSource {
     private val decoder = com.halo.drivers.heycyan.codec.RawOpusAudioDecoder()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -39,51 +42,71 @@ class HeyCyanAudioSource(
 
     override val frames: Flow<AudioFrame> = decoder.frames
 
+    private var observerJobs: List<Job> = emptyList()
+    private var started = false
     private var sessionPacketCount = 0
     private var sessionStartTime = 0L
 
-    init {
-        scope.launch {
-            voiceSession.state.collect { sessionState ->
-                when (sessionState) {
-                    HeyCyanVoiceSession.State.ACTIVE -> {
-                        _state.value = AudioSourceState.ACTIVE
-                        sessionPacketCount = 0
-                        sessionStartTime = System.currentTimeMillis()
-                        android.util.Log.i("HALO-AUDIO", "[HEY_CYAN] session=STARTED")
-                    }
-                    HeyCyanVoiceSession.State.ENDED -> {
-                        _state.value = AudioSourceState.IDLE
-                        val duration = System.currentTimeMillis() - sessionStartTime
-                        android.util.Log.i("HALO-AUDIO", "[HEY_CYAN] session=ENDED packets=$sessionPacketCount durationMs=$duration")
-                    }
-                    else -> {
-                        _state.value = AudioSourceState.IDLE
-                    }
-                }
-            }
-        }
-
-        scope.launch {
-            driver.heyCyanEvents
-                .filterIsInstance<HeyCyanEvent.RawAudioFrame>()
-                .collect { event ->
-                    // Only process audio frames when the voice session is ACTIVE (BC 73 payload 03 trigger)
-                    if (voiceSession.isActive) {
-                        sessionPacketCount++
-                        decoder.decodePacket(event.payload, System.nanoTime() / 1000)
-                    } else {
-                        android.util.Log.d("HALO-AUDIO", "[HEY_CYAN] Dropping BC59 packet: no active session")
-                    }
-                }
-        }
-    }
-
     override suspend fun start() {
+        if (started) return
+
         decoder.initialize()
+
+        observerJobs = listOf(
+            scope.launch(start = CoroutineStart.UNDISPATCHED) {
+                voiceSession.state.collect { sessionState ->
+                    when (sessionState) {
+                        HeyCyanVoiceSession.State.ACTIVE -> {
+                            _state.value = AudioSourceState.ACTIVE
+                            sessionPacketCount = 0
+                            sessionStartTime = System.currentTimeMillis()
+                            android.util.Log.i("HALO-AUDIO", "[HEY_CYAN] session=STARTED")
+                        }
+                        HeyCyanVoiceSession.State.ENDED -> {
+                            _state.value = AudioSourceState.IDLE
+                            val duration = System.currentTimeMillis() - sessionStartTime
+                            android.util.Log.i(
+                                "HALO-AUDIO",
+                                "[HEY_CYAN] session=ENDED packets=$sessionPacketCount durationMs=$duration"
+                            )
+                        }
+                        else -> {
+                            _state.value = AudioSourceState.IDLE
+                        }
+                    }
+                }
+            },
+            scope.launch(start = CoroutineStart.UNDISPATCHED) {
+                driver.heyCyanEvents
+                    .filterIsInstance<HeyCyanEvent.RawAudioFrame>()
+                    .collect { event ->
+                        // Only process audio frames when the voice session is ACTIVE
+                        // (BC 73 payload 03 trigger).
+                        if (voiceSession.isActive) {
+                            sessionPacketCount++
+                            decoder.decodePacket(event.payload, System.nanoTime() / 1000)
+                        } else {
+                            android.util.Log.d(
+                                "HALO-AUDIO",
+                                "[HEY_CYAN] Dropping BC59 packet: no active session"
+                            )
+                        }
+                    }
+            }
+        )
+
+        voiceSession.start()
+        started = true
     }
 
     override suspend fun stop() {
+        if (!started && observerJobs.isEmpty()) return
+
+        started = false
+        voiceSession.stop()
+        observerJobs.forEach { it.cancel() }
+        observerJobs = emptyList()
+        _state.value = AudioSourceState.IDLE
         decoder.release()
     }
 }

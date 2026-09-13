@@ -3,6 +3,7 @@ package com.halo.runtime.speech
 import com.halo.engines.speech.SpeechRecognizedPayload
 import com.halo.sdk.runtime.*
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.util.UUID
 
@@ -13,11 +14,15 @@ class SpeechPerceptionBridge(
     private val eventBus: EventBus,
     private val scope: CoroutineScope
 ) {
+    private var bridgeJob: Job? = null
+
     fun start() {
-        scope.launch {
+        if (bridgeJob?.isActive == true) return
+
+        bridgeJob = scope.launch {
             eventBus.observe(SpeechRecognized::class.java).collect { event ->
                 val observationId = UUID.randomUUID().toString()
-                
+
                 val observation = Observation(
                     id = ObservationId(observationId),
                     timestamp = event.timestamp,
@@ -27,7 +32,7 @@ class SpeechPerceptionBridge(
                     payload = SpeechRecognizedPayload(event.text, event.locale),
                     metadata = mapOf("engine" to "SpeechPerceptionBridge")
                 )
-                
+
                 // Publish to EventBus for reactive observation
                 eventBus.publish(
                     ObservationCreated(
@@ -37,5 +42,10 @@ class SpeechPerceptionBridge(
                 )
             }
         }
+    }
+
+    fun stop() {
+        bridgeJob?.cancel()
+        bridgeJob = null
     }
 }

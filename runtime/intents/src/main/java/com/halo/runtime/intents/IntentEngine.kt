@@ -4,10 +4,12 @@ import com.halo.libraries.common.core.Identifier
 import com.halo.libraries.common.core.Version
 import com.halo.sdk.runtime.*
 import com.halo.runtime.plugins.PluginManager
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class IntentEngine(
@@ -30,8 +32,8 @@ class IntentEngine(
 
     private lateinit var context: EngineContext
     private val parser: IntentParser = DefaultIntentParser()
-    
-    private val scope = CoroutineScope(Dispatchers.Default)
+    private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+    private var recognitionJob: Job? = null
 
     override suspend fun initialize(context: EngineContext) {
         this.context = context
@@ -39,16 +41,25 @@ class IntentEngine(
     }
 
     override suspend fun start() {
+        if (recognitionJob?.isActive == true) return
+
         _state.value = EngineState.Running
-        scope.launch {
+        recognitionJob = scope.launch {
             eventBus.observe(SpeechRecognized::class.java).collect {
                 val intent = parser.parse(it.text)
-                eventBus.publish(IntentRecognized(timestamp = System.currentTimeMillis(), intent = intent))
+                eventBus.publish(
+                    IntentRecognized(
+                        timestamp = System.currentTimeMillis(),
+                        intent = intent
+                    )
+                )
             }
         }
     }
 
     override suspend fun stop() {
+        recognitionJob?.cancel()
+        recognitionJob = null
         _state.value = EngineState.Stopped
     }
 }

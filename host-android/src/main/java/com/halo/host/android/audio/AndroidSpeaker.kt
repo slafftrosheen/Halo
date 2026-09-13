@@ -11,6 +11,8 @@ import com.halo.sdk.runtime.TtsRequested
 import com.halo.sdk.runtime.TtsStarted
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import java.util.Locale
 import java.util.UUID
@@ -21,12 +23,18 @@ class AndroidSpeaker(
 ) : TextToSpeech.OnInitListener {
     private var tts: TextToSpeech? = null
     private var isReady = false
-    private val scope = CoroutineScope(Dispatchers.IO)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private var eventJob: Job? = null
     private var currentTextLength = 0
 
     fun start() {
-        tts = TextToSpeech(context.applicationContext, this)
-        scope.launch {
+        if (eventJob?.isActive == true) return
+
+        if (tts == null) {
+            tts = TextToSpeech(context.applicationContext, this)
+        }
+
+        eventJob = scope.launch {
             eventBus.events().collect { event ->
                 if (event is TtsRequested) {
                     speak(event.text)
@@ -91,6 +99,8 @@ class AndroidSpeaker(
     }
 
     fun shutdown() {
+        eventJob?.cancel()
+        eventJob = null
         tts?.stop()
         tts?.shutdown()
         tts = null

@@ -2,6 +2,10 @@ package com.halo.app
 
 import com.halo.app.di.ManualDependencyGraph
 import com.halo.sdk.host.ConnectionState
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
 /**
  * Owns the application-level runtime lifecycle.
@@ -12,11 +16,12 @@ class HaloRuntime(
     private val graph: ManualDependencyGraph
 ) {
 
+    private val lifecycleMutex = Mutex()
     private var started = false
+
     fun isStarted() = started
 
-    suspend fun start() {
-
+    suspend fun start() = lifecycleMutex.withLock {
         check(!started) {
             "HaloRuntime is already running"
         }
@@ -28,84 +33,230 @@ class HaloRuntime(
             "Runtime requires a connected host; discovery and physical device selection are separate workflows"
         }
 
-        /*
-         * Cognitive engines
-         */
-        graph.interpretationEngine.initialize(
-            graph.engineContext
-        )
+        var interpretationInitialized = false
+        var interpretationStarted = false
+        var reasoningInitialized = false
+        var reasoningStarted = false
+        var planningInitialized = false
+        var planningStarted = false
+        var executionInitialized = false
+        var executionStarted = false
+        var audioInitialized = false
+        var audioStarted = false
+        var speechSessionStarted = false
+        var speechBridgeStarted = false
+        var replayRecordingStarted = false
+        var androidSpeakerStarted = false
+        var kernelBooted = false
 
-        graph.reasoningEngine.initialize(
-            graph.engineContext
-        )
+        try {
+            /*
+             * Cognitive engines
+             */
+            graph.interpretationEngine.initialize(graph.engineContext)
+            interpretationInitialized = true
 
-        graph.interpretationEngine.start()
-        graph.reasoningEngine.start()
+            graph.reasoningEngine.initialize(graph.engineContext)
+            reasoningInitialized = true
 
-        /*
-         * Planning and execution engines
-         */
-        graph.planningEngine.initialize(graph.engineContext)
-        graph.executionEngine.initialize(graph.engineContext)
-        graph.planningEngine.start()
-        graph.executionEngine.start()
+            checkHostStillConnected()
 
-        /*
-         * Audio perception
-         */
-        graph.audioPerceptionEngine.initialize(
-            graph.engineContext
-        )
+            graph.interpretationEngine.start()
+            interpretationStarted = true
+            graph.reasoningEngine.start()
+            reasoningStarted = true
 
-        graph.audioPerceptionEngine.start()
+            /*
+             * Planning and execution engines
+             */
+            graph.planningEngine.initialize(graph.engineContext)
+            planningInitialized = true
+            graph.executionEngine.initialize(graph.engineContext)
+            executionInitialized = true
 
+            checkHostStillConnected()
 
-        /*
-         * Kernel
-         */
-        graph.microkernel.boot()
+            graph.planningEngine.start()
+            planningStarted = true
+            graph.executionEngine.start()
+            executionStarted = true
 
-        started = true
+            /*
+             * Audio perception
+             */
+            graph.audioPerceptionEngine.initialize(graph.engineContext)
+            audioInitialized = true
+
+            checkHostStillConnected()
+
+            graph.audioPerceptionEngine.start()
+            audioStarted = true
+
+            /*
+             * Runtime-owned speech/replay services.
+             */
+            graph.speechSessionManager.start()
+            speechSessionStarted = true
+
+            graph.speechPerceptionBridge.start()
+            speechBridgeStarted = true
+
+            graph.runtimeReplayRecorder.startRecording()
+            replayRecordingStarted = true
+
+            /*
+             * Android TTS is a runtime service. Start it explicitly rather than
+             * allowing lazy graph construction to initialize TextToSpeech.
+             */
+            graph.startAndroidSpeaker()
+            androidSpeakerStarted = true
+
+            /*
+             * Kernel
+             */
+            graph.microkernel.boot()
+            kernelBooted = true
+
+            started = true
+        } catch (error: Throwable) {
+            withContext(NonCancellable) {
+                cleanupPartialStartup(
+                    audioStarted = audioStarted,
+                    audioInitialized = audioInitialized,
+                    executionStarted = executionStarted,
+                    executionInitialized = executionInitialized,
+                    planningStarted = planningStarted,
+                    planningInitialized = planningInitialized,
+                    reasoningStarted = reasoningStarted,
+                    reasoningInitialized = reasoningInitialized,
+                    interpretationStarted = interpretationStarted,
+                    interpretationInitialized = interpretationInitialized,
+                    speechSessionStarted = speechSessionStarted,
+                    speechBridgeStarted = speechBridgeStarted,
+                    replayRecordingStarted = replayRecordingStarted,
+                    androidSpeakerStarted = androidSpeakerStarted,
+                    kernelBooted = kernelBooted
+                )
+            }
+            throw error
+        }
     }
 
-    suspend fun stop() {
-
+    suspend fun stop() = lifecycleMutex.withLock {
         if (!started) {
-            return
+            return@withLock
         }
 
+        withContext(NonCancellable) {
+            cleanupPartialStartup(
+                audioStarted = true,
+                audioInitialized = true,
+                executionStarted = true,
+                executionInitialized = true,
+                planningStarted = true,
+                planningInitialized = true,
+                reasoningStarted = true,
+                reasoningInitialized = true,
+                interpretationStarted = true,
+                interpretationInitialized = true,
+                speechSessionStarted = true,
+                speechBridgeStarted = true,
+                replayRecordingStarted = true,
+                androidSpeakerStarted = true,
+                kernelBooted = true
+            )
+
+            /*
+             * Disconnect physical host last.
+             */
+            graph.wearableHost.disconnect()
+            started = false
+        }
+    }
+
+    private fun checkHostStillConnected() {
+        val connectivity = graph.wearableHost.connectivity.value
+        check(
+            connectivity is ConnectionState.Connected || connectivity is ConnectionState.Ready
+        ) {
+            "Wearable host disconnected during runtime startup"
+        }
+    }
+
+    private suspend fun cleanupPartialStartup(
+        audioStarted: Boolean,
+        audioInitialized: Boolean,
+        executionStarted: Boolean,
+        executionInitialized: Boolean,
+        planningStarted: Boolean,
+        planningInitialized: Boolean,
+        reasoningStarted: Boolean,
+        reasoningInitialized: Boolean,
+        interpretationStarted: Boolean,
+        interpretationInitialized: Boolean,
+        speechSessionStarted: Boolean,
+        speechBridgeStarted: Boolean,
+        replayRecordingStarted: Boolean,
+        androidSpeakerStarted: Boolean,
+        kernelBooted: Boolean
+    ) {
         /*
-         * Stop producers first.
+         * Reverse startup order. Each operation is guarded independently so one
+         * broken component cannot prevent the remaining runtime from cleaning up.
          */
-        graph.audioPerceptionEngine.stop()
+        if (kernelBooted) {
+            runCatching { graph.microkernel.shutdown() }
+        }
 
-        /*
-         * Stop execution and planning.
-         */
-        graph.executionEngine.stop()
-        graph.executionEngine.dispose()
-        graph.planningEngine.stop()
-        graph.planningEngine.dispose()
+        if (androidSpeakerStarted) {
+            runCatching { graph.androidSpeaker.shutdown() }
+        }
 
-        /*
-         * Stop cognition.
-         */
-        graph.reasoningEngine.stop()
-        graph.reasoningEngine.dispose()
+        if (replayRecordingStarted) {
+            runCatching { graph.runtimeReplayRecorder.stopRecording() }
+        }
 
-        graph.interpretationEngine.stop()
-        graph.interpretationEngine.dispose()
+        if (speechBridgeStarted) {
+            runCatching { graph.speechPerceptionBridge.stop() }
+        }
 
-        /*
-         * Stop kernel.
-         */
-        graph.microkernel.shutdown()
+        if (speechSessionStarted) {
+            runCatching { graph.speechSessionManager.stop() }
+        }
 
-        /*
-         * Disconnect physical host last.
-         */
-        graph.wearableHost.disconnect()
+        if (audioStarted) {
+            runCatching { graph.audioPerceptionEngine.stop() }
+        }
+        if (audioInitialized) {
+            runCatching { graph.audioPerceptionEngine.dispose() }
+        }
 
-        started = false
+        if (executionStarted) {
+            runCatching { graph.executionEngine.stop() }
+        }
+        if (executionInitialized) {
+            runCatching { graph.executionEngine.dispose() }
+        }
+
+        if (planningStarted) {
+            runCatching { graph.planningEngine.stop() }
+        }
+        if (planningInitialized) {
+            runCatching { graph.planningEngine.dispose() }
+        }
+
+        if (reasoningStarted) {
+            runCatching { graph.reasoningEngine.stop() }
+        }
+        if (reasoningInitialized) {
+            runCatching { graph.reasoningEngine.dispose() }
+        }
+
+        if (interpretationStarted) {
+            runCatching { graph.interpretationEngine.stop() }
+        }
+        if (interpretationInitialized) {
+            runCatching { graph.interpretationEngine.dispose() }
+        }
     }
 }

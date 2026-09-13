@@ -8,9 +8,6 @@ import com.halo.engines.memory.service.Consolidator
 import com.halo.engines.memory.service.ForgettingPolicy
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 class MemoryEngine(
     private val consolidator: Consolidator,
@@ -31,7 +28,6 @@ class MemoryEngine(
     override val dependencies: Set<ServiceKey<*>> = setOf(Services.EventBus)
 
     private lateinit var context: EngineContext
-    private val scope = CoroutineScope(Dispatchers.Default)
 
     override suspend fun initialize(context: EngineContext) {
         this.context = context
@@ -40,15 +36,6 @@ class MemoryEngine(
 
     override suspend fun start() {
         _state.value = EngineState.Running
-        
-        scope.launch {
-            // Periodically run consolidation and forgetting
-            // while (isActive) {
-            //     delay(5.minutes)
-            //     consolidator.consolidate()
-            //     // forgettingPolicy.apply()
-            // }
-        }
     }
 
     override suspend fun stop() {

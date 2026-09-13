@@ -194,16 +194,34 @@ object ManualDependencyGraph {
 
     val runtimeSnapshotManager get() = observerGraph.runtimeSnapshotManager
 
-    val androidSpeaker by lazy {
-        com.halo.host.android.audio.AndroidSpeaker(applicationContext, infra.eventBus).apply {
-            start()
+    // ─── Android TTS ────────────────────────────────────────────
+
+    private val androidSpeakerDelegate = lazy {
+        com.halo.host.android.audio.AndroidSpeaker(applicationContext, infra.eventBus)
+    }
+
+    val androidSpeaker: com.halo.host.android.audio.AndroidSpeaker
+        get() = androidSpeakerDelegate.value
+
+    fun startAndroidSpeaker() {
+        androidSpeakerDelegate.value.start()
+    }
+
+    fun shutdownAndroidSpeaker() {
+        if (androidSpeakerDelegate.isInitialized()) {
+            androidSpeakerDelegate.value.shutdown()
         }
     }
 
     // ─── Kernel ─────────────────────────────────────────────────
 
+    /**
+     * Kernel construction is deferred until runtime startup. The kernel does not
+     * start Android TTS, speech, or replay services as incidental construction side effects.
+     */
     val microkernel by lazy {
-        androidSpeaker
+        android.util.Log.d("ManualDependencyGraph", "Creating microkernel")
+
         processManager.register(androidWakeWordProcess)
         processManager.register(workingMemoryProcess)
         processManager.register(
@@ -215,10 +233,6 @@ object ManualDependencyGraph {
         processManager.register(
             com.halo.engines.agents.ReasoningServiceProcess(perceptionBus, cognitiveBus, aiProviderRouter)
         )
-
-        speechSessionManager.start()
-        speechPerceptionBridge.start()
-        runtimeReplayRecorder.startRecording()
 
         HaloMicrokernel(
             infra.scope,
