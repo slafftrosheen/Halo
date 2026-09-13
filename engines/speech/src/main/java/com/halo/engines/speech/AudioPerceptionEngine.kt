@@ -75,6 +75,7 @@ class AudioPerceptionEngine(
 
             _state.value = EngineState.Running
             _health.value = EngineHealth.Healthy
+            audioPipeline.start()
             captureJob = scope.launch { runCaptureLoop(eventBus) }
         }
     }
@@ -186,7 +187,7 @@ class AudioPerceptionEngine(
             withContext(NonCancellable) {
                 bridgeJob?.cancel()
                 stopAudioSource()
-                audioPipeline.reset()
+                audioPipeline.stop()
             }
         }
     }
@@ -238,7 +239,7 @@ class AudioPerceptionEngine(
         activeCaptureJob?.cancel()
         withContext(NonCancellable) { stopAudioSource() }
         activeCaptureJob?.join()
-        audioPipeline.reset()
+        audioPipeline.stop()
         _state.value = EngineState.Stopped
     }
 
