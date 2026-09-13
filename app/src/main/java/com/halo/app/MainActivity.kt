@@ -131,10 +131,9 @@ class MainActivity : ComponentActivity() {
         if (runtimeLoopStarted) return
         runtimeLoopStarted = true
 
-        // Materialize the composition graph and collect transport state from a
-        // background dispatcher. The previous version touched wearableHost from
-        // the main dispatcher before host.connect() was moved to IO, so the lazy
-        // HostGraph/ProviderGraph construction could still block first startup.
+        // Keep host construction, transport observation, and runtime startup off
+        // the UI dispatcher. Runtime.start() initializes the cognitive/audio graph
+        // and must not be allowed to recreate the startup jank seen in the log.
         connectivityJob = lifecycleScope.launch(Dispatchers.IO) {
             val host = ManualDependencyGraph.wearableHost
 
@@ -142,11 +141,7 @@ class MainActivity : ComponentActivity() {
                 val connected = state is com.halo.sdk.host.ConnectionState.Connected ||
                     state is com.halo.sdk.host.ConnectionState.Ready
                 if (connected && !runtime.isStarted()) {
-                    withContext(Dispatchers.Main.immediate) {
-                        if (!runtime.isStarted()) {
-                            runtime.start()
-                        }
-                    }
+                    runtime.start()
                 }
             }
         }
