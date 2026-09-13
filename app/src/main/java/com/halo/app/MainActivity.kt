@@ -262,7 +262,9 @@ class MainActivity : ComponentActivity() {
         connectivityJob?.cancel()
         hostConnectJob?.cancel()
         buddyBotConnectJob?.cancel()
-        lifecycleScope.launch(Dispatchers.IO) { runtime.stop() }
+        // lifecycleScope is cancelled as the Activity is destroyed, so runtime shutdown
+        // must use the application-scoped infrastructure scope to finish deterministically.
+        ManualDependencyGraph.infra.scope.launch(Dispatchers.IO) { runtime.stop() }
         super.onDestroy()
     }
 }
