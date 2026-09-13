@@ -42,15 +42,10 @@ class DefaultAiProviderRouter(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var pollingJob: Job? = null
 
-    private val _selectedProviderId = MutableStateFlow(
-        storage.getString("active_ai_provider")?.takeIf { id -> allProviders.any { it.id == id } }
-            ?: inferenceProviders.firstOrNull()?.id
-    )
+    private val _selectedProviderId = MutableStateFlow<String?>(inferenceProviders.firstOrNull()?.id)
     override val selectedProviderId: StateFlow<String?> = _selectedProviderId.asStateFlow()
 
-    private val _selectedModelId = MutableStateFlow<String?>(
-        storage.getString("active_ai_model")
-    )
+    private val _selectedModelId = MutableStateFlow<String?>(null)
     override val selectedModelId: StateFlow<String?> = _selectedModelId.asStateFlow()
 
     private val _diagnosticsFlow = MutableStateFlow<List<AiProviderDiagnostic>>(
@@ -69,14 +64,27 @@ class DefaultAiProviderRouter(
     )
     override val diagnosticsFlow: StateFlow<List<AiProviderDiagnostic>> = _diagnosticsFlow.asStateFlow()
 
-    private val _routingPolicy = MutableStateFlow(
-        storage.getString("ai_routing_policy")?.let {
-            runCatching { enumValueOf<AiRoutingPolicy>(it) }.getOrDefault(AiRoutingPolicy.AUTOMATIC)
-        } ?: AiRoutingPolicy.AUTOMATIC
-    )
+    private val _routingPolicy = MutableStateFlow(AiRoutingPolicy.AUTOMATIC)
 
     init {
-        scope.launch { refreshDiagnostics() }
+        scope.launch(Dispatchers.IO) {
+            restoreStoredRoutingState()
+            refreshDiagnostics()
+        }
+    }
+
+    private fun restoreStoredRoutingState() {
+        val storedProvider = storage.getString("active_ai_provider")
+            ?.takeIf { id -> allProviders.any { it.id == id } }
+        if (storedProvider != null) {
+            _selectedProviderId.value = storedProvider
+        }
+        _selectedModelId.value = storage.getString("active_ai_model")
+            ?.trim()
+            ?.ifBlank { null }
+        _routingPolicy.value = storage.getString("ai_routing_policy")?.let {
+            runCatching { enumValueOf<AiRoutingPolicy>(it) }.getOrDefault(AiRoutingPolicy.AUTOMATIC)
+        } ?: AiRoutingPolicy.AUTOMATIC
     }
 
     override fun start() {
@@ -96,16 +104,20 @@ class DefaultAiProviderRouter(
 
     fun setRoutingPolicy(policy: AiRoutingPolicy) {
         _routingPolicy.value = policy
-        storage.putString("ai_routing_policy", policy.name)
+        scope.launch(Dispatchers.IO) {
+            storage.putString("ai_routing_policy", policy.name)
+        }
     }
 
     override fun selectProvider(id: String) {
         if (allProviders.any { it.id == id }) {
             val providerChanged = _selectedProviderId.value != id
             _selectedProviderId.value = id
-            storage.putString("active_ai_provider", id)
-            if (providerChanged) {
-                restoreStoredModel(id)
+            scope.launch(Dispatchers.IO) {
+                storage.putString("active_ai_provider", id)
+                if (providerChanged) {
+                    restoreStoredModel(id)
+                }
             }
             scope.launch { refreshDiagnostics() }
         }
@@ -113,10 +125,12 @@ class DefaultAiProviderRouter(
 
     override fun selectModel(modelId: String?) {
         _selectedModelId.value = modelId
-        storage.putString("active_ai_model", modelId)
         val providerId = _selectedProviderId.value
-        if (providerId != null && modelId != null) {
-            persistProviderModel(providerId, modelId)
+        scope.launch(Dispatchers.IO) {
+            storage.putString("active_ai_model", modelId)
+            if (providerId != null && modelId != null) {
+                persistProviderModel(providerId, modelId)
+            }
         }
         scope.launch { refreshDiagnostics() }
     }
@@ -188,11 +202,7 @@ class DefaultAiProviderRouter(
         }
     }
 
-    private suspend fun resolveExplicitTarget(
-        preferredProvider: AiInferenceProvider?,
-        selectedProvider: AiProvider?,
-        request: AiRequest
-    ): AiExecutionTarget {
+    private suspend fun resolveExplicitTarget(preferredProvider: AiInferenceProvider?, selectedProvider: AiProvider?, request: AiRequest): AiExecutionTarget {
         val provider = preferredProvider ?: throw AiProviderException(
             if (selectedProvider is AiHandoffProvider) AiErrorType.UNSUPPORTED_CAPABILITY else AiErrorType.PROVIDER_UNAVAILABLE,
             if (selectedProvider is AiHandoffProvider) "Provider ${selectedProvider.id} is a handoff target, not a normal inference backend"
@@ -341,14 +351,7 @@ class DefaultAiProviderRouter(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Throwable) {
-            eventBus?.publish(
-                ProviderFailure(
-                    requestId = requestId,
-                    providerId = target.providerId,
-                    reason = e.message ?: "Execution failed"
-                )
-            )
-
+            eventBus?.publish(ProviderFailure(requestId = requestId, providerId = target.providerId, reason = e.message ?: "Execution failed"))
             if ((policy == AiRoutingPolicy.PREFERRED_WITH_FALLBACK || policy == AiRoutingPolicy.AUTOMATIC) && fallbackEligible(e)) {
                 val fallbackTarget = getFallbackExecutionTarget(request, failedProviderId = target.providerId)
                 if (fallbackTarget != null) {
