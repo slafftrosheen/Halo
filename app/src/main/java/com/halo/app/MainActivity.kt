@@ -206,9 +206,11 @@ class MainActivity : ComponentActivity() {
 
         connectivityJob = lifecycleScope.launch(Dispatchers.IO) {
             try {
-                // The runtime must never start against a partially materialized UI graph.
+                // Runtime startup is explicitly dependent on successful UI graph bootstrap.
                 uiGraphJob?.join()
-                if (!uiGraphReady) return@launch
+                check(uiGraphReady) {
+                    uiGraphError ?: "UI graph bootstrap did not complete successfully"
+                }
 
                 val host = ManualDependencyGraph.wearableHost
                 host.connectivity.collect { state ->
