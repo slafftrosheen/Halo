@@ -10,7 +10,7 @@ class ModelMemoryAdmissionTest {
     @Test
     fun rejectsModelThatExceedsTotalMemoryCeiling() {
         val decision = ModelMemoryAdmission.evaluate(
-            modelBytes = 4.9 * gb.toDouble().toLong(),
+            modelBytes = (4.9 * gb).toLong(),
             memory = ModelMemoryAdmission.Snapshot(
                 totalBytes = 8L * gb,
                 availableBytes = 7L * gb,
