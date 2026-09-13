@@ -9,15 +9,20 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.halo.app.di.ManualDependencyGraph
 import com.halo.app.ui.shell.AppShell
@@ -32,6 +37,7 @@ import kotlinx.coroutines.withContext
 class MainActivity : ComponentActivity() {
     private var hasRequiredPermissions by mutableStateOf(false)
     private var uiGraphReady by mutableStateOf(false)
+    private var uiGraphError by mutableStateOf<String?>(null)
     private lateinit var runtime: HaloRuntime
     private var runtimeLoopStarted = false
     private var uiGraphJob: Job? = null
@@ -73,6 +79,31 @@ class MainActivity : ComponentActivity() {
                                 permissionLauncher.launch(requiredPermissions())
                             }
                         )
+                        uiGraphError != null -> Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.padding(24.dp)
+                            ) {
+                                Text(
+                                    text = "Halo could not initialize the interface.",
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                Text(
+                                    text = uiGraphError ?: "Unknown startup error",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.padding(top = 8.dp)
+                                )
+                                Button(
+                                    onClick = { startUiGraphBootstrap(force = true) },
+                                    modifier = Modifier.padding(top = 16.dp)
+                                ) {
+                                    Text("Retry")
+                                }
+                            }
+                        }
                         !uiGraphReady -> Box(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
@@ -91,8 +122,12 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun startUiGraphBootstrap() {
-        if (uiGraphReady || uiGraphJob?.isActive == true) return
+    private fun startUiGraphBootstrap(force: Boolean = false) {
+        if (!force && (uiGraphReady || uiGraphJob?.isActive == true)) return
+        if (force) uiGraphJob?.cancel()
+
+        uiGraphReady = false
+        uiGraphError = null
 
         // Home's ViewModel reaches RuntimeSnapshot/Observer/Engine/Provider graphs.
         // Materialize that dependency chain on IO so AppShell never triggers it
@@ -107,6 +142,9 @@ class MainActivity : ComponentActivity() {
                 throw error
             } catch (error: Throwable) {
                 android.util.Log.e("MainActivity", "UI graph bootstrap failed", error)
+                withContext(Dispatchers.Main.immediate) {
+                    uiGraphError = error.message ?: error::class.java.simpleName
+                }
             }
         }
     }
