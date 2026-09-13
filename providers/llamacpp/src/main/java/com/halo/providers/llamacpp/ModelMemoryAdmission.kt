@@ -37,15 +37,22 @@ internal object ModelMemoryAdmission {
             return Decision.Reject(Reason.SYSTEM_LOW_MEMORY)
         }
 
+        // 0.55 == 11/20. Integer arithmetic avoids overflow from multiplying
+        // an unusually large total-memory value by a Double before conversion.
+        val totalFractionLimit = (memory.totalBytes / 20L) * 11L +
+            (memory.totalBytes % 20L) * 11L / 20L
         val totalLimit = minOf(
-            (memory.totalBytes * MODEL_MEMORY_FRACTION).toLong(),
+            totalFractionLimit,
             (memory.totalBytes - RESERVED_MEMORY_BYTES).coerceAtLeast(0L)
         )
         if (modelBytes > totalLimit) {
             return Decision.Reject(Reason.TOTAL_MEMORY_LIMIT)
         }
 
-        if (memory.availableBytes < modelBytes + RESERVED_MEMORY_BYTES) {
+        // Subtraction form avoids overflowing modelBytes + reserve when inputs
+        // are near Long.MAX_VALUE while preserving the same admission rule.
+        val availableAfterReserve = memory.availableBytes - RESERVED_MEMORY_BYTES
+        if (availableAfterReserve < 0L || modelBytes > availableAfterReserve) {
             return Decision.Reject(Reason.AVAILABLE_MEMORY_LIMIT)
         }
 
