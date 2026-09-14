@@ -12,64 +12,35 @@ class ModelMemoryAdmissionTest {
     fun rejectsModelThatExceedsTotalMemoryCeiling() {
         val decision = ModelMemoryAdmission.evaluate(
             modelBytes = (4.9 * gb).toLong(),
-            memory = ModelMemoryAdmission.Snapshot(
-                totalBytes = 8L * gb,
-                availableBytes = 7L * gb,
-                lowMemory = false
-            )
+            memory = ModelMemoryAdmission.Snapshot(8L * gb, 7L * gb, false)
         )
-
-        assertEquals(
-            ModelMemoryAdmission.Reason.TOTAL_MEMORY_LIMIT,
-            (decision as ModelMemoryAdmission.Decision.Reject).reason
-        )
+        assertEquals(ModelMemoryAdmission.Reason.TOTAL_MEMORY_LIMIT, (decision as ModelMemoryAdmission.Decision.Reject).reason)
     }
 
     @Test
     fun rejectsWhenAvailableMemoryCannotPreserveHeadroom() {
         val decision = ModelMemoryAdmission.evaluate(
             modelBytes = 4L * gb,
-            memory = ModelMemoryAdmission.Snapshot(
-                totalBytes = 16L * gb,
-                availableBytes = 5L * gb,
-                lowMemory = false
-            )
+            memory = ModelMemoryAdmission.Snapshot(16L * gb, 5L * gb, false)
         )
-
-        assertEquals(
-            ModelMemoryAdmission.Reason.AVAILABLE_MEMORY_LIMIT,
-            (decision as ModelMemoryAdmission.Decision.Reject).reason
-        )
+        assertEquals(ModelMemoryAdmission.Reason.AVAILABLE_MEMORY_LIMIT, (decision as ModelMemoryAdmission.Decision.Reject).reason)
     }
 
     @Test
     fun rejectsWhenAndroidReportsLowMemory() {
         val decision = ModelMemoryAdmission.evaluate(
             modelBytes = 2L * gb,
-            memory = ModelMemoryAdmission.Snapshot(
-                totalBytes = 16L * gb,
-                availableBytes = 12L * gb,
-                lowMemory = true
-            )
+            memory = ModelMemoryAdmission.Snapshot(16L * gb, 12L * gb, true)
         )
-
-        assertEquals(
-            ModelMemoryAdmission.Reason.SYSTEM_LOW_MEMORY,
-            (decision as ModelMemoryAdmission.Decision.Reject).reason
-        )
+        assertEquals(ModelMemoryAdmission.Reason.SYSTEM_LOW_MEMORY, (decision as ModelMemoryAdmission.Decision.Reject).reason)
     }
 
     @Test
     fun allowsModelWhenBothTotalAndAvailableMemoryAreHealthy() {
         val decision = ModelMemoryAdmission.evaluate(
             modelBytes = 4L * gb,
-            memory = ModelMemoryAdmission.Snapshot(
-                totalBytes = 16L * gb,
-                availableBytes = 8L * gb,
-                lowMemory = false
-            )
+            memory = ModelMemoryAdmission.Snapshot(16L * gb, 8L * gb, false)
         )
-
         assertTrue(decision is ModelMemoryAdmission.Decision.Allow)
     }
 
@@ -77,13 +48,8 @@ class ModelMemoryAdmissionTest {
     fun allowsSmallQwenModelWithAboutOneGigabyteAvailableOnSixGigabyteDevice() {
         val decision = ModelMemoryAdmission.evaluate(
             modelBytes = 388L * mb,
-            memory = ModelMemoryAdmission.Snapshot(
-                totalBytes = 6L * gb,
-                availableBytes = 1070L * mb,
-                lowMemory = false
-            )
+            memory = ModelMemoryAdmission.Snapshot(6L * gb, 1070L * mb, false)
         )
-
         assertTrue(decision is ModelMemoryAdmission.Decision.Allow)
         assertEquals(512L * mb, ModelMemoryAdmission.reserveBytesFor(388L * mb))
     }
@@ -92,84 +58,61 @@ class ModelMemoryAdmissionTest {
     fun smallModelStillRejectsWhenRealHeadroomIsTooLow() {
         val decision = ModelMemoryAdmission.evaluate(
             modelBytes = 388L * mb,
-            memory = ModelMemoryAdmission.Snapshot(
-                totalBytes = 6L * gb,
-                availableBytes = 850L * mb,
-                lowMemory = false
-            )
+            memory = ModelMemoryAdmission.Snapshot(6L * gb, 850L * mb, false)
         )
-
-        assertEquals(
-            ModelMemoryAdmission.Reason.AVAILABLE_MEMORY_LIMIT,
-            (decision as ModelMemoryAdmission.Decision.Reject).reason
-        )
+        assertEquals(ModelMemoryAdmission.Reason.AVAILABLE_MEMORY_LIMIT, (decision as ModelMemoryAdmission.Decision.Reject).reason)
     }
 
     @Test
     fun allowsModelExactlyAtAvailableMemoryBoundary() {
         val modelBytes = 2L * gb
         val reserve = ModelMemoryAdmission.reserveBytesFor(modelBytes)
-
         val decision = ModelMemoryAdmission.evaluate(
             modelBytes = modelBytes,
-            memory = ModelMemoryAdmission.Snapshot(
-                totalBytes = 8L * gb,
-                availableBytes = modelBytes + reserve,
-                lowMemory = false
-            )
+            memory = ModelMemoryAdmission.Snapshot(8L * gb, modelBytes + reserve, false)
         )
-
         assertTrue(decision is ModelMemoryAdmission.Decision.Allow)
+    }
+
+    @Test
+    fun reserveStepsUpAtOneGigabyteBoundary() {
+        assertEquals(512L * mb, ModelMemoryAdmission.reserveBytesFor(512L * mb))
+        assertEquals(768L * mb, ModelMemoryAdmission.reserveBytesFor(512L * mb + 1L))
+        assertEquals(768L * mb, ModelMemoryAdmission.reserveBytesFor(1L * gb))
+        assertEquals(1024L * mb, ModelMemoryAdmission.reserveBytesFor(1L * gb + 1L))
+    }
+
+    @Test
+    fun reserveStepsUpAtTwoGigabyteBoundaryAndCapsAtConfiguredMaximum() {
+        assertEquals(1024L * mb, ModelMemoryAdmission.reserveBytesFor(2L * gb))
+        assertEquals(1536L * mb, ModelMemoryAdmission.reserveBytesFor(2L * gb + 1L))
+        assertEquals(1536L * mb, ModelMemoryAdmission.reserveBytesFor(5L * gb))
     }
 
     @Test
     fun rejectsNegativeAvailableMemoryBeforeApplyingArithmetic() {
         val decision = ModelMemoryAdmission.evaluate(
             modelBytes = 1L * gb,
-            memory = ModelMemoryAdmission.Snapshot(
-                totalBytes = 8L * gb,
-                availableBytes = -1L,
-                lowMemory = false
-            )
+            memory = ModelMemoryAdmission.Snapshot(8L * gb, -1L, false)
         )
-
-        assertEquals(
-            ModelMemoryAdmission.Reason.INVALID_MEMORY_SNAPSHOT,
-            (decision as ModelMemoryAdmission.Decision.Reject).reason
-        )
+        assertEquals(ModelMemoryAdmission.Reason.INVALID_MEMORY_SNAPSHOT, (decision as ModelMemoryAdmission.Decision.Reject).reason)
     }
 
     @Test
     fun rejectsExtremeAvailableMemoryWithoutOverflowingModelPlusReserve() {
         val decision = ModelMemoryAdmission.evaluate(
             modelBytes = Long.MAX_VALUE - 1L,
-            memory = ModelMemoryAdmission.Snapshot(
-                totalBytes = Long.MAX_VALUE,
-                availableBytes = Long.MAX_VALUE,
-                lowMemory = false
-            )
+            memory = ModelMemoryAdmission.Snapshot(Long.MAX_VALUE, Long.MAX_VALUE, false)
         )
-
-        assertEquals(
-            ModelMemoryAdmission.Reason.TOTAL_MEMORY_LIMIT,
-            (decision as ModelMemoryAdmission.Decision.Reject).reason
-        )
+        assertEquals(ModelMemoryAdmission.Reason.TOTAL_MEMORY_LIMIT, (decision as ModelMemoryAdmission.Decision.Reject).reason)
     }
 
     @Test
     fun rejectsInvalidMemorySnapshot() {
         val decision = ModelMemoryAdmission.evaluate(
             modelBytes = 1L * gb,
-            memory = ModelMemoryAdmission.Snapshot(
-                totalBytes = 0L,
-                availableBytes = 0L,
-                lowMemory = false
-            )
+            memory = ModelMemoryAdmission.Snapshot(0L, 0L, false)
         )
-
-        assertEquals(
-            ModelMemoryAdmission.Reason.INVALID_MEMORY_SNAPSHOT,
-            (decision as ModelMemoryAdmission.Decision.Reject).reason
-        )
+        assertEquals(ModelMemoryAdmission.Reason.INVALID_MEMORY_SNAPSHOT, (decision as ModelMemoryAdmission.Decision.Reject).reason)
     }
 }
