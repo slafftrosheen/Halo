@@ -9,7 +9,7 @@ package com.halo.providers.llamacpp
 internal object LocalModelMemoryPlanner {
     private const val BYTES_PER_MB = 1024L * 1024L
 
-    /** Extra native/process headroom kept outside the model estimate. */
+    /** Maximum extra native/process headroom kept outside the model estimate. */
     const val PROCESS_RESERVE_BYTES = 1536L * BYTES_PER_MB
 
     /** Approximate KV/compute multiplier per context token. */
@@ -46,14 +46,15 @@ internal object LocalModelMemoryPlanner {
         }
         if (candidates.isEmpty()) return null
 
-        val availableAfterReserve = memory.availableBytes - PROCESS_RESERVE_BYTES
+        val reserveBytes = ModelMemoryAdmission.reserveBytesFor(modelBytes)
+        val availableAfterReserve = memory.availableBytes - reserveBytes
         if (availableAfterReserve <= 0L) return null
 
         val totalFractionLimit = (memory.totalBytes / 20L) * 11L +
             (memory.totalBytes % 20L) * 11L / 20L
         val totalLimit = minOf(
             totalFractionLimit,
-            (memory.totalBytes - PROCESS_RESERVE_BYTES).coerceAtLeast(0L),
+            (memory.totalBytes - reserveBytes).coerceAtLeast(0L),
         )
 
         for (candidate in candidates) {
