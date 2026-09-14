@@ -12,13 +12,24 @@ internal object LocalModelMemoryPlanner {
     /** Maximum extra native/process headroom kept outside the model estimate. */
     const val PROCESS_RESERVE_BYTES = 1536L * BYTES_PER_MB
 
-    /** Approximate KV/compute multiplier per context token. */
+    /** Fallback estimate used when GGUF attention metadata is incomplete. */
     const val APPROX_BYTES_PER_CONTEXT_TOKEN = 16L * 1024L
+
+    /** Conservative multiplier over the raw KV-cache footprint. */
+    private const val KV_CACHE_HEADROOM_NUMERATOR = 3L
+    private const val KV_CACHE_HEADROOM_DENOMINATOR = 2L
 
     data class MemorySnapshot(
         val totalBytes: Long,
         val availableBytes: Long,
         val lowMemory: Boolean,
+    )
+
+    data class ModelProfile(
+        val blockCount: Int?,
+        val embeddingLength: Int?,
+        val attentionHeadCount: Int?,
+        val attentionHeadCountKv: Int?,
     )
 
     data class Candidate(
@@ -32,14 +43,11 @@ internal object LocalModelMemoryPlanner {
         val remainingBytes: Long,
     )
 
-    /**
-     * Selects the first safe candidate in caller-provided preference order.
-     * Candidates should be ordered from most desirable to least desirable.
-     */
     fun choose(
         modelBytes: Long,
         memory: MemorySnapshot,
         candidates: List<Candidate>,
+        modelProfile: ModelProfile? = null,
     ): Plan? {
         if (modelBytes <= 0L || memory.totalBytes <= 0L || memory.availableBytes < 0L || memory.lowMemory) {
             return null
@@ -60,7 +68,7 @@ internal object LocalModelMemoryPlanner {
         for (candidate in candidates) {
             if (candidate.contextSize <= 0 || candidate.gpuLayers < -1) continue
 
-            val contextBytes = candidate.contextSize.toLong() * APPROX_BYTES_PER_CONTEXT_TOKEN
+            val contextBytes = estimateContextBytes(candidate.contextSize, modelProfile)
             val estimatedBytes = saturatingAdd(modelBytes, contextBytes)
             if (estimatedBytes > totalLimit || estimatedBytes > availableAfterReserve) continue
 
@@ -71,6 +79,28 @@ internal object LocalModelMemoryPlanner {
             )
         }
         return null
+    }
+
+    fun estimateContextBytes(contextSize: Int, modelProfile: ModelProfile?): Long {
+        if (contextSize <= 0) return 0L
+
+        val profile = modelProfile ?: return saturatingMultiply(contextSize.toLong(), APPROX_BYTES_PER_CONTEXT_TOKEN)
+        val layers = profile.blockCount?.takeIf { it > 0 } ?: return fallbackContextBytes(contextSize)
+        val embedding = profile.embeddingLength?.takeIf { it > 0 } ?: return fallbackContextBytes(contextSize)
+        val heads = profile.attentionHeadCount?.takeIf { it > 0 } ?: return fallbackContextBytes(contextSize)
+        val kvHeads = profile.attentionHeadCountKv?.takeIf { it > 0 && it <= heads } ?: return fallbackContextBytes(contextSize)
+        if (embedding % heads != 0) return fallbackContextBytes(contextSize)
+
+        val headDimension = embedding / heads
+        val elementsPerToken = saturatingMultiply(
+            saturatingMultiply(layers.toLong(), kvHeads.toLong()),
+            headDimension.toLong(),
+        )
+        val rawKvBytes = saturatingMultiply(
+            saturatingMultiply(elementsPerToken, contextSize.toLong()),
+            4L,
+        )
+        return saturatingMultiply(rawKvBytes, KV_CACHE_HEADROOM_NUMERATOR) / KV_CACHE_HEADROOM_DENOMINATOR
     }
 
     fun defaultCandidates(
@@ -104,6 +134,17 @@ internal object LocalModelMemoryPlanner {
         }
 
         return contexts.flatMap { context -> gpu.map { layers -> Candidate(context, layers) } }
+    }
+
+    private fun fallbackContextBytes(contextSize: Int): Long = saturatingMultiply(
+        contextSize.toLong(),
+        APPROX_BYTES_PER_CONTEXT_TOKEN,
+    )
+
+    private fun saturatingMultiply(a: Long, b: Long): Long {
+        if (a <= 0L || b <= 0L) return 0L
+        if (a > Long.MAX_VALUE / b) return Long.MAX_VALUE
+        return a * b
     }
 
     private fun saturatingAdd(a: Long, b: Long): Long {
