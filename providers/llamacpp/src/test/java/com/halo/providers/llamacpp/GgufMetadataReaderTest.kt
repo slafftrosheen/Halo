@@ -26,6 +26,52 @@ class GgufMetadataReaderTest {
     }
 
     @Test
+    fun readsAllArchitectureDimensionsUsedByPlanner() {
+        val file = writeGguf(
+            metadata = listOf(
+                "general.architecture" to StringValue("llama"),
+                "llama.context_length" to UInt32Value(4096L),
+                "llama.block_count" to UInt32Value(32L),
+                "llama.embedding_length" to UInt32Value(4096L),
+                "llama.attention.head_count" to UInt32Value(32L),
+                "llama.attention.head_count_kv" to UInt32Value(8L),
+            )
+        )
+
+        try {
+            val metadata = GgufMetadataReader.read(file)
+            assertEquals("llama", metadata?.architecture)
+            assertEquals(4096, metadata?.contextLength)
+            assertEquals(32, metadata?.blockCount)
+            assertEquals(4096, metadata?.embeddingLength)
+            assertEquals(32, metadata?.attentionHeadCount)
+            assertEquals(8, metadata?.attentionHeadCountKv)
+        } finally {
+            file.delete()
+        }
+    }
+
+    @Test
+    fun doesNotMixDimensionsFromDifferentArchitectures() {
+        val file = writeGguf(
+            metadata = listOf(
+                "general.architecture" to StringValue("llama"),
+                "qwen2.block_count" to UInt32Value(80L),
+                "llama.block_count" to UInt32Value(32L),
+                "llama.embedding_length" to UInt32Value(4096L),
+            )
+        )
+
+        try {
+            val metadata = GgufMetadataReader.read(file)
+            assertEquals(32, metadata?.blockCount)
+            assertEquals(4096, metadata?.embeddingLength)
+        } finally {
+            file.delete()
+        }
+    }
+
+    @Test
     fun ignoresUnknownMetadataTypesWithoutGuessing() {
         val file = writeGguf(
             metadata = listOf(
