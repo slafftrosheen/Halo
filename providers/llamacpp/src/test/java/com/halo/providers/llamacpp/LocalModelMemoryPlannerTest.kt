@@ -89,6 +89,73 @@ class LocalModelMemoryPlannerTest {
     }
 
     @Test
+    fun estimatesKnownLlamaDimensionsFromKvCacheGeometry() {
+        val profile = LocalModelMemoryPlanner.ModelProfile(
+            blockCount = 32,
+            embeddingLength = 4096,
+            attentionHeadCount = 32,
+            attentionHeadCountKv = 8,
+        )
+
+        // 32 layers * 8 KV heads * 128 head dim * 4096 tokens * 4 bytes,
+        // followed by the planner's 1.5x conservative headroom multiplier.
+        val expected = 805_306_368L
+        assertEquals(expected, LocalModelMemoryPlanner.estimateContextBytes(4096, profile))
+    }
+
+    @Test
+    fun fallsBackToFixedEstimateWhenAttentionMetadataIsIncomplete() {
+        val profile = LocalModelMemoryPlanner.ModelProfile(
+            blockCount = 32,
+            embeddingLength = 4096,
+            attentionHeadCount = 32,
+            attentionHeadCountKv = null,
+        )
+
+        assertEquals(
+            1024L * LocalModelMemoryPlanner.APPROX_BYTES_PER_CONTEXT_TOKEN,
+            LocalModelMemoryPlanner.estimateContextBytes(1024, profile),
+        )
+    }
+
+    @Test
+    fun fallsBackWhenArchitectureDimensionsAreInconsistent() {
+        val profile = LocalModelMemoryPlanner.ModelProfile(
+            blockCount = 32,
+            embeddingLength = 4097,
+            attentionHeadCount = 32,
+            attentionHeadCountKv = 8,
+        )
+
+        assertEquals(
+            2048L * LocalModelMemoryPlanner.APPROX_BYTES_PER_CONTEXT_TOKEN,
+            LocalModelMemoryPlanner.estimateContextBytes(2048, profile),
+        )
+    }
+
+    @Test
+    fun architectureAwareEstimateCanForceContextReduction() {
+        val profile = LocalModelMemoryPlanner.ModelProfile(
+            blockCount = 32,
+            embeddingLength = 4096,
+            attentionHeadCount = 32,
+            attentionHeadCountKv = 8,
+        )
+        val plan = LocalModelMemoryPlanner.choose(
+            modelBytes = 4L * 1024L * 1024L * 1024L,
+            memory = memory(totalGb = 8, availableGb = 7),
+            candidates = listOf(
+                LocalModelMemoryPlanner.Candidate(contextSize = 4096, gpuLayers = 0),
+                LocalModelMemoryPlanner.Candidate(contextSize = 2048, gpuLayers = 0),
+            ),
+            modelProfile = profile,
+        )
+
+        assertNotNull(plan)
+        assertEquals(2048, plan!!.candidate.contextSize)
+    }
+
+    @Test
     fun defaultCandidatesTryContextReductionAndAcceleratorFallback() {
         val candidates = LocalModelMemoryPlanner.defaultCandidates(
             requestedContextSize = 4096,
