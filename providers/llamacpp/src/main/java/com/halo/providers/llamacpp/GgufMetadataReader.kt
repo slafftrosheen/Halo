@@ -35,9 +35,9 @@ internal object GgufMetadataReader {
                 val version = input.readUInt32LE()
                 if (version !in MIN_VERSION..MAX_VERSION) return null
 
-                val tensorCount = input.readUInt64LE()
+                input.readUInt64LE() // tensor count
                 val metadataCount = input.readUInt64LE()
-                if (tensorCount < 0L || metadataCount < 0L || metadataCount > MAX_ARRAY_ELEMENTS) return null
+                if (metadataCount < 0L || metadataCount > MAX_ARRAY_ELEMENTS) return null
 
                 var architecture: String? = null
                 var contextLength: Int? = null
@@ -46,26 +46,32 @@ internal object GgufMetadataReader {
                 var attentionHeadCount: Int? = null
                 var attentionHeadCountKv: Int? = null
 
-                val entries = ArrayList<Pair<String, Any?>>(metadataCount.toInt().coerceAtMost(256))
+                // Keep only the small set of architecture metadata needed by the planner.
+                // This avoids retaining arbitrary GGUF metadata in memory.
+                val pending = HashMap<String, Any?>(6)
                 repeat(metadataCount.toInt()) {
                     val key = input.readString()
                     val type = input.readUInt32LE()
                     val value = input.readValue(type)
-                    if (key == "general.architecture" && value is String) architecture = value
-                    entries += key to value
+                    if (key == "general.architecture" && value is String) {
+                        architecture = value
+                    } else if (
+                        key.endsWith(".context_length") ||
+                        key.endsWith(".block_count") ||
+                        key.endsWith(".embedding_length") ||
+                        key.endsWith(".attention.head_count") ||
+                        key.endsWith(".attention.head_count_kv")
+                    ) {
+                        pending[key] = value
+                    }
                 }
 
-                if (architecture != null) {
-                    val prefix = "$architecture."
-                    entries.forEach { (key, value) ->
-                        when (key) {
-                            "${prefix}context_length" -> contextLength = value.asPositiveInt()
-                            "${prefix}block_count" -> blockCount = value.asPositiveInt()
-                            "${prefix}embedding_length" -> embeddingLength = value.asPositiveInt()
-                            "${prefix}attention.head_count" -> attentionHeadCount = value.asPositiveInt()
-                            "${prefix}attention.head_count_kv" -> attentionHeadCountKv = value.asPositiveInt()
-                        }
-                    }
+                architecture?.let { prefix ->
+                    contextLength = pending["$prefix.context_length"].asPositiveInt()
+                    blockCount = pending["$prefix.block_count"].asPositiveInt()
+                    embeddingLength = pending["$prefix.embedding_length"].asPositiveInt()
+                    attentionHeadCount = pending["$prefix.attention.head_count"].asPositiveInt()
+                    attentionHeadCountKv = pending["$prefix.attention.head_count_kv"].asPositiveInt()
                 }
 
                 Metadata(architecture, contextLength, blockCount, embeddingLength, attentionHeadCount, attentionHeadCountKv)
