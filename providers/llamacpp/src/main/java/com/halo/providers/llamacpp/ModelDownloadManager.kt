@@ -53,6 +53,7 @@ class ModelDownloadManager(private val context: Context) {
     init {
         loadCustomModels()
         refreshStates()
+        recoverPersistedDownloads()
     }
 
     fun getAllModels(): List<CognitiveModel> = AvailableModels + _customModels.value
@@ -67,8 +68,11 @@ class ModelDownloadManager(private val context: Context) {
             File(context.filesDir, fileName),
             runCatching { File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), fileName) }.getOrNull()
         )
-        return candidates.firstOrNull { it.exists() && it.isFile && it.length() > 0 }
+        return candidates.firstOrNull { isUsableGguf(it) }
     }
+
+    private fun isUsableGguf(file: File): Boolean =
+        file.exists() && file.isFile && file.length() > 0L && GgufMetadataReader.read(file) != null
 
     fun refreshStates() {
         if (closed) return
@@ -127,9 +131,63 @@ class ModelDownloadManager(private val context: Context) {
             }
             val downloadId = downloadManager.enqueue(request)
             activeDownloads[downloadId] = id
+            persistDownload(downloadId, id)
             _downloadStates.value = _downloadStates.value.toMutableMap().apply { put(id, DownloadState.Downloading) }
             downloadJobs[downloadId] = scope.launch { pollDownload(downloadId, id) }
         }
+    }
+
+    private fun recoverPersistedDownloads() {
+        if (closed) return
+        val pending = prefs.all
+            .asSequence()
+            .filter { it.key.startsWith(DOWNLOAD_PREF_PREFIX) }
+            .mapNotNull { entry ->
+                val id = entry.key.removePrefix(DOWNLOAD_PREF_PREFIX).toLongOrNull() ?: return@mapNotNull null
+                val modelId = entry.value as? String ?: return@mapNotNull null
+                id to modelId
+            }
+            .toList()
+
+        pending.forEach { (downloadId, modelId) ->
+            val status = runCatching {
+                downloadManager.query(DownloadManager.Query().setFilterById(downloadId)).use { cursor ->
+                    if (!cursor.moveToFirst()) null
+                    else cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
+                }
+            }.getOrNull()
+
+            when (status) {
+                DownloadManager.STATUS_PENDING,
+                DownloadManager.STATUS_RUNNING,
+                DownloadManager.STATUS_PAUSED -> {
+                    synchronized(downloadsLock) {
+                        if (!closed && !activeDownloads.containsKey(downloadId)) {
+                            activeDownloads[downloadId] = modelId
+                            _downloadStates.value = _downloadStates.value.toMutableMap().apply { put(modelId, DownloadState.Downloading) }
+                            downloadJobs[downloadId] = scope.launch { pollDownload(downloadId, modelId) }
+                        }
+                    }
+                }
+                DownloadManager.STATUS_SUCCESSFUL -> {
+                    clearPersistedDownload(downloadId)
+                    if (getModelFile(modelId) == null) setState(modelId, DownloadState.Failed)
+                    else setState(modelId, DownloadState.Downloaded)
+                }
+                else -> {
+                    clearPersistedDownload(downloadId)
+                    if (status != null) setState(modelId, DownloadState.Failed)
+                }
+            }
+        }
+    }
+
+    private fun persistDownload(downloadId: Long, modelId: String) {
+        prefs.edit().putString(DOWNLOAD_PREF_PREFIX + downloadId, modelId).apply()
+    }
+
+    private fun clearPersistedDownload(downloadId: Long) {
+        prefs.edit().remove(DOWNLOAD_PREF_PREFIX + downloadId).apply()
     }
 
     private suspend fun pollDownload(downloadId: Long, modelId: String) {
@@ -164,6 +222,7 @@ class ModelDownloadManager(private val context: Context) {
                 activeDownloads.remove(downloadId)
                 downloadJobs.remove(downloadId)
             }
+            clearPersistedDownload(downloadId)
             if (!closed) refreshStates()
         }
     }
@@ -215,5 +274,9 @@ class ModelDownloadManager(private val context: Context) {
         }
         jobs.forEach { it.cancel() }
         scope.coroutineContext[Job]?.cancel()
+    }
+
+    private companion object {
+        private const val DOWNLOAD_PREF_PREFIX = "active_download_"
     }
 }
