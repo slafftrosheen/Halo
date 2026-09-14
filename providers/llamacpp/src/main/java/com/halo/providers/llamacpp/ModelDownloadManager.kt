@@ -191,10 +191,11 @@ class ModelDownloadManager(private val context: Context) {
     }
 
     private suspend fun pollDownload(downloadId: Long, modelId: String) {
+        var terminal = false
         try {
             while (!closed) {
                 val query = DownloadManager.Query().setFilterById(downloadId)
-                val terminal = downloadManager.query(query).use { cursor ->
+                terminal = downloadManager.query(query).use { cursor ->
                     if (!cursor.moveToFirst()) {
                         setState(modelId, DownloadState.Failed)
                         true
@@ -222,7 +223,7 @@ class ModelDownloadManager(private val context: Context) {
                 activeDownloads.remove(downloadId)
                 downloadJobs.remove(downloadId)
             }
-            clearPersistedDownload(downloadId)
+            if (terminal) clearPersistedDownload(downloadId)
             if (!closed) refreshStates()
         }
     }
