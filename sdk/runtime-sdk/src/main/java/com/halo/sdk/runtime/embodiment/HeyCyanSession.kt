@@ -2,6 +2,7 @@ package com.halo.sdk.runtime.embodiment
 
 import com.halo.sdk.runtime.DeviceIdentity
 import com.halo.sdk.runtime.EventBus
+import com.halo.sdk.runtime.ObservationUpdated
 import com.halo.sdk.runtime.EmbodimentExecutionEvent
 import com.halo.sdk.runtime.embodiment.ExecutionResult as EmbodimentExecutionResult
 import com.halo.sdk.runtime.embodiment.ExecutionStatus as EmbodimentExecutionStatus

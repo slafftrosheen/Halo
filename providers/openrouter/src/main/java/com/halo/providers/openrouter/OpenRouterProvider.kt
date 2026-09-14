@@ -453,13 +453,15 @@ class OpenRouterProvider(
     private fun statusFromLastErrorOrReady(): ProviderStatus =
         status.value.takeIf { it.state == ProviderStatus.State.ERROR } ?: ProviderStatus.READY
 
-    private fun defaultClient(): OkHttpClient =
-        OkHttpClient.Builder()
-            .connectTimeout(12, TimeUnit.SECONDS)
-            .readTimeout(45, TimeUnit.SECONDS)
-            .writeTimeout(30, TimeUnit.SECONDS)
-            .callTimeout(60, TimeUnit.SECONDS)
-            .build()
+    private companion object {
+        fun defaultClient(): OkHttpClient =
+            OkHttpClient.Builder()
+                .connectTimeout(12, TimeUnit.SECONDS)
+                .readTimeout(45, TimeUnit.SECONDS)
+                .writeTimeout(30, TimeUnit.SECONDS)
+                .callTimeout(60, TimeUnit.SECONDS)
+                .build()
+    }
 
     private class StreamToolCall(val id: String) {
         var name: String? = null

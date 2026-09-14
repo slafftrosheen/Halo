@@ -175,5 +175,5 @@ class HeyCyanHost(
         }
     }
 
-    override suspend fun disconnect() = driver.disconnect()
+    override suspend fun disconnect() { driver.disconnect() }
 }
