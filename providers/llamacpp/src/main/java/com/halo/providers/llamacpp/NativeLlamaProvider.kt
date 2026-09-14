@@ -1,6 +1,5 @@
 package com.halo.providers.llamacpp
 
-import android.app.ActivityManager
 import android.content.Context
 import android.net.Uri
 import android.util.Log
@@ -61,7 +60,7 @@ class NativeLlamaProvider(
             engine != null && loadedModelId == activeId -> ProviderStatus.READY
             downloadManager.getModelFile(activeId) != null ->
                 ProviderStatus(ProviderStatus.State.READY, "Model downloaded; ready to load: $activeId")
-            else -> ProviderStatus(ProviderStatus.State.UNAVAILABLE, "Model not downloaded: $activeId")
+            else -> ProviderStatus(State = ProviderStatus.State.UNAVAILABLE, message = "Model not downloaded: $activeId")
         }
         _status.value = current
         return current
@@ -94,13 +93,29 @@ class NativeLlamaProvider(
         }
 
         val modelBytes = file.length()
-        val memoryInfo = ActivityManager.MemoryInfo()
-        val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
-        activityManager?.getMemoryInfo(memoryInfo)
+        val androidMemory = AndroidMemorySnapshot.read(context)
         val memorySnapshot = ModelMemoryAdmission.Snapshot(
-            totalBytes = memoryInfo.totalMem,
-            availableBytes = memoryInfo.availMem,
-            lowMemory = memoryInfo.lowMemory
+            totalBytes = androidMemory.totalBytes,
+            availableBytes = androidMemory.availableBytes,
+            lowMemory = androidMemory.lowMemory
+        )
+        val ggufMetadata = GgufMetadataReader.read(file)
+        val modelProfile = ggufMetadata?.let {
+            LocalModelMemoryPlanner.ModelProfile(
+                blockCount = it.blockCount,
+                embeddingLength = it.embeddingLength,
+                attentionHeadCount = it.attentionHeadCount,
+                attentionHeadCountKv = it.attentionHeadCountKv,
+            )
+        }
+        Log.i(
+            TAG,
+            "Memory admission snapshot: total=${memorySnapshot.totalBytes / BYTES_PER_MB}MB " +
+                "available=${memorySnapshot.availableBytes / BYTES_PER_MB}MB low=${memorySnapshot.lowMemory} " +
+                "appPss=${androidMemory.appPssBytes / BYTES_PER_MB}MB model=${modelBytes / BYTES_PER_MB}MB " +
+                "architecture=${ggufMetadata?.architecture} metadataContext=${ggufMetadata?.contextLength} " +
+                "blocks=${ggufMetadata?.blockCount} embedding=${ggufMetadata?.embeddingLength} " +
+                "heads=${ggufMetadata?.attentionHeadCount} kvHeads=${ggufMetadata?.attentionHeadCountKv}"
         )
         val admission = ModelMemoryAdmission.evaluate(modelBytes, memorySnapshot)
 
@@ -149,6 +164,7 @@ class NativeLlamaProvider(
                 requestedGpuLayers = 0,
                 accelerator = false,
             ),
+            modelProfile = modelProfile,
         )
         if (plan == null) {
             val message = "Native model load blocked: no safe context size fits the current memory envelope. " +
@@ -163,7 +179,7 @@ class NativeLlamaProvider(
             Log.w(
                 TAG,
                 "Reducing llama.cpp context from requested=$contextSize to planned=$effectiveContextSize " +
-                    "modelBytes=$modelBytes remainingBytes=${plan.remainingBytes}"
+                    "modelBytes=$modelBytes estimatedBytes=${plan.estimatedBytes} remainingBytes=${plan.remainingBytes}"
             )
         }
 
@@ -171,14 +187,12 @@ class NativeLlamaProvider(
         releaseCurrentModel()
         return@withLock try {
             val modelUri = Uri.fromFile(file).toString()
-            val ggufMetadata = GgufMetadataReader.read(file)
             Log.i(
                 TAG,
                 "Loading GGUF model: uri=$modelUri scheme=${Uri.parse(modelUri).scheme} " +
                     "(${file.length()} bytes) architecture=${ggufMetadata?.architecture} " +
                     "metadataContext=${ggufMetadata?.contextLength} effectiveContext=$effectiveContextSize"
             )
-
             val events = MutableSharedFlow<LlamaHelper.LLMEvent>(extraBufferCapacity = 64)
             val loadResult = CompletableDeferred<String?>()
             val loadCollector = scope.launch {
@@ -195,7 +209,6 @@ class NativeLlamaProvider(
                     }
                 }
             }
-
             var helper: LlamaHelper? = null
             var installed = false
             try {
@@ -204,27 +217,17 @@ class NativeLlamaProvider(
                     Log.i(TAG, "Native llama.cpp model ready contextId=$contextId model=$activeId contextSize=$effectiveContextSize")
                     loadResult.complete(null)
                 }
-
                 val loadOutcome = withTimeoutOrNull(MODEL_LOAD_TIMEOUT_MS) { loadResult.await() }
                 if (loadOutcome == null && !loadResult.isCompleted) {
                     Log.e(TAG, "Native llama.cpp model load timed out after ${MODEL_LOAD_TIMEOUT_MS}ms model=$activeId")
-                    _status.value = ProviderStatus(
-                        ProviderStatus.State.ERROR,
-                        "Native llama.cpp model load timed out after ${MODEL_LOAD_TIMEOUT_MS / 1000}s"
-                    )
+                    _status.value = ProviderStatus(ProviderStatus.State.ERROR, "Native llama.cpp model load timed out after ${MODEL_LOAD_TIMEOUT_MS / 1000}s")
                     false
                 } else if (loadOutcome != null) {
-                    _status.value = ProviderStatus(
-                        ProviderStatus.State.ERROR,
-                        "Native llama.cpp model initialization failed: $loadOutcome"
-                    )
+                    _status.value = ProviderStatus(ProviderStatus.State.ERROR, "Native llama.cpp model initialization failed: $loadOutcome")
                     false
                 } else if (downloadManager.activeModelId.value != activeId) {
                     Log.w(TAG, "Discarding stale llama.cpp engine: requested=$activeId active=${downloadManager.activeModelId.value}")
-                    _status.value = ProviderStatus(
-                        ProviderStatus.State.UNAVAILABLE,
-                        "Model selection changed while loading"
-                    )
+                    _status.value = ProviderStatus(ProviderStatus.State.UNAVAILABLE, "Model selection changed while loading")
                     false
                 } else {
                     engine = helper
@@ -237,9 +240,7 @@ class NativeLlamaProvider(
                 }
             } finally {
                 loadCollector.cancel()
-                if (!installed) {
-                    runCatching { helper?.release() }
-                }
+                if (!installed) runCatching { helper?.release() }
             }
         } catch (error: CancellationException) {
             releaseCurrentModel()
@@ -281,10 +282,7 @@ class NativeLlamaProvider(
         val activeModelId = downloadManager.activeModelId.value
             ?: throw AiProviderException(AiErrorType.MODEL_NOT_SELECTED, "No local llama.cpp model is selected")
         if (request.modelId != null && request.modelId != activeModelId) {
-            throw AiProviderException(
-                AiErrorType.MODEL_NOT_FOUND,
-                "Selected llama.cpp model '${request.modelId}' is not the active local model '$activeModelId'"
-            )
+            throw AiProviderException(AiErrorType.MODEL_NOT_FOUND, "Selected llama.cpp model '${request.modelId}' is not the active local model '$activeModelId'")
         }
         return activeModelId
     }
@@ -292,9 +290,7 @@ class NativeLlamaProvider(
     override suspend fun generate(request: AiRequest, context: AiContext): AiResponse {
         request.validateForTextGeneration()
         val modelId = requireSelectedModel(request)
-        if (!loadModelIfNeeded()) {
-            throw AiProviderException(AiErrorType.MODEL_LOAD_FAILED, status.value.message ?: "Unable to load local model")
-        }
+        if (!loadModelIfNeeded()) throw AiProviderException(AiErrorType.MODEL_LOAD_FAILED, status.value.message ?: "Unable to load local model")
         val startedAt = System.currentTimeMillis()
         val prompt = buildPrompt(request, context)
         return inferenceMutex.withLock {
@@ -304,23 +300,10 @@ class NativeLlamaProvider(
                 val text = buildString { streamInternal(prompt, transactionId).collect { append(it) } }.trim()
                 if (text.isBlank()) throw AiProviderException(AiErrorType.EMPTY_RESPONSE, "llama.cpp returned an empty response")
                 Log.i(TAG, "[$transactionId] generate complete outputChars=${text.length} durationMs=${System.currentTimeMillis() - startedAt}")
-                AiResponse(
-                    text = text,
-                    providerId = id,
-                    modelId = modelId,
-                    finishReason = "stop",
-                    metrics = AiGenerationMetrics(startedAtMs = startedAt, completedAtMs = System.currentTimeMillis())
-                )
-            } catch (error: CancellationException) {
-                Log.i(TAG, "[$transactionId] generate cancelled")
-                throw error
-            } catch (error: AiProviderException) {
-                Log.e(TAG, "[$transactionId] generate failed type=${error.type} message=${error.message}", error)
-                throw error
-            } catch (error: Throwable) {
-                Log.e(TAG, "[$transactionId] generate failed unexpectedly", error)
-                throw AiProviderException(AiErrorType.GENERATION_FAILED, "Native llama.cpp generation failed", error)
-            }
+                AiResponse(text, id, modelId, "stop", AiGenerationMetrics(startedAtMs = startedAt, completedAtMs = System.currentTimeMillis()))
+            } catch (error: CancellationException) { throw error }
+            catch (error: AiProviderException) { throw error }
+            catch (error: Throwable) { throw AiProviderException(AiErrorType.GENERATION_FAILED, "Native llama.cpp generation failed", error) }
         }
     }
 
@@ -332,37 +315,15 @@ class NativeLlamaProvider(
         val transactionId = UUID.randomUUID().toString().take(8)
         try {
             val modelId = requireSelectedModel(request)
-            if (!loadModelIfNeeded()) {
-                throw AiProviderException(AiErrorType.MODEL_LOAD_FAILED, status.value.message ?: "Unable to load llama.cpp model")
-            }
-            Log.i(TAG, "[$transactionId] stream start model=$modelId requestChars=${request.text?.length ?: 0}")
+            if (!loadModelIfNeeded()) throw AiProviderException(AiErrorType.MODEL_LOAD_FAILED, status.value.message ?: "Unable to load llama.cpp model")
             inferenceMutex.withLock {
-                streamInternal(buildPrompt(request, context), transactionId).collect { token ->
-                    output.append(token)
-                    emit(AiStreamEvent.Token(token))
-                }
+                streamInternal(buildPrompt(request, context), transactionId).collect { token -> output.append(token); emit(AiStreamEvent.Token(token)) }
             }
             val text = output.toString().trim()
             if (text.isBlank()) throw AiProviderException(AiErrorType.EMPTY_RESPONSE, "llama.cpp produced no response text")
-            Log.i(TAG, "[$transactionId] stream complete outputChars=${text.length} durationMs=${System.currentTimeMillis() - startedAt}")
-            emit(
-                AiStreamEvent.Completed(
-                    AiResponse(
-                        text = text,
-                        providerId = id,
-                        modelId = modelId,
-                        finishReason = "stop",
-                        metrics = AiGenerationMetrics(startedAtMs = startedAt, completedAtMs = System.currentTimeMillis())
-                    )
-                )
-            )
-        } catch (error: CancellationException) {
-            Log.i(TAG, "[$transactionId] stream cancelled")
-            throw error
-        } catch (error: Throwable) {
-            Log.e(TAG, "[$transactionId] stream failed type=${error::class.qualifiedName} message=${error.message}", error)
-            emit(AiStreamEvent.Failed(error))
-        }
+            emit(AiStreamEvent.Completed(AiResponse(text, id, modelId, "stop", AiGenerationMetrics(startedAtMs = startedAt, completedAtMs = System.currentTimeMillis()))))
+        } catch (error: CancellationException) { throw error }
+        catch (error: Throwable) { emit(AiStreamEvent.Failed(error)) }
     }
 
     fun stream(prompt: String): Flow<String> = flow {
@@ -371,83 +332,36 @@ class NativeLlamaProvider(
     }
 
     private fun streamInternal(prompt: String, transactionId: String): Flow<String> = kotlinx.coroutines.flow.channelFlow {
-        val currentEngine = engine
-            ?: throw AiProviderException(AiErrorType.MODEL_NOT_READY, "Native llama.cpp engine is not loaded")
-        val currentEvents = engineEvents
-            ?: throw AiProviderException(AiErrorType.MODEL_NOT_READY, "Native llama.cpp event stream is not ready")
-
+        val currentEngine = engine ?: throw AiProviderException(AiErrorType.MODEL_NOT_READY, "Native llama.cpp engine is not loaded")
+        val currentEvents = engineEvents ?: throw AiProviderException(AiErrorType.MODEL_NOT_READY, "Native llama.cpp event stream is not ready")
         val eventChannel = Channel<LlamaHelper.LLMEvent>(Channel.UNLIMITED)
         var eventCount = 0
         var tokenCount = 0
         var terminalEvent: String? = null
-        val collector = launch {
-            currentEvents.collect { event ->
-                eventChannel.send(event)
-            }
-        }
-
+        val collector = launch { currentEvents.collect { eventChannel.send(it) } }
         try {
             currentEvents.subscriptionCount.first { it > 0 }
             currentCoroutineContext().ensureActive()
-            Log.d(TAG, "[$transactionId] native event collector ready; predict begin promptChars=${prompt.length}")
-            try {
-                currentEngine.predict(prompt, "", true)
-            } catch (error: CancellationException) {
-                throw error
-            } catch (error: Throwable) {
-                Log.e(TAG, "[$transactionId] native predict threw before terminal event", error)
-                throw AiProviderException(
-                    AiErrorType.GENERATION_FAILED,
-                    "llama.cpp predict() failed: ${error.message ?: error::class.simpleName}",
-                    error
-                )
-            }
-            Log.d(TAG, "[$transactionId] predict returned; awaiting native terminal event")
-
+            currentEngine.predict(prompt, "", true)
             val completed = withTimeoutOrNull(GENERATION_TIMEOUT_MS) {
                 for (event in eventChannel) {
                     currentCoroutineContext().ensureActive()
                     eventCount++
                     when (event) {
-                        is LlamaHelper.LLMEvent.Ongoing -> {
-                            if (event.word.isNotEmpty()) {
-                                tokenCount++
-                                send(event.word)
-                            }
-                        }
-                        is LlamaHelper.LLMEvent.Done -> {
-                            terminalEvent = "Done"
-                            Log.i(TAG, "[$transactionId] native generation done events=$eventCount tokens=$tokenCount")
-                            return@withTimeoutOrNull true
-                        }
+                        is LlamaHelper.LLMEvent.Ongoing -> if (event.word.isNotEmpty()) { tokenCount++; send(event.word) }
+                        is LlamaHelper.LLMEvent.Done -> { terminalEvent = "Done"; return@withTimeoutOrNull true }
                         is LlamaHelper.LLMEvent.Error -> {
                             terminalEvent = "Error"
-                            Log.e(TAG, "[$transactionId] native generation emitted Error event=${event::class.qualifiedName} events=$eventCount tokens=$tokenCount message=${event.message}")
-                            throw AiProviderException(
-                                AiErrorType.GENERATION_FAILED,
-                                "llama.cpp generation error: ${event.message ?: event::class.simpleName}"
-                            )
+                            throw AiProviderException(AiErrorType.GENERATION_FAILED, "llama.cpp generation error: ${event.message ?: event::class.simpleName}")
                         }
-                        else -> {
-                            if (eventCount <= 8) {
-                                Log.d(TAG, "[$transactionId] native event #$eventCount type=${event::class.qualifiedName}")
-                            }
-                        }
+                        else -> if (eventCount <= 8) Log.d(TAG, "[$transactionId] native event #$eventCount type=${event::class.qualifiedName}")
                     }
                 }
                 false
             } ?: false
-
-            if (!completed) {
-                throw AiProviderException(
-                    AiErrorType.GENERATION_FAILED,
-                    "llama.cpp generation timed out after ${GENERATION_TIMEOUT_MS / 1000}s without a terminal event"
-                )
-            }
+            if (!completed) throw AiProviderException(AiErrorType.GENERATION_FAILED, "llama.cpp generation timed out after ${GENERATION_TIMEOUT_MS / 1000}s without a terminal event")
         } finally {
-            if (terminalEvent == null) {
-                Log.w(TAG, "[$transactionId] native event stream ended without terminal event events=$eventCount tokens=$tokenCount")
-            }
+            if (terminalEvent == null) Log.w(TAG, "[$transactionId] native event stream ended without terminal event events=$eventCount tokens=$tokenCount")
             collector.cancel()
             eventChannel.close()
         }
@@ -459,24 +373,12 @@ class NativeLlamaProvider(
         return downloaded.sortedWith(compareByDescending<CognitiveModel> { it.id == activeId }.thenBy { it.name }).map { model ->
             val file = downloadManager.getModelFile(model.id)
             val metadata = file?.let(GgufMetadataReader::read)
-            AiModel(
-                id = model.id,
-                displayName = model.name,
-                providerId = id,
-                inputCapabilities = setOf(AiCapability.TEXT),
-                contextLength = metadata?.contextLength?.toLong() ?: 4096L,
-                supportsStreaming = true,
-                supportsTools = false
-            )
+            AiModel(id = model.id, displayName = model.name, providerId = id, inputCapabilities = setOf(AiCapability.TEXT), contextLength = metadata?.contextLength?.toLong() ?: 4096L, supportsStreaming = true, supportsTools = false)
         }
     }
 
     suspend fun close() {
-        modelLoadMutex.withLock {
-            inferenceMutex.withLock {
-                releaseCurrentModel()
-            }
-        }
+        modelLoadMutex.withLock { inferenceMutex.withLock { releaseCurrentModel() } }
         scope.coroutineContext[kotlinx.coroutines.Job]?.cancel()
     }
 
