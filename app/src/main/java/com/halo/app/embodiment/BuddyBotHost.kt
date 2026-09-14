@@ -40,6 +40,10 @@ data class BuddyBotTelemetry(
 /**
  * Host controller for physical BuddyBot embodiment.
  * Manages WebSocket connection, device registration, pairing, and incoming telemetry.
+ *
+ * Construction is intentionally side-effect free. Device registration is performed
+ * explicitly by the startup/connect path so creating a UI ViewModel cannot perform
+ * storage access or transport allocation on the Compose main thread.
  */
 class BuddyBotHost(
     private val sessionManager: DeviceSessionManager,
@@ -60,17 +64,15 @@ class BuddyBotHost(
     var session: BuddyBotSession? = null
         private set
 
-    init {
-        ensureDeviceRegistered()
-    }
-
     fun getTargetUrl(): String {
         return storage.getString(STORAGE_KEY_URL, DEFAULT_BUDDYBOT_URL) ?: DEFAULT_BUDDYBOT_URL
     }
 
     fun setTargetUrl(url: String) {
         storage.putString(STORAGE_KEY_URL, url)
-        ensureDeviceRegistered(recreate = true)
+        scope.launch(Dispatchers.IO) {
+            ensureDeviceRegistered(recreate = true)
+        }
     }
 
     fun ensureDeviceRegistered(recreate: Boolean = false) {
@@ -97,7 +99,7 @@ class BuddyBotHost(
 
         sessionManager.registerSession(newSession)
 
-        scope.launch {
+        scope.launch(Dispatchers.IO) {
             val existing = sessionManager.registry.getDevice(deviceId)
             if (existing == null) {
                 sessionManager.registry.saveDevice(
@@ -170,7 +172,7 @@ class BuddyBotHost(
                 )
                 _telemetry.value = updated
 
-                scope.launch {
+                scope.launch(Dispatchers.IO) {
                     sessionManager.registry.getDevice(deviceId)?.let { record ->
                         sessionManager.registry.saveDevice(record.copy(lastSeenMs = System.currentTimeMillis()))
                     }
