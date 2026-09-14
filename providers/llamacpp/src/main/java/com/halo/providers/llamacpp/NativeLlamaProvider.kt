@@ -459,7 +459,7 @@ class NativeLlamaProvider(
                 displayName = model.name,
                 providerId = id,
                 inputCapabilities = setOf(AiCapability.TEXT),
-                contextLength = metadata?.contextLength ?: 4096,
+                contextLength = metadata?.contextLength?.toLong() ?: 4096L,
                 supportsStreaming = true,
                 supportsTools = false
             )

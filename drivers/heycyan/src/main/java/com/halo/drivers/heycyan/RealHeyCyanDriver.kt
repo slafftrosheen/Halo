@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
+import android.util.Log
 import com.halo.drivers.heycyan.ble.HeyCyanBleScanner
 import com.halo.drivers.heycyan.ble.HeyCyanGattClient
 import com.halo.drivers.heycyan.codec.*
@@ -35,6 +36,11 @@ import com.halo.drivers.heycyan.capability.*
 import com.halo.drivers.heycyan.ble.HeyCyanGattCommandTransport
 import com.halo.drivers.heycyan.protocol.HeyCyanProtocolConstants
 import com.halo.drivers.heycyan.capability.toOperationFailure
+import com.halo.sdk.runtime.Modality
+import com.halo.sdk.runtime.Observation
+import com.halo.sdk.runtime.ObservationUpdated
+import com.halo.sdk.runtime.Source
+import com.halo.sdk.runtime.SystemObservationPayload
 
 class RealHeyCyanDriver(
     private val context: Context,
@@ -73,7 +79,7 @@ class RealHeyCyanDriver(
         connectedDeviceId = selectedAddress
         android.util.Log.i("RealHeyCyanDriver", "Connecting to $selectedAddress (mode: $mode)")
         captureRecorder.abort()
-        captureRecorder.start(scenario = scenario, captureId = captureId, metadata = captureMetadata())
+        captureRecorder.start(scenario = scenario, captureId = captureId, metadata = CaptureMetadata())
         gattClient.markScanning()
         stateStore.updateConnection(com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.SCANNING)
         try {
@@ -123,12 +129,13 @@ class RealHeyCyanDriver(
         }
     }
     private suspend fun finalizeGattConnection(mode: HeyCyanConnectionMode) { stateStore.updateConnection(com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.READY); if (mode == HeyCyanConnectionMode.RUNTIME) startReading(); if (canDecodeEvents(mode)) _events.emit(DeviceEvent.Ready(System.currentTimeMillis())) }
-    override suspend fun disconnect() = connectionMutex.withLock {
-        android.util.Log.i("RealHeyCyanDriver", "Disconnecting...")
+    override suspend fun disconnect(): Unit = connectionMutex.withLock {
+        Log.i("RealHeyCyanDriver", "Disconnecting...")
         readJob?.cancel(); readJob = null
         try { gattClient.disconnect(); gattClient.awaitDisconnected() } catch (error: CancellationException) { throw error } catch (error: Throwable) { android.util.Log.w("RealHeyCyanDriver", "GATT disconnect failed", error) } finally { connectedDeviceId = null }
         stateStore.updateConnection(com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.DISCONNECTED)
         runCatching { captureRecorder.stop() }
+        Unit
     }
     override suspend fun shutdown() { android.util.Log.i("RealHeyCyanDriver", "Shutting down..."); disconnect(); eventScope.coroutineContext[kotlinx.coroutines.Job]?.cancel() }
     override suspend fun emit(event: DeviceEvent) { _events.emit(event) }
@@ -148,13 +155,27 @@ class RealHeyCyanDriver(
         val timestamp = System.currentTimeMillis(); stateStore.apply(event = event, timestamp = timestamp)
         when (event) {
             is HeyCyanEvent.BatteryUpdated -> { _events.emit(DeviceEvent.BatteryLevel(timestamp = timestamp, level = event.level)); emitDeviceEvent(event); val deviceId = currentObservationDeviceId() ?: return; eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(observation = com.halo.sdk.runtime.Observation(modality = com.halo.sdk.runtime.Modality.SYSTEM, source = com.halo.sdk.runtime.Source.BLUETOOTH, payload = com.halo.sdk.runtime.BatteryObservationPayload(event.level), sourceDeviceId = deviceId, metadata = mapOf("battery" to event.level, "charging" to event.isCharging)))) }
-            is HeyCyanEvent.ButtonPressed -> { _events.emit(DeviceEvent.ButtonClick(timestamp = timestamp, buttonId = event.type.toButtonId())); emitDeviceEvent(event); val deviceId = currentObservationDeviceId() ?: return; eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(observation = com.halo.sdk.runtime.Observation(modality = com.halo.sdk.runtime.Modality.SYSTEM, source = com.halo.sdk.runtime.Source.BLUETOOTH, payload = com.halo.sdk.runtime.SystemObservationPayload("BUTTON_PRESSED"), sourceDeviceId = deviceId, metadata = mapOf("button" to event.type.name)))) }
-            is HeyCyanEvent.AiImageRecognition -> { emitDeviceEvent(event); val deviceId = currentObservationDeviceId() ?: return; eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(observation = com.halo.sdk.runtime.Observation(modality = com.halo.sdk.runtime.Modality.VIDEO, source = com.halo.sdk.runtime.Source.CAMERA, payload = com.halo.sdk.runtime.SystemObservationPayload("AI_IMAGE_RECOGNITION"), sourceDeviceId = deviceId, metadata = mapOf("action" to "AI_IMAGE_RECOGNITION"))) }
-            is HeyCyanEvent.VoiceActivationStarted -> { emitDeviceEvent(event); val deviceId = currentObservationDeviceId() ?: return; eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(observation = com.halo.sdk.runtime.Observation(modality = com.halo.sdk.runtime.Modality.AUDIO, source = com.halo.sdk.runtime.Source.MICROPHONE, payload = com.halo.sdk.runtime.SystemObservationPayload("MICROPHONE_ACTIVE"), sourceDeviceId = deviceId, metadata = mapOf("event" to "MICROPHONE_ACTIVE"))) }
-            is HeyCyanEvent.VoiceActivationEnded -> { emitDeviceEvent(event); val deviceId = currentObservationDeviceId() ?: return; eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(observation = com.halo.sdk.runtime.Observation(modality = com.halo.sdk.runtime.Modality.AUDIO, source = com.halo.sdk.runtime.Source.MICROPHONE, payload = com.halo.sdk.runtime.SystemObservationPayload("MICROPHONE_INACTIVE"), sourceDeviceId = deviceId, metadata = mapOf("event" to "MICROPHONE_INACTIVE"))) }
-            is HeyCyanEvent.VoicePlaybackPause -> { emitDeviceEvent(event); val deviceId = currentObservationDeviceId() ?: return; eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(observation = com.halo.sdk.runtime.Observation(modality = com.halo.sdk.runtime.Modality.SYSTEM, source = com.halo.sdk.runtime.Source.BLUETOOTH, payload = com.halo.sdk.runtime.SystemObservationPayload("VOICE_PLAYBACK_PAUSE"), sourceDeviceId = deviceId, metadata = mapOf("event" to "VOICE_PLAYBACK_PAUSE"))) }
-            is HeyCyanEvent.ModeChanged -> { emitDeviceEvent(event); val deviceId = currentObservationDeviceId() ?: return; eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(observation = com.halo.sdk.runtime.Observation(modality = com.halo.sdk.runtime.Modality.SYSTEM, source = com.halo.sdk.runtime.Source.BLUETOOTH, payload = com.halo.sdk.runtime.SystemObservationPayload("MODE_CHANGED"), sourceDeviceId = deviceId, metadata = mapOf("event" to "MODE_CHANGED", "mode" to event.mode))) }
-            is HeyCyanEvent.MemoryInsufficient -> { emitDeviceEvent(event); val deviceId = currentObservationDeviceId() ?: return; eventBus?.publish(com.halo.sdk.runtime.ObservationUpdated(observation = com.halo.sdk.runtime.Observation(modality = com.halo.sdk.runtime.Modality.SYSTEM, source = com.halo.sdk.runtime.Modality.SYSTEM.let { com.halo.sdk.runtime.Source.BLUETOOTH }, payload = com.halo.sdk.runtime.SystemObservationPayload("MEMORY_INSUFFICIENT"), sourceDeviceId = deviceId, metadata = mapOf("fault" to "MEMORY_INSUFFICIENT"))) }
+            is HeyCyanEvent.ButtonPressed -> { _events.emit(DeviceEvent.ButtonClick(timestamp = timestamp, buttonId = event.type.ordinal)); emitDeviceEvent(event); val deviceId = currentObservationDeviceId() ?: return; eventBus?.publish(
+                ObservationUpdated(observation = Observation(modality = Modality.SYSTEM, source = Source.BLUETOOTH, payload = SystemObservationPayload("BUTTON_PRESSED"), sourceDeviceId = deviceId, metadata = mapOf("button" to event.type.name)))
+            ) }
+            is HeyCyanEvent.AiImageRecognition -> { emitDeviceEvent(event); val deviceId = currentObservationDeviceId() ?: return; eventBus?.publish(
+                ObservationUpdated(observation = Observation(modality = Modality.VIDEO, source = Source.CAMERA, payload = SystemObservationPayload("AI_IMAGE_RECOGNITION"), sourceDeviceId = deviceId, metadata = mapOf("action" to "AI_IMAGE_RECOGNITION")))
+            ) }
+            is HeyCyanEvent.VoiceActivationStarted -> { emitDeviceEvent(event); val deviceId = currentObservationDeviceId() ?: return; eventBus?.publish(
+                ObservationUpdated(observation = Observation(modality = Modality.AUDIO, source = Source.MICROPHONE, payload = SystemObservationPayload("MICROPHONE_ACTIVE"), sourceDeviceId = deviceId, metadata = mapOf("event" to "MICROPHONE_ACTIVE")))
+            ) }
+            is HeyCyanEvent.VoiceActivationEnded -> { emitDeviceEvent(event); val deviceId = currentObservationDeviceId() ?: return; eventBus?.publish(
+                ObservationUpdated(observation = Observation(modality = Modality.AUDIO, source = Source.MICROPHONE, payload = SystemObservationPayload("MICROPHONE_INACTIVE"), sourceDeviceId = deviceId, metadata = mapOf("event" to "MICROPHONE_INACTIVE")))
+            ) }
+            is HeyCyanEvent.VoicePlaybackPause -> { emitDeviceEvent(event); val deviceId = currentObservationDeviceId() ?: return; eventBus?.publish(
+                ObservationUpdated(observation = Observation(modality = Modality.SYSTEM, source = Source.BLUETOOTH, payload = SystemObservationPayload("VOICE_PLAYBACK_PAUSE"), sourceDeviceId = deviceId, metadata = mapOf("event" to "VOICE_PLAYBACK_PAUSE")))
+            ) }
+            is HeyCyanEvent.ModeChanged -> { emitDeviceEvent(event); val deviceId = currentObservationDeviceId() ?: return; eventBus?.publish(
+                ObservationUpdated(observation = Observation(modality = Modality.SYSTEM, source = Source.BLUETOOTH, payload = SystemObservationPayload("MODE_CHANGED"), sourceDeviceId = deviceId, metadata = mapOf("event" to "MODE_CHANGED", "mode" to event.mode)))
+            ) }
+            is HeyCyanEvent.MemoryInsufficient -> { emitDeviceEvent(event); val deviceId = currentObservationDeviceId() ?: return; eventBus?.publish(
+                ObservationUpdated(observation = Observation(modality = Modality.SYSTEM, source = Modality.SYSTEM.let { Source.BLUETOOTH }, payload = SystemObservationPayload("MEMORY_INSUFFICIENT"), sourceDeviceId = deviceId, metadata = mapOf("fault" to "MEMORY_INSUFFICIENT")))
+            ) }
             else -> emitDeviceEvent(event)
         }
     }
