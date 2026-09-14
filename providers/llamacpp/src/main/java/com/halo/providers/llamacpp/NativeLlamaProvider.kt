@@ -1,6 +1,5 @@
 package com.halo.providers.llamacpp
 
-import android.app.ActivityManager
 import android.content.Context
 import android.net.Uri
 import android.util.Log
@@ -94,14 +93,31 @@ class NativeLlamaProvider(
         }
 
         val modelBytes = file.length()
-        val memoryInfo = ActivityManager.MemoryInfo()
-        val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
-        activityManager?.getMemoryInfo(memoryInfo)
+        val androidMemory = AndroidMemorySnapshot.read(context)
         val memorySnapshot = ModelMemoryAdmission.Snapshot(
-            totalBytes = memoryInfo.totalMem,
-            availableBytes = memoryInfo.availMem,
-            lowMemory = memoryInfo.lowMemory
+            totalBytes = androidMemory.totalBytes,
+            availableBytes = androidMemory.availableBytes,
+            lowMemory = androidMemory.lowMemory
         )
+        val ggufMetadata = GgufMetadataReader.read(file)
+        val modelProfile = ggufMetadata?.let {
+            LocalModelMemoryPlanner.ModelProfile(
+                blockCount = it.blockCount,
+                embeddingLength = it.embeddingLength,
+                attentionHeadCount = it.attentionHeadCount,
+                attentionHeadCountKv = it.attentionHeadCountKv,
+            )
+        }
+        Log.i(
+            TAG,
+            "Memory admission snapshot: total=${memorySnapshot.totalBytes / BYTES_PER_MB}MB " +
+                "available=${memorySnapshot.availableBytes / BYTES_PER_MB}MB low=${memorySnapshot.lowMemory} " +
+                "appPss=${androidMemory.appPssBytes / BYTES_PER_MB}MB model=${modelBytes / BYTES_PER_MB}MB " +
+                "architecture=${ggufMetadata?.architecture} metadataContext=${ggufMetadata?.contextLength} " +
+                "blocks=${ggufMetadata?.blockCount} embedding=${ggufMetadata?.embeddingLength} " +
+                "heads=${ggufMetadata?.attentionHeadCount} kvHeads=${ggufMetadata?.attentionHeadCountKv}"
+        )
+
         val admission = ModelMemoryAdmission.evaluate(modelBytes, memorySnapshot)
 
         if (admission is ModelMemoryAdmission.Decision.Reject) {
@@ -149,6 +165,7 @@ class NativeLlamaProvider(
                 requestedGpuLayers = 0,
                 accelerator = false,
             ),
+            modelProfile = modelProfile,
         )
         if (plan == null) {
             val message = "Native model load blocked: no safe context size fits the current memory envelope. " +
@@ -163,7 +180,7 @@ class NativeLlamaProvider(
             Log.w(
                 TAG,
                 "Reducing llama.cpp context from requested=$contextSize to planned=$effectiveContextSize " +
-                    "modelBytes=$modelBytes remainingBytes=${plan.remainingBytes}"
+                    "modelBytes=$modelBytes estimatedBytes=${plan.estimatedBytes} remainingBytes=${plan.remainingBytes}"
             )
         }
 
@@ -171,7 +188,6 @@ class NativeLlamaProvider(
         releaseCurrentModel()
         return@withLock try {
             val modelUri = Uri.fromFile(file).toString()
-            val ggufMetadata = GgufMetadataReader.read(file)
             Log.i(
                 TAG,
                 "Loading GGUF model: uri=$modelUri scheme=${Uri.parse(modelUri).scheme} " +
