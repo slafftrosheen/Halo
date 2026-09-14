@@ -6,6 +6,7 @@ import org.junit.Test
 
 class ModelMemoryAdmissionTest {
     private val gb = 1024L * 1024L * 1024L
+    private val mb = 1024L * 1024L
 
     @Test
     fun rejectsModelThatExceedsTotalMemoryCeiling() {
@@ -73,9 +74,41 @@ class ModelMemoryAdmissionTest {
     }
 
     @Test
+    fun allowsSmallQwenModelWithAboutOneGigabyteAvailableOnSixGigabyteDevice() {
+        val decision = ModelMemoryAdmission.evaluate(
+            modelBytes = 388L * mb,
+            memory = ModelMemoryAdmission.Snapshot(
+                totalBytes = 6L * gb,
+                availableBytes = 1070L * mb,
+                lowMemory = false
+            )
+        )
+
+        assertTrue(decision is ModelMemoryAdmission.Decision.Allow)
+        assertEquals(512L * mb, ModelMemoryAdmission.reserveBytesFor(388L * mb))
+    }
+
+    @Test
+    fun smallModelStillRejectsWhenRealHeadroomIsTooLow() {
+        val decision = ModelMemoryAdmission.evaluate(
+            modelBytes = 388L * mb,
+            memory = ModelMemoryAdmission.Snapshot(
+                totalBytes = 6L * gb,
+                availableBytes = 850L * mb,
+                lowMemory = false
+            )
+        )
+
+        assertEquals(
+            ModelMemoryAdmission.Reason.AVAILABLE_MEMORY_LIMIT,
+            (decision as ModelMemoryAdmission.Decision.Reject).reason
+        )
+    }
+
+    @Test
     fun allowsModelExactlyAtAvailableMemoryBoundary() {
         val modelBytes = 2L * gb
-        val reserve = ModelMemoryAdmission.RESERVED_MEMORY_BYTES
+        val reserve = ModelMemoryAdmission.reserveBytesFor(modelBytes)
 
         val decision = ModelMemoryAdmission.evaluate(
             modelBytes = modelBytes,
