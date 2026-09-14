@@ -6,6 +6,8 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 class LocalModelMemoryPlannerTest {
+    private val mb = 1024L * 1024L
+
     private fun memory(totalGb: Int, availableGb: Int, lowMemory: Boolean = false) =
         LocalModelMemoryPlanner.MemorySnapshot(
             totalBytes = totalGb.toLong() * 1024L * 1024L * 1024L,
@@ -21,6 +23,26 @@ class LocalModelMemoryPlannerTest {
             candidates = listOf(
                 LocalModelMemoryPlanner.Candidate(contextSize = 4096, gpuLayers = 0),
                 LocalModelMemoryPlanner.Candidate(contextSize = 2048, gpuLayers = 0),
+            ),
+        )
+
+        assertNotNull(plan)
+        assertEquals(4096, plan!!.candidate.contextSize)
+    }
+
+    @Test
+    fun allowsSmallModelOnSixGigabyteDeviceWithAboutOneGigabyteAvailable() {
+        val plan = LocalModelMemoryPlanner.choose(
+            modelBytes = 388L * mb,
+            memory = LocalModelMemoryPlanner.MemorySnapshot(
+                totalBytes = 6L * 1024L * mb,
+                availableBytes = 1070L * mb,
+                lowMemory = false,
+            ),
+            candidates = LocalModelMemoryPlanner.defaultCandidates(
+                requestedContextSize = 4096,
+                requestedGpuLayers = 0,
+                accelerator = false,
             ),
         )
 
