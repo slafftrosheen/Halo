@@ -10,6 +10,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -35,7 +36,7 @@ class NativeLlamaProvider(
 ) : AiInferenceProvider {
     private var engine: LlamaHelper? = null
     private var engineEvents: MutableSharedFlow<LlamaHelper.LLMEvent>? = null
-    private val scope = CoroutineScope(Dispatchers.IO)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var loadedModelId: String? = null
     private var loadedContextSize: Int? = null
     private val modelLoadMutex = Mutex()
@@ -113,17 +114,21 @@ class NativeLlamaProvider(
                 ModelMemoryAdmission.Reason.TOTAL_MEMORY_LIMIT -> {
                     val totalFractionLimit = (memorySnapshot.totalBytes / 20L) * 11L +
                         (memorySnapshot.totalBytes % 20L) * 11L / 20L
+                    val reserveBytes = ModelMemoryAdmission.reserveBytesFor(modelBytes)
                     val maxMb = minOf(
                         totalFractionLimit,
-                        (memorySnapshot.totalBytes - ModelMemoryAdmission.RESERVED_MEMORY_BYTES).coerceAtLeast(0L)
+                        (memorySnapshot.totalBytes - reserveBytes).coerceAtLeast(0L)
                     ) / BYTES_PER_MB
                     "Model $activeId is ${modelMb}MB but this device has ${totalMb}MB RAM; " +
-                        "native loading is limited to ${maxMb}MB to avoid process kills. Select a smaller GGUF model."
+                        "native loading is limited to ${maxMb}MB with ${reserveBytes / BYTES_PER_MB}MB reserved headroom. " +
+                        "Select a smaller GGUF model."
                 }
-                ModelMemoryAdmission.Reason.AVAILABLE_MEMORY_LIMIT ->
-                    "Native model load blocked: $modelMb MB model needs at least " +
-                        "${ModelMemoryAdmission.RESERVED_MEMORY_BYTES / BYTES_PER_MB}MB additional RAM headroom, " +
-                        "but only ${availableMb}MB is currently available. Close other apps and retry."
+                ModelMemoryAdmission.Reason.AVAILABLE_MEMORY_LIMIT -> {
+                    val reserveBytes = ModelMemoryAdmission.reserveBytesFor(modelBytes)
+                    "Native model load blocked: $modelMb MB model needs ${reserveBytes / BYTES_PER_MB}MB " +
+                        "additional RAM headroom, but only ${availableMb}MB is currently available. " +
+                        "Close other apps and retry."
+                }
                 ModelMemoryAdmission.Reason.INVALID_MEMORY_SNAPSHOT ->
                     "Native model load blocked: Android returned invalid memory information."
             }

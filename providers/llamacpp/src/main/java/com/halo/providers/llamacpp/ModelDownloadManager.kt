@@ -7,6 +7,7 @@ import android.os.Environment
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,9 +35,11 @@ enum class DownloadState { NotDownloaded, Downloading, Downloaded, Failed }
 class ModelDownloadManager(private val context: Context) {
     private val prefs = context.getSharedPreferences("halo_models", Context.MODE_PRIVATE)
     private val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-    private val scope = CoroutineScope(Dispatchers.IO)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val downloadsLock = Any()
     private val activeDownloads = mutableMapOf<Long, String>()
     private val downloadJobs = mutableMapOf<Long, Job>()
+    @Volatile private var closed = false
 
     private val _downloadStates = MutableStateFlow<Map<String, DownloadState>>(emptyMap())
     val downloadStates: StateFlow<Map<String, DownloadState>> = _downloadStates
@@ -68,6 +71,7 @@ class ModelDownloadManager(private val context: Context) {
     }
 
     fun refreshStates() {
+        if (closed) return
         val states = mutableMapOf<String, DownloadState>()
         getAllModels().forEach { model ->
             states[model.id] = if (getModelFile(model.id) != null) {
@@ -94,11 +98,12 @@ class ModelDownloadManager(private val context: Context) {
     }
 
     fun downloadModel(modelId: String) {
+        if (closed) return
         getAllModels().find { it.id == modelId }?.let { downloadUrl(it.id, it.name, it.downloadUrl) }
     }
 
     fun downloadCustomUrl(url: String, name: String) {
-        if (url.isBlank()) return
+        if (closed || url.isBlank()) return
         val id = "custom_" + url.hashCode().toString().replace("-", "n")
         val modelName = name.ifBlank { url.substringAfterLast("/") }
         _customModels.value = _customModels.value.filter { it.id != id } +
@@ -108,66 +113,68 @@ class ModelDownloadManager(private val context: Context) {
     }
 
     private fun downloadUrl(id: String, name: String, url: String) {
-        val existing = activeDownloads.entries.firstOrNull { it.value == id }
-        if (existing != null) return
+        if (closed) return
+        synchronized(downloadsLock) {
+            if (activeDownloads.values.any { it == id }) return
 
-        val request = DownloadManager.Request(Uri.parse(url)).apply {
-            setTitle("Downloading $name")
-            setDescription("Halo on-device GGUF model download.")
-            setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-            setDestinationInExternalFilesDir(context, Environment.DIRECTORY_DOWNLOADS, url.substringAfterLast("/"))
-            setAllowedOverMetered(true)
-            setAllowedOverRoaming(true)
+            val request = DownloadManager.Request(Uri.parse(url)).apply {
+                setTitle("Downloading $name")
+                setDescription("Halo on-device GGUF model download.")
+                setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                setDestinationInExternalFilesDir(context, Environment.DIRECTORY_DOWNLOADS, url.substringAfterLast("/"))
+                setAllowedOverMetered(true)
+                setAllowedOverRoaming(true)
+            }
+            val downloadId = downloadManager.enqueue(request)
+            activeDownloads[downloadId] = id
+            _downloadStates.value = _downloadStates.value.toMutableMap().apply { put(id, DownloadState.Downloading) }
+            downloadJobs[downloadId] = scope.launch { pollDownload(downloadId, id) }
         }
-        val downloadId = downloadManager.enqueue(request)
-        activeDownloads[downloadId] = id
-        _downloadStates.value = _downloadStates.value.toMutableMap().apply { put(id, DownloadState.Downloading) }
-        pollDownload(downloadId, id)
     }
 
-    private fun pollDownload(downloadId: Long, modelId: String) {
-        downloadJobs.remove(downloadId)?.cancel()
-        downloadJobs[downloadId] = scope.launch {
-            try {
-                while (true) {
-                    val query = DownloadManager.Query().setFilterById(downloadId)
-                    val terminal = downloadManager.query(query).use { cursor ->
-                        if (!cursor.moveToFirst()) {
-                            setState(modelId, DownloadState.Failed)
-                            true
-                        } else {
-                            when (cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))) {
-                                DownloadManager.STATUS_SUCCESSFUL -> {
-                                    refreshStates()
-                                    if (getModelFile(modelId) == null) setState(modelId, DownloadState.Failed)
-                                    else setState(modelId, DownloadState.Downloaded)
-                                    true
-                                }
-                                DownloadManager.STATUS_FAILED -> {
-                                    setState(modelId, DownloadState.Failed)
-                                    true
-                                }
-                                else -> false
+    private suspend fun pollDownload(downloadId: Long, modelId: String) {
+        try {
+            while (!closed) {
+                val query = DownloadManager.Query().setFilterById(downloadId)
+                val terminal = downloadManager.query(query).use { cursor ->
+                    if (!cursor.moveToFirst()) {
+                        setState(modelId, DownloadState.Failed)
+                        true
+                    } else {
+                        when (cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))) {
+                            DownloadManager.STATUS_SUCCESSFUL -> {
+                                refreshStates()
+                                if (getModelFile(modelId) == null) setState(modelId, DownloadState.Failed)
+                                else setState(modelId, DownloadState.Downloaded)
+                                true
                             }
+                            DownloadManager.STATUS_FAILED -> {
+                                setState(modelId, DownloadState.Failed)
+                                true
+                            }
+                            else -> false
                         }
                     }
-                    if (terminal) break
-                    delay(1000L)
                 }
-            } finally {
+                if (terminal) break
+                delay(1000L)
+            }
+        } finally {
+            synchronized(downloadsLock) {
                 activeDownloads.remove(downloadId)
                 downloadJobs.remove(downloadId)
-                refreshStates()
             }
+            if (!closed) refreshStates()
         }
     }
 
     private fun setState(modelId: String, state: DownloadState) {
+        if (closed) return
         _downloadStates.value = _downloadStates.value.toMutableMap().apply { put(modelId, state) }
     }
 
     fun setActiveModel(modelId: String) {
-        if (getModelFile(modelId) == null) return
+        if (closed || getModelFile(modelId) == null) return
         _activeModelId.value = modelId
         prefs.edit().putString("active_model", modelId).apply()
         refreshStates()
@@ -196,5 +203,17 @@ class ModelDownloadManager(private val context: Context) {
             listOf(model.id, model.name, model.description, model.downloadUrl, model.sizeMb.toString()).joinToString("|||")
         }
         prefs.edit().putString("custom_models_json", json).apply()
+    }
+
+    fun close() {
+        closed = true
+        val jobs = synchronized(downloadsLock) {
+            val current = downloadJobs.values.toList()
+            downloadJobs.clear()
+            activeDownloads.clear()
+            current
+        }
+        jobs.forEach { it.cancel() }
+        scope.coroutineContext[Job]?.cancel()
     }
 }
