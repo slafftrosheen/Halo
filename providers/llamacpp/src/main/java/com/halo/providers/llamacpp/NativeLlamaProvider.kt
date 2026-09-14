@@ -37,6 +37,7 @@ class NativeLlamaProvider(
     private var engineEvents: MutableSharedFlow<LlamaHelper.LLMEvent>? = null
     private val scope = CoroutineScope(Dispatchers.IO)
     private var loadedModelId: String? = null
+    private var loadedContextSize: Int? = null
     private val modelLoadMutex = Mutex()
     private val inferenceMutex = Mutex()
 
@@ -131,11 +132,47 @@ class NativeLlamaProvider(
             return@withLock false
         }
 
+        val plan = LocalModelMemoryPlanner.choose(
+            modelBytes = modelBytes,
+            memory = LocalModelMemoryPlanner.MemorySnapshot(
+                totalBytes = memorySnapshot.totalBytes,
+                availableBytes = memorySnapshot.availableBytes,
+                lowMemory = memorySnapshot.lowMemory,
+            ),
+            candidates = LocalModelMemoryPlanner.defaultCandidates(
+                requestedContextSize = contextSize,
+                requestedGpuLayers = 0,
+                accelerator = false,
+            ),
+        )
+        if (plan == null) {
+            val message = "Native model load blocked: no safe context size fits the current memory envelope. " +
+                "Close other apps or lower the llama.cpp context setting."
+            Log.e(TAG, message)
+            _status.value = ProviderStatus(ProviderStatus.State.ERROR, message)
+            return@withLock false
+        }
+
+        val effectiveContextSize = plan.candidate.contextSize
+        if (effectiveContextSize != contextSize) {
+            Log.w(
+                TAG,
+                "Reducing llama.cpp context from requested=$contextSize to planned=$effectiveContextSize " +
+                    "modelBytes=$modelBytes remainingBytes=${plan.remainingBytes}"
+            )
+        }
+
         _status.value = ProviderStatus.State.LOADING.let { ProviderStatus(it, "Loading $activeId...") }
         releaseCurrentModel()
         return@withLock try {
             val modelUri = Uri.fromFile(file).toString()
-            Log.i(TAG, "Loading GGUF model: uri=$modelUri scheme=${Uri.parse(modelUri).scheme} (${file.length()} bytes)")
+            val ggufMetadata = GgufMetadataReader.read(file)
+            Log.i(
+                TAG,
+                "Loading GGUF model: uri=$modelUri scheme=${Uri.parse(modelUri).scheme} " +
+                    "(${file.length()} bytes) architecture=${ggufMetadata?.architecture} " +
+                    "metadataContext=${ggufMetadata?.contextLength} effectiveContext=$effectiveContextSize"
+            )
 
             val events = MutableSharedFlow<LlamaHelper.LLMEvent>(extraBufferCapacity = 64)
             val loadResult = CompletableDeferred<String?>()
@@ -158,8 +195,8 @@ class NativeLlamaProvider(
             var installed = false
             try {
                 helper = LlamaHelper(context.contentResolver, scope, events)
-                helper.load(modelUri, contextSize, null) { contextId ->
-                    Log.i(TAG, "Native llama.cpp model ready contextId=$contextId model=$activeId")
+                helper.load(modelUri, effectiveContextSize, null) { contextId ->
+                    Log.i(TAG, "Native llama.cpp model ready contextId=$contextId model=$activeId contextSize=$effectiveContextSize")
                     loadResult.complete(null)
                 }
 
@@ -188,6 +225,7 @@ class NativeLlamaProvider(
                     engine = helper
                     engineEvents = events
                     loadedModelId = activeId
+                    loadedContextSize = effectiveContextSize
                     installed = true
                     _status.value = ProviderStatus.READY
                     true
@@ -215,6 +253,7 @@ class NativeLlamaProvider(
         engine = null
         engineEvents = null
         loadedModelId = null
+        loadedContextSize = null
     }
 
     suspend fun health(): Boolean =
@@ -256,7 +295,7 @@ class NativeLlamaProvider(
         return inferenceMutex.withLock {
             val transactionId = UUID.randomUUID().toString().take(8)
             try {
-                Log.i(TAG, "[$transactionId] generate start model=$modelId promptChars=${prompt.length} contextSize=$contextSize")
+                Log.i(TAG, "[$transactionId] generate start model=$modelId promptChars=${prompt.length} contextSize=${loadedContextSize ?: contextSize}")
                 val text = buildString { streamInternal(prompt, transactionId).collect { append(it) } }.trim()
                 if (text.isBlank()) throw AiProviderException(AiErrorType.EMPTY_RESPONSE, "llama.cpp returned an empty response")
                 Log.i(TAG, "[$transactionId] generate complete outputChars=${text.length} durationMs=${System.currentTimeMillis() - startedAt}")
@@ -413,12 +452,14 @@ class NativeLlamaProvider(
         val downloaded = downloadManager.getAllModels().filter { downloadManager.getModelFile(it.id) != null }
         val activeId = downloadManager.activeModelId.value
         return downloaded.sortedWith(compareByDescending<CognitiveModel> { it.id == activeId }.thenBy { it.name }).map { model ->
+            val file = downloadManager.getModelFile(model.id)
+            val metadata = file?.let(GgufMetadataReader::read)
             AiModel(
                 id = model.id,
                 displayName = model.name,
                 providerId = id,
                 inputCapabilities = setOf(AiCapability.TEXT),
-                contextLength = 4096,
+                contextLength = metadata?.contextLength ?: 4096,
                 supportsStreaming = true,
                 supportsTools = false
             )
