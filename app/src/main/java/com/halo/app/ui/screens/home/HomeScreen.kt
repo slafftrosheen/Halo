@@ -5,6 +5,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.History
@@ -21,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.halo.app.ui.glass.components.*
@@ -43,6 +46,14 @@ fun HomeScreen(viewModel: HomeViewModel) {
         uiState.runtimeState == HaloRuntimeState.Recognizing
     val isDeviceConnected = uiState.connectionState == "Connected" ||
         uiState.connectionState == "Ready"
+
+    fun submitText() {
+        val text = textInput.trim()
+        if (text.isNotEmpty() && !isActiveSession) {
+            viewModel.submitText(text)
+            textInput = ""
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -159,13 +170,16 @@ fun HomeScreen(viewModel: HomeViewModel) {
                     modifier = Modifier.weight(1f),
                     placeholder = { Text("Ask Halo anything…", style = HaloTypography.bodyMedium, color = HaloGlassColors.TextMuted) },
                     textStyle = HaloTypography.bodyMedium,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+                    keyboardActions = KeyboardActions(onSend = { submitText() }),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = HaloGlassColors.TextPrimary,
                         unfocusedTextColor = HaloGlassColors.TextPrimary,
                         focusedBorderColor = Color.Transparent,
                         unfocusedBorderColor = Color.Transparent
                     ),
-                    maxLines = 3
+                    maxLines = 3,
+                    enabled = !isActiveSession
                 )
                 if (isActiveSession) {
                     IconButton(onClick = viewModel::cancelSession) {
@@ -173,12 +187,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
                     }
                 } else {
                     IconButton(
-                        onClick = {
-                            if (textInput.isNotBlank()) {
-                                viewModel.submitText(textInput)
-                                textInput = ""
-                            }
-                        },
+                        onClick = ::submitText,
                         enabled = textInput.isNotBlank()
                     ) {
                         Icon(
