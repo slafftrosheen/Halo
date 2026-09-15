@@ -44,7 +44,6 @@ fun PermissionsScreen(
     fun granted(permission: String): Boolean =
         ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
 
-    // Read after refreshKey so the state is recomputed after returning from the platform prompt.
     @Suppress("UNUSED_VARIABLE")
     val ignored = refreshKey
     val micGranted = granted(Manifest.permission.RECORD_AUDIO)
@@ -55,7 +54,6 @@ fun PermissionsScreen(
     }
     val wifiGranted = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
         granted(Manifest.permission.NEARBY_WIFI_DEVICES)
-    val allGranted = micGranted && bluetoothGranted && wifiGranted
 
     HaloGlassPage(title = "") {
         HaloGlassBackHeader(title = "Permissions", onBack = onBack)
@@ -63,13 +61,13 @@ fun PermissionsScreen(
         HaloGlassSection(title = "STATUS") {
             Column(Modifier.fillMaxWidth().padding(16.dp)) {
                 Text(
-                    if (allGranted) "All required permissions granted" else "Permissions required",
+                    if (micGranted) "Halo is ready for voice input" else "Microphone access is required",
                     style = HaloTypography.titleMedium,
                     color = HaloGlassColors.TextPrimary
                 )
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    "Microphone is required for voice input. Bluetooth is required for wearable connectivity. Nearby Wi-Fi is used on Android 13+ for supported transfer flows.",
+                    "Halo runs fully on your phone. Microphone access enables voice interaction. Bluetooth and Nearby Wi-Fi are optional and are only needed for external devices or supported transfer flows.",
                     style = HaloTypography.bodySmall,
                     color = HaloGlassColors.TextSecondary
                 )
@@ -77,20 +75,20 @@ fun PermissionsScreen(
         }
 
         HaloGlassSection(title = "ACCESS") {
-            PermissionRow(Icons.Default.Mic, "Microphone", micGranted)
+            PermissionRow(Icons.Default.Mic, "Microphone", micGranted, required = true)
             HaloGlassDivider()
-            PermissionRow(Icons.Default.Bluetooth, "Bluetooth", bluetoothGranted)
+            PermissionRow(Icons.Default.Bluetooth, "Bluetooth", bluetoothGranted, required = false)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 HaloGlassDivider()
-                PermissionRow(Icons.Default.Wifi, "Nearby Wi-Fi", wifiGranted)
+                PermissionRow(Icons.Default.Wifi, "Nearby Wi-Fi", wifiGranted, required = false)
             }
         }
 
-        if (!allGranted) {
+        if (!micGranted) {
             HaloGlassSection(title = "ACTION") {
                 Column(Modifier.fillMaxWidth().padding(16.dp)) {
                     HaloGlassButton(
-                        text = "Grant Permissions",
+                        text = "Grant Microphone Access",
                         onClick = {
                             onRequestPermissions()
                             refreshKey++
@@ -107,7 +105,8 @@ fun PermissionsScreen(
 private fun PermissionRow(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     title: String,
-    granted: Boolean
+    granted: Boolean,
+    required: Boolean
 ) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
@@ -117,7 +116,11 @@ private fun PermissionRow(
         Column(Modifier.padding(start = 12.dp)) {
             Text(title, style = HaloTypography.bodyLarge, color = HaloGlassColors.TextPrimary)
             Text(
-                if (granted) "Granted" else "Required",
+                when {
+                    granted -> "Granted"
+                    required -> "Required"
+                    else -> "Optional"
+                },
                 style = HaloTypography.bodySmall,
                 color = HaloGlassColors.TextSecondary
             )
