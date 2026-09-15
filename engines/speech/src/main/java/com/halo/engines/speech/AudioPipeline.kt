@@ -64,12 +64,7 @@ class AudioPipeline(
     }
 
     private fun onSpeechEnded() {
-        // A LIVE provider owns its endpointing. The audio source becoming idle must
-        // not cancel the recognition flow or manufacture a RecognitionFinished event.
-        // Android SpeechRecognizer commonly closes its callbackFlow after onResults/onError.
-        if (sttProvider.mode == SpeechRecognitionMode.LIVE) {
-            return
-        }
+        if (sttProvider.mode == SpeechRecognitionMode.LIVE) return
 
         val segment = buffer.snapshot()
         buffer.clear()
@@ -119,11 +114,6 @@ class AudioPipeline(
                 } else {
                     _state.value = SpeechState.Idle
                 }
-            } else if (sttProvider.mode == SpeechRecognitionMode.LIVE) {
-                // Do not emit SpeechEnded for every non-speech frame. The Android
-                // SpeechRecognizer performs its own endpointing; repeatedly emitting
-                // SpeechEnded caused the pipeline to race recognition lifecycle state.
-                // The provider's Final/Error/Stopped events are the authoritative end.
             }
         }
     }
@@ -136,15 +126,9 @@ class AudioPipeline(
             try {
                 provider.startListening().collect { event ->
                     when (event) {
-                        is RecognitionEvent.Ready -> {
-                            _state.value = SpeechState.Listening
-                        }
-                        is RecognitionEvent.Listening -> {
-                            _state.value = SpeechState.Recognizing
-                        }
-                        is RecognitionEvent.Partial -> {
-                            // Can emit partial event here if required in the future.
-                        }
+                        is RecognitionEvent.Ready -> _state.value = SpeechState.Listening
+                        is RecognitionEvent.Listening -> _state.value = SpeechState.Recognizing
+                        is RecognitionEvent.Partial -> Unit
                         is RecognitionEvent.Final -> {
                             _state.value = SpeechState.Thinking
                             eventBus.publish(
@@ -160,15 +144,11 @@ class AudioPipeline(
                             eventBus.publish(RecognitionFailed(reason = event.reason))
                         }
                         is RecognitionEvent.Stopped -> {
-                            if (_state.value != SpeechState.Thinking) {
-                                _state.value = SpeechState.Idle
-                            }
+                            if (_state.value != SpeechState.Thinking) _state.value = SpeechState.Idle
                         }
                     }
                 }
             } catch (cancellation: CancellationException) {
-                // Cancellation is normal lifecycle control (reset/stop). Do not publish
-                // it as a user-visible recognition failure.
                 if (_state.value != SpeechState.Idle && _state.value != SpeechState.Thinking) {
                     _state.value = SpeechState.Idle
                 }
@@ -198,7 +178,6 @@ class AudioPipeline(
             )
             eventBus.publish(RecognitionFinished(id = UUID.randomUUID().toString()))
         } catch (cancellation: CancellationException) {
-            // Parent/runtime shutdown cancellation is not an STT failure.
             throw cancellation
         } catch (exception: Exception) {
             _state.value = SpeechState.Idle
@@ -210,6 +189,7 @@ class AudioPipeline(
 
     fun reset() {
         buffer.clear()
+        vad.reset()
         _state.value = SpeechState.Idle
         liveListeningJob?.cancel()
         liveListeningJob = null
