@@ -48,7 +48,7 @@ class HostGraph(
 
     val audioPerceptionEngine by lazy {
         com.halo.engines.speech.AudioPerceptionEngine(
-            audioSource = wearableHost.audioSource,
+            audioSource = HybridAudioSource(wearableHost),
             preprocessor = com.halo.engines.speech.DefaultAudioPreprocessor(),
             audioPipeline = audioPipeline,
             eventBus = infra.eventBus
