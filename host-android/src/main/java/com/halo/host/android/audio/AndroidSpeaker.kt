@@ -34,6 +34,7 @@ class AndroidSpeaker(
     private var eventJob: Job? = null
     private var currentTextLength = 0
     private var pendingText: String? = null
+    private var activeUtteranceId: String? = null
 
     fun start() {
         if (eventJob?.isActive == true) return
@@ -63,12 +64,15 @@ class AndroidSpeaker(
         tts?.language = Locale.getDefault()
         tts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
             override fun onStart(utteranceId: String?) {
+                if (utteranceId == null || utteranceId != activeUtteranceId) return
                 scope.launch {
                     eventBus.publish(TtsStarted(textLength = currentTextLength))
                 }
             }
 
             override fun onDone(utteranceId: String?) {
+                if (utteranceId == null || utteranceId != activeUtteranceId) return
+                activeUtteranceId = null
                 scope.launch {
                     eventBus.publish(TtsCompleted())
                 }
@@ -76,12 +80,16 @@ class AndroidSpeaker(
 
             @Deprecated("Deprecated in Java")
             override fun onError(utteranceId: String?) {
+                if (utteranceId == null || utteranceId != activeUtteranceId) return
+                activeUtteranceId = null
                 scope.launch {
                     eventBus.publish(TtsFailed(message = "Android TTS error"))
                 }
             }
 
             override fun onError(utteranceId: String?, errorCode: Int) {
+                if (utteranceId == null || utteranceId != activeUtteranceId) return
+                activeUtteranceId = null
                 scope.launch {
                     eventBus.publish(TtsFailed(message = "Android TTS error code $errorCode"))
                 }
@@ -106,8 +114,10 @@ class AndroidSpeaker(
             return
         }
 
-        currentTextLength = text.length
         val utteranceId = "halo-tts-${UUID.randomUUID()}"
+        currentTextLength = text.length
+        activeUtteranceId = utteranceId
+
         val params = Bundle()
         params.putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, utteranceId)
         tts?.speak(text, TextToSpeech.QUEUE_FLUSH, params, utteranceId)
@@ -115,13 +125,13 @@ class AndroidSpeaker(
 
     fun stop() {
         pendingText = null
+        val wasActive = activeUtteranceId != null
+        activeUtteranceId = null
         tts?.stop()
-        _stateStop()
-    }
-
-    private fun _stateStop() {
-        scope.launch {
-            eventBus.publish(TtsCompleted())
+        if (wasActive) {
+            scope.launch {
+                eventBus.publish(TtsCompleted())
+            }
         }
     }
 
@@ -129,6 +139,7 @@ class AndroidSpeaker(
         eventJob?.cancel()
         eventJob = null
         pendingText = null
+        activeUtteranceId = null
         tts?.stop()
         tts?.shutdown()
         tts = null
