@@ -51,6 +51,10 @@ class AndroidSpeechRecognitionProvider(
                 putExtra(RecognizerIntent.EXTRA_LANGUAGE, configuredLocale)
                 putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
                 putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3)
+                // Keep the phone-first fallback aligned with Halo's local-first
+                // policy. The recognizer implementation may still fall back to
+                // its configured service if offline recognition is unavailable.
+                putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true)
             }
 
             val recognizer = SpeechRecognizer.createSpeechRecognizer(context.applicationContext)
