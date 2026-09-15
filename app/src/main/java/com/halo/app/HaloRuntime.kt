@@ -145,7 +145,8 @@ class HaloRuntime(
                 true, true, true, true, true, true, true, true, true, true,
                 true, true, true, true, true
             )
-            graph.wearableHost.disconnect()
+            // Do not construct or touch a physical host during Android runtime
+            // shutdown. Device lifecycles are owned by the Devices flow.
             started = false
             RuntimeStartupTrace.mark("runtime.stop.complete")
         }
