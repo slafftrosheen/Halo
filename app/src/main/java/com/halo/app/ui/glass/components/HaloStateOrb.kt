@@ -3,193 +3,226 @@ package com.halo.app.ui.glass.components
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
 import com.halo.app.ui.glass.material.HaloGlassColors
 import com.halo.app.ui.glass.material.HaloRuntimeState
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.foundation.background
 import kotlin.math.cos
 import kotlin.math.sin
 
 /**
- * Halo State Orb - Visualizes runtime state with sophisticated animations.
- * Adheres to HALO-GLASS-DESIGN.md motion and state rules.
+ * Halo's primary presence and interaction surface.
+ *
+ * The orb is deliberately state-driven: visuals describe the runtime and taps
+ * issue a command through the caller rather than inventing UI-local state.
  */
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun HaloStateOrb(
     state: HaloRuntimeState,
     modifier: Modifier = Modifier,
-    size: Dp = 80.dp
+    size: Dp = 120.dp,
+    onClick: (() -> Unit)? = null,
+    onLongClick: (() -> Unit)? = null,
+    contentDescription: String = "Halo"
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "halo_state_orb")
-    
-    // Shared color animation for transitions between states
+    val transition = rememberInfiniteTransition(label = "halo_orb")
+    val interactionSource = remember { MutableInteractionSource() }
+    val pressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) 0.94f else 1f,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "orb_press_scale"
+    )
     val stateColor by animateColorAsState(
-        targetValue = getStateColor(state),
-        animationSpec = tween(500),
-        label = "state_color"
+        targetValue = stateColor(state),
+        animationSpec = tween(420),
+        label = "orb_state_color"
     )
 
-    // Common animations used across different states
-    val pulse4s by infiniteTransition.animateFloat(
-        initialValue = 0.3f, targetValue = 0.7f,
-        animationSpec = infiniteRepeatable(tween(4000, easing = LinearEasing), RepeatMode.Reverse),
-        label = "pulse_4s"
+    val breath by transition.animateFloat(
+        initialValue = 0.90f,
+        targetValue = 1.04f,
+        animationSpec = infiniteRepeatable(tween(2400, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        label = "orb_breath"
     )
-    
-    val pulse1_5s by infiniteTransition.animateFloat(
-        initialValue = 0f, targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(1500, easing = FastOutSlowInEasing)),
-        label = "pulse_1_5s"
+    val pulse by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(1700, easing = LinearEasing)),
+        label = "orb_pulse"
     )
-
-    val rotation2s by infiniteTransition.animateFloat(
-        initialValue = 0f, targetValue = 360f,
-        animationSpec = infiniteRepeatable(tween(2000, easing = LinearEasing)),
-        label = "rotation_2s"
-    )
-
-    val sonarPulse by infiniteTransition.animateFloat(
-        initialValue = 0f, targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(2000, easing = LinearEasing)),
-        label = "sonar_pulse"
+    val rotation by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(tween(7000, easing = LinearEasing)),
+        label = "orb_rotation"
     )
 
-    Canvas(modifier = modifier.size(size)) {
-        val center = Offset(size.toPx() / 2, size.toPx() / 2)
-        val radius = size.toPx() / 2
+    Canvas(
+        modifier = modifier
+            .size(size)
+            .scale(scale)
+            .then(
+                if (onClick != null || onLongClick != null) {
+                    Modifier
+                        .combinedClickable(
+                            interactionSource = interactionSource,
+                            indication = null,
+                            onClick = { onClick?.invoke() },
+                            onLongClick = onLongClick
+                        )
+                        .semantics {
+                            this.contentDescription = contentDescription
+                            role = Role.Button
+                        }
+                } else Modifier
+            )
+    ) {
+        val center = Offset(size.toPx() / 2f, size.toPx() / 2f)
+        val radius = size.toPx() / 2f
+        val core = radius * 0.34f
+        val outer = radius * 0.78f
 
+        // Soft atmospheric halo. This is the visual identity at rest.
+        drawCircle(
+            brush = Brush.radialGradient(
+                0f to stateColor.copy(alpha = 0.26f),
+                0.42f to stateColor.copy(alpha = 0.10f),
+                1f to Color.Transparent,
+                center = center,
+                radius = radius * 0.98f
+            ),
+            radius = radius * 0.98f
+        )
+
+        // State activity lives in the perimeter, keeping the core calm and legible.
         when (state) {
             HaloRuntimeState.Idle, HaloRuntimeState.Recovering -> {
-                // Thin ring, subtle breath animation
-                val color = if (state == HaloRuntimeState.Recovering) HaloGlassColors.Danger else stateColor
                 drawCircle(
-                    color = color.copy(alpha = pulse4s),
-                    radius = radius * 0.9f,
-                    style = Stroke(width = 1.dp.toPx())
+                    color = stateColor.copy(alpha = 0.22f + 0.10f * (breath - 0.90f) / 0.14f),
+                    radius = outer * breath,
+                    style = Stroke(width = 1.2.dp.toPx())
+                )
+                drawArc(
+                    color = stateColor.copy(alpha = 0.65f),
+                    startAngle = -70f,
+                    sweepAngle = if (state == HaloRuntimeState.Recovering) 300f else 210f,
+                    useCenter = false,
+                    style = Stroke(width = 2.dp.toPx()),
+                    topLeft = Offset(center.x - outer, center.y - outer),
+                    size = androidx.compose.ui.geometry.Size(outer * 2f, outer * 2f)
                 )
             }
 
-            HaloRuntimeState.Listening, HaloRuntimeState.Wakeword -> {
-                // Filled dot + pulse ring
-                drawCircle(color = stateColor, radius = radius * 0.4f)
+            HaloRuntimeState.Listening, HaloRuntimeState.Wakeword, HaloRuntimeState.Capturing -> {
+                val expanding = outer * (0.88f + 0.22f * pulse)
                 drawCircle(
-                    color = stateColor.copy(alpha = 1f - pulse1_5s),
-                    radius = radius * (0.4f + 0.5f * pulse1_5s),
+                    color = stateColor.copy(alpha = 0.48f * (1f - pulse)),
+                    radius = expanding,
                     style = Stroke(width = 2.dp.toPx())
                 )
-            }
-
-            HaloRuntimeState.Capturing -> {
-                // Solid filled dot with waveform "vibration"
-                drawCircle(color = stateColor, radius = radius * 0.5f)
-                // Minimal waveform lines from center
-                for (i in 0..3) {
-                    val angle = (rotation2s + i * 90f) * (Math.PI / 180f).toFloat()
-                    val lineLen = radius * 0.2f * pulse1_5s
-                    drawLine(
-                        color = Color.White.copy(alpha = 0.5f),
-                        start = center,
-                        end = Offset(
-                            center.x + cos(angle) * (radius * 0.5f + lineLen),
-                            center.y + sin(angle) * (radius * 0.5f + lineLen)
-                        ),
-                        strokeWidth = 2.dp.toPx()
-                    )
-                }
+                drawArc(
+                    color = stateColor,
+                    startAngle = rotation,
+                    sweepAngle = 110f,
+                    useCenter = false,
+                    style = Stroke(width = if (state == HaloRuntimeState.Capturing) 3.dp.toPx() else 2.dp.toPx()),
+                    topLeft = Offset(center.x - outer, center.y - outer),
+                    size = androidx.compose.ui.geometry.Size(outer * 2f, outer * 2f)
+                )
             }
 
             HaloRuntimeState.Recognizing -> {
-                // Ring with 3 orbiting dots
-                drawCircle(
-                    color = stateColor.copy(alpha = 0.3f),
-                    radius = radius * 0.8f,
-                    style = Stroke(width = 1.dp.toPx())
-                )
+                drawCircle(color = stateColor.copy(alpha = 0.55f), radius = outer, style = Stroke(width = 2.dp.toPx()))
                 for (i in 0..2) {
-                    val angle = (rotation2s + i * 120f) * (Math.PI / 180f).toFloat()
+                    val angle = (rotation * 1.6f + i * 120f) * (Math.PI / 180f).toFloat()
                     drawCircle(
-                        color = Color.White,
+                        color = Color.White.copy(alpha = 0.9f),
                         radius = 3.dp.toPx(),
-                        center = Offset(
-                            center.x + cos(angle) * radius * 0.8f,
-                            center.y + sin(angle) * radius * 0.8f
-                        )
+                        center = Offset(center.x + cos(angle) * outer, center.y + sin(angle) * outer)
                     )
                 }
             }
 
             HaloRuntimeState.Reasoning, HaloRuntimeState.Planning -> {
-                // Dot with scale pulse
-                val scale = if (state == HaloRuntimeState.Reasoning) 0.8f + 0.1f * pulse1_5s else 0.9f
-                drawCircle(color = stateColor, radius = radius * 0.5f * scale)
-                
-                if (state == HaloRuntimeState.Planning) {
-                    // Ring segments fill clockwise
-                    drawArc(
-                        color = stateColor,
-                        startAngle = -90f,
-                        sweepAngle = rotation2s,
-                        useCenter = false,
-                        style = Stroke(width = 2.dp.toPx()),
-                        size = androidx.compose.ui.geometry.Size(radius * 1.8f, radius * 1.8f),
-                        topLeft = Offset(center.x - radius * 0.9f, center.y - radius * 0.9f)
-                    )
-                }
+                drawCircle(color = stateColor.copy(alpha = 0.45f), radius = outer, style = Stroke(width = 1.5.dp.toPx()))
+                drawArc(
+                    color = stateColor,
+                    startAngle = rotation * 1.5f - 90f,
+                    sweepAngle = if (state == HaloRuntimeState.Planning) 250f else 120f,
+                    useCenter = false,
+                    style = Stroke(width = 2.5.dp.toPx()),
+                    topLeft = Offset(center.x - outer, center.y - outer),
+                    size = androidx.compose.ui.geometry.Size(outer * 2f, outer * 2f)
+                )
             }
 
             HaloRuntimeState.Executing -> {
-                // Dot + rotating progress ring
-                drawCircle(color = stateColor, radius = radius * 0.4f)
+                drawCircle(color = stateColor.copy(alpha = 0.50f), radius = outer, style = Stroke(width = 2.dp.toPx()))
                 drawArc(
                     color = stateColor,
-                    startAngle = rotation2s,
-                    sweepAngle = 90f,
+                    startAngle = -90f,
+                    sweepAngle = 270f,
                     useCenter = false,
                     style = Stroke(width = 3.dp.toPx()),
-                    size = androidx.compose.ui.geometry.Size(radius * 1.6f, radius * 1.6f),
-                    topLeft = Offset(center.x - radius * 0.8f, center.y - radius * 0.8f)
+                    topLeft = Offset(center.x - outer, center.y - outer),
+                    size = androidx.compose.ui.geometry.Size(outer * 2f, outer * 2f)
                 )
             }
 
             HaloRuntimeState.Speaking -> {
-                // Dot + outward sonar pulses
-                drawCircle(color = stateColor, radius = radius * 0.45f)
                 for (i in 0..1) {
-                    val pulse = (sonarPulse + i * 0.5f) % 1f
+                    val p = (pulse + i * 0.5f) % 1f
                     drawCircle(
-                        color = stateColor.copy(alpha = 1f - pulse),
-                        radius = radius * (0.45f + 0.55f * pulse),
+                        color = stateColor.copy(alpha = 0.38f * (1f - p)),
+                        radius = core + (outer - core) * p,
                         style = Stroke(width = 2.dp.toPx())
                     )
                 }
             }
 
             HaloRuntimeState.Stopped -> {
-                // Cross visualization fading to idle
-                val alpha = pulse4s // Reuse pulse for fade
-                val crossSize = radius * 0.3f
-                drawLine(
-                    color = HaloGlassColors.Danger.copy(alpha = alpha),
-                    start = Offset(center.x - crossSize, center.y - crossSize),
-                    end = Offset(center.x + crossSize, center.y + crossSize),
-                    strokeWidth = 2.dp.toPx()
-                )
-                drawLine(
-                    color = HaloGlassColors.Danger.copy(alpha = alpha),
-                    start = Offset(center.x + crossSize, center.y - crossSize),
-                    end = Offset(center.x - crossSize, center.y + crossSize),
-                    strokeWidth = 2.dp.toPx()
-                )
+                drawCircle(color = HaloGlassColors.Danger.copy(alpha = 0.55f), radius = outer, style = Stroke(width = 2.dp.toPx()))
             }
         }
+
+        // Glassy core: a luminous center rather than a generic filled dot.
+        drawCircle(
+            brush = Brush.radialGradient(
+                0f to Color.White.copy(alpha = 0.95f),
+                0.18f to stateColor.copy(alpha = 0.98f),
+                0.70f to stateColor.copy(alpha = 0.72f),
+                1f to stateColor.copy(alpha = 0.20f),
+                center = Offset(center.x - core * 0.22f, center.y - core * 0.26f),
+                radius = core * 1.65f
+            ),
+            radius = core * (if (state == HaloRuntimeState.Idle) 0.92f else 1.04f)
+        )
+
+        // Tiny specular highlight gives the orb a physical glass presence.
+        drawCircle(
+            color = Color.White.copy(alpha = 0.55f),
+            radius = core * 0.16f,
+            center = Offset(center.x - core * 0.30f, center.y - core * 0.34f)
+        )
     }
 }
 
@@ -197,36 +230,28 @@ fun HaloStateOrb(
 @Composable
 fun PreviewHaloStateOrb() {
     Column(
-        modifier = Modifier
-            .background(HaloGlassColors.Background)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        modifier = Modifier.background(HaloGlassColors.Background).padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            HaloStateOrb(state = HaloRuntimeState.Idle)
-            HaloStateOrb(state = HaloRuntimeState.Listening)
-            HaloStateOrb(state = HaloRuntimeState.Capturing)
+        Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+            HaloStateOrb(HaloRuntimeState.Idle)
+            HaloStateOrb(HaloRuntimeState.Listening)
+            HaloStateOrb(HaloRuntimeState.Reasoning)
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            HaloStateOrb(state = HaloRuntimeState.Recognizing)
-            HaloStateOrb(state = HaloRuntimeState.Reasoning)
-            HaloStateOrb(state = HaloRuntimeState.Planning)
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            HaloStateOrb(state = HaloRuntimeState.Executing)
-            HaloStateOrb(state = HaloRuntimeState.Speaking)
-            HaloStateOrb(state = HaloRuntimeState.Recovering)
+        Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+            HaloStateOrb(HaloRuntimeState.Executing)
+            HaloStateOrb(HaloRuntimeState.Speaking)
+            HaloStateOrb(HaloRuntimeState.Recovering)
         }
     }
 }
 
-
-private fun getStateColor(state: HaloRuntimeState): Color = when (state) {
+private fun stateColor(state: HaloRuntimeState): Color = when (state) {
     HaloRuntimeState.Idle, HaloRuntimeState.Stopped -> HaloGlassColors.TextMuted
     HaloRuntimeState.Listening, HaloRuntimeState.Wakeword, HaloRuntimeState.Speaking -> HaloGlassColors.Accent
     HaloRuntimeState.Capturing -> HaloGlassColors.Warning
     HaloRuntimeState.Recognizing -> HaloGlassColors.Info
     HaloRuntimeState.Reasoning, HaloRuntimeState.Planning -> HaloGlassColors.AccentStrong
-    HaloRuntimeState.Executing -> HaloGlassColors.Accent.copy(alpha = 0.8f)
+    HaloRuntimeState.Executing -> HaloGlassColors.Accent.copy(alpha = 0.85f)
     HaloRuntimeState.Recovering -> HaloGlassColors.Danger
 }
