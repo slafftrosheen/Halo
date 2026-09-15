@@ -84,7 +84,8 @@ class AudioPipeline(
         }
 
         if (buffer.duration() == 0L) {
-            _state.value = SpeechState.Idle
+            // A wake word can be detected before VAD sees speech. Keep the
+            // wake-armed state alive until actual audio enters the utterance.
             return
         }
 
@@ -131,13 +132,13 @@ class AudioPipeline(
                 buffer.append(frame)
             }
         } else if (
-            stateAfterWake == SpeechState.Listening ||
-            stateAfterWake == SpeechState.WakeDetected ||
-            stateAfterWake == SpeechState.Recognizing
+            sttProvider.mode == SpeechRecognitionMode.BUFFERED &&
+            (stateAfterWake == SpeechState.Listening ||
+                stateAfterWake == SpeechState.WakeDetected ||
+                stateAfterWake == SpeechState.Recognizing) &&
+            buffer.duration() > 0L
         ) {
-            if (sttProvider.mode == SpeechRecognitionMode.BUFFERED) {
-                scope.launch { eventBus.publish(SpeechEnded()) }
-            }
+            scope.launch { eventBus.publish(SpeechEnded()) }
         }
     }
 
