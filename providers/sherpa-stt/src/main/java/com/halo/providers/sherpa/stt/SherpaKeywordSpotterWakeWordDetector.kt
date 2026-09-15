@@ -40,6 +40,9 @@ class SherpaKeywordSpotterWakeWordDetector(
             "Sherpa KWS keywords file is missing: ${keywordsFile.absolutePath}"
         }
 
+        // The official sherpa-onnx Zipformer KWS model configuration only needs
+        // encoder, decoder, joiner, tokens and modelType. It does not use a BPE
+        // vocabulary file. See sherpa-onnx's Kotlin getKwsModelConfig().
         val modelConfig = OnlineModelConfig(
             transducer = OnlineTransducerModelConfig(
                 encoder = File(modelDirectory, "encoder-epoch-12-avg-2-chunk-16-left-64.int8.onnx").absolutePath,
@@ -49,9 +52,7 @@ class SherpaKeywordSpotterWakeWordDetector(
             tokens = File(modelDirectory, "tokens.txt").absolutePath,
             numThreads = 1,
             provider = "cpu",
-            modelType = "zipformer2",
-            modelingUnit = "bpe",
-            bpeVocab = File(modelDirectory, "bpe.model").absolutePath
+            modelType = "zipformer2"
         )
 
         model = KeywordSpotter(
