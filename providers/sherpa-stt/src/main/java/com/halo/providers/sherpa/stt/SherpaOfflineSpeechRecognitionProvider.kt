@@ -10,6 +10,8 @@ import com.k2fsa.sherpa.onnx.OfflineRecognizer
 import com.k2fsa.sherpa.onnx.OfflineRecognizerConfig
 import com.k2fsa.sherpa.onnx.OfflineWhisperModelConfig
 import java.io.File
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * Fully local, buffered ASR backed by sherpa-onnx.
@@ -23,13 +25,13 @@ import java.io.File
  */
 class SherpaOfflineSpeechRecognitionProvider(
     private val modelDirectory: File,
-    private val language: String = "en",
+    private val language: String = "",
     private val numThreads: Int = 2
 ) : BufferedSpeechRecognitionProvider {
 
     companion object {
         private const val SAMPLE_RATE = 16_000
-        private const val MODEL_NAME = "tiny.en"
+        private const val MODEL_NAME = "tiny"
         private const val MIN_MODEL_BYTES = 1_024L
 
         fun isInstalled(modelDirectory: File): Boolean {
@@ -44,7 +46,7 @@ class SherpaOfflineSpeechRecognitionProvider(
     }
 
     override val metadata = com.halo.sdk.provider.ProviderMetadata(
-        id = "speech.sherpa_onnx.whisper_tiny_en",
+        id = "speech.sherpa_onnx.whisper_tiny",
         supportsStreaming = false
     )
 
@@ -52,6 +54,7 @@ class SherpaOfflineSpeechRecognitionProvider(
     private var recognizer: OfflineRecognizer? = null
 
     private val recognizerLock = Any()
+    private val recognitionMutex = Mutex()
 
     override suspend fun health(): Boolean = isInstalled(modelDirectory)
 
@@ -60,14 +63,14 @@ class SherpaOfflineSpeechRecognitionProvider(
         return ProviderHealth(
             healthy = installed,
             message = if (installed) {
-                "Sherpa-ONNX Whisper tiny.en model is installed"
+                "Sherpa-ONNX Whisper tiny multilingual model is installed"
             } else {
-                "Sherpa-ONNX Whisper tiny.en model is not installed"
+                "Sherpa-ONNX Whisper tiny multilingual model is not installed"
             }
         )
     }
 
-    override suspend fun recognize(audio: AudioBuffer): RecognitionResult {
+    override suspend fun recognize(audio: AudioBuffer): RecognitionResult = recognitionMutex.withLock {
         require(audio.frames.isNotEmpty()) { "Cannot recognize an empty audio buffer" }
         check(isInstalled(modelDirectory)) {
             "Sherpa-ONNX model is not installed at ${modelDirectory.absolutePath}"
@@ -97,8 +100,10 @@ class SherpaOfflineSpeechRecognitionProvider(
             val result = localRecognizer.getResult(stream)
             RecognitionResult(
                 text = result.text.trim(),
-                language = language,
-                confidence = 1.0f
+                language = language.ifBlank { "auto" },
+                // Whisper's offline result does not expose a calibrated confidence
+                // through this API. Never report a fabricated 1.0 confidence.
+                confidence = 0.0f
             )
         } finally {
             stream.release()
@@ -106,9 +111,11 @@ class SherpaOfflineSpeechRecognitionProvider(
     }
 
     override suspend fun close() {
-        synchronized(recognizerLock) {
-            recognizer?.release()
-            recognizer = null
+        recognitionMutex.withLock {
+            synchronized(recognizerLock) {
+                recognizer?.release()
+                recognizer = null
+            }
         }
     }
 
