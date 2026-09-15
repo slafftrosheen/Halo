@@ -11,16 +11,12 @@ import com.halo.sdk.runtime.ProviderFailure
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.CancellationException
 import java.util.UUID
-import kotlin.time.Duration.Companion.seconds
 
 /** Routes AI requests while preserving explicit intent and provider boundaries. */
 class DefaultAiProviderRouter(
@@ -39,7 +35,6 @@ class DefaultAiProviderRouter(
     private val inferenceProviders: List<AiInferenceProvider> = providerRegistry.inference
     private val allProviders: List<AiProvider> = providerRegistry.all
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    private var pollingJob: Job? = null
 
     private val _selectedProviderId = MutableStateFlow<String?>(null)
     override val selectedProviderId: StateFlow<String?> = _selectedProviderId.asStateFlow()
@@ -56,10 +51,10 @@ class DefaultAiProviderRouter(
     override val routingPolicy: StateFlow<AiRoutingPolicy> = _routingPolicy.asStateFlow()
 
     init {
+        // Startup must only restore local persisted state. Provider health checks
+        // are explicit diagnostics work; some providers (for example Ollama)
+        // perform network I/O from getStatus().
         restoreStoredRoutingState()
-        scope.launch(Dispatchers.IO) {
-            refreshDiagnostics()
-        }
     }
 
     private fun restoreStoredRoutingState() {
@@ -91,19 +86,10 @@ class DefaultAiProviderRouter(
     }
 
     override fun start() {
-        if (pollingJob?.isActive == true) return
-        pollingJob = scope.launch {
-            while (isActive) {
-                refreshDiagnostics()
-                delay(30.seconds)
-            }
-        }
+        // Intentionally no background polling. Provider diagnostics are on-demand.
     }
 
-    override fun stop() {
-        pollingJob?.cancel()
-        pollingJob = null
-    }
+    override fun stop() = Unit
 
     fun setRoutingPolicy(policy: AiRoutingPolicy) {
         val effectivePolicy = when (policy) {
