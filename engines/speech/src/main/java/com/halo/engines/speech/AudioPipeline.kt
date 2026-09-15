@@ -23,13 +23,19 @@ class AudioPipeline(
     private val wakeWordDetector: WakeWordDetector,
     private val sttProvider: SpeechRecognitionProvider,
     private val eventBus: EventBus,
-    private val scope: CoroutineScope
+    private val scope: CoroutineScope,
+    preRollMillis: Long = 400
 ) {
+    private val preRollBuffer = AudioBuffer(maxMillis = preRollMillis)
     private var buffer = AudioBuffer()
     private val _state = MutableStateFlow<SpeechState>(SpeechState.Idle)
     val state: StateFlow<SpeechState> = _state
     private var observerJobs: List<Job> = emptyList()
     private var liveListeningJob: Job? = null
+
+    init {
+        require(preRollMillis > 0) { "preRollMillis must be > 0" }
+    }
 
     fun start() {
         if (observerJobs.any { it.isActive }) return
@@ -64,37 +70,42 @@ class AudioPipeline(
     }
 
     private fun onSpeechEnded() {
-        // A LIVE provider owns its endpointing. The audio source becoming idle must
-        // not cancel the recognition flow or manufacture a RecognitionFinished event.
-        // Android SpeechRecognizer commonly closes its callbackFlow after onResults/onError.
-        if (sttProvider.mode == SpeechRecognitionMode.LIVE) {
+        if (sttProvider.mode == SpeechRecognitionMode.LIVE) return
+
+        val stateAtEnd = _state.value
+        val shouldRecognize = stateAtEnd == SpeechState.WakeDetected ||
+            stateAtEnd == SpeechState.Recognizing
+
+        if (!shouldRecognize) {
+            buffer.clear()
+            preRollBuffer.clear()
+            _state.value = SpeechState.Idle
+            return
+        }
+
+        if (buffer.duration() == 0L) {
+            // A wake word can be detected before VAD sees speech. Keep the
+            // wake-armed state alive until actual audio enters the utterance.
             return
         }
 
         val segment = buffer.snapshot()
         buffer.clear()
-        if (segment.audioBuffer.frames.isNotEmpty()) {
-            _state.value = SpeechState.Recognizing
-            scope.launch { processSegment(segment) }
-        } else {
-            _state.value = SpeechState.Idle
-        }
+        preRollBuffer.clear()
+        _state.value = SpeechState.Recognizing
+        scope.launch { processSegment(segment) }
     }
 
     fun processFrame(frame: AudioFrame) {
+        preRollBuffer.append(frame)
         val currentState = _state.value
+        val speechDetected = vad.isSpeech(frame)
 
-        if (vad.isSpeech(frame)) {
-            if (currentState == SpeechState.Idle) {
-                _state.value = SpeechState.Listening
-                scope.launch { eventBus.publish(SpeechStarted()) }
-            }
-
-            if (sttProvider.mode == SpeechRecognitionMode.BUFFERED) {
-                buffer.append(frame)
-            }
-
-            if (currentState != SpeechState.WakeDetected && currentState != SpeechState.Recognizing) {
+        // A real keyword spotter needs the complete stream, not only frames that
+        // passed VAD. The legacy pass-through detector remains VAD-gated.
+        if (currentState != SpeechState.WakeDetected && currentState != SpeechState.Recognizing) {
+            val shouldRunWakeDetector = !wakeWordDetector.requiresSpeechGate || speechDetected
+            if (shouldRunWakeDetector) {
                 val wwResult = wakeWordDetector.process(frame)
                 if (wwResult.detected) {
                     _state.value = SpeechState.WakeDetected
@@ -106,25 +117,28 @@ class AudioPipeline(
                     }
                 }
             }
-        } else if (currentState == SpeechState.Listening || currentState == SpeechState.WakeDetected || currentState == SpeechState.Recognizing) {
-            if (sttProvider.mode == SpeechRecognitionMode.BUFFERED) {
-                scope.launch { eventBus.publish(SpeechEnded()) }
+        }
 
-                val segment = buffer.snapshot()
+        val stateAfterWake = _state.value
+        if (speechDetected) {
+            if (stateAfterWake == SpeechState.Idle) {
+                _state.value = SpeechState.Listening
                 buffer.clear()
-
-                if (currentState == SpeechState.WakeDetected || currentState == SpeechState.Recognizing) {
-                    _state.value = SpeechState.Recognizing
-                    scope.launch { processSegment(segment) }
-                } else {
-                    _state.value = SpeechState.Idle
-                }
-            } else if (sttProvider.mode == SpeechRecognitionMode.LIVE) {
-                // Do not emit SpeechEnded for every non-speech frame. The Android
-                // SpeechRecognizer performs its own endpointing; repeatedly emitting
-                // SpeechEnded caused the pipeline to race recognition lifecycle state.
-                // The provider's Final/Error/Stopped events are the authoritative end.
+                preRollBuffer.frames().forEach(buffer::append)
+                scope.launch { eventBus.publish(SpeechStarted()) }
+            } else if (sttProvider.mode == SpeechRecognitionMode.BUFFERED &&
+                stateAfterWake != SpeechState.Recognizing
+            ) {
+                buffer.append(frame)
             }
+        } else if (
+            sttProvider.mode == SpeechRecognitionMode.BUFFERED &&
+            (stateAfterWake == SpeechState.Listening ||
+                stateAfterWake == SpeechState.WakeDetected ||
+                stateAfterWake == SpeechState.Recognizing) &&
+            buffer.duration() > 0L
+        ) {
+            scope.launch { eventBus.publish(SpeechEnded()) }
         }
     }
 
@@ -136,15 +150,9 @@ class AudioPipeline(
             try {
                 provider.startListening().collect { event ->
                     when (event) {
-                        is RecognitionEvent.Ready -> {
-                            _state.value = SpeechState.Listening
-                        }
-                        is RecognitionEvent.Listening -> {
-                            _state.value = SpeechState.Recognizing
-                        }
-                        is RecognitionEvent.Partial -> {
-                            // Can emit partial event here if required in the future.
-                        }
+                        is RecognitionEvent.Ready -> _state.value = SpeechState.Listening
+                        is RecognitionEvent.Listening -> _state.value = SpeechState.Recognizing
+                        is RecognitionEvent.Partial -> Unit
                         is RecognitionEvent.Final -> {
                             _state.value = SpeechState.Thinking
                             eventBus.publish(
@@ -160,15 +168,11 @@ class AudioPipeline(
                             eventBus.publish(RecognitionFailed(reason = event.reason))
                         }
                         is RecognitionEvent.Stopped -> {
-                            if (_state.value != SpeechState.Thinking) {
-                                _state.value = SpeechState.Idle
-                            }
+                            if (_state.value != SpeechState.Thinking) _state.value = SpeechState.Idle
                         }
                     }
                 }
             } catch (cancellation: CancellationException) {
-                // Cancellation is normal lifecycle control (reset/stop). Do not publish
-                // it as a user-visible recognition failure.
                 if (_state.value != SpeechState.Idle && _state.value != SpeechState.Thinking) {
                     _state.value = SpeechState.Idle
                 }
@@ -198,7 +202,6 @@ class AudioPipeline(
             )
             eventBus.publish(RecognitionFinished(id = UUID.randomUUID().toString()))
         } catch (cancellation: CancellationException) {
-            // Parent/runtime shutdown cancellation is not an STT failure.
             throw cancellation
         } catch (exception: Exception) {
             _state.value = SpeechState.Idle
@@ -210,6 +213,8 @@ class AudioPipeline(
 
     fun reset() {
         buffer.clear()
+        preRollBuffer.clear()
+        vad.reset()
         _state.value = SpeechState.Idle
         liveListeningJob?.cancel()
         liveListeningJob = null

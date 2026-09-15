@@ -1,49 +1,46 @@
 package com.halo.engines.speech
 
-import org.junit.Assert.assertArrayEquals
+import com.halo.sdk.host.AudioFrame
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class AudioBufferTest {
     @Test
-    fun snapshotIsDetachedFromFramesAndSurvivesClear() {
-        val originalSamples = shortArrayOf(1, 2, 3)
-        val buffer = AudioBuffer()
-        buffer.append(
-            AudioFrame(
-                samples = originalSamples,
-                sampleRate = 16_000,
-                channels = 1,
-                timestamp = 100L
+    fun `buffer trims oldest frames to configured duration`() {
+        val buffer = AudioBuffer(maxMillis = 400)
+
+        repeat(60) { index ->
+            buffer.append(
+                AudioFrame(
+                    samples = ShortArray(160),
+                    sampleRate = 16_000,
+                    channels = 1,
+                    timestamp = index * 10_000_000L
+                )
             )
-        )
-        originalSamples[0] = 99
+        }
 
-        val segment = buffer.snapshot()
-        buffer.clear()
-
-        assertArrayEquals(shortArrayOf(1, 2, 3), segment.pcm)
-        assertEquals(100L, segment.startedAt)
-        assertTrue(segment.finishedAt > segment.startedAt)
+        assertTrue(buffer.duration() <= 400)
+        assertEquals(40, buffer.frames().size)
+        assertEquals(200_000_000L, buffer.frames().first().timestamp)
+        assertEquals(590_000_000L, buffer.frames().last().timestamp)
     }
 
     @Test
-    fun segmentPcmAccessorReturnsDefensiveCopies() {
-        val buffer = AudioBuffer()
+    fun `buffer keeps a single frame even when frame exceeds limit`() {
+        val buffer = AudioBuffer(maxMillis = 100)
+
         buffer.append(
             AudioFrame(
-                samples = shortArrayOf(4, 5),
+                samples = ShortArray(3_200),
                 sampleRate = 16_000,
                 channels = 1,
-                timestamp = 100L
+                timestamp = 0
             )
         )
 
-        val segment = buffer.snapshot()
-        val exposedPcm = segment.pcm
-        exposedPcm[0] = 99
-
-        assertArrayEquals(shortArrayOf(4, 5), segment.pcm)
+        assertEquals(1, buffer.frames().size)
+        assertEquals(200L, buffer.duration())
     }
 }

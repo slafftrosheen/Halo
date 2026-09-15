@@ -23,7 +23,9 @@ data class RuntimeSnapshot(
     val providers: List<ProviderSnapshot>,
     val blackboard: BlackboardSnapshot,
     val deviceContext: DeviceContext = DeviceContext(),
-    val traces: List<ObservationTrace> = emptyList()
+    val traces: List<ObservationTrace> = emptyList(),
+    /** Native heavyweight residency, eviction and contention diagnostics. */
+    val nativeResources: List<NativeResourceSnapshot> = emptyList()
 )
 
 data class StageMetrics(

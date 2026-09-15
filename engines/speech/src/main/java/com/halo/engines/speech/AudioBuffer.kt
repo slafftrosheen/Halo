@@ -1,12 +1,19 @@
 package com.halo.engines.speech
 
 class AudioBuffer(val maxMillis: Long = 10000) {
+    init {
+        require(maxMillis > 0) { "maxMillis must be > 0" }
+    }
+
     private val lock = Any()
     private val frames = mutableListOf<AudioFrame>()
 
     fun append(frame: AudioFrame) {
+        require(frame.sampleRate > 0) { "sampleRate must be > 0" }
+        require(frame.channels > 0) { "channels must be > 0" }
         synchronized(lock) {
             frames.add(frame.copyDetached())
+            trimToMaxDuration()
         }
     }
 
@@ -46,10 +53,7 @@ class AudioBuffer(val maxMillis: Long = 10000) {
     }
 
     fun duration(): Long = synchronized(lock) {
-        if (frames.isEmpty()) return@synchronized 0
-        val sampleRate = frames.first().sampleRate
-        val totalSamples = frames.sumOf { it.samples.size }
-        return@synchronized (totalSamples * 1000L) / sampleRate
+        durationMillis()
     }
 
     fun frames(): List<AudioFrame> = synchronized(lock) {
@@ -58,6 +62,19 @@ class AudioBuffer(val maxMillis: Long = 10000) {
 
     fun pcm(): ShortArray = synchronized(lock) {
         copyPcm()
+    }
+
+    private fun trimToMaxDuration() {
+        while (frames.size > 1 && durationMillis() > maxMillis) {
+            frames.removeAt(0)
+        }
+    }
+
+    private fun durationMillis(): Long {
+        if (frames.isEmpty()) return 0
+        val sampleRate = frames.first().sampleRate
+        val totalSamples = frames.sumOf { it.samples.size }
+        return (totalSamples * 1000L) / sampleRate
     }
 
     private fun copyPcm(): ShortArray {

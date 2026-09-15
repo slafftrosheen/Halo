@@ -3,8 +3,7 @@ package com.halo.engines.speech
 import com.halo.libraries.common.core.Identifier
 import com.halo.libraries.common.core.Version
 import com.halo.sdk.runtime.*
-import com.halo.runtime.services.Services
-import com.halo.sdk.host.AudioSourceState
+import com.halo.sdk.host.AudioSource
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -13,10 +12,12 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 
 data class EngineMetrics(
@@ -26,11 +27,21 @@ data class EngineMetrics(
     var activeCaptureTimeMillis: Long = 0L
 )
 
+/**
+ * Owns microphone capture for an explicit speech session.
+ *
+ * Starting the engine is deliberately passive: it prepares the audio pipeline
+ * but does not open the microphone and does not start speech recognition.
+ * A StartListening command begins one capture session; StopListening ends it.
+ * This prevents Halo from continuously listening/recognizing immediately after
+ * application startup.
+ */
 class AudioPerceptionEngine(
-    private val audioSource: com.halo.sdk.host.AudioSource,
+    private val audioSource: AudioSource,
     private val preprocessor: AudioPreprocessor,
     private val audioPipeline: AudioPipeline,
-    private val eventBus: com.halo.sdk.runtime.EventBus
+    private val eventBus: EventBus,
+    private val commandBus: CommandBus
 ) : Engine {
 
     override val metadata = EngineMetadata(
@@ -51,6 +62,7 @@ class AudioPerceptionEngine(
     private lateinit var scope: CoroutineScope
     private val lifecycleMutex = Mutex()
     private val sourceStartAttempted = AtomicBoolean(false)
+    private var commandJob: Job? = null
     private var captureJob: Job? = null
 
     val metrics = EngineMetrics()
@@ -71,12 +83,24 @@ class AudioPerceptionEngine(
             check(_state.value != EngineState.Disposed) {
                 "AudioPerceptionEngine cannot be started after it is disposed"
             }
-            if (captureJob?.isActive == true) return@withLock
+            if (commandJob?.isActive == true) return@withLock
 
             _state.value = EngineState.Running
             _health.value = EngineHealth.Healthy
             audioPipeline.start()
-            captureJob = scope.launch { runCaptureLoop(eventBus) }
+
+            commandJob = scope.launch {
+                launch {
+                    commandBus.commands().filterIsInstance<StartListening>().collect {
+                        startCapture()
+                    }
+                }
+                launch {
+                    commandBus.commands().filterIsInstance<StopListening>().collect {
+                        stopCapture()
+                    }
+                }
+            }
         }
     }
 
@@ -99,112 +123,65 @@ class AudioPerceptionEngine(
         }
     }
 
-    private suspend fun runCaptureLoop(eventBus: EventBus) {
-        var bridgeJob: Job? = null
-        try {
-            sourceStartAttempted.set(true)
+    private suspend fun startCapture() {
+        if (captureJob?.isActive == true) return
+
+        captureJob = scope.launch {
             try {
-                audioSource.start()
+                sourceStartAttempted.set(true)
+                try {
+                    audioSource.start()
+                } catch (exception: CancellationException) {
+                    sourceStartAttempted.set(false)
+                    throw exception
+                } catch (exception: Exception) {
+                    sourceStartAttempted.set(false)
+                    reportCaptureFailure(
+                        "Unable to start audio source: ${exception.message ?: "Audio initialization failed"}",
+                        exception
+                    )
+                    return@launch
+                }
+
+                audioPipeline.reset()
+                _health.value = EngineHealth.Healthy
+
+                // Transport capture is now intentional. Only this explicit command
+                // creates the lifecycle event that starts live STT.
+                eventBus.publish(ListeningStarted())
+
+                audioSource.frames.collect { rawFrame ->
+                    metrics.framesProcessed++
+                    val frame = preprocessor.process(rawFrame)
+                    audioPipeline.processFrame(frame)
+                }
             } catch (exception: CancellationException) {
-                sourceStartAttempted.set(false)
                 throw exception
             } catch (exception: Exception) {
-                sourceStartAttempted.set(false)
                 reportCaptureFailure(
-                    eventBus,
-                    "Unable to start audio source: ${exception.message ?: "Audio initialization failed"}",
+                    "Audio capture failed: ${exception.message ?: "Unknown error"}",
                     exception
                 )
-                return
-            }
-
-            audioPipeline.reset()
-            _health.value = EngineHealth.Healthy
-
-            bridgeJob = scope.launch {
-                var active = false
-                audioSource.state.collect { sourceState ->
-                    when (sourceState) {
-                        AudioSourceState.ACTIVE -> {
-                            if (active) return@collect
-                            active = true
-                            eventBus.publish(
-                                ObservationUpdated(
-                                    observation = Observation(
-                                        modality = Modality.AUDIO,
-                                        source = Source.MICROPHONE,
-                                        payload = AudioObservationPayload(energy = null, isSpeechActive = true)
-                                    )
-                                )
-                            )
-                            eventBus.publish(ListeningStarted())
-                        }
-
-                        AudioSourceState.IDLE -> {
-                            if (!active) return@collect
-                            active = false
-                            eventBus.publish(
-                                ObservationUpdated(
-                                    observation = Observation(
-                                        modality = Modality.AUDIO,
-                                        source = Source.MICROPHONE,
-                                        payload = AudioObservationPayload(energy = null, isSpeechActive = false)
-                                    )
-                                )
-                            )
-                            // The source becoming idle is transport lifecycle, not
-                            // recognition completion. LIVE STT owns its endpointing.
-                            if (audioPipelineStateIsBuffered()) {
-                                eventBus.publish(SpeechEnded())
-                            }
-                        }
-
-                        AudioSourceState.ERROR -> {
-                            reportCaptureFailure(
-                                eventBus,
-                                "Audio source reported error",
-                                RuntimeException("Source Error")
-                            )
-                        }
-                    }
+            } finally {
+                withContext(NonCancellable) {
+                    stopAudioSource()
+                    audioPipeline.reset()
                 }
-            }
-
-            audioSource.frames.collect { rawFrame ->
-                metrics.framesProcessed++
-                val frame = preprocessor.process(rawFrame)
-                audioPipeline.processFrame(frame)
-            }
-        } catch (exception: CancellationException) {
-            throw exception
-        } catch (exception: Exception) {
-            reportCaptureFailure(
-                eventBus,
-                "Audio capture failed: ${exception.message ?: "Unknown error"}",
-                exception
-            )
-        } finally {
-            withContext(NonCancellable) {
-                bridgeJob?.cancel()
-                stopAudioSource()
-                audioPipeline.stop()
+                captureJob = null
             }
         }
     }
 
-    /**
-     * AudioPerceptionEngine only knows the pipeline instance, not its configured
-     * provider. SpeechEnded must not be broadcast from transport state when the
-     * pipeline is using LIVE recognition. Keep this conservative until the engine
-     * exposes an explicit endpointing mode in the SDK.
-     */
-    private fun audioPipelineStateIsBuffered(): Boolean = false
+    private suspend fun stopCapture() {
+        val job = captureJob ?: return
+        captureJob = null
+        job.cancel()
+        withContext(NonCancellable) { stopAudioSource() }
+        job.join()
+        audioPipeline.reset()
+    }
 
-    private suspend fun reportCaptureFailure(
-        eventBus: EventBus,
-        reason: String,
-        throwable: Throwable
-    ) {
+    private suspend fun reportCaptureFailure(reason: String, throwable: Throwable) {
         _health.value = EngineHealth.Degraded
         if (::context.isInitialized) {
             context.runtime.logger.error(
@@ -213,10 +190,10 @@ class AudioPerceptionEngine(
                 throwable = throwable
             )
         }
-        publishFailure(eventBus, reason)
+        publishFailure(reason)
     }
 
-    private suspend fun publishFailure(eventBus: EventBus, reason: String) {
+    private suspend fun publishFailure(reason: String) {
         try {
             eventBus.publish(RecognitionFailed(reason = reason))
         } catch (exception: CancellationException) {
@@ -233,12 +210,12 @@ class AudioPerceptionEngine(
     }
 
     private suspend fun stopLocked() {
-        val activeCaptureJob = captureJob
-        captureJob = null
+        val activeCommandJob = commandJob
+        commandJob = null
+        activeCommandJob?.cancel()
 
-        activeCaptureJob?.cancel()
-        withContext(NonCancellable) { stopAudioSource() }
-        activeCaptureJob?.join()
+        withContext(NonCancellable) { stopCapture() }
+        activeCommandJob?.join()
         audioPipeline.stop()
         _state.value = EngineState.Stopped
     }
