@@ -1,17 +1,17 @@
 package com.halo.app.di
 
 import android.content.Context
+import com.halo.engines.speech.AlwaysWakeDetector
+import com.halo.engines.speech.UnavailableSpeechRecognitionProvider
 import com.halo.providers.llamacpp.ModelDownloadManager
 import com.halo.providers.llamacpp.NativeLlamaProvider
 import com.halo.providers.android.assistant.AndroidAssistantProvider
-import com.halo.providers.android.stt.AndroidSpeechRecognitionProvider
 import com.halo.providers.android.tts.AndroidTTSProvider
 import com.halo.providers.openrouter.OpenRouterProvider
 import com.halo.providers.llamacpp.OllamaProvider
 import com.halo.providers.sherpa.stt.SherpaKeywordSpotterWakeWordDetector
 import com.halo.providers.sherpa.stt.SherpaOfflineSpeechRecognitionProvider
 import com.halo.providers.sherpa.stt.SherpaSpeechModelCatalog
-import com.halo.engines.speech.AlwaysWakeDetector
 import com.halo.sdk.provider.SpeechRecognitionProvider
 import com.halo.sdk.runtime.NativeResourceCoordinator
 import java.io.File
@@ -32,8 +32,10 @@ class AndroidProviderFactory(
             nativeResourceCoordinator = nativeResourceCoordinator
         )
 
-        // Local Whisper is selected only when the complete, explicitly installed
-        // model is present. Startup never downloads or initializes the model.
+        // Voice remains local-first. If the approved offline model is absent,
+        // expose an explicit unavailable provider instead of silently falling
+        // back to Android SpeechRecognizer, which can invoke an OEM/system
+        // recognition service and take microphone ownership outside Halo's path.
         val sherpaModelDirectory = File(
             context.filesDir,
             "speech/${SherpaSpeechModelCatalog.WHISPER_TINY_DIRECTORY}"
@@ -52,9 +54,9 @@ class AndroidProviderFactory(
                 nativeResourceCoordinator = nativeResourceCoordinator
             )
         } else {
-            AndroidSpeechRecognitionProvider(context) {
-                configuredLocale
-            }
+            UnavailableSpeechRecognitionProvider(
+                "Install the local Whisper tiny model to enable private voice input"
+            )
         }
 
         val sherpaKwsDirectory = File(
