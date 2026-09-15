@@ -51,7 +51,8 @@ class HostGraph(
             audioSource = HybridAudioSource(wearableHost),
             preprocessor = com.halo.engines.speech.DefaultAudioPreprocessor(),
             audioPipeline = audioPipeline,
-            eventBus = infra.eventBus
+            eventBus = infra.eventBus,
+            commandBus = infra.commandBus
         )
     }
 }
