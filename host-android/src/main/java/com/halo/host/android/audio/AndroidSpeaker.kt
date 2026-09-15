@@ -17,6 +17,13 @@ import kotlinx.coroutines.launch
 import java.util.Locale
 import java.util.UUID
 
+/**
+ * Android TTS output for the phone host.
+ *
+ * Starting the speaker only subscribes to TTS requests. The Android TTS engine
+ * itself is initialized on the first real TtsRequested event so application
+ * startup remains silent and does not touch the audio output stack.
+ */
 class AndroidSpeaker(
     private val context: Context,
     private val eventBus: EventBus
@@ -26,13 +33,10 @@ class AndroidSpeaker(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var eventJob: Job? = null
     private var currentTextLength = 0
+    private var pendingText: String? = null
 
     fun start() {
         if (eventJob?.isActive == true) return
-
-        if (tts == null) {
-            tts = TextToSpeech(context.applicationContext, this)
-        }
 
         eventJob = scope.launch {
             eventBus.events().collect { event ->
@@ -44,50 +48,73 @@ class AndroidSpeaker(
     }
 
     override fun onInit(status: Int) {
-        if (status == TextToSpeech.SUCCESS) {
-            tts?.language = Locale.getDefault()
-            tts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-                override fun onStart(utteranceId: String?) {
-                    scope.launch {
-                        eventBus.publish(TtsStarted(textLength = currentTextLength))
-                    }
+        if (status != TextToSpeech.SUCCESS) {
+            isReady = false
+            val pending = pendingText
+            pendingText = null
+            if (!pending.isNullOrBlank()) {
+                scope.launch {
+                    eventBus.publish(TtsFailed(message = "Android TTS initialization failed"))
                 }
+            }
+            return
+        }
 
-                override fun onDone(utteranceId: String?) {
-                    scope.launch {
-                        eventBus.publish(TtsCompleted())
-                    }
+        tts?.language = Locale.getDefault()
+        tts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+            override fun onStart(utteranceId: String?) {
+                scope.launch {
+                    eventBus.publish(TtsStarted(textLength = currentTextLength))
                 }
+            }
 
-                @Deprecated("Deprecated in Java")
-                override fun onError(utteranceId: String?) {
-                    scope.launch {
-                        eventBus.publish(TtsFailed(message = "Android TTS error"))
-                    }
+            override fun onDone(utteranceId: String?) {
+                scope.launch {
+                    eventBus.publish(TtsCompleted())
                 }
+            }
 
-                override fun onError(utteranceId: String?, errorCode: Int) {
-                    scope.launch {
-                        eventBus.publish(TtsFailed(message = "Android TTS error code $errorCode"))
-                    }
+            @Deprecated("Deprecated in Java")
+            override fun onError(utteranceId: String?) {
+                scope.launch {
+                    eventBus.publish(TtsFailed(message = "Android TTS error"))
                 }
-            })
-            isReady = true
+            }
+
+            override fun onError(utteranceId: String?, errorCode: Int) {
+                scope.launch {
+                    eventBus.publish(TtsFailed(message = "Android TTS error code $errorCode"))
+                }
+            }
+        })
+        isReady = true
+
+        pendingText?.also {
+            pendingText = null
+            speak(it)
         }
     }
 
     private fun speak(text: String) {
         if (text.isBlank()) return
-        if (isReady) {
-            currentTextLength = text.length
-            val utteranceId = "halo-tts-${UUID.randomUUID()}"
-            val params = Bundle()
-            params.putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, utteranceId)
-            tts?.speak(text, TextToSpeech.QUEUE_FLUSH, params, utteranceId)
+
+        if (!isReady) {
+            pendingText = text
+            if (tts == null) {
+                tts = TextToSpeech(context.applicationContext, this)
+            }
+            return
         }
+
+        currentTextLength = text.length
+        val utteranceId = "halo-tts-${UUID.randomUUID()}"
+        val params = Bundle()
+        params.putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, utteranceId)
+        tts?.speak(text, TextToSpeech.QUEUE_FLUSH, params, utteranceId)
     }
 
     fun stop() {
+        pendingText = null
         tts?.stop()
         _stateStop()
     }
@@ -101,6 +128,7 @@ class AndroidSpeaker(
     fun shutdown() {
         eventJob?.cancel()
         eventJob = null
+        pendingText = null
         tts?.stop()
         tts?.shutdown()
         tts = null
