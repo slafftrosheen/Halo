@@ -423,6 +423,7 @@ class OpenRouterProvider(
         val type = when (statusCode) {
             400 -> AiErrorType.INVALID_REQUEST
             401, 403 -> AiErrorType.AUTHENTICATION_FAILED
+            402 -> AiErrorType.AUTHENTICATION_FAILED
             408 -> AiErrorType.TIMEOUT
             409 -> AiErrorType.PROVIDER_UNAVAILABLE
             429 -> AiErrorType.RATE_LIMITED
