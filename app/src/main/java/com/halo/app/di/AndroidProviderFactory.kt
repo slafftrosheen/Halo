@@ -1,32 +1,34 @@
 package com.halo.app.di
 
 import android.content.Context
-import com.halo.sdk.provider.*
-import com.halo.engines.speech.AlwaysWakeDetector
+import com.halo.providers.llamacpp.ModelDownloadManager
+import com.halo.providers.llamacpp.NativeLlamaProvider
+import com.halo.providers.android.assistant.AndroidAssistantProvider
 import com.halo.providers.android.stt.AndroidSpeechRecognitionProvider
 import com.halo.providers.android.tts.AndroidTTSProvider
-import com.halo.providers.android.assistant.AndroidAssistantProvider
 import com.halo.providers.openrouter.OpenRouterProvider
-import com.halo.providers.llamacpp.NativeLlamaProvider
-import com.halo.providers.llamacpp.ModelDownloadManager
 import com.halo.providers.llamacpp.OllamaProvider
 import com.halo.providers.sherpa.stt.SherpaKeywordSpotterWakeWordDetector
 import com.halo.providers.sherpa.stt.SherpaOfflineSpeechRecognitionProvider
 import com.halo.providers.sherpa.stt.SherpaSpeechModelCatalog
+import com.halo.engines.speech.AlwaysWakeDetector
+import com.halo.sdk.runtime.NativeResourceCoordinator
 import java.io.File
 import java.util.Locale
 
 class AndroidProviderFactory(
     private val context: Context,
     private val modelDownloadManager: ModelDownloadManager,
-    private val storage: com.halo.sdk.runtime.Storage
+    private val storage: com.halo.sdk.runtime.Storage,
+    private val nativeResourceCoordinator: NativeResourceCoordinator
 ) : ProviderFactory {
 
     override fun createProviders(): Providers {
         val llamaProvider = NativeLlamaProvider(
             context = context,
             downloadManager = modelDownloadManager,
-            storage = storage
+            storage = storage,
+            nativeResourceCoordinator = nativeResourceCoordinator
         )
 
         // Local Whisper is selected only when the complete, explicitly installed
@@ -45,7 +47,8 @@ class AndroidProviderFactory(
         ) {
             SherpaOfflineSpeechRecognitionProvider(
                 modelDirectory = sherpaModelDirectory,
-                language = speechLanguage
+                language = speechLanguage,
+                nativeResourceCoordinator = nativeResourceCoordinator
             )
         } else {
             AndroidSpeechRecognitionProvider(context) {
