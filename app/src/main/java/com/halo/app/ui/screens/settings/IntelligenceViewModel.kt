@@ -74,7 +74,6 @@ class IntelligenceViewModel(
     init {
         viewModelScope.launch(Dispatchers.IO) { loadSettings() }
         modelDownloadManager?.refreshStates()
-
         viewModelScope.launch {
             aiProviderRouter.selectedProviderId.collectLatest { providerId ->
                 if (providerId != null) {
@@ -114,7 +113,6 @@ class IntelligenceViewModel(
             "openrouter" -> settings.openRouterModel.trim().ifBlank { "openrouter/free" }
             "provider.ollama" -> settings.ollamaModel.trim().ifBlank { null }
             "provider.llamacpp.native" -> modelDownloadManager?.activeModelId?.value ?: settings.llamacppModel.trim().ifBlank { null }
-            "android.system.assistant" -> "android-assistant/handoff"
             else -> null
         }
         if (storedModelId != aiProviderRouter.selectedModelId.value) aiProviderRouter.selectModel(storedModelId)
@@ -189,9 +187,16 @@ class IntelligenceViewModel(
 
     fun selectProvider(id: String) {
         if (aiProviderRouter.getAllProviders().none { it.id == id }) return
-        aiProviderRouter.selectProvider(id); _availableModels.value = emptyList(); _refreshTrigger.update { it + 1 }
+        if (id == "android.system.assistant") {
+            handoffToAssistant()
+            return
+        }
+        aiProviderRouter.selectProvider(id)
+        _availableModels.value = emptyList()
+        _refreshTrigger.update { it + 1 }
         viewModelScope.launch { syncStoredModelSelection(id); refreshModelsFor(id); refreshAssistantInfo(id) }
     }
+
     fun selectModel(modelId: String?) {
         val normalized = modelId?.trim()?.ifBlank { null }; val providerId = aiProviderRouter.selectedProviderId.value
         if (normalized != null) {
