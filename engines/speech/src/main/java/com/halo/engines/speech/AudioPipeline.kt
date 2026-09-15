@@ -23,13 +23,19 @@ class AudioPipeline(
     private val wakeWordDetector: WakeWordDetector,
     private val sttProvider: SpeechRecognitionProvider,
     private val eventBus: EventBus,
-    private val scope: CoroutineScope
+    private val scope: CoroutineScope,
+    preRollMillis: Long = 400
 ) {
+    private val preRollBuffer = AudioBuffer(maxMillis = preRollMillis)
     private var buffer = AudioBuffer()
     private val _state = MutableStateFlow<SpeechState>(SpeechState.Idle)
     val state: StateFlow<SpeechState> = _state
     private var observerJobs: List<Job> = emptyList()
     private var liveListeningJob: Job? = null
+
+    init {
+        require(preRollMillis > 0) { "preRollMillis must be > 0" }
+    }
 
     fun start() {
         if (observerJobs.any { it.isActive }) return
@@ -66,26 +72,43 @@ class AudioPipeline(
     private fun onSpeechEnded() {
         if (sttProvider.mode == SpeechRecognitionMode.LIVE) return
 
+        val stateAtEnd = _state.value
+        val shouldRecognize = stateAtEnd == SpeechState.WakeDetected ||
+            stateAtEnd == SpeechState.Recognizing
+
+        if (!shouldRecognize) {
+            buffer.clear()
+            preRollBuffer.clear()
+            _state.value = SpeechState.Idle
+            return
+        }
+
+        if (buffer.duration() == 0L) {
+            _state.value = SpeechState.Idle
+            return
+        }
+
         val segment = buffer.snapshot()
         buffer.clear()
-        if (segment.audioBuffer.frames.isNotEmpty()) {
-            _state.value = SpeechState.Recognizing
-            scope.launch { processSegment(segment) }
-        } else {
-            _state.value = SpeechState.Idle
-        }
+        preRollBuffer.clear()
+        _state.value = SpeechState.Recognizing
+        scope.launch { processSegment(segment) }
     }
 
     fun processFrame(frame: AudioFrame) {
+        // Keep a small bounded history so VAD/wake-word onset does not clip
+        // the first phonemes of the utterance.
+        preRollBuffer.append(frame)
+
         val currentState = _state.value
 
         if (vad.isSpeech(frame)) {
             if (currentState == SpeechState.Idle) {
                 _state.value = SpeechState.Listening
+                buffer.clear()
+                preRollBuffer.frames().forEach(buffer::append)
                 scope.launch { eventBus.publish(SpeechStarted()) }
-            }
-
-            if (sttProvider.mode == SpeechRecognitionMode.BUFFERED) {
+            } else if (sttProvider.mode == SpeechRecognitionMode.BUFFERED) {
                 buffer.append(frame)
             }
 
@@ -104,16 +127,6 @@ class AudioPipeline(
         } else if (currentState == SpeechState.Listening || currentState == SpeechState.WakeDetected || currentState == SpeechState.Recognizing) {
             if (sttProvider.mode == SpeechRecognitionMode.BUFFERED) {
                 scope.launch { eventBus.publish(SpeechEnded()) }
-
-                val segment = buffer.snapshot()
-                buffer.clear()
-
-                if (currentState == SpeechState.WakeDetected || currentState == SpeechState.Recognizing) {
-                    _state.value = SpeechState.Recognizing
-                    scope.launch { processSegment(segment) }
-                } else {
-                    _state.value = SpeechState.Idle
-                }
             }
         }
     }
@@ -189,6 +202,7 @@ class AudioPipeline(
 
     fun reset() {
         buffer.clear()
+        preRollBuffer.clear()
         vad.reset()
         _state.value = SpeechState.Idle
         liveListeningJob?.cancel()
