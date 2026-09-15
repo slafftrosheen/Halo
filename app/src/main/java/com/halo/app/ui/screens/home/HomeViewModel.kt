@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.SharingStarted
@@ -92,9 +91,7 @@ class HomeViewModel(
     private val snapshotManager: RuntimeSnapshotSource,
     private val commandBus: CommandBus,
     private val cognitiveSession: CognitiveSession,
-    private val aiProviderRouter: AiProviderRouter? = null,
-    @Suppress("UNUSED_PARAMETER")
-    private val deviceSessionManager: com.halo.sdk.runtime.embodiment.DeviceSessionManager? = null
+    private val aiProviderRouter: AiProviderRouter? = null
 ) : ViewModel() {
     private val mapper = HomeUiMapper()
     val uiState: StateFlow<HomeUiState> = combine(
@@ -144,5 +141,4 @@ class HomeViewModel(
 
     fun navigateToIntelligence() { viewModelScope.launch { _navigationEvents.emit("ai_settings") } }
     fun navigateToDevices() { viewModelScope.launch { _navigationEvents.emit("devices") } }
-    fun navigateToConsole() { viewModelScope.launch { _navigationEvents.emit("console") } }
 }
