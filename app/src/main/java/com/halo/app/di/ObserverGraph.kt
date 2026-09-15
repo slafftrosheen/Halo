@@ -1,20 +1,18 @@
 package com.halo.app.di
 
-import android.content.Context
 import com.halo.runtime.observer.DefaultRuntimeObserver
 import com.halo.runtime.observer.TimelineRecorder
 import com.halo.runtime.observer.DefaultTimelineEventMapper
 import com.halo.runtime.observer.DefaultRuntimeHealthEvaluator
 import com.halo.runtime.observer.DefaultSnapshotAssembler
 import com.halo.sdk.runtime.ProviderSnapshot
-import com.halo.sdk.provider.AiProviderRouter
 
 /**
- * Owns all observability infrastructure: timeline, replay, snapshots, tracing.
- * Read-only consumers of runtime state — never mutate engine behavior.
+ * Owns production observability infrastructure used to expose runtime state.
+ * Diagnostics are emitted to Logcat; replay recording is deliberately not part
+ * of the production dependency graph.
  */
 class ObserverGraph(
-    private val applicationContext: Context,
     private val infra: InfrastructureGraph,
     private val engineGraph: EngineGraph
 ) {
@@ -42,21 +40,6 @@ class ObserverGraph(
             healthEvaluator,
             java.time.Clock.systemUTC(),
             engineGraph.nativeResourceCoordinator
-        )
-    }
-
-    val runtimeReplayRecorder by lazy {
-        com.halo.runtime.observer.replay.RuntimeReplayRecorder(
-            infra.eventBus,
-            infra.scope,
-            java.io.File(applicationContext.cacheDir, "replay_sessions")
-        )
-    }
-
-    val runtimeReplayPlayer by lazy {
-        com.halo.runtime.observer.replay.RuntimeReplayPlayer(
-            infra.eventBus,
-            infra.scope
         )
     }
 
