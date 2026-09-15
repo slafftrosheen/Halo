@@ -114,7 +114,6 @@ fun HomeScreen(viewModel: HomeViewModel) {
                     state = uiState.runtimeState,
                     size = 172.dp,
                     onClick = ::toggleOrb,
-                    onLongClick = viewModel::navigateToConsole,
                     contentDescription = when {
                         isActiveSession -> "Stop Halo"
                         isListening -> "Stop listening"
