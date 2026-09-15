@@ -5,7 +5,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.halo.app.ui.glass.material.HaloRuntimeState
 import com.halo.app.ui.state.presenceFromSpeech
-import com.halo.app.ui.state.toDisplayText
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.*
 import com.halo.runtime.cognition.session.CognitiveSession
@@ -23,15 +22,11 @@ import kotlinx.coroutines.launch
 data class TimelinePreviewEvent(val command: String, val status: String, val timestamp: Long)
 
 data class HomeUiState(
-    val connectionState: String = "Disconnected",
     val contextualText: String = "Ready when you are",
     val runtimeState: HaloRuntimeState = HaloRuntimeState.Idle,
     val recentEvents: List<TimelinePreviewEvent> = emptyList(),
     val activeProvider: String = "No provider",
     val activeProviderStatus: String = "Unavailable",
-    val batteryPercent: Int? = null,
-    val isCharging: Boolean = false,
-    val capabilities: List<String> = emptyList(),
     val sessionState: CognitiveSessionState = CognitiveSessionState.Idle
 )
 
@@ -41,10 +36,8 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
         sessionState: CognitiveSessionState,
         selectedProviderId: String? = null,
         selectedModelId: String? = null,
-        diagnostics: List<AiProviderDiagnostic> = emptyList(),
-        activeSessions: List<com.halo.sdk.runtime.embodiment.EmbodimentSession> = emptyList()
+        diagnostics: List<AiProviderDiagnostic> = emptyList()
     ): HomeUiState {
-        val isReady = snapshot.runtimeState == RuntimeState.Running
         val speechRuntimeState = presenceFromSpeech(snapshot.speech)
         val uiRuntimeState = when (sessionState) {
             is CognitiveSessionState.PreparingContext -> HaloRuntimeState.Recognizing
@@ -63,7 +56,7 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
             is CognitiveSessionState.Completed -> sessionState.response.text.ifBlank { "Completed" }
             is CognitiveSessionState.Failed -> "Error: ${sessionState.message}"
             CognitiveSessionState.Idle -> when (uiRuntimeState) {
-                HaloRuntimeState.Idle -> if (isReady) "Ready when you are" else "Starting Halo..."
+                HaloRuntimeState.Idle -> "Ready when you are"
                 HaloRuntimeState.Capturing -> "Listening"
                 HaloRuntimeState.Recognizing -> "Understanding"
                 HaloRuntimeState.Reasoning -> "Reasoning"
@@ -71,29 +64,23 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
                 else -> "Processing..."
             }
         }
-        val activeSessionState = activeSessions.firstOrNull()?.state?.value
-        val connectionText = activeSessionState?.toDisplayText()
-            ?: if (snapshot.deviceContext.connected) "Connected" else "Disconnected"
-        val caps = snapshot.deviceContext.capabilities
-        val selectedDiag = diagnostics.find { it.providerId == selectedProviderId } ?: diagnostics.find { it.selected }
-        val activeProviderText = if (selectedDiag != null) {
-            val modelSuffix = selectedModelId?.let { " · $it" } ?: selectedDiag.selectedModelId?.let { " · $it" } ?: ""
-            "${selectedDiag.displayName}$modelSuffix"
-        } else {
-            val snapProvider = snapshot.providers.find { it.isSelected } ?: snapshot.providers.firstOrNull()
-            if (snapProvider != null) "${snapProvider.name}${snapProvider.activeModel?.let { " · $it" } ?: ""}" else "No provider"
-        }
-        val providerStatus = selectedDiag?.state?.name ?: snapshot.providers.find { it.isSelected }?.status ?: "Unavailable"
+        val activeProviderText = diagnostics.find { it.providerId == selectedProviderId }?.let { diagnostic ->
+            val modelSuffix = selectedModelId?.let { " · $it" }
+                ?: diagnostic.selectedModelId?.let { " · $it" }
+                ?: ""
+            "${diagnostic.displayName}$modelSuffix"
+        } ?: snapshot.providers.find { it.isSelected }?.let { provider ->
+            "${provider.name}${provider.activeModel?.let { " · $it" } ?: ""}"
+        } ?: "No provider"
+        val providerStatus = diagnostics.find { it.providerId == selectedProviderId }?.state?.name
+            ?: snapshot.providers.find { it.isSelected }?.status
+            ?: "Unavailable"
         return HomeUiState(
-            connectionState = connectionText,
             contextualText = contextualText,
             runtimeState = uiRuntimeState,
             recentEvents = snapshot.timeline.map { TimelinePreviewEvent(it.title, it.status, it.timestamp.toEpochMilli()) },
             activeProvider = activeProviderText,
             activeProviderStatus = providerStatus,
-            batteryPercent = snapshot.deviceContext.batteryPercent,
-            isCharging = snapshot.deviceContext.charging,
-            capabilities = caps,
             sessionState = sessionState
         )
     }
@@ -106,6 +93,7 @@ class HomeViewModel(
     private val commandBus: CommandBus,
     private val cognitiveSession: CognitiveSession,
     private val aiProviderRouter: AiProviderRouter? = null,
+    @Suppress("UNUSED_PARAMETER")
     private val deviceSessionManager: com.halo.sdk.runtime.embodiment.DeviceSessionManager? = null
 ) : ViewModel() {
     private val mapper = HomeUiMapper()
@@ -114,8 +102,7 @@ class HomeViewModel(
         cognitiveSession.state,
         aiProviderRouter?.selectedProviderId ?: MutableStateFlow<String?>(null),
         aiProviderRouter?.selectedModelId ?: MutableStateFlow<String?>(null),
-        aiProviderRouter?.diagnosticsFlow ?: MutableStateFlow(emptyList<AiProviderDiagnostic>()),
-        deviceSessionManager?.activeSessions ?: MutableStateFlow(emptyList<com.halo.sdk.runtime.embodiment.EmbodimentSession>())
+        aiProviderRouter?.diagnosticsFlow ?: MutableStateFlow(emptyList<AiProviderDiagnostic>())
     ) { args ->
         @Suppress("UNCHECKED_CAST")
         val snapshot = args[0] as RuntimeSnapshot
@@ -123,8 +110,7 @@ class HomeViewModel(
         val selectedProviderId = args[2] as String?
         val selectedModelId = args[3] as String?
         @Suppress("UNCHECKED_CAST") val diagnostics = args[4] as List<AiProviderDiagnostic>
-        @Suppress("UNCHECKED_CAST") val activeSessions = args[5] as List<com.halo.sdk.runtime.embodiment.EmbodimentSession>
-        mapper.map(snapshot, sessionState, selectedProviderId, selectedModelId, diagnostics, activeSessions)
+        mapper.map(snapshot, sessionState, selectedProviderId, selectedModelId, diagnostics)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HomeUiState())
 
     fun submitText(text: String) {
@@ -135,16 +121,27 @@ class HomeViewModel(
                 .onFailure { Log.e("HomeViewModel", "Text submission failed", it) }
         }
     }
+
     fun clearConversation() { cognitiveSession.clearConversation() }
     fun cancelSession() { cognitiveSession.cancel() }
+
     fun startListening() {
-        viewModelScope.launch { runCatching { commandBus.dispatch(StartListening) }.onFailure { Log.e("HomeViewModel", "Failed to start listening", it) } }
+        viewModelScope.launch {
+            runCatching { commandBus.dispatch(StartListening) }
+                .onFailure { Log.e("HomeViewModel", "Failed to start listening", it) }
+        }
     }
+
     fun stopListening() {
-        viewModelScope.launch { runCatching { commandBus.dispatch(StopListening) }.onFailure { Log.e("HomeViewModel", "Failed to stop listening", it) } }
+        viewModelScope.launch {
+            runCatching { commandBus.dispatch(StopListening) }
+                .onFailure { Log.e("HomeViewModel", "Failed to stop listening", it) }
+        }
     }
+
     private val _navigationEvents = MutableSharedFlow<String>()
     val navigationEvents: SharedFlow<String> = _navigationEvents.asSharedFlow()
+
     fun navigateToIntelligence() { viewModelScope.launch { _navigationEvents.emit("ai_settings") } }
     fun navigateToDevices() { viewModelScope.launch { _navigationEvents.emit("devices") } }
     fun navigateToConsole() { viewModelScope.launch { _navigationEvents.emit("console") } }
