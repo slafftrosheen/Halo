@@ -4,6 +4,9 @@ import com.halo.sdk.host.AudioBuffer
 import com.halo.sdk.provider.BufferedSpeechRecognitionProvider
 import com.halo.sdk.provider.ProviderHealth
 import com.halo.sdk.provider.RecognitionResult
+import com.halo.sdk.runtime.NativeResourceCoordinator
+import com.halo.sdk.runtime.NativeResourceKind
+import com.halo.sdk.runtime.NativeResourceOwner
 import com.k2fsa.sherpa.onnx.FeatureConfig
 import com.k2fsa.sherpa.onnx.OfflineModelConfig
 import com.k2fsa.sherpa.onnx.OfflineRecognizer
@@ -17,8 +20,9 @@ import kotlinx.coroutines.sync.withLock
 class SherpaOfflineSpeechRecognitionProvider(
     private val modelDirectory: File,
     private val language: String = "",
-    private val numThreads: Int = 2
-) : BufferedSpeechRecognitionProvider {
+    private val numThreads: Int = 2,
+    private val nativeResourceCoordinator: NativeResourceCoordinator? = null
+) : BufferedSpeechRecognitionProvider, NativeResourceOwner {
 
     companion object {
         private const val SAMPLE_RATE = 16_000
@@ -34,6 +38,8 @@ class SherpaOfflineSpeechRecognitionProvider(
         id = "speech.sherpa_onnx.whisper_tiny",
         supportsStreaming = false
     )
+
+    override val nativeResourceKind: NativeResourceKind = NativeResourceKind.HEAVY_ASR
 
     @Volatile
     private var recognizer: OfflineRecognizer? = null
@@ -52,7 +58,7 @@ class SherpaOfflineSpeechRecognitionProvider(
             message = if (missing.isEmpty()) {
                 "Sherpa-ONNX Whisper tiny multilingual model is installed"
             } else {
-                "Sherpa-ONNX Whisper tiny model is incomplete; missing: ${missing.joinToString() }"
+                "Sherpa-ONNX Whisper tiny model is incomplete; missing: ${missing.joinToString()}"
             }
         )
     }
@@ -61,6 +67,9 @@ class SherpaOfflineSpeechRecognitionProvider(
         require(audio.frames.isNotEmpty()) { "Cannot recognize an empty audio buffer" }
         check(isInstalled(modelDirectory)) {
             "Sherpa-ONNX model is not installed at ${modelDirectory.absolutePath}"
+        }
+        check(nativeResourceCoordinator?.acquire(this) ?: true) {
+            "Local Whisper recognition deferred: another heavyweight native model is busy"
         }
 
         require(audio.frames.all { it.sampleRate == SAMPLE_RATE && it.channels == 1 }) {
@@ -91,6 +100,19 @@ class SherpaOfflineSpeechRecognitionProvider(
         }
     }
 
+    override suspend fun releaseIfIdle(): Boolean {
+        if (!recognitionMutex.tryLock()) return false
+        return try {
+            synchronized(recognizerLock) {
+                recognizer?.release()
+                recognizer = null
+            }
+            true
+        } finally {
+            recognitionMutex.unlock()
+        }
+    }
+
     override suspend fun close() {
         recognitionMutex.withLock {
             synchronized(recognizerLock) {
@@ -98,6 +120,7 @@ class SherpaOfflineSpeechRecognitionProvider(
                 recognizer = null
             }
         }
+        nativeResourceCoordinator?.unregister(this)
     }
 
     private fun ensureRecognizer(): OfflineRecognizer {
