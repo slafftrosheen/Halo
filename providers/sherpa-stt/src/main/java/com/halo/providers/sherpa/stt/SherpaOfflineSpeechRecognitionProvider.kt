@@ -13,16 +13,7 @@ import java.io.File
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-/**
- * Fully local, buffered ASR backed by sherpa-onnx.
- *
- * The provider deliberately owns no microphone. Halo's AudioPerceptionEngine
- * supplies the already captured utterance as an AudioBuffer. This keeps audio
- * ownership in one place and avoids the system SpeechRecognizer audio/beep path.
- *
- * The model directory is external to the APK. A later model manager can download
- * and validate it without changing this provider or the runtime contracts.
- */
+/** Fully local, buffered ASR backed by sherpa-onnx. */
 class SherpaOfflineSpeechRecognitionProvider(
     private val modelDirectory: File,
     private val language: String = "",
@@ -31,18 +22,12 @@ class SherpaOfflineSpeechRecognitionProvider(
 
     companion object {
         private const val SAMPLE_RATE = 16_000
-        private const val MODEL_NAME = "tiny"
-        private const val MIN_MODEL_BYTES = 1_024L
 
-        fun isInstalled(modelDirectory: File): Boolean {
-            val encoder = File(modelDirectory, "$MODEL_NAME-encoder.int8.onnx")
-            val decoder = File(modelDirectory, "$MODEL_NAME-decoder.int8.onnx")
-            val tokens = File(modelDirectory, "$MODEL_NAME-tokens.txt")
-            return modelDirectory.isDirectory &&
-                encoder.isFile && encoder.length() > MIN_MODEL_BYTES &&
-                decoder.isFile && decoder.length() > MIN_MODEL_BYTES &&
-                tokens.isFile && tokens.length() > MIN_MODEL_BYTES
-        }
+        fun isInstalled(modelDirectory: File): Boolean =
+            SherpaSpeechModelCatalog.isInstalled(
+                modelDirectory,
+                SherpaSpeechModelCatalog.whisperTiny
+            )
     }
 
     override val metadata = com.halo.sdk.provider.ProviderMetadata(
@@ -52,20 +37,22 @@ class SherpaOfflineSpeechRecognitionProvider(
 
     @Volatile
     private var recognizer: OfflineRecognizer? = null
-
     private val recognizerLock = Any()
     private val recognitionMutex = Mutex()
 
     override suspend fun health(): Boolean = isInstalled(modelDirectory)
 
     override suspend fun healthDetails(): ProviderHealth {
-        val installed = isInstalled(modelDirectory)
+        val missing = SherpaSpeechModelCatalog.missingFiles(
+            modelDirectory,
+            SherpaSpeechModelCatalog.whisperTiny
+        )
         return ProviderHealth(
-            healthy = installed,
-            message = if (installed) {
+            healthy = missing.isEmpty(),
+            message = if (missing.isEmpty()) {
                 "Sherpa-ONNX Whisper tiny multilingual model is installed"
             } else {
-                "Sherpa-ONNX Whisper tiny multilingual model is not installed"
+                "Sherpa-ONNX Whisper tiny model is incomplete; missing: ${missing.joinToString() }"
             }
         )
     }
@@ -76,10 +63,6 @@ class SherpaOfflineSpeechRecognitionProvider(
             "Sherpa-ONNX model is not installed at ${modelDirectory.absolutePath}"
         }
 
-        val sampleRate = audio.frames.first().sampleRate
-        require(sampleRate == SAMPLE_RATE) {
-            "Sherpa-ONNX provider requires ${SAMPLE_RATE} Hz audio, got $sampleRate Hz"
-        }
         require(audio.frames.all { it.sampleRate == SAMPLE_RATE && it.channels == 1 }) {
             "Sherpa-ONNX provider requires mono ${SAMPLE_RATE} Hz PCM audio"
         }
@@ -101,8 +84,6 @@ class SherpaOfflineSpeechRecognitionProvider(
             RecognitionResult(
                 text = result.text.trim(),
                 language = language.ifBlank { "auto" },
-                // Whisper's offline result does not expose a calibrated confidence
-                // through this API. Never report a fabricated 1.0 confidence.
                 confidence = 0.0f
             )
         } finally {
@@ -130,12 +111,12 @@ class SherpaOfflineSpeechRecognitionProvider(
                 ),
                 modelConfig = OfflineModelConfig(
                     whisper = OfflineWhisperModelConfig(
-                        encoder = File(modelDirectory, "$MODEL_NAME-encoder.int8.onnx").absolutePath,
-                        decoder = File(modelDirectory, "$MODEL_NAME-decoder.int8.onnx").absolutePath,
+                        encoder = File(modelDirectory, "tiny-encoder.int8.onnx").absolutePath,
+                        decoder = File(modelDirectory, "tiny-decoder.int8.onnx").absolutePath,
                         language = language,
                         task = "transcribe"
                     ),
-                    tokens = File(modelDirectory, "$MODEL_NAME-tokens.txt").absolutePath,
+                    tokens = File(modelDirectory, "tiny-tokens.txt").absolutePath,
                     modelType = "whisper",
                     numThreads = numThreads,
                     provider = "cpu"
