@@ -72,8 +72,6 @@ object ManualDependencyGraph {
     val traceRecorder get() = observerGraph.traceRecorder
     val healthEvaluator get() = observerGraph.healthEvaluator
     val snapshotAssembler get() = observerGraph.snapshotAssembler
-    val runtimeReplayRecorder get() = observerGraph.runtimeReplayRecorder
-    val runtimeReplayPlayer get() = observerGraph.runtimeReplayPlayer
 
     val androidWakeWordProcess by lazy { AndroidWakeWordProcess(applicationContext, perceptionBus, eventBus, id = "driver.android.wakeword", name = "Android Wake Word", scope = infra.scope) }
     val workingMemoryProcess by lazy { WorkingMemoryProcess(perceptionBus, cognitiveBus, executionBus) }
