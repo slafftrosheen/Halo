@@ -136,9 +136,12 @@ object ManualDependencyGraph {
 
     val microkernel by lazy {
         RuntimeStartupTrace.measure("graph.microkernel") {
-            // processManager.register(androidWakeWordProcess) // Disabled: Continuous SpeechRecognizer causes beeping/hanging on Samsung/Android 13+ devices
+            // Wake-word activation is opt-in and must never be part of normal boot.
+            // The legacy Android audio process is also intentionally not registered:
+            // it opens AudioRecord continuously on microkernel start, which violates
+            // the phone-first explicit-invocation model. AudioPerceptionEngine owns
+            // microphone capture and only starts it after StartListening.
             processManager.register(workingMemoryProcess)
-            processManager.register(com.halo.host.android.AudioPerceptionProcess(perceptionBus))
             processManager.register(com.halo.engines.interpretation.RuleInterpretationProcess(perceptionBus, cognitiveBus))
             processManager.register(com.halo.engines.agents.ReasoningServiceProcess(perceptionBus, cognitiveBus, aiProviderRouter))
             HaloMicrokernel(infra.scope, processManager, perceptionBus, cognitiveBus, executionBus)
