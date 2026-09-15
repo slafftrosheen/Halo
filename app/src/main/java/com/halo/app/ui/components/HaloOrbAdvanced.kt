@@ -16,7 +16,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
@@ -24,6 +23,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.input.pointer.pointerInput
@@ -54,33 +54,24 @@ fun HaloOrbAdvanced(
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "halo-orb-advanced")
 
-    // Breathing scale
     val baseScale by infiniteTransition.animateFloat(
         initialValue = 0.97f,
         targetValue = 1.03f,
         animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = 2600,
-                easing = FastOutSlowInEasing
-            )
+            animation = tween(2600, easing = FastOutSlowInEasing)
         ),
         label = "halo-orb-advanced-breath"
     )
 
-    // Slow rotation for inner caustics
     val rotation by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 360f,
         animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = 14000,
-                easing = LinearEasing
-            )
+            animation = tween(14000, easing = LinearEasing)
         ),
         label = "halo-orb-advanced-rotation"
     )
 
-    // Signal intensity by presence
     val signalIntensity by animateFloatAsState(
         targetValue = when (presence.state) {
             HaloPresenceState.Idle -> 0.3f
@@ -89,11 +80,10 @@ fun HaloOrbAdvanced(
             HaloPresenceState.Acting -> 1.0f
             HaloPresenceState.Error -> 0.65f
         },
-        animationSpec = tween(durationMillis = 260, easing = FastOutSlowInEasing),
+        animationSpec = tween(260, easing = FastOutSlowInEasing),
         label = "halo-orb-advanced-signal-intensity"
     )
 
-    // Core color by presence
     val coreColor by animateColorAsState(
         targetValue = when (presence.state) {
             HaloPresenceState.Idle -> HaloPrimary.copy(alpha = 0.7f)
@@ -102,7 +92,7 @@ fun HaloOrbAdvanced(
             HaloPresenceState.Acting -> HaloPrimaryStrong.copy(alpha = 0.95f)
             HaloPresenceState.Error -> HaloDanger
         },
-        animationSpec = tween(durationMillis = 240, easing = FastOutSlowInEasing),
+        animationSpec = tween(240, easing = FastOutSlowInEasing),
         label = "halo-orb-advanced-core-color"
     )
 
@@ -114,7 +104,7 @@ fun HaloOrbAdvanced(
             HaloPresenceState.Acting -> HaloPrimaryStrong.copy(alpha = 0.7f)
             HaloPresenceState.Error -> HaloWarning.copy(alpha = 0.7f)
         },
-        animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing),
+        animationSpec = tween(280, easing = FastOutSlowInEasing),
         label = "halo-orb-advanced-outer-color"
     )
 
@@ -149,45 +139,23 @@ fun HaloOrbAdvanced(
 
 private fun DrawScope.drawHaloWell(color: Color) {
     val gradient = Brush.radialGradient(
-        colors = listOf(
-            color.copy(alpha = 0.0f),
-            color.copy(alpha = 0.4f),
-            color.copy(alpha = 0.85f)
-        ),
+        colors = listOf(color.copy(alpha = 0.0f), color.copy(alpha = 0.4f), color.copy(alpha = 0.85f)),
         center = center,
         radius = size.minDimension / 1.9f
     )
-
-    drawRect(
-        brush = gradient,
-        size = size
-    )
-
-    drawRect(
-        color = HaloBackground.copy(alpha = 0.7f),
-        size = size
-    )
+    drawRect(brush = gradient, size = size)
+    drawRect(color = HaloBackground.copy(alpha = 0.7f), size = size)
 }
 
 private fun DrawScope.drawCoreOrb(coreColor: Color, signalIntensity: Float) {
     val innerRadius = size.minDimension / 3.4f
-
     val innerGradient = Brush.radialGradient(
-        colors = listOf(
-            coreColor.copy(alpha = 0.15f),
-            coreColor.copy(alpha = 0.8f),
-            Color.White.copy(alpha = 0.95f)
-        ),
+        colors = listOf(coreColor.copy(alpha = 0.15f), coreColor.copy(alpha = 0.8f), Color.White.copy(alpha = 0.95f)),
         center = center,
         radius = innerRadius
     )
+    drawCircle(brush = innerGradient, radius = innerRadius)
 
-    drawCircle(
-        brush = innerGradient,
-        radius = innerRadius
-    )
-
-    // Caustic shape
     val causticPath = Path().apply {
         moveTo(center.x, center.y - innerRadius * 0.8f)
         cubicTo(
@@ -202,30 +170,20 @@ private fun DrawScope.drawCoreOrb(coreColor: Color, signalIntensity: Float) {
         )
         close()
     }
-
-    val causticColor = coreColor.copy(alpha = 0.4f + 0.25f * signalIntensity)
-
-    drawPath(
-        path = causticPath,
-        color = causticColor
-    )
+    drawPath(path = causticPath, color = coreColor.copy(alpha = 0.4f + 0.25f * signalIntensity))
 }
 
 private fun DrawScope.drawRings(coreColor: Color, signalIntensity: Float) {
     val baseRadius = size.minDimension / 2.6f
     val ringCount = 3
-
     repeat(ringCount) { index ->
         val progress = index.toFloat() / ringCount.toFloat()
         val radius = baseRadius + progress * (size.minDimension / 10f)
         val alpha = 0.1f + 0.18f * (signalIntensity * (1f - progress))
-
         drawCircle(
             color = coreColor.copy(alpha = alpha),
             radius = radius,
-            style = androidx.compose.ui.graphics.Stroke(
-                width = (size.minDimension / 220f) * (1f + progress * 1.5f)
-            )
+            style = Stroke(width = (size.minDimension / 220f) * (1f + progress * 1.5f))
         )
     }
 }
@@ -233,16 +191,13 @@ private fun DrawScope.drawRings(coreColor: Color, signalIntensity: Float) {
 private fun DrawScope.drawParticles(coreColor: Color, signalIntensity: Float, rotation: Float) {
     val particleCount = (22 + 26 * signalIntensity).toInt()
     val orbitRadius = size.minDimension / 2.3f
-
     repeat(particleCount) { index ->
         val progress = index.toFloat() / particleCount.toFloat()
         val angle = progress * 360f + rotation * 0.9f
         val radians = Math.toRadians(angle.toDouble())
         val x = center.x + orbitRadius * kotlin.math.cos(radians).toFloat()
         val y = center.y + orbitRadius * kotlin.math.sin(radians).toFloat()
-
         val particleRadius = (size.minDimension / 130f) * (0.8f + signalIntensity * 0.9f)
-
         drawCircle(
             color = coreColor.copy(alpha = 0.2f + 0.4f * progress),
             radius = particleRadius,
@@ -254,11 +209,9 @@ private fun DrawScope.drawParticles(coreColor: Color, signalIntensity: Float, ro
 private fun DrawScope.drawScanlines(signalIntensity: Float) {
     val lineCount = 18
     val spacing = size.height / (lineCount + 1).toFloat()
-
     repeat(lineCount) { index ->
         val y = spacing * (index + 1)
         val alpha = 0.03f + 0.05f * signalIntensity
-
         drawLine(
             color = Color.White.copy(alpha = alpha),
             start = androidx.compose.ui.geometry.Offset(0f, y),
