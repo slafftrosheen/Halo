@@ -4,15 +4,15 @@ import kotlin.math.abs
 
 interface VoiceActivityDetector {
     fun isSpeech(frame: AudioFrame): Boolean
+
+    /** Reset any temporal detector state at the end of an audio session. */
+    fun reset() = Unit
+
+    /** Release native/model resources when the owning pipeline is disposed. */
+    fun close() = Unit
 }
 
-/**
- * Lightweight deterministic VAD for the fallback path.
- *
- * The detector deliberately has a small silence hangover. A single low-energy
- * PCM frame is not enough to terminate an utterance, which prevents normal
- * word-boundary dips from repeatedly ending buffered recognition.
- */
+/** Lightweight deterministic VAD for the fallback path. */
 class EnergyVAD(
     private val threshold: Int = 1000,
     private val hangoverFrames: Int = 4
@@ -39,5 +39,9 @@ class EnergyVAD(
         }
 
         return false
+    }
+
+    override fun reset() {
+        remainingHangoverFrames = 0
     }
 }
