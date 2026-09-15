@@ -1,14 +1,12 @@
 package com.halo.app.di
 
 import com.halo.drivers.heycyan.RealHeyCyanDriver
+import com.halo.providers.sherpa.stt.SherpaSpeechModelCatalog
+import java.io.File
 
 /**
  * Owns the WearableHost, physical driver, audio pipeline, and audio perception
  * chain for the current host instance.
- *
- * The physical driver has exactly one owner in the composition root. Every
- * consumer (WearableHost, capability bridge, device UI and protocol tooling)
- * receives this same instance so transport state cannot diverge.
  */
 class HostGraph(
     private val context: android.content.Context,
@@ -17,7 +15,6 @@ class HostGraph(
     private val storage: com.halo.sdk.runtime.Storage
 ) {
 
-    /** Single driver instance shared by host, capabilities, and UI tooling. */
     val heyCyanDriver: RealHeyCyanDriver by lazy {
         RealHeyCyanDriver(context, infra.eventBus)
     }
@@ -36,9 +33,31 @@ class HostGraph(
         hostFactory.create(HostType.HEYCYAN)
     }
 
+    private val speechModelDirectory by lazy {
+        File(context.filesDir, "speech")
+    }
+
+    private val vad by lazy {
+        val sileroInstalled = SherpaSpeechModelCatalog.isInstalled(
+            speechModelDirectory,
+            SherpaSpeechModelCatalog.sileroVad
+        )
+        if (sileroInstalled) {
+            runCatching {
+                SherpaSileroVad(
+                    modelFile = File(speechModelDirectory, SherpaSpeechModelCatalog.SILERO_VAD_FILE)
+                )
+            }.getOrNull()
+        } else {
+            null
+        }
+    }
+
     val audioPipeline by lazy {
         com.halo.engines.speech.AudioPipeline(
-            vad = com.halo.engines.speech.EnergyVAD(threshold = 1000),
+            // Neural VAD is opt-in through an explicitly installed model. Keep
+            // deterministic energy VAD as the safe fallback for fresh installs.
+            vad = vad ?: com.halo.engines.speech.EnergyVAD(threshold = 1000),
             wakeWordDetector = providerGraph.providers.wakeWord,
             sttProvider = providerGraph.providers.speechRecognition,
             eventBus = infra.eventBus,
