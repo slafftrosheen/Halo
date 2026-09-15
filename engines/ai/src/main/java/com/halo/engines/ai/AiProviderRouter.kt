@@ -319,7 +319,7 @@ class DefaultAiProviderRouter(
             (request.video == null || AiCapability.VIDEO in capabilities)
     }
 
-    /** Only transient backend/model failures may trigger transparent provider fallback. */
+    /** Only transient transport/backend/model failures may trigger transparent provider fallback. */
     private fun fallbackEligible(error: Throwable): Boolean =
         error is AiProviderException && error.type in setOf(
             AiErrorType.PROVIDER_UNAVAILABLE,
@@ -328,7 +328,6 @@ class DefaultAiProviderRouter(
             AiErrorType.MODEL_NOT_READY,
             AiErrorType.GENERATION_FAILED,
             AiErrorType.EMPTY_RESPONSE,
-            AiErrorType.RATE_LIMITED,
             AiErrorType.TIMEOUT,
             AiErrorType.NETWORK_UNAVAILABLE,
             AiErrorType.NETWORK_ERROR,
