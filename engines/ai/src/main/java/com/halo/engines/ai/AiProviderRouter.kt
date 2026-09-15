@@ -52,7 +52,7 @@ class DefaultAiProviderRouter(
         }
     )
     override val diagnosticsFlow: StateFlow<List<AiProviderDiagnostic>> = _diagnosticsFlow.asStateFlow()
-    private val _routingPolicy = MutableStateFlow(AiRoutingPolicy.AUTOMATIC)
+    private val _routingPolicy = MutableStateFlow(AiRoutingPolicy.LOCAL_ONLY)
     override val routingPolicy: StateFlow<AiRoutingPolicy> = _routingPolicy.asStateFlow()
 
     init {
@@ -67,12 +67,19 @@ class DefaultAiProviderRouter(
         // Android Assistant is an AiHandoffProvider and must never silently
         // turn a cognitive request into OpenRouter/Ollama inference.
         val storedProvider = storage.getString("active_ai_provider")
-            ?.takeIf { id -> inferenceProviders.any { it.id == id } }
-        val restoredProvider = storedProvider ?: inferenceProviders.firstOrNull()?.id
+            ?.takeIf { id -> inferenceProviders.any { it.id == id && it.isLocal } }
+        val restoredProvider = storedProvider ?: inferenceProviders.firstOrNull { it.isLocal }?.id
 
         _routingPolicy.value = storage.getString("ai_routing_policy")?.let {
-            runCatching { enumValueOf<AiRoutingPolicy>(it) }.getOrDefault(AiRoutingPolicy.AUTOMATIC)
-        } ?: AiRoutingPolicy.AUTOMATIC
+            runCatching { enumValueOf<AiRoutingPolicy>(it) }.getOrDefault(AiRoutingPolicy.LOCAL_ONLY)
+        } ?: AiRoutingPolicy.LOCAL_ONLY
+
+        // The phone-first product must not silently regain network inference from
+        // an older persisted AUTOMATIC/PREFERRED_WITH_FALLBACK setting.
+        if (_routingPolicy.value != AiRoutingPolicy.LOCAL_ONLY && _routingPolicy.value != AiRoutingPolicy.EXPLICIT) {
+            _routingPolicy.value = AiRoutingPolicy.LOCAL_ONLY
+            storage.putString("ai_routing_policy", AiRoutingPolicy.LOCAL_ONLY.name)
+        }
 
         _selectedProviderId.value = restoredProvider
         if (restoredProvider != null) {
@@ -99,8 +106,13 @@ class DefaultAiProviderRouter(
     }
 
     fun setRoutingPolicy(policy: AiRoutingPolicy) {
-        _routingPolicy.value = policy
-        storage.putString("ai_routing_policy", policy.name)
+        val effectivePolicy = when (policy) {
+            AiRoutingPolicy.AUTOMATIC,
+            AiRoutingPolicy.PREFERRED_WITH_FALLBACK -> AiRoutingPolicy.LOCAL_ONLY
+            else -> policy
+        }
+        _routingPolicy.value = effectivePolicy
+        storage.putString("ai_routing_policy", effectivePolicy.name)
     }
 
     override fun selectProvider(id: String) {
@@ -330,11 +342,7 @@ class DefaultAiProviderRouter(
             "provider.ollama" -> storage.getString("ollama_model")
             "provider.llamacpp.native" -> storage.getString("llamacpp_model")
             else -> storage.getString("ai_model_${provider.id}")
-        }?.trim()?.ifBlank { null }
-        value?.let { provider.id to it }
+        } ?: return@mapNotNull null
+        provider.id to value
     }.toMap()
-
-    private fun persistStoredModels(models: Map<String, String>) {
-        models.forEach { (providerId, modelId) -> persistProviderModel(providerId, modelId) }
-    }
 }
