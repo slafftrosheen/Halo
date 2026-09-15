@@ -2,7 +2,6 @@ package com.halo.app.di
 
 import android.content.Context
 import com.halo.engines.memory.WorkingMemoryProcess
-import com.halo.host.android.AndroidWakeWordProcess
 import com.halo.runtime.kernel.HaloMicrokernel
 import com.halo.app.ui.screens.home.HomeViewModel
 import com.halo.app.ui.screens.settings.SettingsViewModel
@@ -73,7 +72,6 @@ object ManualDependencyGraph {
     val healthEvaluator get() = observerGraph.healthEvaluator
     val snapshotAssembler get() = observerGraph.snapshotAssembler
 
-    val androidWakeWordProcess by lazy { AndroidWakeWordProcess(applicationContext, perceptionBus, eventBus, id = "driver.android.wakeword", name = "Android Wake Word", scope = infra.scope) }
     val workingMemoryProcess by lazy { WorkingMemoryProcess(perceptionBus, cognitiveBus, executionBus) }
 
     val deviceRegistry by lazy { com.halo.sdk.runtime.embodiment.PersistentDeviceRegistry(storage) }
@@ -96,7 +94,7 @@ object ManualDependencyGraph {
 
     val microkernel by lazy {
         RuntimeStartupTrace.measure("graph.microkernel") {
-            // Wake-word and legacy always-on audio remain disabled during normal boot.
+            // Only explicit, phone-safe runtime processes are registered during boot.
             processManager.register(workingMemoryProcess)
             processManager.register(com.halo.engines.interpretation.RuleInterpretationProcess(perceptionBus, cognitiveBus))
             processManager.register(com.halo.engines.agents.ReasoningServiceProcess(perceptionBus, cognitiveBus, aiProviderRouter))
