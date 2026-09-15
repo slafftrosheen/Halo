@@ -29,7 +29,6 @@ class DefaultAiProviderRouter(
     private val eventBus: EventBus? = null,
     private val logger: RuntimeLogger? = null
 ) : AiProviderRouter {
-    /** Compatibility constructor for tests/legacy callers; routing still derives a typed registry immediately. */
     constructor(
         providers: List<AiProvider>,
         storage: Storage,
@@ -42,29 +41,17 @@ class DefaultAiProviderRouter(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var pollingJob: Job? = null
 
-    /* Null is intentional until persisted routing state has been restored. */
     private val _selectedProviderId = MutableStateFlow<String?>(null)
     override val selectedProviderId: StateFlow<String?> = _selectedProviderId.asStateFlow()
-
     private val _selectedModelId = MutableStateFlow<String?>(null)
     override val selectedModelId: StateFlow<String?> = _selectedModelId.asStateFlow()
 
     private val _diagnosticsFlow = MutableStateFlow<List<AiProviderDiagnostic>>(
         allProviders.map { provider ->
-            AiProviderDiagnostic(
-                providerId = provider.id,
-                displayName = provider.displayName,
-                state = ProviderStatus.State.LOADING,
-                message = null,
-                capabilities = emptySet(),
-                selected = false,
-                selectedModelId = null,
-                local = provider.isLocal
-            )
+            AiProviderDiagnostic(provider.id, provider.displayName, ProviderStatus.State.LOADING, null, emptySet(), false, null, provider.isLocal)
         }
     )
     override val diagnosticsFlow: StateFlow<List<AiProviderDiagnostic>> = _diagnosticsFlow.asStateFlow()
-
     private val _routingPolicy = MutableStateFlow(AiRoutingPolicy.AUTOMATIC)
 
     init {
@@ -75,19 +62,24 @@ class DefaultAiProviderRouter(
     }
 
     private fun restoreStoredRoutingState() {
+        // Only inference providers are valid persisted cognitive targets.
+        // Android Assistant is an AiHandoffProvider and must never silently
+        // turn a cognitive request into OpenRouter/Ollama inference.
         val storedProvider = storage.getString("active_ai_provider")
-            ?.takeIf { id -> allProviders.any { it.id == id } }
+            ?.takeIf { id -> inferenceProviders.any { it.id == id } }
         val restoredProvider = storedProvider ?: inferenceProviders.firstOrNull()?.id
 
-        _selectedModelId.value = storage.getString("active_ai_model")
-            ?.trim()
-            ?.ifBlank { null }
         _routingPolicy.value = storage.getString("ai_routing_policy")?.let {
             runCatching { enumValueOf<AiRoutingPolicy>(it) }.getOrDefault(AiRoutingPolicy.AUTOMATIC)
         } ?: AiRoutingPolicy.AUTOMATIC
 
-        /* Publish the provider only after model + policy restoration is complete. */
         _selectedProviderId.value = restoredProvider
+        if (restoredProvider != null) {
+            restoreStoredModel(restoredProvider)
+        } else {
+            _selectedModelId.value = null
+            storage.putString("active_ai_model", null)
+        }
     }
 
     override fun start() {
@@ -107,20 +99,16 @@ class DefaultAiProviderRouter(
 
     fun setRoutingPolicy(policy: AiRoutingPolicy) {
         _routingPolicy.value = policy
-        scope.launch(Dispatchers.IO) {
-            storage.putString("ai_routing_policy", policy.name)
-        }
+        scope.launch(Dispatchers.IO) { storage.putString("ai_routing_policy", policy.name) }
     }
 
     override fun selectProvider(id: String) {
-        if (allProviders.any { it.id == id }) {
+        if (inferenceProviders.any { it.id == id }) {
             val providerChanged = _selectedProviderId.value != id
             _selectedProviderId.value = id
             scope.launch(Dispatchers.IO) {
                 storage.putString("active_ai_provider", id)
-                if (providerChanged) {
-                    restoreStoredModel(id)
-                }
+                if (providerChanged) restoreStoredModel(id)
             }
             scope.launch { refreshDiagnostics() }
         }
@@ -131,15 +119,12 @@ class DefaultAiProviderRouter(
         val providerId = _selectedProviderId.value
         scope.launch(Dispatchers.IO) {
             storage.putString("active_ai_model", modelId)
-            if (providerId != null && modelId != null) {
-                persistProviderModel(providerId, modelId)
-            }
+            if (providerId != null && modelId != null) persistProviderModel(providerId, modelId)
         }
         scope.launch { refreshDiagnostics() }
     }
 
     override fun getAllProviders(): List<AiProvider> = allProviders
-
     override suspend fun diagnostics(): List<AiProviderDiagnostic> = refreshDiagnostics()
 
     private fun restoreStoredModel(providerId: String) {
@@ -165,19 +150,11 @@ class DefaultAiProviderRouter(
     private suspend fun refreshDiagnostics(): List<AiProviderDiagnostic> {
         val selectedId = _selectedProviderId.value
         val list = allProviders.map { provider ->
-            val status = runCatching { provider.getStatus() }.getOrElse {
-                ProviderStatus(ProviderStatus.State.ERROR, it.message ?: "Status check failed")
-            }
+            val status = runCatching { provider.getStatus() }.getOrElse { ProviderStatus(ProviderStatus.State.ERROR, it.message ?: "Status check failed") }
             val capabilities = runCatching { provider.getCapabilities() }.getOrDefault(emptySet())
             AiProviderDiagnostic(
-                providerId = provider.id,
-                displayName = provider.displayName,
-                state = status.state,
-                message = status.message,
-                capabilities = capabilities,
-                selected = provider.id == selectedId,
-                selectedModelId = if (provider.id == selectedId) _selectedModelId.value else null,
-                local = provider.isLocal
+                provider.id, provider.displayName, status.state, status.message, capabilities,
+                provider.id == selectedId, if (provider.id == selectedId) _selectedModelId.value else null, provider.isLocal
             )
         }
         _diagnosticsFlow.value = list
@@ -188,13 +165,8 @@ class DefaultAiProviderRouter(
 
     override suspend fun resolveExecutionTarget(request: AiRequest): AiExecutionTarget {
         val selectedProvider = allProviders.firstOrNull { it.id == _selectedProviderId.value }
-        if (selectedProvider is AiHandoffProvider && selectedProvider !is AiInferenceProvider) {
-            if (_routingPolicy.value == AiRoutingPolicy.EXPLICIT) {
-                throw AiProviderException(
-                    AiErrorType.UNSUPPORTED_CAPABILITY,
-                    "Provider ${selectedProvider.id} is a handoff target, not a normal inference backend"
-                )
-            }
+        if (selectedProvider is AiHandoffProvider && selectedProvider !is AiInferenceProvider && _routingPolicy.value == AiRoutingPolicy.EXPLICIT) {
+            throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY, "Provider ${selectedProvider.id} is a handoff target, not a normal inference backend")
         }
         val preferredProvider = selectedProvider as? AiInferenceProvider
         return when (_routingPolicy.value) {
@@ -208,23 +180,18 @@ class DefaultAiProviderRouter(
     private suspend fun resolveExplicitTarget(preferredProvider: AiInferenceProvider?, selectedProvider: AiProvider?, request: AiRequest): AiExecutionTarget {
         val provider = preferredProvider ?: throw AiProviderException(
             if (selectedProvider is AiHandoffProvider) AiErrorType.UNSUPPORTED_CAPABILITY else AiErrorType.PROVIDER_UNAVAILABLE,
-            if (selectedProvider is AiHandoffProvider) "Provider ${selectedProvider.id} is a handoff target, not a normal inference backend"
-            else "Explicitly selected provider not found: ${_selectedProviderId.value}"
+            if (selectedProvider is AiHandoffProvider) "Provider ${selectedProvider.id} is a handoff target, not a normal inference backend" else "Explicitly selected provider not found: ${_selectedProviderId.value}"
         )
         val status = provider.getStatus()
-        if (status.state != ProviderStatus.State.READY) {
-            throw AiProviderException(AiErrorType.PROVIDER_UNAVAILABLE, "Explicit provider is not ready: ${provider.id}: ${status.state}")
-        }
+        if (status.state != ProviderStatus.State.READY) throw AiProviderException(AiErrorType.PROVIDER_UNAVAILABLE, "Explicit provider is not ready: ${provider.id}: ${status.state}")
         return resolveTargetForProvider(provider, request, allowSelectedModelFallback = false)
     }
 
     private suspend fun resolvePreferredWithFallbackTarget(preferredProvider: AiInferenceProvider?, request: AiRequest): AiExecutionTarget {
         if (preferredProvider != null && preferredProvider.getStatus().state == ProviderStatus.State.READY) {
-            try {
-                return resolveTargetForProvider(preferredProvider, request, allowSelectedModelFallback = false)
-            } catch (e: AiProviderException) {
-                if (e.type == AiErrorType.MODEL_NOT_FOUND || e.type == AiErrorType.UNSUPPORTED_CAPABILITY ||
-                    e.type == AiErrorType.INVALID_REQUEST || e.type == AiErrorType.CONTEXT_TOO_LARGE) throw e
+            try { return resolveTargetForProvider(preferredProvider, request, allowSelectedModelFallback = false) }
+            catch (e: AiProviderException) {
+                if (e.type == AiErrorType.MODEL_NOT_FOUND || e.type == AiErrorType.UNSUPPORTED_CAPABILITY || e.type == AiErrorType.INVALID_REQUEST || e.type == AiErrorType.CONTEXT_TOO_LARGE) throw e
             }
         }
         return getFallbackExecutionTarget(request, failedProviderId = preferredProvider?.id)
@@ -238,36 +205,20 @@ class DefaultAiProviderRouter(
         }
         val failures = mutableListOf<String>()
         for (provider in orderedProviders) {
-            if (localOnly && !provider.isLocal) {
-                failures += "${provider.id}: not local"
-                continue
-            }
-            val status = runCatching { provider.getStatus() }.getOrElse {
-                failures += "${provider.id}: status check failed"
-                continue
-            }
-            if (status.state != ProviderStatus.State.READY) {
-                failures += "${provider.id}: state=${status.state}"
-                continue
-            }
-            val result = runCatching {
-                resolveTargetForProvider(provider, request, allowSelectedModelFallback = provider.id != preferredProvider?.id)
-            }
+            if (localOnly && !provider.isLocal) { failures += "${provider.id}: not local"; continue }
+            val status = runCatching { provider.getStatus() }.getOrElse { failures += "${provider.id}: status check failed"; continue }
+            if (status.state != ProviderStatus.State.READY) { failures += "${provider.id}: state=${status.state}"; continue }
+            val result = runCatching { resolveTargetForProvider(provider, request, allowSelectedModelFallback = provider.id != preferredProvider?.id) }
             result.getOrNull()?.let { return it }
             val error = result.exceptionOrNull()
-            if (provider.id == preferredProvider?.id && error is AiProviderException) {
-                if (error.type == AiErrorType.MODEL_NOT_FOUND || error.type == AiErrorType.UNSUPPORTED_CAPABILITY ||
-                    error.type == AiErrorType.INVALID_REQUEST || error.type == AiErrorType.CONTEXT_TOO_LARGE) throw error
-            }
+            if (provider.id == preferredProvider?.id && error is AiProviderException &&
+                error.type in setOf(AiErrorType.MODEL_NOT_FOUND, AiErrorType.UNSUPPORTED_CAPABILITY, AiErrorType.INVALID_REQUEST, AiErrorType.CONTEXT_TOO_LARGE)) throw error
             failures += "${provider.id}: ${error?.message ?: "target unavailable"}"
         }
-        throw AiProviderException(
-            AiErrorType.PROVIDER_UNAVAILABLE,
-            buildString {
-                append("No provider/model target could satisfy the request.")
-                failures.take(6).forEach { append("\n- ").append(it) }
-            }
-        )
+        throw AiProviderException(AiErrorType.PROVIDER_UNAVAILABLE, buildString {
+            append("No provider/model target could satisfy the request.")
+            failures.take(6).forEach { append("\n- ").append(it) }
+        })
     }
 
     private suspend fun resolveTargetForProvider(provider: AiInferenceProvider, request: AiRequest, allowSelectedModelFallback: Boolean): AiExecutionTarget {
@@ -275,22 +226,17 @@ class DefaultAiProviderRouter(
         request.validateAgainst(providerCapabilities)
         val models = provider.listModels()
         if (models.isEmpty()) throw AiProviderException(AiErrorType.MODEL_UNAVAILABLE, "Provider ${provider.id} did not advertise any models")
-
         request.modelId?.let { explicitId ->
-            val model = models.firstOrNull { it.id == explicitId }
-                ?: throw AiProviderException(AiErrorType.MODEL_NOT_FOUND, "Model $explicitId is not advertised by provider ${provider.id}")
+            val model = models.firstOrNull { it.id == explicitId } ?: throw AiProviderException(AiErrorType.MODEL_NOT_FOUND, "Model $explicitId is not advertised by provider ${provider.id}")
             validateModelInput(model, request)
             return AiExecutionTarget(provider, model, providerCapabilities)
         }
-
         val selectedModelId = if (allowSelectedModelFallback) null else _selectedModelId.value
         selectedModelId?.let { selectedId ->
-            val model = models.firstOrNull { it.id == selectedId }
-                ?: throw AiProviderException(AiErrorType.MODEL_NOT_FOUND, "Selected model $selectedId is not advertised by provider ${provider.id}")
+            val model = models.firstOrNull { it.id == selectedId } ?: throw AiProviderException(AiErrorType.MODEL_NOT_FOUND, "Selected model $selectedId is not advertised by provider ${provider.id}")
             validateModelInput(model, request)
             return AiExecutionTarget(provider, model, providerCapabilities)
         }
-
         val compatible = models.firstOrNull { supportsModelInput(it, request) }
             ?: throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY, "Provider ${provider.id} has no advertised model compatible with this request")
         return AiExecutionTarget(provider, compatible, providerCapabilities)
@@ -319,22 +265,12 @@ class DefaultAiProviderRouter(
             (request.video == null || AiCapability.VIDEO in capabilities)
     }
 
-    /** Only transient backend/model failures may trigger transparent provider fallback. */
-    private fun fallbackEligible(error: Throwable): Boolean =
-        error is AiProviderException && error.type in setOf(
-            AiErrorType.PROVIDER_UNAVAILABLE,
-            AiErrorType.MODEL_UNAVAILABLE,
-            AiErrorType.MODEL_LOAD_FAILED,
-            AiErrorType.MODEL_NOT_READY,
-            AiErrorType.GENERATION_FAILED,
-            AiErrorType.EMPTY_RESPONSE,
-            AiErrorType.RATE_LIMITED,
-            AiErrorType.TIMEOUT,
-            AiErrorType.NETWORK_UNAVAILABLE,
-            AiErrorType.NETWORK_ERROR,
-            AiErrorType.LOCAL_MODEL_UNAVAILABLE,
-            AiErrorType.UNKNOWN_ERROR
-        )
+    private fun fallbackEligible(error: Throwable): Boolean = error is AiProviderException && error.type in setOf(
+        AiErrorType.PROVIDER_UNAVAILABLE, AiErrorType.MODEL_UNAVAILABLE, AiErrorType.MODEL_LOAD_FAILED,
+        AiErrorType.MODEL_NOT_READY, AiErrorType.GENERATION_FAILED, AiErrorType.EMPTY_RESPONSE,
+        AiErrorType.TIMEOUT, AiErrorType.NETWORK_UNAVAILABLE, AiErrorType.NETWORK_ERROR,
+        AiErrorType.LOCAL_MODEL_UNAVAILABLE, AiErrorType.UNKNOWN_ERROR
+    )
 
     override suspend fun execute(request: AiRequest, context: AiContext): AiResponse {
         val policy = _routingPolicy.value
@@ -343,7 +279,6 @@ class DefaultAiProviderRouter(
         val requestId = UUID.randomUUID().toString()
         logger?.info("AiProviderRouter", "AI execute start provider=${target.providerId} model=${target.modelId}")
         eventBus?.publish(ProviderRequest(requestId = requestId, providerId = target.providerId))
-
         return try {
             finalRequest.validateAgainst(target.providerCapabilities)
             validateModelInput(target.model, finalRequest)
@@ -351,9 +286,8 @@ class DefaultAiProviderRouter(
             validateResponse(target, response)
             eventBus?.publish(ProviderResult(requestId = requestId, success = true))
             response
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Throwable) {
+        } catch (e: CancellationException) { throw e }
+        catch (e: Throwable) {
             eventBus?.publish(ProviderFailure(requestId = requestId, providerId = target.providerId, reason = e.message ?: "Execution failed"))
             if ((policy == AiRoutingPolicy.PREFERRED_WITH_FALLBACK || policy == AiRoutingPolicy.AUTOMATIC) && fallbackEligible(e)) {
                 val fallbackTarget = getFallbackExecutionTarget(request, failedProviderId = target.providerId)
@@ -369,9 +303,8 @@ class DefaultAiProviderRouter(
                         eventBus?.publish(ProviderResult(requestId = fallbackRequestId, success = true))
                         logger?.info("AiProviderRouter", "AI fallback success provider=${fallbackTarget.providerId} model=${fallbackTarget.modelId}")
                         return fallbackResponse
-                    } catch (fallbackError: CancellationException) {
-                        throw fallbackError
-                    } catch (fallbackError: Throwable) {
+                    } catch (fallbackError: CancellationException) { throw fallbackError }
+                    catch (fallbackError: Throwable) {
                         eventBus?.publish(ProviderFailure(requestId = fallbackRequestId, providerId = fallbackTarget.providerId, reason = fallbackError.message ?: "Fallback execution failed"))
                     }
                 }
@@ -384,21 +317,17 @@ class DefaultAiProviderRouter(
         AiResponseValidator.validate(target.provider, target.providerCapabilities, target.modelId, response)
     }
 
-    private fun loadStoredModels(): Map<String, String> {
-        return inferenceProviders.mapNotNull { provider ->
-            val value = when (provider.id) {
-                "openrouter" -> storage.getString("openrouter_model")
-                "provider.ollama" -> storage.getString("ollama_model")
-                "provider.llamacpp.native" -> storage.getString("llamacpp_model")
-                else -> storage.getString("ai_model_${provider.id}")
-            }?.trim()?.ifBlank { null }
-            value?.let { provider.id to it }
-        }.toMap()
-    }
+    private fun loadStoredModels(): Map<String, String> = inferenceProviders.mapNotNull { provider ->
+        val value = when (provider.id) {
+            "openrouter" -> storage.getString("openrouter_model")
+            "provider.ollama" -> storage.getString("ollama_model")
+            "provider.llamacpp.native" -> storage.getString("llamacpp_model")
+            else -> storage.getString("ai_model_${provider.id}")
+        }?.trim()?.ifBlank { null }
+        value?.let { provider.id to it }
+    }.toMap()
 
     private fun persistStoredModels(models: Map<String, String>) {
-        models.forEach { (providerId, modelId) ->
-            persistProviderModel(providerId, modelId)
-        }
+        models.forEach { (providerId, modelId) -> persistProviderModel(providerId, modelId) }
     }
 }

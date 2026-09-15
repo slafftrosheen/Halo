@@ -1,7 +1,6 @@
 package com.halo.app
 
 import com.halo.app.di.ManualDependencyGraph
-import com.halo.sdk.host.ConnectionState
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -10,7 +9,8 @@ import kotlinx.coroutines.withContext
 /**
  * Owns the application-level runtime lifecycle.
  *
- * Construction != startup.
+ * Construction != startup. Halo's cognitive runtime is usable without a
+ * wearable; physical-device capabilities become available when a host connects.
  */
 class HaloRuntime(
     private val graph: ManualDependencyGraph
@@ -24,10 +24,6 @@ class HaloRuntime(
         check(!started) { "HaloRuntime is already running" }
 
         RuntimeStartupTrace.mark("runtime.start.begin")
-        val connectivity = graph.wearableHost.connectivity.value
-        check(connectivity is ConnectionState.Connected || connectivity is ConnectionState.Ready) {
-            "Runtime requires a connected host; discovery and physical device selection are separate workflows"
-        }
 
         var interpretationInitialized = false
         var interpretationStarted = false
@@ -64,7 +60,6 @@ class HaloRuntime(
                 graph.reasoningEngine.initialize(graph.engineContext)
                 reasoningInitialized = true
             }
-            phase("connectivity.check.1") { checkHostStillConnected() }
 
             phase("interpretation.start") {
                 graph.interpretationEngine.start()
@@ -83,7 +78,6 @@ class HaloRuntime(
                 graph.executionEngine.initialize(graph.engineContext)
                 executionInitialized = true
             }
-            phase("connectivity.check.2") { checkHostStillConnected() }
 
             phase("planning.start") {
                 graph.planningEngine.start()
@@ -98,7 +92,6 @@ class HaloRuntime(
                 graph.audioPerceptionEngine.initialize(graph.engineContext)
                 audioInitialized = true
             }
-            phase("connectivity.check.3") { checkHostStillConnected() }
             phase("audio.start") {
                 graph.audioPerceptionEngine.start()
                 audioStarted = true
@@ -155,13 +148,6 @@ class HaloRuntime(
             graph.wearableHost.disconnect()
             started = false
             RuntimeStartupTrace.mark("runtime.stop.complete")
-        }
-    }
-
-    private fun checkHostStillConnected() {
-        val connectivity = graph.wearableHost.connectivity.value
-        check(connectivity is ConnectionState.Connected || connectivity is ConnectionState.Ready) {
-            "Wearable host disconnected during runtime startup"
         }
     }
 

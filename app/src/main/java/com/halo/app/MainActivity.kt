@@ -92,12 +92,9 @@ class MainActivity : ComponentActivity() {
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 modifier = Modifier.padding(24.dp)
                             ) {
+                                Text("Halo could not initialize the interface.", style = MaterialTheme.typography.titleMedium)
                                 Text(
-                                    text = "Halo could not initialize the interface.",
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                                Text(
-                                    text = uiGraphError ?: "Unknown startup error",
+                                    uiGraphError ?: "Unknown startup error",
                                     style = MaterialTheme.typography.bodyMedium,
                                     modifier = Modifier.padding(top = 8.dp)
                                 )
@@ -108,9 +105,7 @@ class MainActivity : ComponentActivity() {
                                         startRuntimeLoop(force = true)
                                     },
                                     modifier = Modifier.padding(top = 16.dp)
-                                ) {
-                                    Text("Retry")
-                                }
+                                ) { Text("Retry") }
                             }
                         }
                         runtimeError != null -> Box(
@@ -121,12 +116,9 @@ class MainActivity : ComponentActivity() {
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 modifier = Modifier.padding(24.dp)
                             ) {
+                                Text("Halo runtime could not start.", style = MaterialTheme.typography.titleMedium)
                                 Text(
-                                    text = "Halo runtime could not start.",
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                                Text(
-                                    text = runtimeError ?: "Unknown runtime startup error",
+                                    runtimeError ?: "Unknown runtime startup error",
                                     style = MaterialTheme.typography.bodyMedium,
                                     modifier = Modifier.padding(top = 8.dp)
                                 )
@@ -136,17 +128,13 @@ class MainActivity : ComponentActivity() {
                                         startRuntimeLoop(force = true)
                                     },
                                     modifier = Modifier.padding(top = 16.dp)
-                                ) {
-                                    Text("Retry runtime")
-                                }
+                                ) { Text("Retry runtime") }
                             }
                         }
                         !uiGraphReady -> Box(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator()
-                        }
+                        ) { CircularProgressIndicator() }
                         else -> AppShell()
                     }
                 }
@@ -175,9 +163,7 @@ class MainActivity : ComponentActivity() {
             try {
                 ManualDependencyGraph.homeViewModel
                 RuntimeStartupTrace.mark("activity.uiBootstrap.graphReady", startedAt)
-                withContext(Dispatchers.Main.immediate) {
-                    uiGraphReady = true
-                }
+                withContext(Dispatchers.Main.immediate) { uiGraphReady = true }
                 RuntimeStartupTrace.mark("activity.uiBootstrap.end", startedAt)
             } catch (error: CancellationException) {
                 RuntimeStartupTrace.mark("activity.uiBootstrap.cancelled", startedAt)
@@ -201,15 +187,18 @@ class MainActivity : ComponentActivity() {
             add(Manifest.permission.ACCESS_FINE_LOCATION)
             add(Manifest.permission.ACCESS_COARSE_LOCATION)
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            add(Manifest.permission.NEARBY_WIFI_DEVICES)
-        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) add(Manifest.permission.NEARBY_WIFI_DEVICES)
     }.toTypedArray()
 
     private fun areRequiredPermissionsGranted(): Boolean = requiredPermissions().all { permission ->
         checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
     }
 
+    /**
+     * Starts the cognitive runtime as soon as the UI graph is ready.
+     * A wearable is an optional embodiment, not a prerequisite for inference,
+     * text interaction, Android TTS, or the phone microphone.
+     */
     private fun startRuntimeLoop(force: Boolean = false) {
         if (!force && runtimeLoopStarted) return
         if (force) {
@@ -223,32 +212,24 @@ class MainActivity : ComponentActivity() {
 
         connectivityJob = lifecycleScope.launch(Dispatchers.IO) {
             val startedAt = android.os.SystemClock.elapsedRealtime()
-            RuntimeStartupTrace.mark("activity.connectivityLoop.begin", startedAt)
+            RuntimeStartupTrace.mark("activity.runtime.begin", startedAt)
             try {
-                // Runtime startup is explicitly dependent on successful UI graph bootstrap.
                 uiGraphJob?.join()
-                RuntimeStartupTrace.mark("activity.connectivityLoop.uiBootstrapJoined", startedAt)
-                check(uiGraphReady) {
-                    uiGraphError ?: "UI graph bootstrap did not complete successfully"
-                }
+                RuntimeStartupTrace.mark("activity.runtime.uiBootstrapJoined", startedAt)
+                check(uiGraphReady) { uiGraphError ?: "UI graph bootstrap did not complete successfully" }
 
-                val host = ManualDependencyGraph.wearableHost
-                RuntimeStartupTrace.mark("activity.connectivityLoop.hostResolved", startedAt)
-                host.connectivity.collect { state ->
-                    val connected = state is com.halo.sdk.host.ConnectionState.Connected ||
-                        state is com.halo.sdk.host.ConnectionState.Ready
-                    if (connected && !runtime.isStarted()) {
-                        RuntimeStartupTrace.mark("activity.runtime.start.begin", startedAt)
-                        runtime.start()
-                        RuntimeStartupTrace.mark("activity.runtime.start.end", startedAt)
-                    }
+                if (!runtime.isStarted()) {
+                    RuntimeStartupTrace.mark("activity.runtime.start.begin", startedAt)
+                    runtime.start()
+                    RuntimeStartupTrace.mark("activity.runtime.start.end", startedAt)
                 }
+                RuntimeStartupTrace.mark("activity.runtime.ready", startedAt)
             } catch (error: CancellationException) {
-                RuntimeStartupTrace.mark("activity.connectivityLoop.cancelled", startedAt)
+                RuntimeStartupTrace.mark("activity.runtime.cancelled", startedAt)
                 throw error
             } catch (error: Throwable) {
-                RuntimeStartupTrace.mark("activity.connectivityLoop.failed", startedAt)
-                android.util.Log.e("MainActivity", "Runtime startup loop failed", error)
+                RuntimeStartupTrace.mark("activity.runtime.failed", startedAt)
+                android.util.Log.e("MainActivity", "Runtime startup failed", error)
                 withContext(Dispatchers.Main.immediate) {
                     runtimeError = error.message ?: error::class.java.simpleName
                     runtimeLoopStarted = false
@@ -256,6 +237,8 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        // Physical hosts connect independently. A failed wearable connection
+        // must never prevent the phone-only cognitive runtime from operating.
         hostConnectJob = lifecycleScope.launch(Dispatchers.IO) {
             val startedAt = android.os.SystemClock.elapsedRealtime()
             RuntimeStartupTrace.mark("activity.hostConnect.begin", startedAt)
@@ -278,9 +261,7 @@ class MainActivity : ComponentActivity() {
                 val buddyBot = ManualDependencyGraph.buddyBotHost
                 buddyBot.ensureDeviceRegistered()
                 val device = ManualDependencyGraph.deviceRegistry.getDevice(buddyBot.deviceId)
-                if (device?.autoConnect == true) {
-                    buddyBot.connect()
-                }
+                if (device?.autoConnect == true) buddyBot.connect()
                 RuntimeStartupTrace.mark("activity.buddyBotConnect.end", startedAt)
             } catch (error: CancellationException) {
                 RuntimeStartupTrace.mark("activity.buddyBotConnect.cancelled", startedAt)
@@ -298,8 +279,6 @@ class MainActivity : ComponentActivity() {
         connectivityJob?.cancel()
         hostConnectJob?.cancel()
         buddyBotConnectJob?.cancel()
-        // lifecycleScope is cancelled as the Activity is destroyed, so runtime shutdown
-        // must use the application-scoped infrastructure scope to finish deterministically.
         ManualDependencyGraph.infra.scope.launch(Dispatchers.IO) {
             RuntimeStartupTrace.mark("activity.runtime.stop.begin")
             runtime.stop()
