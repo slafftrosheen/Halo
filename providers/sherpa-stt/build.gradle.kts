@@ -1,6 +1,5 @@
 plugins {
     id("com.android.library")
-    id("org.jetbrains.kotlin.android")
 }
 
 android {
@@ -13,8 +12,9 @@ android {
 }
 
 dependencies {
-    implementation("com.github.k2-fsa.sherpa-onnx:sherpa-onnx:v1.13.8")
+    api("com.github.k2-fsa.sherpa-onnx:sherpa-onnx:v1.13.8")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    implementation(project(":sdk:runtime-sdk"))
     implementation(project(":sdk:provider-sdk"))
     implementation(project(":sdk:host-sdk"))
 

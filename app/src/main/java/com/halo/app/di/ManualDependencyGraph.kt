@@ -111,7 +111,7 @@ object ManualDependencyGraph {
             HomeViewModel(runtimeSnapshotManager, commandBus, cognitiveSession, aiProviderRouter, deviceSessionManager)
         }
     }
-    val consoleViewModel by lazy { ConsoleViewModel(runtimeSnapshotManager, eventBus, blackboard) }
+    val consoleViewModel by lazy { ConsoleViewModel(runtimeSnapshotManager, eventBus, blackboard, commandBus) }
     val settingsViewModel by lazy { SettingsViewModel(runtimeSnapshotManager, aiProviderRouter, storage) }
     val activityViewModel by lazy { ActivityViewModel(runtimeSnapshotManager) }
     val devicesViewModel by lazy { DevicesViewModel(deviceRegistry, deviceSessionManager, eventBus, runtimeSnapshotManager, heyCyanDriver, buddyBotHost) }

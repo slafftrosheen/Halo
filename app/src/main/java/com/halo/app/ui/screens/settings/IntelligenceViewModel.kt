@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.halo.providers.android.assistant.AndroidAssistantProvider
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.RuntimeSnapshotSource
+import com.halo.sdk.runtime.NativeResourceSnapshot
 import com.halo.sdk.runtime.Storage
 import com.halo.runtime.cognition.session.CognitiveSession
 import kotlinx.coroutines.Dispatchers
@@ -38,7 +39,10 @@ data class IntelligenceUiState(
     val isAgentEnabled: Boolean = false,
     val temperature: Float = 0.7f,
     val policy: AiContextPolicy = AiContextPolicy.CONSERVATIVE,
-    val assistantPackage: String? = null
+    val assistantPackage: String? = null,
+    val routingPolicy: AiRoutingPolicy = AiRoutingPolicy.AUTOMATIC,
+    val activeProviderIsLocal: Boolean? = null,
+    val nativeResources: List<NativeResourceSnapshot> = emptyList()
 )
 
 private data class IntelligenceSettings(
@@ -53,6 +57,13 @@ private data class IntelligenceSettings(
     val isAgentEnabled: Boolean = false,
     val temperature: Float = 0.7f,
     val policy: AiContextPolicy = AiContextPolicy.CONSERVATIVE
+)
+
+private data class ProviderSelection(
+    val providerId: String?,
+    val modelId: String?,
+    val assistantPackage: String?,
+    val routingPolicy: AiRoutingPolicy
 )
 
 class IntelligenceViewModel(
@@ -126,11 +137,17 @@ class IntelligenceViewModel(
 
     val uiState: StateFlow<IntelligenceUiState> = combine(
         snapshotManager.snapshot,
-        combine(aiProviderRouter.selectedProviderId, aiProviderRouter.selectedModelId, _assistantPackage) { pId, mId, pkg -> Triple(pId, mId, pkg) },
+        combine(
+            aiProviderRouter.selectedProviderId,
+            aiProviderRouter.selectedModelId,
+            _assistantPackage,
+            aiProviderRouter.routingPolicy
+        ) { pId, mId, pkg, routing -> ProviderSelection(pId, mId, pkg, routing) },
         modelDownloadManager?.downloadStates ?: MutableStateFlow<Map<String, DownloadState>>(emptyMap()),
         combine(modelDownloadManager?.activeModelId ?: MutableStateFlow<String?>(null), _refreshTrigger) { activeId, _ -> activeId },
         _settings
-    ) { snapshot, (selectedProviderId, selectedModelId, assistantPkg), dlStates, activeLocalId, settings ->
+    ) { snapshot, selection, dlStates, activeLocalId, settings ->
+        val (selectedProviderId, selectedModelId, assistantPkg) = selection
         val allProviders = aiProviderRouter.getAllProviders()
         val activeProvider = allProviders.find { it.id == selectedProviderId }
         val snapshotProvider = snapshot.providers.find { it.id == selectedProviderId }
@@ -160,7 +177,10 @@ class IntelligenceViewModel(
             isAgentEnabled = settings.isAgentEnabled,
             temperature = settings.temperature,
             policy = settings.policy,
-            assistantPackage = assistantPkg
+            assistantPackage = assistantPkg,
+            routingPolicy = selection.routingPolicy,
+            activeProviderIsLocal = activeProvider?.isLocal,
+            nativeResources = snapshot.nativeResources
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), IntelligenceUiState())
 

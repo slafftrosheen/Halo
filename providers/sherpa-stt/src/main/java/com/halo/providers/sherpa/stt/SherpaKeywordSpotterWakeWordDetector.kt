@@ -96,11 +96,12 @@ class SherpaKeywordSpotterWakeWordDetector(
         message = metadata.displayName
     )
 
-    @Synchronized
-    override fun close() {
-        if (closed) return
-        closed = true
-        stream.release()
-        model.release()
+    override suspend fun close() {
+        synchronized(this) {
+            if (closed) return
+            closed = true
+            stream.release()
+            model.release()
+        }
     }
 }

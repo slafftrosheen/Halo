@@ -32,7 +32,7 @@ class CognitiveSessionToolTest {
         val supportsToolsCapability: Boolean = true,
         val initialToolCalls: List<ToolCall> = emptyList(),
         val finalResponseText: String = "Echo completed."
-    ) : AiProvider {
+    ) : AiInferenceProvider {
         val capturedContexts = mutableListOf<AiContext>()
         var callCount = 0
 
@@ -69,7 +69,7 @@ class CognitiveSessionToolTest {
         override suspend fun listModels() = emptyList<AiModel>()
     }
 
-    private class FakeRouter(private val provider: AiProvider) : AiProviderRouter {
+    private class FakeRouter(private val provider: AiInferenceProvider) : AiProviderRouter {
         override val selectedProviderId = MutableStateFlow<String?>(provider.id)
         override val selectedModelId = MutableStateFlow<String?>("test-model")
         override fun selectProvider(id: String) {}

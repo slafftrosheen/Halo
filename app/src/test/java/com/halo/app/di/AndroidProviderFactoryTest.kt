@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.halo.providers.llamacpp.ModelDownloadManager
 import com.halo.sdk.provider.AiInferenceProvider
+import com.halo.sdk.runtime.NativeResourceCoordinator
 import com.halo.sdk.runtime.Storage
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
@@ -31,7 +32,12 @@ class AndroidProviderFactoryTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val storage = FakeStorage()
         val downloadManager = ModelDownloadManager(context)
-        val factory = AndroidProviderFactory(context, downloadManager, storage)
+        val factory = AndroidProviderFactory(
+            context = context,
+            modelDownloadManager = downloadManager,
+            storage = storage,
+            nativeResourceCoordinator = NativeResourceCoordinator()
+        )
 
         val providers = factory.createProviders()
         val inference = providers.inference
@@ -45,7 +51,12 @@ class AndroidProviderFactoryTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val storage = FakeStorage()
         val downloadManager = ModelDownloadManager(context)
-        val providers = AndroidProviderFactory(context, downloadManager, storage).createProviders()
+        val providers = AndroidProviderFactory(
+            context = context,
+            modelDownloadManager = downloadManager,
+            storage = storage,
+            nativeResourceCoordinator = NativeResourceCoordinator()
+        ).createProviders()
 
         assertTrue(providers.aiRegistry.inference.any { it === providers.inference })
         assertTrue(providers.aiRegistry.inference.all { provider ->
@@ -81,13 +92,26 @@ class AndroidProviderFactoryTest {
 
         val providers = Providers(
             inference = inference,
-            speechRecognition = error("unused in this test"),
-            speechSynthesis = error("unused in this test"),
-            wakeWord = error("unused in this test")
+            speechRecognition = object : com.halo.sdk.provider.BufferedSpeechRecognitionProvider {
+                override suspend fun recognize(audio: com.halo.sdk.host.AudioBuffer) =
+                    com.halo.sdk.provider.RecognitionResult("", "en", 0f)
+                override suspend fun health() = true
+            },
+            speechSynthesis = object : com.halo.sdk.provider.SpeechSynthesisProvider {
+                override suspend fun synthesize(request: com.halo.sdk.provider.SpeechRequest) =
+                    com.halo.sdk.provider.SpeechResult(0, true)
+                override fun stream(text: String) = kotlinx.coroutines.flow.emptyFlow<com.halo.sdk.host.AudioFrame>()
+                override suspend fun health() = true
+            },
+            wakeWord = object : com.halo.sdk.provider.WakeWordDetector {
+                override fun process(frame: com.halo.sdk.host.AudioFrame) =
+                    com.halo.sdk.provider.WakeWordResult(detected = false)
+                override suspend fun health() = true
+            }
         )
 
-        assertSame(inference, providers.aiProviders.single())
-        assertSame(inference, providers.aiRegistry.inference.single())
+        assertSame(inference, providers.aiProviders.first())
+        assertSame(inference, providers.aiRegistry.inference.first())
     }
 
     @Test
@@ -115,9 +139,22 @@ class AndroidProviderFactoryTest {
 
         val providers = Providers(
             inference = inference,
-            speechRecognition = error("unused in this test"),
-            speechSynthesis = error("unused in this test"),
-            wakeWord = error("unused in this test"),
+            speechRecognition = object : com.halo.sdk.provider.BufferedSpeechRecognitionProvider {
+                override suspend fun recognize(audio: com.halo.sdk.host.AudioBuffer) =
+                    com.halo.sdk.provider.RecognitionResult("", "en", 0f)
+                override suspend fun health() = true
+            },
+            speechSynthesis = object : com.halo.sdk.provider.SpeechSynthesisProvider {
+                override suspend fun synthesize(request: com.halo.sdk.provider.SpeechRequest) =
+                    com.halo.sdk.provider.SpeechResult(0, true)
+                override fun stream(text: String) = kotlinx.coroutines.flow.emptyFlow<com.halo.sdk.host.AudioFrame>()
+                override suspend fun health() = true
+            },
+            wakeWord = object : com.halo.sdk.provider.WakeWordDetector {
+                override fun process(frame: com.halo.sdk.host.AudioFrame) =
+                    com.halo.sdk.provider.WakeWordResult(detected = false)
+                override suspend fun health() = true
+            },
             aiProviders = emptyList()
         )
 

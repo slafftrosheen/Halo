@@ -196,6 +196,7 @@ dependencies {
     implementation(project(":runtime:cognition"))
     implementation(project(":providers:llamacpp"))
     implementation(project(":providers:android-stt"))
+    implementation(project(":providers:sherpa-stt"))
     implementation(project(":providers:android-tts"))
     implementation(project(":providers:android-assistant"))
     implementation(project(":providers:openrouter"))

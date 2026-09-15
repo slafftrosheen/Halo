@@ -47,7 +47,11 @@ class SherpaSileroVad(
         return vad.isSpeechDetected()
     }
 
-    fun reset() = vad.reset()
+    override fun reset() {
+        vad.reset()
+    }
 
-    fun close() = vad.release()
+    override fun close() {
+        vad.release()
+    }
 }

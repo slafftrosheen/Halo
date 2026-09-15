@@ -29,7 +29,7 @@ class AssistantExecutionServiceTest {
         override val displayName: String = "P1",
         override val isLocal: Boolean = true,
         val responseText: String = "Hello from AI"
-    ) : AiProvider {
+    ) : AiInferenceProvider {
         override val status: StateFlow<ProviderStatus> = MutableStateFlow(ProviderStatus.READY)
         override suspend fun getStatus() = status.value
         override suspend fun getCapabilities() = setOf(AiCapability.TEXT)

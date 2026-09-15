@@ -28,6 +28,4 @@ local.properties
 .env
 debug.keystore
 
-# Track releases
-!releases/
-!releases/*.apk
+*.apk

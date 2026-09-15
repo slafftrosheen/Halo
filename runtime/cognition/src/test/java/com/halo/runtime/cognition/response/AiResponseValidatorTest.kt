@@ -5,7 +5,7 @@ import com.halo.sdk.provider.AiCapability
 import com.halo.sdk.provider.AiContext
 import com.halo.sdk.provider.AiErrorType
 import com.halo.sdk.provider.AiModel
-import com.halo.sdk.provider.AiProvider
+import com.halo.sdk.provider.AiInferenceProvider
 import com.halo.sdk.provider.AiProviderException
 import com.halo.sdk.provider.AiRequest
 import com.halo.sdk.provider.AiResponse
@@ -23,7 +23,7 @@ class AiResponseValidatorTest {
 
     private class FakeProvider(
         override val id: String = "fake"
-    ) : AiProvider {
+    ) : AiInferenceProvider {
 
         override val displayName =
             "Fake Provider"

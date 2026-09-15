@@ -188,7 +188,7 @@ class NativeLlamaProvider(
                         "modelBytes=$modelBytes estimatedBytes=${plan.estimatedBytes} remainingBytes=${plan.remainingBytes}"
                 )
             }
-            _status.value = ProviderStatus(ProviderStatus.State.LOADING.let { ProviderStatus(it, "Loading $activeId...") })
+            _status.value = ProviderStatus(ProviderStatus.State.LOADING, "Loading $activeId...")
             releaseCurrentModel()
 
             return@withLock try {
@@ -359,11 +359,11 @@ class NativeLlamaProvider(
                     }.trim()
                     if (text.isBlank()) throw AiProviderException(AiErrorType.EMPTY_RESPONSE, "llama.cpp returned an empty response")
                     AiResponse(
-                        text,
-                        id,
-                        modelId,
-                        "stop",
-                        AiGenerationMetrics(startedAtMs = startedAt, completedAtMs = System.currentTimeMillis())
+                        text = text,
+                        finishReason = "stop",
+                        providerId = id,
+                        modelId = modelId,
+                        metrics = AiGenerationMetrics(startedAtMs = startedAt, completedAtMs = System.currentTimeMillis())
                     )
                 } catch (error: CancellationException) {
                     throw error
@@ -415,11 +415,11 @@ class NativeLlamaProvider(
             emit(
                 AiStreamEvent.Completed(
                     AiResponse(
-                        text,
-                        id,
-                        modelId,
-                        "stop",
-                        AiGenerationMetrics(startedAtMs = startedAt, completedAtMs = System.currentTimeMillis())
+                        text = text,
+                        finishReason = "stop",
+                        providerId = id,
+                        modelId = modelId,
+                        metrics = AiGenerationMetrics(startedAtMs = startedAt, completedAtMs = System.currentTimeMillis())
                     )
                 )
             )

@@ -203,12 +203,12 @@ fun HomeScreen(viewModel: HomeViewModel) {
 
         if (uiState.sessionState != com.halo.sdk.provider.CognitiveSessionState.Idle) {
             HaloGlassSection(title = "CURRENT CONTEXT") {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                    ContextTag("VOICE", true)
-                    ContextTag("CAMERA", uiState.capabilities.contains("Camera"))
-                    ContextTag("HISTORY", true)
+                if (uiState.capabilities.isNotEmpty()) {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                        uiState.capabilities.forEach { capability -> ContextTag(capability.uppercase()) }
+                    }
+                    Spacer(Modifier.height(4.dp))
                 }
-                Spacer(Modifier.height(4.dp))
                 when (val session = uiState.sessionState) {
                     is com.halo.sdk.provider.CognitiveSessionState.Streaming -> Text(
                         session.text.ifBlank { "Generating…" },
@@ -267,7 +267,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
         Spacer(Modifier.height(20.dp))
 
         HaloGlassSection(title = "RUNTIME", modifier = Modifier.clickable { viewModel.navigateToIntelligence() }, trailing = {
-            Text(if (isProviderReady) "ONLINE" else "CHECK", style = HaloTypography.labelSmall, color = if (isProviderReady) HaloGlassColors.Success else HaloGlassColors.Warning)
+            Text(uiState.activeProviderStatus.uppercase(), style = HaloTypography.labelSmall, color = if (isProviderReady) HaloGlassColors.Success else HaloGlassColors.Warning)
         }) {
             RuntimeMetricRow("Intelligence", uiState.activeProvider, isProviderReady)
             HaloGlassDivider()
@@ -312,7 +312,6 @@ private fun RuntimeMetricRow(label: String, value: String, healthy: Boolean) {
 }
 
 @Composable
-private fun ContextTag(label: String, active: Boolean) {
-    if (!active) return
+private fun ContextTag(label: String) {
     HaloGlassChip(text = label, material = HaloGlassMaterials.Interactive.copy(containerColor = HaloGlassColors.Accent.copy(alpha = 0.10f), contentColor = HaloGlassColors.Accent))
 }

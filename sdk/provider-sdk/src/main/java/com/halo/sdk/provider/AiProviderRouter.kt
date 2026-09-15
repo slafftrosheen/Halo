@@ -32,6 +32,10 @@ interface AiProviderRouter {
     val diagnosticsFlow: StateFlow<List<AiProviderDiagnostic>>
         get() = MutableStateFlow(emptyList())
 
+    /** Policy used to resolve execution targets. Read-only projection for observers. */
+    val routingPolicy: StateFlow<AiRoutingPolicy>
+        get() = MutableStateFlow(AiRoutingPolicy.AUTOMATIC)
+
     fun selectProvider(id: String)
 
     fun selectModel(modelId: String?)

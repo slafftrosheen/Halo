@@ -33,7 +33,7 @@ class CognitiveSessionRequestIntegrityTest {
         private val initialToolCall: ToolCall? = null,
         val finalResponseText: String = "Final output",
         val onCallAction: (() -> Unit)? = null
-    ) : AiProvider {
+    ) : AiInferenceProvider {
         val capturedRequests = mutableListOf<AiRequest>()
         var callCount = 0
 
@@ -69,8 +69,8 @@ class CognitiveSessionRequestIntegrityTest {
     }
 
     private class SwitchableRouter(
-        var primaryProvider: AiProvider,
-        var secondaryProvider: AiProvider
+        var primaryProvider: AiInferenceProvider,
+        var secondaryProvider: AiInferenceProvider
     ) : AiProviderRouter {
         val selectedId = MutableStateFlow<String?>(primaryProvider.id)
         override val selectedProviderId: StateFlow<String?> = selectedId
@@ -79,7 +79,7 @@ class CognitiveSessionRequestIntegrityTest {
         override fun selectProvider(id: String) { selectedId.value = id }
         override fun selectModel(modelId: String?) { selectedModelId.value = modelId }
         override fun getAllProviders() = listOf(primaryProvider, secondaryProvider)
-        override suspend fun getEligibleProvider(request: AiRequest): AiProvider {
+        override suspend fun getEligibleProvider(request: AiRequest): AiInferenceProvider {
             val cur = selectedId.value
             return if (cur == primaryProvider.id) primaryProvider else secondaryProvider
         }

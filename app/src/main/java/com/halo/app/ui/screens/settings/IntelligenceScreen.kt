@@ -18,10 +18,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.halo.app.ui.glass.components.HaloGlassButton
 import com.halo.app.ui.glass.components.HaloGlassCard
+import com.halo.app.ui.glass.components.HaloGlassChip
+import com.halo.app.ui.glass.components.HaloGlassDivider
+import com.halo.app.ui.glass.components.HaloGlassMetric
+import com.halo.app.ui.glass.components.HaloGlassModelPickerDialog
 import com.halo.app.ui.glass.components.HaloGlassPage
 import com.halo.app.ui.glass.components.HaloGlassSection
 import com.halo.app.ui.glass.components.HaloGlassSettingRow
 import com.halo.app.ui.glass.material.HaloGlassColors
+import com.halo.app.ui.glass.material.HaloGlassMaterials
 import com.halo.app.ui.glass.material.HaloTypography
 
 @Composable
@@ -31,6 +36,7 @@ fun IntelligenceScreen(
     onChangeModel: (String) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var showModelPicker by remember { mutableStateOf(false) }
 
     HaloGlassPage(title = "AI Model", onBack = onBack) {
         item {
@@ -68,7 +74,9 @@ fun IntelligenceScreen(
                         Text(
                             if (uiState.isRefreshingModels) "Loading models…" else "No models reported by this provider.",
                             style = HaloTypography.bodySmall,
-                            color = HaloGlassColors.TextSecondary
+                            color = HaloGlassColors.TextSecondary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     } else {
                         uiState.availableModels.forEach { model ->
@@ -79,6 +87,14 @@ fun IntelligenceScreen(
                                     onChangeModel(model.id)
                                     viewModel.selectModel(model.id)
                                 }
+                            }
+                            Spacer(Modifier.width(12.dp))
+                            HaloGlassChip(
+                                text = resource.state.label(),
+                                material = HaloGlassMaterials.Interactive.copy(
+                                    containerColor = residencyColor(resource.state).copy(alpha = 0.14f),
+                                    contentColor = residencyColor(resource.state)
+                                )
                             )
                             Spacer(Modifier.height(6.dp))
                         }
@@ -99,6 +115,54 @@ fun IntelligenceScreen(
                     PolicySwitchRow("Memory", uiState.isMemoryEnabled, viewModel::setMemoryEnabled)
                     PolicySwitchRow("Tools", uiState.isToolsEnabled, viewModel::setToolsEnabled)
                     PolicySwitchRow("Agent mode", uiState.isAgentEnabled, viewModel::setAgentEnabled)
+                }
+                HaloGlassDivider()
+                FactRow("Configured llama.cpp context", "${uiState.llamacppContext} tokens")
+                HaloGlassDivider()
+                FactRow("Sampling temperature", String.format(java.util.Locale.ROOT, "%.2f", uiState.temperature))
+            }
+        }
+
+        Spacer(Modifier.height(24.dp))
+
+        HaloGlassSection(
+            title = "AVAILABLE MODELS",
+            trailing = {
+                Text(
+                    text = if (uiState.isRefreshingModels) "Refreshing" else "${uiState.availableModels.size}",
+                    style = HaloTypography.labelSmall,
+                    color = HaloGlassColors.TextMuted
+                )
+            }
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+            ) {
+                if (uiState.availableModels.isEmpty()) {
+                    Text(
+                        text = if (uiState.isRefreshingModels) {
+                            "Loading models from ${uiState.activeProviderName}..."
+                        } else {
+                            "No models advertised by ${uiState.activeProviderName}."
+                        },
+                        style = HaloTypography.bodySmall,
+                        color = HaloGlassColors.TextSecondary,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+                } else {
+                    uiState.availableModels.forEach { model ->
+                        HaloGlassSettingRow(
+                            title = model.displayName,
+                            value = model.contextLength?.let { "${it / 1000}k context" },
+                            trailingText = if (model.id == uiState.activeModelId) "Active" else null,
+                            onClick = {
+                                onChangeModel(model.id)
+                                viewModel.selectModel(model.id)
+                            }
+                        )
+                    }
                 }
             }
         }

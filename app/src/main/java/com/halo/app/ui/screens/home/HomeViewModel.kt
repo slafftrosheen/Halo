@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.halo.app.ui.glass.material.HaloRuntimeState
+import com.halo.app.ui.state.presenceFromSpeech
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.*
 import com.halo.runtime.cognition.session.CognitiveSession
@@ -43,15 +44,7 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
         activeSessions: List<com.halo.sdk.runtime.embodiment.EmbodimentSession> = emptyList()
     ): HomeUiState {
         val isReady = snapshot.runtimeState == RuntimeState.Running
-        val speechRuntimeState = when (snapshot.speech) {
-            is SpeechSessionState.PassiveListening -> HaloRuntimeState.Idle
-            is SpeechSessionState.Capturing -> HaloRuntimeState.Capturing
-            is SpeechSessionState.Recognizing -> HaloRuntimeState.Recognizing
-            is SpeechSessionState.Thinking -> HaloRuntimeState.Reasoning
-            is SpeechSessionState.Processing -> HaloRuntimeState.Planning
-            is SpeechSessionState.Speaking -> HaloRuntimeState.Speaking
-            else -> HaloRuntimeState.Idle
-        }
+        val speechRuntimeState = presenceFromSpeech(snapshot.speech)
         val uiRuntimeState = when (sessionState) {
             is CognitiveSessionState.PreparingContext -> HaloRuntimeState.Recognizing
             is CognitiveSessionState.Reasoning -> HaloRuntimeState.Reasoning
@@ -92,7 +85,7 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
             com.halo.sdk.runtime.embodiment.SessionState.ERROR -> "Error"
             null -> if (snapshot.deviceContext.connected) "Connected" else "Disconnected"
         }
-        val caps = if (snapshot.deviceContext.capabilities.isEmpty()) listOf("Phone runtime") else snapshot.deviceContext.capabilities
+        val caps = snapshot.deviceContext.capabilities
         val selectedDiag = diagnostics.find { it.providerId == selectedProviderId } ?: diagnostics.find { it.selected }
         val activeProviderText = if (selectedDiag != null) {
             val modelSuffix = selectedModelId?.let { " · $it" } ?: selectedDiag.selectedModelId?.let { " · $it" } ?: ""

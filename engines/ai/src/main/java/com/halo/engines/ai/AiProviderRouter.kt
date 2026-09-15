@@ -53,6 +53,7 @@ class DefaultAiProviderRouter(
     )
     override val diagnosticsFlow: StateFlow<List<AiProviderDiagnostic>> = _diagnosticsFlow.asStateFlow()
     private val _routingPolicy = MutableStateFlow(AiRoutingPolicy.AUTOMATIC)
+    override val routingPolicy: StateFlow<AiRoutingPolicy> = _routingPolicy.asStateFlow()
 
     init {
         scope.launch(Dispatchers.IO) {

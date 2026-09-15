@@ -27,7 +27,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.halo.app.ui.glass.components.HaloGlassBackHeader
 import com.halo.app.ui.glass.components.HaloGlassButton
-import com.halo.app.ui.glass.components.HaloGlassDivider
+import com.halo.app.ui.glass.components.HaloGlassCard
 import com.halo.app.ui.glass.components.HaloGlassLazyPage
 import com.halo.app.ui.glass.components.HaloGlassSection
 import com.halo.app.ui.glass.material.HaloGlassColors
@@ -304,9 +304,6 @@ class DevicesViewModel(
     }
 }
 
-import com.halo.app.ui.glass.components.HaloGlassChip
-import com.halo.app.ui.glass.components.HaloGlassCard
-
 @Composable
 fun DevicesScreen(
     viewModel: DevicesViewModel,
@@ -330,27 +327,6 @@ fun DevicesScreen(
                 offlineCount = offlineCount
             )
             Spacer(Modifier.height(24.dp))
-        }
-
-        // Room filter chips (mocked)
-        item {
-            HaloGlassSection(title = "FILTERS") {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    HaloGlassChip(
-                        text = "All", 
-                        material = com.halo.app.ui.glass.material.HaloGlassMaterials.Interactive.copy(
-                            containerColor = HaloGlassColors.Accent.copy(alpha=0.2f), 
-                            contentColor = HaloGlassColors.Accent
-                        )
-                    )
-                    HaloGlassChip(text = "Living Room")
-                    HaloGlassChip(text = "Office")
-                }
-            }
-            Spacer(Modifier.height(20.dp))
         }
 
         if (uiState.devices.isEmpty()) {

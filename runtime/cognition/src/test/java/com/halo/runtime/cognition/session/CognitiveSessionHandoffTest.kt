@@ -7,6 +7,7 @@ import com.halo.runtime.cognition.tools.ToolRegistry
 import com.halo.sdk.provider.AiCapability
 import com.halo.sdk.provider.AiContext
 import com.halo.sdk.provider.AiHandoffProvider
+import com.halo.sdk.provider.AiInferenceProvider
 import com.halo.sdk.provider.AiModel
 import com.halo.sdk.provider.AiProvider
 import com.halo.sdk.provider.AiProviderException
@@ -42,7 +43,7 @@ class CognitiveSessionHandoffTest {
         override fun events(): Flow<HaloEvent> = flow { }
     }
 
-    private class HandoffProvider : AiProvider, AiHandoffProvider {
+    private class HandoffProvider : AiInferenceProvider, AiHandoffProvider {
         override val id = "android.system.assistant"
         override val displayName = "Android Assistant"
         override val isLocal = false
@@ -74,7 +75,7 @@ class CognitiveSessionHandoffTest {
     fun `session does not emit TTS for terminal handoff marker`() = runTest {
         val eventBus = FakeEventBus()
         val store = InMemoryConversationStore()
-        val provider = object : AiProvider {
+        val provider = object : AiInferenceProvider {
             override val id = "p1"
             override val displayName = "P1"
             override val isLocal = true

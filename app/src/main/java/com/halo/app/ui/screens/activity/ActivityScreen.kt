@@ -13,17 +13,21 @@ import androidx.lifecycle.ViewModel
 import com.halo.app.ui.glass.components.*
 import com.halo.app.ui.glass.material.HaloGlassColors
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.graphics.Color
 import com.halo.app.ui.glass.material.HaloGlassTokens
 import com.halo.app.ui.glass.material.HaloGlassMaterials
 import com.halo.app.ui.glass.material.HaloTypography
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import androidx.lifecycle.viewModelScope
 import com.halo.sdk.runtime.RuntimeSnapshotSource
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun ActivityScreen(viewModel: ActivityViewModel) {
@@ -57,11 +61,12 @@ fun ActivityScreen(viewModel: ActivityViewModel) {
             Spacer(modifier = Modifier.height(20.dp))
         }
 
-        // Filter chips (for now, simple “All / Success / Errors”)
+        // Filter chips
         item {
             ActivityFilterBar(
-                events = uiState.events,
-                onFilterSelected = { /* TODO: hook into viewModel when ready */ }
+                filter = uiState.filter,
+                hasFailures = uiState.failedCount > 0,
+                onFilterSelected = viewModel::selectFilter
             )
             Spacer(modifier = Modifier.height(16.dp))
         }
@@ -77,13 +82,17 @@ fun ActivityScreen(viewModel: ActivityViewModel) {
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = "No activity yet.",
+                            text = if (uiState.totalCount == 0) "No activity yet." else "Nothing matches this filter.",
                             color = HaloGlassColors.TextMuted,
                             style = HaloTypography.bodyLarge
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Your cognitive timeline will appear once Halo runs intents and routines.",
+                            text = if (uiState.totalCount == 0) {
+                                "Your cognitive timeline will appear once Halo runs intents and routines."
+                            } else {
+                                "${uiState.totalCount} intents recorded — switch the filter to see them."
+                            },
                             color = HaloGlassColors.TextSecondary,
                             style = HaloTypography.bodySmall
                         )
@@ -102,10 +111,6 @@ fun ActivityScreen(viewModel: ActivityViewModel) {
 
 @Composable
 private fun ActivitySummaryBar(uiState: ActivityUiState) {
-    val totalEvents = uiState.events.size
-    val successfulEvents = uiState.events.count { it.status.equals("Success", ignoreCase = true) }
-    val failedEvents = uiState.events.count { !it.status.equals("Success", ignoreCase = true) }
-
     HaloGlassCard {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -122,7 +127,7 @@ private fun ActivitySummaryBar(uiState: ActivityUiState) {
                     color = HaloGlassColors.TextMuted
                 )
                 Text(
-                    text = "$totalEvents intents in view",
+                    text = "${uiState.events.size} of ${uiState.totalCount} intents shown",
                     style = HaloTypography.bodyMedium,
                     color = HaloGlassColors.TextPrimary
                 )
@@ -137,13 +142,13 @@ private fun ActivitySummaryBar(uiState: ActivityUiState) {
             ) {
                 SummaryMetricRow(
                     label = "Successful",
-                    value = successfulEvents.toString(),
-                    healthy = successfulEvents >= failedEvents
+                    value = uiState.successCount.toString(),
+                    color = HaloGlassColors.Success
                 )
                 SummaryMetricRow(
-                    label = "Errors",
-                    value = failedEvents.toString(),
-                    healthy = failedEvents == 0
+                    label = "Failed",
+                    value = uiState.failedCount.toString(),
+                    color = if (uiState.failedCount > 0) HaloGlassColors.Danger else HaloGlassColors.TextMuted
                 )
             }
         }
@@ -151,7 +156,7 @@ private fun ActivitySummaryBar(uiState: ActivityUiState) {
 }
 
 @Composable
-private fun SummaryMetricRow(label: String, value: String, healthy: Boolean) {
+private fun SummaryMetricRow(label: String, value: String, color: Color) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -166,10 +171,7 @@ private fun SummaryMetricRow(label: String, value: String, healthy: Boolean) {
             Box(
                 modifier = Modifier
                     .size(7.dp)
-                    .background(
-                        if (healthy) HaloGlassColors.Success else HaloGlassColors.Danger,
-                        HaloGlassTokens.circleShape
-                    )
+                    .background(color, HaloGlassTokens.circleShape)
             )
             Spacer(modifier = Modifier.width(6.dp))
             Text(
@@ -183,40 +185,48 @@ private fun SummaryMetricRow(label: String, value: String, healthy: Boolean) {
 
 @Composable
 private fun ActivityFilterBar(
-    events: List<ActivityEvent>,
-    onFilterSelected: (String) -> Unit
+    filter: ActivityFilter,
+    hasFailures: Boolean,
+    onFilterSelected: (ActivityFilter) -> Unit
 ) {
-    val hasErrors = events.any { !it.status.equals("Success", ignoreCase = true) }
-
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        HaloGlassChip(
-            text = "All",
-            material = HaloGlassMaterials.Interactive.copy(
-                containerColor = HaloGlassColors.Glass,
-                contentColor = HaloGlassColors.TextPrimary
-            )
+        FilterChip(
+            label = "All",
+            selected = filter == ActivityFilter.All,
+            tint = HaloGlassColors.Accent,
+            onClick = { onFilterSelected(ActivityFilter.All) }
         )
-        HaloGlassChip(
-            text = "Success",
-            material = HaloGlassMaterials.Interactive.copy(
-                containerColor = HaloGlassColors.Success.copy(alpha = 0.14f),
-                contentColor = HaloGlassColors.Success
-            )
+        FilterChip(
+            label = "Success",
+            selected = filter == ActivityFilter.Success,
+            tint = HaloGlassColors.Success,
+            onClick = { onFilterSelected(ActivityFilter.Success) }
         )
-        if (hasErrors) {
-            HaloGlassChip(
-                text = "Errors",
-                material = HaloGlassMaterials.Interactive.copy(
-                    containerColor = HaloGlassColors.Danger.copy(alpha = 0.14f),
-                    contentColor = HaloGlassColors.Danger
-                )
+        if (hasFailures) {
+            FilterChip(
+                label = "Failed",
+                selected = filter == ActivityFilter.Failed,
+                tint = HaloGlassColors.Danger,
+                onClick = { onFilterSelected(ActivityFilter.Failed) }
             )
         }
     }
+}
+
+@Composable
+private fun FilterChip(label: String, selected: Boolean, tint: Color, onClick: () -> Unit) {
+    HaloGlassChip(
+        modifier = Modifier.clickable(onClick = onClick),
+        text = label,
+        material = HaloGlassMaterials.Interactive.copy(
+            containerColor = if (selected) tint.copy(alpha = 0.20f) else HaloGlassColors.Glass,
+            contentColor = if (selected) tint else HaloGlassColors.TextSecondary
+        )
+    )
 }
 
 @Composable
@@ -240,9 +250,7 @@ private fun ActivityTimelineItem(event: ActivityEvent) {
                 modifier = Modifier
                     .size(10.dp)
                     .background(
-                        color = if (event.status.equals("Success", ignoreCase = true))
-                            HaloGlassColors.Success
-                        else HaloGlassColors.Warning,
+                        color = statusColor(event.status),
                         shape = HaloGlassTokens.circleShape
                     )
             )
@@ -315,7 +323,7 @@ private fun ActivityTimelineItem(event: ActivityEvent) {
                         Text(
                             text = event.status,
                             style = HaloTypography.bodyLarge,
-                            color = if (event.status == "Success")
+                            color = if (isSuccess(event.status))
                                 HaloGlassColors.Success
                             else HaloGlassColors.TextPrimary
                         )
@@ -345,9 +353,7 @@ private fun ActivityTimelineItem(event: ActivityEvent) {
                         Text(
                             text = event.status.uppercase(),
                             style = HaloTypography.labelSmall,
-                            color = if (event.status == "Success")
-                                HaloGlassColors.Success
-                            else HaloGlassColors.Warning
+                            color = statusColor(event.status)
                         )
                         Column(horizontalAlignment = Alignment.End) {
                             Text(
@@ -412,69 +418,104 @@ data class ActivityEvent(
     val subEvents: List<ActivityEvent> = emptyList()
 )
 
-fun Long.format(): String {
-    val secs = (this / 1000) % 60
-    val mins = (this / 1000 / 60) % 60
-    val hours = (this / 1000 / 60 / 60) % 24
-    return String.format(java.util.Locale.ROOT, "%02d:%02d:%02d", hours, mins, secs)
+/** Formats an epoch-millis timestamp in the device's local time zone. */
+private fun Long.format(): String =
+    SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(this))
+
+private fun isSuccess(status: String): Boolean = status.equals("Success", ignoreCase = true)
+
+private fun isFailure(status: String): Boolean =
+    status.equals("Failed", ignoreCase = true) || status.equals("Error", ignoreCase = true)
+
+private fun statusColor(status: String): Color = when {
+    isSuccess(status) -> HaloGlassColors.Success
+    isFailure(status) -> HaloGlassColors.Danger
+    else -> HaloGlassColors.Info
+}
+
+enum class ActivityFilter {
+    All,
+    Success,
+    Failed;
+
+    fun matches(status: String): Boolean = when (this) {
+        All -> true
+        Success -> isSuccess(status)
+        Failed -> isFailure(status)
+    }
 }
 
 data class ActivityUiState(
     val events: List<ActivityEvent> = emptyList(),
-    val hasMore: Boolean = false
+    val filter: ActivityFilter = ActivityFilter.All,
+    val totalCount: Int = 0,
+    val successCount: Int = 0,
+    val failedCount: Int = 0
 )
 
 class ActivityViewModel(private val snapshotManager: RuntimeSnapshotSource) : ViewModel() {
-    val uiState: StateFlow<ActivityUiState> = snapshotManager.snapshot
-        .map { snapshot ->
-            // Group timeline events by intentId, falling back to id for ungrouped events
-            val groupedEvents = snapshot.timeline
-                .groupBy { it.intentId ?: it.id }
-                .map { (groupId, events) ->
-                    // Sort events in this group chronologically
-                    val sortedEvents = events.sortedBy { it.timestamp }
-                    val firstEvent = sortedEvents.first()
-                    val lastEvent = sortedEvents.last()
-                    
-                    val title = if (events.size > 1 && sortedEvents.any { it.title == "Intent Created" }) {
-                        "Intent: " + sortedEvents.find { it.title == "Intent Created" }?.description?.substringBefore(" [") 
-                    } else {
-                        firstEvent.title
-                    }
-                    
-                    val description = if (events.size > 1) {
-                        "${events.size} operations • Final state: ${lastEvent.status}"
-                    } else {
-                        firstEvent.description
-                    }
 
-                    ActivityEvent(
-                        id = groupId,
-                        command = title,
-                        description = description,
-                        timestamp = lastEvent.timestamp.toEpochMilli(),
-                        status = lastEvent.status,
-                        subEvents = sortedEvents.map { 
-                            ActivityEvent(
-                                id = it.id, 
-                                command = it.title, 
-                                description = it.description, 
-                                timestamp = it.timestamp.toEpochMilli(), 
-                                status = it.status,
-                                subEvents = emptyList()
-                            )
-                        }
-                    )
-                }.sortedByDescending { it.timestamp }
+    private val _filter = MutableStateFlow(ActivityFilter.All)
 
-            ActivityUiState(
-                events = groupedEvents,
-                hasMore = false
-            )
-        }
+    val uiState: StateFlow<ActivityUiState> = combine(
+        snapshotManager.snapshot,
+        _filter
+    ) { snapshot, filter ->
+        // Group timeline events by intentId, falling back to id for ungrouped events
+        val groupedEvents = snapshot.timeline
+            .groupBy { it.intentId ?: it.id }
+            .map { (groupId, events) ->
+                // Sort events in this group chronologically
+                val sortedEvents = events.sortedBy { it.timestamp }
+                val firstEvent = sortedEvents.first()
+                val lastEvent = sortedEvents.last()
+
+                val title = if (events.size > 1 && sortedEvents.any { it.title == "Intent Created" }) {
+                    "Intent: " + sortedEvents.find { it.title == "Intent Created" }?.description?.substringBefore(" [")
+                } else {
+                    firstEvent.title
+                }
+
+                val description = if (events.size > 1) {
+                    "${events.size} operations • Final state: ${lastEvent.status}"
+                } else {
+                    firstEvent.description
+                }
+
+                ActivityEvent(
+                    id = groupId,
+                    command = title,
+                    description = description,
+                    timestamp = lastEvent.timestamp.toEpochMilli(),
+                    status = lastEvent.status,
+                    subEvents = sortedEvents.map {
+                        ActivityEvent(
+                            id = it.id,
+                            command = it.title,
+                            description = it.description,
+                            timestamp = it.timestamp.toEpochMilli(),
+                            status = it.status,
+                            subEvents = emptyList()
+                        )
+                    }
+                )
+            }.sortedByDescending { it.timestamp }
+
+        ActivityUiState(
+            events = groupedEvents.filter { filter.matches(it.status) },
+            filter = filter,
+            totalCount = groupedEvents.size,
+            successCount = groupedEvents.count { isSuccess(it.status) },
+            failedCount = groupedEvents.count { isFailure(it.status) }
+        )
+    }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = ActivityUiState()
         )
+
+    fun selectFilter(filter: ActivityFilter) {
+        _filter.value = filter
+    }
 }

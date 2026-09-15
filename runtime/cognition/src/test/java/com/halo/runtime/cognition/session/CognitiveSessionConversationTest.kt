@@ -52,7 +52,7 @@ class CognitiveSessionConversationTest {
         override val isLocal: Boolean = true,
         val shouldFail: Boolean = false,
         val responseText: String = "Paris."
-    ) : AiProvider {
+    ) : AiInferenceProvider {
         val capturedContexts = mutableListOf<AiContext>()
         val capturedRequests = mutableListOf<AiRequest>()
 
@@ -83,7 +83,7 @@ class CognitiveSessionConversationTest {
         override suspend fun listModels() = emptyList<AiModel>()
     }
 
-    private class FakeRouter(private val provider: AiProvider) : AiProviderRouter {
+    private class FakeRouter(private val provider: AiInferenceProvider) : AiProviderRouter {
         override val selectedProviderId = MutableStateFlow<String?>(provider.id)
         override val selectedModelId = MutableStateFlow<String?>("test-model")
         override fun selectProvider(id: String) {}

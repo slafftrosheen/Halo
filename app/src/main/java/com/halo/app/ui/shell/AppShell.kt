@@ -22,14 +22,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.halo.app.di.ManualDependencyGraph
-import com.halo.app.ui.developer.console.ConsoleScreen
 import com.halo.app.ui.screens.HaloConsoleScreen
-import com.halo.app.ui.screens.EngineStatusUi
-import com.halo.app.ui.screens.ProviderStatusUi
-import com.halo.app.ui.screens.ConsoleEventUi
-import com.halo.app.ui.components.HaloPresenceState
-import com.halo.runtime.kernel.ProcessState
-import androidx.compose.runtime.remember
 import com.halo.app.ui.developer.inspector.RuntimeInspectorScreen
 import com.halo.app.ui.developer.protocol.ProtocolLabScreen
 import com.halo.app.ui.glass.components.HaloGlassNavigation
@@ -179,40 +172,9 @@ fun AppShell() {
                 }
 
                 composable("console") {
-                    val engines = remember {
-                        listOf(
-                            EngineStatusUi("Cognition", ProcessState.Running),
-                            EngineStatusUi("Sensors", ProcessState.Running),
-                            EngineStatusUi("Network", ProcessState.Paused),
-                            EngineStatusUi("Embodiment", ProcessState.Running)
-                        )
-                    }
-
-                    val providers = remember {
-                        listOf(
-                            ProviderStatusUi("MQTT Broker", "Connected", isOnline = true),
-                            ProviderStatusUi("Lighting", "Synced", isOnline = true),
-                            ProviderStatusUi("Cameras", "Offline", isOnline = false)
-                        )
-                    }
-
-                    val events = remember {
-                        listOf(
-                            ConsoleEventUi("12:24", "Scene executed", "Evening lights routine completed."),
-                            ConsoleEventUi("12:20", "Device joined", "New thermostat paired."),
-                            ConsoleEventUi("12:16", "Provider warning", "Camera provider lost connection.")
-                        )
-                    }
-
                     HaloConsoleScreen(
-                        engines = engines,
-                        providers = providers,
-                        events = events,
-                        initialPresenceState = HaloPresenceState.Idle,
-                        onOrbTap = { /* hook into voice / interaction */ },
-                        onEngineTap = { engine -> /* open engine diagnostics */ },
-                        onProviderTap = { provider -> /* open provider detail */ },
-                        onEventTap = { event -> /* open log / detail */ }
+                        viewModel = ManualDependencyGraph.consoleViewModel,
+                        onBack = { navController.popBackStack() }
                     )
                 }
 

@@ -38,7 +38,7 @@ class AiProviderRouterDiagnosticsTest {
         override val isLocal: Boolean = true,
         val throwsException: Boolean = false,
         val responseText: String = "Test response"
-    ) : AiProvider {
+    ) : AiInferenceProvider {
         override val status: StateFlow<ProviderStatus> = MutableStateFlow(initialStatus)
         override suspend fun getStatus() = status.value
         override suspend fun getCapabilities() = setOf(AiCapability.TEXT)

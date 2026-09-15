@@ -65,10 +65,6 @@ class AiProviderRegistryRoutingTest {
 
         override suspend fun getStatus(): ProviderStatus = status.value
         override suspend fun getCapabilities(): Set<AiCapability> = emptySet()
-        override suspend fun generate(request: AiRequest, context: AiContext): AiResponse =
-            throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY, "handoff is not inference")
-        override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = emptyFlow()
-        override suspend fun listModels(): List<AiModel> = emptyList()
         override fun isAvailable(): Boolean = true
         override fun assistantPackageName(): String = "com.example.assistant"
         override fun handoff(prompt: String?) = Unit
@@ -110,7 +106,11 @@ class AiProviderRegistryRoutingTest {
         val router = DefaultAiProviderRouter(registry, FakeStorage())
 
         assertTrue(router.getAllProviders().contains(handoff))
-        assertFalse(router.getAllProviders().filterIsInstance<AiInferenceProvider>().contains(handoff))
+        assertTrue(
+            router.getAllProviders()
+                .filterIsInstance<AiInferenceProvider>()
+                .none { it.id == handoff.id }
+        )
 
         router.setRoutingPolicy(AiRoutingPolicy.EXPLICIT)
         router.selectProvider("handoff")

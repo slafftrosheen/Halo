@@ -33,7 +33,7 @@ class AiProviderRouterTest {
         val supportedCapabilities: Set<AiCapability> = setOf(AiCapability.TEXT),
         val modelId: String = "test-model",
         val failureType: AiErrorType = AiErrorType.PROVIDER_UNAVAILABLE
-    ) : AiProvider {
+    ) : AiInferenceProvider {
         override val status: StateFlow<ProviderStatus> = MutableStateFlow(initialStatus)
         val receivedRequests = mutableListOf<AiRequest>()
 

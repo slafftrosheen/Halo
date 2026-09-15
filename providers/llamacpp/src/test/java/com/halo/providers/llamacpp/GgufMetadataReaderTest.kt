@@ -2,10 +2,10 @@ package com.halo.providers.llamacpp
 
 import java.io.File
 import java.nio.file.Files
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Test
 
 class GgufMetadataReaderTest {
     @Test
@@ -80,7 +80,7 @@ class GgufMetadataReaderTest {
         try {
             val metadata = GgufMetadataReader.read(file)
             assertNotNull(metadata)
-            assertNull(metadata.architecture)
+            assertNull(metadata!!.architecture)
             assertNull(metadata.contextLength)
         } finally { file.delete() }
     }
@@ -161,21 +161,21 @@ class GgufMetadataReaderTest {
             out.writeLe32(value)
         }
     }
+}
 
-    private fun java.io.OutputStream.writeString(value: String) {
-        val bytes = value.toByteArray(Charsets.UTF_8)
-        writeLe64(bytes.size.toLong())
-        write(bytes)
-    }
+private fun java.io.OutputStream.writeString(value: String) {
+    val bytes = value.toByteArray(Charsets.UTF_8)
+    writeLe64(bytes.size.toLong())
+    write(bytes)
+}
 
-    private fun java.io.OutputStream.writeLe32(value: Long) {
-        write((value and 0xFF).toInt())
-        write(((value ushr 8) and 0xFF).toInt())
-        write(((value ushr 16) and 0xFF).toInt())
-        write(((value ushr 24) and 0xFF).toInt())
-    }
+private fun java.io.OutputStream.writeLe32(value: Long) {
+    write((value and 0xFF).toInt())
+    write(((value ushr 8) and 0xFF).toInt())
+    write(((value ushr 16) and 0xFF).toInt())
+    write(((value ushr 24) and 0xFF).toInt())
+}
 
-    private fun java.io.OutputStream.writeLe64(value: Long) {
-        for (index in 0 until 8) write(((value ushr (index * 8)) and 0xFF).toInt())
-    }
+private fun java.io.OutputStream.writeLe64(value: Long) {
+    for (index in 0 until 8) write(((value ushr (index * 8)) and 0xFF).toInt())
 }
