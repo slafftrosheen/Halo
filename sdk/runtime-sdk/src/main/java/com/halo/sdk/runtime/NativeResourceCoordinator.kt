@@ -28,6 +28,11 @@ data class NativeResourceSnapshot(
 /** Owner of a native resource lease. */
 interface NativeResourceOwner {
     val nativeResourceKind: NativeResourceKind
+
+    /** Stable diagnostic identity; implementations may override when multiple instances exist. */
+    val nativeResourceId: String
+        get() = nativeResourceKind.name + ":" + (this::class.qualifiedName ?: this::class.simpleName ?: "unknown")
+
     suspend fun releaseIfIdle(): Boolean
 }
 
@@ -94,14 +99,14 @@ class NativeResourceCoordinator {
     }
 
     private fun publish(owner: NativeResourceOwner, state: NativeResourceState, reason: String) {
-        val id = owner::class.qualifiedName ?: owner::class.simpleName ?: "unknown"
+        val id = owner.nativeResourceId
         val next = _snapshot.value.filterNot { it.ownerId == id } +
             NativeResourceSnapshot(id, owner.nativeResourceKind, state, reason)
-        _snapshot.value = next.sortedBy { it.kind.name }
+        _snapshot.value = next.sortedBy { it.ownerId }
     }
 
     private fun remove(owner: NativeResourceOwner) {
-        val id = owner::class.qualifiedName ?: owner::class.simpleName ?: "unknown"
+        val id = owner.nativeResourceId
         _snapshot.value = _snapshot.value.filterNot { it.ownerId == id }
     }
 }
