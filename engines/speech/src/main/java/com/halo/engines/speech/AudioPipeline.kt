@@ -14,8 +14,10 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.util.UUID
 
@@ -33,6 +35,7 @@ class AudioPipeline(
     val state: StateFlow<SpeechState> = _state
     private var observerJobs: List<Job> = emptyList()
     private var liveListeningJob: Job? = null
+    private var bufferedRecognitionJob: Job? = null
 
     /** True when the STT provider owns microphone capture itself. */
     val usesLiveRecognition: Boolean
@@ -103,7 +106,8 @@ class AudioPipeline(
 
         val stateAtEnd = _state.value
         val shouldRecognize = stateAtEnd == SpeechState.WakeDetected ||
-            stateAtEnd == SpeechState.Recognizing
+            stateAtEnd == SpeechState.Recognizing ||
+            stateAtEnd == SpeechState.Listening
 
         if (!shouldRecognize) {
             buffer.clear()
@@ -113,12 +117,19 @@ class AudioPipeline(
         }
 
         if (buffer.duration() == 0L) return
+        if (bufferedRecognitionJob?.isActive == true) return
 
         val segment = buffer.snapshot()
         buffer.clear()
         preRollBuffer.clear()
         _state.value = SpeechState.Recognizing
-        scope.launch { processSegment(segment) }
+        bufferedRecognitionJob = scope.launch {
+            try {
+                processSegment(segment)
+            } finally {
+                bufferedRecognitionJob = null
+            }
+        }
     }
 
     fun processFrame(frame: AudioFrame) {
@@ -223,6 +234,10 @@ class AudioPipeline(
 
         try {
             val result = provider.recognize(segment.audioBuffer)
+            // A provider may complete after cancellation. Never publish a stale
+            // recognition result into the global event bus once this session ended.
+            if (!currentCoroutineContext().isActive) return
+
             _state.value = SpeechState.Thinking
             eventBus.publish(
                 SpeechRecognized(
@@ -234,6 +249,7 @@ class AudioPipeline(
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (exception: Exception) {
+            if (!currentCoroutineContext().isActive) return
             _state.value = SpeechState.Idle
             eventBus.publish(
                 RecognitionFailed(reason = exception.message ?: "Recognition failed")
@@ -250,5 +266,6 @@ class AudioPipeline(
         // releases provider-owned microphone resources. This prevents a new
         // session from starting while the previous provider is still shutting down.
         liveListeningJob?.cancel()
+        bufferedRecognitionJob?.cancel()
     }
 }
