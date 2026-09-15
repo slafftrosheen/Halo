@@ -29,6 +29,10 @@ class ObserverGraph(
         com.halo.runtime.observer.TraceRecorder(infra.eventBus, runtimeValidator, infra.scope)
     }
 
+    val speechTurnTracker by lazy {
+        com.halo.runtime.observer.SpeechTurnTracker(infra.eventBus, infra.scope)
+    }
+
     val healthEvaluator by lazy {
         DefaultRuntimeHealthEvaluator(java.time.Clock.systemUTC())
     }

@@ -15,7 +15,7 @@ data class AiProviderRegistry(
 
     companion object {
         fun from(providers: List<AiProvider>): AiProviderRegistry = AiProviderRegistry(
-            inference = providers.filterIsInstance<AiInferenceProvider>(),
+            inference = providers.filterIsInstance<AiInferenceProvider>().filterNot { it is AiHandoffProvider },
             handoff = providers.filterIsInstance<AiHandoffProvider>()
         )
     }

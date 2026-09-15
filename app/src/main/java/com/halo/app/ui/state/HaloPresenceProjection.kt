@@ -4,6 +4,7 @@ import com.halo.app.ui.glass.material.HaloRuntimeState
 import com.halo.sdk.runtime.RuntimeHealth
 import com.halo.sdk.runtime.RuntimeSnapshot
 import com.halo.sdk.runtime.SpeechSessionState
+import com.halo.sdk.runtime.embodiment.SessionState
 
 /**
  * The single canonical projection from runtime state to the presence the orb renders.
@@ -37,3 +38,21 @@ fun presenceFromSnapshot(snapshot: RuntimeSnapshot): HaloRuntimeState {
 }
 
 private fun RuntimeHealth.requiresAttention(): Boolean = !healthy || degraded
+
+/**
+ * Canonical mapping from SessionState to user-facing display text.
+ * Used by HomeViewModel and DevicesViewModel to show connection status.
+ */
+fun SessionState.toDisplayText(): String = when (this) {
+    SessionState.SAVED -> "Saved"
+    SessionState.DISCOVERED -> "Discovered"
+    SessionState.CONNECTING -> "Connecting"
+    SessionState.CONNECTED -> "Connected"
+    SessionState.HANDSHAKE -> "Handshaking"
+    SessionState.CAPABILITY_SYNC -> "Syncing capabilities"
+    SessionState.STATE_SYNC -> "Syncing state"
+    SessionState.READY -> "Ready"
+    SessionState.DISCONNECTING -> "Disconnecting"
+    SessionState.DISCONNECTED -> "Disconnected"
+    SessionState.ERROR -> "Error"
+}

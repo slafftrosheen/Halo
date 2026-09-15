@@ -116,20 +116,18 @@ fun AppShell() {
                         devicesViewModel.navigationEvents.collectLatest(::navigateSafely)
                     }
 
-                    val deviceType = devicesState.devices
+                    val deviceKind = devicesState.devices
                         .firstOrNull { it.id == deviceId }
-                        ?.type
-                        .orEmpty()
+                        ?.kind
 
                     when {
                         deviceId == null -> navController.popBackStack()
-                        deviceType.contains("BuddyBot", ignoreCase = true) -> BuddyBotControlScreen(
+                        deviceKind == com.halo.sdk.runtime.embodiment.DeviceKind.BUDDYBOT -> BuddyBotControlScreen(
                             deviceId = deviceId,
                             viewModel = devicesViewModel,
                             onBack = { navController.popBackStack() }
                         )
-                        deviceType.contains("HeyCyan", ignoreCase = true) ||
-                            deviceType.contains("Glasses", ignoreCase = true) -> HeyCyanControlScreen(
+                        deviceKind == com.halo.sdk.runtime.embodiment.DeviceKind.HEYCYAN_GLASSES -> HeyCyanControlScreen(
                             deviceId = deviceId,
                             viewModel = devicesViewModel,
                             onBack = { navController.popBackStack() }

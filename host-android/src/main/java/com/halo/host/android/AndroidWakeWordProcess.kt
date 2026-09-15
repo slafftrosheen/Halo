@@ -102,7 +102,7 @@ class AndroidWakeWordProcess(
                 if (!current()) return
                 isListening = false
                 unmuteBeep()
-                scheduleRestart(generation)
+                scheduleRestart(generation, error)
             }
 
             override fun onResults(results: Bundle?) {
@@ -137,10 +137,26 @@ class AndroidWakeWordProcess(
         }
     }
 
-    private fun scheduleRestart(generation: Long) {
+    private var consecutiveErrors = 0
+
+    private fun scheduleRestart(generation: Long, error: Int? = null) {
         if (!currentProcessGeneration(generation) || _state.value != ProcessState.Running) return
+        
+        val isNormalTimeout = error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT || error == SpeechRecognizer.ERROR_NO_MATCH
+        if (error != null && !isNormalTimeout) {
+            consecutiveErrors++
+        } else {
+            consecutiveErrors = 0
+        }
+        
+        val backoffDelay = if (consecutiveErrors > 0) {
+            minOf(30000L, 1000L * (1L shl minOf(consecutiveErrors, 5)))
+        } else {
+            150L
+        }
+
         scope.launch(Dispatchers.Main) {
-            delay(150L)
+            delay(backoffDelay)
             if (!currentProcessGeneration(generation) || isListening || _state.value != ProcessState.Running) return@launch
             speechRecognizer?.destroy()
             speechRecognizer = null

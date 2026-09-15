@@ -43,7 +43,7 @@ class LocalModelMemoryPlannerTest {
     @Test
     fun fallsBackToSmallerContextWhenRequestedContextDoesNotFit() {
         val plan = LocalModelMemoryPlanner.choose(
-            modelBytes = 4L * 1024L * 1024L * 1024L,
+            modelBytes = 4450L * 1024L * 1024L,
             memory = memory(8, 7),
             candidates = listOf(
                 LocalModelMemoryPlanner.Candidate(4096, 0),

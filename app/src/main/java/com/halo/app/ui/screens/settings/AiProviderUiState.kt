@@ -16,5 +16,5 @@ data class AiProviderUiState(
      * provider exposed by the Android host. Keep this derived here until the
      * UI projection is moved to the provider-type boundary in the view model.
      */
-    val isHandoff: Boolean = id == "android.system.assistant"
+    val isHandoff: Boolean = id == ProviderIds.ANDROID_ASSISTANT
 )

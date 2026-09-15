@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.halo.sdk.provider.AiProviderRouter
 import com.halo.sdk.runtime.RuntimeSnapshotSource
 import com.halo.sdk.runtime.Storage
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -35,9 +34,7 @@ class SettingsViewModel(
     val navigationEvents = _navigationEvents.asSharedFlow()
 
     init {
-        viewModelScope.launch(Dispatchers.IO) {
-            _devMode.value = storage.getBoolean("developer_mode", false)
-        }
+        _devMode.value = storage.getBoolean("developer_mode", false)
     }
 
     val uiState: StateFlow<SettingsUiState> = combine(
@@ -60,9 +57,7 @@ class SettingsViewModel(
 
     fun setDevMode(enabled: Boolean) {
         _devMode.value = enabled
-        viewModelScope.launch(Dispatchers.IO) {
-            storage.putBoolean("developer_mode", enabled)
-        }
+        storage.putBoolean("developer_mode", enabled)
     }
 
     fun openIntelligence() { _navigationEvents.tryEmit("ai_settings") }

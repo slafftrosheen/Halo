@@ -13,7 +13,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Wifi
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,6 +26,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.halo.app.ui.glass.components.HaloGlassBackHeader
+import com.halo.app.ui.glass.components.HaloGlassButton
 import com.halo.app.ui.glass.components.HaloGlassDivider
 import com.halo.app.ui.glass.components.HaloGlassPage
 import com.halo.app.ui.glass.components.HaloGlassSection
@@ -89,15 +89,14 @@ fun PermissionsScreen(
         if (!allGranted) {
             HaloGlassSection(title = "ACTION") {
                 Column(Modifier.fillMaxWidth().padding(16.dp)) {
-                    Button(
+                    HaloGlassButton(
+                        text = "Grant Permissions",
                         onClick = {
                             onRequestPermissions()
                             refreshKey++
                         },
                         modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Grant Permissions")
-                    }
+                    )
                 }
             }
         }

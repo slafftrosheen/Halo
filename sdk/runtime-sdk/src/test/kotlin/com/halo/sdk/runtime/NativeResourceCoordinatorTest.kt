@@ -11,36 +11,46 @@ class NativeResourceCoordinatorTest {
     @Test
     fun conflictingOwnerIsAskedToYieldAndDiagnosticsTrackTransition() = runBlocking {
         val coordinator = NativeResourceCoordinator()
-        val llm = FakeOwner(NativeResourceKind.HEAVY_LLM)
-        val asr = FakeOwner(NativeResourceKind.HEAVY_ASR)
+        val firstLlm = FakeOwner(NativeResourceKind.HEAVY_LLM)
+        val secondLlm = FakeOwner(NativeResourceKind.HEAVY_LLM)
 
-        assertTrue(coordinator.acquire(llm))
+        assertTrue(coordinator.acquire(firstLlm))
         assertEquals(NativeResourceState.RESIDENT, coordinator.snapshot.value.single().state)
 
-        coordinator.mark(llm, NativeResourceState.IN_USE, "generation active")
+        coordinator.mark(firstLlm, NativeResourceState.IN_USE, "generation active")
         assertEquals(NativeResourceState.IN_USE, coordinator.snapshot.value.single().state)
 
-        assertTrue(coordinator.acquire(asr))
-        assertTrue(llm.released)
-        assertEquals(NativeResourceState.RELEASED, coordinator.snapshot.value.first { it.ownerId == llm.nativeResourceId }.state)
-        assertEquals(NativeResourceState.RESIDENT, coordinator.snapshot.value.first { it.ownerId == asr.nativeResourceId }.state)
-        assertTrue(coordinator.activeKinds().contains(NativeResourceKind.HEAVY_ASR))
-        assertFalse(coordinator.activeKinds().contains(NativeResourceKind.HEAVY_LLM))
+        assertTrue(coordinator.acquire(secondLlm))
+        assertTrue(firstLlm.released)
+        assertEquals(
+            NativeResourceState.RELEASED,
+            coordinator.snapshot.value.first { it.ownerId == firstLlm.nativeResourceId }.state
+        )
+        assertEquals(
+            NativeResourceState.RESIDENT,
+            coordinator.snapshot.value.first { it.ownerId == secondLlm.nativeResourceId }.state
+        )
+        assertTrue(coordinator.activeKinds().contains(NativeResourceKind.HEAVY_LLM))
     }
 
     @Test
     fun busyOwnerBlocksConflictingAcquisitionAndReportsReason() = runBlocking {
         val coordinator = NativeResourceCoordinator()
-        val llm = FakeOwner(NativeResourceKind.HEAVY_LLM, canRelease = false)
-        val asr = FakeOwner(NativeResourceKind.HEAVY_ASR)
+        val firstLlm = FakeOwner(NativeResourceKind.HEAVY_LLM, canRelease = false)
+        val secondLlm = FakeOwner(NativeResourceKind.HEAVY_LLM)
 
-        assertTrue(coordinator.acquire(llm))
-        coordinator.mark(llm, NativeResourceState.IN_USE, "generation active")
-        assertFalse(coordinator.acquire(asr))
+        assertTrue(coordinator.acquire(firstLlm))
+        coordinator.mark(firstLlm, NativeResourceState.IN_USE, "generation active")
+        assertFalse(coordinator.acquire(secondLlm))
         assertTrue(coordinator.activeKinds().contains(NativeResourceKind.HEAVY_LLM))
-        assertFalse(coordinator.activeKinds().contains(NativeResourceKind.HEAVY_ASR))
-        assertEquals(NativeResourceState.RELEASED, coordinator.snapshot.value.first { it.ownerId == asr.nativeResourceId }.state)
-        assertTrue(coordinator.snapshot.value.first { it.ownerId == asr.nativeResourceId }.reason?.contains("busy") == true)
+        assertEquals(
+            NativeResourceState.RELEASED,
+            coordinator.snapshot.value.first { it.ownerId == secondLlm.nativeResourceId }.state
+        )
+        assertTrue(
+            coordinator.snapshot.value.first { it.ownerId == secondLlm.nativeResourceId }
+                .reason?.contains("busy") == true
+        )
     }
 
     @Test
@@ -108,6 +118,10 @@ class NativeResourceCoordinatorTest {
         private val canRelease: Boolean = true
     ) : NativeResourceOwner {
         var released: Boolean = false
+        private val uniqueId = java.util.UUID.randomUUID().toString()
+
+        override val nativeResourceId: String
+            get() = nativeResourceKind.name + ":" + uniqueId
 
         override suspend fun releaseIfIdle(): Boolean {
             if (!canRelease) return false

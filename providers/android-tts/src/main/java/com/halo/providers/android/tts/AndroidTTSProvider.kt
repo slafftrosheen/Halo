@@ -210,7 +210,7 @@ class AndroidTTSProvider(
                         it.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO ||
                         it.type == AudioDeviceInfo.TYPE_BLE_HEADSET
                 }
-                .joinToString { "type=${it.type},name=${it.productName},address=${it.address}" }
+                .joinToString { "type=${it.type},name=${it.productName}" }
 
             val communication = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 audioManager.communicationDevice?.let {

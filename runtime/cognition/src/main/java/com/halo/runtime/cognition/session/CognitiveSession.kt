@@ -231,7 +231,9 @@ class CognitiveSession(
             response = response
         )
 
-        return if (validated.finishReason.equals("handoff", ignoreCase = true)) {
+        val isHandoff = validated.finishReason.equals("handoff", ignoreCase = true) ||
+            validated.text.equals("HANDOFF_STARTED", ignoreCase = true)
+        return if (isHandoff) {
             AiExecutionOutcome.HandoffStarted(
                 providerId = provider.id,
                 modelId = expectedModelId

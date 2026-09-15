@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -27,6 +26,8 @@ import androidx.lifecycle.lifecycleScope
 import com.halo.app.di.ManualDependencyGraph
 import com.halo.app.ui.shell.AppShell
 import com.halo.app.ui.shell.PermissionsScreen
+import com.halo.app.ui.glass.components.HaloGlassButton
+import com.halo.app.ui.glass.material.HaloTypography
 import com.halo.app.ui.theme.BrainToolTheme
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -92,20 +93,21 @@ class MainActivity : ComponentActivity() {
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 modifier = Modifier.padding(24.dp)
                             ) {
-                                Text("Halo could not initialize the interface.", style = MaterialTheme.typography.titleMedium)
+                                Text("Halo could not initialize the interface.", style = HaloTypography.titleMedium)
                                 Text(
                                     uiGraphError ?: "Unknown startup error",
-                                    style = MaterialTheme.typography.bodyMedium,
+                                    style = HaloTypography.bodyMedium,
                                     modifier = Modifier.padding(top = 8.dp)
                                 )
-                                Button(
+                                HaloGlassButton(
+                                    text = "Retry",
                                     onClick = {
                                         runtimeError = null
                                         startUiGraphBootstrap(force = true)
                                         startRuntimeLoop(force = true)
                                     },
                                     modifier = Modifier.padding(top = 16.dp)
-                                ) { Text("Retry") }
+                                )
                             }
                         }
                         runtimeError != null -> Box(
@@ -116,19 +118,20 @@ class MainActivity : ComponentActivity() {
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 modifier = Modifier.padding(24.dp)
                             ) {
-                                Text("Halo runtime could not start.", style = MaterialTheme.typography.titleMedium)
+                                Text("Halo runtime could not start.", style = HaloTypography.titleMedium)
                                 Text(
                                     runtimeError ?: "Unknown runtime startup error",
-                                    style = MaterialTheme.typography.bodyMedium,
+                                    style = HaloTypography.bodyMedium,
                                     modifier = Modifier.padding(top = 8.dp)
                                 )
-                                Button(
+                                HaloGlassButton(
+                                    text = "Retry runtime",
                                     onClick = {
                                         runtimeError = null
                                         startRuntimeLoop(force = true)
                                     },
                                     modifier = Modifier.padding(top = 16.dp)
-                                ) { Text("Retry runtime") }
+                                )
                             }
                         }
                         !uiGraphReady -> Box(

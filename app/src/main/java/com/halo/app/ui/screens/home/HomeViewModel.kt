@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.halo.app.ui.glass.material.HaloRuntimeState
 import com.halo.app.ui.state.presenceFromSpeech
+import com.halo.app.ui.state.toDisplayText
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.*
 import com.halo.runtime.cognition.session.CognitiveSession
@@ -71,20 +72,8 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
             }
         }
         val activeSessionState = activeSessions.firstOrNull()?.state?.value
-        val connectionText = when (activeSessionState) {
-            com.halo.sdk.runtime.embodiment.SessionState.SAVED -> "Saved"
-            com.halo.sdk.runtime.embodiment.SessionState.DISCOVERED -> "Discovered"
-            com.halo.sdk.runtime.embodiment.SessionState.CONNECTING -> "Connecting"
-            com.halo.sdk.runtime.embodiment.SessionState.CONNECTED -> "Connected"
-            com.halo.sdk.runtime.embodiment.SessionState.HANDSHAKE -> "Handshaking"
-            com.halo.sdk.runtime.embodiment.SessionState.CAPABILITY_SYNC -> "Syncing capabilities"
-            com.halo.sdk.runtime.embodiment.SessionState.STATE_SYNC -> "Syncing state"
-            com.halo.sdk.runtime.embodiment.SessionState.READY -> "Ready"
-            com.halo.sdk.runtime.embodiment.SessionState.DISCONNECTING -> "Disconnecting"
-            com.halo.sdk.runtime.embodiment.SessionState.DISCONNECTED -> "Disconnected"
-            com.halo.sdk.runtime.embodiment.SessionState.ERROR -> "Error"
-            null -> if (snapshot.deviceContext.connected) "Connected" else "Disconnected"
-        }
+        val connectionText = activeSessionState?.toDisplayText()
+            ?: if (snapshot.deviceContext.connected) "Connected" else "Disconnected"
         val caps = snapshot.deviceContext.capabilities
         val selectedDiag = diagnostics.find { it.providerId == selectedProviderId } ?: diagnostics.find { it.selected }
         val activeProviderText = if (selectedDiag != null) {

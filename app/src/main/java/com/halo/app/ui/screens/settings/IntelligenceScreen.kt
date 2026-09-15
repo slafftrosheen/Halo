@@ -7,8 +7,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -18,15 +16,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.halo.app.ui.glass.components.HaloGlassButton
 import com.halo.app.ui.glass.components.HaloGlassCard
-import com.halo.app.ui.glass.components.HaloGlassChip
 import com.halo.app.ui.glass.components.HaloGlassDivider
-import com.halo.app.ui.glass.components.HaloGlassMetric
-import com.halo.app.ui.glass.components.HaloGlassModelPickerDialog
-import com.halo.app.ui.glass.components.HaloGlassPage
+import com.halo.app.ui.glass.components.HaloGlassLazyPage
 import com.halo.app.ui.glass.components.HaloGlassSection
 import com.halo.app.ui.glass.components.HaloGlassSettingRow
+import com.halo.app.ui.glass.components.HaloGlassSwitch
 import com.halo.app.ui.glass.material.HaloGlassColors
-import com.halo.app.ui.glass.material.HaloGlassMaterials
 import com.halo.app.ui.glass.material.HaloTypography
 
 @Composable
@@ -36,9 +31,8 @@ fun IntelligenceScreen(
     onChangeModel: (String) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var showModelPicker by remember { mutableStateOf(false) }
 
-    HaloGlassPage(title = "AI Model", onBack = onBack) {
+    HaloGlassLazyPage(title = "Intelligence") {
         item {
             HaloGlassCard(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
                 Column(
@@ -47,7 +41,6 @@ fun IntelligenceScreen(
                 ) {
                     Text(uiState.activeProviderName, style = HaloTypography.titleMedium, color = HaloGlassColors.TextPrimary)
                     Text(uiState.activeModelId?.ifBlank { null } ?: "No model selected", style = HaloTypography.bodyMedium, color = HaloGlassColors.TextSecondary)
-                    Text("Status: ${uiState.activeProviderStatus.name}", style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
                 }
             }
         }
@@ -55,54 +48,68 @@ fun IntelligenceScreen(
         item {
             HaloGlassSection(title = "PROVIDER") {
                 Column(Modifier.fillMaxWidth().padding(16.dp)) {
-                    uiState.providers.forEach { provider ->
+                    uiState.providers.forEachIndexed { index, provider ->
                         HaloGlassSettingRow(
-                            title = provider.displayName,
-                            trailingText = if (provider.isSelected) "Selected" else provider.status.name,
+                            title = provider.name,
+                            trailingText = if (provider.isSelected) "Selected" else null,
                             onClick = { viewModel.selectProvider(provider.id) }
                         )
-                        Spacer(Modifier.height(6.dp))
+                        if (index < uiState.providers.lastIndex) {
+                            HaloGlassDivider()
+                        }
                     }
                 }
             }
         }
 
         item {
-            HaloGlassSection(title = "MODEL") {
-                Column(Modifier.fillMaxWidth().padding(16.dp)) {
+            HaloGlassSection(
+                title = "MODELS",
+                trailing = {
+                    Text(
+                        text = if (uiState.isRefreshingModels) "Refreshing" else "${uiState.availableModels.size}",
+                        style = HaloTypography.labelSmall,
+                        color = HaloGlassColors.TextMuted
+                    )
+                }
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
+                ) {
                     if (uiState.availableModels.isEmpty()) {
                         Text(
-                            if (uiState.isRefreshingModels) "Loading models…" else "No models reported by this provider.",
+                            text = if (uiState.isRefreshingModels) {
+                                "Loading models from ${uiState.activeProviderName}..."
+                            } else {
+                                "No models advertised by ${uiState.activeProviderName}."
+                            },
                             style = HaloTypography.bodySmall,
                             color = HaloGlassColors.TextSecondary,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                         )
                     } else {
-                        uiState.availableModels.forEach { model ->
+                        uiState.availableModels.forEachIndexed { index, model ->
                             HaloGlassSettingRow(
                                 title = model.displayName,
-                                trailingText = if (model.id == uiState.activeModelId) "Selected" else null,
+                                value = model.contextLength?.let { "${it / 1000}k context" },
+                                trailingText = if (model.id == uiState.activeModelId) "Active" else null,
                                 onClick = {
                                     onChangeModel(model.id)
                                     viewModel.selectModel(model.id)
                                 }
-                            }
-                            Spacer(Modifier.width(12.dp))
-                            HaloGlassChip(
-                                text = resource.state.label(),
-                                material = HaloGlassMaterials.Interactive.copy(
-                                    containerColor = residencyColor(resource.state).copy(alpha = 0.14f),
-                                    contentColor = residencyColor(resource.state)
-                                )
                             )
-                            Spacer(Modifier.height(6.dp))
+                            if (index < uiState.availableModels.lastIndex) {
+                                HaloGlassDivider()
+                            }
                         }
                     }
+
                     Spacer(Modifier.height(8.dp))
                     HaloGlassButton(
                         text = if (uiState.isRefreshingModels) "Refreshing…" else "Refresh Models",
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                         onClick = viewModel::refreshModels
                     )
                 }
@@ -116,74 +123,9 @@ fun IntelligenceScreen(
                     PolicySwitchRow("Tools", uiState.isToolsEnabled, viewModel::setToolsEnabled)
                     PolicySwitchRow("Agent mode", uiState.isAgentEnabled, viewModel::setAgentEnabled)
                 }
-                HaloGlassDivider()
-                FactRow("Configured llama.cpp context", "${uiState.llamacppContext} tokens")
-                HaloGlassDivider()
-                FactRow("Sampling temperature", String.format(java.util.Locale.ROOT, "%.2f", uiState.temperature))
             }
         }
 
-        Spacer(Modifier.height(24.dp))
-
-        HaloGlassSection(
-            title = "AVAILABLE MODELS",
-            trailing = {
-                Text(
-                    text = if (uiState.isRefreshingModels) "Refreshing" else "${uiState.availableModels.size}",
-                    style = HaloTypography.labelSmall,
-                    color = HaloGlassColors.TextMuted
-                )
-            }
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-            ) {
-                if (uiState.availableModels.isEmpty()) {
-                    Text(
-                        text = if (uiState.isRefreshingModels) {
-                            "Loading models from ${uiState.activeProviderName}..."
-                        } else {
-                            "No models advertised by ${uiState.activeProviderName}."
-                        },
-                        style = HaloTypography.bodySmall,
-                        color = HaloGlassColors.TextSecondary,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                    )
-                } else {
-                    uiState.availableModels.forEach { model ->
-                        HaloGlassSettingRow(
-                            title = model.displayName,
-                            value = model.contextLength?.let { "${it / 1000}k context" },
-                            trailingText = if (model.id == uiState.activeModelId) "Active" else null,
-                            onClick = {
-                                onChangeModel(model.id)
-                                viewModel.selectModel(model.id)
-                            }
-                        )
-                    }
-                }
-            }
-        }
-
-        item {
-            HaloGlassSection(title = "LOCAL MODEL") {
-                Column(Modifier.fillMaxWidth().padding(16.dp)) {
-                    Text(uiState.activeLocalModelId ?: "No local model selected", style = HaloTypography.bodyMedium, color = HaloGlassColors.TextPrimary)
-                    Spacer(Modifier.height(4.dp))
-                    Text("Context: ${uiState.llamacppContext}", style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
-                }
-            }
-        }
-
-        item {
-            HaloGlassButton(
-                text = "Test Connection",
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                onClick = viewModel::testConnection
-            )
-        }
         item { Spacer(Modifier.height(24.dp)) }
     }
 }
@@ -195,15 +137,6 @@ private fun PolicySwitchRow(label: String, checked: Boolean, onCheckedChange: (B
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(label, modifier = Modifier.weight(1f), style = HaloTypography.bodyMedium, color = HaloGlassColors.TextPrimary)
-        Switch(
-            checked = checked,
-            onCheckedChange = onCheckedChange,
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = HaloGlassColors.OnSurface,
-                checkedTrackColor = HaloGlassColors.Accent,
-                uncheckedThumbColor = HaloGlassColors.TextSecondary,
-                uncheckedTrackColor = HaloGlassColors.Surface
-            )
-        )
+        HaloGlassSwitch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }

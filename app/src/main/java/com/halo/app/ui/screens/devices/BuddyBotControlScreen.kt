@@ -18,8 +18,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -47,6 +45,7 @@ import com.halo.app.ui.glass.components.HaloGlassDivider
 import com.halo.app.ui.glass.components.HaloGlassLazyPage
 import com.halo.app.ui.glass.components.HaloGlassSection
 import com.halo.app.ui.glass.components.HaloGlassSettingRow
+import com.halo.app.ui.glass.components.HaloGlassTextField
 import com.halo.app.ui.glass.material.HaloGlassColors
 import com.halo.app.ui.glass.material.HaloGlassMaterials
 import com.halo.app.ui.glass.material.HaloGlassTokens
@@ -119,19 +118,12 @@ fun BuddyBotControlScreen(
         HaloGlassDialog(title = "BuddyBot Target", onDismissRequest = { showUrlDialog = false }) {
             Column(Modifier.fillMaxWidth().padding(8.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text("Local WebSocket endpoint", style = HaloTypography.bodySmall, color = HaloGlassColors.TextSecondary)
-                OutlinedTextField(
+                HaloGlassTextField(
                     value = targetUrl,
                     onValueChange = { targetUrl = it },
-                    label = { Text("WebSocket URL") },
+                    label = "WebSocket URL",
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = HaloGlassColors.TextPrimary,
-                        unfocusedTextColor = HaloGlassColors.TextPrimary,
-                        focusedBorderColor = HaloGlassColors.Accent,
-                        unfocusedBorderColor = HaloGlassColors.BorderStandard,
-                        cursorColor = HaloGlassColors.Accent
-                    )
+                    modifier = Modifier.fillMaxWidth()
                 )
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     HaloGlassButton(text = "Reset", onClick = { targetUrl = BuddyBotHost.DEFAULT_BUDDYBOT_URL }, modifier = Modifier.weight(1f), isPrimary = false)
@@ -321,19 +313,12 @@ fun BuddyBotControlScreen(
                     HaloGlassSettingRow(title = "Auto-connect", value = if (device?.autoConnect == true) "ON" else "OFF", onClick = { viewModel.toggleAutoConnect(deviceId, !(device?.autoConnect ?: false)) })
                     HaloGlassDivider()
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedTextField(
+                        HaloGlassTextField(
                             value = pairingCode,
                             onValueChange = { if (it.length <= 9) pairingCode = it },
-                            placeholder = { Text("1234 5678", color = HaloGlassColors.TextMuted) },
+                            placeholder = "1234 5678",
                             singleLine = true,
-                            modifier = Modifier.weight(1f),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = HaloGlassColors.TextPrimary,
-                                unfocusedTextColor = HaloGlassColors.TextPrimary,
-                                focusedBorderColor = HaloGlassColors.Accent,
-                                unfocusedBorderColor = HaloGlassColors.BorderStandard,
-                                cursorColor = HaloGlassColors.Accent
-                            )
+                            modifier = Modifier.weight(1f)
                         )
                         HaloGlassButton(text = "Pair", onClick = {
                             val code = pairingCode.replace(" ", "")

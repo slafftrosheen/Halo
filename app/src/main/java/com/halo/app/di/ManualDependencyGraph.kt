@@ -120,7 +120,7 @@ object ManualDependencyGraph {
     val intelligenceViewModel by lazy {
         com.halo.app.ui.screens.settings.IntelligenceViewModel(runtimeSnapshotManager, aiProviderRouter, cognitiveSession, storage, modelDownloadManager)
     }
-    val runtimeInspectorViewModel by lazy { RuntimeInspectorViewModel(runtimeSnapshotManager) }
+    val runtimeInspectorViewModel by lazy { RuntimeInspectorViewModel(runtimeSnapshotManager, aiProviderRouter, observerGraph.speechTurnTracker) }
 
     val runtimeSnapshotManager get() = observerGraph.runtimeSnapshotManager
 
@@ -133,7 +133,7 @@ object ManualDependencyGraph {
 
     val microkernel by lazy {
         RuntimeStartupTrace.measure("graph.microkernel") {
-            processManager.register(androidWakeWordProcess)
+            // processManager.register(androidWakeWordProcess) // Disabled: Continuous SpeechRecognizer causes beeping/hanging on Samsung/Android 13+ devices
             processManager.register(workingMemoryProcess)
             processManager.register(com.halo.host.android.AudioPerceptionProcess(perceptionBus))
             processManager.register(com.halo.engines.interpretation.RuleInterpretationProcess(perceptionBus, cognitiveBus))

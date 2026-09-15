@@ -1,6 +1,7 @@
 package com.halo.app.ui.components
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.ui.graphics.vector.ImageVector
 
@@ -21,7 +22,7 @@ object HaloIcons {
     val Bluetooth: ImageVector = Icons.Rounded.Bluetooth
     val Navigation: ImageVector = Icons.Rounded.Navigation
     val Search: ImageVector = Icons.Rounded.Search
-    val Volume: ImageVector = Icons.Rounded.VolumeUp
+    val Volume: ImageVector = Icons.AutoMirrored.Rounded.VolumeUp
     val Folder: ImageVector = Icons.Rounded.Folder
     val Graph: ImageVector = Icons.Rounded.Timeline
     val Eye: ImageVector = Icons.Rounded.Visibility

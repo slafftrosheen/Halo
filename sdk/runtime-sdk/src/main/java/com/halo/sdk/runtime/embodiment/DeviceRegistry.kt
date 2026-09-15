@@ -9,7 +9,8 @@ data class DeviceRecord(
     val identity: DeviceIdentity,
     val autoConnect: Boolean = true,
     val firmwareVersion: String? = null,
-    val lastSeenMs: Long = 0L
+    val lastSeenMs: Long = 0L,
+    val descriptor: DeviceDescriptor = DeviceDescriptor.fromDeviceType(identity.deviceType)
 )
 
 /**

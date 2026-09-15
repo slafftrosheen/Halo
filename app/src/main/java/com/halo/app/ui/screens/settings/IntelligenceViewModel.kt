@@ -9,7 +9,6 @@ import com.halo.sdk.runtime.RuntimeSnapshotSource
 import com.halo.sdk.runtime.NativeResourceSnapshot
 import com.halo.sdk.runtime.Storage
 import com.halo.runtime.cognition.session.CognitiveSession
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import com.halo.providers.llamacpp.ModelDownloadManager
@@ -83,7 +82,7 @@ class IntelligenceViewModel(
     private val _settings = MutableStateFlow(IntelligenceSettings())
 
     init {
-        viewModelScope.launch(Dispatchers.IO) { loadSettings() }
+        loadSettings()
         modelDownloadManager?.refreshStates()
         viewModelScope.launch {
             aiProviderRouter.selectedProviderId.collectLatest { providerId ->
@@ -121,16 +120,16 @@ class IntelligenceViewModel(
     private suspend fun syncStoredModelSelection(providerId: String) {
         val settings = _settings.value
         val storedModelId = when (providerId) {
-            "openrouter" -> settings.openRouterModel.trim().ifBlank { "openrouter/free" }
-            "provider.ollama" -> settings.ollamaModel.trim().ifBlank { null }
-            "provider.llamacpp.native" -> modelDownloadManager?.activeModelId?.value ?: settings.llamacppModel.trim().ifBlank { null }
+            ProviderIds.OPENROUTER -> settings.openRouterModel.trim().ifBlank { "openrouter/free" }
+            ProviderIds.OLLAMA -> settings.ollamaModel.trim().ifBlank { null }
+            ProviderIds.LLAMACPP -> modelDownloadManager?.activeModelId?.value ?: settings.llamacppModel.trim().ifBlank { null }
             else -> null
         }
         if (storedModelId != aiProviderRouter.selectedModelId.value) aiProviderRouter.selectModel(storedModelId)
     }
 
     private suspend fun refreshAssistantInfo(providerId: String) {
-        if (providerId != "android.system.assistant") { _assistantPackage.value = null; return }
+        if (providerId != ProviderIds.ANDROID_ASSISTANT) { _assistantPackage.value = null; return }
         val provider = aiProviderRouter.getAllProviders().firstOrNull { it.id == providerId }
         _assistantPackage.value = (provider as? AndroidAssistantProvider)?.assistantPackageName()
     }
@@ -156,7 +155,7 @@ class IntelligenceViewModel(
             activeProviderName = snapshotProvider?.name ?: activeProvider?.displayName ?: "None",
             activeProviderStatus = activeProvider?.status?.value ?: ProviderStatus.UNAVAILABLE,
             capabilities = activeProvider?.getCapabilities() ?: emptySet(),
-            activeModelId = selectedModelId ?: snapshotProvider?.activeModel ?: if (selectedProviderId == "provider.llamacpp.native") activeLocalId ?: settings.llamacppModel else null,
+            activeModelId = selectedModelId ?: snapshotProvider?.activeModel ?: if (selectedProviderId == ProviderIds.LLAMACPP) activeLocalId ?: settings.llamacppModel else null,
             providers = allProviders.map { routerProv ->
                 val snap = snapshot.providers.find { it.id == routerProv.id }
                 AiProviderUiState(routerProv.id, snap?.name ?: routerProv.displayName, routerProv.status.value, routerProv.id == selectedProviderId, routerProv.getCapabilities())
@@ -185,7 +184,7 @@ class IntelligenceViewModel(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), IntelligenceUiState())
 
     fun handoffToAssistant(prompt: String? = null) {
-        val provider = aiProviderRouter.getAllProviders().firstOrNull { it.id == "android.system.assistant" } as? AndroidAssistantProvider ?: return
+        val provider = aiProviderRouter.getAllProviders().firstOrNull { it.id == ProviderIds.ANDROID_ASSISTANT } as? AndroidAssistantProvider ?: return
         runCatching { provider.handoff(prompt) }.onFailure { error -> Log.w("IntelligenceViewModel", "Assistant handoff failed", error) }
         _refreshTrigger.update { it + 1 }
     }
@@ -198,7 +197,7 @@ class IntelligenceViewModel(
     fun setActiveLocalModel(modelId: String) {
         if (modelDownloadManager?.getAllModels()?.any { it.id == modelId } != true) return
         modelDownloadManager?.setActiveModel(modelId); updateSettings { it.copy(llamacppModel = modelId) }; persist { storage.putString("llamacpp_model", modelId) }
-        if (aiProviderRouter.selectedProviderId.value == "provider.llamacpp.native") aiProviderRouter.selectModel(modelId)
+        if (aiProviderRouter.selectedProviderId.value == ProviderIds.LLAMACPP) aiProviderRouter.selectModel(modelId)
         _refreshTrigger.update { it + 1 }
     }
 
@@ -207,7 +206,7 @@ class IntelligenceViewModel(
 
     fun selectProvider(id: String) {
         if (aiProviderRouter.getAllProviders().none { it.id == id }) return
-        if (id == "android.system.assistant") {
+        if (id == ProviderIds.ANDROID_ASSISTANT) {
             handoffToAssistant()
             return
         }
@@ -220,13 +219,13 @@ class IntelligenceViewModel(
     fun selectModel(modelId: String?) {
         val normalized = modelId?.trim()?.ifBlank { null }; val providerId = aiProviderRouter.selectedProviderId.value
         if (normalized != null) {
-            val known = _availableModels.value.any { it.id == normalized } || (providerId == "provider.llamacpp.native" && modelDownloadManager?.getAllModels()?.any { it.id == normalized } == true)
+            val known = _availableModels.value.any { it.id == normalized } || (providerId == ProviderIds.LLAMACPP && modelDownloadManager?.getAllModels()?.any { it.id == normalized } == true)
             if (!known) return
         }
         when (providerId) {
-            "provider.llamacpp.native" -> if (normalized != null) { modelDownloadManager?.setActiveModel(normalized); updateSettings { it.copy(llamacppModel = normalized) }; persist { storage.putString("llamacpp_model", normalized) } }
-            "provider.ollama" -> if (normalized != null) { updateSettings { it.copy(ollamaModel = normalized) }; persist { storage.putString("ollama_model", normalized) } }
-            "openrouter" -> if (normalized != null) { updateSettings { it.copy(openRouterModel = normalized) }; persist { storage.putString("openrouter_model", normalized) } }
+            ProviderIds.LLAMACPP -> if (normalized != null) { modelDownloadManager?.setActiveModel(normalized); updateSettings { it.copy(llamacppModel = normalized) }; persist { storage.putString("llamacpp_model", normalized) } }
+            ProviderIds.OLLAMA -> if (normalized != null) { updateSettings { it.copy(ollamaModel = normalized) }; persist { storage.putString("ollama_model", normalized) } }
+            ProviderIds.OPENROUTER -> if (normalized != null) { updateSettings { it.copy(openRouterModel = normalized) }; persist { storage.putString("openrouter_model", normalized) } }
         }
         aiProviderRouter.selectModel(normalized); _refreshTrigger.update { it + 1 }
     }
@@ -240,15 +239,15 @@ class IntelligenceViewModel(
             _availableModels.value = models
             val settings = _settings.value
             val storedModelId = when (providerId) {
-                "openrouter" -> settings.openRouterModel.trim().ifBlank { null }
-                "provider.ollama" -> settings.ollamaModel.trim().ifBlank { null }
-                "provider.llamacpp.native" -> modelDownloadManager?.activeModelId?.value
-                "android.system.assistant" -> "android-assistant/handoff"
+                ProviderIds.OPENROUTER -> settings.openRouterModel.trim().ifBlank { null }
+                ProviderIds.OLLAMA -> settings.ollamaModel.trim().ifBlank { null }
+                ProviderIds.LLAMACPP -> modelDownloadManager?.activeModelId?.value
+                ProviderIds.ANDROID_ASSISTANT -> "android-assistant/handoff"
                 else -> null
             }
             if (storedModelId != null && models.any { it.id == storedModelId } && aiProviderRouter.selectedModelId.value != storedModelId) aiProviderRouter.selectModel(storedModelId)
             else if (storedModelId == null && aiProviderRouter.selectedModelId.value == null && models.size == 1) aiProviderRouter.selectModel(models.first().id)
-            if (providerId == "provider.ollama" && settings.ollamaModel.isBlank() && models.isNotEmpty()) {
+            if (providerId == ProviderIds.OLLAMA && settings.ollamaModel.isBlank() && models.isNotEmpty()) {
                 val modelId = models.first().id; updateSettings { it.copy(ollamaModel = modelId) }; persist { storage.putString("ollama_model", modelId) }; aiProviderRouter.selectModel(modelId)
             }
         } catch (error: Exception) {
@@ -265,10 +264,10 @@ class IntelligenceViewModel(
         }
     }
     fun setOpenRouterKey(key: String) { updateSettings { it.copy(openRouterKey = key) }; persist { storage.putString("openrouter_api_key", key) } }
-    fun setOpenRouterModel(model: String) { val n = model.trim(); if (n.isBlank()) return; updateSettings { it.copy(openRouterModel = n) }; persist { storage.putString("openrouter_model", n) }; if (aiProviderRouter.selectedProviderId.value == "openrouter") aiProviderRouter.selectModel(n); _refreshTrigger.update { it + 1 } }
+    fun setOpenRouterModel(model: String) { val n = model.trim(); if (n.isBlank()) return; updateSettings { it.copy(openRouterModel = n) }; persist { storage.putString("openrouter_model", n) }; if (aiProviderRouter.selectedProviderId.value == ProviderIds.OPENROUTER) aiProviderRouter.selectModel(n); _refreshTrigger.update { it + 1 } }
     fun setOllamaEndpoint(endpoint: String) { val n = endpoint.trim().trimEnd('/'); updateSettings { it.copy(ollamaEndpoint = n) }; persist { storage.putString("ollama_endpoint", n) }; _availableModels.value = emptyList(); _refreshTrigger.update { it + 1 } }
-    fun setOllamaModel(model: String) { val n = model.trim(); if (n.isBlank()) return; updateSettings { it.copy(ollamaModel = n) }; persist { storage.putString("ollama_model", n) }; if (aiProviderRouter.selectedProviderId.value == "provider.ollama") aiProviderRouter.selectModel(n); _refreshTrigger.update { it + 1 } }
-    fun setLlamacppModel(model: String) { val n = model.trim(); if (n.isBlank() || modelDownloadManager?.getAllModels()?.any { it.id == n } != true) return; updateSettings { it.copy(llamacppModel = n) }; persist { storage.putString("llamacpp_model", n) }; if (aiProviderRouter.selectedProviderId.value == "provider.llamacpp.native") { modelDownloadManager?.setActiveModel(n); aiProviderRouter.selectModel(n) }; _refreshTrigger.update { it + 1 } }
+    fun setOllamaModel(model: String) { val n = model.trim(); if (n.isBlank()) return; updateSettings { it.copy(ollamaModel = n) }; persist { storage.putString("ollama_model", n) }; if (aiProviderRouter.selectedProviderId.value == ProviderIds.OLLAMA) aiProviderRouter.selectModel(n); _refreshTrigger.update { it + 1 } }
+    fun setLlamacppModel(model: String) { val n = model.trim(); if (n.isBlank() || modelDownloadManager?.getAllModels()?.any { it.id == n } != true) return; updateSettings { it.copy(llamacppModel = n) }; persist { storage.putString("llamacpp_model", n) }; if (aiProviderRouter.selectedProviderId.value == ProviderIds.LLAMACPP) { modelDownloadManager?.setActiveModel(n); aiProviderRouter.selectModel(n) }; _refreshTrigger.update { it + 1 } }
     fun setLlamacppContext(size: Int) { val n = size.coerceAtLeast(1); updateSettings { it.copy(llamacppContext = n) }; persist { storage.putInt("llamacpp_context", n) }; _refreshTrigger.update { it + 1 } }
     fun setMemoryEnabled(enabled: Boolean) { updateSettings { it.copy(isMemoryEnabled = enabled) }; persist { storage.putBoolean("ai_memory_enabled", enabled) }; _refreshTrigger.update { it + 1 } }
     fun setToolsEnabled(enabled: Boolean) { updateSettings { it.copy(isToolsEnabled = enabled) }; persist { storage.putBoolean("ai_tools_enabled", enabled) }; _refreshTrigger.update { it + 1 } }
@@ -285,12 +284,10 @@ class IntelligenceViewModel(
         val current = _settings.value.policy
         val updated = current.copy(includeConversation = conversation ?: current.includeConversation, includeDeviceState = deviceState ?: current.includeDeviceState, includeRecentEvents = recentEvents ?: current.includeRecentEvents, includeMemories = memories ?: current.includeMemories, includeAvailableTools = tools ?: current.includeAvailableTools, includeLocation = location ?: current.includeLocation, includeImages = images ?: current.includeImages, includeAudio = audio ?: current.includeAudio, includeVideo = video ?: current.includeVideo)
         updateSettings { it.copy(policy = updated) }
-        viewModelScope.launch(Dispatchers.IO) {
-            conversation?.let { storage.putBoolean("policy_conversation", it) }; deviceState?.let { storage.putBoolean("policy_device_state", it) }; recentEvents?.let { storage.putBoolean("policy_recent_events", it) }; memories?.let { storage.putBoolean("policy_memories", it) }; tools?.let { storage.putBoolean("policy_tools", it) }; location?.let { storage.putBoolean("policy_location", it) }; images?.let { storage.putBoolean("policy_images", it) }; audio?.let { storage.putBoolean("policy_audio", it) }; video?.let { storage.putBoolean("policy_video", it) }
-        }
+        conversation?.let { storage.putBoolean("policy_conversation", it) }; deviceState?.let { storage.putBoolean("policy_device_state", it) }; recentEvents?.let { storage.putBoolean("policy_recent_events", it) }; memories?.let { storage.putBoolean("policy_memories", it) }; tools?.let { storage.putBoolean("policy_tools", it) }; location?.let { storage.putBoolean("policy_location", it) }; images?.let { storage.putBoolean("policy_images", it) }; audio?.let { storage.putBoolean("policy_audio", it) }; video?.let { storage.putBoolean("policy_video", it) }
         _refreshTrigger.update { it + 1 }
     }
     private inline fun updateSettings(transform: (IntelligenceSettings) -> IntelligenceSettings) { _settings.update(transform) }
-    private inline fun persist(crossinline write: () -> Unit) { viewModelScope.launch(Dispatchers.IO) { write() } }
+    private fun persist(write: () -> Unit) { write() }
     fun navigateTo(route: String) { viewModelScope.launch { _navigationEvents.emit(route) } }
 }

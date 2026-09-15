@@ -7,18 +7,18 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.*
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.halo.app.ui.glass.components.*
+import com.halo.app.ui.glass.components.HaloGlassIconButton
 import com.halo.app.ui.glass.material.HaloGlassColors
 import com.halo.app.ui.glass.material.HaloTypography
 import com.halo.sdk.host.ConnectionState
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PairingScreen(viewModel: PairingViewModel) {
     val uiState by viewModel.uiState.collectAsState()
@@ -34,9 +34,11 @@ fun PairingScreen(viewModel: PairingViewModel) {
             modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = { viewModel.navigateBack() }) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = HaloGlassColors.TextPrimary)
-            }
+            HaloGlassIconButton.Ghost(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Back",
+                onClick = { viewModel.navigateBack() }
+            )
             Spacer(Modifier.width(8.dp))
             Text("Pair Glasses", style = HaloTypography.titleLarge, color = HaloGlassColors.TextPrimary)
         }

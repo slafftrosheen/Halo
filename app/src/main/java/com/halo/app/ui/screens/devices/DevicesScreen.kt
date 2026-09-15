@@ -32,6 +32,7 @@ import com.halo.app.ui.glass.components.HaloGlassLazyPage
 import com.halo.app.ui.glass.components.HaloGlassSection
 import com.halo.app.ui.glass.material.HaloGlassColors
 import com.halo.app.ui.glass.material.HaloTypography
+import com.halo.app.ui.state.toDisplayText
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -48,7 +49,7 @@ enum class PhotoActionState { READY, CAPTURING, COMPLETED, FAILED }
 data class GenericDeviceUiState(
     val id: String,
     val name: String,
-    val type: String,
+    val kind: com.halo.sdk.runtime.embodiment.DeviceKind,
     val isConnected: Boolean,
     val connectionStateText: String,
     val autoConnect: Boolean,
@@ -101,8 +102,7 @@ class DevicesViewModel(
             ) { activeSessions, _, (driverState, buddyBotTelemetry), photoStates, _ ->
                 val now = System.currentTimeMillis()
                 deviceRegistry.getSavedDevices().map { record ->
-                    val isBuddyBot = record.identity.deviceId == "buddybot_1" ||
-                        record.identity.deviceType.contains("BuddyBot", ignoreCase = true)
+                    val isRobot = record.descriptor.kind == com.halo.sdk.runtime.embodiment.DeviceKind.BUDDYBOT
                     val session = activeSessions.find { it.identity.deviceId == record.identity.deviceId }
                     val sessionState = session?.state?.value
                     val isConnected = sessionState in setOf(
@@ -112,32 +112,19 @@ class DevicesViewModel(
                         com.halo.sdk.runtime.embodiment.SessionState.STATE_SYNC,
                         com.halo.sdk.runtime.embodiment.SessionState.READY
                     )
-                    val stateText = when (sessionState) {
-                        com.halo.sdk.runtime.embodiment.SessionState.SAVED -> "Saved"
-                        com.halo.sdk.runtime.embodiment.SessionState.DISCOVERED -> "Discovered"
-                        com.halo.sdk.runtime.embodiment.SessionState.CONNECTING -> "Connecting"
-                        com.halo.sdk.runtime.embodiment.SessionState.CONNECTED -> "Connected"
-                        com.halo.sdk.runtime.embodiment.SessionState.HANDSHAKE -> "Handshaking"
-                        com.halo.sdk.runtime.embodiment.SessionState.CAPABILITY_SYNC -> "Syncing capabilities"
-                        com.halo.sdk.runtime.embodiment.SessionState.STATE_SYNC -> "Syncing state"
-                        com.halo.sdk.runtime.embodiment.SessionState.READY -> "Ready"
-                        com.halo.sdk.runtime.embodiment.SessionState.DISCONNECTING -> "Disconnecting"
-                        com.halo.sdk.runtime.embodiment.SessionState.DISCONNECTED -> "Disconnected"
-                        com.halo.sdk.runtime.embodiment.SessionState.ERROR -> "Error"
-                        null -> "Saved • no session"
-                    }
+                    val stateText = sessionState?.toDisplayText() ?: "Saved • no session"
                     val battery = driverState.battery
-                    val batteryText = if (isBuddyBot) {
+                    val batteryText = if (isRobot) {
                         buddyBotTelemetry.batteryPercent?.let { "$it%" } ?: "Unknown"
                     } else {
                         battery?.let { "${it.level}%${if (it.charging) " • Charging" else ""}" } ?: "Unknown"
                     }
-                    val batteryAgeMs = if (isBuddyBot) {
+                    val batteryAgeMs = if (isRobot) {
                         if (buddyBotTelemetry.lastUpdateMs > 0L) now - buddyBotTelemetry.lastUpdateMs else Long.MAX_VALUE
                     } else {
                         battery?.let { now - it.timestampMs } ?: Long.MAX_VALUE
                     }
-                    val healthWarning = if (isBuddyBot) {
+                    val healthWarning = if (isRobot) {
                         if (!buddyBotTelemetry.safetyFault.isNullOrEmpty() && buddyBotTelemetry.safetyFault != "none") {
                             "Fault: ${buddyBotTelemetry.safetyFault}"
                         } else if (buddyBotTelemetry.forwardMotionBlocked) {
@@ -151,7 +138,7 @@ class DevicesViewModel(
                             else -> null
                         }
                     }
-                    val healthStateText = if (isBuddyBot) {
+                    val healthStateText = if (isRobot) {
                         buddyBotTelemetry.safetyState ?: "Healthy"
                     } else {
                         driverState.healthState.name
@@ -159,18 +146,18 @@ class DevicesViewModel(
                     GenericDeviceUiState(
                         id = record.identity.deviceId,
                         name = record.identity.displayName,
-                        type = record.identity.deviceType,
+                        kind = record.descriptor.kind,
                         isConnected = isConnected,
                         connectionStateText = stateText,
                         autoConnect = record.autoConnect,
                         battery = batteryText,
-                        batteryAgeText = if (isBuddyBot) {
+                        batteryAgeText = if (isRobot) {
                             if (buddyBotTelemetry.lastUpdateMs > 0L) "Updated ${formatLastSeen(buddyBotTelemetry.lastUpdateMs)}" else "No data"
                         } else {
                             if (battery != null) "Updated ${formatLastSeen(battery.timestampMs)}" else "No data"
                         },
                         isBatteryStale = batteryAgeMs > STALE_BATTERY_MS,
-                        firmware = if (isBuddyBot) {
+                        firmware = if (isRobot) {
                             record.firmwareVersion ?: "v0.3.0"
                         } else {
                             driverState.version?.firmware ?: record.firmwareVersion ?: "Unknown"
@@ -181,7 +168,7 @@ class DevicesViewModel(
                         audioState = driverState.audioRecordingState,
                         healthStateText = healthStateText,
                         healthWarning = healthWarning,
-                        wearStateText = if (isBuddyBot) "Active" else driverState.wearState.name,
+                        wearStateText = if (isRobot) "Active" else driverState.wearState.name,
                         volumeText = driverState.volumeState?.let { "Music ${it.musicCurrent}, Call ${it.callCurrent}" } ?: "Normal"
                     )
                 }
@@ -479,7 +466,7 @@ private fun DeviceTile(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = if (device.type.contains("BuddyBot", true)) "🤖" else "👓", 
+                text = if (device.kind == com.halo.sdk.runtime.embodiment.DeviceKind.BUDDYBOT) "🤖" else "👓", 
                 style = HaloTypography.bodyLarge
             )
             Box(Modifier.size(8.dp).background(statusColor, CircleShape))
