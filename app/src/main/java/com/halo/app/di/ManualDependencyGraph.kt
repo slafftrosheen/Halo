@@ -48,11 +48,11 @@ object ManualDependencyGraph {
     val modelDownloadManager get() = providerGraph.modelDownloadManager
     val providers get() = providerGraph.providers
 
+    /** Physical hosts remain lazy and are only touched by explicit device flows. */
     val wearableHost by lazy {
         RuntimeStartupTrace.measure("host.wearableHost") { hostGraph.wearableHost }
     }
     val audioPipeline get() = hostGraph.audioPipeline
-    val audioPerceptionEngine get() = hostGraph.audioPerceptionEngine
     val audioPerceptionEngine get() = hostGraph.audioPerceptionEngine
     val heyCyanDriver by lazy {
         RuntimeStartupTrace.measure("host.heyCyanDriver") { hostGraph.heyCyanDriver }
