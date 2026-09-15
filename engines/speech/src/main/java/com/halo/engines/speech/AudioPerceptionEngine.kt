@@ -17,7 +17,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 
 data class EngineMetrics(
@@ -28,13 +27,14 @@ data class EngineMetrics(
 )
 
 /**
- * Owns microphone capture for an explicit speech session.
+ * Owns the explicit speech-session lifecycle.
  *
- * Starting the engine is deliberately passive: it prepares the audio pipeline
- * but does not open the microphone and does not start speech recognition.
- * A StartListening command begins one capture session; StopListening ends it.
- * This prevents Halo from continuously listening/recognizing immediately after
- * application startup.
+ * The engine itself is passive at runtime startup. A StartListening command
+ * begins one user-requested session and StopListening ends it.
+ *
+ * For a live STT provider, the provider owns microphone capture. For a
+ * buffered provider, this engine owns AudioSource capture and feeds frames
+ * through the local VAD/pipeline.
  */
 class AudioPerceptionEngine(
     private val audioSource: AudioSource,
@@ -126,6 +126,16 @@ class AudioPerceptionEngine(
     private suspend fun startCapture() {
         if (captureJob?.isActive == true) return
 
+        // Live providers (Android SpeechRecognizer today) capture from the
+        // microphone themselves. Starting AudioRecord here would create two
+        // competing microphone clients and can produce OEM audio feedback.
+        if (audioPipeline.usesLiveRecognition) {
+            audioPipeline.reset()
+            _health.value = EngineHealth.Healthy
+            eventBus.publish(ListeningStarted())
+            return
+        }
+
         captureJob = scope.launch {
             try {
                 sourceStartAttempted.set(true)
@@ -145,9 +155,6 @@ class AudioPerceptionEngine(
 
                 audioPipeline.reset()
                 _health.value = EngineHealth.Healthy
-
-                // Transport capture is now intentional. Only this explicit command
-                // creates the lifecycle event that starts live STT.
                 eventBus.publish(ListeningStarted())
 
                 audioSource.frames.collect { rawFrame ->
@@ -173,6 +180,11 @@ class AudioPerceptionEngine(
     }
 
     private suspend fun stopCapture() {
+        if (audioPipeline.usesLiveRecognition) {
+            audioPipeline.reset()
+            return
+        }
+
         val job = captureJob ?: return
         captureJob = null
         job.cancel()
