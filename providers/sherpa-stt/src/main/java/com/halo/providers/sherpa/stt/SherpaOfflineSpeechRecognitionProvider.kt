@@ -7,6 +7,7 @@ import com.halo.sdk.provider.RecognitionResult
 import com.halo.sdk.runtime.NativeResourceCoordinator
 import com.halo.sdk.runtime.NativeResourceKind
 import com.halo.sdk.runtime.NativeResourceOwner
+import com.halo.sdk.runtime.NativeResourceState
 import com.k2fsa.sherpa.onnx.FeatureConfig
 import com.k2fsa.sherpa.onnx.OfflineModelConfig
 import com.k2fsa.sherpa.onnx.OfflineRecognizer
@@ -28,10 +29,7 @@ class SherpaOfflineSpeechRecognitionProvider(
         private const val SAMPLE_RATE = 16_000
 
         fun isInstalled(modelDirectory: File): Boolean =
-            SherpaSpeechModelCatalog.isInstalled(
-                modelDirectory,
-                SherpaSpeechModelCatalog.whisperTiny
-            )
+            SherpaSpeechModelCatalog.isInstalled(modelDirectory, SherpaSpeechModelCatalog.whisperTiny)
     }
 
     override val metadata = com.halo.sdk.provider.ProviderMetadata(
@@ -41,33 +39,24 @@ class SherpaOfflineSpeechRecognitionProvider(
 
     override val nativeResourceKind: NativeResourceKind = NativeResourceKind.HEAVY_ASR
 
-    @Volatile
-    private var recognizer: OfflineRecognizer? = null
+    @Volatile private var recognizer: OfflineRecognizer? = null
     private val recognizerLock = Any()
     private val recognitionMutex = Mutex()
 
     override suspend fun health(): Boolean = isInstalled(modelDirectory)
 
     override suspend fun healthDetails(): ProviderHealth {
-        val missing = SherpaSpeechModelCatalog.missingFiles(
-            modelDirectory,
-            SherpaSpeechModelCatalog.whisperTiny
-        )
+        val missing = SherpaSpeechModelCatalog.missingFiles(modelDirectory, SherpaSpeechModelCatalog.whisperTiny)
         return ProviderHealth(
             healthy = missing.isEmpty(),
-            message = if (missing.isEmpty()) {
-                "Sherpa-ONNX Whisper tiny multilingual model is installed"
-            } else {
-                "Sherpa-ONNX Whisper tiny model is incomplete; missing: ${missing.joinToString()}"
-            }
+            message = if (missing.isEmpty()) "Sherpa-ONNX Whisper tiny multilingual model is installed"
+            else "Sherpa-ONNX Whisper tiny model is incomplete; missing: ${missing.joinToString()}"
         )
     }
 
     override suspend fun recognize(audio: AudioBuffer): RecognitionResult = recognitionMutex.withLock {
         require(audio.frames.isNotEmpty()) { "Cannot recognize an empty audio buffer" }
-        check(isInstalled(modelDirectory)) {
-            "Sherpa-ONNX model is not installed at ${modelDirectory.absolutePath}"
-        }
+        check(isInstalled(modelDirectory)) { "Sherpa-ONNX model is not installed at ${modelDirectory.absolutePath}" }
         require(audio.frames.all { it.sampleRate == SAMPLE_RATE && it.channels == 1 }) {
             "Sherpa-ONNX provider requires mono ${SAMPLE_RATE} Hz PCM audio"
         }
@@ -78,25 +67,27 @@ class SherpaOfflineSpeechRecognitionProvider(
         val samples = FloatArray(audio.frames.sumOf { it.samples.size })
         var offset = 0
         audio.frames.forEach { frame ->
-            frame.samples.forEach { sample ->
-                samples[offset++] = sample / 32768.0f
-            }
+            frame.samples.forEach { sample -> samples[offset++] = sample / 32768.0f }
         }
 
         try {
+            val wasResident = recognizer != null
+            nativeResourceCoordinator?.mark(
+                this,
+                if (wasResident) NativeResourceState.IN_USE else NativeResourceState.LOADING,
+                if (wasResident) "recognition started" else "loading Whisper recognizer"
+            )
             val localRecognizer = ensureRecognizer()
+            nativeResourceCoordinator?.mark(this, NativeResourceState.IN_USE, "recognition active")
             val stream = localRecognizer.createStream()
             return try {
                 stream.acceptWaveform(samples, SAMPLE_RATE)
                 localRecognizer.decode(stream)
                 val result = localRecognizer.getResult(stream)
-                RecognitionResult(
-                    text = result.text.trim(),
-                    language = language.ifBlank { "auto" },
-                    confidence = 0.0f
-                )
+                RecognitionResult(result.text.trim(), language.ifBlank { "auto" }, 0.0f)
             } finally {
                 stream.release()
+                nativeResourceCoordinator?.mark(this, NativeResourceState.RESIDENT, "recognition idle")
             }
         } catch (error: Throwable) {
             nativeResourceCoordinator?.release(this)
@@ -130,12 +121,8 @@ class SherpaOfflineSpeechRecognitionProvider(
     private fun ensureRecognizer(): OfflineRecognizer {
         synchronized(recognizerLock) {
             recognizer?.let { return it }
-
             val config = OfflineRecognizerConfig(
-                featConfig = FeatureConfig(
-                    sampleRate = SAMPLE_RATE,
-                    featureDim = 80
-                ),
+                featConfig = FeatureConfig(sampleRate = SAMPLE_RATE, featureDim = 80),
                 modelConfig = OfflineModelConfig(
                     whisper = OfflineWhisperModelConfig(
                         encoder = File(modelDirectory, "tiny-encoder.int8.onnx").absolutePath,
@@ -149,7 +136,6 @@ class SherpaOfflineSpeechRecognitionProvider(
                     provider = "cpu"
                 )
             )
-
             return OfflineRecognizer(config = config).also { recognizer = it }
         }
     }
