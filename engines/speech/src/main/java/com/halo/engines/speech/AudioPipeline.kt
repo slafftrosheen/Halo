@@ -33,11 +33,13 @@ class AudioPipeline(
     private var observerJobs: List<Job> = emptyList()
     private var liveListeningJob: Job? = null
 
+    /** True when the STT provider owns microphone capture itself. */
+    val usesLiveRecognition: Boolean
+        get() = sttProvider.mode == SpeechRecognitionMode.LIVE
+
     /**
      * Wake-word activation is opt-in. The normal phone interaction model is
      * explicit invocation through the orb, widget, or another input action.
-     * Enabling this flag is a separate activation policy and must not happen as
-     * a side effect of starting the runtime or starting a manual session.
      */
     @Volatile
     var wakeWordEnabled: Boolean = false
@@ -49,13 +51,7 @@ class AudioPipeline(
 
     fun setWakeWordEnabled(enabled: Boolean) {
         wakeWordEnabled = enabled
-        if (!enabled) {
-            // Dropping a partially detected wake state avoids carrying activation
-            // state across a user-visible policy change.
-            if (_state.value == SpeechState.WakeDetected) {
-                reset()
-            }
-        }
+        if (!enabled && _state.value == SpeechState.WakeDetected) reset()
     }
 
     fun start() {
@@ -104,11 +100,7 @@ class AudioPipeline(
             return
         }
 
-        if (buffer.duration() == 0L) {
-            // A wake word can be detected before VAD sees speech. Keep the
-            // wake-armed state alive until actual audio enters the utterance.
-            return
-        }
+        if (buffer.duration() == 0L) return
 
         val segment = buffer.snapshot()
         buffer.clear()
@@ -122,9 +114,6 @@ class AudioPipeline(
         val currentState = _state.value
         val speechDetected = vad.isSpeech(frame)
 
-        // Wake-word detection is never part of the normal manual phone session.
-        // It is only evaluated when the user has explicitly enabled wake-word
-        // activation in policy/settings.
         if (wakeWordEnabled &&
             currentState != SpeechState.WakeDetected &&
             currentState != SpeechState.Recognizing
