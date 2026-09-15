@@ -219,9 +219,9 @@ class AiProviderRouterTest {
     @Test
     fun `router falls back on transient generation failure`() = runTest {
         val storage = FakeStorage()
-        val primary = MockProvider("p1", "P1", throwsException = true, failureType = AiErrorType.GENERATION_FAILED)
-        val fallback = MockProvider("p2", "P2")
-        val router = DefaultAiProviderRouter(listOf(primary, fallback), storage)
+        val provider1 = MockProvider("p1", "P1", throwsException = true, failureType = AiErrorType.GENERATION_FAILED)
+        val provider2 = MockProvider("p2", "P2")
+        val router = DefaultAiProviderRouter(listOf(provider1, provider2), storage)
         router.setRoutingPolicy(AiRoutingPolicy.PREFERRED_WITH_FALLBACK)
         router.selectProvider("p1")
         val response = router.execute(AiRequest(text = "Hello"), AiContext.EMPTY)
@@ -229,119 +229,59 @@ class AiProviderRouterTest {
     }
 
     @Test
-    fun `router does not fallback on invalid request`() = runTest {
+    fun `router defaults to local-only routing`() = runTest {
         val storage = FakeStorage()
-        val primary = MockProvider("p1", "P1", throwsException = true, failureType = AiErrorType.INVALID_REQUEST)
-        val fallback = MockProvider("p2", "P2")
-        val router = DefaultAiProviderRouter(listOf(primary, fallback), storage)
-        router.setRoutingPolicy(AiRoutingPolicy.PREFERRED_WITH_FALLBACK)
-        router.selectProvider("p1")
-        try {
-            router.execute(AiRequest(text = "Hello"), AiContext.EMPTY)
-            fail("Expected INVALID_REQUEST")
-        } catch (e: AiProviderException) {
-            assertEquals(AiErrorType.INVALID_REQUEST, e.type)
-        }
-        assertTrue(fallback.receivedRequests.isEmpty())
-    }
+        val cloud = MockProvider("cloud", "Cloud", isLocal = false)
+        val local = MockProvider("local", "Local", isLocal = true)
+        val router = DefaultAiProviderRouter(listOf(cloud, local), storage)
 
-    @Test
-    fun `router does not fallback on authentication failure`() = runTest {
-        val storage = FakeStorage()
-        val primary = MockProvider("p1", "P1", throwsException = true, failureType = AiErrorType.AUTHENTICATION_FAILED)
-        val fallback = MockProvider("p2", "P2")
-        val router = DefaultAiProviderRouter(listOf(primary, fallback), storage)
-        router.setRoutingPolicy(AiRoutingPolicy.PREFERRED_WITH_FALLBACK)
-        router.selectProvider("p1")
-        try {
-            router.execute(AiRequest(text = "Hello"), AiContext.EMPTY)
-            fail("Expected AUTHENTICATION_FAILED")
-        } catch (e: AiProviderException) {
-            assertEquals(AiErrorType.AUTHENTICATION_FAILED, e.type)
-        }
-        assertTrue(fallback.receivedRequests.isEmpty())
-    }
-
-    @Test
-    fun `router does not fallback on unsupported capability`() = runTest {
-        val storage = FakeStorage()
-        val primary = MockProvider("p1", "P1", throwsException = true, failureType = AiErrorType.UNSUPPORTED_CAPABILITY)
-        val fallback = MockProvider("p2", "P2")
-        val router = DefaultAiProviderRouter(listOf(primary, fallback), storage)
-        router.setRoutingPolicy(AiRoutingPolicy.PREFERRED_WITH_FALLBACK)
-        router.selectProvider("p1")
-        try {
-            router.execute(AiRequest(text = "Hello"), AiContext.EMPTY)
-            fail("Expected UNSUPPORTED_CAPABILITY")
-        } catch (e: AiProviderException) {
-            assertEquals(AiErrorType.UNSUPPORTED_CAPABILITY, e.type)
-        }
-        assertTrue(fallback.receivedRequests.isEmpty())
-    }
-
-    @Test
-    fun `router does not fallback on context overflow`() = runTest {
-        val storage = FakeStorage()
-        val primary = MockProvider("p1", "P1", throwsException = true, failureType = AiErrorType.CONTEXT_TOO_LARGE)
-        val fallback = MockProvider("p2", "P2")
-        val router = DefaultAiProviderRouter(listOf(primary, fallback), storage)
-        router.setRoutingPolicy(AiRoutingPolicy.PREFERRED_WITH_FALLBACK)
-        router.selectProvider("p1")
-        try {
-            router.execute(AiRequest(text = "Hello"), AiContext.EMPTY)
-            fail("Expected CONTEXT_TOO_LARGE")
-        } catch (e: AiProviderException) {
-            assertEquals(AiErrorType.CONTEXT_TOO_LARGE, e.type)
-        }
-        assertTrue(fallback.receivedRequests.isEmpty())
-    }
-
-    @Test
-    fun `fallback resolves its own advertised model`() = runTest {
-        val storage = FakeStorage()
-        val primary = MockProvider("p1", "P1", throwsException = true, modelId = "model-a")
-        val fallback = MockProvider("p2", "P2", modelId = "model-b")
-        val router = DefaultAiProviderRouter(listOf(primary, fallback), storage)
-        router.setRoutingPolicy(AiRoutingPolicy.PREFERRED_WITH_FALLBACK)
+        assertEquals(AiRoutingPolicy.LOCAL_ONLY, router.routingPolicy.value)
         val response = router.execute(AiRequest(text = "Hello"), AiContext.EMPTY)
-        assertEquals("p2", response.providerId)
-        assertEquals("model-b", fallback.receivedRequests.single().modelId)
+        assertEquals("local", response.providerId)
+        assertEquals(0, cloud.receivedRequests.size)
     }
 
     @Test
-    fun `automatic routing skips provider with incompatible models`() = runTest {
+    fun `legacy automatic policy is migrated to local-only`() = runTest {
         val storage = FakeStorage()
-        val textProvider = MockProvider("p1", "Text Provider", supportedCapabilities = setOf(AiCapability.TEXT), modelId = "text-model")
-        val usableProvider = MockProvider("p2", "Image Provider", supportedCapabilities = setOf(AiCapability.TEXT, AiCapability.IMAGE), modelId = "vision-model")
-        val router = DefaultAiProviderRouter(listOf(textProvider, usableProvider), storage)
+        storage.putString("ai_routing_policy", AiRoutingPolicy.AUTOMATIC.name)
+        val cloud = MockProvider("cloud", "Cloud", isLocal = false)
+        val local = MockProvider("local", "Local", isLocal = true)
+        val router = DefaultAiProviderRouter(listOf(cloud, local), storage)
+
+        assertEquals(AiRoutingPolicy.LOCAL_ONLY, router.routingPolicy.value)
+        assertEquals(AiRoutingPolicy.LOCAL_ONLY.name, storage.getString("ai_routing_policy"))
+        assertEquals("local", router.execute(AiRequest(text = "Hello"), AiContext.EMPTY).providerId)
+        assertEquals(0, cloud.receivedRequests.size)
+    }
+
+    @Test
+    fun `automatic and preferred fallback requests cannot re-enable network routing`() = runTest {
+        val storage = FakeStorage()
+        val cloud = MockProvider("cloud", "Cloud", isLocal = false)
+        val local = MockProvider("local", "Local", isLocal = true)
+        val router = DefaultAiProviderRouter(listOf(cloud, local), storage)
+
         router.setRoutingPolicy(AiRoutingPolicy.AUTOMATIC)
-        val response = router.execute(AiRequest(text = "What is this?", image = byteArrayOf(1, 2, 3)), AiContext.EMPTY)
-        assertEquals("p2", response.providerId)
+        assertEquals(AiRoutingPolicy.LOCAL_ONLY, router.routingPolicy.value)
+        router.setRoutingPolicy(AiRoutingPolicy.PREFERRED_WITH_FALLBACK)
+        assertEquals(AiRoutingPolicy.LOCAL_ONLY, router.routingPolicy.value)
+        assertEquals("local", router.execute(AiRequest(text = "Hello"), AiContext.EMPTY).providerId)
+        assertEquals(0, cloud.receivedRequests.size)
     }
 
     @Test
-    fun `router skips providers without required capability`() = runTest {
+    fun `explicit cloud selection remains explicit and never becomes automatic`() = runTest {
         val storage = FakeStorage()
-        val pText = MockProvider("p1", "Text Only", supportedCapabilities = setOf(AiCapability.TEXT))
-        val pImage = MockProvider("p2", "Image Only", supportedCapabilities = setOf(AiCapability.IMAGE))
-        val router = DefaultAiProviderRouter(listOf(pText, pImage), storage)
-        router.setRoutingPolicy(AiRoutingPolicy.AUTOMATIC)
-        val resp1 = router.execute(AiRequest(text = "hello"))
-        assertEquals("p1", resp1.providerId)
-        val resp2 = router.execute(AiRequest(image = byteArrayOf(1, 2, 3)))
-        assertEquals("p2", resp2.providerId)
-    }
+        val cloud = MockProvider("cloud", "Cloud", isLocal = false)
+        val local = MockProvider("local", "Local", isLocal = true)
+        val router = DefaultAiProviderRouter(listOf(cloud, local), storage)
+        router.setRoutingPolicy(AiRoutingPolicy.EXPLICIT)
+        router.selectProvider("cloud")
 
-    @Test
-    fun `getEligibleProvider throws if no provider supports request`() = runTest {
-        val storage = FakeStorage()
-        val pText = MockProvider("p1", "Text Only")
-        val router = DefaultAiProviderRouter(listOf(pText), storage)
-        try {
-            router.getEligibleProvider(AiRequest(image = byteArrayOf(1)))
-            fail("Expected AiProviderException")
-        } catch (e: AiProviderException) {
-            assertEquals(AiErrorType.PROVIDER_UNAVAILABLE, e.type)
-        }
+        assertEquals(AiRoutingPolicy.EXPLICIT, router.routingPolicy.value)
+        assertEquals("cloud", router.execute(AiRequest(text = "Hello"), AiContext.EMPTY).providerId)
+        assertEquals(1, cloud.receivedRequests.size)
+        assertEquals(0, local.receivedRequests.size)
     }
 }
