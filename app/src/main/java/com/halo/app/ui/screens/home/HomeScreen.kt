@@ -9,7 +9,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Stop
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
@@ -117,8 +116,8 @@ fun HomeScreen(viewModel: HomeViewModel) {
                     size = 172.dp,
                     onClick = ::toggleOrb,
                     contentDescription = when {
-                        isActiveSession -> "Stop Halo"
                         isListening -> "Stop listening"
+                        isActiveSession -> "Stop Halo"
                         else -> "Speak to Halo"
                     }
                 )
