@@ -74,6 +74,9 @@ class AndroidProviderFactory(
                 keywordsFile = sherpaKwsKeywords
             )
         }.getOrElse {
+            // Never activate upstream demo keywords implicitly. Until a Halo-owned
+            // keyword file is explicitly installed, retain the compatibility
+            // pass-through detector and explicit listening controls.
             AlwaysWakeDetector()
         }
 

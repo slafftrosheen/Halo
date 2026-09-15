@@ -16,7 +16,7 @@ object SherpaSpeechModelCatalog {
     const val SILERO_VAD_FILE = "silero_vad.onnx"
     const val KWS_ENGLISH_ID = "kws-english-zipformer"
     const val KWS_ENGLISH_DIRECTORY = "sherpa-kws-english"
-    const val KWS_ENGLISH_KEYWORDS_FILE = "keywords.txt"
+    const val KWS_ENGLISH_KEYWORDS_FILE = "halo-keywords.txt"
 
     data class FileSpec(
         val name: String,
@@ -46,9 +46,9 @@ object SherpaSpeechModelCatalog {
     )
 
     /**
-     * English Zipformer KWS model. We use the int8 encoder/joiner and fp32 decoder
-     * combination documented by sherpa-onnx. The keywords file is deliberately
-     * user-supplied so the wake phrase remains configurable rather than hardcoded.
+     * English Zipformer KWS model. Halo's keyword file is intentionally excluded
+     * from this model inventory: the upstream archive's example keywords must not
+     * silently become Halo's active wake phrase.
      */
     val kwsEnglish = ModelSpec(
         id = KWS_ENGLISH_ID,
@@ -57,8 +57,7 @@ object SherpaSpeechModelCatalog {
             FileSpec("decoder-epoch-12-avg-2-chunk-16-left-64.onnx", 900_000L),
             FileSpec("joiner-epoch-12-avg-2-chunk-16-left-64.int8.onnx", 100_000L),
             FileSpec("tokens.txt", 3_000L),
-            FileSpec("bpe.model", 100_000L),
-            FileSpec(KWS_ENGLISH_KEYWORDS_FILE, 1L)
+            FileSpec("bpe.model", 100_000L)
         ),
         sourceUrl = "https://github.com/k2-fsa/sherpa-onnx/releases/download/kws-models/sherpa-onnx-kws-zipformer-gigaspeech-3.3M-2024-01-01.tar.bz2"
     )
