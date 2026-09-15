@@ -126,9 +126,17 @@ class AudioPerceptionEngine(
     private suspend fun startCapture() {
         if (captureJob?.isActive == true) return
 
-        // Live providers (Android SpeechRecognizer today) capture from the
-        // microphone themselves. Starting AudioRecord here would create two
-        // competing microphone clients and can produce OEM audio feedback.
+        // Do not touch the microphone unless the selected STT provider is usable.
+        // In particular, the unavailable local provider must fail before AudioRecord
+        // starts so tapping the orb never creates a fake listening session.
+        if (!audioPipeline.isRecognitionAvailable()) {
+            reportCaptureFailure(audioPipeline.unavailableReason())
+            return
+        }
+
+        // Live providers own microphone capture themselves. Starting AudioRecord
+        // here would create two competing microphone clients and can produce OEM
+        // audio feedback.
         if (audioPipeline.usesLiveRecognition) {
             audioPipeline.reset()
             _health.value = EngineHealth.Healthy
@@ -193,7 +201,7 @@ class AudioPerceptionEngine(
         audioPipeline.reset()
     }
 
-    private suspend fun reportCaptureFailure(reason: String, throwable: Throwable) {
+    private suspend fun reportCaptureFailure(reason: String, throwable: Throwable? = null) {
         _health.value = EngineHealth.Degraded
         if (::context.isInitialized) {
             context.runtime.logger.error(
