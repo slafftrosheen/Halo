@@ -26,7 +26,7 @@ data class TimelinePreviewEvent(
 
 data class HomeUiState(
     val connectionState: String = "Disconnected",
-    val contextualText: String = "Initializing...",
+    val contextualText: String = "Ready when you are",
     val runtimeState: HaloRuntimeState = HaloRuntimeState.Idle,
     val recentEvents: List<TimelinePreviewEvent> = emptyList(),
     val activeProvider: String = "No provider",
@@ -48,7 +48,7 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
     ): HomeUiState {
         val isReady = snapshot.runtimeState == RuntimeState.Running
 
-        val uiRuntimeState = when (snapshot.speech) {
+        val speechRuntimeState = when (snapshot.speech) {
             is SpeechSessionState.PassiveListening -> HaloRuntimeState.Idle
             is SpeechSessionState.Capturing -> HaloRuntimeState.Capturing
             is SpeechSessionState.Recognizing -> HaloRuntimeState.Recognizing
@@ -58,16 +58,29 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
             else -> HaloRuntimeState.Idle
         }
 
+        // Text cognition must drive the same state surface as speech cognition.
+        // Previously a successful text request could leave the orb visually Idle.
+        val uiRuntimeState = when (sessionState) {
+            is CognitiveSessionState.PreparingContext -> HaloRuntimeState.Recognizing
+            is CognitiveSessionState.Reasoning -> HaloRuntimeState.Reasoning
+            is CognitiveSessionState.Streaming -> HaloRuntimeState.Reasoning
+            is CognitiveSessionState.ExecutingTool -> HaloRuntimeState.Executing
+            is CognitiveSessionState.Completed -> HaloRuntimeState.Idle
+            is CognitiveSessionState.Failed -> HaloRuntimeState.Recovering
+            CognitiveSessionState.Idle -> speechRuntimeState
+        }
+
         val contextualText = when (sessionState) {
             is CognitiveSessionState.PreparingContext -> "Preparing context..."
             is CognitiveSessionState.Reasoning -> "Reasoning..."
-            is CognitiveSessionState.Streaming -> sessionState.text
+            is CognitiveSessionState.Streaming -> sessionState.text.ifBlank { "Generating..." }
+            is CognitiveSessionState.ExecutingTool -> "Executing ${sessionState.toolName}..."
             is CognitiveSessionState.Completed -> sessionState.response.text.ifBlank { "Completed" }
             is CognitiveSessionState.Failed -> "Error: ${sessionState.message}"
-            else -> when (uiRuntimeState) {
-                HaloRuntimeState.Idle -> if (isReady) "Ready when you are" else "Initializing..."
+            CognitiveSessionState.Idle -> when (uiRuntimeState) {
+                HaloRuntimeState.Idle -> if (isReady) "Ready when you are" else "Starting Halo..."
                 HaloRuntimeState.Capturing -> "Listening"
-                HaloRuntimeState.Recognizing -> "Thinking"
+                HaloRuntimeState.Recognizing -> "Understanding"
                 HaloRuntimeState.Reasoning -> "Reasoning"
                 HaloRuntimeState.Speaking -> "Speaking"
                 else -> "Processing..."
@@ -76,17 +89,6 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
 
         val activeSession = activeSessions.firstOrNull()
         val activeSessionState = activeSession?.state?.value
-        val isConnected = when (activeSessionState) {
-            com.halo.sdk.runtime.embodiment.SessionState.CONNECTING,
-            com.halo.sdk.runtime.embodiment.SessionState.CONNECTED,
-            com.halo.sdk.runtime.embodiment.SessionState.HANDSHAKE,
-            com.halo.sdk.runtime.embodiment.SessionState.CAPABILITY_SYNC,
-            com.halo.sdk.runtime.embodiment.SessionState.STATE_SYNC,
-            com.halo.sdk.runtime.embodiment.SessionState.READY -> true
-            null -> snapshot.deviceContext.connected
-            else -> false
-        }
-
         val connectionText = when (activeSessionState) {
             com.halo.sdk.runtime.embodiment.SessionState.SAVED -> "Saved"
             com.halo.sdk.runtime.embodiment.SessionState.DISCOVERED -> "Discovered"
@@ -103,7 +105,7 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
         }
 
         val caps = if (snapshot.deviceContext.capabilities.isEmpty()) {
-            listOf("Not reported")
+            listOf("Phone runtime")
         } else {
             snapshot.deviceContext.capabilities
         }
@@ -130,17 +132,9 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
             ?: snapshot.providers.find { it.isSelected }?.status
             ?: "Unavailable"
 
-        val finalContextualText = if (sessionState != CognitiveSessionState.Idle) {
-            contextualText
-        } else if (!isConnected) {
-            "Glasses disconnected"
-        } else {
-            contextualText
-        }
-
         return HomeUiState(
             connectionState = connectionText,
-            contextualText = finalContextualText,
+            contextualText = contextualText,
             runtimeState = uiRuntimeState,
             recentEvents = snapshot.timeline.map {
                 TimelinePreviewEvent(it.title, it.status, it.timestamp.toEpochMilli())
@@ -202,10 +196,11 @@ class HomeViewModel(
     fun submitText(text: String) {
         Log.d("HomeViewModel", "submitText invoked")
         val normalized = text.trim()
-        if (normalized.isBlank()) return
-        viewModelScope.launch {
-            runCatching { cognitiveSession.submit(AiRequest(text = normalized)) }
-                .onFailure { Log.e("HomeViewModel", "Text submission failed", it) }
+        if (normalized.isNotBlank()) {
+            viewModelScope.launch {
+                runCatching { cognitiveSession.submit(AiRequest(text = normalized)) }
+                    .onFailure { Log.e("HomeViewModel", "Text submission failed", it) }
+            }
         }
     }
 
