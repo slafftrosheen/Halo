@@ -104,12 +104,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
                     }
                 )
                 Spacer(Modifier.height(10.dp))
-                Text(
-                    uiState.runtimeState.name.uppercase(),
-                    style = HaloTypography.labelLarge,
-                    color = HaloGlassColors.TextPrimary,
-                    letterSpacing = 1.2.sp
-                )
+                Text(uiState.runtimeState.name.uppercase(), style = HaloTypography.labelLarge, color = HaloGlassColors.TextPrimary, letterSpacing = 1.2.sp)
                 Spacer(Modifier.height(4.dp))
                 Text(
                     when {
@@ -135,7 +130,20 @@ fun HomeScreen(viewModel: HomeViewModel) {
                     ContextTag("HISTORY", true)
                 }
                 Spacer(Modifier.height(4.dp))
-                HaloMarkdownText(markdown = uiState.contextualText.ifBlank { "Working…" }, textColor = HaloGlassColors.TextPrimary, modifier = Modifier.fillMaxWidth())
+                when (val session = uiState.sessionState) {
+                    is com.halo.sdk.provider.CognitiveSessionState.Streaming -> Text(
+                        session.text.ifBlank { "Generating…" },
+                        style = HaloTypography.bodyLarge,
+                        color = HaloGlassColors.TextPrimary,
+                        lineHeight = 22.sp
+                    )
+                    is com.halo.sdk.provider.CognitiveSessionState.Completed -> HaloMarkdownText(
+                        markdown = session.response.text.ifBlank { "Completed" },
+                        textColor = HaloGlassColors.TextPrimary,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    else -> Text(uiState.contextualText, style = HaloTypography.bodyLarge, color = HaloGlassColors.TextPrimary)
+                }
                 if (uiState.sessionState is com.halo.sdk.provider.CognitiveSessionState.Completed || uiState.sessionState is com.halo.sdk.provider.CognitiveSessionState.Streaming) {
                     Spacer(Modifier.height(8.dp))
                     Text("via ${uiState.activeProvider}", style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
