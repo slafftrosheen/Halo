@@ -12,6 +12,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import com.halo.app.ui.glass.components.*
 import com.halo.app.ui.glass.material.HaloGlassColors
+import androidx.compose.foundation.background
+import com.halo.app.ui.glass.material.HaloGlassTokens
+import com.halo.app.ui.glass.material.HaloGlassMaterials
 import com.halo.app.ui.glass.material.HaloTypography
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,148 +28,377 @@ import com.halo.sdk.runtime.RuntimeSnapshotSource
 @Composable
 fun ActivityScreen(viewModel: ActivityViewModel) {
     val uiState by viewModel.uiState.collectAsState()
-    
+
     HaloGlassLazyPage(title = "Activity") {
+        // Intro / context copy
         item {
-            Text(
-                text = "Cognitive timeline and runtime events",
-                style = HaloTypography.bodyMedium,
-                color = HaloGlassColors.TextSecondary
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
+            ) {
+                Text(
+                    text = "Cognitive timeline and runtime events",
+                    style = HaloTypography.bodyMedium,
+                    color = HaloGlassColors.TextSecondary
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Intents, routines and system operations executed by Halo.",
+                    style = HaloTypography.bodySmall,
+                    color = HaloGlassColors.TextMuted
+                )
+            }
         }
-        
+
+        // Summary metrics bar
+        item {
+            ActivitySummaryBar(uiState = uiState)
+            Spacer(modifier = Modifier.height(20.dp))
+        }
+
+        // Filter chips (for now, simple “All / Success / Errors”)
+        item {
+            ActivityFilterBar(
+                events = uiState.events,
+                onFilterSelected = { /* TODO: hook into viewModel when ready */ }
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
         if (uiState.events.isEmpty()) {
+            // Empty state
             item {
-                Box(Modifier.fillMaxWidth().height(300.dp), contentAlignment = Alignment.Center) {
-                    Text(
-                        text = "No activity yet.",
-                        color = HaloGlassColors.TextMuted,
-                        style = HaloTypography.bodyLarge
-                    )
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(260.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "No activity yet.",
+                            color = HaloGlassColors.TextMuted,
+                            style = HaloTypography.bodyLarge
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Your cognitive timeline will appear once Halo runs intents and routines.",
+                            color = HaloGlassColors.TextSecondary,
+                            style = HaloTypography.bodySmall
+                        )
+                    }
                 }
             }
         } else {
+            // Timeline spine + cards
             items(uiState.events) { event ->
-                ActivityEventItem(event)
+                ActivityTimelineItem(event = event)
+                Spacer(modifier = Modifier.height(12.dp))
             }
         }
     }
 }
 
 @Composable
-private fun ActivityEventItem(event: ActivityEvent) {
-    var expanded by remember { mutableStateOf(false) }
+private fun ActivitySummaryBar(uiState: ActivityUiState) {
+    val totalEvents = uiState.events.size
+    val successfulEvents = uiState.events.count { it.status.equals("Success", ignoreCase = true) }
+    val failedEvents = uiState.events.count { !it.status.equals("Success", ignoreCase = true) }
 
-    HaloGlassCard(
-        onClick = { expanded = !expanded }
-    ) {
-        Column(modifier = Modifier.padding(4.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+    HaloGlassCard {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Text(
-                    text = event.command,
-                    color = HaloGlassColors.TextPrimary,
-                    style = HaloTypography.bodyLarge,
-                    fontWeight = FontWeight.SemiBold
+                    text = "Timeline overview",
+                    style = HaloTypography.labelSmall,
+                    color = HaloGlassColors.TextMuted
                 )
                 Text(
-                    text = event.timestamp.format(),
-                    color = HaloGlassColors.TextSecondary,
-                    style = HaloTypography.labelMedium
+                    text = "$totalEvents intents in view",
+                    style = HaloTypography.bodyMedium,
+                    color = HaloGlassColors.TextPrimary
                 )
             }
-            
-            if (expanded) {
-                Spacer(modifier = Modifier.height(16.dp))
-                HaloGlassDivider()
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                if (event.subEvents.isNotEmpty()) {
-                    Text(
-                        text = "TIMELINE",
-                        style = HaloTypography.labelSmall,
-                        color = HaloGlassColors.TextSecondary
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                SummaryMetricRow(
+                    label = "Successful",
+                    value = successfulEvents.toString(),
+                    healthy = successfulEvents >= failedEvents
+                )
+                SummaryMetricRow(
+                    label = "Errors",
+                    value = failedEvents.toString(),
+                    healthy = failedEvents == 0
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SummaryMetricRow(label: String, value: String, healthy: Boolean) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            style = HaloTypography.bodySmall,
+            color = HaloGlassColors.TextSecondary
+        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(7.dp)
+                    .background(
+                        if (healthy) HaloGlassColors.Success else HaloGlassColors.Danger,
+                        HaloGlassTokens.circleShape
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    event.subEvents.forEach { subEvent ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = subEvent.command,
-                                color = HaloGlassColors.TextPrimary,
-                                style = HaloTypography.bodySmall
-                            )
-                            Text(
-                                text = subEvent.timestamp.format(),
-                                color = HaloGlassColors.TextSecondary,
-                                style = HaloTypography.labelSmall
-                            )
-                        }
-                        if (subEvent.description.isNotBlank()) {
-                            Text(
-                                text = subEvent.description,
-                                color = HaloGlassColors.TextSecondary,
-                                style = HaloTypography.labelSmall,
-                                modifier = Modifier.padding(bottom = 4.dp)
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(16.dp))
-                } else {
-                    Text(
-                        text = "STATUS",
-                        style = HaloTypography.labelSmall,
-                        color = HaloGlassColors.TextSecondary
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = value,
+                style = HaloTypography.bodyMedium,
+                color = HaloGlassColors.TextPrimary
+            )
+        }
+    }
+}
+
+@Composable
+private fun ActivityFilterBar(
+    events: List<ActivityEvent>,
+    onFilterSelected: (String) -> Unit
+) {
+    val hasErrors = events.any { !it.status.equals("Success", ignoreCase = true) }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        HaloGlassChip(
+            text = "All",
+            material = HaloGlassMaterials.Interactive.copy(
+                containerColor = HaloGlassColors.Glass,
+                contentColor = HaloGlassColors.TextPrimary
+            )
+        )
+        HaloGlassChip(
+            text = "Success",
+            material = HaloGlassMaterials.Interactive.copy(
+                containerColor = HaloGlassColors.Success.copy(alpha = 0.14f),
+                contentColor = HaloGlassColors.Success
+            )
+        )
+        if (hasErrors) {
+            HaloGlassChip(
+                text = "Errors",
+                material = HaloGlassMaterials.Interactive.copy(
+                    containerColor = HaloGlassColors.Danger.copy(alpha = 0.14f),
+                    contentColor = HaloGlassColors.Danger
+                )
+            )
+        }
+    }
+}
+
+@Composable
+private fun ActivityTimelineItem(event: ActivityEvent) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.Top
+    ) {
+        // Timeline spine + node
+        Column(
+            modifier = Modifier
+                .width(36.dp)
+                .padding(top = 4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Node
+            Box(
+                modifier = Modifier
+                    .size(10.dp)
+                    .background(
+                        color = if (event.status.equals("Success", ignoreCase = true))
+                            HaloGlassColors.Success
+                        else HaloGlassColors.Warning,
+                        shape = HaloGlassTokens.circleShape
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+            )
+            // Spine segment beneath node
+            Spacer(modifier = Modifier.height(4.dp))
+            Box(
+                modifier = Modifier
+                    .width(2.dp)
+                    .height(80.dp)
+                    .background(HaloGlassColors.Glass)
+            )
+        }
+
+        // Event card
+        HaloGlassCard(
+            onClick = { expanded = !expanded }
+        ) {
+            Column(modifier = Modifier.padding(4.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
-                        text = event.status,
+                        text = event.command,
+                        color = HaloGlassColors.TextPrimary,
                         style = HaloTypography.bodyLarge,
-                        color = if (event.status == "Success") HaloGlassColors.Success else HaloGlassColors.TextPrimary
+                        fontWeight = FontWeight.SemiBold
                     )
-                    
-                    Spacer(modifier = Modifier.height(24.dp))
-                    
                     Text(
-                        text = "DESCRIPTION",
-                        style = HaloTypography.labelSmall,
-                        color = HaloGlassColors.TextSecondary
+                        text = event.timestamp.format(),
+                        color = HaloGlassColors.TextSecondary,
+                        style = HaloTypography.labelMedium
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                if (!expanded) {
                     Text(
                         text = event.description,
-                        color = HaloGlassColors.TextPrimary,
-                        style = HaloTypography.bodyMedium
+                        color = HaloGlassColors.TextSecondary,
+                        style = HaloTypography.bodySmall,
+                        maxLines = 1
                     )
-                }
-                
-                Spacer(modifier = Modifier.height(24.dp))
-                
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text("ID", style = HaloTypography.labelSmall, color = HaloGlassColors.TextSecondary)
+                } else {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    HaloGlassDivider()
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    if (event.subEvents.isNotEmpty()) {
+                        Text(
+                            text = "TIMELINE",
+                            style = HaloTypography.labelSmall,
+                            color = HaloGlassColors.TextSecondary
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        event.subEvents.forEach { subEvent ->
+                            SubEventRow(subEvent)
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                    } else {
+                        Text(
+                            text = "STATUS",
+                            style = HaloTypography.labelSmall,
+                            color = HaloGlassColors.TextSecondary
+                        )
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text(event.id.take(8), style = HaloTypography.monoSmall, color = HaloGlassColors.TextMuted)
+                        Text(
+                            text = event.status,
+                            style = HaloTypography.bodyLarge,
+                            color = if (event.status == "Success")
+                                HaloGlassColors.Success
+                            else HaloGlassColors.TextPrimary
+                        )
+
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        Text(
+                            text = "DESCRIPTION",
+                            style = HaloTypography.labelSmall,
+                            color = HaloGlassColors.TextSecondary
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = event.description,
+                            color = HaloGlassColors.TextPrimary,
+                            style = HaloTypography.bodyMedium
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = event.status.uppercase(),
+                            style = HaloTypography.labelSmall,
+                            color = if (event.status == "Success")
+                                HaloGlassColors.Success
+                            else HaloGlassColors.Warning
+                        )
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text(
+                                "ID",
+                                style = HaloTypography.labelSmall,
+                                color = HaloGlassColors.TextSecondary
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                event.id.take(8),
+                                style = HaloTypography.monoSmall,
+                                color = HaloGlassColors.TextMuted
+                            )
+                        }
                     }
                 }
-            } else {
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = event.description,
-                    color = HaloGlassColors.TextSecondary,
-                    style = HaloTypography.bodySmall,
-                    maxLines = 1
-                )
             }
+        }
+    }
+}
+
+@Composable
+private fun SubEventRow(subEvent: ActivityEvent) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = subEvent.command,
+                color = HaloGlassColors.TextPrimary,
+                style = HaloTypography.bodySmall
+            )
+            Text(
+                text = subEvent.timestamp.format(),
+                color = HaloGlassColors.TextSecondary,
+                style = HaloTypography.labelSmall
+            )
+        }
+        if (subEvent.description.isNotBlank()) {
+            Text(
+                text = subEvent.description,
+                color = HaloGlassColors.TextSecondary,
+                style = HaloTypography.labelSmall,
+                modifier = Modifier.padding(top = 2.dp)
+            )
         }
     }
 }

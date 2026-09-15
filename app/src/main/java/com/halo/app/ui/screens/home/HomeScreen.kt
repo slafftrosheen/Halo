@@ -5,9 +5,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Stop
@@ -23,7 +25,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.input.ImeAction
+
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.halo.app.ui.glass.components.*
@@ -80,43 +84,118 @@ fun HomeScreen(viewModel: HomeViewModel) {
 
         Spacer(Modifier.height(24.dp))
 
-        HaloGlassCard {
-            Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = when {
-                        isListening -> "HALO IS LISTENING"
-                        isActiveSession -> "HALO IS THINKING"
-                        else -> "HALO IS READY"
-                    },
-                    style = HaloTypography.labelSmall,
-                    color = HaloGlassColors.TextMuted,
-                    letterSpacing = 1.1.sp
+        val presenceLabel = when (uiState.runtimeState) {
+            HaloRuntimeState.Listening, HaloRuntimeState.Wakeword -> "Listening for you"
+            HaloRuntimeState.Capturing -> "Capturing input"
+            HaloRuntimeState.Recognizing -> "Understanding context"
+            HaloRuntimeState.Reasoning, HaloRuntimeState.Planning -> "Reasoning about next steps"
+            HaloRuntimeState.Executing -> "Running routines"
+            HaloRuntimeState.Speaking -> "Responding"
+            HaloRuntimeState.Recovering -> "Recovering runtime"
+            HaloRuntimeState.Stopped, HaloRuntimeState.Idle -> "Standing by"
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    brush = Brush.radialGradient(
+                        colors = listOf(HaloGlassColors.Glass, Color.Transparent),
+                        radius = 600f
+                    )
                 )
-                Spacer(Modifier.height(14.dp))
-                HaloFloatingMic(
-                    state = uiState.runtimeState,
-                    onClick = {
-                        when {
-                            isActiveSession -> viewModel.cancelSession()
-                            isListening -> viewModel.stopListening()
-                            else -> viewModel.startListening()
+        ) {
+            HaloGlassCard {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = presenceLabel,
+                        style = HaloTypography.labelSmall,
+                        color = HaloGlassColors.TextMuted,
+                        letterSpacing = 1.1.sp
+                    )
+
+                    Spacer(Modifier.height(16.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(24.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .pointerInput(Unit) {
+                                    detectTapGestures(
+                                        onLongPress = {
+                                            viewModel.navigateToConsole()
+                                        }
+                                    )
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            HaloStateOrb(
+                                state = uiState.runtimeState,
+                                size = 100.dp
+                            )
+                        }
+
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            HaloFloatingMic(
+                                state = uiState.runtimeState,
+                                onClick = {
+                                    when {
+                                        isActiveSession -> viewModel.cancelSession()
+                                        isListening -> viewModel.stopListening()
+                                        else -> viewModel.startListening()
+                                    }
+                                }
+                            )
+                            Spacer(Modifier.height(10.dp))
+                            Text(
+                                uiState.runtimeState.name.uppercase(),
+                                style = HaloTypography.labelLarge,
+                                color = HaloGlassColors.TextPrimary,
+                                letterSpacing = 1.2.sp
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                when {
+                                    isActiveSession -> "Tap to stop"
+                                    isListening -> "Listening… tap to stop"
+                                    else -> "Tap to speak"
+                                },
+                                style = HaloTypography.labelSmall,
+                                color = HaloGlassColors.TextSecondary
+                            )
                         }
                     }
-                )
-                Spacer(Modifier.height(10.dp))
-                Text(uiState.runtimeState.name.uppercase(), style = HaloTypography.labelLarge, color = HaloGlassColors.TextPrimary, letterSpacing = 1.2.sp)
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    when {
-                        isActiveSession -> "Tap to stop"
-                        isListening -> "Listening… tap to stop"
-                        else -> "Tap to speak"
-                    },
-                    style = HaloTypography.labelSmall,
-                    color = HaloGlassColors.TextSecondary
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(uiState.contextualText, style = HaloTypography.bodySmall, color = HaloGlassColors.TextMuted)
+
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        uiState.contextualText,
+                        style = HaloTypography.bodySmall,
+                        color = HaloGlassColors.TextMuted
+                    )
+                }
+            }
+        }
+
+        if (uiState.recentEvents.isNotEmpty()) {
+            val lastEvent = uiState.recentEvents.first()
+            Spacer(Modifier.height(12.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(lastEvent.command, style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted, maxLines = 1, modifier = Modifier.weight(1f))
+                Text(lastEvent.status, style = HaloTypography.labelSmall, color = HaloGlassColors.TextSecondary, maxLines = 1)
             }
         }
 

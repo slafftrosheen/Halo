@@ -165,4 +165,5 @@ class HomeViewModel(
     val navigationEvents: SharedFlow<String> = _navigationEvents.asSharedFlow()
     fun navigateToIntelligence() { viewModelScope.launch { _navigationEvents.emit("ai_settings") } }
     fun navigateToDevices() { viewModelScope.launch { _navigationEvents.emit("devices") } }
+    fun navigateToConsole() { viewModelScope.launch { _navigationEvents.emit("console") } }
 }
