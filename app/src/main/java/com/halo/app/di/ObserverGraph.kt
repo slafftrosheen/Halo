@@ -34,7 +34,11 @@ class ObserverGraph(
     }
 
     val snapshotAssembler by lazy {
-        DefaultSnapshotAssembler(healthEvaluator, java.time.Clock.systemUTC())
+        DefaultSnapshotAssembler(
+            healthEvaluator,
+            java.time.Clock.systemUTC(),
+            engineGraph.nativeResourceCoordinator
+        )
     }
 
     val runtimeReplayRecorder by lazy {
@@ -64,7 +68,7 @@ class ObserverGraph(
                 val router = engineGraph.aiProviderRouter
                 val selectedId = router.selectedProviderId.value
                 val selectedModelId = router.selectedModelId.value
-                
+
                 router.getAllProviders().map { provider ->
                     val status = provider.status.value
                     ProviderSnapshot(
