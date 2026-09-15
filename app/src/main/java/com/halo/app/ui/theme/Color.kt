@@ -23,3 +23,6 @@ val HaloBorderStrong = Color.White.copy(alpha = 0.50f)
 val HaloDivider = HaloBorderSubtle
 
 val HaloSignalSurface = Color(0xFF101516)
+
+val HaloGlassHighlight = Color.White.copy(alpha = 0.08f)
+val HaloGlassShadow = Color.Black.copy(alpha = 0.45f)
