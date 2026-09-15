@@ -11,6 +11,7 @@ import com.halo.app.ui.screens.activity.ActivityViewModel
 import com.halo.app.ui.screens.devices.DevicesViewModel
 import com.halo.app.ui.developer.protocol.ProtocolLabViewModel
 import com.halo.app.ui.developer.inspector.RuntimeInspectorViewModel
+import com.halo.app.RuntimeStartupTrace
 
 /**
  * Thin façade that wires sub-graphs together. This is the sole composition root.
@@ -20,19 +21,17 @@ object ManualDependencyGraph {
     lateinit var applicationContext: Context
 
     fun init(context: Context) {
-        applicationContext = context.applicationContext
+        RuntimeStartupTrace.measure("graph.init") {
+            applicationContext = context.applicationContext
+        }
     }
 
-    // ─── Sub-graphs ─────────────────────────────────────────────
-
-    val infra by lazy { InfrastructureGraph() }
-    val storage by lazy { com.halo.host.android.AndroidStorage(applicationContext) }
-    val providerGraph by lazy { ProviderGraph(applicationContext, storage) }
-    val hostGraph by lazy { HostGraph(applicationContext, infra, providerGraph, storage) }
-    val engineGraph by lazy { EngineGraph(applicationContext, infra, providerGraph, deviceSessionManager, hostGraph.heyCyanDriver) }
-    val observerGraph by lazy { ObserverGraph(applicationContext, infra, engineGraph) }
-
-    // ─── Convenience accessors (preserve existing API) ──────────
+    val infra by lazy { RuntimeStartupTrace.measure("graph.infra") { InfrastructureGraph() } }
+    val storage by lazy { RuntimeStartupTrace.measure("graph.storage") { com.halo.host.android.AndroidStorage(applicationContext) } }
+    val providerGraph by lazy { RuntimeStartupTrace.measure("graph.providers") { ProviderGraph(applicationContext, storage) } }
+    val hostGraph by lazy { RuntimeStartupTrace.measure("graph.host") { HostGraph(applicationContext, infra, providerGraph, storage) } }
+    val engineGraph by lazy { RuntimeStartupTrace.measure("graph.engines") { EngineGraph(applicationContext, infra, providerGraph, deviceSessionManager, hostGraph.heyCyanDriver) } }
+    val observerGraph by lazy { RuntimeStartupTrace.measure("graph.observers") { ObserverGraph(applicationContext, infra, engineGraph) } }
 
     val eventBus get() = infra.eventBus
     val commandBus get() = infra.commandBus
@@ -50,8 +49,7 @@ object ManualDependencyGraph {
     val providers get() = providerGraph.providers
 
     val wearableHost by lazy {
-        android.util.Log.d("ManualDependencyGraph", "Creating wearableHost")
-        hostGraph.wearableHost
+        RuntimeStartupTrace.measure("host.wearableHost") { hostGraph.wearableHost }
     }
     val audioPipeline get() = hostGraph.audioPipeline
     val audioPerceptionEngine get() = hostGraph.audioPerceptionEngine
@@ -71,42 +69,19 @@ object ManualDependencyGraph {
     val speechSessionManager get() = engineGraph.speechSessionManager
     val speechPerceptionBridge get() = engineGraph.speechPerceptionBridge
 
-    val conversationStore by lazy {
-        com.halo.runtime.cognition.conversation.InMemoryConversationStore()
-    }
-
+    val conversationStore by lazy { com.halo.runtime.cognition.conversation.InMemoryConversationStore() }
     val toolRegistry by lazy {
         com.halo.runtime.cognition.tools.ToolRegistry(
-            listOf(
-                com.halo.runtime.cognition.tools.EchoToolExecutor(),
-                com.halo.runtime.cognition.tools.CurrentTimeToolExecutor()
-            )
+            listOf(com.halo.runtime.cognition.tools.EchoToolExecutor(), com.halo.runtime.cognition.tools.CurrentTimeToolExecutor())
         )
     }
-
     val contextAssembler by lazy {
-        com.halo.runtime.cognition.context.DefaultContextAssembler(
-            conversationStore = conversationStore,
-            blackboard = blackboard,
-            toolRegistry = toolRegistry
-        )
+        com.halo.runtime.cognition.context.DefaultContextAssembler(conversationStore, blackboard, toolRegistry)
     }
-
-    val toolAuthorizer by lazy {
-        com.halo.runtime.cognition.tools.InMemoryToolAuthorizer(
-            toolRegistry
-        )
-    }
-
+    val toolAuthorizer by lazy { com.halo.runtime.cognition.tools.InMemoryToolAuthorizer(toolRegistry) }
     val cognitiveSession by lazy {
         com.halo.runtime.cognition.session.CognitiveSession(
-            eventBus = eventBus,
-            providerRouter = aiProviderRouter,
-            conversationStore = conversationStore,
-            contextAssembler = contextAssembler,
-            toolRegistry = toolRegistry,
-            toolAuthorizer = toolAuthorizer,
-            scope = infra.scope
+            eventBus, aiProviderRouter, conversationStore, contextAssembler, toolRegistry, toolAuthorizer, infra.scope
         )
     }
 
@@ -120,142 +95,69 @@ object ManualDependencyGraph {
     val runtimeReplayRecorder get() = observerGraph.runtimeReplayRecorder
     val runtimeReplayPlayer get() = observerGraph.runtimeReplayPlayer
 
-    // ─── Processes ──────────────────────────────────────────────
-
     val androidWakeWordProcess by lazy {
-        AndroidWakeWordProcess(
-            applicationContext, perceptionBus, eventBus,
-            id = "driver.android.wakeword", name = "Android Wake Word",
-            scope = infra.scope
-        )
+        AndroidWakeWordProcess(applicationContext, perceptionBus, eventBus, id = "driver.android.wakeword", name = "Android Wake Word", scope = infra.scope)
     }
-
-    val workingMemoryProcess by lazy {
-        WorkingMemoryProcess(perceptionBus, cognitiveBus, executionBus)
-    }
-
-    // ─── ViewModels ─────────────────────────────────────────────
+    val workingMemoryProcess by lazy { WorkingMemoryProcess(perceptionBus, cognitiveBus, executionBus) }
 
     val deviceRegistry by lazy { com.halo.sdk.runtime.embodiment.PersistentDeviceRegistry(storage) }
     val deviceSessionManager by lazy { com.halo.sdk.runtime.embodiment.DeviceSessionManager(deviceRegistry) }
-
     val buddyBotHost by lazy {
-        com.halo.app.embodiment.BuddyBotHost(
-            sessionManager = deviceSessionManager,
-            eventBus = infra.eventBus,
-            storage = storage,
-            scope = infra.scope
-        )
+        com.halo.app.embodiment.BuddyBotHost(deviceSessionManager, infra.eventBus, storage, infra.scope)
     }
 
     val homeViewModel by lazy {
-        android.util.Log.d("ManualDependencyGraph", "Creating HomeViewModel")
-        HomeViewModel(runtimeSnapshotManager, commandBus, cognitiveSession, aiProviderRouter, deviceSessionManager)
+        RuntimeStartupTrace.measure("viewmodel.home") {
+            HomeViewModel(runtimeSnapshotManager, commandBus, cognitiveSession, aiProviderRouter, deviceSessionManager)
+        }
     }
-    val consoleViewModel by lazy {
-        android.util.Log.d("ManualDependencyGraph", "Creating ConsoleViewModel")
-        ConsoleViewModel(runtimeSnapshotManager, eventBus, blackboard)
-    }
-    val settingsViewModel by lazy {
-        android.util.Log.d("ManualDependencyGraph", "Creating SettingsViewModel")
-        SettingsViewModel(runtimeSnapshotManager, aiProviderRouter, storage)
-    }
-    val activityViewModel by lazy {
-        android.util.Log.d("ManualDependencyGraph", "Creating ActivityViewModel")
-        ActivityViewModel(runtimeSnapshotManager)
-    }
-    val devicesViewModel by lazy {
-        android.util.Log.d("ManualDependencyGraph", "Creating DevicesViewModel")
-        DevicesViewModel(deviceRegistry, deviceSessionManager, eventBus, runtimeSnapshotManager, heyCyanDriver, buddyBotHost)
-    }
-    val protocolLabViewModel by lazy {
-        android.util.Log.d("ManualDependencyGraph", "Creating ProtocolLabViewModel")
-        ProtocolLabViewModel(heyCyanDriver)
-    }
-    val pairingViewModel by lazy {
-        android.util.Log.d("ManualDependencyGraph", "Creating PairingViewModel")
-        com.halo.app.ui.screens.discovery.PairingViewModel(heyCyanDriver)
-    }
+    val consoleViewModel by lazy { ConsoleViewModel(runtimeSnapshotManager, eventBus, blackboard) }
+    val settingsViewModel by lazy { SettingsViewModel(runtimeSnapshotManager, aiProviderRouter, storage) }
+    val activityViewModel by lazy { ActivityViewModel(runtimeSnapshotManager) }
+    val devicesViewModel by lazy { DevicesViewModel(deviceRegistry, deviceSessionManager, eventBus, runtimeSnapshotManager, heyCyanDriver, buddyBotHost) }
+    val protocolLabViewModel by lazy { ProtocolLabViewModel(heyCyanDriver) }
+    val pairingViewModel by lazy { com.halo.app.ui.screens.discovery.PairingViewModel(heyCyanDriver) }
     val intelligenceViewModel by lazy {
-        android.util.Log.d("ManualDependencyGraph", "Creating IntelligenceViewModel")
-        com.halo.app.ui.screens.settings.IntelligenceViewModel(
-            runtimeSnapshotManager,
-            aiProviderRouter,
-            cognitiveSession,
-            storage,
-            modelDownloadManager
-        )
+        com.halo.app.ui.screens.settings.IntelligenceViewModel(runtimeSnapshotManager, aiProviderRouter, cognitiveSession, storage, modelDownloadManager)
     }
-    val runtimeInspectorViewModel by lazy {
-        android.util.Log.d("ManualDependencyGraph", "Creating RuntimeInspectorViewModel")
-        RuntimeInspectorViewModel(runtimeSnapshotManager)
-    }
+    val runtimeInspectorViewModel by lazy { RuntimeInspectorViewModel(runtimeSnapshotManager) }
 
     val runtimeSnapshotManager get() = observerGraph.runtimeSnapshotManager
-
-    // ─── Android TTS ────────────────────────────────────────────
 
     private val androidSpeakerDelegate = lazy {
         com.halo.host.android.audio.AndroidSpeaker(applicationContext, infra.eventBus)
     }
+    val androidSpeaker: com.halo.host.android.audio.AndroidSpeaker get() = androidSpeakerDelegate.value
+    fun startAndroidSpeaker() { androidSpeakerDelegate.value.start() }
+    fun shutdownAndroidSpeaker() { if (androidSpeakerDelegate.isInitialized()) androidSpeakerDelegate.value.shutdown() }
 
-    val androidSpeaker: com.halo.host.android.audio.AndroidSpeaker
-        get() = androidSpeakerDelegate.value
-
-    fun startAndroidSpeaker() {
-        androidSpeakerDelegate.value.start()
-    }
-
-    fun shutdownAndroidSpeaker() {
-        if (androidSpeakerDelegate.isInitialized()) {
-            androidSpeakerDelegate.value.shutdown()
+    val microkernel by lazy {
+        RuntimeStartupTrace.measure("graph.microkernel") {
+            processManager.register(androidWakeWordProcess)
+            processManager.register(workingMemoryProcess)
+            processManager.register(com.halo.host.android.AudioPerceptionProcess(perceptionBus))
+            processManager.register(com.halo.engines.interpretation.RuleInterpretationProcess(perceptionBus, cognitiveBus))
+            processManager.register(com.halo.engines.agents.ReasoningServiceProcess(perceptionBus, cognitiveBus, aiProviderRouter))
+            HaloMicrokernel(infra.scope, processManager, perceptionBus, cognitiveBus, executionBus)
         }
     }
 
-    // ─── Kernel ─────────────────────────────────────────────────
-
-    /**
-     * Kernel construction is deferred until runtime startup. The kernel does not
-     * start Android TTS, speech, or replay services as incidental construction side effects.
-     */
-    val microkernel by lazy {
-        android.util.Log.d("ManualDependencyGraph", "Creating microkernel")
-
-        processManager.register(androidWakeWordProcess)
-        processManager.register(workingMemoryProcess)
-        processManager.register(
-            com.halo.host.android.AudioPerceptionProcess(perceptionBus)
-        )
-        processManager.register(
-            com.halo.engines.interpretation.RuleInterpretationProcess(perceptionBus, cognitiveBus)
-        )
-        processManager.register(
-            com.halo.engines.agents.ReasoningServiceProcess(perceptionBus, cognitiveBus, aiProviderRouter)
-        )
-
-        HaloMicrokernel(
-            infra.scope,
-            processManager,
-            perceptionBus,
-            cognitiveBus,
-            executionBus
-        )
-    }
-
     val engineContext by lazy {
-        com.halo.sdk.runtime.EngineContext(
-            runtime = object : com.halo.sdk.runtime.RuntimeContext {
-                override val eventBus = infra.eventBus
-                override val commandBus = infra.commandBus
-                override val queryBus = infra.queryBus
-                override val registry = infra.registry
-                override val logger = infra.logger
-                override val scheduler = infra.scheduler
-                override val clock = infra.clock
-                override val powerMode get() = infra.powerMode
-                override val metrics = infra.metrics
-            },
-            registry = infra.registry
-        )
+        RuntimeStartupTrace.measure("graph.engineContext") {
+            com.halo.sdk.runtime.EngineContext(
+                runtime = object : com.halo.sdk.runtime.RuntimeContext {
+                    override val eventBus = infra.eventBus
+                    override val commandBus = infra.commandBus
+                    override val queryBus = infra.queryBus
+                    override val registry = infra.registry
+                    override val logger = infra.logger
+                    override val scheduler = infra.scheduler
+                    override val clock = infra.clock
+                    override val powerMode get() = infra.powerMode
+                    override val metrics = infra.metrics
+                },
+                registry = infra.registry
+            )
+        }
     }
 }
