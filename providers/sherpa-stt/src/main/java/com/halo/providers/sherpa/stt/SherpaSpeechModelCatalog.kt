@@ -56,8 +56,7 @@ object SherpaSpeechModelCatalog {
             FileSpec("encoder-epoch-12-avg-2-chunk-16-left-64.int8.onnx", 4_000_000L),
             FileSpec("decoder-epoch-12-avg-2-chunk-16-left-64.onnx", 900_000L),
             FileSpec("joiner-epoch-12-avg-2-chunk-16-left-64.int8.onnx", 100_000L),
-            FileSpec("tokens.txt", 3_000L),
-            FileSpec("bpe.model", 100_000L)
+            FileSpec("tokens.txt", 3_000L)
         ),
         sourceUrl = "https://github.com/k2-fsa/sherpa-onnx/releases/download/kws-models/sherpa-onnx-kws-zipformer-gigaspeech-3.3M-2024-01-01.tar.bz2"
     )
