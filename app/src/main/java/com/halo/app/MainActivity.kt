@@ -50,6 +50,7 @@ class MainActivity : ComponentActivity() {
         ActivityResultContracts.RequestMultiplePermissions()
     ) {
         hasRequiredPermissions = areRequiredPermissionsGranted()
+        RuntimeStartupTrace.mark("permissions.result granted=$hasRequiredPermissions")
         if (hasRequiredPermissions) {
             startUiGraphBootstrap()
             startRuntimeLoop()
@@ -57,12 +58,18 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val startedAt = android.os.SystemClock.elapsedRealtime()
+        RuntimeStartupTrace.mark("activity.onCreate.begin", startedAt)
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
+        RuntimeStartupTrace.mark("activity.graph.init.begin", startedAt)
         ManualDependencyGraph.init(this)
+        RuntimeStartupTrace.mark("activity.graph.init.end", startedAt)
         runtime = HaloRuntime(ManualDependencyGraph)
+        RuntimeStartupTrace.mark("activity.runtime.constructed", startedAt)
         hasRequiredPermissions = areRequiredPermissionsGranted()
+        RuntimeStartupTrace.mark("activity.permissions.checked", startedAt)
 
         setContent {
             BrainToolTheme {
@@ -145,11 +152,13 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+        RuntimeStartupTrace.mark("activity.setContent.returned", startedAt)
 
         if (hasRequiredPermissions) {
             startUiGraphBootstrap()
             startRuntimeLoop()
         }
+        RuntimeStartupTrace.mark("activity.onCreate.end", startedAt)
     }
 
     private fun startUiGraphBootstrap(force: Boolean = false) {
@@ -158,16 +167,23 @@ class MainActivity : ComponentActivity() {
 
         uiGraphReady = false
         uiGraphError = null
+        RuntimeStartupTrace.mark("activity.uiBootstrap.schedule force=$force")
 
         uiGraphJob = lifecycleScope.launch(Dispatchers.IO) {
+            val startedAt = android.os.SystemClock.elapsedRealtime()
+            RuntimeStartupTrace.mark("activity.uiBootstrap.begin", startedAt)
             try {
                 ManualDependencyGraph.homeViewModel
+                RuntimeStartupTrace.mark("activity.uiBootstrap.graphReady", startedAt)
                 withContext(Dispatchers.Main.immediate) {
                     uiGraphReady = true
                 }
+                RuntimeStartupTrace.mark("activity.uiBootstrap.end", startedAt)
             } catch (error: CancellationException) {
+                RuntimeStartupTrace.mark("activity.uiBootstrap.cancelled", startedAt)
                 throw error
             } catch (error: Throwable) {
+                RuntimeStartupTrace.mark("activity.uiBootstrap.failed", startedAt)
                 android.util.Log.e("MainActivity", "UI graph bootstrap failed", error)
                 withContext(Dispatchers.Main.immediate) {
                     uiGraphError = error.message ?: error::class.java.simpleName
@@ -203,26 +219,35 @@ class MainActivity : ComponentActivity() {
         }
         runtimeLoopStarted = true
         runtimeError = null
+        RuntimeStartupTrace.mark("activity.runtimeLoop.schedule force=$force")
 
         connectivityJob = lifecycleScope.launch(Dispatchers.IO) {
+            val startedAt = android.os.SystemClock.elapsedRealtime()
+            RuntimeStartupTrace.mark("activity.connectivityLoop.begin", startedAt)
             try {
                 // Runtime startup is explicitly dependent on successful UI graph bootstrap.
                 uiGraphJob?.join()
+                RuntimeStartupTrace.mark("activity.connectivityLoop.uiBootstrapJoined", startedAt)
                 check(uiGraphReady) {
                     uiGraphError ?: "UI graph bootstrap did not complete successfully"
                 }
 
                 val host = ManualDependencyGraph.wearableHost
+                RuntimeStartupTrace.mark("activity.connectivityLoop.hostResolved", startedAt)
                 host.connectivity.collect { state ->
                     val connected = state is com.halo.sdk.host.ConnectionState.Connected ||
                         state is com.halo.sdk.host.ConnectionState.Ready
                     if (connected && !runtime.isStarted()) {
+                        RuntimeStartupTrace.mark("activity.runtime.start.begin", startedAt)
                         runtime.start()
+                        RuntimeStartupTrace.mark("activity.runtime.start.end", startedAt)
                     }
                 }
             } catch (error: CancellationException) {
+                RuntimeStartupTrace.mark("activity.connectivityLoop.cancelled", startedAt)
                 throw error
             } catch (error: Throwable) {
+                RuntimeStartupTrace.mark("activity.connectivityLoop.failed", startedAt)
                 android.util.Log.e("MainActivity", "Runtime startup loop failed", error)
                 withContext(Dispatchers.Main.immediate) {
                     runtimeError = error.message ?: error::class.java.simpleName
@@ -232,16 +257,23 @@ class MainActivity : ComponentActivity() {
         }
 
         hostConnectJob = lifecycleScope.launch(Dispatchers.IO) {
+            val startedAt = android.os.SystemClock.elapsedRealtime()
+            RuntimeStartupTrace.mark("activity.hostConnect.begin", startedAt)
             try {
                 ManualDependencyGraph.wearableHost.connect()
+                RuntimeStartupTrace.mark("activity.hostConnect.end", startedAt)
             } catch (error: CancellationException) {
+                RuntimeStartupTrace.mark("activity.hostConnect.cancelled", startedAt)
                 throw error
             } catch (error: Throwable) {
+                RuntimeStartupTrace.mark("activity.hostConnect.failed", startedAt)
                 android.util.Log.e("MainActivity", "Wearable host connection failed", error)
             }
         }
 
         buddyBotConnectJob = lifecycleScope.launch(Dispatchers.IO) {
+            val startedAt = android.os.SystemClock.elapsedRealtime()
+            RuntimeStartupTrace.mark("activity.buddyBotConnect.begin", startedAt)
             try {
                 val buddyBot = ManualDependencyGraph.buddyBotHost
                 buddyBot.ensureDeviceRegistered()
@@ -249,22 +281,31 @@ class MainActivity : ComponentActivity() {
                 if (device?.autoConnect == true) {
                     buddyBot.connect()
                 }
+                RuntimeStartupTrace.mark("activity.buddyBotConnect.end", startedAt)
             } catch (error: CancellationException) {
+                RuntimeStartupTrace.mark("activity.buddyBotConnect.cancelled", startedAt)
                 throw error
             } catch (error: Throwable) {
+                RuntimeStartupTrace.mark("activity.buddyBotConnect.failed", startedAt)
                 android.util.Log.e("MainActivity", "BuddyBot connection failed", error)
             }
         }
     }
 
     override fun onDestroy() {
+        RuntimeStartupTrace.mark("activity.onDestroy.begin")
         uiGraphJob?.cancel()
         connectivityJob?.cancel()
         hostConnectJob?.cancel()
         buddyBotConnectJob?.cancel()
         // lifecycleScope is cancelled as the Activity is destroyed, so runtime shutdown
         // must use the application-scoped infrastructure scope to finish deterministically.
-        ManualDependencyGraph.infra.scope.launch(Dispatchers.IO) { runtime.stop() }
+        ManualDependencyGraph.infra.scope.launch(Dispatchers.IO) {
+            RuntimeStartupTrace.mark("activity.runtime.stop.begin")
+            runtime.stop()
+            RuntimeStartupTrace.mark("activity.runtime.stop.end")
+        }
         super.onDestroy()
+        RuntimeStartupTrace.mark("activity.onDestroy.end")
     }
 }
