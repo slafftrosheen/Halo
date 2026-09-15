@@ -15,7 +15,9 @@ enum class NativeResourceKind {
 enum class NativeResourceState {
     RELEASED,
     ACQUIRING,
-    RESIDENT
+    LOADING,
+    RESIDENT,
+    IN_USE
 }
 
 data class NativeResourceSnapshot(
@@ -28,25 +30,17 @@ data class NativeResourceSnapshot(
 /** Owner of a native resource lease. */
 interface NativeResourceOwner {
     val nativeResourceKind: NativeResourceKind
-
-    /** Stable diagnostic identity; implementations may override when multiple instances exist. */
     val nativeResourceId: String
         get() = nativeResourceKind.name + ":" + (this::class.qualifiedName ?: this::class.simpleName ?: "unknown")
-
     suspend fun releaseIfIdle(): Boolean
 }
 
-/**
- * Process-scoped arbitration and observability for heavyweight native inference resources.
- * Lightweight wake-word/VAD resources intentionally do not participate here.
- */
+/** Process-scoped arbitration and observability for heavyweight native resources. */
 class NativeResourceCoordinator {
     private val mutex = Mutex()
     private val owners = LinkedHashSet<NativeResourceOwner>()
     private val active = LinkedHashSet<NativeResourceOwner>()
     private val _snapshot = MutableStateFlow<List<NativeResourceSnapshot>>(emptyList())
-
-    /** Read-only, UI/diagnostic-safe view of heavyweight residency. */
     val snapshot: StateFlow<List<NativeResourceSnapshot>> = _snapshot.asStateFlow()
 
     suspend fun register(owner: NativeResourceOwner) = mutex.withLock {
@@ -60,18 +54,12 @@ class NativeResourceCoordinator {
         remove(owner)
     }
 
-    /**
-     * Acquire [owner]'s resource. Conflicting active owners are asked to yield.
-     * If any owner is busy, the new acquisition is rejected and no resource is
-     * forcibly torn down.
-     */
     suspend fun acquire(owner: NativeResourceOwner): Boolean = mutex.withLock {
         owners += owner
         if (active.contains(owner)) {
             publish(owner, NativeResourceState.RESIDENT, "already resident")
             return@withLock true
         }
-
         publish(owner, NativeResourceState.ACQUIRING, "acquisition requested")
         val conflicts = active.filter { it.nativeResourceKind != owner.nativeResourceKind }
         for (conflict in conflicts) {
@@ -87,11 +75,15 @@ class NativeResourceCoordinator {
         true
     }
 
+    /** Update provider lifecycle state without changing the arbitration lease. */
+    suspend fun mark(owner: NativeResourceOwner, state: NativeResourceState, reason: String) = mutex.withLock {
+        owners += owner
+        publish(owner, state, reason)
+    }
+
     suspend fun release(owner: NativeResourceOwner) = mutex.withLock {
         active -= owner
-        if (owners.contains(owner)) {
-            publish(owner, NativeResourceState.RELEASED, "released")
-        }
+        if (owners.contains(owner)) publish(owner, NativeResourceState.RELEASED, "released")
     }
 
     suspend fun activeKinds(): Set<NativeResourceKind> = mutex.withLock {
@@ -99,14 +91,12 @@ class NativeResourceCoordinator {
     }
 
     private fun publish(owner: NativeResourceOwner, state: NativeResourceState, reason: String) {
-        val id = owner.nativeResourceId
-        val next = _snapshot.value.filterNot { it.ownerId == id } +
-            NativeResourceSnapshot(id, owner.nativeResourceKind, state, reason)
+        val next = _snapshot.value.filterNot { it.ownerId == owner.nativeResourceId } +
+            NativeResourceSnapshot(owner.nativeResourceId, owner.nativeResourceKind, state, reason)
         _snapshot.value = next.sortedBy { it.ownerId }
     }
 
     private fun remove(owner: NativeResourceOwner) {
-        val id = owner.nativeResourceId
-        _snapshot.value = _snapshot.value.filterNot { it.ownerId == id }
+        _snapshot.value = _snapshot.value.filterNot { it.ownerId == owner.nativeResourceId }
     }
 }
