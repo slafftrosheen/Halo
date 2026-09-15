@@ -1,5 +1,6 @@
 package com.halo.app.di
 
+import android.content.Context
 import com.halo.runtime.observer.DefaultRuntimeObserver
 import com.halo.runtime.observer.TimelineRecorder
 import com.halo.runtime.observer.DefaultTimelineEventMapper
@@ -13,6 +14,7 @@ import com.halo.sdk.runtime.ProviderSnapshot
  * of the production dependency graph.
  */
 class ObserverGraph(
+    private val applicationContext: Context,
     private val infra: InfrastructureGraph,
     private val engineGraph: EngineGraph
 ) {
