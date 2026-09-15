@@ -1,8 +1,6 @@
 package com.halo.runtime.observer
 
 import com.halo.sdk.runtime.*
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
 import java.time.Instant
 import kotlinx.datetime.toJavaInstant
 
@@ -20,7 +18,8 @@ interface SnapshotAssembler {
 
 class DefaultSnapshotAssembler(
     private val healthEvaluator: RuntimeHealthEvaluator,
-    private val clock: java.time.Clock
+    private val clock: java.time.Clock,
+    private val nativeResourceCoordinator: NativeResourceCoordinator? = null
 ) : SnapshotAssembler {
     override fun assemble(
         speechState: SpeechSessionState,
@@ -41,7 +40,7 @@ class DefaultSnapshotAssembler(
                 EngineSnapshot("Execution", EngineState.Unknown, EngineHealth.Unknown, EngineMetrics(null, java.time.Duration.ZERO, 0, 0, 0.0), clock.instant())
             )
         } else engines
-        
+
         val isBooting = processes.isEmpty()
         val health = healthEvaluator.evaluate(isBooting, startedAtTime, speechState, actualEngines)
 
@@ -55,10 +54,11 @@ class DefaultSnapshotAssembler(
             engines = actualEngines,
             timeline = timeline,
             providers = providers,
-            blackboard = BlackboardSnapshot(facts.size, facts.takeLast(10).map { 
-                FactSummary(it.id.value, it.payload::class.simpleName ?: "Unknown", it.createdAt.toJavaInstant()) 
+            blackboard = BlackboardSnapshot(facts.size, facts.takeLast(10).map {
+                FactSummary(it.id.value, it.payload::class.simpleName ?: "Unknown", it.createdAt.toJavaInstant())
             }),
-            traces = traces
+            traces = traces,
+            nativeResources = nativeResourceCoordinator?.snapshot?.value ?: emptyList()
         )
     }
 }
