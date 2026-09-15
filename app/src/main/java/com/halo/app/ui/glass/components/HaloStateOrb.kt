@@ -27,12 +27,7 @@ import com.halo.app.ui.glass.material.HaloRuntimeState
 import kotlin.math.cos
 import kotlin.math.sin
 
-/**
- * Halo's primary presence and interaction surface.
- *
- * The orb is deliberately state-driven: visuals describe the runtime and taps
- * issue a command through the caller rather than inventing UI-local state.
- */
+/** Halo's primary presence and interaction surface. */
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun HaloStateOrb(
@@ -52,26 +47,23 @@ fun HaloStateOrb(
         label = "orb_press_scale"
     )
     val stateColor by animateColorAsState(
-        targetValue = stateColor(state),
+        targetValue = haloStateColor(state),
         animationSpec = tween(420),
         label = "orb_state_color"
     )
 
     val breath by transition.animateFloat(
-        initialValue = 0.90f,
-        targetValue = 1.04f,
+        initialValue = 0.90f, targetValue = 1.04f,
         animationSpec = infiniteRepeatable(tween(2400, easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "orb_breath"
     )
     val pulse by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
+        initialValue = 0f, targetValue = 1f,
         animationSpec = infiniteRepeatable(tween(1700, easing = LinearEasing)),
         label = "orb_pulse"
     )
     val rotation by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
+        initialValue = 0f, targetValue = 360f,
         animationSpec = infiniteRepeatable(tween(7000, easing = LinearEasing)),
         label = "orb_rotation"
     )
@@ -101,7 +93,6 @@ fun HaloStateOrb(
         val core = radius * 0.34f
         val outer = radius * 0.78f
 
-        // Soft atmospheric halo. This is the visual identity at rest.
         drawCircle(
             brush = Brush.radialGradient(
                 0f to stateColor.copy(alpha = 0.26f),
@@ -113,7 +104,6 @@ fun HaloStateOrb(
             radius = radius * 0.98f
         )
 
-        // State activity lives in the perimeter, keeping the core calm and legible.
         when (state) {
             HaloRuntimeState.Idle, HaloRuntimeState.Recovering -> {
                 drawCircle(
@@ -131,7 +121,6 @@ fun HaloStateOrb(
                     size = androidx.compose.ui.geometry.Size(outer * 2f, outer * 2f)
                 )
             }
-
             HaloRuntimeState.Listening, HaloRuntimeState.Wakeword, HaloRuntimeState.Capturing -> {
                 val expanding = outer * (0.88f + 0.22f * pulse)
                 drawCircle(
@@ -149,19 +138,16 @@ fun HaloStateOrb(
                     size = androidx.compose.ui.geometry.Size(outer * 2f, outer * 2f)
                 )
             }
-
             HaloRuntimeState.Recognizing -> {
                 drawCircle(color = stateColor.copy(alpha = 0.55f), radius = outer, style = Stroke(width = 2.dp.toPx()))
                 for (i in 0..2) {
                     val angle = (rotation * 1.6f + i * 120f) * (Math.PI / 180f).toFloat()
                     drawCircle(
-                        color = Color.White.copy(alpha = 0.9f),
-                        radius = 3.dp.toPx(),
+                        color = Color.White.copy(alpha = 0.9f), radius = 3.dp.toPx(),
                         center = Offset(center.x + cos(angle) * outer, center.y + sin(angle) * outer)
                     )
                 }
             }
-
             HaloRuntimeState.Reasoning, HaloRuntimeState.Planning -> {
                 drawCircle(color = stateColor.copy(alpha = 0.45f), radius = outer, style = Stroke(width = 1.5.dp.toPx()))
                 drawArc(
@@ -174,20 +160,15 @@ fun HaloStateOrb(
                     size = androidx.compose.ui.geometry.Size(outer * 2f, outer * 2f)
                 )
             }
-
             HaloRuntimeState.Executing -> {
                 drawCircle(color = stateColor.copy(alpha = 0.50f), radius = outer, style = Stroke(width = 2.dp.toPx()))
                 drawArc(
-                    color = stateColor,
-                    startAngle = -90f,
-                    sweepAngle = 270f,
-                    useCenter = false,
+                    color = stateColor, startAngle = -90f, sweepAngle = 270f, useCenter = false,
                     style = Stroke(width = 3.dp.toPx()),
                     topLeft = Offset(center.x - outer, center.y - outer),
                     size = androidx.compose.ui.geometry.Size(outer * 2f, outer * 2f)
                 )
             }
-
             HaloRuntimeState.Speaking -> {
                 for (i in 0..1) {
                     val p = (pulse + i * 0.5f) % 1f
@@ -198,13 +179,11 @@ fun HaloStateOrb(
                     )
                 }
             }
-
             HaloRuntimeState.Stopped -> {
                 drawCircle(color = HaloGlassColors.Danger.copy(alpha = 0.55f), radius = outer, style = Stroke(width = 2.dp.toPx()))
             }
         }
 
-        // Glassy core: a luminous center rather than a generic filled dot.
         drawCircle(
             brush = Brush.radialGradient(
                 0f to Color.White.copy(alpha = 0.95f),
@@ -214,10 +193,9 @@ fun HaloStateOrb(
                 center = Offset(center.x - core * 0.22f, center.y - core * 0.26f),
                 radius = core * 1.65f
             ),
-            radius = core * (if (state == HaloRuntimeState.Idle) 0.92f else 1.04f)
+            radius = core * if (state == HaloRuntimeState.Idle) 0.92f else 1.04f
         )
 
-        // Tiny specular highlight gives the orb a physical glass presence.
         drawCircle(
             color = Color.White.copy(alpha = 0.55f),
             radius = core * 0.16f,
@@ -246,7 +224,7 @@ fun PreviewHaloStateOrb() {
     }
 }
 
-private fun stateColor(state: HaloRuntimeState): Color = when (state) {
+private fun haloStateColor(state: HaloRuntimeState): Color = when (state) {
     HaloRuntimeState.Idle, HaloRuntimeState.Stopped -> HaloGlassColors.TextMuted
     HaloRuntimeState.Listening, HaloRuntimeState.Wakeword, HaloRuntimeState.Speaking -> HaloGlassColors.Accent
     HaloRuntimeState.Capturing -> HaloGlassColors.Warning
