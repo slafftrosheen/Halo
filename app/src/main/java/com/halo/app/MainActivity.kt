@@ -2,7 +2,6 @@ package com.halo.app
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -24,10 +23,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.halo.app.di.ManualDependencyGraph
-import com.halo.app.ui.shell.AppShell
-import com.halo.app.ui.shell.PermissionsScreen
 import com.halo.app.ui.glass.components.HaloGlassButton
 import com.halo.app.ui.glass.material.HaloTypography
+import com.halo.app.ui.shell.AppShell
+import com.halo.app.ui.shell.PermissionsScreen
 import com.halo.app.ui.theme.BrainToolTheme
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -43,9 +42,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var runtime: HaloRuntime
     private var runtimeLoopStarted = false
     private var uiGraphJob: Job? = null
-    private var connectivityJob: Job? = null
-    private var hostConnectJob: Job? = null
-    private var buddyBotConnectJob: Job? = null
+    private var runtimeJob: Job? = null
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -181,39 +178,29 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun requiredPermissions(): Array<String> = buildList {
-        add(Manifest.permission.RECORD_AUDIO)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            add(Manifest.permission.BLUETOOTH_SCAN)
-            add(Manifest.permission.BLUETOOTH_CONNECT)
-        } else {
-            add(Manifest.permission.ACCESS_FINE_LOCATION)
-            add(Manifest.permission.ACCESS_COARSE_LOCATION)
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) add(Manifest.permission.NEARBY_WIFI_DEVICES)
-    }.toTypedArray()
+    /**
+     * Phone-first permissions. Bluetooth and nearby-device permissions are requested
+     * only when the Devices flow is actually used; they are not startup prerequisites.
+     */
+    private fun requiredPermissions(): Array<String> = arrayOf(Manifest.permission.RECORD_AUDIO)
 
     private fun areRequiredPermissionsGranted(): Boolean = requiredPermissions().all { permission ->
         checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
     }
 
     /**
-     * Starts the cognitive runtime as soon as the UI graph is ready.
-     * A wearable is an optional embodiment, not a prerequisite for inference,
-     * text interaction, Android TTS, or the phone microphone.
+     * Starts only the Android cognitive runtime. Physical embodiments are optional
+     * and must be connected explicitly from the Devices flow.
      */
     private fun startRuntimeLoop(force: Boolean = false) {
         if (!force && runtimeLoopStarted) return
-        if (force) {
-            connectivityJob?.cancel()
-            hostConnectJob?.cancel()
-            buddyBotConnectJob?.cancel()
-        }
+        if (force) runtimeJob?.cancel()
+
         runtimeLoopStarted = true
         runtimeError = null
         RuntimeStartupTrace.mark("activity.runtimeLoop.schedule force=$force")
 
-        connectivityJob = lifecycleScope.launch(Dispatchers.IO) {
+        runtimeJob = lifecycleScope.launch(Dispatchers.IO) {
             val startedAt = android.os.SystemClock.elapsedRealtime()
             RuntimeStartupTrace.mark("activity.runtime.begin", startedAt)
             try {
@@ -239,49 +226,12 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-
-        // Physical hosts connect independently. A failed wearable connection
-        // must never prevent the phone-only cognitive runtime from operating.
-        hostConnectJob = lifecycleScope.launch(Dispatchers.IO) {
-            val startedAt = android.os.SystemClock.elapsedRealtime()
-            RuntimeStartupTrace.mark("activity.hostConnect.begin", startedAt)
-            try {
-                ManualDependencyGraph.wearableHost.connect()
-                RuntimeStartupTrace.mark("activity.hostConnect.end", startedAt)
-            } catch (error: CancellationException) {
-                RuntimeStartupTrace.mark("activity.hostConnect.cancelled", startedAt)
-                throw error
-            } catch (error: Throwable) {
-                RuntimeStartupTrace.mark("activity.hostConnect.failed", startedAt)
-                android.util.Log.e("MainActivity", "Wearable host connection failed", error)
-            }
-        }
-
-        buddyBotConnectJob = lifecycleScope.launch(Dispatchers.IO) {
-            val startedAt = android.os.SystemClock.elapsedRealtime()
-            RuntimeStartupTrace.mark("activity.buddyBotConnect.begin", startedAt)
-            try {
-                val buddyBot = ManualDependencyGraph.buddyBotHost
-                buddyBot.ensureDeviceRegistered()
-                val device = ManualDependencyGraph.deviceRegistry.getDevice(buddyBot.deviceId)
-                if (device?.autoConnect == true) buddyBot.connect()
-                RuntimeStartupTrace.mark("activity.buddyBotConnect.end", startedAt)
-            } catch (error: CancellationException) {
-                RuntimeStartupTrace.mark("activity.buddyBotConnect.cancelled", startedAt)
-                throw error
-            } catch (error: Throwable) {
-                RuntimeStartupTrace.mark("activity.buddyBotConnect.failed", startedAt)
-                android.util.Log.e("MainActivity", "BuddyBot connection failed", error)
-            }
-        }
     }
 
     override fun onDestroy() {
         RuntimeStartupTrace.mark("activity.onDestroy.begin")
         uiGraphJob?.cancel()
-        connectivityJob?.cancel()
-        hostConnectJob?.cancel()
-        buddyBotConnectJob?.cancel()
+        runtimeJob?.cancel()
         ManualDependencyGraph.infra.scope.launch(Dispatchers.IO) {
             RuntimeStartupTrace.mark("activity.runtime.stop.begin")
             runtime.stop()
