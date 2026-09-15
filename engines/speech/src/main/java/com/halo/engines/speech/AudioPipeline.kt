@@ -96,23 +96,15 @@ class AudioPipeline(
     }
 
     fun processFrame(frame: AudioFrame) {
-        // Keep a small bounded history so VAD/wake-word onset does not clip
-        // the first phonemes of the utterance.
         preRollBuffer.append(frame)
-
         val currentState = _state.value
+        val speechDetected = vad.isSpeech(frame)
 
-        if (vad.isSpeech(frame)) {
-            if (currentState == SpeechState.Idle) {
-                _state.value = SpeechState.Listening
-                buffer.clear()
-                preRollBuffer.frames().forEach(buffer::append)
-                scope.launch { eventBus.publish(SpeechStarted()) }
-            } else if (sttProvider.mode == SpeechRecognitionMode.BUFFERED) {
-                buffer.append(frame)
-            }
-
-            if (currentState != SpeechState.WakeDetected && currentState != SpeechState.Recognizing) {
+        // A real keyword spotter needs the complete stream, not only frames that
+        // passed VAD. The legacy pass-through detector remains VAD-gated.
+        if (currentState != SpeechState.WakeDetected && currentState != SpeechState.Recognizing) {
+            val shouldRunWakeDetector = !wakeWordDetector.requiresSpeechGate || speechDetected
+            if (shouldRunWakeDetector) {
                 val wwResult = wakeWordDetector.process(frame)
                 if (wwResult.detected) {
                     _state.value = SpeechState.WakeDetected
@@ -124,7 +116,25 @@ class AudioPipeline(
                     }
                 }
             }
-        } else if (currentState == SpeechState.Listening || currentState == SpeechState.WakeDetected || currentState == SpeechState.Recognizing) {
+        }
+
+        val stateAfterWake = _state.value
+        if (speechDetected) {
+            if (stateAfterWake == SpeechState.Idle) {
+                _state.value = SpeechState.Listening
+                buffer.clear()
+                preRollBuffer.frames().forEach(buffer::append)
+                scope.launch { eventBus.publish(SpeechStarted()) }
+            } else if (sttProvider.mode == SpeechRecognitionMode.BUFFERED &&
+                stateAfterWake != SpeechState.Recognizing
+            ) {
+                buffer.append(frame)
+            }
+        } else if (
+            stateAfterWake == SpeechState.Listening ||
+            stateAfterWake == SpeechState.WakeDetected ||
+            stateAfterWake == SpeechState.Recognizing
+        ) {
             if (sttProvider.mode == SpeechRecognitionMode.BUFFERED) {
                 scope.launch { eventBus.publish(SpeechEnded()) }
             }

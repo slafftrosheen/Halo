@@ -10,6 +10,7 @@ import com.halo.providers.openrouter.OpenRouterProvider
 import com.halo.providers.llamacpp.NativeLlamaProvider
 import com.halo.providers.llamacpp.ModelDownloadManager
 import com.halo.providers.llamacpp.OllamaProvider
+import com.halo.providers.sherpa.stt.SherpaKeywordSpotterWakeWordDetector
 import com.halo.providers.sherpa.stt.SherpaOfflineSpeechRecognitionProvider
 import com.halo.providers.sherpa.stt.SherpaSpeechModelCatalog
 import java.io.File
@@ -52,11 +53,35 @@ class AndroidProviderFactory(
             }
         }
 
+        val sherpaKwsDirectory = File(
+            context.filesDir,
+            "speech/${SherpaSpeechModelCatalog.KWS_ENGLISH_DIRECTORY}"
+        )
+        val sherpaKwsKeywords = File(
+            sherpaKwsDirectory,
+            SherpaSpeechModelCatalog.KWS_ENGLISH_KEYWORDS_FILE
+        )
+        val wakeWord = runCatching {
+            if (!SherpaSpeechModelCatalog.isInstalled(
+                    sherpaKwsDirectory,
+                    SherpaSpeechModelCatalog.kwsEnglish
+                )
+            ) {
+                throw IllegalStateException("Sherpa KWS model is not installed")
+            }
+            SherpaKeywordSpotterWakeWordDetector(
+                modelDirectory = sherpaKwsDirectory,
+                keywordsFile = sherpaKwsKeywords
+            )
+        }.getOrElse {
+            AlwaysWakeDetector()
+        }
+
         return Providers(
             inference = llamaProvider,
             speechRecognition = speechRecognition,
             speechSynthesis = AndroidTTSProvider(context),
-            wakeWord = AlwaysWakeDetector(),
+            wakeWord = wakeWord,
             aiProviders = listOfNotNull(
                 runCatching { AndroidAssistantProvider(context) }.getOrNull(),
                 runCatching { OpenRouterProvider(storage) }.getOrNull(),
