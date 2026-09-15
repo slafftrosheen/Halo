@@ -7,6 +7,7 @@ import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.NativeResourceCoordinator
 import com.halo.sdk.runtime.NativeResourceKind
 import com.halo.sdk.runtime.NativeResourceOwner
+import com.halo.sdk.runtime.NativeResourceState
 import com.halo.sdk.runtime.Storage
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
@@ -102,6 +103,7 @@ class NativeLlamaProvider(
                 _status.value = ProviderStatus(ProviderStatus.State.ERROR, message)
                 return@withLock false
             }
+            nativeResourceCoordinator?.mark(this, NativeResourceState.LOADING, "loading llama.cpp model $activeId")
 
             val modelBytes = file.length()
             val androidMemory = AndroidMemorySnapshot.read(context)
@@ -249,6 +251,7 @@ class NativeLlamaProvider(
                         loadedModelId = activeId
                         loadedContextSize = effectiveContextSize
                         installed = true
+                        nativeResourceCoordinator?.mark(this, NativeResourceState.RESIDENT, "llama.cpp model resident: $activeId")
                         _status.value = ProviderStatus.READY
                         true
                     }
@@ -348,6 +351,7 @@ class NativeLlamaProvider(
                 check(nativeResourceCoordinator?.acquire(this) ?: true) {
                     "Local llama.cpp generation deferred: another heavyweight native model is busy"
                 }
+                nativeResourceCoordinator?.mark(this, NativeResourceState.IN_USE, "llama.cpp generation")
                 val transactionId = UUID.randomUUID().toString().take(8)
                 try {
                     val text = buildString {
@@ -367,6 +371,10 @@ class NativeLlamaProvider(
                     throw error
                 } catch (error: Throwable) {
                     throw AiProviderException(AiErrorType.GENERATION_FAILED, "Native llama.cpp generation failed", error)
+                } finally {
+                    if (engine != null) {
+                        nativeResourceCoordinator?.mark(this, NativeResourceState.RESIDENT, "llama.cpp generation idle")
+                    }
                 }
             }
         } finally {
@@ -390,9 +398,16 @@ class NativeLlamaProvider(
                 check(nativeResourceCoordinator?.acquire(this@NativeLlamaProvider) ?: true) {
                     "Local llama.cpp generation deferred: another heavyweight native model is busy"
                 }
-                streamInternal(buildPrompt(request, context), transactionId).collect { token ->
-                    output.append(token)
-                    emit(AiStreamEvent.Token(token))
+                nativeResourceCoordinator?.mark(this@NativeLlamaProvider, NativeResourceState.IN_USE, "llama.cpp streaming generation")
+                try {
+                    streamInternal(buildPrompt(request, context), transactionId).collect { token ->
+                        output.append(token)
+                        emit(AiStreamEvent.Token(token))
+                    }
+                } finally {
+                    if (engine != null) {
+                        nativeResourceCoordinator?.mark(this@NativeLlamaProvider, NativeResourceState.RESIDENT, "llama.cpp streaming generation idle")
+                    }
                 }
             }
             val text = output.toString().trim()
@@ -425,7 +440,14 @@ class NativeLlamaProvider(
                 check(nativeResourceCoordinator?.acquire(this@NativeLlamaProvider) ?: true) {
                     "Local llama.cpp generation deferred: another heavyweight native model is busy"
                 }
-                streamInternal(prompt, transactionId).collect { emit(it) }
+                nativeResourceCoordinator?.mark(this@NativeLlamaProvider, NativeResourceState.IN_USE, "llama.cpp direct streaming generation")
+                try {
+                    streamInternal(prompt, transactionId).collect { emit(it) }
+                } finally {
+                    if (engine != null) {
+                        nativeResourceCoordinator?.mark(this@NativeLlamaProvider, NativeResourceState.RESIDENT, "llama.cpp direct streaming idle")
+                    }
+                }
             }
         } finally {
             inferenceReservation.set(false)
