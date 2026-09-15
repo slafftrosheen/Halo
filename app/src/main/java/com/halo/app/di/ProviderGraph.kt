@@ -2,6 +2,7 @@ package com.halo.app.di
 
 import android.content.Context
 import com.halo.providers.llamacpp.ModelDownloadManager
+import com.halo.sdk.runtime.NativeResourceCoordinator
 
 /**
  * Owns provider construction. Android-aware (needs Context for provider instantiation).
@@ -13,9 +14,15 @@ class ProviderGraph(
 ) {
 
     val modelDownloadManager by lazy { ModelDownloadManager(applicationContext) }
+    val nativeResourceCoordinator by lazy { NativeResourceCoordinator() }
 
     private val providerFactory by lazy {
-        AndroidProviderFactory(applicationContext, modelDownloadManager, storage)
+        AndroidProviderFactory(
+            applicationContext,
+            modelDownloadManager,
+            storage,
+            nativeResourceCoordinator
+        )
     }
 
     private var _providers: Providers? = null
