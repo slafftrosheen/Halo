@@ -23,7 +23,7 @@ object SherpaSpeechModelCatalog {
     data class ModelSpec(
         val id: String,
         val files: List<FileSpec>,
-        val sourceUrls: Map<String, String>
+        val sourceUrl: String
     )
 
     val whisperTiny = ModelSpec(
@@ -33,25 +33,19 @@ object SherpaSpeechModelCatalog {
             FileSpec("tiny-decoder.int8.onnx", 70_000_000L),
             FileSpec("tiny-tokens.txt", 100_000L)
         ),
-        sourceUrls = mapOf(
-            "tiny-encoder.int8.onnx" to "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-tiny.tar.bz2",
-            "tiny-decoder.int8.onnx" to "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-tiny.tar.bz2",
-            "tiny-tokens.txt" to "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-tiny.tar.bz2"
-        )
+        sourceUrl = "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-tiny.tar.bz2"
     )
 
     val sileroVad = ModelSpec(
         id = SILERO_VAD_ID,
         files = listOf(FileSpec(SILERO_VAD_FILE, 100_000L)),
-        sourceUrls = mapOf(
-            SILERO_VAD_FILE to "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/silero_vad.onnx"
-        )
+        sourceUrl = "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/silero_vad.onnx"
     )
 
     fun isInstalled(directory: File, spec: ModelSpec): Boolean =
         directory.isDirectory && spec.files.all { fileSpec ->
-            File(directory, fileSpec.name).isFile &&
-                File(directory, fileSpec.name).length() >= fileSpec.minimumBytes
+            val file = File(directory, fileSpec.name)
+            file.isFile && file.length() >= fileSpec.minimumBytes
         }
 
     fun missingFiles(directory: File, spec: ModelSpec): List<String> =
