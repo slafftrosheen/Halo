@@ -1,11 +1,13 @@
 package com.halo.app.di
 
+import com.halo.drivers.heycyan.RealHeyCyanDriver
 import com.halo.providers.sherpa.stt.SherpaSpeechModelCatalog
 import java.io.File
 
 /**
  * Owns Android-host audio and speech input for the phone-first runtime.
- * Physical wearable audio is attached later by the Devices flow.
+ * Physical wearable adapters remain lazy and are only touched by explicit
+ * device flows; they are never constructed as part of normal runtime startup.
  */
 class HostGraph(
     private val context: android.content.Context,
@@ -53,5 +55,13 @@ class HostGraph(
             eventBus = infra.eventBus,
             commandBus = infra.commandBus
         )
+    }
+
+    /**
+     * Physical HeyCyan support is deliberately lazy. The phone runtime never
+     * asks for this property during startup; Devices/diagnostic flows may.
+     */
+    val heyCyanDriver: RealHeyCyanDriver by lazy {
+        RealHeyCyanDriver(context, infra.eventBus)
     }
 }
