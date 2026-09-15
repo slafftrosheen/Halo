@@ -30,7 +30,7 @@ object ManualDependencyGraph {
     val storage by lazy { RuntimeStartupTrace.measure("graph.storage") { com.halo.host.android.AndroidStorage(applicationContext) } }
     val providerGraph by lazy { RuntimeStartupTrace.measure("graph.providers") { ProviderGraph(applicationContext, storage) } }
     val hostGraph by lazy { RuntimeStartupTrace.measure("graph.host") { HostGraph(applicationContext, infra, providerGraph, storage) } }
-    val engineGraph by lazy { RuntimeStartupTrace.measure("graph.engines") { EngineGraph(applicationContext, infra, providerGraph, deviceSessionManager, hostGraph.heyCyanDriver) } }
+    val engineGraph by lazy { RuntimeStartupTrace.measure("graph.engines") { EngineGraph(applicationContext, infra, providerGraph) } }
     val observerGraph by lazy { RuntimeStartupTrace.measure("graph.observers") { ObserverGraph(applicationContext, infra, engineGraph) } }
 
     val eventBus get() = infra.eventBus
@@ -53,7 +53,10 @@ object ManualDependencyGraph {
     }
     val audioPipeline get() = hostGraph.audioPipeline
     val audioPerceptionEngine get() = hostGraph.audioPerceptionEngine
-    val heyCyanDriver get() = hostGraph.heyCyanDriver
+    val audioPerceptionEngine get() = hostGraph.audioPerceptionEngine
+    val heyCyanDriver by lazy {
+        RuntimeStartupTrace.measure("host.heyCyanDriver") { hostGraph.heyCyanDriver }
+    }
 
     val goalManager get() = engineGraph.goalManager
     val capabilityRegistry get() = engineGraph.capabilityRegistry
