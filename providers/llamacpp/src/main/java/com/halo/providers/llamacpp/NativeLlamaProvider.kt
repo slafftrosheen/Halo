@@ -30,6 +30,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
 import org.nehuatl.llamacpp.LlamaHelper
 import java.util.UUID
+import java.util.concurrent.atomic.AtomicBoolean
 
 class NativeLlamaProvider(
     private val context: Context,
@@ -44,6 +45,7 @@ class NativeLlamaProvider(
     private var loadedContextSize: Int? = null
     private val modelLoadMutex = Mutex()
     private val inferenceMutex = Mutex()
+    private val inferenceReservation = AtomicBoolean(false)
     private val _status = MutableStateFlow(ProviderStatus.UNAVAILABLE)
     override val status: StateFlow<ProviderStatus> = _status.asStateFlow()
     private val systemPrompt: String get() = storage.getString("ai_system_prompt") ?: "You are Halo, a helpful AI."
@@ -275,10 +277,13 @@ class NativeLlamaProvider(
     }
 
     override suspend fun releaseIfIdle(): Boolean {
+        if (inferenceReservation.get()) return false
         if (!modelLoadMutex.tryLock()) return false
         return try {
+            if (inferenceReservation.get()) return false
             if (!inferenceMutex.tryLock()) return false
             try {
+                if (inferenceReservation.get()) return false
                 releaseCurrentModel()
                 true
             } finally {
@@ -329,38 +334,43 @@ class NativeLlamaProvider(
     override suspend fun generate(request: AiRequest, context: AiContext): AiResponse {
         request.validateForTextGeneration()
         val modelId = requireSelectedModel(request)
-        if (!loadModelIfNeeded()) {
-            throw AiProviderException(
-                AiErrorType.MODEL_LOAD_FAILED,
-                status.value.message ?: "Unable to load local model"
-            )
-        }
-        val startedAt = System.currentTimeMillis()
-        val prompt = buildPrompt(request, context)
-        return inferenceMutex.withLock {
-            check(nativeResourceCoordinator?.acquire(this) ?: true) {
-                "Local llama.cpp generation deferred: another heavyweight native model is busy"
-            }
-            val transactionId = UUID.randomUUID().toString().take(8)
-            try {
-                val text = buildString {
-                    streamInternal(prompt, transactionId).collect { append(it) }
-                }.trim()
-                if (text.isBlank()) throw AiProviderException(AiErrorType.EMPTY_RESPONSE, "llama.cpp returned an empty response")
-                AiResponse(
-                    text,
-                    id,
-                    modelId,
-                    "stop",
-                    AiGenerationMetrics(startedAtMs = startedAt, completedAtMs = System.currentTimeMillis())
+        inferenceReservation.set(true)
+        try {
+            if (!loadModelIfNeeded()) {
+                throw AiProviderException(
+                    AiErrorType.MODEL_LOAD_FAILED,
+                    status.value.message ?: "Unable to load local model"
                 )
-            } catch (error: CancellationException) {
-                throw error
-            } catch (error: AiProviderException) {
-                throw error
-            } catch (error: Throwable) {
-                throw AiProviderException(AiErrorType.GENERATION_FAILED, "Native llama.cpp generation failed", error)
             }
+            val startedAt = System.currentTimeMillis()
+            val prompt = buildPrompt(request, context)
+            return inferenceMutex.withLock {
+                check(nativeResourceCoordinator?.acquire(this) ?: true) {
+                    "Local llama.cpp generation deferred: another heavyweight native model is busy"
+                }
+                val transactionId = UUID.randomUUID().toString().take(8)
+                try {
+                    val text = buildString {
+                        streamInternal(prompt, transactionId).collect { append(it) }
+                    }.trim()
+                    if (text.isBlank()) throw AiProviderException(AiErrorType.EMPTY_RESPONSE, "llama.cpp returned an empty response")
+                    AiResponse(
+                        text,
+                        id,
+                        modelId,
+                        "stop",
+                        AiGenerationMetrics(startedAtMs = startedAt, completedAtMs = System.currentTimeMillis())
+                    )
+                } catch (error: CancellationException) {
+                    throw error
+                } catch (error: AiProviderException) {
+                    throw error
+                } catch (error: Throwable) {
+                    throw AiProviderException(AiErrorType.GENERATION_FAILED, "Native llama.cpp generation failed", error)
+                }
+            }
+        } finally {
+            inferenceReservation.set(false)
         }
     }
 
@@ -370,6 +380,7 @@ class NativeLlamaProvider(
         val startedAt = System.currentTimeMillis()
         val output = StringBuilder()
         val transactionId = UUID.randomUUID().toString().take(8)
+        inferenceReservation.set(true)
         try {
             val modelId = requireSelectedModel(request)
             if (!loadModelIfNeeded()) {
@@ -401,16 +412,23 @@ class NativeLlamaProvider(
             throw error
         } catch (error: Throwable) {
             emit(AiStreamEvent.Failed(error))
+        } finally {
+            inferenceReservation.set(false)
         }
     }
 
     fun stream(prompt: String): Flow<String> = flow {
         val transactionId = UUID.randomUUID().toString().take(8)
-        inferenceMutex.withLock {
-            check(nativeResourceCoordinator?.acquire(this@NativeLlamaProvider) ?: true) {
-                "Local llama.cpp generation deferred: another heavyweight native model is busy"
+        inferenceReservation.set(true)
+        try {
+            inferenceMutex.withLock {
+                check(nativeResourceCoordinator?.acquire(this@NativeLlamaProvider) ?: true) {
+                    "Local llama.cpp generation deferred: another heavyweight native model is busy"
+                }
+                streamInternal(prompt, transactionId).collect { emit(it) }
             }
-            streamInternal(prompt, transactionId).collect { emit(it) }
+        } finally {
+            inferenceReservation.set(false)
         }
     }
 
