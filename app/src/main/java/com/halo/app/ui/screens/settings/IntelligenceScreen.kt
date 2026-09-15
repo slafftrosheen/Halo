@@ -24,12 +24,6 @@ import com.halo.app.ui.glass.components.HaloGlassSettingRow
 import com.halo.app.ui.glass.material.HaloGlassColors
 import com.halo.app.ui.glass.material.HaloTypography
 
-/**
- * Provider/model control surface.
- *
- * This screen deliberately reports only values already owned by IntelligenceViewModel.
- * It does not manufacture performance metrics or simulate runtime state.
- */
 @Composable
 fun IntelligenceScreen(
     viewModel: IntelligenceViewModel,
@@ -46,16 +40,8 @@ fun IntelligenceScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(uiState.activeProviderName, style = HaloTypography.titleMedium, color = HaloGlassColors.TextPrimary)
-                    Text(
-                        uiState.activeModelId?.ifBlank { null } ?: "No model selected",
-                        style = HaloTypography.bodyMedium,
-                        color = HaloGlassColors.TextSecondary
-                    )
-                    Text(
-                        "Status: ${uiState.activeProviderStatus.name}",
-                        style = HaloTypography.labelSmall,
-                        color = HaloGlassColors.TextMuted
-                    )
+                    Text(uiState.activeModelId?.ifBlank { null } ?: "No model selected", style = HaloTypography.bodyMedium, color = HaloGlassColors.TextSecondary)
+                    Text("Status: ${uiState.activeProviderStatus.name}", style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
                 }
             }
         }
@@ -65,8 +51,8 @@ fun IntelligenceScreen(
                 Column(Modifier.fillMaxWidth().padding(16.dp)) {
                     uiState.providers.forEach { provider ->
                         HaloGlassSettingRow(
-                            text = provider.displayName,
-                            trailingIcon = if (provider.isSelected) "✓" else null,
+                            title = provider.displayName,
+                            trailingText = if (provider.isSelected) "Selected" else provider.status.name,
                             onClick = { viewModel.selectProvider(provider.id) }
                         )
                         Spacer(Modifier.height(6.dp))
@@ -87,8 +73,8 @@ fun IntelligenceScreen(
                     } else {
                         uiState.availableModels.forEach { model ->
                             HaloGlassSettingRow(
-                                text = model.displayName,
-                                trailingIcon = if (model.id == uiState.activeModelId) "✓" else null,
+                                title = model.displayName,
+                                trailingText = if (model.id == uiState.activeModelId) "Selected" else null,
                                 onClick = {
                                     onChangeModel(model.id)
                                     viewModel.selectModel(model.id)
@@ -120,17 +106,9 @@ fun IntelligenceScreen(
         item {
             HaloGlassSection(title = "LOCAL MODEL") {
                 Column(Modifier.fillMaxWidth().padding(16.dp)) {
-                    Text(
-                        uiState.activeLocalModelId ?: "No local model selected",
-                        style = HaloTypography.bodyMedium,
-                        color = HaloGlassColors.TextPrimary
-                    )
+                    Text(uiState.activeLocalModelId ?: "No local model selected", style = HaloTypography.bodyMedium, color = HaloGlassColors.TextPrimary)
                     Spacer(Modifier.height(4.dp))
-                    Text(
-                        "Context: ${uiState.llamacppContext}",
-                        style = HaloTypography.labelSmall,
-                        color = HaloGlassColors.TextMuted
-                    )
+                    Text("Context: ${uiState.llamacppContext}", style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
                 }
             }
         }
@@ -142,27 +120,17 @@ fun IntelligenceScreen(
                 onClick = viewModel::testConnection
             )
         }
-
         item { Spacer(Modifier.height(24.dp)) }
     }
 }
 
 @Composable
-private fun PolicySwitchRow(
-    label: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
-) {
+private fun PolicySwitchRow(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            label,
-            modifier = Modifier.weight(1f),
-            style = HaloTypography.bodyMedium,
-            color = HaloGlassColors.TextPrimary
-        )
+        Text(label, modifier = Modifier.weight(1f), style = HaloTypography.bodyMedium, color = HaloGlassColors.TextPrimary)
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
