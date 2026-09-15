@@ -1,12 +1,11 @@
 package com.halo.app.di
 
-import com.halo.drivers.heycyan.RealHeyCyanDriver
 import com.halo.providers.sherpa.stt.SherpaSpeechModelCatalog
 import java.io.File
 
 /**
- * Owns the WearableHost, physical driver, audio pipeline, and audio perception
- * chain for the current host instance.
+ * Owns Android-host audio and speech input for the phone-first runtime.
+ * Physical wearable audio is attached later by the Devices flow.
  */
 class HostGraph(
     private val context: android.content.Context,
@@ -14,24 +13,6 @@ class HostGraph(
     private val providerGraph: ProviderGraph,
     private val storage: com.halo.sdk.runtime.Storage
 ) {
-
-    val heyCyanDriver: RealHeyCyanDriver by lazy {
-        RealHeyCyanDriver(context, infra.eventBus)
-    }
-
-    private val hostFactory by lazy {
-        HostFactory(
-            context = context,
-            storage = storage,
-            heyCyanDriver = heyCyanDriver,
-            sessionManager = ManualDependencyGraph.deviceSessionManager,
-            eventBus = infra.eventBus
-        )
-    }
-
-    val wearableHost: com.halo.sdk.host.WearableHost by lazy {
-        hostFactory.create(HostType.HEYCYAN)
-    }
 
     private val speechModelDirectory by lazy {
         File(context.filesDir, "speech")
@@ -53,10 +34,9 @@ class HostGraph(
         }
     }
 
+    /** Android microphone is the canonical input while Halo is phone-only. */
     val audioPipeline by lazy {
         com.halo.engines.speech.AudioPipeline(
-            // Neural VAD is opt-in through an explicitly installed model. Keep
-            // deterministic energy VAD as the safe fallback for fresh installs.
             vad = vad ?: com.halo.engines.speech.EnergyVAD(threshold = 1000),
             wakeWordDetector = providerGraph.providers.wakeWord,
             sttProvider = providerGraph.providers.speechRecognition,
@@ -67,7 +47,7 @@ class HostGraph(
 
     val audioPerceptionEngine by lazy {
         com.halo.engines.speech.AudioPerceptionEngine(
-            audioSource = HybridAudioSource(wearableHost),
+            audioSource = com.halo.host.android.audio.AndroidAudioSource(),
             preprocessor = com.halo.engines.speech.DefaultAudioPreprocessor(),
             audioPipeline = audioPipeline,
             eventBus = infra.eventBus,
