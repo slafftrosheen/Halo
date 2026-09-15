@@ -12,6 +12,7 @@ import com.halo.providers.llamacpp.ModelDownloadManager
 import com.halo.providers.llamacpp.OllamaProvider
 import com.halo.providers.sherpa.stt.SherpaOfflineSpeechRecognitionProvider
 import java.io.File
+import java.util.Locale
 
 class AndroidProviderFactory(
     private val context: Context,
@@ -26,14 +27,24 @@ class AndroidProviderFactory(
             storage = storage
         )
 
-        val sherpaModelDirectory = File(context.filesDir, "speech/sherpa-whisper-tiny-en")
+        // Local Whisper is opt-in through model presence. Do not download or
+        // initialize a 100+ MB ASR model during application startup.
+        val sherpaModelDirectory = File(context.filesDir, "speech/sherpa-whisper-tiny")
+        val configuredLocale = storage.getString("speech_locale")
+            ?.takeIf { it.isNotBlank() }
+            ?: Locale.getDefault().toLanguageTag()
+        val speechLanguage = configuredLocale.substringBefore('-').substringBefore('_')
+
         val speechRecognition: SpeechRecognitionProvider = if (
             SherpaOfflineSpeechRecognitionProvider.isInstalled(sherpaModelDirectory)
         ) {
-            SherpaOfflineSpeechRecognitionProvider(sherpaModelDirectory)
+            SherpaOfflineSpeechRecognitionProvider(
+                modelDirectory = sherpaModelDirectory,
+                language = speechLanguage
+            )
         } else {
             AndroidSpeechRecognitionProvider(context) {
-                storage.getString("speech_locale") ?: java.util.Locale.getDefault().toLanguageTag()
+                configuredLocale
             }
         }
 
