@@ -11,6 +11,7 @@ import kotlinx.coroutines.withContext
  *
  * Construction != startup. Halo's cognitive runtime is usable without a
  * wearable; physical-device capabilities become available when a host connects.
+ * Production runtime state is not recorded to replay files; diagnostics stay in Logcat.
  */
 class HaloRuntime(
     private val graph: ManualDependencyGraph
@@ -37,7 +38,6 @@ class HaloRuntime(
         var audioStarted = false
         var speechSessionStarted = false
         var speechBridgeStarted = false
-        var replayRecordingStarted = false
         var androidSpeakerStarted = false
         var kernelBooted = false
 
@@ -60,7 +60,6 @@ class HaloRuntime(
                 graph.reasoningEngine.initialize(graph.engineContext)
                 reasoningInitialized = true
             }
-
             phase("interpretation.start") {
                 graph.interpretationEngine.start()
                 interpretationStarted = true
@@ -69,7 +68,6 @@ class HaloRuntime(
                 graph.reasoningEngine.start()
                 reasoningStarted = true
             }
-
             phase("planning.initialize") {
                 graph.planningEngine.initialize(graph.engineContext)
                 planningInitialized = true
@@ -78,7 +76,6 @@ class HaloRuntime(
                 graph.executionEngine.initialize(graph.engineContext)
                 executionInitialized = true
             }
-
             phase("planning.start") {
                 graph.planningEngine.start()
                 planningStarted = true
@@ -87,7 +84,6 @@ class HaloRuntime(
                 graph.executionEngine.start()
                 executionStarted = true
             }
-
             phase("audio.initialize") {
                 graph.audioPerceptionEngine.initialize(graph.engineContext)
                 audioInitialized = true
@@ -96,7 +92,6 @@ class HaloRuntime(
                 graph.audioPerceptionEngine.start()
                 audioStarted = true
             }
-
             phase("speechSession.start") {
                 graph.speechSessionManager.start()
                 speechSessionStarted = true
@@ -105,10 +100,7 @@ class HaloRuntime(
                 graph.speechPerceptionBridge.start()
                 speechBridgeStarted = true
             }
-            phase("replay.start") {
-                graph.runtimeReplayRecorder.startRecording()
-                replayRecordingStarted = true
-            }
+            // Replay recording is developer infrastructure, not a production runtime service.
             phase("androidSpeaker.start") {
                 graph.startAndroidSpeaker()
                 androidSpeakerStarted = true
@@ -130,7 +122,7 @@ class HaloRuntime(
                     reasoningStarted, reasoningInitialized,
                     interpretationStarted, interpretationInitialized,
                     speechSessionStarted, speechBridgeStarted,
-                    replayRecordingStarted, androidSpeakerStarted, kernelBooted
+                    androidSpeakerStarted, kernelBooted
                 )
             }
             throw error
@@ -143,7 +135,7 @@ class HaloRuntime(
         withContext(NonCancellable) {
             cleanupPartialStartup(
                 true, true, true, true, true, true, true, true, true, true,
-                true, true, true, true, true
+                true, true, true, true
             )
             // Do not construct or touch a physical host during Android runtime
             // shutdown. Device lifecycles are owned by the Devices flow.
@@ -165,13 +157,11 @@ class HaloRuntime(
         interpretationInitialized: Boolean,
         speechSessionStarted: Boolean,
         speechBridgeStarted: Boolean,
-        replayRecordingStarted: Boolean,
         androidSpeakerStarted: Boolean,
         kernelBooted: Boolean
     ) {
         if (kernelBooted) runCatching { graph.microkernel.shutdown() }
         if (androidSpeakerStarted) runCatching { graph.androidSpeaker.shutdown() }
-        if (replayRecordingStarted) runCatching { graph.runtimeReplayRecorder.stopRecording() }
         if (speechBridgeStarted) runCatching { graph.speechPerceptionBridge.stop() }
         if (speechSessionStarted) runCatching { graph.speechSessionManager.stop() }
         if (audioStarted) runCatching { graph.audioPerceptionEngine.stop() }
