@@ -20,6 +20,7 @@ import com.halo.host.android.capability.AndroidNavigationCapability
 import com.halo.engines.execution.capability.LocomotionCapability
 import com.halo.engines.execution.capability.CameraCapability
 import com.halo.engines.execution.capability.SpeechOutputRouter
+import com.halo.sdk.runtime.NativeResourceCoordinator
 import com.halo.sdk.runtime.embodiment.BuddyBotGateway
 import com.halo.sdk.runtime.embodiment.HeyCyanGateway
 import com.halo.app.capability.HeyCyanCapabilityBridge
@@ -39,6 +40,10 @@ class EngineGraph(
     private val deviceSessionManager: com.halo.sdk.runtime.embodiment.DeviceSessionManager,
     private val heyCyanDriver: com.halo.drivers.heycyan.RealHeyCyanDriver
 ) {
+    /** Shared arbitration boundary used by heavyweight native inference providers. */
+    val nativeResourceCoordinator: NativeResourceCoordinator
+        get() = providerGraph.nativeResourceCoordinator
+
     // Intentionally do not warm a multi-GB local model from a listening event.
     // Listening is a latency-sensitive runtime path, while native GGUF loading can
     // require several GB of additional native memory and can trigger process death
