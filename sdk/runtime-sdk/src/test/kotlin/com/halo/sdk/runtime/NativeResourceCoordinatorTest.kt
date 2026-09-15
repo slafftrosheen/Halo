@@ -17,16 +17,13 @@ class NativeResourceCoordinatorTest {
         assertTrue(coordinator.acquire(llm))
         assertEquals(NativeResourceState.RESIDENT, coordinator.snapshot.value.single().state)
 
+        coordinator.mark(llm, NativeResourceState.IN_USE, "generation active")
+        assertEquals(NativeResourceState.IN_USE, coordinator.snapshot.value.single().state)
+
         assertTrue(coordinator.acquire(asr))
         assertTrue(llm.released)
-        assertEquals(
-            NativeResourceState.RELEASED,
-            coordinator.snapshot.value.first { it.ownerId == llm.nativeResourceId }.state
-        )
-        assertEquals(
-            NativeResourceState.RESIDENT,
-            coordinator.snapshot.value.first { it.ownerId == asr.nativeResourceId }.state
-        )
+        assertEquals(NativeResourceState.RELEASED, coordinator.snapshot.value.first { it.ownerId == llm.nativeResourceId }.state)
+        assertEquals(NativeResourceState.RESIDENT, coordinator.snapshot.value.first { it.ownerId == asr.nativeResourceId }.state)
         assertTrue(coordinator.activeKinds().contains(NativeResourceKind.HEAVY_ASR))
         assertFalse(coordinator.activeKinds().contains(NativeResourceKind.HEAVY_LLM))
     }
@@ -38,15 +35,12 @@ class NativeResourceCoordinatorTest {
         val asr = FakeOwner(NativeResourceKind.HEAVY_ASR)
 
         assertTrue(coordinator.acquire(llm))
+        coordinator.mark(llm, NativeResourceState.IN_USE, "generation active")
         assertFalse(coordinator.acquire(asr))
         assertTrue(coordinator.activeKinds().contains(NativeResourceKind.HEAVY_LLM))
         assertFalse(coordinator.activeKinds().contains(NativeResourceKind.HEAVY_ASR))
-        assertEquals(
-            NativeResourceState.RELEASED,
-            coordinator.snapshot.value.first { it.ownerId == asr.nativeResourceId }.state
-        )
-        assertTrue(coordinator.snapshot.value.first { it.ownerId == asr.nativeResourceId }
-            .reason?.contains("busy") == true)
+        assertEquals(NativeResourceState.RELEASED, coordinator.snapshot.value.first { it.ownerId == asr.nativeResourceId }.state)
+        assertTrue(coordinator.snapshot.value.first { it.ownerId == asr.nativeResourceId }.reason?.contains("busy") == true)
     }
 
     private class FakeOwner(
