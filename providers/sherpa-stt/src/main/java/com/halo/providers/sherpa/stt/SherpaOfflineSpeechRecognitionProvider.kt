@@ -68,12 +68,11 @@ class SherpaOfflineSpeechRecognitionProvider(
         check(isInstalled(modelDirectory)) {
             "Sherpa-ONNX model is not installed at ${modelDirectory.absolutePath}"
         }
-        check(nativeResourceCoordinator?.acquire(this) ?: true) {
-            "Local Whisper recognition deferred: another heavyweight native model is busy"
-        }
-
         require(audio.frames.all { it.sampleRate == SAMPLE_RATE && it.channels == 1 }) {
             "Sherpa-ONNX provider requires mono ${SAMPLE_RATE} Hz PCM audio"
+        }
+        check(nativeResourceCoordinator?.acquire(this) ?: true) {
+            "Local Whisper recognition deferred: another heavyweight native model is busy"
         }
 
         val samples = FloatArray(audio.frames.sumOf { it.samples.size })
@@ -84,19 +83,24 @@ class SherpaOfflineSpeechRecognitionProvider(
             }
         }
 
-        val localRecognizer = ensureRecognizer()
-        val stream = localRecognizer.createStream()
-        return try {
-            stream.acceptWaveform(samples, SAMPLE_RATE)
-            localRecognizer.decode(stream)
-            val result = localRecognizer.getResult(stream)
-            RecognitionResult(
-                text = result.text.trim(),
-                language = language.ifBlank { "auto" },
-                confidence = 0.0f
-            )
-        } finally {
-            stream.release()
+        try {
+            val localRecognizer = ensureRecognizer()
+            val stream = localRecognizer.createStream()
+            return try {
+                stream.acceptWaveform(samples, SAMPLE_RATE)
+                localRecognizer.decode(stream)
+                val result = localRecognizer.getResult(stream)
+                RecognitionResult(
+                    text = result.text.trim(),
+                    language = language.ifBlank { "auto" },
+                    confidence = 0.0f
+                )
+            } finally {
+                stream.release()
+            }
+        } catch (error: Throwable) {
+            nativeResourceCoordinator?.release(this)
+            throw error
         }
     }
 
