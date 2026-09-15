@@ -22,9 +22,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.halo.app.di.ManualDependencyGraph
-import com.halo.app.ui.screens.HaloConsoleScreen
-import com.halo.app.ui.developer.inspector.RuntimeInspectorScreen
-import com.halo.app.ui.developer.protocol.ProtocolLabScreen
 import com.halo.app.ui.glass.components.HaloGlassNavigation
 import com.halo.app.ui.glass.components.NavigationItem
 import com.halo.app.ui.glass.material.HaloGlassColors
@@ -50,23 +47,14 @@ val bottomNavItems = listOf(Screen.Home, Screen.Activity, Screen.Devices, Screen
 @Composable
 fun AppShell() {
     val navController = rememberNavController()
-
-    // Home is the start destination, so it is the only screen ViewModel that
-    // should be materialized during first composition. The log showed settings,
-    // intelligence, devices and pairing all being constructed before frame 1,
-    // which also kicked provider discovery and hardware setup on startup.
     val homeViewModel = ManualDependencyGraph.homeViewModel
 
     fun navigateSafely(route: String) {
         if (navController.currentDestination?.route != route) {
-            navController.navigate(route) {
-                launchSingleTop = true
-            }
+            navController.navigate(route) { launchSingleTop = true }
         }
     }
 
-    // Home owns primary dashboard shortcuts, so its navigation stream must be
-    // collected while the shell is alive. This was previously missing entirely.
     LaunchedEffect(homeViewModel) {
         homeViewModel.navigationEvents.collectLatest(::navigateSafely)
     }
@@ -88,106 +76,49 @@ fun AppShell() {
                 startDestination = Screen.Home.route,
                 modifier = Modifier.fillMaxSize()
             ) {
-                composable(Screen.Home.route) {
-                    HomeScreen(homeViewModel)
-                }
-
-                composable(Screen.Activity.route) {
-                    ActivityScreen(ManualDependencyGraph.activityViewModel)
-                }
+                composable(Screen.Home.route) { HomeScreen(homeViewModel) }
+                composable(Screen.Activity.route) { ActivityScreen(ManualDependencyGraph.activityViewModel) }
 
                 composable(Screen.Devices.route) {
-                    val devicesViewModel = ManualDependencyGraph.devicesViewModel
-                    LaunchedEffect(devicesViewModel) {
-                        devicesViewModel.navigationEvents.collectLatest(::navigateSafely)
+                    val viewModel = ManualDependencyGraph.devicesViewModel
+                    LaunchedEffect(viewModel) {
+                        viewModel.navigationEvents.collectLatest(::navigateSafely)
                     }
-                    DevicesScreen(devicesViewModel)
+                    DevicesScreen(viewModel)
                 }
 
-                composable(
-                    "device/{deviceId}",
-                    arguments = listOf(navArgument("deviceId") { type = NavType.StringType })
-                ) { entry ->
-                    val devicesViewModel = ManualDependencyGraph.devicesViewModel
+                composable("device/{deviceId}", arguments = listOf(navArgument("deviceId") { type = NavType.StringType })) { entry ->
+                    val viewModel = ManualDependencyGraph.devicesViewModel
                     val deviceId = entry.arguments?.getString("deviceId")
-                    val devicesState by devicesViewModel.uiState.collectAsState()
-
-                    LaunchedEffect(devicesViewModel) {
-                        devicesViewModel.navigationEvents.collectLatest(::navigateSafely)
-                    }
-
-                    val deviceKind = devicesState.devices
-                        .firstOrNull { it.id == deviceId }
-                        ?.kind
-
+                    val state by viewModel.uiState.collectAsState()
+                    val deviceKind = state.devices.firstOrNull { it.id == deviceId }?.kind
                     when {
                         deviceId == null -> navController.popBackStack()
-                        deviceKind == com.halo.sdk.runtime.embodiment.DeviceKind.BUDDYBOT -> BuddyBotControlScreen(
-                            deviceId = deviceId,
-                            viewModel = devicesViewModel,
-                            onBack = { navController.popBackStack() }
-                        )
-                        deviceKind == com.halo.sdk.runtime.embodiment.DeviceKind.HEYCYAN_GLASSES -> HeyCyanControlScreen(
-                            deviceId = deviceId,
-                            viewModel = devicesViewModel,
-                            onBack = { navController.popBackStack() }
-                        )
+                        deviceKind == com.halo.sdk.runtime.embodiment.DeviceKind.BUDDYBOT -> BuddyBotControlScreen(deviceId, viewModel) { navController.popBackStack() }
+                        deviceKind == com.halo.sdk.runtime.embodiment.DeviceKind.HEYCYAN_GLASSES -> HeyCyanControlScreen(deviceId, viewModel) { navController.popBackStack() }
                         else -> navController.popBackStack()
                     }
                 }
 
                 composable(Screen.Settings.route) {
-                    val settingsViewModel = ManualDependencyGraph.settingsViewModel
-                    LaunchedEffect(settingsViewModel) {
-                        settingsViewModel.navigationEvents.collectLatest(::navigateSafely)
-                    }
-                    SettingsScreen(settingsViewModel)
+                    val viewModel = ManualDependencyGraph.settingsViewModel
+                    LaunchedEffect(viewModel) { viewModel.navigationEvents.collectLatest(::navigateSafely) }
+                    SettingsScreen(viewModel)
                 }
 
                 composable("ai_settings") {
-                    val intelligenceViewModel = ManualDependencyGraph.intelligenceViewModel
-                    LaunchedEffect(intelligenceViewModel) {
-                        intelligenceViewModel.navigationEvents.collectLatest(::navigateSafely)
-                    }
-                    IntelligenceScreen(
-                        viewModel = intelligenceViewModel,
-                        onBack = { navController.popBackStack() }
-                    )
+                    val viewModel = ManualDependencyGraph.intelligenceViewModel
+                    LaunchedEffect(viewModel) { viewModel.navigationEvents.collectLatest(::navigateSafely) }
+                    IntelligenceScreen(viewModel) { navController.popBackStack() }
                 }
 
-                composable("permissions") {
-                    PermissionsScreen(onBack = { navController.popBackStack() })
-                }
-
+                composable("permissions") { PermissionsScreen { navController.popBackStack() } }
                 composable("discovery") {
-                    val pairingViewModel = ManualDependencyGraph.pairingViewModel
-                    LaunchedEffect(pairingViewModel) {
-                        pairingViewModel.navigationEvents.collectLatest { event ->
-                            if (event == "back") navController.popBackStack()
-                        }
+                    val viewModel = ManualDependencyGraph.pairingViewModel
+                    LaunchedEffect(viewModel) {
+                        viewModel.navigationEvents.collectLatest { if (it == "back") navController.popBackStack() }
                     }
-                    PairingScreen(pairingViewModel)
-                }
-
-                composable("console") {
-                    HaloConsoleScreen(
-                        viewModel = ManualDependencyGraph.consoleViewModel,
-                        onBack = { navController.popBackStack() }
-                    )
-                }
-
-                composable("inspector") {
-                    RuntimeInspectorScreen(
-                        ManualDependencyGraph.runtimeInspectorViewModel,
-                        onBack = { navController.popBackStack() }
-                    )
-                }
-
-                composable("protocol_lab") {
-                    ProtocolLabScreen(
-                        ManualDependencyGraph.protocolLabViewModel,
-                        onBack = { navController.popBackStack() }
-                    )
+                    PairingScreen(viewModel)
                 }
             }
         }
