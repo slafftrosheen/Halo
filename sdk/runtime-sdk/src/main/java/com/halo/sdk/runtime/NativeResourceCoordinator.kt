@@ -61,10 +61,17 @@ class NativeResourceCoordinator {
             return@withLock true
         }
         publish(owner, NativeResourceState.ACQUIRING, "acquisition requested")
-        val conflicts = active.filter { it.nativeResourceKind != owner.nativeResourceKind }
+
+        // A resource kind is exclusive, while different heavyweight kinds may coexist.
+        // This guarantees at most one LLM and one ASR owner at a time.
+        val conflicts = active.filter { it.nativeResourceKind == owner.nativeResourceKind }
         for (conflict in conflicts) {
             if (!conflict.releaseIfIdle()) {
-                publish(owner, NativeResourceState.RELEASED, "blocked by busy ${conflict.nativeResourceKind}")
+                publish(
+                    owner,
+                    NativeResourceState.RELEASED,
+                    "blocked by busy ${conflict.nativeResourceKind}"
+                )
                 return@withLock false
             }
             publish(conflict, NativeResourceState.RELEASED, "yielded to ${owner.nativeResourceKind}")
