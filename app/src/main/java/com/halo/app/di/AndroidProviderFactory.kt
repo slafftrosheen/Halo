@@ -10,6 +10,8 @@ import com.halo.providers.openrouter.OpenRouterProvider
 import com.halo.providers.llamacpp.NativeLlamaProvider
 import com.halo.providers.llamacpp.ModelDownloadManager
 import com.halo.providers.llamacpp.OllamaProvider
+import com.halo.providers.sherpa.stt.SherpaOfflineSpeechRecognitionProvider
+import java.io.File
 
 class AndroidProviderFactory(
     private val context: Context,
@@ -24,11 +26,20 @@ class AndroidProviderFactory(
             storage = storage
         )
 
+        val sherpaModelDirectory = File(context.filesDir, "speech/sherpa-whisper-tiny-en")
+        val speechRecognition: SpeechRecognitionProvider = if (
+            SherpaOfflineSpeechRecognitionProvider.isInstalled(sherpaModelDirectory)
+        ) {
+            SherpaOfflineSpeechRecognitionProvider(sherpaModelDirectory)
+        } else {
+            AndroidSpeechRecognitionProvider(context) {
+                storage.getString("speech_locale") ?: java.util.Locale.getDefault().toLanguageTag()
+            }
+        }
+
         return Providers(
             inference = llamaProvider,
-            speechRecognition = AndroidSpeechRecognitionProvider(context) {
-                storage.getString("speech_locale") ?: java.util.Locale.getDefault().toLanguageTag()
-            },
+            speechRecognition = speechRecognition,
             speechSynthesis = AndroidTTSProvider(context),
             wakeWord = AlwaysWakeDetector(),
             aiProviders = listOfNotNull(
