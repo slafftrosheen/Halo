@@ -2,10 +2,13 @@ package com.halo.app.di
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import com.halo.engines.speech.UnavailableSpeechRecognitionProvider
 import com.halo.providers.llamacpp.ModelDownloadManager
 import com.halo.sdk.provider.AiInferenceProvider
 import com.halo.sdk.runtime.NativeResourceCoordinator
 import com.halo.sdk.runtime.Storage
+import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -27,19 +30,19 @@ class AndroidProviderFactoryTest {
         override fun clear() { data.clear() }
     }
 
-    @Test
-    fun `inference provider is identical object instance in aiProviders`() {
+    private fun createFactory(): AndroidProviderFactory {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        val storage = FakeStorage()
-        val downloadManager = ModelDownloadManager(context)
-        val factory = AndroidProviderFactory(
+        return AndroidProviderFactory(
             context = context,
-            modelDownloadManager = downloadManager,
-            storage = storage,
+            modelDownloadManager = ModelDownloadManager(context),
+            storage = FakeStorage(),
             nativeResourceCoordinator = NativeResourceCoordinator()
         )
+    }
 
-        val providers = factory.createProviders()
+    @Test
+    fun `inference provider is identical object instance in aiProviders`() {
+        val providers = createFactory().createProviders()
         val inference = providers.inference
         val aiProvider = providers.aiProviders.first { it.id == inference.id }
 
@@ -48,15 +51,7 @@ class AndroidProviderFactoryTest {
 
     @Test
     fun `registry preserves typed inference boundary`() {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        val storage = FakeStorage()
-        val downloadManager = ModelDownloadManager(context)
-        val providers = AndroidProviderFactory(
-            context = context,
-            modelDownloadManager = downloadManager,
-            storage = storage,
-            nativeResourceCoordinator = NativeResourceCoordinator()
-        ).createProviders()
+        val providers = createFactory().createProviders()
 
         assertTrue(providers.aiRegistry.inference.any { it === providers.inference })
         assertTrue(providers.aiRegistry.inference.all { provider ->
@@ -65,6 +60,16 @@ class AndroidProviderFactoryTest {
         assertTrue(providers.aiRegistry.handoff.all { provider ->
             providers.aiProviders.any { it === provider }
         })
+    }
+
+    @Test
+    fun `default speech path never falls back to system recognizer`() = runBlocking {
+        val speech = createFactory().createProviders().speechRecognition
+
+        assertTrue(speech is UnavailableSpeechRecognitionProvider || speech.health())
+        if (speech is UnavailableSpeechRecognitionProvider) {
+            assertFalse(speech.health())
+        }
     }
 
     @Test
