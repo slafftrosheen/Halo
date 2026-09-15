@@ -4,6 +4,9 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import com.halo.sdk.provider.*
+import com.halo.sdk.runtime.NativeResourceCoordinator
+import com.halo.sdk.runtime.NativeResourceKind
+import com.halo.sdk.runtime.NativeResourceOwner
 import com.halo.sdk.runtime.Storage
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
@@ -31,8 +34,9 @@ import java.util.UUID
 class NativeLlamaProvider(
     private val context: Context,
     private val downloadManager: ModelDownloadManager,
-    private val storage: Storage
-) : AiInferenceProvider {
+    private val storage: Storage,
+    private val nativeResourceCoordinator: NativeResourceCoordinator? = null
+) : AiInferenceProvider, NativeResourceOwner {
     private var engine: LlamaHelper? = null
     private var engineEvents: MutableSharedFlow<LlamaHelper.LLMEvent>? = null
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -47,6 +51,7 @@ class NativeLlamaProvider(
     override val id: String = "provider.llamacpp.native"
     override val displayName: String = "llama.cpp (native)"
     override val isLocal: Boolean = true
+    override val nativeResourceKind: NativeResourceKind = NativeResourceKind.HEAVY_LLM
 
     override suspend fun getCapabilities(): Set<AiCapability> = setOf(AiCapability.TEXT, AiCapability.STREAMING)
 
@@ -86,6 +91,13 @@ class NativeLlamaProvider(
             val file = downloadManager.getModelFile(activeId)
             if (file == null || !file.exists() || !file.isFile || file.length() <= 0L) {
                 _status.value = ProviderStatus(ProviderStatus.State.UNAVAILABLE, "Model file not found: $activeId")
+                return@withLock false
+            }
+
+            if (nativeResourceCoordinator?.acquire(this) == false) {
+                val message = "Native llama.cpp load deferred: another heavyweight native model is busy"
+                Log.w(TAG, message)
+                _status.value = ProviderStatus(ProviderStatus.State.ERROR, message)
                 return@withLock false
             }
 
@@ -142,6 +154,7 @@ class NativeLlamaProvider(
                 }
                 Log.e(TAG, message)
                 _status.value = ProviderStatus(ProviderStatus.State.ERROR, message)
+                nativeResourceCoordinator?.release(this)
                 return@withLock false
             }
 
@@ -159,6 +172,7 @@ class NativeLlamaProvider(
                 val message = "Native model load blocked: no safe context size fits the current memory envelope. Close other apps or lower the llama.cpp context setting."
                 Log.e(TAG, message)
                 _status.value = ProviderStatus(ProviderStatus.State.ERROR, message)
+                nativeResourceCoordinator?.release(this)
                 return@withLock false
             }
 
@@ -242,17 +256,36 @@ class NativeLlamaProvider(
                 }
             } catch (error: CancellationException) {
                 releaseCurrentModel()
+                nativeResourceCoordinator?.release(this)
                 _status.value = ProviderStatus(ProviderStatus.State.UNAVAILABLE, "Model loading cancelled")
                 throw error
             } catch (error: Throwable) {
                 releaseCurrentModel()
+                nativeResourceCoordinator?.release(this)
                 Log.e(TAG, "Failed loading model ${file.absolutePath}", error)
                 _status.value = ProviderStatus(
                     ProviderStatus.State.ERROR,
                     "Model load failed: ${error.message ?: error::class.simpleName}"
                 )
                 false
+            }.also { loaded ->
+                if (!loaded) nativeResourceCoordinator?.release(this)
             }
+        }
+    }
+
+    override suspend fun releaseIfIdle(): Boolean {
+        if (!modelLoadMutex.tryLock()) return false
+        return try {
+            if (!inferenceMutex.tryLock()) return false
+            try {
+                releaseCurrentModel()
+                true
+            } finally {
+                inferenceMutex.unlock()
+            }
+        } finally {
+            modelLoadMutex.unlock()
         }
     }
 
@@ -305,6 +338,9 @@ class NativeLlamaProvider(
         val startedAt = System.currentTimeMillis()
         val prompt = buildPrompt(request, context)
         return inferenceMutex.withLock {
+            check(nativeResourceCoordinator?.acquire(this) ?: true) {
+                "Local llama.cpp generation deferred: another heavyweight native model is busy"
+            }
             val transactionId = UUID.randomUUID().toString().take(8)
             try {
                 val text = buildString {
@@ -340,6 +376,9 @@ class NativeLlamaProvider(
                 throw AiProviderException(AiErrorType.MODEL_LOAD_FAILED, status.value.message ?: "Unable to load llama.cpp model")
             }
             inferenceMutex.withLock {
+                check(nativeResourceCoordinator?.acquire(this@NativeLlamaProvider) ?: true) {
+                    "Local llama.cpp generation deferred: another heavyweight native model is busy"
+                }
                 streamInternal(buildPrompt(request, context), transactionId).collect { token ->
                     output.append(token)
                     emit(AiStreamEvent.Token(token))
@@ -368,6 +407,9 @@ class NativeLlamaProvider(
     fun stream(prompt: String): Flow<String> = flow {
         val transactionId = UUID.randomUUID().toString().take(8)
         inferenceMutex.withLock {
+            check(nativeResourceCoordinator?.acquire(this@NativeLlamaProvider) ?: true) {
+                "Local llama.cpp generation deferred: another heavyweight native model is busy"
+            }
             streamInternal(prompt, transactionId).collect { emit(it) }
         }
     }
@@ -454,6 +496,7 @@ class NativeLlamaProvider(
                 releaseCurrentModel()
             }
         }
+        nativeResourceCoordinator?.unregister(this)
         scope.coroutineContext[kotlinx.coroutines.Job]?.cancel()
     }
 
