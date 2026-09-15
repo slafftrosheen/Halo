@@ -1,5 +1,6 @@
 package com.halo.engines.speech
 
+import com.halo.engines.speech.UnavailableSpeechRecognitionProvider
 import com.halo.sdk.provider.BufferedSpeechRecognitionProvider
 import com.halo.sdk.provider.LiveSpeechRecognitionProvider
 import com.halo.sdk.provider.RecognitionEvent
@@ -36,6 +37,17 @@ class AudioPipeline(
     /** True when the STT provider owns microphone capture itself. */
     val usesLiveRecognition: Boolean
         get() = sttProvider.mode == SpeechRecognitionMode.LIVE
+
+    /** True only when the configured speech provider can actually recognize audio. */
+    suspend fun isRecognitionAvailable(): Boolean = sttProvider.health()
+
+    /** Human-readable local setup failure, when available. */
+    suspend fun unavailableReason(): String =
+        if (sttProvider is UnavailableSpeechRecognitionProvider) {
+            sttProvider.healthDetails().message ?: "Local speech recognition is unavailable"
+        } else {
+            "Local speech recognition is unavailable"
+        }
 
     /**
      * Wake-word activation is opt-in. The normal phone interaction model is
