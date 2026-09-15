@@ -17,73 +17,39 @@ import com.halo.engines.reasoning.strategy.DefaultReasoningStrategy
 import com.halo.host.android.capability.AndroidApplicationCapability
 import com.halo.host.android.capability.AndroidMediaCapability
 import com.halo.host.android.capability.AndroidNavigationCapability
-import com.halo.engines.execution.capability.LocomotionCapability
-import com.halo.engines.execution.capability.CameraCapability
 import com.halo.engines.execution.capability.SpeechOutputRouter
 import com.halo.sdk.runtime.NativeResourceCoordinator
-import com.halo.sdk.runtime.embodiment.BuddyBotGateway
-import com.halo.sdk.runtime.embodiment.HeyCyanGateway
-import com.halo.app.capability.HeyCyanCapabilityBridge
 import com.halo.runtime.speech.SpeechPerceptionBridge
 import com.halo.runtime.speech.SpeechSessionManager
-import com.halo.drivers.heycyan.capability.CapabilityRequest
-import com.halo.drivers.heycyan.capability.HeyCyanCapabilityIds
 
 /**
- * Owns all cognitive engines: interpretation, reasoning, planning, execution, reflection.
- * Also owns the RuntimeOrchestrator that coordinates the Alpha Loop.
+ * Owns the cognitive engines used by the Android host.
+ *
+ * Physical-device capabilities are deliberately outside this graph's startup
+ * path. They are attached by the Devices flow when a peripheral is explicitly
+ * connected.
  */
 class EngineGraph(
     private val applicationContext: Context,
     private val infra: InfrastructureGraph,
-    private val providerGraph: ProviderGraph,
-    private val deviceSessionManager: com.halo.sdk.runtime.embodiment.DeviceSessionManager,
-    private val heyCyanDriver: com.halo.drivers.heycyan.RealHeyCyanDriver
+    private val providerGraph: ProviderGraph
 ) {
     /** Shared arbitration boundary used by heavyweight native inference providers. */
     val nativeResourceCoordinator: NativeResourceCoordinator
         get() = providerGraph.nativeResourceCoordinator
 
-    // Intentionally do not warm a multi-GB local model from a listening event.
-    // Listening is a latency-sensitive runtime path, while native GGUF loading can
-    // require several GB of additional native memory and can trigger process death
-    // before Java can report an OutOfMemoryError. NativeLlamaProvider remains
-    // responsible for the explicit, serialized load path and its RAM admission gate.
-
     val goalManager by lazy { GoalManager() }
 
+    /** Android-only capability set for the phone-first product. */
     val capabilityRegistry by lazy {
         CapabilityRegistry().apply {
-            val buddyBotGateway = BuddyBotGateway(infra.eventBus, deviceSessionManager)
-            val heyCyanGateway = HeyCyanGateway(infra.eventBus, deviceSessionManager)
-
-            register(LocomotionCapability(buddyBotGateway))
-            register(CameraCapability(heyCyanGateway))
             register(AndroidApplicationCapability(applicationContext))
             register(AndroidMediaCapability(applicationContext))
             register(AndroidNavigationCapability(applicationContext))
             register(
                 com.halo.engines.execution.capability.SpeechCapability(
                     ttsProvider = providerGraph.providers.speechSynthesis,
-                    outputRouter = SpeechOutputRouter {
-                        heyCyanDriver.capabilityProvider.execute(
-                            HeyCyanCapabilityIds.AUDIO_SPEAKER_OUTPUT,
-                            CapabilityRequest.Empty,
-                        ).let { outcome ->
-                            when (outcome) {
-                                com.halo.drivers.heycyan.capability.CapabilityOutcome.Success -> Result.success(Unit)
-                                is com.halo.drivers.heycyan.capability.CapabilityOutcome.Failure -> Result.failure(
-                                    IllegalStateException(outcome.message)
-                                )
-                            }
-                        }
-                    }
-                )
-            )
-            register(
-                HeyCyanCapabilityBridge(
-                    heyCyanDriver.capabilityProvider,
-                    heyCyanDriver.deviceState
+                    outputRouter = SpeechOutputRouter { Result.success(Unit) }
                 )
             )
         }
@@ -106,7 +72,7 @@ class EngineGraph(
     val speechSessionManager by lazy { SpeechSessionManager(infra.eventBus, infra.commandBus, infra.scope) }
     val speechPerceptionBridge by lazy { SpeechPerceptionBridge(infra.eventBus, infra.scope) }
 
-    /** Cognitive inference sees only the typed inference registry; handoff providers cannot enter execution routing. */
+    /** Cognitive inference sees only the typed inference registry. */
     val aiProviderRouter by lazy {
         DefaultAiProviderRouter(
             providerRegistry = providerGraph.providers.aiRegistry,
