@@ -46,9 +46,11 @@ fun HomeScreen(viewModel: HomeViewModel) {
     }
 
     fun toggleOrb() {
+        // Listening is a speech-control state, not a cognitive-session state.
+        // Stop the microphone before cancelling an already-running cognitive turn.
         when {
-            isActiveSession -> viewModel.cancelSession()
             isListening -> viewModel.stopListening()
+            isActiveSession -> viewModel.cancelSession()
             else -> viewModel.startListening()
         }
     }
@@ -133,8 +135,8 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 Spacer(Modifier.height(7.dp))
                 Text(
                     when {
-                        isActiveSession -> "Tap to stop"
                         isListening -> "Tap to stop listening"
+                        isActiveSession -> "Tap to stop"
                         else -> "Tap Halo to speak"
                     },
                     style = HaloTypography.labelSmall,
