@@ -10,6 +10,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,13 +27,6 @@ data class EngineMetrics(
     var activeCaptureTimeMillis: Long = 0L
 )
 
-/**
- * Owns the explicit speech-session lifecycle.
- *
- * The engine is passive at runtime startup. A StartListening command begins
- * one user-requested session and StopListening ends it. Exactly one capture
- * transaction may own the AudioSource at a time.
- */
 class AudioPerceptionEngine(
     private val audioSource: AudioSource,
     private val preprocessor: AudioPreprocessor,
@@ -49,10 +43,8 @@ class AudioPerceptionEngine(
 
     private val _health = MutableStateFlow(EngineHealth.Healthy)
     override val health: StateFlow<EngineHealth> = _health
-
     private val _state = MutableStateFlow<EngineState>(EngineState.Created)
     override val state: StateFlow<EngineState> = _state
-
     override val dependencies: Set<ServiceKey<*>> = emptySet()
 
     private lateinit var context: EngineContext
@@ -61,7 +53,6 @@ class AudioPerceptionEngine(
     private val transactionMutex = Mutex()
     private var commandJob: Job? = null
     private var captureJob: Job? = null
-
     val metrics = EngineMetrics()
 
     override suspend fun initialize(context: EngineContext) {
@@ -77,22 +68,12 @@ class AudioPerceptionEngine(
             check(::scope.isInitialized) { "AudioPerceptionEngine must be initialized before it starts" }
             check(_state.value != EngineState.Disposed) { "AudioPerceptionEngine cannot be started after it is disposed" }
             if (commandJob?.isActive == true) return@withLock
-
             _state.value = EngineState.Running
             _health.value = EngineHealth.Healthy
             audioPipeline.start()
-
             commandJob = scope.launch {
-                launch {
-                    commandBus.commands().filterIsInstance<StartListening>().collect {
-                        startCapture()
-                    }
-                }
-                launch {
-                    commandBus.commands().filterIsInstance<StopListening>().collect {
-                        stopCapture()
-                    }
-                }
+                launch { commandBus.commands().filterIsInstance<StartListening>().collect { startCapture() } }
+                launch { commandBus.commands().filterIsInstance<StopListening>().collect { stopCapture() } }
             }
         }
     }
@@ -129,13 +110,10 @@ class AudioPerceptionEngine(
     private suspend fun startCapture() {
         transactionMutex.withLock {
             if (captureJob?.isActive == true) return@withLock
-
             if (!audioPipeline.isRecognitionAvailable()) {
                 reportCaptureFailure(audioPipeline.unavailableReason())
                 return@withLock
             }
-
-            // Live providers own microphone capture themselves.
             if (audioPipeline.usesLiveRecognition) {
                 audioPipeline.reset()
                 _health.value = EngineHealth.Healthy
@@ -145,23 +123,16 @@ class AudioPerceptionEngine(
 
             val job = scope.launch {
                 try {
-                    // Cancellation must win even if StopListening arrives while
-                    // AudioRecord.start() is waiting on the platform audio stack.
                     currentCoroutineContext().ensureActive()
                     audioSource.start()
                     currentCoroutineContext().ensureActive()
-
-                    // The platform microphone must be successfully started before
-                    // the runtime advertises ListeningStarted.
                     audioPipeline.reset()
                     _health.value = EngineHealth.Healthy
                     eventBus.publish(ListeningStarted())
-
                     audioSource.frames.collect { rawFrame ->
                         currentCoroutineContext().ensureActive()
                         metrics.framesProcessed++
-                        val frame = preprocessor.process(rawFrame)
-                        audioPipeline.processFrame(frame)
+                        audioPipeline.processFrame(preprocessor.process(rawFrame))
                     }
                 } catch (exception: CancellationException) {
                     throw exception
@@ -187,12 +158,9 @@ class AudioPerceptionEngine(
                 audioPipeline.reset()
                 return@withLock
             }
-
             val job = captureJob
             if (job != null) {
                 job.cancel()
-                // stop() is intentionally called before join so a blocking
-                // AudioRecord.read() is interrupted by the platform stop.
                 withContext(NonCancellable) { stopAudioSource() }
                 job.join()
                 if (captureJob === job) captureJob = null
@@ -229,7 +197,6 @@ class AudioPerceptionEngine(
         val activeCommandJob = commandJob
         commandJob = null
         activeCommandJob?.cancel()
-
         withContext(NonCancellable) { stopCapture() }
         activeCommandJob?.join()
         audioPipeline.stop()
