@@ -52,8 +52,8 @@ class RealHeyCyanDriver(
     }
     private val captureRecorder = CaptureSessionRecorder(JsonCaptureSessionStore(File(context.filesDir, "captures/heycyan")))
     private val tracer = CompositePacketTracer(LoggingPacketTracer(ConsoleLogger()), captureRecorder)
-    val scanner = HeyCyanBleScanner(context)
-    private val gattClient = HeyCyanGattClient(context, tracer)
+    val scanner by lazy { HeyCyanBleScanner(context) }
+    private val gattClient by lazy { HeyCyanGattClient(context, tracer) }
     private val packetAnalyzer = HeyCyanConsolePacketAnalyzer(ConsoleLogger())
     private val eventRouter = HeyCyanEventRouter(HeyCyanResponseDecoder())
     private val stateStore = com.halo.drivers.heycyan.protocol.HeyCyanDeviceStateStore()

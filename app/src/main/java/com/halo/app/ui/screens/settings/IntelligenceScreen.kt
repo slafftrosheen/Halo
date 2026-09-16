@@ -23,6 +23,7 @@ import com.halo.app.ui.glass.components.HaloGlassSettingRow
 import com.halo.app.ui.glass.components.HaloGlassSwitch
 import com.halo.app.ui.glass.material.HaloGlassColors
 import com.halo.app.ui.glass.material.HaloTypography
+import com.halo.providers.llamacpp.DownloadState
 
 @Composable
 fun IntelligenceScreen(
@@ -112,6 +113,91 @@ fun IntelligenceScreen(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                         onClick = viewModel::refreshModels
                     )
+                }
+            }
+        }
+
+        if (uiState.activeProviderId == ProviderIds.LLAMACPP || uiState.localModels.isNotEmpty()) {
+            item {
+                HaloGlassSection(title = "LOCAL GGUF MODELS") {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        uiState.localModels.forEach { model ->
+                            val downloadState = uiState.downloadStates[model.id] ?: DownloadState.NotDownloaded
+                            val isActive = model.id == uiState.activeLocalModelId
+
+                            HaloGlassCard(modifier = Modifier.fillMaxWidth()) {
+                                Column(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = model.name,
+                                            style = HaloTypography.titleMedium,
+                                            color = HaloGlassColors.TextPrimary
+                                        )
+                                        Text(
+                                            text = "${model.sizeMb} MB",
+                                            style = HaloTypography.labelSmall,
+                                            color = HaloGlassColors.TextMuted
+                                        )
+                                    }
+                                    Text(
+                                        text = model.description,
+                                        style = HaloTypography.bodySmall,
+                                        color = HaloGlassColors.TextSecondary
+                                    )
+                                    Spacer(Modifier.height(4.dp))
+                                    when (downloadState) {
+                                        DownloadState.Downloaded -> {
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                if (isActive) {
+                                                    HaloGlassButton(
+                                                        text = "Active",
+                                                        modifier = Modifier.weight(1f),
+                                                        onClick = {},
+                                                        enabled = false
+                                                    )
+                                                } else {
+                                                    HaloGlassButton(
+                                                        text = "Select",
+                                                        modifier = Modifier.weight(1f),
+                                                        onClick = { viewModel.setActiveLocalModel(model.id) }
+                                                    )
+                                                }
+                                            }
+                                        }
+                                        DownloadState.Downloading -> {
+                                            Text(
+                                                text = "Downloading...",
+                                                style = HaloTypography.labelSmall,
+                                                color = HaloGlassColors.Accent
+                                            )
+                                        }
+                                        else -> {
+                                            HaloGlassButton(
+                                                text = "Download (${model.sizeMb} MB)",
+                                                modifier = Modifier.fillMaxWidth(),
+                                                onClick = { viewModel.downloadModel(model.id) }
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

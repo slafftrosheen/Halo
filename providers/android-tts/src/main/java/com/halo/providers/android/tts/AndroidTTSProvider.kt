@@ -49,27 +49,55 @@ class AndroidTTSProvider(
     private val synthesizeMutex = Mutex()
 
     private var tts: TextToSpeech? = null
+    @Volatile
     private var isInitialized = false
+    private val initLock = Any()
+    private var initCallback: ((Boolean) -> Unit)? = null
 
-    init {
-        tts = TextToSpeech(appContext, this)
+    private suspend fun ensureTts(): Boolean {
+        if (isInitialized && tts != null) return true
+        return suspendCancellableCoroutine { continuation ->
+            synchronized(initLock) {
+                if (isInitialized && tts != null) {
+                    continuation.resume(true)
+                    return@suspendCancellableCoroutine
+                }
+                val prev = initCallback
+                initCallback = { ok ->
+                    prev?.invoke(ok)
+                    if (continuation.isActive) continuation.resume(ok)
+                }
+                if (tts == null) {
+                    Log.i(TAG, "Initializing TextToSpeech lazily on demand")
+                    tts = TextToSpeech(appContext, this)
+                }
+            }
+        }
     }
 
     override fun onInit(status: Int) {
-        if (status == TextToSpeech.SUCCESS) {
-            tts?.language = Locale.US
-            tts?.setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_MEDIA)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
-                    .build()
-            )
-            isInitialized = true
+        synchronized(initLock) {
+            val ok = status == TextToSpeech.SUCCESS
+            if (ok) {
+                tts?.language = Locale.US
+                tts?.setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .build()
+                )
+                isInitialized = true
+            }
+            val cb = initCallback
+            initCallback = null
+            cb?.invoke(ok)
         }
     }
 
     override suspend fun synthesize(request: SpeechRequest): SpeechResult =
         synthesizeMutex.withLock {
+            val ready = ensureTts()
+            if (!ready) return@withLock SpeechResult(0, false)
             suspendCancellableCoroutine { continuation ->
                 val ttsEngine = tts
                 if (ttsEngine == null || !isInitialized) {
@@ -247,7 +275,7 @@ class AndroidTTSProvider(
 
     override fun stream(text: String): Flow<AudioFrame> = emptyFlow()
 
-    override suspend fun health(): Boolean = isInitialized
+    override suspend fun health(): Boolean = true
 
     override suspend fun close() {
         // Do not acquire synthesizeMutex here: synthesize() may be waiting for

@@ -467,7 +467,7 @@ class NativeLlamaProvider(
         try {
             currentEvents.subscriptionCount.first { it > 0 }
             currentCoroutineContext().ensureActive()
-            currentEngine.predict(prompt, "", true)
+            currentEngine.predict(prompt, null, true)
             val completed = withTimeoutOrNull(GENERATION_TIMEOUT_MS) {
                 for (event in eventChannel) {
                     currentCoroutineContext().ensureActive()

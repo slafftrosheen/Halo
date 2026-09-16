@@ -39,16 +39,31 @@ class AndroidAudioSource : AudioSource {
     private val audioFormat = AudioFormat.ENCODING_PCM_16BIT
     private val bufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
 
+    private fun releaseRecorderSafely(recorder: AudioRecord?) {
+        if (recorder == null) return
+        runCatching {
+            if (recorder.recordingState == AudioRecord.RECORDSTATE_RECORDING) {
+                recorder.stop()
+            }
+            recorder.release()
+        }
+    }
+
     @SuppressLint("MissingPermission")
     override suspend fun start() {
         withContext(Dispatchers.IO) {
             recorderMutex.withLock {
-                if (isRecording) {
+                if (isRecording && audioRecord != null) {
                     return@withLock
                 }
-                check(pendingRelease == null) {
-                    "AudioRecord cleanup is still in progress"
-                }
+
+                // Cleanly release any lingering previous AudioRecord instance
+                isRecording = false
+                releaseRecorderSafely(audioRecord)
+                releaseRecorderSafely(pendingRelease)
+                audioRecord = null
+                pendingRelease = null
+                activeReader = null
 
                 check(bufferSize > 0) {
                     "Unable to determine a valid AudioRecord buffer size: $bufferSize"
@@ -74,7 +89,7 @@ class AndroidAudioSource : AudioSource {
                     isRecording = true
                     _state.value = AudioSourceState.ACTIVE
                 } catch (exception: Exception) {
-                    runCatching { recorder.release() }
+                    releaseRecorderSafely(recorder)
                     _state.value = AudioSourceState.ERROR
                     throw IllegalStateException("Unable to start AudioRecord", exception)
                 }
@@ -84,28 +99,16 @@ class AndroidAudioSource : AudioSource {
 
     override suspend fun stop() {
         withContext(Dispatchers.IO) {
-            var releaseImmediately: AudioRecord? = null
             recorderMutex.withLock {
                 isRecording = false
                 _state.value = AudioSourceState.IDLE
-                val recorder = audioRecord ?: pendingRelease ?: return@withLock
+                val recorderToRelease = audioRecord ?: pendingRelease
                 audioRecord = null
+                pendingRelease = null
+                activeReader = null
 
-                try {
-                    if (recorder.recordingState == AudioRecord.RECORDSTATE_RECORDING) {
-                        recorder.stop()
-                    }
-                } catch (_: IllegalStateException) {
-                    // The recorder may already have been stopped by an audio-device failure.
-                }
-
-                pendingRelease = recorder
-                if (activeReader !== recorder) {
-                    pendingRelease = null
-                    releaseImmediately = recorder
-                }
+                releaseRecorderSafely(recorderToRelease)
             }
-            releaseImmediately?.release()
         }
     }
 
@@ -167,17 +170,11 @@ class AndroidAudioSource : AudioSource {
                 }
             }
         } finally {
-            var releaseAfterRead: AudioRecord? = null
             recorderMutex.withLock {
                 if (activeReader === reader) {
                     activeReader = null
                 }
-                if (pendingRelease === reader) {
-                    pendingRelease = null
-                    releaseAfterRead = reader
-                }
             }
-            releaseAfterRead?.release()
         }
     }
 }

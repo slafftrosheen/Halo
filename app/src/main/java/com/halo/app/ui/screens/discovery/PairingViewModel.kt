@@ -3,9 +3,11 @@ package com.halo.app.ui.screens.discovery
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.halo.app.di.ManualDependencyGraph
 import com.halo.drivers.heycyan.RealHeyCyanDriver
 import com.halo.drivers.heycyan.ble.DiscoveredBleDevice
 import com.halo.sdk.host.ConnectionState
+import com.halo.sdk.runtime.embodiment.DeviceRegistry
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
@@ -21,9 +23,11 @@ data class PairingUiState(
 )
 
 class PairingViewModel(
-    private val driver: RealHeyCyanDriver = com.halo.app.di.ManualDependencyGraph.heyCyanDriver,
-    private val deviceRegistry: com.halo.sdk.runtime.embodiment.DeviceRegistry = com.halo.app.di.ManualDependencyGraph.deviceRegistry
+    private val driverProvider: () -> RealHeyCyanDriver = { ManualDependencyGraph.heyCyanDriver },
+    private val deviceRegistry: DeviceRegistry = ManualDependencyGraph.deviceRegistry
 ) : ViewModel() {
+
+    private val driver by lazy { driverProvider() }
 
     private val _uiState = MutableStateFlow(PairingUiState())
     val uiState: StateFlow<PairingUiState> = _uiState.asStateFlow()

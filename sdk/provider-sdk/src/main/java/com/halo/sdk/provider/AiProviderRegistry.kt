@@ -14,9 +14,12 @@ data class AiProviderRegistry(
         get() = inference + handoff
 
     companion object {
-        fun from(providers: List<AiProvider>): AiProviderRegistry = AiProviderRegistry(
-            inference = providers.filterIsInstance<AiInferenceProvider>().filterNot { it is AiHandoffProvider },
-            handoff = providers.filterIsInstance<AiHandoffProvider>()
-        )
+        fun from(providers: List<AiProvider>): AiProviderRegistry {
+            val distinct = providers.distinctBy { it.id }
+            return AiProviderRegistry(
+                inference = distinct.filterIsInstance<AiInferenceProvider>().filterNot { it is AiHandoffProvider },
+                handoff = distinct.filterIsInstance<AiHandoffProvider>()
+            )
+        }
     }
 }

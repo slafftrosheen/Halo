@@ -262,10 +262,9 @@ class AudioPipeline(
         preRollBuffer.clear()
         vad.reset()
         _state.value = SpeechState.Idle
-        // Keep the cancelled job reference until its finally block explicitly
-        // releases provider-owned microphone resources. This prevents a new
-        // session from starting while the previous provider is still shutting down.
         liveListeningJob?.cancel()
+        liveListeningJob = null
         bufferedRecognitionJob?.cancel()
+        bufferedRecognitionJob = null
     }
 }

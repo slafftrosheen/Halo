@@ -17,7 +17,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import java.util.concurrent.atomic.AtomicBoolean
 
 data class EngineMetrics(
     var segmentsCaptured: Int = 0,
@@ -61,7 +60,7 @@ class AudioPerceptionEngine(
     private lateinit var context: EngineContext
     private lateinit var scope: CoroutineScope
     private val lifecycleMutex = Mutex()
-    private val sourceStartAttempted = AtomicBoolean(false)
+    private val transactionMutex = Mutex()
     private var commandJob: Job? = null
     private var captureJob: Job? = null
 
@@ -124,81 +123,71 @@ class AudioPerceptionEngine(
     }
 
     private suspend fun startCapture() {
-        if (captureJob?.isActive == true) return
+        transactionMutex.withLock {
+            if (captureJob?.isActive == true) return@withLock
 
-        // Do not touch the microphone unless the selected STT provider is usable.
-        // In particular, the unavailable local provider must fail before AudioRecord
-        // starts so tapping the orb never creates a fake listening session.
-        if (!audioPipeline.isRecognitionAvailable()) {
-            reportCaptureFailure(audioPipeline.unavailableReason())
-            return
-        }
+            // Do not touch the microphone unless the selected STT provider is usable.
+            if (!audioPipeline.isRecognitionAvailable()) {
+                reportCaptureFailure(audioPipeline.unavailableReason())
+                return@withLock
+            }
 
-        // Live providers own microphone capture themselves. Starting AudioRecord
-        // here would create two competing microphone clients and can produce OEM
-        // audio feedback.
-        if (audioPipeline.usesLiveRecognition) {
-            audioPipeline.reset()
-            _health.value = EngineHealth.Healthy
-            eventBus.publish(ListeningStarted())
-            return
-        }
-
-        captureJob = scope.launch {
-            try {
-                sourceStartAttempted.set(true)
-                try {
-                    audioSource.start()
-                } catch (exception: CancellationException) {
-                    sourceStartAttempted.set(false)
-                    throw exception
-                } catch (exception: Exception) {
-                    sourceStartAttempted.set(false)
-                    reportCaptureFailure(
-                        "Unable to start audio source: ${exception.message ?: "Audio initialization failed"}",
-                        exception
-                    )
-                    return@launch
-                }
-
+            // Live providers own microphone capture themselves.
+            if (audioPipeline.usesLiveRecognition) {
                 audioPipeline.reset()
                 _health.value = EngineHealth.Healthy
                 eventBus.publish(ListeningStarted())
+                return@withLock
+            }
 
-                audioSource.frames.collect { rawFrame ->
-                    metrics.framesProcessed++
-                    val frame = preprocessor.process(rawFrame)
-                    audioPipeline.processFrame(frame)
-                }
-            } catch (exception: CancellationException) {
-                throw exception
-            } catch (exception: Exception) {
-                reportCaptureFailure(
-                    "Audio capture failed: ${exception.message ?: "Unknown error"}",
-                    exception
-                )
-            } finally {
-                withContext(NonCancellable) {
-                    stopAudioSource()
+            captureJob = scope.launch {
+                try {
+                    audioSource.start()
+                    // Only publish ListeningStarted if AudioRecord started successfully
                     audioPipeline.reset()
+                    _health.value = EngineHealth.Healthy
+                    eventBus.publish(ListeningStarted())
+
+                    audioSource.frames.collect { rawFrame ->
+                        metrics.framesProcessed++
+                        val frame = preprocessor.process(rawFrame)
+                        audioPipeline.processFrame(frame)
+                    }
+                } catch (exception: CancellationException) {
+                    throw exception
+                } catch (exception: Exception) {
+                    reportCaptureFailure(
+                        "Audio capture failed: ${exception.message ?: "Unknown error"}",
+                        exception
+                    )
+                } finally {
+                    withContext(NonCancellable) {
+                        stopAudioSource()
+                        audioPipeline.reset()
+                    }
                 }
-                captureJob = null
             }
         }
     }
 
     private suspend fun stopCapture() {
-        if (audioPipeline.usesLiveRecognition) {
-            audioPipeline.reset()
-            return
-        }
+        transactionMutex.withLock {
+            if (audioPipeline.usesLiveRecognition) {
+                audioPipeline.reset()
+                return@withLock
+            }
 
-        val job = captureJob ?: return
-        captureJob = null
-        job.cancel()
-        withContext(NonCancellable) { stopAudioSource() }
-        job.join()
-        audioPipeline.reset()
+            val job = captureJob
+            if (job != null) {
+                job.cancel()
+                withContext(NonCancellable) {
+                    stopAudioSource()
+                }
+                job.join()
+                captureJob = null
+            }
+            audioPipeline.reset()
+        }
     }
 
     private suspend fun reportCaptureFailure(reason: String, throwable: Throwable? = null) {
@@ -241,7 +230,6 @@ class AudioPerceptionEngine(
     }
 
     private suspend fun stopAudioSource() {
-        if (!sourceStartAttempted.compareAndSet(true, false)) return
         try {
             audioSource.stop()
         } catch (exception: Exception) {

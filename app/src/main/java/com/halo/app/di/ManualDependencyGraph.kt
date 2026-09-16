@@ -8,6 +8,7 @@ import com.halo.app.ui.screens.settings.SettingsViewModel
 import com.halo.app.ui.screens.activity.ActivityViewModel
 import com.halo.app.ui.screens.devices.DevicesViewModel
 import com.halo.app.RuntimeStartupTrace
+import com.halo.app.ui.screens.discovery.PairingViewModel
 import com.halo.app.ui.screens.settings.VoiceSettingsViewModel
 
 /** Thin façade that wires sub-graphs together. This is the sole composition root. */
@@ -84,7 +85,7 @@ object ManualDependencyGraph {
     val voiceSettingsViewModel by lazy { VoiceSettingsViewModel(applicationContext, storage, providerGraph) }
     val activityViewModel by lazy { ActivityViewModel(runtimeSnapshotManager) }
     val devicesViewModel by lazy { DevicesViewModel(deviceRegistry, deviceSessionManager, eventBus, runtimeSnapshotManager, heyCyanDriver, buddyBotHost) }
-    val pairingViewModel by lazy { com.halo.app.ui.screens.discovery.PairingViewModel(heyCyanDriver) }
+    val pairingViewModel by lazy { PairingViewModel({ heyCyanDriver }) }
     val intelligenceViewModel by lazy { com.halo.app.ui.screens.settings.IntelligenceViewModel(runtimeSnapshotManager, aiProviderRouter, cognitiveSession, storage, modelDownloadManager) }
 
     val runtimeSnapshotManager get() = observerGraph.runtimeSnapshotManager
