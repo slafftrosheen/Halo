@@ -32,6 +32,12 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             )
             HaloGlassDivider()
             HaloGlassSettingRow(
+                title = "Voice",
+                trailingText = uiState.voiceStatus,
+                onClick = { viewModel.openVoice() }
+            )
+            HaloGlassDivider()
+            HaloGlassSettingRow(
                 title = "Devices",
                 trailingText = uiState.deviceName,
                 onClick = { viewModel.openDevices() }

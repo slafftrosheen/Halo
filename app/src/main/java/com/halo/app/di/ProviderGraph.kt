@@ -2,6 +2,7 @@ package com.halo.app.di
 
 import android.content.Context
 import com.halo.providers.llamacpp.ModelDownloadManager
+import com.halo.providers.sherpa.stt.ReloadableSpeechRecognitionProvider
 import com.halo.sdk.runtime.NativeResourceCoordinator
 
 /**
@@ -37,5 +38,10 @@ class ProviderGraph(
      */
     fun replaceProviders(transform: (Providers) -> Providers) {
         _providers = transform(providers)
+    }
+
+    fun reloadSpeechProvider() {
+        val reloadable = providers.speechRecognition as? ReloadableSpeechRecognitionProvider
+        reloadable?.refresh()
     }
 }

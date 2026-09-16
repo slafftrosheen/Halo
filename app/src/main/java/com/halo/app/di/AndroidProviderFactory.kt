@@ -9,6 +9,7 @@ import com.halo.providers.android.assistant.AndroidAssistantProvider
 import com.halo.providers.android.tts.AndroidTTSProvider
 import com.halo.providers.openrouter.OpenRouterProvider
 import com.halo.providers.llamacpp.OllamaProvider
+import com.halo.providers.sherpa.stt.ReloadableSpeechRecognitionProvider
 import com.halo.providers.sherpa.stt.SherpaKeywordSpotterWakeWordDetector
 import com.halo.providers.sherpa.stt.SherpaOfflineSpeechRecognitionProvider
 import com.halo.providers.sherpa.stt.SherpaSpeechModelCatalog
@@ -40,24 +41,16 @@ class AndroidProviderFactory(
             context.filesDir,
             "speech/${SherpaSpeechModelCatalog.WHISPER_TINY_DIRECTORY}"
         )
-        val configuredLocale = storage.getString("speech_locale")
-            ?.takeIf { it.isNotBlank() }
-            ?: Locale.getDefault().toLanguageTag()
-        val speechLanguage = configuredLocale.substringBefore('-').substringBefore('_')
-
-        val speechRecognition: SpeechRecognitionProvider = if (
-            SherpaOfflineSpeechRecognitionProvider.isInstalled(sherpaModelDirectory)
-        ) {
-            SherpaOfflineSpeechRecognitionProvider(
-                modelDirectory = sherpaModelDirectory,
-                language = speechLanguage,
-                nativeResourceCoordinator = nativeResourceCoordinator
-            )
-        } else {
-            UnavailableSpeechRecognitionProvider(
-                "Install the local Whisper tiny model to enable private voice input"
-            )
-        }
+        val speechRecognition: SpeechRecognitionProvider = ReloadableSpeechRecognitionProvider(
+            modelDirectory = sherpaModelDirectory,
+            getLanguage = {
+                val configuredLocale = storage.getString("speech_locale")
+                    ?.takeIf { it.isNotBlank() }
+                    ?: Locale.getDefault().toLanguageTag()
+                configuredLocale.substringBefore('-').substringBefore('_')
+            },
+            nativeResourceCoordinator = nativeResourceCoordinator
+        )
 
         val sherpaKwsDirectory = File(
             context.filesDir,

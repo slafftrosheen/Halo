@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.halo.engines.speech.UnavailableSpeechRecognitionProvider
 import com.halo.providers.llamacpp.ModelDownloadManager
+import com.halo.providers.sherpa.stt.ReloadableSpeechRecognitionProvider
 import com.halo.sdk.provider.AiInferenceProvider
 import com.halo.sdk.runtime.NativeResourceCoordinator
 import com.halo.sdk.runtime.Storage
@@ -65,9 +66,11 @@ class AndroidProviderFactoryTest {
     @Test
     fun `default speech path never falls back to system recognizer`() = runBlocking {
         val speech = createFactory().createProviders().speechRecognition
+        val activeSpeech = (speech as? ReloadableSpeechRecognitionProvider)?.delegate ?: speech
 
-        assertTrue(speech is UnavailableSpeechRecognitionProvider || speech.health())
-        if (speech is UnavailableSpeechRecognitionProvider) {
+        assertTrue(activeSpeech is UnavailableSpeechRecognitionProvider || activeSpeech.health())
+        if (activeSpeech is UnavailableSpeechRecognitionProvider) {
+            assertFalse(activeSpeech.health())
             assertFalse(speech.health())
         }
     }

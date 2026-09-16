@@ -33,6 +33,7 @@ import com.halo.app.ui.screens.discovery.PairingScreen
 import com.halo.app.ui.screens.home.HomeScreen
 import com.halo.app.ui.screens.settings.IntelligenceScreen
 import com.halo.app.ui.screens.settings.SettingsScreen
+import com.halo.app.ui.screens.settings.VoiceSettingsScreen
 import kotlinx.coroutines.flow.collectLatest
 
 sealed class Screen(val route: String, val title: String, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
@@ -110,6 +111,14 @@ fun AppShell() {
                     val viewModel = ManualDependencyGraph.intelligenceViewModel
                     LaunchedEffect(viewModel) { viewModel.navigationEvents.collectLatest(::navigateSafely) }
                     IntelligenceScreen(viewModel) { navController.popBackStack() }
+                }
+
+                composable("voice_settings") {
+                    val viewModel = ManualDependencyGraph.voiceSettingsViewModel
+                    LaunchedEffect(viewModel) {
+                        viewModel.navigationEvents.collectLatest { if (it == "back") navController.popBackStack() }
+                    }
+                    VoiceSettingsScreen(viewModel) { navController.popBackStack() }
                 }
 
                 composable("permissions") { PermissionsScreen { navController.popBackStack() } }

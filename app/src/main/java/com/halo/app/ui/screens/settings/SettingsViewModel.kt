@@ -1,9 +1,12 @@
 package com.halo.app.ui.screens.settings
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.halo.providers.sherpa.stt.SherpaSpeechModelCatalog
 import com.halo.sdk.provider.AiProviderRouter
 import com.halo.sdk.runtime.RuntimeSnapshotSource
+import java.io.File
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -15,24 +18,35 @@ import kotlinx.coroutines.flow.stateIn
 data class SettingsUiState(
     val version: String = "1.0.0",
     val provider: String = "Not configured",
+    val voiceStatus: String = "Not installed",
     val deviceName: String = "Not reported"
 )
 
 class SettingsViewModel(
+    private val context: Context,
     private val snapshotManager: RuntimeSnapshotSource,
     private val aiProviderRouter: AiProviderRouter
 ) : ViewModel() {
+    private val appContext = context.applicationContext
     private val _navigationEvents = MutableSharedFlow<String>(extraBufferCapacity = 8)
     val navigationEvents = _navigationEvents.asSharedFlow()
+
+    private val speechModelDirectory: File
+        get() = File(appContext.filesDir, "speech/${SherpaSpeechModelCatalog.WHISPER_TINY_DIRECTORY}")
 
     val uiState: StateFlow<SettingsUiState> = combine(
         snapshotManager.snapshot,
         aiProviderRouter.selectedProviderId
     ) { snapshot, selectedId ->
         val provider = aiProviderRouter.getAllProviders().firstOrNull { it.id == selectedId }
+        val isVoiceReady = SherpaSpeechModelCatalog.isInstalled(
+            speechModelDirectory,
+            SherpaSpeechModelCatalog.whisperTiny
+        )
         SettingsUiState(
             version = "v${snapshot.runtimeVersion} (${snapshot.buildNumber})",
             provider = provider?.displayName ?: "Not configured",
+            voiceStatus = if (isVoiceReady) "Ready" else "Not installed",
             deviceName = snapshot.deviceContext.name ?: "Not reported"
         )
     }.stateIn(
@@ -42,6 +56,7 @@ class SettingsViewModel(
     )
 
     fun openIntelligence() { _navigationEvents.tryEmit("ai_settings") }
+    fun openVoice() { _navigationEvents.tryEmit("voice_settings") }
     fun openDevices() { _navigationEvents.tryEmit("devices") }
     fun openPermissions() { _navigationEvents.tryEmit("permissions") }
 }
