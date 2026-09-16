@@ -114,16 +114,16 @@ class AudioPipeline(
         }
     }
 
-    /**
-     * Explicitly finalize a user-initiated recording stop. VAD normally ends a
-     * segment after silence; a button stop must not throw away the audio that
-     * has already been captured.
-     */
     suspend fun finishCapture() {
         if (sttProvider.mode == SpeechRecognitionMode.LIVE) {
             val provider = sttProvider as? LiveSpeechRecognitionProvider
             if (provider != null) {
-                runCatching { provider.stopListening() }
+                try {
+                    provider.stopListening()
+                } catch (_: Exception) {
+                    // The engine is already stopping capture; provider cleanup
+                    // errors must not prevent the runtime from returning Idle.
+                }
                 liveListeningJob?.join()
             }
             _state.value = SpeechState.Idle
