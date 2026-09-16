@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import com.halo.sdk.runtime.EventBus
+import com.halo.sdk.runtime.TtsCancelled
 import com.halo.sdk.runtime.TtsCompleted
 import com.halo.sdk.runtime.TtsFailed
 import com.halo.sdk.runtime.TtsRequested
@@ -130,7 +131,7 @@ class AndroidSpeaker(
         tts?.stop()
         if (wasActive) {
             scope.launch {
-                eventBus.publish(TtsCompleted())
+                eventBus.publish(TtsCancelled())
             }
         }
     }

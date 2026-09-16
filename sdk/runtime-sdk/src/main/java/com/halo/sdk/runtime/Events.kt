@@ -37,6 +37,11 @@ data class TtsCompleted(
     override val timestamp: Long = System.currentTimeMillis()
 ) : HaloEvent
 
+data class TtsCancelled(
+    override val id: String = UUID.randomUUID().toString(),
+    override val timestamp: Long = System.currentTimeMillis()
+) : HaloEvent
+
 data class TtsFailed(
     override val id: String = UUID.randomUUID().toString(),
     val message: String,

@@ -71,8 +71,19 @@ class CognitiveSession(
     init {
         scope.launch {
             eventBus.observe(SpeechRecognized::class.java).collect { speech ->
-                if (activeJob?.isActive == true) return@collect
-                speech.text.trim().takeIf { it.isNotEmpty() }?.let { submit(AiRequest(text = it)) }
+                val text = speech.text.trim()
+
+                if (text.isEmpty()) {
+                    return@collect
+                }
+
+                if (activeJob?.isActive == true) {
+                    return@collect
+                }
+
+                submit(
+                    AiRequest(text = text)
+                )
             }
         }
     }

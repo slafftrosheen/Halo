@@ -19,6 +19,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import java.util.UUID
 
 data class EngineMetrics(
     var segmentsCaptured: Int = 0,
@@ -187,7 +188,7 @@ class AudioPerceptionEngine(
 
     private suspend fun publishFailure(reason: String) {
         try {
-            eventBus.publish(RecognitionFailed(reason = reason))
+            eventBus.publish(RecognitionFailed(id = UUID.randomUUID().toString(), reason = reason))
         } catch (exception: CancellationException) {
             throw exception
         } catch (exception: Exception) {
