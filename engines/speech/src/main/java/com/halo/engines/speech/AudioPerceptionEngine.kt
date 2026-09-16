@@ -73,7 +73,7 @@ class AudioPerceptionEngine(
             audioPipeline.start()
             commandJob = scope.launch {
                 launch { commandBus.commands().filterIsInstance<StartListening>().collect { startCapture() } }
-                launch { commandBus.commands().filterIsInstance<StopListening>().collect { stopCapture() } }
+                launch { commandBus.commands().filterIsInstance<StopListening>().collect { stopCapture(finalizeUserCapture = true) } }
             }
         }
     }
@@ -122,6 +122,7 @@ class AudioPerceptionEngine(
             }
 
             val job = scope.launch {
+                var cancelled = false
                 try {
                     currentCoroutineContext().ensureActive()
                     audioSource.start()
@@ -135,6 +136,7 @@ class AudioPerceptionEngine(
                         audioPipeline.processFrame(preprocessor.process(rawFrame))
                     }
                 } catch (exception: CancellationException) {
+                    cancelled = true
                     throw exception
                 } catch (exception: Exception) {
                     reportCaptureFailure(
@@ -144,7 +146,9 @@ class AudioPerceptionEngine(
                 } finally {
                     withContext(NonCancellable) {
                         stopAudioSource()
-                        audioPipeline.reset()
+                        // A user StopListening needs the already captured buffer
+                        // to survive until finishCapture() runs after join().
+                        if (!cancelled) audioPipeline.reset()
                     }
                 }
             }
@@ -152,7 +156,7 @@ class AudioPerceptionEngine(
         }
     }
 
-    private suspend fun stopCapture() {
+    private suspend fun stopCapture(finalizeUserCapture: Boolean) {
         transactionMutex.withLock {
             if (audioPipeline.usesLiveRecognition) {
                 audioPipeline.reset()
@@ -165,7 +169,11 @@ class AudioPerceptionEngine(
                 job.join()
                 if (captureJob === job) captureJob = null
             }
-            audioPipeline.reset()
+            if (finalizeUserCapture) {
+                audioPipeline.finishCapture()
+            } else {
+                audioPipeline.reset()
+            }
         }
     }
 
@@ -197,7 +205,7 @@ class AudioPerceptionEngine(
         val activeCommandJob = commandJob
         commandJob = null
         activeCommandJob?.cancel()
-        withContext(NonCancellable) { stopCapture() }
+        withContext(NonCancellable) { stopCapture(finalizeUserCapture = false) }
         activeCommandJob?.join()
         audioPipeline.stop()
         _state.value = EngineState.Stopped
