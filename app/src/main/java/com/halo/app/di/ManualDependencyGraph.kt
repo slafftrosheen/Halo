@@ -84,7 +84,7 @@ object ManualDependencyGraph {
     val settingsViewModel by lazy { SettingsViewModel(applicationContext, runtimeSnapshotManager, aiProviderRouter) }
     val voiceSettingsViewModel by lazy { VoiceSettingsViewModel(applicationContext, storage, providerGraph) }
     val activityViewModel by lazy { ActivityViewModel(runtimeSnapshotManager) }
-    val devicesViewModel by lazy { DevicesViewModel(deviceRegistry, deviceSessionManager, eventBus, runtimeSnapshotManager, heyCyanDriver, buddyBotHost) }
+    val devicesViewModel by lazy { DevicesViewModel(deviceRegistry, deviceSessionManager, eventBus, runtimeSnapshotManager, { heyCyanDriver }, buddyBotHost) }
     val pairingViewModel by lazy { PairingViewModel({ heyCyanDriver }) }
     val intelligenceViewModel by lazy { com.halo.app.ui.screens.settings.IntelligenceViewModel(runtimeSnapshotManager, aiProviderRouter, cognitiveSession, storage, modelDownloadManager) }
 

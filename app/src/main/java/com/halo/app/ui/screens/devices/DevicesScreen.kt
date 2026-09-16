@@ -25,6 +25,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.halo.app.embodiment.BuddyBotHost
 import com.halo.app.ui.glass.components.HaloGlassBackHeader
 import com.halo.app.ui.glass.components.HaloGlassButton
 import com.halo.app.ui.glass.components.HaloGlassCard
@@ -33,6 +34,7 @@ import com.halo.app.ui.glass.components.HaloGlassSection
 import com.halo.app.ui.glass.material.HaloGlassColors
 import com.halo.app.ui.glass.material.HaloTypography
 import com.halo.app.ui.state.toDisplayText
+import com.halo.drivers.heycyan.RealHeyCyanDriver
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -74,9 +76,10 @@ class DevicesViewModel(
     val sessionManager: com.halo.sdk.runtime.embodiment.DeviceSessionManager,
     private val eventBus: com.halo.sdk.runtime.EventBus,
     private val snapshotSource: com.halo.sdk.runtime.RuntimeSnapshotSource,
-    private val heyCyanDriver: com.halo.drivers.heycyan.RealHeyCyanDriver? = null,
-    val buddyBotHost: com.halo.app.embodiment.BuddyBotHost? = null
+    private val heyCyanDriverProvider: () -> RealHeyCyanDriver?,
+    val buddyBotHost: BuddyBotHost? = null
 ) : ViewModel() {
+    private val heyCyanDriver by lazy { heyCyanDriverProvider() }
     private val _uiState = MutableStateFlow(DevicesUiState())
     val uiState: StateFlow<DevicesUiState> = _uiState.asStateFlow()
     private val _photoStates = MutableStateFlow<Map<String, PhotoActionState>>(emptyMap())
