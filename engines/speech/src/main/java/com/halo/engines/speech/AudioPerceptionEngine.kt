@@ -10,6 +10,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filterIsInstance
@@ -144,15 +145,20 @@ class AudioPerceptionEngine(
 
             val job = scope.launch {
                 try {
-                    // The platform microphone must be successfully started before
-                    // the runtime advertises ListeningStarted. This prevents the
-                    // UI from entering a fake listening state on AudioRecord failure.
+                    // Cancellation must win even if StopListening arrives while
+                    // AudioRecord.start() is waiting on the platform audio stack.
+                    currentCoroutineContext().ensureActive()
                     audioSource.start()
+                    currentCoroutineContext().ensureActive()
+
+                    // The platform microphone must be successfully started before
+                    // the runtime advertises ListeningStarted.
                     audioPipeline.reset()
                     _health.value = EngineHealth.Healthy
                     eventBus.publish(ListeningStarted())
 
                     audioSource.frames.collect { rawFrame ->
+                        currentCoroutineContext().ensureActive()
                         metrics.framesProcessed++
                         val frame = preprocessor.process(rawFrame)
                         audioPipeline.processFrame(frame)
