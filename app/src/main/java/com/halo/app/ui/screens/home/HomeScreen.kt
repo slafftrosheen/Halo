@@ -1,5 +1,12 @@
 package com.halo.app.ui.screens.home
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -17,11 +24,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.halo.app.ui.glass.components.*
 import com.halo.app.ui.glass.material.HaloGlassColors
-import com.halo.app.ui.glass.material.HaloGlassMaterials
 import com.halo.app.ui.glass.material.HaloRuntimeState
 import com.halo.app.ui.glass.material.HaloTypography
 
@@ -32,7 +39,6 @@ fun HomeScreen(viewModel: HomeViewModel) {
     val isActiveSession = uiState.sessionState != com.halo.sdk.provider.CognitiveSessionState.Idle &&
         uiState.sessionState !is com.halo.sdk.provider.CognitiveSessionState.Completed &&
         uiState.sessionState !is com.halo.sdk.provider.CognitiveSessionState.Failed
-    val isProviderReady = uiState.activeProviderStatus == "READY" || uiState.activeProviderStatus == "STANDBY"
     val isListening = uiState.runtimeState == HaloRuntimeState.Capturing || uiState.runtimeState == HaloRuntimeState.Recognizing
     val isSessionActive = uiState.sessionState != com.halo.sdk.provider.CognitiveSessionState.Idle
 
@@ -54,6 +60,24 @@ fun HomeScreen(viewModel: HomeViewModel) {
         }
     }
 
+    val presenceLabel = when (uiState.runtimeState) {
+        HaloRuntimeState.Listening, HaloRuntimeState.Wakeword -> "Listening"
+        HaloRuntimeState.Capturing -> "Hearing you"
+        HaloRuntimeState.Recognizing -> "Understanding"
+        HaloRuntimeState.Reasoning, HaloRuntimeState.Planning -> "Thinking"
+        HaloRuntimeState.Executing -> "Working"
+        HaloRuntimeState.Speaking -> "Responding"
+        HaloRuntimeState.Recovering -> "Recovering"
+        HaloRuntimeState.Stopped -> "Offline"
+        HaloRuntimeState.Idle -> "Ready"
+    }
+
+    val hintLabel = when {
+        isListening -> "Tap to stop"
+        isActiveSession -> "Tap to cancel"
+        else -> "Tap to speak"
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -67,50 +91,34 @@ fun HomeScreen(viewModel: HomeViewModel) {
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp, vertical = 16.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text("HALO", style = HaloTypography.titleLarge, color = HaloGlassColors.TextPrimary, letterSpacing = 4.sp)
-                Spacer(Modifier.height(2.dp))
-                Text("COGNITIVE RUNTIME", style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted, letterSpacing = 1.4.sp)
-            }
-            HaloGlassChip(
-                text = if (isProviderReady) "READY" else "SETUP",
-                material = HaloGlassMaterials.Interactive.copy(
-                    containerColor = if (isProviderReady) HaloGlassColors.Success.copy(alpha = 0.14f) else HaloGlassColors.Glass,
-                    contentColor = if (isProviderReady) HaloGlassColors.Success else HaloGlassColors.TextSecondary
-                )
-            )
-        }
+        Text(
+            "HALO",
+            style = HaloTypography.titleLarge,
+            color = HaloGlassColors.TextPrimary,
+            letterSpacing = 4.sp,
+            modifier = Modifier.padding(top = 8.dp)
+        )
 
-        Spacer(Modifier.height(30.dp))
-
-        val presenceLabel = when (uiState.runtimeState) {
-            HaloRuntimeState.Listening, HaloRuntimeState.Wakeword -> "Listening for you"
-            HaloRuntimeState.Capturing -> "Listening"
-            HaloRuntimeState.Recognizing -> "Understanding"
-            HaloRuntimeState.Reasoning, HaloRuntimeState.Planning -> "Reasoning"
-            HaloRuntimeState.Executing -> "Executing"
-            HaloRuntimeState.Speaking -> "Responding"
-            HaloRuntimeState.Recovering -> "Recovering"
-            HaloRuntimeState.Stopped, HaloRuntimeState.Idle -> "Standing by"
-        }
+        Spacer(Modifier.height(24.dp))
 
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(
                     brush = Brush.radialGradient(
-                        colors = listOf(HaloGlassColors.Glass, Color.Transparent),
+                        colors = listOf(
+                            HaloGlassColors.Glass.copy(alpha = 0.6f),
+                            Color.Transparent
+                        ),
                         radius = 720f
                     )
                 ),
             contentAlignment = Alignment.Center
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(vertical = 12.dp)) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(vertical = 16.dp)
+            ) {
                 HaloStateOrb(
                     state = uiState.runtimeState,
                     size = 172.dp,
@@ -122,24 +130,34 @@ fun HomeScreen(viewModel: HomeViewModel) {
                     }
                 )
 
-                Spacer(Modifier.height(18.dp))
-                Text(
-                    presenceLabel,
-                    style = HaloTypography.labelLarge,
-                    color = HaloGlassColors.TextPrimary,
-                    letterSpacing = 1.2.sp
-                )
-                Spacer(Modifier.height(5.dp))
-                Text(uiState.contextualText, style = HaloTypography.bodySmall, color = HaloGlassColors.TextMuted)
-                Spacer(Modifier.height(7.dp))
-                Text(
-                    when {
-                        isListening -> "Tap to stop listening"
-                        isActiveSession -> "Tap to stop"
-                        else -> "Tap Halo to speak"
+                Spacer(Modifier.height(20.dp))
+
+                // Animated presence label — smooth text crossfade on state change
+                AnimatedContent(
+                    targetState = presenceLabel,
+                    transitionSpec = {
+                        (fadeIn(tween(300)) + slideInVertically { it / 3 })
+                            .togetherWith(fadeOut(tween(200)) + slideOutVertically { -it / 3 })
                     },
+                    label = "presence_label"
+                ) { label ->
+                    Text(
+                        label,
+                        style = HaloTypography.labelLarge,
+                        color = HaloGlassColors.TextPrimary,
+                        letterSpacing = 1.4.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                Spacer(Modifier.height(4.dp))
+
+                Text(
+                    hintLabel,
                     style = HaloTypography.labelSmall,
-                    color = HaloGlassColors.TextMuted
+                    color = HaloGlassColors.TextMuted,
+                    letterSpacing = 0.6.sp
                 )
             }
         }
@@ -181,21 +199,6 @@ fun HomeScreen(viewModel: HomeViewModel) {
             }
         }
 
-        Spacer(Modifier.height(20.dp))
-
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            HaloGlassButton.Secondary(modifier = Modifier.weight(1f), text = "Devices", onClick = viewModel::navigateToDevices)
-            HaloGlassButton.Secondary(modifier = Modifier.weight(1f), text = "Intelligence", onClick = viewModel::navigateToIntelligence)
-        }
-
-        Spacer(Modifier.height(24.dp))
-        Text(
-            text = if (uiState.activeProvider == "No provider") "Choose an intelligence provider to start using Halo."
-            else "Intelligence · ${uiState.activeProvider}",
-            style = HaloTypography.labelSmall,
-            color = if (isProviderReady) HaloGlassColors.TextMuted else HaloGlassColors.Warning,
-            modifier = Modifier.fillMaxWidth()
-        )
         Spacer(Modifier.height(32.dp))
     }
 }

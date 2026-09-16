@@ -41,7 +41,7 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
         val uiRuntimeState = when (sessionState) {
             is CognitiveSessionState.PreparingContext -> HaloRuntimeState.Recognizing
             is CognitiveSessionState.Reasoning -> HaloRuntimeState.Reasoning
-            is CognitiveSessionState.Streaming -> HaloRuntimeState.Reasoning
+            is CognitiveSessionState.Streaming -> HaloRuntimeState.Speaking
             is CognitiveSessionState.ExecutingTool -> HaloRuntimeState.Executing
             is CognitiveSessionState.Completed -> HaloRuntimeState.Idle
             is CognitiveSessionState.Failed -> HaloRuntimeState.Recovering
@@ -50,7 +50,7 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
         val contextualText = when (sessionState) {
             is CognitiveSessionState.PreparingContext -> "Preparing context..."
             is CognitiveSessionState.Reasoning -> "Reasoning..."
-            is CognitiveSessionState.Streaming -> sessionState.text.ifBlank { "Generating..." }
+            is CognitiveSessionState.Streaming -> sessionState.text.ifBlank { "Responding…" }
             is CognitiveSessionState.ExecutingTool -> "Executing ${sessionState.toolId}..."
             is CognitiveSessionState.Completed -> sessionState.response.text.ifBlank { "Completed" }
             is CognitiveSessionState.Failed -> "Error: ${sessionState.message}"
