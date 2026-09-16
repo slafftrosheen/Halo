@@ -13,10 +13,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 data class TimelinePreviewEvent(val command: String, val status: String, val timestamp: Long)
 
@@ -47,33 +51,14 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
         }
 
         val uiRuntimeState = when {
-            // Actual TTS/speech presence always wins over the cognitive transaction.
-            snapshot.speech == SpeechSessionState.Speaking ->
-                HaloRuntimeState.Speaking
-
-            // Actual microphone recognition always wins while it is active.
-            speechIsActive ->
-                speechRuntimeState
-
-            sessionState is CognitiveSessionState.PreparingContext ->
-                HaloRuntimeState.Reasoning
-
-            sessionState is CognitiveSessionState.Reasoning ->
-                HaloRuntimeState.Reasoning
-
-            sessionState is CognitiveSessionState.Streaming ->
-                HaloRuntimeState.Speaking
-
-            sessionState is CognitiveSessionState.ExecutingTool ->
-                HaloRuntimeState.Executing
-
-            sessionState is CognitiveSessionState.Failed ->
-                HaloRuntimeState.Recovering
-
-            // Completed means the cognitive transaction is finished,
-            // but speech state may still be Speaking. That case was handled above.
-            else ->
-                speechRuntimeState
+            snapshot.speech == SpeechSessionState.Speaking -> HaloRuntimeState.Speaking
+            speechIsActive -> speechRuntimeState
+            sessionState is CognitiveSessionState.PreparingContext -> HaloRuntimeState.Reasoning
+            sessionState is CognitiveSessionState.Reasoning -> HaloRuntimeState.Reasoning
+            sessionState is CognitiveSessionState.Streaming -> HaloRuntimeState.Speaking
+            sessionState is CognitiveSessionState.ExecutingTool -> HaloRuntimeState.Executing
+            sessionState is CognitiveSessionState.Failed -> HaloRuntimeState.Recovering
+            else -> speechRuntimeState
         }
 
         val contextualText = when (sessionState) {
@@ -124,6 +109,10 @@ class HomeViewModel(
     private val aiProviderRouter: AiProviderRouter? = null
 ) : ViewModel() {
     private val mapper = HomeUiMapper()
+    private val listeningCommandMutex = Mutex()
+    private val _listeningRequested = MutableStateFlow(false)
+    val listeningRequested: StateFlow<Boolean> = _listeningRequested.asStateFlow()
+
     val uiState: StateFlow<HomeUiState> = combine(
         snapshotManager.snapshot,
         cognitiveSession.state,
@@ -140,6 +129,23 @@ class HomeViewModel(
         mapper.map(snapshot, sessionState, selectedProviderId, selectedModelId, diagnostics)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HomeUiState())
 
+    init {
+        // The UI command state is deliberately separate from the runtime
+        // snapshot. A second tap can arrive before the asynchronous snapshot
+        // has rendered the first tap; without this local intent state both taps
+        // become StartListening commands.
+        viewModelScope.launch {
+            snapshotManager.snapshot.collect { snapshot ->
+                when (snapshot.speech) {
+                    SpeechSessionState.Thinking,
+                    SpeechSessionState.Speaking,
+                    SpeechSessionState.Recovering -> _listeningRequested.value = false
+                    else -> Unit
+                }
+            }
+        }
+    }
+
     fun submitText(text: String) {
         Log.d("HomeViewModel", "submitText invoked")
         val normalized = text.trim()
@@ -152,17 +158,41 @@ class HomeViewModel(
     fun clearConversation() { cognitiveSession.clearConversation() }
     fun cancelSession() { cognitiveSession.cancel() }
 
-    fun startListening() {
+    fun toggleListening() {
+        val shouldStart = !_listeningRequested.value
+        _listeningRequested.value = shouldStart
         viewModelScope.launch {
-            runCatching { commandBus.dispatch(StartListening) }
-                .onFailure { Log.e("HomeViewModel", "Failed to start listening", it) }
+            listeningCommandMutex.withLock {
+                val command = if (shouldStart) StartListening else StopListening
+                runCatching { commandBus.dispatch(command) }
+                    .onFailure {
+                        if (shouldStart) _listeningRequested.value = false
+                        Log.e("HomeViewModel", "Failed to dispatch speech command", it)
+                    }
+            }
+        }
+    }
+
+    fun startListening() {
+        _listeningRequested.value = true
+        viewModelScope.launch {
+            listeningCommandMutex.withLock {
+                runCatching { commandBus.dispatch(StartListening) }
+                    .onFailure {
+                        _listeningRequested.value = false
+                        Log.e("HomeViewModel", "Failed to start listening", it)
+                    }
+            }
         }
     }
 
     fun stopListening() {
+        _listeningRequested.value = false
         viewModelScope.launch {
-            runCatching { commandBus.dispatch(StopListening) }
-                .onFailure { Log.e("HomeViewModel", "Failed to stop listening", it) }
+            listeningCommandMutex.withLock {
+                runCatching { commandBus.dispatch(StopListening) }
+                    .onFailure { Log.e("HomeViewModel", "Failed to stop listening", it) }
+            }
         }
     }
 

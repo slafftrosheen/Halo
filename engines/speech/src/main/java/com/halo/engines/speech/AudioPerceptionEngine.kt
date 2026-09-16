@@ -28,12 +28,9 @@ data class EngineMetrics(
 /**
  * Owns the explicit speech-session lifecycle.
  *
- * The engine itself is passive at runtime startup. A StartListening command
- * begins one user-requested session and StopListening ends it.
- *
- * For a live STT provider, the provider owns microphone capture. For a
- * buffered provider, this engine owns AudioSource capture and feeds frames
- * through the local VAD/pipeline.
+ * The engine is passive at runtime startup. A StartListening command begins
+ * one user-requested session and StopListening ends it. Exactly one capture
+ * transaction may own the AudioSource at a time.
  */
 class AudioPerceptionEngine(
     private val audioSource: AudioSource,
@@ -76,12 +73,8 @@ class AudioPerceptionEngine(
 
     override suspend fun start() {
         lifecycleMutex.withLock {
-            check(::scope.isInitialized) {
-                "AudioPerceptionEngine must be initialized before it starts"
-            }
-            check(_state.value != EngineState.Disposed) {
-                "AudioPerceptionEngine cannot be started after it is disposed"
-            }
+            check(::scope.isInitialized) { "AudioPerceptionEngine must be initialized before it starts" }
+            check(_state.value != EngineState.Disposed) { "AudioPerceptionEngine cannot be started after it is disposed" }
             if (commandJob?.isActive == true) return@withLock
 
             _state.value = EngineState.Running
@@ -116,6 +109,16 @@ class AudioPerceptionEngine(
             lifecycleMutex.withLock {
                 if (_state.value == EngineState.Disposed) return@withLock
                 stopLocked()
+                runCatching { audioSource.close() }
+                    .onFailure {
+                        if (::context.isInitialized) {
+                            context.runtime.logger.error(
+                                category = "speech",
+                                message = "Failed to close microphone source",
+                                throwable = it
+                            )
+                        }
+                    }
                 if (::scope.isInitialized) scope.cancel()
                 _state.value = EngineState.Disposed
             }
@@ -126,7 +129,6 @@ class AudioPerceptionEngine(
         transactionMutex.withLock {
             if (captureJob?.isActive == true) return@withLock
 
-            // Do not touch the microphone unless the selected STT provider is usable.
             if (!audioPipeline.isRecognitionAvailable()) {
                 reportCaptureFailure(audioPipeline.unavailableReason())
                 return@withLock
@@ -140,10 +142,12 @@ class AudioPerceptionEngine(
                 return@withLock
             }
 
-            captureJob = scope.launch {
+            val job = scope.launch {
                 try {
+                    // The platform microphone must be successfully started before
+                    // the runtime advertises ListeningStarted. This prevents the
+                    // UI from entering a fake listening state on AudioRecord failure.
                     audioSource.start()
-                    // Only publish ListeningStarted if AudioRecord started successfully
                     audioPipeline.reset()
                     _health.value = EngineHealth.Healthy
                     eventBus.publish(ListeningStarted())
@@ -167,6 +171,7 @@ class AudioPerceptionEngine(
                     }
                 }
             }
+            captureJob = job
         }
     }
 
@@ -180,11 +185,11 @@ class AudioPerceptionEngine(
             val job = captureJob
             if (job != null) {
                 job.cancel()
-                withContext(NonCancellable) {
-                    stopAudioSource()
-                }
+                // stop() is intentionally called before join so a blocking
+                // AudioRecord.read() is interrupted by the platform stop.
+                withContext(NonCancellable) { stopAudioSource() }
                 job.join()
-                captureJob = null
+                if (captureJob === job) captureJob = null
             }
             audioPipeline.reset()
         }
@@ -193,11 +198,7 @@ class AudioPerceptionEngine(
     private suspend fun reportCaptureFailure(reason: String, throwable: Throwable? = null) {
         _health.value = EngineHealth.Degraded
         if (::context.isInitialized) {
-            context.runtime.logger.error(
-                category = "speech",
-                message = reason,
-                throwable = throwable
-            )
+            context.runtime.logger.error(category = "speech", message = reason, throwable = throwable)
         }
         publishFailure(reason)
     }

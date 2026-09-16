@@ -36,16 +36,19 @@ import com.halo.sdk.provider.CognitiveSessionState
 @Composable
 fun HomeScreen(viewModel: HomeViewModel) {
     val uiState by viewModel.uiState.collectAsState()
+    val listeningRequested by viewModel.listeningRequested.collectAsState()
     var textInput by remember { mutableStateOf("") }
     val isActiveSession = uiState.sessionState != CognitiveSessionState.Idle &&
         uiState.sessionState !is CognitiveSessionState.Completed &&
         uiState.sessionState !is CognitiveSessionState.Failed
-    val isListening = uiState.speechActive
+    // Include the immediate local intent so a second tap can stop a session
+    // before the runtime snapshot has propagated the first StartListening.
+    val isListening = uiState.speechActive || listeningRequested
     val isSessionActive = uiState.sessionState != CognitiveSessionState.Idle
 
     fun submitText() {
         val text = textInput.trim()
-        if (text.isNotEmpty() && !isActiveSession) {
+        if (text.isNotEmpty() && !isActiveSession && !isListening) {
             viewModel.submitText(text)
             textInput = ""
         }
@@ -53,7 +56,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
 
     fun toggleOrb() {
         when {
-            uiState.speechActive -> viewModel.stopListening()
+            isListening -> viewModel.stopListening()
             isActiveSession -> viewModel.cancelSession()
             else -> viewModel.startListening()
         }
@@ -68,7 +71,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
         HaloRuntimeState.Speaking -> "Responding"
         HaloRuntimeState.Recovering -> "Recovering"
         HaloRuntimeState.Stopped -> "Offline"
-        HaloRuntimeState.Idle -> "Ready"
+        HaloRuntimeState.Idle -> if (listeningRequested) "Starting microphone" else "Ready"
     }
 
     val hintLabel = when {
@@ -123,7 +126,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
                     size = 172.dp,
                     onClick = ::toggleOrb,
                     contentDescription = when {
-                        uiState.speechActive -> "Stop listening"
+                        isListening -> "Stop listening"
                         isActiveSession -> "Stop Halo"
                         else -> "Speak to Halo"
                     }
@@ -131,7 +134,6 @@ fun HomeScreen(viewModel: HomeViewModel) {
 
                 Spacer(Modifier.height(20.dp))
 
-                // Animated presence label — smooth text crossfade on state change
                 AnimatedContent(
                     targetState = presenceLabel,
                     transitionSpec = {
@@ -178,7 +180,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
                     keyboardActions = KeyboardActions(onSend = { submitText() }),
                     maxLines = 3,
-                    enabled = !isActiveSession
+                    enabled = !isActiveSession && !isListening
                 )
                 Spacer(Modifier.width(8.dp))
                 if (isActiveSession) {
@@ -192,7 +194,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
                         imageVector = Icons.AutoMirrored.Filled.Send,
                         contentDescription = "Submit",
                         onClick = ::submitText,
-                        enabled = textInput.isNotBlank()
+                        enabled = textInput.isNotBlank() && !isListening
                     )
                 }
             }

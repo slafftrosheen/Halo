@@ -16,9 +16,7 @@ interface WearableHost {
     suspend fun disconnect()
 }
 
-/**
- * State of the audio source.
- */
+/** State of the audio source. */
 enum class AudioSourceState {
     IDLE,
     ACTIVE,
@@ -29,6 +27,10 @@ interface AudioSource {
     val state: StateFlow<AudioSourceState>
     suspend fun start()
     suspend fun stop()
+
+    /** Release platform resources when the owning host/runtime is disposed. */
+    suspend fun close() {}
+
     val frames: Flow<AudioFrame>
 }
 
@@ -98,5 +100,4 @@ sealed interface ObservationSource {
     data object HeyCyanGlasses : ObservationSource
     data object Replay : ObservationSource
     data object Debug : ObservationSource
-    data object BuddyBot : ObservationSource
 }

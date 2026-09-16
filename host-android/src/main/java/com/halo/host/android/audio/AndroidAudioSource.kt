@@ -20,6 +20,15 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
+/**
+ * Single-owner phone microphone.
+ *
+ * The AudioRecord instance is created once and reused across user speech
+ * sessions. Start/stop only changes the recording state; release happens at
+ * host/runtime disposal. This mirrors the simple lifecycle used by the
+ * Sherpa-ONNX Android microphone examples and avoids rapid stop/release/new
+ * AudioRecord races on Android audio HALs.
+ */
 class AndroidAudioSource : AudioSource {
     private val _state = MutableStateFlow(AudioSourceState.IDLE)
     override val state: StateFlow<AudioSourceState> = _state.asStateFlow()
@@ -31,21 +40,38 @@ class AndroidAudioSource : AudioSource {
     private var audioRecord: AudioRecord? = null
 
     private val recorderMutex = Mutex()
-    private var activeReader: AudioRecord? = null
-    private var pendingRelease: AudioRecord? = null
 
-    private val sampleRate = 16000
+    private val sampleRate = 16_000
     private val channelConfig = AudioFormat.CHANNEL_IN_MONO
     private val audioFormat = AudioFormat.ENCODING_PCM_16BIT
-    private val bufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
+    private val minimumBufferSize = AudioRecord.getMinBufferSize(
+        sampleRate,
+        channelConfig,
+        audioFormat
+    )
+    // Keep reads short and regular (~20 ms), rather than blocking for a large
+    // HAL buffer. Sherpa's Android examples use the same general pattern.
+    private val readBufferSize = maxOf(
+        minimumBufferSize,
+        sampleRate / 50
+    )
 
-    private fun releaseRecorderSafely(recorder: AudioRecord?) {
-        if (recorder == null) return
-        runCatching {
-            if (recorder.recordingState == AudioRecord.RECORDSTATE_RECORDING) {
-                recorder.stop()
+    @SuppressLint("MissingPermission")
+    private fun createRecorder(): AudioRecord {
+        check(readBufferSize > 0) {
+            "Unable to determine a valid AudioRecord buffer size: $readBufferSize"
+        }
+
+        return AudioRecord(
+            MediaRecorder.AudioSource.MIC,
+            sampleRate,
+            channelConfig,
+            audioFormat,
+            readBufferSize
+        ).also { recorder ->
+            check(recorder.state == AudioRecord.STATE_INITIALIZED) {
+                "AudioRecord failed to initialize"
             }
-            recorder.release()
         }
     }
 
@@ -53,43 +79,23 @@ class AndroidAudioSource : AudioSource {
     override suspend fun start() {
         withContext(Dispatchers.IO) {
             recorderMutex.withLock {
-                if (isRecording && audioRecord != null) {
-                    return@withLock
-                }
+                if (isRecording) return@withLock
 
-                // Cleanly release any lingering previous AudioRecord instance
-                isRecording = false
-                releaseRecorderSafely(audioRecord)
-                releaseRecorderSafely(pendingRelease)
-                audioRecord = null
-                pendingRelease = null
-                activeReader = null
+                val recorder = audioRecord ?: createRecorder().also { audioRecord = it }
 
-                check(bufferSize > 0) {
-                    "Unable to determine a valid AudioRecord buffer size: $bufferSize"
-                }
-
-                val recorder = AudioRecord(
-                    MediaRecorder.AudioSource.MIC,
-                    sampleRate,
-                    channelConfig,
-                    audioFormat,
-                    bufferSize
-                )
                 try {
-                    check(recorder.state == AudioRecord.STATE_INITIALIZED) {
-                        "AudioRecord failed to initialize"
-                    }
                     recorder.startRecording()
                     check(recorder.recordingState == AudioRecord.RECORDSTATE_RECORDING) {
                         "AudioRecord failed to start recording"
                     }
-
-                    audioRecord = recorder
                     isRecording = true
                     _state.value = AudioSourceState.ACTIVE
                 } catch (exception: Exception) {
-                    releaseRecorderSafely(recorder)
+                    // Do not immediately release/recreate the recorder here.
+                    // Releasing an AudioRecord and creating another one during
+                    // rapid UI interaction is the failure mode seen in the logs:
+                    // "AudioRecord cleanup is still in progress".
+                    isRecording = false
                     _state.value = AudioSourceState.ERROR
                     throw IllegalStateException("Unable to start AudioRecord", exception)
                 }
@@ -101,80 +107,83 @@ class AndroidAudioSource : AudioSource {
         withContext(Dispatchers.IO) {
             recorderMutex.withLock {
                 isRecording = false
+                val recorder = audioRecord
+                if (recorder != null && recorder.recordingState == AudioRecord.RECORDSTATE_RECORDING) {
+                    runCatching { recorder.stop() }
+                }
                 _state.value = AudioSourceState.IDLE
-                val recorderToRelease = audioRecord ?: pendingRelease
-                audioRecord = null
-                pendingRelease = null
-                activeReader = null
+            }
+        }
+    }
 
-                releaseRecorderSafely(recorderToRelease)
+    override suspend fun close() {
+        withContext(Dispatchers.IO) {
+            recorderMutex.withLock {
+                isRecording = false
+                val recorder = audioRecord
+                audioRecord = null
+                if (recorder != null) {
+                    runCatching {
+                        if (recorder.recordingState == AudioRecord.RECORDSTATE_RECORDING) {
+                            recorder.stop()
+                        }
+                    }
+                    runCatching { recorder.release() }
+                }
+                _state.value = AudioSourceState.IDLE
             }
         }
     }
 
     override val frames: Flow<AudioFrame> = flow {
-        check(bufferSize > 0) {
-            "Unable to determine a valid AudioRecord buffer size: $bufferSize"
+        check(readBufferSize > 0) {
+            "Unable to determine a valid AudioRecord buffer size: $readBufferSize"
         }
-        val buffer = ShortArray(bufferSize / 2)
+
+        val buffer = ShortArray(readBufferSize / 2)
         var reader: AudioRecord? = null
+
         try {
             while (currentCoroutineContext().isActive) {
                 val recorder = audioRecord
-                if (!isRecording || recorder == null) {
-                    break
-                }
-
-                val canRead = recorderMutex.withLock {
-                    if (!isRecording || audioRecord !== recorder) {
-                        false
-                    } else {
-                        activeReader = recorder
-                        reader = recorder
-                        true
-                    }
-                }
-                if (!canRead) {
-                    break
-                }
+                if (!isRecording || recorder == null) break
+                reader = recorder
 
                 val read = try {
                     recorder.read(buffer, 0, buffer.size)
                 } catch (exception: IllegalStateException) {
-                    if (!isRecording) {
-                        break
-                    }
+                    if (!isRecording) break
                     throw IllegalStateException("AudioRecord read failed", exception)
                 }
 
-                if (!isRecording) {
-                    break
-                }
+                if (!isRecording) break
 
                 when {
                     read > 0 -> {
-                        val samples = buffer.copyOf(read)
-                        emit(AudioFrame(samples, sampleRate, 1, System.nanoTime()))
+                        emit(
+                            AudioFrame(
+                                samples = buffer.copyOf(read),
+                                sampleRate = sampleRate,
+                                channels = 1,
+                                timestamp = System.nanoTime()
+                            )
+                        )
                     }
-                    read == 0 -> delay(10)
-                    read == AudioRecord.ERROR_INVALID_OPERATION -> {
+                    read == 0 -> delay(5)
+                    read == AudioRecord.ERROR_INVALID_OPERATION ->
                         throw IllegalStateException("AudioRecord read failed: invalid operation")
-                    }
-                    read == AudioRecord.ERROR_BAD_VALUE -> {
+                    read == AudioRecord.ERROR_BAD_VALUE ->
                         throw IllegalStateException("AudioRecord read failed: invalid buffer parameters")
-                    }
-                    read == AudioRecord.ERROR_DEAD_OBJECT -> {
+                    read == AudioRecord.ERROR_DEAD_OBJECT ->
                         throw IllegalStateException("AudioRecord read failed: recorder is no longer available")
-                    }
-                    else -> throw IllegalStateException("AudioRecord read failed with code $read")
+                    else ->
+                        throw IllegalStateException("AudioRecord read failed with code $read")
                 }
             }
         } finally {
-            recorderMutex.withLock {
-                if (activeReader === reader) {
-                    activeReader = null
-                }
-            }
+            // stop()/close() own recorder lifecycle. The frame collector only
+            // relinquishes its read loop; it never releases the platform object.
+            reader = null
         }
     }
 }
