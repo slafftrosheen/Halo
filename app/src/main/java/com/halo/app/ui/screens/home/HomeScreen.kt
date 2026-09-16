@@ -31,16 +31,17 @@ import com.halo.app.ui.glass.components.*
 import com.halo.app.ui.glass.material.HaloGlassColors
 import com.halo.app.ui.glass.material.HaloRuntimeState
 import com.halo.app.ui.glass.material.HaloTypography
+import com.halo.sdk.provider.CognitiveSessionState
 
 @Composable
 fun HomeScreen(viewModel: HomeViewModel) {
     val uiState by viewModel.uiState.collectAsState()
     var textInput by remember { mutableStateOf("") }
-    val isActiveSession = uiState.sessionState != com.halo.sdk.provider.CognitiveSessionState.Idle &&
-        uiState.sessionState !is com.halo.sdk.provider.CognitiveSessionState.Completed &&
-        uiState.sessionState !is com.halo.sdk.provider.CognitiveSessionState.Failed
-    val isListening = uiState.runtimeState == HaloRuntimeState.Capturing || uiState.runtimeState == HaloRuntimeState.Recognizing
-    val isSessionActive = uiState.sessionState != com.halo.sdk.provider.CognitiveSessionState.Idle
+    val isActiveSession = uiState.sessionState != CognitiveSessionState.Idle &&
+        uiState.sessionState !is CognitiveSessionState.Completed &&
+        uiState.sessionState !is CognitiveSessionState.Failed
+    val isListening = uiState.speechActive
+    val isSessionActive = uiState.sessionState != CognitiveSessionState.Idle
 
     fun submitText() {
         val text = textInput.trim()
@@ -51,10 +52,8 @@ fun HomeScreen(viewModel: HomeViewModel) {
     }
 
     fun toggleOrb() {
-        // Listening is a speech-control state, not a cognitive-session state.
-        // Stop the microphone before cancelling an already-running cognitive turn.
         when {
-            isListening -> viewModel.stopListening()
+            uiState.speechActive -> viewModel.stopListening()
             isActiveSession -> viewModel.cancelSession()
             else -> viewModel.startListening()
         }
@@ -124,7 +123,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
                     size = 172.dp,
                     onClick = ::toggleOrb,
                     contentDescription = when {
-                        isListening -> "Stop listening"
+                        uiState.speechActive -> "Stop listening"
                         isActiveSession -> "Stop Halo"
                         else -> "Speak to Halo"
                     }
@@ -207,23 +206,23 @@ fun HomeScreen(viewModel: HomeViewModel) {
 private fun SessionContextPanel(uiState: HomeUiState) {
     HaloGlassSection(title = "CONTEXT") {
         when (val session = uiState.sessionState) {
-            is com.halo.sdk.provider.CognitiveSessionState.Streaming -> Text(
+            is CognitiveSessionState.Streaming -> Text(
                 session.text.ifBlank { "Generating…" }, style = HaloTypography.bodyLarge,
                 color = HaloGlassColors.TextPrimary, lineHeight = 22.sp
             )
-            is com.halo.sdk.provider.CognitiveSessionState.Completed -> HaloMarkdownText(
+            is CognitiveSessionState.Completed -> HaloMarkdownText(
                 markdown = session.response.text.ifBlank { "Completed" }, textColor = HaloGlassColors.TextPrimary,
                 modifier = Modifier.fillMaxWidth()
             )
             else -> Text(uiState.contextualText, style = HaloTypography.bodyLarge, color = HaloGlassColors.TextPrimary)
         }
-        if (uiState.sessionState is com.halo.sdk.provider.CognitiveSessionState.Completed ||
-            uiState.sessionState is com.halo.sdk.provider.CognitiveSessionState.Streaming
+        if (uiState.sessionState is CognitiveSessionState.Completed ||
+            uiState.sessionState is CognitiveSessionState.Streaming
         ) {
             Spacer(Modifier.height(8.dp))
             Text("via ${uiState.activeProvider}", style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
         }
-        if (uiState.sessionState is com.halo.sdk.provider.CognitiveSessionState.Reasoning) {
+        if (uiState.sessionState is CognitiveSessionState.Reasoning) {
             Spacer(Modifier.height(12.dp))
             HaloGlassIndeterminateProgress(modifier = Modifier.fillMaxWidth())
         }

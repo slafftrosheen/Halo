@@ -26,7 +26,8 @@ data class HomeUiState(
     val recentEvents: List<TimelinePreviewEvent> = emptyList(),
     val activeProvider: String = "No provider",
     val activeProviderStatus: String = "Unavailable",
-    val sessionState: CognitiveSessionState = CognitiveSessionState.Idle
+    val sessionState: CognitiveSessionState = CognitiveSessionState.Idle,
+    val speechActive: Boolean = false
 )
 
 class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
@@ -38,15 +39,43 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
         diagnostics: List<AiProviderDiagnostic> = emptyList()
     ): HomeUiState {
         val speechRuntimeState = presenceFromSpeech(snapshot.speech)
-        val uiRuntimeState = when (sessionState) {
-            is CognitiveSessionState.PreparingContext -> HaloRuntimeState.Recognizing
-            is CognitiveSessionState.Reasoning -> HaloRuntimeState.Reasoning
-            is CognitiveSessionState.Streaming -> HaloRuntimeState.Speaking
-            is CognitiveSessionState.ExecutingTool -> HaloRuntimeState.Executing
-            is CognitiveSessionState.Completed -> HaloRuntimeState.Idle
-            is CognitiveSessionState.Failed -> HaloRuntimeState.Recovering
-            CognitiveSessionState.Idle -> speechRuntimeState
+
+        val speechIsActive = when (snapshot.speech) {
+            SpeechSessionState.Capturing,
+            SpeechSessionState.Recognizing -> true
+            else -> false
         }
+
+        val uiRuntimeState = when {
+            // Actual TTS/speech presence always wins over the cognitive transaction.
+            snapshot.speech == SpeechSessionState.Speaking ->
+                HaloRuntimeState.Speaking
+
+            // Actual microphone recognition always wins while it is active.
+            speechIsActive ->
+                speechRuntimeState
+
+            sessionState is CognitiveSessionState.PreparingContext ->
+                HaloRuntimeState.Reasoning
+
+            sessionState is CognitiveSessionState.Reasoning ->
+                HaloRuntimeState.Reasoning
+
+            sessionState is CognitiveSessionState.Streaming ->
+                HaloRuntimeState.Speaking
+
+            sessionState is CognitiveSessionState.ExecutingTool ->
+                HaloRuntimeState.Executing
+
+            sessionState is CognitiveSessionState.Failed ->
+                HaloRuntimeState.Recovering
+
+            // Completed means the cognitive transaction is finished,
+            // but speech state may still be Speaking. That case was handled above.
+            else ->
+                speechRuntimeState
+        }
+
         val contextualText = when (sessionState) {
             is CognitiveSessionState.PreparingContext -> "Preparing context..."
             is CognitiveSessionState.Reasoning -> "Reasoning..."
@@ -80,7 +109,8 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
             recentEvents = snapshot.timeline.map { TimelinePreviewEvent(it.title, it.status, it.timestamp.toEpochMilli()) },
             activeProvider = activeProviderText,
             activeProviderStatus = providerStatus,
-            sessionState = sessionState
+            sessionState = sessionState,
+            speechActive = speechIsActive
         )
     }
 

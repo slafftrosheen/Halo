@@ -1,7 +1,10 @@
 package com.halo.app.di
 
+import com.halo.drivers.heycyan.HeyCyanAudioOutput
+import com.halo.drivers.heycyan.HeyCyanHost
 import com.halo.drivers.heycyan.RealHeyCyanDriver
 import com.halo.providers.sherpa.stt.SherpaSpeechModelCatalog
+import com.halo.sdk.host.WearableHost
 import java.io.File
 
 /**
@@ -63,5 +66,18 @@ class HostGraph(
      */
     val heyCyanDriver: RealHeyCyanDriver by lazy {
         RealHeyCyanDriver(context, infra.eventBus)
+    }
+
+    val heyCyanHost: HeyCyanHost by lazy {
+        HeyCyanHost(
+            driver = heyCyanDriver,
+            audioOutput = HeyCyanAudioOutput(heyCyanDriver),
+            storage = storage,
+            eventBus = infra.eventBus
+        )
+    }
+
+    val wearableHost: WearableHost by lazy {
+        heyCyanHost
     }
 }
