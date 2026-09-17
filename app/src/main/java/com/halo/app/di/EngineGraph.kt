@@ -2,7 +2,6 @@ package com.halo.app.di
 
 import android.content.Context
 import com.halo.engines.execution.ExecutionEngine
-import com.halo.engines.execution.capability.SpeechOutputRouter
 import com.halo.engines.execution.service.CapabilityRegistry
 import com.halo.engines.execution.service.ExecutionScheduler
 import com.halo.engines.ai.AIEngine
@@ -54,12 +53,12 @@ class EngineGraph(
             register(AndroidWebCapability(applicationContext))
             register(AndroidDeviceCapability(applicationContext))
             register(AndroidMemoryCapability(applicationContext))
-            register(
-                com.halo.engines.execution.capability.SpeechCapability(
-                    ttsProvider = providerGraph.providers.speechSynthesis,
-                    outputRouter = SpeechOutputRouter { Result.success(Unit) }
-                )
-            )
+
+            // Do not register SpeechCapability in the phone-first runtime.
+            // User-facing speech output is owned by the single TtsRequested ->
+            // AndroidSpeaker path, which provides interruption and lifecycle
+            // events. Keeping a second execution capability here would create a
+            // competing Android TextToSpeech owner for CommunicationTask.
         }
     }
 
