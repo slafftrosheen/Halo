@@ -1,5 +1,7 @@
 package com.halo.engines.reasoning
 
+import com.halo.cognition.language.ConversationIntent
+import com.halo.cognition.language.QuestionIntent
 import com.halo.engines.reasoning.strategy.DefaultReasoningStrategy
 import com.halo.libraries.common.core.Identifier
 import com.halo.libraries.common.core.Version
@@ -23,18 +25,14 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * Converts Blackboard InterpretationKnowledge into GoalCreated events.
+ * Converts actionable Blackboard InterpretationKnowledge into GoalCreated events.
  *
- *     InterpretationKnowledge
- *              ↓
- *        ReasoningStrategy
- *              ↓
- *             Goal
- *              ↓
- *         GoalCreated
+ * Conversation and question intents are owned by CognitiveSession. They must not
+ * also enter deterministic planning/execution, otherwise one utterance can create
+ * both an LLM response and a bogus executable CommunicationTask.
  */
 class ReasoningEngine(
-    private val strategy: com.halo.engines.reasoning.strategy.LlmReasoningStrategy,
+    private val strategy: DefaultReasoningStrategy,
     private val blackboard: Blackboard,
     private val eventBus: EventBus
 ) : Engine {
@@ -45,130 +43,88 @@ class ReasoningEngine(
         description = "Core deterministic reasoning engine"
     )
 
-    private val _health =
-        MutableStateFlow(EngineHealth.Healthy)
+    private val _health = MutableStateFlow(EngineHealth.Healthy)
+    override val health: StateFlow<EngineHealth> = _health
 
-    override val health: StateFlow<EngineHealth> =
-        _health
+    private val _state = MutableStateFlow<EngineState>(EngineState.Created)
+    override val state: StateFlow<EngineState> = _state
 
-    private val _state =
-        MutableStateFlow<EngineState>(EngineState.Created)
-
-    override val state: StateFlow<EngineState> =
-        _state
-
-    override val dependencies: Set<ServiceKey<*>> =
-        emptySet()
+    override val dependencies: Set<ServiceKey<*>> = emptySet()
 
     private var context: EngineContext? = null
     private var job: Job? = null
+    private val processedKnowledgeIds = mutableSetOf<String>()
 
-    private val processedKnowledgeIds =
-        mutableSetOf<String>()
-
-    override suspend fun initialize(
-        context: EngineContext
-    ) {
+    override suspend fun initialize(context: EngineContext) {
         check(_state.value != EngineState.Disposed)
-
         this.context = context
         _state.value = EngineState.Initializing
         _health.value = EngineHealth.Healthy
     }
 
     override suspend fun start() {
-        check(context != null) {
-            "ReasoningEngine must be initialized before start"
-        }
-
-        if (job?.isActive == true) {
-            return
-        }
+        check(context != null) { "ReasoningEngine must be initialized before start" }
+        if (job?.isActive == true) return
 
         val runtimeContext = requireNotNull(context)
-
         _state.value = EngineState.Running
 
-        job = kotlinx.coroutines.CoroutineScope(
-            runtimeContext.runtime.scheduler.compute
-        ).launch {
-
+        job = kotlinx.coroutines.CoroutineScope(runtimeContext.runtime.scheduler.compute).launch {
             try {
-                blackboard
-                    .stream()
-                    .filter {
-                        it.payload is InterpretationKnowledge
-                    }
+                blackboard.stream()
+                    .filter { it.payload is InterpretationKnowledge }
                     .collect { knowledge ->
+                        val knowledgeId = knowledge.id.value
+                        if (!processedKnowledgeIds.add(knowledgeId)) return@collect
 
-                        val knowledgeId =
-                            knowledge.id.value
+                        val interpretation =
+                            (knowledge.payload as InterpretationKnowledge).interpretation
 
-                        /*
-                         * Blackboard is an append-only stream.
-                         *
-                         * Never create two goals from the same
-                         * InterpretationKnowledge.
-                         */
-                        if (!processedKnowledgeIds.add(knowledgeId)) {
+                        if (interpretation.intent is ConversationIntent ||
+                            interpretation.intent is QuestionIntent
+                        ) {
+                            runtimeContext.runtime.logger.debug(
+                                category = "reasoning",
+                                message = "Conversation knowledge $knowledgeId delegated to CognitiveSession"
+                            )
                             return@collect
                         }
 
-                        val interpretation =
-                            (knowledge.payload as InterpretationKnowledge)
-                                .interpretation
-
                         try {
-                            val goal =
-                                strategy.generateGoal(
-                                    interpretation = interpretation,
-                                    parentKnowledgeId = knowledgeId
-                                )
-
-                            println("[HALO-TXN] reasoning knowledgeId=$knowledgeId intent=${interpretation.intent::class.simpleName} goal=${goal.type} payload=${goal.payload}")
-
-                            eventBus.publish(
-                                GoalCreated(
-                                    goal = goal
-                                )
+                            val goal = strategy.generateGoal(
+                                interpretation = interpretation,
+                                parentKnowledgeId = knowledgeId
                             )
 
-                            _health.value =
-                                EngineHealth.Healthy
+                            println(
+                                "[HALO-TXN] reasoning knowledgeId=$knowledgeId " +
+                                    "intent=${interpretation.intent::class.simpleName} " +
+                                    "goal=${goal.type} payload=${goal.payload}"
+                            )
+
+                            eventBus.publish(GoalCreated(goal = goal))
+                            _health.value = EngineHealth.Healthy
 
                             runtimeContext.runtime.logger.debug(
                                 category = "reasoning",
-                                message =
-                                    "Goal ${goal.id.value} created from knowledge $knowledgeId"
+                                message = "Goal ${goal.id.value} created from knowledge $knowledgeId"
                             )
-
                         } catch (exception: Exception) {
-
-                            _health.value =
-                                EngineHealth.Degraded
-
+                            _health.value = EngineHealth.Degraded
                             runtimeContext.runtime.logger.error(
                                 category = "reasoning",
-                                message =
-                                    "Failed to reason from knowledge $knowledgeId",
+                                message = "Failed to reason from knowledge $knowledgeId",
                                 throwable = exception
                             )
                         }
                     }
-
             } catch (exception: CancellationException) {
                 throw exception
-
             } catch (exception: Exception) {
-
-                _health.value =
-                    EngineHealth.Failed
-
-                _state.value =
-                    EngineState.Failed(
-                        exception.message
-                            ?: "Reasoning stream failed"
-                    )
+                _health.value = EngineHealth.Failed
+                _state.value = EngineState.Failed(
+                    exception.message ?: "Reasoning stream failed"
+                )
             }
         }
     }
@@ -177,7 +133,6 @@ class ReasoningEngine(
         withContext(NonCancellable) {
             job?.cancel()
             job = null
-
             if (_state.value != EngineState.Disposed) {
                 _state.value = EngineState.Stopped
             }
@@ -189,12 +144,9 @@ class ReasoningEngine(
             job?.cancel()
             job = null
             context = null
-
-            _health.value =
-                EngineHealth.Offline
-
-            _state.value =
-                EngineState.Disposed
+            processedKnowledgeIds.clear()
+            _health.value = EngineHealth.Offline
+            _state.value = EngineState.Disposed
         }
     }
 }

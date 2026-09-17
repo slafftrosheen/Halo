@@ -25,16 +25,7 @@ import com.halo.icl.ontology.NavigationPayload
 import com.halo.icl.ontology.SearchPayload
 import com.halo.runtime.cognition.blackboard.Interpretation
 
-/**
- * Deterministic semantic compiler:
- *
- * Interpretation -> Goal
- *
- * This is deliberately rule-based.
- *
- * LLM/semantic escalation can be introduced later as another reasoning
- * strategy, without contaminating the deterministic baseline.
- */
+/** Deterministic Interpretation -> Goal compiler for executable intents. */
 class DefaultReasoningStrategy(
     private val goalManager: GoalManager
 ) {
@@ -43,10 +34,7 @@ class DefaultReasoningStrategy(
         interpretation: Interpretation,
         parentKnowledgeId: String? = null
     ): Goal {
-
         val intent = interpretation.intent
-        val lowerTranscript = interpretation.transcript.lowercase()
-        val isTimeQuery = lowerTranscript.contains("time") || lowerTranscript.contains("clock")
 
         val type = when (intent) {
             is NavigateIntent -> GoalType.NAVIGATION
@@ -55,46 +43,72 @@ class DefaultReasoningStrategy(
             is SearchIntent -> GoalType.SEARCH
             is CallIntent -> GoalType.COMMUNICATION
             is OpenIntent -> GoalType.DEVICE
-            is QuestionIntent, is ConversationIntent -> {
-                if (isTimeQuery) GoalType.DEVICE else GoalType.CONVERSATION
-            }
+            is QuestionIntent, is ConversationIntent -> GoalType.CONVERSATION
             else -> GoalType.CONVERSATION
         }
 
         val payload = when (intent) {
             is NavigateIntent -> {
-                val dest = interpretation.entities.filterIsInstance<LocationEntity>().firstOrNull()?.location ?: ""
-                NavigationPayload(dest)
+                val destination = interpretation.entities
+                    .filterIsInstance<LocationEntity>()
+                    .firstOrNull()
+                    ?.location
+                    .orEmpty()
+                NavigationPayload(destination)
             }
 
             is PlayIntent -> {
-                val rawTitle = interpretation.entities.filterIsInstance<MediaEntity>().firstOrNull()?.title 
-                    ?: interpretation.transcript.removePrefix("play").removePrefix("Please").replace(".", "").trim()
+                val rawTitle = interpretation.entities
+                    .filterIsInstance<MediaEntity>()
+                    .firstOrNull()
+                    ?.title
+                    ?: interpretation.transcript
+                        .removePrefix("play")
+                        .removePrefix("Please")
+                        .replace(".", "")
+                        .trim()
                 val normalizedTitle = rawTitle.replace(".", "").trim()
                 val lower = normalizedTitle.lowercase()
-                val isGeneric = lower.isEmpty() || lower == "music" || lower == "some music" || 
-                                lower == "something" || lower == "a music" || lower == "start music" || 
-                                lower == "start playing" || lower == "put some music on"
-                MediaPayload(query = if (isGeneric) "" else normalizedTitle, action = "play")
+                val isGeneric = lower.isEmpty() ||
+                    lower == "music" ||
+                    lower == "some music" ||
+                    lower == "something" ||
+                    lower == "a music" ||
+                    lower == "start music" ||
+                    lower == "start playing" ||
+                    lower == "put some music on"
+                MediaPayload(
+                    query = if (isGeneric) "" else normalizedTitle,
+                    action = "play"
+                )
             }
 
             is PauseIntent -> MediaPayload(query = "", action = "pause")
 
             is ReminderIntent -> MemoryPayload(
-                fact = interpretation.entities.firstOrNull()?.toString() ?: interpretation.transcript
+                fact = interpretation.entities.firstOrNull()?.toString()
+                    ?: interpretation.transcript
             )
 
             is SearchIntent -> SearchPayload(
-                query = interpretation.entities.firstOrNull()?.toString() ?: interpretation.transcript
+                query = interpretation.entities.firstOrNull()?.toString()
+                    ?: interpretation.transcript
             )
 
             is CallIntent -> CommunicationPayload(
-                target = interpretation.entities.filterIsInstance<PersonEntity>().firstOrNull()?.name ?: ""
+                target = interpretation.entities
+                    .filterIsInstance<PersonEntity>()
+                    .firstOrNull()
+                    ?.name
+                    .orEmpty()
             )
 
             is OpenIntent -> {
-                val appName = interpretation.entities.filterIsInstance<ApplicationEntity>().firstOrNull()?.name
-                    ?: interpretation.entities.firstOrNull()?.toString() ?: ""
+                val appName = interpretation.entities
+                    .filterIsInstance<ApplicationEntity>()
+                    .firstOrNull()
+                    ?.name
+                    ?: interpretation.entities.firstOrNull()?.toString().orEmpty()
                 if (appName.equals("time", ignoreCase = true)) {
                     DevicePayload(action = "time", target = "")
                 } else {
@@ -102,13 +116,8 @@ class DefaultReasoningStrategy(
                 }
             }
 
-            is ConversationIntent, is QuestionIntent -> {
-                if (isTimeQuery) {
-                    DevicePayload(action = "time", target = "")
-                } else {
-                    ConversationPayload(topic = interpretation.transcript)
-                }
-            }
+            is ConversationIntent, is QuestionIntent ->
+                ConversationPayload(topic = interpretation.transcript)
 
             else -> ConversationPayload(topic = interpretation.transcript)
         }
