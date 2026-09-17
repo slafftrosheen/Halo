@@ -15,6 +15,7 @@ import com.halo.sdk.runtime.EngineMetadata
 import com.halo.sdk.runtime.EngineState
 import com.halo.sdk.runtime.EventBus
 import com.halo.sdk.runtime.ServiceKey
+import com.halo.sdk.runtime.defaultResponseDelivery
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
@@ -102,7 +103,12 @@ class ReasoningEngine(
                                     "goal=${goal.type} payload=${goal.payload}"
                             )
 
-                            eventBus.publish(GoalCreated(goal = goal))
+                            eventBus.publish(
+                                GoalCreated(
+                                    goal = goal,
+                                    responseDelivery = interpretation.source.defaultResponseDelivery()
+                                )
+                            )
                             _health.value = EngineHealth.Healthy
 
                             runtimeContext.runtime.logger.debug(

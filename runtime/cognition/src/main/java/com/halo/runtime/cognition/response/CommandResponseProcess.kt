@@ -1,8 +1,12 @@
 package com.halo.runtime.cognition.response
 
 import com.halo.runtime.cognition.ExecutionResultPublished
+import com.halo.runtime.cognition.blackboard.Blackboard
+import com.halo.runtime.cognition.blackboard.PlanKnowledge
+import com.halo.sdk.runtime.AssistantResponsePublished
 import com.halo.sdk.runtime.EventBus
 import com.halo.sdk.runtime.ExecutionFinished
+import com.halo.sdk.runtime.ResponseDelivery
 import com.halo.sdk.runtime.RuntimeLogger
 import com.halo.sdk.runtime.TtsRequested
 import kotlinx.coroutines.CoroutineScope
@@ -13,6 +17,7 @@ import kotlinx.coroutines.launch
 
 class CommandResponseProcess(
     private val eventBus: EventBus,
+    private val blackboard: Blackboard,
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
     private val logger: RuntimeLogger? = null,
     private val mapper: CommandResponseMapper = CommandResponseMapper()
@@ -39,11 +44,22 @@ class CommandResponseProcess(
                         val responseText = mapper.mapExecution(results)
 
                         if (!responseText.isNullOrBlank()) {
+                            val delivery = responseDeliveryForPlan(event.planId)
                             logger?.info(
                                 "HALO-TXN",
-                                "execution=${event.id} plan=${event.planId} tasks=${results.size} tts=\"$responseText\""
+                                "execution=${event.id} plan=${event.planId} tasks=${results.size} " +
+                                    "delivery=$delivery response=\"$responseText\""
                             )
-                            eventBus.publish(TtsRequested(text = responseText))
+                            eventBus.publish(
+                                AssistantResponsePublished(
+                                    text = responseText,
+                                    delivery = delivery,
+                                    transactionId = event.planId
+                                )
+                            )
+                            if (delivery == ResponseDelivery.SPEECH_AND_VISUAL) {
+                                eventBus.publish(TtsRequested(text = responseText))
+                            }
                         }
                     }
                 }
@@ -55,5 +71,13 @@ class CommandResponseProcess(
         job?.cancel()
         job = null
         pendingResults.clear()
+    }
+
+    private fun responseDeliveryForPlan(planId: String): ResponseDelivery {
+        val plan = blackboard.flow.value.asReversed()
+            .mapNotNull { knowledge -> (knowledge.payload as? PlanKnowledge)?.plan }
+            .firstOrNull { it.id.toString() == planId }
+
+        return plan?.responseDelivery ?: ResponseDelivery.VISUAL_ONLY
     }
 }

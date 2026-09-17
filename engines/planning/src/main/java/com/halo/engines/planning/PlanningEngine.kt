@@ -16,7 +16,6 @@ import com.halo.runtime.cognition.ExecutionPlan
 import com.halo.runtime.cognition.MediaTask
 import com.halo.runtime.cognition.MemoryTask
 import com.halo.runtime.cognition.NavigationTask
-import com.halo.runtime.cognition.SystemTask
 import com.halo.runtime.cognition.Task
 import com.halo.runtime.cognition.WebTask
 import com.halo.sdk.runtime.*
@@ -81,29 +80,33 @@ class PlanningEngine(
 
     override suspend fun start() {
         if (job?.isActive == true) return
-        
+
         val runtimeContext = requireNotNull(context)
         _state.value = EngineState.Running
-        
+
         job = CoroutineScope(runtimeContext.runtime.scheduler.compute).launch {
             eventBus.observe(GoalCreated::class.java).collect { event ->
                 try {
-                    val goal = event.goal
-                    if (goal != null) {
-                        val plan = createPlan(goal)
-                        
-                        // Publish to Blackboard
-                        blackboard.publish(
-                            Knowledge(
-                                id = KnowledgeId(plan.id.toString()),
-                                payload = PlanKnowledge(plan),
-                                confidence = com.halo.runtime.cognition.blackboard.Confidence(1.0f, 1.0f, 1.0f),
-                                source = KnowledgeSource.RULE,
-                                createdAt = Clock.System.now()
-                            )
+                    val plan = createPlan(
+                        goal = event.goal,
+                        responseDelivery = event.responseDelivery
+                    )
+
+                    blackboard.publish(
+                        Knowledge(
+                            id = KnowledgeId(plan.id.toString()),
+                            payload = PlanKnowledge(plan),
+                            confidence = com.halo.runtime.cognition.blackboard.Confidence(1.0f, 1.0f, 1.0f),
+                            source = KnowledgeSource.RULE,
+                            createdAt = Clock.System.now()
                         )
-                        eventBus.publish(PlanGenerated(id = java.util.UUID.randomUUID().toString(), planId = plan.id.toString()))
-                    }
+                    )
+                    eventBus.publish(
+                        PlanGenerated(
+                            id = java.util.UUID.randomUUID().toString(),
+                            planId = plan.id.toString()
+                        )
+                    )
                 } catch (e: Exception) {
                     runtimeContext.runtime.logger.error("planning", "Failed to generate plan for goal", e)
                 }
@@ -130,18 +133,21 @@ class PlanningEngine(
         }
     }
 
-    fun createPlan(goal: Goal): ExecutionPlan {
+    fun createPlan(
+        goal: Goal,
+        responseDelivery: ResponseDelivery = ResponseDelivery.VISUAL_ONLY
+    ): ExecutionPlan {
         val task = createTask(goal)
 
         return ExecutionPlan(
             goal = goal,
-            tasks = listOf(task)
+            tasks = listOf(task),
+            responseDelivery = responseDelivery
         )
     }
 
     private fun createTask(goal: Goal): Task {
         return when (goal.type) {
-
             GoalType.CONVERSATION -> {
                 val payload = goal.payload as? ConversationPayload
                     ?: return unsupportedGoal(goal)
@@ -208,9 +214,7 @@ class PlanningEngine(
                 )
             }
 
-            GoalType.AUTOMATION -> {
-                unsupportedGoal(goal)
-            }
+            GoalType.AUTOMATION -> unsupportedGoal(goal)
         }
     }
 

@@ -69,6 +69,7 @@ class EngineGraph(
     val commandResponseProcess by lazy {
         CommandResponseProcess(
             eventBus = infra.eventBus,
+            blackboard = infra.blackboard,
             scope = infra.scope,
             logger = infra.logger
         )
