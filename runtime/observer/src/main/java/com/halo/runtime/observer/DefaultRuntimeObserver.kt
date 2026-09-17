@@ -51,9 +51,8 @@ class DefaultRuntimeObserver(
     ) { speechState, processes, facts, timeline, traces ->
         assembler.assemble(speechState, processes, facts, timeline, traces, providerSource(), startedAtTime)
     }.stateIn(
-        // ...
         scope = scope,
-        started = SharingStarted.Eagerly,
+        started = SharingStarted.Lazily,
         initialValue = RuntimeSnapshot(
             runtimeVersion = "1.0.0-alpha",
             buildNumber = 44,

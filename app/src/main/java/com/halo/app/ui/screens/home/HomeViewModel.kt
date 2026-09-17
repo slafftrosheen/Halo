@@ -127,7 +127,7 @@ class HomeViewModel(
         val selectedModelId = args[3] as String?
         @Suppress("UNCHECKED_CAST") val diagnostics = args[4] as List<AiProviderDiagnostic>
         mapper.map(snapshot, sessionState, selectedProviderId, selectedModelId, diagnostics)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HomeUiState())
+    }.stateIn(viewModelScope, SharingStarted.Lazily, HomeUiState())
 
     init {
         // The UI command state is deliberately separate from the runtime

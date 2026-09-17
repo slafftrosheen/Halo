@@ -54,6 +54,9 @@ class ObserverGraph(
             traceRecorder,
             snapshotAssembler,
             {
+                // Defer evaluating providers until the snapshot flow actually runs
+                // to avoid resolving the lazy aiProviderRouter on the UI thread
+                // during early ObserverGraph construction.
                 val router = engineGraph.aiProviderRouter
                 val selectedId = router.selectedProviderId.value
                 val selectedModelId = router.selectedModelId.value
