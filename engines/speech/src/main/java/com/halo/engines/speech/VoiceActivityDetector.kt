@@ -12,15 +12,24 @@ interface VoiceActivityDetector {
     fun close() = Unit
 }
 
-/** Lightweight deterministic VAD for the fallback path. */
+/**
+ * Lightweight deterministic VAD for the fallback path.
+ *
+ * Hangover is measured in audio time rather than frame count so endpointing is
+ * stable even when the Android audio HAL changes read-buffer sizes.
+ */
 class EnergyVAD(
     private val threshold: Int = 1000,
-    private val hangoverFrames: Int = 4
+    private val hangoverMillis: Long = 600L
 ) : VoiceActivityDetector {
-    private var remainingHangoverFrames = 0
+    private var remainingHangoverMillis = 0L
+
+    init {
+        require(hangoverMillis >= 0L) { "hangoverMillis must be >= 0" }
+    }
 
     override fun isSpeech(frame: AudioFrame): Boolean {
-        if (frame.samples.isEmpty()) return remainingHangoverFrames > 0
+        if (frame.samples.isEmpty()) return remainingHangoverMillis > 0L
 
         var sum = 0L
         for (sample in frame.samples) {
@@ -29,12 +38,13 @@ class EnergyVAD(
         val averageEnergy = sum / frame.samples.size
 
         if (averageEnergy > threshold) {
-            remainingHangoverFrames = hangoverFrames.coerceAtLeast(0)
+            remainingHangoverMillis = hangoverMillis
             return true
         }
 
-        if (remainingHangoverFrames > 0) {
-            remainingHangoverFrames--
+        if (remainingHangoverMillis > 0L) {
+            remainingHangoverMillis =
+                (remainingHangoverMillis - frame.durationMillis()).coerceAtLeast(0L)
             return true
         }
 
@@ -42,6 +52,13 @@ class EnergyVAD(
     }
 
     override fun reset() {
-        remainingHangoverFrames = 0
+        remainingHangoverMillis = 0L
+    }
+
+    private fun AudioFrame.durationMillis(): Long {
+        val safeChannels = channels.coerceAtLeast(1)
+        val samplesPerChannel = samples.size / safeChannels
+        if (sampleRate <= 0 || samplesPerChannel <= 0) return 1L
+        return maxOf(1L, samplesPerChannel * 1000L / sampleRate)
     }
 }

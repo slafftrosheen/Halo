@@ -45,22 +45,25 @@ class AndroidAudioSource : AudioSource {
     private val sampleRate = 16_000
     private val channelConfig = AudioFormat.CHANNEL_IN_MONO
     private val audioFormat = AudioFormat.ENCODING_PCM_16BIT
-    private val minimumBufferSize = AudioRecord.getMinBufferSize(
+    private val minimumBufferSizeBytes = AudioRecord.getMinBufferSize(
         sampleRate,
         channelConfig,
         audioFormat
     )
-    // Keep reads short and regular (~20 ms), rather than blocking for a large
-    // HAL buffer. Sherpa's Android examples use the same general pattern.
-    private val readBufferSize = maxOf(
-        minimumBufferSize,
-        sampleRate / 50
+
+    // AudioRecord's internal buffer is measured in bytes, while read() below is
+    // measured in shorts. Keep those units separate so the runtime receives a
+    // stable 20 ms cadence regardless of the HAL's minimum buffer requirement.
+    private val readChunkSamples = sampleRate / 50
+    private val recorderBufferSizeBytes = maxOf(
+        minimumBufferSizeBytes,
+        readChunkSamples * BYTES_PER_PCM16_SAMPLE * 2
     )
 
     @SuppressLint("MissingPermission")
     private fun createRecorder(): AudioRecord {
-        check(readBufferSize > 0) {
-            "Unable to determine a valid AudioRecord buffer size: $readBufferSize"
+        check(recorderBufferSizeBytes > 0) {
+            "Unable to determine a valid AudioRecord buffer size: $recorderBufferSizeBytes"
         }
 
         return AudioRecord(
@@ -68,7 +71,7 @@ class AndroidAudioSource : AudioSource {
             sampleRate,
             channelConfig,
             audioFormat,
-            readBufferSize
+            recorderBufferSizeBytes
         ).also { recorder ->
             check(recorder.state == AudioRecord.STATE_INITIALIZED) {
                 "AudioRecord failed to initialize"
@@ -140,11 +143,11 @@ class AndroidAudioSource : AudioSource {
     }
 
     override val frames: Flow<AudioFrame> = flow {
-        check(readBufferSize > 0) {
-            "Unable to determine a valid AudioRecord buffer size: $readBufferSize"
+        check(recorderBufferSizeBytes > 0) {
+            "Unable to determine a valid AudioRecord buffer size: $recorderBufferSizeBytes"
         }
 
-        val buffer = ShortArray(readBufferSize / 2)
+        val buffer = ShortArray(readChunkSamples)
 
         try {
             while (currentCoroutineContext().isActive) {
@@ -186,5 +189,9 @@ class AndroidAudioSource : AudioSource {
             // stop()/close() own recorder lifecycle. The frame collector only
             // relinquishes its read loop; it never releases the platform object.
         }
+    }
+
+    private companion object {
+        const val BYTES_PER_PCM16_SAMPLE = 2
     }
 }
