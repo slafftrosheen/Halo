@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
+import com.halo.engines.speech.ListeningStarted
 import com.halo.sdk.runtime.EventBus
 import com.halo.sdk.runtime.TtsCancelled
 import com.halo.sdk.runtime.TtsCompleted
@@ -42,8 +43,10 @@ class AndroidSpeaker(
 
         eventJob = scope.launch {
             eventBus.events().collect { event ->
-                if (event is TtsRequested) {
-                    speak(event.text)
+                when (event) {
+                    is TtsRequested -> speak(event.text)
+                    is ListeningStarted,
+                    is TtsCancelled -> stop()
                 }
             }
         }

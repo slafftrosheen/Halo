@@ -10,6 +10,7 @@ import com.halo.app.ui.screens.devices.DevicesViewModel
 import com.halo.app.RuntimeStartupTrace
 import com.halo.app.ui.screens.discovery.PairingViewModel
 import com.halo.app.ui.screens.settings.VoiceSettingsViewModel
+import com.halo.runtime.cognition.session.CognitiveSession
 
 /** Thin façade that wires sub-graphs together. This is the sole composition root. */
 object ManualDependencyGraph {
@@ -64,7 +65,7 @@ object ManualDependencyGraph {
     val toolRegistry by lazy { com.halo.runtime.cognition.tools.ToolRegistry(listOf(com.halo.runtime.cognition.tools.EchoToolExecutor(), com.halo.runtime.cognition.tools.CurrentTimeToolExecutor())) }
     val contextAssembler by lazy { com.halo.runtime.cognition.context.DefaultContextAssembler(conversationStore, blackboard, toolRegistry) }
     val toolAuthorizer by lazy { com.halo.runtime.cognition.tools.InMemoryToolAuthorizer(toolRegistry) }
-    val cognitiveSession by lazy { com.halo.runtime.cognition.session.CognitiveSession(eventBus, aiProviderRouter, conversationStore, contextAssembler, toolRegistry, toolAuthorizer, infra.scope) }
+    val cognitiveSession by lazy { CognitiveSession(eventBus, aiProviderRouter, conversationStore, contextAssembler, toolRegistry, toolAuthorizer, infra.scope, blackboard) }
 
     val processManager get() = observerGraph.processManager
     val timelineEventMapper get() = observerGraph.timelineEventMapper

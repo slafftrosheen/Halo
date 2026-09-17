@@ -16,7 +16,14 @@ import com.halo.sdk.provider.ProviderStatus
 import com.halo.sdk.runtime.CognitiveRequestStarted
 import com.halo.sdk.runtime.EventBus
 import com.halo.sdk.runtime.HaloEvent
-import com.halo.sdk.runtime.SpeechRecognized
+import com.halo.cognition.language.ConversationIntent
+import com.halo.runtime.cognition.blackboard.Confidence
+import com.halo.runtime.cognition.blackboard.Interpretation
+import com.halo.runtime.cognition.blackboard.InterpretationKnowledge
+import com.halo.runtime.cognition.blackboard.Knowledge
+import com.halo.runtime.cognition.blackboard.KnowledgeId
+import com.halo.runtime.cognition.blackboard.KnowledgeSource
+import kotlinx.datetime.Clock
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -40,20 +47,42 @@ class CognitiveSessionSpeechSerializationTest {
         val provider = BlockingStreamingProvider()
         val router = FixedRouter(provider)
         val store = InMemoryConversationStore()
+        val blackboard = DefaultBlackboard()
         val session = CognitiveSession(
             eventBus = eventBus,
+            blackboard = blackboard,
             providerRouter = router,
             conversationStore = store,
-            contextAssembler = DefaultContextAssembler(store, DefaultBlackboard()),
+            contextAssembler = DefaultContextAssembler(store, blackboard),
             scope = this
         )
 
         runCurrent()
-        eventBus.publish(SpeechRecognized(text = "first"))
+        blackboard.publish(
+            Knowledge(
+                id = KnowledgeId("k1"),
+                payload = InterpretationKnowledge(
+                    Interpretation(transcript = "first", intent = ConversationIntent)
+                ),
+                confidence = Confidence(1.0f, 1.0f, 1.0f),
+                source = KnowledgeSource.USER,
+                createdAt = Clock.System.now()
+            )
+        )
         runCurrent()
         assertEquals(1, provider.streamCalls)
 
-        eventBus.publish(SpeechRecognized(text = "second"))
+        blackboard.publish(
+            Knowledge(
+                id = KnowledgeId("k2"),
+                payload = InterpretationKnowledge(
+                    Interpretation(transcript = "second", intent = ConversationIntent)
+                ),
+                confidence = Confidence(1.0f, 1.0f, 1.0f),
+                source = KnowledgeSource.USER,
+                createdAt = Clock.System.now()
+            )
+        )
         runCurrent()
 
         assertEquals("Only the first speech event may own the active transaction", 1, provider.streamCalls)

@@ -3,6 +3,7 @@ package com.halo.app.ui.screens.home
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.halo.app.di.ManualDependencyGraph
 import com.halo.app.ui.glass.material.HaloRuntimeState
 import com.halo.app.ui.state.presenceFromSpeech
 import com.halo.sdk.provider.*
@@ -157,6 +158,22 @@ class HomeViewModel(
 
     fun clearConversation() { cognitiveSession.clearConversation() }
     fun cancelSession() { cognitiveSession.cancel() }
+
+    fun stopSpeakingAndListen() {
+        cognitiveSession.cancel()
+        _listeningRequested.value = true
+        viewModelScope.launch {
+            listeningCommandMutex.withLock {
+                runCatching {
+                    ManualDependencyGraph.androidSpeaker.stop()
+                    commandBus.dispatch(StartListening)
+                }.onFailure {
+                    _listeningRequested.value = false
+                    Log.e("HomeViewModel", "Failed to stop speaking and listen", it)
+                }
+            }
+        }
+    }
 
     fun toggleListening() {
         val shouldStart = !_listeningRequested.value

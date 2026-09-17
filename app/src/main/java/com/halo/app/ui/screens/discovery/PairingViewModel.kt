@@ -9,6 +9,7 @@ import com.halo.drivers.heycyan.ble.DiscoveredBleDevice
 import com.halo.sdk.host.ConnectionState
 import com.halo.sdk.runtime.embodiment.DeviceRegistry
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -34,7 +35,7 @@ class PairingViewModel(
     private var scanJob: Job? = null
 
     init {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             com.halo.app.di.ManualDependencyGraph.wearableHost.connectivity.collect { state ->
                 _uiState.update { it.copy(connectionState = state) }
             }

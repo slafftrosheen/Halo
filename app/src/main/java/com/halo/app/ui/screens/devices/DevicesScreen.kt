@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.halo.app.embodiment.BuddyBotHost
+import com.halo.app.embodiment.BuddyBotTelemetry
 import com.halo.app.ui.glass.components.HaloGlassBackHeader
 import com.halo.app.ui.glass.components.HaloGlassButton
 import com.halo.app.ui.glass.components.HaloGlassCard
@@ -35,6 +36,8 @@ import com.halo.app.ui.glass.material.HaloGlassColors
 import com.halo.app.ui.glass.material.HaloTypography
 import com.halo.app.ui.state.toDisplayText
 import com.halo.drivers.heycyan.RealHeyCyanDriver
+import com.halo.drivers.heycyan.protocol.HeyCyanDeviceState
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -79,7 +82,6 @@ class DevicesViewModel(
     private val heyCyanDriverProvider: () -> RealHeyCyanDriver?,
     val buddyBotHost: BuddyBotHost? = null
 ) : ViewModel() {
-    private val heyCyanDriver by lazy { heyCyanDriverProvider() }
     private val _uiState = MutableStateFlow(DevicesUiState())
     val uiState: StateFlow<DevicesUiState> = _uiState.asStateFlow()
     private val _photoStates = MutableStateFlow<Map<String, PhotoActionState>>(emptyMap())
@@ -89,13 +91,16 @@ class DevicesViewModel(
     val navigationEvents = _navigationEvents.asSharedFlow()
 
     init {
-        val heyCyanStateFlow = heyCyanDriver?.deviceState ?: MutableStateFlow(com.halo.drivers.heycyan.protocol.HeyCyanDeviceState())
-        val buddyBotTelemetryFlow = buddyBotHost?.telemetry ?: MutableStateFlow(com.halo.app.embodiment.BuddyBotTelemetry())
-        val deviceDriversFlow = combine(heyCyanStateFlow, buddyBotTelemetryFlow) { heyCyan, buddy ->
-            Pair(heyCyan, buddy)
-        }
+        viewModelScope.launch(Dispatchers.IO) {
+            val driver = heyCyanDriverProvider()
+            val heyCyanStateFlow = driver?.deviceState ?: MutableStateFlow(HeyCyanDeviceState())
+            val buddyBotTelemetryFlow = buddyBotHost?.telemetry ?: MutableStateFlow(
+                BuddyBotTelemetry()
+            )
+            val deviceDriversFlow = combine(heyCyanStateFlow, buddyBotTelemetryFlow) { heyCyan, buddy ->
+                Pair(heyCyan, buddy)
+            }
 
-        viewModelScope.launch {
             combine(
                 sessionManager.activeSessions,
                 sessionManager.stateRevision,

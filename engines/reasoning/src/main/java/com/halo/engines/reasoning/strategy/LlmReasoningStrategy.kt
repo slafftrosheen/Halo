@@ -144,20 +144,16 @@ class LlmReasoningStrategy(
     }
 
     private fun parseIntent(value: String): Intent {
-        val normalized = value.trim()
-            .removePrefix("navigation")
-            .replaceFirstChar { it.uppercase() }
-            
-        return when (normalized) {
-            "NavigateIntent" -> NavigateIntent
-            "PlayIntent" -> PlayIntent
-            "PauseIntent" -> PauseIntent
-            "ReminderIntent" -> ReminderIntent
-            "SearchIntent" -> SearchIntent
-            "CallIntent" -> CallIntent
-            "OpenIntent" -> OpenIntent
-            "ConversationIntent" -> ConversationIntent
-            else -> throw AiProviderException(AiErrorType.INVALID_RESPONSE, "Unknown intent from LLM: $value")
+        val clean = value.trim().lowercase()
+        return when {
+            clean.contains("navigate") -> NavigateIntent
+            clean.contains("play") -> PlayIntent
+            clean.contains("pause") -> PauseIntent
+            clean.contains("reminder") -> ReminderIntent
+            clean.contains("search") -> SearchIntent
+            clean.contains("call") -> CallIntent
+            clean.contains("open") -> OpenIntent
+            else -> ConversationIntent
         }
     }
 }

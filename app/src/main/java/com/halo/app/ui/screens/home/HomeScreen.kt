@@ -44,11 +44,13 @@ fun HomeScreen(viewModel: HomeViewModel) {
     // Include the immediate local intent so a second tap can stop a session
     // before the runtime snapshot has propagated the first StartListening.
     val isListening = uiState.speechActive || listeningRequested
+    val isSpeaking = uiState.runtimeState == HaloRuntimeState.Speaking ||
+        uiState.sessionState is CognitiveSessionState.Streaming
     val isSessionActive = uiState.sessionState != CognitiveSessionState.Idle
 
     fun submitText() {
         val text = textInput.trim()
-        if (text.isNotEmpty() && !isActiveSession && !isListening) {
+        if (text.isNotEmpty() && !isActiveSession && !isListening && !isSpeaking) {
             viewModel.submitText(text)
             textInput = ""
         }
@@ -57,6 +59,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
     fun toggleOrb() {
         when {
             isListening -> viewModel.stopListening()
+            isSpeaking -> viewModel.stopSpeakingAndListen()
             isActiveSession -> viewModel.cancelSession()
             else -> viewModel.startListening()
         }
@@ -76,6 +79,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
 
     val hintLabel = when {
         isListening -> "Tap to stop"
+        isSpeaking -> "Tap to interrupt"
         isActiveSession -> "Tap to cancel"
         else -> "Tap to speak"
     }

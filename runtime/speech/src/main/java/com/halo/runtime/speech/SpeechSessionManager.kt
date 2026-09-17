@@ -57,9 +57,8 @@ class SpeechSessionManager(
         coroutineScope {
             launch {
                 commandBus.commands().filterIsInstance<StartListening>().collect {
-                    if (isListeningAllowed()) {
-                        _sessionState.value = SpeechSessionState.Capturing
-                    }
+                    outputActive = false
+                    _sessionState.value = SpeechSessionState.Capturing
                 }
             }
             launch {
@@ -139,6 +138,13 @@ class SpeechSessionManager(
                 eventBus.observe(TtsCompleted::class.java).collect {
                     outputActive = false
                     lastTtsEndTime = System.currentTimeMillis()
+                    _sessionState.value = SpeechSessionState.Idle
+                }
+            }
+            launch {
+                eventBus.observe(TtsCancelled::class.java).collect {
+                    outputActive = false
+                    lastTtsEndTime = 0L
                     _sessionState.value = SpeechSessionState.Idle
                 }
             }

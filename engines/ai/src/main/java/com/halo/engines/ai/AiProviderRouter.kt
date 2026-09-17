@@ -58,23 +58,13 @@ class DefaultAiProviderRouter(
     }
 
     private fun restoreStoredRoutingState() {
-        // Only inference providers are valid persisted cognitive targets.
-        // Android Assistant is an AiHandoffProvider and must never silently
-        // turn a cognitive request into OpenRouter/Ollama inference.
         val storedProvider = storage.getString("active_ai_provider")
-            ?.takeIf { id -> inferenceProviders.any { it.id == id && it.isLocal } }
-        val restoredProvider = storedProvider ?: inferenceProviders.firstOrNull { it.isLocal }?.id
+            ?.takeIf { id -> inferenceProviders.any { it.id == id } }
+        val restoredProvider = storedProvider ?: inferenceProviders.firstOrNull { it.isLocal }?.id ?: inferenceProviders.firstOrNull()?.id
 
         _routingPolicy.value = storage.getString("ai_routing_policy")?.let {
-            runCatching { enumValueOf<AiRoutingPolicy>(it) }.getOrDefault(AiRoutingPolicy.LOCAL_ONLY)
-        } ?: AiRoutingPolicy.LOCAL_ONLY
-
-        // The phone-first product must not silently regain network inference from
-        // an older persisted AUTOMATIC/PREFERRED_WITH_FALLBACK setting.
-        if (_routingPolicy.value != AiRoutingPolicy.LOCAL_ONLY && _routingPolicy.value != AiRoutingPolicy.EXPLICIT) {
-            _routingPolicy.value = AiRoutingPolicy.LOCAL_ONLY
-            storage.putString("ai_routing_policy", AiRoutingPolicy.LOCAL_ONLY.name)
-        }
+            runCatching { enumValueOf<AiRoutingPolicy>(it) }.getOrDefault(AiRoutingPolicy.EXPLICIT)
+        } ?: AiRoutingPolicy.EXPLICIT
 
         _selectedProviderId.value = restoredProvider
         if (restoredProvider != null) {
@@ -92,13 +82,8 @@ class DefaultAiProviderRouter(
     override fun stop() = Unit
 
     fun setRoutingPolicy(policy: AiRoutingPolicy) {
-        val effectivePolicy = when (policy) {
-            AiRoutingPolicy.AUTOMATIC,
-            AiRoutingPolicy.PREFERRED_WITH_FALLBACK -> AiRoutingPolicy.LOCAL_ONLY
-            else -> policy
-        }
-        _routingPolicy.value = effectivePolicy
-        storage.putString("ai_routing_policy", effectivePolicy.name)
+        _routingPolicy.value = policy
+        storage.putString("ai_routing_policy", policy.name)
     }
 
     override fun selectProvider(id: String) {
@@ -106,6 +91,7 @@ class DefaultAiProviderRouter(
             val providerChanged = _selectedProviderId.value != id
             _selectedProviderId.value = id
             storage.putString("active_ai_provider", id)
+            setRoutingPolicy(AiRoutingPolicy.EXPLICIT)
             if (providerChanged) restoreStoredModel(id)
             updateDiagnosticsSelection()
             scope.launch { refreshDiagnostics() }

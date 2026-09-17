@@ -1,5 +1,10 @@
 package com.halo.runtime.cognition.session
 
+import com.halo.cognition.language.ConversationIntent
+import com.halo.cognition.language.QuestionIntent
+import com.halo.runtime.cognition.blackboard.Blackboard
+import com.halo.runtime.cognition.blackboard.DefaultBlackboard
+import com.halo.runtime.cognition.blackboard.InterpretationKnowledge
 import com.halo.runtime.cognition.context.ContextAssembler
 import com.halo.runtime.cognition.context.ContextAssemblyResult
 import com.halo.runtime.cognition.conversation.ConversationStore
@@ -41,7 +46,9 @@ import com.halo.sdk.runtime.ToolCallRequested
 import com.halo.sdk.runtime.TtsRequested
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -62,28 +69,42 @@ class CognitiveSession(
     private val contextAssembler: ContextAssembler,
     private val toolRegistry: ToolRegistry? = null,
     private val toolAuthorizer: ToolAuthorizer? = null,
-    private val scope: CoroutineScope
+    private val scope: CoroutineScope,
+    private val blackboard: Blackboard = DefaultBlackboard()
 ) {
     private val _state = MutableStateFlow<CognitiveSessionState>(CognitiveSessionState.Idle)
     val state: StateFlow<CognitiveSessionState> = _state.asStateFlow()
     private var activeJob: Job? = null
 
+    private val observerScope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
+
     init {
-        scope.launch {
-            eventBus.observe(SpeechRecognized::class.java).collect { speech ->
-                val text = speech.text.trim()
+        observerScope.launch {
+            blackboard.stream().collect { knowledge ->
+                if (knowledge.payload is InterpretationKnowledge) {
+                    val interpretation = (knowledge.payload as InterpretationKnowledge).interpretation
+                    val intent = interpretation.intent
+                    
+                    // Only process conversational intents through the generic LLM session.
+                    // Structured intents (Play, Navigate, etc.) are handled by deterministic reasoning.
+                    if (intent !is ConversationIntent && 
+                        intent !is QuestionIntent) {
+                        return@collect
+                    }
 
-                if (text.isEmpty()) {
-                    return@collect
+                    val text = interpretation.transcript.trim()
+                    if (text.isEmpty()) {
+                        return@collect
+                    }
+
+                    if (activeJob?.isActive == true) {
+                        return@collect
+                    }
+
+                    submit(
+                        AiRequest(text = text)
+                    )
                 }
-
-                if (activeJob?.isActive == true) {
-                    return@collect
-                }
-
-                submit(
-                    AiRequest(text = text)
-                )
             }
         }
     }
