@@ -41,7 +41,6 @@ class HaloRuntime(
         var speechSessionStarted = false
         var speechBridgeStarted = false
         var androidSpeakerStarted = false
-        var kernelBooted = false
 
         suspend fun phase(name: String, block: suspend () -> Unit) {
             val startedAt = android.os.SystemClock.elapsedRealtime()
@@ -112,10 +111,11 @@ class HaloRuntime(
                 graph.startAndroidSpeaker()
                 androidSpeakerStarted = true
             }
-            phase("microkernel.boot") {
-                graph.microkernel.boot()
-                kernelBooted = true
-            }
+
+            // The old microkernel/ProcessManager path remains available for
+            // compatibility tests and external tooling, but it is not part of
+            // the phone product loop. The canonical Engine/EventBus/Blackboard
+            // pipeline above owns production interpretation and execution.
 
             started = true
             RuntimeStartupTrace.mark("runtime.start.complete")
@@ -131,8 +131,7 @@ class HaloRuntime(
                     audioStarted = audioStarted,
                     speechSessionStarted = speechSessionStarted,
                     speechBridgeStarted = speechBridgeStarted,
-                    androidSpeakerStarted = androidSpeakerStarted,
-                    kernelBooted = kernelBooted
+                    androidSpeakerStarted = androidSpeakerStarted
                 )
             }
             started = false
@@ -158,8 +157,7 @@ class HaloRuntime(
                 audioStarted = true,
                 speechSessionStarted = true,
                 speechBridgeStarted = true,
-                androidSpeakerStarted = true,
-                kernelBooted = true
+                androidSpeakerStarted = true
             )
             started = false
             RuntimeStartupTrace.mark("runtime.stop.complete")
@@ -175,10 +173,8 @@ class HaloRuntime(
         audioStarted: Boolean,
         speechSessionStarted: Boolean,
         speechBridgeStarted: Boolean,
-        androidSpeakerStarted: Boolean,
-        kernelBooted: Boolean
+        androidSpeakerStarted: Boolean
     ) {
-        if (kernelBooted) runCatching { graph.microkernel.shutdown() }
         if (androidSpeakerStarted) runCatching { graph.androidSpeaker.shutdown() }
         if (speechBridgeStarted) runCatching { graph.speechPerceptionBridge.stop() }
         if (speechSessionStarted) runCatching { graph.speechSessionManager.stop() }

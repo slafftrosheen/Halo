@@ -1,11 +1,11 @@
 package com.halo.app.di
 
 import android.content.Context
-import com.halo.runtime.observer.DefaultRuntimeObserver
-import com.halo.runtime.observer.TimelineRecorder
-import com.halo.runtime.observer.DefaultTimelineEventMapper
 import com.halo.runtime.observer.DefaultRuntimeHealthEvaluator
+import com.halo.runtime.observer.DefaultRuntimeObserver
 import com.halo.runtime.observer.DefaultSnapshotAssembler
+import com.halo.runtime.observer.DefaultTimelineEventMapper
+import com.halo.runtime.observer.TimelineRecorder
 import com.halo.sdk.runtime.ProviderSnapshot
 
 /**
@@ -47,13 +47,18 @@ class ObserverGraph(
 
     val runtimeSnapshotManager by lazy {
         DefaultRuntimeObserver(
-            engineGraph.speechSessionManager,
-            processManager,
-            infra.blackboard,
-            timelineRecorder,
-            traceRecorder,
-            snapshotAssembler,
-            {
+            speechObserver = engineGraph.speechSessionManager,
+            engines = listOf(
+                engineGraph.interpretationEngine,
+                engineGraph.reasoningEngine,
+                engineGraph.planningEngine,
+                engineGraph.executionEngine
+            ),
+            blackboard = infra.blackboard,
+            timelineRecorder = timelineRecorder,
+            traceRecorder = traceRecorder,
+            assembler = snapshotAssembler,
+            providerSource = {
                 // Defer evaluating providers until the snapshot flow actually runs
                 // to avoid resolving the lazy aiProviderRouter on the UI thread
                 // during early ObserverGraph construction.
@@ -73,12 +78,12 @@ class ObserverGraph(
                     )
                 }
             },
-            java.time.Clock.systemUTC(),
-            infra.scope
+            clock = java.time.Clock.systemUTC(),
+            scope = infra.scope
         )
     }
 
-    /** ProcessManager is created here — it owns process lifecycle */
+    /** Compatibility process manager for the optional legacy microkernel path. */
     val processManager by lazy {
         com.halo.runtime.kernel.ProcessManager(infra.scope, infra.logger)
     }
