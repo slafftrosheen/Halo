@@ -1,9 +1,14 @@
 package com.halo.host.android.capability
 
+import android.app.AlarmManager
 import android.content.Context
+import android.content.Intent
 import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraManager
 import android.media.AudioManager
+import android.os.Build
+import android.provider.AlarmClock
+import android.provider.Settings
 import com.halo.runtime.cognition.Capability
 import com.halo.runtime.cognition.DeviceTask
 import com.halo.runtime.cognition.Outcome
@@ -30,6 +35,28 @@ class AndroidDeviceCapability(private val context: Context) : Capability {
                     val formatted = SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date())
                     Outcome.Success("It's $formatted.")
                 }
+                action == "alarm" || action.contains("alarm") -> {
+                    val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
+                        Outcome.PermanentFailure("Exact alarm permission is required")
+                    } else {
+                        val alarmIntent = Intent(AlarmClock.ACTION_SET_ALARM).apply {
+                            putExtra(AlarmClock.EXTRA_SKIP_UI, true)
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        val pm = context.packageManager
+                        if (pm.queryIntentActivities(alarmIntent, 0).isNotEmpty()) {
+                            try {
+                                context.startActivity(alarmIntent)
+                                Outcome.Success("Alarm set")
+                            } catch (e: Exception) {
+                                Outcome.PermanentFailure("Unable to set alarm")
+                            }
+                        } else {
+                            Outcome.PermanentFailure("No alarm clock app available")
+                        }
+                    }
+                }
                 action.contains("flashlight_on") || action.contains("turn_on_flashlight") -> {
                     setFlashlightState(true)
                     Outcome.Success("Flashlight turned on")
@@ -50,6 +77,13 @@ class AndroidDeviceCapability(private val context: Context) : Capability {
                 action == "volumedown" || action.contains("volume_down") -> {
                     adjustVolume(AudioManager.ADJUST_LOWER)
                     Outcome.Success("Volume decreased")
+                }
+                action == "settings" || action.contains("settings") -> {
+                    val settingsIntent = Intent(Settings.ACTION_SETTINGS).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    context.startActivity(settingsIntent)
+                    Outcome.Success("Opening settings")
                 }
                 else -> Outcome.PermanentFailure("Unknown device action: ${task.action}")
             }
