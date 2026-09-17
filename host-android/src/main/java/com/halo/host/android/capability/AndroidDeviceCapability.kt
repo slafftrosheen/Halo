@@ -1,15 +1,21 @@
 package com.halo.host.android.capability
 
 import android.content.Context
+import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraManager
 import android.media.AudioManager
 import com.halo.runtime.cognition.Capability
-import com.halo.runtime.cognition.Task
 import com.halo.runtime.cognition.DeviceTask
 import com.halo.runtime.cognition.Outcome
+import com.halo.runtime.cognition.Task
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class AndroidDeviceCapability(private val context: Context) : Capability {
     override val id: String = "capability.device.android"
+
+    private var isTorchOn = false
 
     override suspend fun supports(task: Task): Boolean {
         return task is DeviceTask
@@ -17,23 +23,37 @@ class AndroidDeviceCapability(private val context: Context) : Capability {
 
     override suspend fun execute(task: Task): Outcome {
         require(task is DeviceTask)
+        val action = task.action.lowercase().trim()
         return try {
-            when (task.action.lowercase()) {
-                "flashlight" -> {
-                    toggleFlashlight()
-                    Outcome.Success("Flashlight toggled")
+            when {
+                action == "time" -> {
+                    val formatted = SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date())
+                    Outcome.Success("It's $formatted.")
                 }
-                "volumeup" -> {
+                action.contains("flashlight_on") || action.contains("turn_on_flashlight") -> {
+                    setFlashlightState(true)
+                    Outcome.Success("Flashlight turned on")
+                }
+                action.contains("flashlight_off") || action.contains("turn_off_flashlight") -> {
+                    setFlashlightState(false)
+                    Outcome.Success("Flashlight turned off")
+                }
+                action.contains("flashlight") -> {
+                    isTorchOn = !isTorchOn
+                    setFlashlightState(isTorchOn)
+                    Outcome.Success(if (isTorchOn) "Flashlight turned on" else "Flashlight turned off")
+                }
+                action == "volumeup" || action.contains("volume_up") -> {
                     adjustVolume(AudioManager.ADJUST_RAISE)
                     Outcome.Success("Volume increased")
                 }
-                "volumedown" -> {
+                action == "volumedown" || action.contains("volume_down") -> {
                     adjustVolume(AudioManager.ADJUST_LOWER)
                     Outcome.Success("Volume decreased")
                 }
                 else -> Outcome.PermanentFailure("Unknown device action: ${task.action}")
             }
-        } catch (e: android.hardware.camera2.CameraAccessException) {
+        } catch (e: CameraAccessException) {
             Outcome.PermanentFailure("Camera access denied or camera in use")
         } catch (e: SecurityException) {
             Outcome.PermanentFailure("Permission denied to modify device state")
@@ -42,16 +62,17 @@ class AndroidDeviceCapability(private val context: Context) : Capability {
         }
     }
 
-    private fun toggleFlashlight() {
+    private fun setFlashlightState(enabled: Boolean) {
         val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
         val cameraId = cameraManager.cameraIdList.firstOrNull()
         if (cameraId != null) {
-            cameraManager.setTorchMode(cameraId, true)
+            cameraManager.setTorchMode(cameraId, enabled)
+            isTorchOn = enabled
         }
     }
 
     private fun adjustVolume(direction: Int) {
         val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, direction, AudioManager.FLAG_SHOW_UI)
+        audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, direction, 0)
     }
 }

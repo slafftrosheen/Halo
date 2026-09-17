@@ -18,8 +18,6 @@ import com.halo.runtime.services.Services
 import com.halo.runtime.cognition.blackboard.Blackboard
 import com.halo.engines.execution.service.ExecutionScheduler
 import com.halo.runtime.cognition.ExecutionResultPublished
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.CoroutineScope
@@ -30,6 +28,7 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.util.UUID
 
 /**
  * ExecutionEngine acts as the single deterministic driver for physical and digital actions in the Alpha Runtime.
@@ -83,16 +82,18 @@ class ExecutionEngine(
                     
                     if (plan != null) {
                         executionMutex.withLock {
-                            eventBus.publish(ExecutionStarted(id = java.util.UUID.randomUUID().toString(), planId = event.planId))
-                            val outcome = executePlan(plan)
-                            eventBus.publish(ExecutionFinished(id = java.util.UUID.randomUUID().toString(), planId = event.planId))
+                            val executionId = UUID.randomUUID().toString()
+                            eventBus.publish(ExecutionStarted(id = executionId, planId = event.planId))
+                            val outcome = executePlan(plan, executionId)
+                            eventBus.publish(ExecutionFinished(id = executionId, planId = event.planId))
                             eventBus.publish(OutcomePublished(outcome = outcome::class.simpleName ?: "Unknown"))
                         }
                     }
                 } catch (e: Exception) {
                     runtimeContext.runtime.logger.error("execution", "Failed to execute plan", e)
+                    val executionId = UUID.randomUUID().toString()
                     val outcome = Outcome.PermanentFailure("Execution failed: ${e.message}", e)
-                    eventBus.publish(ExecutionFinished(id = java.util.UUID.randomUUID().toString(), planId = event.planId))
+                    eventBus.publish(ExecutionFinished(id = executionId, planId = event.planId))
                     eventBus.publish(OutcomePublished(outcome = outcome::class.simpleName ?: "PermanentFailure"))
                 }
             }
@@ -118,13 +119,14 @@ class ExecutionEngine(
         }
     }
 
-    suspend fun executePlan(plan: ExecutionPlan): Outcome {
+    suspend fun executePlan(plan: ExecutionPlan, executionId: String = UUID.randomUUID().toString()): Outcome {
         var finalOutcome: Outcome = Outcome.Success("Plan executed successfully")
         
         for (task in plan.tasks) {
             val result = scheduler.executeTaskGraph(task)
             eventBus.publish(
                 ExecutionResultPublished(
+                    id = executionId,
                     planId = plan.id.toString(),
                     task = task,
                     outcome = result,

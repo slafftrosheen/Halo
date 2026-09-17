@@ -7,9 +7,9 @@ import android.media.AudioManager
 import android.provider.MediaStore
 import android.view.KeyEvent
 import com.halo.runtime.cognition.Capability
-import com.halo.runtime.cognition.Task
 import com.halo.runtime.cognition.MediaTask
 import com.halo.runtime.cognition.Outcome
+import com.halo.runtime.cognition.Task
 
 class AndroidMediaCapability(private val context: Context) : Capability {
     override val id: String = "capability.media.android"
@@ -23,31 +23,34 @@ class AndroidMediaCapability(private val context: Context) : Capability {
         return try {
             val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
             
-            when (task.mediaAction.lowercase()) {
+            when (task.mediaAction.lowercase().trim()) {
                 "play" -> {
-                    val query = task.mediaId
-                    if (query.isBlank() || query.equals("some music", ignoreCase = true) || query.equals("music", ignoreCase = true)) {
-                        // Generic play command
+                    val query = task.mediaId.trim()
+                    if (query.isBlank() || query.equals("some music", ignoreCase = true) || query.equals("music", ignoreCase = true) || query.equals("something", ignoreCase = true)) {
+                        // Generic play / resume
                         val event = KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PLAY)
                         audioManager.dispatchMediaKeyEvent(event)
                         audioManager.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_MEDIA_PLAY))
                         Outcome.Success("Resumed media playback")
                     } else {
                         // Search and play specific media
-                        val intent = Intent(MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH)
-                        intent.putExtra(MediaStore.EXTRA_MEDIA_FOCUS, MediaStore.Audio.Playlists.ENTRY_CONTENT_TYPE)
-                        intent.putExtra("query", query)
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                        val intent = Intent(MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH).apply {
+                            putExtra(MediaStore.EXTRA_MEDIA_FOCUS, MediaStore.Audio.Playlists.ENTRY_CONTENT_TYPE)
+                            putExtra("query", query)
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                        }
                         
-                        try {
-                            context.startActivity(intent)
-                            Outcome.Success("Requested playback for $query")
-                        } catch (e: ActivityNotFoundException) {
-                            // Fallback to media key event if no search activity handled it directly
-                            val event = KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PLAY)
-                            audioManager.dispatchMediaKeyEvent(event)
-                            audioManager.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_MEDIA_PLAY))
-                            Outcome.Success("Triggered media playback for $query")
+                        val pm = context.packageManager
+                        val resolveList = pm.queryIntentActivities(intent, 0)
+                        if (resolveList.isNotEmpty()) {
+                            try {
+                                context.startActivity(intent)
+                                Outcome.Success("Requested playback for $query")
+                            } catch (e: ActivityNotFoundException) {
+                                Outcome.PermanentFailure("No media player available to play $query")
+                            }
+                        } else {
+                            Outcome.PermanentFailure("No media player is available to search for $query")
                         }
                     }
                 }
