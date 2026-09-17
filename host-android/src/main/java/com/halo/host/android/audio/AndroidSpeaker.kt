@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
+import android.util.Log
 import com.halo.engines.speech.ListeningStarted
 import com.halo.sdk.runtime.EventBus
 import com.halo.sdk.runtime.TtsCancelled
@@ -69,6 +70,7 @@ class AndroidSpeaker(
         tts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
             override fun onStart(utteranceId: String?) {
                 if (utteranceId == null || utteranceId != activeUtteranceId) return
+                Log.i("HaloAudio", "TTS_START chars=$currentTextLength")
                 scope.launch {
                     eventBus.publish(TtsStarted(textLength = currentTextLength))
                 }
@@ -77,6 +79,7 @@ class AndroidSpeaker(
             override fun onDone(utteranceId: String?) {
                 if (utteranceId == null || utteranceId != activeUtteranceId) return
                 activeUtteranceId = null
+                Log.i("HaloAudio", "TTS_DONE")
                 scope.launch {
                     eventBus.publish(TtsCompleted())
                 }

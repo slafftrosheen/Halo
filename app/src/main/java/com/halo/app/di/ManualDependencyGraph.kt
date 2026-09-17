@@ -82,7 +82,18 @@ object ManualDependencyGraph {
     val deviceSessionManager by lazy { com.halo.sdk.runtime.embodiment.DeviceSessionManager(deviceRegistry) }
     val buddyBotHost by lazy { com.halo.app.embodiment.BuddyBotHost(deviceSessionManager, infra.eventBus, storage, infra.scope) }
 
-    val homeViewModel by lazy { RuntimeStartupTrace.measure("viewmodel.home") { HomeViewModel(runtimeSnapshotManager, commandBus, eventBus, cognitiveSession, aiProviderRouter) } }
+    val homeViewModel by lazy {
+        RuntimeStartupTrace.measure("viewmodel.home") {
+            HomeViewModel(
+                snapshotManager = runtimeSnapshotManager,
+                commandBus = commandBus,
+                eventBus = eventBus,
+                cognitiveSession = cognitiveSession,
+                stopSpeechOutput = { androidSpeaker.stop() },
+                aiProviderRouter = aiProviderRouter
+            )
+        }
+    }
     val settingsViewModel by lazy { SettingsViewModel(applicationContext, runtimeSnapshotManager, aiProviderRouter) }
     val voiceSettingsViewModel by lazy { VoiceSettingsViewModel(applicationContext, storage, providerGraph) }
     val activityViewModel by lazy { ActivityViewModel(runtimeSnapshotManager) }

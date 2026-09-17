@@ -3,7 +3,6 @@ package com.halo.app.ui.screens.home
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.halo.app.di.ManualDependencyGraph
 import com.halo.app.ui.glass.material.HaloRuntimeState
 import com.halo.app.ui.state.presenceFromSpeech
 import com.halo.sdk.provider.*
@@ -57,7 +56,7 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
             speechIsActive -> speechRuntimeState
             sessionState is CognitiveSessionState.PreparingContext -> HaloRuntimeState.Reasoning
             sessionState is CognitiveSessionState.Reasoning -> HaloRuntimeState.Reasoning
-            sessionState is CognitiveSessionState.Streaming -> HaloRuntimeState.Speaking
+            sessionState is CognitiveSessionState.Streaming -> HaloRuntimeState.Reasoning
             sessionState is CognitiveSessionState.ExecutingTool -> HaloRuntimeState.Executing
             sessionState is CognitiveSessionState.Failed -> HaloRuntimeState.Recovering
             else -> speechRuntimeState
@@ -109,6 +108,7 @@ class HomeViewModel(
     private val commandBus: CommandBus,
     private val eventBus: EventBus,
     private val cognitiveSession: CognitiveSession,
+    private val stopSpeechOutput: () -> Unit,
     private val aiProviderRouter: AiProviderRouter? = null
 ) : ViewModel() {
     private val mapper = HomeUiMapper()
@@ -180,7 +180,7 @@ class HomeViewModel(
         viewModelScope.launch {
             listeningCommandMutex.withLock {
                 runCatching {
-                    ManualDependencyGraph.androidSpeaker.stop()
+                    stopSpeechOutput()
                     commandBus.dispatch(StartListening)
                 }.onFailure {
                     _listeningRequested.value = false

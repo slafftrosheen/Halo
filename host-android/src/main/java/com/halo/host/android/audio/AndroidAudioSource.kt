@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
+import android.util.Log
 import com.halo.sdk.host.AudioFrame
 import com.halo.sdk.host.AudioSource
 import com.halo.sdk.host.AudioSourceState
@@ -90,6 +91,7 @@ class AndroidAudioSource : AudioSource {
                     }
                     isRecording = true
                     _state.value = AudioSourceState.ACTIVE
+                    Log.i("HaloAudio", "MIC_START")
                 } catch (exception: Exception) {
                     // Do not immediately release/recreate the recorder here.
                     // Releasing an AudioRecord and creating another one during
@@ -110,6 +112,7 @@ class AndroidAudioSource : AudioSource {
                 val recorder = audioRecord
                 if (recorder != null && recorder.recordingState == AudioRecord.RECORDSTATE_RECORDING) {
                     runCatching { recorder.stop() }
+                        .onSuccess { Log.i("HaloAudio", "MIC_STOP") }
                 }
                 _state.value = AudioSourceState.IDLE
             }
@@ -126,6 +129,7 @@ class AndroidAudioSource : AudioSource {
                     runCatching {
                         if (recorder.recordingState == AudioRecord.RECORDSTATE_RECORDING) {
                             recorder.stop()
+                            Log.i("HaloAudio", "MIC_STOP")
                         }
                     }
                     runCatching { recorder.release() }
@@ -141,13 +145,11 @@ class AndroidAudioSource : AudioSource {
         }
 
         val buffer = ShortArray(readBufferSize / 2)
-        var reader: AudioRecord? = null
 
         try {
             while (currentCoroutineContext().isActive) {
                 val recorder = audioRecord
                 if (!isRecording || recorder == null) break
-                reader = recorder
 
                 val read = try {
                     recorder.read(buffer, 0, buffer.size)
@@ -183,7 +185,6 @@ class AndroidAudioSource : AudioSource {
         } finally {
             // stop()/close() own recorder lifecycle. The frame collector only
             // relinquishes its read loop; it never releases the platform object.
-            reader = null
         }
     }
 }

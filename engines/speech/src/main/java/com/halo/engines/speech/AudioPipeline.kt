@@ -186,8 +186,14 @@ class AudioPipeline(
             buffer.duration() > 0L
         ) {
             _state.value = SpeechState.Recognizing
-            scope.launch { eventBus.publish(SpeechEnded()) }
+
+            // Snapshot and hand the utterance to recognition before notifying
+            // the capture owner that physical microphone input can be released.
             finishCaptureBuffered()
+
+            scope.launch {
+                eventBus.publish(SpeechEnded())
+            }
         }
     }
 
@@ -222,15 +228,15 @@ class AudioPipeline(
                         is RecognitionEvent.Partial -> Unit
                         is RecognitionEvent.Final -> {
                             _state.value = SpeechState.Thinking
-            eventBus.publish(
-                SpeechRecognized(
-                    id = UUID.randomUUID().toString(),
-                    text = event.result.text,
-                    locale = "en",
-                    timestamp = System.currentTimeMillis()
-                )
-            )
-            eventBus.publish(RecognitionFinished(id = UUID.randomUUID().toString()))
+                            eventBus.publish(
+                                SpeechRecognized(
+                                    id = UUID.randomUUID().toString(),
+                                    text = event.result.text,
+                                    locale = "en",
+                                    timestamp = System.currentTimeMillis()
+                                )
+                            )
+                            eventBus.publish(RecognitionFinished(id = UUID.randomUUID().toString()))
                         }
                         is RecognitionEvent.Error -> {
                             _state.value = SpeechState.Idle
@@ -264,7 +270,7 @@ class AudioPipeline(
         try {
             val result = provider.recognize(segment.audioBuffer)
             if (!currentCoroutineContext().isActive) return
-            
+
             val text = result.text.trim()
             if (text.isBlank()) {
                 _state.value = SpeechState.Idle
