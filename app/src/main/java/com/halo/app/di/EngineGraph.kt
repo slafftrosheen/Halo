@@ -71,7 +71,7 @@ class EngineGraph(
             eventBus = infra.eventBus,
             scope = infra.scope,
             logger = infra.logger
-        ).apply { start() }
+        )
     }
     val planningEngine by lazy { PlanningEngine(infra.eventBus, infra.blackboard) }
 

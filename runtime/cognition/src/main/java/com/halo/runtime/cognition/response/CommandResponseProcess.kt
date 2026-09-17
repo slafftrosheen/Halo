@@ -50,4 +50,10 @@ class CommandResponseProcess(
             }
         }
     }
+
+    fun stop() {
+        job?.cancel()
+        job = null
+        pendingResults.clear()
+    }
 }

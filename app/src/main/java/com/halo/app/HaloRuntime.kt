@@ -34,6 +34,7 @@ class HaloRuntime(
         var planningStarted = false
         var executionInitialized = false
         var executionStarted = false
+        var commandResponseStarted = false
         var audioInitialized = false
         var audioStarted = false
         var speechSessionStarted = false
@@ -84,6 +85,10 @@ class HaloRuntime(
                 graph.executionEngine.start()
                 executionStarted = true
             }
+            phase("commandResponse.start") {
+                graph.commandResponseProcess.start()
+                commandResponseStarted = true
+            }
             phase("audio.initialize") {
                 graph.audioPerceptionEngine.initialize(graph.engineContext)
                 audioInitialized = true
@@ -121,7 +126,7 @@ class HaloRuntime(
                     reasoningStarted, reasoningInitialized,
                     interpretationStarted, interpretationInitialized,
                     speechSessionStarted, speechBridgeStarted,
-                    androidSpeakerStarted, kernelBooted
+                    commandResponseStarted, androidSpeakerStarted, kernelBooted
                 )
             }
             throw error
@@ -134,7 +139,7 @@ class HaloRuntime(
         withContext(NonCancellable) {
             cleanupPartialStartup(
                 true, true, true, true, true, true, true, true, true, true,
-                true, true, true, true
+                true, true, true, true, true
             )
             started = false
             RuntimeStartupTrace.mark("runtime.stop.complete")
@@ -154,6 +159,7 @@ class HaloRuntime(
         interpretationInitialized: Boolean,
         speechSessionStarted: Boolean,
         speechBridgeStarted: Boolean,
+        commandResponseStarted: Boolean,
         androidSpeakerStarted: Boolean,
         kernelBooted: Boolean
     ) {
@@ -163,6 +169,7 @@ class HaloRuntime(
         if (speechSessionStarted) runCatching { graph.speechSessionManager.stop() }
         if (audioStarted) runCatching { graph.audioPerceptionEngine.stop() }
         if (audioInitialized) runCatching { graph.audioPerceptionEngine.dispose() }
+        if (commandResponseStarted) runCatching { graph.commandResponseProcess.stop() }
         if (executionStarted) runCatching { graph.executionEngine.stop() }
         if (executionInitialized) runCatching { graph.executionEngine.dispose() }
         if (planningStarted) runCatching { graph.planningEngine.stop() }
