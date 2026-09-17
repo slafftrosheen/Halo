@@ -9,6 +9,7 @@ import com.halo.app.ui.state.presenceFromSpeech
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.*
 import com.halo.runtime.cognition.session.CognitiveSession
+import java.util.Locale
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -106,6 +107,7 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
 class HomeViewModel(
     private val snapshotManager: RuntimeSnapshotSource,
     private val commandBus: CommandBus,
+    private val eventBus: EventBus,
     private val cognitiveSession: CognitiveSession,
     private val aiProviderRouter: AiProviderRouter? = null
 ) : ViewModel() {
@@ -148,11 +150,24 @@ class HomeViewModel(
     }
 
     fun submitText(text: String) {
-        Log.d("HomeViewModel", "submitText invoked")
         val normalized = text.trim()
-        if (normalized.isNotBlank()) viewModelScope.launch {
-            runCatching { cognitiveSession.submit(AiRequest(text = normalized)) }
-                .onFailure { Log.e("HomeViewModel", "Text submission failed", it) }
+        if (normalized.isBlank()) return
+
+        // Keyboard and microphone input enter the same interpretation/reasoning
+        // pipeline. This keeps deterministic commands (media, navigation, device
+        // actions) out of the LLM path regardless of input modality.
+        viewModelScope.launch {
+            runCatching {
+                eventBus.publish(
+                    SpeechRecognized(
+                        timestamp = System.currentTimeMillis(),
+                        text = normalized,
+                        locale = Locale.getDefault().toLanguageTag()
+                    )
+                )
+            }.onFailure {
+                Log.e("HomeViewModel", "Text submission failed", it)
+            }
         }
     }
 
