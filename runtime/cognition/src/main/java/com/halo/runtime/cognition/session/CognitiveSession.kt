@@ -29,6 +29,7 @@ import com.halo.sdk.provider.AiStreamEvent
 import com.halo.sdk.provider.CognitiveSessionState
 import com.halo.sdk.provider.Role
 import com.halo.sdk.provider.validateAgainst
+import com.halo.sdk.runtime.AssistantResponsePublished
 import com.halo.sdk.runtime.CognitiveCompleted
 import com.halo.sdk.runtime.CognitiveFailed
 import com.halo.sdk.runtime.CognitiveReasoningStarted
@@ -37,11 +38,13 @@ import com.halo.sdk.runtime.CognitiveTokenReceived
 import com.halo.sdk.runtime.ContextAssembled
 import com.halo.sdk.runtime.ConversationTurnCompleted
 import com.halo.sdk.runtime.EventBus
+import com.halo.sdk.runtime.ResponseDelivery
 import com.halo.sdk.runtime.ToolCallAuthorized
 import com.halo.sdk.runtime.ToolCallCompleted
 import com.halo.sdk.runtime.ToolCallRejected
 import com.halo.sdk.runtime.ToolCallRequested
 import com.halo.sdk.runtime.TtsRequested
+import com.halo.sdk.runtime.defaultResponseDelivery
 import java.util.Collections
 import java.util.UUID
 import kotlinx.coroutines.CancellationException
@@ -108,16 +111,24 @@ class CognitiveSession(
                     return@collect
                 }
 
+                val responseDelivery = interpretation.source.defaultResponseDelivery()
                 println(
                     "[HALO-TXN] speech knowledgeId=$knowledgeId text=\"$text\" " +
-                        "intent=${intent::class.simpleName} -> SUBMITTING TO LLM"
+                        "intent=${intent::class.simpleName} delivery=$responseDelivery -> SUBMITTING TO LLM"
                 )
-                submit(AiRequest(text = text))
+                submit(
+                    request = AiRequest(text = text),
+                    responseDelivery = responseDelivery
+                )
             }
         }
     }
 
-    fun submit(request: AiRequest, policy: AiContextPolicy = AiContextPolicy.CONSERVATIVE) {
+    fun submit(
+        request: AiRequest,
+        policy: AiContextPolicy = AiContextPolicy.CONSERVATIVE,
+        responseDelivery: ResponseDelivery = ResponseDelivery.VISUAL_ONLY
+    ) {
         activeJob?.cancel()
         activeJob = scope.launch {
             val requestId = UUID.randomUUID().toString()
@@ -217,12 +228,22 @@ class CognitiveSession(
                             )
                         )
                     }
+
                     eventBus.publish(
-                        TtsRequested(
+                        AssistantResponsePublished(
                             text = responseText,
-                            timestamp = System.currentTimeMillis()
+                            delivery = responseDelivery,
+                            transactionId = requestId
                         )
                     )
+                    if (responseDelivery == ResponseDelivery.SPEECH_AND_VISUAL) {
+                        eventBus.publish(
+                            TtsRequested(
+                                text = responseText,
+                                timestamp = System.currentTimeMillis()
+                            )
+                        )
+                    }
                 }
             } catch (e: CancellationException) {
                 _state.value = CognitiveSessionState.Idle

@@ -46,6 +46,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
     val isListening = uiState.speechActive || listeningRequested
     val isSpeaking = uiState.runtimeState == HaloRuntimeState.Speaking
     val isSessionActive = uiState.sessionState != CognitiveSessionState.Idle
+    val hasPresentedResponse = !uiState.presentedResponse.isNullOrBlank()
 
     fun submitText() {
         val text = textInput.trim()
@@ -167,7 +168,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
             }
         }
 
-        if (isSessionActive) {
+        if (isSessionActive || hasPresentedResponse) {
             Spacer(Modifier.height(12.dp))
             SessionContextPanel(uiState)
         }
@@ -210,23 +211,50 @@ fun HomeScreen(viewModel: HomeViewModel) {
 
 @Composable
 private fun SessionContextPanel(uiState: HomeUiState) {
-    HaloGlassSection(title = "CONTEXT") {
+    HaloGlassSection(title = "HALO") {
         when (val session = uiState.sessionState) {
             is CognitiveSessionState.Streaming -> Text(
-                session.text.ifBlank { "Generating…" }, style = HaloTypography.bodyLarge,
-                color = HaloGlassColors.TextPrimary, lineHeight = 22.sp
+                session.text.ifBlank { "Generating…" },
+                style = HaloTypography.bodyLarge,
+                color = HaloGlassColors.TextPrimary,
+                lineHeight = 22.sp
             )
             is CognitiveSessionState.Completed -> HaloMarkdownText(
-                markdown = session.response.text.ifBlank { "Completed" }, textColor = HaloGlassColors.TextPrimary,
+                markdown = session.response.text.ifBlank { "Completed" },
+                textColor = HaloGlassColors.TextPrimary,
                 modifier = Modifier.fillMaxWidth()
             )
-            else -> Text(uiState.contextualText, style = HaloTypography.bodyLarge, color = HaloGlassColors.TextPrimary)
+            is CognitiveSessionState.Failed -> Text(
+                uiState.contextualText,
+                style = HaloTypography.bodyLarge,
+                color = HaloGlassColors.TextPrimary
+            )
+            else -> {
+                val response = uiState.presentedResponse
+                if (!response.isNullOrBlank()) {
+                    HaloMarkdownText(
+                        markdown = response,
+                        textColor = HaloGlassColors.TextPrimary,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                } else {
+                    Text(
+                        uiState.contextualText,
+                        style = HaloTypography.bodyLarge,
+                        color = HaloGlassColors.TextPrimary
+                    )
+                }
+            }
         }
         if (uiState.sessionState is CognitiveSessionState.Completed ||
             uiState.sessionState is CognitiveSessionState.Streaming
         ) {
             Spacer(Modifier.height(8.dp))
-            Text("via ${uiState.activeProvider}", style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
+            Text(
+                "via ${uiState.activeProvider}",
+                style = HaloTypography.labelSmall,
+                color = HaloGlassColors.TextMuted
+            )
         }
         if (uiState.sessionState is CognitiveSessionState.Reasoning) {
             Spacer(Modifier.height(12.dp))

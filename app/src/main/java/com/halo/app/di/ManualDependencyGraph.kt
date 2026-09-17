@@ -90,7 +90,6 @@ object ManualDependencyGraph {
                 eventBus = eventBus,
                 cognitiveSession = cognitiveSession,
                 stopSpeechOutput = { androidSpeaker.stop() },
-                suppressNextSpeechOutput = { androidSpeaker.suppressNextRequest() },
                 aiProviderRouter = aiProviderRouter
             )
         }

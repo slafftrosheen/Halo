@@ -34,7 +34,8 @@ data class HomeUiState(
     val activeProvider: String = "No provider",
     val activeProviderStatus: String = "Unavailable",
     val sessionState: CognitiveSessionState = CognitiveSessionState.Idle,
-    val speechActive: Boolean = false
+    val speechActive: Boolean = false,
+    val presentedResponse: String? = null
 )
 
 class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
@@ -111,20 +112,21 @@ class HomeViewModel(
     private val eventBus: EventBus,
     private val cognitiveSession: CognitiveSession,
     private val stopSpeechOutput: () -> Unit,
-    private val suppressNextSpeechOutput: () -> Unit,
     private val aiProviderRouter: AiProviderRouter? = null
 ) : ViewModel() {
     private val mapper = HomeUiMapper()
     private val listeningCommandMutex = Mutex()
     private val _listeningRequested = MutableStateFlow(false)
     val listeningRequested: StateFlow<Boolean> = _listeningRequested.asStateFlow()
+    private val _presentedResponse = MutableStateFlow<String?>(null)
 
     val uiState: StateFlow<HomeUiState> = combine(
         snapshotManager.snapshot,
         cognitiveSession.state,
         aiProviderRouter?.selectedProviderId ?: MutableStateFlow<String?>(null),
         aiProviderRouter?.selectedModelId ?: MutableStateFlow<String?>(null),
-        aiProviderRouter?.diagnosticsFlow ?: MutableStateFlow(emptyList<AiProviderDiagnostic>())
+        aiProviderRouter?.diagnosticsFlow ?: MutableStateFlow(emptyList<AiProviderDiagnostic>()),
+        _presentedResponse
     ) { args ->
         @Suppress("UNCHECKED_CAST")
         val snapshot = args[0] as RuntimeSnapshot
@@ -132,7 +134,9 @@ class HomeViewModel(
         val selectedProviderId = args[2] as String?
         val selectedModelId = args[3] as String?
         @Suppress("UNCHECKED_CAST") val diagnostics = args[4] as List<AiProviderDiagnostic>
+        val presentedResponse = args[5] as String?
         mapper.map(snapshot, sessionState, selectedProviderId, selectedModelId, diagnostics)
+            .copy(presentedResponse = presentedResponse)
     }.stateIn(viewModelScope, SharingStarted.Lazily, HomeUiState())
 
     init {
@@ -150,6 +154,12 @@ class HomeViewModel(
                 }
             }
         }
+
+        viewModelScope.launch {
+            eventBus.observe(AssistantResponsePublished::class.java).collect { response ->
+                _presentedResponse.value = response.text
+            }
+        }
     }
 
     fun submitText(text: String) {
@@ -157,9 +167,9 @@ class HomeViewModel(
         if (normalized.isBlank()) return
 
         // Text enters the same interpretation/reasoning pipeline as recognized
-        // speech, but it remains a TEXT/USER observation. This keeps the speech
-        // session and microphone state untouched and makes keyboard turns silent.
-        suppressNextSpeechOutput()
+        // speech, but it remains a TEXT/USER observation. Response delivery is
+        // carried by the transaction, so keyboard turns never need a global TTS mute.
+        _presentedResponse.value = null
         viewModelScope.launch {
             runCatching {
                 val timestamp = System.currentTimeMillis()
@@ -185,11 +195,16 @@ class HomeViewModel(
         }
     }
 
-    fun clearConversation() { cognitiveSession.clearConversation() }
+    fun clearConversation() {
+        cognitiveSession.clearConversation()
+        _presentedResponse.value = null
+    }
+
     fun cancelSession() { cognitiveSession.cancel() }
 
     fun stopSpeakingAndListen() {
         cognitiveSession.cancel()
+        _presentedResponse.value = null
         _listeningRequested.value = true
         viewModelScope.launch {
             listeningCommandMutex.withLock {
@@ -206,6 +221,7 @@ class HomeViewModel(
 
     fun toggleListening() {
         val shouldStart = !_listeningRequested.value
+        if (shouldStart) _presentedResponse.value = null
         _listeningRequested.value = shouldStart
         viewModelScope.launch {
             listeningCommandMutex.withLock {
@@ -220,6 +236,7 @@ class HomeViewModel(
     }
 
     fun startListening() {
+        _presentedResponse.value = null
         _listeningRequested.value = true
         viewModelScope.launch {
             listeningCommandMutex.withLock {

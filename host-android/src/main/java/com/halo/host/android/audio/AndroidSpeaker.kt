@@ -39,36 +39,18 @@ class AndroidSpeaker(
     private var pendingText: String? = null
     private var activeUtteranceId: String? = null
 
-    @Volatile
-    private var suppressNextRequest = false
-
     fun start() {
         if (eventJob?.isActive == true) return
 
         eventJob = scope.launch {
             eventBus.events().collect { event ->
                 when (event) {
-                    is TtsRequested -> {
-                        if (suppressNextRequest) {
-                            suppressNextRequest = false
-                            Log.i("HaloAudio", "TTS_SUPPRESSED_TEXT_INPUT")
-                        } else {
-                            speak(event.text)
-                        }
-                    }
-                    is ListeningStarted -> {
-                        // A new voice turn supersedes any stale one-shot text mute.
-                        suppressNextRequest = false
-                        stop()
-                    }
+                    is TtsRequested -> speak(event.text)
+                    is ListeningStarted -> stop()
                     is TtsCancelled -> stop()
                 }
             }
         }
-    }
-
-    fun suppressNextRequest() {
-        suppressNextRequest = true
     }
 
     override fun onInit(status: Int) {
@@ -163,7 +145,6 @@ class AndroidSpeaker(
     fun shutdown() {
         eventJob?.cancel()
         eventJob = null
-        suppressNextRequest = false
         pendingText = null
         activeUtteranceId = null
         tts?.stop()

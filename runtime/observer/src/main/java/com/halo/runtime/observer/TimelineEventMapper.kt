@@ -11,6 +11,13 @@ class DefaultTimelineEventMapper : TimelineEventMapper {
     override fun map(event: HaloEvent): TimelineEvent? {
         val timestamp = Instant.ofEpochMilli(event.timestamp)
         return when (event) {
+            is AssistantResponsePublished -> TimelineEvent(
+                id = event.id,
+                title = "Halo",
+                description = event.text,
+                timestamp = timestamp,
+                status = "Completed"
+            )
             is SpeechRecognized -> TimelineEvent(
                 id = event.id,
                 title = "Speech Recognized",
