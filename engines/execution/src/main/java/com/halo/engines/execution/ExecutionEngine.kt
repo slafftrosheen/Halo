@@ -83,18 +83,20 @@ class ExecutionEngine(
                     if (plan != null) {
                         executionMutex.withLock {
                             val executionId = UUID.randomUUID().toString()
-                            eventBus.publish(ExecutionStarted(id = executionId, planId = event.planId))
-                            val outcome = executePlan(plan, executionId)
-                            eventBus.publish(ExecutionFinished(id = executionId, planId = event.planId))
-                            eventBus.publish(OutcomePublished(outcome = outcome::class.simpleName ?: "Unknown"))
+                            try {
+                                eventBus.publish(ExecutionStarted(id = executionId, planId = event.planId))
+                                val outcome = executePlan(plan, executionId)
+                                eventBus.publish(ExecutionFinished(id = executionId, planId = event.planId))
+                                eventBus.publish(OutcomePublished(outcome = outcome::class.simpleName ?: "Unknown"))
+                            } catch (e: Exception) {
+                                runtimeContext.runtime.logger.error("execution", "Failed to execute plan", e)
+                                eventBus.publish(ExecutionFinished(id = executionId, planId = event.planId))
+                                eventBus.publish(OutcomePublished(outcome = "PermanentFailure"))
+                            }
                         }
                     }
                 } catch (e: Exception) {
-                    runtimeContext.runtime.logger.error("execution", "Failed to execute plan", e)
-                    val executionId = UUID.randomUUID().toString()
-                    val outcome = Outcome.PermanentFailure("Execution failed: ${e.message}", e)
-                    eventBus.publish(ExecutionFinished(id = executionId, planId = event.planId))
-                    eventBus.publish(OutcomePublished(outcome = outcome::class.simpleName ?: "PermanentFailure"))
+                    runtimeContext.runtime.logger.error("execution", "Failed to collect plan", e)
                 }
             }
         }
