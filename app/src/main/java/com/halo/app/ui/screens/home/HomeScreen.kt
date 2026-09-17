@@ -105,7 +105,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
             modifier = Modifier.padding(top = 8.dp)
         )
 
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(16.dp))
 
         Box(
             modifier = Modifier
@@ -113,21 +113,21 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 .background(
                     brush = Brush.radialGradient(
                         colors = listOf(
-                            HaloGlassColors.Glass.copy(alpha = 0.6f),
+                            HaloGlassColors.Glass.copy(alpha = 0.32f),
                             Color.Transparent
                         ),
-                        radius = 720f
+                        radius = 860f
                     )
                 ),
             contentAlignment = Alignment.Center
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(vertical = 16.dp)
+                modifier = Modifier.padding(vertical = 8.dp)
             ) {
                 HaloStateOrb(
                     state = uiState.runtimeState,
-                    size = 172.dp,
+                    size = 236.dp,
                     onClick = ::toggleOrb,
                     contentDescription = when {
                         isListening -> "Stop listening"
@@ -137,7 +137,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
                     }
                 )
 
-                Spacer(Modifier.height(20.dp))
+                Spacer(Modifier.height(18.dp))
 
                 AnimatedContent(
                     targetState = presenceLabel,
