@@ -7,35 +7,36 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 /**
- * Owns the application-level runtime lifecycle.
+ * Owns the process-level Halo runtime lifecycle.
  *
- * Construction != startup. Halo's cognitive runtime is usable without a
- * wearable; physical-device capabilities become available when a host connects.
- * Production runtime state is not recorded to replay files; diagnostics stay in Logcat.
+ * Construction != startup. The same instance survives Activity recreation so
+ * configuration changes cannot dispose and race a newly-created UI against the
+ * old Activity's teardown. Physical-device capabilities remain optional.
  */
 class HaloRuntime(
     private val graph: ManualDependencyGraph
 ) {
     private val lifecycleMutex = Mutex()
+
+    @Volatile
     private var started = false
 
-    fun isStarted() = started
+    /** Engines are initialized once for the lifetime of the process graph. */
+    private var initialized = false
 
+    fun isStarted(): Boolean = started
+
+    /** Idempotent so overlapping Activity bootstrap attempts safely converge. */
     suspend fun start() = lifecycleMutex.withLock {
-        check(!started) { "HaloRuntime is already running" }
+        if (started) return@withLock
 
         RuntimeStartupTrace.mark("runtime.start.begin")
 
-        var interpretationInitialized = false
         var interpretationStarted = false
-        var reasoningInitialized = false
         var reasoningStarted = false
-        var planningInitialized = false
         var planningStarted = false
-        var executionInitialized = false
         var executionStarted = false
         var commandResponseStarted = false
-        var audioInitialized = false
         var audioStarted = false
         var speechSessionStarted = false
         var speechBridgeStarted = false
@@ -53,14 +54,28 @@ class HaloRuntime(
         }
 
         try {
-            phase("interpretation.initialize") {
-                graph.interpretationEngine.initialize(graph.engineContext)
-                interpretationInitialized = true
+            if (!initialized) {
+                // Initialize the complete phone runtime before starting any
+                // reactive collectors. This gives retry a clean phase boundary.
+                phase("interpretation.initialize") {
+                    graph.interpretationEngine.initialize(graph.engineContext)
+                }
+                phase("reasoning.initialize") {
+                    graph.reasoningEngine.initialize(graph.engineContext)
+                }
+                phase("planning.initialize") {
+                    graph.planningEngine.initialize(graph.engineContext)
+                }
+                phase("execution.initialize") {
+                    graph.executionEngine.initialize(graph.engineContext)
+                }
+                phase("audio.initialize") {
+                    graph.audioPerceptionEngine.initialize(graph.engineContext)
+                }
+                initialized = true
+                RuntimeStartupTrace.mark("runtime.initialize.complete")
             }
-            phase("reasoning.initialize") {
-                graph.reasoningEngine.initialize(graph.engineContext)
-                reasoningInitialized = true
-            }
+
             phase("interpretation.start") {
                 graph.interpretationEngine.start()
                 interpretationStarted = true
@@ -68,14 +83,6 @@ class HaloRuntime(
             phase("reasoning.start") {
                 graph.reasoningEngine.start()
                 reasoningStarted = true
-            }
-            phase("planning.initialize") {
-                graph.planningEngine.initialize(graph.engineContext)
-                planningInitialized = true
-            }
-            phase("execution.initialize") {
-                graph.executionEngine.initialize(graph.engineContext)
-                executionInitialized = true
             }
             phase("planning.start") {
                 graph.planningEngine.start()
@@ -88,10 +95,6 @@ class HaloRuntime(
             phase("commandResponse.start") {
                 graph.commandResponseProcess.start()
                 commandResponseStarted = true
-            }
-            phase("audio.initialize") {
-                graph.audioPerceptionEngine.initialize(graph.engineContext)
-                audioInitialized = true
             }
             phase("audio.start") {
                 graph.audioPerceptionEngine.start()
@@ -119,47 +122,59 @@ class HaloRuntime(
         } catch (error: Throwable) {
             RuntimeStartupTrace.mark("runtime.start.failed")
             withContext(NonCancellable) {
-                cleanupPartialStartup(
-                    audioStarted, audioInitialized,
-                    executionStarted, executionInitialized,
-                    planningStarted, planningInitialized,
-                    reasoningStarted, reasoningInitialized,
-                    interpretationStarted, interpretationInitialized,
-                    speechSessionStarted, speechBridgeStarted,
-                    commandResponseStarted, androidSpeakerStarted, kernelBooted
+                stopStartedComponents(
+                    interpretationStarted = interpretationStarted,
+                    reasoningStarted = reasoningStarted,
+                    planningStarted = planningStarted,
+                    executionStarted = executionStarted,
+                    commandResponseStarted = commandResponseStarted,
+                    audioStarted = audioStarted,
+                    speechSessionStarted = speechSessionStarted,
+                    speechBridgeStarted = speechBridgeStarted,
+                    androidSpeakerStarted = androidSpeakerStarted,
+                    kernelBooted = kernelBooted
                 )
             }
+            started = false
             throw error
         }
     }
 
+    /**
+     * Stops active collectors/resources but deliberately does not dispose the
+     * process graph. A later start() must remain valid in the same Android process.
+     */
     suspend fun stop() = lifecycleMutex.withLock {
         if (!started) return@withLock
+
         RuntimeStartupTrace.mark("runtime.stop.begin")
         withContext(NonCancellable) {
-            cleanupPartialStartup(
-                true, true, true, true, true, true, true, true, true, true,
-                true, true, true, true, true
+            stopStartedComponents(
+                interpretationStarted = true,
+                reasoningStarted = true,
+                planningStarted = true,
+                executionStarted = true,
+                commandResponseStarted = true,
+                audioStarted = true,
+                speechSessionStarted = true,
+                speechBridgeStarted = true,
+                androidSpeakerStarted = true,
+                kernelBooted = true
             )
             started = false
             RuntimeStartupTrace.mark("runtime.stop.complete")
         }
     }
 
-    private suspend fun cleanupPartialStartup(
-        audioStarted: Boolean,
-        audioInitialized: Boolean,
-        executionStarted: Boolean,
-        executionInitialized: Boolean,
-        planningStarted: Boolean,
-        planningInitialized: Boolean,
-        reasoningStarted: Boolean,
-        reasoningInitialized: Boolean,
+    private suspend fun stopStartedComponents(
         interpretationStarted: Boolean,
-        interpretationInitialized: Boolean,
+        reasoningStarted: Boolean,
+        planningStarted: Boolean,
+        executionStarted: Boolean,
+        commandResponseStarted: Boolean,
+        audioStarted: Boolean,
         speechSessionStarted: Boolean,
         speechBridgeStarted: Boolean,
-        commandResponseStarted: Boolean,
         androidSpeakerStarted: Boolean,
         kernelBooted: Boolean
     ) {
@@ -168,15 +183,10 @@ class HaloRuntime(
         if (speechBridgeStarted) runCatching { graph.speechPerceptionBridge.stop() }
         if (speechSessionStarted) runCatching { graph.speechSessionManager.stop() }
         if (audioStarted) runCatching { graph.audioPerceptionEngine.stop() }
-        if (audioInitialized) runCatching { graph.audioPerceptionEngine.dispose() }
         if (commandResponseStarted) runCatching { graph.commandResponseProcess.stop() }
         if (executionStarted) runCatching { graph.executionEngine.stop() }
-        if (executionInitialized) runCatching { graph.executionEngine.dispose() }
         if (planningStarted) runCatching { graph.planningEngine.stop() }
-        if (planningInitialized) runCatching { graph.planningEngine.dispose() }
         if (reasoningStarted) runCatching { graph.reasoningEngine.stop() }
-        if (reasoningInitialized) runCatching { graph.reasoningEngine.dispose() }
         if (interpretationStarted) runCatching { graph.interpretationEngine.stop() }
-        if (interpretationInitialized) runCatching { graph.interpretationEngine.dispose() }
     }
 }

@@ -67,8 +67,8 @@ class MainActivity : ComponentActivity() {
         RuntimeStartupTrace.mark("activity.graph.init.begin", startedAt)
         ManualDependencyGraph.init(this)
         RuntimeStartupTrace.mark("activity.graph.init.end", startedAt)
-        runtime = HaloRuntime(ManualDependencyGraph)
-        RuntimeStartupTrace.mark("activity.runtime.constructed", startedAt)
+        runtime = ManualDependencyGraph.runtime
+        RuntimeStartupTrace.mark("activity.runtime.attached", startedAt)
         hasRequiredPermissions = areRequiredPermissionsGranted()
         RuntimeStartupTrace.mark("activity.permissions.checked", startedAt)
 
@@ -212,11 +212,7 @@ class MainActivity : ComponentActivity() {
                 RuntimeStartupTrace.mark("activity.runtime.uiBootstrapJoined", startedAt)
                 check(uiGraphReady) { uiGraphError ?: "UI graph bootstrap did not complete successfully" }
 
-                if (!runtime.isStarted()) {
-                    RuntimeStartupTrace.mark("activity.runtime.start.begin", startedAt)
-                    runtime.start()
-                    RuntimeStartupTrace.mark("activity.runtime.start.end", startedAt)
-                }
+                runtime.start()
                 withContext(Dispatchers.Main.immediate) {
                     runtimeReady = true
                 }
@@ -237,15 +233,15 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
-        RuntimeStartupTrace.mark("activity.onDestroy.begin")
+        RuntimeStartupTrace.mark("activity.onDestroy.begin changingConfig=$isChangingConfigurations")
         runtimeReady = false
         uiGraphJob?.cancel()
         runtimeJob?.cancel()
-        ManualDependencyGraph.infra.scope.launch(Dispatchers.IO) {
-            RuntimeStartupTrace.mark("activity.runtime.stop.begin")
-            runtime.stop()
-            RuntimeStartupTrace.mark("activity.runtime.stop.end")
-        }
+
+        // HaloRuntime belongs to the Android process, not to an Activity. Stopping
+        // or disposing it here made rotation race the next Activity and left lazy
+        // engine instances permanently disposed. Process death already reclaims
+        // platform resources; explicit product shutdown can call runtime.stop().
         super.onDestroy()
         RuntimeStartupTrace.mark("activity.onDestroy.end")
     }

@@ -1,16 +1,17 @@
 package com.halo.app.di
 
 import android.content.Context
-import com.halo.engines.memory.WorkingMemoryProcess
-import com.halo.runtime.kernel.HaloMicrokernel
-import com.halo.app.ui.screens.home.HomeViewModel
-import com.halo.app.ui.screens.settings.SettingsViewModel
+import com.halo.app.HaloRuntime
+import com.halo.app.RuntimeStartupTrace
 import com.halo.app.ui.screens.activity.ActivityViewModel
 import com.halo.app.ui.screens.devices.DevicesViewModel
-import com.halo.app.RuntimeStartupTrace
 import com.halo.app.ui.screens.discovery.PairingViewModel
+import com.halo.app.ui.screens.home.HomeViewModel
+import com.halo.app.ui.screens.settings.SettingsViewModel
 import com.halo.app.ui.screens.settings.VoiceSettingsViewModel
+import com.halo.engines.memory.WorkingMemoryProcess
 import com.halo.runtime.cognition.session.CognitiveSession
+import com.halo.runtime.kernel.HaloMicrokernel
 
 /** Thin façade that wires sub-graphs together. This is the sole composition root. */
 object ManualDependencyGraph {
@@ -26,6 +27,13 @@ object ManualDependencyGraph {
     val hostGraph by lazy { RuntimeStartupTrace.measure("graph.host") { HostGraph(applicationContext, infra, providerGraph, storage) } }
     val engineGraph by lazy { RuntimeStartupTrace.measure("graph.engines") { EngineGraph(applicationContext, infra, providerGraph) } }
     val observerGraph by lazy { RuntimeStartupTrace.measure("graph.observers") { ObserverGraph(applicationContext, infra, engineGraph) } }
+
+    /** One runtime instance per Android process; Activities are only views over it. */
+    val runtime by lazy {
+        RuntimeStartupTrace.measure("graph.runtime") {
+            HaloRuntime(ManualDependencyGraph)
+        }
+    }
 
     val eventBus get() = infra.eventBus
     val commandBus get() = infra.commandBus
