@@ -54,6 +54,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import java.util.Collections
 import java.util.UUID
 
 /**
@@ -76,31 +77,46 @@ class CognitiveSession(
     val state: StateFlow<CognitiveSessionState> = _state.asStateFlow()
     private var activeJob: Job? = null
 
+    private val processedSpeechIds = Collections.synchronizedSet(mutableSetOf<String>())
     private val observerScope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
 
     init {
         observerScope.launch {
             blackboard.stream().collect { knowledge ->
                 if (knowledge.payload is InterpretationKnowledge) {
+                    val knowledgeId = knowledge.id.value
+                    
+                    // Transaction deduplication: process each interpretation knowledge ID at most once
+                    if (!processedSpeechIds.add(knowledgeId)) {
+                        return@collect
+                    }
+                    if (processedSpeechIds.size > 500) {
+                        processedSpeechIds.clear()
+                    }
+
                     val interpretation = (knowledge.payload as InterpretationKnowledge).interpretation
                     val intent = interpretation.intent
                     
-                    // Only process conversational intents through the generic LLM session.
-                    // Structured intents (Play, Navigate, etc.) are handled by deterministic reasoning.
-                    if (intent !is ConversationIntent && 
-                        intent !is QuestionIntent) {
+                    val text = interpretation.transcript.trim()
+                    val lowerText = text.lowercase()
+                    val isTimeQuery = lowerText.contains("time") || lowerText.contains("clock")
+                    
+                    // Structured action intents (Play, Pause, Navigate, Open, Call, Reminder, Search) and Time queries
+                    // NEVER enter CognitiveSession / LLM reasoning.
+                    if ((intent !is ConversationIntent && intent !is QuestionIntent) || isTimeQuery) {
+                        println("[HALO-TXN] speech knowledgeId=$knowledgeId text=\"${interpretation.transcript}\" intent=${intent::class.simpleName} -> BYPASSING LLM (deterministic execution)")
                         return@collect
                     }
-
-                    val text = interpretation.transcript.trim()
                     if (text.isEmpty()) {
                         return@collect
                     }
 
                     if (activeJob?.isActive == true) {
+                        println("[HALO-TXN] speech knowledgeId=$knowledgeId -> DROPPED (active job running)")
                         return@collect
                     }
 
+                    println("[HALO-TXN] speech knowledgeId=$knowledgeId text=\"$text\" intent=${intent::class.simpleName} -> SUBMITTING TO LLM")
                     submit(
                         AiRequest(text = text)
                     )

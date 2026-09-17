@@ -125,6 +125,8 @@ class ReasoningEngine(
                                     parentKnowledgeId = knowledgeId
                                 )
 
+                            println("[HALO-TXN] reasoning knowledgeId=$knowledgeId intent=${interpretation.intent::class.simpleName} goal=${goal.type} payload=${goal.payload}")
+
                             eventBus.publish(
                                 GoalCreated(
                                     goal = goal

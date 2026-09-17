@@ -8,7 +8,10 @@ import com.halo.libraries.common.core.Version
 import com.halo.runtime.services.Services
 import com.halo.runtime.cognition.blackboard.Blackboard
 import com.halo.engines.execution.service.ExecutionScheduler
+import com.halo.runtime.cognition.DeviceTask
 import com.halo.runtime.cognition.ExecutionContext
+import com.halo.runtime.cognition.MediaTask
+import com.halo.runtime.cognition.NavigationTask
 import com.halo.runtime.cognition.OutcomePublished
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,6 +23,8 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
 /**
  * ExecutionEngine acts as the single deterministic driver for physical and digital actions in the Alpha Runtime.
@@ -113,12 +118,44 @@ class ExecutionEngine(
         
         for (task in plan.tasks) {
             val result = scheduler.executeTaskGraph(task)
+            println("[HALO-TXN] task=${task::class.simpleName} outcome=${result::class.simpleName}")
             if (result is Outcome.PermanentFailure || result is Outcome.RetryableFailure) {
                 finalOutcome = result
                 break
             } else if (result is Outcome.Partial) {
                 finalOutcome = result
             }
+        }
+
+        // Emit concise deterministic TTS response for structured action tasks
+        val primaryTask = plan.tasks.firstOrNull()
+        val confirmationText = when (primaryTask) {
+            is MediaTask -> {
+                if (finalOutcome is Outcome.Success) {
+                    if (primaryTask.mediaAction.equals("pause", ignoreCase = true)) "Paused playback." else "Playing music."
+                } else {
+                    "I couldn't find a media player to control."
+                }
+            }
+            is DeviceTask -> {
+                if (primaryTask.action.equals("time", ignoreCase = true)) {
+                    val formattedTime = LocalTime.now().format(DateTimeFormatter.ofPattern("h:mm a"))
+                    "It's $formattedTime."
+                } else if (finalOutcome is Outcome.Success) {
+                    "Opening."
+                } else {
+                    "Unable to open application."
+                }
+            }
+            is NavigationTask -> {
+                if (finalOutcome is Outcome.Success) "Starting navigation." else "Unable to find destination."
+            }
+            else -> null
+        }
+
+        if (confirmationText != null) {
+            println("[HALO-TXN] tts confirmation=\"$confirmationText\"")
+            eventBus.publish(TtsRequested(timestamp = System.currentTimeMillis(), text = confirmationText))
         }
         
         return finalOutcome

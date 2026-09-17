@@ -44,6 +44,8 @@ class DefaultReasoningStrategy(
     ): Goal {
 
         val intent = interpretation.intent
+        val lowerTranscript = interpretation.transcript.lowercase()
+        val isTimeQuery = lowerTranscript.contains("time") || lowerTranscript.contains("clock")
 
         val type = when (intent) {
             is NavigateIntent -> GoalType.NAVIGATION
@@ -52,7 +54,9 @@ class DefaultReasoningStrategy(
             is SearchIntent -> GoalType.SEARCH
             is CallIntent -> GoalType.COMMUNICATION
             is OpenIntent -> GoalType.DEVICE
-            is QuestionIntent, is ConversationIntent -> GoalType.CONVERSATION
+            is QuestionIntent, is ConversationIntent -> {
+                if (isTimeQuery) GoalType.DEVICE else GoalType.CONVERSATION
+            }
             else -> GoalType.CONVERSATION
         }
 
@@ -63,11 +67,12 @@ class DefaultReasoningStrategy(
             }
 
             is PlayIntent -> {
-                // Normalize "play music" and "play some music" to a generic query
-                val rawTitle = interpretation.entities.filterIsInstance<MediaEntity>().firstOrNull()?.title ?: ""
+                // Normalize generic play requests (e.g. "play music", "play some music", "play something", "music")
+                val rawTitle = interpretation.entities.filterIsInstance<MediaEntity>().firstOrNull()?.title 
+                    ?: interpretation.transcript.removePrefix("play").removePrefix("Please").replace(".", "").trim()
                 val normalizedTitle = rawTitle.replace(".", "").trim()
-                val isGeneric = normalizedTitle.equals("music", ignoreCase = true) || 
-                                normalizedTitle.equals("some music", ignoreCase = true)
+                val lower = normalizedTitle.lowercase()
+                val isGeneric = lower.isEmpty() || lower == "music" || lower == "some music" || lower == "something" || lower == "a music"
                 MediaPayload(query = if (isGeneric) "" else normalizedTitle, action = "play")
             }
 
@@ -90,9 +95,13 @@ class DefaultReasoningStrategy(
                 target = interpretation.entities.firstOrNull()?.toString() ?: ""
             )
 
-            is ConversationIntent, is QuestionIntent -> ConversationPayload(
-                topic = interpretation.transcript
-            )
+            is ConversationIntent, is QuestionIntent -> {
+                if (isTimeQuery) {
+                    DevicePayload(action = "time", target = "")
+                } else {
+                    ConversationPayload(topic = interpretation.transcript)
+                }
+            }
 
             else -> ConversationPayload(topic = interpretation.transcript)
         }

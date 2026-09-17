@@ -24,7 +24,7 @@ data class ConversationTurnCompleted(
 ) : HaloEvent
 
 data class DeviceCommand(override val id: String = UUID.randomUUID().toString(), override val timestamp: Long, val command: String) : HaloEvent
-data class TtsRequested(override val id: String = UUID.randomUUID().toString(), override val timestamp: Long, val text: String) : HaloEvent
+data class TtsRequested(override val id: String = UUID.randomUUID().toString(), override val timestamp: Long = System.currentTimeMillis(), val text: String) : HaloEvent
 
 data class TtsStarted(
     override val id: String = UUID.randomUUID().toString(),

@@ -11,5 +11,5 @@ dependencies {
     implementation(project(":libraries:halo-cognition-language"))
     api(libs.kotlinx.datetime)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
-    // LLM dependencies belong in providers, not here
+    testImplementation(libs.junit)
 }

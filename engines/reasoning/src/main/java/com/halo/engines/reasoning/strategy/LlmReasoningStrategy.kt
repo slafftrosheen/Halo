@@ -52,6 +52,9 @@ class LlmReasoningStrategy(
         interpretation: Interpretation,
         parentKnowledgeId: String? = null
     ): Goal {
+        val lowerTranscript = interpretation.transcript.lowercase()
+        val isTimeQuery = lowerTranscript.contains("time") || lowerTranscript.contains("clock")
+
         return when (interpretation.intent) {
             is NavigateIntent,
             is PlayIntent,
@@ -59,13 +62,16 @@ class LlmReasoningStrategy(
             is ReminderIntent,
             is SearchIntent,
             is CallIntent,
-            is OpenIntent,
-            is QuestionIntent -> {
+            is OpenIntent -> {
                 defaultStrategy.generateGoal(interpretation, parentKnowledgeId)
             }
 
-            is ConversationIntent -> {
-                generateConversationGoalWithLlm(interpretation, parentKnowledgeId)
+            is QuestionIntent, is ConversationIntent -> {
+                if (isTimeQuery) {
+                    defaultStrategy.generateGoal(interpretation, parentKnowledgeId)
+                } else {
+                    generateConversationGoalWithLlm(interpretation, parentKnowledgeId)
+                }
             }
 
             else -> {
