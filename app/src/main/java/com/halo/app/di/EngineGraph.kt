@@ -18,6 +18,10 @@ import com.halo.host.android.capability.AndroidApplicationCapability
 import com.halo.host.android.capability.AndroidMediaCapability
 import com.halo.host.android.capability.AndroidNavigationCapability
 import com.halo.engines.execution.capability.SpeechOutputRouter
+import com.halo.host.android.capability.AndroidCommunicationCapability
+import com.halo.host.android.capability.AndroidDeviceCapability
+import com.halo.host.android.capability.AndroidMemoryCapability
+import com.halo.host.android.capability.AndroidWebCapability
 import com.halo.sdk.runtime.NativeResourceCoordinator
 import com.halo.runtime.speech.SpeechPerceptionBridge
 import com.halo.runtime.speech.SpeechSessionManager
@@ -46,6 +50,10 @@ class EngineGraph(
             register(AndroidApplicationCapability(applicationContext))
             register(AndroidMediaCapability(applicationContext))
             register(AndroidNavigationCapability(applicationContext))
+            register(AndroidCommunicationCapability(applicationContext))
+            register(AndroidWebCapability(applicationContext))
+            register(AndroidDeviceCapability(applicationContext))
+            register(AndroidMemoryCapability(applicationContext))
             register(
                 com.halo.engines.execution.capability.SpeechCapability(
                     ttsProvider = providerGraph.providers.speechSynthesis,

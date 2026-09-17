@@ -1,18 +1,24 @@
 package com.halo.engines.execution
+import com.halo.runtime.cognition.ApplicationTask
+import com.halo.runtime.cognition.CommunicationTask
+import com.halo.runtime.cognition.DeviceTask
+import com.halo.runtime.cognition.ExecutionContext
 import com.halo.runtime.cognition.ExecutionPlan
+import com.halo.runtime.cognition.MediaTask
+import com.halo.runtime.cognition.MemoryTask
+import com.halo.runtime.cognition.NavigationTask
 import com.halo.runtime.cognition.Outcome
+import com.halo.runtime.cognition.OutcomePublished
 import com.halo.runtime.cognition.Task
+import com.halo.runtime.cognition.WebTask
 import com.halo.sdk.runtime.*
 import com.halo.libraries.common.core.Identifier
 import com.halo.libraries.common.core.Version
 import com.halo.runtime.services.Services
 import com.halo.runtime.cognition.blackboard.Blackboard
 import com.halo.engines.execution.service.ExecutionScheduler
-import com.halo.runtime.cognition.DeviceTask
-import com.halo.runtime.cognition.ExecutionContext
-import com.halo.runtime.cognition.MediaTask
-import com.halo.runtime.cognition.NavigationTask
-import com.halo.runtime.cognition.OutcomePublished
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.CoroutineScope
@@ -23,8 +29,6 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
 
 /**
  * ExecutionEngine acts as the single deterministic driver for physical and digital actions in the Alpha Runtime.
@@ -130,25 +134,56 @@ class ExecutionEngine(
         // Emit concise deterministic TTS response for structured action tasks
         val primaryTask = plan.tasks.firstOrNull()
         val confirmationText = when (primaryTask) {
+            is ApplicationTask -> {
+                if (finalOutcome is Outcome.Success) {
+                    val label = finalOutcome.message?.ifBlank { primaryTask.packageName } ?: primaryTask.packageName
+                    "Opening $label."
+                } else if (finalOutcome is Outcome.PermanentFailure) {
+                    finalOutcome.reason
+                } else {
+                    "Unable to open application."
+                }
+            }
+            is CommunicationTask -> {
+                if (finalOutcome is Outcome.Success) {
+                    val name = finalOutcome.message?.ifBlank { primaryTask.targetId } ?: primaryTask.targetId
+                    "Opening the phone for $name."
+                } else if (finalOutcome is Outcome.PermanentFailure) {
+                    finalOutcome.reason
+                } else {
+                    "Unable to initiate call."
+                }
+            }
+            is WebTask -> {
+                val query = primaryTask.url.removePrefix("https://www.google.com/search?q=")
+                if (finalOutcome is Outcome.Success) "Searching for $query." else "Unable to perform web search."
+            }
+            is NavigationTask -> {
+                if (finalOutcome is Outcome.Success) "Opening directions to ${primaryTask.coordinates}." else "Unable to find destination."
+            }
             is MediaTask -> {
                 if (finalOutcome is Outcome.Success) {
-                    if (primaryTask.mediaAction.equals("pause", ignoreCase = true)) "Paused playback." else "Playing music."
+                    if (primaryTask.mediaAction.equals("pause", ignoreCase = true)) "Music paused." else "Playing music."
                 } else {
                     "I couldn't find a media player to control."
                 }
+            }
+            is MemoryTask -> {
+                if (finalOutcome is Outcome.Success) "Reminder set." else "Unable to set reminder."
             }
             is DeviceTask -> {
                 if (primaryTask.action.equals("time", ignoreCase = true)) {
                     val formattedTime = LocalTime.now().format(DateTimeFormatter.ofPattern("h:mm a"))
                     "It's $formattedTime."
+                } else if (primaryTask.action.equals("alarm", ignoreCase = true)) {
+                    if (finalOutcome is Outcome.Success) "Alarm set." else "Unable to set alarm."
+                } else if (primaryTask.action.equals("settings", ignoreCase = true)) {
+                    if (finalOutcome is Outcome.Success) "Opening settings." else "Unable to open settings."
                 } else if (finalOutcome is Outcome.Success) {
-                    "Opening."
+                    "Done."
                 } else {
-                    "Unable to open application."
+                    "Unable to complete device action."
                 }
-            }
-            is NavigationTask -> {
-                if (finalOutcome is Outcome.Success) "Starting navigation." else "Unable to find destination."
             }
             else -> null
         }

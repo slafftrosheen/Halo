@@ -1,0 +1,135 @@
+package com.halo.engines.interpretation.rules
+
+import com.halo.engines.interpretation.api.InterpretationContext
+import com.halo.engines.interpretation.model.ApplicationEntity
+import com.halo.engines.interpretation.model.CallIntent
+import com.halo.engines.interpretation.model.MediaEntity
+import com.halo.engines.interpretation.model.NavigateIntent
+import com.halo.engines.interpretation.model.OpenIntent
+import com.halo.engines.interpretation.model.PersonEntity
+import com.halo.engines.interpretation.model.PlaceEntity
+import com.halo.engines.interpretation.model.PlayIntent
+import com.halo.engines.interpretation.model.QuestionIntent
+import com.halo.engines.interpretation.model.ReminderIntent
+import com.halo.engines.interpretation.model.SearchIntent
+import com.halo.engines.interpretation.model.WebEntity
+import com.halo.engines.speech.SpeechRecognizedPayload
+import com.halo.runtime.cognition.workingmemory.WorkingMemorySnapshot
+import com.halo.sdk.runtime.Modality
+import com.halo.sdk.runtime.Observation
+import com.halo.sdk.runtime.ObservationId
+import com.halo.sdk.runtime.Source
+import kotlinx.coroutines.runBlocking
+import kotlinx.datetime.Clock
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+class PhoneCommandsRuleTest {
+
+    private val speechRule = SpeechRule()
+
+    private fun createContext(transcript: String): InterpretationContext {
+        val observation = Observation(
+            id = ObservationId("obs1"),
+            modality = Modality.AUDIO,
+            source = Source.MICROPHONE,
+            payload = SpeechRecognizedPayload(transcript = transcript, language = "en"),
+            timestamp = System.currentTimeMillis()
+        )
+        return InterpretationContext(
+            observation = observation,
+            workingMemory = WorkingMemorySnapshot(
+                currentGoal = null, activeTask = null, latestObservation = null, latestInterpretation = null, focusedPerson = null, currentLocation = null
+            ),
+            goals = emptyList(),
+            tasks = emptyList(),
+            timestamp = Clock.System.now()
+        )
+    }
+
+    @Test
+    fun testOpenApplication() = runBlocking {
+        val match1 = speechRule.match(createContext("open YouTube"))
+        assertNotNull(match1)
+        assertEquals(OpenIntent, match1!!.intent)
+        assertTrue(match1.entities.any { it is ApplicationEntity && it.name == "YouTube" })
+
+        val match2 = speechRule.match(createContext("launch Chrome"))
+        assertNotNull(match2)
+        assertEquals(OpenIntent, match2!!.intent)
+        assertTrue(match2.entities.any { it is ApplicationEntity && it.name == "Chrome" })
+    }
+
+    @Test
+    fun testCallContact() = runBlocking {
+        val match1 = speechRule.match(createContext("call John"))
+        assertNotNull(match1)
+        assertEquals(CallIntent, match1!!.intent)
+        assertTrue(match1.entities.any { it is PersonEntity && it.name == "John" })
+
+        val match2 = speechRule.match(createContext("call +37120000000"))
+        assertNotNull(match2)
+        assertEquals(CallIntent, match2!!.intent)
+    }
+
+    @Test
+    fun testSearchWeb() = runBlocking {
+        val match1 = speechRule.match(createContext("search for cats"))
+        assertNotNull(match1)
+        assertEquals(SearchIntent, match1!!.intent)
+        assertTrue(match1.entities.any { it is WebEntity && it.query == "cats" })
+
+        val match2 = speechRule.match(createContext("google cats"))
+        assertNotNull(match2)
+        assertEquals(SearchIntent, match2!!.intent)
+        assertTrue(match2.entities.any { it is WebEntity && it.query == "cats" })
+    }
+
+    @Test
+    fun testNavigation() = runBlocking {
+        val match1 = speechRule.match(createContext("navigate to Riga"))
+        assertNotNull(match1)
+        assertEquals(NavigateIntent, match1!!.intent)
+        assertTrue(match1.entities.any { it is PlaceEntity && it.name == "Riga" })
+
+        val match2 = speechRule.match(createContext("directions to Riga"))
+        assertNotNull(match2)
+        assertEquals(NavigateIntent, match2!!.intent)
+        assertTrue(match2.entities.any { it is PlaceEntity && it.name == "Riga" })
+    }
+
+    @Test
+    fun testReminder() = runBlocking {
+        val match = speechRule.match(createContext("remind me in 10 minutes to call John"))
+        assertNotNull(match)
+        assertEquals(ReminderIntent, match!!.intent)
+    }
+
+    @Test
+    fun testAlarm() = runBlocking {
+        val match = speechRule.match(createContext("set an alarm for 07:30"))
+        assertNotNull(match)
+        assertEquals(OpenIntent, match!!.intent)
+    }
+
+    @Test
+    fun testPrecedenceSearchForMusicVsPlayMusic() = runBlocking {
+        val searchMatch = speechRule.match(createContext("search for music"))
+        assertNotNull(searchMatch)
+        assertEquals(SearchIntent, searchMatch!!.intent)
+        assertTrue(searchMatch.entities.any { it is WebEntity && it.query == "music" })
+
+        val playMatch = speechRule.match(createContext("play music"))
+        assertNotNull(playMatch)
+        assertEquals(PlayIntent, playMatch!!.intent)
+        assertTrue(playMatch.entities.any { it is MediaEntity })
+    }
+
+    @Test
+    fun testGenericConversationQuestion() = runBlocking {
+        val match = speechRule.match(createContext("tell me about Riga"))
+        assertTrue(match == null || match.intent is QuestionIntent)
+    }
+}

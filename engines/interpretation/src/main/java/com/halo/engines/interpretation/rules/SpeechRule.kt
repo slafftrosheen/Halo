@@ -1,5 +1,6 @@
 package com.halo.engines.interpretation.rules
 
+import com.halo.cognition.language.PersonEntity
 import com.halo.engines.interpretation.api.InterpretationContext
 import com.halo.engines.interpretation.api.InterpretationRule
 import com.halo.engines.interpretation.api.RuleMatch
@@ -27,14 +28,18 @@ class SpeechRule : InterpretationRule {
         val consumedTokens = transcript.tokenCount()
 
         return when {
-            normalized.startsWith("call ") || normalized == "call" -> RuleMatch(
-                confidence = 0.99f,
-                intent = CallIntent,
-                consumedTokens = consumedTokens,
-                diagnostics = "Detected call command"
-            )
+            normalized.startsWith("call ") || normalized.startsWith("phone ") || normalized == "call" -> {
+                val target = transcript.afterFirstWord().trim()
+                RuleMatch(
+                    confidence = 0.99f,
+                    intent = CallIntent,
+                    entities = if (target.isNotBlank()) listOf(PersonEntity(target.titlecaseWords(), 0.99f)) else emptyList(),
+                    consumedTokens = consumedTokens,
+                    diagnostics = "Detected call command"
+                )
+            }
 
-            navigationPattern.matches(transcript) -> {
+            navigationPattern.containsMatchIn(transcript) -> {
                 val destination = navigationPattern.find(transcript)
                     ?.groupValues
                     ?.get(1)
@@ -51,7 +56,7 @@ class SpeechRule : InterpretationRule {
                 }
             }
 
-            normalized.startsWith("open ") -> {
+            normalized.startsWith("open ") || normalized.startsWith("launch ") || normalized.startsWith("start ") -> {
                 val application = transcript.afterFirstWord()
                 application.takeIf { it.isNotBlank() }?.let {
                     RuleMatch(
@@ -77,7 +82,7 @@ class SpeechRule : InterpretationRule {
                 }
             }
 
-            normalized == "pause" || normalized.startsWith("pause ") -> RuleMatch(
+            normalized == "pause" || normalized.startsWith("pause ") || normalized == "stop music" -> RuleMatch(
                 confidence = 0.95f,
                 intent = PauseIntent,
                 consumedTokens = consumedTokens,
@@ -91,13 +96,23 @@ class SpeechRule : InterpretationRule {
                 diagnostics = "Detected reminder command"
             )
 
-            normalized.startsWith("search ") -> {
-                val query = transcript.afterFirstWord()
+            normalized.startsWith("set an alarm") || normalized.startsWith("alarm for") || normalized.startsWith("wake me at") -> {
+                RuleMatch(
+                    confidence = 0.95f,
+                    intent = OpenIntent,
+                    entities = listOf(ApplicationEntity("alarm", 0.95f)),
+                    consumedTokens = consumedTokens,
+                    diagnostics = "Detected alarm command"
+                )
+            }
+
+            searchPattern.containsMatchIn(transcript) -> {
+                val query = searchPattern.find(transcript)?.groupValues?.get(1)?.trim().orEmpty()
                 query.takeIf { it.isNotBlank() }?.let {
                     RuleMatch(
-                        confidence = 0.92f,
+                        confidence = 0.96f,
                         intent = SearchIntent,
-                        entities = listOf(WebEntity(it, 0.9f)),
+                        entities = listOf(WebEntity(it, 0.95f)),
                         consumedTokens = consumedTokens,
                         diagnostics = "Detected web search command"
                     )
@@ -135,8 +150,12 @@ class SpeechRule : InterpretationRule {
             }
 
     private companion object {
+        val searchPattern = Regex(
+            "^\\s*(?:search(?:\\s+for)?|google|look\\s+up|find\\s+information\\s+about)\\s+(.+)$",
+            RegexOption.IGNORE_CASE
+        )
         val navigationPattern = Regex(
-            "^\\s*(?:navigate(?:\\s+to)?|go\\s+to)\\s+(.+)$",
+            "^\\s*(?:navigate(?:\\s+to)?|directions\\s+to|take\\s+me\\s+to|go\\s+to|open\\s+directions\\s+to)\\s+(.+)$",
             RegexOption.IGNORE_CASE
         )
         val questionPattern = Regex(
