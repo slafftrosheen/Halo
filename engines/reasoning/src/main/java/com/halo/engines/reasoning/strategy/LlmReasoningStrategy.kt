@@ -10,6 +10,7 @@ import com.halo.cognition.language.OpenIntent
 import com.halo.cognition.language.PauseIntent
 import com.halo.cognition.language.PersonEntity
 import com.halo.cognition.language.PlayIntent
+import com.halo.cognition.language.QuestionIntent
 import com.halo.cognition.language.ReminderIntent
 import com.halo.cognition.language.SearchIntent
 import com.halo.engines.reasoning.service.GoalManager
@@ -37,14 +38,13 @@ class LlmReasoningStrategy(
 
     private val SYSTEM_PROMPT = """
         You are the reasoning engine for Halo. 
-        Analyze the user's intent and output a strict JSON object describing the action.
-        Do NOT output any conversational text. ONLY output the JSON object.
+        Analyze the user's conversational input and output a strict JSON object describing the response.
+        Do NOT output any conversational text outside the JSON. ONLY output the JSON object.
         
         The JSON must match this structure:
         {
-          "intent": "NavigateIntent | PlayIntent | PauseIntent | ReminderIntent | SearchIntent | CallIntent | OpenIntent | ConversationIntent",
-          "target": "string (optional, e.g., destination, media title, contact name, app name)",
-          "action": "string (optional, e.g., 'play', 'pause')"
+          "intent": "ConversationIntent",
+          "target": "string (the conversational response or topic extracted)"
         }
     """.trimIndent()
 
@@ -52,13 +52,32 @@ class LlmReasoningStrategy(
         interpretation: Interpretation,
         parentKnowledgeId: String? = null
     ): Goal {
-        // 1. Direct deterministic mapping for commands already matched by the Interpretation Engine
-        val deterministicGoal = mapDeterministicIntent(interpretation, parentKnowledgeId)
-        if (deterministicGoal != null) {
-            return deterministicGoal
-        }
+        return when (interpretation.intent) {
+            is NavigateIntent,
+            is PlayIntent,
+            is PauseIntent,
+            is ReminderIntent,
+            is SearchIntent,
+            is CallIntent,
+            is OpenIntent,
+            is QuestionIntent -> {
+                defaultStrategy.generateGoal(interpretation, parentKnowledgeId)
+            }
 
-        // 2. Fall back to LLM for conversational intents
+            is ConversationIntent -> {
+                generateConversationGoalWithLlm(interpretation, parentKnowledgeId)
+            }
+
+            else -> {
+                defaultStrategy.generateGoal(interpretation, parentKnowledgeId)
+            }
+        }
+    }
+
+    private suspend fun generateConversationGoalWithLlm(
+        interpretation: Interpretation,
+        parentKnowledgeId: String? = null
+    ): Goal {
         val prompt = "User transcript: \"${interpretation.transcript}\""
         
         val response = try {
@@ -69,6 +88,8 @@ class LlmReasoningStrategy(
                 )
             )
         } catch (e: Exception) {
+            // If the LLM router fails (e.g., due to local unavailability or rate limits), 
+            // fallback to the deterministic default strategy.
             return defaultStrategy.generateGoal(interpretation, parentKnowledgeId)
         }
         
@@ -95,38 +116,6 @@ class LlmReasoningStrategy(
             intent = intentPayload,
             payload = payload,
             confidence = 0.9f,
-            parentId = parentKnowledgeId
-        )
-    }
-
-    private fun mapDeterministicIntent(interpretation: Interpretation, parentKnowledgeId: String?): Goal? {
-        val (type, payload) = when (val intent = interpretation.intent) {
-            is PlayIntent -> {
-                val title = interpretation.entities.filterIsInstance<MediaEntity>().firstOrNull()?.title ?: ""
-                GoalType.MEDIA to MediaPayload(title, "play")
-            }
-            is PauseIntent -> GoalType.MEDIA to MediaPayload("", "pause")
-            is NavigateIntent -> {
-                val dest = interpretation.entities.filterIsInstance<LocationEntity>().firstOrNull()?.location ?: ""
-                GoalType.NAVIGATION to NavigationPayload(dest)
-            }
-            is CallIntent -> {
-                val name = interpretation.entities.filterIsInstance<PersonEntity>().firstOrNull()?.name ?: ""
-                GoalType.COMMUNICATION to CommunicationPayload(name)
-            }
-            is OpenIntent -> {
-                // Heuristic: check if there's any entity string
-                val app = interpretation.entities.firstOrNull()?.let { it.toString() } ?: ""
-                GoalType.DEVICE to DevicePayload("open", app)
-            }
-            else -> return null
-        }
-
-        return goalManager.createGoal(
-            type = type,
-            intent = interpretation.intent,
-            payload = payload,
-            confidence = interpretation.confidence,
             parentId = parentKnowledgeId
         )
     }
