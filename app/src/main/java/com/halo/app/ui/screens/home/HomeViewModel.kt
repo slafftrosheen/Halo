@@ -5,10 +5,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.halo.app.ui.glass.material.HaloRuntimeState
 import com.halo.app.ui.state.presenceFromSpeech
+import com.halo.engines.speech.SpeechRecognizedPayload
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.*
 import com.halo.runtime.cognition.session.CognitiveSession
 import java.util.Locale
+import java.util.UUID
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -109,6 +111,7 @@ class HomeViewModel(
     private val eventBus: EventBus,
     private val cognitiveSession: CognitiveSession,
     private val stopSpeechOutput: () -> Unit,
+    private val suppressNextSpeechOutput: () -> Unit,
     private val aiProviderRouter: AiProviderRouter? = null
 ) : ViewModel() {
     private val mapper = HomeUiMapper()
@@ -153,16 +156,27 @@ class HomeViewModel(
         val normalized = text.trim()
         if (normalized.isBlank()) return
 
-        // Keyboard and microphone input enter the same interpretation/reasoning
-        // pipeline. This keeps deterministic commands (media, navigation, device
-        // actions) out of the LLM path regardless of input modality.
+        // Text enters the same interpretation/reasoning pipeline as recognized
+        // speech, but it remains a TEXT/USER observation. This keeps the speech
+        // session and microphone state untouched and makes keyboard turns silent.
+        suppressNextSpeechOutput()
         viewModelScope.launch {
             runCatching {
+                val timestamp = System.currentTimeMillis()
                 eventBus.publish(
-                    SpeechRecognized(
-                        timestamp = System.currentTimeMillis(),
-                        text = normalized,
-                        locale = Locale.getDefault().toLanguageTag()
+                    ObservationCreated(
+                        observation = Observation(
+                            id = ObservationId(UUID.randomUUID().toString()),
+                            timestamp = timestamp,
+                            modality = Modality.TEXT,
+                            source = Source.USER,
+                            confidence = 1.0f,
+                            payload = SpeechRecognizedPayload(
+                                transcript = normalized,
+                                language = Locale.getDefault().toLanguageTag()
+                            ),
+                            metadata = mapOf("input" to "keyboard")
+                        )
                     )
                 )
             }.onFailure {
