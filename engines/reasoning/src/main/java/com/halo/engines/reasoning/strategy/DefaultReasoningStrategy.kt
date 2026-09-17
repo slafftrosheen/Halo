@@ -1,5 +1,6 @@
 package com.halo.engines.reasoning.strategy
 
+import com.halo.cognition.language.ApplicationEntity
 import com.halo.cognition.language.CallIntent
 import com.halo.cognition.language.ConversationIntent
 import com.halo.cognition.language.LocationEntity
@@ -67,12 +68,13 @@ class DefaultReasoningStrategy(
             }
 
             is PlayIntent -> {
-                // Normalize generic play requests (e.g. "play music", "play some music", "play something", "music")
                 val rawTitle = interpretation.entities.filterIsInstance<MediaEntity>().firstOrNull()?.title 
                     ?: interpretation.transcript.removePrefix("play").removePrefix("Please").replace(".", "").trim()
                 val normalizedTitle = rawTitle.replace(".", "").trim()
                 val lower = normalizedTitle.lowercase()
-                val isGeneric = lower.isEmpty() || lower == "music" || lower == "some music" || lower == "something" || lower == "a music"
+                val isGeneric = lower.isEmpty() || lower == "music" || lower == "some music" || 
+                                lower == "something" || lower == "a music" || lower == "start music" || 
+                                lower == "start playing" || lower == "put some music on"
                 MediaPayload(query = if (isGeneric) "" else normalizedTitle, action = "play")
             }
 
@@ -90,10 +92,15 @@ class DefaultReasoningStrategy(
                 target = interpretation.entities.filterIsInstance<PersonEntity>().firstOrNull()?.name ?: ""
             )
 
-            is OpenIntent -> DevicePayload(
-                action = "open",
-                target = interpretation.entities.firstOrNull()?.toString() ?: ""
-            )
+            is OpenIntent -> {
+                val appName = interpretation.entities.filterIsInstance<ApplicationEntity>().firstOrNull()?.name
+                    ?: interpretation.entities.firstOrNull()?.toString() ?: ""
+                if (appName.equals("time", ignoreCase = true)) {
+                    DevicePayload(action = "time", target = "")
+                } else {
+                    DevicePayload(action = "open", target = appName)
+                }
+            }
 
             is ConversationIntent, is QuestionIntent -> {
                 if (isTimeQuery) {

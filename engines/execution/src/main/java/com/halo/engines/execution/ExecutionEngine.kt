@@ -17,6 +17,7 @@ import com.halo.libraries.common.core.Version
 import com.halo.runtime.services.Services
 import com.halo.runtime.cognition.blackboard.Blackboard
 import com.halo.engines.execution.service.ExecutionScheduler
+import com.halo.runtime.cognition.ExecutionResultPublished
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -122,75 +123,20 @@ class ExecutionEngine(
         
         for (task in plan.tasks) {
             val result = scheduler.executeTaskGraph(task)
-            println("[HALO-TXN] task=${task::class.simpleName} outcome=${result::class.simpleName}")
+            eventBus.publish(
+                ExecutionResultPublished(
+                    planId = plan.id.toString(),
+                    task = task,
+                    outcome = result,
+                    message = (result as? Outcome.Success)?.message ?: (result as? Outcome.PermanentFailure)?.reason ?: ""
+                )
+            )
             if (result is Outcome.PermanentFailure || result is Outcome.RetryableFailure) {
                 finalOutcome = result
                 break
             } else if (result is Outcome.Partial) {
                 finalOutcome = result
             }
-        }
-
-        // Emit concise deterministic TTS response for structured action tasks
-        val primaryTask = plan.tasks.firstOrNull()
-        val confirmationText = when (primaryTask) {
-            is ApplicationTask -> {
-                if (finalOutcome is Outcome.Success) {
-                    val label = finalOutcome.message?.ifBlank { primaryTask.packageName } ?: primaryTask.packageName
-                    "Opening $label."
-                } else if (finalOutcome is Outcome.PermanentFailure) {
-                    finalOutcome.reason
-                } else {
-                    "Unable to open application."
-                }
-            }
-            is CommunicationTask -> {
-                if (finalOutcome is Outcome.Success) {
-                    val name = finalOutcome.message?.ifBlank { primaryTask.targetId } ?: primaryTask.targetId
-                    "Opening the phone for $name."
-                } else if (finalOutcome is Outcome.PermanentFailure) {
-                    finalOutcome.reason
-                } else {
-                    "Unable to initiate call."
-                }
-            }
-            is WebTask -> {
-                val query = primaryTask.url.removePrefix("https://www.google.com/search?q=")
-                if (finalOutcome is Outcome.Success) "Searching for $query." else "Unable to perform web search."
-            }
-            is NavigationTask -> {
-                if (finalOutcome is Outcome.Success) "Opening directions to ${primaryTask.coordinates}." else "Unable to find destination."
-            }
-            is MediaTask -> {
-                if (finalOutcome is Outcome.Success) {
-                    if (primaryTask.mediaAction.equals("pause", ignoreCase = true)) "Music paused." else "Playing music."
-                } else {
-                    "I couldn't find a media player to control."
-                }
-            }
-            is MemoryTask -> {
-                if (finalOutcome is Outcome.Success) "Reminder set." else "Unable to set reminder."
-            }
-            is DeviceTask -> {
-                if (primaryTask.action.equals("time", ignoreCase = true)) {
-                    val formattedTime = LocalTime.now().format(DateTimeFormatter.ofPattern("h:mm a"))
-                    "It's $formattedTime."
-                } else if (primaryTask.action.equals("alarm", ignoreCase = true)) {
-                    if (finalOutcome is Outcome.Success) "Alarm set." else "Unable to set alarm."
-                } else if (primaryTask.action.equals("settings", ignoreCase = true)) {
-                    if (finalOutcome is Outcome.Success) "Opening settings." else "Unable to open settings."
-                } else if (finalOutcome is Outcome.Success) {
-                    "Done."
-                } else {
-                    "Unable to complete device action."
-                }
-            }
-            else -> null
-        }
-
-        if (confirmationText != null) {
-            println("[HALO-TXN] tts confirmation=\"$confirmationText\"")
-            eventBus.publish(TtsRequested(timestamp = System.currentTimeMillis(), text = confirmationText))
         }
         
         return finalOutcome

@@ -22,6 +22,7 @@ import com.halo.host.android.capability.AndroidCommunicationCapability
 import com.halo.host.android.capability.AndroidDeviceCapability
 import com.halo.host.android.capability.AndroidMemoryCapability
 import com.halo.host.android.capability.AndroidWebCapability
+import com.halo.runtime.cognition.response.CommandResponseProcess
 import com.halo.sdk.runtime.NativeResourceCoordinator
 import com.halo.runtime.speech.SpeechPerceptionBridge
 import com.halo.runtime.speech.SpeechSessionManager
@@ -65,6 +66,13 @@ class EngineGraph(
 
     val executionScheduler by lazy { ExecutionScheduler(capabilityRegistry) }
     val executionEngine by lazy { ExecutionEngine(executionScheduler, infra.eventBus, infra.blackboard) }
+    val commandResponseProcess by lazy {
+        CommandResponseProcess(
+            eventBus = infra.eventBus,
+            scope = infra.scope,
+            logger = infra.logger
+        ).apply { start() }
+    }
     val planningEngine by lazy { PlanningEngine(infra.eventBus, infra.blackboard) }
 
     val interpretationEngine by lazy { InterpretationEngine(infra.blackboard, infra.eventBus) }

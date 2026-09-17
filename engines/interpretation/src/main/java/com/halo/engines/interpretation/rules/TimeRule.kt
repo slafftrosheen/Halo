@@ -1,8 +1,10 @@
 package com.halo.engines.interpretation.rules
 
+import com.halo.cognition.language.ApplicationEntity
 import com.halo.engines.interpretation.api.InterpretationContext
 import com.halo.engines.interpretation.api.InterpretationRule
 import com.halo.engines.interpretation.api.RuleMatch
+import com.halo.engines.interpretation.model.OpenIntent
 import com.halo.engines.interpretation.model.TimeEntity
 import com.halo.engines.speech.SpeechRecognizedPayload
 
@@ -11,13 +13,27 @@ class TimeRule : InterpretationRule {
 
     override suspend fun match(context: InterpretationContext): RuleMatch? {
         val transcript = transcript(context) ?: return null
+        val consumedTokens = transcript.tokenCount()
+
+        // 1. Explicit current-time query matching
+        if (currentTimePattern.containsMatchIn(transcript)) {
+            return RuleMatch(
+                confidence = 0.99f,
+                intent = OpenIntent,
+                entities = listOf(ApplicationEntity("time", 0.99f)),
+                consumedTokens = consumedTokens,
+                diagnostics = "Detected explicit current time query"
+            )
+        }
+
+        // 2. Relative day/time expressions (e.g., "today at 5pm")
         val match = timePattern.find(transcript) ?: return null
         val expression = normalize(match.groupValues[1], match.groupValues[2])
 
         return RuleMatch(
             confidence = 0.98f,
             entities = listOf(TimeEntity(expression, 0.98f)),
-            consumedTokens = match.value.tokenCount(),
+            consumedTokens = consumedTokens,
             diagnostics = "Extracted time $expression"
         )
     }
@@ -54,6 +70,10 @@ class TimeRule : InterpretationRule {
         trim().split(Regex("\\s+")).count { it.isNotBlank() }
 
     private companion object {
+        val currentTimePattern = Regex(
+            "^\\s*(?:what(?:'s|\\s+is)?(?:\\s+the)?\\s+time|current\\s+time|what\\s+time\\s+is\\s+it|what\\s+time\\s+do\\s+we\\s+have)\\b",
+            RegexOption.IGNORE_CASE
+        )
         val timePattern = Regex(
             "\\b(today|tomorrow|tonight)(?:\\s+(?:at\\s+)?(\\d{1,2}(?::\\d{2})?\\s*(?:am|pm)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|morning|afternoon|evening))?",
             RegexOption.IGNORE_CASE

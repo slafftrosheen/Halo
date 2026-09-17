@@ -49,7 +49,8 @@ data class ApplicationTask(
     override val dependencies: List<Task> = emptyList(),
     override val isParallel: Boolean = false,
     val packageName: String,
-    val intent: String
+    val intent: String,
+    val displayName: String = ""
 ) : Task
 
 data class MediaTask(

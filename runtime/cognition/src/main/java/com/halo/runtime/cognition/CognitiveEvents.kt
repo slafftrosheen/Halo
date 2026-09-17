@@ -16,6 +16,15 @@ data class OutcomePublished(
     override val timestamp: Long = System.currentTimeMillis()
 ) : HaloEvent
 
+data class ExecutionResultPublished(
+    override val id: String = UUID.randomUUID().toString(),
+    val planId: String,
+    val task: Task,
+    val outcome: Outcome,
+    val message: String = "",
+    override val timestamp: Long = System.currentTimeMillis()
+) : HaloEvent
+
 data class RecoveryStarted(
     override val id: String = UUID.randomUUID().toString(),
     val observationId: String,
