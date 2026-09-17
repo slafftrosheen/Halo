@@ -3,6 +3,7 @@ package com.halo.runtime.cognition.response
 import com.halo.runtime.cognition.ApplicationTask
 import com.halo.runtime.cognition.CommunicationTask
 import com.halo.runtime.cognition.DeviceTask
+import com.halo.runtime.cognition.ExecutionResultPublished
 import com.halo.runtime.cognition.MediaTask
 import com.halo.runtime.cognition.NavigationTask
 import com.halo.runtime.cognition.Outcome
@@ -76,5 +77,45 @@ class CommandResponseMapperTest {
         val outcome = Outcome.PermanentFailure("No media player is available")
         val response = mapper.mapResponse(task, outcome)
         assertEquals("No media player is available", response)
+    }
+
+    @Test
+    fun testExecutionSpeaksOnceUsingFinalMeaningfulSuccess() {
+        val results = listOf(
+            ExecutionResultPublished(
+                executionId = "execution-1",
+                planId = "plan-1",
+                task = DeviceTask(action = "time"),
+                outcome = Outcome.Success("It's 12:34 PM.")
+            ),
+            ExecutionResultPublished(
+                executionId = "execution-1",
+                planId = "plan-1",
+                task = MediaTask(mediaAction = "play", mediaId = "Daft Punk"),
+                outcome = Outcome.Success("Playback requested")
+            )
+        )
+
+        assertEquals("Playing music.", mapper.mapExecution(results))
+    }
+
+    @Test
+    fun testExecutionFailureOverridesEarlierSuccess() {
+        val results = listOf(
+            ExecutionResultPublished(
+                executionId = "execution-2",
+                planId = "plan-2",
+                task = ApplicationTask(packageName = "com.example.app", intent = "open", displayName = "Example"),
+                outcome = Outcome.Success("Example")
+            ),
+            ExecutionResultPublished(
+                executionId = "execution-2",
+                planId = "plan-2",
+                task = MediaTask(mediaAction = "play", mediaId = "Daft Punk"),
+                outcome = Outcome.PermanentFailure("No media player is available")
+            )
+        )
+
+        assertEquals("No media player is available", mapper.mapExecution(results))
     }
 }

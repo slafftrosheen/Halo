@@ -18,6 +18,7 @@ data class OutcomePublished(
 
 data class ExecutionResultPublished(
     override val id: String = UUID.randomUUID().toString(),
+    val executionId: String,
     val planId: String,
     val task: Task,
     val outcome: Outcome,
