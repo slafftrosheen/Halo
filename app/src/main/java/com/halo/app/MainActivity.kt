@@ -37,6 +37,7 @@ import kotlinx.coroutines.withContext
 class MainActivity : ComponentActivity() {
     private var hasRequiredPermissions by mutableStateOf(false)
     private var uiGraphReady by mutableStateOf(false)
+    private var runtimeReady by mutableStateOf(false)
     private var uiGraphError by mutableStateOf<String?>(null)
     private var runtimeError by mutableStateOf<String?>(null)
     private lateinit var runtime: HaloRuntime
@@ -52,6 +53,8 @@ class MainActivity : ComponentActivity() {
         if (hasRequiredPermissions) {
             startUiGraphBootstrap()
             startRuntimeLoop()
+        } else {
+            runtimeReady = false
         }
     }
 
@@ -131,7 +134,7 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                         }
-                        !uiGraphReady -> Box(
+                        !uiGraphReady || !runtimeReady -> Box(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
                         ) { CircularProgressIndicator() }
@@ -197,6 +200,7 @@ class MainActivity : ComponentActivity() {
         if (force) runtimeJob?.cancel()
 
         runtimeLoopStarted = true
+        runtimeReady = false
         runtimeError = null
         RuntimeStartupTrace.mark("activity.runtimeLoop.schedule force=$force")
 
@@ -213,6 +217,9 @@ class MainActivity : ComponentActivity() {
                     runtime.start()
                     RuntimeStartupTrace.mark("activity.runtime.start.end", startedAt)
                 }
+                withContext(Dispatchers.Main.immediate) {
+                    runtimeReady = true
+                }
                 RuntimeStartupTrace.mark("activity.runtime.ready", startedAt)
             } catch (error: CancellationException) {
                 RuntimeStartupTrace.mark("activity.runtime.cancelled", startedAt)
@@ -221,6 +228,7 @@ class MainActivity : ComponentActivity() {
                 RuntimeStartupTrace.mark("activity.runtime.failed", startedAt)
                 android.util.Log.e("MainActivity", "Runtime startup failed", error)
                 withContext(Dispatchers.Main.immediate) {
+                    runtimeReady = false
                     runtimeError = error.message ?: error::class.java.simpleName
                     runtimeLoopStarted = false
                 }
@@ -230,6 +238,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         RuntimeStartupTrace.mark("activity.onDestroy.begin")
+        runtimeReady = false
         uiGraphJob?.cancel()
         runtimeJob?.cancel()
         ManualDependencyGraph.infra.scope.launch(Dispatchers.IO) {
