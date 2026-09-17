@@ -103,7 +103,7 @@ open class DefaultInterpretationEngine(
                     for (execution in processed.result.executions) {
                         eventBus.publish(execution)
                     }
-                    
+
                     eventBus.publish(InterpretationBuilt(id = UUID.randomUUID().toString(), interpretation = processed.result.interpretation))
                     eventBus.publish(InterpretationPublished(id = UUID.randomUUID().toString(), knowledgeId = processed.knowledge.id))
 
@@ -240,7 +240,10 @@ open class DefaultInterpretationEngine(
                 timestamp = timestamp
             ),
             confidence = knowledgeConfidence,
-            source = KnowledgeSource.AUDIO,
+            // Keyboard input reuses the same transcript payload as speech so it
+            // can enter the same interpreter. Preserve the actual input source
+            // instead of poisoning the blackboard with fake AUDIO provenance.
+            source = if (source == Source.USER) KnowledgeSource.USER else KnowledgeSource.AUDIO,
             createdAt = Instant.fromEpochMilliseconds(timestamp)
         )
     }
