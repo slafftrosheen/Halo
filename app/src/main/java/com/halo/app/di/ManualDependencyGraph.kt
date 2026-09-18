@@ -2,6 +2,7 @@ package com.halo.app.di
 
 import android.content.Context
 import com.halo.app.HaloRuntime
+import com.halo.app.ai.readRuntimeAiContextPolicy
 import com.halo.app.RuntimeStartupTrace
 import com.halo.app.data.AppDatabase
 import com.halo.app.data.notebook.RoomNotebookRepository
@@ -83,7 +84,19 @@ object ManualDependencyGraph {
     val toolRegistry by lazy { com.halo.runtime.cognition.tools.ToolRegistry(listOf(com.halo.runtime.cognition.tools.EchoToolExecutor(), com.halo.runtime.cognition.tools.CurrentTimeToolExecutor())) }
     val contextAssembler by lazy { com.halo.runtime.cognition.context.DefaultContextAssembler(conversationStore, blackboard, toolRegistry) }
     val toolAuthorizer by lazy { com.halo.runtime.cognition.tools.InMemoryToolAuthorizer(toolRegistry) }
-    val cognitiveSession by lazy { CognitiveSession(eventBus, aiProviderRouter, conversationStore, contextAssembler, toolRegistry, toolAuthorizer, infra.scope, blackboard) }
+    val cognitiveSession by lazy {
+        CognitiveSession(
+            eventBus = eventBus,
+            providerRouter = aiProviderRouter,
+            conversationStore = conversationStore,
+            contextAssembler = contextAssembler,
+            toolRegistry = toolRegistry,
+            toolAuthorizer = toolAuthorizer,
+            scope = infra.scope,
+            blackboard = blackboard,
+            defaultPolicyProvider = { storage.readRuntimeAiContextPolicy() }
+        )
+    }
 
     val processManager get() = observerGraph.processManager
     val timelineEventMapper get() = observerGraph.timelineEventMapper
