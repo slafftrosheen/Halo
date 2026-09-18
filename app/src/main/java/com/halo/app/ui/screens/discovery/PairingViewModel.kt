@@ -66,7 +66,13 @@ class PairingViewModel(
                             ConnectionState.Ready -> "Connected and ready"
                             ConnectionState.Disconnecting -> "Disconnecting…"
                             is ConnectionState.Failed -> state.reason
-                            ConnectionState.Disconnected -> current.statusMessage
+                            ConnectionState.Disconnected -> {
+                                if (current.connectionState != ConnectionState.Disconnected) {
+                                    "Disconnected"
+                                } else {
+                                    current.statusMessage
+                                }
+                            }
                         }
                     )
                 }
