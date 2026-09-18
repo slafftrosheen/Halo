@@ -1,7 +1,6 @@
 package com.halo.app.ui.screens.devices
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -37,6 +36,7 @@ import com.halo.app.ui.workspace.HaloWorkspaceCard
 import com.halo.app.ui.workspace.HaloWorkspaceHeader
 import com.halo.app.ui.workspace.HaloWorkspaceRow
 import com.halo.app.ui.workspace.HaloWorkspaceSection
+import com.halo.app.ui.workspace.HaloWorkspaceToggleRow
 import com.halo.drivers.heycyan.protocol.AudioRecordingState
 import com.halo.drivers.heycyan.protocol.VideoRecordingState
 
@@ -284,39 +284,14 @@ fun HeyCyanControlScreen(
         Spacer(Modifier.height(20.dp))
 
         HaloWorkspaceSection(title = "Preferences") {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable {
-                        viewModel.toggleAutoConnect(deviceId, !(device?.autoConnect ?: false))
-                    }
-                    .padding(horizontal = 16.dp, vertical = 14.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Settings,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(Modifier.size(12.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Auto-connect",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = "Reconnect when this saved device becomes available.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+            HaloWorkspaceToggleRow(
+                title = "Auto-connect",
+                subtitle = "Reconnect when this saved device becomes available.",
+                checked = device?.autoConnect == true,
+                onCheckedChange = { enabled ->
+                    viewModel.toggleAutoConnect(deviceId, enabled)
                 }
-                Text(
-                    text = if (device?.autoConnect == true) "On" else "Off",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.secondary
-                )
-            }
+            )
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
