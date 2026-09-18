@@ -44,7 +44,7 @@ import com.halo.drivers.heycyan.protocol.VideoRecordingState
 fun HeyCyanControlScreen(
     deviceId: String,
     viewModel: DevicesViewModel,
-    onBack: () -> Unit = {}
+    onBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val device = uiState.devices.find { it.id == deviceId }
