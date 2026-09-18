@@ -152,9 +152,9 @@ Implemented on main:
 - Note editor uses the workspace content plane rather than an enclosing legacy glass card.
 - Persisted System/Light/Dark appearance selection is applied at the app root.
 - HaloPresence respects Android's platform animation-disable setting.
-- Intelligence, Voice, Permissions and Pairing use shared workspace primitives.
+- Intelligence, Voice, Permissions, Pairing and HeyCyan device detail use shared workspace primitives.
 
 Still required:
 - Feed measured input/output envelope into Presence when shared telemetry exists.
-- Migrate remaining device-detail screens away from legacy Halo Glass primitives.
+- Migrate BuddyBot's custom control surface away from legacy Halo Glass primitives without changing safety/control semantics.
 - Add screenshot/accessibility/frame-time acceptance in both schemes.
