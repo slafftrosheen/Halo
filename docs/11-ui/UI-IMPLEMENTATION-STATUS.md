@@ -88,10 +88,12 @@ Fixes made:
 - HeyCyan and BuddyBot detail screens require explicit back actions.
 - The legacy placeholder `rippleGlass()` clickable modifier was removed because it created an
   interaction surface with no behavior.
-- Intelligence Memory and Tools switches now edit the same persisted AiContextPolicy consumed by
-  CognitiveSession for the next live turn.
-- The Agent mode switch was removed because the current cognitive-session path has no authoritative
-  agent-mode runtime hook; unsupported controls are not presented as working features.
+- Intelligence Tools now edits the same persisted AiContextPolicy consumed by CognitiveSession for
+  the next live turn.
+- Memory is hidden because DefaultContextAssembler currently reports the memory source as unpopulated;
+  exposing a switch would imply behavior that does not exist yet.
+- Agent mode is hidden because the current cognitive-session path has no authoritative agent-mode
+  runtime hook; unsupported controls are not presented as working features.
 
 Current reachable-screen source audit found no empty `onClick = {}`, no required callback defaulting
 to an empty action, and no screen-level TODO controls. Static rows such as About/status/telemetry
