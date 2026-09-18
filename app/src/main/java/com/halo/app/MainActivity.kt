@@ -1,6 +1,8 @@
 package com.halo.app
 
 import android.Manifest
+import android.bluetooth.BluetoothAdapter
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -26,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.halo.app.di.ManualDependencyGraph
 import com.halo.app.ui.shell.AppShell
+import com.halo.app.ui.screens.discovery.requiredBluetoothDiscoveryPermissions
 import com.halo.app.ui.shell.PermissionsScreen
 import com.halo.app.ui.theme.AppearanceMode
 import com.halo.app.ui.theme.HaloTheme
@@ -57,6 +60,26 @@ class MainActivity : ComponentActivity() {
             startRuntimeLoop()
         } else {
             runtimeReady = false
+        }
+    }
+
+    private val devicePermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) {
+        runCatching {
+            ManualDependencyGraph.pairingViewModel.refreshPrerequisites()
+        }.onFailure { error ->
+            android.util.Log.w("MainActivity", "Could not refresh pairing permissions", error)
+        }
+    }
+
+    private val bluetoothEnableLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        runCatching {
+            ManualDependencyGraph.pairingViewModel.refreshPrerequisites()
+        }.onFailure { error ->
+            android.util.Log.w("MainActivity", "Could not refresh Bluetooth state", error)
         }
     }
 
@@ -150,6 +173,14 @@ class MainActivity : ComponentActivity() {
                         else -> AppShell(
                             onRequestPermissions = {
                                 permissionLauncher.launch(requiredPermissions())
+                            },
+                            onRequestBluetoothPermissions = {
+                                devicePermissionLauncher.launch(requiredBluetoothDiscoveryPermissions())
+                            },
+                            onRequestBluetoothEnable = {
+                                bluetoothEnableLauncher.launch(
+                                    Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+                                )
                             }
                         )
                     }
