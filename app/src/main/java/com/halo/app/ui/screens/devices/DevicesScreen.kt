@@ -316,11 +316,7 @@ class DevicesViewModel(
 }
 
 @Composable
-fun DevicesScreen(
-    viewModel: DevicesViewModel,
-    onNavigate: (String) -> Unit = {},
-    onBack: () -> Unit = {}
-) {
+fun DevicesScreen(viewModel: DevicesViewModel) {
     val uiState by viewModel.uiState.collectAsState()
 
     Column(
