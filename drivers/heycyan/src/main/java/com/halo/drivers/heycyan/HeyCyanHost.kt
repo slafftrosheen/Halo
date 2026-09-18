@@ -43,20 +43,7 @@ class HeyCyanHost(
 
     init {
         scope.launch {
-            val sm = sessionManager ?: return@launch
-            selectedAddress?.let { migrateLegacySavedDevice(sm, it) }
-
-            val saved = sm.registry.getSavedDevices().filter { it.identity.deviceType == "HEYCYAN_GLASSES" }
-            saved.forEach { ensureSessionRegistered(it.identity.deviceId) }
-
-            val target = selectedAddress
-                ?.let { id -> saved.firstOrNull { it.identity.deviceId == id } }
-                ?: saved.firstOrNull { it.autoConnect }
-            if (target != null && target.autoConnect) {
-                selectedAddress = target.identity.deviceId
-                runCatching { sm.autoConnectDevice(target.identity.deviceId) }
-                    .onFailure { Log.w("HeyCyanHost", "Saved device auto-connect failed", it) }
-            }
+            retryAutoConnect()
         }
 
         driver.deviceState
@@ -116,6 +103,32 @@ class HeyCyanHost(
                 }
             }
             .launchIn(scope)
+    }
+
+    /**
+     * Re-register saved glasses sessions and retry the preferred auto-connect target.
+     * Safe to call after Bluetooth returns; DeviceSessionManager serializes duplicate
+     * connect attempts and treats READY as success.
+     */
+    suspend fun retryAutoConnect(): Boolean {
+        val sm = sessionManager ?: return false
+        selectedAddress?.let { migrateLegacySavedDevice(sm, it) }
+
+        val saved = sm.registry.getSavedDevices()
+            .filter { it.identity.deviceType == "HEYCYAN_GLASSES" }
+        saved.forEach { ensureSessionRegistered(it.identity.deviceId) }
+
+        val target = selectedAddress
+            ?.let { id -> saved.firstOrNull { it.identity.deviceId == id && it.autoConnect } }
+            ?: saved.firstOrNull { it.autoConnect }
+            ?: return false
+
+        selectedAddress = target.identity.deviceId
+        return runCatching {
+            sm.autoConnectDevice(target.identity.deviceId)
+        }.onFailure {
+            Log.w("HeyCyanHost", "Saved device auto-connect failed", it)
+        }.getOrDefault(false)
     }
 
     private suspend fun migrateLegacySavedDevice(
