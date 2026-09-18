@@ -6,34 +6,38 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.weight
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.halo.app.ui.glass.components.HaloGlassBackHeader
-import com.halo.app.ui.glass.components.HaloGlassButton
-import com.halo.app.ui.glass.components.HaloGlassChip
-import com.halo.app.ui.glass.components.HaloGlassDivider
-import com.halo.app.ui.glass.components.HaloGlassLazyPage
-import com.halo.app.ui.glass.components.HaloGlassSection
-import com.halo.app.ui.glass.components.HaloGlassSettingRow
-import com.halo.app.ui.glass.material.HaloGlassColors
-import com.halo.app.ui.glass.material.HaloTypography
+import com.halo.app.ui.theme.HaloPastelBlue
+import com.halo.app.ui.theme.HaloPastelMint
+import com.halo.app.ui.theme.HaloWarning
+import com.halo.app.ui.workspace.HaloWorkspaceButton
+import com.halo.app.ui.workspace.HaloWorkspaceCard
+import com.halo.app.ui.workspace.HaloWorkspaceHeader
+import com.halo.app.ui.workspace.HaloWorkspaceRow
+import com.halo.app.ui.workspace.HaloWorkspaceSection
 import com.halo.drivers.heycyan.protocol.AudioRecordingState
 import com.halo.drivers.heycyan.protocol.VideoRecordingState
 
@@ -47,270 +51,322 @@ fun HeyCyanControlScreen(
     val device = uiState.devices.find { it.id == deviceId }
     val isConnected = device?.isConnected == true
     val connectionState = device?.connectionStateText ?: "Unknown"
-    val connectionColor = when {
-        connectionState == "Ready" -> HaloGlassColors.Success
+    val statusAccent = when {
+        connectionState == "Ready" -> HaloPastelMint
         connectionState.contains("Connecting", ignoreCase = true) ||
             connectionState.contains("Syncing", ignoreCase = true) ||
-            connectionState.contains("Handshaking", ignoreCase = true) -> HaloGlassColors.Warning
-        connectionState == "Error" -> HaloGlassColors.Danger
-        else -> HaloGlassColors.TextMuted
+            connectionState.contains("Handshaking", ignoreCase = true) -> HaloWarning
+        connectionState == "Error" -> MaterialTheme.colorScheme.error
+        else -> HaloPastelBlue
     }
 
-    HaloGlassLazyPage(title = "") {
-        item {
-            HaloGlassBackHeader(
-                title = device?.name ?: "HeyCyan BW-AG1 Pro",
-                onBack = onBack
-            )
-        }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp, vertical = 14.dp)
+    ) {
+        HaloWorkspaceHeader(
+            title = device?.name ?: "HeyCyan BW-AG1 Pro",
+            subtitle = "Smart glasses · device runtime",
+            onBack = onBack
+        )
+
+        Spacer(Modifier.height(18.dp))
 
         device?.healthWarning?.let { warning ->
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(HaloGlassColors.Warning.copy(alpha = 0.2f))
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(Icons.Default.Warning, contentDescription = null, tint = HaloGlassColors.Warning)
-                    Spacer(Modifier.width(12.dp))
-                    Text(warning, style = HaloTypography.bodyMedium, color = HaloGlassColors.Warning)
+            HaloWorkspaceCard(accent = HaloWarning) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Warning,
+                        contentDescription = null,
+                        tint = HaloWarning
+                    )
+                    Spacer(Modifier.size(10.dp))
+                    Text(
+                        text = warning,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
                 }
             }
+            Spacer(Modifier.height(14.dp))
         }
 
-        item {
+        HaloWorkspaceCard(accent = statusAccent) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(HaloGlassColors.GlassElevated)
-                    .padding(20.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(Modifier.weight(1f)) {
-                    Text("Status", style = HaloTypography.labelMedium, color = HaloGlassColors.TextSecondary)
-                    Spacer(Modifier.height(4.dp))
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        connectionState,
-                        style = HaloTypography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
-                        color = connectionColor
+                        text = "Status",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Spacer(Modifier.height(2.dp))
                     Text(
-                        when {
-                            connectionState == "Ready" -> "Device is ready for runtime actions"
-                            connectionState == "Error" -> "Reconnect to retry the session"
-                            isConnected -> "Session is active"
-                            else -> "No active device session"
+                        text = connectionState,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = when {
+                            connectionState == "Ready" -> "Device is ready for runtime actions."
+                            connectionState == "Error" -> "Reconnect to retry the session."
+                            isConnected -> "Device session is active."
+                            else -> "No active device session."
                         },
-                        style = HaloTypography.bodySmall,
-                        color = HaloGlassColors.TextMuted
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                Spacer(Modifier.width(12.dp))
-                HaloGlassChip(
+
+                HaloWorkspaceButton(
                     text = when {
                         connectionState.contains("Connecting", ignoreCase = true) ||
                             connectionState.contains("Syncing", ignoreCase = true) ||
-                            connectionState.contains("Handshaking", ignoreCase = true) -> "Working..."
+                            connectionState.contains("Handshaking", ignoreCase = true) -> "Working…"
                         isConnected -> "Disconnect"
                         else -> "Connect"
                     },
-                    modifier = Modifier.clickable(enabled = connectionState != "Disconnecting") {
+                    onClick = {
                         if (isConnected) viewModel.disconnectDevice(deviceId)
                         else viewModel.connectDevice(deviceId)
-                    }
+                    },
+                    enabled = connectionState != "Disconnecting",
+                    primary = !isConnected
                 )
             }
         }
 
-        item {
-            HaloGlassSection(title = "QUICK ACTIONS") {
-                Column(
-                    Modifier.fillMaxWidth().padding(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+        Spacer(Modifier.height(20.dp))
+
+        HaloWorkspaceSection(title = "Quick actions") {
+            Column(
+                modifier = Modifier.padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        val photoState = device?.photoState ?: PhotoActionState.READY
-                        val capturing = photoState == PhotoActionState.CAPTURING
-                        HaloGlassButton(
-                            text = when (photoState) {
-                                PhotoActionState.READY -> "Take Photo"
-                                PhotoActionState.CAPTURING -> "Capturing..."
-                                PhotoActionState.COMPLETED -> "Take Another"
-                                PhotoActionState.FAILED -> "Retry Photo"
-                            },
-                            onClick = { viewModel.takePhoto(deviceId) },
-                            modifier = Modifier.weight(1f),
-                            enabled = isConnected && !capturing
-                        )
+                    val photoState = device?.photoState ?: PhotoActionState.READY
+                    val capturing = photoState == PhotoActionState.CAPTURING
+                    HaloWorkspaceButton(
+                        text = when (photoState) {
+                            PhotoActionState.READY -> "Take photo"
+                            PhotoActionState.CAPTURING -> "Capturing…"
+                            PhotoActionState.COMPLETED -> "Take another"
+                            PhotoActionState.FAILED -> "Retry photo"
+                        },
+                        onClick = { viewModel.takePhoto(deviceId) },
+                        modifier = Modifier.weight(1f),
+                        enabled = isConnected && !capturing
+                    )
 
-                        val videoState = device?.videoState ?: VideoRecordingState.IDLE
-                        val recording = videoState == VideoRecordingState.RECORDING
-                        val transitioning = videoState == VideoRecordingState.STARTING || videoState == VideoRecordingState.STOPPING
-                        HaloGlassButton(
-                            text = when (videoState) {
-                                VideoRecordingState.IDLE -> "Start Video"
-                                VideoRecordingState.STARTING -> "Starting..."
-                                VideoRecordingState.RECORDING -> "Stop Video"
-                                VideoRecordingState.STOPPING -> "Stopping..."
-                                VideoRecordingState.ERROR -> "Retry Video"
-                                VideoRecordingState.UNKNOWN -> "Unknown"
-                            },
-                            onClick = {
-                                if (recording) viewModel.stopVideo(deviceId) else viewModel.startVideo(deviceId)
-                            },
-                            modifier = Modifier.weight(1f),
-                            enabled = isConnected && !transitioning
-                        )
-                    }
-
-                    val audioState = device?.audioState ?: AudioRecordingState.IDLE
-                    val audioRecording = audioState == AudioRecordingState.RECORDING
-                    val audioTransitioning = false
-                    HaloGlassButton(
-                        text = when (audioState) {
-                            AudioRecordingState.IDLE -> "Start Audio"
-                            AudioRecordingState.RECORDING -> "Stop Audio"
-                            AudioRecordingState.ERROR -> "Retry Audio"
+                    val videoState = device?.videoState ?: VideoRecordingState.IDLE
+                    val recording = videoState == VideoRecordingState.RECORDING
+                    val transitioning =
+                        videoState == VideoRecordingState.STARTING ||
+                            videoState == VideoRecordingState.STOPPING
+                    HaloWorkspaceButton(
+                        text = when (videoState) {
+                            VideoRecordingState.IDLE -> "Start video"
+                            VideoRecordingState.STARTING -> "Starting…"
+                            VideoRecordingState.RECORDING -> "Stop video"
+                            VideoRecordingState.STOPPING -> "Stopping…"
+                            VideoRecordingState.ERROR -> "Retry video"
+                            VideoRecordingState.UNKNOWN -> "Unknown"
                         },
                         onClick = {
-                            if (audioRecording) viewModel.stopAudioRecording(deviceId)
-                            else viewModel.startAudioRecording(deviceId)
+                            if (recording) viewModel.stopVideo(deviceId)
+                            else viewModel.startVideo(deviceId)
                         },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = isConnected && !audioTransitioning
+                        modifier = Modifier.weight(1f),
+                        enabled = isConnected && !transitioning,
+                        primary = !recording
                     )
                 }
-            }
-        }
 
-        item {
-            HaloGlassSection(title = "DEVICE STATE") {
-                HaloGlassSettingRow(title = "Connection", value = connectionState)
-                HaloGlassDivider()
-                HaloGlassSettingRow(title = "Battery", value = "${device?.battery ?: "Unknown"}\n${device?.batteryAgeText ?: "No data"}")
-                HaloGlassDivider()
-                HaloGlassSettingRow(title = "Video Recording", value = device?.videoState?.name ?: "IDLE")
-                HaloGlassDivider()
-                HaloGlassSettingRow(title = "Audio Recording", value = device?.audioState?.name ?: "IDLE")
-                HaloGlassDivider()
-                HaloGlassSettingRow(title = "Wear State", value = device?.wearStateText ?: "UNKNOWN")
-                HaloGlassDivider()
-                HaloGlassSettingRow(title = "Volume", value = device?.volumeText ?: "Normal")
-            }
-        }
-
-        item {
-            HaloGlassSection(title = "AUDIO OUTPUT") {
-                HaloGlassSettingRow(title = "Speech target", value = "HeyCyan glasses")
-                HaloGlassDivider()
-                HaloGlassSettingRow(title = "Routing command", value = "Verified • 0x52")
-                HaloGlassDivider()
-                HaloGlassSettingRow(title = "Playback transport", value = "Android Bluetooth audio")
-                HaloGlassDivider()
-                HaloGlassSettingRow(
-                    title = "Output status",
-                    value = if (isConnected) "Ready for speech routing" else "Connect device to route speech"
+                val audioState = device?.audioState ?: AudioRecordingState.IDLE
+                val audioRecording = audioState == AudioRecordingState.RECORDING
+                HaloWorkspaceButton(
+                    text = when (audioState) {
+                        AudioRecordingState.IDLE -> "Start audio"
+                        AudioRecordingState.RECORDING -> "Stop audio"
+                        AudioRecordingState.ERROR -> "Retry audio"
+                    },
+                    onClick = {
+                        if (audioRecording) viewModel.stopAudioRecording(deviceId)
+                        else viewModel.startAudioRecording(deviceId)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = isConnected,
+                    primary = !audioRecording
                 )
             }
         }
 
-        item {
-            HaloGlassSection(title = "HARDWARE INPUTS") {
-                HaloGlassSettingRow(title = "AI Button", value = "Input event • voice routing")
-                HaloGlassDivider()
-                HaloGlassSettingRow(title = "Camera Button", value = "Input event • photo/video")
-                HaloGlassDivider()
-                HaloGlassSettingRow(title = "Touch Panel", value = "Input event • gesture source")
-                HaloGlassDivider()
-                HaloGlassSettingRow(title = "Microphone", value = "Observation source • live audio")
-            }
+        Spacer(Modifier.height(20.dp))
+
+        HaloWorkspaceSection(title = "Device state") {
+            DeviceRow("Connection", connectionState)
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            DeviceRow("Battery", device?.battery ?: "Unknown", device?.batteryAgeText)
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            DeviceRow("Video recording", device?.videoState?.name ?: "IDLE")
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            DeviceRow("Audio recording", device?.audioState?.name ?: "IDLE")
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            DeviceRow("Wear state", device?.wearStateText ?: "UNKNOWN")
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            DeviceRow("Volume", device?.volumeText ?: "Normal")
         }
 
-        item {
-            HaloGlassSection(title = "CAPABILITIES") {
-                HaloGlassSettingRow(title = "Battery", value = "Available")
-                HaloGlassDivider()
-                HaloGlassSettingRow(title = "Device info", value = "Available")
-                HaloGlassDivider()
-                HaloGlassSettingRow(title = "Media inventory", value = "Available")
-                HaloGlassDivider()
-                HaloGlassSettingRow(title = "Photo capture", value = "Available")
-                HaloGlassDivider()
-                HaloGlassSettingRow(title = "Video capture", value = "Available")
-                HaloGlassDivider()
-                HaloGlassSettingRow(title = "Audio recording", value = "Available")
-                HaloGlassDivider()
-                HaloGlassSettingRow(title = "Speaker output", value = "Available with Bluetooth routing")
-                HaloGlassDivider()
-                HaloGlassSettingRow(title = "Live audio input", value = "Structural validation")
-                HaloGlassDivider()
-                HaloGlassSettingRow(title = "AI photo", value = "Blocked by protocol")
-                HaloGlassDivider()
-                HaloGlassSettingRow(title = "Wi-Fi transfer", value = "Available with limitation")
-            }
+        Spacer(Modifier.height(20.dp))
+
+        HaloWorkspaceSection(title = "Audio output") {
+            DeviceRow("Speech target", "HeyCyan glasses")
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            DeviceRow("Routing command", "Verified · 0x52")
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            DeviceRow("Playback transport", "Android Bluetooth audio")
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            DeviceRow(
+                "Output status",
+                if (isConnected) "Ready for speech routing" else "Connect device to route speech"
+            )
         }
 
-        item {
-            HaloGlassSection(title = "PREFERENCES") {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            viewModel.toggleAutoConnect(deviceId, !(device?.autoConnect ?: false))
-                        }
-                        .padding(vertical = 16.dp, horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Default.Settings,
-                            contentDescription = null,
-                            tint = HaloGlassColors.TextSecondary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(Modifier.width(12.dp))
-                        Text("Auto-connect", style = HaloTypography.bodyLarge, color = HaloGlassColors.TextPrimary)
+        Spacer(Modifier.height(20.dp))
+
+        HaloWorkspaceSection(title = "Hardware inputs") {
+            DeviceRow("AI button", "Input event · voice routing")
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            DeviceRow("Camera button", "Input event · photo/video")
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            DeviceRow("Touch panel", "Input event · gesture source")
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            DeviceRow("Microphone", "Observation source · live audio")
+        }
+
+        Spacer(Modifier.height(20.dp))
+
+        HaloWorkspaceSection(title = "Capabilities") {
+            DeviceRow("Battery", "Available")
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            DeviceRow("Device info", "Available")
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            DeviceRow("Media inventory", "Available")
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            DeviceRow("Photo capture", "Available")
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            DeviceRow("Video capture", "Available")
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            DeviceRow("Audio recording", "Available")
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            DeviceRow("Speaker output", "Available with Bluetooth routing")
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            DeviceRow("Live audio input", "Structural validation")
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            DeviceRow("AI photo", "Blocked by protocol")
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            DeviceRow("Wi-Fi transfer", "Available with limitation")
+        }
+
+        Spacer(Modifier.height(20.dp))
+
+        HaloWorkspaceSection(title = "Preferences") {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        viewModel.toggleAutoConnect(deviceId, !(device?.autoConnect ?: false))
                     }
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.size(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        if (device?.autoConnect == true) "ON" else "OFF",
-                        style = HaloTypography.bodyLarge,
-                        color = HaloGlassColors.Accent
+                        text = "Auto-connect",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Reconnect when this saved device becomes available.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                HaloGlassDivider()
+                Text(
+                    text = if (device?.autoConnect == true) "On" else "Off",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+            }
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { viewModel.forgetDevice(deviceId) },
+                color = MaterialTheme.colorScheme.surface
+            ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { viewModel.forgetDevice(deviceId) }
-                        .padding(16.dp),
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.Warning, contentDescription = null, tint = HaloGlassColors.Danger)
-                    Spacer(Modifier.width(12.dp))
-                    Text("Forget device", style = HaloTypography.bodyLarge, color = HaloGlassColors.Danger)
+                    Icon(
+                        imageVector = Icons.Default.Warning,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                    Spacer(Modifier.size(12.dp))
+                    Text(
+                        text = "Forget device",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.error
+                    )
                 }
             }
         }
 
-        item {
-            HaloGlassSection(title = "DIAGNOSTICS") {
-                HaloGlassSettingRow(title = "Device ID", value = deviceId)
-                HaloGlassDivider()
-                HaloGlassSettingRow(title = "Firmware", value = device?.firmware ?: "Unknown")
-                HaloGlassDivider()
-                HaloGlassSettingRow(title = "Health", value = device?.healthStateText ?: "UNKNOWN")
-                HaloGlassDivider()
-                HaloGlassSettingRow(title = "Last seen", value = device?.lastSeen ?: "Never")
-                HaloGlassDivider()
-                HaloGlassSettingRow(title = "Protocol", value = "HeyCyan SDK v1")
-            }
+        Spacer(Modifier.height(20.dp))
+
+        HaloWorkspaceSection(title = "Diagnostics") {
+            DeviceRow("Device ID", deviceId)
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            DeviceRow("Firmware", device?.firmware ?: "Unknown")
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            DeviceRow("Health", device?.healthStateText ?: "UNKNOWN")
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            DeviceRow("Last seen", device?.lastSeen ?: "Never")
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            DeviceRow("Protocol", "HeyCyan SDK v1")
         }
+
+        Spacer(Modifier.height(32.dp))
     }
+}
+
+@Composable
+private fun DeviceRow(
+    title: String,
+    value: String,
+    subtitle: String? = null
+) {
+    HaloWorkspaceRow(
+        title = title,
+        subtitle = subtitle,
+        trailingText = value
+    )
 }
