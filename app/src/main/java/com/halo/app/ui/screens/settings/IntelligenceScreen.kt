@@ -202,12 +202,6 @@ fun IntelligenceScreen(
 
         HaloWorkspaceSection(title = "Runtime policy") {
             PolicySwitchRow(
-                "Memory",
-                uiState.policy.includeMemories,
-                viewModel::setMemoryEnabled
-            )
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            PolicySwitchRow(
                 "Tools",
                 uiState.policy.includeAvailableTools,
                 viewModel::setToolsEnabled
