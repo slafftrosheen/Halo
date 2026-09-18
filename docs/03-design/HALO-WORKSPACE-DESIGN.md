@@ -152,9 +152,17 @@ Implemented on main:
 - Note editor uses the workspace content plane rather than an enclosing legacy glass card.
 - Persisted System/Light/Dark appearance selection is applied at the app root.
 - HaloPresence respects Android's platform animation-disable setting.
-- Intelligence, Voice, Permissions, Pairing and HeyCyan device detail use shared workspace primitives.
+- Intelligence, Voice, Permissions, Pairing, HeyCyan and BuddyBot device detail use shared workspace primitives.
 
 Still required:
 - Feed measured input/output envelope into Presence when shared telemetry exists.
-- Migrate BuddyBot's custom control surface away from legacy Halo Glass primitives without changing safety/control semantics.
-- Add screenshot/accessibility/frame-time acceptance in both schemes.
+- Record/verify committed Roborazzi light/dark visual-language snapshots, then extend coverage to full screens, accessibility and frame-time acceptance.
+
+
+### BuddyBot control-surface decision
+
+BuddyBot uses the same workspace language but keeps a denser control treatment appropriate for
+physical motion. Semantic danger/warning colors remain stronger than pastel object accents.
+The migration intentionally preserved the existing control contract: motors must be armed before
+drive commands, forward motion remains blocked by safety telemetry, joystick release sends STOP,
+manual pulses remain bounded/throttled, and the embedded SafetySupervisor remains authoritative.
