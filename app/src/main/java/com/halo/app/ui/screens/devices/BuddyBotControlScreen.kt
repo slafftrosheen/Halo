@@ -1,24 +1,35 @@
 package com.halo.app.ui.screens.devices
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -33,38 +44,35 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
-
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.halo.app.embodiment.BuddyBotHost
 import com.halo.app.embodiment.BuddyBotTelemetry
-import com.halo.app.ui.glass.components.HaloGlassBackHeader
-import com.halo.app.ui.glass.components.HaloGlassButton
-import com.halo.app.ui.glass.components.HaloGlassDialog
-import com.halo.app.ui.glass.components.HaloGlassDivider
-import com.halo.app.ui.glass.components.HaloGlassLazyPage
-import com.halo.app.ui.glass.components.HaloGlassSection
-import com.halo.app.ui.glass.components.HaloGlassSettingRow
-import com.halo.app.ui.glass.components.HaloGlassTextField
-import com.halo.app.ui.glass.material.HaloGlassColors
-import com.halo.app.ui.glass.material.HaloGlassMaterials
-import com.halo.app.ui.glass.material.HaloGlassTokens
-import com.halo.app.ui.glass.material.HaloTypography
+import com.halo.app.ui.theme.HaloPastelBlue
+import com.halo.app.ui.theme.HaloPastelMint
+import com.halo.app.ui.theme.HaloWarning
+import com.halo.app.ui.workspace.HaloWorkspaceButton
+import com.halo.app.ui.workspace.HaloWorkspaceCard
+import com.halo.app.ui.workspace.HaloWorkspaceHeader
+import com.halo.app.ui.workspace.HaloWorkspaceRow
+import com.halo.app.ui.workspace.HaloWorkspaceSection
 import com.halo.sdk.runtime.embodiment.ActionId
 import com.halo.sdk.runtime.embodiment.DriveMode
 import com.halo.sdk.runtime.embodiment.EmbodimentIntent
 import com.halo.sdk.runtime.embodiment.IntentKind
 import com.halo.sdk.runtime.embodiment.Mood
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.launch
 import java.util.UUID
 import kotlin.math.abs
 import kotlin.math.hypot
 import kotlin.math.min
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 
 private const val DRIVE_PULSE_MS = 180
 private const val JOYSTICK_MIN_PULSE_MS = 90
 private const val JOYSTICK_MAX_PULSE_MS = 250
+private const val JOYSTICK_SEND_INTERVAL_MS = 120L
 
 @Composable
 fun BuddyBotControlScreen(
@@ -82,7 +90,9 @@ fun BuddyBotControlScreen(
 
     var pairingCode by remember { mutableStateOf("") }
     var showUrlDialog by remember { mutableStateOf(false) }
-    var targetUrl by remember { mutableStateOf(buddyBotHost?.getTargetUrl() ?: BuddyBotHost.DEFAULT_BUDDYBOT_URL) }
+    var targetUrl by remember {
+        mutableStateOf(buddyBotHost?.getTargetUrl() ?: BuddyBotHost.DEFAULT_BUDDYBOT_URL)
+    }
     var joystickOffset by remember { mutableStateOf(Offset.Zero) }
     var joystickDirection by remember { mutableStateOf("STANDBY") }
     var lastJoystickSend by remember { mutableLongStateOf(0L) }
@@ -115,356 +125,845 @@ fun BuddyBotControlScreen(
     }
 
     if (showUrlDialog) {
-        HaloGlassDialog(title = "BuddyBot Target", onDismissRequest = { showUrlDialog = false }) {
-            Column(Modifier.fillMaxWidth().padding(8.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("Local WebSocket endpoint", style = HaloTypography.bodySmall, color = HaloGlassColors.TextSecondary)
-                HaloGlassTextField(
-                    value = targetUrl,
-                    onValueChange = { targetUrl = it },
-                    label = "WebSocket URL",
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    HaloGlassButton(text = "Reset", onClick = { targetUrl = BuddyBotHost.DEFAULT_BUDDYBOT_URL }, modifier = Modifier.weight(1f), isPrimary = false)
-                    HaloGlassButton(text = "Save", onClick = { buddyBotHost?.setTargetUrl(targetUrl.trim()); showUrlDialog = false }, modifier = Modifier.weight(1f))
-                }
-            }
-        }
-    }
-
-    HaloGlassLazyPage(title = "") {
-        item { HaloGlassBackHeader(title = device?.name ?: "BuddyBot", onBack = onBack) }
-
-        item { BuddyBotHero(device, telemetry, isConnected, ::stopMotion) }
-
-        item {
-            HaloGlassSection(title = "MANUAL CONTROL") {
-                Column(
-                    Modifier.fillMaxWidth().padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    val driveEnabled = isConnected && telemetry.motorsArmed
-                    val hint = when {
-                        !isConnected -> "Connect BuddyBot"
-                        !telemetry.motorsArmed -> "Arm motors to drive"
-                        telemetry.forwardMotionBlocked -> "Forward locked by safety"
-                        else -> "Drag to steer • release to stop"
-                    }
-
-                    BuddyBotDriveHud(
-                        telemetry = telemetry,
-                        connectionReady = driveEnabled,
-                        direction = joystickDirection,
+        AlertDialog(
+            onDismissRequest = { showUrlDialog = false },
+            title = { Text("BuddyBot target") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        text = "Local WebSocket endpoint",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    OutlinedTextField(
+                        value = targetUrl,
+                        onValueChange = { targetUrl = it },
+                        label = { Text("WebSocket URL") },
+                        singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
-
-                    BuddyBotJoystick(
-                        enabled = driveEnabled,
-                        forwardBlocked = telemetry.forwardMotionBlocked,
-                        offset = joystickOffset,
-                        onMove = { raw ->
-                            joystickOffset = raw
-                            if (!driveEnabled) return@BuddyBotJoystick
-
-                            val magnitude = min(1f, hypot(raw.x, raw.y) / 100f)
-                            if (magnitude < 0.14f) {
-                                stopMotion()
-                                return@BuddyBotJoystick
-                            }
-
-                            val x = (raw.x / 100f).coerceIn(-1f, 1f)
-                            val y = (-raw.y / 100f).coerceIn(-1f, 1f)
-                            val mode = when {
-                                y >= abs(x) -> DriveMode.FORWARD
-                                y <= -abs(x) -> DriveMode.REVERSE
-                                x < 0f -> DriveMode.ROTATE_LEFT
-                                else -> DriveMode.ROTATE_RIGHT
-                            }
-
-                            if (mode == DriveMode.FORWARD && telemetry.forwardMotionBlocked) {
-                                joystickDirection = "FORWARD LOCKED"
-                                stopMotion()
-                                return@BuddyBotJoystick
-                            }
-
-                            joystickDirection = when (mode) {
-                                DriveMode.FORWARD -> "FORWARD"
-                                DriveMode.REVERSE -> "REVERSE"
-                                DriveMode.ROTATE_LEFT -> "LEFT"
-                                else -> "RIGHT"
-                            }
-
-                            val now = System.currentTimeMillis()
-                            if (now - lastJoystickSend < 120L) return@BuddyBotJoystick
-                            lastJoystickSend = now
-                            val pulseMs = (JOYSTICK_MIN_PULSE_MS +
-                                (JOYSTICK_MAX_PULSE_MS - JOYSTICK_MIN_PULSE_MS) * magnitude).toInt()
-                            dispatch(IntentKind.MOVE, mode, pulseMs)
-                        },
-                        onRelease = ::stopMotion
-                    )
-
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text(joystickDirection, style = HaloTypography.labelMedium, color = if (driveEnabled) HaloGlassColors.Accent else HaloGlassColors.TextMuted)
-                        Text(hint, style = HaloTypography.labelSmall, color = if (telemetry.forwardMotionBlocked) HaloGlassColors.Warning else HaloGlassColors.TextMuted)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { targetUrl = BuddyBotHost.DEFAULT_BUDDYBOT_URL }) {
+                    Text("Reset")
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        buddyBotHost?.setTargetUrl(targetUrl.trim())
+                        showUrlDialog = false
                     }
-
-                    HaloGlassButton(
-                        text = "EMERGENCY STOP",
-                        onClick = ::stopMotion,
-                        enabled = isConnected,
-                        modifier = Modifier.fillMaxWidth(),
-                        contentColor = HaloGlassColors.Danger,
-                        material = HaloGlassMaterials.Interactive.copy(containerColor = HaloGlassColors.Danger.copy(alpha = 0.12f))
-                    )
-                    Text("Safety Supervisor remains authoritative over every movement.", style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
+                ) {
+                    Text("Save")
                 }
             }
-        }
+        )
+    }
 
-        item {
-            HaloGlassSection(title = "DRIVE PAD") {
-                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    val driveEnabled = isConnected && telemetry.motorsArmed
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        DriveButton("▲  Forward", driveEnabled && !telemetry.forwardMotionBlocked) { dispatch(IntentKind.MOVE, DriveMode.FORWARD, DRIVE_PULSE_MS) }
-                        DriveButton("↶  Left", driveEnabled) { dispatch(IntentKind.MOVE, DriveMode.ROTATE_LEFT, DRIVE_PULSE_MS) }
-                    }
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        DriveButton("■  Stop", isConnected) { stopMotion() }
-                        DriveButton("Right  ↷", driveEnabled) { dispatch(IntentKind.MOVE, DriveMode.ROTATE_RIGHT, DRIVE_PULSE_MS) }
-                    }
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        DriveButton("▼  Reverse", driveEnabled) { dispatch(IntentKind.MOVE, DriveMode.REVERSE, DRIVE_PULSE_MS) }
-                        DriveButton(if (telemetry.motorsArmed) "DISARM" else "ARM", isConnected) {
-                            dispatch(if (telemetry.motorsArmed) IntentKind.DISARM else IntentKind.ARM)
-                        }
-                    }
-                }
-            }
-        }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp, vertical = 14.dp)
+    ) {
+        HaloWorkspaceHeader(
+            title = device?.name ?: "BuddyBot",
+            subtitle = "Embodiment · manual control",
+            onBack = onBack
+        )
 
-        item {
-            HaloGlassSection(title = "SAFETY") {
-                val safety = telemetry.safetyState ?: "UNKNOWN"
-                val safetyColor = when (safety.uppercase()) {
-                    "ARMED", "READY" -> HaloGlassColors.Success
-                    "CAUTION", "BLOCKED" -> HaloGlassColors.Warning
-                    "FAULT", "ESTOP" -> HaloGlassColors.Danger
-                    else -> HaloGlassColors.TextSecondary
+        Spacer(Modifier.height(18.dp))
+
+        BuddyBotHero(
+            device = device,
+            telemetry = telemetry,
+            isConnected = isConnected,
+            onStop = ::stopMotion
+        )
+
+        Spacer(Modifier.height(20.dp))
+
+        HaloWorkspaceSection(title = "Manual control") {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                val driveEnabled = isConnected && telemetry.motorsArmed
+                val hint = when {
+                    !isConnected -> "Connect BuddyBot"
+                    !telemetry.motorsArmed -> "Arm motors to drive"
+                    telemetry.forwardMotionBlocked -> "Forward locked by safety"
+                    else -> "Drag to steer · release to stop"
                 }
-                TelemetryLine("Supervisor", safety, safetyColor)
-                HaloGlassDivider()
-                TelemetryLine(
-                    "Obstacle",
-                    when {
-                        telemetry.forwardMotionBlocked -> "Forward blocked"
-                        telemetry.obstacleDetected -> "Detected"
-                        telemetry.rangeValid -> "Clear"
-                        else -> "No reading"
-                    },
-                    if (telemetry.forwardMotionBlocked || telemetry.obstacleDetected) HaloGlassColors.Warning else HaloGlassColors.TextSecondary
+
+                BuddyBotDriveHud(
+                    telemetry = telemetry,
+                    connectionReady = driveEnabled,
+                    direction = joystickDirection,
+                    modifier = Modifier.fillMaxWidth()
                 )
-                if (telemetry.rangeMm != null) {
-                    HaloGlassDivider()
-                    TelemetryLine("Range", "${telemetry.rangeMm} mm", HaloGlassColors.TextPrimary)
+
+                BuddyBotJoystick(
+                    enabled = driveEnabled,
+                    forwardBlocked = telemetry.forwardMotionBlocked,
+                    offset = joystickOffset,
+                    onMove = { raw ->
+                        joystickOffset = raw
+                        if (!driveEnabled) return@BuddyBotJoystick
+
+                        val magnitude = min(1f, hypot(raw.x, raw.y) / 100f)
+                        if (magnitude < 0.14f) {
+                            stopMotion()
+                            return@BuddyBotJoystick
+                        }
+
+                        val x = (raw.x / 100f).coerceIn(-1f, 1f)
+                        val y = (-raw.y / 100f).coerceIn(-1f, 1f)
+                        val mode = when {
+                            y >= abs(x) -> DriveMode.FORWARD
+                            y <= -abs(x) -> DriveMode.REVERSE
+                            x < 0f -> DriveMode.ROTATE_LEFT
+                            else -> DriveMode.ROTATE_RIGHT
+                        }
+
+                        if (mode == DriveMode.FORWARD && telemetry.forwardMotionBlocked) {
+                            joystickDirection = "FORWARD LOCKED"
+                            stopMotion()
+                            return@BuddyBotJoystick
+                        }
+
+                        joystickDirection = when (mode) {
+                            DriveMode.FORWARD -> "FORWARD"
+                            DriveMode.REVERSE -> "REVERSE"
+                            DriveMode.ROTATE_LEFT -> "LEFT"
+                            else -> "RIGHT"
+                        }
+
+                        val now = System.currentTimeMillis()
+                        if (now - lastJoystickSend < JOYSTICK_SEND_INTERVAL_MS) {
+                            return@BuddyBotJoystick
+                        }
+                        lastJoystickSend = now
+                        val pulseMs = (
+                            JOYSTICK_MIN_PULSE_MS +
+                                (JOYSTICK_MAX_PULSE_MS - JOYSTICK_MIN_PULSE_MS) * magnitude
+                            ).toInt()
+                        dispatch(IntentKind.MOVE, mode, pulseMs)
+                    },
+                    onRelease = ::stopMotion
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = joystickDirection,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = if (driveEnabled) {
+                            MaterialTheme.colorScheme.secondary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        }
+                    )
+                    Text(
+                        text = hint,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (telemetry.forwardMotionBlocked) {
+                            HaloWarning
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        }
+                    )
                 }
-                if (!telemetry.safetyFault.isNullOrEmpty() && telemetry.safetyFault != "none") {
-                    HaloGlassDivider()
-                    TelemetryLine("Fault", telemetry.safetyFault ?: "Unknown", HaloGlassColors.Danger)
-                }
-                HaloGlassDivider()
-                TelemetryLine("Motors", if (telemetry.motorsArmed) "ARMED" else "DISARMED", if (telemetry.motorsArmed) HaloGlassColors.Success else HaloGlassColors.TextSecondary)
+
+                BuddyBotEmergencyStop(
+                    enabled = isConnected,
+                    onClick = ::stopMotion
+                )
+
+                Text(
+                    text = "Safety Supervisor remains authoritative over every movement.",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
 
-        item {
-            HaloGlassSection(title = "PERSONALITY") {
-                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    HaloGlassSettingRow(title = "Persona", value = telemetry.personaName ?: "BuddyBot")
-                    HaloGlassDivider()
-                    HaloGlassSettingRow(title = "Mood", value = (telemetry.moodName ?: "idle").replaceFirstChar { it.uppercase() })
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        MoodButton("Happy", Mood.HAPPY, isConnected) { dispatch(IntentKind.SET_MOOD, mood = it) }
-                        MoodButton("Curious", Mood.CURIOUS, isConnected) { dispatch(IntentKind.SET_MOOD, mood = it) }
-                        MoodButton("Sleepy", Mood.SLEEPY, isConnected) { dispatch(IntentKind.SET_MOOD, mood = it) }
+        Spacer(Modifier.height(20.dp))
+
+        HaloWorkspaceSection(title = "Drive pad") {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                val driveEnabled = isConnected && telemetry.motorsArmed
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    DriveButton(
+                        text = "▲  Forward",
+                        enabled = driveEnabled && !telemetry.forwardMotionBlocked
+                    ) {
+                        dispatch(IntentKind.MOVE, DriveMode.FORWARD, DRIVE_PULSE_MS)
                     }
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        DriveButton("Celebrate", isConnected) { dispatch(IntentKind.ACTION, action = ActionId.CELEBRATE) }
-                        DriveButton("Look left", isConnected) { dispatch(IntentKind.ACTION, action = ActionId.LOOK_LEFT) }
-                        DriveButton("Next persona", isConnected) { dispatch(IntentKind.NEXT_PERSONA) }
+                    DriveButton("↶  Left", driveEnabled) {
+                        dispatch(IntentKind.MOVE, DriveMode.ROTATE_LEFT, DRIVE_PULSE_MS)
                     }
                 }
-            }
-        }
-
-        item {
-            HaloGlassSection(title = "CONNECTION") {
-                val paired = buddyBotHost?.session?.hasToken == true || telemetry.controllerPresent
-                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    StatusLine("Status", device?.connectionStateText ?: "Unknown", isConnected)
-                    HaloGlassDivider()
-                    StatusLine("Controller lease", if (paired) "PAIRED & ACTIVE" else "UNPAIRED", paired)
-                    HaloGlassDivider()
-                    HaloGlassSettingRow(title = "Target URL", value = buddyBotHost?.getTargetUrl() ?: BuddyBotHost.DEFAULT_BUDDYBOT_URL, onClick = { showUrlDialog = true })
-                    HaloGlassDivider()
-                    HaloGlassSettingRow(title = "Auto-connect", value = if (device?.autoConnect == true) "ON" else "OFF", onClick = { viewModel.toggleAutoConnect(deviceId, !(device?.autoConnect ?: false)) })
-                    HaloGlassDivider()
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        HaloGlassTextField(
-                            value = pairingCode,
-                            onValueChange = { if (it.length <= 9) pairingCode = it },
-                            placeholder = "1234 5678",
-                            singleLine = true,
-                            modifier = Modifier.weight(1f)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    DriveButton("■  Stop", isConnected, ::stopMotion)
+                    DriveButton("Right  ↷", driveEnabled) {
+                        dispatch(IntentKind.MOVE, DriveMode.ROTATE_RIGHT, DRIVE_PULSE_MS)
+                    }
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    DriveButton("▼  Reverse", driveEnabled) {
+                        dispatch(IntentKind.MOVE, DriveMode.REVERSE, DRIVE_PULSE_MS)
+                    }
+                    DriveButton(
+                        if (telemetry.motorsArmed) "DISARM" else "ARM",
+                        isConnected
+                    ) {
+                        dispatch(
+                            if (telemetry.motorsArmed) IntentKind.DISARM
+                            else IntentKind.ARM
                         )
-                        HaloGlassButton(text = "Pair", onClick = {
-                            val code = pairingCode.replace(" ", "")
-                            if (code.isNotBlank()) scope.launch { buddyBotHost?.pair(code) }
-                        }, enabled = isConnected && pairingCode.isNotBlank())
                     }
-                    HaloGlassButton(text = "Forget device", onClick = { viewModel.forgetDevice(deviceId) }, modifier = Modifier.fillMaxWidth(), contentColor = HaloGlassColors.Danger, material = HaloGlassMaterials.Interactive.copy(containerColor = HaloGlassColors.Danger.copy(alpha = 0.10f)))
                 }
             }
         }
 
-        item {
-            HaloGlassSection(title = "DEVICE") {
-                Column(Modifier.fillMaxWidth().padding(16.dp)) {
-                    HaloGlassSettingRow(title = "Battery", value = telemetry.batteryPercent?.let { "$it%" } ?: device?.battery ?: "Unknown")
-                    HaloGlassDivider()
-                    HaloGlassSettingRow(title = "Firmware", value = device?.firmware ?: "v0.3.0")
-                    HaloGlassDivider()
-                    HaloGlassSettingRow(title = "Uptime", value = if (telemetry.uptimeMs > 0) "${telemetry.uptimeMs / 1000}s" else "Unknown")
-                    HaloGlassDivider()
-                    HaloGlassSettingRow(title = "Wi-Fi clients", value = telemetry.wifiClientCount.toString())
-                    HaloGlassDivider()
-                    HaloGlassSettingRow(title = "Health", value = device?.healthStateText ?: "Unknown")
+        Spacer(Modifier.height(20.dp))
+
+        HaloWorkspaceSection(title = "Safety") {
+            val safety = telemetry.safetyState ?: "UNKNOWN"
+            val safetyColor = when (safety.uppercase()) {
+                "ARMED", "READY" -> MaterialTheme.colorScheme.primary
+                "CAUTION", "BLOCKED" -> HaloWarning
+                "FAULT", "ESTOP" -> MaterialTheme.colorScheme.error
+                else -> MaterialTheme.colorScheme.onSurfaceVariant
+            }
+
+            TelemetryLine("Supervisor", safety, safetyColor)
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            TelemetryLine(
+                "Obstacle",
+                when {
+                    telemetry.forwardMotionBlocked -> "Forward blocked"
+                    telemetry.obstacleDetected -> "Detected"
+                    telemetry.rangeValid -> "Clear"
+                    else -> "No reading"
+                },
+                if (telemetry.forwardMotionBlocked || telemetry.obstacleDetected) {
+                    HaloWarning
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                }
+            )
+            telemetry.rangeMm?.let { range ->
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                TelemetryLine(
+                    "Range",
+                    "$range mm",
+                    MaterialTheme.colorScheme.onSurface
+                )
+            }
+            if (!telemetry.safetyFault.isNullOrEmpty() && telemetry.safetyFault != "none") {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                TelemetryLine(
+                    "Fault",
+                    telemetry.safetyFault ?: "Unknown",
+                    MaterialTheme.colorScheme.error
+                )
+            }
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            TelemetryLine(
+                "Motors",
+                if (telemetry.motorsArmed) "ARMED" else "DISARMED",
+                if (telemetry.motorsArmed) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                }
+            )
+        }
+
+        Spacer(Modifier.height(20.dp))
+
+        HaloWorkspaceSection(title = "Personality") {
+            HaloWorkspaceRow(
+                title = "Persona",
+                trailingText = telemetry.personaName ?: "BuddyBot"
+            )
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            HaloWorkspaceRow(
+                title = "Mood",
+                trailingText = (telemetry.moodName ?: "idle").replaceFirstChar { it.uppercase() }
+            )
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            Column(
+                modifier = Modifier.padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    MoodButton("Happy", Mood.HAPPY, isConnected) {
+                        dispatch(IntentKind.SET_MOOD, mood = it)
+                    }
+                    MoodButton("Curious", Mood.CURIOUS, isConnected) {
+                        dispatch(IntentKind.SET_MOOD, mood = it)
+                    }
+                    MoodButton("Sleepy", Mood.SLEEPY, isConnected) {
+                        dispatch(IntentKind.SET_MOOD, mood = it)
+                    }
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    DriveButton("Celebrate", isConnected) {
+                        dispatch(IntentKind.ACTION, action = ActionId.CELEBRATE)
+                    }
+                    DriveButton("Look left", isConnected) {
+                        dispatch(IntentKind.ACTION, action = ActionId.LOOK_LEFT)
+                    }
+                    DriveButton("Next persona", isConnected) {
+                        dispatch(IntentKind.NEXT_PERSONA)
+                    }
                 }
             }
         }
-        item { Spacer(Modifier.height(28.dp)) }
+
+        Spacer(Modifier.height(20.dp))
+
+        HaloWorkspaceSection(title = "Connection") {
+            val paired = buddyBotHost?.session?.hasToken == true || telemetry.controllerPresent
+            StatusLine("Status", device?.connectionStateText ?: "Unknown", isConnected)
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            StatusLine(
+                "Controller lease",
+                if (paired) "PAIRED & ACTIVE" else "UNPAIRED",
+                paired
+            )
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            HaloWorkspaceRow(
+                title = "Target URL",
+                subtitle = buddyBotHost?.getTargetUrl() ?: BuddyBotHost.DEFAULT_BUDDYBOT_URL,
+                onClick = { showUrlDialog = true }
+            )
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            HaloWorkspaceRow(
+                title = "Auto-connect",
+                trailingText = if (device?.autoConnect == true) "On" else "Off",
+                onClick = {
+                    viewModel.toggleAutoConnect(
+                        deviceId,
+                        !(device?.autoConnect ?: false)
+                    )
+                }
+            )
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedTextField(
+                    value = pairingCode,
+                    onValueChange = { if (it.length <= 9) pairingCode = it },
+                    placeholder = { Text("1234 5678") },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f)
+                )
+                HaloWorkspaceButton(
+                    text = "Pair",
+                    onClick = {
+                        val code = pairingCode.replace(" ", "")
+                        if (code.isNotBlank()) {
+                            scope.launch { buddyBotHost?.pair(code) }
+                        }
+                    },
+                    enabled = isConnected && pairingCode.isNotBlank()
+                )
+            }
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { viewModel.forgetDevice(deviceId) },
+                color = MaterialTheme.colorScheme.surface
+            ) {
+                Text(
+                    text = "Forget device",
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        }
+
+        Spacer(Modifier.height(20.dp))
+
+        HaloWorkspaceSection(title = "Device") {
+            HaloWorkspaceRow(
+                title = "Battery",
+                trailingText = telemetry.batteryPercent?.let { "$it%" }
+                    ?: device?.battery
+                    ?: "Unknown"
+            )
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            HaloWorkspaceRow(
+                title = "Firmware",
+                trailingText = device?.firmware ?: "v0.3.0"
+            )
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            HaloWorkspaceRow(
+                title = "Uptime",
+                trailingText = if (telemetry.uptimeMs > 0) {
+                    "${telemetry.uptimeMs / 1000}s"
+                } else {
+                    "Unknown"
+                }
+            )
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            HaloWorkspaceRow(
+                title = "Wi-Fi clients",
+                trailingText = telemetry.wifiClientCount.toString()
+            )
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            HaloWorkspaceRow(
+                title = "Health",
+                trailingText = device?.healthStateText ?: "Unknown"
+            )
+        }
+
+        Spacer(Modifier.height(32.dp))
     }
 }
 
 @Composable
-private fun BuddyBotHero(device: GenericDeviceUiState?, telemetry: BuddyBotTelemetry, isConnected: Boolean, onStop: () -> Unit) {
+private fun BuddyBotHero(
+    device: GenericDeviceUiState?,
+    telemetry: BuddyBotTelemetry,
+    isConnected: Boolean,
+    onStop: () -> Unit
+) {
     val status = telemetry.safetyState ?: if (isConnected) "READY" else "OFFLINE"
     val tone = when (status.uppercase()) {
-        "ARMED", "READY" -> HaloGlassColors.Success
-        "CAUTION", "BLOCKED" -> HaloGlassColors.Warning
-        "FAULT", "ESTOP" -> HaloGlassColors.Danger
-        else -> HaloGlassColors.TextMuted
+        "ARMED", "READY" -> MaterialTheme.colorScheme.primary
+        "CAUTION", "BLOCKED" -> HaloWarning
+        "FAULT", "ESTOP" -> MaterialTheme.colorScheme.error
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
-    HaloGlassSection(title = "BUDDYBOT") {
-        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(52.dp).clip(CircleShape).background(tone.copy(alpha = 0.14f)).border(1.dp, tone.copy(alpha = 0.5f), CircleShape), contentAlignment = Alignment.Center) { Text("B", style = HaloTypography.titleLarge, color = tone) }
-                Spacer(Modifier.width(14.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(device?.name ?: "BuddyBot", style = HaloTypography.titleLarge, color = HaloGlassColors.TextPrimary)
-                    Text(if (isConnected) "${device?.connectionStateText ?: "Connected"} • ${device?.battery ?: "Battery unknown"}" else "Disconnected", style = HaloTypography.bodySmall, color = HaloGlassColors.TextSecondary)
+
+    HaloWorkspaceCard(accent = tone) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                modifier = Modifier.size(52.dp),
+                shape = CircleShape,
+                color = tone.copy(alpha = 0.14f),
+                border = BorderStroke(1.dp, tone.copy(alpha = 0.45f))
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = "B",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = tone
+                    )
                 }
-                Text(status.uppercase(), style = HaloTypography.labelMedium, color = tone)
             }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Metric("RANGE", telemetry.rangeMm?.let { "${it}mm" } ?: "—")
-                Metric("MOTORS", if (telemetry.motorsArmed) "ARMED" else "OFF")
-                Metric("MOOD", (telemetry.moodName ?: "idle").uppercase())
+
+            Spacer(Modifier.width(14.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = device?.name ?: "BuddyBot",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = if (isConnected) {
+                        "${device?.connectionStateText ?: "Connected"} · ${device?.battery ?: "Battery unknown"}"
+                    } else {
+                        "Disconnected"
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
-            if (isConnected) HaloGlassButton(text = "STOP ALL MOTION", onClick = onStop, modifier = Modifier.fillMaxWidth(), contentColor = HaloGlassColors.Danger, material = HaloGlassMaterials.Interactive.copy(containerColor = HaloGlassColors.Danger.copy(alpha = 0.10f)))
+
+            Text(
+                text = status.uppercase(),
+                style = MaterialTheme.typography.labelMedium,
+                color = tone
+            )
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Metric("RANGE", telemetry.rangeMm?.let { "${it}mm" } ?: "—")
+            Metric("MOTORS", if (telemetry.motorsArmed) "ARMED" else "OFF")
+            Metric("MOOD", (telemetry.moodName ?: "idle").uppercase())
+        }
+
+        if (isConnected) {
+            BuddyBotEmergencyStop(
+                enabled = true,
+                onClick = onStop,
+                text = "STOP ALL MOTION"
+            )
         }
     }
 }
 
 @Composable
-private fun BuddyBotJoystick(enabled: Boolean, forwardBlocked: Boolean, offset: Offset, onMove: (Offset) -> Unit, onRelease: () -> Unit) {
-    BoxWithConstraints(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-        val diameter = min(maxWidth.value, 250f).dp
-        Box(Modifier.size(diameter), contentAlignment = Alignment.Center) {
-            Canvas(Modifier.size(diameter).pointerInput(enabled, forwardBlocked) {
-                if (!enabled) return@pointerInput
-                detectDragGestures(
-                    onDragStart = { onMove(Offset.Zero) },
-                    onDragCancel = onRelease,
-                    onDragEnd = onRelease,
-                    onDrag = { change, _ ->
-                        change.consume()
-                        val center = Offset(size.width / 2f, size.height / 2f)
-                        val requested = change.position - center
-                        val radius = min(size.width, size.height) * 0.34f
-                        val length = hypot(requested.x, requested.y)
-                        val scale = if (length > radius) radius / length else 1f
-                        onMove(Offset(requested.x * scale, requested.y * scale))
-                    }
+private fun BuddyBotDriveHud(
+    telemetry: BuddyBotTelemetry,
+    connectionReady: Boolean,
+    direction: String,
+    modifier: Modifier = Modifier
+) {
+    val warning = telemetry.forwardMotionBlocked || telemetry.obstacleDetected
+    val tone = when {
+        warning -> HaloWarning
+        connectionReady -> MaterialTheme.colorScheme.primary
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
+    }
+
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp),
+        color = tone.copy(alpha = 0.08f),
+        border = BorderStroke(1.dp, tone.copy(alpha = 0.28f))
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = direction,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = tone
                 )
-            }) {
+                Text(
+                    text = telemetry.driveModeName ?: "Runtime standby",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = telemetry.rangeMm?.let { "${it} mm" } ?: "—",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = when {
+                        telemetry.forwardMotionBlocked -> "FORWARD BLOCKED"
+                        telemetry.obstacleDetected -> "OBSTACLE"
+                        telemetry.rangeValid -> "CLEAR"
+                        else -> "NO RANGE"
+                    },
+                    style = MaterialTheme.typography.labelSmall,
+                    color = tone
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun BuddyBotJoystick(
+    enabled: Boolean,
+    forwardBlocked: Boolean,
+    offset: Offset,
+    onMove: (Offset) -> Unit,
+    onRelease: () -> Unit
+) {
+    val surface = MaterialTheme.colorScheme.surfaceVariant
+    val warning = HaloWarning
+    val outline = MaterialTheme.colorScheme.outline
+    val muted = MaterialTheme.colorScheme.onSurfaceVariant
+    val accent = MaterialTheme.colorScheme.secondary
+    val foreground = MaterialTheme.colorScheme.onSurface
+
+    BoxWithConstraints(
+        modifier = Modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center
+    ) {
+        val diameter = min(maxWidth.value, 250f).dp
+
+        Box(
+            modifier = Modifier.size(diameter),
+            contentAlignment = Alignment.Center
+        ) {
+            Canvas(
+                modifier = Modifier
+                    .size(diameter)
+                    .pointerInput(enabled, forwardBlocked) {
+                        if (!enabled) return@pointerInput
+                        detectDragGestures(
+                            onDragStart = { onMove(Offset.Zero) },
+                            onDragCancel = onRelease,
+                            onDragEnd = onRelease,
+                            onDrag = { change, _ ->
+                                change.consume()
+                                val center = Offset(size.width / 2f, size.height / 2f)
+                                val requested = change.position - center
+                                val radius = min(size.width, size.height) * 0.34f
+                                val length = hypot(requested.x, requested.y)
+                                val scale = if (length > radius) radius / length else 1f
+                                onMove(
+                                    Offset(
+                                        requested.x * scale,
+                                        requested.y * scale
+                                    )
+                                )
+                            }
+                        )
+                    }
+            ) {
                 val center = Offset(size.width / 2f, size.height / 2f)
                 val outer = size.minDimension * 0.46f
                 val dead = outer * 0.26f
-                drawCircle(HaloGlassColors.GlassElevated, outer, center)
-                drawCircle(if (forwardBlocked) HaloGlassColors.Warning.copy(alpha = 0.55f) else HaloGlassColors.BorderStandard, outer, center, style = Stroke(2.dp.toPx()))
-                drawCircle(HaloGlassColors.TextMuted.copy(alpha = 0.18f), dead, center, style = Stroke(1.dp.toPx()))
-                drawLine(HaloGlassColors.BorderSubtle, Offset(center.x, center.y - outer), Offset(center.x, center.y + outer), 1.dp.toPx())
-                drawLine(HaloGlassColors.BorderSubtle, Offset(center.x - outer, center.y), Offset(center.x + outer, center.y), 1.dp.toPx())
+
+                drawCircle(surface, outer, center)
+                drawCircle(
+                    color = if (forwardBlocked) warning.copy(alpha = 0.62f) else outline,
+                    radius = outer,
+                    center = center,
+                    style = Stroke(2.dp.toPx())
+                )
+                drawCircle(
+                    color = muted.copy(alpha = 0.18f),
+                    radius = dead,
+                    center = center,
+                    style = Stroke(1.dp.toPx())
+                )
+                drawLine(
+                    muted.copy(alpha = 0.22f),
+                    Offset(center.x, center.y - outer),
+                    Offset(center.x, center.y + outer),
+                    1.dp.toPx()
+                )
+                drawLine(
+                    muted.copy(alpha = 0.22f),
+                    Offset(center.x - outer, center.y),
+                    Offset(center.x + outer, center.y),
+                    1.dp.toPx()
+                )
+
                 if (forwardBlocked) {
-                    drawLine(HaloGlassColors.Warning, Offset(center.x - outer * 0.35f, center.y - outer * 0.70f), Offset(center.x + outer * 0.35f, center.y - outer * 0.70f), 3.dp.toPx())
+                    drawLine(
+                        warning,
+                        Offset(center.x - outer * 0.35f, center.y - outer * 0.70f),
+                        Offset(center.x + outer * 0.35f, center.y - outer * 0.70f),
+                        3.dp.toPx()
+                    )
                 }
+
                 val knobScale = outer / (size.minDimension * 0.34f)
-                val knob = Offset(center.x + offset.x * knobScale, center.y + offset.y * knobScale)
-                drawCircle(if (enabled) HaloGlassColors.Accent.copy(alpha = 0.9f) else HaloGlassColors.TextMuted.copy(alpha = 0.45f), size.minDimension * 0.14f, knob)
-                drawCircle(HaloGlassColors.TextPrimary.copy(alpha = if (enabled) 0.3f else 0.12f), size.minDimension * 0.14f, knob, style = Stroke(2.dp.toPx()))
+                val knob = Offset(
+                    center.x + offset.x * knobScale,
+                    center.y + offset.y * knobScale
+                )
+                drawCircle(
+                    if (enabled) accent.copy(alpha = 0.92f) else muted.copy(alpha = 0.42f),
+                    size.minDimension * 0.14f,
+                    knob
+                )
+                drawCircle(
+                    foreground.copy(alpha = if (enabled) 0.30f else 0.12f),
+                    size.minDimension * 0.14f,
+                    knob,
+                    style = Stroke(2.dp.toPx())
+                )
             }
+
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(if (forwardBlocked) "×" else "▲", style = HaloTypography.labelSmall, color = if (forwardBlocked) HaloGlassColors.Warning else HaloGlassColors.TextSecondary)
+                Text(
+                    text = if (forwardBlocked) "×" else "▲",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (forwardBlocked) warning else muted
+                )
                 Spacer(Modifier.height(72.dp))
                 Row {
-                    Text("◀", style = HaloTypography.labelSmall, color = HaloGlassColors.TextSecondary)
+                    Text("◀", style = MaterialTheme.typography.labelSmall, color = muted)
                     Spacer(Modifier.width(116.dp))
-                    Text("▶", style = HaloTypography.labelSmall, color = HaloGlassColors.TextSecondary)
+                    Text("▶", style = MaterialTheme.typography.labelSmall, color = muted)
                 }
                 Spacer(Modifier.height(72.dp))
-                Text("▼", style = HaloTypography.labelSmall, color = HaloGlassColors.TextSecondary)
+                Text("▼", style = MaterialTheme.typography.labelSmall, color = muted)
             }
         }
     }
 }
 
 @Composable
-private fun RowScope.DriveButton(text: String, enabled: Boolean, onClick: () -> Unit) {
-    HaloGlassButton(text = text, onClick = onClick, enabled = enabled, modifier = Modifier.weight(1f))
-}
-
-@Composable
-private fun RowScope.MoodButton(label: String, mood: Mood, enabled: Boolean, onClick: (Mood) -> Unit) {
-    HaloGlassButton(text = label, onClick = { onClick(mood) }, enabled = enabled, modifier = Modifier.weight(1f), isPrimary = false)
-}
-
-@Composable
-private fun TelemetryLine(label: String, value: String, color: Color) {
-    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-        Text(label, style = HaloTypography.bodyMedium, color = HaloGlassColors.TextSecondary)
-        Text(value, style = HaloTypography.bodyMedium, color = color)
+private fun BuddyBotEmergencyStop(
+    enabled: Boolean,
+    onClick: () -> Unit,
+    text: String = "EMERGENCY STOP"
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = onClick,
+        enabled = enabled,
+        shape = RoundedCornerShape(14.dp),
+        color = MaterialTheme.colorScheme.error.copy(alpha = 0.10f),
+        border = BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.error.copy(alpha = 0.42f)
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = if (enabled) {
+                    MaterialTheme.colorScheme.error
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                }
+            )
+        }
     }
 }
 
 @Composable
-private fun StatusLine(label: String, value: String, positive: Boolean) {
-    Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-        Text(label, style = HaloTypography.bodyMedium, color = HaloGlassColors.TextSecondary)
-        Text(value, style = HaloTypography.labelMedium, color = if (positive) HaloGlassColors.Success else HaloGlassColors.TextMuted)
+private fun RowScope.DriveButton(
+    text: String,
+    enabled: Boolean,
+    onClick: () -> Unit
+) {
+    HaloWorkspaceButton(
+        text = text,
+        onClick = onClick,
+        enabled = enabled,
+        modifier = Modifier.weight(1f),
+        primary = false
+    )
+}
+
+@Composable
+private fun RowScope.MoodButton(
+    label: String,
+    mood: Mood,
+    enabled: Boolean,
+    onClick: (Mood) -> Unit
+) {
+    HaloWorkspaceButton(
+        text = label,
+        onClick = { onClick(mood) },
+        enabled = enabled,
+        modifier = Modifier.weight(1f),
+        primary = false
+    )
+}
+
+@Composable
+private fun TelemetryLine(
+    label: String,
+    value: String,
+    color: Color
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
+            color = color
+        )
     }
 }
 
 @Composable
-private fun RowScope.Metric(label: String, value: String) {
-    Box(Modifier.weight(1f).clip(HaloGlassTokens.smallShape).background(HaloGlassColors.BackgroundSecondary).border(1.dp, HaloGlassColors.BorderSubtle, HaloGlassTokens.smallShape).padding(10.dp)) {
-        Column {
-            Text(label, style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
+private fun StatusLine(
+    label: String,
+    value: String,
+    positive: Boolean
+) {
+    TelemetryLine(
+        label = label,
+        value = value,
+        color = if (positive) {
+            MaterialTheme.colorScheme.primary
+        } else {
+            MaterialTheme.colorScheme.onSurfaceVariant
+        }
+    )
+}
+
+@Composable
+private fun RowScope.Metric(
+    label: String,
+    value: String
+) {
+    Surface(
+        modifier = Modifier.weight(1f),
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    ) {
+        Column(modifier = Modifier.padding(10.dp)) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
             Spacer(Modifier.height(3.dp))
-            Text(value, style = HaloTypography.labelMedium, color = HaloGlassColors.TextPrimary)
+            Text(
+                text = value,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
         }
     }
 }
