@@ -27,7 +27,7 @@ import com.halo.app.ui.glass.components.HaloGlassButton
 import com.halo.app.ui.glass.material.HaloTypography
 import com.halo.app.ui.shell.AppShell
 import com.halo.app.ui.shell.PermissionsScreen
-import com.halo.app.ui.theme.BrainToolTheme
+import com.halo.app.ui.theme.HaloTheme
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -73,7 +73,7 @@ class MainActivity : ComponentActivity() {
         RuntimeStartupTrace.mark("activity.permissions.checked", startedAt)
 
         setContent {
-            BrainToolTheme {
+            HaloTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
