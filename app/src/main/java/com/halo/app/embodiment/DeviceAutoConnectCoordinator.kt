@@ -21,6 +21,29 @@ import kotlinx.coroutines.launch
  * registry and only constructs a physical host when that device kind has an
  * explicit saved autoConnect=true record.
  */
+internal fun normalizeLegacyDeviceRecord(
+    record: com.halo.sdk.runtime.embodiment.DeviceRecord
+): com.halo.sdk.runtime.embodiment.DeviceRecord {
+    val identity = record.identity
+
+    // Migration for the short-lived Pairing constructor-order bug where the
+    // Bluetooth display name was written into deviceType and the canonical
+    // type string was written into displayName.
+    if (
+        identity.displayName == "HEYCYAN_GLASSES" &&
+        identity.deviceType != "HEYCYAN_GLASSES"
+    ) {
+        return record.copy(
+            identity = identity.copy(
+                deviceType = "HEYCYAN_GLASSES",
+                displayName = identity.deviceType.ifBlank { "HeyCyan Glasses" }
+            )
+        )
+    }
+
+    return record
+}
+
 internal fun autoConnectDeviceIds(
     records: List<com.halo.sdk.runtime.embodiment.DeviceRecord>,
     kind: DeviceKind
@@ -88,7 +111,15 @@ class DeviceAutoConnectCoordinator(
     }
 
     private suspend fun bootstrapSavedDevices() {
-        val saved = registry.getSavedDevices()
+        val rawSaved = registry.getSavedDevices()
+        val saved = rawSaved.map(::normalizeLegacyDeviceRecord)
+
+        saved.zip(rawSaved).forEach { (normalized, original) ->
+            if (normalized != original) {
+                registry.saveDevice(normalized)
+            }
+        }
+
         if (
             bluetoothEnabled.value &&
             autoConnectDeviceIds(saved, DeviceKind.HEYCYAN_GLASSES).isNotEmpty()
@@ -103,8 +134,16 @@ class DeviceAutoConnectCoordinator(
     }
 
     private suspend fun retryHeyCyan() {
+        val rawSaved = registry.getSavedDevices()
+        val saved = rawSaved.map(::normalizeLegacyDeviceRecord)
+        saved.zip(rawSaved).forEach { (normalized, original) ->
+            if (normalized != original) {
+                registry.saveDevice(normalized)
+            }
+        }
+
         val hasAutoConnect = autoConnectDeviceIds(
-            registry.getSavedDevices(),
+            saved,
             DeviceKind.HEYCYAN_GLASSES
         ).isNotEmpty()
         if (!hasAutoConnect) return
@@ -112,9 +151,14 @@ class DeviceAutoConnectCoordinator(
     }
 
     private suspend fun retryBuddyBot() {
+        val targetIds = autoConnectDeviceIds(
+            registry.getSavedDevices(),
+            DeviceKind.BUDDYBOT
+        )
+        if (targetIds.isEmpty()) return
+
         val host = buddyBotHostProvider()
-        val record = registry.getDevice(host.deviceId) ?: return
-        if (!record.autoConnect || record.descriptor.kind != DeviceKind.BUDDYBOT) return
+        if (host.deviceId !in targetIds) return
 
         host.ensureDeviceRegistered()
         sessionManager.autoConnectDevice(host.deviceId)
