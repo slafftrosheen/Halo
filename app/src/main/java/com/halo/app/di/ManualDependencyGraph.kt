@@ -2,6 +2,8 @@ package com.halo.app.di
 
 import android.content.Context
 import com.halo.app.HaloRuntime
+import com.halo.app.embodiment.DeviceAutoConnectCoordinator
+import com.halo.host.android.system.AndroidPlatformStateMonitor
 import com.halo.app.ai.readRuntimeAiContextPolicy
 import com.halo.app.RuntimeStartupTrace
 import com.halo.app.data.AppDatabase
@@ -35,6 +37,7 @@ object ManualDependencyGraph {
     val providerGraph by lazy { RuntimeStartupTrace.measure("graph.providers") { ProviderGraph(applicationContext, storage) } }
     val deviceRegistry by lazy { com.halo.sdk.runtime.embodiment.PersistentDeviceRegistry(storage) }
     val deviceSessionManager by lazy { com.halo.sdk.runtime.embodiment.DeviceSessionManager(deviceRegistry) }
+    val platformStateMonitor by lazy { AndroidPlatformStateMonitor(applicationContext) }
     val hostGraph by lazy {
         RuntimeStartupTrace.measure("graph.host") {
             HostGraph(
@@ -127,7 +130,26 @@ object ManualDependencyGraph {
 
     val workingMemoryProcess by lazy { WorkingMemoryProcess(perceptionBus, cognitiveBus, executionBus) }
 
-    val buddyBotHost by lazy { com.halo.app.embodiment.BuddyBotHost(deviceSessionManager, infra.eventBus, storage, infra.scope) }
+    val buddyBotHost by lazy {
+        com.halo.app.embodiment.BuddyBotHost(
+            deviceSessionManager,
+            infra.eventBus,
+            storage,
+            infra.scope
+        )
+    }
+
+    val deviceAutoConnectCoordinator by lazy {
+        DeviceAutoConnectCoordinator(
+            registry = deviceRegistry,
+            sessionManager = deviceSessionManager,
+            heyCyanHostProvider = { hostGraph.heyCyanHost },
+            buddyBotHostProvider = { buddyBotHost },
+            bluetoothEnabled = platformStateMonitor.bluetoothEnabled,
+            networkRevision = platformStateMonitor.networkRevision,
+            scope = infra.scope
+        )
+    }
 
     val homeViewModel by lazy {
         RuntimeStartupTrace.measure("viewmodel.home") {
@@ -138,7 +160,8 @@ object ManualDependencyGraph {
                 cognitiveSession = cognitiveSession,
                 stopSpeechOutput = { androidSpeaker.stop() },
                 aiProviderRouter = aiProviderRouter,
-                speechAvailability = speechRecognitionAvailability
+                speechAvailability = speechRecognitionAvailability,
+                networkRevision = platformStateMonitor.networkRevision
             )
         }
     }
@@ -147,7 +170,14 @@ object ManualDependencyGraph {
     val activityViewModel by lazy { ActivityViewModel(runtimeSnapshotManager) }
     val notebookViewModel by lazy { NotebookViewModel(notebookUseCases) }
     val devicesViewModel by lazy { DevicesViewModel(deviceRegistry, deviceSessionManager, eventBus, runtimeSnapshotManager, { heyCyanDriver }, buddyBotHost) }
-    val pairingViewModel by lazy { PairingViewModel({ heyCyanDriver }) }
+    val pairingViewModel by lazy {
+        PairingViewModel(
+            driverProvider = { heyCyanDriver },
+            deviceRegistry = deviceRegistry,
+            context = applicationContext,
+            bluetoothEnabled = platformStateMonitor.bluetoothEnabled
+        )
+    }
     val intelligenceViewModel by lazy { com.halo.app.ui.screens.settings.IntelligenceViewModel(runtimeSnapshotManager, aiProviderRouter, cognitiveSession, storage, modelDownloadManager) }
 
     val runtimeSnapshotManager get() = observerGraph.runtimeSnapshotManager
