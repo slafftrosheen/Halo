@@ -42,10 +42,8 @@ private val HaloLightColorScheme = lightColorScheme(
     outline = LightOutline,
     outlineVariant = LightOutlineVariant,
     error = HaloDanger,
-    onError = ColorTokensLightOnError
+    onError = LightSurface
 )
-
-private val ColorTokensLightOnError = androidx.compose.ui.graphics.Color.White
 
 private val HaloShapes = Shapes(
     extraSmall = RoundedCornerShape(8.dp),
