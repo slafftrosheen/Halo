@@ -97,15 +97,12 @@ fun HomeScreen(viewModel: HomeViewModel) {
         )
 
     fun togglePresence() {
-        if (!uiState.speechReady) {
-            viewModel.navigateToVoice()
-            return
-        }
         when {
             isListening -> viewModel.stopListening()
             isSpeaking -> viewModel.stopSpeakingAndListen()
             isActiveSession -> viewModel.cancelSession()
             isSpeechProcessing -> Unit
+            !uiState.speechReady -> viewModel.navigateToVoice()
             else -> viewModel.startListening()
         }
     }
