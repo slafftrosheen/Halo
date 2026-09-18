@@ -115,6 +115,7 @@ This pass hardened the shared interaction contract across reachable screens:
 - HeyCyan media controls are enabled only when the device session is READY; transitional connection
   states no longer expose ambiguous/reentrant actions.
 - BuddyBot host-backed controls are disabled when the host is unavailable.
+- HeyCyan and BuddyBot auto-connect use a shared Role.Switch toggle row rather than button-like On/Off text.
 - Notebook create actions and other shared interactive surfaces meet the 48dp target.
 - Voice locale selection uses the shared selectable row primitive.
 
