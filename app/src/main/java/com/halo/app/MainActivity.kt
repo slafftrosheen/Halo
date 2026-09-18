@@ -25,12 +25,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.halo.app.di.ManualDependencyGraph
-import com.halo.app.ui.glass.components.HaloGlassButton
-import com.halo.app.ui.glass.material.HaloTypography
 import com.halo.app.ui.shell.AppShell
 import com.halo.app.ui.shell.PermissionsScreen
 import com.halo.app.ui.theme.AppearanceMode
 import com.halo.app.ui.theme.HaloTheme
+import com.halo.app.ui.workspace.HaloWorkspaceButton
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -91,7 +90,6 @@ class MainActivity : ComponentActivity() {
                 ) {
                     when {
                         !hasRequiredPermissions -> PermissionsScreen(
-                            onBack = {},
                             onRequestPermissions = {
                                 permissionLauncher.launch(requiredPermissions())
                             }
@@ -104,13 +102,13 @@ class MainActivity : ComponentActivity() {
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 modifier = Modifier.padding(24.dp)
                             ) {
-                                Text("Halo could not initialize the interface.", style = HaloTypography.titleMedium)
+                                Text("Halo could not initialize the interface.", style = MaterialTheme.typography.titleMedium)
                                 Text(
                                     uiGraphError ?: "Unknown startup error",
-                                    style = HaloTypography.bodyMedium,
+                                    style = MaterialTheme.typography.bodyMedium,
                                     modifier = Modifier.padding(top = 8.dp)
                                 )
-                                HaloGlassButton(
+                                HaloWorkspaceButton(
                                     text = "Retry",
                                     onClick = {
                                         runtimeError = null
@@ -129,13 +127,13 @@ class MainActivity : ComponentActivity() {
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 modifier = Modifier.padding(24.dp)
                             ) {
-                                Text("Halo runtime could not start.", style = HaloTypography.titleMedium)
+                                Text("Halo runtime could not start.", style = MaterialTheme.typography.titleMedium)
                                 Text(
                                     runtimeError ?: "Unknown runtime startup error",
                                     style = HaloTypography.bodyMedium,
                                     modifier = Modifier.padding(top = 8.dp)
                                 )
-                                HaloGlassButton(
+                                HaloWorkspaceButton(
                                     text = "Retry runtime",
                                     onClick = {
                                         runtimeError = null
