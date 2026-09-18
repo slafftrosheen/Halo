@@ -33,6 +33,8 @@ data class HomeUiState(
     val recentEvents: List<TimelinePreviewEvent> = emptyList(),
     val activeProvider: String = "No provider",
     val activeProviderStatus: String = "Unavailable",
+    val activeProviderState: ProviderStatus.State? = null,
+    val activeProviderMessage: String? = null,
     val sessionState: CognitiveSessionState = CognitiveSessionState.Idle,
     val speechActive: Boolean = false,
     val speechProcessing: Boolean = false,
@@ -90,23 +92,32 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
                 }
             }
         }
-        val activeProviderText = diagnostics.find { it.providerId == selectedProviderId }?.let { diagnostic ->
+        val selectedDiagnostic = diagnostics.find { it.providerId == selectedProviderId }
+        val snapshotProvider = snapshot.providers.find { it.isSelected }
+        val activeProviderText = selectedDiagnostic?.let { diagnostic ->
             val modelSuffix = selectedModelId?.let { " · $it" }
                 ?: diagnostic.selectedModelId?.let { " · $it" }
                 ?: ""
             "${diagnostic.displayName}$modelSuffix"
-        } ?: snapshot.providers.find { it.isSelected }?.let { provider ->
+        } ?: snapshotProvider?.let { provider ->
             "${provider.name}${provider.activeModel?.let { " · $it" } ?: ""}"
         } ?: "No provider"
-        val providerStatus = diagnostics.find { it.providerId == selectedProviderId }?.state?.name
-            ?: snapshot.providers.find { it.isSelected }?.status
+        val providerStatus = selectedDiagnostic?.state?.name
+            ?: snapshotProvider?.status
             ?: "Unavailable"
+        val providerState = selectedDiagnostic?.state ?: snapshotProvider?.status?.let { raw ->
+            ProviderStatus.State.values().firstOrNull { state ->
+                state.name.equals(raw.trim(), ignoreCase = true)
+            }
+        }
         return HomeUiState(
             contextualText = contextualText,
             runtimeState = uiRuntimeState,
             recentEvents = snapshot.timeline.map { TimelinePreviewEvent(it.title, it.status, it.timestamp.toEpochMilli()) },
             activeProvider = activeProviderText,
             activeProviderStatus = providerStatus,
+            activeProviderState = providerState,
+            activeProviderMessage = selectedDiagnostic?.message,
             sessionState = sessionState,
             speechActive = speechIsActive,
             speechProcessing = speechIsProcessing
