@@ -210,8 +210,12 @@ fun HaloWorkspaceButton(
         onClick = onClick,
         enabled = enabled,
         shape = RoundedCornerShape(14.dp),
-        color = if (primary) MaterialTheme.colorScheme.primaryContainer
-        else MaterialTheme.colorScheme.surfaceVariant,
+        color = when {
+            !enabled && primary -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f)
+            !enabled -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)
+            primary -> MaterialTheme.colorScheme.primaryContainer
+            else -> MaterialTheme.colorScheme.surfaceVariant
+        },
         border = if (primary) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Row(
@@ -222,8 +226,11 @@ fun HaloWorkspaceButton(
                 text = text,
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold,
-                color = if (primary) MaterialTheme.colorScheme.onPrimaryContainer
-                else MaterialTheme.colorScheme.onSurfaceVariant
+                color = when {
+                    !enabled -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f)
+                    primary -> MaterialTheme.colorScheme.onPrimaryContainer
+                    else -> MaterialTheme.colorScheme.onSurfaceVariant
+                }
             )
         }
     }
