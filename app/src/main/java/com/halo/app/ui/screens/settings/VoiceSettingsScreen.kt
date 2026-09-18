@@ -13,25 +13,25 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.halo.app.ui.glass.components.HaloGlassBackHeader
-import com.halo.app.ui.glass.components.HaloGlassButton
-import com.halo.app.ui.glass.components.HaloGlassCard
-import com.halo.app.ui.glass.components.HaloGlassDivider
-import com.halo.app.ui.glass.components.HaloGlassSection
-import com.halo.app.ui.glass.components.HaloGlassSettingRow
-import com.halo.app.ui.glass.material.HaloGlassColors
-import com.halo.app.ui.glass.material.HaloGlassTokens
-import com.halo.app.ui.glass.material.HaloTypography
+import com.halo.app.ui.theme.HaloPastelBlue
+import com.halo.app.ui.theme.HaloPastelMint
+import com.halo.app.ui.workspace.HaloWorkspaceButton
+import com.halo.app.ui.workspace.HaloWorkspaceCard
+import com.halo.app.ui.workspace.HaloWorkspaceHeader
+import com.halo.app.ui.workspace.HaloWorkspaceRow
+import com.halo.app.ui.workspace.HaloWorkspaceSection
 
 @Composable
 fun VoiceSettingsScreen(
@@ -43,145 +43,154 @@ fun VoiceSettingsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(HaloGlassColors.Background)
+            .background(MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 16.dp)
+            .padding(horizontal = 20.dp, vertical = 14.dp)
     ) {
-        HaloGlassBackHeader(title = "Voice", onBack = onBack)
+        HaloWorkspaceHeader(
+            title = "Voice",
+            subtitle = "Local speech recognition and language.",
+            onBack = onBack
+        )
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(20.dp))
 
-        HaloGlassSection(title = "SPEECH RECOGNITION") {
-            HaloGlassSettingRow(
+        HaloWorkspaceSection(title = "Speech recognition") {
+            HaloWorkspaceRow(
                 title = "Model",
                 trailingText = "Whisper Tiny"
             )
-            HaloGlassDivider()
-            HaloGlassSettingRow(
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            HaloWorkspaceRow(
                 title = "Status",
                 trailingText = when {
-                    uiState.isDownloading -> "Downloading... (${(uiState.downloadProgress * 100).toInt()}%)"
+                    uiState.isDownloading -> "Downloading ${(uiState.downloadProgress * 100).toInt()}%"
                     uiState.isInstalled -> "Ready"
                     else -> "Not installed"
-                }
+                },
+                selected = uiState.isInstalled
             )
             if (uiState.isInstalled) {
-                HaloGlassDivider()
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 val megabytes = uiState.installedSizeBytes / (1024 * 1024)
-                HaloGlassSettingRow(
+                HaloWorkspaceRow(
                     title = "Storage",
-                    trailingText = "~${megabytes} MB"
+                    trailingText = "~$megabytes MB"
                 )
             }
         }
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(20.dp))
 
-        HaloGlassSection(title = "LANGUAGE") {
-            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
-                uiState.availableLocales.forEachIndexed { index, option ->
-                    val isSelected = option.tag == uiState.selectedLocale
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(HaloGlassTokens.smallShape)
-                            .clickable { viewModel.selectLocale(option.tag) }
-                            .padding(vertical = 10.dp, horizontal = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+        HaloWorkspaceSection(title = "Language") {
+            uiState.availableLocales.forEachIndexed { index, option ->
+                val selected = option.tag == uiState.selectedLocale
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { viewModel.selectLocale(option.tag) }
+                        .padding(horizontal = 16.dp, vertical = 13.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = option.displayName,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    if (selected) {
                         Text(
-                            text = option.displayName,
-                            style = HaloTypography.bodyMedium,
-                            color = if (isSelected) HaloGlassColors.TextPrimary else HaloGlassColors.TextSecondary
+                            text = "Selected",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.secondary
                         )
-                        if (isSelected) {
-                            Text(
-                                text = "Selected",
-                                style = HaloTypography.labelSmall,
-                                color = HaloGlassColors.Accent
-                            )
-                        }
                     }
-                    if (index < uiState.availableLocales.lastIndex) {
-                        HaloGlassDivider()
-                    }
+                }
+                if (index < uiState.availableLocales.lastIndex) {
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 }
             }
         }
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(20.dp))
 
-        if (uiState.isDownloading) {
-            HaloGlassCard {
-                Column(modifier = Modifier.padding(16.dp)) {
+        when {
+            uiState.isDownloading -> {
+                HaloWorkspaceCard(accent = HaloPastelBlue) {
                     Text(
-                        text = "Downloading Whisper Tiny...",
-                        style = HaloTypography.titleMedium,
-                        color = HaloGlassColors.TextPrimary
+                        text = "Downloading Whisper Tiny",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
-                    Spacer(Modifier.height(4.dp))
                     Text(
                         text = uiState.currentFileDownloading ?: "Downloading model files",
-                        style = HaloTypography.bodySmall,
-                        color = HaloGlassColors.TextMuted
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Spacer(Modifier.height(12.dp))
+                    Spacer(Modifier.height(6.dp))
                     LinearProgressIndicator(
                         progress = { uiState.downloadProgress },
-                        modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
-                        color = HaloGlassColors.Accent,
-                        trackColor = HaloGlassColors.Glass
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(6.dp),
+                        color = MaterialTheme.colorScheme.secondary,
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant
                     )
                 }
             }
-        } else if (!uiState.isInstalled) {
-            HaloGlassCard {
-                Column(modifier = Modifier.padding(16.dp)) {
+            !uiState.isInstalled -> {
+                HaloWorkspaceCard {
                     Text(
-                        text = "Halo needs the local speech model for private voice input.",
-                        style = HaloTypography.bodyMedium,
-                        color = HaloGlassColors.TextSecondary,
-                        lineHeight = 20.sp
+                        text = "Local voice input needs the speech model.",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "The model is stored on this device and works without a cloud speech provider.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     if (uiState.downloadError != null) {
-                        Spacer(Modifier.height(8.dp))
                         Text(
                             text = "Error: ${uiState.downloadError}",
-                            style = HaloTypography.bodySmall,
-                            color = HaloGlassColors.Danger
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
                         )
                     }
-                    Spacer(Modifier.height(16.dp))
-                    HaloGlassButton(
+                    Spacer(Modifier.height(8.dp))
+                    HaloWorkspaceButton(
                         text = "Install Whisper Tiny",
-                        onClick = { viewModel.installWhisperTiny() },
+                        onClick = viewModel::installWhisperTiny,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
             }
-        } else {
-            HaloGlassCard {
-                Column(modifier = Modifier.padding(16.dp)) {
+            else -> {
+                HaloWorkspaceCard(accent = HaloPastelMint) {
                     Text(
-                        text = "Whisper Tiny is installed and ready for local speech recognition.",
-                        style = HaloTypography.bodySmall,
-                        color = HaloGlassColors.TextMuted
+                        text = "Whisper Tiny is ready",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Speech recognition remains available locally.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     if (uiState.downloadError != null) {
-                        Spacer(Modifier.height(8.dp))
                         Text(
                             text = "Error: ${uiState.downloadError}",
-                            style = HaloTypography.bodySmall,
-                            color = HaloGlassColors.Danger
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
                         )
                     }
-                    Spacer(Modifier.height(12.dp))
-                    HaloGlassButton(
+                    Spacer(Modifier.height(8.dp))
+                    HaloWorkspaceButton(
                         text = "Reinstall Whisper Tiny",
-                        onClick = { viewModel.installWhisperTiny() },
+                        onClick = viewModel::installWhisperTiny,
                         modifier = Modifier.fillMaxWidth(),
-                        isPrimary = false
+                        primary = false
                     )
                 }
             }
