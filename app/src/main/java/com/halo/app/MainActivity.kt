@@ -58,8 +58,6 @@ class MainActivity : ComponentActivity() {
         if (hasRequiredPermissions) {
             startUiGraphBootstrap()
             startRuntimeLoop()
-        } else {
-            runtimeReady = false
         }
     }
 
@@ -273,6 +271,24 @@ class MainActivity : ComponentActivity() {
                     runtimeLoopStarted = false
                 }
             }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val permissionsNowGranted = areRequiredPermissionsGranted()
+        val changed = permissionsNowGranted != hasRequiredPermissions
+        hasRequiredPermissions = permissionsNowGranted
+
+        if (permissionsNowGranted) {
+            startUiGraphBootstrap()
+            startRuntimeLoop()
+        }
+
+        if (changed) {
+            RuntimeStartupTrace.mark(
+                "activity.permissions.onResume granted=$permissionsNowGranted"
+            )
         }
     }
 
