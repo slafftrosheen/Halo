@@ -1,11 +1,11 @@
 # Notebook delivery and reconciliation
 
-Status: NB-01 IN PROGRESS. Updated 2026-09-18.
+Status: NB-01 IMPLEMENTED IN SOURCE / ACCEPTANCE IN PROGRESS. Updated 2026-09-18.
 
 The [user blueprint](NOTEBOOK-WORKSPACE-BLUEPRINT.md) defines Notebook as the persistent
 cognitive workspace and user-facing management of Halo's information and memory.
 Use the [mockup guide](../03-design/HALO-WORKSPACE-DESIGN.md) for visual direction.
-Neither is implemented by the current four-tab app.
+The five-tab AppShell now includes the persisted NB-01 Notebook route. Later memory/files/conversation/Canvas slices remain unimplemented.
 
 ## Product decisions carried into the plan
 
@@ -86,3 +86,11 @@ The blueprint further specifies soft spatial cells and rejects mechanical rings/
 Interpret the earlier request for a halo as optional soft depth/light around those cells,
 not an obligatory segmented mechanical orbit. Keep progress in readable task cards.
 Content stays primary in Notebook; a compact presence indicator appears only when useful.
+
+
+## Current UI boundary — 2026-09-18
+
+Notebook currently exposes only capabilities backed by NB-01 code: note creation, local lexical
+search, All/Inbox/Archived/Trash views, persisted editing, recovery drafts and lifecycle actions.
+Mockup-only Memory, Files, Chats and Canvas filters/actions are intentionally hidden until their
+delivery slices exist. This prevents the visual prototype from becoming a false product contract.
