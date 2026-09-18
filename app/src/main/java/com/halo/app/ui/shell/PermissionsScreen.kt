@@ -95,12 +95,12 @@ fun PermissionsScreen(
 
         HaloWorkspaceCard(accent = if (micGranted) HaloPastelMint else HaloPastelYellow) {
             Text(
-                text = if (micGranted) "Voice input is ready" else "Microphone access is required",
+                text = if (micGranted) "Voice input can use the microphone" else "Microphone access is off",
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                text = "Microphone enables voice interaction. Bluetooth and Nearby Wi-Fi remain optional until a device or transfer flow needs them.",
+                text = "Halo remains usable without microphone access. Grant it only for voice input; Bluetooth and Nearby Wi-Fi are requested from the device flows that need them.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -109,12 +109,12 @@ fun PermissionsScreen(
         Spacer(Modifier.height(20.dp))
 
         HaloWorkspaceSection(title = "Access") {
-            PermissionRow(Icons.Default.Mic, "Microphone", micGranted, required = true)
+            PermissionRow(Icons.Default.Mic, "Microphone", micGranted, missingLabel = "Needed for voice")
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            PermissionRow(Icons.Default.Bluetooth, "Bluetooth", bluetoothGranted, required = false)
+            PermissionRow(Icons.Default.Bluetooth, "Bluetooth", bluetoothGranted, missingLabel = "Requested from Devices")
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                PermissionRow(Icons.Default.Wifi, "Nearby Wi-Fi", wifiGranted, required = false)
+                PermissionRow(Icons.Default.Wifi, "Nearby Wi-Fi", wifiGranted, missingLabel = "Requested for transfers")
             }
         }
 
@@ -139,7 +139,7 @@ private fun PermissionRow(
     icon: ImageVector,
     title: String,
     granted: Boolean,
-    required: Boolean
+    missingLabel: String
 ) {
     Row(
         modifier = Modifier
@@ -161,11 +161,7 @@ private fun PermissionRow(
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                text = when {
-                    granted -> "Granted"
-                    required -> "Required"
-                    else -> "Optional"
-                },
+                text = if (granted) "Granted" else missingLabel,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
