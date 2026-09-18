@@ -161,6 +161,7 @@ object ManualDependencyGraph {
                 stopSpeechOutput = { androidSpeaker.stop() },
                 aiProviderRouter = aiProviderRouter,
                 speechAvailability = speechRecognitionAvailability,
+                microphonePermission = platformStateMonitor.microphonePermissionGranted,
                 networkRevision = platformStateMonitor.networkRevision
             )
         }
