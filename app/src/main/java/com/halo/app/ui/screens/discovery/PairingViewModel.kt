@@ -22,7 +22,6 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
@@ -60,7 +59,6 @@ class PairingViewModel(
 
         viewModelScope.launch {
             bluetoothEnabled
-                .distinctUntilChanged()
                 .drop(1)
                 .collect {
                     refreshPrerequisites()
