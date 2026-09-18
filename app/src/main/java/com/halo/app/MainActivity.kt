@@ -65,6 +65,7 @@ class MainActivity : ComponentActivity() {
         ActivityResultContracts.RequestMultiplePermissions()
     ) {
         runCatching {
+            ManualDependencyGraph.platformStateMonitor.refreshBluetoothState()
             ManualDependencyGraph.pairingViewModel.refreshPrerequisites()
         }.onFailure { error ->
             android.util.Log.w("MainActivity", "Could not refresh pairing permissions", error)
@@ -75,6 +76,7 @@ class MainActivity : ComponentActivity() {
         ActivityResultContracts.StartActivityForResult()
     ) {
         runCatching {
+            ManualDependencyGraph.platformStateMonitor.refreshBluetoothState()
             ManualDependencyGraph.pairingViewModel.refreshPrerequisites()
         }.onFailure { error ->
             android.util.Log.w("MainActivity", "Could not refresh Bluetooth state", error)
@@ -255,6 +257,7 @@ class MainActivity : ComponentActivity() {
                 check(uiGraphReady) { uiGraphError ?: "UI graph bootstrap did not complete successfully" }
 
                 runtime.start()
+                ManualDependencyGraph.deviceAutoConnectCoordinator.start()
                 withContext(Dispatchers.Main.immediate) {
                     runtimeReady = true
                 }
