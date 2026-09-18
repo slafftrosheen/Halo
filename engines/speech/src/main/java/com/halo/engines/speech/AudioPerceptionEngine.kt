@@ -137,7 +137,6 @@ class AudioPerceptionEngine(
             }
 
             val job = scope.launch {
-                var cancelled = false
                 try {
                     currentCoroutineContext().ensureActive()
                     audioSource.start()
@@ -151,7 +150,6 @@ class AudioPerceptionEngine(
                         audioPipeline.processFrame(preprocessor.process(rawFrame))
                     }
                 } catch (exception: CancellationException) {
-                    cancelled = true
                     throw exception
                 } catch (exception: Exception) {
                     reportCaptureFailure(
@@ -159,11 +157,25 @@ class AudioPerceptionEngine(
                         exception
                     )
                 } finally {
+                    // job.cancel() does not guarantee the frames Flow throws a
+                    // CancellationException before completing. Inspect the Job
+                    // state itself, otherwise a normal-looking completion here
+                    // can reset AudioPipeline and cancel an ASR job that already
+                    // owns the captured utterance.
+                    val captureWasCancelled = !currentCoroutineContext().isActive
+                    val recognitionOwnsTurn =
+                        !audioPipeline.usesLiveRecognition && audioPipeline.recognitionInFlight
+
                     withContext(NonCancellable) {
                         stopAudioSource()
-                        // A user StopListening needs the already captured buffer
-                        // to survive until finishCapture() runs after join().
-                        if (!cancelled) audioPipeline.reset()
+
+                        // Only an unexpected, genuinely normal end of capture may
+                        // reset the pipeline here. VAD endpointing transfers turn
+                        // ownership to buffered recognition before the microphone
+                        // job is cancelled.
+                        if (!captureWasCancelled && !recognitionOwnsTurn) {
+                            audioPipeline.reset()
+                        }
                     }
                 }
             }

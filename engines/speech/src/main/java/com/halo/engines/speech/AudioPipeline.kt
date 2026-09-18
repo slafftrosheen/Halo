@@ -15,11 +15,13 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.UUID
 
 class AudioPipeline(
@@ -282,38 +284,66 @@ class AudioPipeline(
 
         try {
             val result = provider.recognize(segment.audioBuffer)
-            if (!currentCoroutineContext().isActive) return
+
+            // Transaction ownership, not coroutine activity, decides whether a
+            // completed native result is still valid. Buffered JNI decode is
+            // blocking, so a coroutine can be marked cancelled while decode
+            // still returns a perfectly valid transcript. Explicit user/runtime
+            // cancellation calls reset(), which clears this transaction id.
+            if (activeSpeechTransactionId != transactionId) return
 
             val text = result.text.trim()
-            if (text.isBlank()) {
+
+            // Once Whisper has returned a result for the still-owned turn, make
+            // the handoff atomic with respect to coroutine cancellation. This
+            // prevents capture-job teardown from dropping a completed transcript
+            // between native decode and EventBus publication.
+            withContext(NonCancellable) {
+                if (activeSpeechTransactionId != transactionId) return@withContext
+
+                if (text.isBlank()) {
+                    _state.value = SpeechState.Idle
+                    eventBus.publish(
+                        RecognitionFailed(
+                            id = transactionId,
+                            reason = "No speech recognized"
+                        )
+                    )
+                    return@withContext
+                }
+
+                _state.value = SpeechState.Thinking
+                eventBus.publish(
+                    SpeechRecognized(
+                        id = transactionId,
+                        text = text,
+                        locale = "en",
+                        timestamp = System.currentTimeMillis()
+                    )
+                )
+                eventBus.publish(RecognitionFinished(id = transactionId))
+            }
+        } catch (cancellation: CancellationException) {
+            // reset() is the authoritative cancellation path and clears
+            // activeSpeechTransactionId. A cancellation that arrives after a
+            // native result has already been handed off is safe to propagate.
+            throw cancellation
+        } catch (exception: Exception) {
+            if (activeSpeechTransactionId != transactionId) return
+            withContext(NonCancellable) {
+                if (activeSpeechTransactionId != transactionId) return@withContext
                 _state.value = SpeechState.Idle
                 eventBus.publish(
                     RecognitionFailed(
                         id = transactionId,
-                        reason = "No speech recognized"
+                        reason = exception.message ?: "Recognition failed"
                     )
                 )
-                return
             }
-
-            _state.value = SpeechState.Thinking
-            eventBus.publish(
-                SpeechRecognized(
-                    id = transactionId,
-                    text = text,
-                    locale = "en",
-                    timestamp = System.currentTimeMillis()
-                )
-            )
-            eventBus.publish(RecognitionFinished(id = transactionId))
-        } catch (cancellation: CancellationException) {
-            throw cancellation
-        } catch (exception: Exception) {
-            if (!currentCoroutineContext().isActive) return
-            _state.value = SpeechState.Idle
-            eventBus.publish(RecognitionFailed(id = transactionId, reason = exception.message ?: "Recognition failed"))
         } finally {
-            activeSpeechTransactionId = null
+            if (activeSpeechTransactionId == transactionId) {
+                activeSpeechTransactionId = null
+            }
         }
     }
 
