@@ -57,5 +57,4 @@ System/Light/Dark selection and MainActivity applies it at the app root; System 
 
 Intelligence, Voice, Permissions and Pairing now use shared workspace primitives rather than
 legacy Halo Glass page/card components. Startup error/retry surfaces also use the new workspace
-button/typography treatment. HeyCyanControlScreen and BuddyBotControlScreen remain the main
-reachable legacy-styled surfaces and are the next migration target.
+button/typography treatment. HeyCyanControlScreen now uses the workspace primitives while preserving its existing device actions.\nBuddyBotControlScreen remains the main reachable legacy-styled surface; its joystick/HUD/safety controls\nshould be migrated as a dedicated control-surface pass rather than a cosmetic search-and-replace.
