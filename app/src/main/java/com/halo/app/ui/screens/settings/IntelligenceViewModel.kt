@@ -57,7 +57,8 @@ private data class ProviderSelection(
     val providerId: String?,
     val modelId: String?,
     val assistantPackage: String?,
-    val routingPolicy: AiRoutingPolicy
+    val routingPolicy: AiRoutingPolicy,
+    val diagnostics: List<AiProviderDiagnostic>
 )
 
 class IntelligenceViewModel(
@@ -132,8 +133,11 @@ class IntelligenceViewModel(
             aiProviderRouter.selectedProviderId,
             aiProviderRouter.selectedModelId,
             _assistantPackage,
-            aiProviderRouter.routingPolicy
-        ) { pId, mId, pkg, routing -> ProviderSelection(pId, mId, pkg, routing) },
+            aiProviderRouter.routingPolicy,
+            aiProviderRouter.diagnosticsFlow
+        ) { pId, mId, pkg, routing, diagnostics ->
+            ProviderSelection(pId, mId, pkg, routing, diagnostics)
+        },
         modelDownloadManager?.downloadStates ?: MutableStateFlow<Map<String, DownloadState>>(emptyMap()),
         combine(modelDownloadManager?.activeModelId ?: MutableStateFlow<String?>(null), _refreshTrigger) { activeId, _ -> activeId },
         _settings
@@ -142,15 +146,28 @@ class IntelligenceViewModel(
         val allProviders = aiProviderRouter.getAllProviders()
         val activeProvider = allProviders.find { it.id == selectedProviderId }
         val snapshotProvider = snapshot.providers.find { it.id == selectedProviderId }
+        val activeDiagnostic = selection.diagnostics.find { it.providerId == selectedProviderId }
+        val activeStatus = activeDiagnostic?.let { diagnostic ->
+            ProviderStatus(diagnostic.state, diagnostic.message)
+        } ?: activeProvider?.status?.value ?: ProviderStatus.UNAVAILABLE
         IntelligenceUiState(
             activeProviderId = selectedProviderId ?: "",
             activeProviderName = snapshotProvider?.name ?: activeProvider?.displayName ?: "None",
-            activeProviderStatus = activeProvider?.status?.value ?: ProviderStatus.UNAVAILABLE,
+            activeProviderStatus = activeStatus,
             capabilities = activeProvider?.getCapabilities() ?: emptySet(),
             activeModelId = selectedModelId ?: snapshotProvider?.activeModel ?: if (selectedProviderId == ProviderIds.LLAMACPP) activeLocalId ?: settings.llamacppModel else null,
             providers = allProviders.map { routerProv ->
                 val snap = snapshot.providers.find { it.id == routerProv.id }
-                AiProviderUiState(routerProv.id, snap?.name ?: routerProv.displayName, routerProv.status.value, routerProv.id == selectedProviderId, routerProv.getCapabilities())
+                val diagnostic = selection.diagnostics.find { it.providerId == routerProv.id }
+                val status = diagnostic?.let { ProviderStatus(it.state, it.message) }
+                    ?: routerProv.status.value
+                AiProviderUiState(
+                    routerProv.id,
+                    snap?.name ?: routerProv.displayName,
+                    status,
+                    routerProv.id == selectedProviderId,
+                    routerProv.getCapabilities()
+                )
             },
             availableModels = _availableModels.value,
             isRefreshingModels = _isRefreshing.value,
@@ -218,7 +235,14 @@ class IntelligenceViewModel(
         }
         aiProviderRouter.selectModel(normalized); _refreshTrigger.update { it + 1 }
     }
-    fun refreshModels() { aiProviderRouter.selectedProviderId.value?.let { id -> viewModelScope.launch { refreshModelsFor(id) } } }
+    fun refreshModels() {
+        aiProviderRouter.selectedProviderId.value?.let { id ->
+            viewModelScope.launch {
+                runCatching { aiProviderRouter.diagnostics() }
+                refreshModelsFor(id)
+            }
+        }
+    }
 
     private suspend fun refreshModelsFor(providerId: String) {
         val provider = aiProviderRouter.getAllProviders().find { it.id == providerId } ?: return
@@ -248,8 +272,17 @@ class IntelligenceViewModel(
         viewModelScope.launch {
             val selectedId = aiProviderRouter.selectedProviderId.value ?: return@launch
             val provider = aiProviderRouter.getAllProviders().find { it.id == selectedId } ?: return@launch
-            try { _testConnectionResult.emit(provider.testConnection()); provider.getStatus(); refreshModelsFor(selectedId) }
-            catch (error: Exception) { Log.w("IntelligenceViewModel", "Provider test failed: $selectedId", error); _testConnectionResult.emit(false); _refreshTrigger.update { it + 1 } }
+            try {
+                val ready = provider.testConnection()
+                aiProviderRouter.diagnostics()
+                refreshModelsFor(selectedId)
+                _testConnectionResult.emit(ready)
+            } catch (error: Exception) {
+                Log.w("IntelligenceViewModel", "Provider test failed: $selectedId", error)
+                runCatching { aiProviderRouter.diagnostics() }
+                _testConnectionResult.emit(false)
+                _refreshTrigger.update { it + 1 }
+            }
         }
     }
     fun setOpenRouterKey(key: String) { updateSettings { it.copy(openRouterKey = key) }; persist { storage.putString("openrouter_api_key", key) } }
