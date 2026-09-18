@@ -21,6 +21,9 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -135,7 +138,8 @@ class HomeViewModel(
     private val cognitiveSession: CognitiveSession,
     private val stopSpeechOutput: () -> Unit,
     private val aiProviderRouter: AiProviderRouter? = null,
-    private val speechAvailability: StateFlow<Boolean> = MutableStateFlow(true)
+    private val speechAvailability: StateFlow<Boolean> = MutableStateFlow(true),
+    private val networkRevision: StateFlow<Long> = MutableStateFlow(0L)
 ) : ViewModel() {
     private val mapper = HomeUiMapper()
     private val listeningCommandMutex = Mutex()
@@ -187,6 +191,17 @@ class HomeViewModel(
             eventBus.observe(AssistantResponsePublished::class.java).collect { response ->
                 _presentedResponse.value = response.text
             }
+        }
+
+        viewModelScope.launch {
+            networkRevision
+                .drop(1)
+                .collectLatest {
+                    // Connectivity callbacks can arrive in bursts while Wi-Fi/cellular
+                    // hand over. Coalesce them before doing provider network I/O.
+                    delay(600L)
+                    refreshProviderDiagnostics()
+                }
         }
     }
 
