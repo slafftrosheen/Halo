@@ -257,9 +257,9 @@ class PairingViewModel(
                         identity = (
                             existing?.identity
                                 ?: com.halo.sdk.runtime.DeviceIdentity(
-                                    address,
-                                    deviceName,
-                                    "HEYCYAN_GLASSES"
+                                    deviceId = address,
+                                    deviceType = "HEYCYAN_GLASSES",
+                                    displayName = deviceName
                                 )
                             ).copy(displayName = deviceName),
                         lastSeenMs = System.currentTimeMillis()
