@@ -111,6 +111,7 @@ enum class HaloSignalKind {
     DEVICE,
     MEMORY,
     FILE,
+    NOTE,
     ACTION,
     ERROR
 }
@@ -127,7 +128,8 @@ fun HaloSignalGlyph(
         HaloSignalKind.USER -> listOf(HaloPastelBlue, HaloPastelMint, HaloPastelBlue)
         HaloSignalKind.DEVICE -> listOf(HaloPastelLilac, HaloPastelBlue, HaloPastelMint)
         HaloSignalKind.MEMORY -> listOf(HaloPastelPink, HaloPastelLilac, HaloPastelMint)
-        HaloSignalKind.FILE -> listOf(HaloPastelYellow, HaloPastelBlue, HaloPastelMint)
+        HaloSignalKind.FILE -> listOf(HaloPastelBlue, HaloPastelLilac, HaloPastelMint)
+        HaloSignalKind.NOTE -> listOf(HaloPastelYellow, HaloPastelPink, HaloPastelBlue)
         HaloSignalKind.ACTION -> listOf(HaloPastelCoral, HaloPastelMint, HaloPastelBlue)
         HaloSignalKind.ERROR -> listOf(HaloDanger, HaloPastelCoral, HaloDanger)
     }
