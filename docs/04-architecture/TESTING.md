@@ -56,3 +56,8 @@ The app now includes:
   UI-configured default policy reaches context/tool assembly rather than falling back silently.
 
 These complement the source audit; they do not replace device-level interaction testing.
+
+
+The interaction-wiring acceptance rule is now: a visible interactive control must have a real
+host/ViewModel/runtime action. If the runtime capability is absent (for example memory context or
+agent mode in the current session path), the control stays hidden instead of shipping as a placebo.
