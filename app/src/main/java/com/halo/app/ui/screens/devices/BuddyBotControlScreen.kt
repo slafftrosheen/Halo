@@ -75,7 +75,7 @@ fun BuddyBotControlScreen(
     deviceId: String,
     viewModel: DevicesViewModel,
     buddyBotHost: BuddyBotHost? = viewModel.buddyBotHost,
-    onBack: () -> Unit = {}
+    onBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val device = uiState.devices.find { it.id == deviceId }
