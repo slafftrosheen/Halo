@@ -2,7 +2,6 @@ package com.halo.app.ui.glass.material
 
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.foundation.clickable
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.animation.core.SpringSpec
@@ -90,7 +89,3 @@ fun Modifier.glassElevation(elevation: Dp = HaloGlassTokens.level1) =
         shadowElevation = elevation.toPx()
     }
 
-fun Modifier.rippleGlass() = 
-    this.clickable {
-        // Placeholder
-    }
