@@ -29,11 +29,17 @@ Halo should present a calm cognitive workspace for thinking, capturing, organizi
 acting across devices. Preserve its technical pixel identity through spatial cells,
 compact signals and precise behavior, with a softer and more human visual expression.
 
-Two first-class themes: the light workspace is airy/off-white with deep blue-gray text and pastel object accents;\nthe dark companion uses soft charcoal rather than pure black, with the same hierarchy and restrained color.\nBoth schemes are implemented and currently follow the Android system theme. A manual System/Light/Dark\npreference remains a separate functional slice; do not render a dead selector.
+Two first-class themes: the light workspace is airy/off-white with deep blue-gray text and pastel object accents;
+the dark companion uses soft charcoal rather than pure black, with the same hierarchy and restrained color.
+Both schemes are implemented. A persisted System/Light/Dark selector is available in Settings, with System
+as the default mode.
 
 ## Presence: evolve the orb into a spatial cell cluster
 
-The hero is a living asymmetric arrangement of rounded spatial cells with a larger central\nvolume, pastel satellites and detached pixel markers. The Compose HaloPresence implementation\nnow morphs spread, vertical posture, rotation and core scale from HaloRuntimeState without a\npermanent idle loop. It retains the pixel identity while moving beyond the old polygon orb.
+The hero is a living asymmetric arrangement of rounded spatial cells with a larger central
+volume, pastel satellites and detached pixel markers. The Compose HaloPresence implementation
+morphs spread, vertical posture, rotation and core scale from HaloRuntimeState without a
+permanent idle loop. It retains the pixel identity while moving beyond the old polygon orb.
 
 This is a Compose rendering target, not a requirement for a 3D engine. Begin with layered
 Canvas geometry and cached paths. Prototype optional depth/refraction only after measuring
@@ -64,7 +70,8 @@ not acquire a second microphone.
 
 ## Navigation and screens
 
-Primary navigation is **Home, Activity, Notebook, Devices, Settings**. AppShell now registers all five\ndestinations. Notebook is backed by the NB-01 persisted notes flow rather than a decorative tab.
+Primary navigation is **Home, Activity, Notebook, Devices, Settings**. AppShell now registers all five
+destinations. Notebook is backed by the NB-01 persisted notes flow rather than a decorative tab.
 
 | Surface | Reference intent | Implementation requirements |
 |---|---|---|
@@ -143,10 +150,11 @@ Implemented on main:
 - Notebook NB-01 search/filter/create/editor affordances only; future Memory/Files/Canvas controls are hidden.
 - Device list renders persisted/live device state only; mock device rows and dead quick actions were removed.
 - Note editor uses the workspace content plane rather than an enclosing legacy glass card.
+- Persisted System/Light/Dark appearance selection is applied at the app root.
+- HaloPresence respects Android's platform animation-disable setting.
+- Intelligence, Voice, Permissions and Pairing use shared workspace primitives.
 
 Still required:
-- Wire Android reduced-motion preference into HaloPresence.
 - Feed measured input/output envelope into Presence when shared telemetry exists.
-- Add an actual persisted System/Light/Dark appearance preference before exposing a selector.
-- Migrate remaining secondary/device-detail screens away from legacy Halo Glass primitives.
+- Migrate remaining device-detail screens away from legacy Halo Glass primitives.
 - Add screenshot/accessibility/frame-time acceptance in both schemes.
