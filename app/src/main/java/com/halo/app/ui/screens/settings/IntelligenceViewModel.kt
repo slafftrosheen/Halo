@@ -83,6 +83,7 @@ class IntelligenceViewModel(
         viewModelScope.launch {
             aiProviderRouter.selectedProviderId.collectLatest { providerId ->
                 if (providerId != null) {
+                    runCatching { aiProviderRouter.diagnostics() }
                     syncStoredModelSelection(providerId)
                     refreshModelsFor(providerId)
                     refreshAssistantInfo(providerId)
@@ -285,9 +286,31 @@ class IntelligenceViewModel(
             }
         }
     }
-    fun setOpenRouterKey(key: String) { updateSettings { it.copy(openRouterKey = key) }; persist { storage.putString("openrouter_api_key", key) } }
+    fun setOpenRouterKey(key: String) {
+        val normalized = key.trim()
+        updateSettings { it.copy(openRouterKey = normalized) }
+        persist { storage.putString("openrouter_api_key", normalized) }
+        if (aiProviderRouter.selectedProviderId.value == ProviderIds.OPENROUTER) {
+            viewModelScope.launch {
+                runCatching { aiProviderRouter.diagnostics() }
+                refreshModelsFor(ProviderIds.OPENROUTER)
+            }
+        }
+    }
     fun setOpenRouterModel(model: String) { val n = model.trim(); if (n.isBlank()) return; updateSettings { it.copy(openRouterModel = n) }; persist { storage.putString("openrouter_model", n) }; if (aiProviderRouter.selectedProviderId.value == ProviderIds.OPENROUTER) aiProviderRouter.selectModel(n); _refreshTrigger.update { it + 1 } }
-    fun setOllamaEndpoint(endpoint: String) { val n = endpoint.trim().trimEnd('/'); updateSettings { it.copy(ollamaEndpoint = n) }; persist { storage.putString("ollama_endpoint", n) }; _availableModels.value = emptyList(); _refreshTrigger.update { it + 1 } }
+    fun setOllamaEndpoint(endpoint: String) {
+        val normalized = endpoint.trim().trimEnd('/')
+        updateSettings { it.copy(ollamaEndpoint = normalized) }
+        persist { storage.putString("ollama_endpoint", normalized) }
+        _availableModels.value = emptyList()
+        _refreshTrigger.update { it + 1 }
+        if (aiProviderRouter.selectedProviderId.value == ProviderIds.OLLAMA) {
+            viewModelScope.launch {
+                runCatching { aiProviderRouter.diagnostics() }
+                refreshModelsFor(ProviderIds.OLLAMA)
+            }
+        }
+    }
     fun setOllamaModel(model: String) { val n = model.trim(); if (n.isBlank()) return; updateSettings { it.copy(ollamaModel = n) }; persist { storage.putString("ollama_model", n) }; if (aiProviderRouter.selectedProviderId.value == ProviderIds.OLLAMA) aiProviderRouter.selectModel(n); _refreshTrigger.update { it + 1 } }
     fun setLlamacppModel(model: String) { val n = model.trim(); if (n.isBlank() || modelDownloadManager?.getAllModels()?.any { it.id == n } != true) return; updateSettings { it.copy(llamacppModel = n) }; persist { storage.putString("llamacpp_model", n) }; if (aiProviderRouter.selectedProviderId.value == ProviderIds.LLAMACPP) { modelDownloadManager?.setActiveModel(n); aiProviderRouter.selectModel(n) }; _refreshTrigger.update { it + 1 } }
     fun setLlamacppContext(size: Int) { val n = size.coerceAtLeast(1); updateSettings { it.copy(llamacppContext = n) }; persist { storage.putInt("llamacpp_context", n) }; _refreshTrigger.update { it + 1 } }
