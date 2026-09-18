@@ -242,6 +242,13 @@ fun HomeScreen(viewModel: HomeViewModel) {
             onVoice = ::togglePresence,
             onStop = viewModel::cancelSession,
             enabled = !isListening && !isSpeechProcessing && !isSpeaking && !isActiveSession,
+            voiceEnabled = !isSpeechProcessing && !isActiveSession,
+            voiceActive = isListening,
+            voiceContentDescription = when {
+                isListening -> "Stop listening"
+                isSpeaking -> "Interrupt response and listen"
+                else -> "Voice input"
+            },
             showStop = isActiveSession
         )
 
@@ -257,6 +264,9 @@ private fun HaloComposer(
     onVoice: () -> Unit,
     onStop: () -> Unit,
     enabled: Boolean,
+    voiceEnabled: Boolean,
+    voiceActive: Boolean,
+    voiceContentDescription: String,
     showStop: Boolean
 ) {
     Surface(
@@ -269,11 +279,18 @@ private fun HaloComposer(
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = onVoice, enabled = !showStop) {
+            IconButton(
+                onClick = onVoice,
+                enabled = voiceEnabled && !showStop
+            ) {
                 Icon(
-                    imageVector = Icons.Default.Mic,
-                    contentDescription = "Voice input",
-                    tint = MaterialTheme.colorScheme.secondary
+                    imageVector = if (voiceActive) Icons.Default.Stop else Icons.Default.Mic,
+                    contentDescription = voiceContentDescription,
+                    tint = if (voiceActive) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.secondary
+                    }
                 )
             }
 
