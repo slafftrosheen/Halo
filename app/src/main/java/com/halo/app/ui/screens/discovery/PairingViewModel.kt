@@ -21,6 +21,8 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
@@ -37,7 +39,9 @@ data class PairingUiState(
 class PairingViewModel(
     private val driverProvider: () -> RealHeyCyanDriver = { ManualDependencyGraph.heyCyanDriver },
     private val deviceRegistry: DeviceRegistry = ManualDependencyGraph.deviceRegistry,
-    context: Context = ManualDependencyGraph.applicationContext
+    context: Context = ManualDependencyGraph.applicationContext,
+    private val bluetoothEnabled: StateFlow<Boolean> =
+        ManualDependencyGraph.platformStateMonitor.bluetoothEnabled
 ) : ViewModel() {
 
     private val appContext = context.applicationContext
@@ -53,6 +57,15 @@ class PairingViewModel(
 
     init {
         refreshPrerequisites()
+
+        viewModelScope.launch {
+            bluetoothEnabled
+                .distinctUntilChanged()
+                .drop(1)
+                .collect {
+                    refreshPrerequisites()
+                }
+        }
 
         viewModelScope.launch(Dispatchers.IO) {
             ManualDependencyGraph.wearableHost.connectivity.collect { state ->
