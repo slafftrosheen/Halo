@@ -13,6 +13,7 @@ import com.halo.app.ui.screens.home.HomeViewModel
 import com.halo.app.ui.screens.notebook.NotebookViewModel
 import com.halo.app.ui.screens.settings.SettingsViewModel
 import com.halo.app.ui.screens.settings.VoiceSettingsViewModel
+import com.halo.app.ui.theme.AppearancePreferences
 import com.halo.engines.memory.WorkingMemoryProcess
 import com.halo.runtime.cognition.session.CognitiveSession
 import com.halo.runtime.kernel.HaloMicrokernel
@@ -34,6 +35,7 @@ object ManualDependencyGraph {
     val appDatabase by lazy { RuntimeStartupTrace.measure("graph.database") { AppDatabase.create(applicationContext) } }
     val notebookRepository by lazy { RoomNotebookRepository(appDatabase.notebookDao()) }
     val notebookUseCases by lazy { NotebookUseCases(notebookRepository) }
+    val appearancePreferences by lazy { AppearancePreferences(applicationContext) }
 
     /** One runtime instance per Android process; Activities are only views over it. */
     val runtime by lazy {
@@ -109,7 +111,7 @@ object ManualDependencyGraph {
             )
         }
     }
-    val settingsViewModel by lazy { SettingsViewModel(applicationContext, runtimeSnapshotManager, aiProviderRouter) }
+    val settingsViewModel by lazy { SettingsViewModel(applicationContext, runtimeSnapshotManager, aiProviderRouter, appearancePreferences) }
     val voiceSettingsViewModel by lazy { VoiceSettingsViewModel(applicationContext, storage, providerGraph) }
     val activityViewModel by lazy { ActivityViewModel(runtimeSnapshotManager) }
     val notebookViewModel by lazy { NotebookViewModel(notebookUseCases) }
