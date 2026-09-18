@@ -45,3 +45,14 @@ Normal app unit tests, including `AppearancePreferencesTest`, remain under:
 
 A committed test or dependency is not evidence of a passing run. Record the command, commit,
 environment and generated diff/result before marking visual acceptance complete.
+
+
+## UI action wiring regression coverage
+
+The app now includes:
+- `PermissionsScreenTest`: verifies the visible microphone grant action invokes the host callback.
+- `RuntimeAiPolicyTest`: verifies persisted policy keys map to the runtime AiContextPolicy.
+- `CognitiveSessionToolTest.configured default policy is used when submit omits policy`: verifies
+  UI-configured default policy reaches context/tool assembly rather than falling back silently.
+
+These complement the source audit; they do not replace device-level interaction testing.
