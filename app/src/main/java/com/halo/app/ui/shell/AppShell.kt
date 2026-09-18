@@ -24,7 +24,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.halo.app.di.ManualDependencyGraph
-import com.halo.app.ui.glass.components.HaloGlassNavigation
+import com.halo.app.ui.glass.components.HaloNavigation
 import com.halo.app.ui.glass.components.NavigationItem
 import androidx.compose.material3.MaterialTheme
 import com.halo.app.ui.screens.activity.ActivityScreen
@@ -71,7 +71,7 @@ fun AppShell() {
         modifier = Modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            HaloGlassNavigation(
+            HaloNavigation(
                 navController = navController,
                 items = bottomNavItems.map { NavigationItem(it.route, it.title, it.icon) }
             )
