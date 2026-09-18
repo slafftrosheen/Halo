@@ -24,12 +24,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.halo.app.ui.theme.HaloPastelBlue
 import com.halo.app.ui.theme.HaloPastelMint
+import com.halo.app.ui.theme.HaloWarning
 import com.halo.app.ui.workspace.HaloWorkspaceButton
 import com.halo.app.ui.workspace.HaloWorkspaceCard
 import com.halo.app.ui.workspace.HaloWorkspaceHeader
 import com.halo.app.ui.workspace.HaloWorkspaceRow
 import com.halo.app.ui.workspace.HaloWorkspaceSection
 import com.halo.providers.llamacpp.DownloadState
+import com.halo.sdk.provider.ProviderStatus
 
 @Composable
 fun IntelligenceScreen(
@@ -53,17 +55,58 @@ fun IntelligenceScreen(
 
         Spacer(Modifier.height(20.dp))
 
-        HaloWorkspaceCard(accent = HaloPastelBlue) {
-            Text(
-                text = uiState.activeProviderName,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = uiState.activeModelId?.ifBlank { null } ?: "No model selected",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+        val providerState = uiState.activeProviderStatus.state
+        val providerAccent = when (providerState) {
+            ProviderStatus.State.READY -> HaloPastelMint
+            ProviderStatus.State.LOADING,
+            ProviderStatus.State.STANDBY -> HaloPastelBlue
+            else -> HaloWarning
+        }
+
+        HaloWorkspaceCard(accent = providerAccent) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = uiState.activeProviderName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = uiState.activeModelId?.ifBlank { null } ?: "No model selected",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Text(
+                    text = providerState.name.replace("_", " "),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = when (providerState) {
+                        ProviderStatus.State.READY -> MaterialTheme.colorScheme.primary
+                        ProviderStatus.State.ERROR,
+                        ProviderStatus.State.UNAVAILABLE -> MaterialTheme.colorScheme.error
+                        else -> MaterialTheme.colorScheme.onSurfaceVariant
+                    }
+                )
+            }
+            uiState.activeProviderStatus.message?.takeIf { it.isNotBlank() }?.let { message ->
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            HaloWorkspaceButton(
+                text = "Check connection",
+                onClick = viewModel::testConnection,
+                enabled = uiState.activeProviderId.isNotBlank(),
+                modifier = Modifier.fillMaxWidth(),
+                primary = providerState != ProviderStatus.State.READY
             )
         }
 
