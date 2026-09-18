@@ -31,6 +31,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,9 +45,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.halo.app.ui.glass.components.HaloMarkdownText
 import com.halo.app.ui.glass.material.HaloRuntimeState
 import com.halo.app.ui.presence.HaloPresence
+import com.halo.app.ui.theme.HaloPastelBlue
 import com.halo.app.ui.theme.HaloWarning
 import com.halo.app.ui.theme.rememberReducedMotion
 import com.halo.app.ui.workspace.HaloWorkspaceButton
@@ -59,6 +65,21 @@ fun HomeScreen(viewModel: HomeViewModel) {
     val listeningRequested by viewModel.listeningRequested.collectAsState()
     var textInput by rememberSaveable { mutableStateOf("") }
     val reducedMotion by rememberReducedMotion()
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    LaunchedEffect(viewModel) {
+        viewModel.refreshProviderDiagnostics()
+    }
+
+    DisposableEffect(lifecycleOwner, viewModel) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.refreshProviderDiagnostics()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     val isListening = uiState.speechActive || listeningRequested
     val isSpeechProcessing = uiState.speechProcessing
@@ -76,6 +97,10 @@ fun HomeScreen(viewModel: HomeViewModel) {
         )
 
     fun togglePresence() {
+        if (!uiState.speechReady) {
+            viewModel.navigateToVoice()
+            return
+        }
         when {
             isListening -> viewModel.stopListening()
             isSpeaking -> viewModel.stopSpeakingAndListen()
@@ -190,6 +215,34 @@ fun HomeScreen(viewModel: HomeViewModel) {
             }
         }
 
+        AnimatedVisibility(visible = !uiState.speechReady) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp)
+            ) {
+                HaloWorkspaceCard(accent = HaloPastelBlue) {
+                    Text(
+                        text = "Voice input needs setup",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Install the local Whisper Tiny model to enable private voice input.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    HaloWorkspaceButton(
+                        text = "Set up Voice",
+                        onClick = viewModel::navigateToVoice,
+                        modifier = Modifier.fillMaxWidth(),
+                        primary = false
+                    )
+                }
+            }
+        }
+
         Spacer(Modifier.height(30.dp))
 
         Box(
@@ -215,7 +268,11 @@ fun HomeScreen(viewModel: HomeViewModel) {
             ) {
                 Icon(
                     imageVector = if (isListening || isActiveSession) Icons.Default.Stop else Icons.Default.Mic,
-                    contentDescription = if (isListening || isActiveSession) "Stop" else "Talk to Halo",
+                    contentDescription = when {
+                        !uiState.speechReady -> "Set up voice input"
+                        isListening || isActiveSession -> "Stop"
+                        else -> "Talk to Halo"
+                    },
                     tint = if (isListening || isActiveSession) {
                         MaterialTheme.colorScheme.error
                     } else {
@@ -291,6 +348,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
             voiceEnabled = !isSpeechProcessing && !isActiveSession,
             voiceActive = isListening,
             voiceContentDescription = when {
+                !uiState.speechReady -> "Set up voice input"
                 isListening -> "Stop listening"
                 isSpeaking -> "Interrupt response and listen"
                 else -> "Voice input"
