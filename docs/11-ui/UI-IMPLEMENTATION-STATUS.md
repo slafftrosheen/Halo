@@ -134,8 +134,9 @@ generic failure text:
   enable request; PairingViewModel only publishes state and never attempts privileged UI actions.
 - Pairing re-evaluates prerequisites on resume and before scan/connect, blocks actions while the
   prerequisite is unresolved, and maps connection transitions/failures to user-facing status.
-- MainActivity re-checks required microphone permission on resume without falsely restarting the
-  process-owned HaloRuntime.
+- Microphone permission is capability-scoped rather than an application startup gate. Halo boots
+  without RECORD_AUDIO; Home requests it only when the user invokes voice, and the permission
+  state is re-read on foreground without restarting the process-owned HaloRuntime.
 - Home refreshes AI provider diagnostics on first display and foreground resume. Confirmed
   UNCONFIGURED/OFFLINE/MODEL_MISSING/UNAVAILABLE/ERROR states render a recovery card that routes
   directly to Intelligence without disabling fallback-capable routing.
@@ -150,3 +151,30 @@ generic failure text:
 These are source-level recovery contracts. Bluetooth radio behavior, OEM permission dialogs,
 network changes, actual provider reachability and physical glasses reconnect still require device
 acceptance.
+
+
+## Pre-burn-in lifecycle hardening — 2026-09-18
+
+The Android recovery model is now process-owned where appropriate rather than screen-owned:
+
+- `AndroidPlatformStateMonitor` observes Bluetooth adapter state and network transitions and
+  exposes microphone permission as capability state.
+- Pairing reacts to a Bluetooth off/on event while the screen remains open; it no longer depends
+  only on leaving/re-entering the route.
+- Home coalesces network changes before refreshing provider diagnostics.
+- `DeviceAutoConnectCoordinator` owns persisted auto-connect policy. It inspects the registry
+  before constructing physical hosts, so ordinary phone-only startup does not touch HeyCyan or
+  BuddyBot unless a saved record explicitly opted into auto-connect.
+- Enabling Auto-connect from device UI performs an immediate retry rather than waiting for restart.
+- `HeyCyanHost` is now composed with the real `DeviceSessionManager`, so its saved-session and
+  bounded auto-connect path is active instead of structurally disconnected.
+- Pairing canonicalizes every saved glasses identity to `deviceType=HEYCYAN_GLASSES`.
+  A narrow process migration repairs records produced by the earlier constructor-order bug.
+- Semantic HeyCyan media controls do not use the generic raw
+  `HeyCyanEmbodimentTransport.send(...)` stubs. Their source path is
+  DevicesViewModel -> HeyCyanSession -> capability controller -> evidence-backed command executor
+  -> HeyCyanGattCommandTransport -> GATT write.
+
+Physical acceptance is defined in
+[REAL_DEVICE_BURN_IN.md](../04-architecture/REAL_DEVICE_BURN_IN.md). Source wiring does not establish
+radio/OEM behavior, reconnect timing, command completion or hardware reliability.
