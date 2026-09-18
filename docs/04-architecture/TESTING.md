@@ -71,3 +71,18 @@ rows report selection plus a click action, and disabled buttons report disabled 
 The visual-language snapshot suite also includes a 1.30x font-scale contract. This is a regression
 guard, not proof of full accessibility. Device acceptance must still cover TalkBack traversal,
 focus order, 200% font-size behavior where supported, keyboard/IME use, and physical touch targets.
+
+
+## Recovery regression coverage
+
+This source pass adds/extends:
+- `BluetoothPrerequisitesTest`: verifies pre-Android-12 location permission vs Android 12+
+  BLUETOOTH_SCAN/BLUETOOTH_CONNECT discovery permissions.
+- `HomeViewModelTest.test13_providerDiagnosticProjectsRecoveryState`: verifies provider diagnostic
+  state/message reach the Home recovery projection.
+- `WhisperModelInstallAndProviderTest`: verifies reloadable STT availability is false without the
+  model and becomes true after install + refresh.
+
+These tests cover state projection and wiring, not OEM Bluetooth, permission-dialog, radio or
+network behavior. Physical acceptance should still exercise Bluetooth off/on, permission deny/grant,
+provider offline/online, speech model missing/install, background/foreground and process recreation.
