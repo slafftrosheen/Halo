@@ -88,7 +88,12 @@ fun AppShell(
                 startDestination = Screen.Home.route,
                 modifier = Modifier.fillMaxSize()
             ) {
-                composable(Screen.Home.route) { HomeScreen(homeViewModel) }
+                composable(Screen.Home.route) {
+                    HomeScreen(
+                        viewModel = homeViewModel,
+                        onRequestMicrophonePermission = onRequestPermissions
+                    )
+                }
                 composable(Screen.Activity.route) { ActivityScreen(ManualDependencyGraph.activityViewModel) }
 
                 composable(Screen.Notebook.route) {
