@@ -1,7 +1,6 @@
 package com.halo.app.ui.screens.settings
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -85,28 +84,12 @@ fun VoiceSettingsScreen(
         HaloWorkspaceSection(title = "Language") {
             uiState.availableLocales.forEachIndexed { index, option ->
                 val selected = option.tag == uiState.selectedLocale
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { viewModel.selectLocale(option.tag) }
-                        .padding(horizontal = 16.dp, vertical = 13.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = option.displayName,
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    if (selected) {
-                        Text(
-                            text = "Selected",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.secondary
-                        )
-                    }
-                }
+                HaloWorkspaceRow(
+                    title = option.displayName,
+                    trailingText = if (selected) "Selected" else null,
+                    selected = selected,
+                    onClick = { viewModel.selectLocale(option.tag) }
+                )
                 if (index < uiState.availableLocales.lastIndex) {
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 }
