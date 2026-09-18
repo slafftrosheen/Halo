@@ -13,6 +13,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.halo.app.ui.glass.material.HaloRuntimeState
@@ -51,8 +54,27 @@ fun HaloPresence(
 
     val surface = MaterialTheme.colorScheme.surface
     val onSurface = MaterialTheme.colorScheme.onSurface
+    val accessibleState = when (state) {
+        HaloRuntimeState.Idle -> "Ready"
+        HaloRuntimeState.Listening, HaloRuntimeState.Wakeword -> "Listening"
+        HaloRuntimeState.Capturing -> "Capturing speech"
+        HaloRuntimeState.Recognizing -> "Recognizing speech"
+        HaloRuntimeState.Reasoning -> "Thinking"
+        HaloRuntimeState.Planning -> "Planning"
+        HaloRuntimeState.Executing -> "Executing"
+        HaloRuntimeState.Speaking -> "Speaking"
+        HaloRuntimeState.Recovering -> "Recovering"
+        HaloRuntimeState.Stopped -> "Offline"
+    }
 
-    Canvas(modifier = modifier.size(size)) {
+    Canvas(
+        modifier = modifier
+            .size(size)
+            .semantics {
+                contentDescription = "Halo presence"
+                stateDescription = accessibleState
+            }
+    ) {
         val extent = min(this.size.width, this.size.height)
         val center = Offset(this.size.width / 2f, this.size.height / 2f)
         val unit = extent * 0.28f
