@@ -137,11 +137,10 @@ fun PairingScreen(
                         )
                     }
                     BluetoothPrerequisite.UNSUPPORTED -> {
-                        HaloWorkspaceButton(
+                        Text(
                             text = "Unavailable",
-                            onClick = {},
-                            enabled = false,
-                            primary = false
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.error
                         )
                     }
                     BluetoothPrerequisite.READY -> {
