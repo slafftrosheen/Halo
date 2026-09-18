@@ -42,8 +42,8 @@ import com.halo.app.ui.workspace.HaloWorkspaceSection
 
 @Composable
 fun PermissionsScreen(
-    onBack: (() -> Unit)? = null,
-    onRequestPermissions: () -> Unit = {}
+    onRequestPermissions: () -> Unit,
+    onBack: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
     var refreshKey by remember { mutableStateOf(0) }
