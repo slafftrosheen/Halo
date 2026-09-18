@@ -128,4 +128,28 @@ class HomeViewModelTest {
         assertEquals(HaloRuntimeState.Speaking, uiState.runtimeState)
         assertFalse(uiState.speechActive)
     }
+    @Test
+    fun test11_idleCognitiveSessionExposesBufferedSpeechProcessing() {
+        val snapshot = createSnapshot(SpeechSessionState.Thinking)
+        val uiState = mapper.map(snapshot, CognitiveSessionState.Idle)
+
+        assertEquals(HaloRuntimeState.Reasoning, uiState.runtimeState)
+        assertFalse(uiState.speechActive)
+        assertTrue(uiState.speechProcessing)
+        assertEquals("Transcribing speech…", uiState.contextualText)
+    }
+
+    @Test
+    fun test12_cognitiveReasoningOwnsThinkingAfterSpeechHandoff() {
+        val snapshot = createSnapshot(SpeechSessionState.Thinking)
+        val uiState = mapper.map(
+            snapshot,
+            CognitiveSessionState.Reasoning("provider_id")
+        )
+
+        assertEquals(HaloRuntimeState.Reasoning, uiState.runtimeState)
+        assertFalse(uiState.speechActive)
+        assertFalse(uiState.speechProcessing)
+    }
+
 }

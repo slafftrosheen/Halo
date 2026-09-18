@@ -35,6 +35,7 @@ data class HomeUiState(
     val activeProviderStatus: String = "Unavailable",
     val sessionState: CognitiveSessionState = CognitiveSessionState.Idle,
     val speechActive: Boolean = false,
+    val speechProcessing: Boolean = false,
     val presentedResponse: String? = null
 )
 
@@ -53,6 +54,11 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
             SpeechSessionState.Recognizing -> true
             else -> false
         }
+        // Thinking + no cognitive transaction yet is the buffered STT decode
+        // boundary. Keep it separate from microphone ownership and LLM reasoning.
+        val speechIsProcessing =
+            snapshot.speech == SpeechSessionState.Thinking &&
+                sessionState == CognitiveSessionState.Idle
 
         val uiRuntimeState = when {
             snapshot.speech == SpeechSessionState.Speaking -> HaloRuntimeState.Speaking
@@ -72,13 +78,16 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
             is CognitiveSessionState.ExecutingTool -> "Executing ${sessionState.toolId}..."
             is CognitiveSessionState.Completed -> sessionState.response.text.ifBlank { "Completed" }
             is CognitiveSessionState.Failed -> "Error: ${sessionState.message}"
-            CognitiveSessionState.Idle -> when (uiRuntimeState) {
-                HaloRuntimeState.Idle -> "Ready when you are"
-                HaloRuntimeState.Capturing -> "Listening"
-                HaloRuntimeState.Recognizing -> "Understanding"
-                HaloRuntimeState.Reasoning -> "Reasoning"
-                HaloRuntimeState.Speaking -> "Speaking"
-                else -> "Processing..."
+            CognitiveSessionState.Idle -> when {
+                speechIsProcessing -> "Transcribing speech…"
+                else -> when (uiRuntimeState) {
+                    HaloRuntimeState.Idle -> "Ready when you are"
+                    HaloRuntimeState.Capturing -> "Listening"
+                    HaloRuntimeState.Recognizing -> "Understanding"
+                    HaloRuntimeState.Reasoning -> "Reasoning"
+                    HaloRuntimeState.Speaking -> "Speaking"
+                    else -> "Processing..."
+                }
             }
         }
         val activeProviderText = diagnostics.find { it.providerId == selectedProviderId }?.let { diagnostic ->
@@ -99,7 +108,8 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
             activeProvider = activeProviderText,
             activeProviderStatus = providerStatus,
             sessionState = sessionState,
-            speechActive = speechIsActive
+            speechActive = speechIsActive,
+            speechProcessing = speechIsProcessing
         )
     }
 

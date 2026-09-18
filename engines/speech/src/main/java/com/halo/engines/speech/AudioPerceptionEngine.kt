@@ -116,6 +116,15 @@ class AudioPerceptionEngine(
     private suspend fun startCapture() {
         transactionMutex.withLock {
             if (captureJob?.isActive == true) return@withLock
+            if (!audioPipeline.usesLiveRecognition && audioPipeline.recognitionInFlight) {
+                if (::context.isInitialized) {
+                    context.runtime.logger.info(
+                        "speech",
+                        "StartListening ignored while buffered recognition is still in flight"
+                    )
+                }
+                return@withLock
+            }
             if (!audioPipeline.isRecognitionAvailable()) {
                 reportCaptureFailure(audioPipeline.unavailableReason())
                 return@withLock
