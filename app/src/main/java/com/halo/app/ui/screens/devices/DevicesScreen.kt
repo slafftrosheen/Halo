@@ -329,9 +329,8 @@ fun DevicesScreen(
             .background(androidx.compose.material3.MaterialTheme.colorScheme.background)
             .padding(horizontal = 24.dp)
     ) {
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(Modifier.height(16.dp))
 
-        // Top Bar
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -341,82 +340,75 @@ fun DevicesScreen(
                 Text(
                     text = "Devices",
                     fontSize = 28.sp,
-                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
                     color = androidx.compose.material3.MaterialTheme.colorScheme.onBackground
                 )
-                Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Connect. Configure. Control.",
+                    text = "Connected hardware and saved sessions.",
                     fontSize = 14.sp,
                     color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             androidx.compose.material3.Surface(
                 shape = CircleShape,
-                color = androidx.compose.material3.MaterialTheme.colorScheme.surfaceVariant,
-                modifier = Modifier.size(40.dp)
+                color = androidx.compose.material3.MaterialTheme.colorScheme.primaryContainer,
+                modifier = Modifier.size(44.dp),
+                onClick = { viewModel.navigateTo("discovery") }
             ) {
-                androidx.compose.material3.IconButton(onClick = { viewModel.navigateTo("discovery") }) {
-                    androidx.compose.material3.Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Add Device",
-                        tint = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
+                androidx.compose.material3.Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Add device",
+                    tint = androidx.compose.material3.MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.padding(11.dp)
+                )
             }
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(Modifier.height(28.dp))
 
         if (uiState.devices.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "No devices connected.",
-                    color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "No saved devices",
+                        fontSize = 18.sp,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
+                        color = androidx.compose.material3.MaterialTheme.colorScheme.onBackground
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        text = "Pair supported hardware to make it available to Halo.",
+                        fontSize = 14.sp,
+                        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    androidx.compose.material3.Surface(
+                        onClick = { viewModel.navigateTo("discovery") },
+                        shape = RoundedCornerShape(14.dp),
+                        color = androidx.compose.material3.MaterialTheme.colorScheme.primaryContainer
+                    ) {
+                        Text(
+                            text = "Add device",
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 9.dp),
+                            color = androidx.compose.material3.MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                }
             }
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = 80.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(uiState.devices, key = { it.id }) { device ->
-                    DeviceCard(device) {
-                        viewModel.navigateTo("device/${device.id}")
-                    }
-                }
-
-                item {
-                    Spacer(modifier = Modifier.height(32.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Saved Devices",
-                            fontSize = 14.sp,
-                            fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
-                            color = androidx.compose.material3.MaterialTheme.colorScheme.onBackground
-                        )
-                        Text(
-                            text = "Edit",
-                            fontSize = 14.sp,
-                            color = androidx.compose.material3.MaterialTheme.colorScheme.secondary,
-                            modifier = Modifier.clickable { /* TODO */ }
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
-
-                item {
-                    SavedDeviceRow("Phone (This device)", "Local", Icons.Default.PhoneAndroid)
-                    SavedDeviceRow("MSStack", "Last seen 2 days ago", Icons.Default.Devices)
+                    DeviceCard(
+                        device = device,
+                        onClick = { viewModel.navigateTo("device/${device.id}") }
+                    )
                 }
             }
         }
@@ -424,137 +416,122 @@ fun DevicesScreen(
 }
 
 @Composable
-fun DeviceCard(device: GenericDeviceUiState, onClick: () -> Unit) {
+private fun DeviceCard(
+    device: GenericDeviceUiState,
+    onClick: () -> Unit
+) {
+    val statusColor = when {
+        device.healthWarning != null -> com.halo.app.ui.theme.HaloWarning
+        device.connectionStateText.equals("Error", ignoreCase = true) ->
+            androidx.compose.material3.MaterialTheme.colorScheme.error
+        device.isConnected -> androidx.compose.material3.MaterialTheme.colorScheme.primary
+        else -> androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+    }
+
     androidx.compose.material3.Surface(
-        shape = RoundedCornerShape(24.dp),
+        onClick = onClick,
+        shape = RoundedCornerShape(20.dp),
         color = androidx.compose.material3.MaterialTheme.colorScheme.surface,
-        border = androidx.compose.foundation.BorderStroke(1.dp, androidx.compose.material3.MaterialTheme.colorScheme.outlineVariant),
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            androidx.compose.material3.MaterialTheme.colorScheme.outlineVariant
+        )
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
+        Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 androidx.compose.material3.Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = androidx.compose.material3.MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f),
+                    shape = RoundedCornerShape(13.dp),
+                    color = androidx.compose.material3.MaterialTheme.colorScheme.surfaceVariant,
                     modifier = Modifier.size(48.dp)
                 ) {
                     androidx.compose.material3.Icon(
-                        imageVector = if (device.kind.name.contains("GLASSES")) Icons.Default.SmartToy else Icons.Default.SmartToy,
+                        imageVector = Icons.Default.SmartToy,
                         contentDescription = null,
                         tint = androidx.compose.material3.MaterialTheme.colorScheme.secondary,
                         modifier = Modifier.padding(12.dp)
                     )
                 }
-                Spacer(modifier = Modifier.width(16.dp))
+
+                Spacer(Modifier.width(14.dp))
+
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = device.name,
                         fontSize = 16.sp,
-                        fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
                         color = androidx.compose.material3.MaterialTheme.colorScheme.onBackground
                     )
+                    Spacer(Modifier.height(2.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             modifier = Modifier
-                                .size(8.dp)
+                                .size(7.dp)
                                 .clip(CircleShape)
-                                .background(if (device.isConnected) Color(0xFF00C853) else Color(0xFFF0B86B))
+                                .background(statusColor)
                         )
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Spacer(Modifier.width(6.dp))
                         Text(
-                            text = if (device.isConnected) "Connected • ${device.battery}" else "Offline",
+                            text = device.connectionStateText,
                             fontSize = 12.sp,
                             color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
-                androidx.compose.material3.IconButton(onClick = onClick) {
-                    androidx.compose.material3.Icon(
-                        imageVector = Icons.Default.Settings,
-                        contentDescription = "Settings",
-                        tint = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+
+                androidx.compose.material3.Icon(
+                    imageVector = Icons.Default.ChevronRight,
+                    contentDescription = "Open device",
+                    tint = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(Modifier.height(14.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                DeviceAction(Icons.Default.CameraAlt, "Camera")
-                DeviceAction(Icons.Default.Mic, "Audio")
-                DeviceAction(Icons.Default.Gamepad, "Controls")
-                DeviceAction(Icons.Default.Settings, "Settings")
+                DeviceMeta("Battery", device.battery)
+                DeviceMeta("Seen", device.lastSeen)
+                DeviceMeta("Auto", if (device.autoConnect) "On" else "Off")
+            }
+
+            if (device.healthWarning != null) {
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    text = device.healthWarning,
+                    fontSize = 12.sp,
+                    color = com.halo.app.ui.theme.HaloWarning
+                )
+            } else if (device.isBatteryStale) {
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    text = "Battery data may be stale · ${device.batteryAgeText}",
+                    fontSize = 12.sp,
+                    color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }
 }
 
 @Composable
-fun DeviceAction(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        androidx.compose.material3.Surface(
-            shape = CircleShape,
-            color = androidx.compose.material3.MaterialTheme.colorScheme.surfaceVariant,
-            modifier = Modifier.size(48.dp)
-        ) {
-            androidx.compose.material3.Icon(
-                imageVector = icon,
-                contentDescription = label,
-                tint = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(12.dp)
-            )
-        }
-        Spacer(modifier = Modifier.height(8.dp))
+private fun DeviceMeta(label: String, value: String) {
+    Column {
         Text(
             text = label,
-            fontSize = 12.sp,
+            fontSize = 10.sp,
             color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
         )
-    }
-}
-
-@Composable
-fun SavedDeviceRow(name: String, status: String, icon: androidx.compose.ui.graphics.vector.ImageVector) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        androidx.compose.material3.Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(24.dp)
-        )
-        Spacer(modifier = Modifier.width(16.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = name,
-                fontSize = 16.sp,
-                fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
-                color = androidx.compose.material3.MaterialTheme.colorScheme.onBackground
-            )
-            Text(
-                text = status,
-                fontSize = 12.sp,
-                color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        androidx.compose.material3.Icon(
-            imageVector = Icons.Default.ChevronRight,
-            contentDescription = null,
-            tint = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+        Text(
+            text = value,
+            fontSize = 12.sp,
+            fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
+            color = androidx.compose.material3.MaterialTheme.colorScheme.onBackground,
+            maxLines = 1
         )
     }
 }
