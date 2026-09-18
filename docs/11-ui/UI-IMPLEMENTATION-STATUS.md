@@ -55,9 +55,20 @@ System/Light/Dark selection and MainActivity applies it at the app root; System 
 
 ## Secondary-surface migration
 
-Intelligence, Voice, Permissions and Pairing now use shared workspace primitives rather than
-legacy Halo Glass page/card components. Startup error/retry surfaces also use the new workspace
-button/typography treatment. HeyCyanControlScreen now uses the workspace primitives while preserving
-its existing device actions. BuddyBotControlScreen remains the main reachable legacy-styled surface;
-its joystick/HUD/safety controls should be migrated as a dedicated control-surface pass rather than
-a cosmetic search-and-replace.
+Intelligence, Voice, Permissions, Pairing, HeyCyanControlScreen and BuddyBotControlScreen now use
+shared workspace primitives rather than legacy Halo Glass page/card components. Startup error/retry
+surfaces also use the new workspace button/typography treatment. BuddyBot's joystick, emergency stop,
+arming gate, forward-block behavior, STOP-on-release and SafetySupervisor authority were preserved
+during migration.
+
+
+## Visual regression scaffold
+
+`HaloVisualLanguageSnapshotTest` renders a deterministic 390dp workspace contract in both light
+and dark HaloTheme variants using Robolectric native graphics and Roborazzi. The fixture exercises
+Halo Presence, signal glyphs, workspace cards/rows/buttons, semantic warning/error treatment and
+typography without booting the runtime graph.
+
+`AppearancePreferencesTest` verifies System as the default and persistence of an explicit theme.
+The tests are committed, but no golden-image verification is claimed in this source-only pass.
+Record and verify locally/CI before treating the visual acceptance checkbox as passed.
