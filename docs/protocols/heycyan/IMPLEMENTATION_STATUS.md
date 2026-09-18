@@ -44,3 +44,49 @@ Halo build or a connected device implements every command.
 
 See [hardware confirmation matrix](HARDWARE_CONFIRMATION_MATRIX.md) for planned tests.
 No physical acceptance or current test pass is certified by this review.
+
+
+## Current semantic control path
+
+Reachable device controls do not use the generic raw `EmbodimentTransport.send(...)` methods.
+For photo/video/audio-recording/media-inventory intents, the current source path is:
+
+```text
+DevicesViewModel
+  -> HeyCyanSession.dispatch()
+  -> HeyCyanOperation
+  -> HeyCyanCapabilityControllerAdapter
+  -> HeyCyanCapabilityController
+  -> DefaultHeyCyanCommandExecutor
+  -> HeyCyanGattCommandTransport
+  -> HeyCyanGattClient.write()
+```
+
+The command executor accepts only catalogued/evidence-backed mappings and emits
+`HALO-TX-TRACE` before the verified GATT write. Session success is not inferred merely from a
+successful write; operations that have a completion signal wait for the corresponding device
+observation/state transition.
+
+`HeyCyanEmbodimentTransport.send(String)` and `send(ByteArray)` remain unsupported generic
+transport methods in current source and return false. They are not the command path used by the
+reachable semantic controls above. Do not connect generic raw-send UI to those stubs without a
+separately verified protocol contract.
+
+## Session and auto-connect composition
+
+`HeyCyanHost` is now constructed with the shared process `DeviceSessionManager`. Saved glasses
+therefore use the same registered `HeyCyanSession` lifecycle as Devices UI actions.
+
+Auto-connect ownership is process-level rather than constructor-driven:
+- `DeviceAutoConnectCoordinator` inspects persisted records and only opts a device kind into
+  startup/recovery when `autoConnect=true`;
+- Bluetooth-on can trigger a serialized retry through `DeviceSessionManager.autoConnectDevice`;
+- enabling Auto-connect from the device UI triggers an immediate retry;
+- constructing `HeyCyanHost` by itself registers saved sessions but does not start a transport
+  connection;
+- records created during the earlier Pairing constructor-order bug are normalized to canonical
+  `deviceType=HEYCYAN_GLASSES`.
+
+Physical pass/fail for these flows is defined in
+[REAL_DEVICE_BURN_IN.md](../../04-architecture/REAL_DEVICE_BURN_IN.md). The source path above is not
+a claim that a particular firmware/device completed the command successfully.
