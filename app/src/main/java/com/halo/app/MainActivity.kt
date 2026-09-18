@@ -7,6 +7,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,6 +16,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -27,6 +29,7 @@ import com.halo.app.ui.glass.components.HaloGlassButton
 import com.halo.app.ui.glass.material.HaloTypography
 import com.halo.app.ui.shell.AppShell
 import com.halo.app.ui.shell.PermissionsScreen
+import com.halo.app.ui.theme.AppearanceMode
 import com.halo.app.ui.theme.HaloTheme
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -73,7 +76,15 @@ class MainActivity : ComponentActivity() {
         RuntimeStartupTrace.mark("activity.permissions.checked", startedAt)
 
         setContent {
-            HaloTheme {
+            val appearanceMode by ManualDependencyGraph.appearancePreferences.mode.collectAsState()
+            val systemDark = isSystemInDarkTheme()
+            val darkTheme = when (appearanceMode) {
+                AppearanceMode.SYSTEM -> systemDark
+                AppearanceMode.LIGHT -> false
+                AppearanceMode.DARK -> true
+            }
+
+            HaloTheme(darkTheme = darkTheme) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
