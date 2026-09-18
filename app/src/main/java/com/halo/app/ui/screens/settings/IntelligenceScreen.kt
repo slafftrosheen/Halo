@@ -201,11 +201,17 @@ fun IntelligenceScreen(
         Spacer(Modifier.height(20.dp))
 
         HaloWorkspaceSection(title = "Runtime policy") {
-            PolicySwitchRow("Memory", uiState.isMemoryEnabled, viewModel::setMemoryEnabled)
+            PolicySwitchRow(
+                "Memory",
+                uiState.policy.includeMemories,
+                viewModel::setMemoryEnabled
+            )
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            PolicySwitchRow("Tools", uiState.isToolsEnabled, viewModel::setToolsEnabled)
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            PolicySwitchRow("Agent mode", uiState.isAgentEnabled, viewModel::setAgentEnabled)
+            PolicySwitchRow(
+                "Tools",
+                uiState.policy.includeAvailableTools,
+                viewModel::setToolsEnabled
+            )
         }
 
         Spacer(Modifier.height(32.dp))
