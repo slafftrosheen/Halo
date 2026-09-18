@@ -53,6 +53,7 @@ import com.halo.app.ui.workspace.HaloWorkspaceCard
 import com.halo.app.ui.workspace.HaloWorkspaceHeader
 import com.halo.app.ui.workspace.HaloWorkspaceRow
 import com.halo.app.ui.workspace.HaloWorkspaceSection
+import com.halo.app.ui.workspace.HaloWorkspaceToggleRow
 import com.halo.sdk.runtime.embodiment.ActionId
 import com.halo.sdk.runtime.embodiment.DriveMode
 import com.halo.sdk.runtime.embodiment.EmbodimentIntent
@@ -465,14 +466,12 @@ fun BuddyBotControlScreen(
                 onClick = { showUrlDialog = true }
             )
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            HaloWorkspaceRow(
+            HaloWorkspaceToggleRow(
                 title = "Auto-connect",
-                trailingText = if (device?.autoConnect == true) "On" else "Off",
-                onClick = {
-                    viewModel.toggleAutoConnect(
-                        deviceId,
-                        !(device?.autoConnect ?: false)
-                    )
+                subtitle = "Reconnect when BuddyBot becomes available.",
+                checked = device?.autoConnect == true,
+                onCheckedChange = { enabled ->
+                    viewModel.toggleAutoConnect(deviceId, enabled)
                 }
             )
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
