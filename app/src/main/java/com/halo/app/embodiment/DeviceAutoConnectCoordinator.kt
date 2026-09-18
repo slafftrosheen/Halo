@@ -1,5 +1,6 @@
 package com.halo.app.embodiment
 
+import android.util.Log
 import com.halo.drivers.heycyan.HeyCyanHost
 import com.halo.sdk.runtime.embodiment.DeviceKind
 import com.halo.sdk.runtime.embodiment.DeviceRegistry
@@ -64,6 +65,7 @@ class DeviceAutoConnectCoordinator(
 
     fun start() {
         if (!started.compareAndSet(false, true)) return
+        Log.i(TAG, "AUTOCONNECT_COORDINATOR_START")
 
         scope.launch(Dispatchers.IO) {
             bootstrapSavedDevices()
@@ -74,6 +76,7 @@ class DeviceAutoConnectCoordinator(
                 .drop(1)
                 .filter { it }
                 .collectLatest {
+                    Log.i(TAG, "AUTOCONNECT_TRIGGER kind=heycyan source=bluetooth_on")
                     retryHeyCyan()
                 }
         }
@@ -97,6 +100,7 @@ class DeviceAutoConnectCoordinator(
         }
         if (!record.autoConnect) return false
 
+        Log.i(TAG, "AUTOCONNECT_TRIGGER kind=${record.descriptor.kind.name.lowercase()} source=user_toggle")
         return when (record.descriptor.kind) {
             DeviceKind.HEYCYAN_GLASSES -> {
                 if (!bluetoothEnabled.value) return false
@@ -151,7 +155,8 @@ class DeviceAutoConnectCoordinator(
             DeviceKind.HEYCYAN_GLASSES
         ).isNotEmpty()
         if (!hasAutoConnect) return
-        heyCyanHostProvider().retryAutoConnect()
+        val success = heyCyanHostProvider().retryAutoConnect()
+        Log.i(TAG, "AUTOCONNECT_RESULT kind=heycyan success=$success")
     }
 
     private suspend fun retryBuddyBot() {
@@ -165,6 +170,11 @@ class DeviceAutoConnectCoordinator(
         if (host.deviceId !in targetIds) return
 
         host.ensureDeviceRegistered()
-        sessionManager.autoConnectDevice(host.deviceId)
+        val success = sessionManager.autoConnectDevice(host.deviceId)
+        Log.i(TAG, "AUTOCONNECT_RESULT kind=buddybot success=$success")
+    }
+
+    private companion object {
+        const val TAG = "HaloAutoConnect"
     }
 }
