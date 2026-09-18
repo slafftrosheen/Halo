@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,6 +24,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
@@ -127,7 +133,13 @@ fun HaloWorkspaceRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .heightIn(min = 48.dp)
             .then(interaction)
+            .semantics(mergeDescendants = true) {
+                if (onClick != null) role = Role.Button
+                if (selected) this.selected = true
+                if (!enabled) disabled()
+            }
             .padding(horizontal = 16.dp, vertical = 13.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -155,7 +167,7 @@ fun HaloWorkspaceRow(
                 color = if (selected) MaterialTheme.colorScheme.secondary
                 else MaterialTheme.colorScheme.onSurfaceVariant
             )
-        } else if (onClick != null) {
+        } else if (onClick != null && enabled) {
             Icon(
                 imageVector = Icons.Default.ChevronRight,
                 contentDescription = null,
@@ -194,7 +206,7 @@ fun HaloWorkspaceButton(
     primary: Boolean = true
 ) {
     Surface(
-        modifier = modifier,
+        modifier = modifier.heightIn(min = 48.dp),
         onClick = onClick,
         enabled = enabled,
         shape = RoundedCornerShape(14.dp),
