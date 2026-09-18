@@ -61,6 +61,10 @@ class AndroidPlatformStateMonitor(
         registerNetworkCallback()
     }
 
+    fun refreshBluetoothState() {
+        _bluetoothEnabled.value = readBluetoothEnabled()
+    }
+
     private fun readBluetoothEnabled(): Boolean = try {
         bluetoothManager?.adapter?.isEnabled == true
     } catch (_: SecurityException) {
