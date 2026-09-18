@@ -3,7 +3,6 @@ package com.halo.app
 import android.Manifest
 import android.bluetooth.BluetoothAdapter
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -29,7 +28,6 @@ import androidx.lifecycle.lifecycleScope
 import com.halo.app.di.ManualDependencyGraph
 import com.halo.app.ui.shell.AppShell
 import com.halo.app.ui.screens.discovery.requiredBluetoothDiscoveryPermissions
-import com.halo.app.ui.shell.PermissionsScreen
 import com.halo.app.ui.theme.AppearanceMode
 import com.halo.app.ui.theme.HaloTheme
 import com.halo.app.ui.workspace.HaloWorkspaceButton
@@ -40,7 +38,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
-    private var hasRequiredPermissions by mutableStateOf(false)
     private var uiGraphReady by mutableStateOf(false)
     private var runtimeReady by mutableStateOf(false)
     private var uiGraphError by mutableStateOf<String?>(null)
@@ -53,12 +50,11 @@ class MainActivity : ComponentActivity() {
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) {
-        hasRequiredPermissions = areRequiredPermissionsGranted()
-        RuntimeStartupTrace.mark("permissions.result granted=$hasRequiredPermissions")
-        if (hasRequiredPermissions) {
-            startUiGraphBootstrap()
-            startRuntimeLoop()
-        }
+        ManualDependencyGraph.platformStateMonitor.refreshMicrophonePermission()
+        RuntimeStartupTrace.mark(
+            "permissions.microphone.result granted=" +
+                ManualDependencyGraph.platformStateMonitor.microphonePermissionGranted.value
+        )
     }
 
     private val devicePermissionLauncher = registerForActivityResult(
@@ -94,8 +90,7 @@ class MainActivity : ComponentActivity() {
         RuntimeStartupTrace.mark("activity.graph.init.end", startedAt)
         runtime = ManualDependencyGraph.runtime
         RuntimeStartupTrace.mark("activity.runtime.attached", startedAt)
-        hasRequiredPermissions = areRequiredPermissionsGranted()
-        RuntimeStartupTrace.mark("activity.permissions.checked", startedAt)
+        RuntimeStartupTrace.mark("activity.permissions.deferred", startedAt)
 
         setContent {
             val appearanceMode by ManualDependencyGraph.appearancePreferences.mode.collectAsState()
@@ -112,11 +107,6 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     when {
-                        !hasRequiredPermissions -> PermissionsScreen(
-                            onRequestPermissions = {
-                                permissionLauncher.launch(requiredPermissions())
-                            }
-                        )
                         uiGraphError != null -> Box(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
@@ -172,7 +162,7 @@ class MainActivity : ComponentActivity() {
                         ) { CircularProgressIndicator() }
                         else -> AppShell(
                             onRequestPermissions = {
-                                permissionLauncher.launch(requiredPermissions())
+                                permissionLauncher.launch(microphonePermissions())
                             },
                             onRequestBluetoothPermissions = {
                                 devicePermissionLauncher.launch(requiredBluetoothDiscoveryPermissions())
@@ -189,10 +179,8 @@ class MainActivity : ComponentActivity() {
         }
         RuntimeStartupTrace.mark("activity.setContent.returned", startedAt)
 
-        if (hasRequiredPermissions) {
-            startUiGraphBootstrap()
-            startRuntimeLoop()
-        }
+        startUiGraphBootstrap()
+        startRuntimeLoop()
         RuntimeStartupTrace.mark("activity.onCreate.end", startedAt)
     }
 
@@ -226,14 +214,11 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * Phone-first permissions. Bluetooth and nearby-device permissions are requested
-     * only when the Devices flow is actually used; they are not startup prerequisites.
+     * Microphone access is capability-scoped, not an application startup prerequisite.
+     * Bluetooth/nearby permissions are likewise requested only from the Devices flow.
      */
-    private fun requiredPermissions(): Array<String> = arrayOf(Manifest.permission.RECORD_AUDIO)
-
-    private fun areRequiredPermissionsGranted(): Boolean = requiredPermissions().all { permission ->
-        checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
-    }
+    private fun microphonePermissions(): Array<String> =
+        arrayOf(Manifest.permission.RECORD_AUDIO)
 
     /**
      * Starts only the Android cognitive runtime. Physical embodiments are optional
@@ -279,20 +264,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        val permissionsNowGranted = areRequiredPermissionsGranted()
-        val changed = permissionsNowGranted != hasRequiredPermissions
-        hasRequiredPermissions = permissionsNowGranted
-
-        if (permissionsNowGranted) {
-            startUiGraphBootstrap()
-            startRuntimeLoop()
-        }
-
-        if (changed) {
-            RuntimeStartupTrace.mark(
-                "activity.permissions.onResume granted=$permissionsNowGranted"
-            )
-        }
+        ManualDependencyGraph.platformStateMonitor.refreshMicrophonePermission()
+        startUiGraphBootstrap()
+        startRuntimeLoop()
     }
 
     override fun onDestroy() {
