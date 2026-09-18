@@ -10,7 +10,7 @@ excludes the older microkernel/ProcessManager path from normal phone startup.
 
 | Area | Present in code | Limit |
 |---|---|---|
-| UI | Five primary tabs (Home, Activity, Notebook, Devices, Settings); persistent NB-01 notes/search/lifecycle flow; spatial Halo Presence; persisted System/Light/Dark appearance mode; workspace-styled intelligence, voice, permissions and pairing routes | Notebook files/memory/conversations/Working Set are not implemented; BuddyBot control still retains legacy Halo Glass styling; console/lab/inspector are not AppShell routes; whole-app accessibility/performance not established |
+| UI | Five primary tabs (Home, Activity, Notebook, Devices, Settings); persistent NB-01 notes/search/lifecycle flow; spatial Halo Presence; persisted System/Light/Dark appearance mode; workspace-styled intelligence, voice, permissions, pairing, HeyCyan and BuddyBot control routes | Notebook files/memory/conversations/Working Set are not implemented; console/lab/inspector are not AppShell routes; whole-app accessibility/performance not established |
 | Presence | Asymmetric rounded-cell renderer driven by HaloRuntimeState; no permanent idle animation; compact signal-cell glyphs in Activity/Notebook/navigation; Android animator-scale zero disables Presence transitions | No measured audio/output envelope yet; low-power behavior beyond platform animation removal is not established |
 | Cognition | Engine pipeline and CognitiveSession streaming/tool rounds | General model-to-Android capability bridge is not wired |
 | Model tools | Echo and current time registered in app graph | Not general phone/device actions |
@@ -22,6 +22,7 @@ excludes the older microkernel/ProcessManager path from normal phone startup.
 | Plugins | In-process registration/capability contribution/dispatch | No security sandbox or downloadable plugin installer established |
 | Devices | Persisted identities/session handling, HeyCyan and BuddyBot paths | Hardware reliability and capability consistency need evidence |
 | Credentials | OpenRouter key written through SharedPreferences | No application-level encryption in this storage path |
+| UI verification | Robolectric/Roborazzi dependencies plus light/dark visual-language snapshot tests and appearance persistence test | Golden images have not been recorded/verified in this source-only pass; whole-screen/device-specific coverage is incomplete |
 | CI | Workflow declares lint/test/build/upload | Current success not established; detekt/ktlint configuration mismatch |
 
 See [architecture](docs/04-architecture/ARCHITECTURE.md),
