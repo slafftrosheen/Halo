@@ -1,13 +1,23 @@
 package com.halo.runtime.observer
 
-import com.halo.sdk.runtime.*
+import com.halo.sdk.runtime.BlackboardSnapshot
+import com.halo.sdk.runtime.EngineSnapshot
+import com.halo.sdk.runtime.EngineState
+import com.halo.sdk.runtime.FactSummary
+import com.halo.sdk.runtime.NativeResourceCoordinator
+import com.halo.sdk.runtime.ObservationTrace
+import com.halo.sdk.runtime.ProviderSnapshot
+import com.halo.sdk.runtime.RuntimeSnapshot
+import com.halo.sdk.runtime.RuntimeState
+import com.halo.sdk.runtime.SpeechSessionState
+import com.halo.sdk.runtime.TimelineEvent
 import java.time.Instant
 import kotlinx.datetime.toJavaInstant
 
 interface SnapshotAssembler {
     fun assemble(
         speechState: SpeechSessionState,
-        processes: List<com.halo.runtime.kernel.Process>,
+        engines: List<EngineSnapshot>,
         facts: List<com.halo.runtime.cognition.blackboard.Knowledge>,
         timeline: List<TimelineEvent>,
         traces: List<ObservationTrace>,
@@ -23,40 +33,51 @@ class DefaultSnapshotAssembler(
 ) : SnapshotAssembler {
     override fun assemble(
         speechState: SpeechSessionState,
-        processes: List<com.halo.runtime.kernel.Process>,
+        engines: List<EngineSnapshot>,
         facts: List<com.halo.runtime.cognition.blackboard.Knowledge>,
         timeline: List<TimelineEvent>,
         traces: List<ObservationTrace>,
         providers: List<ProviderSnapshot>,
         startedAtTime: Instant
     ): RuntimeSnapshot {
-        val engines = processes.map { p -> p.engineSnapshot() }
+        val isBooting = engines.isEmpty() || engines.any { engine ->
+            engine.state == EngineState.Created || engine.state == EngineState.Initializing
+        }
 
-        val actualEngines = if (engines.isEmpty()) {
-            listOf(
-                EngineSnapshot("Speech", EngineState.Unknown, EngineHealth.Unknown, EngineMetrics(null, java.time.Duration.ZERO, 0, 0, 0.0), clock.instant()),
-                EngineSnapshot("Reasoning", EngineState.Unknown, EngineHealth.Unknown, EngineMetrics(null, java.time.Duration.ZERO, 0, 0, 0.0), clock.instant()),
-                EngineSnapshot("Planning", EngineState.Unknown, EngineHealth.Unknown, EngineMetrics(null, java.time.Duration.ZERO, 0, 0, 0.0), clock.instant()),
-                EngineSnapshot("Execution", EngineState.Unknown, EngineHealth.Unknown, EngineMetrics(null, java.time.Duration.ZERO, 0, 0, 0.0), clock.instant())
-            )
-        } else engines
+        val runtimeState = when {
+            isBooting -> RuntimeState.Booting
+            engines.all { it.state == EngineState.Stopped || it.state == EngineState.Disposed } -> RuntimeState.Offline
+            engines.all { it.state == EngineState.Running } -> RuntimeState.Running
+            else -> RuntimeState.Ready
+        }
 
-        val isBooting = processes.isEmpty()
-        val health = healthEvaluator.evaluate(isBooting, startedAtTime, speechState, actualEngines)
+        val health = healthEvaluator.evaluate(
+            isBooting = isBooting,
+            startedAtTime = startedAtTime,
+            speechState = speechState,
+            engines = engines
+        )
 
         return RuntimeSnapshot(
             runtimeVersion = "1.0.0-alpha",
             buildNumber = 44,
             startedAt = startedAtTime,
             health = health,
-            runtimeState = if (isBooting) RuntimeState.Booting else RuntimeState.Running,
+            runtimeState = runtimeState,
             speech = speechState,
-            engines = actualEngines,
+            engines = engines,
             timeline = timeline,
             providers = providers,
-            blackboard = BlackboardSnapshot(facts.size, facts.takeLast(10).map {
-                FactSummary(it.id.value, it.payload::class.simpleName ?: "Unknown", it.createdAt.toJavaInstant())
-            }),
+            blackboard = BlackboardSnapshot(
+                facts.size,
+                facts.takeLast(10).map {
+                    FactSummary(
+                        it.id.value,
+                        it.payload::class.simpleName ?: "Unknown",
+                        it.createdAt.toJavaInstant()
+                    )
+                }
+            ),
             traces = traces,
             nativeResources = nativeResourceCoordinator?.snapshot?.value ?: emptyList()
         )

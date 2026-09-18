@@ -136,25 +136,45 @@ class SpeechSessionManager(
             }
             launch {
                 eventBus.observe(TtsCompleted::class.java).collect {
-                    outputActive = false
-                    lastTtsEndTime = System.currentTimeMillis()
-                    _sessionState.value = SpeechSessionState.Idle
+                    finishOutput(
+                        endedAt = System.currentTimeMillis(),
+                        preserveInputState = true
+                    )
                 }
             }
             launch {
                 eventBus.observe(TtsCancelled::class.java).collect {
-                    outputActive = false
-                    lastTtsEndTime = 0L
-                    _sessionState.value = SpeechSessionState.Idle
+                    // Cancellation is the intentional barge-in path. Do not add
+                    // a cooldown and never allow the late cancellation callback
+                    // to overwrite a new Capturing/Recognizing state.
+                    finishOutput(
+                        endedAt = 0L,
+                        preserveInputState = true
+                    )
                 }
             }
             launch {
                 eventBus.observe(TtsFailed::class.java).collect {
-                    outputActive = false
-                    lastTtsEndTime = System.currentTimeMillis()
-                    _sessionState.value = SpeechSessionState.Idle
+                    finishOutput(
+                        endedAt = System.currentTimeMillis(),
+                        preserveInputState = true
+                    )
                 }
             }
         }
+    }
+
+    private fun finishOutput(endedAt: Long, preserveInputState: Boolean) {
+        outputActive = false
+        lastTtsEndTime = endedAt
+
+        val current = _sessionState.value
+        if (preserveInputState &&
+            (current == SpeechSessionState.Capturing || current == SpeechSessionState.Recognizing)
+        ) {
+            return
+        }
+
+        _sessionState.value = SpeechSessionState.Idle
     }
 }

@@ -110,4 +110,22 @@ class HomeViewModelTest {
         assertEquals(HaloRuntimeState.Recovering, uiState.runtimeState)
         assertFalse(uiState.speechActive)
     }
+
+    @Test
+    fun test9_streamingResponseIsNotPhysicalSpeech() {
+        val snapshot = createSnapshot(SpeechSessionState.Idle)
+        val uiState = mapper.map(snapshot, CognitiveSessionState.Streaming("Partial response"))
+
+        assertEquals(HaloRuntimeState.Reasoning, uiState.runtimeState)
+        assertFalse(uiState.speechActive)
+    }
+
+    @Test
+    fun test10_actualSpeechWinsWhileResponseIsStreaming() {
+        val snapshot = createSnapshot(SpeechSessionState.Speaking)
+        val uiState = mapper.map(snapshot, CognitiveSessionState.Streaming("Partial response"))
+
+        assertEquals(HaloRuntimeState.Speaking, uiState.runtimeState)
+        assertFalse(uiState.speechActive)
+    }
 }

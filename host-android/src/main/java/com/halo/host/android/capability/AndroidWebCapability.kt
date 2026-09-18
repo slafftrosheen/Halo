@@ -1,5 +1,7 @@
 package com.halo.host.android.capability
 
+import android.app.SearchManager
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -15,17 +17,30 @@ class AndroidWebCapability(private val context: Context) : Capability {
 
     override suspend fun execute(task: Task): Outcome {
         require(task is WebTask)
+        val target = task.url.trim()
+        if (target.isEmpty()) {
+            return Outcome.PermanentFailure("No web search query was provided")
+        }
+
         return try {
-            val urlStr = if (task.url.startsWith("http://") || task.url.startsWith("https://")) {
-                task.url
+            val intent = if (target.startsWith("http://", ignoreCase = true) ||
+                target.startsWith("https://", ignoreCase = true)
+            ) {
+                Intent(Intent.ACTION_VIEW, Uri.parse(target))
             } else {
-                "https://www.google.com/search?q=${Uri.encode(task.url)}"
-            }
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(urlStr)).apply {
+                Intent(Intent.ACTION_WEB_SEARCH).apply {
+                    putExtra(SearchManager.QUERY, target)
+                }
+            }.apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
+
             context.startActivity(intent)
-            Outcome.Success(task.url)
+            Outcome.Success(target)
+        } catch (_: ActivityNotFoundException) {
+            Outcome.PermanentFailure("No web browser or search app is available")
+        } catch (_: SecurityException) {
+            Outcome.PermanentFailure("Android blocked the web request")
         } catch (e: Exception) {
             Outcome.RetryableFailure(e.message ?: "Failed to open web search")
         }

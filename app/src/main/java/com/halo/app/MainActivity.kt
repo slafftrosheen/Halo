@@ -37,6 +37,7 @@ import kotlinx.coroutines.withContext
 class MainActivity : ComponentActivity() {
     private var hasRequiredPermissions by mutableStateOf(false)
     private var uiGraphReady by mutableStateOf(false)
+    private var runtimeReady by mutableStateOf(false)
     private var uiGraphError by mutableStateOf<String?>(null)
     private var runtimeError by mutableStateOf<String?>(null)
     private lateinit var runtime: HaloRuntime
@@ -52,6 +53,8 @@ class MainActivity : ComponentActivity() {
         if (hasRequiredPermissions) {
             startUiGraphBootstrap()
             startRuntimeLoop()
+        } else {
+            runtimeReady = false
         }
     }
 
@@ -64,8 +67,8 @@ class MainActivity : ComponentActivity() {
         RuntimeStartupTrace.mark("activity.graph.init.begin", startedAt)
         ManualDependencyGraph.init(this)
         RuntimeStartupTrace.mark("activity.graph.init.end", startedAt)
-        runtime = HaloRuntime(ManualDependencyGraph)
-        RuntimeStartupTrace.mark("activity.runtime.constructed", startedAt)
+        runtime = ManualDependencyGraph.runtime
+        RuntimeStartupTrace.mark("activity.runtime.attached", startedAt)
         hasRequiredPermissions = areRequiredPermissionsGranted()
         RuntimeStartupTrace.mark("activity.permissions.checked", startedAt)
 
@@ -131,7 +134,7 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                         }
-                        !uiGraphReady -> Box(
+                        !uiGraphReady || !runtimeReady -> Box(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
                         ) { CircularProgressIndicator() }
@@ -197,6 +200,7 @@ class MainActivity : ComponentActivity() {
         if (force) runtimeJob?.cancel()
 
         runtimeLoopStarted = true
+        runtimeReady = false
         runtimeError = null
         RuntimeStartupTrace.mark("activity.runtimeLoop.schedule force=$force")
 
@@ -208,10 +212,9 @@ class MainActivity : ComponentActivity() {
                 RuntimeStartupTrace.mark("activity.runtime.uiBootstrapJoined", startedAt)
                 check(uiGraphReady) { uiGraphError ?: "UI graph bootstrap did not complete successfully" }
 
-                if (!runtime.isStarted()) {
-                    RuntimeStartupTrace.mark("activity.runtime.start.begin", startedAt)
-                    runtime.start()
-                    RuntimeStartupTrace.mark("activity.runtime.start.end", startedAt)
+                runtime.start()
+                withContext(Dispatchers.Main.immediate) {
+                    runtimeReady = true
                 }
                 RuntimeStartupTrace.mark("activity.runtime.ready", startedAt)
             } catch (error: CancellationException) {
@@ -221,6 +224,7 @@ class MainActivity : ComponentActivity() {
                 RuntimeStartupTrace.mark("activity.runtime.failed", startedAt)
                 android.util.Log.e("MainActivity", "Runtime startup failed", error)
                 withContext(Dispatchers.Main.immediate) {
+                    runtimeReady = false
                     runtimeError = error.message ?: error::class.java.simpleName
                     runtimeLoopStarted = false
                 }
@@ -229,14 +233,15 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
-        RuntimeStartupTrace.mark("activity.onDestroy.begin")
+        RuntimeStartupTrace.mark("activity.onDestroy.begin changingConfig=$isChangingConfigurations")
+        runtimeReady = false
         uiGraphJob?.cancel()
         runtimeJob?.cancel()
-        ManualDependencyGraph.infra.scope.launch(Dispatchers.IO) {
-            RuntimeStartupTrace.mark("activity.runtime.stop.begin")
-            runtime.stop()
-            RuntimeStartupTrace.mark("activity.runtime.stop.end")
-        }
+
+        // HaloRuntime belongs to the Android process, not to an Activity. Stopping
+        // or disposing it here made rotation race the next Activity and left lazy
+        // engine instances permanently disposed. Process death already reclaims
+        // platform resources; explicit product shutdown can call runtime.stop().
         super.onDestroy()
         RuntimeStartupTrace.mark("activity.onDestroy.end")
     }

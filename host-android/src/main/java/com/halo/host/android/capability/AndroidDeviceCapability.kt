@@ -1,21 +1,16 @@
 package com.halo.host.android.capability
 
-import android.app.AlarmManager
 import android.content.Context
-import android.content.Intent
 import android.hardware.camera2.CameraAccessException
+import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.media.AudioManager
-import android.os.Build
-import android.provider.AlarmClock
-import android.provider.Settings
+import android.text.format.DateFormat
 import com.halo.runtime.cognition.Capability
 import com.halo.runtime.cognition.DeviceTask
 import com.halo.runtime.cognition.Outcome
 import com.halo.runtime.cognition.Task
-import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.Locale
 
 class AndroidDeviceCapability(private val context: Context) : Capability {
     override val id: String = "capability.device.android"
@@ -32,59 +27,45 @@ class AndroidDeviceCapability(private val context: Context) : Capability {
         return try {
             when {
                 action == "time" -> {
-                    val formatted = SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date())
+                    val formatted = DateFormat.getTimeFormat(context).format(Date())
                     Outcome.Success("It's $formatted.")
                 }
-                action == "alarm" || action.contains("alarm") -> {
-                    val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
-                        Outcome.PermanentFailure("Exact alarm permission is required")
+
+                action.contains("flashlight_on") || action.contains("turn_on_flashlight") -> {
+                    if (setFlashlightState(true)) {
+                        Outcome.Success("Flashlight turned on")
                     } else {
-                        val alarmIntent = Intent(AlarmClock.ACTION_SET_ALARM).apply {
-                            putExtra(AlarmClock.EXTRA_SKIP_UI, true)
-                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        }
-                        val pm = context.packageManager
-                        if (pm.queryIntentActivities(alarmIntent, 0).isNotEmpty()) {
-                            try {
-                                context.startActivity(alarmIntent)
-                                Outcome.Success("Alarm set")
-                            } catch (e: Exception) {
-                                Outcome.PermanentFailure("Unable to set alarm")
-                            }
-                        } else {
-                            Outcome.PermanentFailure("No alarm clock app available")
-                        }
+                        Outcome.PermanentFailure("No flashlight is available on this device")
                     }
                 }
-                action.contains("flashlight_on") || action.contains("turn_on_flashlight") -> {
-                    setFlashlightState(true)
-                    Outcome.Success("Flashlight turned on")
-                }
+
                 action.contains("flashlight_off") || action.contains("turn_off_flashlight") -> {
-                    setFlashlightState(false)
-                    Outcome.Success("Flashlight turned off")
+                    if (setFlashlightState(false)) {
+                        Outcome.Success("Flashlight turned off")
+                    } else {
+                        Outcome.PermanentFailure("No flashlight is available on this device")
+                    }
                 }
+
                 action.contains("flashlight") -> {
-                    isTorchOn = !isTorchOn
-                    setFlashlightState(isTorchOn)
-                    Outcome.Success(if (isTorchOn) "Flashlight turned on" else "Flashlight turned off")
+                    val requestedState = !isTorchOn
+                    if (setFlashlightState(requestedState)) {
+                        Outcome.Success(if (requestedState) "Flashlight turned on" else "Flashlight turned off")
+                    } else {
+                        Outcome.PermanentFailure("No flashlight is available on this device")
+                    }
                 }
+
                 action == "volumeup" || action.contains("volume_up") -> {
                     adjustVolume(AudioManager.ADJUST_RAISE)
                     Outcome.Success("Volume increased")
                 }
+
                 action == "volumedown" || action.contains("volume_down") -> {
                     adjustVolume(AudioManager.ADJUST_LOWER)
                     Outcome.Success("Volume decreased")
                 }
-                action == "settings" || action.contains("settings") -> {
-                    val settingsIntent = Intent(Settings.ACTION_SETTINGS).apply {
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    }
-                    context.startActivity(settingsIntent)
-                    Outcome.Success("Opening settings")
-                }
+
                 else -> Outcome.PermanentFailure("Unknown device action: ${task.action}")
             }
         } catch (e: CameraAccessException) {
@@ -96,13 +77,16 @@ class AndroidDeviceCapability(private val context: Context) : Capability {
         }
     }
 
-    private fun setFlashlightState(enabled: Boolean) {
+    private fun setFlashlightState(enabled: Boolean): Boolean {
         val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
-        val cameraId = cameraManager.cameraIdList.firstOrNull()
-        if (cameraId != null) {
-            cameraManager.setTorchMode(cameraId, enabled)
-            isTorchOn = enabled
-        }
+        val cameraId = cameraManager.cameraIdList.firstOrNull { id ->
+            cameraManager.getCameraCharacteristics(id)
+                .get(CameraCharacteristics.FLASH_INFO_AVAILABLE) == true
+        } ?: return false
+
+        cameraManager.setTorchMode(cameraId, enabled)
+        isTorchOn = enabled
+        return true
     }
 
     private fun adjustVolume(direction: Int) {

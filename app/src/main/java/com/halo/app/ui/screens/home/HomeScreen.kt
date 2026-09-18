@@ -44,9 +44,9 @@ fun HomeScreen(viewModel: HomeViewModel) {
     // Include the immediate local intent so a second tap can stop a session
     // before the runtime snapshot has propagated the first StartListening.
     val isListening = uiState.speechActive || listeningRequested
-    val isSpeaking = uiState.runtimeState == HaloRuntimeState.Speaking ||
-        uiState.sessionState is CognitiveSessionState.Streaming
+    val isSpeaking = uiState.runtimeState == HaloRuntimeState.Speaking
     val isSessionActive = uiState.sessionState != CognitiveSessionState.Idle
+    val hasPresentedResponse = !uiState.presentedResponse.isNullOrBlank()
 
     fun submitText() {
         val text = textInput.trim()
@@ -105,7 +105,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
             modifier = Modifier.padding(top = 8.dp)
         )
 
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(16.dp))
 
         Box(
             modifier = Modifier
@@ -113,30 +113,31 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 .background(
                     brush = Brush.radialGradient(
                         colors = listOf(
-                            HaloGlassColors.Glass.copy(alpha = 0.6f),
+                            HaloGlassColors.Glass.copy(alpha = 0.32f),
                             Color.Transparent
                         ),
-                        radius = 720f
+                        radius = 860f
                     )
                 ),
             contentAlignment = Alignment.Center
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(vertical = 16.dp)
+                modifier = Modifier.padding(vertical = 8.dp)
             ) {
                 HaloStateOrb(
                     state = uiState.runtimeState,
-                    size = 172.dp,
+                    size = 236.dp,
                     onClick = ::toggleOrb,
                     contentDescription = when {
                         isListening -> "Stop listening"
+                        isSpeaking -> "Interrupt and listen"
                         isActiveSession -> "Stop Halo"
                         else -> "Speak to Halo"
                     }
                 )
 
-                Spacer(Modifier.height(20.dp))
+                Spacer(Modifier.height(18.dp))
 
                 AnimatedContent(
                     targetState = presenceLabel,
@@ -167,7 +168,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
             }
         }
 
-        if (isSessionActive) {
+        if (isSessionActive || hasPresentedResponse) {
             Spacer(Modifier.height(12.dp))
             SessionContextPanel(uiState)
         }
@@ -184,7 +185,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
                     keyboardActions = KeyboardActions(onSend = { submitText() }),
                     maxLines = 3,
-                    enabled = !isActiveSession && !isListening
+                    enabled = !isActiveSession && !isListening && !isSpeaking
                 )
                 Spacer(Modifier.width(8.dp))
                 if (isActiveSession) {
@@ -198,7 +199,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
                         imageVector = Icons.AutoMirrored.Filled.Send,
                         contentDescription = "Submit",
                         onClick = ::submitText,
-                        enabled = textInput.isNotBlank() && !isListening
+                        enabled = textInput.isNotBlank() && !isListening && !isSpeaking
                     )
                 }
             }
@@ -210,23 +211,50 @@ fun HomeScreen(viewModel: HomeViewModel) {
 
 @Composable
 private fun SessionContextPanel(uiState: HomeUiState) {
-    HaloGlassSection(title = "CONTEXT") {
+    HaloGlassSection(title = "HALO") {
         when (val session = uiState.sessionState) {
             is CognitiveSessionState.Streaming -> Text(
-                session.text.ifBlank { "Generating…" }, style = HaloTypography.bodyLarge,
-                color = HaloGlassColors.TextPrimary, lineHeight = 22.sp
+                session.text.ifBlank { "Generating…" },
+                style = HaloTypography.bodyLarge,
+                color = HaloGlassColors.TextPrimary,
+                lineHeight = 22.sp
             )
             is CognitiveSessionState.Completed -> HaloMarkdownText(
-                markdown = session.response.text.ifBlank { "Completed" }, textColor = HaloGlassColors.TextPrimary,
+                markdown = session.response.text.ifBlank { "Completed" },
+                textColor = HaloGlassColors.TextPrimary,
                 modifier = Modifier.fillMaxWidth()
             )
-            else -> Text(uiState.contextualText, style = HaloTypography.bodyLarge, color = HaloGlassColors.TextPrimary)
+            is CognitiveSessionState.Failed -> Text(
+                uiState.contextualText,
+                style = HaloTypography.bodyLarge,
+                color = HaloGlassColors.TextPrimary
+            )
+            else -> {
+                val response = uiState.presentedResponse
+                if (!response.isNullOrBlank()) {
+                    HaloMarkdownText(
+                        markdown = response,
+                        textColor = HaloGlassColors.TextPrimary,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                } else {
+                    Text(
+                        uiState.contextualText,
+                        style = HaloTypography.bodyLarge,
+                        color = HaloGlassColors.TextPrimary
+                    )
+                }
+            }
         }
         if (uiState.sessionState is CognitiveSessionState.Completed ||
             uiState.sessionState is CognitiveSessionState.Streaming
         ) {
             Spacer(Modifier.height(8.dp))
-            Text("via ${uiState.activeProvider}", style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
+            Text(
+                "via ${uiState.activeProvider}",
+                style = HaloTypography.labelSmall,
+                color = HaloGlassColors.TextMuted
+            )
         }
         if (uiState.sessionState is CognitiveSessionState.Reasoning) {
             Spacer(Modifier.height(12.dp))

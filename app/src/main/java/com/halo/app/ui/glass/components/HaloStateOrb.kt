@@ -12,7 +12,6 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -26,11 +25,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -41,29 +45,17 @@ import androidx.compose.ui.unit.dp
 import com.halo.app.ui.glass.material.HaloGlassColors
 import com.halo.app.ui.glass.material.HaloRuntimeState
 import kotlin.math.PI
-import kotlin.math.abs
 import kotlin.math.cos
-import kotlin.math.floor
-import kotlin.math.pow
+import kotlin.math.min
 import kotlin.math.sin
-import kotlin.math.sqrt
 
 /**
- * Halo's primary presence and interaction surface.
+ * Halo's primary presence surface.
  *
- * Entirely procedural: no bitmaps, no animation assets, no external
- * rendering dependencies.  ~600 particles on a Fibonacci sphere are
- * continuously deformed, Z-sorted, and projected with perspective.
- *
- * Each [HaloRuntimeState] drives a unique combination of:
- *   - organic deformation geometry
- *   - shape-morph target (2D glyph forms)
- *   - multi-layered reactive halo glow
- *   - three-tone particle coloration with depth mapping
- *   - motion speed, turbulence, expansion, and pulse characteristics
- *
- * The particle set is created once and never reallocated.
- * Nothing inside the draw loop allocates.
+ * The renderer deliberately uses a small number of large geometric marks rather
+ * than a dense particle cloud. Every runtime state has a readable silhouette and
+ * a distinct semantic colour, so the orb still communicates before the user reads
+ * the label underneath it.
  */
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
@@ -75,123 +67,58 @@ fun HaloStateOrb(
     onLongClick: (() -> Unit)? = null,
     contentDescription: String = "Halo"
 ) {
-    val transition = rememberInfiniteTransition(label = "halo_orb")
-
+    val profile = orbProfile(state)
+    val transition = rememberInfiniteTransition(label = "halo_presence")
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
 
     val pressScale by animateFloatAsState(
-        targetValue = if (pressed) 0.92f else 1f,
+        targetValue = if (pressed) 0.94f else 1f,
         animationSpec = spring(
-            dampingRatio = 0.55f,
-            stiffness = Spring.StiffnessMediumLow
+            dampingRatio = 0.58f,
+            stiffness = Spring.StiffnessMedium
         ),
-        label = "orb_press_scale"
+        label = "halo_orb_press"
     )
-
-    val profile = haloOrbProfile(state)
-
-    // --- Animated profile fields (spring-based for organic feel) ---
-
-    val shapeAmount by animateFloatAsState(
-        targetValue = profile.shape,
-        animationSpec = spring(dampingRatio = 0.72f, stiffness = 120f),
-        label = "orb_shape"
+    val shellScale by animateFloatAsState(
+        targetValue = profile.scale,
+        animationSpec = spring(dampingRatio = 0.72f, stiffness = 150f),
+        label = "halo_orb_scale"
     )
-    val turbulence by animateFloatAsState(
-        targetValue = profile.turbulence,
-        animationSpec = spring(dampingRatio = 0.72f, stiffness = 120f),
-        label = "orb_turbulence"
+    val glowStrength by animateFloatAsState(
+        targetValue = profile.glow,
+        animationSpec = tween(350, easing = FastOutSlowInEasing),
+        label = "halo_orb_glow"
     )
-    val expansion by animateFloatAsState(
-        targetValue = profile.expansion,
-        animationSpec = spring(dampingRatio = 0.68f, stiffness = 100f),
-        label = "orb_expansion"
-    )
-    val motionAmount by animateFloatAsState(
-        targetValue = profile.motion,
-        animationSpec = spring(dampingRatio = 0.72f, stiffness = 120f),
-        label = "orb_motion"
-    )
-    val glyphMorph by animateFloatAsState(
-        targetValue = profile.glyphMorph,
-        animationSpec = spring(dampingRatio = 0.65f, stiffness = 80f),
-        label = "orb_glyph"
-    )
-
-    val primaryColor by animateColorAsState(
+    val primary by animateColorAsState(
         targetValue = profile.primary,
-        animationSpec = tween(700, easing = FastOutSlowInEasing),
-        label = "orb_primary_color"
+        animationSpec = tween(360, easing = FastOutSlowInEasing),
+        label = "halo_orb_primary"
     )
-    val secondaryColor by animateColorAsState(
+    val secondary by animateColorAsState(
         targetValue = profile.secondary,
-        animationSpec = tween(700, easing = FastOutSlowInEasing),
-        label = "orb_secondary_color"
-    )
-    val tertiaryColor by animateColorAsState(
-        targetValue = profile.tertiary,
-        animationSpec = tween(700, easing = FastOutSlowInEasing),
-        label = "orb_tertiary_color"
-    )
-    val glowAlpha by animateFloatAsState(
-        targetValue = profile.glowIntensity,
-        animationSpec = spring(dampingRatio = 0.72f, stiffness = 100f),
-        label = "orb_glow_alpha"
+        animationSpec = tween(360, easing = FastOutSlowInEasing),
+        label = "halo_orb_secondary"
     )
 
-    /*
-     * Single continuously-advancing phase drives all motion.
-     * States multiply by different speed coefficients so transitions
-     * never produce a visible discontinuity.
-     */
     val phase by transition.animateFloat(
         initialValue = 0f,
-        targetValue = (PI * 2.0).toFloat(),
+        targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 14_000, easing = LinearEasing),
+            animation = tween(durationMillis = 8_000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ),
-        label = "orb_phase"
+        label = "halo_orb_phase"
     )
-
     val pulse by transition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = profile.pulseDuration, easing = LinearEasing),
+            animation = tween(profile.pulseDurationMs, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ),
-        label = "orb_pulse"
+        label = "halo_orb_pulse"
     )
-
-    /*
-     * Secondary slow phase for the halo glow rotation — decoupled from
-     * the particle phase so the glow drifts independently.
-     */
-    val glowPhase by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = (PI * 2.0).toFloat(),
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 20_000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "orb_glow_phase"
-    )
-
-    val particles = remember { createHaloParticles(PARTICLE_COUNT) }
-    /*
-     * Reusable buffers — avoids allocating every frame.
-     * sortIndices: Z-sort order.
-     * projX/Y/Z/Depth: projected screen coordinates per particle.
-     * glyphXY: 2-element scratch for glyph target output (avoids Pair boxing).
-     */
-    val sortIndices = remember { IntArray(PARTICLE_COUNT) { it } }
-    val projX = remember { FloatArray(PARTICLE_COUNT) }
-    val projY = remember { FloatArray(PARTICLE_COUNT) }
-    val projZ = remember { FloatArray(PARTICLE_COUNT) }
-    val projDepth = remember { FloatArray(PARTICLE_COUNT) }
-    val glyphXY = remember { FloatArray(2) }
 
     Canvas(
         modifier = modifier
@@ -215,843 +142,773 @@ fun HaloStateOrb(
                 }
             )
     ) {
-        drawHaloOrb(
-            particles = particles,
-            sortIndices = sortIndices,
-            projX = projX,
-            projY = projY,
-            projZ = projZ,
-            projDepth = projDepth,
-            glyphXY = glyphXY,
-            phase = phase,
-            pulse = pulse,
-            glowPhase = glowPhase,
-            shapeAmount = shapeAmount,
-            turbulence = turbulence,
-            expansion = expansion,
-            motionAmount = motionAmount,
-            glyphMorph = glyphMorph,
-            primaryColor = primaryColor,
-            secondaryColor = secondaryColor,
-            tertiaryColor = tertiaryColor,
-            glowAlpha = glowAlpha,
+        drawPresenceOrb(
+            state = state,
             profile = profile,
-            state = state
+            primary = primary,
+            secondary = secondary,
+            shellScale = shellScale,
+            glowStrength = glowStrength,
+            phase = phase,
+            pulse = pulse
         )
     }
 }
 
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
+private enum class OrbGlyph {
+    REST,
+    LISTEN,
+    WAKE,
+    CAPTURE,
+    RECOGNIZE,
+    REASON,
+    PLAN,
+    EXECUTE,
+    SPEAK,
+    RECOVER,
+    STOP
+}
 
-private const val PARTICLE_COUNT = 600
-private const val TWO_PI = (PI * 2.0).toFloat()
-
-// ---------------------------------------------------------------------------
-// Data
-// ---------------------------------------------------------------------------
-
-private data class HaloParticle(
-    val x: Float,       // unit sphere x
-    val y: Float,       // unit sphere y
-    val z: Float,       // unit sphere z
-    val theta: Float,   // azimuthal angle
-    val latitude: Float,// same as y, kept for readability
-    val phase: Float,   // per-particle phase offset [0..1)
-    val size: Float,    // base radius multiplier
-    val brightness: Float, // base brightness [0.42..1)
-    val ring: Int        // concentric ring index (0 = core, higher = outer)
-)
-
-private data class HaloOrbProfile(
-    val shape: Float,          // organic deformation amplitude
-    val turbulence: Float,     // surface roughness
-    val expansion: Float,      // overall scale
-    val motion: Float,         // wave animation speed multiplier
-    val rotation: Float,       // Y-axis rotation speed
-    val pulseStrength: Float,  // breathing intensity
-    val asymmetry: Float,      // directional distortion
-    val glyphMorph: Float,     // 0 = organic, 1 = full glyph form
-    val glowIntensity: Float,  // halo glow strength
+private data class OrbProfile(
     val primary: Color,
     val secondary: Color,
-    val tertiary: Color,       // third tone for depth
-    val pulseDuration: Int,
-    val glyphType: GlyphType   // which 2D form to morph toward
+    val scale: Float,
+    val glow: Float,
+    val pulseDepth: Float,
+    val rotationTurns: Float,
+    val vertices: Int,
+    val nodeCount: Int,
+    val pulseDurationMs: Int,
+    val glyph: OrbGlyph
 )
 
-/**
- * The 2D glyph targets that particles can morph toward.
- * Each is generated algorithmically — no image assets.
- */
-private enum class GlyphType {
-    NONE,           // pure organic field
-    EAR,            // listening — open arc
-    LENS,           // recognizing — concentric focus
-    CONSTELLATION,  // reasoning/planning — scattered nodes + links
-    ARROW,          // executing — directional chevron
-    WAVE,           // speaking — horizontal waveform
-    SCATTER         // recovering — fragmented explosion
-}
-
-// ---------------------------------------------------------------------------
-// State → profile mapping
-// ---------------------------------------------------------------------------
-
-private fun haloOrbProfile(state: HaloRuntimeState): HaloOrbProfile = when (state) {
-    HaloRuntimeState.Idle -> HaloOrbProfile(
-        shape = 0.08f,
-        turbulence = 0.08f,
-        expansion = 0.92f,
-        motion = 0.18f,
-        rotation = 0.14f,
-        pulseStrength = 0.06f,
-        asymmetry = 0.06f,
-        glyphMorph = 0f,
-        glowIntensity = 0.10f,
-        primary = HaloGlassColors.Accent,
-        secondary = Color(0xFF6D55FF),
-        tertiary = Color(0xFF2A3A55),
-        pulseDuration = 3400,
-        glyphType = GlyphType.NONE
+private fun orbProfile(state: HaloRuntimeState): OrbProfile = when (state) {
+    HaloRuntimeState.Idle -> OrbProfile(
+        primary = Color(0xFF7DE2B1),
+        secondary = Color(0xFFCBFFE7),
+        scale = 1.00f,
+        glow = 0.86f,
+        pulseDepth = 0.018f,
+        rotationTurns = 0f,
+        vertices = 10,
+        nodeCount = 8,
+        pulseDurationMs = 3_800,
+        glyph = OrbGlyph.REST
     )
 
-    HaloRuntimeState.Listening,
-    HaloRuntimeState.Wakeword -> HaloOrbProfile(
-        shape = 0.20f,
-        turbulence = 0.28f,
-        expansion = 1.06f,
-        motion = 0.85f,
-        rotation = 0.55f,
-        pulseStrength = 0.22f,
-        asymmetry = 0.24f,
-        glyphMorph = 0.35f,
-        glowIntensity = 0.28f,
-        primary = Color(0xFF00D9FF),
-        secondary = Color(0xFF6D4DFF),
-        tertiary = Color(0xFF00445A),
-        pulseDuration = 1800,
-        glyphType = GlyphType.EAR
+    HaloRuntimeState.Listening -> OrbProfile(
+        primary = Color(0xFF55ECFF),
+        secondary = Color(0xFF7C91FF),
+        scale = 1.04f,
+        glow = 1.00f,
+        pulseDepth = 0.045f,
+        rotationTurns = 0.42f,
+        vertices = 12,
+        nodeCount = 10,
+        pulseDurationMs = 1_650,
+        glyph = OrbGlyph.LISTEN
     )
 
-    HaloRuntimeState.Capturing -> HaloOrbProfile(
-        shape = 0.30f,
-        turbulence = 0.42f,
-        expansion = 1.12f,
-        motion = 1.10f,
-        rotation = 0.80f,
-        pulseStrength = 0.32f,
-        asymmetry = 0.38f,
-        glyphMorph = 0.50f,
-        glowIntensity = 0.38f,
-        primary = Color(0xFF00E5FF),
-        secondary = Color(0xFF4D63FF),
-        tertiary = Color(0xFF003848),
-        pulseDuration = 1100,
-        glyphType = GlyphType.EAR
+    HaloRuntimeState.Wakeword -> OrbProfile(
+        primary = Color(0xFFF2FFFF),
+        secondary = Color(0xFF56EFFF),
+        scale = 1.07f,
+        glow = 1.10f,
+        pulseDepth = 0.065f,
+        rotationTurns = 0.18f,
+        vertices = 8,
+        nodeCount = 8,
+        pulseDurationMs = 850,
+        glyph = OrbGlyph.WAKE
     )
 
-    HaloRuntimeState.Recognizing -> HaloOrbProfile(
-        shape = 0.22f,
-        turbulence = 0.45f,
-        expansion = 0.98f,
-        motion = 1.35f,
-        rotation = 1.20f,
-        pulseStrength = 0.18f,
-        asymmetry = 0.48f,
-        glyphMorph = 0.55f,
-        glowIntensity = 0.25f,
-        primary = Color(0xFF43B8FF),
-        secondary = Color(0xFF765CFF),
-        tertiary = Color(0xFF1A2840),
-        pulseDuration = 1400,
-        glyphType = GlyphType.LENS
+    HaloRuntimeState.Capturing -> OrbProfile(
+        primary = Color(0xFF42FFC2),
+        secondary = Color(0xFF00D9FF),
+        scale = 1.08f,
+        glow = 1.08f,
+        pulseDepth = 0.070f,
+        rotationTurns = 0.10f,
+        vertices = 10,
+        nodeCount = 8,
+        pulseDurationMs = 900,
+        glyph = OrbGlyph.CAPTURE
     )
 
-    HaloRuntimeState.Reasoning,
-    HaloRuntimeState.Planning -> HaloOrbProfile(
-        shape = 0.48f,
-        turbulence = 0.75f,
-        expansion = 1.00f,
-        motion = 1.20f,
-        rotation = 1.50f,
-        pulseStrength = 0.20f,
-        asymmetry = 0.74f,
-        glyphMorph = 0.40f,
-        glowIntensity = 0.32f,
-        primary = Color(0xFF00D7FF),
-        secondary = Color(0xFFA044FF),
-        tertiary = Color(0xFF1A0A3A),
-        pulseDuration = 1500,
-        glyphType = GlyphType.CONSTELLATION
+    HaloRuntimeState.Recognizing -> OrbProfile(
+        primary = Color(0xFF73A8FF),
+        secondary = Color(0xFFAD8CFF),
+        scale = 1.01f,
+        glow = 0.95f,
+        pulseDepth = 0.030f,
+        rotationTurns = 0.88f,
+        vertices = 12,
+        nodeCount = 9,
+        pulseDurationMs = 1_300,
+        glyph = OrbGlyph.RECOGNIZE
     )
 
-    HaloRuntimeState.Executing -> HaloOrbProfile(
-        shape = 0.36f,
-        turbulence = 0.58f,
-        expansion = 1.08f,
-        motion = 1.80f,
-        rotation = 2.00f,
-        pulseStrength = 0.30f,
-        asymmetry = 0.88f,
-        glyphMorph = 0.55f,
-        glowIntensity = 0.42f,
-        primary = Color(0xFF00E1FF),
-        secondary = Color(0xFF5367FF),
-        tertiary = Color(0xFF001830),
-        pulseDuration = 950,
-        glyphType = GlyphType.ARROW
+    HaloRuntimeState.Reasoning -> OrbProfile(
+        primary = Color(0xFFB77CFF),
+        secondary = Color(0xFF63E8FF),
+        scale = 1.03f,
+        glow = 1.00f,
+        pulseDepth = 0.040f,
+        rotationTurns = 0.26f,
+        vertices = 6,
+        nodeCount = 6,
+        pulseDurationMs = 1_450,
+        glyph = OrbGlyph.REASON
     )
 
-    HaloRuntimeState.Speaking -> HaloOrbProfile(
-        shape = 0.24f,
-        turbulence = 0.32f,
-        expansion = 1.02f,
-        motion = 0.85f,
-        rotation = 0.65f,
-        pulseStrength = 0.44f,
-        asymmetry = 0.30f,
-        glyphMorph = 0.45f,
-        glowIntensity = 0.35f,
-        primary = Color(0xFF19DFFF),
-        secondary = Color(0xFF8A55FF),
-        tertiary = Color(0xFF0A2838),
-        pulseDuration = 1050,
-        glyphType = GlyphType.WAVE
+    HaloRuntimeState.Planning -> OrbProfile(
+        primary = Color(0xFF8D83FF),
+        secondary = Color(0xFF65FFD8),
+        scale = 1.03f,
+        glow = 0.98f,
+        pulseDepth = 0.035f,
+        rotationTurns = 0.62f,
+        vertices = 8,
+        nodeCount = 8,
+        pulseDurationMs = 1_250,
+        glyph = OrbGlyph.PLAN
     )
 
-    HaloRuntimeState.Recovering -> HaloOrbProfile(
-        shape = 0.58f,
-        turbulence = 0.95f,
-        expansion = 1.06f,
-        motion = 1.40f,
-        rotation = 0.90f,
-        pulseStrength = 0.28f,
-        asymmetry = 1.00f,
-        glyphMorph = 0.50f,
-        glowIntensity = 0.30f,
-        primary = HaloGlassColors.Danger,
-        secondary = Color(0xFF8D4DFF),
-        tertiary = Color(0xFF3A1020),
-        pulseDuration = 750,
-        glyphType = GlyphType.SCATTER
+    HaloRuntimeState.Executing -> OrbProfile(
+        primary = Color(0xFFFFD166),
+        secondary = Color(0xFF58E8FF),
+        scale = 1.06f,
+        glow = 1.05f,
+        pulseDepth = 0.050f,
+        rotationTurns = 1.05f,
+        vertices = 7,
+        nodeCount = 7,
+        pulseDurationMs = 900,
+        glyph = OrbGlyph.EXECUTE
     )
 
-    HaloRuntimeState.Stopped -> HaloOrbProfile(
-        shape = 0.03f,
-        turbulence = 0.03f,
-        expansion = 0.85f,
-        motion = 0.04f,
-        rotation = 0.03f,
-        pulseStrength = 0f,
-        asymmetry = 0f,
-        glyphMorph = 0f,
-        glowIntensity = 0.04f,
-        primary = HaloGlassColors.TextMuted,
-        secondary = HaloGlassColors.TextMuted,
-        tertiary = Color(0xFF1A1A1A),
-        pulseDuration = 4500,
-        glyphType = GlyphType.NONE
+    HaloRuntimeState.Speaking -> OrbProfile(
+        primary = Color(0xFFFF7DCE),
+        secondary = Color(0xFF6AFFF0),
+        scale = 1.07f,
+        glow = 1.08f,
+        pulseDepth = 0.075f,
+        rotationTurns = 0.12f,
+        vertices = 10,
+        nodeCount = 8,
+        pulseDurationMs = 760,
+        glyph = OrbGlyph.SPEAK
+    )
+
+    HaloRuntimeState.Recovering -> OrbProfile(
+        primary = Color(0xFFFFB85C),
+        secondary = Color(0xFFFF765C),
+        scale = 1.02f,
+        glow = 0.95f,
+        pulseDepth = 0.055f,
+        rotationTurns = 0.34f,
+        vertices = 6,
+        nodeCount = 6,
+        pulseDurationMs = 1_100,
+        glyph = OrbGlyph.RECOVER
+    )
+
+    HaloRuntimeState.Stopped -> OrbProfile(
+        primary = Color(0xFFEF6A76),
+        secondary = Color(0xFF8A9390),
+        scale = 0.94f,
+        glow = 0.55f,
+        pulseDepth = 0f,
+        rotationTurns = 0f,
+        vertices = 8,
+        nodeCount = 4,
+        pulseDurationMs = 3_000,
+        glyph = OrbGlyph.STOP
     )
 }
 
-// ---------------------------------------------------------------------------
-// Glyph target generators — mathematical point sets, no assets
-// ---------------------------------------------------------------------------
-
-/**
- * Compute the target XY position for a particle when morphing into a
- * 2D glyph shape.  Writes (x, y) in [-1..1] space into [out][0] and [out][1].
- *
- * The coordinate is deterministic for each particle index so the
- * assignment is stable across frames.  Writing into a shared buffer
- * eliminates Pair object boxing (~600 per frame).
- */
-private fun glyphTarget(
-    type: GlyphType,
-    index: Int,
-    count: Int,
-    time: Float,
-    out: FloatArray
-) {
-    val t = index.toFloat() / count.toFloat()
-    when (type) {
-        GlyphType.NONE -> { out[0] = 0f; out[1] = 0f }
-
-        GlyphType.EAR -> {
-            val angle = -PI.toFloat() * 0.7f + t * PI.toFloat() * 1.4f
-            val r = 0.65f + sin(t * PI.toFloat() * 3f) * 0.08f
-            out[0] = cos(angle) * r * 0.85f
-            out[1] = sin(angle) * r
-        }
-
-        GlyphType.LENS -> {
-            val ring = (t * 4f).toInt().coerceAtMost(3)
-            val withinRing = (t * 4f) - ring
-            val ringRadius = 0.20f + ring * 0.20f
-            val angle = withinRing * TWO_PI + ring * 0.5f
-            out[0] = cos(angle) * ringRadius
-            out[1] = sin(angle) * ringRadius
-        }
-
-        GlyphType.CONSTELLATION -> {
-            val nodeCount = 7
-            val nodeIndex = (t * nodeCount).toInt().coerceAtMost(nodeCount - 1)
-            val withinNode = (t * nodeCount) - nodeIndex
-            val nodeAngle = nodeIndex.toFloat() / nodeCount * TWO_PI + 0.3f
-            val nodeR = 0.35f + (nodeIndex % 3) * 0.18f
-            val nx = cos(nodeAngle) * nodeR
-            val ny = sin(nodeAngle) * nodeR
-            val scatter = 0.12f * (1f - withinNode * 0.5f)
-            val sa = withinNode * TWO_PI * 2.5f + index * 0.1f
-            out[0] = nx + cos(sa) * scatter
-            out[1] = ny + sin(sa) * scatter
-        }
-
-        GlyphType.ARROW -> {
-            val row = (t * 12f).toInt().coerceAtMost(11)
-            val withinRow = (t * 12f) - row
-            val yPos = 0.7f - row * 0.12f
-            val halfWidth = if (row < 6) (row + 1) * 0.08f else 0.15f
-            out[0] = -halfWidth + withinRow * halfWidth * 2f
-            out[1] = yPos
-        }
-
-        GlyphType.WAVE -> {
-            val x = -0.8f + t * 1.6f
-            val amp = 0.3f + sin(time * 1.5f + t * PI.toFloat()) * 0.12f
-            out[0] = x
-            out[1] = sin(t * PI.toFloat() * 3f + time * 2f) * amp
-        }
-
-        GlyphType.SCATTER -> {
-            val seed = index * 0.75487766f
-            val angle = fract(seed * 7.13f) * TWO_PI
-            val r = 0.4f + fract(seed * 3.71f) * 0.5f
-            val jitter = sin(time * 3f + index * 0.3f) * 0.08f
-            out[0] = cos(angle) * (r + jitter)
-            out[1] = sin(angle) * (r + jitter)
-        }
-    }
-}
-
-// ---------------------------------------------------------------------------
-// Particle creation — Fibonacci sphere (deterministic)
-// ---------------------------------------------------------------------------
-
-private fun createHaloParticles(count: Int): List<HaloParticle> {
-    val particles = ArrayList<HaloParticle>(count)
-    val goldenAngle = PI * (3.0 - sqrt(5.0))
-
-    for (i in 0 until count) {
-        val normalized = if (count == 1) 0.5f else i.toFloat() / (count - 1).toFloat()
-        val y = 1f - normalized * 2f
-        val radius = sqrt((1f - y * y).coerceAtLeast(0f))
-        val theta = (goldenAngle * i).toFloat()
-        val x = cos(theta) * radius
-        val z = sin(theta) * radius
-        val seed = i * 0.75487766f
-        // Assign concentric ring (0–4) based on distance from pole
-        val ring = ((1f - abs(y)) * 5f).toInt().coerceIn(0, 4)
-
-        particles += HaloParticle(
-            x = x, y = y, z = z,
-            theta = theta,
-            latitude = y,
-            phase = fract(seed * 17.123f),
-            size = 0.60f + fract(seed * 5.71f) * 1.15f,
-            brightness = 0.40f + fract(seed * 11.37f) * 0.60f,
-            ring = ring
-        )
-    }
-    return particles
-}
-
-// ---------------------------------------------------------------------------
-// Draw
-// ---------------------------------------------------------------------------
-
-private fun DrawScope.drawHaloOrb(
-    particles: List<HaloParticle>,
-    sortIndices: IntArray,
-    projX: FloatArray,
-    projY: FloatArray,
-    projZ: FloatArray,
-    projDepth: FloatArray,
-    glyphXY: FloatArray,
+private fun DrawScope.drawPresenceOrb(
+    state: HaloRuntimeState,
+    profile: OrbProfile,
+    primary: Color,
+    secondary: Color,
+    shellScale: Float,
+    glowStrength: Float,
     phase: Float,
-    pulse: Float,
-    glowPhase: Float,
-    shapeAmount: Float,
-    turbulence: Float,
-    expansion: Float,
-    motionAmount: Float,
-    glyphMorph: Float,
-    primaryColor: Color,
-    secondaryColor: Color,
-    tertiaryColor: Color,
-    glowAlpha: Float,
-    profile: HaloOrbProfile,
-    state: HaloRuntimeState
+    pulse: Float
 ) {
-    val width = size.width
-    val height = size.height
-    val center = Offset(width * 0.5f, height * 0.5f)
-    val baseRadius = minOf(width, height) * 0.46f
+    val extent = min(size.width, size.height)
+    val center = Offset(size.width / 2f, size.height / 2f)
+    val wave = ((sin(pulse * TWO_PI - HALF_PI) + 1f) * 0.5f)
+    val shellRadius = extent * 0.305f * shellScale * (1f + profile.pulseDepth * wave)
+    val rotation = phase * 360f * profile.rotationTurns
 
-    val time = phase * profile.rotation
-    val cameraDistance = 2.6f
-    val perspectiveStrength = 0.70f
-
-    // -----------------------------------------------------------------------
-    // Pass 1: Compute projected positions and Z for sorting
-    // -----------------------------------------------------------------------
-
-    for (idx in 0 until PARTICLE_COUNT) {
-        val particle = particles[idx]
-        val x0 = particle.x
-        val y0 = particle.y
-        val z0 = particle.z
-
-        // --- Glyph morph target (writes into glyphXY to avoid Pair boxing) ---
-        glyphTarget(profile.glyphType, idx, PARTICLE_COUNT, time, glyphXY)
-        val gx = glyphXY[0]; val gy = glyphXY[1]
-        // Smoothly morph between organic sphere position and flat glyph
-        val morphedX0 = x0 + (gx - x0) * glyphMorph
-        val morphedY0 = y0 + (gy - y0) * glyphMorph
-        val morphedZ0 = z0 * (1f - glyphMorph * 0.75f) // flatten Z toward glyph
-
-        // --- Organic deformation (three independent frequencies) ---
-        val waveA = sin(
-            particle.theta * 3.0f +
-                particle.latitude * 4.5f +
-                time * (1.0f + motionAmount)
-        )
-        val waveB = sin(
-            particle.theta * 7.0f -
-                particle.latitude * 2.5f -
-                time * (1.7f + motionAmount * 0.5f) +
-                particle.phase * TWO_PI
-        )
-        val waveC = sin(
-            (x0 + y0 + z0) * 8.0f + time * 0.7f
-        )
-        // Fourth frequency — subtle mid-range detail
-        val waveD = sin(
-            particle.theta * 5.0f +
-                time * 1.3f +
-                particle.phase * 3.14f
-        ) * 0.12f
-
-        val asymmetryTerm =
-            x0 * y0 * profile.asymmetry * 0.40f +
-                z0 * x0 * profile.asymmetry * 0.26f
-
-        val organicDeform = shapeAmount * (
-            waveA * 0.44f + waveB * 0.26f + waveC * 0.14f + waveD + asymmetryTerm
-            )
-        // Reduce organic deformation when morphed toward a glyph
-        val deformation = 1f + organicDeform * (1f - glyphMorph * 0.6f)
-
-        var x = morphedX0 * deformation
-        var y = morphedY0 * deformation
-        var z = morphedZ0 * deformation
-
-        // --- Breathing ---
-        val breathe = 1f + sin(phase * 1.15f + particle.phase * TWO_PI) *
-            profile.pulseStrength * 0.10f
-
-        // --- State-specific field effects ---
-        val listeningPulse =
-            if (state == HaloRuntimeState.Listening ||
-                state == HaloRuntimeState.Wakeword ||
-                state == HaloRuntimeState.Capturing
-            ) {
-                1f + pulse * profile.pulseStrength * 0.14f
-            } else 1f
-
-        val speakingWave =
-            if (state == HaloRuntimeState.Speaking) {
-                1f + sin(pulse * TWO_PI + particle.latitude * 3.2f) * 0.05f
-            } else 1f
-
-        // Executing: directional push forward (positive Y bias)
-        val executingPush =
-            if (state == HaloRuntimeState.Executing) {
-                val forward = (particle.latitude + 1f) * 0.5f // 0 at bottom, 1 at top
-                1f + forward * pulse * 0.06f
-            } else 1f
-
-        // Recovering: chaotic per-particle jitter
-        val recoveringJitter =
-            if (state == HaloRuntimeState.Recovering) {
-                1f + sin(phase * 4f + particle.phase * 20f) * 0.04f
-            } else 1f
-
-        val scaleAll = expansion * breathe * listeningPulse * speakingWave *
-            executingPush * recoveringJitter
-
-        x *= scaleAll
-        y *= scaleAll
-        z *= scaleAll
-
-        // --- Rotation ---
-        val yAngle = time * 0.40f
-        val cosYa = cos(yAngle); val sinYa = sin(yAngle)
-        val rx = x * cosYa - z * sinYa
-        val rz = x * sinYa + z * cosYa
-        x = rx; z = rz
-
-        val zAngle = time * 0.10f + profile.asymmetry * sin(time * 0.40f) * 0.5f
-        val cosZa = cos(zAngle); val sinZa = sin(zAngle)
-        val rx2 = x * cosZa - y * sinZa
-        val ry2 = x * sinZa + y * cosZa
-        x = rx2; y = ry2
-
-        // Small X-axis tilt for depth
-        val xTilt = sin(time * 0.08f) * 0.06f
-        val cosXt = cos(xTilt); val sinXt = sin(xTilt)
-        val ry3 = y * cosXt - z * sinXt
-        val rz3 = y * sinXt + z * cosXt
-        y = ry3; z = rz3
-
-        // --- Perspective ---
-        val depth = cameraDistance /
-            (cameraDistance - z * perspectiveStrength).coerceAtLeast(1.20f)
-        val screenX = center.x + x * baseRadius * 0.90f * depth
-        val screenY = center.y + y * baseRadius * 0.90f * depth
-
-        projX[idx] = screenX
-        projY[idx] = screenY
-        projZ[idx] = z
-        projDepth[idx] = depth
-        sortIndices[idx] = idx
-    }
-
-    // -----------------------------------------------------------------------
-    // Z-sort: back-to-front (insertion sort — fast on nearly-sorted data)
-    // -----------------------------------------------------------------------
-    for (i in 1 until PARTICLE_COUNT) {
-        val key = sortIndices[i]
-        val keyZ = projZ[key]
-        var j = i - 1
-        while (j >= 0 && projZ[sortIndices[j]] > keyZ) {
-            sortIndices[j + 1] = sortIndices[j]
-            j--
-        }
-        sortIndices[j + 1] = key
-    }
-
-    // -----------------------------------------------------------------------
-    // Halo glow layers (drawn behind particles)
-    // -----------------------------------------------------------------------
-    drawHaloGlow(
-        center = center,
-        baseRadius = baseRadius,
-        primaryColor = primaryColor,
-        secondaryColor = secondaryColor,
-        tertiaryColor = tertiaryColor,
-        glowAlpha = glowAlpha,
-        glowPhase = glowPhase,
-        pulse = pulse,
-        state = state
-    )
-
-    // -----------------------------------------------------------------------
-    // Pass 2: Draw particles back-to-front
-    // -----------------------------------------------------------------------
-    for (si in 0 until PARTICLE_COUNT) {
-        val idx = sortIndices[si]
-        val particle = particles[idx]
-        val screenX = projX[idx]
-        val screenY = projY[idx]
-        val z = projZ[idx]
-
-        // Cull
-        if (screenX < -10f || screenX > width + 10f ||
-            screenY < -10f || screenY > height + 10f
-        ) continue
-
-        val depthBrightness = ((z + 1f) * 0.5f).coerceIn(0f, 1f)
-        val brightness = (particle.brightness * (0.35f + depthBrightness * 0.78f))
-            .coerceIn(0.06f, 1f)
-
-        // Three-tone color mixing based on depth and phase
-        val baseMix = (
-            0.15f +
-                particle.phase * 0.48f +
-                (z + 1f) * 0.18f +
-                sin(time + particle.phase * 5f) * 0.10f
-            ).coerceIn(0f, 1f)
-
-        val color = if (baseMix < 0.5f) {
-            mixColor(primaryColor, secondaryColor, baseMix * 2f)
-        } else {
-            mixColor(secondaryColor, tertiaryColor, (baseMix - 0.5f) * 2f)
-        }
-
-        val particleRadius = (
-            particle.size *
-                (0.68f + depthBrightness * 0.80f) *
-                (0.88f + turbulence * 0.18f)
-            ).coerceIn(0.50f, 2.8f)
-
-        // Soft glow on brighter particles (back particles get less)
-        if (particle.brightness > 0.78f && depthBrightness > 0.30f) {
-            drawCircle(
-                color = color.copy(alpha = (brightness * 0.065f * depthBrightness)
-                    .coerceAtMost(0.08f)),
-                radius = particleRadius * 3.5f,
-                center = Offset(screenX, screenY)
-            )
-        }
-
-        // Core particle
-        drawCircle(
-            color = color.copy(alpha = (brightness * 0.78f).coerceAtMost(0.85f)),
-            radius = particleRadius,
-            center = Offset(screenX, screenY)
-        )
-
-        // Specular highlight on brightest front-facing particles
-        if (depthBrightness > 0.72f && particle.brightness > 0.85f) {
-            drawCircle(
-                color = Color.White.copy(
-                    alpha = (brightness * 0.30f * (depthBrightness - 0.72f) / 0.28f)
-                        .coerceIn(0f, 0.32f)
-                ),
-                radius = particleRadius * 0.36f,
-                center = Offset(screenX, screenY)
-            )
-        }
-    }
-
-    // -----------------------------------------------------------------------
-    // State-specific overlays (drawn on top)
-    // -----------------------------------------------------------------------
-    drawStateOverlay(
-        center = center,
-        baseRadius = baseRadius,
-        primaryColor = primaryColor,
-        secondaryColor = secondaryColor,
-        pulse = pulse,
-        phase = phase,
-        state = state,
-        profile = profile
-    )
-}
-
-// ---------------------------------------------------------------------------
-// Halo glow — multi-layered, state-reactive
-// ---------------------------------------------------------------------------
-
-private fun DrawScope.drawHaloGlow(
-    center: Offset,
-    baseRadius: Float,
-    primaryColor: Color,
-    secondaryColor: Color,
-    tertiaryColor: Color,
-    glowAlpha: Float,
-    glowPhase: Float,
-    pulse: Float,
-    state: HaloRuntimeState
-) {
-    if (glowAlpha < 0.01f) return
-
-    // Layer 1: Large soft outer halo
-    val outerRadius = baseRadius * 1.35f
     drawCircle(
         brush = Brush.radialGradient(
             colors = listOf(
-                primaryColor.copy(alpha = glowAlpha * 0.22f),
-                secondaryColor.copy(alpha = glowAlpha * 0.08f),
-                tertiaryColor.copy(alpha = glowAlpha * 0.03f),
+                primary.copy(alpha = 0.22f * glowStrength),
+                primary.copy(alpha = 0.10f * glowStrength),
+                secondary.copy(alpha = 0.045f * glowStrength),
                 Color.Transparent
             ),
             center = center,
-            radius = outerRadius
+            radius = extent * 0.49f
         ),
-        radius = outerRadius,
+        radius = extent * 0.49f,
         center = center
     )
 
-    // Layer 2: Tighter core glow with slight offset for asymmetry
-    val coreOffsetX = sin(glowPhase * 0.7f) * baseRadius * 0.04f
-    val coreOffsetY = cos(glowPhase * 0.5f) * baseRadius * 0.03f
-    val coreCenter = Offset(center.x + coreOffsetX, center.y + coreOffsetY)
-    val coreRadius = baseRadius * 0.72f
+    drawCircle(
+        color = primary.copy(alpha = 0.10f * glowStrength),
+        radius = shellRadius * 1.16f,
+        center = center
+    )
+
+    drawPixelRing(
+        center = center,
+        radius = extent * 0.405f,
+        count = profile.nodeCount,
+        rotationDegrees = rotation,
+        phase = phase,
+        state = state,
+        primary = primary,
+        secondary = secondary,
+        extent = extent
+    )
+
+    drawPolygonShell(
+        center = center,
+        radius = shellRadius,
+        vertices = profile.vertices,
+        rotationDegrees = rotation,
+        state = state,
+        phase = phase,
+        primary = primary,
+        secondary = secondary,
+        extent = extent
+    )
 
     drawCircle(
         brush = Brush.radialGradient(
             colors = listOf(
-                primaryColor.copy(alpha = glowAlpha * 0.18f),
-                secondaryColor.copy(alpha = glowAlpha * 0.06f),
+                secondary.copy(alpha = 0.18f),
+                primary.copy(alpha = 0.08f),
                 Color.Transparent
             ),
-            center = coreCenter,
-            radius = coreRadius
+            center = center,
+            radius = shellRadius * 0.72f
         ),
-        radius = coreRadius,
-        center = coreCenter
+        radius = shellRadius * 0.72f,
+        center = center
     )
 
-    // Layer 3: Pulsing ring — only for active states
-    if (state != HaloRuntimeState.Idle && state != HaloRuntimeState.Stopped) {
-        val ringPulse = (sin(glowPhase * 1.2f) * 0.5f + 0.5f)
-        val ringRadius = baseRadius * (0.85f + ringPulse * 0.12f)
-        val ringAlpha = glowAlpha * 0.10f * (1f - ringPulse * 0.5f)
-        drawCircle(
-            color = primaryColor.copy(alpha = ringAlpha.coerceIn(0f, 0.12f)),
-            radius = ringRadius,
-            center = center,
-            style = Stroke(width = 0.8f + ringPulse * 0.4f)
-        )
-    }
-
-    // Layer 4: Breathing expansion ring for listening states
-    if (state == HaloRuntimeState.Listening ||
-        state == HaloRuntimeState.Wakeword ||
-        state == HaloRuntimeState.Capturing
-    ) {
-        val breathRadius = baseRadius * (0.90f + pulse * 0.35f)
-        val breathAlpha = glowAlpha * 0.16f * (1f - pulse)
-        drawCircle(
-            color = primaryColor.copy(alpha = breathAlpha.coerceAtMost(0.18f)),
-            radius = breathRadius,
-            center = center,
-            style = Stroke(width = 1.4f)
-        )
-    }
+    drawStateGlyph(
+        glyph = profile.glyph,
+        center = center,
+        radius = shellRadius * 0.62f,
+        primary = primary,
+        secondary = secondary,
+        phase = phase,
+        pulse = wave,
+        extent = extent
+    )
 }
 
-// ---------------------------------------------------------------------------
-// State-specific overlays
-// ---------------------------------------------------------------------------
-
-private fun DrawScope.drawStateOverlay(
+private fun DrawScope.drawPixelRing(
     center: Offset,
-    baseRadius: Float,
-    primaryColor: Color,
-    secondaryColor: Color,
-    pulse: Float,
+    radius: Float,
+    count: Int,
+    rotationDegrees: Float,
     phase: Float,
     state: HaloRuntimeState,
-    profile: HaloOrbProfile
+    primary: Color,
+    secondary: Color,
+    extent: Float
 ) {
-    when (state) {
-        HaloRuntimeState.Speaking -> {
-            // Dual expanding wave rings — staggered
-            for (i in 0..1) {
-                val p = (pulse + i * 0.45f) % 1f
-                val waveRadius = baseRadius * (0.50f + p * 0.55f)
-                val alpha = 0.10f * (1f - p).pow(1.5f)
-                drawCircle(
-                    color = primaryColor.copy(alpha = alpha.coerceIn(0f, 0.12f)),
-                    radius = waveRadius,
-                    center = center,
-                    style = Stroke(width = 1.0f + (1f - p) * 0.6f)
-                )
-            }
-        }
+    val activeIndex = ((phase * count).toInt()) % count
+    val base = extent * 0.026f
 
-        HaloRuntimeState.Executing -> {
-            // Subtle directional sweep — a thin arc that rotates quickly
-            val sweepAngle = phase * profile.rotation * 50f
-            val arcRadius = baseRadius * 0.82f
-            drawArc(
-                color = primaryColor.copy(alpha = 0.10f),
-                startAngle = sweepAngle,
-                sweepAngle = 60f,
-                useCenter = false,
-                style = Stroke(width = 1.0f),
-                topLeft = Offset(center.x - arcRadius, center.y - arcRadius),
-                size = androidx.compose.ui.geometry.Size(arcRadius * 2f, arcRadius * 2f)
-            )
+    repeat(count) { index ->
+        val angle = (TWO_PI * index / count) + degreesToRadians(rotationDegrees)
+        val position = Offset(
+            center.x + cos(angle) * radius,
+            center.y + sin(angle) * radius
+        )
+        val active = when (state) {
+            HaloRuntimeState.Listening,
+            HaloRuntimeState.Recognizing,
+            HaloRuntimeState.Planning,
+            HaloRuntimeState.Executing,
+            HaloRuntimeState.Recovering -> index == activeIndex
+            HaloRuntimeState.Speaking -> index % 2 == activeIndex % 2
+            HaloRuntimeState.Wakeword -> true
+            else -> false
         }
+        val pixelSize = if (active) base * 1.48f else base
+        val color = if (index % 2 == 0) primary else secondary
 
-        HaloRuntimeState.Recovering -> {
-            // Fragmented outer ring — discontinuous arcs
-            val fragmentCount = 5
-            for (i in 0 until fragmentCount) {
-                val startAngle = i * (360f / fragmentCount) + phase * 15f
-                val gap = sin(phase * 2f + i * 1.2f) * 15f
-                drawArc(
-                    color = primaryColor.copy(alpha = 0.08f),
-                    startAngle = startAngle + gap,
-                    sweepAngle = 35f,
-                    useCenter = false,
-                    style = Stroke(width = 0.8f),
-                    topLeft = Offset(
-                        center.x - baseRadius * 0.88f,
-                        center.y - baseRadius * 0.88f
-                    ),
-                    size = androidx.compose.ui.geometry.Size(
-                        baseRadius * 1.76f,
-                        baseRadius * 1.76f
-                    )
-                )
-            }
-        }
-
-        HaloRuntimeState.Recognizing -> {
-            // Three subtle orbiting focus dots
-            for (i in 0..2) {
-                val angle = phase * 1.4f + i * (TWO_PI / 3f)
-                val orbitR = baseRadius * 0.75f
-                val dotX = center.x + cos(angle) * orbitR
-                val dotY = center.y + sin(angle) * orbitR
-                drawCircle(
-                    color = primaryColor.copy(alpha = 0.15f),
-                    radius = 2.0f,
-                    center = Offset(dotX, dotY)
-                )
-            }
-        }
-
-        else -> { /* No overlay for Idle, Stopped, Listening, Wakeword, Capturing,
-                      Reasoning, Planning — the particle field alone carries the state */ }
+        drawRoundRect(
+            color = color.copy(alpha = if (active) 0.98f else 0.58f),
+            topLeft = Offset(position.x - pixelSize / 2f, position.y - pixelSize / 2f),
+            size = Size(pixelSize, pixelSize),
+            cornerRadius = CornerRadius(pixelSize * 0.14f, pixelSize * 0.14f)
+        )
     }
 }
 
-// ---------------------------------------------------------------------------
-// Utilities
-// ---------------------------------------------------------------------------
+private fun DrawScope.drawPolygonShell(
+    center: Offset,
+    radius: Float,
+    vertices: Int,
+    rotationDegrees: Float,
+    state: HaloRuntimeState,
+    phase: Float,
+    primary: Color,
+    secondary: Color,
+    extent: Float
+) {
+    val outer = polygonPath(
+        center = center,
+        radius = radius,
+        vertices = vertices,
+        rotationDegrees = rotationDegrees,
+        state = state,
+        phase = phase
+    )
+    val inner = polygonPath(
+        center = center,
+        radius = radius * 0.78f,
+        vertices = vertices,
+        rotationDegrees = -rotationDegrees * 0.45f,
+        state = HaloRuntimeState.Idle,
+        phase = phase
+    )
 
-private fun mixColor(first: Color, second: Color, amount: Float): Color {
-    val t = amount.coerceIn(0f, 1f)
-    return Color(
-        red = first.red + (second.red - first.red) * t,
-        green = first.green + (second.green - first.green) * t,
-        blue = first.blue + (second.blue - first.blue) * t,
-        alpha = first.alpha + (second.alpha - first.alpha) * t
+    drawPath(
+        path = outer,
+        color = primary.copy(alpha = 0.11f)
+    )
+    drawPath(
+        path = outer,
+        color = primary.copy(alpha = 0.96f),
+        style = Stroke(width = extent * 0.013f)
+    )
+    drawPath(
+        path = inner,
+        color = secondary.copy(alpha = 0.34f),
+        style = Stroke(width = extent * 0.006f)
     )
 }
 
-private fun fract(value: Float): Float = value - floor(value)
-
-// ---------------------------------------------------------------------------
-// Preview
-// ---------------------------------------------------------------------------
-
-@Preview
-@Composable
-private fun PreviewHaloStateOrb() {
-    Column(
-        modifier = Modifier
-            .background(HaloGlassColors.Background)
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
-    ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-            HaloStateOrb(HaloRuntimeState.Idle, size = 100.dp)
-            HaloStateOrb(HaloRuntimeState.Listening, size = 100.dp)
-            HaloStateOrb(HaloRuntimeState.Reasoning, size = 100.dp)
+private fun polygonPath(
+    center: Offset,
+    radius: Float,
+    vertices: Int,
+    rotationDegrees: Float,
+    state: HaloRuntimeState,
+    phase: Float
+): Path {
+    val path = Path()
+    repeat(vertices) { index ->
+        val angle = -HALF_PI + TWO_PI * index / vertices + degreesToRadians(rotationDegrees)
+        val stateScale = when (state) {
+            HaloRuntimeState.Capturing -> 1f + 0.08f * sin(angle * 3f + phase * TWO_PI * 2f)
+            HaloRuntimeState.Reasoning -> if (index % 2 == 0) 1.10f else 0.90f
+            HaloRuntimeState.Planning -> if (index % 2 == 0) 1.05f else 0.96f
+            HaloRuntimeState.Executing -> if (index == 1 || index == 2) 1.12f else 0.97f
+            HaloRuntimeState.Speaking -> 1f + 0.055f * sin(angle * 4f + phase * TWO_PI * 3f)
+            HaloRuntimeState.Recovering -> if (index % 3 == 0) 0.82f else 1.08f
+            else -> 1f
         }
+        val point = Offset(
+            center.x + cos(angle) * radius * stateScale,
+            center.y + sin(angle) * radius * stateScale
+        )
+        if (index == 0) path.moveTo(point.x, point.y) else path.lineTo(point.x, point.y)
+    }
+    path.close()
+    return path
+}
+
+private fun DrawScope.drawStateGlyph(
+    glyph: OrbGlyph,
+    center: Offset,
+    radius: Float,
+    primary: Color,
+    secondary: Color,
+    phase: Float,
+    pulse: Float,
+    extent: Float
+) {
+    when (glyph) {
+        OrbGlyph.REST -> drawRestGlyph(center, radius, primary, secondary, extent)
+        OrbGlyph.LISTEN -> drawListenGlyph(center, radius, primary, secondary, phase, extent)
+        OrbGlyph.WAKE -> drawWakeGlyph(center, radius, primary, secondary, pulse, extent)
+        OrbGlyph.CAPTURE -> drawCaptureGlyph(center, radius, primary, secondary, phase, extent)
+        OrbGlyph.RECOGNIZE -> drawRecognizeGlyph(center, radius, primary, secondary, phase, extent)
+        OrbGlyph.REASON -> drawReasonGlyph(center, radius, primary, secondary, phase, extent)
+        OrbGlyph.PLAN -> drawPlanGlyph(center, radius, primary, secondary, phase, extent)
+        OrbGlyph.EXECUTE -> drawExecuteGlyph(center, radius, primary, secondary, extent)
+        OrbGlyph.SPEAK -> drawSpeakGlyph(center, radius, primary, secondary, phase, extent)
+        OrbGlyph.RECOVER -> drawRecoverGlyph(center, radius, primary, secondary, phase, extent)
+        OrbGlyph.STOP -> drawStopGlyph(center, radius, primary, secondary, extent)
+    }
+}
+
+private fun DrawScope.drawRestGlyph(
+    center: Offset,
+    radius: Float,
+    primary: Color,
+    secondary: Color,
+    extent: Float
+) {
+    val diamond = Path().apply {
+        moveTo(center.x, center.y - radius * 0.33f)
+        lineTo(center.x + radius * 0.33f, center.y)
+        lineTo(center.x, center.y + radius * 0.33f)
+        lineTo(center.x - radius * 0.33f, center.y)
+        close()
+    }
+    drawPath(diamond, primary.copy(alpha = 0.18f))
+    drawPath(diamond, primary, style = Stroke(width = extent * 0.012f))
+    drawCircle(secondary, radius * 0.08f, center)
+}
+
+private fun DrawScope.drawListenGlyph(
+    center: Offset,
+    radius: Float,
+    primary: Color,
+    secondary: Color,
+    phase: Float,
+    extent: Float
+) {
+    val ringSize = Size(radius * 1.45f, radius * 1.45f)
+    val topLeft = Offset(center.x - ringSize.width / 2f, center.y - ringSize.height / 2f)
+    drawArc(
+        color = primary,
+        startAngle = 125f,
+        sweepAngle = 110f,
+        useCenter = false,
+        topLeft = topLeft,
+        size = ringSize,
+        style = Stroke(width = extent * 0.014f, cap = StrokeCap.Round)
+    )
+    drawArc(
+        color = secondary.copy(alpha = 0.82f),
+        startAngle = -55f,
+        sweepAngle = 110f,
+        useCenter = false,
+        topLeft = topLeft,
+        size = ringSize,
+        style = Stroke(width = extent * 0.010f, cap = StrokeCap.Round)
+    )
+    drawCircle(primary, radius * 0.12f, center)
+
+    val sweepAngle = -HALF_PI + phase * TWO_PI
+    val sweepPoint = Offset(
+        center.x + cos(sweepAngle) * radius * 0.72f,
+        center.y + sin(sweepAngle) * radius * 0.72f
+    )
+    drawPixel(sweepPoint, extent * 0.040f, secondary, 1f)
+}
+
+private fun DrawScope.drawWakeGlyph(
+    center: Offset,
+    radius: Float,
+    primary: Color,
+    secondary: Color,
+    pulse: Float,
+    extent: Float
+) {
+    val diamondRadius = radius * (0.38f + 0.06f * pulse)
+    val path = Path().apply {
+        moveTo(center.x, center.y - diamondRadius)
+        lineTo(center.x + diamondRadius, center.y)
+        lineTo(center.x, center.y + diamondRadius)
+        lineTo(center.x - diamondRadius, center.y)
+        close()
+    }
+    drawPath(path, primary.copy(alpha = 0.30f))
+    drawPath(path, primary, style = Stroke(width = extent * 0.016f))
+    drawCircle(
+        color = secondary.copy(alpha = 0.72f - pulse * 0.24f),
+        radius = radius * (0.52f + pulse * 0.18f),
+        center = center,
+        style = Stroke(width = extent * 0.008f)
+    )
+    drawCircle(Color.White.copy(alpha = 0.92f), radius * 0.09f, center)
+}
+
+private fun DrawScope.drawCaptureGlyph(
+    center: Offset,
+    radius: Float,
+    primary: Color,
+    secondary: Color,
+    phase: Float,
+    extent: Float
+) {
+    val bars = 5
+    val barWidth = radius * 0.17f
+    val gap = radius * 0.11f
+    val total = bars * barWidth + (bars - 1) * gap
+    val startX = center.x - total / 2f
+
+    repeat(bars) { index ->
+        val level = 0.32f + 0.62f * normalizedWave(phase * 2f + index * 0.18f)
+        val height = radius * level
+        drawRoundRect(
+            color = if (index == bars / 2) secondary else primary,
+            topLeft = Offset(startX + index * (barWidth + gap), center.y - height / 2f),
+            size = Size(barWidth, height),
+            cornerRadius = CornerRadius(barWidth * 0.28f, barWidth * 0.28f)
+        )
+    }
+    drawLine(
+        color = primary.copy(alpha = 0.28f),
+        start = Offset(center.x - radius * 0.88f, center.y),
+        end = Offset(center.x + radius * 0.88f, center.y),
+        strokeWidth = extent * 0.006f
+    )
+}
+
+private fun DrawScope.drawRecognizeGlyph(
+    center: Offset,
+    radius: Float,
+    primary: Color,
+    secondary: Color,
+    phase: Float,
+    extent: Float
+) {
+    drawCircle(primary.copy(alpha = 0.92f), radius * 0.50f, center, style = Stroke(extent * 0.012f))
+    drawCircle(secondary.copy(alpha = 0.60f), radius * 0.26f, center, style = Stroke(extent * 0.008f))
+    drawCircle(primary, radius * 0.07f, center)
+
+    repeat(3) { index ->
+        val angle = phase * TWO_PI * 1.7f + TWO_PI * index / 3f
+        val point = Offset(
+            center.x + cos(angle) * radius * 0.67f,
+            center.y + sin(angle) * radius * 0.67f
+        )
+        drawPixel(point, extent * 0.035f, if (index == 0) secondary else primary, 0.95f)
+    }
+}
+
+private fun DrawScope.drawReasonGlyph(
+    center: Offset,
+    radius: Float,
+    primary: Color,
+    secondary: Color,
+    phase: Float,
+    extent: Float
+) {
+    val rotation = phase * 55f
+    rotate(rotation, center) {
+        val points = listOf(
+            Offset(center.x, center.y - radius * 0.55f),
+            Offset(center.x + radius * 0.52f, center.y - radius * 0.12f),
+            Offset(center.x + radius * 0.28f, center.y + radius * 0.50f),
+            Offset(center.x - radius * 0.34f, center.y + radius * 0.42f),
+            Offset(center.x - radius * 0.54f, center.y - radius * 0.12f)
+        )
+        points.indices.forEach { index ->
+            val next = (index + 2) % points.size
+            drawLine(
+                color = primary.copy(alpha = 0.42f),
+                start = points[index],
+                end = points[next],
+                strokeWidth = extent * 0.007f
+            )
+        }
+        points.forEachIndexed { index, point ->
+            drawPixel(
+                point,
+                extent * if (index == 0) 0.047f else 0.034f,
+                if (index % 2 == 0) secondary else primary,
+                0.96f
+            )
+        }
+    }
+}
+
+private fun DrawScope.drawPlanGlyph(
+    center: Offset,
+    radius: Float,
+    primary: Color,
+    secondary: Color,
+    phase: Float,
+    extent: Float
+) {
+    val box = Size(radius * 1.16f, radius * 1.16f)
+    val topLeft = Offset(center.x - box.width / 2f, center.y - box.height / 2f)
+    repeat(6) { index ->
+        val active = index == ((phase * 6f).toInt() % 6)
+        drawArc(
+            color = if (active) secondary else primary.copy(alpha = 0.54f),
+            startAngle = -90f + index * 60f + phase * 40f,
+            sweepAngle = 34f,
+            useCenter = false,
+            topLeft = topLeft,
+            size = box,
+            style = Stroke(width = extent * if (active) 0.016f else 0.010f, cap = StrokeCap.Round)
+        )
+    }
+    val core = extent * 0.080f
+    drawRoundRect(
+        color = secondary.copy(alpha = 0.90f),
+        topLeft = Offset(center.x - core / 2f, center.y - core / 2f),
+        size = Size(core, core),
+        cornerRadius = CornerRadius(core * 0.12f, core * 0.12f)
+    )
+}
+
+private fun DrawScope.drawExecuteGlyph(
+    center: Offset,
+    radius: Float,
+    primary: Color,
+    secondary: Color,
+    extent: Float
+) {
+    val left = center.x - radius * 0.45f
+    val right = center.x + radius * 0.48f
+    val top = center.y - radius * 0.40f
+    val bottom = center.y + radius * 0.40f
+
+    drawLine(primary, Offset(left, top), Offset(center.x, center.y), extent * 0.016f, cap = StrokeCap.Round)
+    drawLine(primary, Offset(left, bottom), Offset(center.x, center.y), extent * 0.016f, cap = StrokeCap.Round)
+    drawLine(secondary, Offset(center.x - radius * 0.08f, top), Offset(right, center.y), extent * 0.016f, cap = StrokeCap.Round)
+    drawLine(secondary, Offset(center.x - radius * 0.08f, bottom), Offset(right, center.y), extent * 0.016f, cap = StrokeCap.Round)
+}
+
+private fun DrawScope.drawSpeakGlyph(
+    center: Offset,
+    radius: Float,
+    primary: Color,
+    secondary: Color,
+    phase: Float,
+    extent: Float
+) {
+    val bars = 5
+    val barWidth = radius * 0.13f
+    val gap = radius * 0.10f
+    val total = bars * barWidth + (bars - 1) * gap
+    val startX = center.x - total / 2f
+    repeat(bars) { index ->
+        val level = 0.28f + 0.68f * normalizedWave(phase * 3f + index * 0.21f)
+        val height = radius * level
+        drawRoundRect(
+            color = if (index % 2 == 0) primary else secondary,
+            topLeft = Offset(startX + index * (barWidth + gap), center.y - height / 2f),
+            size = Size(barWidth, height),
+            cornerRadius = CornerRadius(barWidth / 2f, barWidth / 2f)
+        )
+    }
+
+    val arcSize = Size(radius * 1.80f, radius * 1.80f)
+    val topLeft = Offset(center.x - arcSize.width / 2f, center.y - arcSize.height / 2f)
+    drawArc(
+        color = primary.copy(alpha = 0.44f),
+        startAngle = 322f,
+        sweepAngle = 76f,
+        useCenter = false,
+        topLeft = topLeft,
+        size = arcSize,
+        style = Stroke(width = extent * 0.008f, cap = StrokeCap.Round)
+    )
+    drawArc(
+        color = secondary.copy(alpha = 0.44f),
+        startAngle = 142f,
+        sweepAngle = 76f,
+        useCenter = false,
+        topLeft = topLeft,
+        size = arcSize,
+        style = Stroke(width = extent * 0.008f, cap = StrokeCap.Round)
+    )
+}
+
+private fun DrawScope.drawRecoverGlyph(
+    center: Offset,
+    radius: Float,
+    primary: Color,
+    secondary: Color,
+    phase: Float,
+    extent: Float
+) {
+    val box = Size(radius * 1.25f, radius * 1.25f)
+    val topLeft = Offset(center.x - box.width / 2f, center.y - box.height / 2f)
+    repeat(4) { index ->
+        drawArc(
+            color = if (index % 2 == 0) primary else secondary,
+            startAngle = phase * 120f + index * 90f,
+            sweepAngle = 48f,
+            useCenter = false,
+            topLeft = topLeft,
+            size = box,
+            style = Stroke(width = extent * 0.014f, cap = StrokeCap.Round)
+        )
+    }
+    drawPixel(center, extent * 0.060f, primary, 0.94f)
+}
+
+private fun DrawScope.drawStopGlyph(
+    center: Offset,
+    radius: Float,
+    primary: Color,
+    secondary: Color,
+    extent: Float
+) {
+    val diagonal = radius * 0.43f
+    drawLine(
+        primary,
+        Offset(center.x - diagonal, center.y - diagonal),
+        Offset(center.x + diagonal, center.y + diagonal),
+        extent * 0.018f,
+        cap = StrokeCap.Round
+    )
+    drawLine(
+        secondary,
+        Offset(center.x + diagonal, center.y - diagonal),
+        Offset(center.x - diagonal, center.y + diagonal),
+        extent * 0.018f,
+        cap = StrokeCap.Round
+    )
+}
+
+private fun DrawScope.drawPixel(
+    center: Offset,
+    size: Float,
+    color: Color,
+    alpha: Float
+) {
+    drawRoundRect(
+        color = color.copy(alpha = alpha),
+        topLeft = Offset(center.x - size / 2f, center.y - size / 2f),
+        size = Size(size, size),
+        cornerRadius = CornerRadius(size * 0.12f, size * 0.12f)
+    )
+}
+
+private fun normalizedWave(value: Float): Float =
+    ((sin(value * TWO_PI) + 1f) * 0.5f)
+
+private fun degreesToRadians(degrees: Float): Float = degrees * PI.toFloat() / 180f
+
+private const val TWO_PI = (PI * 2.0).toFloat()
+private const val HALF_PI = (PI / 2.0).toFloat()
+
+@Preview(showBackground = true, backgroundColor = 0xFF080B0B)
+@Composable
+private fun HaloStateOrbPreview() {
+    Column(modifier = Modifier.padding(24.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-            HaloStateOrb(HaloRuntimeState.Executing, size = 100.dp)
-            HaloStateOrb(HaloRuntimeState.Speaking, size = 100.dp)
-            HaloStateOrb(HaloRuntimeState.Recovering, size = 100.dp)
+            HaloStateOrb(HaloRuntimeState.Idle, size = 112.dp)
+            HaloStateOrb(HaloRuntimeState.Capturing, size = 112.dp)
+        }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(20.dp),
+            modifier = Modifier.padding(top = 20.dp)
+        ) {
+            HaloStateOrb(HaloRuntimeState.Reasoning, size = 112.dp)
+            HaloStateOrb(HaloRuntimeState.Speaking, size = 112.dp)
         }
     }
 }

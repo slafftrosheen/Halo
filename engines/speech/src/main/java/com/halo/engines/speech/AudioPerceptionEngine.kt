@@ -75,6 +75,11 @@ class AudioPerceptionEngine(
             commandJob = scope.launch {
                 launch { commandBus.commands().filterIsInstance<StartListening>().collect { startCapture() } }
                 launch { commandBus.commands().filterIsInstance<StopListening>().collect { stopCapture(finalizeUserCapture = true) } }
+                launch {
+                    eventBus.observe(SpeechEnded::class.java).collect {
+                        stopBufferedInputAfterSpeechEnd()
+                    }
+                }
             }
         }
     }
@@ -157,23 +162,59 @@ class AudioPerceptionEngine(
         }
     }
 
+    private suspend fun stopBufferedInputAfterSpeechEnd() {
+        // Live recognizers own an active microphone-backed recognition session.
+        // This automatic release is specifically for the buffered path, where
+        // the utterance has already been snapshotted for recognition.
+        if (audioPipeline.usesLiveRecognition) return
+
+        transactionMutex.withLock {
+            val job = captureJob ?: return@withLock
+
+            if (job.isActive) {
+                job.cancel()
+
+                // AudioRecord.read() may currently be blocked. Stopping the
+                // source explicitly unblocks the platform read before join().
+                withContext(NonCancellable) {
+                    stopAudioSource()
+                }
+
+                job.join()
+            }
+
+            if (captureJob === job) {
+                captureJob = null
+            }
+        }
+    }
+
     private suspend fun stopCapture(finalizeUserCapture: Boolean) {
         transactionMutex.withLock {
             if (audioPipeline.usesLiveRecognition) {
                 audioPipeline.reset()
                 return@withLock
             }
+
             val job = captureJob
+            val hadActiveCapture = job?.isActive == true
+
             if (job != null) {
                 job.cancel()
                 withContext(NonCancellable) { stopAudioSource() }
                 job.join()
                 if (captureJob === job) captureJob = null
             }
-            if (finalizeUserCapture) {
-                audioPipeline.finishCapture()
-            } else {
-                audioPipeline.reset()
+
+            when {
+                !finalizeUserCapture -> audioPipeline.reset()
+                hadActiveCapture -> audioPipeline.finishCapture()
+                else -> {
+                    // If VAD already ended capture, StopListening means the user
+                    // is cancelling the recognition transaction rather than
+                    // asking us to finalize the same buffered audio again.
+                    audioPipeline.reset()
+                }
             }
         }
     }

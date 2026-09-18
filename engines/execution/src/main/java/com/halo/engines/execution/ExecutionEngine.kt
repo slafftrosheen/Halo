@@ -1,43 +1,43 @@
 package com.halo.engines.execution
-import com.halo.runtime.cognition.ApplicationTask
-import com.halo.runtime.cognition.CommunicationTask
-import com.halo.runtime.cognition.DeviceTask
+
+import com.halo.engines.execution.service.ExecutionScheduler
+import com.halo.libraries.common.core.Identifier
+import com.halo.libraries.common.core.Version
 import com.halo.runtime.cognition.ExecutionContext
 import com.halo.runtime.cognition.ExecutionPlan
-import com.halo.runtime.cognition.MediaTask
-import com.halo.runtime.cognition.MemoryTask
-import com.halo.runtime.cognition.NavigationTask
+import com.halo.runtime.cognition.ExecutionResultPublished
 import com.halo.runtime.cognition.Outcome
 import com.halo.runtime.cognition.OutcomePublished
 import com.halo.runtime.cognition.Task
-import com.halo.runtime.cognition.WebTask
-import com.halo.sdk.runtime.*
-import com.halo.libraries.common.core.Identifier
-import com.halo.libraries.common.core.Version
-import com.halo.runtime.services.Services
 import com.halo.runtime.cognition.blackboard.Blackboard
-import com.halo.engines.execution.service.ExecutionScheduler
-import com.halo.runtime.cognition.ExecutionResultPublished
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import com.halo.runtime.cognition.blackboard.PlanKnowledge
+import com.halo.sdk.runtime.Engine
+import com.halo.sdk.runtime.EngineContext
+import com.halo.sdk.runtime.EngineHealth
+import com.halo.sdk.runtime.EngineMetadata
+import com.halo.sdk.runtime.EngineState
+import com.halo.sdk.runtime.EventBus
+import com.halo.sdk.runtime.ExecutionFinished
+import com.halo.sdk.runtime.ExecutionStarted
+import com.halo.sdk.runtime.PlanGenerated
+import com.halo.sdk.runtime.ServiceKey
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import java.util.UUID
 
 /**
- * ExecutionEngine acts as the single deterministic driver for physical and digital actions in the Alpha Runtime.
- * 
- * Alpha Architecture constraints:
- * - NO pub/sub listeners in the host attempting to execute raw intents.
- * - ALL execution must pass through this engine by matching a [Task] to a registered [Capability].
- * - Platform agnosticism is strictly maintained. The implementation of a capability 
- *   (e.g., `AndroidDeviceCapability`) is provided by the host layer and injected into the [CapabilityRegistry].
+ * Single deterministic driver for physical and digital actions.
+ *
+ * All execution passes through this engine by matching a [Task] to a registered
+ * capability in [ExecutionScheduler]. Platform implementations remain outside
+ * the cognition/runtime layer.
  */
 class ExecutionEngine(
     private val scheduler: ExecutionScheduler,
@@ -70,33 +70,36 @@ class ExecutionEngine(
 
     override suspend fun start() {
         if (job?.isActive == true) return
-        
+
         val runtimeContext = requireNotNull(context)
         _state.value = EngineState.Running
-        
+
         job = CoroutineScope(runtimeContext.runtime.scheduler.io).launch {
             eventBus.observe(PlanGenerated::class.java).collect { event ->
-                try {
-                    val planKnowledge = blackboard.latest(com.halo.runtime.cognition.blackboard.PlanKnowledge::class)
-                    val plan = (planKnowledge?.payload as? com.halo.runtime.cognition.blackboard.PlanKnowledge)?.plan
-                    
-                    if (plan != null) {
-                        executionMutex.withLock {
-                            val executionId = UUID.randomUUID().toString()
-                            try {
-                                eventBus.publish(ExecutionStarted(id = executionId, planId = event.planId))
-                                val outcome = executePlan(plan, executionId)
-                                eventBus.publish(ExecutionFinished(id = executionId, planId = event.planId))
-                                eventBus.publish(OutcomePublished(outcome = outcome::class.simpleName ?: "Unknown"))
-                            } catch (e: Exception) {
-                                runtimeContext.runtime.logger.error("execution", "Failed to execute plan", e)
-                                eventBus.publish(ExecutionFinished(id = executionId, planId = event.planId))
-                                eventBus.publish(OutcomePublished(outcome = "PermanentFailure"))
-                            }
-                        }
+                val plan = try {
+                    val planKnowledge = blackboard.latest(PlanKnowledge::class)
+                    (planKnowledge?.payload as? PlanKnowledge)?.plan
+                } catch (error: Exception) {
+                    runtimeContext.runtime.logger.error("execution", "Failed to resolve generated plan", error)
+                    null
+                }
+
+                if (plan == null) return@collect
+
+                executionMutex.withLock {
+                    val executionId = UUID.randomUUID().toString()
+                    eventBus.publish(ExecutionStarted(id = executionId, planId = event.planId))
+
+                    try {
+                        val outcome = executePlan(plan, executionId)
+                        eventBus.publish(
+                            OutcomePublished(outcome = outcome::class.simpleName ?: "Unknown")
+                        )
+                    } finally {
+                        // ExecutionFinished is the aggregation boundary used by presentation.
+                        // It must always correlate with the exact ExecutionStarted id.
+                        eventBus.publish(ExecutionFinished(id = executionId, planId = event.planId))
                     }
-                } catch (e: Exception) {
-                    runtimeContext.runtime.logger.error("execution", "Failed to collect plan", e)
                 }
             }
         }
@@ -121,28 +124,55 @@ class ExecutionEngine(
         }
     }
 
-    suspend fun executePlan(plan: ExecutionPlan, executionId: String = UUID.randomUUID().toString()): Outcome {
+    suspend fun executePlan(
+        plan: ExecutionPlan,
+        executionId: String = UUID.randomUUID().toString()
+    ): Outcome {
         var finalOutcome: Outcome = Outcome.Success("Plan executed successfully")
-        
+
         for (task in plan.tasks) {
-            val result = scheduler.executeTaskGraph(task)
+            val result = try {
+                scheduler.executeTaskGraph(task)
+            } catch (error: Exception) {
+                context?.runtime?.logger?.error(
+                    "execution",
+                    "Task ${task::class.simpleName ?: "unknown"} threw during execution",
+                    error
+                )
+                Outcome.PermanentFailure("Unable to complete action.", error)
+            }
+
             eventBus.publish(
                 ExecutionResultPublished(
-                    id = executionId,
+                    executionId = executionId,
                     planId = plan.id.toString(),
                     task = task,
                     outcome = result,
-                    message = (result as? Outcome.Success)?.message ?: (result as? Outcome.PermanentFailure)?.reason ?: ""
+                    message = result.messageForTelemetry()
                 )
             )
-            if (result is Outcome.PermanentFailure || result is Outcome.RetryableFailure) {
-                finalOutcome = result
-                break
-            } else if (result is Outcome.Partial) {
-                finalOutcome = result
+
+            when (result) {
+                is Outcome.PermanentFailure,
+                is Outcome.RetryableFailure,
+                is Outcome.Cancelled -> {
+                    finalOutcome = result
+                    break
+                }
+
+                is Outcome.Partial -> finalOutcome = result
+                is Outcome.Success -> Unit
             }
         }
-        
+
         return finalOutcome
+    }
+
+    private fun Outcome.messageForTelemetry(): String = when (this) {
+        is Outcome.Success -> message.orEmpty()
+        is Outcome.PermanentFailure -> reason
+        is Outcome.RetryableFailure -> reason
+        is Outcome.Partial -> message
+        is Outcome.Cancelled -> reason.orEmpty()
     }
 }

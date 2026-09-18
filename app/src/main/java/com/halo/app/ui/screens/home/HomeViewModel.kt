@@ -3,12 +3,14 @@ package com.halo.app.ui.screens.home
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.halo.app.di.ManualDependencyGraph
 import com.halo.app.ui.glass.material.HaloRuntimeState
 import com.halo.app.ui.state.presenceFromSpeech
+import com.halo.engines.speech.SpeechRecognizedPayload
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.*
 import com.halo.runtime.cognition.session.CognitiveSession
+import java.util.Locale
+import java.util.UUID
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -32,7 +34,8 @@ data class HomeUiState(
     val activeProvider: String = "No provider",
     val activeProviderStatus: String = "Unavailable",
     val sessionState: CognitiveSessionState = CognitiveSessionState.Idle,
-    val speechActive: Boolean = false
+    val speechActive: Boolean = false,
+    val presentedResponse: String? = null
 )
 
 class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
@@ -56,7 +59,7 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
             speechIsActive -> speechRuntimeState
             sessionState is CognitiveSessionState.PreparingContext -> HaloRuntimeState.Reasoning
             sessionState is CognitiveSessionState.Reasoning -> HaloRuntimeState.Reasoning
-            sessionState is CognitiveSessionState.Streaming -> HaloRuntimeState.Speaking
+            sessionState is CognitiveSessionState.Streaming -> HaloRuntimeState.Reasoning
             sessionState is CognitiveSessionState.ExecutingTool -> HaloRuntimeState.Executing
             sessionState is CognitiveSessionState.Failed -> HaloRuntimeState.Recovering
             else -> speechRuntimeState
@@ -106,20 +109,24 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
 class HomeViewModel(
     private val snapshotManager: RuntimeSnapshotSource,
     private val commandBus: CommandBus,
+    private val eventBus: EventBus,
     private val cognitiveSession: CognitiveSession,
+    private val stopSpeechOutput: () -> Unit,
     private val aiProviderRouter: AiProviderRouter? = null
 ) : ViewModel() {
     private val mapper = HomeUiMapper()
     private val listeningCommandMutex = Mutex()
     private val _listeningRequested = MutableStateFlow(false)
     val listeningRequested: StateFlow<Boolean> = _listeningRequested.asStateFlow()
+    private val _presentedResponse = MutableStateFlow<String?>(null)
 
     val uiState: StateFlow<HomeUiState> = combine(
         snapshotManager.snapshot,
         cognitiveSession.state,
         aiProviderRouter?.selectedProviderId ?: MutableStateFlow<String?>(null),
         aiProviderRouter?.selectedModelId ?: MutableStateFlow<String?>(null),
-        aiProviderRouter?.diagnosticsFlow ?: MutableStateFlow(emptyList<AiProviderDiagnostic>())
+        aiProviderRouter?.diagnosticsFlow ?: MutableStateFlow(emptyList<AiProviderDiagnostic>()),
+        _presentedResponse
     ) { args ->
         @Suppress("UNCHECKED_CAST")
         val snapshot = args[0] as RuntimeSnapshot
@@ -127,7 +134,9 @@ class HomeViewModel(
         val selectedProviderId = args[2] as String?
         val selectedModelId = args[3] as String?
         @Suppress("UNCHECKED_CAST") val diagnostics = args[4] as List<AiProviderDiagnostic>
+        val presentedResponse = args[5] as String?
         mapper.map(snapshot, sessionState, selectedProviderId, selectedModelId, diagnostics)
+            .copy(presentedResponse = presentedResponse)
     }.stateIn(viewModelScope, SharingStarted.Lazily, HomeUiState())
 
     init {
@@ -145,27 +154,62 @@ class HomeViewModel(
                 }
             }
         }
-    }
 
-    fun submitText(text: String) {
-        Log.d("HomeViewModel", "submitText invoked")
-        val normalized = text.trim()
-        if (normalized.isNotBlank()) viewModelScope.launch {
-            runCatching { cognitiveSession.submit(AiRequest(text = normalized)) }
-                .onFailure { Log.e("HomeViewModel", "Text submission failed", it) }
+        viewModelScope.launch {
+            eventBus.observe(AssistantResponsePublished::class.java).collect { response ->
+                _presentedResponse.value = response.text
+            }
         }
     }
 
-    fun clearConversation() { cognitiveSession.clearConversation() }
+    fun submitText(text: String) {
+        val normalized = text.trim()
+        if (normalized.isBlank()) return
+
+        // Text enters the same interpretation/reasoning pipeline as recognized
+        // speech, but it remains a TEXT/USER observation. Response delivery is
+        // carried by the transaction, so keyboard turns never need a global TTS mute.
+        _presentedResponse.value = null
+        viewModelScope.launch {
+            runCatching {
+                val timestamp = System.currentTimeMillis()
+                eventBus.publish(
+                    ObservationCreated(
+                        observation = Observation(
+                            id = ObservationId(UUID.randomUUID().toString()),
+                            timestamp = timestamp,
+                            modality = Modality.TEXT,
+                            source = Source.USER,
+                            confidence = 1.0f,
+                            payload = SpeechRecognizedPayload(
+                                transcript = normalized,
+                                language = Locale.getDefault().toLanguageTag()
+                            ),
+                            metadata = mapOf("input" to "keyboard")
+                        )
+                    )
+                )
+            }.onFailure {
+                Log.e("HomeViewModel", "Text submission failed", it)
+            }
+        }
+    }
+
+    fun clearConversation() {
+        cognitiveSession.clearConversation()
+        _presentedResponse.value = null
+    }
+
     fun cancelSession() { cognitiveSession.cancel() }
 
     fun stopSpeakingAndListen() {
         cognitiveSession.cancel()
+        _presentedResponse.value = null
         _listeningRequested.value = true
         viewModelScope.launch {
             listeningCommandMutex.withLock {
                 runCatching {
-                    ManualDependencyGraph.androidSpeaker.stop()
+                    stopSpeechOutput()
                     commandBus.dispatch(StartListening)
                 }.onFailure {
                     _listeningRequested.value = false
@@ -177,6 +221,7 @@ class HomeViewModel(
 
     fun toggleListening() {
         val shouldStart = !_listeningRequested.value
+        if (shouldStart) _presentedResponse.value = null
         _listeningRequested.value = shouldStart
         viewModelScope.launch {
             listeningCommandMutex.withLock {
@@ -191,6 +236,7 @@ class HomeViewModel(
     }
 
     fun startListening() {
+        _presentedResponse.value = null
         _listeningRequested.value = true
         viewModelScope.launch {
             listeningCommandMutex.withLock {

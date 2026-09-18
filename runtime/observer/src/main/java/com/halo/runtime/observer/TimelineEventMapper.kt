@@ -11,13 +11,33 @@ class DefaultTimelineEventMapper : TimelineEventMapper {
     override fun map(event: HaloEvent): TimelineEvent? {
         val timestamp = Instant.ofEpochMilli(event.timestamp)
         return when (event) {
-            is SpeechRecognized -> TimelineEvent(
+            is AssistantResponsePublished -> TimelineEvent(
                 id = event.id,
-                title = "Speech Recognized",
+                title = "Halo",
                 description = event.text,
                 timestamp = timestamp,
-                status = "Success"
+                status = "Completed"
             )
+            is ObservationCreated -> {
+                val input = event.observation.payload as? SpeechObservationPayload
+                val userInput = event.observation.source == Source.USER ||
+                    event.observation.source == Source.MICROPHONE
+                if (input != null && userInput && input.transcript.isNotBlank()) {
+                    TimelineEvent(
+                        id = event.id,
+                        title = "You",
+                        description = input.transcript.trim(),
+                        timestamp = Instant.ofEpochMilli(event.observation.timestamp),
+                        status = "Sent"
+                    )
+                } else {
+                    null
+                }
+            }
+            // SpeechRecognized is an internal speech-stage event. The canonical
+            // ObservationCreated event above records the user turn once for both
+            // microphone and keyboard input, avoiding duplicate Activity entries.
+            is SpeechRecognized -> null
             is IntentRecognized -> TimelineEvent(
                 id = event.id,
                 title = "Intent Recognized",
@@ -104,7 +124,7 @@ class DefaultTimelineEventMapper : TimelineEventMapper {
             )
             is CognitiveFailed -> TimelineEvent(
                 id = event.id,
-                title = "Cognitive Failed",
+                title = "Halo",
                 description = event.message,
                 timestamp = timestamp,
                 status = "Failed"
@@ -210,7 +230,7 @@ class DefaultTimelineEventMapper : TimelineEventMapper {
                 timestamp = timestamp,
                 status = "Failed"
             )
-            is com.halo.sdk.runtime.EmbodimentExecutionEvent -> TimelineEvent(
+            is EmbodimentExecutionEvent -> TimelineEvent(
                 id = event.id,
                 title = "Execution Result",
                 description = "${event.device.displayName}: ${event.result.status}",

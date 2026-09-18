@@ -8,28 +8,28 @@ import com.halo.runtime.cognition.blackboard.InterpretationKnowledge
 import com.halo.runtime.cognition.context.ContextAssembler
 import com.halo.runtime.cognition.context.ContextAssemblyResult
 import com.halo.runtime.cognition.conversation.ConversationStore
-import com.halo.runtime.provider.response.AiResponseValidator
 import com.halo.runtime.cognition.tools.ToolAuthorization
 import com.halo.runtime.cognition.tools.ToolAuthorizer
 import com.halo.runtime.cognition.tools.ToolExecutionLimits
 import com.halo.runtime.cognition.tools.ToolExecutionResult
 import com.halo.runtime.cognition.tools.ToolRegistry
+import com.halo.runtime.provider.response.AiResponseValidator
+import com.halo.sdk.provider.AIMessage
 import com.halo.sdk.provider.AiCapability
 import com.halo.sdk.provider.AiContext
 import com.halo.sdk.provider.AiContextPolicy
 import com.halo.sdk.provider.AiErrorType
 import com.halo.sdk.provider.AiExecutionOutcome
 import com.halo.sdk.provider.AiInferenceProvider
-import com.halo.sdk.provider.AiProvider
 import com.halo.sdk.provider.AiProviderException
+import com.halo.sdk.provider.AiProviderRouter
 import com.halo.sdk.provider.AiRequest
 import com.halo.sdk.provider.AiResponse
 import com.halo.sdk.provider.AiStreamEvent
-import com.halo.sdk.provider.validateAgainst
-import com.halo.sdk.provider.AIMessage
 import com.halo.sdk.provider.CognitiveSessionState
 import com.halo.sdk.provider.Role
-import com.halo.sdk.provider.AiProviderRouter
+import com.halo.sdk.provider.validateAgainst
+import com.halo.sdk.runtime.AssistantResponsePublished
 import com.halo.sdk.runtime.CognitiveCompleted
 import com.halo.sdk.runtime.CognitiveFailed
 import com.halo.sdk.runtime.CognitiveReasoningStarted
@@ -38,30 +38,30 @@ import com.halo.sdk.runtime.CognitiveTokenReceived
 import com.halo.sdk.runtime.ContextAssembled
 import com.halo.sdk.runtime.ConversationTurnCompleted
 import com.halo.sdk.runtime.EventBus
-import com.halo.sdk.runtime.SpeechRecognized
+import com.halo.sdk.runtime.ResponseDelivery
 import com.halo.sdk.runtime.ToolCallAuthorized
 import com.halo.sdk.runtime.ToolCallCompleted
 import com.halo.sdk.runtime.ToolCallRejected
 import com.halo.sdk.runtime.ToolCallRequested
 import com.halo.sdk.runtime.TtsRequested
+import com.halo.sdk.runtime.defaultResponseDelivery
+import java.util.Collections
+import java.util.UUID
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
-import java.util.Collections
-import java.util.UUID
 
 /**
- * Manages one immutable cognitive transaction at a time.
+ * Manages one immutable conversational cognitive transaction at a time.
  *
- * Provider/model selection happens once per request.
- * Tool rounds never return to the router.
+ * Structured/action interpretations are owned by deterministic reasoning and
+ * execution. ConversationIntent and QuestionIntent are owned here. Provider/model
+ * selection happens once per request and tool rounds never return to the router.
  */
 class CognitiveSession(
     private val eventBus: EventBus,
@@ -77,55 +77,58 @@ class CognitiveSession(
     val state: StateFlow<CognitiveSessionState> = _state.asStateFlow()
     private var activeJob: Job? = null
 
-    private val processedSpeechIds = Collections.synchronizedSet(mutableSetOf<String>())
-    private val observerScope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
+    private val processedInterpretationIds = Collections.synchronizedSet(mutableSetOf<String>())
 
     init {
-        observerScope.launch {
+        scope.launch {
             blackboard.stream().collect { knowledge ->
-                if (knowledge.payload is InterpretationKnowledge) {
-                    val knowledgeId = knowledge.id.value
-                    
-                    // Transaction deduplication: process each interpretation knowledge ID at most once
-                    if (!processedSpeechIds.add(knowledgeId)) {
-                        return@collect
-                    }
-                    if (processedSpeechIds.size > 500) {
-                        processedSpeechIds.clear()
-                    }
+                val payload = knowledge.payload as? InterpretationKnowledge ?: return@collect
+                val knowledgeId = knowledge.id.value
 
-                    val interpretation = (knowledge.payload as InterpretationKnowledge).interpretation
-                    val intent = interpretation.intent
-                    
-                    val text = interpretation.transcript.trim()
-                    val lowerText = text.lowercase()
-                    val isTimeQuery = lowerText.contains("time") || lowerText.contains("clock")
-                    
-                    // Structured action intents (Play, Pause, Navigate, Open, Call, Reminder, Search) and Time queries
-                    // NEVER enter CognitiveSession / LLM reasoning.
-                    if ((intent !is ConversationIntent && intent !is QuestionIntent) || isTimeQuery) {
-                        println("[HALO-TXN] speech knowledgeId=$knowledgeId text=\"${interpretation.transcript}\" intent=${intent::class.simpleName} -> BYPASSING LLM (deterministic execution)")
-                        return@collect
-                    }
-                    if (text.isEmpty()) {
-                        return@collect
-                    }
-
-                    if (activeJob?.isActive == true) {
-                        println("[HALO-TXN] speech knowledgeId=$knowledgeId -> DROPPED (active job running)")
-                        return@collect
-                    }
-
-                    println("[HALO-TXN] speech knowledgeId=$knowledgeId text=\"$text\" intent=${intent::class.simpleName} -> SUBMITTING TO LLM")
-                    submit(
-                        AiRequest(text = text)
-                    )
+                // Blackboard is append-only. Submit each interpretation exactly once.
+                if (!processedInterpretationIds.add(knowledgeId)) return@collect
+                if (processedInterpretationIds.size > MAX_PROCESSED_INTERPRETATIONS) {
+                    processedInterpretationIds.clear()
+                    processedInterpretationIds.add(knowledgeId)
                 }
+
+                val interpretation = payload.interpretation
+                val intent = interpretation.intent
+                if (intent !is ConversationIntent && intent !is QuestionIntent) {
+                    println(
+                        "[HALO-TXN] speech knowledgeId=$knowledgeId " +
+                            "text=\"${interpretation.transcript}\" " +
+                            "intent=${intent::class.simpleName} -> BYPASSING LLM (deterministic execution)"
+                    )
+                    return@collect
+                }
+
+                val text = interpretation.transcript.trim()
+                if (text.isEmpty()) return@collect
+
+                if (activeJob?.isActive == true) {
+                    println("[HALO-TXN] speech knowledgeId=$knowledgeId -> DROPPED (active job running)")
+                    return@collect
+                }
+
+                val responseDelivery = interpretation.source.defaultResponseDelivery()
+                println(
+                    "[HALO-TXN] speech knowledgeId=$knowledgeId text=\"$text\" " +
+                        "intent=${intent::class.simpleName} delivery=$responseDelivery -> SUBMITTING TO LLM"
+                )
+                submit(
+                    request = AiRequest(text = text),
+                    responseDelivery = responseDelivery
+                )
             }
         }
     }
 
-    fun submit(request: AiRequest, policy: AiContextPolicy = AiContextPolicy.CONSERVATIVE) {
+    fun submit(
+        request: AiRequest,
+        policy: AiContextPolicy = AiContextPolicy.CONSERVATIVE,
+        responseDelivery: ResponseDelivery = ResponseDelivery.VISUAL_ONLY
+    ) {
         activeJob?.cancel()
         activeJob = scope.launch {
             val requestId = UUID.randomUUID().toString()
@@ -162,14 +165,16 @@ class CognitiveSession(
                     )
                 )
 
-                var response = when (val outcome = executeProviderRequest(
-                    provider = provider,
-                    capabilities = capabilities,
-                    expectedModelId = target.modelId,
-                    request = requestWithContext,
-                    context = context,
-                    requestId = requestId
-                )) {
+                var response = when (
+                    val outcome = executeProviderRequest(
+                        provider = provider,
+                        capabilities = capabilities,
+                        expectedModelId = target.modelId,
+                        request = requestWithContext,
+                        context = context,
+                        requestId = requestId
+                    )
+                ) {
                     is AiExecutionOutcome.Response -> outcome.response
                     is AiExecutionOutcome.HandoffStarted -> {
                         _state.value = CognitiveSessionState.Completed(
@@ -211,7 +216,10 @@ class CognitiveSession(
                 val userText = finalRequest.text?.trim().orEmpty()
                 if (responseText.isNotBlank()) {
                     if (userText.isNotBlank()) {
-                        val turn = conversationStore.append(userText = userText, assistantText = responseText)
+                        val turn = conversationStore.append(
+                            userText = userText,
+                            assistantText = responseText
+                        )
                         eventBus.publish(
                             ConversationTurnCompleted(
                                 turnId = turn.id,
@@ -220,7 +228,22 @@ class CognitiveSession(
                             )
                         )
                     }
-                    eventBus.publish(TtsRequested(text = responseText, timestamp = System.currentTimeMillis()))
+
+                    eventBus.publish(
+                        AssistantResponsePublished(
+                            text = responseText,
+                            delivery = responseDelivery,
+                            transactionId = requestId
+                        )
+                    )
+                    if (responseDelivery == ResponseDelivery.SPEECH_AND_VISUAL) {
+                        eventBus.publish(
+                            TtsRequested(
+                                text = responseText,
+                                timestamp = System.currentTimeMillis()
+                            )
+                        )
+                    }
                 }
             } catch (e: CancellationException) {
                 _state.value = CognitiveSessionState.Idle
@@ -233,7 +256,10 @@ class CognitiveSession(
         }
     }
 
-    private fun bindAssembledContext(request: AiRequest, assembly: ContextAssemblyResult): AiRequest {
+    private fun bindAssembledContext(
+        request: AiRequest,
+        assembly: ContextAssemblyResult
+    ): AiRequest {
         val image = assembly.image ?: return request
         if (request.image != null) return request
         return request.copy(image = image.imageBytes, mimeTypes = listOf(image.mimeType))
@@ -253,12 +279,17 @@ class CognitiveSession(
             val accumulatedText = StringBuilder()
             provider.stream(request, context).collect { event ->
                 when (event) {
-                    is AiStreamEvent.Started -> _state.value = CognitiveSessionState.Streaming("")
+                    is AiStreamEvent.Started ->
+                        _state.value = CognitiveSessionState.Streaming("")
+
                     is AiStreamEvent.Token -> {
                         accumulatedText.append(event.text)
                         _state.value = CognitiveSessionState.Streaming(accumulatedText.toString())
-                        eventBus.publish(CognitiveTokenReceived(requestId = requestId, token = event.text))
+                        eventBus.publish(
+                            CognitiveTokenReceived(requestId = requestId, token = event.text)
+                        )
                     }
+
                     is AiStreamEvent.Completed -> completedResponse = event.response
                     is AiStreamEvent.Failed -> throw event.error
                     is AiStreamEvent.ToolCallDelta -> Unit
@@ -309,10 +340,17 @@ class CognitiveSession(
         while (response.toolCalls.isNotEmpty()) {
             round++
             if (round > ToolExecutionLimits.MAX_TOOL_ROUNDS) {
-                throw AiProviderException(AiErrorType.GENERATION_FAILED, "Maximum tool execution rounds (${ToolExecutionLimits.MAX_TOOL_ROUNDS}) exceeded")
+                throw AiProviderException(
+                    AiErrorType.GENERATION_FAILED,
+                    "Maximum tool execution rounds (${ToolExecutionLimits.MAX_TOOL_ROUNDS}) exceeded"
+                )
             }
             if (response.toolCalls.size > ToolExecutionLimits.MAX_TOOL_CALLS_PER_ROUND) {
-                throw AiProviderException(AiErrorType.INVALID_RESPONSE, "Provider returned ${response.toolCalls.size} tool calls; maximum is ${ToolExecutionLimits.MAX_TOOL_CALLS_PER_ROUND}")
+                throw AiProviderException(
+                    AiErrorType.INVALID_RESPONSE,
+                    "Provider returned ${response.toolCalls.size} tool calls; " +
+                        "maximum is ${ToolExecutionLimits.MAX_TOOL_CALLS_PER_ROUND}"
+                )
             }
 
             val calls = response.toolCalls
@@ -322,9 +360,18 @@ class CognitiveSession(
             for (toolCall in calls) {
                 totalToolCalls++
                 if (totalToolCalls > ToolExecutionLimits.MAX_TOTAL_TOOL_CALLS) {
-                    throw AiProviderException(AiErrorType.GENERATION_FAILED, "Maximum total tool calls (${ToolExecutionLimits.MAX_TOTAL_TOOL_CALLS}) exceeded")
+                    throw AiProviderException(
+                        AiErrorType.GENERATION_FAILED,
+                        "Maximum total tool calls (${ToolExecutionLimits.MAX_TOTAL_TOOL_CALLS}) exceeded"
+                    )
                 }
-                eventBus.publish(ToolCallRequested(requestId = requestId, toolCallId = toolCall.id, toolId = toolCall.functionName))
+                eventBus.publish(
+                    ToolCallRequested(
+                        requestId = requestId,
+                        toolCallId = toolCall.id,
+                        toolId = toolCall.functionName
+                    )
+                )
 
                 if (!policy.includeAvailableTools || toolRegistry == null || toolAuthorizer == null) {
                     val reason = when {
@@ -332,36 +379,110 @@ class CognitiveSession(
                         toolRegistry == null -> "Tool registry unavailable"
                         else -> "Tool authorization service unavailable"
                     }
-                    eventBus.publish(ToolCallRejected(requestId = requestId, toolCallId = toolCall.id, toolId = toolCall.functionName, reason = reason))
-                    toolMessages.add(AIMessage(Role.TOOL, "Tool execution rejected: $reason", toolCallId = toolCall.id))
+                    eventBus.publish(
+                        ToolCallRejected(
+                            requestId = requestId,
+                            toolCallId = toolCall.id,
+                            toolId = toolCall.functionName,
+                            reason = reason
+                        )
+                    )
+                    toolMessages.add(
+                        AIMessage(
+                            Role.TOOL,
+                            "Tool execution rejected: $reason",
+                            toolCallId = toolCall.id
+                        )
+                    )
                     continue
                 }
 
                 val authorization = toolAuthorizer.authorize(toolCall)
                 when (authorization) {
                     is ToolAuthorization.Rejected -> {
-                        eventBus.publish(ToolCallRejected(requestId = requestId, toolCallId = toolCall.id, toolId = toolCall.functionName, reason = authorization.reason))
-                        toolMessages.add(AIMessage(Role.TOOL, "Tool execution rejected: ${authorization.reason}", toolCallId = toolCall.id))
+                        eventBus.publish(
+                            ToolCallRejected(
+                                requestId = requestId,
+                                toolCallId = toolCall.id,
+                                toolId = toolCall.functionName,
+                                reason = authorization.reason
+                            )
+                        )
+                        toolMessages.add(
+                            AIMessage(
+                                Role.TOOL,
+                                "Tool execution rejected: ${authorization.reason}",
+                                toolCallId = toolCall.id
+                            )
+                        )
                         continue
                     }
+
                     is ToolAuthorization.Authorized -> {
-                        eventBus.publish(ToolCallAuthorized(requestId = requestId, toolCallId = toolCall.id, toolId = toolCall.functionName))
+                        eventBus.publish(
+                            ToolCallAuthorized(
+                                requestId = requestId,
+                                toolCallId = toolCall.id,
+                                toolId = toolCall.functionName
+                            )
+                        )
                     }
                 }
 
                 val authorized = authorization as ToolAuthorization.Authorized
                 when (val result = toolRegistry.executeAuthorized(authorized)) {
                     is ToolExecutionResult.Success -> {
-                        eventBus.publish(ToolCallCompleted(requestId = requestId, toolCallId = toolCall.id, toolId = toolCall.functionName, success = true))
-                        toolMessages.add(AIMessage(Role.TOOL, result.output.take(ToolExecutionLimits.MAX_TOOL_OUTPUT_CHARS), toolCallId = toolCall.id))
+                        eventBus.publish(
+                            ToolCallCompleted(
+                                requestId = requestId,
+                                toolCallId = toolCall.id,
+                                toolId = toolCall.functionName,
+                                success = true
+                            )
+                        )
+                        toolMessages.add(
+                            AIMessage(
+                                Role.TOOL,
+                                result.output.take(ToolExecutionLimits.MAX_TOOL_OUTPUT_CHARS),
+                                toolCallId = toolCall.id
+                            )
+                        )
                     }
+
                     is ToolExecutionResult.Rejected -> {
-                        eventBus.publish(ToolCallRejected(requestId = requestId, toolCallId = toolCall.id, toolId = toolCall.functionName, reason = result.reason))
-                        toolMessages.add(AIMessage(Role.TOOL, "Tool execution rejected: ${result.reason}", toolCallId = toolCall.id))
+                        eventBus.publish(
+                            ToolCallRejected(
+                                requestId = requestId,
+                                toolCallId = toolCall.id,
+                                toolId = toolCall.functionName,
+                                reason = result.reason
+                            )
+                        )
+                        toolMessages.add(
+                            AIMessage(
+                                Role.TOOL,
+                                "Tool execution rejected: ${result.reason}",
+                                toolCallId = toolCall.id
+                            )
+                        )
                     }
+
                     is ToolExecutionResult.Failed -> {
-                        eventBus.publish(ToolCallCompleted(requestId = requestId, toolCallId = toolCall.id, toolId = toolCall.functionName, success = false))
-                        toolMessages.add(AIMessage(Role.TOOL, "Tool execution failed: ${result.message}", toolCallId = toolCall.id))
+                        eventBus.publish(
+                            ToolCallCompleted(
+                                requestId = requestId,
+                                toolCallId = toolCall.id,
+                                toolId = toolCall.functionName,
+                                success = false
+                            )
+                        )
+                        toolMessages.add(
+                            AIMessage(
+                                Role.TOOL,
+                                "Tool execution failed: ${result.message}",
+                                toolCallId = toolCall.id
+                            )
+                        )
                     }
                 }
             }
@@ -370,20 +491,28 @@ class CognitiveSession(
                 conversation = buildList {
                     addAll(currentContext.conversation)
                     if (response.text.isNotBlank() || response.toolCalls.isNotEmpty()) {
-                        add(AIMessage(Role.ASSISTANT, response.text, toolCalls = response.toolCalls))
+                        add(
+                            AIMessage(
+                                Role.ASSISTANT,
+                                response.text,
+                                toolCalls = response.toolCalls
+                            )
+                        )
                     }
                     addAll(toolMessages)
                 }
             )
 
-            response = when (val outcome = executeProviderRequest(
-                provider = provider,
-                capabilities = capabilities,
-                expectedModelId = target.modelId,
-                request = request.copy(modelId = target.modelId),
-                context = currentContext,
-                requestId = requestId
-            )) {
+            response = when (
+                val outcome = executeProviderRequest(
+                    provider = provider,
+                    capabilities = capabilities,
+                    expectedModelId = target.modelId,
+                    request = request.copy(modelId = target.modelId),
+                    context = currentContext,
+                    requestId = requestId
+                )
+            ) {
                 is AiExecutionOutcome.Response -> outcome.response
                 is AiExecutionOutcome.HandoffStarted -> throw AiProviderException(
                     AiErrorType.INVALID_RESPONSE,
@@ -414,5 +543,9 @@ class CognitiveSession(
 
     fun clearConversation() {
         scope.launch { conversationStore.clear() }
+    }
+
+    private companion object {
+        const val MAX_PROCESSED_INTERPRETATIONS = 500
     }
 }

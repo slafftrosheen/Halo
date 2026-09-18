@@ -1,64 +1,83 @@
 package com.halo.runtime.cognition.response
 
 import com.halo.runtime.cognition.ExecutionResultPublished
-import com.halo.runtime.cognition.Outcome
-import com.halo.runtime.cognition.Task
+import com.halo.runtime.cognition.blackboard.Blackboard
+import com.halo.runtime.cognition.blackboard.PlanKnowledge
+import com.halo.sdk.runtime.AssistantResponsePublished
 import com.halo.sdk.runtime.EventBus
 import com.halo.sdk.runtime.ExecutionFinished
+import com.halo.sdk.runtime.ResponseDelivery
 import com.halo.sdk.runtime.RuntimeLogger
 import com.halo.sdk.runtime.TtsRequested
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import java.util.Collections
-import java.util.concurrent.ConcurrentHashMap
 
 class CommandResponseProcess(
     private val eventBus: EventBus,
+    private val blackboard: Blackboard,
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
     private val logger: RuntimeLogger? = null,
     private val mapper: CommandResponseMapper = CommandResponseMapper()
 ) {
-    private data class ExecutionRecord(
-        val primaryTask: Task,
-        val outcome: Outcome
-    )
-
-    private val activeExecutions = ConcurrentHashMap<String, ExecutionRecord>()
-    private val processedExecutionIds = Collections.synchronizedSet(mutableSetOf<String>())
+    private val pendingResults = mutableMapOf<String, MutableList<ExecutionResultPublished>>()
+    private var job: Job? = null
 
     fun start() {
-        scope.launch {
-            eventBus.observe(ExecutionResultPublished::class.java).collect { event ->
-                val executionId = event.id
-                activeExecutions.putIfAbsent(executionId, ExecutionRecord(event.task, event.outcome))
-            }
-        }
+        if (job?.isActive == true) return
 
-        scope.launch {
-            eventBus.observe(ExecutionFinished::class.java).collect { event ->
-                val executionId = event.id
-                
-                if (!processedExecutionIds.add(executionId)) {
-                    return@collect
-                }
-                if (processedExecutionIds.size > 500) {
-                    processedExecutionIds.clear()
-                }
+        pendingResults.clear()
+        job = scope.launch {
+            // Use the single ordered event stream so ExecutionFinished cannot overtake
+            // the result event that immediately precedes it on another collector.
+            eventBus.events().collect { event ->
+                when (event) {
+                    is ExecutionResultPublished -> {
+                        pendingResults.getOrPut(event.executionId) { mutableListOf() }
+                            .add(event)
+                    }
 
-                val record = activeExecutions.remove(executionId)
-                if (record != null) {
-                    val responseText = mapper.mapResponse(record.primaryTask, record.outcome)
-                    if (!responseText.isNullOrBlank()) {
-                        logger?.info(
-                            "HALO-TXN",
-                            "speech=$executionId task=${record.primaryTask::class.simpleName} outcome=${record.outcome::class.simpleName} tts=\"$responseText\""
-                        )
-                        eventBus.publish(TtsRequested(text = responseText))
+                    is ExecutionFinished -> {
+                        val results = pendingResults.remove(event.id).orEmpty()
+                        val responseText = mapper.mapExecution(results)
+
+                        if (!responseText.isNullOrBlank()) {
+                            val delivery = responseDeliveryForPlan(event.planId)
+                            logger?.info(
+                                "HALO-TXN",
+                                "execution=${event.id} plan=${event.planId} tasks=${results.size} " +
+                                    "delivery=$delivery response=\"$responseText\""
+                            )
+                            eventBus.publish(
+                                AssistantResponsePublished(
+                                    text = responseText,
+                                    delivery = delivery,
+                                    transactionId = event.planId
+                                )
+                            )
+                            if (delivery == ResponseDelivery.SPEECH_AND_VISUAL) {
+                                eventBus.publish(TtsRequested(text = responseText))
+                            }
+                        }
                     }
                 }
             }
         }
+    }
+
+    fun stop() {
+        job?.cancel()
+        job = null
+        pendingResults.clear()
+    }
+
+    private fun responseDeliveryForPlan(planId: String): ResponseDelivery {
+        val plan = blackboard.flow.value.asReversed()
+            .mapNotNull { knowledge -> (knowledge.payload as? PlanKnowledge)?.plan }
+            .firstOrNull { it.id.toString() == planId }
+
+        return plan?.responseDelivery ?: ResponseDelivery.VISUAL_ONLY
     }
 }

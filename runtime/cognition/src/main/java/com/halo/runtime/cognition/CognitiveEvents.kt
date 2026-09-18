@@ -2,11 +2,13 @@ package com.halo.runtime.cognition
 
 import com.halo.icl.ontology.Goal
 import com.halo.sdk.runtime.HaloEvent
+import com.halo.sdk.runtime.ResponseDelivery
 import java.util.UUID
 
 data class GoalCreated(
     override val id: String = UUID.randomUUID().toString(),
     val goal: Goal,
+    val responseDelivery: ResponseDelivery = ResponseDelivery.VISUAL_ONLY,
     override val timestamp: Long = System.currentTimeMillis()
 ) : HaloEvent
 
@@ -18,6 +20,7 @@ data class OutcomePublished(
 
 data class ExecutionResultPublished(
     override val id: String = UUID.randomUUID().toString(),
+    val executionId: String,
     val planId: String,
     val task: Task,
     val outcome: Outcome,
