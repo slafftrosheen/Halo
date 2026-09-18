@@ -1,52 +1,35 @@
-# Halo Current State
+# Halo current state
 
-## Architecture & Subsystems
-| Area | State | Assessment |
-|------|-------|------------|
-| Cognitive/runtime architecture | 🟢 8.5/10 | Strong foundation |
-| DI / lifecycle | 🟢 8/10 | Much improved |
-| Local AI infrastructure | 🟢 8/10 | Serious progress |
-| Speech stack | 🟢 7.5/10 | Good foundation, integration remains |
-| Stability/observability | 🟢 8/10 | Much better than a few weeks ago |
-| HeyCyan transport | 🟡 7/10 | Hardened but physical acceptance still matters |
-| Device abstraction | 🟡 7/10 | Good contracts, UI still cheats in places |
-| UI architecture | 🟡 6/10 | Good visual foundation, inconsistent implementation |
-| Documentation alignment | 🟡 6/10 | Several authoritative docs are now stale |
-| End-to-end cognition | 🟡 6/10 | Components exist; complete dependable loop needs validation |
-| UI polish | 🟡 5.5/10 | Looks like an advanced prototype rather than product |
-| Product completeness | 🟡 5.5/10 | Primary focus for Product Integration Week |
+Status: CURRENT SOURCE MAP. Reviewed 2026-09-18.
+Static source review only; no fresh build, instrumented test or hardware run is claimed.
 
-## Feature Status
+[ManualDependencyGraph](app/src/main/java/com/halo/app/di/ManualDependencyGraph.kt) is
+the process composition root. [App HaloRuntime](app/src/main/java/com/halo/app/HaloRuntime.kt)
+starts the phone Engine/EventBus/Blackboard and speech components. Its source explicitly
+excludes the older microkernel/ProcessManager path from normal phone startup.
 
-### Implemented
-- Cognitive kernel architecture (RuntimeSnapshot, TimelineRecorder, EventBus)
-- Manual Dependency Graph and separation of runtime/provider/device scopes
-- AI Provider Routing (Native Llama.cpp, Sherpa STT, Android TTS)
-- Basic Home, Devices, and Intelligence screens
-- BLE lifecycle and GATT transport for HeyCyan
-- Native resource residency coordination
+| Area | Present in code | Limit |
+|---|---|---|
+| UI | Four primary tabs, device details, intelligence, voice, permissions, pairing | Console/lab/inspector are not AppShell routes; whole-app accessibility/performance not established |
+| Orb | Canvas shapes, pixel ring, colors, glyphs and infinite motion | No measured audio/task-progress input or explicit reduced-motion control |
+| Cognition | Engine pipeline and CognitiveSession streaming/tool rounds | General model-to-Android capability bridge is not wired |
+| Model tools | Echo and current time registered in app graph | Not general phone/device actions |
+| Providers | llama.cpp, Ollama, OpenRouter inference; Android assistant handoff; Sherpa and Android TTS speech | Support is adapter/model-specific; handoff is not inference |
+| Speech input | HostGraph injects AndroidAudioSource | HeyCyanAudioSource existence does not prove glasses feed the phone speech loop |
+| Memory | In-memory cognitive/conversation stores; separate Room Memory schema/DAO/repository | Room-backed CognitiveSession not established |
+| Reminders | Exact-alarm adapter with simple duration parsing | Complete CRUD, robust ambiguity, permission/reboot recovery not established |
+| Notifications/routines/privacy | Named modules/contracts | Operational summarizer, full automation engine and universal network firewall not established |
+| Plugins | In-process registration/capability contribution/dispatch | No security sandbox or downloadable plugin installer established |
+| Devices | Persisted identities/session handling, HeyCyan and BuddyBot paths | Hardware reliability and capability consistency need evidence |
+| Credentials | OpenRouter key written through SharedPreferences | No application-level encryption in this storage path |
+| CI | Workflow declares lint/test/build/upload | Current success not established; detekt/ktlint configuration mismatch |
 
-### Verified
-- DI and lifecycle stability
-- BLE session reliability and GATT failure handling
-- Native inference resource observation
+See [architecture](docs/04-architecture/ARCHITECTURE.md),
+[providers](docs/ai/AI_PROVIDER_ARCHITECTURE.md),
+[persistence](docs/04-architecture/DATABASE.md),
+[security](docs/12-security/THREAT_MODEL.md),
+[HeyCyan](docs/protocols/heycyan/IMPLEMENTATION_STATUS.md) and
+[audit ledger](docs/engineering/DOCUMENTATION-AUDIT.md).
 
-### Hardware-Tested
-- HeyCyan basic connection and packet captures (End-to-end verification pending)
-
-### Partially Verified
-- End-to-End Cognition Loop
-- Device Abstraction (still relying on hardcoded types in some places)
-
-### Not Yet Verified
-- Real physical audio captures
-- Physical audio transport latency
-- Battery budgets
-- Complete wearable speech loop latency
-
-### Planned (Next Phase: Product Integration Week)
-- **Phase A — Product Integration**: Finish UI components, standardize design language.
-- **Phase B — Wearable Validation**: Physical end-to-end speech loop.
-- **Phase C — UI Polish**: Glass UI consistency and Home redesign.
-- **Phase D — Stability / Burn-in**: 8-12 hour stability run.
-- **Phase E — New Embodiments**: Tracked chassis and generic device capabilities.
+Read [release readiness](RELEASE_READINESS.md) separately. Code presence is not measured
+latency, power consumption, passing tests or physical acceptance.

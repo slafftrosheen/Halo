@@ -1,3 +1,9 @@
+> Status: HISTORICAL RESEARCH. Classified 2026-09-18.
+>
+> Recorded vendor/capture analysis and hypotheses from earlier work. Statements below, including VERIFIED labels and code sketches, retain their original research scope; they are not assertions of current Halo behavior or current-build hardware acceptance. Some findings conflict across reports. Trace artifacts before reuse; current code/wiring is documented in the implementation status page.
+>
+> [Current reference](IMPLEMENTATION_STATUS.md).
+
 # HeyCyan WiFi Media Transfer — wait, the user asked me put the response to the user
 The PR-016 forensic documentation focuses on the dual-protocol communication system that leverages both Bluetooth Low Energy (BLE) for control and WiFi for high-bandwidth data transfer. This hybrid approach solves the fundamental challenge of transferring large media files from resource-constrained smart glasses while maintaining real-time control capabilities.
 

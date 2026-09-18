@@ -1,33 +1,23 @@
 # Halo
 
-**Halo is a Portable Cognitive Runtime for Wearable Computing.**
+Status: CURRENT SOURCE MAP. Updated 2026-09-18.
 
-The Android application is the first host, not the product boundary. Halo is designed around a device-agnostic runtime that can observe, interpret, reason, plan and execute across wearable hardware.
+Halo is an Android application and modular cognitive-runtime project for phone and wearable
+interaction. The repository includes Compose UI, speech/cognition paths, local/network
+providers, Android capability adapters, HeyCyan integration and simulator tooling.
 
-### Product principles
+Start with [current state](CURRENT-STATE.md), [documentation](docs/README.md) and
+[the source audit](docs/engineering/DOCUMENTATION-AUDIT.md). Current code and actual wiring
+are the source of truth for implementation. Specifications describe intent; code presence
+does not certify passing tests, security properties or physical device behavior.
 
-- **Runtime is the product** — host applications are replaceable adapters.
-- **Device agnostic** — hardware interaction stays behind stable runtime/device interfaces.
-- **Local first** — local inference and on-device processing are first-class paths; network providers are optional.
-- **Truthful capabilities** — UI and runtime expose only verified or explicitly qualified device behavior.
-- **Halo Glass** — dark, layered glass surfaces with a restrained technical/pixel signal language.
+The next requested direction is [Halo Presence + Capable Assistant](docs/14-roadmap/NEXT-PHASE-2027.md):
+expand the pixel orb and interface, connect useful assistant actions, and validate remaining
+requirements. This work is planned, not shipped.
 
-## Documentation
+Local processing and user-controlled providers are product goals. Optional network integrations
+exist. Read [security limits](docs/12-security/THREAT_MODEL.md) before assuming all processing
+is on-device or credentials are application-encrypted.
 
-Start with [`docs/README.md`](docs/README.md) for the documentation hierarchy and [`PROJECT-DIRECTION.md`](PROJECT-DIRECTION.md) for canonical project direction.
-
-The visual/UI authority is [`docs/03-design/halo-glass/HALO-GLASS-DESIGN.md`](docs/03-design/halo-glass/HALO-GLASS-DESIGN.md).
-
-## Current development focus
-
-The current implementation is being hardened around real wearable operation: device sessions, HeyCyan transport/protocol boundaries, speech lifecycle, runtime observation/replay, typed AI provider routing, and the primary Compose experience.
-
-HeyCyan protocol work remains evidence-backed. Unsupported or unverified protocol operations must not be presented as working controls.
-
-## Privacy
-
-Halo is designed for local-first operation with no requirement for a cloud service or remote storage. Optional network providers are explicit integrations and must remain visible as such.
-
-## Acknowledgments
-
-A special thanks to the [FerSaiyan/Alternative-HeyCyan-App-and-SDK](https://github.com/FerSaiyan/Alternative-HeyCyan-App-and-SDK) repository. Its work and source description were valuable references during extraction and reverse-engineering of the HeyCyan hardware protocol.
+Thanks to [Alternative HeyCyan App and SDK](https://github.com/FerSaiyan/Alternative-HeyCyan-App-and-SDK)
+for protocol reference material.

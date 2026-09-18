@@ -1,42 +1,10 @@
-# Provider SDK Specification
+# Provider contracts
 
-Providers are the AI backends (e.g., llama.cpp, Gemini, OpenAI).
+Status: CURRENT SOURCE MAP. Reviewed 2026-09-18.
 
-## Responsibilities
-Providers implement:
-* **Chat**
-* **Vision**
-* **Embeddings**
-* **Speech** (optional)
-* **Streaming**
-* **Metadata**
+Use [provider architecture](../ai/AI_PROVIDER_ARCHITECTURE.md) and
+[sdk/provider-sdk](../../sdk/provider-sdk). The former Prompt/Options/Attachments/
+Cancellation Token -> Result sketch was not the actual Kotlin API.
 
-No Android. No UI. No memory.
-
-## Provider Object
-Providers are self-describing and immutable once loaded.
-They define:
-* Latency class
-* Context Window size
-* Vision support
-* Streaming support
-* Offline capability
-* Cost metric
-* Privacy class
-
-## Provider Sandbox
-Providers never know about Plugins, Drivers, Android, or Memory.
-They only receive:
-* `Prompt`
-* `Options`
-* `Attachments`
-* `Cancellation Token`
-
-They return a standardized `Result`.
-
-## AI Router
-The AI Router is a workflow node that selects the appropriate provider based on the Intent and Context.
-* Simple -> Android local processing
-* Complex -> LLM
-* Vision -> Vision Provider
-* Offline required -> Local Provider
+Provider abstraction is not a security sandbox. Adapters own platform/native/network
+integration. Validate model-specific modalities and distinguish inference from handoff.

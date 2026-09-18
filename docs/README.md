@@ -1,71 +1,47 @@
-# Halo Documentation
+# Halo documentation
 
-**Documentation index — refreshed 2026-09-11**
+Status: CURRENT SOURCE MAP. Reviewed 2026-09-18.
 
-Halo is a Portable Cognitive Runtime for wearable computing. Android is the first host; the runtime, device boundaries, cognition, and provider contracts are the durable architecture.
-
-## Authority hierarchy
-
-When documents disagree, use this order:
-
-1. **[PROJECT-DIRECTION.md](../PROJECT-DIRECTION.md)** — canonical product direction
-2. **[CONSTITUTION.md](../CONSTITUTION.md)** / HPS specifications — immutable engineering principles
-3. **[ARCHITECTURE-GUARDRAILS.md](ARCHITECTURE-GUARDRAILS.md)** — architectural constraints
-4. **[04-architecture/](04-architecture/)** — runtime architecture
-5. **[03-design/halo-glass/](03-design/halo-glass/)** — authoritative visual language
-6. **[07-platform/](07-platform/)** and **[protocols/](protocols/)** — device/platform contracts
-7. **[11-ui/](11-ui/)** — presentation architecture and screen guidance
-8. **[14-roadmap/](14-roadmap/)** — execution planning
-9. **archive/** — historical reference only
+**Current executable code and its actual wiring are the source of truth for implemented behavior.**
+Tests establish what their assertions exercise; passing runs need dated results.
+Physical behavior needs build/device/firmware evidence. Comments, filenames, enum labels
+and old reports do not establish that something works.
 
 ## Start here
 
-- [PROJECT-DIRECTION.md](../PROJECT-DIRECTION.md) — why Halo exists and what must remain true
-- [ARCHITECTURE-GUARDRAILS.md](ARCHITECTURE-GUARDRAILS.md) — rules for extending the runtime
-- [04-architecture/ARCHITECTURE.md](04-architecture/ARCHITECTURE.md) — system architecture
-- [03-design/halo-glass/HALO-GLASS-DESIGN.md](03-design/halo-glass/HALO-GLASS-DESIGN.md) — visual system
-- [11-ui/UI-ARCHITECTURE.md](11-ui/UI-ARCHITECTURE.md) — Compose/UI boundaries
-- [protocols/README.md](protocols/README.md) — evidence-backed device protocol work
+- [Current state](../CURRENT-STATE.md)
+- [Current architecture](04-architecture/ARCHITECTURE.md)
+- [Documentation audit](engineering/DOCUMENTATION-AUDIT.md)
+- [Product direction](../PROJECT-DIRECTION.md)
+- [Proposed next phase](14-roadmap/NEXT-PHASE-2027.md)
+- [GitHub/web implementation research](engineering/IMPLEMENTATION-RESEARCH-2026-09.md)
+- [HeyCyan implementation](protocols/heycyan/IMPLEMENTATION_STATUS.md)
+- [UI route inventory](11-ui/UI-IMPLEMENTATION-STATUS.md)
+- [User redesign guide](03-design/HALO-WORKSPACE-DESIGN.md)
+- [Notebook blueprint](02-product/NOTEBOOK-WORKSPACE-BLUEPRINT.md) and [delivery plan](02-product/NOTEBOOK-DELIVERY.md) — proposed, not current storage/UI
 
-## Documentation domains
+## Interpretation rules
 
-| Area | Purpose |
+| Label | Meaning |
 |---|---|
-| `01-vision` | Vision, mission, platform DNA |
-| `02-product` | Product requirements and MVP scope |
-| `03-design` | Halo Glass visual system |
-| `04-architecture` | Runtime architecture and engineering boundaries |
-| `05-runtime` | Runtime lifecycle and APIs |
-| `06-cognition` | Reasoning, memory, cognitive models |
-| `07-platform` | Drivers, devices, host/platform boundaries |
-| `08-providers` | AI provider integrations |
-| `09-plugins` | Plugin architecture |
-| `10-features` | Functional capabilities |
-| `11-ui` | UI architecture and screen specifications |
-| `12-security` | Security, privacy, permissions |
-| `13-engineering` | Engineering practices and diagnostics |
-| `14-roadmap` | Milestones and release planning |
-| `15-brand` | Brand and visual identity |
-| `protocols` | HeyCyan and other device protocol evidence |
-| `specifications` | Formal HPS specifications |
-| `archive` | Superseded material; reference only |
+| CURRENT SOURCE MAP | Source-backed description, not a build or hardware certificate |
+| DESIGN TARGET | Intended requirements/examples; conformance is not implied |
+| PLANNED / PROPOSED | Future work |
+| HISTORICAL RESEARCH | Recorded observations/vendor analysis, not current implementation |
+| HISTORICAL REPORT | Previous narrative, not current verification |
+| THIRD-PARTY / RAW EVIDENCE | Preserved material; provenance and attribution matter |
 
-## Current implementation reality
+For factual conflicts, trace the caller, implementation and configuration in the checkout.
+Record disagreements inside code instead of selecting the most optimistic comment.
+For intended direction use PROJECT-DIRECTION, CONSTITUTION and the relevant design/RFC.
+Neither a specification nor this index turns an unimplemented requirement into a feature.
 
-The repository is an active implementation, not a literal realization of every historical specification. New documentation must describe behavior that exists or clearly label planned behavior as such.
+HPS documents are design drafts, not executable SDK definitions. Protocol research retains
+provenance; use the implementation status page to enter the current driver. Vendor documents
+and raw captures are not rewritten to agree with code.
 
-In particular:
+## Maintenance
 
-- The cognitive runtime is the product boundary; Android remains a host adapter.
-- Device interaction goes through runtime/device abstractions rather than UI code calling vendor SDKs directly.
-- AI inference and external-assistant handoff are separate provider contracts.
-- Local inference remains a first-class path; network providers are optional adapters.
-- HeyCyan protocol claims must remain evidence-backed. Unverified commands are not presented as supported capabilities.
-- Developer diagnostics are intentionally separate from the primary user navigation.
-- UI state should represent real runtime/device state rather than simulated controls.
-
-## Documentation hygiene
-
-Prefer updating the authoritative document instead of creating another competing specification. Mark incomplete work as **PLANNED**, **LIMITED**, **BLOCKED**, or **UNVERIFIED** rather than presenting it as shipped.
-
-Historical documents may remain in place for forensic context, but they must not be used as implementation authority when superseded.
+Link implementation claims to source and state whether they are wired, merely declared,
+tested or hardware-observed. Record commit, command/scenario and result for verification.
+Keep external ideas in research until implemented. Correct source maps when behavior changes.

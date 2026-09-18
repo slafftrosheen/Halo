@@ -1,18 +1,15 @@
-# CI/CD Pipeline
+# CI configuration
 
-Every pull request must run the full pipeline before review.
+Status: CURRENT SOURCE MAP. Reviewed 2026-09-18.
 
-## Pipeline Steps
-1. **Static Analysis**: Detekt, ktlint.
-2. **Unit Tests**: Fast JVM tests.
-3. **Instrumentation Tests**: Run against mock drivers.
-4. **Build**: Compile all modules.
-5. **API Compatibility Check**: Ensure Plugin, Driver, and Provider APIs are not broken.
-6. **Documentation**: Generate KDoc and markdown validation.
-7. **Artifact**: Produce signed debug APK/AAB.
+[android.yml](../../.github/workflows/android.yml) declares an Ubuntu/JDK 21 job for main
+pushes/pull requests. It calls detekt, ktlintCheck, lintDebug, testDebugUnitTest,
+:drivers:heycyan:testDebugUnitTest and assembleDebug, then uploads app-debug.apk.
 
-## Regression Gates
-Performance targets are regression gates, not goals:
-* Cold start < 2s
-* Idle battery drain < 1.5% per hour
-* Foreground service RAM < 200MB
+A declared step is not proof of success. The inspected Gradle files/version catalog do
+not configure Detekt or ktlint plugins/tasks. Resolve that mismatch before calling these
+static-analysis gates operational.
+
+The workflow does not declare instrumented/emulator testing, API compatibility checks,
+KDoc generation, documentation validation, measured performance gates or release AAB
+distribution. No current Actions/local build result was obtained in this docs review.

@@ -1,31 +1,31 @@
-# UI Implementation Status (PR-UI-003 Complete)
+# UI source inventory
 
-## Home
-- **Implemented**: connection state, battery percentage, active provider, reactive floating mic.
-- **Partially Implemented**: capabilities map (filtered for reported only).
-- **Placeholder**: none.
-- **Real data source**: YES (RuntimeSnapshot)
+Status: CURRENT SOURCE MAP. Reviewed 2026-09-18.
+Route/source presence is not interaction, visual or accessibility acceptance.
 
-## Activity
-- **Implemented**: real timeline from RuntimeSnapshot. Empty state handled properly.
-- **Partially Implemented**: pagination.
-- **Placeholder**: none.
-- **Real data source**: YES (TimelineEventMapper).
+[AppShell](../../app/src/main/java/com/halo/app/ui/shell/AppShell.kt) registers:
 
-## Devices
-- **Implemented**: Connected/Disconnected state modes, real capabilities mapped from `DeviceContext.capabilities`.
-- **Partially Implemented**: none.
-- **Placeholder**: none.
-- **Real data source**: YES (RuntimeSnapshot).
+| Route | Surface |
+|---|---|
+| home | HomeScreen |
+| activity | ActivityScreen |
+| devices | DevicesScreen |
+| device/{deviceId} | DeviceKind dispatch to HeyCyanControlScreen/BuddyBotControlScreen |
+| settings | SettingsScreen |
+| ai_settings | IntelligenceScreen |
+| voice_settings | VoiceSettingsScreen |
+| permissions | PermissionsScreen |
+| discovery | PairingScreen |
 
-## Settings
-- **Implemented**: Real Android permissions checking (API-aware for Location), Developer Mode toggle, Settings menu navigation.
-- **Partially Implemented**: none.
-- **Placeholder**: Audio Diagnostics (informational only).
-- **Real data source**: YES.
+Notebook and its editor/search/memory/file/Canvas routes are proposed in the
+[Notebook plan](../02-product/NOTEBOOK-DELIVERY.md), not registered here.
 
-## Protocol Lab
-- **Implemented**: Forensic capture toggle, TRANSACTION LOG (nav to Console), Quick Actions, and AUDIO STREAM (BC 59) stats with Session tracking.
-- **Partially Implemented**: none.
-- **Placeholder**: none.
-- **Real data source**: YES (HeyCyanAudioStreamProbe).
+Console, Protocol Lab and Runtime Inspector are not registered destinations.
+HeyCyanDiscoveryScreen exists separately; the discovery route above uses PairingScreen.
+A probe/diagnostic class, label or old screen is not a reachable page.
+
+The orb has Canvas shapes, pixel-ring motion, colors and touch animation, but no measured
+audio/task-progress input. Previous “complete/no placeholders” labels have been removed.
+
+Acceptance still needs action/back behavior, empty/loading/offline/denied/error/stale states,
+large text, TalkBack, reduced motion, recreation, frame timing and physical workflow checks.

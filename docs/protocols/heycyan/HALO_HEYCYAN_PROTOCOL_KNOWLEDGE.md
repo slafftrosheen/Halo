@@ -1,3 +1,9 @@
+> Status: HISTORICAL RESEARCH. Classified 2026-09-18.
+>
+> Recorded vendor/capture analysis and hypotheses from earlier work. Statements below, including VERIFIED labels and code sketches, retain their original research scope; they are not assertions of current Halo behavior or current-build hardware acceptance. Some findings conflict across reports. Trace artifacts before reuse; current code/wiring is documented in the implementation status page.
+>
+> [Current reference](IMPLEMENTATION_STATUS.md).
+
 # Halo HeyCyan Protocol Knowledge Base
 Date: 2026-08-12
 Rule: raw observations and source-derived facts outrank semantic guesses.

@@ -1,3 +1,9 @@
+> Status: SUPERSEDED DESIGN DRAFT. Classified 2026-09-18.
+>
+> Legacy design intent, not implemented behavior. The user-provided 2026-09-18 workspace mockup supersedes conflicting dark-only, four-tab and old orb directions. Examples here are illustrative, not a compiled component API.
+>
+> [Current reference](HALO-WORKSPACE-DESIGN.md).
+
 # Halo Design Language (HDL)
 
 Every major platform has a defining design language (Apple's HIG, Google's Material). Halo uses HDL. 

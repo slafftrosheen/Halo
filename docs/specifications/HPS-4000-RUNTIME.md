@@ -3,6 +3,13 @@ title: HPS-4000-RUNTIME
 status: Draft
 maturity: Alpha
 ---
+
+> Status: DESIGN TARGET. Classified 2026-09-18.
+>
+> Requirements, examples and proposed behavior; not an implementation or verification report. Read present-tense guarantees below as intended acceptance criteria, not achieved properties. Current code and actual wiring determine behavior. Any previous ACTIVE/authority wording applies only to historical design intent.
+>
+> [Current reference](../../CURRENT-STATE.md).
+
 # HPS-400: HAL Runtime Specification (HRS)
 
 ## Runtime Responsibilities
@@ -36,4 +43,3 @@ The 12 permanent services:
 5. Automation
 6. Background
 7. Cleanup
-

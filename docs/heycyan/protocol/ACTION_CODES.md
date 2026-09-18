@@ -1,25 +1,29 @@
-# HeyCyan Action Codes
+# HeyCyan action identifiers in current code
 
-The following action codes represent the primary logical commands in the HeyCyan protocol as defined in `LargeDataHandler.java`.
+Status: CURRENT SOURCE MAP. Reviewed 2026-09-18.
 
-| Hex | Decimal | Symbol | Description |
-|-----|---------|--------|-------------|
-| `0x2E` | 46 | `ACTION_BT_MAC_Protocol` | Request/Response for Bluetooth MAC address. |
-| `0x40` | 64 | `ACTION_SYNC_TIME` | Sync time with the device. |
-| `0x41` | 65 | `ACTION_GLASSES_CONTROL` | Send hardware control commands (e.g. photo, video). |
-| `0x42` | 66 | `ACTION_GLASSES_BATTERY` | Query or receive battery status. |
-| `0x43` | 67 | `ACTION_DEVICE_INFO` | Query or receive device info. |
-| `0x44` | 68 | `ACTION_DEVICE_AI_VOICE` | AI Voice communication state. |
-| `0x45` | 69 | `ACTION_DEVICE_HEART_BEAT` | Keep-alive or health check. |
-| `0x46` | 70 | `ACTION_DEVICE_WEAR` | In-ear/wear detection status. |
-| `0x47` | 71 | `ACTION_DEVICE_WEAR_SUPPORT` | Query wear detection capability. |
-| `0x48` | 72 | `ACTION_VOICE_STATUS` | Voice status/config. |
-| `0x49` | 73 | `ACTION_BT_CONNECT` | Bluetooth connection negotiation/handshake. |
-| `0x51` | 81 | `ACTION_VOLUME_CONTROL` | Set/query volume level. |
-| `0x52` | 82 | `ACTION_SPEAK_SOUND_SWITCH` | Audio routing or speaker toggle. |
-| `0x59` | 89 | `ACTION_GPT_UPLOAD` | Live audio stream (Opus packets) from device. |
-| `0x73` | 115 | `ACTION_DEVICE_DATA_REPORTING` | Asynchronous hardware events (buttons, triggers). |
-| `0xFC` | -4 (252) | `ACTION_OTA_SOC` | OTA firmware update stream. |
-| `0xFD` | -3 (253) | `ACTION_PICTURE_THUMBNAILS` | Thumbnail transfer over BLE. |
+Source: [HeyCyanCommandCatalog](../../../drivers/heycyan/src/main/java/com/halo/drivers/heycyan/protocol/HeyCyanCommandCatalog.kt).
+Constants alone do not establish executable payloads or device support.
 
-*(Extracted from `com.oudmon.ble.base.communication.LargeDataHandler`)*
+| Identifier | Hex |
+|---|---|
+| BT MAC | 0x2E |
+| Sync time | 0x40 |
+| Glasses control | 0x41 |
+| Battery | 0x42 |
+| Device info | 0x43 |
+| AI voice | 0x44 |
+| Heartbeat | 0x45 |
+| Wear | 0x46 |
+| Wear support | 0x47 |
+| Voice status | 0x4C |
+| BT connect | 0x4D |
+| Volume | 0x51 |
+| Sound switch | 0x52 |
+| GPT upload | 0x59 |
+| Device reporting | 0x73 |
+| OTA SOC | 0xFC |
+| Thumbnails | 0xFD |
+
+Earlier 0x48/0x49 voice-status/BT-connect values did not match this source catalog.
+These are Halo's current constants, not an independent vendor/hardware validation.

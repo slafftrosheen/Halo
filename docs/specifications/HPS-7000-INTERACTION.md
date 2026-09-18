@@ -3,6 +3,13 @@ title: HPS-7000-INTERACTION
 status: Draft
 maturity: Alpha
 ---
+
+> Status: DESIGN TARGET. Classified 2026-09-18.
+>
+> Requirements, examples and proposed behavior; not an implementation or verification report. Read present-tense guarantees below as intended acceptance criteria, not achieved properties. Current code and actual wiring determine behavior. Any previous ACTIVE/authority wording applies only to historical design intent.
+>
+> [Current reference](../../CURRENT-STATE.md).
+
 # HPS-7000: Halo Principles of Interaction
 
 Halo is governed by strict rules of interaction designed to minimize cognitive load and respect user attention.
@@ -37,4 +44,3 @@ Every capability must have an offline fallback where practical. If the cloud is 
 
 ## Rule 10: 10-second explainability.
 Every action taken by Halo should be explainable in under 10 seconds (e.g., "Why did you do that?" -> "Because your calendar showed a meeting starting in 5 minutes").
-

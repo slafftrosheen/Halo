@@ -1,32 +1,14 @@
-# Driver SDK Specification
+# Driver contracts
 
-The Driver Layer makes Halo a platform by abstracting hardware differences.
+Status: CURRENT SOURCE MAP / DESIGN TARGET. Reviewed 2026-09-18.
 
-## Responsibilities
-Driver authors implement exactly five responsibilities:
-1. **Discovery**
-2. **Connection**
-3. **Streaming**
-4. **Capabilities**
-5. **Diagnostics**
+Read [driver SDK](../../sdk/driver-sdk), [host SDK](../../sdk/host-sdk),
+[HeyCyan](../../drivers/heycyan) and [simulator](../../drivers/simulator).
+Device/session contracts also exist in sdk/runtime-sdk.
 
-Nothing else. Drivers never know about AI or intent resolution.
+Discovery, connection, transport, capabilities and diagnostics are intended responsibilities.
+The previous universal lifecycle diagram was not the exact enum of every driver.
 
-## Driver Lifecycle
-`Discover` -> `Pair` -> `Authenticate` -> `Capabilities` -> `Initialize` -> `Ready` -> `Streaming` -> `Sleep` -> `Disconnect`
-
-## Device Capabilities
-Drivers must report capabilities during the `Capabilities` phase.
-* `audioInput`
-* `audioOutput`
-* `buttons`
-* `camera`
-* `display`
-* `imu`
-* `vibration`
-
-## Driver Isolation
-SDK crashes must never crash Halo. 
-* Every driver is wrapped in a dedicated coroutine scope or process.
-* Exceptions are converted to standardized Event Bus failures.
-* Timeouts are strictly enforced on all blocking or long-running SDK calls.
+Coroutine scopes and exception handling are not process isolation. There is no established
+guarantee that SDK/native crashes cannot crash Halo or every operation has a timeout.
+Use [HeyCyan status](../protocols/heycyan/IMPLEMENTATION_STATUS.md) for current limits.

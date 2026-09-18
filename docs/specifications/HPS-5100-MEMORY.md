@@ -3,6 +3,13 @@ title: HPS-5100-MEMORY
 status: Draft
 maturity: Alpha
 ---
+
+> Status: DESIGN TARGET. Classified 2026-09-18.
+>
+> Requirements, examples and proposed behavior; not an implementation or verification report. Read present-tense guarantees below as intended acceptance criteria, not achieved properties. Current code and actual wiring determine behavior. Any previous ACTIVE/authority wording applies only to historical design intent.
+>
+> [Current reference](../../CURRENT-STATE.md).
+
 # HPS-500: Memory Specification
 
 Halo is not just chat. Halo has four memory types:
@@ -18,4 +25,3 @@ Halo is not just chat. Halo has four memory types:
 ## Search Pipeline
 `Voice -> Intent -> Embedding -> Vector Search -> Ranking -> Memory -> Response`
 Everything inspectable.
-

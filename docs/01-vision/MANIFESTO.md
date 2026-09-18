@@ -1,3 +1,9 @@
+> Status: DESIGN TARGET. Classified 2026-09-18.
+>
+> Requirements, examples and proposed behavior; not an implementation or verification report. Read present-tense guarantees below as intended acceptance criteria, not achieved properties. Current code and actual wiring determine behavior. Any previous ACTIVE/authority wording applies only to historical design intent.
+>
+> [Current reference](../../CURRENT-STATE.md).
+
 # HPS-9000: Halo Engineering Manifesto
 
 This document outlines the engineering culture, principles, and quality gates that separate Halo from a typical software project. Every pull request and architectural decision is judged against these principles.

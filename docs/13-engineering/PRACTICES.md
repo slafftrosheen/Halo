@@ -1,14 +1,13 @@
-# HPS-1500: Engineering Constitution
+# Engineering practices
 
-The law of the codebase:
+Status: DESIGN TARGET. Updated 2026-09-18.
 
-1. Every dependency must be replaceable.
-2. No business logic in Android classes.
-3. No feature without a specification.
-4. Every network request must be inspectable.
-5. Every feature must function in degraded mode when possible.
-6. The user is always in control of where data goes.
-7. No AI provider may become mandatory.
-8. No hidden background work. Everything observable.
-9. Every API is documented before implementation.
-10. If an implementation conflicts with the specification, **the specification wins** until formally changed via an RFC.
+Code and wiring determine current behavior. When prose disagrees, correct it and record
+code defects separately. Specifications describe intended changes and do not override facts.
+
+Prefer explicit ownership, replaceable dependencies, typed boundaries, observable work,
+structured cancellation, truthful outcomes and useful degraded behavior.
+Describe exceptions instead of claiming universal conformance.
+
+Follow Kotlin conventions where applicable; production native code also exists.
+Substantial proposed contracts use RFCs. Factual documentation correction is maintenance.

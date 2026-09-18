@@ -1,3 +1,9 @@
+> Status: HISTORICAL RESEARCH. Classified 2026-09-18.
+>
+> Recorded vendor/capture analysis and hypotheses from earlier work. Statements below, including VERIFIED labels and code sketches, retain their original research scope; they are not assertions of current Halo behavior or current-build hardware acceptance. Some findings conflict across reports. Trace artifacts before reuse; current code/wiring is documented in the implementation status page.
+>
+> [Current reference](IMPLEMENTATION_STATUS.md).
+
 # HeyCyan Capture Analysis Workflow
 
 **Status:** PR-012 tooling foundation; PR-013/014 evidence-gated codec seams
@@ -76,16 +82,16 @@ evidence, not a decoded value.
 
 ## Packet correlation
 
-PR-016 provides [`PacketCorrelation`](../../drivers/heycyan/src/main/java/com/halo/drivers/heycyan/codec/PacketCorrelation.kt)
-through [`OrderedPacketCorrelation`](../../drivers/heycyan/src/main/java/com/halo/drivers/heycyan/codec/PacketCorrelation.kt).
+PR-016 provides [`PacketCorrelation`](../../../drivers/heycyan/src/main/java/com/halo/drivers/heycyan/codec/PacketCorrelation.kt)
+through [`OrderedPacketCorrelation`](../../../drivers/heycyan/src/main/java/com/halo/drivers/heycyan/codec/PacketCorrelation.kt).
 It compares a baseline capture with an action capture by direction and characteristic,
 then aligns packet order within each transport stream. This intentionally does not
 interpret payload bytes or align by capture-local sequence numbers, because an action
 may insert packets and shift subsequent sequence values.
 
-The result is a list of raw [`PacketDifference`](../../drivers/heycyan/src/main/java/com/halo/drivers/heycyan/codec/PacketCorrelation.kt)
-values containing copied baseline/action payloads. Use [`baselineHex()`](../../drivers/heycyan/src/main/java/com/halo/drivers/heycyan/codec/PacketCorrelation.kt:29)
-and [`actionHex()`](../../drivers/heycyan/src/main/java/com/halo/drivers/heycyan/codec/PacketCorrelation.kt:31)
+The result is a list of raw [`PacketDifference`](../../../drivers/heycyan/src/main/java/com/halo/drivers/heycyan/codec/PacketCorrelation.kt)
+values containing copied baseline/action payloads. Use [`baselineHex()`](../../../drivers/heycyan/src/main/java/com/halo/drivers/heycyan/codec/PacketCorrelation.kt)
+and [`actionHex()`](../../../drivers/heycyan/src/main/java/com/halo/drivers/heycyan/codec/PacketCorrelation.kt)
 for presentation only. A difference is a candidate observation, not a protocol meaning.
 
 Example workflow:

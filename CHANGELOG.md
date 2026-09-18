@@ -1,13 +1,16 @@
-# Changelog — Halo Ecosystem
+# Changelog
 
-## [1.0.0-RC1] - 2026-08-14
+Status: HISTORICAL REPORT / DOCUMENTATION MAINTENANCE.
 
-### Release Candidate Highlights
-- **HeyCyan Smart Glasses Embodiment**: Full native protocol integration for HeyCyan BW-AG1 smart glasses. Supports real hardware discovery, GATT transport, semantic state management (`READY`, `CAPTURING`, `RECORDING`), and photo/video execution.
-- **Photo Golden Path**: 4-state photo execution flow (`READY` → `CAPTURING` → `COMPLETED` / `FAILED`) with 5s hardware acknowledgement timeout and double-click locking during capture.
-- **Video State Machine**: Semantic state machine (`IDLE`, `STARTING`, `RECORDING`, `STOPPING`) guarding video workflows against invalid duplicate dispatches.
-- **Notification Observation Pipeline**: Proprietary `0x73` payload decoder projecting AI Image Recognition, Voice Activation (Microphone Active/Inactive), Voice Playback Pause, Memory Fault warnings, and Battery telemetry into `ObservationUpdated` timeline events over the `EventBus`.
-- **Battery Telemetry Age & Stale Indicators**: Live battery telemetry displaying level % and timestamped age ("Updated 2m ago" vs "Last known battery"). Stale indicators render for telemetry older than 5 minutes.
-- **Provider Setup UX & Fallback**: Standardized AI provider status model (`NOT_CONFIGURED`, `CONFIGURING`, `CHECKING`, `READY`, `UNAVAILABLE`, `ERROR`) across Ollama, Llama.cpp, OpenRouter, and System Assistant. Password masking enabled for API key input.
-- **Crash Resilience & Security**: Out-of-bounds frame protection on BLE byte parsing, session invalidation on device unbind, and zero plain secret logging.
-- **Diagnostics Export**: Exportable flat text diagnostic report (`halo_diagnostics_*.txt`) for TestFlight participants.
+## Documentation reconciliation — 2026-09-18
+
+Implementation claims now follow the current checkout and actual wiring. Entry points for
+architecture, providers, storage, security, UI, protocol status and release readiness were
+corrected. Plans/research are separately labeled. See the documentation audit for scope.
+
+## Prior RC1 narrative — 2026-08-14
+
+A previous entry described runtime/device/provider/UI work as an RC1 release.
+The current build configuration declares 1.0-RC1; this is not proof of a released or accepted
+artifact. Claims of full native protocol coverage, zero secret logging and TestFlight
+distribution have been withdrawn as current facts. The original narrative remains in Git history.

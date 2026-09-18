@@ -1,92 +1,46 @@
-# HeyCyan Protocol Implementation Status
+# HeyCyan implementation status
 
-**Date:** 2026-08-12  
-**Batch:** PR-018 (TX Wire Capture Infrastructure)
+Status: CURRENT SOURCE MAP. Reviewed 2026-09-18.
+This describes code paths, not newly verified device behavior.
 
----
+## Current sources
 
-## 1. Physically Verified from Live Device
+- [RealHeyCyanDriver](../../../drivers/heycyan/src/main/java/com/halo/drivers/heycyan/RealHeyCyanDriver.kt)
+  constructs scanner/GATT client, capture recorder, response router and device-state store.
+- [Wire encoder](../../../drivers/heycyan/src/main/java/com/halo/drivers/heycyan/codec/HeyCyanWireEncoder.kt)
+  and [response decoder](../../../drivers/heycyan/src/main/java/com/halo/drivers/heycyan/codec/HeyCyanResponseDecoder.kt)
+  exist. “All production packets are unknown” and “there is no protocol implementation”
+  are obsolete descriptions.
+- [Command catalog](../../../drivers/heycyan/src/main/java/com/halo/drivers/heycyan/protocol/HeyCyanCommandCatalog.kt)
+  lists identifiers; its own contract distinguishes identifiers from executable payloads.
+- [Capability catalog](../../../drivers/heycyan/src/main/java/com/halo/drivers/heycyan/capability/HeyCyanCapabilityCatalog.kt)
+  has implemented/limited/blocked entries. These are code metadata, not hardware acceptance.
+- [HeyCyanAudioSource](../../../drivers/heycyan/src/main/java/com/halo/drivers/heycyan/HeyCyanAudioSource.kt)
+  observes active voice sessions and feeds RawAudioFrame payloads to RawOpusAudioDecoder.
+- [HostGraph](../../../app/src/main/java/com/halo/app/di/HostGraph.kt) injects AndroidAudioSource
+  into the production phone speech engine. Do not infer wearable speech integration merely
+  from the separate driver audio classes.
 
-### Transport & Framing
-- **GATT Command Transport**: Verified writing to `de5bf72a-d711-4e47-af26-65e3012a5dc7`.
-- **Wire Frame (0xBC)**: Verified `BC 41 <lenLE> <crcLE> <payload>` framing.
-- **CRC16 Algorithm**: Verified `0xA001` polynomial with `0xFFFF` init matches hardware.
+## Contradictions and limits
 
-### Commands (Action 0x41)
-- **Photo Capture (0x01)**: Verified. Device returns ACK and increments internal media counter.
-- **Video Toggle (0x02)**: Verified. Single command triggers both start and stop; device returns alternating ACKs.
-- **Audio Toggle (0x04)**: Verified. Observed 0x04 trigger and 40-byte control info response.
+| Topic | Current evidence | Required interpretation |
+|---|---|---|
+| Live microphone | AudioSource/decoder code exists; capability catalog marks audio.live_input unsupported | Code metadata and implementation disagree; neither proves device acceptance |
+| Framing | Wire encoder exists; some catalog explanations still say checksum/framing unresolved | Record drift, inspect selected execution path before changing claims |
+| Date/time | Action constant exists, catalog labels payload blocked | Identifier is not supported executable time sync |
+| Voice trigger/codec | Voice-session/decoder logic exists; historical notes disagree on trigger and packet interpretation | Code shows attempted handling, not universal codec/firmware truth |
+| Hardware captures | Raw/annotated artifacts exist under research/evidence/captures | Do not say no evidence exists; also do not infer complete current-build acceptance |
+| Tests | Test sources exist | Old “238 PASS” count is not a current run result |
 
-### Observed Correlations
-- **Photo Counter**: `BC 73 08` frame at byte index 7 (payload[1]) increments exactly once per PHOTO command.
-- **Video Toggle ACK**: Start returns `... FF FF`, Stop returns `... FF 02`.
+## Protocol terminology correction
 
----
+The current command catalog uses volume 0x51, sound switch 0x52, wear 0x46 and
+wear-support 0x47. Earlier docs rendered decimal values 81/82/70/71 as hexadecimal
+0x81/0x82/0x70/0x71; those are different bytes. Use the actual constants for Halo behavior.
 
-## 2. Verified from Vendor Documentation
+Firmware/protocol assertions require raw bytes, characteristic, capture/session identity
+and provenance. Vendor documentation is evidence about the vendor, not proof that a current
+Halo build or a connected device implements every command.
 
-### Notification Fields (SDK Family 0x01..0x06) - INFERRED FROM SOURCE
-- **0x01 Battery**: level (byte 1), charging (byte 2)
-- **0x02 Media Counts**: photo/video/audio (bytes 1-6, UInt16 LE)
-- **0x03 Version**: HW/FW/WiFi strings (length-prefixed)
-- **0x04 Mode**: current work mode (byte 1)
-- **0x05 WiFi**: SSID/password (length-prefixed)
-- **0x06 AI Image**: chunked transfer
-
----
-
-## 3. Observed from Captures
-
-### Packet Families (Header BC)
-- `BC 73 05`: Discrete events (AI double-press)
-- `BC 73 08`: Discrete command/state events (Camera, AI long-press)
-- `BC 73 0E`: Ordered control parameters (Swipes, Double-tap)
-- `BC 73 02`: Short event frames (AI/Recording interaction)
-- `BC 59 28`: High-rate real-time audio stream (48kHz mono PCM verified via decoder, but framing strictness under STRUCTURAL_VALIDATION)
-
----
-
-## 4. Structurally Decoded
-
-### BC 73 0E (20 bytes)
-- `unknown04/05`: bytes 4-5 (candidate checksum/sequence)
-- `candidateAction`: byte 10 (changes with swipes)
-- `unknown19`: byte 19 (differs between swipe and double-tap)
-
----
-
-## 5. Correlated but Unverified
-
-- **AI Action** → `BC 73 08` family
-- **Recording Start** → `BC 59 28` stream start
-- **Swipe Gesture** → `BC 73 0E` family (advancing byte 10)
-- **Double Tap** → `BC 73 0E` family (byte 19 == 0x01)
-- **AI Double Press** → `BC 73 05` family
-
----
-
-## 6. Still Unknown
-
-- **Sequence Fields**: Whether the device uses per-packet monotonic counters.
-- **Touch Semantics**: Exact mapping of `candidateAction` values to gesture vectors.
-- **BC 59 28 Framing**: The stream encodes 20ms audio payloads, but proprietary `4B 41` headers require structural validation against RFC 6716 Code-3 framing rules.
-- **Handshake**: Whether an application-level "Hello" packet is required.
-
----
-
-## 7. Forensic Instrumentation (PR-018)
-
-### TX Capture Path
-- Instrument point: `HeyCyanGattClient.write()`
-- Metadata captured: Timestamp, Write Type, Characteristic UUID, Raw Bytes.
-- Transaction correlation: Enabled via `HeyCyanProtocolCapture`.
-
-### Trace Logs
-- Filter: `HALO-TX-TRACE` or `HALO-`
-- Provides semantic → dispatch → physical byte visibility.
-
----
-
-## 8. Test Status
-
-- 238 protocol/driver tests: **PASS** (Includes new `HeyCyanPacketFramerTest`)
+See [hardware confirmation matrix](HARDWARE_CONFIRMATION_MATRIX.md) for planned tests.
+No physical acceptance or current test pass is certified by this review.

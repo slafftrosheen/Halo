@@ -1,59 +1,34 @@
-# Halo AI Provider Architecture
+# AI providers and sessions
 
-## Overview
-Halo uses a provider-neutral architecture where different reasoning backends can be swapped without disconnecting the system's cognitive state, perception, or tools.
+Status: CURRENT SOURCE MAP. Reviewed 2026-09-18.
 
-```mermaid
-graph TD
-    subgraph Halo Core
-        A[Cognitive Runtime] --> B[AiContext]
-        B --> C[Memory]
-        B --> D[Tools]
-        B --> E[Device State]
-    end
-    
-    A --> F[AiProviderRouter]
-    
-    subgraph Providers
-        F --> G[Phone Assistant]
-        F --> H[OpenRouter]
-        F --> I[Local Ollama]
-        F --> J[Local llama.cpp]
-    end
-```
+[AI.kt](../../sdk/provider-sdk/src/main/java/com/halo/sdk/provider/AI.kt) separates
+AiProvider metadata from inference and handoff contracts. AiRequest contains
+text/image/audio/video fields; actual modality support is provider/model-specific.
+AiResponse carries text/tool calls/metadata. AiStreamEvent represents streamed data and outcomes.
 
-## Key Components
+[DefaultAiProviderRouter](../../engines/ai/src/main/java/com/halo/engines/ai/AiProviderRouter.kt)
+is the routing implementation. Read its policy/capability checks; do not assume automatic
+local/cloud fallback or that all models support every request field.
 
-### 1. AiProvider
-The unified interface for all reasoning backends.
-- **id**: Unique identifier (e.g., "openrouter").
-- **getStatus()**: Reports if the provider is READY, UNCONFIGURED, or UNAVAILABLE.
-- **generate(request, context)**: Generates a response based on multimodal input and full cognitive context.
-- **listModels()**: Dynamically discovers available models from the provider's API.
+| Adapter | Boundary |
+|---|---|
+| OpenRouter | Network inference, discovery, streaming and tool-call parsing/serialization |
+| Ollama | Configured endpoint; currently advertises TEXT and STREAMING, not TOOLS |
+| Native llama.cpp | Native inference; model metadata reports supportsTools=false |
+| Android assistant | ACTION_ASSIST handoff; custom prompt extras are not guaranteed Android APIs; no inference result |
+| Sherpa / Android TTS | Speech providers, not conversational LLM substitutes |
 
-### 2. AiContext
-The logical state of Halo passed to the provider for every request.
-- **conversation**: List of recent messages (Role + Content).
-- **deviceState**: Snapshot of hardware/platform state.
-- **recentEvents**: High-level timeline of what happened.
-- **memories**: Long-term context (fact/episode).
-- **availableTools**: Definitions of capabilities the model can call.
+Ollama's local metadata does not mean on-phone: its endpoint may be another machine.
+External assistant handoff does not establish local processing by that assistant.
 
-### 3. AiProviderRouter
-Responsible for selecting the active backend and routing requests.
-- Persists provider and model selection.
-- Validates modalities before routing.
-- Handles fallbacks between compatible providers.
+[CognitiveSession](../../runtime/cognition/src/main/java/com/halo/runtime/cognition/session/CognitiveSession.kt)
+already performs bounded tool rounds, authorization and result feedback.
+The app ToolRegistry is initialized with echo and current time; general Android/wearable
+capability tools are not thereby exposed.
 
-## Privacy & Context Policy
-Halo does not blindly upload all data to cloud providers. The `AiContextPolicy` controls what parts of the cognitive state are shared with external services.
-- **Conservative (Default)**: Shares conversation and basic device state.
-- **Advanced**: Enables memory, tools, and multimodal uploads (images/audio).
-
-## Tiered Setup Logic
-1. **Zero Config**: Phone Assistant (uses Android system defaults).
-2. **Quick Setup**: OpenRouter (requires user API key, discovers models dynamically).
-3. **Power User**: Local backends (Ollama/llama.cpp) and advanced parameters (Temperature, Context window).
-
-## Future: Agentic Halo
-The provider abstraction supports `ToolCall` in `AiResponse`. This allows models to request actions (e.g., "Take a photo") which Halo executes through its internal `ToolRegistry`, maintaining safety and hardware abstraction.
+[InMemoryToolAuthorizer](../../runtime/cognition/src/main/java/com/halo/runtime/cognition/tools/InMemoryToolAuthorizer.kt)
+checks registry validation/registration, not complete user-confirmation/Android permission
+or physical-safety policy. Context sharing policy exists in session assembly but is not
+a mandatory global network firewall. The older AIEngine supplies an empty availableTools
+list in both policy branches. These integration gaps are [planned work](../14-roadmap/NEXT-PHASE-2027.md).

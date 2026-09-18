@@ -1,3 +1,9 @@
+> Status: HISTORICAL RESEARCH. Classified 2026-09-18.
+>
+> Recorded vendor/capture analysis and hypotheses from earlier work. Statements below, including VERIFIED labels and code sketches, retain their original research scope; they are not assertions of current Halo behavior or current-build hardware acceptance. Some findings conflict across reports. Trace artifacts before reuse; current code/wiring is documented in the implementation status page.
+>
+> [Current reference](../../protocols/heycyan/IMPLEMENTATION_STATUS.md).
+
 # HeyCyan Control Commands
 
 The SDK exposes several specific hardware control and configuration commands through `LargeDataHandler`. These commands are framed as BC packets with the specified Action ID and payload.

@@ -1,41 +1,14 @@
-# Plugin SDK Specification
+# Plugins: implementation and limits
 
-Plugins run within a restrictive sandbox. They do not have direct access to Android APIs, the SQLite database, or AI providers. 
+Status: CURRENT SOURCE MAP. Reviewed 2026-09-18.
 
-## Plugin Sandbox
-Plugins receive:
-* `Context` (Read-only snapshot)
-* `Commands` (Ability to execute actions via Command Bus)
-* `Events` (Subscribe to system events via Event Bus)
-* `Queries` (Read data via Query Bus)
+[PluginRegistry](../../runtime/plugins/src/main/java/com/halo/runtime/plugins/PluginRegistry.kt)
+registers in-process objects, rejects duplicate IDs, contributes capabilities and rolls
+back partial registration. Unregister removes contributed capabilities.
+[PluginManager](../../runtime/plugins/src/main/java/com/halo/runtime/plugins/PluginManager.kt)
+dispatches to the first registered plugin supporting an intent.
 
-**Never** Android Context. 
-**Never** Activity. 
-**Never** Fragment. 
-**Never** Compose.
-
-## Halo Plugin Store
-Halo does not host plugins in a built-in marketplace. 
-To remain vendor-neutral, Halo supports:
-* Git repositories
-* ZIP packages
-* F-Droid
-* GitHub Releases
-* Local installation
-* Enterprise repositories
-
-The application only knows how to verify, install, and sandbox them.
-
-## Plugin Lifecycle
-1. **Install**: Plugin verified and registered.
-2. **Validate**: Permissions and capabilities checked.
-3. **Load**: Code loaded into memory.
-4. **Initialize**: Setup hooks and commands.
-5. **Ready/Running**: Active state.
-6. **Unload**: Cleanup resources.
-7. **Disabled**: Inactive.
-
-## Manifest & Permissions
-Every plugin must declare a manifest specifying the permissions it needs.
-Examples: `Calendar`, `Notifications`, `Network`, `Location`, `Memory`, `Filesystem`.
-The Privacy Engine enforces these restrictions at runtime.
+These contracts are not a security sandbox. An in-process context interface cannot by
+itself prohibit arbitrary code from accessing APIs available to the application.
+A verified Git/ZIP/F-Droid installer, package isolation and full permission enforcement
+are not established by this implementation. Such a system requires a separate design.
