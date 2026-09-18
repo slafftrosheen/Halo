@@ -42,6 +42,7 @@ data class HomeUiState(
     val speechActive: Boolean = false,
     val speechProcessing: Boolean = false,
     val speechReady: Boolean = true,
+    val microphonePermissionGranted: Boolean = true,
     val presentedResponse: String? = null
 )
 
@@ -139,6 +140,7 @@ class HomeViewModel(
     private val stopSpeechOutput: () -> Unit,
     private val aiProviderRouter: AiProviderRouter? = null,
     private val speechAvailability: StateFlow<Boolean> = MutableStateFlow(true),
+    private val microphonePermission: StateFlow<Boolean> = MutableStateFlow(true),
     private val networkRevision: StateFlow<Long> = MutableStateFlow(0L)
 ) : ViewModel() {
     private val mapper = HomeUiMapper()
@@ -154,7 +156,8 @@ class HomeViewModel(
         aiProviderRouter?.selectedModelId ?: MutableStateFlow<String?>(null),
         aiProviderRouter?.diagnosticsFlow ?: MutableStateFlow(emptyList<AiProviderDiagnostic>()),
         _presentedResponse,
-        speechAvailability
+        speechAvailability,
+        microphonePermission
     ) { args ->
         @Suppress("UNCHECKED_CAST")
         val snapshot = args[0] as RuntimeSnapshot
@@ -164,10 +167,12 @@ class HomeViewModel(
         @Suppress("UNCHECKED_CAST") val diagnostics = args[4] as List<AiProviderDiagnostic>
         val presentedResponse = args[5] as String?
         val speechReady = args[6] as Boolean
+        val microphonePermissionGranted = args[7] as Boolean
         mapper.map(snapshot, sessionState, selectedProviderId, selectedModelId, diagnostics)
             .copy(
                 presentedResponse = presentedResponse,
-                speechReady = speechReady
+                speechReady = speechReady,
+                microphonePermissionGranted = microphonePermissionGranted
             )
     }.stateIn(viewModelScope, SharingStarted.Lazily, HomeUiState())
 
