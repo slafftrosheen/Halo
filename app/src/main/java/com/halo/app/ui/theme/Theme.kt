@@ -10,11 +10,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 
 private val HaloDarkColorScheme = darkColorScheme(
-    primary = HaloGreen,
+    primary = HaloReady,
     onPrimary = DarkBackground,
-    primaryContainer = HaloGreen.copy(alpha = 0.18f),
+    primaryContainer = HaloPastelMint.copy(alpha = 0.16f),
     onPrimaryContainer = DarkOnBackground,
-    secondary = HaloBlue,
+    secondary = HaloAction,
     background = DarkBackground,
     onBackground = DarkOnBackground,
     surface = DarkSurface,
@@ -23,16 +23,16 @@ private val HaloDarkColorScheme = darkColorScheme(
     onSurfaceVariant = DarkOnSurfaceVariant,
     outline = DarkOutline,
     outlineVariant = DarkOutlineVariant,
-    error = HaloPink,
+    error = HaloDanger,
     onError = DarkOnBackground
 )
 
 private val HaloLightColorScheme = lightColorScheme(
-    primary = HaloGreen,
-    onPrimary = LightBackground,
-    primaryContainer = HaloGreen.copy(alpha = 0.18f),
+    primary = HaloReady,
+    onPrimary = LightOnBackground,
+    primaryContainer = HaloPastelMint.copy(alpha = 0.42f),
     onPrimaryContainer = LightOnBackground,
-    secondary = HaloBlue,
+    secondary = HaloAction,
     background = LightBackground,
     onBackground = LightOnBackground,
     surface = LightSurface,
@@ -41,34 +41,41 @@ private val HaloLightColorScheme = lightColorScheme(
     onSurfaceVariant = LightOnSurfaceVariant,
     outline = LightOutline,
     outlineVariant = LightOutlineVariant,
-    error = HaloPink,
-    onError = LightOnBackground
+    error = HaloDanger,
+    onError = ColorTokensLightOnError
 )
+
+private val ColorTokensLightOnError = androidx.compose.ui.graphics.Color.White
 
 private val HaloShapes = Shapes(
     extraSmall = RoundedCornerShape(8.dp),
-    small = RoundedCornerShape(16.dp),
-    medium = RoundedCornerShape(24.dp),
-    large = RoundedCornerShape(32.dp),
-    extraLarge = RoundedCornerShape(40.dp)
+    small = RoundedCornerShape(14.dp),
+    medium = RoundedCornerShape(20.dp),
+    large = RoundedCornerShape(28.dp),
+    extraLarge = RoundedCornerShape(36.dp)
 )
 
 @Composable
-fun BrainToolTheme(
+fun HaloTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = false,
-    content: @Composable () -> Unit,
+    content: @Composable () -> Unit
 ) {
-    val colorScheme = if (darkTheme) {
-        HaloDarkColorScheme
-    } else {
-        HaloLightColorScheme
-    }
-
     MaterialTheme(
-        colorScheme = colorScheme,
+        colorScheme = if (darkTheme) HaloDarkColorScheme else HaloLightColorScheme,
         typography = Typography,
         shapes = HaloShapes,
         content = content
     )
+}
+
+/** Compatibility alias while older previews/tests migrate to HaloTheme. */
+@Composable
+fun BrainToolTheme(
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    dynamicColor: Boolean = false,
+    content: @Composable () -> Unit
+) {
+    @Suppress("UNUSED_VARIABLE")
+    val ignoredDynamicColor = dynamicColor
+    HaloTheme(darkTheme = darkTheme, content = content)
 }
