@@ -44,6 +44,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.halo.app.embodiment.BuddyBotHost
 import com.halo.app.embodiment.BuddyBotTelemetry
+import com.halo.app.embodiment.DeviceAutoConnectCoordinator
 import com.halo.app.ui.glass.components.HaloGlassBackHeader
 import com.halo.app.ui.glass.components.HaloGlassButton
 import com.halo.app.ui.glass.components.HaloGlassCard
@@ -97,7 +98,8 @@ class DevicesViewModel(
     private val eventBus: com.halo.sdk.runtime.EventBus,
     private val snapshotSource: com.halo.sdk.runtime.RuntimeSnapshotSource,
     private val heyCyanDriverProvider: () -> RealHeyCyanDriver?,
-    val buddyBotHost: BuddyBotHost? = null
+    val buddyBotHost: BuddyBotHost? = null,
+    private val autoConnectCoordinator: DeviceAutoConnectCoordinator? = null
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(DevicesUiState())
     val uiState: StateFlow<DevicesUiState> = _uiState.asStateFlow()
@@ -311,6 +313,9 @@ class DevicesViewModel(
             deviceRegistry.getDevice(deviceId)?.let { current ->
                 deviceRegistry.saveDevice(current.copy(autoConnect = enabled))
                 _registryRevision.update { it + 1 }
+                if (enabled) {
+                    autoConnectCoordinator?.retryDevice(deviceId)
+                }
             }
         }
     }
