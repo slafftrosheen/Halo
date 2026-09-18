@@ -93,6 +93,10 @@ class NotebookViewModel(private val useCases: NotebookUseCases) : ViewModel() {
         viewModelScope.launch { useCases.restore(id) }
     }
 
+    fun removeFromInbox(id: String) {
+        viewModelScope.launch { useCases.removeFromInbox(id) }
+    }
+
     fun deletePermanently(id: String) {
         viewModelScope.launch { useCases.permanentlyDelete(id) }
     }

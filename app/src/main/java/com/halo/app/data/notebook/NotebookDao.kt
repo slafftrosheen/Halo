@@ -46,11 +46,17 @@ interface NotebookDao {
     )
     suspend fun getNote(id: String): NotebookNoteRow?
 
+    @Query("SELECT * FROM note_drafts WHERE objectId = :id LIMIT 1")
+    suspend fun getDraft(id: String): NoteDraftEntity?
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertObject(entity: WorkspaceObjectEntity)
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertNote(entity: NoteEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertDraft(entity: NoteDraftEntity)
 
     @Transaction
     suspend fun insertNoteObject(objectEntity: WorkspaceObjectEntity, noteEntity: NoteEntity) {
@@ -70,11 +76,15 @@ interface NotebookDao {
     @Query("UPDATE notes SET body = :body, revision = revision + 1 WHERE objectId = :id")
     suspend fun updateNoteBody(id: String, body: String): Int
 
+    @Query("DELETE FROM note_drafts WHERE objectId = :id")
+    suspend fun deleteDraft(id: String): Int
+
     @Transaction
     suspend fun updateNote(id: String, title: String, body: String, updatedAt: Long): Boolean {
         val metadataUpdated = updateObjectForNote(id, title, updatedAt)
         if (metadataUpdated == 0) return false
         check(updateNoteBody(id, body) == 1) { "Note content missing for workspace object $id" }
+        deleteDraft(id)
         return true
     }
 

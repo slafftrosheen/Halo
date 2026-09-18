@@ -46,6 +46,29 @@ data class NoteEntity(
     val revision: Int
 )
 
+@Entity(
+    tableName = "note_drafts",
+    foreignKeys = [
+        ForeignKey(
+            entity = WorkspaceObjectEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["objectId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ]
+)
+data class NoteDraftEntity(
+    @PrimaryKey val objectId: String,
+    val body: String,
+    val updatedAt: Long
+)
+
+data class NoteDraft(
+    val objectId: String,
+    val body: String,
+    val updatedAt: Long
+)
+
 data class NotebookNote(
     val id: String,
     val title: String,

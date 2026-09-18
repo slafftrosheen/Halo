@@ -12,7 +12,9 @@ interface NotebookRepository {
     ): Flow<List<NotebookNote>>
 
     suspend fun getNote(id: String): NotebookNote?
+    suspend fun getDraft(id: String): NoteDraft?
     suspend fun createNote(body: String = "", source: WorkspaceSource = WorkspaceSource.QUICK_NOTE): NotebookNote
+    suspend fun saveDraft(id: String, body: String)
     suspend fun saveNote(id: String, body: String): Boolean
     suspend fun setLifecycle(id: String, lifecycle: WorkspaceLifecycle): Boolean
     suspend fun removeFromInbox(id: String): Boolean
@@ -35,6 +37,10 @@ class RoomNotebookRepository(
     ).map { rows -> rows.map(NotebookNoteRow::toDomain) }
 
     override suspend fun getNote(id: String): NotebookNote? = dao.getNote(id)?.toDomain()
+
+    override suspend fun getDraft(id: String): NoteDraft? = dao.getDraft(id)?.let { draft ->
+        NoteDraft(draft.objectId, draft.body, draft.updatedAt)
+    }
 
     override suspend fun createNote(body: String, source: WorkspaceSource): NotebookNote {
         val timestamp = now()
@@ -60,6 +66,10 @@ class RoomNotebookRepository(
 
     override suspend fun saveNote(id: String, body: String): Boolean =
         dao.updateNote(id, titleFor(body), body, now())
+
+    override suspend fun saveDraft(id: String, body: String) {
+        dao.upsertDraft(NoteDraftEntity(objectId = id, body = body, updatedAt = now()))
+    }
 
     override suspend fun setLifecycle(id: String, lifecycle: WorkspaceLifecycle): Boolean =
         dao.setLifecycle(id, lifecycle.name, now()) == 1

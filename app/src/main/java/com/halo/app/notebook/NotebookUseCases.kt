@@ -2,6 +2,7 @@ package com.halo.app.notebook
 
 import com.halo.app.data.notebook.NotebookNote
 import com.halo.app.data.notebook.NotebookRepository
+import com.halo.app.data.notebook.NoteDraft
 import com.halo.app.data.notebook.WorkspaceLifecycle
 import kotlinx.coroutines.flow.Flow
 
@@ -17,9 +18,13 @@ class NotebookUseCases(private val repository: NotebookRepository) {
 
     suspend fun getNote(id: String): NotebookNote? = repository.getNote(id)
 
+    suspend fun getDraft(id: String): NoteDraft? = repository.getDraft(id)
+
     suspend fun createQuickNote(): NotebookNote = repository.createNote()
 
     suspend fun saveNote(id: String, body: String): Boolean = repository.saveNote(id, body)
+
+    suspend fun saveDraft(id: String, body: String) = repository.saveDraft(id, body)
 
     suspend fun archive(id: String): Boolean =
         repository.setLifecycle(id, WorkspaceLifecycle.ARCHIVED)

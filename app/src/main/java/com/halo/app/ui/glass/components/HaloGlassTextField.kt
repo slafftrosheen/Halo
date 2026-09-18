@@ -1,6 +1,7 @@
 package com.halo.app.ui.glass.components
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicTextField
@@ -9,6 +10,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
@@ -58,32 +60,36 @@ fun HaloGlassTextField(
             material = material.copy(containerColor = containerColor),
             shape = HaloGlassTokens.mediumShape
         ) {
-            BasicTextField(
-                value = value,
-                onValueChange = onValueChange,
-                enabled = enabled,
-                singleLine = singleLine,
-                maxLines = maxLines,
-                keyboardOptions = keyboardOptions,
-                keyboardActions = keyboardActions,
-                visualTransformation = visualTransformation,
-                textStyle = HaloTypography.bodyMedium.copy(color = textColor),
-                cursorBrush = SolidColor(HaloGlassColors.Accent),
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                decorationBox = { innerTextField ->
-                    if (value.isEmpty() && placeholder != null) {
-                        Text(
-                            text = placeholder,
-                            style = HaloTypography.bodyMedium,
-                            color = HaloGlassColors.TextMuted
-                        )
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                BasicTextField(
+                    value = value,
+                    onValueChange = onValueChange,
+                    enabled = enabled,
+                    singleLine = singleLine,
+                    maxLines = maxLines,
+                    keyboardOptions = keyboardOptions,
+                    keyboardActions = keyboardActions,
+                    visualTransformation = visualTransformation,
+                    textStyle = HaloTypography.bodyMedium.copy(color = textColor),
+                    cursorBrush = SolidColor(HaloGlassColors.Accent),
+                    modifier = Modifier.weight(1f),
+                    decorationBox = { innerTextField ->
+                        if (value.isEmpty() && placeholder != null) {
+                            Text(
+                                text = placeholder,
+                                style = HaloTypography.bodyMedium,
+                                color = HaloGlassColors.TextMuted
+                            )
+                        }
+                        innerTextField()
                     }
-                    innerTextField()
+                )
+                if (trailingIcon != null) {
+                    trailingIcon()
                 }
-            )
-
-            if (trailingIcon != null) {
-                trailingIcon()
             }
         }
     }

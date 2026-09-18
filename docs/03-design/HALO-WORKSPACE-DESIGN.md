@@ -3,11 +3,17 @@
 Status: DESIGN TARGET. User-provided direction, 2026-09-18.
 This describes the requested redesign. It is not a screenshot of the current application.
 
+The current root reference is [HaloDesignMockup.png](../../HaloDesignMockup.png), supplied
+2026-09-18 after the earlier preserved reference below. It is the visual authority for ongoing
+screen work. SHA-256:
+`50C1B5271F0E7BDE179D3CFEF124D577277A0B80548E3B63103FD36A7562839F`.
+Implement only controls backed by real behavior even when the reference depicts later slices.
+
 ![User-provided Halo workspace mockup](reference/halo-workspace-mockup-2026-09-18.png)
 
 ## Authority and provenance
 
-The user supplied this mockup and explicitly asked that it guide the redesign.
+The user supplied these mockups and explicitly asked that they guide the redesign.
 It supersedes older dark-only, mint-only, four-tab and polygon-orb-only design targets.
 Current code remains the source of truth for what is implemented.
 

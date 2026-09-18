@@ -16,7 +16,7 @@ excludes the older microkernel/ProcessManager path from normal phone startup.
 | Model tools | Echo and current time registered in app graph | Not general phone/device actions |
 | Providers | llama.cpp, Ollama, OpenRouter inference; Android assistant handoff; Sherpa and Android TTS speech | Support is adapter/model-specific; handoff is not inference |
 | Speech input | HostGraph injects AndroidAudioSource | HeyCyanAudioSource existence does not prove glasses feed the phone speech loop |
-| Persistence | Room Memory plus NB-01 workspace-object/note tables, local note search and lifecycle management; in-memory cognitive/conversation stores | Notebook storage is not cognitive memory; Room-backed CognitiveSession and remaining Notebook object types are not established |
+| Persistence | Room Memory plus NB-01 workspace-object/note/recovery-draft tables, local note search and lifecycle management; in-memory cognitive/conversation stores | Notebook storage is not cognitive memory; Room-backed CognitiveSession and remaining Notebook object types are not established |
 | Reminders | Exact-alarm adapter with simple duration parsing | Complete CRUD, robust ambiguity, permission/reboot recovery not established |
 | Notifications/routines/privacy | Named modules/contracts | Operational summarizer, full automation engine and universal network firewall not established |
 | Plugins | In-process registration/capability contribution/dispatch | No security sandbox or downloadable plugin installer established |

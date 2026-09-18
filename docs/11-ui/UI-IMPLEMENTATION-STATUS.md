@@ -20,7 +20,10 @@ Route/source presence is not interaction, visual or accessibility acceptance.
 | discovery | PairingScreen |
 
 Notebook now has a persistent NB-01 notes route with quick creation, local lexical search,
-Inbox/archive/trash views and an autosaving plain-text/Markdown editor. Memory, Working Set,
+Inbox/archive/trash views and an autosaving plain-text/Markdown editor with recovery drafts.
+Its hierarchy, pastel action signals, compact item rows, editor toolbar and status treatment use
+the root `HaloDesignMockup.png` as visual direction without exposing its unsupported controls.
+Memory, Working Set,
 files, conversations and Canvas remain proposed in the
 [Notebook plan](../02-product/NOTEBOOK-DELIVERY.md); the initial route does not imply those flows.
 

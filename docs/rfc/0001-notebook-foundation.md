@@ -1,6 +1,7 @@
 # RFC: Notebook foundation
 
-- Status: IMPLEMENTING NB-01
+Status: IMPLEMENTING NB-01.
+
 - Start Date: 2026-09-18
 - Target Milestone: Notebook NB-01
 - RFC PR: N/A (local implementation)
@@ -39,11 +40,11 @@ tables and repositories rather than growing the note record into a generic blob.
 
 ### Autosave and revisions
 
-The editor debounces ordinary changes for 400 ms and flushes when leaving or stopping the
-screen. Each committed edit atomically updates metadata/body and increments the note revision.
-Room provides crash-safe transaction boundaries; a killed process can lose only an uncommitted
-draft inside the debounce window. Durable draft recovery and conflict UI remain NB-01 follow-up
-work before full process-death acceptance is claimed.
+The editor writes each changed body to a dedicated recovery-draft row before the 400 ms
+debounced commit and flushes when leaving or stopping the screen. On reconstruction, a newer
+draft is restored and committed. Each committed edit atomically updates metadata/body,
+increments the note revision, and clears its draft. Room provides crash-safe transaction
+boundaries. Conflict UI and physical process-death acceptance remain NB-01 follow-up work.
 
 ### Search and indexing
 
@@ -92,8 +93,8 @@ Full workspace import/export remains beta. No portability claim is made by this 
 ## Drawbacks
 
 Keeping the first contracts in the app module postpones reuse and creates a later extraction
-cost. SQL `LIKE` search will not scale as well as FTS. Debounced autosave does not yet preserve
-the final few hundred milliseconds of an edit under abrupt process kill.
+cost. SQL `LIKE` search will not scale as well as FTS. Immediate recovery-draft writes add local
+I/O while editing, though committed note revisions remain debounced.
 
 ## Alternatives
 
@@ -104,7 +105,6 @@ have different consent, provenance, correction, and forgetting rules.
 
 ## Unresolved questions
 
-- Whether note draft recovery should use SavedStateHandle, a dedicated draft table, or immediate writes.
 - When to introduce FTS and how indexing failures should be exposed and retried.
 - The final retention window for trashed objects and historical revisions.
 - The versioned note export envelope and Android share UX.

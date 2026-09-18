@@ -7,11 +7,12 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.halo.app.data.notebook.NoteEntity
+import com.halo.app.data.notebook.NoteDraftEntity
 import com.halo.app.data.notebook.WorkspaceObjectEntity
 
 @Database(
-    entities = [Memory::class, WorkspaceObjectEntity::class, NoteEntity::class],
-    version = 2,
+    entities = [Memory::class, WorkspaceObjectEntity::class, NoteEntity::class, NoteDraftEntity::class],
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -57,9 +58,25 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS note_drafts (
+                        objectId TEXT NOT NULL PRIMARY KEY,
+                        body TEXT NOT NULL,
+                        updatedAt INTEGER NOT NULL,
+                        FOREIGN KEY(objectId) REFERENCES workspace_objects(id)
+                            ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+            }
+        }
+
         fun create(context: Context): AppDatabase =
             Room.databaseBuilder(context, AppDatabase::class.java, "halo.db")
-                .addMigrations(MIGRATION_1_2)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                 .build()
     }
 }

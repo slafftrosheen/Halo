@@ -89,6 +89,24 @@ class RoomNotebookRepositoryTest {
     }
 
     @Test
+    fun draftSurvivesUntilCommitAndIsDeletedWithItsNote() = runTest {
+        val note = repository.createNote("Committed")
+
+        repository.saveDraft(note.id, "Recovered draft")
+        assertEquals("Recovered draft", repository.getDraft(note.id)?.body)
+        assertEquals("Committed", repository.getNote(note.id)?.body)
+
+        assertTrue(repository.saveNote(note.id, "Recovered draft"))
+        assertNull(repository.getDraft(note.id))
+        assertEquals("Recovered draft", repository.getNote(note.id)?.body)
+
+        repository.saveDraft(note.id, "Delete me")
+        repository.setLifecycle(note.id, WorkspaceLifecycle.TRASHED)
+        assertTrue(repository.permanentlyDelete(note.id))
+        assertNull(repository.getDraft(note.id))
+    }
+
+    @Test
     fun migrationFromVersionOnePreservesMemoryAndAddsNotebook() = runTest {
         database.close()
         val databaseName = "notebook-migration-test.db"
@@ -116,7 +134,7 @@ class RoomNotebookRepositoryTest {
         helper.close()
 
         database = Room.databaseBuilder(context, AppDatabase::class.java, databaseName)
-            .addMigrations(AppDatabase.MIGRATION_1_2)
+            .addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3)
             .allowMainThreadQueries()
             .build()
         repository = RoomNotebookRepository(database.notebookDao(), newId = { "migrated-note" })

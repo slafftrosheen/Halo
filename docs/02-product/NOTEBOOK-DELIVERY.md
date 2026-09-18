@@ -56,7 +56,7 @@ must not silently delete the original. Avoid storing large media as Room blobs.
 
 | Slice | Scope | Acceptance |
 |---|---|---|
-| NB-01 Foundation + notes | **In progress:** object identity/metadata, persistent notes, Inbox, notebook route, editor/autosave, archive/trash, and local lexical search are implemented; durable draft recovery, richer Markdown editing and full acceptance remain | Works offline and after process death/restart; edit/delete/search agree |
+| NB-01 Foundation + notes | **In progress:** object identity/metadata, persistent notes, Inbox, notebook route, editor/autosave with durable recovery drafts, archive/trash, and local lexical search are implemented; richer Markdown editing and full device/accessibility acceptance remain | Works offline and after process death/restart; edit/delete/search agree |
 | NB-02 Memory + Working Set | Explicit promotion, provenance, correction/forgetting, context snapshot interface, Home summary | Note -> memory -> Working Set -> contextual answer -> Activity link -> original note works; forgotten data excluded |
 | NB-03 Conversations + files | Durable typed conversation records, import/share via Android URIs, indexing states, source references | Reopen content; handle revoked grants and provider failure without blocking local editing |
 | NB-04 Device + alpha acceptance | Verified media event -> Inbox, Activity links, filters and management flows | Real media receipt precedes import success; duplicates/cancellation/failure handled |

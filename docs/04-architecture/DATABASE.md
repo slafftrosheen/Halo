@@ -2,18 +2,20 @@
 
 Status: CURRENT SOURCE MAP. Reviewed 2026-09-18.
 
-[AppDatabase](../../app/src/main/java/com/halo/app/data/AppDatabase.kt) is Room version 2,
+[AppDatabase](../../app/src/main/java/com/halo/app/data/AppDatabase.kt) is Room version 3,
 exportSchema=false. It retains the original Memory entity and adds the NB-01
-`workspace_objects` metadata table plus a type-specific `notes` table. Migration 1 -> 2
-preserves existing Memory rows and creates the Notebook tables and indexes.
+`workspace_objects` metadata table, a type-specific `notes` table, and a short-lived
+`note_drafts` recovery table. Migration 1 -> 2 preserves existing Memory rows and creates the
+Notebook object/note tables and indexes; migration 2 -> 3 adds draft recovery.
 [MemoryRepository](../../app/src/main/java/com/halo/app/data/MemoryRepository.kt) provides
 DAO insert/update/delete and all-memories flow. This does not establish integration
 with the cognitive session.
 
 [RoomNotebookRepository](../../app/src/main/java/com/halo/app/data/notebook/NotebookRepository.kt)
-provides persistent note creation, atomic metadata/content edits with revisions, literal local
-lexical search, Inbox membership, archive/trash/restore, and permanent deletion restricted to
-trashed objects. Notebook notes are not automatically memory or model context. File storage,
+provides persistent note creation, recoverable drafts, atomic metadata/content edits with
+revisions, literal local lexical search, Inbox membership, archive/trash/restore, and permanent
+deletion restricted to trashed objects. Committing a note removes its recovery draft; permanent
+deletion cascades to both. Notebook notes are not automatically memory or model context. File storage,
 FTS indexing, conversations, promoted memory, Working Set, retention and export remain future
 delivery slices.
 

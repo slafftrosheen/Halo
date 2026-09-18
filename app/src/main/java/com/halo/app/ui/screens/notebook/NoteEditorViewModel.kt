@@ -28,6 +28,7 @@ class NoteEditorViewModel(
     private val mutableUiState = MutableStateFlow(NoteEditorUiState())
     val uiState: StateFlow<NoteEditorUiState> = mutableUiState.asStateFlow()
     private var saveJob: Job? = null
+    private var draftJob: Job? = null
 
     init {
         viewModelScope.launch {
@@ -35,7 +36,16 @@ class NoteEditorViewModel(
             mutableUiState.value = if (note == null) {
                 NoteEditorUiState(status = SaveStatus.MISSING)
             } else {
-                NoteEditorUiState(note.body, note.lifecycle, SaveStatus.SAVED)
+                val draft = useCases.getDraft(noteId)
+                val recoveredBody = draft
+                    ?.takeIf { it.updatedAt >= note.updatedAt && it.body != note.body }
+                    ?.body
+                if (recoveredBody == null) {
+                    NoteEditorUiState(note.body, note.lifecycle, SaveStatus.SAVED)
+                } else {
+                    scheduleCommit(recoveredBody)
+                    NoteEditorUiState(recoveredBody, note.lifecycle, SaveStatus.SAVING)
+                }
             }
         }
     }
@@ -44,6 +54,12 @@ class NoteEditorViewModel(
         val current = mutableUiState.value
         if (current.status == SaveStatus.MISSING || body == current.body) return
         mutableUiState.value = current.copy(body = body, status = SaveStatus.SAVING)
+        draftJob?.cancel()
+        draftJob = viewModelScope.launch { useCases.saveDraft(noteId, body) }
+        scheduleCommit(body)
+    }
+
+    private fun scheduleCommit(body: String) {
         saveJob?.cancel()
         saveJob = viewModelScope.launch {
             delay(autosaveDelayMs)
@@ -65,6 +81,7 @@ class NoteEditorViewModel(
     fun restore() = updateLifecycle(WorkspaceLifecycle.ACTIVE)
 
     private suspend fun persist(body: String) {
+        draftJob?.join()
         val saved = useCases.saveNote(noteId, body)
         val current = mutableUiState.value
         if (current.body == body) {
@@ -76,6 +93,7 @@ class NoteEditorViewModel(
         val beforeChange = mutableUiState.value
         saveJob?.cancel()
         viewModelScope.launch {
+            draftJob?.join()
             if (beforeChange.status == SaveStatus.SAVING && !useCases.saveNote(noteId, beforeChange.body)) {
                 mutableUiState.value = mutableUiState.value.copy(status = SaveStatus.ERROR)
                 return@launch
