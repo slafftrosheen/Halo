@@ -33,7 +33,19 @@ object ManualDependencyGraph {
     val infra by lazy { RuntimeStartupTrace.measure("graph.infra") { InfrastructureGraph() } }
     val storage by lazy { RuntimeStartupTrace.measure("graph.storage") { com.halo.host.android.AndroidStorage(applicationContext) } }
     val providerGraph by lazy { RuntimeStartupTrace.measure("graph.providers") { ProviderGraph(applicationContext, storage) } }
-    val hostGraph by lazy { RuntimeStartupTrace.measure("graph.host") { HostGraph(applicationContext, infra, providerGraph, storage) } }
+    val deviceRegistry by lazy { com.halo.sdk.runtime.embodiment.PersistentDeviceRegistry(storage) }
+    val deviceSessionManager by lazy { com.halo.sdk.runtime.embodiment.DeviceSessionManager(deviceRegistry) }
+    val hostGraph by lazy {
+        RuntimeStartupTrace.measure("graph.host") {
+            HostGraph(
+                applicationContext,
+                infra,
+                providerGraph,
+                storage,
+                deviceSessionManager
+            )
+        }
+    }
     val engineGraph by lazy { RuntimeStartupTrace.measure("graph.engines") { EngineGraph(applicationContext, infra, providerGraph) } }
     val observerGraph by lazy { RuntimeStartupTrace.measure("graph.observers") { ObserverGraph(applicationContext, infra, engineGraph) } }
     val appDatabase by lazy { RuntimeStartupTrace.measure("graph.database") { AppDatabase.create(applicationContext) } }
@@ -115,8 +127,6 @@ object ManualDependencyGraph {
 
     val workingMemoryProcess by lazy { WorkingMemoryProcess(perceptionBus, cognitiveBus, executionBus) }
 
-    val deviceRegistry by lazy { com.halo.sdk.runtime.embodiment.PersistentDeviceRegistry(storage) }
-    val deviceSessionManager by lazy { com.halo.sdk.runtime.embodiment.DeviceSessionManager(deviceRegistry) }
     val buddyBotHost by lazy { com.halo.app.embodiment.BuddyBotHost(deviceSessionManager, infra.eventBus, storage, infra.scope) }
 
     val homeViewModel by lazy {
