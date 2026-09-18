@@ -53,7 +53,11 @@ sealed class Screen(val route: String, val title: String, val icon: androidx.com
 val bottomNavItems = listOf(Screen.Home, Screen.Activity, Screen.Notebook, Screen.Devices, Screen.Settings)
 
 @Composable
-fun AppShell(onRequestPermissions: () -> Unit) {
+fun AppShell(
+    onRequestPermissions: () -> Unit,
+    onRequestBluetoothPermissions: () -> Unit,
+    onRequestBluetoothEnable: () -> Unit
+) {
     val navController = rememberNavController()
     val homeViewModel = ManualDependencyGraph.homeViewModel
 
@@ -167,7 +171,11 @@ fun AppShell(onRequestPermissions: () -> Unit) {
                     LaunchedEffect(viewModel) {
                         viewModel.navigationEvents.collectLatest { if (it == "back") navController.popBackStack() }
                     }
-                    PairingScreen(viewModel)
+                    PairingScreen(
+                        viewModel = viewModel,
+                        onRequestBluetoothPermissions = onRequestBluetoothPermissions,
+                        onRequestBluetoothEnable = onRequestBluetoothEnable
+                    )
                 }
             }
         }
