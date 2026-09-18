@@ -200,7 +200,7 @@ class HomeViewModel(
                     // Connectivity callbacks can arrive in bursts while Wi-Fi/cellular
                     // hand over. Coalesce them before doing provider network I/O.
                     delay(600L)
-                    refreshProviderDiagnostics()
+                    refreshProviderDiagnosticsNow()
                 }
         }
     }
@@ -239,13 +239,17 @@ class HomeViewModel(
     }
 
     fun refreshProviderDiagnostics() {
-        val router = aiProviderRouter ?: return
         viewModelScope.launch {
-            runCatching { router.diagnostics() }
-                .onFailure { error ->
-                    Log.w("HomeViewModel", "Provider diagnostics refresh failed", error)
-                }
+            refreshProviderDiagnosticsNow()
         }
+    }
+
+    private suspend fun refreshProviderDiagnosticsNow() {
+        val router = aiProviderRouter ?: return
+        runCatching { router.diagnostics() }
+            .onFailure { error ->
+                Log.w("HomeViewModel", "Provider diagnostics refresh failed", error)
+            }
     }
 
     fun clearConversation() {
