@@ -2,7 +2,9 @@ package com.halo.app.ui.screens.home
 
 import com.halo.app.ui.glass.material.HaloRuntimeState
 import com.halo.sdk.provider.AiResponse
+import com.halo.sdk.provider.AiProviderDiagnostic
 import com.halo.sdk.provider.CognitiveSessionState
+import com.halo.sdk.provider.ProviderStatus
 import com.halo.sdk.runtime.BlackboardSnapshot
 import com.halo.sdk.runtime.RuntimeHealth
 import com.halo.sdk.runtime.RuntimeSnapshot
@@ -151,5 +153,32 @@ class HomeViewModelTest {
         assertFalse(uiState.speechActive)
         assertFalse(uiState.speechProcessing)
     }
+
+    @Test
+    fun test13_providerDiagnosticProjectsRecoveryState() {
+        val snapshot = createSnapshot(SpeechSessionState.Idle)
+        val diagnostic = AiProviderDiagnostic(
+            providerId = "provider.test",
+            displayName = "Test Provider",
+            state = ProviderStatus.State.UNCONFIGURED,
+            message = "API key missing",
+            capabilities = emptySet(),
+            selected = true,
+            selectedModelId = null,
+            local = false
+        )
+
+        val uiState = mapper.map(
+            snapshot = snapshot,
+            sessionState = CognitiveSessionState.Idle,
+            selectedProviderId = "provider.test",
+            diagnostics = listOf(diagnostic)
+        )
+
+        assertEquals(ProviderStatus.State.UNCONFIGURED, uiState.activeProviderState)
+        assertEquals("API key missing", uiState.activeProviderMessage)
+        assertEquals("Test Provider", uiState.activeProvider)
+    }
+
 
 }
