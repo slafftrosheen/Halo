@@ -121,3 +121,32 @@ This pass hardened the shared interaction contract across reachable screens:
 
 Regression coverage now includes workspace interaction semantics and a 1.30x font-scale Roborazzi
 visual contract in addition to the light/dark snapshots.
+
+
+## Real-device recovery pass — 2026-09-18
+
+The reachable Android flows now recover from common runtime prerequisites instead of presenting
+generic failure text:
+
+- Pairing models Bluetooth prerequisites explicitly: READY, permission required, Bluetooth off,
+  and unsupported BLE.
+- MainActivity owns separate ActivityResult launchers for BLE permissions and the system Bluetooth
+  enable request; PairingViewModel only publishes state and never attempts privileged UI actions.
+- Pairing re-evaluates prerequisites on resume and before scan/connect, blocks actions while the
+  prerequisite is unresolved, and maps connection transitions/failures to user-facing status.
+- MainActivity re-checks required microphone permission on resume without falsely restarting the
+  process-owned HaloRuntime.
+- Home refreshes AI provider diagnostics on first display and foreground resume. Confirmed
+  UNCONFIGURED/OFFLINE/MODEL_MISSING/UNAVAILABLE/ERROR states render a recovery card that routes
+  directly to Intelligence without disabling fallback-capable routing.
+- Intelligence consumes router diagnostics, shows provider state/message, exposes Check connection,
+  and restores provider-specific setup for OpenRouter API key and Ollama endpoint. Saving either
+  setting refreshes diagnostics and advertised models.
+- ReloadableSpeechRecognitionProvider exposes observable availability. Home routes unavailable voice
+  actions to Voice setup; installing Whisper refreshes the same provider instance and updates Home
+  without an app restart.
+- Voice settings re-check model files on resume.
+
+These are source-level recovery contracts. Bluetooth radio behavior, OEM permission dialogs,
+network changes, actual provider reachability and physical glasses reconnect still require device
+acceptance.
