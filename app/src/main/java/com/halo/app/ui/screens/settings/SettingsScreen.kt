@@ -3,12 +3,14 @@ package com.halo.app.ui.screens.settings
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -33,6 +35,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -138,8 +143,14 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             AppearanceMode.entries.forEach { mode ->
                 val selected = uiState.appearanceMode == mode
                 Surface(
-                    modifier = Modifier.weight(1f),
-                    onClick = { viewModel.setAppearanceMode(mode) },
+                    modifier = Modifier
+                        .weight(1f)
+                        .heightIn(min = 48.dp)
+                        .selectable(
+                            selected = selected,
+                            role = Role.RadioButton,
+                            onClick = { viewModel.setAppearanceMode(mode) }
+                        ),
                     shape = RoundedCornerShape(14.dp),
                     color = if (selected) {
                         MaterialTheme.colorScheme.primaryContainer
@@ -189,7 +200,9 @@ private fun SettingsRow(
     onClick: (() -> Unit)? = null
 ) {
     val interaction = if (onClick != null) {
-        Modifier.clickable(onClick = onClick)
+        Modifier
+            .clickable(onClick = onClick)
+            .semantics { role = Role.Button }
     } else {
         Modifier
     }
@@ -197,6 +210,7 @@ private fun SettingsRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .heightIn(min = 48.dp)
             .then(interaction)
             .padding(vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
