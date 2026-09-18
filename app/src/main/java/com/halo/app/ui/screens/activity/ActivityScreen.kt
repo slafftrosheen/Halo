@@ -1,36 +1,32 @@
 package com.halo.app.ui.screens.activity
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.MoreHoriz
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Article
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Devices
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.halo.app.ui.presence.HaloSignalGlyph
+import com.halo.app.ui.presence.HaloSignalKind
 import com.halo.sdk.runtime.RuntimeSnapshotSource
 import com.halo.sdk.runtime.TimelineEvent
 import java.text.SimpleDateFormat
@@ -51,75 +47,33 @@ fun ActivityScreen(viewModel: ActivityViewModel) {
             .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 24.dp)
     ) {
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Top Bar
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Activity",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            Row {
-                IconButton(onClick = { /* TODO */ }) {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "Search",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                IconButton(onClick = { /* TODO */ }) {
-                    Icon(
-                        imageVector = Icons.Default.MoreHoriz,
-                        contentDescription = "More",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Filter Pills
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            FilterPill("All", true)
-            FilterPill("Voice", false)
-            FilterPill("Vision", false)
-            FilterPill("System", false)
-            FilterPill("Devices", false)
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(Modifier.size(16.dp))
         Text(
-            text = "Today",
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
+            text = "Activity",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onBackground
         )
-        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "What happened, in order.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(Modifier.size(24.dp))
 
         if (uiState.events.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
-                    text = "No activity yet.",
+                    text = "Nothing here yet.",
+                    style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = 80.dp)
+                contentPadding = PaddingValues(bottom = 80.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 items(uiState.events, key = { it.id }) { event ->
                     ActivityListItem(event)
@@ -130,38 +84,18 @@ fun ActivityScreen(viewModel: ActivityViewModel) {
 }
 
 @Composable
-fun FilterPill(text: String, selected: Boolean) {
-    Surface(
-        shape = RoundedCornerShape(16.dp),
-        color = if (selected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.surface,
-        border = if (selected) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-    ) {
-        Text(
-            text = text,
-            fontSize = 12.sp,
-            color = if (selected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
-        )
+private fun ActivityListItem(event: ActivityEvent) {
+    val signalKind = when {
+        event.failed -> HaloSignalKind.ERROR
+        event.speaker == ActivitySpeaker.User -> HaloSignalKind.USER
+        event.speaker == ActivitySpeaker.System -> HaloSignalKind.DEVICE
+        else -> HaloSignalKind.HALO
     }
-}
-
-@Composable
-fun ActivityListItem(event: ActivityEvent) {
-    val isSystemOrError = event.failed || event.speaker == ActivitySpeaker.System
-    val isUser = event.speaker == ActivitySpeaker.User
-
-    val (icon, color) = when {
-        event.failed -> Icons.Default.AutoAwesome to Color(0xFFFF6B72) // Danger
-        isUser -> Icons.Default.Mic to Color(0xFF4EA8FF) // Info
-        isSystemOrError -> Icons.Default.Devices to Color(0xFFF0B86B) // Warning
-        else -> Icons.Default.AutoAwesome to Color(0xFF9C27B0) // Purple for Halo response
-    }
-
     val title = when {
-        event.failed -> "Failed Action"
-        isUser -> "Transcribed"
-        isSystemOrError -> "System Event"
-        else -> "Asked"
+        event.failed -> "Failed"
+        event.speaker == ActivitySpeaker.User -> "You"
+        event.speaker == ActivitySpeaker.System -> "System"
+        else -> "Halo"
     }
 
     Row(
@@ -172,39 +106,30 @@ fun ActivityListItem(event: ActivityEvent) {
     ) {
         Text(
             text = event.timestamp.formatTime(),
-            fontSize = 12.sp,
+            style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.width(48.dp).padding(top = 4.dp)
+            modifier = Modifier
+                .width(48.dp)
+                .padding(top = 8.dp)
         )
-
-        Surface(
-            shape = RoundedCornerShape(12.dp),
-            color = color.copy(alpha = 0.15f),
-            modifier = Modifier.size(36.dp)
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = color,
-                modifier = Modifier.padding(8.dp)
-            )
-        }
-
-        Spacer(modifier = Modifier.width(16.dp))
-
+        HaloSignalGlyph(
+            kind = signalKind,
+            size = 36.dp
+        )
+        Spacer(Modifier.width(14.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onBackground
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = if (event.failed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground
             )
-            Spacer(modifier = Modifier.height(2.dp))
+            Spacer(Modifier.size(3.dp))
             Text(
-                text = "\"${event.message}\"",
-                fontSize = 14.sp,
+                text = event.message,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2
+                maxLines = 4
             )
         }
     }
@@ -231,11 +156,14 @@ data class ActivityUiState(
 class ActivityUiMapper {
     fun map(timeline: List<TimelineEvent>): ActivityUiState {
         val events = timeline.asSequence()
-            .filter { event -> event.title == "You" || event.title == "Halo" || event.title.startsWith("System") }
+            .filter { event ->
+                event.title == "You" ||
+                    event.title == "Halo" ||
+                    event.title.startsWith("System")
+            }
             .mapNotNull { event ->
                 val message = event.description.trim()
                 if (message.isEmpty()) return@mapNotNull null
-
                 ActivityEvent(
                     id = event.id,
                     speaker = when (event.title) {
@@ -251,7 +179,6 @@ class ActivityUiMapper {
             }
             .sortedByDescending { it.timestamp }
             .toList()
-
         return ActivityUiState(events = events)
     }
 }
