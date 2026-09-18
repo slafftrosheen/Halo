@@ -46,8 +46,12 @@ import androidx.compose.ui.unit.sp
 import com.halo.app.ui.glass.components.HaloMarkdownText
 import com.halo.app.ui.glass.material.HaloRuntimeState
 import com.halo.app.ui.presence.HaloPresence
+import com.halo.app.ui.theme.HaloWarning
 import com.halo.app.ui.theme.rememberReducedMotion
+import com.halo.app.ui.workspace.HaloWorkspaceButton
+import com.halo.app.ui.workspace.HaloWorkspaceCard
 import com.halo.sdk.provider.CognitiveSessionState
+import com.halo.sdk.provider.ProviderStatus
 
 @Composable
 fun HomeScreen(viewModel: HomeViewModel) {
@@ -62,6 +66,14 @@ fun HomeScreen(viewModel: HomeViewModel) {
     val isActiveSession = uiState.sessionState != CognitiveSessionState.Idle &&
         uiState.sessionState !is CognitiveSessionState.Completed &&
         uiState.sessionState !is CognitiveSessionState.Failed
+    val providerNeedsAttention = uiState.activeProvider == "No provider" ||
+        uiState.activeProviderState in setOf(
+            ProviderStatus.State.UNCONFIGURED,
+            ProviderStatus.State.OFFLINE,
+            ProviderStatus.State.MODEL_MISSING,
+            ProviderStatus.State.UNAVAILABLE,
+            ProviderStatus.State.ERROR
+        )
 
     fun togglePresence() {
         when {
@@ -141,6 +153,40 @@ fun HomeScreen(viewModel: HomeViewModel) {
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+            }
+        }
+
+        AnimatedVisibility(visible = providerNeedsAttention) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 18.dp)
+            ) {
+                HaloWorkspaceCard(accent = HaloWarning) {
+                    Text(
+                        text = "AI provider needs attention",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = uiState.activeProviderMessage ?: when (uiState.activeProviderState) {
+                            ProviderStatus.State.UNCONFIGURED -> "Finish provider setup before using it."
+                            ProviderStatus.State.OFFLINE -> "The selected provider is currently offline."
+                            ProviderStatus.State.MODEL_MISSING -> "Choose or install a model for this provider."
+                            ProviderStatus.State.ERROR -> "The provider reported an error."
+                            ProviderStatus.State.UNAVAILABLE -> "The selected provider is unavailable."
+                            else -> "Choose and configure an AI provider."
+                        },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    HaloWorkspaceButton(
+                        text = "Open Intelligence",
+                        onClick = viewModel::navigateToIntelligence,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         }
 
