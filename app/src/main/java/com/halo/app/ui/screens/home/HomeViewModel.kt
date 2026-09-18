@@ -38,6 +38,7 @@ data class HomeUiState(
     val sessionState: CognitiveSessionState = CognitiveSessionState.Idle,
     val speechActive: Boolean = false,
     val speechProcessing: Boolean = false,
+    val speechReady: Boolean = true,
     val presentedResponse: String? = null
 )
 
@@ -133,7 +134,8 @@ class HomeViewModel(
     private val eventBus: EventBus,
     private val cognitiveSession: CognitiveSession,
     private val stopSpeechOutput: () -> Unit,
-    private val aiProviderRouter: AiProviderRouter? = null
+    private val aiProviderRouter: AiProviderRouter? = null,
+    private val speechAvailability: StateFlow<Boolean> = MutableStateFlow(true)
 ) : ViewModel() {
     private val mapper = HomeUiMapper()
     private val listeningCommandMutex = Mutex()
@@ -147,7 +149,8 @@ class HomeViewModel(
         aiProviderRouter?.selectedProviderId ?: MutableStateFlow<String?>(null),
         aiProviderRouter?.selectedModelId ?: MutableStateFlow<String?>(null),
         aiProviderRouter?.diagnosticsFlow ?: MutableStateFlow(emptyList<AiProviderDiagnostic>()),
-        _presentedResponse
+        _presentedResponse,
+        speechAvailability
     ) { args ->
         @Suppress("UNCHECKED_CAST")
         val snapshot = args[0] as RuntimeSnapshot
@@ -156,8 +159,12 @@ class HomeViewModel(
         val selectedModelId = args[3] as String?
         @Suppress("UNCHECKED_CAST") val diagnostics = args[4] as List<AiProviderDiagnostic>
         val presentedResponse = args[5] as String?
+        val speechReady = args[6] as Boolean
         mapper.map(snapshot, sessionState, selectedProviderId, selectedModelId, diagnostics)
-            .copy(presentedResponse = presentedResponse)
+            .copy(
+                presentedResponse = presentedResponse,
+                speechReady = speechReady
+            )
     }.stateIn(viewModelScope, SharingStarted.Lazily, HomeUiState())
 
     init {
@@ -213,6 +220,16 @@ class HomeViewModel(
             }.onFailure {
                 Log.e("HomeViewModel", "Text submission failed", it)
             }
+        }
+    }
+
+    fun refreshProviderDiagnostics() {
+        val router = aiProviderRouter ?: return
+        viewModelScope.launch {
+            runCatching { router.diagnostics() }
+                .onFailure { error ->
+                    Log.w("HomeViewModel", "Provider diagnostics refresh failed", error)
+                }
         }
     }
 
@@ -284,5 +301,6 @@ class HomeViewModel(
     val navigationEvents: SharedFlow<String> = _navigationEvents.asSharedFlow()
 
     fun navigateToIntelligence() { viewModelScope.launch { _navigationEvents.emit("ai_settings") } }
+    fun navigateToVoice() { viewModelScope.launch { _navigationEvents.emit("voice_settings") } }
     fun navigateToDevices() { viewModelScope.launch { _navigationEvents.emit("devices") } }
 }
