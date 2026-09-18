@@ -8,6 +8,7 @@ import com.halo.app.di.ManualDependencyGraph
 import com.halo.drivers.heycyan.RealHeyCyanDriver
 import com.halo.drivers.heycyan.ble.DiscoveredBleDevice
 import com.halo.sdk.host.ConnectionState
+import com.halo.sdk.runtime.DeviceIdentity
 import com.halo.sdk.runtime.embodiment.DeviceRegistry
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -25,6 +26,20 @@ import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+
+internal fun canonicalHeyCyanIdentity(
+    address: String,
+    displayName: String,
+    existing: DeviceIdentity? = null
+): DeviceIdentity = (existing ?: DeviceIdentity(
+    deviceId = address,
+    deviceType = "HEYCYAN_GLASSES",
+    displayName = displayName
+)).copy(
+    deviceId = address,
+    deviceType = "HEYCYAN_GLASSES",
+    displayName = displayName
+)
 
 data class PairingUiState(
     val devices: List<DiscoveredBleDevice> = emptyList(),
@@ -259,20 +274,16 @@ class PairingViewModel(
                 val existing = deviceRegistry.getDevice(address)
                 deviceRegistry.saveDevice(
                     (existing ?: com.halo.sdk.runtime.embodiment.DeviceRecord(
-                        identity = com.halo.sdk.runtime.DeviceIdentity(
-                            deviceId = address,
-                            displayName = deviceName,
-                            deviceType = "HEYCYAN_GLASSES"
+                        identity = canonicalHeyCyanIdentity(
+                            address = address,
+                            displayName = deviceName
                         )
                     )).copy(
-                        identity = (
-                            existing?.identity
-                                ?: com.halo.sdk.runtime.DeviceIdentity(
-                                    deviceId = address,
-                                    deviceType = "HEYCYAN_GLASSES",
-                                    displayName = deviceName
-                                )
-                            ).copy(displayName = deviceName),
+                        identity = canonicalHeyCyanIdentity(
+                            address = address,
+                            displayName = deviceName,
+                            existing = existing?.identity
+                        ),
                         lastSeenMs = System.currentTimeMillis()
                     )
                 )
