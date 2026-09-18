@@ -1,10 +1,12 @@
 package com.halo.host.android.system
 
+import android.Manifest
 import android.bluetooth.BluetoothManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
@@ -31,6 +33,10 @@ class AndroidPlatformStateMonitor(
 
     private val _bluetoothEnabled = MutableStateFlow(readBluetoothEnabled())
     val bluetoothEnabled: StateFlow<Boolean> = _bluetoothEnabled.asStateFlow()
+
+    private val _microphonePermissionGranted = MutableStateFlow(readMicrophonePermission())
+    val microphonePermissionGranted: StateFlow<Boolean> =
+        _microphonePermissionGranted.asStateFlow()
 
     private val _networkRevision = MutableStateFlow(0L)
     val networkRevision: StateFlow<Long> = _networkRevision.asStateFlow()
@@ -64,6 +70,14 @@ class AndroidPlatformStateMonitor(
     fun refreshBluetoothState() {
         _bluetoothEnabled.value = readBluetoothEnabled()
     }
+
+    fun refreshMicrophonePermission() {
+        _microphonePermissionGranted.value = readMicrophonePermission()
+    }
+
+    private fun readMicrophonePermission(): Boolean =
+        appContext.checkSelfPermission(Manifest.permission.RECORD_AUDIO) ==
+            PackageManager.PERMISSION_GRANTED
 
     private fun readBluetoothEnabled(): Boolean = try {
         bluetoothManager?.adapter?.isEnabled == true
