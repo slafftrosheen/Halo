@@ -61,3 +61,13 @@ These complement the source audit; they do not replace device-level interaction 
 The interaction-wiring acceptance rule is now: a visible interactive control must have a real
 host/ViewModel/runtime action. If the runtime capability is absent (for example memory context or
 agent mode in the current session path), the control stays hidden instead of shipping as a placebo.
+
+
+## Accessibility interaction checks
+
+`HaloWorkspaceInteractionTest` verifies disabled rows expose no click action, selected interactive
+rows report selection plus a click action, and disabled buttons report disabled state.
+
+The visual-language snapshot suite also includes a 1.30x font-scale contract. This is a regression
+guard, not proof of full accessibility. Device acceptance must still cover TalkBack traversal,
+focus order, 200% font-size behavior where supported, keyboard/IME use, and physical touch targets.
