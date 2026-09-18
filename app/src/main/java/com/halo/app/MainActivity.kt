@@ -221,8 +221,9 @@ class MainActivity : ComponentActivity() {
         arrayOf(Manifest.permission.RECORD_AUDIO)
 
     /**
-     * Starts only the Android cognitive runtime. Physical embodiments are optional
-     * and must be connected explicitly from the Devices flow.
+     * Starts the Android cognitive runtime. Physical embodiments remain optional:
+     * only saved devices with autoConnect=true may be constructed/retried by the
+     * process-level DeviceAutoConnectCoordinator.
      */
     private fun startRuntimeLoop(force: Boolean = false) {
         if (!force && runtimeLoopStarted) return
