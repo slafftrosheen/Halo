@@ -13,14 +13,19 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.halo.app.ui.theme.HaloPastelBlue
 import com.halo.app.ui.theme.HaloPastelMint
@@ -39,6 +44,12 @@ fun IntelligenceScreen(
     onBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var openRouterKeyDraft by rememberSaveable(uiState.activeProviderId) {
+        mutableStateOf(uiState.openRouterKey)
+    }
+    var ollamaEndpointDraft by rememberSaveable(uiState.activeProviderId) {
+        mutableStateOf(uiState.ollamaEndpoint)
+    }
 
     Column(
         modifier = Modifier
@@ -122,6 +133,68 @@ fun IntelligenceScreen(
                 )
                 if (index < uiState.providers.lastIndex) {
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                }
+            }
+        }
+
+        when (uiState.activeProviderId) {
+            ProviderIds.OPENROUTER -> {
+                Spacer(Modifier.height(20.dp))
+                HaloWorkspaceSection(title = "Configuration") {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = openRouterKeyDraft,
+                            onValueChange = { openRouterKeyDraft = it },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            label = { Text("OpenRouter API key") },
+                            visualTransformation = PasswordVisualTransformation()
+                        )
+                        Text(
+                            text = "Stored locally on this Android host and used only for OpenRouter requests.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        HaloWorkspaceButton(
+                            text = "Save and refresh",
+                            onClick = { viewModel.setOpenRouterKey(openRouterKeyDraft) },
+                            enabled = openRouterKeyDraft.trim() != uiState.openRouterKey.trim(),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
+
+            ProviderIds.OLLAMA -> {
+                Spacer(Modifier.height(20.dp))
+                HaloWorkspaceSection(title = "Configuration") {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = ollamaEndpointDraft,
+                            onValueChange = { ollamaEndpointDraft = it },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            label = { Text("Ollama endpoint") },
+                            placeholder = { Text("http://192.168.1.10:11434") }
+                        )
+                        Text(
+                            text = "Use the reachable HTTP endpoint for the Ollama host on your local network.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        HaloWorkspaceButton(
+                            text = "Save and refresh",
+                            onClick = { viewModel.setOllamaEndpoint(ollamaEndpointDraft) },
+                            enabled = ollamaEndpointDraft.trim().trimEnd('/') != uiState.ollamaEndpoint.trim().trimEnd('/'),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
             }
         }
