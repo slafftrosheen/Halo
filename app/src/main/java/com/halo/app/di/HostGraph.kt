@@ -16,7 +16,8 @@ class HostGraph(
     private val context: android.content.Context,
     private val infra: InfrastructureGraph,
     private val providerGraph: ProviderGraph,
-    private val storage: com.halo.sdk.runtime.Storage
+    private val storage: com.halo.sdk.runtime.Storage,
+    private val deviceSessionManager: com.halo.sdk.runtime.embodiment.DeviceSessionManager
 ) {
 
     private val speechModelDirectory by lazy {
@@ -73,6 +74,7 @@ class HostGraph(
             driver = heyCyanDriver,
             audioOutput = HeyCyanAudioOutput(heyCyanDriver),
             storage = storage,
+            sessionManager = deviceSessionManager,
             eventBus = infra.eventBus
         )
     }
