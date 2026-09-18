@@ -1,279 +1,286 @@
 package com.halo.app.ui.screens.home
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.MoreHoriz
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.automirrored.filled.Article
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.halo.app.ui.glass.components.*
-import com.halo.app.ui.glass.material.HaloGlassColors
 import com.halo.app.ui.glass.material.HaloRuntimeState
-import com.halo.app.ui.glass.material.HaloTypography
 import com.halo.sdk.provider.CognitiveSessionState
 
 @Composable
 fun HomeScreen(viewModel: HomeViewModel) {
     val uiState by viewModel.uiState.collectAsState()
     val listeningRequested by viewModel.listeningRequested.collectAsState()
-    var textInput by remember { mutableStateOf("") }
-    val isActiveSession = uiState.sessionState != CognitiveSessionState.Idle &&
-        uiState.sessionState !is CognitiveSessionState.Completed &&
-        uiState.sessionState !is CognitiveSessionState.Failed
-    // Include the immediate local intent so a second tap can stop a session
-    // before the runtime snapshot has propagated the first StartListening.
     val isListening = uiState.speechActive || listeningRequested
     val isSpeechProcessing = uiState.speechProcessing
     val isSpeaking = uiState.runtimeState == HaloRuntimeState.Speaking
-    val isSessionActive = uiState.sessionState != CognitiveSessionState.Idle
-    val hasPresentedResponse = !uiState.presentedResponse.isNullOrBlank()
-
-    fun submitText() {
-        val text = textInput.trim()
-        if (text.isNotEmpty() &&
-            !isActiveSession &&
-            !isListening &&
-            !isSpeechProcessing &&
-            !isSpeaking
-        ) {
-            viewModel.submitText(text)
-            textInput = ""
-        }
-    }
 
     fun toggleOrb() {
         when {
             isListening -> viewModel.stopListening()
             isSpeaking -> viewModel.stopSpeakingAndListen()
-            isActiveSession -> viewModel.cancelSession()
-            // sherpa-onnx decode is a blocking native call. Do not start another
-            // microphone transaction until the current recognition has returned.
+            uiState.sessionState != CognitiveSessionState.Idle -> viewModel.cancelSession()
             isSpeechProcessing -> Unit
             else -> viewModel.startListening()
         }
     }
 
-    val presenceLabel = if (isSpeechProcessing) {
-        "Transcribing"
-    } else {
-        when (uiState.runtimeState) {
-            HaloRuntimeState.Listening, HaloRuntimeState.Wakeword -> "Listening"
-            HaloRuntimeState.Capturing -> "Hearing you"
-            HaloRuntimeState.Recognizing -> "Understanding"
-            HaloRuntimeState.Reasoning, HaloRuntimeState.Planning -> "Thinking"
-            HaloRuntimeState.Executing -> "Working"
-            HaloRuntimeState.Speaking -> "Responding"
-            HaloRuntimeState.Recovering -> "Recovering"
-            HaloRuntimeState.Stopped -> "Offline"
-            HaloRuntimeState.Idle -> if (listeningRequested) "Starting microphone" else "Ready"
-        }
-    }
-
-    val hintLabel = when {
-        isListening -> "Tap to stop"
-        isSpeaking -> "Tap to interrupt"
-        isActiveSession -> "Tap to cancel"
-        isSpeechProcessing -> "Local speech recognition"
-        else -> "Tap to speak"
-    }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    0f to HaloGlassColors.BackgroundSecondary,
-                    0.34f to HaloGlassColors.Background,
-                    1f to HaloGlassColors.Background
-                )
-            )
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 16.dp)
+            .background(MaterialTheme.colorScheme.background)
+            .padding(top = 16.dp, start = 24.dp, end = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // Top Bar
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "halo",
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground,
+                letterSpacing = 2.sp
+            )
+            Row {
+                IconButton(onClick = { /* TODO */ }) {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = "Settings",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = "Profile",
+                        tint = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier.padding(8.dp)
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(48.dp))
+
+        // Central Graphic (Abstract Pixel Art)
+        AbstractLogoGraphic()
+
+        Spacer(modifier = Modifier.height(40.dp))
+
+        // Status Indicator
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(10.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "Ready",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+        }
+        Spacer(modifier = Modifier.height(4.dp))
         Text(
-            "HALO",
-            style = HaloTypography.titleLarge,
-            color = HaloGlassColors.TextPrimary,
-            letterSpacing = 4.sp,
-            modifier = Modifier.padding(top = 8.dp)
+            text = "Listening when you need me",
+            fontSize = 14.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
-        Box(
+        // Tap to speak button
+        Surface(
+            shape = RoundedCornerShape(32.dp),
+            color = MaterialTheme.colorScheme.surface,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
             modifier = Modifier
                 .fillMaxWidth()
-                .background(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            HaloGlassColors.Glass.copy(alpha = 0.32f),
-                            Color.Transparent
-                        ),
-                        radius = 860f
-                    )
-                ),
-            contentAlignment = Alignment.Center
+                .height(64.dp)
+                .clickable { toggleOrb() }
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(vertical = 8.dp)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(horizontal = 24.dp)
             ) {
-                HaloStateOrb(
-                    state = uiState.runtimeState,
-                    size = 236.dp,
-                    onClick = if (isSpeechProcessing) null else ::toggleOrb,
-                    contentDescription = when {
-                        isListening -> "Stop listening"
-                        isSpeaking -> "Interrupt and listen"
-                        isActiveSession -> "Stop Halo"
-                        isSpeechProcessing -> "Halo is transcribing speech"
-                        else -> "Speak to Halo"
-                    }
-                )
-
-                Spacer(Modifier.height(18.dp))
-
-                AnimatedContent(
-                    targetState = presenceLabel,
-                    transitionSpec = {
-                        (fadeIn(tween(300)) + slideInVertically { it / 3 })
-                            .togetherWith(fadeOut(tween(200)) + slideOutVertically { -it / 3 })
-                    },
-                    label = "presence_label"
-                ) { label ->
-                    Text(
-                        label,
-                        style = HaloTypography.labelLarge,
-                        color = HaloGlassColors.TextPrimary,
-                        letterSpacing = 1.4.sp,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.secondary,
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Mic,
+                        contentDescription = "Microphone",
+                        tint = Color.White,
+                        modifier = Modifier.padding(8.dp)
                     )
                 }
-
-                Spacer(Modifier.height(4.dp))
-
+                Spacer(modifier = Modifier.width(16.dp))
                 Text(
-                    hintLabel,
-                    style = HaloTypography.labelSmall,
-                    color = HaloGlassColors.TextMuted,
-                    letterSpacing = 0.6.sp
+                    text = "Tap to speak",
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Medium
                 )
             }
         }
 
-        if (isSessionActive || hasPresentedResponse) {
-            Spacer(Modifier.height(12.dp))
-            SessionContextPanel(uiState)
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Four Actions
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            QuickAction(icon = Icons.Default.CameraAlt, label = "Camera")
+            QuickAction(icon = Icons.Default.Edit, label = "Note")
+            QuickAction(icon = Icons.Default.Search, label = "Ask")
+            QuickAction(icon = Icons.Default.MoreHoriz, label = "More")
         }
 
-        Spacer(Modifier.height(22.dp))
+        Spacer(modifier = Modifier.weight(1f))
 
-        HaloGlassCard {
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                HaloGlassTextField(
-                    value = textInput,
-                    onValueChange = { textInput = it },
-                    modifier = Modifier.weight(1f),
-                    placeholder = "Ask Halo anything…",
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
-                    keyboardActions = KeyboardActions(onSend = { submitText() }),
-                    maxLines = 3,
-                    enabled = !isActiveSession && !isListening && !isSpeechProcessing && !isSpeaking
-                )
-                Spacer(Modifier.width(8.dp))
-                if (isActiveSession) {
-                    HaloGlassIconButton.Danger(
-                        imageVector = Icons.Default.Stop,
-                        contentDescription = "Stop",
-                        onClick = viewModel::cancelSession
+        // Recent Context Card
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.surface,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 24.dp)
+                .clickable { /* TODO */ }
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f),
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Article,
+                        contentDescription = "Document",
+                        tint = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier.padding(12.dp)
                     )
-                } else {
-                    HaloGlassIconButton.Primary(
-                        imageVector = Icons.AutoMirrored.Filled.Send,
-                        contentDescription = "Submit",
-                        onClick = ::submitText,
-                        enabled = textInput.isNotBlank() && !isListening && !isSpeechProcessing && !isSpeaking
+                }
+                Spacer(modifier = Modifier.width(16.dp))
+                Column {
+                    Text(
+                        text = "Working on",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "Halo visual language",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "4 items • 2 memories",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
         }
-
-        Spacer(Modifier.height(32.dp))
     }
 }
 
 @Composable
-private fun SessionContextPanel(uiState: HomeUiState) {
-    HaloGlassSection(title = "HALO") {
-        when (val session = uiState.sessionState) {
-            is CognitiveSessionState.Streaming -> Text(
-                session.text.ifBlank { "Generating…" },
-                style = HaloTypography.bodyLarge,
-                color = HaloGlassColors.TextPrimary,
-                lineHeight = 22.sp
-            )
-            is CognitiveSessionState.Completed -> HaloMarkdownText(
-                markdown = session.response.text.ifBlank { "Completed" },
-                textColor = HaloGlassColors.TextPrimary,
-                modifier = Modifier.fillMaxWidth()
-            )
-            is CognitiveSessionState.Failed -> Text(
-                uiState.contextualText,
-                style = HaloTypography.bodyLarge,
-                color = HaloGlassColors.TextPrimary
-            )
-            else -> {
-                val response = uiState.presentedResponse
-                if (!response.isNullOrBlank()) {
-                    HaloMarkdownText(
-                        markdown = response,
-                        textColor = HaloGlassColors.TextPrimary,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                } else {
-                    Text(
-                        uiState.contextualText,
-                        style = HaloTypography.bodyLarge,
-                        color = HaloGlassColors.TextPrimary
-                    )
-                }
-            }
-        }
-        if (uiState.sessionState is CognitiveSessionState.Completed ||
-            uiState.sessionState is CognitiveSessionState.Streaming
+fun QuickAction(icon: ImageVector, label: String) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.clickable { /* TODO */ }
+    ) {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surface,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            modifier = Modifier.size(64.dp)
         ) {
-            Spacer(Modifier.height(8.dp))
-            Text(
-                "via ${uiState.activeProvider}",
-                style = HaloTypography.labelSmall,
-                color = HaloGlassColors.TextMuted
+            Icon(
+                imageVector = icon,
+                contentDescription = label,
+                tint = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier.padding(18.dp)
             )
         }
-        if (uiState.sessionState is CognitiveSessionState.Reasoning) {
-            Spacer(Modifier.height(12.dp))
-            HaloGlassIndeterminateProgress(modifier = Modifier.fillMaxWidth())
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = label,
+            fontSize = 12.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+fun AbstractLogoGraphic() {
+    // A simple placeholder for the abstract pixel art logo
+    Box(
+        modifier = Modifier.size(120.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Box(modifier = Modifier.size(24.dp).background(Color.Transparent))
+                Box(modifier = Modifier.size(24.dp).background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f)))
+                Box(modifier = Modifier.size(24.dp).background(Color.Transparent))
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Box(modifier = Modifier.size(24.dp).background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f)))
+                Box(modifier = Modifier.size(24.dp).background(MaterialTheme.colorScheme.secondary))
+                Box(modifier = Modifier.size(24.dp).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)))
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Box(modifier = Modifier.size(24.dp).background(Color.Transparent))
+                Box(modifier = Modifier.size(24.dp).background(MaterialTheme.colorScheme.primary))
+                Box(modifier = Modifier.size(24.dp).background(Color.Transparent))
+            }
         }
     }
 }

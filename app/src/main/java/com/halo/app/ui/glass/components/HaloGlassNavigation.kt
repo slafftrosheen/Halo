@@ -5,32 +5,26 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.clip
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.halo.app.ui.glass.material.HaloGlassColors
 
-/**
- * Data model for a navigation item.
- */
 data class NavigationItem(
     val route: String,
     val label: String,
     val icon: ImageVector
 )
 
-/**
- * Glass navigation bar for the main application shell.
- */
 @Composable
 fun HaloGlassNavigation(
     modifier: Modifier = Modifier,
@@ -50,16 +44,14 @@ fun HaloGlassNavigation(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .navigationBarsPadding()
-            .padding(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 12.dp),
+            .background(MaterialTheme.colorScheme.surface)
+            .navigationBarsPadding(),
         contentAlignment = Alignment.BottomCenter
     ) {
         Row(
             modifier = Modifier
-                .fillMaxWidth(0.9f)
+                .fillMaxWidth()
                 .height(64.dp)
-                .clip(RoundedCornerShape(32.dp))
-                .background(HaloGlassColors.BackgroundSecondary.copy(alpha = 0.8f))
                 .padding(horizontal = 8.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
@@ -75,43 +67,30 @@ fun HaloGlassNavigation(
                         .clickable {
                             val destination = navController.currentDestination
                             if (destination?.route == item.route || getPrimaryRoute(destination?.route) == item.route) {
-                                Log.d("HaloGlassNavigation", "Already at primary route: ${item.route}")
                                 return@clickable
                             }
-
-                            val currentDestinationId = destination?.id ?: return@clickable
-                            Log.d(
-                                "HaloGlassNavigation",
-                                "Navigating: ${destination?.route} -> ${item.route} (id=$currentDestinationId)"
-                            )
-
                             runCatching {
                                 navController.navigate(item.route) {
                                     launchSingleTop = true
                                     restoreState = true
                                 }
-                            }.onFailure { error ->
-                                Log.e(
-                                    "HaloGlassNavigation",
-                                    "Navigation failed: ${destination?.route} -> ${item.route}",
-                                    error
-                                )
                             }
                         }
                         .padding(vertical = 8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
+                    val tint = if (selected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant
                     Icon(
                         imageVector = item.icon,
                         contentDescription = item.label,
-                        tint = if (selected) HaloGlassColors.Accent else HaloGlassColors.TextMuted,
-                        modifier = Modifier.size(26.dp)
+                        tint = tint,
+                        modifier = Modifier.size(24.dp)
                     )
                     Spacer(Modifier.height(4.dp))
                     Text(
                         text = item.label,
-                        color = if (selected) HaloGlassColors.TextPrimary else HaloGlassColors.TextMuted,
+                        color = tint,
                         fontSize = 11.sp
                     )
                 }

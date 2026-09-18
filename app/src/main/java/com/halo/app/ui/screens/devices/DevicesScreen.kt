@@ -23,6 +23,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.PhoneAndroid
+import androidx.compose.material.icons.filled.Devices
+import androidx.compose.material.icons.filled.SmartToy
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.Gamepad
+import androidx.compose.material.icons.filled.ChevronRight
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.halo.app.embodiment.BuddyBotHost
@@ -306,133 +322,101 @@ fun DevicesScreen(
     onBack: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    
-    val onlineCount = uiState.devices.count { it.isConnected }
-    val offlineCount = uiState.devices.size - onlineCount
 
-    HaloGlassLazyPage(title = "") {
-        item { HaloGlassBackHeader(title = "Devices", onBack = onBack) }
-        item { Spacer(Modifier.height(16.dp)) }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(androidx.compose.material3.MaterialTheme.colorScheme.background)
+            .padding(horizontal = 24.dp)
+    ) {
+        Spacer(modifier = Modifier.height(16.dp))
 
-        // Fleet status card
-        item {
-            FleetStatusCard(
-                totalCount = uiState.devices.size,
-                onlineCount = onlineCount,
-                offlineCount = offlineCount
-            )
-            Spacer(Modifier.height(24.dp))
-        }
-
-        if (uiState.devices.isEmpty()) {
-            item {
-                HaloGlassSection(title = "DEVICES") {
-                    Column(Modifier.fillMaxWidth().padding(16.dp)) {
-                        Text("No saved devices", style = HaloTypography.titleMedium, color = HaloGlassColors.TextPrimary)
-                        Spacer(Modifier.height(6.dp))
-                        Text(
-                            "Pair a wearable or robot to make it available to the runtime.",
-                            style = HaloTypography.bodySmall,
-                            color = HaloGlassColors.TextSecondary
-                        )
-                    }
-                }
-            }
-            item { Spacer(Modifier.height(12.dp)) }
-            item {
-                HaloGlassButton(
-                    text = "Add device",
-                    onClick = { viewModel.navigateTo("discovery") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        } else {
-            // 2-column grid. We chunk the devices list by 2.
-            val chunkedDevices = uiState.devices.chunked(2)
-            
-            item {
-                Text(
-                    text = "FLEET",
-                    style = HaloTypography.labelSmall,
-                    color = HaloGlassColors.TextMuted,
-                    modifier = Modifier.padding(bottom = 12.dp, start = 8.dp)
-                )
-            }
-
-            items(chunkedDevices.size) { rowIndex ->
-                val rowDevices = chunkedDevices[rowIndex]
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    DeviceTile(
-                        device = rowDevices[0],
-                        onClick = { viewModel.navigateTo("device/${rowDevices[0].id}") },
-                        modifier = Modifier.weight(1f)
-                    )
-                    
-                    if (rowDevices.size > 1) {
-                        DeviceTile(
-                            device = rowDevices[1],
-                            onClick = { viewModel.navigateTo("device/${rowDevices[1].id}") },
-                            modifier = Modifier.weight(1f)
-                        )
-                    } else {
-                        // If odd number, add "Add Device" tile here
-                        AddDeviceTile(
-                            onClick = { viewModel.navigateTo("discovery") },
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
-                Spacer(Modifier.height(12.dp))
-            }
-            
-            // If even number of devices, the "Add Device" tile goes in a new row
-            if (uiState.devices.size % 2 == 0) {
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        AddDeviceTile(
-                            onClick = { viewModel.navigateTo("discovery") },
-                            modifier = Modifier.weight(1f)
-                        )
-                        Spacer(Modifier.weight(1f)) // empty spacer to keep columns balanced
-                    }
-                    Spacer(Modifier.height(12.dp))
-                }
-            }
-        }
-
-        item { Spacer(Modifier.height(24.dp)) }
-    }
-}
-
-@Composable
-private fun FleetStatusCard(totalCount: Int, onlineCount: Int, offlineCount: Int) {
-    HaloGlassCard {
+        // Top Bar
         Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
-                Text("FLEET STATUS", style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
-                Spacer(Modifier.height(4.dp))
-                Text("$totalCount Devices", style = HaloTypography.titleLarge, color = HaloGlassColors.TextPrimary)
+                Text(
+                    text = "Devices",
+                    fontSize = 28.sp,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                    color = androidx.compose.material3.MaterialTheme.colorScheme.onBackground
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Connect. Configure. Control.",
+                    fontSize = 14.sp,
+                    color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Column(horizontalAlignment = Alignment.End) {
-                    Text("ONLINE", style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
-                    Spacer(Modifier.height(2.dp))
-                    Text(onlineCount.toString(), style = HaloTypography.bodyLarge, color = HaloGlassColors.Success)
+            androidx.compose.material3.Surface(
+                shape = CircleShape,
+                color = androidx.compose.material3.MaterialTheme.colorScheme.surfaceVariant,
+                modifier = Modifier.size(40.dp)
+            ) {
+                androidx.compose.material3.IconButton(onClick = { viewModel.navigateTo("discovery") }) {
+                    androidx.compose.material3.Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add Device",
+                        tint = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
-                Column(horizontalAlignment = Alignment.End) {
-                    Text("OFFLINE", style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
-                    Spacer(Modifier.height(2.dp))
-                    Text(offlineCount.toString(), style = HaloTypography.bodyLarge, color = HaloGlassColors.Warning)
+            }
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        if (uiState.devices.isEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "No devices connected.",
+                    color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = 80.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                items(uiState.devices, key = { it.id }) { device ->
+                    DeviceCard(device) {
+                        viewModel.navigateTo("device/${device.id}")
+                    }
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(32.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Saved Devices",
+                            fontSize = 14.sp,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
+                            color = androidx.compose.material3.MaterialTheme.colorScheme.onBackground
+                        )
+                        Text(
+                            text = "Edit",
+                            fontSize = 14.sp,
+                            color = androidx.compose.material3.MaterialTheme.colorScheme.secondary,
+                            modifier = Modifier.clickable { /* TODO */ }
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
+                item {
+                    SavedDeviceRow("Phone (This device)", "Local", Icons.Default.PhoneAndroid)
+                    SavedDeviceRow("MSStack", "Last seen 2 days ago", Icons.Default.Devices)
                 }
             }
         }
@@ -440,106 +424,137 @@ private fun FleetStatusCard(totalCount: Int, onlineCount: Int, offlineCount: Int
 }
 
 @Composable
-private fun DeviceTile(
-    device: GenericDeviceUiState,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val statusColor = when {
-        device.healthWarning != null -> HaloGlassColors.Warning
-        device.connectionStateText == "Error" -> HaloGlassColors.Danger
-        device.isConnected -> HaloGlassColors.Success
-        device.connectionStateText == "Connecting" || device.connectionStateText.contains("Syncing") || device.connectionStateText == "Handshaking" -> HaloGlassColors.Warning
-        else -> HaloGlassColors.TextMuted
-    }
-    
-    val batteryColor = when {
-        device.battery == "Unknown" || device.battery == "No data" -> HaloGlassColors.TextMuted
-        device.isBatteryStale -> HaloGlassColors.Warning
-        else -> HaloGlassColors.TextPrimary
-    }
-
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
-            .background(HaloGlassColors.GlassElevated)
-            .clickable(onClick = onClick)
-            .padding(16.dp)
-            .height(140.dp) // Fixed height for grid uniformity
+fun DeviceCard(device: GenericDeviceUiState, onClick: () -> Unit) {
+    androidx.compose.material3.Surface(
+        shape = RoundedCornerShape(24.dp),
+        color = androidx.compose.material3.MaterialTheme.colorScheme.surface,
+        border = androidx.compose.foundation.BorderStroke(1.dp, androidx.compose.material3.MaterialTheme.colorScheme.outlineVariant),
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)
     ) {
-        // Top row: Type icon/indicator & Status Dot
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.padding(16.dp)
         ) {
-            Text(
-                text = if (device.kind == com.halo.sdk.runtime.embodiment.DeviceKind.BUDDYBOT) "🤖" else "👓", 
-                style = HaloTypography.bodyLarge
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                androidx.compose.material3.Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = androidx.compose.material3.MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f),
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    androidx.compose.material3.Icon(
+                        imageVector = if (device.kind.name.contains("GLASSES")) Icons.Default.SmartToy else Icons.Default.SmartToy,
+                        contentDescription = null,
+                        tint = androidx.compose.material3.MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier.padding(12.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(16.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = device.name,
+                        fontSize = 16.sp,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
+                        color = androidx.compose.material3.MaterialTheme.colorScheme.onBackground
+                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .clip(CircleShape)
+                                .background(if (device.isConnected) Color(0xFF00C853) else Color(0xFFF0B86B))
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = if (device.isConnected) "Connected • ${device.battery}" else "Offline",
+                            fontSize = 12.sp,
+                            color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                androidx.compose.material3.IconButton(onClick = onClick) {
+                    androidx.compose.material3.Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = "Settings",
+                        tint = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                DeviceAction(Icons.Default.CameraAlt, "Camera")
+                DeviceAction(Icons.Default.Mic, "Audio")
+                DeviceAction(Icons.Default.Gamepad, "Controls")
+                DeviceAction(Icons.Default.Settings, "Settings")
+            }
+        }
+    }
+}
+
+@Composable
+fun DeviceAction(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        androidx.compose.material3.Surface(
+            shape = CircleShape,
+            color = androidx.compose.material3.MaterialTheme.colorScheme.surfaceVariant,
+            modifier = Modifier.size(48.dp)
+        ) {
+            androidx.compose.material3.Icon(
+                imageVector = icon,
+                contentDescription = label,
+                tint = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(12.dp)
             )
-            Box(Modifier.size(8.dp).background(statusColor, CircleShape))
         }
-
-        Spacer(Modifier.weight(1f))
-
-        // Device Name
+        Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = device.name,
-            style = HaloTypography.bodyMedium,
-            color = HaloGlassColors.TextPrimary,
-            maxLines = 1,
-            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+            text = label,
+            fontSize = 12.sp,
+            color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
         )
-        
-        Spacer(Modifier.height(4.dp))
-        
-        // Status Text
-        Text(
-            text = device.connectionStateText,
-            style = HaloTypography.labelSmall,
-            color = statusColor,
-            maxLines = 1,
-            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-        )
-
-        Spacer(Modifier.height(12.dp))
-        
-        // Battery bar / info
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text("BATTERY", style = HaloTypography.labelSmall, color = HaloGlassColors.TextMuted)
-            Text(device.battery.substringBefore(" •"), style = HaloTypography.labelSmall, color = batteryColor)
-        }
     }
 }
 
 @Composable
-private fun AddDeviceTile(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
-            .background(HaloGlassColors.Glass) // Lighter background to indicate action
-            .clickable(onClick = onClick)
-            .padding(16.dp)
-            .height(140.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+fun SavedDeviceRow(name: String, status: String, icon: androidx.compose.ui.graphics.vector.ImageVector) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .background(HaloGlassColors.GlassElevated, CircleShape),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("+", style = HaloTypography.titleLarge, color = HaloGlassColors.TextPrimary)
+        androidx.compose.material3.Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(24.dp)
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = name,
+                fontSize = 16.sp,
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
+                color = androidx.compose.material3.MaterialTheme.colorScheme.onBackground
+            )
+            Text(
+                text = status,
+                fontSize = 12.sp,
+                color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
-        Spacer(Modifier.height(12.dp))
-        Text("Add Device", style = HaloTypography.bodyMedium, color = HaloGlassColors.TextSecondary)
+        androidx.compose.material3.Icon(
+            imageVector = Icons.Default.ChevronRight,
+            contentDescription = null,
+            tint = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+        )
     }
 }

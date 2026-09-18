@@ -26,7 +26,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.halo.app.di.ManualDependencyGraph
 import com.halo.app.ui.glass.components.HaloGlassNavigation
 import com.halo.app.ui.glass.components.NavigationItem
-import com.halo.app.ui.glass.material.HaloGlassColors
+import androidx.compose.material3.MaterialTheme
 import com.halo.app.ui.screens.activity.ActivityScreen
 import com.halo.app.ui.screens.devices.BuddyBotControlScreen
 import com.halo.app.ui.screens.devices.DevicesScreen
@@ -69,7 +69,7 @@ fun AppShell() {
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        containerColor = HaloGlassColors.Background,
+        containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
             HaloGlassNavigation(
                 navController = navController,
