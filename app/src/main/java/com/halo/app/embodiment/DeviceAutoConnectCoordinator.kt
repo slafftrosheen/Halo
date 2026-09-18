@@ -59,6 +59,27 @@ class DeviceAutoConnectCoordinator(
         }
     }
 
+    suspend fun retryDevice(deviceId: String): Boolean {
+        val record = registry.getDevice(deviceId) ?: return false
+        if (!record.autoConnect) return false
+
+        return when (record.descriptor.kind) {
+            DeviceKind.HEYCYAN_GLASSES -> {
+                if (!bluetoothEnabled.value) return false
+                val host = heyCyanHostProvider()
+                host.setTargetDevice(deviceId)
+                host.retryAutoConnect()
+            }
+            DeviceKind.BUDDYBOT -> {
+                val host = buddyBotHostProvider()
+                if (host.deviceId != deviceId) return false
+                host.ensureDeviceRegistered()
+                sessionManager.autoConnectDevice(deviceId)
+            }
+            DeviceKind.UNKNOWN -> false
+        }
+    }
+
     private suspend fun bootstrapSavedDevices() {
         val saved = registry.getSavedDevices()
         if (bluetoothEnabled.value &&
