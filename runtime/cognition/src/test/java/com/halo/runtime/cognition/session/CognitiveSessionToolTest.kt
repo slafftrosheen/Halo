@@ -137,6 +137,42 @@ class CognitiveSessionToolTest {
         assertTrue(ctx2.availableTools.isEmpty())
     }
 
+
+    @Test
+    fun `configured default policy is used when submit omits policy`() = runTest {
+        val eventBus = FakeEventBus()
+        val blackboard = DefaultBlackboard()
+        val provider = ToolCallingProvider(supportsToolsCapability = true)
+        val router = FakeRouter(provider)
+        val store = InMemoryConversationStore()
+        val registry = ToolRegistry(listOf(EchoToolExecutor()))
+        val assembler = com.halo.runtime.cognition.context.DefaultContextAssembler(
+            store,
+            blackboard,
+            registry
+        )
+        val authorizer = InMemoryToolAuthorizer(registry)
+
+        val session = CognitiveSession(
+            eventBus = eventBus,
+            providerRouter = router,
+            conversationStore = store,
+            contextAssembler = assembler,
+            toolRegistry = registry,
+            toolAuthorizer = authorizer,
+            scope = this,
+            defaultPolicyProvider = {
+                AiContextPolicy(includeAvailableTools = false)
+            }
+        )
+
+        session.submit(AiRequest(text = "Hello"))
+        advanceUntilIdle()
+
+        assertEquals(1, provider.capturedContexts.size)
+        assertTrue(provider.capturedContexts.single().availableTools.isEmpty())
+    }
+
     @Test
     fun `provider without TOOLS capability receives no tool definitions`() = runTest {
         val eventBus = FakeEventBus()
