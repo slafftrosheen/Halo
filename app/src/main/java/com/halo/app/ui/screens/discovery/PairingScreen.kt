@@ -1,119 +1,168 @@
 package com.halo.app.ui.screens.discovery
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.halo.app.ui.glass.components.*
-import com.halo.app.ui.glass.components.HaloGlassIconButton
-import com.halo.app.ui.glass.material.HaloGlassColors
-import com.halo.app.ui.glass.material.HaloTypography
+import com.halo.app.ui.theme.HaloPastelBlue
+import com.halo.app.ui.theme.HaloPastelMint
+import com.halo.app.ui.workspace.HaloWorkspaceButton
+import com.halo.app.ui.workspace.HaloWorkspaceCard
+import com.halo.app.ui.workspace.HaloWorkspaceHeader
 import com.halo.sdk.host.ConnectionState
 
 @Composable
 fun PairingScreen(viewModel: PairingViewModel) {
     val uiState by viewModel.uiState.collectAsState()
+    val isActive =
+        uiState.connectionState is ConnectionState.Connected ||
+            uiState.connectionState is ConnectionState.Ready
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(HaloGlassColors.Background)
-            .padding(16.dp)
+            .background(MaterialTheme.colorScheme.background)
+            .padding(horizontal = 20.dp, vertical = 14.dp)
     ) {
-        // Header
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            HaloGlassIconButton.Ghost(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
-                onClick = { viewModel.navigateBack() }
-            )
-            Spacer(Modifier.width(8.dp))
-            Text("Pair Glasses", style = HaloTypography.titleLarge, color = HaloGlassColors.TextPrimary)
-        }
-
-        Spacer(Modifier.height(32.dp))
-
-        Text(
-            "Select your HeyCyan glasses from the list below to begin pairing.",
-            style = HaloTypography.bodyMedium,
-            color = HaloGlassColors.TextSecondary
+        HaloWorkspaceHeader(
+            title = "Pair glasses",
+            subtitle = "Discover and connect supported HeyCyan hardware.",
+            onBack = viewModel::navigateBack
         )
 
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(20.dp))
 
-        // Scanning Status
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                if (uiState.isScanning) "Searching..." else "Discovery Idle",
-                style = HaloTypography.labelLarge,
-                color = if (uiState.isScanning) HaloGlassColors.Accent else HaloGlassColors.TextMuted
-            )
-            HaloGlassButton(
-                text = if (uiState.isScanning) "Stop" else "Scan",
-                onClick = { if (uiState.isScanning) viewModel.stopScan() else viewModel.startScan() }
-            )
+        HaloWorkspaceCard(accent = if (isActive) HaloPastelMint else HaloPastelBlue) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = when {
+                            isActive -> "Glasses connected"
+                            uiState.isScanning -> "Searching nearby"
+                            else -> "Ready to scan"
+                        },
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = uiState.statusMessage ?: when {
+                            isActive -> "The selected device is available to Halo."
+                            uiState.isScanning -> "BLE discovery is active."
+                            else -> "Start discovery when the glasses are powered on."
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                HaloWorkspaceButton(
+                    text = if (uiState.isScanning) "Stop" else "Scan",
+                    onClick = {
+                        if (uiState.isScanning) viewModel.stopScan() else viewModel.startScan()
+                    },
+                    primary = !uiState.isScanning
+                )
+            }
         }
 
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(18.dp))
 
-        val isActive = uiState.connectionState is ConnectionState.Connected || uiState.connectionState is ConnectionState.Ready
+        Text(
+            text = if (isActive) "Available / active" else "Discovered devices",
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(Modifier.height(8.dp))
 
-        // Device List
         Box(modifier = Modifier.weight(1f)) {
             if (uiState.devices.isEmpty() && !uiState.isScanning && !isActive) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
                         text = uiState.statusMessage ?: "No BLE devices found",
-                        color = if (uiState.statusMessage?.contains("fail", ignoreCase = true) == true) HaloGlassColors.Danger else HaloGlassColors.TextMuted
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = if (
+                            uiState.statusMessage?.contains("fail", ignoreCase = true) == true
+                        ) {
+                            MaterialTheme.colorScheme.error
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        }
                     )
                 }
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    contentPadding = PaddingValues(bottom = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    if (isActive) {
-                        item {
-                            Text("Active Device", style = HaloTypography.labelMedium, color = HaloGlassColors.TextSecondary)
-                            Spacer(Modifier.height(8.dp))
-                        }
-                    }
-
                     items(uiState.devices, key = { it.advertisement.address }) { device ->
-                        val isSelected = uiState.selectedAddress == device.advertisement.address
-                        HaloGlassCard(
+                        val selected = uiState.selectedAddress == device.advertisement.address
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
                             onClick = { viewModel.selectDevice(device) },
-                            material = if (isSelected) com.halo.app.ui.glass.material.HaloGlassMaterials.Interactive.copy(
-                                containerColor = HaloGlassColors.Accent.copy(alpha = 0.2f)
-                            ) else com.halo.app.ui.glass.material.HaloGlassMaterials.Standard
+                            shape = RoundedCornerShape(18.dp),
+                            color = if (selected) {
+                                MaterialTheme.colorScheme.primaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.surface
+                            },
+                            border = BorderStroke(
+                                1.dp,
+                                if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
+                                else MaterialTheme.colorScheme.outlineVariant
+                            )
                         ) {
                             Row(
-                                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                modifier = Modifier.padding(16.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Column {
-                                    Text(device.advertisement.name ?: "Unknown Glasses", color = HaloGlassColors.TextPrimary, style = HaloTypography.bodyLarge)
-                                    Text(device.advertisement.address, color = HaloGlassColors.TextMuted, style = HaloTypography.labelSmall)
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = device.advertisement.name ?: "Unknown glasses",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = device.advertisement.address,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
                                 }
-                                if (isSelected) {
-                                    Text("SELECTED", color = HaloGlassColors.Accent, style = HaloTypography.labelLarge)
+                                if (selected) {
+                                    Text(
+                                        text = "Selected",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.secondary
+                                    )
                                 }
                             }
                         }
@@ -122,32 +171,21 @@ fun PairingScreen(viewModel: PairingViewModel) {
             }
         }
 
-        // Action Footer
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            val showStatusInFooter = uiState.devices.isNotEmpty() || uiState.isScanning || isActive
-            val currentStatusMsg = uiState.statusMessage
-            if (showStatusInFooter && currentStatusMsg != null) {
-                Text(currentStatusMsg, color = HaloGlassColors.Info, style = HaloTypography.bodySmall)
-                Spacer(Modifier.height(12.dp))
-            }
+        HaloWorkspaceButton(
+            text = when {
+                uiState.connectionState is ConnectionState.Ready -> "Device active"
+                uiState.connectionState is ConnectionState.Connected -> "Initializing…"
+                else -> "Connect glasses"
+            },
+            onClick = viewModel::connect,
+            enabled = uiState.selectedAddress != null &&
+                (
+                    uiState.connectionState is ConnectionState.Disconnected ||
+                        uiState.connectionState is ConnectionState.Failed
+                ),
+            modifier = Modifier.fillMaxWidth()
+        )
 
-            HaloGlassButton(
-                text = "Connect Glasses",
-                onClick = { viewModel.connect() },
-                enabled = uiState.selectedAddress != null && (uiState.connectionState is ConnectionState.Disconnected || uiState.connectionState is ConnectionState.Failed),
-                modifier = Modifier.fillMaxWidth()
-            )
-            
-            if (uiState.connectionState is ConnectionState.Ready) {
-                Spacer(Modifier.height(8.dp))
-                Text("Device is active", color = HaloGlassColors.Success, style = HaloTypography.labelLarge)
-            } else if (uiState.connectionState is ConnectionState.Connected) {
-                Spacer(Modifier.height(8.dp))
-                Text("Connected (Initializing...)", color = HaloGlassColors.Info, style = HaloTypography.labelLarge)
-            }
-        }
+        Spacer(Modifier.height(16.dp))
     }
 }
