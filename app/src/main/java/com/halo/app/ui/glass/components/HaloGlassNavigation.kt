@@ -1,18 +1,27 @@
 package com.halo.app.ui.glass.components
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -25,8 +34,13 @@ data class NavigationItem(
     val icon: ImageVector
 )
 
+/**
+ * Halo's low-profile primary navigation.
+ *
+ * The selected destination carries a three-cell signal instead of a large pill or glow.
+ */
 @Composable
-fun HaloGlassNavigation(
+fun HaloNavigation(
     modifier: Modifier = Modifier,
     navController: NavHostController,
     items: List<NavigationItem>
@@ -35,65 +49,85 @@ fun HaloGlassNavigation(
     val currentDestination = navBackStackEntry?.destination
     val currentRoute = currentDestination?.route
 
-    fun getPrimaryRoute(route: String?): String? = when (route) {
-        "ai_settings", "permissions", "protocol_lab", "console", "inspector" -> "settings"
-        "discovery" -> "devices"
-        else -> if (route?.startsWith("notebook/note/") == true) "notebook" else route
+    fun primaryRoute(route: String?): String? = when (route) {
+        "ai_settings", "voice_settings", "permissions" -> "settings"
+        "discovery", "device/{deviceId}" -> "devices"
+        "notebook/note/{noteId}" -> "notebook"
+        else -> route
     }
 
-    Box(
+    Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface)
-            .navigationBarsPadding(),
-        contentAlignment = Alignment.BottomCenter
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.97f))
+            .navigationBarsPadding()
+            .height(68.dp)
+            .padding(horizontal = 8.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(64.dp)
-                .padding(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            items.forEach { item ->
-                val isDirectMatch = currentDestination?.hierarchy?.any { it.route == item.route } == true
-                val isPrimaryMatch = getPrimaryRoute(currentRoute) == item.route
-                val selected = isDirectMatch || isPrimaryMatch
+        items.forEach { item ->
+            val selected =
+                currentDestination?.hierarchy?.any { it.route == item.route } == true ||
+                    primaryRoute(currentRoute) == item.route
+            val tint = if (selected) {
+                MaterialTheme.colorScheme.onSurface
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            }
 
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clickable {
-                            val destination = navController.currentDestination
-                            if (destination?.route == item.route || getPrimaryRoute(destination?.route) == item.route) {
-                                return@clickable
-                            }
-                            runCatching {
-                                navController.navigate(item.route) {
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable {
+                        val destination = navController.currentDestination
+                        if (primaryRoute(destination?.route) == item.route) return@clickable
+                        runCatching {
+                            navController.navigate(item.route) {
+                                launchSingleTop = true
+                                restoreState = true
                             }
                         }
-                        .padding(vertical = 8.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    val tint = if (selected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant
-                    Icon(
-                        imageVector = item.icon,
-                        contentDescription = item.label,
-                        tint = tint,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        text = item.label,
-                        color = tint,
-                        fontSize = 11.sp
-                    )
+                    }
+                    .padding(vertical = 6.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                if (selected) {
+                    Row(
+                        modifier = Modifier.height(7.dp),
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        listOf(
+                            MaterialTheme.colorScheme.primary,
+                            MaterialTheme.colorScheme.secondary,
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.55f)
+                        ).forEachIndexed { index, color ->
+                            Box(
+                                Modifier
+                                    .size(if (index == 1) 5.dp else 4.dp)
+                                    .background(color, RoundedCornerShape(1.5.dp))
+                            )
+                        }
+                    }
+                } else {
+                    Spacer(Modifier.height(7.dp))
                 }
+
+                Icon(
+                    imageVector = item.icon,
+                    contentDescription = item.label,
+                    tint = tint,
+                    modifier = Modifier.size(22.dp)
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = item.label,
+                    color = tint,
+                    fontSize = 11.sp,
+                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
+                )
             }
         }
     }
