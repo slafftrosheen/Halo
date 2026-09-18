@@ -12,6 +12,9 @@ import com.halo.sdk.runtime.NativeResourceCoordinator
 import java.io.File
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * Thread-safe speech recognition provider wrapper that dynamically delegates
@@ -28,6 +31,8 @@ class ReloadableSpeechRecognitionProvider(
 ) : BufferedSpeechRecognitionProvider {
 
     private val currentDelegate = AtomicReference<BufferedSpeechRecognitionProvider>()
+    private val _availability = MutableStateFlow(false)
+    val availability: StateFlow<Boolean> = _availability.asStateFlow()
 
     init {
         refresh()
@@ -46,6 +51,7 @@ class ReloadableSpeechRecognitionProvider(
             )
         }
         val old = currentDelegate.getAndSet(newDelegate)
+        _availability.value = newDelegate !is UnavailableSpeechRecognitionProvider
         if (old != null && old != newDelegate) {
             runCatching { runBlocking { old.close() } }
         }
