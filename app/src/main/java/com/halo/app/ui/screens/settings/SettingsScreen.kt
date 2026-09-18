@@ -1,5 +1,6 @@
 package com.halo.app.ui.screens.settings
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -35,6 +36,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.halo.app.ui.theme.AppearanceMode
 import com.halo.app.ui.theme.HaloPastelBlue
 import com.halo.app.ui.theme.HaloPastelLilac
 import com.halo.app.ui.theme.HaloPastelMint
@@ -95,22 +97,78 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             onClick = viewModel::openPermissions
         )
 
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(18.dp))
 
-        Text(
-            text = "Appearance",
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(vertical = 8.dp)
-        )
+        ) {
+            Surface(
+                shape = RoundedCornerShape(11.dp),
+                color = HaloPastelLilac.copy(alpha = 0.22f),
+                modifier = Modifier.size(36.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Palette,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(9.dp)
+                )
+            }
+            Spacer(Modifier.size(12.dp))
+            Column {
+                Text(
+                    text = "Appearance",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Text(
+                    text = "Choose once; Halo remembers it.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
 
-        SettingsRow(
-            icon = Icons.Default.Palette,
-            tint = HaloPastelLilac,
-            title = "Theme",
-            subtitle = "Follows system · light + dark"
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            AppearanceMode.entries.forEach { mode ->
+                val selected = uiState.appearanceMode == mode
+                Surface(
+                    modifier = Modifier.weight(1f),
+                    onClick = { viewModel.setAppearanceMode(mode) },
+                    shape = RoundedCornerShape(14.dp),
+                    color = if (selected) {
+                        MaterialTheme.colorScheme.primaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.surface
+                    },
+                    border = BorderStroke(
+                        1.dp,
+                        if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
+                        else MaterialTheme.colorScheme.outlineVariant
+                    )
+                ) {
+                    Text(
+                        text = mode.label(),
+                        modifier = Modifier.padding(vertical = 10.dp),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                        color = if (selected) {
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        }
+                    )
+                }
+            }
+        }
+
+        Spacer(Modifier.height(18.dp))
+
         SettingsRow(
             icon = Icons.Default.Info,
             tint = HaloPastelBlue,
@@ -180,4 +238,10 @@ private fun SettingsRow(
             )
         }
     }
+}
+
+private fun AppearanceMode.label(): String = when (this) {
+    AppearanceMode.SYSTEM -> "System"
+    AppearanceMode.LIGHT -> "Light"
+    AppearanceMode.DARK -> "Dark"
 }
