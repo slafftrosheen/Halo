@@ -2,15 +2,27 @@ package com.halo.app.ui.screens.settings
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Devices
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.SmartToy
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -23,8 +35,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.halo.app.ui.glass.components.HaloGlassDivider
+import com.halo.app.ui.theme.HaloPastelBlue
+import com.halo.app.ui.theme.HaloPastelLilac
+import com.halo.app.ui.theme.HaloPastelMint
+import com.halo.app.ui.theme.HaloPastelYellow
 
 @Composable
 fun SettingsScreen(viewModel: SettingsViewModel) {
@@ -37,189 +51,133 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp)
     ) {
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Top Bar
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text(
-                    text = "Settings",
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Personal. Private. Powerful.",
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Surface(
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                modifier = Modifier.size(40.dp)
-            ) {
-                IconButton(onClick = { /* TODO: Search */ }) {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "Search Settings",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        SettingsRow(
-            icon = Icons.Default.Search, // Replace with specific AI Icon
-            iconTint = Color(0xFF4EA8FF),
-            title = "AI Providers",
-            subtitle = uiState.provider,
-            onClick = { viewModel.openIntelligence() }
+        Spacer(Modifier.height(16.dp))
+        Text(
+            text = "Settings",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onBackground
         )
-        HaloGlassDivider(modifier = Modifier.padding(start = 56.dp))
-        
+        Text(
+            text = "System configuration without the noise.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(Modifier.height(28.dp))
+
         SettingsRow(
-            icon = Icons.Default.Search, // Replace with specific Speech Icon
-            iconTint = Color(0xFF9C27B0),
+            icon = Icons.Default.SmartToy,
+            tint = HaloPastelBlue,
+            title = "AI providers",
+            subtitle = uiState.provider,
+            onClick = viewModel::openIntelligence
+        )
+        SettingsRow(
+            icon = Icons.Default.Mic,
+            tint = HaloPastelLilac,
             title = "Speech",
             subtitle = uiState.voiceStatus,
-            onClick = { viewModel.openVoice() }
+            onClick = viewModel::openVoice
         )
-        HaloGlassDivider(modifier = Modifier.padding(start = 56.dp))
-
         SettingsRow(
-            icon = Icons.Default.Search, // Replace with Memory Icon
-            iconTint = Color(0xFFFF9100),
-            title = "Memory",
-            subtitle = "Manage what Halo remembers",
-            onClick = { /* TODO */ }
-        )
-        HaloGlassDivider(modifier = Modifier.padding(start = 56.dp))
-        
-        SettingsRow(
-            icon = Icons.Default.Search, // Replace with Privacy Icon
-            iconTint = Color(0xFF00C853),
-            title = "Privacy",
-            subtitle = "Your data stays with you",
-            onClick = { /* TODO */ }
-        )
-        HaloGlassDivider(modifier = Modifier.padding(start = 56.dp))
-        
-        SettingsRow(
-            icon = Icons.Default.Search, // Replace with Appearance Icon
-            iconTint = Color(0xFF4EA8FF),
-            title = "Appearance",
-            subtitle = "Light / Dark / System",
-            onClick = { /* TODO */ }
-        )
-        HaloGlassDivider(modifier = Modifier.padding(start = 56.dp))
-        
-        SettingsRow(
-            icon = Icons.Default.Search, // Replace with Devices Icon
-            iconTint = Color(0xFF4EA8FF),
+            icon = Icons.Default.Devices,
+            tint = HaloPastelMint,
             title = "Devices",
             subtitle = uiState.deviceName,
-            onClick = { viewModel.openDevices() }
+            onClick = viewModel::openDevices
         )
-        HaloGlassDivider(modifier = Modifier.padding(start = 56.dp))
-        
         SettingsRow(
-            icon = Icons.Default.Search, // Replace with Devices Icon
-            iconTint = Color(0xFF4EA8FF),
+            icon = Icons.Default.Security,
+            tint = HaloPastelYellow,
             title = "Permissions",
-            subtitle = "Manage Android system access",
-            onClick = { viewModel.openPermissions() }
-        )
-        HaloGlassDivider(modifier = Modifier.padding(start = 56.dp))
-        
-        SettingsRow(
-            icon = Icons.Default.Search, // Replace with Notifications Icon
-            iconTint = Color(0xFFFF4081),
-            title = "Notifications",
-            subtitle = "Events, Alerts, Quiet hours",
-            onClick = { /* TODO */ }
-        )
-        HaloGlassDivider(modifier = Modifier.padding(start = 56.dp))
-        
-        SettingsRow(
-            icon = Icons.Default.Search, // Replace with Storage Icon
-            iconTint = Color(0xFFFFD600),
-            title = "Storage",
-            subtitle = "Files, Cache, Offline data",
-            onClick = { /* TODO */ }
-        )
-        HaloGlassDivider(modifier = Modifier.padding(start = 56.dp))
-        
-        SettingsRow(
-            icon = Icons.Default.Search, // Replace with About Icon
-            iconTint = Color(0xFF4EA8FF),
-            title = "About",
-            subtitle = "Version ${uiState.version}",
-            onClick = { /* TODO */ }
+            subtitle = "Android system access",
+            onClick = viewModel::openPermissions
         )
 
-        Spacer(modifier = Modifier.height(100.dp))
+        Spacer(Modifier.height(12.dp))
+
+        Text(
+            text = "Appearance",
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+
+        SettingsRow(
+            icon = Icons.Default.Palette,
+            tint = HaloPastelLilac,
+            title = "Theme",
+            subtitle = "Follows system · light + dark"
+        )
+        SettingsRow(
+            icon = Icons.Default.Info,
+            tint = HaloPastelBlue,
+            title = "About",
+            subtitle = "Version ${uiState.version}"
+        )
+
+        Spacer(Modifier.height(100.dp))
     }
 }
 
 @Composable
-fun SettingsRow(
+private fun SettingsRow(
     icon: ImageVector,
-    iconTint: Color,
+    tint: Color,
     title: String,
     subtitle: String,
-    onClick: () -> Unit
+    onClick: (() -> Unit)? = null
 ) {
+    val interaction = if (onClick != null) {
+        Modifier.clickable(onClick = onClick)
+    } else {
+        Modifier
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = 16.dp),
+            .then(interaction)
+            .padding(vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Surface(
-            shape = CircleShape,
-            color = iconTint.copy(alpha = 0.1f),
-            modifier = Modifier.size(40.dp)
+            shape = RoundedCornerShape(12.dp),
+            color = tint.copy(alpha = 0.22f),
+            modifier = Modifier.size(42.dp)
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = iconTint,
+                tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(10.dp)
             )
         }
-        
-        Spacer(modifier = Modifier.width(16.dp))
-        
+
+        Spacer(Modifier.size(14.dp))
+
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
-                fontSize = 16.sp,
+                style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onBackground
             )
-            Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = subtitle,
-                fontSize = 13.sp,
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        
-        Icon(
-            imageVector = Icons.Default.ChevronRight,
-            contentDescription = "Navigate",
-            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-            modifier = Modifier.size(24.dp)
-        )
+
+        if (onClick != null) {
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = "Open",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f)
+            )
+        }
     }
 }
