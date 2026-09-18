@@ -1,6 +1,7 @@
 package com.halo.app.ui.screens.settings
 
 import android.util.Log
+import com.halo.app.ai.readRuntimeAiContextPolicy
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.halo.providers.android.assistant.AndroidAssistantProvider
@@ -33,9 +34,6 @@ data class IntelligenceUiState(
     val localModels: List<CognitiveModel> = emptyList(),
     val downloadStates: Map<String, DownloadState> = emptyMap(),
     val activeLocalModelId: String? = null,
-    val isMemoryEnabled: Boolean = true,
-    val isToolsEnabled: Boolean = true,
-    val isAgentEnabled: Boolean = false,
     val temperature: Float = 0.7f,
     val policy: AiContextPolicy = AiContextPolicy.CONSERVATIVE,
     val assistantPackage: String? = null,
@@ -51,9 +49,6 @@ private data class IntelligenceSettings(
     val ollamaModel: String = "llama3",
     val llamacppModel: String = "qwen1.5-0.5b",
     val llamacppContext: Int = 4096,
-    val isMemoryEnabled: Boolean = true,
-    val isToolsEnabled: Boolean = true,
-    val isAgentEnabled: Boolean = false,
     val temperature: Float = 0.7f,
     val policy: AiContextPolicy = AiContextPolicy.CONSERVATIVE
 )
@@ -109,11 +104,8 @@ class IntelligenceViewModel(
             ollamaModel = storage.getString("ollama_model") ?: "llama3",
             llamacppModel = storage.getString("llamacpp_model") ?: "qwen1.5-0.5b",
             llamacppContext = storage.getInt("llamacpp_context", 4096),
-            isMemoryEnabled = storage.getBoolean("ai_memory_enabled", true),
-            isToolsEnabled = storage.getBoolean("ai_tools_enabled", true),
-            isAgentEnabled = storage.getBoolean("ai_agent_enabled", false),
             temperature = storage.getInt("ai_temperature", 70) / 100f,
-            policy = loadPolicy()
+            policy = storage.readRuntimeAiContextPolicy()
         )
     }
 
@@ -171,9 +163,6 @@ class IntelligenceViewModel(
             localModels = modelDownloadManager?.getAllModels() ?: emptyList(),
             downloadStates = dlStates,
             activeLocalModelId = activeLocalId ?: settings.llamacppModel,
-            isMemoryEnabled = settings.isMemoryEnabled,
-            isToolsEnabled = settings.isToolsEnabled,
-            isAgentEnabled = settings.isAgentEnabled,
             temperature = settings.temperature,
             policy = settings.policy,
             assistantPackage = assistantPkg,
@@ -269,16 +258,14 @@ class IntelligenceViewModel(
     fun setOllamaModel(model: String) { val n = model.trim(); if (n.isBlank()) return; updateSettings { it.copy(ollamaModel = n) }; persist { storage.putString("ollama_model", n) }; if (aiProviderRouter.selectedProviderId.value == ProviderIds.OLLAMA) aiProviderRouter.selectModel(n); _refreshTrigger.update { it + 1 } }
     fun setLlamacppModel(model: String) { val n = model.trim(); if (n.isBlank() || modelDownloadManager?.getAllModels()?.any { it.id == n } != true) return; updateSettings { it.copy(llamacppModel = n) }; persist { storage.putString("llamacpp_model", n) }; if (aiProviderRouter.selectedProviderId.value == ProviderIds.LLAMACPP) { modelDownloadManager?.setActiveModel(n); aiProviderRouter.selectModel(n) }; _refreshTrigger.update { it + 1 } }
     fun setLlamacppContext(size: Int) { val n = size.coerceAtLeast(1); updateSettings { it.copy(llamacppContext = n) }; persist { storage.putInt("llamacpp_context", n) }; _refreshTrigger.update { it + 1 } }
-    fun setMemoryEnabled(enabled: Boolean) { updateSettings { it.copy(isMemoryEnabled = enabled) }; persist { storage.putBoolean("ai_memory_enabled", enabled) }; _refreshTrigger.update { it + 1 } }
-    fun setToolsEnabled(enabled: Boolean) { updateSettings { it.copy(isToolsEnabled = enabled) }; persist { storage.putBoolean("ai_tools_enabled", enabled) }; _refreshTrigger.update { it + 1 } }
-    fun setAgentEnabled(enabled: Boolean) { updateSettings { it.copy(isAgentEnabled = enabled) }; persist { storage.putBoolean("ai_agent_enabled", enabled) }; _refreshTrigger.update { it + 1 } }
-    fun setTemperature(temp: Float) { val n = temp.coerceIn(0f, 2f); updateSettings { it.copy(temperature = n) }; persist { storage.putInt("ai_temperature", (n * 100).toInt()) }; _refreshTrigger.update { it + 1 } }
+    fun setMemoryEnabled(enabled: Boolean) {
+        updatePolicy(memories = enabled)
+    }
 
-    private fun loadPolicy() = AiContextPolicy(
-        includeConversation = storage.getBoolean("policy_conversation", true), includeDeviceState = storage.getBoolean("policy_device_state", true), includeRecentEvents = storage.getBoolean("policy_recent_events", false),
-        includeMemories = storage.getBoolean("policy_memories", false), includeAvailableTools = storage.getBoolean("policy_tools", true), includeLocation = storage.getBoolean("policy_location", false),
-        includeImages = storage.getBoolean("policy_images", true), includeAudio = storage.getBoolean("policy_audio", false), includeVideo = storage.getBoolean("policy_video", false)
-    )
+    fun setToolsEnabled(enabled: Boolean) {
+        updatePolicy(tools = enabled)
+    }
+    fun setTemperature(temp: Float) { val n = temp.coerceIn(0f, 2f); updateSettings { it.copy(temperature = n) }; persist { storage.putInt("ai_temperature", (n * 100).toInt()) }; _refreshTrigger.update { it + 1 } }
 
     fun updatePolicy(conversation: Boolean? = null, deviceState: Boolean? = null, recentEvents: Boolean? = null, memories: Boolean? = null, tools: Boolean? = null, location: Boolean? = null, images: Boolean? = null, audio: Boolean? = null, video: Boolean? = null) {
         val current = _settings.value.policy
