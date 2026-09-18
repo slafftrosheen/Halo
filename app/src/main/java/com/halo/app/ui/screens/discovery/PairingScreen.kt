@@ -19,25 +19,49 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.halo.app.ui.theme.HaloPastelBlue
 import com.halo.app.ui.theme.HaloPastelMint
+import com.halo.app.ui.theme.HaloWarning
 import com.halo.app.ui.workspace.HaloWorkspaceButton
 import com.halo.app.ui.workspace.HaloWorkspaceCard
 import com.halo.app.ui.workspace.HaloWorkspaceHeader
 import com.halo.sdk.host.ConnectionState
 
 @Composable
-fun PairingScreen(viewModel: PairingViewModel) {
+fun PairingScreen(
+    viewModel: PairingViewModel,
+    onRequestBluetoothPermissions: () -> Unit,
+    onRequestBluetoothEnable: () -> Unit
+) {
     val uiState by viewModel.uiState.collectAsState()
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val bluetoothReady = uiState.bluetoothPrerequisite == BluetoothPrerequisite.READY
     val isActive =
-        uiState.connectionState is ConnectionState.Connected ||
-            uiState.connectionState is ConnectionState.Ready
+        bluetoothReady &&
+            (
+                uiState.connectionState is ConnectionState.Connected ||
+                    uiState.connectionState is ConnectionState.Ready
+                )
+
+    DisposableEffect(lifecycleOwner, viewModel) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.refreshPrerequisites()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     Column(
         modifier = Modifier
@@ -53,7 +77,13 @@ fun PairingScreen(viewModel: PairingViewModel) {
 
         Spacer(Modifier.height(20.dp))
 
-        HaloWorkspaceCard(accent = if (isActive) HaloPastelMint else HaloPastelBlue) {
+        HaloWorkspaceCard(
+            accent = when {
+                !bluetoothReady -> HaloWarning
+                isActive -> HaloPastelMint
+                else -> HaloPastelBlue
+            }
+        ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -61,32 +91,73 @@ fun PairingScreen(viewModel: PairingViewModel) {
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = when {
-                            isActive -> "Glasses connected"
-                            uiState.isScanning -> "Searching nearby"
-                            else -> "Ready to scan"
+                        text = when (uiState.bluetoothPrerequisite) {
+                            BluetoothPrerequisite.PERMISSION_REQUIRED -> "Bluetooth access needed"
+                            BluetoothPrerequisite.BLUETOOTH_OFF -> "Bluetooth is off"
+                            BluetoothPrerequisite.UNSUPPORTED -> "Bluetooth LE unavailable"
+                            BluetoothPrerequisite.READY -> when {
+                                isActive -> "Glasses connected"
+                                uiState.isScanning -> "Searching nearby"
+                                else -> "Ready to scan"
+                            }
                         },
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = uiState.statusMessage ?: when {
-                            isActive -> "The selected device is available to Halo."
-                            uiState.isScanning -> "BLE discovery is active."
-                            else -> "Start discovery when the glasses are powered on."
+                        text = uiState.statusMessage ?: when (uiState.bluetoothPrerequisite) {
+                            BluetoothPrerequisite.PERMISSION_REQUIRED ->
+                                "Grant nearby-device access before scanning."
+                            BluetoothPrerequisite.BLUETOOTH_OFF ->
+                                "Turn on Bluetooth to discover and connect glasses."
+                            BluetoothPrerequisite.UNSUPPORTED ->
+                                "This Android device does not expose Bluetooth Low Energy."
+                            BluetoothPrerequisite.READY -> when {
+                                isActive -> "The selected device is available to Halo."
+                                uiState.isScanning -> "BLE discovery is active."
+                                else -> "Start discovery when the glasses are powered on."
+                            }
                         },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
-                HaloWorkspaceButton(
-                    text = if (uiState.isScanning) "Stop" else "Scan",
-                    onClick = {
-                        if (uiState.isScanning) viewModel.stopScan() else viewModel.startScan()
-                    },
-                    primary = !uiState.isScanning
-                )
+                when (uiState.bluetoothPrerequisite) {
+                    BluetoothPrerequisite.PERMISSION_REQUIRED -> {
+                        HaloWorkspaceButton(
+                            text = "Grant access",
+                            onClick = onRequestBluetoothPermissions
+                        )
+                    }
+                    BluetoothPrerequisite.BLUETOOTH_OFF -> {
+                        HaloWorkspaceButton(
+                            text = "Turn on",
+                            onClick = onRequestBluetoothEnable
+                        )
+                    }
+                    BluetoothPrerequisite.UNSUPPORTED -> {
+                        HaloWorkspaceButton(
+                            text = "Unavailable",
+                            onClick = {},
+                            enabled = false,
+                            primary = false
+                        )
+                    }
+                    BluetoothPrerequisite.READY -> {
+                        HaloWorkspaceButton(
+                            text = if (uiState.isScanning) "Stop" else "Scan",
+                            onClick = {
+                                if (uiState.isScanning) {
+                                    viewModel.stopScan()
+                                } else {
+                                    viewModel.startScan()
+                                }
+                            },
+                            primary = !uiState.isScanning
+                        )
+                    }
+                }
             }
         }
 
@@ -104,14 +175,17 @@ fun PairingScreen(viewModel: PairingViewModel) {
             if (uiState.devices.isEmpty() && !uiState.isScanning && !isActive) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
-                        text = uiState.statusMessage ?: "No BLE devices found",
+                        text = uiState.statusMessage ?: when {
+                            !bluetoothReady -> uiState.bluetoothPrerequisite.userMessage()
+                            else -> "No BLE devices found"
+                        },
                         style = MaterialTheme.typography.bodyLarge,
-                        color = if (
-                            uiState.statusMessage?.contains("fail", ignoreCase = true) == true
-                        ) {
-                            MaterialTheme.colorScheme.error
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
+                        color = when {
+                            uiState.bluetoothPrerequisite == BluetoothPrerequisite.UNSUPPORTED ->
+                                MaterialTheme.colorScheme.error
+                            uiState.statusMessage?.contains("fail", ignoreCase = true) == true ->
+                                MaterialTheme.colorScheme.error
+                            else -> MaterialTheme.colorScheme.onSurfaceVariant
                         }
                     )
                 }
@@ -126,6 +200,7 @@ fun PairingScreen(viewModel: PairingViewModel) {
                         Surface(
                             modifier = Modifier.fillMaxWidth(),
                             onClick = { viewModel.selectDevice(device) },
+                            enabled = bluetoothReady,
                             shape = RoundedCornerShape(18.dp),
                             color = if (selected) {
                                 MaterialTheme.colorScheme.primaryContainer
@@ -134,8 +209,11 @@ fun PairingScreen(viewModel: PairingViewModel) {
                             },
                             border = BorderStroke(
                                 1.dp,
-                                if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
-                                else MaterialTheme.colorScheme.outlineVariant
+                                if (selected) {
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
+                                } else {
+                                    MaterialTheme.colorScheme.outlineVariant
+                                }
                             )
                         ) {
                             Row(
@@ -147,7 +225,11 @@ fun PairingScreen(viewModel: PairingViewModel) {
                                     Text(
                                         text = device.advertisement.name ?: "Unknown glasses",
                                         style = MaterialTheme.typography.bodyLarge,
-                                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                                        fontWeight = if (selected) {
+                                            FontWeight.SemiBold
+                                        } else {
+                                            FontWeight.Normal
+                                        },
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
                                     Text(
@@ -172,16 +254,21 @@ fun PairingScreen(viewModel: PairingViewModel) {
 
         HaloWorkspaceButton(
             text = when {
+                !bluetoothReady -> "Resolve Bluetooth first"
                 uiState.connectionState is ConnectionState.Ready -> "Device active"
-                uiState.connectionState is ConnectionState.Connected -> "Initializing…"
+                uiState.connectionState is ConnectionState.Discovering ||
+                    uiState.connectionState is ConnectionState.Connecting ||
+                    uiState.connectionState is ConnectionState.Connected -> "Initializing…"
                 else -> "Connect glasses"
             },
             onClick = viewModel::connect,
-            enabled = uiState.selectedAddress != null &&
-                (
-                    uiState.connectionState is ConnectionState.Disconnected ||
-                        uiState.connectionState is ConnectionState.Failed
-                ),
+            enabled =
+                bluetoothReady &&
+                    uiState.selectedAddress != null &&
+                    (
+                        uiState.connectionState is ConnectionState.Disconnected ||
+                            uiState.connectionState is ConnectionState.Failed
+                        ),
             modifier = Modifier.fillMaxWidth()
         )
 
