@@ -86,3 +86,26 @@ This source pass adds/extends:
 These tests cover state projection and wiring, not OEM Bluetooth, permission-dialog, radio or
 network behavior. Physical acceptance should still exercise Bluetooth off/on, permission deny/grant,
 provider offline/online, speech model missing/install, background/foreground and process recreation.
+
+
+## Pre-burn-in platform and device coverage
+
+The exact physical/operator procedure is now
+[REAL_DEVICE_BURN_IN.md](REAL_DEVICE_BURN_IN.md). Use that matrix instead of ambiguous shorthand
+such as "cold start" or "Bluetooth test"; each scenario defines setup, action, expected UI/runtime
+state, Logcat evidence and fail criteria.
+
+Additional regression guards in this pass:
+- `AndroidPlatformStateMonitorTest`: microphone permission grant/revoke becomes observable after
+  explicit platform-state refresh.
+- `DeviceAutoConnectCoordinatorTest`: only saved records with `autoConnect=true` and the
+  matching `DeviceKind` are selected, and the earlier HeyCyan identity corruption shape is
+  normalized.
+- `PairingIdentityTest`: pair/re-pair always persists canonical
+  `deviceType=HEYCYAN_GLASSES` regardless of display name.
+
+Important runtime contract: `RECORD_AUDIO` is not an application startup prerequisite.
+`AudioPerceptionEngine.start()` installs the command/pipeline lifecycle, while Android
+`AudioRecord` is created only when a real `StartListening` action occurs. Device acceptance
+must therefore verify both sides: Halo remains usable when microphone permission is denied, and a
+voice action requests/requires permission before capture.
