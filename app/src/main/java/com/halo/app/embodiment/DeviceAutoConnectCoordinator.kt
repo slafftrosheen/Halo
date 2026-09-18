@@ -21,6 +21,13 @@ import kotlinx.coroutines.launch
  * registry and only constructs a physical host when that device kind has an
  * explicit saved autoConnect=true record.
  */
+internal fun autoConnectDeviceIds(
+    records: List<com.halo.sdk.runtime.embodiment.DeviceRecord>,
+    kind: DeviceKind
+): List<String> = records
+    .filter { it.autoConnect && it.descriptor.kind == kind }
+    .map { it.identity.deviceId }
+
 class DeviceAutoConnectCoordinator(
     private val registry: DeviceRegistry,
     private val sessionManager: DeviceSessionManager,
@@ -82,22 +89,24 @@ class DeviceAutoConnectCoordinator(
 
     private suspend fun bootstrapSavedDevices() {
         val saved = registry.getSavedDevices()
-        if (bluetoothEnabled.value &&
-            saved.any { it.autoConnect && it.descriptor.kind == DeviceKind.HEYCYAN_GLASSES }
+        if (
+            bluetoothEnabled.value &&
+            autoConnectDeviceIds(saved, DeviceKind.HEYCYAN_GLASSES).isNotEmpty()
         ) {
             // Construction registers saved sessions and runs the host's initial retry.
             heyCyanHostProvider()
         }
 
-        if (saved.any { it.autoConnect && it.descriptor.kind == DeviceKind.BUDDYBOT }) {
+        if (autoConnectDeviceIds(saved, DeviceKind.BUDDYBOT).isNotEmpty()) {
             retryBuddyBot()
         }
     }
 
     private suspend fun retryHeyCyan() {
-        val hasAutoConnect = registry.getSavedDevices().any {
-            it.autoConnect && it.descriptor.kind == DeviceKind.HEYCYAN_GLASSES
-        }
+        val hasAutoConnect = autoConnectDeviceIds(
+            registry.getSavedDevices(),
+            DeviceKind.HEYCYAN_GLASSES
+        ).isNotEmpty()
         if (!hasAutoConnect) return
         heyCyanHostProvider().retryAutoConnect()
     }
