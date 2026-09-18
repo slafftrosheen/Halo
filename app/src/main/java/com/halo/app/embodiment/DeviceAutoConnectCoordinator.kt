@@ -90,7 +90,11 @@ class DeviceAutoConnectCoordinator(
     }
 
     suspend fun retryDevice(deviceId: String): Boolean {
-        val record = registry.getDevice(deviceId) ?: return false
+        val original = registry.getDevice(deviceId) ?: return false
+        val record = normalizeLegacyDeviceRecord(original)
+        if (record != original) {
+            registry.saveDevice(record)
+        }
         if (!record.autoConnect) return false
 
         return when (record.descriptor.kind) {
