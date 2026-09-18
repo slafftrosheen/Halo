@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -312,6 +313,7 @@ private fun EmptyNotebookState(
             if (!hasQuery && filter == NotebookFilter.ALL) {
                 Spacer(Modifier.height(8.dp))
                 Surface(
+                    modifier = Modifier.heightIn(min = 48.dp),
                     onClick = onCreate,
                     shape = RoundedCornerShape(14.dp),
                     color = MaterialTheme.colorScheme.primaryContainer
