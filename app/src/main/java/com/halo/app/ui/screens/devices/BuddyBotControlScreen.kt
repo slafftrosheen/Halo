@@ -460,7 +460,8 @@ fun BuddyBotControlScreen(
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             HaloWorkspaceRow(
                 title = "Target URL",
-                subtitle = buddyBotHost?.getTargetUrl() ?: BuddyBotHost.DEFAULT_BUDDYBOT_URL,
+                subtitle = buddyBotHost?.getTargetUrl() ?: "BuddyBot host unavailable",
+                enabled = buddyBotHost != null,
                 onClick = { showUrlDialog = true }
             )
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -498,7 +499,7 @@ fun BuddyBotControlScreen(
                             scope.launch { buddyBotHost?.pair(code) }
                         }
                     },
-                    enabled = isConnected && pairingCode.isNotBlank()
+                    enabled = buddyBotHost != null && isConnected && pairingCode.isNotBlank()
                 )
             }
 
