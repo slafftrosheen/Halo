@@ -15,6 +15,9 @@ import com.halo.app.ui.screens.notebook.NotebookViewModel
 import com.halo.app.ui.screens.settings.SettingsViewModel
 import com.halo.app.ui.screens.settings.VoiceSettingsViewModel
 import com.halo.app.ui.theme.AppearancePreferences
+import com.halo.providers.sherpa.stt.ReloadableSpeechRecognitionProvider
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import com.halo.engines.memory.WorkingMemoryProcess
 import com.halo.runtime.cognition.session.CognitiveSession
 import com.halo.runtime.kernel.HaloMicrokernel
@@ -59,6 +62,10 @@ object ManualDependencyGraph {
 
     val modelDownloadManager get() = providerGraph.modelDownloadManager
     val providers get() = providerGraph.providers
+    val speechRecognitionAvailability: StateFlow<Boolean> by lazy {
+        (providers.speechRecognition as? ReloadableSpeechRecognitionProvider)?.availability
+            ?: MutableStateFlow(true)
+    }
 
     /** Physical hosts remain lazy and are only touched by explicit device flows. */
     val wearableHost by lazy { RuntimeStartupTrace.measure("host.wearableHost") { hostGraph.wearableHost } }
@@ -120,7 +127,8 @@ object ManualDependencyGraph {
                 eventBus = eventBus,
                 cognitiveSession = cognitiveSession,
                 stopSpeechOutput = { androidSpeaker.stop() },
-                aiProviderRouter = aiProviderRouter
+                aiProviderRouter = aiProviderRouter,
+                speechAvailability = speechRecognitionAvailability
             )
         }
     }
