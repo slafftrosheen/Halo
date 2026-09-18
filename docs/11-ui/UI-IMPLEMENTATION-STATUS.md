@@ -9,6 +9,8 @@ Route/source presence is not interaction, visual or accessibility acceptance.
 |---|---|
 | home | HomeScreen |
 | activity | ActivityScreen |
+| notebook | NotebookScreen |
+| notebook/note/{noteId} | NoteEditorScreen |
 | devices | DevicesScreen |
 | device/{deviceId} | DeviceKind dispatch to HeyCyanControlScreen/BuddyBotControlScreen |
 | settings | SettingsScreen |
@@ -17,8 +19,10 @@ Route/source presence is not interaction, visual or accessibility acceptance.
 | permissions | PermissionsScreen |
 | discovery | PairingScreen |
 
-Notebook and its editor/search/memory/file/Canvas routes are proposed in the
-[Notebook plan](../02-product/NOTEBOOK-DELIVERY.md), not registered here.
+Notebook now has a persistent NB-01 notes route with quick creation, local lexical search,
+Inbox/archive/trash views and an autosaving plain-text/Markdown editor. Memory, Working Set,
+files, conversations and Canvas remain proposed in the
+[Notebook plan](../02-product/NOTEBOOK-DELIVERY.md); the initial route does not imply those flows.
 
 Console, Protocol Lab and Runtime Inspector are not registered destinations.
 HeyCyanDiscoveryScreen exists separately; the discovery route above uses PairingScreen.

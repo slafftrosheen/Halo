@@ -1,9 +1,65 @@
 package com.halo.app.data
 
+import android.content.Context
 import androidx.room.Database
+import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
+import com.halo.app.data.notebook.NoteEntity
+import com.halo.app.data.notebook.WorkspaceObjectEntity
 
-@Database(entities = [Memory::class], version = 1, exportSchema = false)
+@Database(
+    entities = [Memory::class, WorkspaceObjectEntity::class, NoteEntity::class],
+    version = 2,
+    exportSchema = false
+)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun memoryDao(): MemoryDao
+    abstract fun notebookDao(): com.halo.app.data.notebook.NotebookDao
+
+    companion object {
+        val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS workspace_objects (
+                        id TEXT NOT NULL PRIMARY KEY,
+                        type TEXT NOT NULL,
+                        title TEXT NOT NULL,
+                        createdAt INTEGER NOT NULL,
+                        updatedAt INTEGER NOT NULL,
+                        source TEXT NOT NULL,
+                        lifecycle TEXT NOT NULL,
+                        inInbox INTEGER NOT NULL,
+                        indexingState TEXT NOT NULL,
+                        contentRef TEXT NOT NULL
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS index_workspace_objects_type ON workspace_objects(type)"
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS index_workspace_objects_lifecycle_updatedAt ON workspace_objects(lifecycle, updatedAt)"
+                )
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS notes (
+                        objectId TEXT NOT NULL PRIMARY KEY,
+                        body TEXT NOT NULL,
+                        revision INTEGER NOT NULL,
+                        FOREIGN KEY(objectId) REFERENCES workspace_objects(id)
+                            ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+            }
+        }
+
+        fun create(context: Context): AppDatabase =
+            Room.databaseBuilder(context, AppDatabase::class.java, "halo.db")
+                .addMigrations(MIGRATION_1_2)
+                .build()
+    }
 }

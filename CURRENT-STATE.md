@@ -10,13 +10,13 @@ excludes the older microkernel/ProcessManager path from normal phone startup.
 
 | Area | Present in code | Limit |
 |---|---|---|
-| UI | Four primary tabs, device details, intelligence, voice, permissions, pairing | Console/lab/inspector are not AppShell routes; whole-app accessibility/performance not established |
+| UI | Five primary tabs including an initial persistent Notebook notes flow; device details, intelligence, voice, permissions, pairing | Notebook files/memory/conversations/Working Set are not implemented; console/lab/inspector are not AppShell routes; whole-app accessibility/performance not established |
 | Orb | Canvas shapes, pixel ring, colors, glyphs and infinite motion | No measured audio/task-progress input or explicit reduced-motion control |
 | Cognition | Engine pipeline and CognitiveSession streaming/tool rounds | General model-to-Android capability bridge is not wired |
 | Model tools | Echo and current time registered in app graph | Not general phone/device actions |
 | Providers | llama.cpp, Ollama, OpenRouter inference; Android assistant handoff; Sherpa and Android TTS speech | Support is adapter/model-specific; handoff is not inference |
 | Speech input | HostGraph injects AndroidAudioSource | HeyCyanAudioSource existence does not prove glasses feed the phone speech loop |
-| Memory | In-memory cognitive/conversation stores; separate Room Memory schema/DAO/repository | Room-backed CognitiveSession not established |
+| Persistence | Room Memory plus NB-01 workspace-object/note tables, local note search and lifecycle management; in-memory cognitive/conversation stores | Notebook storage is not cognitive memory; Room-backed CognitiveSession and remaining Notebook object types are not established |
 | Reminders | Exact-alarm adapter with simple duration parsing | Complete CRUD, robust ambiguity, permission/reboot recovery not established |
 | Notifications/routines/privacy | Named modules/contracts | Operational summarizer, full automation engine and universal network firewall not established |
 | Plugins | In-process registration/capability contribution/dispatch | No security sandbox or downloadable plugin installer established |

@@ -2,11 +2,20 @@
 
 Status: CURRENT SOURCE MAP. Reviewed 2026-09-18.
 
-[AppDatabase](../../app/src/main/java/com/halo/app/data/AppDatabase.kt) declares a single
-Room Memory entity, version 1, exportSchema=false.
+[AppDatabase](../../app/src/main/java/com/halo/app/data/AppDatabase.kt) is Room version 2,
+exportSchema=false. It retains the original Memory entity and adds the NB-01
+`workspace_objects` metadata table plus a type-specific `notes` table. Migration 1 -> 2
+preserves existing Memory rows and creates the Notebook tables and indexes.
 [MemoryRepository](../../app/src/main/java/com/halo/app/data/MemoryRepository.kt) provides
 DAO insert/update/delete and all-memories flow. This does not establish integration
 with the cognitive session.
+
+[RoomNotebookRepository](../../app/src/main/java/com/halo/app/data/notebook/NotebookRepository.kt)
+provides persistent note creation, atomic metadata/content edits with revisions, literal local
+lexical search, Inbox membership, archive/trash/restore, and permanent deletion restricted to
+trashed objects. Notebook notes are not automatically memory or model context. File storage,
+FTS indexing, conversations, promoted memory, Working Set, retention and export remain future
+delivery slices.
 
 [ManualDependencyGraph](../../app/src/main/java/com/halo/app/di/ManualDependencyGraph.kt)
 constructs InMemoryConversationStore.
@@ -23,6 +32,6 @@ SQLCipher support and universal JSON/CSV export were proposals, not this schema.
 Durable conversation integration, migrations, backup rules and comprehensive export/delete
 remain to be specified and validated.
 
-The proposed [Notebook workspace schema](../02-product/NOTEBOOK-WORKSPACE-BLUEPRINT.md)
-is future design. Its workspace objects, working sets, relations and search indexes
-must not be added to the current-schema description before implementation.
+The broader [Notebook workspace schema](../02-product/NOTEBOOK-WORKSPACE-BLUEPRINT.md)
+remains a design target beyond this narrow NB-01 foundation. See the
+[foundation RFC](../rfc/0001-notebook-foundation.md) for implemented decisions and open work.

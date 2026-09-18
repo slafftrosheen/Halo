@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Devices
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
@@ -21,6 +22,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.halo.app.di.ManualDependencyGraph
 import com.halo.app.ui.glass.components.HaloGlassNavigation
 import com.halo.app.ui.glass.components.NavigationItem
@@ -31,6 +33,10 @@ import com.halo.app.ui.screens.devices.DevicesScreen
 import com.halo.app.ui.screens.devices.HeyCyanControlScreen
 import com.halo.app.ui.screens.discovery.PairingScreen
 import com.halo.app.ui.screens.home.HomeScreen
+import com.halo.app.ui.screens.notebook.NoteEditorScreen
+import com.halo.app.ui.screens.notebook.NoteEditorViewModel
+import com.halo.app.ui.screens.notebook.NotebookNavigation
+import com.halo.app.ui.screens.notebook.NotebookScreen
 import com.halo.app.ui.screens.settings.IntelligenceScreen
 import com.halo.app.ui.screens.settings.SettingsScreen
 import com.halo.app.ui.screens.settings.VoiceSettingsScreen
@@ -39,11 +45,12 @@ import kotlinx.coroutines.flow.collectLatest
 sealed class Screen(val route: String, val title: String, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
     data object Home : Screen("home", "Home", Icons.Default.Home)
     data object Activity : Screen("activity", "Activity", Icons.Default.Timer)
+    data object Notebook : Screen("notebook", "Notebook", Icons.Default.Book)
     data object Devices : Screen("devices", "Devices", Icons.Default.Devices)
     data object Settings : Screen("settings", "Settings", Icons.Default.Settings)
 }
 
-val bottomNavItems = listOf(Screen.Home, Screen.Activity, Screen.Devices, Screen.Settings)
+val bottomNavItems = listOf(Screen.Home, Screen.Activity, Screen.Notebook, Screen.Devices, Screen.Settings)
 
 @Composable
 fun AppShell() {
@@ -79,6 +86,34 @@ fun AppShell() {
             ) {
                 composable(Screen.Home.route) { HomeScreen(homeViewModel) }
                 composable(Screen.Activity.route) { ActivityScreen(ManualDependencyGraph.activityViewModel) }
+
+                composable(Screen.Notebook.route) {
+                    val notebookViewModel = ManualDependencyGraph.notebookViewModel
+                    LaunchedEffect(notebookViewModel) {
+                        notebookViewModel.navigationEvents.collectLatest { event ->
+                            when (event) {
+                                is NotebookNavigation.OpenNote -> navigateSafely("notebook/note/${event.id}")
+                            }
+                        }
+                    }
+                    NotebookScreen(notebookViewModel)
+                }
+
+                composable(
+                    "notebook/note/{noteId}",
+                    arguments = listOf(navArgument("noteId") { type = NavType.StringType })
+                ) { entry ->
+                    val noteId = entry.arguments?.getString("noteId")
+                    if (noteId == null) {
+                        LaunchedEffect(Unit) { navController.popBackStack() }
+                    } else {
+                        val editorViewModel: NoteEditorViewModel = viewModel(
+                            key = "note-editor-$noteId",
+                            factory = NoteEditorViewModel.Factory(noteId, ManualDependencyGraph.notebookUseCases)
+                        )
+                        NoteEditorScreen(editorViewModel) { navController.popBackStack() }
+                    }
+                }
 
                 composable(Screen.Devices.route) {
                     val viewModel = ManualDependencyGraph.devicesViewModel

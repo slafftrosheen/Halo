@@ -44,7 +44,7 @@ fun HaloGlassNavigation(
     fun getPrimaryRoute(route: String?): String? = when (route) {
         "ai_settings", "permissions", "protocol_lab", "console", "inspector" -> "settings"
         "discovery" -> "devices"
-        else -> route
+        else -> if (route?.startsWith("notebook/note/") == true) "notebook" else route
     }
 
     Box(

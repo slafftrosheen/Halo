@@ -3,10 +3,14 @@ package com.halo.app.di
 import android.content.Context
 import com.halo.app.HaloRuntime
 import com.halo.app.RuntimeStartupTrace
+import com.halo.app.data.AppDatabase
+import com.halo.app.data.notebook.RoomNotebookRepository
+import com.halo.app.notebook.NotebookUseCases
 import com.halo.app.ui.screens.activity.ActivityViewModel
 import com.halo.app.ui.screens.devices.DevicesViewModel
 import com.halo.app.ui.screens.discovery.PairingViewModel
 import com.halo.app.ui.screens.home.HomeViewModel
+import com.halo.app.ui.screens.notebook.NotebookViewModel
 import com.halo.app.ui.screens.settings.SettingsViewModel
 import com.halo.app.ui.screens.settings.VoiceSettingsViewModel
 import com.halo.engines.memory.WorkingMemoryProcess
@@ -27,6 +31,9 @@ object ManualDependencyGraph {
     val hostGraph by lazy { RuntimeStartupTrace.measure("graph.host") { HostGraph(applicationContext, infra, providerGraph, storage) } }
     val engineGraph by lazy { RuntimeStartupTrace.measure("graph.engines") { EngineGraph(applicationContext, infra, providerGraph) } }
     val observerGraph by lazy { RuntimeStartupTrace.measure("graph.observers") { ObserverGraph(applicationContext, infra, engineGraph) } }
+    val appDatabase by lazy { RuntimeStartupTrace.measure("graph.database") { AppDatabase.create(applicationContext) } }
+    val notebookRepository by lazy { RoomNotebookRepository(appDatabase.notebookDao()) }
+    val notebookUseCases by lazy { NotebookUseCases(notebookRepository) }
 
     /** One runtime instance per Android process; Activities are only views over it. */
     val runtime by lazy {
@@ -105,6 +112,7 @@ object ManualDependencyGraph {
     val settingsViewModel by lazy { SettingsViewModel(applicationContext, runtimeSnapshotManager, aiProviderRouter) }
     val voiceSettingsViewModel by lazy { VoiceSettingsViewModel(applicationContext, storage, providerGraph) }
     val activityViewModel by lazy { ActivityViewModel(runtimeSnapshotManager) }
+    val notebookViewModel by lazy { NotebookViewModel(notebookUseCases) }
     val devicesViewModel by lazy { DevicesViewModel(deviceRegistry, deviceSessionManager, eventBus, runtimeSnapshotManager, { heyCyanDriver }, buddyBotHost) }
     val pairingViewModel by lazy { PairingViewModel({ heyCyanDriver }) }
     val intelligenceViewModel by lazy { com.halo.app.ui.screens.settings.IntelligenceViewModel(runtimeSnapshotManager, aiProviderRouter, cognitiveSession, storage, modelDownloadManager) }

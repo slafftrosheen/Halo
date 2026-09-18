@@ -36,7 +36,9 @@ This supersedes
 dark-only/four-tab design targets. It is planned design, not current app behavior.
 Clear actions, state honesty, accessibility and measured performance remain targets.
 
-Home, Activity, Devices and Settings are current primary destinations; Notebook is planned.
+Home, Activity, Notebook, Devices and Settings are current primary destinations. Notebook has
+an initial NB-01 persistent notes flow; its memory, Working Set, files, conversations and Canvas
+surfaces remain planned.
 Console, Protocol
 Lab and Runtime Inspector are proposed destinations, not current AppShell routes.
 
