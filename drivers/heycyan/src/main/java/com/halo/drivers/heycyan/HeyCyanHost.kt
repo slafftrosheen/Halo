@@ -43,7 +43,11 @@ class HeyCyanHost(
 
     init {
         scope.launch {
-            retryAutoConnect()
+            val manager = sessionManager ?: return@launch
+            selectedAddress?.let { migrateLegacySavedDevice(manager, it) }
+            manager.registry.getSavedDevices()
+                .filter { it.identity.deviceType == "HEYCYAN_GLASSES" }
+                .forEach { ensureSessionRegistered(it.identity.deviceId) }
         }
 
         driver.deviceState
@@ -107,8 +111,9 @@ class HeyCyanHost(
 
     /**
      * Re-register saved glasses sessions and retry the preferred auto-connect target.
-     * Safe to call after Bluetooth returns; DeviceSessionManager serializes duplicate
-     * connect attempts and treats READY as success.
+     * This is invoked by the process-level auto-connect coordinator or an explicit
+     * user toggle; host construction itself does not initiate a transport connection.
+     * DeviceSessionManager serializes duplicate attempts and treats READY as success.
      */
     suspend fun retryAutoConnect(): Boolean {
         val sm = sessionManager ?: return false
