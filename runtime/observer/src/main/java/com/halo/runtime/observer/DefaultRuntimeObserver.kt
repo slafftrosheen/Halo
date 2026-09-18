@@ -1,5 +1,6 @@
 package com.halo.runtime.observer
 
+import com.halo.libraries.common.core.Identifier
 import com.halo.runtime.cognition.blackboard.Blackboard
 import com.halo.sdk.runtime.BlackboardSnapshot
 import com.halo.sdk.runtime.Engine

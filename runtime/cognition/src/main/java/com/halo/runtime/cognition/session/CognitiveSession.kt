@@ -49,7 +49,9 @@ import java.util.Collections
 import java.util.UUID
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -78,9 +80,10 @@ class CognitiveSession(
     private var activeJob: Job? = null
 
     private val processedInterpretationIds = Collections.synchronizedSet(mutableSetOf<String>())
+    private val observerScope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
 
     init {
-        scope.launch {
+        observerScope.launch {
             blackboard.stream().collect { knowledge ->
                 val payload = knowledge.payload as? InterpretationKnowledge ?: return@collect
                 val knowledgeId = knowledge.id.value

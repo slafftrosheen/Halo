@@ -133,7 +133,7 @@ class AlphaW1IntegrationTest {
 
             val observation = com.halo.sdk.runtime.Observation(
                 payload = com.halo.engines.speech.SpeechRecognizedPayload(
-                    transcript = "Hello Halo",
+                    transcript = "play music",
                     language = "en-US"
                 ),
                 source = com.halo.sdk.runtime.Source.MICROPHONE,
