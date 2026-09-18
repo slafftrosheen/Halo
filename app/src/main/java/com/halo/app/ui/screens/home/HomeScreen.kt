@@ -60,7 +60,10 @@ import com.halo.sdk.provider.CognitiveSessionState
 import com.halo.sdk.provider.ProviderStatus
 
 @Composable
-fun HomeScreen(viewModel: HomeViewModel) {
+fun HomeScreen(
+    viewModel: HomeViewModel,
+    onRequestMicrophonePermission: () -> Unit
+) {
     val uiState by viewModel.uiState.collectAsState()
     val listeningRequested by viewModel.listeningRequested.collectAsState()
     var textInput by rememberSaveable { mutableStateOf("") }
@@ -102,6 +105,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
             isSpeaking -> viewModel.stopSpeakingAndListen()
             isActiveSession -> viewModel.cancelSession()
             isSpeechProcessing -> Unit
+            !uiState.microphonePermissionGranted -> onRequestMicrophonePermission()
             !uiState.speechReady -> viewModel.navigateToVoice()
             else -> viewModel.startListening()
         }
@@ -212,6 +216,33 @@ fun HomeScreen(viewModel: HomeViewModel) {
             }
         }
 
+        AnimatedVisibility(visible = !uiState.microphonePermissionGranted) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp)
+            ) {
+                HaloWorkspaceCard(accent = HaloWarning) {
+                    Text(
+                        text = "Microphone access is off",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Text, Notebook and device controls still work. Grant microphone access only when you want voice input.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    HaloWorkspaceButton(
+                        text = "Grant microphone access",
+                        onClick = onRequestMicrophonePermission,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        }
+
         AnimatedVisibility(visible = !uiState.speechReady) {
             Column(
                 modifier = Modifier
@@ -266,6 +297,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 Icon(
                     imageVector = if (isListening || isActiveSession) Icons.Default.Stop else Icons.Default.Mic,
                     contentDescription = when {
+                        !uiState.microphonePermissionGranted -> "Grant microphone access"
                         !uiState.speechReady -> "Set up voice input"
                         isListening || isActiveSession -> "Stop"
                         else -> "Talk to Halo"
@@ -345,6 +377,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
             voiceEnabled = !isSpeechProcessing && !isActiveSession,
             voiceActive = isListening,
             voiceContentDescription = when {
+                !uiState.microphonePermissionGranted -> "Grant microphone access"
                 !uiState.speechReady -> "Set up voice input"
                 isListening -> "Stop listening"
                 isSpeaking -> "Interrupt response and listen"
