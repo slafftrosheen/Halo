@@ -73,7 +73,8 @@ class CognitiveSession(
     private val toolRegistry: ToolRegistry? = null,
     private val toolAuthorizer: ToolAuthorizer? = null,
     private val scope: CoroutineScope,
-    private val blackboard: Blackboard = DefaultBlackboard()
+    private val blackboard: Blackboard = DefaultBlackboard(),
+    private val defaultPolicyProvider: () -> AiContextPolicy = { AiContextPolicy.CONSERVATIVE }
 ) {
     private val _state = MutableStateFlow<CognitiveSessionState>(CognitiveSessionState.Idle)
     val state: StateFlow<CognitiveSessionState> = _state.asStateFlow()
@@ -129,9 +130,10 @@ class CognitiveSession(
 
     fun submit(
         request: AiRequest,
-        policy: AiContextPolicy = AiContextPolicy.CONSERVATIVE,
+        policy: AiContextPolicy? = null,
         responseDelivery: ResponseDelivery = ResponseDelivery.VISUAL_ONLY
     ) {
+        val effectivePolicy = policy ?: defaultPolicyProvider()
         activeJob?.cancel()
         activeJob = scope.launch {
             val requestId = UUID.randomUUID().toString()
@@ -144,7 +146,7 @@ class CognitiveSession(
                 _state.value = CognitiveSessionState.PreparingContext
                 eventBus.publish(CognitiveRequestStarted(requestId = requestId))
 
-                val assembly = contextAssembler.assemble(policy = policy, capabilities = capabilities)
+                val assembly = contextAssembler.assemble(policy = effectivePolicy, capabilities = capabilities)
                 val context = assembly.context
                 val requestWithContext = bindAssembledContext(finalRequest, assembly)
 
@@ -202,7 +204,7 @@ class CognitiveSession(
                         initialResponse = response,
                         provider = provider,
                         capabilities = capabilities,
-                        policy = policy
+                        policy = effectivePolicy
                     )
                 }
 
