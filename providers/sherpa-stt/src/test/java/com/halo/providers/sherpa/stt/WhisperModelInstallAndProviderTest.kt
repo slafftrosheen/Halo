@@ -25,6 +25,7 @@ class WhisperModelInstallAndProviderTest {
         assertEquals(3, missing.size)
 
         val provider = ReloadableSpeechRecognitionProvider(dir)
+        assertFalse(provider.availability.value)
         assertFalse(provider.health())
     }
 
@@ -104,7 +105,8 @@ class WhisperModelInstallAndProviderTest {
         // Refresh provider
         provider.refresh()
 
-        // Provider health is now true (model is recognized as installed)
+        // Provider availability/health update without recreating the wrapper.
+        assertTrue(provider.availability.value)
         assertTrue(provider.health())
     }
 }
