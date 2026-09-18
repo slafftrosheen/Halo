@@ -42,7 +42,7 @@ import com.halo.app.ui.workspace.HaloWorkspaceSection
 
 @Composable
 fun PermissionsScreen(
-    onBack: () -> Unit = {},
+    onBack: (() -> Unit)? = null,
     onRequestPermissions: () -> Unit = {}
 ) {
     val context = LocalContext.current
