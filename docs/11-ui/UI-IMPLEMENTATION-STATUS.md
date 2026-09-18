@@ -72,3 +72,27 @@ typography without booting the runtime graph.
 `AppearancePreferencesTest` verifies System as the default and persistence of an explicit theme.
 The tests are committed, but no golden-image verification is claimed in this source-only pass.
 Record and verify locally/CI before treating the visual acceptance checkbox as passed.
+
+
+## Interaction wiring audit — 2026-09-18
+
+Reachable production screens were traced from AppShell through their ViewModels and host callbacks.
+
+Fixes made:
+- Settings -> Permissions now receives MainActivity's real ActivityResult permission launcher; the
+  grant button is no longer a no-op when the route is opened from Settings.
+- PermissionsScreen requires an explicit permission-request action.
+- DevicesScreen no longer accepts unused navigation/back callbacks.
+- IntelligenceScreen requires a real back action and model selection has one authoritative path
+  through IntelligenceViewModel.
+- HeyCyan and BuddyBot detail screens require explicit back actions.
+- The legacy placeholder `rippleGlass()` clickable modifier was removed because it created an
+  interaction surface with no behavior.
+- Intelligence Memory and Tools switches now edit the same persisted AiContextPolicy consumed by
+  CognitiveSession for the next live turn.
+- The Agent mode switch was removed because the current cognitive-session path has no authoritative
+  agent-mode runtime hook; unsupported controls are not presented as working features.
+
+Current reachable-screen source audit found no empty `onClick = {}`, no required callback defaulting
+to an empty action, and no screen-level TODO controls. Static rows such as About/status/telemetry
+remain intentionally non-interactive and do not render interactive affordances.
