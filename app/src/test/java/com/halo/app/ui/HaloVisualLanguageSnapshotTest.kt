@@ -16,8 +16,11 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.halo.app.ui.glass.material.HaloRuntimeState
@@ -57,6 +60,23 @@ class HaloVisualLanguageSnapshotTest {
         captureRoboImage {
             HaloTheme(darkTheme = true) {
                 VisualLanguageFixture()
+            }
+        }
+    }
+
+    @Test
+    fun largeTextWorkspaceContract() {
+        captureRoboImage {
+            HaloTheme(darkTheme = false) {
+                val density = LocalDensity.current
+                CompositionLocalProvider(
+                    LocalDensity provides Density(
+                        density = density.density,
+                        fontScale = 1.30f
+                    )
+                ) {
+                    VisualLanguageFixture()
+                }
             }
         }
     }
