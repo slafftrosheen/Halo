@@ -36,10 +36,15 @@ class AudioPipeline(
     val state: StateFlow<SpeechState> = _state
     private var observerJobs: List<Job> = emptyList()
     private var liveListeningJob: Job? = null
+    @Volatile
     private var bufferedRecognitionJob: Job? = null
 
     val usesLiveRecognition: Boolean
         get() = sttProvider.mode == SpeechRecognitionMode.LIVE
+
+    /** True until the buffered recognition coroutine has actually returned. */
+    val recognitionInFlight: Boolean
+        get() = bufferedRecognitionJob?.isCompleted == false
 
     suspend fun isRecognitionAvailable(): Boolean = sttProvider.health()
 
@@ -121,7 +126,7 @@ class AudioPipeline(
         }
 
         val existingRecognition = bufferedRecognitionJob
-        if (existingRecognition?.isActive == true) {
+        if (existingRecognition != null && !existingRecognition.isCompleted) {
             existingRecognition.join()
             return
         }
@@ -202,18 +207,26 @@ class AudioPipeline(
             reset()
             return
         }
-        if (bufferedRecognitionJob?.isActive == true) return
+        if (bufferedRecognitionJob?.isCompleted == false) return
         val segment = buffer.snapshot()
         buffer.clear()
         preRollBuffer.clear()
         _state.value = SpeechState.Recognizing
-        bufferedRecognitionJob = scope.launch {
+        // Start lazily so the field is assigned before the coroutine can finish.
+        // JNI decode is blocking: cancellation can mark a Job inactive before the
+        // native call actually returns. Only the owning coroutine may clear this
+        // reference, otherwise a second recognition can be stacked behind it.
+        val job = scope.launch(start = CoroutineStart.LAZY) {
             try {
                 processSegment(segment)
             } finally {
-                bufferedRecognitionJob = null
+                if (bufferedRecognitionJob === currentCoroutineContext()[Job]) {
+                    bufferedRecognitionJob = null
+                }
             }
         }
+        bufferedRecognitionJob = job
+        job.start()
     }
 
     private fun startLiveListening() {
@@ -274,7 +287,12 @@ class AudioPipeline(
             val text = result.text.trim()
             if (text.isBlank()) {
                 _state.value = SpeechState.Idle
-                eventBus.publish(RecognitionFinished(id = transactionId))
+                eventBus.publish(
+                    RecognitionFailed(
+                        id = transactionId,
+                        reason = "No speech recognized"
+                    )
+                )
                 return
             }
 
@@ -307,7 +325,9 @@ class AudioPipeline(
         _state.value = SpeechState.Idle
         liveListeningJob?.cancel()
         liveListeningJob = null
+        // Do not clear the reference here. A cancelled coroutine can still be
+        // blocked inside sherpa-onnx JNI decode; its finally block clears ownership
+        // only after native execution has really returned.
         bufferedRecognitionJob?.cancel()
-        bufferedRecognitionJob = null
     }
 }

@@ -44,13 +44,19 @@ fun HomeScreen(viewModel: HomeViewModel) {
     // Include the immediate local intent so a second tap can stop a session
     // before the runtime snapshot has propagated the first StartListening.
     val isListening = uiState.speechActive || listeningRequested
+    val isSpeechProcessing = uiState.speechProcessing
     val isSpeaking = uiState.runtimeState == HaloRuntimeState.Speaking
     val isSessionActive = uiState.sessionState != CognitiveSessionState.Idle
     val hasPresentedResponse = !uiState.presentedResponse.isNullOrBlank()
 
     fun submitText() {
         val text = textInput.trim()
-        if (text.isNotEmpty() && !isActiveSession && !isListening && !isSpeaking) {
+        if (text.isNotEmpty() &&
+            !isActiveSession &&
+            !isListening &&
+            !isSpeechProcessing &&
+            !isSpeaking
+        ) {
             viewModel.submitText(text)
             textInput = ""
         }
@@ -61,26 +67,34 @@ fun HomeScreen(viewModel: HomeViewModel) {
             isListening -> viewModel.stopListening()
             isSpeaking -> viewModel.stopSpeakingAndListen()
             isActiveSession -> viewModel.cancelSession()
+            // sherpa-onnx decode is a blocking native call. Do not start another
+            // microphone transaction until the current recognition has returned.
+            isSpeechProcessing -> Unit
             else -> viewModel.startListening()
         }
     }
 
-    val presenceLabel = when (uiState.runtimeState) {
-        HaloRuntimeState.Listening, HaloRuntimeState.Wakeword -> "Listening"
-        HaloRuntimeState.Capturing -> "Hearing you"
-        HaloRuntimeState.Recognizing -> "Understanding"
-        HaloRuntimeState.Reasoning, HaloRuntimeState.Planning -> "Thinking"
-        HaloRuntimeState.Executing -> "Working"
-        HaloRuntimeState.Speaking -> "Responding"
-        HaloRuntimeState.Recovering -> "Recovering"
-        HaloRuntimeState.Stopped -> "Offline"
-        HaloRuntimeState.Idle -> if (listeningRequested) "Starting microphone" else "Ready"
+    val presenceLabel = if (isSpeechProcessing) {
+        "Transcribing"
+    } else {
+        when (uiState.runtimeState) {
+            HaloRuntimeState.Listening, HaloRuntimeState.Wakeword -> "Listening"
+            HaloRuntimeState.Capturing -> "Hearing you"
+            HaloRuntimeState.Recognizing -> "Understanding"
+            HaloRuntimeState.Reasoning, HaloRuntimeState.Planning -> "Thinking"
+            HaloRuntimeState.Executing -> "Working"
+            HaloRuntimeState.Speaking -> "Responding"
+            HaloRuntimeState.Recovering -> "Recovering"
+            HaloRuntimeState.Stopped -> "Offline"
+            HaloRuntimeState.Idle -> if (listeningRequested) "Starting microphone" else "Ready"
+        }
     }
 
     val hintLabel = when {
         isListening -> "Tap to stop"
         isSpeaking -> "Tap to interrupt"
         isActiveSession -> "Tap to cancel"
+        isSpeechProcessing -> "Local speech recognition"
         else -> "Tap to speak"
     }
 
@@ -128,11 +142,12 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 HaloStateOrb(
                     state = uiState.runtimeState,
                     size = 236.dp,
-                    onClick = ::toggleOrb,
+                    onClick = if (isSpeechProcessing) null else ::toggleOrb,
                     contentDescription = when {
                         isListening -> "Stop listening"
                         isSpeaking -> "Interrupt and listen"
                         isActiveSession -> "Stop Halo"
+                        isSpeechProcessing -> "Halo is transcribing speech"
                         else -> "Speak to Halo"
                     }
                 )
@@ -185,7 +200,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
                     keyboardActions = KeyboardActions(onSend = { submitText() }),
                     maxLines = 3,
-                    enabled = !isActiveSession && !isListening && !isSpeaking
+                    enabled = !isActiveSession && !isListening && !isSpeechProcessing && !isSpeaking
                 )
                 Spacer(Modifier.width(8.dp))
                 if (isActiveSession) {
@@ -199,7 +214,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
                         imageVector = Icons.AutoMirrored.Filled.Send,
                         contentDescription = "Submit",
                         onClick = ::submitText,
-                        enabled = textInput.isNotBlank() && !isListening && !isSpeaking
+                        enabled = textInput.isNotBlank() && !isListening && !isSpeechProcessing && !isSpeaking
                     )
                 }
             }
