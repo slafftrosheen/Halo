@@ -2,9 +2,7 @@ package com.halo.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Halo OS Colors based on SOT Image
-
-// Legacy Halo Glass palette (kept for backward compatibility during migration)
+// Legacy Halo Glass palette remains while secondary screens migrate.
 val HaloBackground = Color(0xFF080A0B)
 val HaloSurface = Color(0xFF141719)
 val HaloCard = Color(0xFF1B1F20)
@@ -12,8 +10,8 @@ val HaloCard = Color(0xFF1B1F20)
 val HaloPrimary = Color(0xFF7DE2B1)
 val HaloPrimaryStrong = Color(0xFF54D99A)
 val HaloInformation = Color(0xFF4EA8FF)
-val HaloWarning = Color(0xFFF0B86B)
-val HaloDanger = Color(0xFFFF6B72)
+val HaloWarning = Color(0xFFE8A84D)
+val HaloDanger = Color(0xFFEB5A67)
 
 val HaloTextPrimary = Color(0xFFF5F7F6)
 val HaloTextSecondary = Color(0xFFA5ADA9)
@@ -23,35 +21,42 @@ val HaloBorderSubtle = Color.White.copy(alpha = 0.20f)
 val HaloBorder = Color.White.copy(alpha = 0.30f)
 val HaloBorderStrong = Color.White.copy(alpha = 0.50f)
 val HaloDivider = HaloBorderSubtle
-
 val HaloSignalSurface = Color(0xFF101516)
 val HaloGlassHighlight = Color.White.copy(alpha = 0.08f)
 val HaloGlassShadow = Color.Black.copy(alpha = 0.45f)
 
-// Core semantic states
-val HaloGreen = Color(0xFF00C853) // Listening / Ready
-val HaloBlue = Color(0xFF2979FF)  // Speaking / Action
-val HaloPink = Color(0xFFFF4081)  // Focused Thinking
-val HaloYellow = Color(0xFFFFD600) // Active Processing
-val HaloOrange = Color(0xFFFF9100) // Connecting
-val HaloGrey = Color(0xFF9E9E9E)   // Idle
+// Workspace object/category colors. These are intentionally soft; they are not status colors.
+val HaloPastelMint = Color(0xFFA6EBD8)
+val HaloPastelBlue = Color(0xFFB9D9FF)
+val HaloPastelLilac = Color(0xFFD5C8FF)
+val HaloPastelPink = Color(0xFFF3C0D9)
+val HaloPastelYellow = Color(0xFFF7DFA3)
+val HaloPastelCoral = Color(0xFFF4BEA9)
 
-// Light Theme Palette
-val LightBackground = Color(0xFFF8F9FA) // Very light gray/off-white background
-val LightSurface = Color(0xFFFFFFFF)    // Pure white for cards/surfaces
-val LightSurfaceVariant = Color(0xFFE9ECEF)
-val LightOnBackground = Color(0xFF111111) // Dark text for contrast
-val LightOnSurface = Color(0xFF111111)
-val LightOnSurfaceVariant = Color(0xFF6C757D)
-val LightOutline = Color(0xFFDEE2E6)
-val LightOutlineVariant = Color(0xFFE9ECEF)
+// Stronger semantic colors are reserved for runtime meaning.
+val HaloReady = Color(0xFF2FCB9A)
+val HaloAction = Color(0xFF5B8DEF)
+val HaloInfo = Color(0xFF4EA8FF)
+val HaloSemanticWarning = HaloWarning
+val HaloSemanticDanger = HaloDanger
+val HaloIdle = Color(0xFF8E9199)
 
-// Dark Theme Palette
-val DarkBackground = Color(0xFF0D1117)  // Deep graphite from Brand Identity
-val DarkSurface = Color(0xFF161B22)     // Slightly lighter for cards
-val DarkSurfaceVariant = Color(0xFF21262D)
-val DarkOnBackground = Color(0xFFF5F7FA)
-val DarkOnSurface = Color(0xFFF5F7FA)
-val DarkOnSurfaceVariant = Color(0xFF8B949E)
-val DarkOutline = Color(0xFF30363D)
-val DarkOutlineVariant = Color(0xFF21262D)
+// Light cognitive workspace.
+val LightBackground = Color(0xFFF6F7FB)
+val LightSurface = Color(0xFFFFFFFF)
+val LightSurfaceVariant = Color(0xFFEEF0F5)
+val LightOnBackground = Color(0xFF182033)
+val LightOnSurface = Color(0xFF182033)
+val LightOnSurfaceVariant = Color(0xFF697184)
+val LightOutline = Color(0xFFD9DEE8)
+val LightOutlineVariant = Color(0xFFE8EBF1)
+
+// Dark companion theme: softer than pure black and intentionally non-cyberpunk.
+val DarkBackground = Color(0xFF17191E)
+val DarkSurface = Color(0xFF20232A)
+val DarkSurfaceVariant = Color(0xFF292C34)
+val DarkOnBackground = Color(0xFFF3F3F1)
+val DarkOnSurface = Color(0xFFF3F3F1)
+val DarkOnSurfaceVariant = Color(0xFFA8AAB2)
+val DarkOutline = Color(0xFF3A3E48)
+val DarkOutlineVariant = Color(0xFF2D3038)
