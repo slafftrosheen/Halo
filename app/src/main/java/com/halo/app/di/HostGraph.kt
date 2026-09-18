@@ -9,8 +9,9 @@ import java.io.File
 
 /**
  * Owns Android-host audio and speech input for the phone-first runtime.
- * Physical wearable adapters remain lazy and are only touched by explicit
- * device flows; they are never constructed as part of normal runtime startup.
+ * Physical wearable adapters remain lazy. They are constructed only by an
+ * explicit device flow or when a persisted autoConnect=true record opts that
+ * device kind into process-level recovery.
  */
 class HostGraph(
     private val context: android.content.Context,
@@ -62,8 +63,9 @@ class HostGraph(
     }
 
     /**
-     * Physical HeyCyan support is deliberately lazy. The phone runtime never
-     * asks for this property during startup; Devices/diagnostic flows may.
+     * Physical HeyCyan support is deliberately lazy. It is resolved by Devices
+     * flows or by DeviceAutoConnectCoordinator when a saved glasses record has
+     * autoConnect enabled.
      */
     val heyCyanDriver: RealHeyCyanDriver by lazy {
         RealHeyCyanDriver(context, infra.eventBus)
