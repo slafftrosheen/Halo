@@ -10,7 +10,7 @@ excludes the older microkernel/ProcessManager path from normal phone startup.
 
 | Area | Present in code | Limit |
 |---|---|---|
-| UI | Five primary tabs (Home, Activity, Notebook, Devices, Settings); persistent NB-01 notes/search/lifecycle flow; spatial Halo Presence; persisted System/Light/Dark appearance mode; workspace-styled intelligence, voice, permissions, pairing, HeyCyan and BuddyBot control routes; reachable interactive controls traced to real callbacks/ViewModel/runtime actions | Notebook files/memory/conversations/Working Set are not implemented; console/lab/inspector are not AppShell routes; whole-app accessibility/performance not established |
+| UI | Five primary tabs (Home, Activity, Notebook, Devices, Settings); persistent NB-01 notes/search/lifecycle flow; spatial Halo Presence; persisted System/Light/Dark appearance mode; workspace-styled intelligence, voice, permissions, pairing, HeyCyan and BuddyBot control routes; reachable controls traced to real actions; shared rows/buttons/navigation now carry 48dp/accessibility selection-state contracts | Notebook files/memory/conversations/Working Set are not implemented; console/lab/inspector are not AppShell routes; full TalkBack/device acceptance and frame-time performance are not established |
 | Presence | Asymmetric rounded-cell renderer driven by HaloRuntimeState; no permanent idle animation; compact signal-cell glyphs in Activity/Notebook/navigation; Android animator-scale zero disables Presence transitions | No measured audio/output envelope yet; low-power behavior beyond platform animation removal is not established |
 | Cognition | Engine pipeline and CognitiveSession streaming/tool rounds; persisted AiContextPolicy from Intelligence is resolved for each new default conversational turn; Tools UI controls real tool exposure | General model-to-Android capability bridge is not wired; memory context source is still unpopulated, so Memory UI is intentionally hidden; no authoritative agent-mode switch exists yet |
 | Model tools | Echo and current time registered in app graph | Not general phone/device actions |
@@ -22,7 +22,7 @@ excludes the older microkernel/ProcessManager path from normal phone startup.
 | Plugins | In-process registration/capability contribution/dispatch | No security sandbox or downloadable plugin installer established |
 | Devices | Persisted identities/session handling, HeyCyan and BuddyBot paths | Hardware reliability and capability consistency need evidence |
 | Credentials | OpenRouter key written through SharedPreferences | No application-level encryption in this storage path |
-| UI verification | Robolectric/Roborazzi dependencies plus light/dark visual-language snapshot tests and appearance persistence test | Golden images have not been recorded/verified in this source-only pass; whole-screen/device-specific coverage is incomplete |
+| UI verification | Robolectric/Roborazzi dependencies; light/dark/1.30x-font visual-language snapshots; appearance persistence, permission-action and shared interaction-semantics tests | Golden images have not been recorded/verified in this source-only pass; whole-screen/device-specific coverage is incomplete |
 | CI | Workflow declares lint/test/build/upload | Current success not established; detekt/ktlint configuration mismatch |
 
 See [architecture](docs/04-architecture/ARCHITECTURE.md),
