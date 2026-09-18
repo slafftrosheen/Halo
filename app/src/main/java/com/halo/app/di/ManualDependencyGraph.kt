@@ -169,7 +169,17 @@ object ManualDependencyGraph {
     val voiceSettingsViewModel by lazy { VoiceSettingsViewModel(applicationContext, storage, providerGraph) }
     val activityViewModel by lazy { ActivityViewModel(runtimeSnapshotManager) }
     val notebookViewModel by lazy { NotebookViewModel(notebookUseCases) }
-    val devicesViewModel by lazy { DevicesViewModel(deviceRegistry, deviceSessionManager, eventBus, runtimeSnapshotManager, { heyCyanDriver }, buddyBotHost) }
+    val devicesViewModel by lazy {
+        DevicesViewModel(
+            deviceRegistry = deviceRegistry,
+            sessionManager = deviceSessionManager,
+            eventBus = eventBus,
+            snapshotSource = runtimeSnapshotManager,
+            heyCyanDriverProvider = { heyCyanDriver },
+            buddyBotHost = buddyBotHost,
+            autoConnectCoordinator = deviceAutoConnectCoordinator
+        )
+    }
     val pairingViewModel by lazy {
         PairingViewModel(
             driverProvider = { heyCyanDriver },
