@@ -74,4 +74,23 @@ class DeviceAutoConnectCoordinatorTest {
 
         assertTrue(unknown.isEmpty())
     }
+    @Test
+    fun migratesConstructorOrderBugFromExistingInstall() {
+        val broken = DeviceRecord(
+            identity = DeviceIdentity(
+                deviceId = "AA:BB",
+                deviceType = "BW-AG1 Pro",
+                displayName = "HEYCYAN_GLASSES"
+            ),
+            autoConnect = true
+        )
+
+        val normalized = normalizeLegacyDeviceRecord(broken)
+
+        assertEquals("HEYCYAN_GLASSES", normalized.identity.deviceType)
+        assertEquals("BW-AG1 Pro", normalized.identity.displayName)
+        assertEquals(DeviceKind.HEYCYAN_GLASSES, normalized.descriptor.kind)
+    }
+
+
 }
