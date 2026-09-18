@@ -98,3 +98,25 @@ Fixes made:
 Current reachable-screen source audit found no empty `onClick = {}`, no required callback defaulting
 to an empty action, and no screen-level TODO controls. Static rows such as About/status/telemetry
 remain intentionally non-interactive and do not render interactive affordances.
+
+
+## Accessibility / interaction acceptance — 2026-09-18
+
+This pass hardened the shared interaction contract across reachable screens:
+
+- HaloWorkspaceRow and HaloWorkspaceButton enforce a 48dp minimum touch target.
+- Disabled rows no longer render a chevron and expose disabled semantics without a click action.
+- Primary navigation uses selectable Tab semantics with selected-state reporting instead of raw
+  clickable columns.
+- Appearance choices expose RadioButton selection semantics.
+- Halo Presence exposes its runtime state through accessibility semantics.
+- Home composer voice controls now match runtime behavior: speech-processing disables the action,
+  listening exposes Stop, and speaking exposes interrupt-and-listen behavior.
+- HeyCyan media controls are enabled only when the device session is READY; transitional connection
+  states no longer expose ambiguous/reentrant actions.
+- BuddyBot host-backed controls are disabled when the host is unavailable.
+- Notebook create actions and other shared interactive surfaces meet the 48dp target.
+- Voice locale selection uses the shared selectable row primitive.
+
+Regression coverage now includes workspace interaction semantics and a 1.30x font-scale Roborazzi
+visual contract in addition to the light/dark snapshots.
