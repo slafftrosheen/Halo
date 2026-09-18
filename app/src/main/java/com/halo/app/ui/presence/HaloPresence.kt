@@ -3,6 +3,7 @@ package com.halo.app.ui.presence
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -51,7 +52,7 @@ fun HaloPresence(
     val surface = MaterialTheme.colorScheme.surface
     val onSurface = MaterialTheme.colorScheme.onSurface
 
-    Canvas(modifier = modifier.then(Modifier).run { this }) {
+    Canvas(modifier = modifier.size(size)) {
         val extent = min(this.size.width, this.size.height)
         val center = Offset(this.size.width / 2f, this.size.height / 2f)
         val unit = extent * 0.28f
@@ -131,7 +132,7 @@ fun HaloSignalGlyph(
         HaloSignalKind.ERROR -> listOf(HaloDanger, HaloPastelCoral, HaloDanger)
     }
 
-    Canvas(modifier = modifier.then(Modifier).run { this }) {
+    Canvas(modifier = modifier.size(size)) {
         val extent = min(this.size.width, this.size.height)
         val cell = extent * 0.28f
         val radius = CornerRadius(cell * 0.28f)
