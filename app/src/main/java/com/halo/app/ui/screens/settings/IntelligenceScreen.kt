@@ -34,8 +34,7 @@ import com.halo.providers.llamacpp.DownloadState
 @Composable
 fun IntelligenceScreen(
     viewModel: IntelligenceViewModel,
-    onBack: () -> Unit = {},
-    onChangeModel: (String) -> Unit = {}
+    onBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -108,10 +107,7 @@ fun IntelligenceScreen(
                         subtitle = model.contextLength?.let { "${it / 1000}k context" },
                         trailingText = if (model.id == uiState.activeModelId) "Active" else null,
                         selected = model.id == uiState.activeModelId,
-                        onClick = {
-                            onChangeModel(model.id)
-                            viewModel.selectModel(model.id)
-                        }
+                        onClick = { viewModel.selectModel(model.id) }
                     )
                     if (index < uiState.availableModels.lastIndex) {
                         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
