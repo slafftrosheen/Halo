@@ -43,9 +43,15 @@ The latest main-line correction restores Home keyboard submission, streaming/com
 presentation, voice start/stop/interruption and session cancellation under the new workspace
 visual language. Notebook exposes only implemented NB-01 controls: create note, lexical search,
 Inbox/archive/trash filters and persisted note editing. Devices no longer shows sample saved
-hardware or dead quick actions. Settings exposes only routed configuration pages plus read-only
-appearance/about information.
+hardware or dead quick actions. Settings exposes routed configuration pages plus a working persisted System/Light/Dark appearance selector.
 
-Light and dark color schemes are implemented through HaloTheme and currently follow the Android
-system theme. An explicit in-app System/Light/Dark selector is still pending and must not be
-claimed as shipped.
+Light and dark color schemes are implemented through HaloTheme. AppearancePreferences persists
+System/Light/Dark selection and MainActivity applies it at the app root; System remains the default.
+
+
+## Secondary-surface migration
+
+Intelligence, Voice, Permissions and Pairing now use shared workspace primitives rather than
+legacy Halo Glass page/card components. Startup error/retry surfaces also use the new workspace
+button/typography treatment. HeyCyanControlScreen and BuddyBotControlScreen remain the main
+reachable legacy-styled surfaces and are the next migration target.
