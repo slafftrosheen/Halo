@@ -60,9 +60,11 @@ class PairingViewModel(
                     current.copy(
                         connectionState = state,
                         statusMessage = when (state) {
+                            ConnectionState.Discovering -> "Discovering device…"
                             ConnectionState.Connecting -> "Connecting to glasses…"
                             ConnectionState.Connected -> "Bluetooth connected · initializing…"
                             ConnectionState.Ready -> "Connected and ready"
+                            ConnectionState.Disconnecting -> "Disconnecting…"
                             is ConnectionState.Failed -> state.reason
                             ConnectionState.Disconnected -> current.statusMessage
                         }
@@ -292,8 +294,10 @@ class PairingViewModel(
 
 private fun ConnectionState.toUserLabel(): String = when (this) {
     ConnectionState.Disconnected -> "Disconnected"
+    ConnectionState.Discovering -> "Discovering"
     ConnectionState.Connecting -> "Connecting"
     ConnectionState.Connected -> "Connected"
     ConnectionState.Ready -> "Ready"
+    ConnectionState.Disconnecting -> "Disconnecting"
     is ConnectionState.Failed -> reason
 }
