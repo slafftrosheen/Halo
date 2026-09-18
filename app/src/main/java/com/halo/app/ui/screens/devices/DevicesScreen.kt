@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -335,20 +336,20 @@ fun DevicesScreen(viewModel: DevicesViewModel) {
             Column {
                 Text(
                     text = "Devices",
-                    fontSize = 28.sp,
+                    style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
                     fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
                     color = androidx.compose.material3.MaterialTheme.colorScheme.onBackground
                 )
                 Text(
                     text = "Connected hardware and saved sessions.",
-                    fontSize = 14.sp,
+                    style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
                     color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             androidx.compose.material3.Surface(
                 shape = CircleShape,
                 color = androidx.compose.material3.MaterialTheme.colorScheme.primaryContainer,
-                modifier = Modifier.size(44.dp),
+                modifier = Modifier.size(48.dp),
                 onClick = { viewModel.navigateTo("discovery") }
             ) {
                 androidx.compose.material3.Icon(
@@ -370,18 +371,19 @@ fun DevicesScreen(viewModel: DevicesViewModel) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         text = "No saved devices",
-                        fontSize = 18.sp,
+                        style = androidx.compose.material3.MaterialTheme.typography.titleMedium,
                         fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
                         color = androidx.compose.material3.MaterialTheme.colorScheme.onBackground
                     )
                     Spacer(Modifier.height(6.dp))
                     Text(
                         text = "Pair supported hardware to make it available to Halo.",
-                        fontSize = 14.sp,
+                        style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
                         color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(Modifier.height(16.dp))
                     androidx.compose.material3.Surface(
+                        modifier = Modifier.heightIn(min = 48.dp),
                         onClick = { viewModel.navigateTo("discovery") },
                         shape = RoundedCornerShape(14.dp),
                         color = androidx.compose.material3.MaterialTheme.colorScheme.primaryContainer
