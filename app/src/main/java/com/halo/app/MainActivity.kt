@@ -130,7 +130,7 @@ class MainActivity : ComponentActivity() {
                                 Text("Halo runtime could not start.", style = MaterialTheme.typography.titleMedium)
                                 Text(
                                     runtimeError ?: "Unknown runtime startup error",
-                                    style = HaloTypography.bodyMedium,
+                                    style = MaterialTheme.typography.bodyMedium,
                                     modifier = Modifier.padding(top = 8.dp)
                                 )
                                 HaloWorkspaceButton(
@@ -147,7 +147,11 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
                         ) { CircularProgressIndicator() }
-                        else -> AppShell()
+                        else -> AppShell(
+                            onRequestPermissions = {
+                                permissionLauncher.launch(requiredPermissions())
+                            }
+                        )
                     }
                 }
             }
