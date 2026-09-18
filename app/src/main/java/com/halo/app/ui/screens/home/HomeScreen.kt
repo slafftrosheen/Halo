@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.sp
 import com.halo.app.ui.glass.components.HaloMarkdownText
 import com.halo.app.ui.glass.material.HaloRuntimeState
 import com.halo.app.ui.presence.HaloPresence
+import com.halo.app.ui.theme.rememberReducedMotion
 import com.halo.sdk.provider.CognitiveSessionState
 
 @Composable
@@ -53,6 +54,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
     val uiState by viewModel.uiState.collectAsState()
     val listeningRequested by viewModel.listeningRequested.collectAsState()
     var textInput by rememberSaveable { mutableStateOf("") }
+    val reducedMotion by rememberReducedMotion()
 
     val isListening = uiState.speechActive || listeningRequested
     val isSpeechProcessing = uiState.speechProcessing
@@ -152,7 +154,8 @@ fun HomeScreen(viewModel: HomeViewModel) {
         ) {
             HaloPresence(
                 state = uiState.runtimeState,
-                size = 184.dp
+                size = 184.dp,
+                reducedMotion = reducedMotion
             )
             Surface(
                 modifier = Modifier
