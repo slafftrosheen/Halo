@@ -75,7 +75,7 @@ fun NotebookScreen(viewModel: NotebookViewModel) {
                 shape = CircleShape,
                 color = MaterialTheme.colorScheme.primaryContainer,
                 onClick = viewModel::createNote,
-                modifier = Modifier.size(44.dp)
+                modifier = Modifier.size(48.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
