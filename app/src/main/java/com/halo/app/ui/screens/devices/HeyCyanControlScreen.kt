@@ -50,6 +50,13 @@ fun HeyCyanControlScreen(
     val device = uiState.devices.find { it.id == deviceId }
     val isConnected = device?.isConnected == true
     val connectionState = device?.connectionStateText ?: "Unknown"
+    val isReady = connectionState == "Ready"
+    val connectionBusy =
+        connectionState == "Connecting" ||
+            connectionState == "Connected" ||
+            connectionState == "Handshaking" ||
+            connectionState.startsWith("Syncing", ignoreCase = true) ||
+            connectionState == "Disconnecting"
     val statusAccent = when {
         connectionState == "Ready" -> HaloPastelMint
         connectionState.contains("Connecting", ignoreCase = true) ||
@@ -125,9 +132,7 @@ fun HeyCyanControlScreen(
 
                 HaloWorkspaceButton(
                     text = when {
-                        connectionState.contains("Connecting", ignoreCase = true) ||
-                            connectionState.contains("Syncing", ignoreCase = true) ||
-                            connectionState.contains("Handshaking", ignoreCase = true) -> "Working…"
+                        connectionBusy -> "Working…"
                         isConnected -> "Disconnect"
                         else -> "Connect"
                     },
@@ -135,7 +140,7 @@ fun HeyCyanControlScreen(
                         if (isConnected) viewModel.disconnectDevice(deviceId)
                         else viewModel.connectDevice(deviceId)
                     },
-                    enabled = connectionState != "Disconnecting",
+                    enabled = !connectionBusy,
                     primary = !isConnected
                 )
             }
@@ -163,7 +168,7 @@ fun HeyCyanControlScreen(
                         },
                         onClick = { viewModel.takePhoto(deviceId) },
                         modifier = Modifier.weight(1f),
-                        enabled = isConnected && !capturing
+                        enabled = isReady && !capturing
                     )
 
                     val videoState = device?.videoState ?: VideoRecordingState.IDLE
@@ -185,7 +190,7 @@ fun HeyCyanControlScreen(
                             else viewModel.startVideo(deviceId)
                         },
                         modifier = Modifier.weight(1f),
-                        enabled = isConnected && !transitioning,
+                        enabled = isReady && !transitioning,
                         primary = !recording
                     )
                 }
@@ -203,7 +208,7 @@ fun HeyCyanControlScreen(
                         else viewModel.startAudioRecording(deviceId)
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = isConnected,
+                    enabled = isReady,
                     primary = !audioRecording
                 )
             }
@@ -236,7 +241,7 @@ fun HeyCyanControlScreen(
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             DeviceRow(
                 "Output status",
-                if (isConnected) "Ready for speech routing" else "Connect device to route speech"
+                if (isReady) "Ready for speech routing" else "Device session is not ready"
             )
         }
 
