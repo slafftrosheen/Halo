@@ -14,3 +14,34 @@ Acceptance targets: contract/cancellation tests, provider wire fixtures, simulat
 UI state/accessibility testing, Android lifecycle/permission/audio instrumentation and
 physical glasses acceptance. Synthetic inputs validate code, not hardware truth.
 Record actual command, commit, environment and result for every verification claim.
+
+
+## UI visual regression
+
+The app module now contains a deterministic Roborazzi visual-language contract:
+`app/src/test/java/com/halo/app/ui/HaloVisualLanguageSnapshotTest.kt`.
+
+It renders the shared workspace primitives and Halo Presence in both explicit light and dark
+themes. It intentionally avoids booting the runtime graph so visual regressions can be isolated
+from provider, permission and hardware setup.
+
+Record baselines:
+
+```bash
+./gradlew :app:recordRoborazziDebug
+```
+
+Verify against recorded baselines:
+
+```bash
+./gradlew :app:verifyRoborazziDebug
+```
+
+Normal app unit tests, including `AppearancePreferencesTest`, remain under:
+
+```bash
+./gradlew :app:testDebugUnitTest
+```
+
+A committed test or dependency is not evidence of a passing run. Record the command, commit,
+environment and generated diff/result before marking visual acceptance complete.
