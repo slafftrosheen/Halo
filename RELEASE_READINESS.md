@@ -17,8 +17,24 @@ Required evidence:
 - [ ] Physical advertised connection/media/speech behavior accepted.
 - [ ] Credential/backup/redaction/permission behavior reviewed.
 - [ ] Named-hardware frame/latency/memory/thermal/battery measurements.
-- [ ] Burn-in and [hardware-week](docs/testing/7-day-hardware-test.md) results.
+- [ ] Execute and record the concrete [real-device burn-in matrix](docs/04-architecture/REAL_DEVICE_BURN_IN.md), then complete the [hardware-week](docs/testing/7-day-hardware-test.md).
 - [ ] Known issues and actual Android signing/distribution process recorded.
 
 Record commit/build, environment, scenario and evidence for each gate.
 TestFlight terminology does not apply to this Android release assessment.
+
+
+## Current pre-burn-in source boundary — 2026-09-18
+
+The current source is prepared to test recovery rather than treating prerequisites as application-wide gates:
+
+- microphone permission is voice-scoped; denying RECORD_AUDIO must not block Home, keyboard input,
+  Notebook, Settings or Devices;
+- Bluetooth permissions/radio state are device-flow prerequisites and are observed separately;
+- saved device auto-connect is owned by a process-level coordinator and is opt-in per saved record;
+- provider diagnostics refresh on foreground/network changes;
+- missing local speech model is a recoverable Voice capability state;
+- previously mis-persisted HeyCyan identity records from the constructor-order bug are normalized.
+
+These are implementation claims only. None of the release gates above should be checked until the
+referenced scenarios are executed on a named build/device and the evidence is recorded.
