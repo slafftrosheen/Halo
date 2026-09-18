@@ -205,7 +205,7 @@ private fun VisualLanguageFixture() {
             )
 
             Text(
-                text = "Danger stays semantic · ${MaterialTheme.colorScheme.error}",
+                text = "Danger stays semantic, not decorative.",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.error
             )
