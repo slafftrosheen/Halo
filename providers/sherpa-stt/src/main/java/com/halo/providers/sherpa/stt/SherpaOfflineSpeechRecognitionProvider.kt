@@ -14,8 +14,12 @@ import com.k2fsa.sherpa.onnx.FeatureConfig
 import com.k2fsa.sherpa.onnx.OfflineModelConfig
 import com.k2fsa.sherpa.onnx.OfflineRecognizer
 import com.k2fsa.sherpa.onnx.OfflineRecognizerConfig
+import com.k2fsa.sherpa.onnx.OfflineStream
 import com.k2fsa.sherpa.onnx.OfflineWhisperModelConfig
 import java.io.File
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -46,6 +50,22 @@ class SherpaOfflineSpeechRecognitionProvider(
     @Volatile private var recognizer: OfflineRecognizer? = null
     private val recognizerLock = Any()
     private val recognitionMutex = Mutex()
+
+    /*
+     * sherpa-onnx 1.13.8 can return a decoded result and then block while
+     * OfflineStream.release() destroys the native stream on the decoding thread.
+     * Never keep the speech transaction behind native teardown: the transcript
+     * is already fully materialized by getResult().
+     *
+     * Cleanup is deliberately single-owner and out-of-band. If one native
+     * delete gets stuck, subsequent stream objects are left to sherpa's own
+     * finalizer instead of growing an unbounded cleanup queue.
+     */
+    private val streamCleanupBusy = AtomicBoolean(false)
+    private val streamCleanupExecutor = Executors.newSingleThreadExecutor { runnable ->
+        Thread(runnable, "HaloSTT-Cleanup").apply { isDaemon = true }
+    }
+
     private val whisperLanguage = language.trim()
         .takeUnless { it.equals("auto", ignoreCase = true) }
         .orEmpty()
@@ -120,19 +140,23 @@ class SherpaOfflineSpeechRecognitionProvider(
 
                 stage = "result"
                 val result = localRecognizer.getResult(stream)
+                val text = result.text.trim()
                 Log.i(
                     TAG,
                     "DECODE_DONE decodeMs=${SystemClock.elapsedRealtime() - decodeStartedAt} " +
-                        "totalMs=${SystemClock.elapsedRealtime() - startedAt} chars=${result.text.trim().length}"
+                        "totalMs=${SystemClock.elapsedRealtime() - startedAt} chars=${text.length}"
                 )
+
+                // getResult() has copied the transcript into Kotlin. From this
+                // point on, native stream destruction must not delay handoff to
+                // SpeechRecognized/cognition.
                 RecognitionResult(
-                    result.text.trim(),
+                    text,
                     whisperLanguage.ifBlank { "auto" },
                     0.0f
                 )
             } finally {
-                stream.release()
-                nativeResourceCoordinator?.mark(this, NativeResourceState.RESIDENT, "recognition idle")
+                releaseStreamOutOfBand(stream)
             }
         } catch (error: Throwable) {
             Log.e(
@@ -146,6 +170,7 @@ class SherpaOfflineSpeechRecognitionProvider(
     }
 
     override suspend fun releaseIfIdle(): Boolean {
+        if (streamCleanupBusy.get()) return false
         if (!recognitionMutex.tryLock()) return false
         return try {
             synchronized(recognizerLock) {
@@ -160,12 +185,55 @@ class SherpaOfflineSpeechRecognitionProvider(
 
     override suspend fun close() {
         recognitionMutex.withLock {
-            synchronized(recognizerLock) {
-                recognizer?.release()
-                recognizer = null
+            if (!streamCleanupBusy.get()) {
+                synchronized(recognizerLock) {
+                    recognizer?.release()
+                    recognizer = null
+                }
+            } else {
+                Log.w(
+                    TAG,
+                    "Recognizer release deferred because native stream cleanup is still running"
+                )
             }
         }
+        streamCleanupExecutor.shutdownNow()
         nativeResourceCoordinator?.unregister(this)
+    }
+
+    private fun releaseStreamOutOfBand(stream: OfflineStream) {
+        if (!streamCleanupBusy.compareAndSet(false, true)) {
+            Log.w(
+                TAG,
+                "STREAM_RELEASE_DEFERRED cleanup already busy; native finalizer will own this stream"
+            )
+            return
+        }
+
+        streamCleanupExecutor.execute {
+            val cleanupStartedAt = SystemClock.elapsedRealtime()
+            Log.i(TAG, "STREAM_RELEASE_BEGIN")
+            try {
+                stream.release()
+                Log.i(
+                    TAG,
+                    "STREAM_RELEASE_DONE elapsedMs=${SystemClock.elapsedRealtime() - cleanupStartedAt}"
+                )
+                nativeResourceCoordinator?.let { coordinator ->
+                    runBlocking {
+                        coordinator.mark(
+                            this@SherpaOfflineSpeechRecognitionProvider,
+                            NativeResourceState.RESIDENT,
+                            "recognition idle"
+                        )
+                    }
+                }
+            } catch (error: Throwable) {
+                Log.e(TAG, "STREAM_RELEASE_FAILED", error)
+            } finally {
+                streamCleanupBusy.set(false)
+            }
+        }
     }
 
     private fun ensureRecognizer(): OfflineRecognizer {
