@@ -53,11 +53,9 @@ class HeyCyanVoiceSession(
                 when (event) {
                     is HeyCyanEvent.VoiceActivationStarted -> {
                         _state.value = State.ACTIVE
-                        com.halo.drivers.heycyan.debug.HeyCyanAudioStreamProbe.onVoiceActivationStarted()
                     }
                     is HeyCyanEvent.VoiceActivationEnded -> {
                         _state.value = State.ENDED
-                        com.halo.drivers.heycyan.debug.HeyCyanAudioStreamProbe.onVoiceActivationEnded()
                         _state.value = State.IDLE
                     }
                     else -> {}

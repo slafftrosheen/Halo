@@ -198,7 +198,7 @@ fun BuddyBotControlScreen(
                     else -> "Drag to steer · release to stop"
                 }
 
-                BuddyBotDriveHud(
+                BuddyBotDriveStatusHud(
                     telemetry = telemetry,
                     connectionReady = driveEnabled,
                     direction = joystickDirection,
@@ -639,7 +639,7 @@ private fun BuddyBotHero(
 }
 
 @Composable
-private fun BuddyBotDriveHud(
+private fun BuddyBotDriveStatusHud(
     telemetry: BuddyBotTelemetry,
     connectionReady: Boolean,
     direction: String,

@@ -45,12 +45,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.halo.app.ui.glass.components.HaloMarkdownText
 import com.halo.app.ui.glass.material.HaloRuntimeState
-import com.halo.app.ui.presence.HaloPresence
+import com.halo.app.ui.presence.HaloOrb
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import com.halo.app.ui.theme.HaloPastelBlue
 import com.halo.app.ui.theme.HaloWarning
 import com.halo.app.ui.theme.rememberReducedMotion
@@ -64,7 +68,24 @@ fun HomeScreen(
     viewModel: HomeViewModel,
     onRequestMicrophonePermission: () -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val selectedContext by (viewModel.workspace?.workingSet ?: kotlinx.coroutines.flow.flowOf(emptyList<String>())).collectAsState(emptyList())
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var pendingPhoto by rememberSaveable { mutableStateOf<String?>(null) }
+    val captureMessage by viewModel.captureMessage.collectAsState()
+    val camera = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.TakePicture()) { received ->
+        pendingPhoto?.let { path -> if (received) viewModel.receiveCapture(java.io.File(path)) else java.io.File(path).delete() }
+        pendingPhoto = null
+    }
+    fun launchCamera() {
+        val store = viewModel.captures ?: return
+        val file = store.newFile(); pendingPhoto = file.absolutePath
+        try { camera.launch(store.uri(file)) } catch (error: Exception) { file.delete(); pendingPhoto = null; viewModel.captureMessage.value = "No camera app is available" }
+    }
+    val cameraPermission = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) launchCamera() else viewModel.captureMessage.value = "Camera permission was not granted"
+    }
+    val clipboard = LocalClipboardManager.current
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val listeningRequested by viewModel.listeningRequested.collectAsState()
     var textInput by rememberSaveable { mutableStateOf("") }
     val reducedMotion by rememberReducedMotion()
@@ -174,7 +195,7 @@ fun HomeScreen(
                 color = MaterialTheme.colorScheme.surfaceVariant
             ) {
                 Text(
-                    text = uiState.activeProviderStatus.lowercase(),
+                    text = "${uiState.providerLocality} · ${uiState.activeProviderStatus.lowercase()}",
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -216,7 +237,7 @@ fun HomeScreen(
             }
         }
 
-        AnimatedVisibility(visible = !uiState.microphonePermissionGranted) {
+        AnimatedVisibility(visible = !providerNeedsAttention && !uiState.microphonePermissionGranted && !isActiveSession) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -243,7 +264,7 @@ fun HomeScreen(
             }
         }
 
-        AnimatedVisibility(visible = !uiState.speechReady) {
+        AnimatedVisibility(visible = !providerNeedsAttention && uiState.microphonePermissionGranted && !uiState.speechReady && !isActiveSession) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -276,13 +297,12 @@ fun HomeScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(210.dp),
+                .height(168.dp),
             contentAlignment = Alignment.Center
         ) {
-            HaloPresence(
-                state = uiState.runtimeState,
-                size = 184.dp,
-                reducedMotion = reducedMotion
+            HaloOrb(
+                presentation = uiState.orb.copy(reducedMotion = reducedMotion),
+                size = 140.dp
             )
             Surface(
                 modifier = Modifier
@@ -328,11 +348,28 @@ fun HomeScreen(
         )
         Spacer(Modifier.height(8.dp))
         Text(
-            text = "${uiState.recentEvents.size} recent events",
+            text = "Input: ${uiState.orb.source} · Output: Phone",
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.82f)
         )
 
+        Text("Working Set: ${selectedContext.size} selected", style = MaterialTheme.typography.bodySmall)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TextButton(onClick = ::togglePresence) { Text("Talk") }
+            TextButton(onClick = {
+                if (context.checkSelfPermission(android.Manifest.permission.CAMERA) == android.content.pm.PackageManager.PERMISSION_GRANTED) launchCamera()
+                else cameraPermission.launch(android.Manifest.permission.CAMERA)
+            }) { Text("Capture") }
+            TextButton(onClick = viewModel::createNote) { Text("New note") }
+            TextButton(onClick = viewModel::navigateToDevices) { Text("Devices") }
+        }
+        captureMessage?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+        uiState.inputStatus.rejection?.let { Text(it.replace('_', ' '), style = MaterialTheme.typography.bodySmall) }
+        if (isActiveSession) HaloWorkspaceCard(accent = HaloPastelBlue) {
+            Text(uiState.contextualText, style = MaterialTheme.typography.titleSmall)
+            Text(uiState.activeProvider, style = MaterialTheme.typography.bodyMedium)
+            TextButton(onClick = viewModel::cancelSession) { Text("Stop") }
+        }
         AnimatedVisibility(visible = responseText.isNotBlank()) {
             Column(
                 modifier = Modifier
@@ -346,6 +383,10 @@ fun HomeScreen(
                     color = MaterialTheme.colorScheme.secondary
                 )
                 Spacer(Modifier.height(8.dp))
+                if (!isActiveSession) Row {
+                    TextButton(onClick = { clipboard.setText(AnnotatedString(responseText)) }) { Text("Copy") }
+                    TextButton(onClick = { viewModel.saveResponse(responseText) }) { Text("Save to Notebook") }
+                }
                 HaloMarkdownText(
                     markdown = responseText,
                     textColor = MaterialTheme.colorScheme.onBackground,
@@ -386,6 +427,10 @@ fun HomeScreen(
             showStop = isActiveSession
         )
 
+        Row {
+            TextButton(onClick = viewModel::newConversation, enabled = !isActiveSession) { Text("New conversation") }
+            TextButton(onClick = viewModel::clearConversation, enabled = !isActiveSession) { Text("Clear conversation") }
+        }
         Spacer(Modifier.height(24.dp))
     }
 }

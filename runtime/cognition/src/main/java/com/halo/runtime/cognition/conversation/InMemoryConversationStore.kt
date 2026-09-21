@@ -17,13 +17,15 @@ class InMemoryConversationStore : ConversationStore {
 
     override suspend fun append(
         userText: String,
-        assistantText: String
+        assistantText: String,
+        metadata: Map<String, String>
     ): ConversationTurn = mutex.withLock {
         val turn = ConversationTurn(
             id = UUID.randomUUID().toString(),
             userText = userText,
             assistantText = assistantText,
-            timestamp = System.currentTimeMillis()
+            timestamp = System.currentTimeMillis(),
+            metadata = metadata
         )
         _turns.value = _turns.value + turn
         turn

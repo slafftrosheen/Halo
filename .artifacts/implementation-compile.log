@@ -1,0 +1,324 @@
+Reusing configuration cache.
+> Task :engines:provider:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :engines:ai:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :runtime:provider-core:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :libraries:common:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :sdk:host-sdk:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :sdk:provider-sdk:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :libraries:halo-cognition-language:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :engines:provider:compileKotlin NO-SOURCE
+> Task :sdk:runtime-sdk:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :engines:ai:processResources NO-SOURCE
+> Task :engines:provider:compileJava NO-SOURCE
+> Task :runtime:plugins:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :runtime:cognition:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :sdk:driver-sdk:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :runtime:services:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :runtime:services:processResources NO-SOURCE
+> Task :sdk:driver-sdk:processResources NO-SOURCE
+> Task :libraries:common:compileKotlin UP-TO-DATE
+> Task :sdk:runtime-sdk:processResources NO-SOURCE
+> Task :sdk:host-sdk:processResources NO-SOURCE
+> Task :libraries:common:processResources NO-SOURCE
+> Task :sdk:provider-sdk:processResources NO-SOURCE
+> Task :libraries:halo-cognition-language:processResources NO-SOURCE
+> Task :runtime:cognition:processResources NO-SOURCE
+> Task :libraries:common:compileJava NO-SOURCE
+> Task :runtime:events:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :libraries:common:classes UP-TO-DATE
+> Task :libraries:common:jar UP-TO-DATE
+> Task :libraries:halo-cognition-language:compileKotlin UP-TO-DATE
+> Task :runtime:events:processResources NO-SOURCE
+> Task :sdk:driver-sdk:compileKotlin UP-TO-DATE
+> Task :libraries:halo-cognition-language:compileJava NO-SOURCE
+> Task :runtime:commands:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :libraries:halo-cognition-language:classes UP-TO-DATE
+> Task :runtime:commands:processResources NO-SOURCE
+> Task :sdk:driver-sdk:compileJava NO-SOURCE
+> Task :runtime:queries:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :sdk:driver-sdk:classes UP-TO-DATE
+> Task :runtime:queries:processResources NO-SOURCE
+> Task :sdk:driver-sdk:jar UP-TO-DATE
+> Task :runtime:scheduler:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :runtime:scheduler:processResources NO-SOURCE
+> Task :runtime:registry:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :runtime:registry:processResources NO-SOURCE
+> Task :runtime:kernel:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :runtime:kernel:processResources NO-SOURCE
+> Task :engines:agents:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :libraries:halo-cognition-language:jar UP-TO-DATE
+> Task :engines:execution:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :engines:speech:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :engines:memory:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :engines:planning:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :engines:reasoning:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :runtime:speech:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :engines:interpretation:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :runtime:speech:processResources NO-SOURCE
+> Task :runtime:observer:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :engines:execution:processResources NO-SOURCE
+> Task :libraries:testing:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :libraries:logging:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :runtime:observer:processResources NO-SOURCE
+> Task :libraries:testing:processResources NO-SOURCE
+> Task :engines:memory:processResources NO-SOURCE
+> Task :libraries:logging:processResources NO-SOURCE
+> Task :engines:diagnostics:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :engines:reasoning:processResources NO-SOURCE
+> Task :engines:diagnostics:processResources NO-SOURCE
+> Task :engines:interpretation:processResources NO-SOURCE
+> Task :engines:speech:processResources NO-SOURCE
+> Task :runtime:intents:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :runtime:plugins:processResources NO-SOURCE
+> Task :runtime:intents:processResources NO-SOURCE
+> Task :engines:perception:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :engines:perception:processResources NO-SOURCE
+> Task :engines:planning:processResources NO-SOURCE
+> Task :engines:agents:processResources NO-SOURCE
+> Task :drivers:simulator:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :drivers:simulator:processResources NO-SOURCE
+> Task :app:generateDebugBuildConfig UP-TO-DATE
+> Task :host-android:preBuild UP-TO-DATE
+> Task :host-android:preDebugBuild UP-TO-DATE
+> Task :app:processDebugGoogleServices UP-TO-DATE
+> Task :drivers:heycyan:preBuild UP-TO-DATE
+> Task :drivers:heycyan:preDebugBuild UP-TO-DATE
+> Task :host-android:processDebugNavigationResources UP-TO-DATE
+> Task :providers:android-assistant:preBuild UP-TO-DATE
+> Task :providers:android-assistant:preDebugBuild UP-TO-DATE
+> Task :drivers:heycyan:processDebugNavigationResources UP-TO-DATE
+> Task :providers:android-assistant:processDebugNavigationResources UP-TO-DATE
+> Task :providers:android-tts:preBuild UP-TO-DATE
+> Task :providers:android-tts:preDebugBuild UP-TO-DATE
+> Task :providers:llamacpp:preBuild UP-TO-DATE
+> Task :providers:llamacpp:preDebugBuild UP-TO-DATE
+> Task :providers:android-tts:processDebugNavigationResources UP-TO-DATE
+> Task :providers:llamacpp:processDebugNavigationResources UP-TO-DATE
+> Task :providers:openrouter:preBuild UP-TO-DATE
+> Task :providers:sherpa-stt:preBuild UP-TO-DATE
+> Task :providers:openrouter:preDebugBuild UP-TO-DATE
+> Task :providers:sherpa-stt:preDebugBuild UP-TO-DATE
+> Task :providers:sherpa-stt:processDebugNavigationResources UP-TO-DATE
+> Task :providers:openrouter:processDebugNavigationResources UP-TO-DATE
+> Task :host-android:generateDebugResources UP-TO-DATE
+> Task :host-android:packageDebugResources UP-TO-DATE
+> Task :host-android:parseDebugLocalResources UP-TO-DATE
+> Task :host-android:generateDebugRFile UP-TO-DATE
+> Task :host-android:javaPreCompileDebug UP-TO-DATE
+> Task :drivers:heycyan:generateDebugResources UP-TO-DATE
+> Task :drivers:heycyan:packageDebugResources UP-TO-DATE
+> Task :drivers:heycyan:parseDebugLocalResources UP-TO-DATE
+> Task :drivers:heycyan:generateDebugRFile UP-TO-DATE
+> Task :app:generateDebugResources
+> Task :drivers:heycyan:javaPreCompileDebug UP-TO-DATE
+> Task :providers:android-assistant:generateDebugResources UP-TO-DATE
+> Task :providers:android-assistant:packageDebugResources UP-TO-DATE
+> Task :providers:android-assistant:parseDebugLocalResources UP-TO-DATE
+> Task :providers:android-assistant:generateDebugRFile UP-TO-DATE
+> Task :providers:android-assistant:javaPreCompileDebug UP-TO-DATE
+> Task :providers:android-tts:generateDebugResources UP-TO-DATE
+> Task :providers:android-tts:packageDebugResources UP-TO-DATE
+> Task :providers:android-tts:parseDebugLocalResources UP-TO-DATE
+> Task :app:processDebugNavigationResources
+> Task :providers:android-tts:generateDebugRFile UP-TO-DATE
+> Task :providers:android-tts:javaPreCompileDebug UP-TO-DATE
+> Task :providers:llamacpp:generateDebugResources UP-TO-DATE
+> Task :providers:llamacpp:javaPreCompileDebug UP-TO-DATE
+> Task :providers:openrouter:generateDebugResources UP-TO-DATE
+> Task :providers:llamacpp:packageDebugResources UP-TO-DATE
+> Task :providers:llamacpp:parseDebugLocalResources UP-TO-DATE
+> Task :providers:openrouter:packageDebugResources UP-TO-DATE
+> Task :providers:openrouter:parseDebugLocalResources UP-TO-DATE
+> Task :providers:llamacpp:generateDebugRFile UP-TO-DATE
+> Task :providers:openrouter:javaPreCompileDebug UP-TO-DATE
+> Task :providers:openrouter:generateDebugRFile UP-TO-DATE
+> Task :providers:sherpa-stt:generateDebugResources UP-TO-DATE
+> Task :providers:sherpa-stt:javaPreCompileDebug UP-TO-DATE
+> Task :providers:sherpa-stt:packageDebugResources UP-TO-DATE
+> Task :providers:sherpa-stt:parseDebugLocalResources UP-TO-DATE
+> Task :providers:sherpa-stt:generateDebugRFile UP-TO-DATE
+> Task :app:packageDebugResources
+> Task :app:parseDebugLocalResources
+> Task :app:generateDebugRFile
+> Task :sdk:host-sdk:compileKotlin
+> Task :sdk:host-sdk:compileJava NO-SOURCE
+> Task :sdk:host-sdk:classes UP-TO-DATE
+> Task :sdk:host-sdk:jar
+> Task :sdk:runtime-sdk:compileKotlin
+> Task :sdk:runtime-sdk:compileJava NO-SOURCE
+> Task :sdk:runtime-sdk:classes UP-TO-DATE
+> Task :sdk:runtime-sdk:jar
+> Task :runtime:queries:compileKotlin
+> Task :runtime:queries:compileJava NO-SOURCE
+> Task :runtime:queries:classes UP-TO-DATE
+> Task :runtime:queries:jar UP-TO-DATE
+> Task :runtime:commands:compileKotlin
+> Task :runtime:commands:compileJava NO-SOURCE
+> Task :runtime:commands:classes UP-TO-DATE
+> Task :runtime:commands:jar UP-TO-DATE
+> Task :runtime:events:compileKotlin
+> Task :runtime:events:compileJava NO-SOURCE
+> Task :runtime:events:classes UP-TO-DATE
+> Task :runtime:events:jar UP-TO-DATE
+> Task :runtime:scheduler:compileKotlin
+> Task :runtime:scheduler:compileJava NO-SOURCE
+> Task :runtime:scheduler:classes UP-TO-DATE
+> Task :runtime:scheduler:jar UP-TO-DATE
+> Task :runtime:registry:compileKotlin
+> Task :runtime:registry:compileJava NO-SOURCE
+> Task :runtime:registry:classes UP-TO-DATE
+> Task :runtime:registry:jar UP-TO-DATE
+> Task :sdk:provider-sdk:compileKotlin
+> Task :sdk:provider-sdk:compileJava NO-SOURCE
+> Task :runtime:provider-core:compileKotlin UP-TO-DATE
+> Task :runtime:provider-core:compileJava NO-SOURCE
+> Task :libraries:logging:compileKotlin
+> Task :engines:perception:compileKotlin
+> Task :sdk:provider-sdk:classes UP-TO-DATE
+> Task :sdk:provider-sdk:jar UP-TO-DATE
+> Task :drivers:simulator:compileKotlin
+> Task :libraries:logging:compileJava NO-SOURCE
+> Task :libraries:logging:classes UP-TO-DATE
+> Task :libraries:logging:jar UP-TO-DATE
+> Task :engines:perception:compileJava NO-SOURCE
+> Task :engines:perception:classes UP-TO-DATE
+> Task :engines:perception:jar UP-TO-DATE
+> Task :drivers:simulator:compileJava NO-SOURCE
+> Task :drivers:simulator:classes UP-TO-DATE
+> Task :drivers:simulator:jar UP-TO-DATE
+> Task :libraries:testing:compileKotlin
+> Task :libraries:testing:compileJava NO-SOURCE
+> Task :libraries:testing:classes UP-TO-DATE
+> Task :libraries:testing:jar UP-TO-DATE
+> Task :providers:android-assistant:compileDebugKotlin UP-TO-DATE
+> Task :providers:android-assistant:compileDebugJavaWithJavac NO-SOURCE
+> Task :providers:android-assistant:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :engines:ai:compileKotlin
+> Task :engines:ai:compileJava NO-SOURCE
+> Task :engines:ai:classes UP-TO-DATE
+> Task :engines:ai:jar UP-TO-DATE
+> Task :providers:android-tts:compileDebugKotlin
+> Task :providers:android-tts:compileDebugJavaWithJavac NO-SOURCE
+> Task :providers:android-tts:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :runtime:cognition:compileKotlin
+> Task :runtime:cognition:compileJava NO-SOURCE
+> Task :runtime:plugins:compileKotlin
+> Task :runtime:plugins:compileJava NO-SOURCE
+> Task :providers:llamacpp:compileDebugKotlin
+> Task :runtime:cognition:classes UP-TO-DATE
+> Task :runtime:cognition:jar
+> Task :providers:openrouter:compileDebugKotlin
+> Task :runtime:plugins:classes UP-TO-DATE
+> Task :runtime:plugins:jar UP-TO-DATE
+> Task :providers:llamacpp:compileDebugJavaWithJavac NO-SOURCE
+> Task :providers:llamacpp:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :providers:openrouter:compileDebugJavaWithJavac NO-SOURCE
+> Task :providers:openrouter:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :runtime:services:compileKotlin
+> Task :runtime:services:compileJava NO-SOURCE
+> Task :runtime:services:classes UP-TO-DATE
+> Task :runtime:services:jar UP-TO-DATE
+> Task :drivers:heycyan:compileDebugKotlin
+w: file:///C:/Users/slavd/HaloEco/Halo-main/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/ble/HeyCyanGattClient.kt:426:24 'var value: ByteArray!' is deprecated. Deprecated in Java.
+w: file:///C:/Users/slavd/HaloEco/Halo-main/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/ble/HeyCyanGattClient.kt:427:28 'fun writeCharacteristic(p0: BluetoothGattCharacteristic!): Boolean' is deprecated. Deprecated in Java.
+w: file:///C:/Users/slavd/HaloEco/Halo-main/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/ble/HeyCyanGattClient.kt:546:25 'var value: ByteArray!' is deprecated. Deprecated in Java.
+w: file:///C:/Users/slavd/HaloEco/Halo-main/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/ble/HeyCyanGattClient.kt:561:19 'fun writeDescriptor(p0: BluetoothGattDescriptor!): Boolean' is deprecated. Deprecated in Java.
+w: file:///C:/Users/slavd/HaloEco/Halo-main/drivers/heycyan/src/main/java/com/halo/drivers/heycyan/capability/HeyCyanCommandExecutor.kt:100:17 'when' is exhaustive so 'else' is redundant here.
+
+> Task :runtime:kernel:compileKotlin
+w: file:///C:/Users/slavd/HaloEco/Halo-main/runtime/kernel/src/main/java/com/halo/runtime/kernel/HaloMicrokernel.kt:70:25 Check for instance is always 'true'.
+
+> Task :runtime:kernel:compileJava NO-SOURCE
+> Task :runtime:kernel:classes UP-TO-DATE
+> Task :runtime:kernel:jar UP-TO-DATE
+> Task :providers:sherpa-stt:compileDebugKotlin
+> Task :engines:execution:compileKotlin
+> Task :engines:execution:compileJava NO-SOURCE
+> Task :engines:planning:compileKotlin
+> Task :engines:planning:compileJava NO-SOURCE
+> Task :engines:memory:compileKotlin
+> Task :engines:memory:compileJava NO-SOURCE
+> Task :engines:execution:classes UP-TO-DATE
+> Task :engines:execution:jar UP-TO-DATE
+> Task :engines:memory:classes UP-TO-DATE
+> Task :engines:memory:jar UP-TO-DATE
+> Task :engines:speech:compileKotlin
+> Task :engines:speech:compileJava NO-SOURCE
+
+> Task :engines:reasoning:compileKotlin
+w: file:///C:/Users/slavd/HaloEco/Halo-main/engines/reasoning/src/main/java/com/halo/engines/reasoning/strategy/DefaultReasoningStrategy.kt:47:13 'when' is exhaustive so 'else' is redundant here.
+w: file:///C:/Users/slavd/HaloEco/Halo-main/engines/reasoning/src/main/java/com/halo/engines/reasoning/strategy/DefaultReasoningStrategy.kt:122:13 'when' is exhaustive so 'else' is redundant here.
+w: file:///C:/Users/slavd/HaloEco/Halo-main/engines/reasoning/src/main/java/com/halo/engines/reasoning/strategy/LlmReasoningStrategy.kt:77:13 'when' is exhaustive so 'else' is redundant here.
+
+> Task :engines:reasoning:compileJava NO-SOURCE
+> Task :engines:reasoning:classes UP-TO-DATE
+> Task :engines:reasoning:jar UP-TO-DATE
+> Task :engines:speech:classes UP-TO-DATE
+> Task :engines:speech:jar UP-TO-DATE
+> Task :engines:diagnostics:compileKotlin
+> Task :engines:diagnostics:compileJava NO-SOURCE
+> Task :engines:diagnostics:classes UP-TO-DATE
+> Task :engines:diagnostics:jar UP-TO-DATE
+> Task :engines:planning:classes UP-TO-DATE
+> Task :engines:planning:jar UP-TO-DATE
+> Task :runtime:intents:compileKotlin
+> Task :runtime:intents:compileJava NO-SOURCE
+> Task :runtime:intents:classes UP-TO-DATE
+> Task :runtime:intents:jar UP-TO-DATE
+> Task :drivers:heycyan:compileDebugJavaWithJavac NO-SOURCE
+> Task :drivers:heycyan:bundleLibCompileToJarDebug
+> Task :providers:sherpa-stt:compileDebugJavaWithJavac NO-SOURCE
+> Task :providers:sherpa-stt:bundleLibCompileToJarDebug UP-TO-DATE
+
+> Task :runtime:observer:compileKotlin
+w: file:///C:/Users/slavd/HaloEco/Halo-main/runtime/observer/src/main/java/com/halo/runtime/observer/replay/RuntimeJsonSerializer.kt:68:63 Unchecked cast of 'Class<*>' to 'Class<Any>'.
+
+> Task :runtime:observer:compileJava NO-SOURCE
+> Task :runtime:observer:classes UP-TO-DATE
+> Task :runtime:observer:jar UP-TO-DATE
+> Task :engines:interpretation:compileKotlin
+> Task :engines:interpretation:compileJava NO-SOURCE
+> Task :engines:interpretation:classes UP-TO-DATE
+> Task :engines:interpretation:jar UP-TO-DATE
+
+> Task :host-android:compileDebugKotlin
+w: file:///C:/Users/slavd/HaloEco/Halo-main/host-android/src/main/java/com/halo/host/android/capability/AndroidMediaCapability.kt:38:85 'class Playlists : Any, BaseColumns, MediaStore.Audio.PlaylistsColumns' is deprecated. Deprecated in Java.
+w: file:///C:/Users/slavd/HaloEco/Halo-main/host-android/src/main/java/com/halo/host/android/capability/AndroidMediaCapability.kt:38:95 'static field ENTRY_CONTENT_TYPE: String' is deprecated. Deprecated in Java.
+
+> Task :host-android:compileDebugJavaWithJavac NO-SOURCE
+> Task :host-android:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :engines:agents:compileKotlin
+> Task :engines:agents:compileJava NO-SOURCE
+> Task :engines:agents:classes UP-TO-DATE
+> Task :engines:agents:jar UP-TO-DATE
+> Task :runtime:speech:compileKotlin
+> Task :runtime:speech:compileJava NO-SOURCE
+> Task :runtime:speech:classes UP-TO-DATE
+> Task :runtime:speech:jar UP-TO-DATE
+> Task :app:kspDebugKotlin
+
+> Task :app:compileDebugKotlin FAILED
+e: file:///C:/Users/slavd/HaloEco/Halo-main/app/src/main/java/com/halo/app/ui/screens/activity/ActivityScreen.kt:188:42 Unresolved reference 'category'.
+e: file:///C:/Users/slavd/HaloEco/Halo-main/app/src/main/java/com/halo/app/ui/screens/activity/ActivityScreen.kt:188:67 Unresolved reference 'category'.
+e: file:///C:/Users/slavd/HaloEco/Halo-main/app/src/main/java/com/halo/app/ui/screens/activity/ActivityScreen.kt:193:38 Unresolved reference 'objectId'.
+e: file:///C:/Users/slavd/HaloEco/Halo-main/app/src/main/java/com/halo/app/ui/screens/activity/ActivityScreen.kt:194:31 Argument type mismatch: actual type is 'String', but 'Map<String, String>' was expected.
+e: file:///C:/Users/slavd/HaloEco/Halo-main/app/src/main/java/com/halo/app/ui/screens/activity/ActivityScreen.kt:194:37 Unresolved reference 'details'.
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileDebugKotlin' (registered by plugin 'com.android.internal.application').
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 2m 16s
+128 actionable tasks: 45 executed, 83 up-to-date
+Configuration cache entry reused.

@@ -45,6 +45,7 @@ import com.halo.app.ui.theme.HaloPastelPink
 
 @Composable
 fun NoteEditorScreen(viewModel: NoteEditorViewModel, onBack: () -> Unit) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     val state by viewModel.uiState.collectAsState()
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -65,6 +66,16 @@ fun NoteEditorScreen(viewModel: NoteEditorViewModel, onBack: () -> Unit) {
             .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 20.dp, vertical = 10.dp)
     ) {
+        val imageUri = androidx.compose.runtime.remember(state.body) {
+            Regex("content://" + Regex.escape(context.packageName) + "\\.captures/[^)\\s]+").find(state.body)?.value
+        }
+        imageUri?.let { uri ->
+            androidx.compose.material3.TextButton(onClick = {
+                runCatching { context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW)
+                    .setDataAndType(android.net.Uri.parse(uri), "image/*")
+                    .addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)) }
+            }) { Text("Open captured image") }
+        }
         EditorToolbar(
             lifecycle = state.lifecycle,
             onBack = {

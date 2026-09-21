@@ -94,7 +94,7 @@ fun AppShell(
                         onRequestMicrophonePermission = onRequestPermissions
                     )
                 }
-                composable(Screen.Activity.route) { ActivityScreen(ManualDependencyGraph.activityViewModel) }
+                composable(Screen.Activity.route) { ActivityScreen(ManualDependencyGraph.activityViewModel, onOpenObject = { navigateSafely("notebook/note/$it") }) }
 
                 composable(Screen.Notebook.route) {
                     val notebookViewModel = ManualDependencyGraph.notebookViewModel

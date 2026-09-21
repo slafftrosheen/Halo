@@ -122,7 +122,8 @@ class CognitiveSession(
                 )
                 submit(
                     request = AiRequest(text = text),
-                    responseDelivery = responseDelivery
+                    responseDelivery = responseDelivery,
+                    origin = interpretation.metadata
                 )
             }
         }
@@ -131,7 +132,8 @@ class CognitiveSession(
     fun submit(
         request: AiRequest,
         policy: AiContextPolicy? = null,
-        responseDelivery: ResponseDelivery = ResponseDelivery.VISUAL_ONLY
+        responseDelivery: ResponseDelivery = ResponseDelivery.VISUAL_ONLY,
+        origin: Map<String, String> = emptyMap()
     ) {
         val effectivePolicy = policy ?: defaultPolicyProvider()
         activeJob?.cancel()
@@ -142,11 +144,13 @@ class CognitiveSession(
                 val provider = target.provider
                 val finalRequest = request.copy(modelId = target.modelId)
                 val capabilities = target.providerCapabilities
+                val targetPolicy = effectivePolicy.copy(includeWorkspace = effectivePolicy.includeWorkspace &&
+                    (target.provider.isLocal || effectivePolicy.allowCloudWorkspace))
 
                 _state.value = CognitiveSessionState.PreparingContext
                 eventBus.publish(CognitiveRequestStarted(requestId = requestId))
 
-                val assembly = contextAssembler.assemble(policy = effectivePolicy, capabilities = capabilities)
+                val assembly = contextAssembler.assemble(policy = targetPolicy, capabilities = capabilities)
                 val context = assembly.context
                 val requestWithContext = bindAssembledContext(finalRequest, assembly)
 
@@ -204,7 +208,7 @@ class CognitiveSession(
                         initialResponse = response,
                         provider = provider,
                         capabilities = capabilities,
-                        policy = effectivePolicy
+                        policy = targetPolicy
                     )
                 }
 
@@ -214,16 +218,14 @@ class CognitiveSession(
                     expectedModelId = target.modelId,
                     response = response
                 )
-                _state.value = CognitiveSessionState.Completed(response)
-                eventBus.publish(CognitiveCompleted(requestId = requestId, response = response.text))
-
                 val responseText = response.text.trim()
                 val userText = finalRequest.text?.trim().orEmpty()
                 if (responseText.isNotBlank()) {
                     if (userText.isNotBlank()) {
                         val turn = conversationStore.append(
                             userText = userText,
-                            assistantText = responseText
+                            assistantText = responseText,
+                            metadata = origin + mapOf("requestId" to requestId, "provider" to target.providerId, "model" to (target.modelId ?: ""))
                         )
                         eventBus.publish(
                             ConversationTurnCompleted(
@@ -234,6 +236,8 @@ class CognitiveSession(
                         )
                     }
 
+                    _state.value = CognitiveSessionState.Completed(response)
+                    eventBus.publish(CognitiveCompleted(requestId = requestId, response = response.text))
                     eventBus.publish(
                         AssistantResponsePublished(
                             text = responseText,
@@ -249,6 +253,9 @@ class CognitiveSession(
                             )
                         )
                     }
+                } else {
+                    _state.value = CognitiveSessionState.Completed(response)
+                    eventBus.publish(CognitiveCompleted(requestId = requestId, response = response.text))
                 }
             } catch (e: CancellationException) {
                 _state.value = CognitiveSessionState.Idle

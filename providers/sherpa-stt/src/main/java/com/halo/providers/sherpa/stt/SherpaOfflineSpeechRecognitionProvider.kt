@@ -47,6 +47,8 @@ class SherpaOfflineSpeechRecognitionProvider(
 
     override val nativeResourceKind: NativeResourceKind = NativeResourceKind.HEAVY_ASR
 
+    override val nativeResourceId = "whisper:" + java.util.UUID.randomUUID().toString()
+    private val closeRequested = AtomicBoolean(false)
     @Volatile private var recognizer: OfflineRecognizer? = null
     private val recognizerLock = Any()
     private val recognitionMutex = Mutex()
@@ -82,6 +84,7 @@ class SherpaOfflineSpeechRecognitionProvider(
     }
 
     override suspend fun recognize(audio: AudioBuffer): RecognitionResult = recognitionMutex.withLock {
+        check(!closeRequested.get()) { "Recognizer is closed" }
         require(audio.frames.isNotEmpty()) { "Cannot recognize an empty audio buffer" }
         check(isInstalled(modelDirectory)) { "Sherpa-ONNX model is not installed at ${modelDirectory.absolutePath}" }
         require(audio.frames.all { it.sampleRate == SAMPLE_RATE && it.channels == 1 }) {
@@ -101,7 +104,7 @@ class SherpaOfflineSpeechRecognitionProvider(
         val audioDurationMs = samples.size * 1000L / SAMPLE_RATE
         Log.i(
             TAG,
-            "RECOGNIZE_BEGIN frames=${audio.frames.size} samples=${samples.size} " +
+            "STT_BEGIN frames=${audio.frames.size} samples=${samples.size} " +
                 "durationMs=$audioDurationMs peak=$peak language=${whisperLanguage.ifBlank { "auto" }}"
         )
 
@@ -143,7 +146,7 @@ class SherpaOfflineSpeechRecognitionProvider(
                 val text = result.text.trim()
                 Log.i(
                     TAG,
-                    "DECODE_DONE decodeMs=${SystemClock.elapsedRealtime() - decodeStartedAt} " +
+                    "STT_DONE decodeMs=${SystemClock.elapsedRealtime() - decodeStartedAt} " +
                         "totalMs=${SystemClock.elapsedRealtime() - startedAt} chars=${text.length}"
                 )
 
@@ -161,7 +164,7 @@ class SherpaOfflineSpeechRecognitionProvider(
         } catch (error: Throwable) {
             Log.e(
                 TAG,
-                "RECOGNIZE_FAILED stage=$stage elapsedMs=${SystemClock.elapsedRealtime() - startedAt}",
+                "STT_FAILED stage=$stage elapsedMs=${SystemClock.elapsedRealtime() - startedAt}",
                 error
             )
             nativeResourceCoordinator?.release(this)
@@ -184,21 +187,17 @@ class SherpaOfflineSpeechRecognitionProvider(
     }
 
     override suspend fun close() {
-        recognitionMutex.withLock {
-            if (!streamCleanupBusy.get()) {
-                synchronized(recognizerLock) {
-                    recognizer?.release()
-                    recognizer = null
-                }
-            } else {
-                Log.w(
-                    TAG,
-                    "Recognizer release deferred because native stream cleanup is still running"
-                )
+        closeRequested.set(true)
+        val released = recognitionMutex.withLock {
+            if (streamCleanupBusy.get()) false else {
+                synchronized(recognizerLock) { recognizer?.release(); recognizer = null }
+                true
             }
         }
-        streamCleanupExecutor.shutdownNow()
-        nativeResourceCoordinator?.unregister(this)
+        // JNI deletion is not interruptible. Its owner releases the recognizer after
+        // stream deletion returns; never unregister an object that still owns native memory.
+        streamCleanupExecutor.shutdown()
+        if (released) nativeResourceCoordinator?.unregister(this)
     }
 
     private fun releaseStreamOutOfBand(stream: OfflineStream) {
@@ -232,6 +231,10 @@ class SherpaOfflineSpeechRecognitionProvider(
                 Log.e(TAG, "STREAM_RELEASE_FAILED", error)
             } finally {
                 streamCleanupBusy.set(false)
+                if (closeRequested.get()) {
+                    synchronized(recognizerLock) { recognizer?.release(); recognizer = null }
+                    nativeResourceCoordinator?.let { coordinator -> runBlocking { coordinator.unregister(this@SherpaOfflineSpeechRecognitionProvider) } }
+                }
             }
         }
     }

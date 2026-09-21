@@ -9,8 +9,6 @@ import java.time.Instant
 object HeyCyanLogger {
     var logger: (tag: String, msg: String) -> Unit = { tag, msg ->
         runCatching { android.util.Log.i(tag, msg) }
-        // Match ConsoleLogger format: [INFO ] [TIMESTAMP] [HALO-tag] msg
-        println("[INFO ] [${Instant.now()}] [HALO-$tag] $msg")
     }
 
     fun i(tag: String, msg: String) {

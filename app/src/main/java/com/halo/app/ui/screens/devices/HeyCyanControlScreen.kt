@@ -45,6 +45,7 @@ fun HeyCyanControlScreen(
     viewModel: DevicesViewModel,
     onBack: () -> Unit
 ) {
+    val media by (viewModel.mediaCoordinator()?.state ?: kotlinx.coroutines.flow.MutableStateFlow(com.halo.app.capture.WearableCaptureStatus())).collectAsState()
     val uiState by viewModel.uiState.collectAsState()
     val device = uiState.devices.find { it.id == deviceId }
     val isConnected = device?.isConnected == true
@@ -167,7 +168,7 @@ fun HeyCyanControlScreen(
                         },
                         onClick = { viewModel.takePhoto(deviceId) },
                         modifier = Modifier.weight(1f),
-                        enabled = isReady && !capturing
+                        enabled = isReady && !capturing && !media.busy
                     )
 
                     val videoState = device?.videoState ?: VideoRecordingState.IDLE
@@ -231,17 +232,17 @@ fun HeyCyanControlScreen(
 
         Spacer(Modifier.height(20.dp))
 
-        HaloWorkspaceSection(title = "Audio output") {
-            DeviceRow("Speech target", "HeyCyan glasses")
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            DeviceRow("Routing command", "Verified Â· 0x52")
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            DeviceRow("Playback transport", "Android Bluetooth audio")
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            DeviceRow(
-                "Output status",
-                if (isReady) "Ready for speech routing" else "Device session is not ready"
-            )
+        HaloWorkspaceSection(title = "Halo speech") {
+            DeviceRow("Input", "Physical glasses activation automatically uses Halo")
+            DeviceRow("Output", "Phone · Android speaker")
+            DeviceRow("Input policy", "An active turn owns input; activation during playback is ignored")
+        }
+        Spacer(Modifier.height(20.dp))
+        HaloWorkspaceSection(title = "Media") {
+            Text(media.message, style = MaterialTheme.typography.bodyMedium)
+            media.lastSync?.let { DeviceRow("Last received", java.text.DateFormat.getDateTimeInstance().format(java.util.Date(it))) }
+            HaloWorkspaceButton(text = "Refresh inventory", onClick = viewModel::refreshMedia, enabled = isReady && !media.busy)
+            HaloWorkspaceButton(text = "Sync media", onClick = viewModel::syncMedia, enabled = isReady && !media.busy)
         }
 
         Spacer(Modifier.height(20.dp))
@@ -273,7 +274,7 @@ fun HeyCyanControlScreen(
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             DeviceRow("Speaker output", "Available with Bluetooth routing")
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            DeviceRow("Live audio input", "Structural validation")
+            DeviceRow("Live audio input", "Shared local Whisper pipeline")
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             DeviceRow("AI photo", "Blocked by protocol")
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)

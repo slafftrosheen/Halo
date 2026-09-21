@@ -42,7 +42,7 @@ class StreamingMediaDownloadStrategy(
 
             return if (result.isSuccess) {
                 val downloadRes = result.getOrThrow()
-                repository.commit(session, sha256 = downloadRes.integrity.sha256)
+                repository.commit(session, sha256 = downloadRes.integrity.sha256).getOrThrow()
                 result
             } else {
                 repository.abort(session)

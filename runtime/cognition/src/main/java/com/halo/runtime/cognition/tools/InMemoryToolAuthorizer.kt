@@ -38,6 +38,10 @@ class InMemoryToolAuthorizer(
             )
         }
 
+        val definition = toolRegistry.definitions().first { it.id == toolCall.functionName || it.name == toolCall.functionName }
+        if (definition.risk != com.halo.sdk.provider.ToolRisk.SAFE) {
+            return ToolAuthorization.Rejected(toolCall, "This action requires confirmation and is not enabled for automatic execution")
+        }
         return ToolAuthorization.Authorized(toolCall)
     }
 }

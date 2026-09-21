@@ -18,7 +18,8 @@ fun Storage.readRuntimeAiContextPolicy(): AiContextPolicy = AiContextPolicy(
     includeLocation = getBoolean(KEY_LOCATION, false),
     includeImages = getBoolean(KEY_IMAGES, true),
     includeAudio = getBoolean(KEY_AUDIO, false),
-    includeVideo = getBoolean(KEY_VIDEO, false)
+    includeVideo = getBoolean(KEY_VIDEO, false),
+    allowCloudWorkspace = getBoolean("policy_cloud_workspace", false)
 )
 
 const val KEY_CONVERSATION = "policy_conversation"

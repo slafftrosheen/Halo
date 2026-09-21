@@ -67,8 +67,15 @@ class HostGraph(
      * flows or by DeviceAutoConnectCoordinator when a saved glasses record has
      * autoConnect enabled.
      */
+    var captureCoordinator: com.halo.app.capture.WearableCaptureCoordinator? = null
+        private set
+
     val heyCyanDriver: RealHeyCyanDriver by lazy {
-        RealHeyCyanDriver(context, infra.eventBus)
+        RealHeyCyanDriver(context, infra.eventBus).also { driver ->
+            WearableSpeechInputBridge(driver, audioPerceptionEngine, infra.eventBus, infra.scope).start()
+            captureCoordinator = com.halo.app.capture.WearableCaptureCoordinator(context, driver,
+                ManualDependencyGraph.captures, infra.eventBus, infra.scope).also { it.start() }
+        }
     }
 
     val heyCyanHost: HeyCyanHost by lazy {

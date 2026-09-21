@@ -59,8 +59,8 @@ class HeyCyanProtocolCapture(
         direction: PacketDirection,
         writeType: String? = null
     ) {
-        // Record even if not enabled for immediate hex dump if needed,
-        // but only store in allFrames if enabled.
+        if (!_isCaptureEnabled.value) return
+        // Raw recording and hex formatting are forensic-only.
         
         val frame = RawHeyCyanFrame(
             timestampMillis = System.currentTimeMillis(),

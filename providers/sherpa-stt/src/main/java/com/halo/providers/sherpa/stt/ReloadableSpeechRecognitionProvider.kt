@@ -11,7 +11,9 @@ import com.halo.sdk.provider.SpeechRecognitionProvider
 import com.halo.sdk.runtime.NativeResourceCoordinator
 import java.io.File
 import java.util.concurrent.atomic.AtomicReference
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,6 +32,8 @@ class ReloadableSpeechRecognitionProvider(
     private val nativeResourceCoordinator: NativeResourceCoordinator? = null
 ) : BufferedSpeechRecognitionProvider {
 
+    private val lifecycle = Mutex()
+    private val cleanupScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val currentDelegate = AtomicReference<BufferedSpeechRecognitionProvider>()
     private val _availability = MutableStateFlow(false)
     val availability: StateFlow<Boolean> = _availability.asStateFlow()
@@ -53,7 +57,9 @@ class ReloadableSpeechRecognitionProvider(
         val old = currentDelegate.getAndSet(newDelegate)
         _availability.value = newDelegate !is UnavailableSpeechRecognitionProvider
         if (old != null && old != newDelegate) {
-            runCatching { runBlocking { old.close() } }
+            cleanupScope.launch {
+                lifecycle.withLock { old.close() }
+            }
         }
     }
 
@@ -73,9 +79,11 @@ class ReloadableSpeechRecognitionProvider(
         currentDelegate.get().healthDetails()
 
     override suspend fun recognize(audio: AudioBuffer): RecognitionResult =
-        currentDelegate.get().recognize(audio)
+        lifecycle.withLock { currentDelegate.get().recognize(audio) }
 
     override suspend fun close() {
-        currentDelegate.get()?.close()
+        lifecycle.withLock { currentDelegate.get()?.close() }
+        cleanupScope.coroutineContext[Job]?.children?.toList()?.joinAll()
+        cleanupScope.cancel()
     }
 }

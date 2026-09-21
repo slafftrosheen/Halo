@@ -99,7 +99,8 @@ class DevicesViewModel(
     private val snapshotSource: com.halo.sdk.runtime.RuntimeSnapshotSource,
     private val heyCyanDriverProvider: () -> RealHeyCyanDriver?,
     val buddyBotHost: BuddyBotHost? = null,
-    private val autoConnectCoordinator: DeviceAutoConnectCoordinator? = null
+    private val autoConnectCoordinator: DeviceAutoConnectCoordinator? = null,
+    private val captures: () -> com.halo.app.capture.WearableCaptureCoordinator? = { null }
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(DevicesUiState())
     val uiState: StateFlow<DevicesUiState> = _uiState.asStateFlow()
@@ -185,7 +186,7 @@ class DevicesViewModel(
                         },
                         isBatteryStale = batteryAgeMs > STALE_BATTERY_MS,
                         firmware = if (isRobot) {
-                            record.firmwareVersion ?: "v0.3.0"
+                            record.firmwareVersion ?: "Unknown"
                         } else {
                             driverState.version?.firmware ?: record.firmwareVersion ?: "Unknown"
                         },
@@ -250,7 +251,12 @@ class DevicesViewModel(
         kind = kind
     )
 
+    fun mediaCoordinator() = captures()
+    fun syncMedia() { viewModelScope.launch(Dispatchers.IO) { captures()?.sync() } }
+    fun refreshMedia() { viewModelScope.launch { heyCyanDriverProvider()?.capabilityController?.execute(com.halo.sdk.runtime.embodiment.heycyan.HeyCyanOperation.GetMediaInventory) } }
     fun takePhoto(deviceId: String) {
+        captures()?.let { capture -> viewModelScope.launch(Dispatchers.IO) { capture.capture() }; return }
+
         if ((_photoStates.value[deviceId] ?: PhotoActionState.READY) == PhotoActionState.CAPTURING) return
         val intent = newIntent(deviceId, com.halo.sdk.runtime.embodiment.IntentKind.CAPTURE_PHOTO)
         _photoStates.value = _photoStates.value + (deviceId to PhotoActionState.CAPTURING)
@@ -407,11 +413,12 @@ fun DevicesScreen(viewModel: DevicesViewModel) {
                 contentPadding = PaddingValues(bottom = 80.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(uiState.devices, key = { it.id }) { device ->
-                    DeviceCard(
-                        device = device,
-                        onClick = { viewModel.navigateTo("device/${device.id}") }
-                    )
+                listOf(true to "Connected", false to "Saved").forEach { (connected, title) ->
+                    val group = uiState.devices.filter { it.isConnected == connected }
+                    if (group.isNotEmpty()) item { Text(title, style = androidx.compose.material3.MaterialTheme.typography.titleMedium) }
+                    items(group, key = { it.id }) { device ->
+                        DeviceCard(device = device, onClick = { viewModel.navigateTo("device/${device.id}") })
+                    }
                 }
             }
         }
@@ -450,12 +457,9 @@ private fun DeviceCard(
                     color = androidx.compose.material3.MaterialTheme.colorScheme.surfaceVariant,
                     modifier = Modifier.size(48.dp)
                 ) {
-                    androidx.compose.material3.Icon(
-                        imageVector = Icons.Default.SmartToy,
-                        contentDescription = null,
-                        tint = androidx.compose.material3.MaterialTheme.colorScheme.secondary,
-                        modifier = Modifier.padding(12.dp)
-                    )
+                    com.halo.app.ui.presence.HaloWorkspaceMark(
+                        if (device.kind == com.halo.sdk.runtime.embodiment.DeviceKind.BUDDYBOT) "robot" else "glasses",
+                        modifier = Modifier.padding(10.dp))
                 }
 
                 Spacer(Modifier.width(14.dp))
@@ -526,7 +530,7 @@ private fun DeviceMeta(label: String, value: String) {
     Column {
         Text(
             text = label,
-            fontSize = 10.sp,
+            fontSize = 12.sp,
             color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(

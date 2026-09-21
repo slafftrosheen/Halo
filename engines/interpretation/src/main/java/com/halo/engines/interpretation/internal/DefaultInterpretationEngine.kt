@@ -166,7 +166,13 @@ open class DefaultInterpretationEngine(
                 timestamp = Instant.fromEpochMilliseconds(observation.timestamp)
             )
         )
-        val interpretation = result.interpretation
+        val interpretation = result.interpretation.copy(metadata = result.interpretation.metadata + buildMap {
+            put("observationId", observation.id.value)
+            put("inputSource", observation.origin?.source?.toString() ?: observation.source.name)
+            observation.sourceDeviceId?.let { put("sourceDeviceId", it) }
+            observation.metadata["captureId"]?.let { put("captureId", it.toString()) }
+            observation.metadata["inputRoute"]?.let { put("inputRoute", it.toString()) }
+        })
         val createdAt = Instant.fromEpochMilliseconds(observation.timestamp)
 
         blackboard.publish(

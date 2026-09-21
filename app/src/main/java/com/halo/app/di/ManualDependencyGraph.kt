@@ -54,6 +54,7 @@ object ManualDependencyGraph {
     val appDatabase by lazy { RuntimeStartupTrace.measure("graph.database") { AppDatabase.create(applicationContext) } }
     val notebookRepository by lazy { RoomNotebookRepository(appDatabase.notebookDao()) }
     val notebookUseCases by lazy { NotebookUseCases(notebookRepository) }
+    val captures by lazy { com.halo.app.capture.LocalCaptureStore(applicationContext, appDatabase, notebookRepository, eventBus) }
     val appearancePreferences by lazy { AppearancePreferences(applicationContext) }
 
     /** One runtime instance per Android process; Activities are only views over it. */
@@ -102,9 +103,10 @@ object ManualDependencyGraph {
     val speechSessionManager get() = engineGraph.speechSessionManager
     val speechPerceptionBridge get() = engineGraph.speechPerceptionBridge
 
-    val conversationStore by lazy { com.halo.runtime.cognition.conversation.InMemoryConversationStore() }
-    val toolRegistry by lazy { com.halo.runtime.cognition.tools.ToolRegistry(listOf(com.halo.runtime.cognition.tools.EchoToolExecutor(), com.halo.runtime.cognition.tools.CurrentTimeToolExecutor())) }
-    val contextAssembler by lazy { com.halo.runtime.cognition.context.DefaultContextAssembler(conversationStore, blackboard, toolRegistry) }
+    val conversationStore by lazy { com.halo.app.data.RoomConversationStore(appDatabase, infra.scope) }
+    val toolRegistry by lazy { com.halo.runtime.cognition.tools.ToolRegistry(listOf(AndroidCapabilityTools(applicationContext, eventBus), com.halo.runtime.cognition.tools.CurrentTimeToolExecutor())) }
+    val workspaceContext by lazy { com.halo.app.data.WorkspaceContextStore(appDatabase, notebookRepository, storage) }
+    val contextAssembler by lazy { com.halo.runtime.cognition.context.DefaultContextAssembler(conversationStore, blackboard, toolRegistry, workspaceContext) }
     val toolAuthorizer by lazy { com.halo.runtime.cognition.tools.InMemoryToolAuthorizer(toolRegistry) }
     val cognitiveSession by lazy {
         CognitiveSession(
@@ -162,14 +164,16 @@ object ManualDependencyGraph {
                 aiProviderRouter = aiProviderRouter,
                 speechAvailability = speechRecognitionAvailability,
                 microphonePermission = platformStateMonitor.microphonePermissionGranted,
-                networkRevision = platformStateMonitor.networkRevision
+                networkRevision = platformStateMonitor.networkRevision,
+                speechInput = audioPerceptionEngine.inputStatus,
+                notebook = notebookRepository, conversations = conversationStore, database = appDatabase, workspace = workspaceContext, captures = captures
             )
         }
     }
     val settingsViewModel by lazy { SettingsViewModel(applicationContext, runtimeSnapshotManager, aiProviderRouter, appearancePreferences) }
     val voiceSettingsViewModel by lazy { VoiceSettingsViewModel(applicationContext, storage, providerGraph) }
     val activityViewModel by lazy { ActivityViewModel(runtimeSnapshotManager) }
-    val notebookViewModel by lazy { NotebookViewModel(notebookUseCases) }
+    val notebookViewModel by lazy { NotebookViewModel(notebookUseCases, workspaceContext, conversationStore) }
     val devicesViewModel by lazy {
         DevicesViewModel(
             deviceRegistry = deviceRegistry,
@@ -178,7 +182,8 @@ object ManualDependencyGraph {
             snapshotSource = runtimeSnapshotManager,
             heyCyanDriverProvider = { heyCyanDriver },
             buddyBotHost = buddyBotHost,
-            autoConnectCoordinator = deviceAutoConnectCoordinator
+            autoConnectCoordinator = deviceAutoConnectCoordinator,
+            captures = { hostGraph.captureCoordinator }
         )
     }
     val pairingViewModel by lazy {

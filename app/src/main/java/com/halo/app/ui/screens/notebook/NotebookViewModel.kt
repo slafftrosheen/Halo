@@ -35,7 +35,9 @@ sealed interface NotebookNavigation {
 }
 
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-class NotebookViewModel(private val useCases: NotebookUseCases) : ViewModel() {
+class NotebookViewModel(private val useCases: NotebookUseCases,
+    val workspace: com.halo.app.data.WorkspaceContextStore? = null,
+    val conversations: com.halo.app.data.RoomConversationStore? = null) : ViewModel() {
     private val query = MutableStateFlow("")
     private val filter = MutableStateFlow(NotebookFilter.ALL)
     private val navigationChannel = Channel<NotebookNavigation>(Channel.BUFFERED)
@@ -61,6 +63,14 @@ class NotebookViewModel(private val useCases: NotebookUseCases) : ViewModel() {
             }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NotebookUiState())
+
+    fun selectContext(id: String, selected: Boolean) { viewModelScope.launch {
+        if (selected) workspace?.select(id) else workspace?.remove(id)
+    } }
+    fun remember(id: String) { viewModelScope.launch { workspace?.remember(id) } }
+    fun forget(id: Int) { viewModelScope.launch { workspace?.forget(id) } }
+    fun correct(memory: com.halo.app.data.Memory, text: String) { viewModelScope.launch { workspace?.correct(memory, text) } }
+    fun openConversation(id: String) { viewModelScope.launch { conversations?.open(id) } }
 
     fun setQuery(value: String) {
         query.value = value

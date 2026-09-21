@@ -16,7 +16,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.material3.TextButton
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -38,8 +42,10 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 @Composable
-fun ActivityScreen(viewModel: ActivityViewModel) {
+fun ActivityScreen(viewModel: ActivityViewModel, onOpenObject: (String) -> Unit = {}) {
     val uiState by viewModel.uiState.collectAsState()
+    var category by remember { mutableStateOf("All") }
+    val filtered = uiState.events.filter { category == "All" || it.category == category || (category == "Errors" && it.failed) }
 
     Column(
         modifier = Modifier
@@ -61,7 +67,12 @@ fun ActivityScreen(viewModel: ActivityViewModel) {
         )
         Spacer(Modifier.size(24.dp))
 
-        if (uiState.events.isEmpty()) {
+        Row(Modifier.horizontalScroll(rememberScrollState())) {
+            listOf("All", "Voice", "Vision", "Actions", "Devices", "Errors").forEach { filter ->
+                TextButton(onClick = { category = filter }) { Text(if (category == filter) "• $filter" else filter) }
+            }
+        }
+        if (filtered.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
                     text = "Nothing here yet.",
@@ -75,8 +86,8 @@ fun ActivityScreen(viewModel: ActivityViewModel) {
                 contentPadding = PaddingValues(bottom = 80.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                items(uiState.events, key = { it.id }) { event ->
-                    ActivityListItem(event)
+                items(filtered, key = { it.id }) { event ->
+                    ActivityListItem(event, onOpenObject)
                 }
             }
         }
@@ -84,23 +95,20 @@ fun ActivityScreen(viewModel: ActivityViewModel) {
 }
 
 @Composable
-private fun ActivityListItem(event: ActivityEvent) {
+private fun ActivityListItem(event: ActivityEvent, onOpenObject: (String) -> Unit) {
     val signalKind = when {
         event.failed -> HaloSignalKind.ERROR
         event.speaker == ActivitySpeaker.User -> HaloSignalKind.USER
         event.speaker == ActivitySpeaker.System -> HaloSignalKind.DEVICE
         else -> HaloSignalKind.HALO
     }
-    val title = when {
-        event.failed -> "Failed"
-        event.speaker == ActivitySpeaker.User -> "You"
-        event.speaker == ActivitySpeaker.System -> "System"
-        else -> "Halo"
-    }
+    var expanded by remember(event.id) { mutableStateOf(false) }
+    val title = "${event.title} · ${event.status}"
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable { expanded = !expanded }
             .padding(vertical = 12.dp),
         verticalAlignment = Alignment.Top
     ) {
@@ -118,6 +126,10 @@ private fun ActivityListItem(event: ActivityEvent) {
         )
         Spacer(Modifier.width(14.dp))
         Column(modifier = Modifier.weight(1f)) {
+            if (expanded) {
+                event.details.forEach { (key, value) -> Text("$key: $value", style = MaterialTheme.typography.bodySmall) }
+                event.objectId?.let { id -> TextButton(onClick = { onOpenObject(id) }) { Text("Open Notebook object") } }
+            }
             Text(
                 text = title,
                 style = MaterialTheme.typography.labelLarge,
@@ -146,7 +158,12 @@ data class ActivityEvent(
     val speaker: ActivitySpeaker,
     val message: String,
     val timestamp: Long,
-    val failed: Boolean = false
+    val failed: Boolean = false,
+    val title: String = speaker.label,
+    val status: String = "Received",
+    val category: String = "All",
+    val objectId: String? = null,
+    val details: Map<String, String> = emptyMap()
 )
 
 data class ActivityUiState(
@@ -156,11 +173,6 @@ data class ActivityUiState(
 class ActivityUiMapper {
     fun map(timeline: List<TimelineEvent>): ActivityUiState {
         val events = timeline.asSequence()
-            .filter { event ->
-                event.title == "You" ||
-                    event.title == "Halo" ||
-                    event.title.startsWith("System")
-            }
             .mapNotNull { event ->
                 val message = event.description.trim()
                 if (message.isEmpty()) return@mapNotNull null
@@ -171,10 +183,19 @@ class ActivityUiMapper {
                         "Halo" -> ActivitySpeaker.Halo
                         else -> ActivitySpeaker.System
                     },
+                    title = event.title,
+                    status = event.status,
+                    category = if (event.category != "All") event.category else when {
+                        event.title.startsWith("Device") || event.title.startsWith("Capabilities") || event.title == "State Changed" -> "Devices"
+                        event.title.startsWith("Intent") || event.title.startsWith("Execution") -> "Actions"
+                        else -> "All"
+                    },
+                    objectId = event.objectId,
+                    details = event.details + listOfNotNull(event.intentId?.let { "identity" to it }).toMap(),
                     message = message,
                     timestamp = event.timestamp.toEpochMilli(),
                     failed = event.status.equals("Failed", ignoreCase = true) ||
-                        event.status.equals("Error", ignoreCase = true)
+                        event.status.equals("Error", ignoreCase = true) || event.status.equals("Rejected", ignoreCase = true)
                 )
             }
             .sortedByDescending { it.timestamp }

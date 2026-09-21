@@ -11,7 +11,8 @@ import java.util.UUID
  */
 class HeyCyanEventRouter(
     private val responseDecoder: HeyCyanResponseDecoder,
-    private val structuralDecoder: HeyCyanStructuralDecoder = HeyCyanStructuralDecoder()
+    private val structuralDecoder: HeyCyanStructuralDecoder = HeyCyanStructuralDecoder(),
+    private val audioProbe: ((com.halo.drivers.heycyan.debug.AudioStreamPacket) -> Unit)? = null
 ) {
 
     fun decode(
@@ -36,6 +37,7 @@ class HeyCyanEventRouter(
             if (decoded.actionFamily != HeyCyanActionFamily.UNKNOWN) {
                 if (decoded.actionFamily == HeyCyanActionFamily.AUDIO_STREAM) {
                     val p = decoded.payload
+                    if (audioProbe != null) {
                     var trailingZeroes = 0
                     for (i in p.indices.reversed()) {
                         if (p[i] == 0.toByte()) trailingZeroes++ else break
@@ -47,7 +49,8 @@ class HeyCyanEventRouter(
                         firstBytes = if (p.size >= 4) p.copyOfRange(0, 4) else p,
                         trailingZeroCount = trailingZeroes
                     )
-                    com.halo.drivers.heycyan.debug.HeyCyanAudioStreamProbe.onPacket(packet)
+                    audioProbe.invoke(packet)
+                    }
                     return HeyCyanEvent.RawAudioFrame(p)
                 }
 

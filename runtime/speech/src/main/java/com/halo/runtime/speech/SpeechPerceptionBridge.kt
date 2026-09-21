@@ -28,9 +28,15 @@ class SpeechPerceptionBridge(
                     timestamp = event.timestamp,
                     modality = Modality.AUDIO,
                     source = Source.MICROPHONE,
+                    sourceDeviceId = (event.input?.route as? SpeechInputRoute.Wearable)?.deviceId,
+                    origin = ObservationOrigin(event.input?.source ?: com.halo.sdk.host.ObservationSource.AndroidPhoneMic),
                     confidence = 1.0f,
                     payload = SpeechRecognizedPayload(event.text, event.locale),
-                    metadata = mapOf("engine" to "SpeechPerceptionBridge")
+                    metadata = mapOf(
+                        "engine" to "SpeechPerceptionBridge",
+                        "captureId" to (event.input?.captureId ?: event.id),
+                        "inputRoute" to (if (event.input?.route is SpeechInputRoute.Wearable) "wearable" else "phone")
+                    )
                 )
 
                 // Publish to EventBus for reactive observation

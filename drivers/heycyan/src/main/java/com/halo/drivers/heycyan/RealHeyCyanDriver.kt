@@ -44,18 +44,19 @@ import com.halo.sdk.runtime.SystemObservationPayload
 
 class RealHeyCyanDriver(
     private val context: Context,
-    private val eventBus: com.halo.sdk.runtime.EventBus? = null
+    private val eventBus: com.halo.sdk.runtime.EventBus? = null,
+    private val diagnostics: HeyCyanDiagnosticsMode = HeyCyanDiagnosticsMode.SUMMARY
 ) : Driver {
     init {
         android.util.Log.i("RealHeyCyanDriver", "Initializing RealHeyCyanDriver")
-        HeyCyanProtocolCapture.instance = HeyCyanProtocolCapture(ConsoleLogger())
+        if (diagnostics == HeyCyanDiagnosticsMode.FORENSIC) HeyCyanProtocolCapture.instance = HeyCyanProtocolCapture(ConsoleLogger()).also { it.setCaptureEnabled(true) }
     }
-    private val captureRecorder = CaptureSessionRecorder(JsonCaptureSessionStore(File(context.filesDir, "captures/heycyan")))
-    private val tracer = CompositePacketTracer(LoggingPacketTracer(ConsoleLogger()), captureRecorder)
+    private val captureRecorder = if (diagnostics == HeyCyanDiagnosticsMode.FORENSIC) CaptureSessionRecorder(JsonCaptureSessionStore(File(context.filesDir, "captures/heycyan"))) else null
+    private val tracer = captureRecorder?.let { CompositePacketTracer(LoggingPacketTracer(ConsoleLogger()), it) } ?: NoOpPacketTracer
     val scanner by lazy { HeyCyanBleScanner(context) }
     private val gattClient by lazy { HeyCyanGattClient(context, tracer) }
-    private val packetAnalyzer = HeyCyanConsolePacketAnalyzer(ConsoleLogger())
-    private val eventRouter = HeyCyanEventRouter(HeyCyanResponseDecoder())
+    private val packetAnalyzer = if (diagnostics == HeyCyanDiagnosticsMode.FORENSIC) HeyCyanConsolePacketAnalyzer(ConsoleLogger()) else null
+    private val eventRouter = HeyCyanEventRouter(HeyCyanResponseDecoder(), audioProbe = if (diagnostics == HeyCyanDiagnosticsMode.FORENSIC) ({ packet -> com.halo.drivers.heycyan.debug.HeyCyanAudioStreamProbe.onPacket(packet) }) else null)
     private val stateStore = com.halo.drivers.heycyan.protocol.HeyCyanDeviceStateStore()
     val deviceState: StateFlow<com.halo.drivers.heycyan.protocol.HeyCyanDeviceState> = stateStore.state
     private val _events = MutableSharedFlow<DeviceEvent>(extraBufferCapacity = 64)
@@ -71,20 +72,21 @@ class RealHeyCyanDriver(
     }
     val capabilityProvider: CapabilityProvider by lazy { HeyCyanCapabilityProvider(capabilityController) }
     @Volatile private var connectedDeviceId: String? = null
+    val activeDeviceId: String? get() = connectedDeviceId
     private fun currentObservationDeviceId(): String? = connectedDeviceId
     override suspend fun initialize() = Unit
     override suspend fun connect() { throw IllegalStateException("HeyCyan requires explicit device selection; use connect(selectedAddress, mode, selectedName)") }
     suspend fun connect(selectedAddress: String, mode: HeyCyanConnectionMode, selectedName: String? = null, scenario: String = "discovery", captureId: String? = null, advertisement: com.halo.drivers.heycyan.ble.BleAdvertisement? = null) = connectionMutex.withLock {
         require(selectedAddress.isNotBlank()) { "Selected BLE address must not be blank" }
         connectedDeviceId = selectedAddress
-        android.util.Log.i("RealHeyCyanDriver", "Connecting to $selectedAddress (mode: $mode)")
-        captureRecorder.abort()
-        captureRecorder.start(scenario = scenario, captureId = captureId, metadata = CaptureMetadata())
+        android.util.Log.i("RealHeyCyanDriver", "Connecting to ${selectedAddress.takeLast(5)} (mode: $mode)")
+        captureRecorder?.abort()
+        captureRecorder?.start(scenario = scenario, captureId = captureId, metadata = CaptureMetadata())
         gattClient.markScanning()
         stateStore.updateConnection(com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.SCANNING)
         try {
-            captureRecorder.setDevice(selectedAddress, selectedName)
-            advertisement?.let { captureRecorder.recordAdvertisement(com.halo.drivers.heycyan.codec.CaptureAdvertisement(timestamp = System.currentTimeMillis(), address = it.address, name = it.name, rssi = it.rssi, serviceUuids = it.serviceUuids, manufacturerData = it.manufacturerData)) }
+            captureRecorder?.setDevice(selectedAddress, selectedName)
+            advertisement?.let { captureRecorder?.recordAdvertisement(com.halo.drivers.heycyan.codec.CaptureAdvertisement(timestamp = System.currentTimeMillis(), address = it.address, name = it.name, rssi = it.rssi, serviceUuids = it.serviceUuids, manufacturerData = it.manufacturerData)) }
             stateStore.updateConnection(com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.CONNECTING)
             android.util.Log.i("RealHeyCyanDriver", "Starting GATT connection (with settling delay)...")
             kotlinx.coroutines.delay(1000L)
@@ -104,27 +106,27 @@ class RealHeyCyanDriver(
             }
             android.util.Log.i("RealHeyCyanDriver", "Transport status: GATT=$firstAttemptReady")
             val gattReady = if (firstAttemptReady) true else {
-                android.util.Log.i("RealHeyCyanDriver", "GATT direct connect failed, executing scan fallback for $selectedAddress...")
+                android.util.Log.i("RealHeyCyanDriver", "GATT direct connect failed, executing scan fallback for ${selectedAddress.takeLast(5)}...")
                 try { kotlinx.coroutines.withTimeoutOrNull(3000L) { scanner.scan(selectedAddress).filter { it.address.equals(selectedAddress, ignoreCase = true) }.first() } } catch (error: CancellationException) { throw error } catch (error: Throwable) { android.util.Log.w("RealHeyCyanDriver", "GATT fallback scan failed", error) }
                 kotlinx.coroutines.delay(500L)
                 try { gattClient.connect(selectedAddress); gattClient.awaitReady(); true } catch (error: CancellationException) { throw error } catch (error: Throwable) { android.util.Log.e("RealHeyCyanDriver", "GATT connection failed (attempt 2)", error); false }
             }
-            check(gattReady) { "No usable HeyCyan transport connected for $selectedAddress" }
+            check(gattReady) { "No usable HeyCyan transport connected for ${selectedAddress.takeLast(5)}" }
             finalizeGattConnection(mode)
         } catch (error: CancellationException) {
             connectedDeviceId = null
-            android.util.Log.i("RealHeyCyanDriver", "Connection cancelled for $selectedAddress")
+            android.util.Log.i("RealHeyCyanDriver", "Connection cancelled for ${selectedAddress.takeLast(5)}")
             runCatching { gattClient.disconnect() }
             readJob?.cancel(); readJob = null
             stateStore.updateConnection(com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.DISCONNECTED)
-            captureRecorder.abort()
+            captureRecorder?.abort()
             throw error
         } catch (error: Throwable) {
             connectedDeviceId = null
             android.util.Log.e("RealHeyCyanDriver", "Connection failed", error)
             stateStore.updateConnection(com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.ERROR)
             gattClient.fail(error)
-            runCatching { captureRecorder.stop() }.onSuccess { file -> android.util.Log.i("RealHeyCyanDriver", "Persisted failed HeyCyan capture: ${file?.absolutePath ?: "no active capture"}") }.onFailure { persistError -> android.util.Log.e("RealHeyCyanDriver", "Failed to persist HeyCyan failure capture", persistError) }
+            runCatching { captureRecorder?.stop() }.onSuccess { file -> android.util.Log.i("RealHeyCyanDriver", "Persisted failed HeyCyan capture: ${file?.absolutePath ?: "no active capture"}") }.onFailure { persistError -> android.util.Log.e("RealHeyCyanDriver", "Failed to persist HeyCyan failure capture", persistError) }
             throw error
         }
     }
@@ -134,7 +136,7 @@ class RealHeyCyanDriver(
         readJob?.cancel(); readJob = null
         try { gattClient.disconnect(); gattClient.awaitDisconnected() } catch (error: CancellationException) { throw error } catch (error: Throwable) { android.util.Log.w("RealHeyCyanDriver", "GATT disconnect failed", error) } finally { connectedDeviceId = null }
         stateStore.updateConnection(com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.DISCONNECTED)
-        runCatching { captureRecorder.stop() }
+        runCatching { captureRecorder?.stop() }
         Unit
     }
     override suspend fun shutdown() { android.util.Log.i("RealHeyCyanDriver", "Shutting down..."); disconnect(); eventScope.coroutineContext[kotlinx.coroutines.Job]?.cancel() }
@@ -145,9 +147,9 @@ class RealHeyCyanDriver(
         readJob = eventScope.launch {
             android.util.Log.i("RealHeyCyanDriver", "Starting event reader loop")
             try { gattClient.incomingBytes.collect { (characteristicUuid, payload) ->
-                packetAnalyzer.onRx(characteristicUuid = characteristicUuid, payload = payload)
+                packetAnalyzer?.onRx(characteristicUuid = characteristicUuid, payload = payload)
                 val event = eventRouter.decode(characteristicUuid = characteristicUuid, payload = payload, timestampMillis = System.currentTimeMillis())
-                when (event) { is HeyCyanEvent.DecodedProprietaryFrame -> handleDecodedEvent(event); is HeyCyanEvent.Unknown -> android.util.Log.d("RealHeyCyanDriver", "Unknown event on $characteristicUuid: ${payload.joinToString("") { "%02X".format(it) }}"); else -> handleDecodedEvent(event) }
+                when (event) { is HeyCyanEvent.DecodedProprietaryFrame -> handleDecodedEvent(event); is HeyCyanEvent.Unknown -> if (diagnostics == HeyCyanDiagnosticsMode.FORENSIC) android.util.Log.d("RealHeyCyanDriver", "Unknown event on $characteristicUuid: ${payload.joinToString("") { "%02X".format(it) }}"); else -> handleDecodedEvent(event) }
             } } catch (error: CancellationException) { throw error } catch (error: Throwable) { android.util.Log.e("RealHeyCyanDriver", "GATT reader failed", error) }
         }
     }

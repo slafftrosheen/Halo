@@ -7,5 +7,7 @@ import androidx.room.PrimaryKey
 data class Memory(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val content: String,
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    val sourceObjectId: String? = null,
+    val sourceRevision: Int? = null
 )

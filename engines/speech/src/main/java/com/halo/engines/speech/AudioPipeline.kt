@@ -33,7 +33,8 @@ class AudioPipeline(
     preRollMillis: Long = 400
 ) {
     private val preRollBuffer = AudioBuffer(maxMillis = preRollMillis)
-    private var buffer = AudioBuffer()
+    private var buffer = AudioBuffer(maxMillis = 120_000)
+    private var inputTurn: com.halo.sdk.runtime.SpeechInputTurn? = null
     private val _state = MutableStateFlow<SpeechState>(SpeechState.Idle)
     val state: StateFlow<SpeechState> = _state
     private var observerJobs: List<Job> = emptyList()
@@ -90,10 +91,16 @@ class AudioPipeline(
         reset()
     }
 
+    fun beginCapture(turn: com.halo.sdk.runtime.SpeechInputTurn) {
+        reset()
+        inputTurn = turn
+        onListeningStarted()
+    }
+
     private fun onListeningStarted() {
         if (_state.value == SpeechState.Recognizing || _state.value == SpeechState.Listening) return
 
-        activeSpeechTransactionId = UUID.randomUUID().toString()
+        activeSpeechTransactionId = inputTurn?.captureId ?: UUID.randomUUID().toString()
         if (sttProvider.mode == SpeechRecognitionMode.LIVE) {
             _state.value = SpeechState.Recognizing
             scope.launch { eventBus.publish(RecognitionStarted(id = activeSpeechTransactionId!!)) }
@@ -151,10 +158,18 @@ class AudioPipeline(
         buffer.clear()
         preRollBuffer.clear()
         _state.value = SpeechState.Recognizing
-        processSegment(segment)
+        launchRecognition(segment)
     }
 
     fun processFrame(frame: AudioFrame) {
+        if (frame.samples.isEmpty()) return
+        if (inputTurn?.boundary == com.halo.sdk.runtime.CaptureBoundary.EXTERNAL) {
+            if (_state.value == SpeechState.Listening) {
+                check(buffer.duration() + frame.samples.size * 1000L / frame.sampleRate <= 120_000) { "Wearable capture exceeded the two-minute limit" }
+                buffer.append(frame)
+            }
+            return
+        }
         preRollBuffer.append(frame)
         val currentState = _state.value
         val speechDetected = vad.isSpeech(frame)
@@ -214,6 +229,10 @@ class AudioPipeline(
         buffer.clear()
         preRollBuffer.clear()
         _state.value = SpeechState.Recognizing
+        launchRecognition(segment)
+    }
+
+    private fun launchRecognition(segment: SpeechSegment) {
         // Start lazily so the field is assigned before the coroutine can finish.
         // JNI decode is blocking: cancellation can mark a Job inactive before the
         // native call actually returns. Only the owning coroutine may clear this
@@ -318,7 +337,8 @@ class AudioPipeline(
                         id = transactionId,
                         text = text,
                         locale = "en",
-                        timestamp = System.currentTimeMillis()
+                        timestamp = System.currentTimeMillis(),
+                        input = inputTurn
                     )
                 )
                 eventBus.publish(RecognitionFinished(id = transactionId))
@@ -352,6 +372,7 @@ class AudioPipeline(
         preRollBuffer.clear()
         vad.reset()
         activeSpeechTransactionId = null
+        inputTurn = null
         _state.value = SpeechState.Idle
         liveListeningJob?.cancel()
         liveListeningJob = null

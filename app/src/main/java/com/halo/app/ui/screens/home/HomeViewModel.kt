@@ -35,6 +35,7 @@ data class HomeUiState(
     val runtimeState: HaloRuntimeState = HaloRuntimeState.Idle,
     val recentEvents: List<TimelinePreviewEvent> = emptyList(),
     val activeProvider: String = "No provider",
+    val providerLocality: String = "Unavailable",
     val activeProviderStatus: String = "Unavailable",
     val activeProviderState: ProviderStatus.State? = null,
     val activeProviderMessage: String? = null,
@@ -43,7 +44,9 @@ data class HomeUiState(
     val speechProcessing: Boolean = false,
     val speechReady: Boolean = true,
     val microphonePermissionGranted: Boolean = true,
-    val presentedResponse: String? = null
+    val presentedResponse: String? = null,
+    val orb: com.halo.app.ui.presence.HaloOrbPresentation = com.halo.app.ui.presence.HaloOrbPresentation(),
+    val inputStatus: SpeechInputStatus = SpeechInputStatus()
 )
 
 class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
@@ -120,6 +123,7 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
             runtimeState = uiRuntimeState,
             recentEvents = snapshot.timeline.map { TimelinePreviewEvent(it.title, it.status, it.timestamp.toEpochMilli()) },
             activeProvider = activeProviderText,
+            providerLocality = selectedDiagnostic?.let { if (it.local) "Local" else "Network" } ?: "Unavailable",
             activeProviderStatus = providerStatus,
             activeProviderState = providerState,
             activeProviderMessage = selectedDiagnostic?.message,
@@ -141,7 +145,13 @@ class HomeViewModel(
     private val aiProviderRouter: AiProviderRouter? = null,
     private val speechAvailability: StateFlow<Boolean> = MutableStateFlow(true),
     private val microphonePermission: StateFlow<Boolean> = MutableStateFlow(true),
-    private val networkRevision: StateFlow<Long> = MutableStateFlow(0L)
+    private val networkRevision: StateFlow<Long> = MutableStateFlow(0L),
+    private val speechInput: StateFlow<SpeechInputStatus> = MutableStateFlow(SpeechInputStatus()),
+    private val notebook: com.halo.app.data.notebook.NotebookRepository? = null,
+    private val conversations: com.halo.app.data.RoomConversationStore? = null,
+    private val database: com.halo.app.data.AppDatabase? = null,
+    val workspace: com.halo.app.data.WorkspaceContextStore? = null,
+    val captures: com.halo.app.capture.LocalCaptureStore? = null
 ) : ViewModel() {
     private val mapper = HomeUiMapper()
     private val listeningCommandMutex = Mutex()
@@ -157,7 +167,8 @@ class HomeViewModel(
         aiProviderRouter?.diagnosticsFlow ?: MutableStateFlow(emptyList<AiProviderDiagnostic>()),
         _presentedResponse,
         speechAvailability,
-        microphonePermission
+        microphonePermission,
+        speechInput
     ) { args ->
         @Suppress("UNCHECKED_CAST")
         val snapshot = args[0] as RuntimeSnapshot
@@ -168,13 +179,23 @@ class HomeViewModel(
         val presentedResponse = args[5] as String?
         val speechReady = args[6] as Boolean
         val microphonePermissionGranted = args[7] as Boolean
-        mapper.map(snapshot, sessionState, selectedProviderId, selectedModelId, diagnostics)
-            .copy(
+        val input = args[8] as SpeechInputStatus
+        val mapped = mapper.map(snapshot, sessionState, selectedProviderId, selectedModelId, diagnostics)
+        mapped.copy(
+                inputStatus = input,
+                orb = com.halo.app.ui.presence.HaloOrbPresentation(
+                    phase = mapped.runtimeState,
+                    label = mapped.contextualText,
+                    source = (input.turn?.route as? SpeechInputRoute.Wearable)?.displayName ?: "Phone",
+                    inputLevel = if (input.capturing) input.inputLevel else 0f,
+                    failed = sessionState is CognitiveSessionState.Failed,
+                    transition = (sessionState as? CognitiveSessionState.ExecutingTool)?.hashCode() ?: 0
+                ),
                 presentedResponse = presentedResponse,
                 speechReady = speechReady,
                 microphonePermissionGranted = microphonePermissionGranted
             )
-    }.stateIn(viewModelScope, SharingStarted.Lazily, HomeUiState())
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(0), HomeUiState())
 
     init {
         // The UI command state is deliberately separate from the runtime
@@ -256,6 +277,30 @@ class HomeViewModel(
                 Log.w("HomeViewModel", "Provider diagnostics refresh failed", error)
             }
     }
+
+    val captureMessage = MutableStateFlow<String?>(null)
+    fun receiveCapture(file: java.io.File) { viewModelScope.launch {
+        try {
+            captures?.receive(file)
+            val target = aiProviderRouter?.resolveExecutionTarget(AiRequest(text = ""))
+            captureMessage.value = if (target?.providerCapabilities?.contains(AiCapability.IMAGE) == true)
+                "Saved to Inbox. Ask Halo about the image to use it in this turn."
+                else "Saved to Inbox. Vision is unavailable for the selected model."
+        } catch (error: Exception) { captureMessage.value = error.message ?: "Capture failed" }
+    } }
+
+    fun createNote() { viewModelScope.launch {
+        val note = notebook?.createNote() ?: return@launch
+        _navigationEvents.emit("notebook/note/${note.id}")
+    } }
+    fun saveResponse(text: String) { viewModelScope.launch {
+        val note = notebook?.createNote(text, com.halo.app.data.notebook.WorkspaceSource.IMPORT) ?: return@launch
+        val turn = conversations?.turns?.value?.lastOrNull()
+        if (turn != null) database?.workspaceContextDao()?.provenance(com.halo.app.data.ObjectProvenance(
+            note.id, turn.conversationId, turn.id, org.json.JSONObject(turn.metadata).toString()))
+        _navigationEvents.emit("notebook/note/${note.id}")
+    } }
+    fun newConversation() { viewModelScope.launch { conversations?.newConversation(); _presentedResponse.value = null } }
 
     fun clearConversation() {
         cognitiveSession.clearConversation()

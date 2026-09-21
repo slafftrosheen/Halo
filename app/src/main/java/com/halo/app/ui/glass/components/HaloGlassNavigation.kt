@@ -123,17 +123,14 @@ fun HaloNavigation(
                     Spacer(Modifier.height(7.dp))
                 }
 
-                Icon(
-                    imageVector = item.icon,
-                    contentDescription = null,
-                    tint = tint,
-                    modifier = Modifier.size(22.dp)
-                )
+                if (item.route == "home") com.halo.app.ui.presence.HaloOrb(
+                    com.halo.app.ui.presence.HaloOrbPresentation(), size = 28.dp)
+                else com.halo.app.ui.presence.HaloWorkspaceMark(item.route)
                 Spacer(Modifier.height(2.dp))
                 Text(
                     text = item.label,
                     color = tint,
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
                     fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
                 )
             }

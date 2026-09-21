@@ -28,7 +28,11 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.AlertDialog
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -44,6 +48,9 @@ import com.halo.app.ui.theme.HaloPastelYellow
 @Composable
 fun NotebookScreen(viewModel: NotebookViewModel) {
     val state by viewModel.uiState.collectAsState()
+    val selected by (viewModel.workspace?.workingSet ?: kotlinx.coroutines.flow.flowOf(emptyList<String>())).collectAsState(emptyList())
+    var panel by remember { mutableStateOf<String?>(null) }
+    if (panel != null) WorkspacePanel(viewModel, panel!!, onClose = { panel = null })
 
     Column(
         modifier = Modifier
@@ -87,6 +94,11 @@ fun NotebookScreen(viewModel: NotebookViewModel) {
             }
         }
 
+        Row {
+            TextButton(onClick = { panel = "Conversations" }) { Text("Conversations") }
+            TextButton(onClick = { panel = "Memory" }) { Text("Memory") }
+        }
+        Text("Working Set: ${selected.size} selected · local context", style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(20.dp))
 
         OutlinedTextField(
@@ -159,6 +171,12 @@ fun NotebookScreen(viewModel: NotebookViewModel) {
                         note = note,
                         onClick = { viewModel.openNote(note.id) }
                     )
+                    if (state.filter != NotebookFilter.TRASH) Row {
+                        TextButton(onClick = { viewModel.selectContext(note.id, note.id !in selected) }) {
+                            Text(if (note.id in selected) "Remove from Working Set" else "Add to Working Set")
+                        }
+                        TextButton(onClick = { viewModel.remember(note.id) }) { Text("Remember") }
+                    }
                 }
             }
         }
@@ -328,4 +346,52 @@ private fun EmptyNotebookState(
             }
         }
     }
+}
+
+@Composable
+private fun WorkspacePanel(viewModel: NotebookViewModel, panel: String, onClose: () -> Unit) {
+    val useMemories by (viewModel.workspace?.useMemories ?: kotlinx.coroutines.flow.MutableStateFlow(false)).collectAsState()
+    val cloudSharing by (viewModel.workspace?.cloudSharing ?: kotlinx.coroutines.flow.MutableStateFlow(false)).collectAsState()
+    val history by (viewModel.conversations?.history ?: kotlinx.coroutines.flow.MutableStateFlow(emptyList<com.halo.app.data.PersistedTurn>())).collectAsState()
+    val memories by (viewModel.workspace?.memories ?: kotlinx.coroutines.flow.flowOf(emptyList<com.halo.app.data.Memory>())).collectAsState(emptyList())
+    var opened by remember { mutableStateOf<String?>(null) }
+    var editing by remember { mutableStateOf<com.halo.app.data.Memory?>(null) }
+    var correction by remember { mutableStateOf("") }
+    AlertDialog(onDismissRequest = onClose, title = { Text(panel) }, confirmButton = {
+        TextButton(onClick = onClose) { Text("Close") }
+    }, text = {
+        Column(Modifier.verticalScroll(rememberScrollState())) {
+            if (panel == "Conversations") {
+                if (history.isEmpty()) Text("Completed conversations appear here.")
+                history.groupBy { it.conversationId }.forEach { (id, turns) ->
+                    TextButton(onClick = { opened = if (opened == id) null else id }) {
+                        Text(turns.first().userText.take(90))
+                    }
+                    if (opened == id) {
+                        turns.forEach { Text("You: ${it.userText}\nHalo: ${it.assistantText}\n", style = MaterialTheme.typography.bodyMedium) }
+                        TextButton(onClick = { viewModel.openConversation(id); onClose() }) { Text("Use this conversation for next turn") }
+                    }
+                }
+            } else {
+                com.halo.app.ui.workspace.HaloWorkspaceToggleRow(title = "Use memories in Halo context", checked = useMemories,
+                    onCheckedChange = { viewModel.workspace?.setUseMemories(it) })
+                com.halo.app.ui.workspace.HaloWorkspaceToggleRow(title = "Share workspace with network models",
+                    subtitle = "Allows selected Working Set and enabled memories to leave this phone.", checked = cloudSharing,
+                    onCheckedChange = { viewModel.workspace?.setCloudSharing(it) })
+                if (memories.isEmpty()) Text("Remember a note explicitly to add it here.")
+                memories.forEach { memory ->
+                    Text(memory.content)
+                    memory.sourceObjectId?.let { id -> TextButton(onClick = { viewModel.openNote(id); onClose() }) { Text("Source · revision ${memory.sourceRevision}") } }
+                    Row {
+                        TextButton(onClick = { editing = memory; correction = memory.content }) { Text("Correct") }
+                        TextButton(onClick = { viewModel.forget(memory.id) }) { Text("Forget") }
+                    }
+                }
+                if (editing != null) {
+                    OutlinedTextField(value = correction, onValueChange = { correction = it }, label = { Text("Corrected memory") })
+                    TextButton(onClick = { editing?.let { viewModel.correct(it, correction) }; editing = null }, enabled = correction.isNotBlank()) { Text("Save correction") }
+                }
+            }
+        }
+    })
 }

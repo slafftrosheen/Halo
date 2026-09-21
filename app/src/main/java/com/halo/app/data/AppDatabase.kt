@@ -11,11 +11,13 @@ import com.halo.app.data.notebook.NoteDraftEntity
 import com.halo.app.data.notebook.WorkspaceObjectEntity
 
 @Database(
-    entities = [Memory::class, WorkspaceObjectEntity::class, NoteEntity::class, NoteDraftEntity::class],
-    version = 3,
+    entities = [Memory::class, WorkspaceObjectEntity::class, NoteEntity::class, NoteDraftEntity::class, PersistedTurn::class, PersistedConversation::class, WorkingSetEntry::class, ObjectProvenance::class],
+    version = 4,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
+    abstract fun conversationDao(): ConversationDao
+    abstract fun workspaceContextDao(): WorkspaceContextDao
     abstract fun memoryDao(): MemoryDao
     abstract fun notebookDao(): com.halo.app.data.notebook.NotebookDao
 
@@ -74,9 +76,20 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS conversations (id TEXT NOT NULL PRIMARY KEY, createdAt INTEGER NOT NULL, active INTEGER NOT NULL)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS conversation_turns (id TEXT NOT NULL PRIMARY KEY, conversationId TEXT NOT NULL, userText TEXT NOT NULL, assistantText TEXT NOT NULL, timestamp INTEGER NOT NULL, metadata TEXT NOT NULL)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS working_set (objectId TEXT NOT NULL PRIMARY KEY)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS object_provenance (objectId TEXT NOT NULL PRIMARY KEY, sourceId TEXT NOT NULL, revision TEXT NOT NULL, metadata TEXT NOT NULL)")
+                db.execSQL("ALTER TABLE memories ADD COLUMN sourceObjectId TEXT")
+                db.execSQL("ALTER TABLE memories ADD COLUMN sourceRevision INTEGER")
+            }
+        }
+
         fun create(context: Context): AppDatabase =
             Room.databaseBuilder(context, AppDatabase::class.java, "halo.db")
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                 .build()
     }
 }

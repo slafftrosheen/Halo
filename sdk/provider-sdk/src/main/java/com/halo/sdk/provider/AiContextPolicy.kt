@@ -12,7 +12,9 @@ data class AiContextPolicy(
     val includeLocation: Boolean = false,
     val includeImages: Boolean = true,
     val includeAudio: Boolean = false,
-    val includeVideo: Boolean = false
+    val includeVideo: Boolean = false,
+    val includeWorkspace: Boolean = true,
+    val allowCloudWorkspace: Boolean = false
 ) {
     companion object {
         val CONSERVATIVE = AiContextPolicy(

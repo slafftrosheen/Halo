@@ -55,6 +55,11 @@ class AudioPerceptionEngine(
     private val transactionMutex = Mutex()
     private var commandJob: Job? = null
     private var captureJob: Job? = null
+    private var lastLevelNanos = 0L
+    private var selectedSource: AudioSource = audioSource
+    private val _inputStatus = MutableStateFlow(SpeechInputStatus())
+    val inputStatus: StateFlow<SpeechInputStatus> = _inputStatus
+
     val metrics = EngineMetrics()
 
     override suspend fun initialize(context: EngineContext) {
@@ -115,73 +120,77 @@ class AudioPerceptionEngine(
     }
 
     private suspend fun startCapture() {
-        transactionMutex.withLock {
-            if (captureJob?.isActive == true) return@withLock
-            if (!audioPipeline.usesLiveRecognition && audioPipeline.recognitionInFlight) {
-                if (::context.isInitialized) {
-                    context.runtime.logger.info(
-                        "speech",
-                        "StartListening ignored while buffered recognition is still in flight"
-                    )
-                }
-                return@withLock
-            }
-            if (!audioPipeline.isRecognitionAvailable()) {
-                reportCaptureFailure(audioPipeline.unavailableReason())
-                return@withLock
-            }
-            if (audioPipeline.usesLiveRecognition) {
-                audioPipeline.reset()
-                _health.value = EngineHealth.Healthy
-                eventBus.publish(ListeningStarted())
-                return@withLock
-            }
+        acquireInput(SpeechInputTurn(UUID.randomUUID().toString()), audioSource)
+    }
 
-            val job = scope.launch {
+    /** The engine is the sole capture owner for every physical input. */
+    suspend fun acquireInput(turn: SpeechInputTurn, source: AudioSource): Boolean = transactionMutex.withLock {
+        if (_state.value != EngineState.Running || captureJob?.isCompleted == false || audioPipeline.recognitionInFlight) {
+            val reason = "active_turn_owns_input"
+            _inputStatus.value = _inputStatus.value.copy(rejection = reason)
+            if (::context.isInitialized) context.runtime.logger.info("SPEECH_INPUT_ROUTE", "rejected=$reason")
+            return@withLock false
+        }
+        if (!audioPipeline.isRecognitionAvailable()) {
+            reportCaptureFailure(audioPipeline.unavailableReason())
+            return@withLock false
+        }
+        selectedSource = source
+        preprocessor.reset()
+        audioPipeline.beginCapture(turn)
+        _inputStatus.value = SpeechInputStatus(turn, capturing = true)
+        try {
+            if (!audioPipeline.usesLiveRecognition) source.start()
+            _health.value = EngineHealth.Healthy
+            eventBus.publish(ListeningStarted())
+            context.runtime.logger.info("SPEECH_INPUT_ROUTE", "capture=${turn.captureId} source=${turn.source}")
+            captureJob = scope.launch(start = kotlinx.coroutines.CoroutineStart.UNDISPATCHED) {
                 try {
-                    currentCoroutineContext().ensureActive()
-                    audioSource.start()
-                    currentCoroutineContext().ensureActive()
-                    audioPipeline.reset()
-                    _health.value = EngineHealth.Healthy
-                    eventBus.publish(ListeningStarted())
-                    audioSource.frames.collect { rawFrame ->
-                        currentCoroutineContext().ensureActive()
+                    source.frames.collect { rawFrame ->
+                        val frame = preprocessor.process(rawFrame)
                         metrics.framesProcessed++
-                        audioPipeline.processFrame(preprocessor.process(rawFrame))
-                    }
-                } catch (exception: CancellationException) {
-                    throw exception
-                } catch (exception: Exception) {
-                    reportCaptureFailure(
-                        "Audio capture failed: ${exception.message ?: "Unknown error"}",
-                        exception
-                    )
-                } finally {
-                    // job.cancel() does not guarantee the frames Flow throws a
-                    // CancellationException before completing. Inspect the Job
-                    // state itself, otherwise a normal-looking completion here
-                    // can reset AudioPipeline and cancel an ASR job that already
-                    // owns the captured utterance.
-                    val captureWasCancelled = !currentCoroutineContext().isActive
-                    val recognitionOwnsTurn =
-                        !audioPipeline.usesLiveRecognition && audioPipeline.recognitionInFlight
-
-                    withContext(NonCancellable) {
-                        stopAudioSource()
-
-                        // Only an unexpected, genuinely normal end of capture may
-                        // reset the pipeline here. VAD endpointing transfers turn
-                        // ownership to buffered recognition before the microphone
-                        // job is cancelled.
-                        if (!captureWasCancelled && !recognitionOwnsTurn) {
-                            audioPipeline.reset()
+                        audioPipeline.processFrame(frame)
+                        val now = System.nanoTime()
+                        if (_inputStatus.subscriptionCount.value > 0 && now - lastLevelNanos >= 100_000_000L) {
+                            lastLevelNanos = now
+                            val level = if (frame.samples.isEmpty()) 0f else
+                                kotlin.math.sqrt(frame.samples.sumOf { it.toDouble() * it } / frame.samples.size).toFloat() / 32768f
+                            _inputStatus.value = _inputStatus.value.copy(inputLevel = level.coerceIn(0f, 1f))
                         }
                     }
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (error: Exception) {
+                    audioPipeline.reset()
+                    reportCaptureFailure("Audio capture failed: ${error.message}", error)
+                } finally {
+                    val completed = currentCoroutineContext().isActive
+                    withContext(NonCancellable) {
+                        stopAudioSource()
+                        if (completed && turn.boundary == CaptureBoundary.EXTERNAL) {
+                            audioPipeline.finishCapture()
+                        }
+                    }
+                    _inputStatus.value = _inputStatus.value.copy(capturing = false, inputLevel = 0f)
                 }
             }
-            captureJob = job
+            true
+        } catch (error: Exception) {
+            audioPipeline.reset()
+            _inputStatus.value = SpeechInputStatus(rejection = error.message)
+            if (error is CancellationException) throw error
+            reportCaptureFailure("Audio capture failed: ${error.message}", error)
+            false
         }
+    }
+
+    suspend fun finishExternalInput(captureId: String) = transactionMutex.withLock {
+        if (_inputStatus.value.turn?.captureId != captureId) return@withLock
+        // The external source has sent EOS. Let its bounded channel empty before
+        // the capture coroutine snapshots the turn in its normal-completion path.
+        val job = captureJob ?: return@withLock
+        job.join()
+        if (captureJob === job) captureJob = null
     }
 
     private suspend fun stopBufferedInputAfterSpeechEnd() {
@@ -211,8 +220,9 @@ class AudioPerceptionEngine(
         }
     }
 
-    private suspend fun stopCapture(finalizeUserCapture: Boolean) {
+    private suspend fun stopCapture(finalizeUserCapture: Boolean, expectedCaptureId: String? = null) {
         transactionMutex.withLock {
+            if (expectedCaptureId != null && _inputStatus.value.turn?.captureId != expectedCaptureId) return@withLock
             if (audioPipeline.usesLiveRecognition) {
                 audioPipeline.reset()
                 return@withLock
@@ -277,7 +287,7 @@ class AudioPerceptionEngine(
 
     private suspend fun stopAudioSource() {
         try {
-            audioSource.stop()
+            selectedSource.stop()
         } catch (exception: Exception) {
             _health.value = EngineHealth.Degraded
             if (::context.isInitialized) {

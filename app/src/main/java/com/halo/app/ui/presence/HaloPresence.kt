@@ -32,7 +32,7 @@ import kotlin.math.min
 /**
  * Halo's cognitive presence.
  *
- * The presence is intentionally not an orb, eye, radial gauge or loading spinner.
+ * Compatibility entry point for the shared Halo Orb renderer.
  * It is an asymmetric set of soft spatial cells whose posture reflects real runtime state.
  * Motion only happens while transitioning between states; there is no decorative idle loop.
  */
@@ -43,88 +43,8 @@ fun HaloPresence(
     size: Dp = 180.dp,
     reducedMotion: Boolean = false
 ) {
-    val profile = state.presenceProfile()
-    val duration = if (reducedMotion) 0 else 420
+    HaloOrb(HaloOrbPresentation(phase = state, label = state.name, reducedMotion = reducedMotion), modifier, size)
 
-    val spread by animateFloatAsState(profile.spread, tween(duration), label = "haloPresenceSpread")
-    val vertical by animateFloatAsState(profile.vertical, tween(duration), label = "haloPresenceVertical")
-    val rotation by animateFloatAsState(profile.rotation, tween(duration), label = "haloPresenceRotation")
-    val coreScale by animateFloatAsState(profile.coreScale, tween(duration), label = "haloPresenceCore")
-    val opacity by animateFloatAsState(profile.opacity, tween(duration), label = "haloPresenceOpacity")
-
-    val surface = MaterialTheme.colorScheme.surface
-    val onSurface = MaterialTheme.colorScheme.onSurface
-    val accessibleState = when (state) {
-        HaloRuntimeState.Idle -> "Ready"
-        HaloRuntimeState.Listening, HaloRuntimeState.Wakeword -> "Listening"
-        HaloRuntimeState.Capturing -> "Capturing speech"
-        HaloRuntimeState.Recognizing -> "Recognizing speech"
-        HaloRuntimeState.Reasoning -> "Thinking"
-        HaloRuntimeState.Planning -> "Planning"
-        HaloRuntimeState.Executing -> "Executing"
-        HaloRuntimeState.Speaking -> "Speaking"
-        HaloRuntimeState.Recovering -> "Recovering"
-        HaloRuntimeState.Stopped -> "Offline"
-    }
-
-    Canvas(
-        modifier = modifier
-            .size(size)
-            .semantics {
-                contentDescription = "Halo presence"
-                stateDescription = accessibleState
-            }
-    ) {
-        val extent = min(this.size.width, this.size.height)
-        val center = Offset(this.size.width / 2f, this.size.height / 2f)
-        val unit = extent * 0.28f
-
-        rotate(rotation, pivot = center) {
-            cells.forEachIndexed { index, cell ->
-                val scale = if (index == 0) coreScale else 1f
-                val cellSize = unit * cell.size * scale
-                val x = center.x + cell.x * unit * spread - cellSize / 2f
-                val y = center.y + cell.y * unit * spread * vertical - cellSize / 2f
-                val color = when {
-                    profile.recovery && index == 0 -> HaloWarning
-                    profile.stopped && index == 0 -> HaloDanger
-                    profile.stopped -> onSurface.copy(alpha = 0.22f)
-                    else -> cell.role.color
-                }
-
-                drawRoundRect(
-                    color = surface.copy(alpha = 0.24f * opacity),
-                    topLeft = Offset(x + extent * 0.012f, y + extent * 0.018f),
-                    size = Size(cellSize, cellSize),
-                    cornerRadius = CornerRadius(cellSize * 0.28f)
-                )
-                drawRoundRect(
-                    color = color.copy(alpha = cell.alpha * opacity),
-                    topLeft = Offset(x, y),
-                    size = Size(cellSize, cellSize),
-                    cornerRadius = CornerRadius(cellSize * 0.28f)
-                )
-            }
-
-            markers.forEachIndexed { index, marker ->
-                val markerSize = extent * (if (index % 2 == 0) 0.035f else 0.026f)
-                val color = if (profile.stopped) {
-                    onSurface.copy(alpha = 0.22f)
-                } else {
-                    marker.role.color.copy(alpha = 0.78f * opacity)
-                }
-                drawRoundRect(
-                    color = color,
-                    topLeft = Offset(
-                        center.x + marker.x * unit * spread - markerSize / 2f,
-                        center.y + marker.y * unit * spread * vertical - markerSize / 2f
-                    ),
-                    size = Size(markerSize, markerSize),
-                    cornerRadius = CornerRadius(markerSize * 0.25f)
-                )
-            }
-        }
-    }
 }
 
 enum class HaloSignalKind {

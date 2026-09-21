@@ -11,6 +11,14 @@ class DefaultTimelineEventMapper : TimelineEventMapper {
     override fun map(event: HaloEvent): TimelineEvent? {
         val timestamp = Instant.ofEpochMilli(event.timestamp)
         return when (event) {
+            is ActionReceipt -> TimelineEvent(event.id, event.title, event.detail, timestamp, event.stage,
+                intentId = event.operationId, category = event.category, objectId = event.objectId,
+                details = mapOf("operation" to event.operationId, "source" to (event.sourceDeviceId?.takeLast(5) ?: "Phone")))
+            is ToolCallRequested -> TimelineEvent(event.id, event.toolId, "Model requested a tool", timestamp, "Requested", event.toolCallId, "Actions")
+            is ToolCallAuthorized -> TimelineEvent(event.id, event.toolId, "Tool authorized", timestamp, "Authorized", event.toolCallId, "Actions")
+            is ToolCallRejected -> TimelineEvent(event.id, event.toolId, event.reason, timestamp, "Rejected", event.toolCallId, "Actions")
+            is ToolCallCompleted -> TimelineEvent(event.id, event.toolId, "Tool executor returned; see action receipt for dispatch/completion", timestamp,
+                if (event.success) "Returned" else "Failed", event.toolCallId, "Actions")
             is AssistantResponsePublished -> TimelineEvent(
                 id = event.id,
                 title = "Halo",
@@ -28,7 +36,13 @@ class DefaultTimelineEventMapper : TimelineEventMapper {
                         title = "You",
                         description = input.transcript.trim(),
                         timestamp = Instant.ofEpochMilli(event.observation.timestamp),
-                        status = "Sent"
+                        status = "Received",
+                        category = if (event.observation.modality == Modality.AUDIO) "Voice" else "All",
+                        details = buildMap {
+                            put("source", event.observation.origin?.source?.toString() ?: event.observation.source.name)
+                            event.observation.sourceDeviceId?.let { put("device", it.takeLast(5)) }
+                            event.observation.metadata["captureId"]?.let { put("capture", it.toString()) }
+                        }
                     )
                 } else {
                     null
@@ -233,9 +247,15 @@ class DefaultTimelineEventMapper : TimelineEventMapper {
             is EmbodimentExecutionEvent -> TimelineEvent(
                 id = event.id,
                 title = "Execution Result",
-                description = "${event.device.displayName}: ${event.result.status}",
+                description = "${event.device.displayName}: ${event.result.reason ?: event.result.status}",
                 timestamp = timestamp,
-                status = event.result.status.name,
+                status = when (event.result.status) {
+                    com.halo.sdk.runtime.embodiment.ExecutionStatus.SUCCEEDED -> "Completed"
+                    com.halo.sdk.runtime.embodiment.ExecutionStatus.ACCEPTED -> "Acknowledged"
+                    com.halo.sdk.runtime.embodiment.ExecutionStatus.ABORTED -> "Cancelled"
+                    else -> event.result.status.name.lowercase().replaceFirstChar { it.uppercase() }
+                },
+                category = "Actions",
                 intentId = event.result.intentId
             )
             else -> null

@@ -3,150 +3,132 @@ package com.halo.drivers.heycyan.codec
 import android.media.MediaCodec
 import android.media.MediaFormat
 import com.halo.sdk.host.AudioFrame
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
-/**
- * Raw Opus audio decoder for HeyCyan audio streams.
- *
- * Verifications from decompiled SDK (`OpusManager` with `hasHead = false`, packetSize = 40):
- * - Streams arrive as raw concatenated 40-byte Opus packets.
- * - Dynamic output format / sample rate handling via [MediaCodec.INFO_OUTPUT_FORMAT_CHANGED].
- */
+data class AudioDecodeStats(
+    val packets: Long = 0, val decodedFrames: Long = 0, val droppedFrames: Long = 0,
+    val decodeErrors: Long = 0, val sampleRate: Int = 48000, val channels: Int = 1,
+    val failure: String? = null
+)
+
+/** One codec per capture. EOS is drained before release; output buffering is bounded. */
 class RawOpusAudioDecoder {
-    private var decoder: MediaCodec? = null
-    @Volatile private var isInitialized = false
+    private val mutex = Mutex()
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private var codec: MediaCodec? = null
+    private var drainJob: Job? = null
+    private var output = Channel<AudioFrame>(64)
+    val frames: Flow<AudioFrame> get() = output.receiveAsFlow()
+    private val _stats = MutableStateFlow(AudioDecodeStats())
+    val stats: StateFlow<AudioDecodeStats> = _stats.asStateFlow()
+    private var baseUs = -1L
+    private var epochNanos = 0L
+    private var samples = 0L
+    private var eos = CompletableDeferred<Unit>()
 
-    private val parser = HeyCyanOpusFrameParser()
-    
-    private val _frames = MutableSharedFlow<AudioFrame>(extraBufferCapacity = 64)
-    val frames: Flow<AudioFrame> = _frames.asSharedFlow()
-
-    private var baseTimestampUs = -1L
-    private var currentSampleRate = 48000
-    private var currentChannels = 1
-
-    fun initialize() {
-        if (isInitialized) return
+    suspend fun initialize() = mutex.withLock {
+        check(codec == null) { "Decoder already active" }
+        _stats.value = AudioDecodeStats()
+        output = Channel(64); eos = CompletableDeferred()
+        baseUs = -1; samples = 0; epochNanos = System.nanoTime()
+        var created: MediaCodec? = null
         try {
-            decoder = MediaCodec.createDecoderByType(MediaFormat.MIMETYPE_AUDIO_OPUS)
-            
+            created = MediaCodec.createDecoderByType(MediaFormat.MIMETYPE_AUDIO_OPUS)
             val format = MediaFormat.createAudioFormat(MediaFormat.MIMETYPE_AUDIO_OPUS, 48000, 1)
-            
-            // Initializing CSD-0 header for Opus without container (hasHead = false)
-            val rate = 48000
-            val csd0 = byteArrayOf(
-                'O'.code.toByte(), 'p'.code.toByte(), 'u'.code.toByte(), 's'.code.toByte(),
-                'H'.code.toByte(), 'e'.code.toByte(), 'a'.code.toByte(), 't'.code.toByte(), // OpusHead
-                1, // Version
-                1, // Channel count
-                (312 and 0xFF).toByte(), ((312 shr 8) and 0xFF).toByte(), // Pre-skip
-                (rate and 0xFF).toByte(), ((rate shr 8) and 0xFF).toByte(), ((rate shr 16) and 0xFF).toByte(), ((rate shr 24) and 0xFF).toByte(),
-                0, 0, 0 // Gain & mapping family
-            )
-            // Fix OpusHead string bytes: 'O','p','u','s','H','e','a','d'
-            csd0[4] = 'H'.code.toByte()
-            csd0[5] = 'e'.code.toByte()
-            csd0[6] = 'a'.code.toByte()
-            csd0[7] = 'd'.code.toByte()
-
-            format.setByteBuffer("csd-0", ByteBuffer.wrap(csd0))
-            
-            val csd1 = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).putLong(6500000L).array()
-            format.setByteBuffer("csd-1", ByteBuffer.wrap(csd1))
-
-            val csd2 = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).putLong(80000000L).array()
-            format.setByteBuffer("csd-2", ByteBuffer.wrap(csd2))
-            
-            decoder?.configure(format, null, null, 0)
-            decoder?.start()
-            
-            isInitialized = true
-            
-            Thread { drainOutput() }.start()
-        } catch (e: Exception) {
-            // Log or handle initialization failure
+            val header = ByteBuffer.allocate(19).order(ByteOrder.LITTLE_ENDIAN)
+                .put("OpusHead".toByteArray(Charsets.US_ASCII)).put(1.toByte()).put(1.toByte())
+                .putShort(312.toShort()).putInt(48000).putShort(0.toShort()).put(0.toByte()).array()
+            format.setByteBuffer("csd-0", ByteBuffer.wrap(header))
+            format.setByteBuffer("csd-1", ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).putLong(6500000L).apply { flip() })
+            format.setByteBuffer("csd-2", ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).putLong(80000000L).apply { flip() })
+            created.configure(format, null, null, 0); created.start()
+            codec = created
+            val activeCodec = created
+            drainJob = scope.launch { drain(activeCodec) }
+        } catch (error: Exception) {
+            runCatching { created?.release() }; codec = null
+            fail("initialize", error); throw error
         }
     }
 
-    fun decodePacket(payload: ByteArray, timestampUs: Long) {
-        if (!isInitialized) initialize()
-
-        // 40-byte Opus packet handling (hasHead = false)
-        // We preserve raw BC59 payloads and decoder output for evidence.
-        // DO NOT reject based on preliminary RFC validation.
-        val analysis = parser.parse(payload)
-        // (analysis.isRfcValid check removed as per PR-020 constraints)
-        val codec = decoder ?: return
+    suspend fun decodePacket(payload: ByteArray, timestampUs: Long) = mutex.withLock {
+        val active = checkNotNull(codec) { "Decoder is not active" }
+        _stats.update { it.copy(packets = it.packets + 1) }
         try {
-            val inputBufferId = codec.dequeueInputBuffer(10000)
-            if (inputBufferId >= 0) {
-                val inputBuffer = codec.getInputBuffer(inputBufferId)
-                inputBuffer?.clear()
-                inputBuffer?.put(payload)
-                
-                if (baseTimestampUs == -1L) baseTimestampUs = timestampUs
-                val relativeTs = timestampUs - baseTimestampUs
-
-                codec.queueInputBuffer(inputBufferId, 0, payload.size, relativeTs, 0)
-            }
-        } catch (e: Exception) {
-            // Ignored
-        }
+            val index = active.dequeueInputBuffer(10_000)
+            if (index < 0) { _stats.update { it.copy(droppedFrames = it.droppedFrames + 1) }; return@withLock }
+            val buffer = checkNotNull(active.getInputBuffer(index))
+            buffer.clear(); buffer.put(payload)
+            if (baseUs < 0) baseUs = timestampUs
+            active.queueInputBuffer(index, 0, payload.size, (timestampUs - baseUs).coerceAtLeast(0), 0)
+        } catch (error: Exception) { fail("packet", error); throw error }
     }
 
-    private fun drainOutput() {
-        val codec = decoder ?: return
-        val bufferInfo = MediaCodec.BufferInfo()
+    private suspend fun drain(active: MediaCodec) {
+        val info = MediaCodec.BufferInfo()
         try {
-            while (isInitialized) {
-                val outputBufferId = codec.dequeueOutputBuffer(bufferInfo, 100000)
-                if (outputBufferId >= 0) {
-                    val size = bufferInfo.size
-                    if (size > 0) {
-                        val outputBuffer = codec.getOutputBuffer(outputBufferId)
-                        if (outputBuffer != null) {
-                            val chunk = ByteArray(size)
-                            outputBuffer.get(chunk)
-                            outputBuffer.clear()
-                            
-                            val shortArray = ShortArray(size / 2)
-                            ByteBuffer.wrap(chunk).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(shortArray)
-                            
-                            val frame = AudioFrame(
-                                samples = shortArray,
-                                sampleRate = currentSampleRate,
-                                channels = currentChannels,
-                                timestamp = System.nanoTime()
-                            )
-                            _frames.tryEmit(frame)
+            while (currentCoroutineContext().isActive) {
+                val index = active.dequeueOutputBuffer(info, 10_000)
+                if (index >= 0) {
+                    try {
+                        if (info.size > 0) {
+                            val buffer = checkNotNull(active.getOutputBuffer(index)).duplicate().order(ByteOrder.LITTLE_ENDIAN)
+                            buffer.position(info.offset); buffer.limit(info.offset + info.size)
+                            val pcm = ShortArray(info.size / 2); buffer.asShortBuffer().get(pcm)
+                            val format = _stats.value
+                            val frame = AudioFrame(pcm, format.sampleRate, format.channels,
+                                epochNanos + samples * 1_000_000_000L / format.sampleRate)
+                            samples += pcm.size / format.channels
+                            val sent = output.trySend(frame).isSuccess
+                            _stats.update { it.copy(decodedFrames = it.decodedFrames + 1,
+                                droppedFrames = it.droppedFrames + if (sent) 0 else 1) }
                         }
-                    }
-                    codec.releaseOutputBuffer(outputBufferId, false)
-                } else if (outputBufferId == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
-                    val format = codec.outputFormat
-                    if (format.containsKey(MediaFormat.KEY_SAMPLE_RATE)) {
-                        currentSampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE)
-                    }
-                    if (format.containsKey(MediaFormat.KEY_CHANNEL_COUNT)) {
-                        currentChannels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
-                    }
+                    } finally { active.releaseOutputBuffer(index, false) }
+                    if (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) { eos.complete(Unit); break }
+                } else if (index == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+                    val format = active.outputFormat
+                    _stats.update { it.copy(sampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE),
+                        channels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT)) }
                 }
             }
-        } catch (e: Exception) {
-            // Ignored
+        } catch (cancelled: CancellationException) { throw cancelled
+        } catch (error: Exception) { fail("output", error); output.close(error); eos.completeExceptionally(error)
+        } finally { output.close() }
+    }
+
+    /** Called while the consumer still runs, so the last decoded frames reach ASR. */
+    suspend fun finish() = mutex.withLock {
+        val active = codec ?: return@withLock
+        try {
+            withTimeout(1500) {
+                var index: Int
+                do { index = active.dequeueInputBuffer(10_000); if (index < 0) yield() } while (index < 0)
+                active.queueInputBuffer(index, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
+                eos.await()
+                drainJob?.join()
+            }
+        } catch (error: Exception) {
+            if (error is CancellationException && error !is TimeoutCancellationException) throw error
+            fail("finish", error)
         }
     }
 
-    fun release() {
-        isInitialized = false
-        try {
-            decoder?.stop()
-            decoder?.release()
-        } catch (e: Exception) {}
-        decoder = null
+    suspend fun release() = mutex.withLock {
+        drainJob?.cancelAndJoin(); drainJob = null
+        val active = codec; codec = null
+        try { active?.stop() } catch (error: Exception) { fail("stop", error) }
+        try { active?.release() } catch (error: Exception) { fail("release", error) }
+        output.close()
+    }
+
+    private fun fail(stage: String, error: Exception) {
+        _stats.update { it.copy(decodeErrors = it.decodeErrors + 1, failure = "$stage: ${error.message}") }
+        android.util.Log.e("WEARABLE_AUDIO", "stage=$stage error=${error.javaClass.simpleName}", error)
     }
 }

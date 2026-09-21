@@ -11,6 +11,8 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface MemoryDao {
     @Query("SELECT * FROM memories ORDER BY timestamp DESC")
+    suspend fun snapshot(): List<Memory>
+    @Query("SELECT * FROM memories ORDER BY timestamp DESC")
     fun getAllMemories(): Flow<List<Memory>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
