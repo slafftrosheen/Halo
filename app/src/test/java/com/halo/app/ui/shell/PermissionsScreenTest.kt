@@ -2,6 +2,7 @@ package com.halo.app.ui.shell
 
 import android.Manifest
 import android.app.Application
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -40,7 +41,10 @@ class PermissionsScreenTest {
 
         composeRule
             .onNodeWithText("Grant microphone access")
+            .performScrollTo()
             .performClick()
+
+        composeRule.runOnIdle { }
 
         assertEquals(1, requests)
     }

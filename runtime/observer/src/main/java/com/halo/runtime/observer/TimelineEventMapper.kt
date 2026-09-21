@@ -36,7 +36,7 @@ class DefaultTimelineEventMapper : TimelineEventMapper {
                         title = "You",
                         description = input.transcript.trim(),
                         timestamp = Instant.ofEpochMilli(event.observation.timestamp),
-                        status = "Received",
+                        status = if (event.observation.source == Source.USER) "Sent" else "Received",
                         category = if (event.observation.modality == Modality.AUDIO) "Voice" else "All",
                         details = buildMap {
                             put("source", event.observation.origin?.source?.toString() ?: event.observation.source.name)

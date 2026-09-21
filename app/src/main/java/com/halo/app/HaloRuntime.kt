@@ -175,7 +175,7 @@ class HaloRuntime(
         speechBridgeStarted: Boolean,
         androidSpeakerStarted: Boolean
     ) {
-        if (androidSpeakerStarted) runCatching { graph.androidSpeaker.shutdown() }
+        if (androidSpeakerStarted) runCatching { graph.shutdownAndroidSpeaker() }
         if (speechBridgeStarted) runCatching { graph.speechPerceptionBridge.stop() }
         if (speechSessionStarted) runCatching { graph.speechSessionManager.stop() }
         if (audioStarted) runCatching { graph.audioPerceptionEngine.stop() }

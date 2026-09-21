@@ -35,7 +35,7 @@ class SpeechPerceptionBridge(
                     metadata = mapOf(
                         "engine" to "SpeechPerceptionBridge",
                         "captureId" to (event.input?.captureId ?: event.id),
-                        "inputRoute" to (if (event.input?.route is SpeechInputRoute.Wearable) "wearable" else "phone")
+                        "inputRoute" to (event.input?.route ?: SpeechInputRoute.Phone)
                     )
                 )
 

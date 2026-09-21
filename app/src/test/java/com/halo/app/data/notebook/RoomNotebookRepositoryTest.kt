@@ -134,7 +134,7 @@ class RoomNotebookRepositoryTest {
         helper.close()
 
         database = Room.databaseBuilder(context, AppDatabase::class.java, databaseName)
-            .addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3)
+            .addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3, AppDatabase.MIGRATION_3_4)
             .allowMainThreadQueries()
             .build()
         repository = RoomNotebookRepository(database.notebookDao(), newId = { "migrated-note" })

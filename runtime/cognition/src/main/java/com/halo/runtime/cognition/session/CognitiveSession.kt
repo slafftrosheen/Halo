@@ -4,6 +4,7 @@ import com.halo.cognition.language.ConversationIntent
 import com.halo.cognition.language.QuestionIntent
 import com.halo.runtime.cognition.blackboard.Blackboard
 import com.halo.runtime.cognition.blackboard.DefaultBlackboard
+import com.halo.runtime.cognition.blackboard.InteractionOrigin
 import com.halo.runtime.cognition.blackboard.InterpretationKnowledge
 import com.halo.runtime.cognition.context.ContextAssembler
 import com.halo.runtime.cognition.context.ContextAssemblyResult
@@ -39,6 +40,9 @@ import com.halo.sdk.runtime.ContextAssembled
 import com.halo.sdk.runtime.ConversationTurnCompleted
 import com.halo.sdk.runtime.EventBus
 import com.halo.sdk.runtime.ResponseDelivery
+import com.halo.sdk.runtime.SpeechInputRoute
+import com.halo.sdk.runtime.SpeechOutputFallback
+import com.halo.sdk.runtime.SpeechOutputTarget
 import com.halo.sdk.runtime.ToolCallAuthorized
 import com.halo.sdk.runtime.ToolCallCompleted
 import com.halo.sdk.runtime.ToolCallRejected
@@ -65,6 +69,10 @@ import kotlinx.coroutines.launch
  * execution. ConversationIntent and QuestionIntent are owned here. Provider/model
  * selection happens once per request and tool rounds never return to the router.
  */
+import com.halo.runtime.cognition.facts.RuntimeFactResolver
+import com.halo.runtime.cognition.facts.DefaultRuntimeFactResolver
+import com.halo.cognition.language.SystemFactIntent
+
 class CognitiveSession(
     private val eventBus: EventBus,
     private val providerRouter: AiProviderRouter,
@@ -74,7 +82,8 @@ class CognitiveSession(
     private val toolAuthorizer: ToolAuthorizer? = null,
     private val scope: CoroutineScope,
     private val blackboard: Blackboard = DefaultBlackboard(),
-    private val defaultPolicyProvider: () -> AiContextPolicy = { AiContextPolicy.CONSERVATIVE }
+    private val defaultPolicyProvider: () -> AiContextPolicy = { AiContextPolicy.CONSERVATIVE },
+    private val factResolver: RuntimeFactResolver = DefaultRuntimeFactResolver()
 ) {
     private val _state = MutableStateFlow<CognitiveSessionState>(CognitiveSessionState.Idle)
     val state: StateFlow<CognitiveSessionState> = _state.asStateFlow()
@@ -98,6 +107,56 @@ class CognitiveSession(
 
                 val interpretation = payload.interpretation
                 val intent = interpretation.intent
+                val responseDelivery = interpretation.source.defaultResponseDelivery()
+
+                if (intent is SystemFactIntent) {
+                    scope.launch {
+                        val fact = factResolver.resolve(intent)
+                        if (fact != null) {
+                            println("[HALO-TXN] speech knowledgeId=$knowledgeId intent=${intent::class.simpleName} -> RESOLVED LOCALLY: ${fact.text}")
+                            
+                            val requestId = UUID.randomUUID().toString()
+                            eventBus.publish(CognitiveRequestStarted(requestId = requestId))
+                            _state.value = CognitiveSessionState.Completed(AiResponse(text = fact.text, providerId = "local", modelId = "fact-resolver", finishReason = "stop"))
+                            eventBus.publish(CognitiveCompleted(requestId = requestId, response = fact.text))
+                            eventBus.publish(
+                                AssistantResponsePublished(
+                                    text = fact.text,
+                                    delivery = responseDelivery,
+                                    transactionId = requestId
+                                )
+                            )
+                            if (responseDelivery == ResponseDelivery.SPEECH_AND_VISUAL) {
+                                val outputTarget = when (val route = interpretation.origin?.speechRoute) {
+                                    is SpeechInputRoute.Wearable ->
+                                        SpeechOutputTarget.Wearable(
+                                            deviceId = route.deviceId,
+                                            displayName = route.displayName
+                                        )
+                                    SpeechInputRoute.Phone -> SpeechOutputTarget.Phone
+                                    null -> SpeechOutputTarget.Phone
+                                }
+                                val fallbackPolicy = if (outputTarget is SpeechOutputTarget.Wearable) {
+                                    SpeechOutputFallback.DISALLOW_PHONE
+                                } else {
+                                    SpeechOutputFallback.ALLOW_PHONE
+                                }
+                                eventBus.publish(
+                                    TtsRequested(
+                                        text = fact.text,
+                                        transactionId = requestId,
+                                        target = outputTarget,
+                                        fallback = fallbackPolicy,
+                                        sourceCaptureId = interpretation.origin?.captureId,
+                                        timestamp = System.currentTimeMillis()
+                                    )
+                                )
+                            }
+                        }
+                    }
+                    return@collect
+                }
+
                 if (intent !is ConversationIntent && intent !is QuestionIntent) {
                     println(
                         "[HALO-TXN] speech knowledgeId=$knowledgeId " +
@@ -115,7 +174,6 @@ class CognitiveSession(
                     return@collect
                 }
 
-                val responseDelivery = interpretation.source.defaultResponseDelivery()
                 println(
                     "[HALO-TXN] speech knowledgeId=$knowledgeId text=\"$text\" " +
                         "intent=${intent::class.simpleName} delivery=$responseDelivery -> SUBMITTING TO LLM"
@@ -123,7 +181,8 @@ class CognitiveSession(
                 submit(
                     request = AiRequest(text = text),
                     responseDelivery = responseDelivery,
-                    origin = interpretation.metadata
+                    origin = interpretation.origin,
+                    metadata = interpretation.metadata
                 )
             }
         }
@@ -133,8 +192,23 @@ class CognitiveSession(
         request: AiRequest,
         policy: AiContextPolicy? = null,
         responseDelivery: ResponseDelivery = ResponseDelivery.VISUAL_ONLY,
-        origin: Map<String, String> = emptyMap()
+        origin: InteractionOrigin? = null,
+        metadata: Map<String, String> = emptyMap()
     ) {
+        val outputTarget = when (val route = origin?.speechRoute) {
+            is SpeechInputRoute.Wearable ->
+                SpeechOutputTarget.Wearable(
+                    deviceId = route.deviceId,
+                    displayName = route.displayName
+                )
+            SpeechInputRoute.Phone -> SpeechOutputTarget.Phone
+            null -> SpeechOutputTarget.Phone
+        }
+        val fallbackPolicy = if (outputTarget is SpeechOutputTarget.Wearable) {
+            SpeechOutputFallback.DISALLOW_PHONE
+        } else {
+            SpeechOutputFallback.ALLOW_PHONE
+        }
         val effectivePolicy = policy ?: defaultPolicyProvider()
         activeJob?.cancel()
         activeJob = scope.launch {
@@ -225,7 +299,7 @@ class CognitiveSession(
                         val turn = conversationStore.append(
                             userText = userText,
                             assistantText = responseText,
-                            metadata = origin + mapOf("requestId" to requestId, "provider" to target.providerId, "model" to (target.modelId ?: ""))
+                            metadata = metadata + mapOf("requestId" to requestId, "provider" to target.providerId, "model" to (target.modelId ?: ""))
                         )
                         eventBus.publish(
                             ConversationTurnCompleted(
@@ -249,6 +323,10 @@ class CognitiveSession(
                         eventBus.publish(
                             TtsRequested(
                                 text = responseText,
+                                transactionId = requestId,
+                                target = outputTarget,
+                                fallback = fallbackPolicy,
+                                sourceCaptureId = origin?.captureId,
                                 timestamp = System.currentTimeMillis()
                             )
                         )

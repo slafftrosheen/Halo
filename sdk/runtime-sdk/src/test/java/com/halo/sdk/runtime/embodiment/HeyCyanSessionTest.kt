@@ -120,7 +120,7 @@ class HeyCyanSessionTest {
         advanceUntilIdle()
 
         val failedEvent = eventBus.events.find {
-            (it as? EmbodimentExecutionEvent)?.result?.status == ExecutionStatus.FAILED
+            (it as? EmbodimentExecutionEvent)?.result?.status == ExecutionStatus.UNCONFIRMED
         } as? EmbodimentExecutionEvent
         assertEquals("intent-timeout", failedEvent?.result?.intentId)
     }

@@ -25,6 +25,7 @@ sealed interface HeyCyanCommand {
     data object AiThumbnail : HeyCyanCommand
     data object PrepareVoiceRouting : HeyCyanCommand
     data object RouteAudioToGlasses : HeyCyanCommand
+    data object RouteAudioToPhone : HeyCyanCommand
 
     // Network / Transfer
     data object EnterWifiTransferMode : HeyCyanCommand
@@ -49,6 +50,7 @@ fun HeyCyanOperation.toCommand(): HeyCyanCommand =
         HeyCyanOperation.StopRecording -> HeyCyanCommand.StopRecording
         HeyCyanOperation.PrepareVoiceRouting -> HeyCyanCommand.PrepareVoiceRouting
         HeyCyanOperation.RouteAudioToGlasses -> HeyCyanCommand.RouteAudioToGlasses
+        HeyCyanOperation.RouteAudioToPhone -> HeyCyanCommand.RouteAudioToPhone
         HeyCyanOperation.GenerateAIPhoto -> HeyCyanCommand.AiThumbnail
         HeyCyanOperation.EnterWifiTransferMode -> HeyCyanCommand.EnterWifiTransferMode
         HeyCyanOperation.SynchronizeMedia ->

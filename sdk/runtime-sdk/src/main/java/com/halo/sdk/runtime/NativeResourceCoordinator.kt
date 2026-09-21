@@ -42,7 +42,7 @@ data class NativeResourceBudget(
     val availableBytes: Long = 0,
     val pressure: NativeMemoryPressure = NativeMemoryPressure.NORMAL,
     val idleGraceMillis: Long = 30_000,
-    val allowConcurrentHeavyweights: Boolean = false
+    val allowConcurrentHeavyweights: Boolean = true
 )
 
 /** Process-scoped arbitration and observability for heavyweight native resources. */
@@ -84,36 +84,45 @@ class NativeResourceCoordinator {
         remove(owner)
     }
 
-    suspend fun acquire(owner: NativeResourceOwner): Boolean = withTimeoutOrNull(15_000) {
-        while (true) {
-            val acquired = mutex.withLock {
-                owners += owner
-                expiry.remove(owner)?.cancel()
-                val conflicts = active.filter { it !== owner &&
-                    (it.nativeResourceKind == owner.nativeResourceKind || !_budget.value.allowConcurrentHeavyweights ||
-                        _budget.value.pressure != NativeMemoryPressure.NORMAL) }
-                var blocked = false
-                for (conflict in conflicts) {
-                    if (conflict.releaseIfIdle()) {
-                        active -= conflict
-                        expiry.remove(conflict)?.cancel()
-                        publish(conflict, NativeResourceState.RELEASED, "yielded to ${owner.nativeResourceKind}")
-                    } else blocked = true
+    suspend fun acquire(owner: NativeResourceOwner): Boolean {
+        val acquired = withTimeoutOrNull(500) {
+            while (true) {
+                val success = mutex.withLock {
+                    owners += owner
+                    expiry.remove(owner)?.cancel()
+                    val conflicts = active.filter { it !== owner &&
+                        (it.nativeResourceKind == owner.nativeResourceKind || !_budget.value.allowConcurrentHeavyweights ||
+                            _budget.value.pressure != NativeMemoryPressure.NORMAL) }
+                    var blocked = false
+                    for (conflict in conflicts) {
+                        if (conflict.releaseIfIdle()) {
+                            active -= conflict
+                            expiry.remove(conflict)?.cancel()
+                            publish(conflict, NativeResourceState.RELEASED, "yielded to ${owner.nativeResourceKind}")
+                        } else blocked = true
+                    }
+                    if (blocked) {
+                        publish(owner, NativeResourceState.ACQUIRING, "busy")
+                        false
+                    } else {
+                        active += owner
+                        publish(owner, NativeResourceState.RESIDENT, "lease acquired")
+                        true
+                    }
                 }
-                if (blocked) {
-                    publish(owner, NativeResourceState.ACQUIRING, "waiting for active heavyweight operation")
-                    false
-                } else {
-                    active += owner
-                    publish(owner, NativeResourceState.RESIDENT, "lease acquired")
-                    true
-                }
+                if (success) return@withTimeoutOrNull true
+                delay(10)
             }
-            if (acquired) return@withTimeoutOrNull true
-            delay(100)
+            @Suppress("UNREACHABLE_CODE") false
+        } ?: false
+
+        if (!acquired) {
+            mutex.withLock {
+                publish(owner, NativeResourceState.RELEASED, "busy")
+            }
         }
-        @Suppress("UNREACHABLE_CODE") false
-    } ?: false
+        return acquired
+    }
 
     /** Update provider lifecycle state without changing the arbitration lease. */
     suspend fun mark(owner: NativeResourceOwner, state: NativeResourceState, reason: String) = mutex.withLock {
@@ -148,6 +157,8 @@ class NativeResourceCoordinator {
     }
 
     private fun publish(owner: NativeResourceOwner, state: NativeResourceState, reason: String) {
+        val message = "NATIVE_RESOURCE_TRANSITION owner=${owner.nativeResourceId} kind=${owner.nativeResourceKind.name} state=${state.name} reason=$reason"
+        println(message)
         val next = _snapshot.value.filterNot { it.ownerId == owner.nativeResourceId } +
             NativeResourceSnapshot(owner.nativeResourceId, owner.nativeResourceKind, state, reason)
         _snapshot.value = next.sortedBy { it.ownerId }

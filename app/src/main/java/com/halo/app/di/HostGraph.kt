@@ -72,7 +72,13 @@ class HostGraph(
 
     val heyCyanDriver: RealHeyCyanDriver by lazy {
         RealHeyCyanDriver(context, infra.eventBus).also { driver ->
-            WearableSpeechInputBridge(driver, audioPerceptionEngine, infra.eventBus, infra.scope).start()
+            WearableSpeechInputBridge(
+                driver,
+                audioPerceptionEngine,
+                infra.eventBus,
+                infra.scope,
+                cancelSpeechOutput = { ManualDependencyGraph.haloSpeechOutputCoordinator.stop("Barge-in") }
+            ).start()
             captureCoordinator = com.halo.app.capture.WearableCaptureCoordinator(context, driver,
                 ManualDependencyGraph.captures, infra.eventBus, infra.scope).also { it.start() }
         }

@@ -37,12 +37,25 @@ class WearableCaptureCoordinator(private val context: Context, private val drive
         override suspend fun disconnect() { connector.disconnect(); wifiState.value = WifiConnectionState.DISCONNECTED }
         override suspend fun currentAddress(): InetAddress? = HeyCyanIpDiscovery().discover()?.let(InetAddress::getByName)
     }
+    private val pendingSync = MutableStateFlow(false)
+
     fun start() {
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             driver.heyCyanEvents.collect { event ->
                 if (event == HeyCyanEvent.AiImageRecognition) {
                     // Do not block BC59 event delivery while HTTP/media work runs.
-                    scope.launch { capture(requestPhoto = false) }
+                    scope.launch {
+                        capture(requestPhoto = false)
+                        pendingSync.value = true
+                    }
+                }
+            }
+        }
+        scope.launch {
+            driver.deviceState.mapNotNull { it.wifiCredentials }.collect {
+                if (pendingSync.value) {
+                    pendingSync.value = false
+                    sync()
                 }
             }
         }
@@ -53,7 +66,7 @@ class WearableCaptureCoordinator(private val context: Context, private val drive
         val device = driver.activeDeviceId
         try {
             requireNotNull(device) { "No connected HeyCyan device" }
-            _state.value = _state.value.copy(busy = true, message = "Requested · waiting for media")
+            _state.value = _state.value.copy(busy = true, message = "Requested ï¿½ waiting for media")
             events.publish(ActionReceipt(operationId = id, category = "Vision", title = "Wearable capture", stage = "Requested", detail = "Waiting for actual media", sourceDeviceId = device))
             if (requestPhoto) {
                 driver.capabilityController.execute(HeyCyanOperation.TakePhoto).getOrThrow()
@@ -68,16 +81,33 @@ class WearableCaptureCoordinator(private val context: Context, private val drive
         } finally { _state.value = _state.value.copy(busy = false); mutex.unlock() }
     }
     suspend fun sync() {
-        if (!mutex.tryLock()) return
+        if (!mutex.tryLock()) {
+            pendingSync.value = true
+            return
+        }
         val id = UUID.randomUUID().toString()
         val device = driver.activeDeviceId
         try {
             requireNotNull(device) { "No connected HeyCyan device" }
             _state.value = _state.value.copy(busy = true, message = "Connecting for media transfer")
-            val credentials = DeviceStateWifiCredentialProvider(driver.deviceState)
-            check(credentials.credentials() != null) { "Media transfer unavailable: glasses have not supplied Wi-Fi credentials" }
+            val credentialsProvider = DeviceStateWifiCredentialProvider(driver.deviceState)
+            var credentials = credentialsProvider.credentials()
+            if (credentials == null) {
+                _state.value = _state.value.copy(busy = true, message = "Awaiting transfer credentials")
+                events.publish(ActionReceipt(operationId = id, category = "Vision", title = "Media synchronization", stage = "Pending", detail = "Awaiting transfer credentials", sourceDeviceId = device))
+                withTimeoutOrNull(30_000L) {
+                    driver.deviceState.mapNotNull { it.wifiCredentials }.first()
+                }
+                credentials = credentialsProvider.credentials()
+                if (credentials == null) {
+                    pendingSync.value = true
+                    error("Media transfer unavailable: glasses have not supplied Wi-Fi credentials")
+                }
+            }
+            _state.value = _state.value.copy(busy = true, message = "Transfer ready")
+            events.publish(ActionReceipt(operationId = id, category = "Vision", title = "Media synchronization", stage = "Transfer ready", detail = "Credentials acquired", sourceDeviceId = device))
             var api: HeyCyanMediaApi? = null
-            val transfer = HeyCyanTransferCoordinator(driver.capabilityController, credentials, wifi,
+            val transfer = HeyCyanTransferCoordinator(driver.capabilityController, credentialsProvider, wifi,
                 HeyCyanMediaApiFactory { address -> DefaultHeyCyanMediaApi(address).also { api = it } })
             transfer.synchronizeManifest().getOrThrow()
             val activeApi = checkNotNull(api)
@@ -88,7 +118,7 @@ class WearableCaptureCoordinator(private val context: Context, private val drive
             val progress = scope.launch {
                 sync.state.collect { value ->
                     if (value is HeyCyanMediaSyncState.Downloading) _state.value = _state.value.copy(
-                        message = "Receiving item ${value.index}/${value.total} · ${value.progress.bytesReceived} bytes")
+                        message = "Receiving item ${value.index}/${value.total} ï¿½ ${value.progress.bytesReceived} bytes")
                 }
             }
             val result = try { sync.synchronize(MediaSyncRequest(mediaTypes = setOf(HeyCyanMediaType.PHOTO))).getOrThrow() }

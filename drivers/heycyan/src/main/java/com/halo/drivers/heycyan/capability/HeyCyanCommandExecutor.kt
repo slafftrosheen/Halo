@@ -3,6 +3,7 @@ package com.halo.drivers.heycyan.capability
 import com.halo.drivers.heycyan.codec.HeyCyanProtocolCapture
 import com.halo.drivers.heycyan.debug.HeyCyanLogger
 import com.halo.drivers.heycyan.protocol.HeyCyanCommand
+import com.halo.drivers.heycyan.protocol.HeyCyanCommandCatalog
 import com.halo.drivers.heycyan.protocol.HeyCyanCommandTransport
 
 /**
@@ -90,6 +91,10 @@ class DefaultHeyCyanCommandExecutor(
                     // ACTION_SPEAK_SOUND_SWITCH (0x52), payload { 0x02, 0x01 }.
                     action = com.halo.drivers.heycyan.protocol.HeyCyanCommandCatalog.ACTION_SPEAK_SOUND_SWITCH
                     payload = byteArrayOf(0x02, 0x01)
+                }
+                is HeyCyanCommand.RouteAudioToPhone -> {
+                    action = HeyCyanCommandCatalog.ACTION_SPEAK_SOUND_SWITCH
+                    payload = byteArrayOf(0x02, 0x02)
                 }
                 is HeyCyanCommand.SetDateTime -> return Result.failure(
                     com.halo.drivers.heycyan.protocol.ProtocolNotVerifiedException(

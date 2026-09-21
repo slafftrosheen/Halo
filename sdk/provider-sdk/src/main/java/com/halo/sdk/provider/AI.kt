@@ -145,9 +145,18 @@ interface AiProvider {
     suspend fun testConnection(): Boolean = getStatus().state == ProviderStatus.State.READY
 }
 
+sealed interface ProviderReadiness {
+    data object Unconfigured : ProviderReadiness
+    data object ConfiguredCold : ProviderReadiness
+    data object Loading : ProviderReadiness
+    data object Ready : ProviderReadiness
+    data class Failed(val reason: String) : ProviderReadiness
+}
+
 data class ProviderStatus(
     val state: State,
-    val message: String? = null
+    val message: String? = null,
+    val readiness: ProviderReadiness = ProviderReadiness.Unconfigured
 ) {
     enum class State {
         READY,

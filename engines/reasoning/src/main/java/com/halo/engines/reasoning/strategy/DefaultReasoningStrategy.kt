@@ -25,6 +25,8 @@ import com.halo.icl.ontology.NavigationPayload
 import com.halo.icl.ontology.SearchPayload
 import com.halo.runtime.cognition.blackboard.Interpretation
 
+import com.halo.cognition.language.CurrentTimeIntent
+
 /** Deterministic Interpretation -> Goal compiler for executable intents. */
 class DefaultReasoningStrategy(
     private val goalManager: GoalManager
@@ -42,8 +44,10 @@ class DefaultReasoningStrategy(
             is ReminderIntent -> GoalType.MEMORY
             is SearchIntent -> GoalType.SEARCH
             is CallIntent -> GoalType.COMMUNICATION
-            is OpenIntent -> GoalType.DEVICE
-            is QuestionIntent, is ConversationIntent -> GoalType.CONVERSATION
+            is OpenIntent, is CurrentTimeIntent -> GoalType.DEVICE
+            is QuestionIntent, is ConversationIntent -> {
+                if (interpretation.transcript.lowercase().contains("time")) GoalType.DEVICE else GoalType.CONVERSATION
+            }
             else -> GoalType.CONVERSATION
         }
 
@@ -103,6 +107,8 @@ class DefaultReasoningStrategy(
                     .orEmpty()
             )
 
+            is CurrentTimeIntent -> DevicePayload(action = "time", target = "")
+
             is OpenIntent -> {
                 val appName = interpretation.entities
                     .filterIsInstance<ApplicationEntity>()
@@ -116,8 +122,13 @@ class DefaultReasoningStrategy(
                 }
             }
 
-            is ConversationIntent, is QuestionIntent ->
-                ConversationPayload(topic = interpretation.transcript)
+            is ConversationIntent, is QuestionIntent -> {
+                if (interpretation.transcript.lowercase().contains("time")) {
+                    DevicePayload(action = "time", target = "")
+                } else {
+                    ConversationPayload(topic = interpretation.transcript)
+                }
+            }
 
             else -> ConversationPayload(topic = interpretation.transcript)
         }

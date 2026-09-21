@@ -11,7 +11,7 @@ class ActivityUiMapperTest {
     private val mapper = ActivityUiMapper()
 
     @Test
-    fun `activity keeps only user and halo turns`() {
+    fun `activity maps all timeline events into ledger`() {
         val state = mapper.map(
             listOf(
                 event("1", "Engine Started", "engine.reasoning", 1_000L, "Started"),
@@ -21,11 +21,11 @@ class ActivityUiMapperTest {
             )
         )
 
-        assertEquals(2, state.events.size)
+        assertEquals(4, state.events.size)
         assertEquals(ActivitySpeaker.Halo, state.events[0].speaker)
         assertEquals("It is 18:30.", state.events[0].message)
-        assertEquals(ActivitySpeaker.User, state.events[1].speaker)
-        assertEquals("What time is it?", state.events[1].message)
+        assertEquals(ActivitySpeaker.User, state.events[2].speaker)
+        assertEquals("What time is it?", state.events[2].message)
     }
 
     @Test

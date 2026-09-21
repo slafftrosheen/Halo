@@ -24,6 +24,8 @@ enum class ExecutionStatus {
     EXECUTING,
     /** The physical action was successfully completed in the real world. */
     SUCCEEDED,
+    /** The physical action was dispatched but success/failure could not be confirmed. */
+    UNCONFIRMED,
     /** The physical action failed during execution (e.g. motor fault). */
     FAILED,
     /** The physical action was aborted mid-execution (e.g. emergency stop). */

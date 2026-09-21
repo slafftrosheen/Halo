@@ -24,27 +24,44 @@ data class ConversationTurnCompleted(
 ) : HaloEvent
 
 data class DeviceCommand(override val id: String = UUID.randomUUID().toString(), override val timestamp: Long, val command: String) : HaloEvent
-data class TtsRequested(override val id: String = UUID.randomUUID().toString(), override val timestamp: Long = System.currentTimeMillis(), val text: String) : HaloEvent
+data class TtsRequested(
+    override val id: String = UUID.randomUUID().toString(),
+    override val timestamp: Long = System.currentTimeMillis(),
+    val text: String,
+    val transactionId: String,
+    val target: SpeechOutputTarget = SpeechOutputTarget.Phone,
+    val fallback: SpeechOutputFallback = SpeechOutputFallback.ALLOW_PHONE,
+    val sourceCaptureId: String? = null
+) : HaloEvent
 
 data class TtsStarted(
     override val id: String = UUID.randomUUID().toString(),
-    val textLength: Int,
+    val transactionId: String,
+    val target: SpeechOutputTarget = SpeechOutputTarget.Phone,
+    val textLength: Int = 0,
     override val timestamp: Long = System.currentTimeMillis()
 ) : HaloEvent
 
 data class TtsCompleted(
     override val id: String = UUID.randomUUID().toString(),
+    val transactionId: String,
+    val target: SpeechOutputTarget = SpeechOutputTarget.Phone,
     override val timestamp: Long = System.currentTimeMillis()
 ) : HaloEvent
 
 data class TtsCancelled(
     override val id: String = UUID.randomUUID().toString(),
+    val transactionId: String,
+    val target: SpeechOutputTarget = SpeechOutputTarget.Phone,
     override val timestamp: Long = System.currentTimeMillis()
 ) : HaloEvent
 
 data class TtsFailed(
     override val id: String = UUID.randomUUID().toString(),
-    val message: String,
+    val transactionId: String,
+    val target: SpeechOutputTarget = SpeechOutputTarget.Phone,
+    val reason: String,
+    val message: String = reason,
     override val timestamp: Long = System.currentTimeMillis()
 ) : HaloEvent
 

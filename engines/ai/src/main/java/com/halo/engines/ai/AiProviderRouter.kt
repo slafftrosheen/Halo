@@ -62,9 +62,15 @@ class DefaultAiProviderRouter(
             ?.takeIf { id -> inferenceProviders.any { it.id == id } }
         val restoredProvider = storedProvider ?: inferenceProviders.firstOrNull { it.isLocal }?.id ?: inferenceProviders.firstOrNull()?.id
 
-        _routingPolicy.value = storage.getString("ai_routing_policy")?.let {
-            runCatching { enumValueOf<AiRoutingPolicy>(it) }.getOrDefault(AiRoutingPolicy.EXPLICIT)
-        } ?: AiRoutingPolicy.EXPLICIT
+        val rawPolicy = storage.getString("ai_routing_policy")
+        val restoredPolicy = rawPolicy?.let {
+            val parsed = runCatching { enumValueOf<AiRoutingPolicy>(it) }.getOrDefault(AiRoutingPolicy.LOCAL_ONLY)
+            if (parsed == AiRoutingPolicy.AUTOMATIC) AiRoutingPolicy.LOCAL_ONLY else parsed
+        } ?: AiRoutingPolicy.LOCAL_ONLY
+        _routingPolicy.value = restoredPolicy
+        if (rawPolicy == "AUTOMATIC") {
+            storage.putString("ai_routing_policy", restoredPolicy.name)
+        }
 
         _selectedProviderId.value = restoredProvider
         if (restoredProvider != null) {
@@ -82,8 +88,13 @@ class DefaultAiProviderRouter(
     override fun stop() = Unit
 
     fun setRoutingPolicy(policy: AiRoutingPolicy) {
-        _routingPolicy.value = policy
-        storage.putString("ai_routing_policy", policy.name)
+        val effective = if (policy == AiRoutingPolicy.AUTOMATIC || policy == AiRoutingPolicy.PREFERRED_WITH_FALLBACK) {
+            AiRoutingPolicy.LOCAL_ONLY
+        } else {
+            policy
+        }
+        _routingPolicy.value = effective
+        storage.putString("ai_routing_policy", effective.name)
     }
 
     override fun selectProvider(id: String) {
@@ -91,7 +102,9 @@ class DefaultAiProviderRouter(
             val providerChanged = _selectedProviderId.value != id
             _selectedProviderId.value = id
             storage.putString("active_ai_provider", id)
-            setRoutingPolicy(AiRoutingPolicy.EXPLICIT)
+            if (_routingPolicy.value != AiRoutingPolicy.LOCAL_ONLY) {
+                setRoutingPolicy(AiRoutingPolicy.EXPLICIT)
+            }
             if (providerChanged) restoreStoredModel(id)
             updateDiagnosticsSelection()
             scope.launch { refreshDiagnostics() }
@@ -176,15 +189,20 @@ class DefaultAiProviderRouter(
             if (selectedProvider is AiHandoffProvider) "Provider ${selectedProvider.id} is a handoff target, not a normal inference backend" else "Explicitly selected provider not found: ${_selectedProviderId.value}"
         )
         val status = provider.getStatus()
-        if (status.state != ProviderStatus.State.READY) throw AiProviderException(AiErrorType.PROVIDER_UNAVAILABLE, "Explicit provider is not ready: ${provider.id}: ${status.state}")
+        val isReady = status.state == ProviderStatus.State.READY || status.readiness is ProviderReadiness.ConfiguredCold || status.readiness is ProviderReadiness.Ready
+        if (!isReady) throw AiProviderException(AiErrorType.PROVIDER_UNAVAILABLE, "Explicit provider is not ready: ${provider.id}: ${status.state}")
         return resolveTargetForProvider(provider, request, allowSelectedModelFallback = false)
     }
 
     private suspend fun resolvePreferredWithFallbackTarget(preferredProvider: AiInferenceProvider?, request: AiRequest): AiExecutionTarget {
-        if (preferredProvider != null && preferredProvider.getStatus().state == ProviderStatus.State.READY) {
-            try { return resolveTargetForProvider(preferredProvider, request, allowSelectedModelFallback = false) }
-            catch (e: AiProviderException) {
-                if (e.type == AiErrorType.MODEL_NOT_FOUND || e.type == AiErrorType.UNSUPPORTED_CAPABILITY || e.type == AiErrorType.INVALID_REQUEST || e.type == AiErrorType.CONTEXT_TOO_LARGE) throw e
+        if (preferredProvider != null) {
+            val status = preferredProvider.getStatus()
+            val isReady = status.state == ProviderStatus.State.READY || status.readiness is ProviderReadiness.ConfiguredCold || status.readiness is ProviderReadiness.Ready
+            if (isReady) {
+                try { return resolveTargetForProvider(preferredProvider, request, allowSelectedModelFallback = false) }
+                catch (e: AiProviderException) {
+                    if (e.type == AiErrorType.MODEL_NOT_FOUND || e.type == AiErrorType.UNSUPPORTED_CAPABILITY || e.type == AiErrorType.INVALID_REQUEST || e.type == AiErrorType.CONTEXT_TOO_LARGE) throw e
+                }
             }
         }
         return getFallbackExecutionTarget(request, failedProviderId = preferredProvider?.id)
@@ -200,7 +218,8 @@ class DefaultAiProviderRouter(
         for (provider in orderedProviders) {
             if (localOnly && !provider.isLocal) { failures += "${provider.id}: not local"; continue }
             val status = runCatching { provider.getStatus() }.getOrElse { failures += "${provider.id}: status check failed"; continue }
-            if (status.state != ProviderStatus.State.READY) { failures += "${provider.id}: state=${status.state}"; continue }
+            val isReady = status.state == ProviderStatus.State.READY || status.readiness is ProviderReadiness.ConfiguredCold || status.readiness is ProviderReadiness.Ready
+            if (!isReady) { failures += "${provider.id}: state=${status.state}"; continue }
             val result = runCatching { resolveTargetForProvider(provider, request, allowSelectedModelFallback = provider.id != preferredProvider?.id) }
             result.getOrNull()?.let { return it }
             val error = result.exceptionOrNull()
@@ -237,7 +256,9 @@ class DefaultAiProviderRouter(
         val localOnly = _routingPolicy.value == AiRoutingPolicy.LOCAL_ONLY
         for (provider in inferenceProviders.filter { it.id != failedProviderId }) {
             if (localOnly && !provider.isLocal) continue
-            if (runCatching { provider.getStatus() }.getOrNull()?.state != ProviderStatus.State.READY) continue
+            val status = runCatching { provider.getStatus() }.getOrNull()
+            val isReady = status?.state == ProviderStatus.State.READY || status?.readiness is ProviderReadiness.ConfiguredCold || status?.readiness is ProviderReadiness.Ready
+            if (!isReady) continue
             val target = runCatching { resolveTargetForProvider(provider, request, allowSelectedModelFallback = true) }.getOrNull()
             if (target != null) return target
         }
@@ -280,7 +301,7 @@ class DefaultAiProviderRouter(
         } catch (e: CancellationException) { throw e }
         catch (e: Throwable) {
             eventBus?.publish(ProviderFailure(requestId = requestId, providerId = target.providerId, reason = e.message ?: "Execution failed"))
-            if ((policy == AiRoutingPolicy.PREFERRED_WITH_FALLBACK || policy == AiRoutingPolicy.AUTOMATIC) && fallbackEligible(e)) {
+            if ((policy == AiRoutingPolicy.PREFERRED_WITH_FALLBACK || policy == AiRoutingPolicy.AUTOMATIC || policy == AiRoutingPolicy.LOCAL_ONLY) && fallbackEligible(e)) {
                 val fallbackTarget = getFallbackExecutionTarget(request, failedProviderId = target.providerId)
                 if (fallbackTarget != null) {
                     val fallbackRequest = request.copy(modelId = fallbackTarget.modelId)

@@ -116,7 +116,13 @@ class IntelligenceViewModel(
         val storedModelId = when (providerId) {
             ProviderIds.OPENROUTER -> settings.openRouterModel.trim().ifBlank { "openrouter/free" }
             ProviderIds.OLLAMA -> settings.ollamaModel.trim().ifBlank { null }
-            ProviderIds.LLAMACPP -> modelDownloadManager?.activeModelId?.value ?: settings.llamacppModel.trim().ifBlank { null }
+            ProviderIds.LLAMACPP -> {
+                val modelId = modelDownloadManager?.activeModelId?.value ?: settings.llamacppModel.trim().ifBlank { null }
+                if (modelId != null && modelDownloadManager?.activeModelId?.value != modelId) {
+                    modelDownloadManager?.setActiveModel(modelId)
+                }
+                modelId
+            }
             else -> null
         }
         if (storedModelId != aiProviderRouter.selectedModelId.value) aiProviderRouter.selectModel(storedModelId)

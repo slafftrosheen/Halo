@@ -1,5 +1,7 @@
 package com.halo.drivers.heycyan.codec
 
+import com.halo.drivers.heycyan.protocol.HeyCyanCommandCatalog
+
 /**
  * Semantic command builders for verified HeyCyan BLE commands.
  *
@@ -66,6 +68,16 @@ object HeyCyanCommand {
     fun prepareVoiceRouting(): ByteArray = HeyCyanWireFrameCodec.encode(
         action = HeyCyanWireFrameCodec.ACTION_GLASSES_CONTROL,
         payload = HeyCyanWireFrameCodec.PAYLOAD_VOICE_ROUTING
+    )
+
+    fun routeAudioToGlasses(): ByteArray = HeyCyanWireFrameCodec.encode(
+        action = HeyCyanCommandCatalog.ACTION_SPEAK_SOUND_SWITCH,
+        payload = byteArrayOf(0x02, 0x01)
+    )
+
+    fun routeAudioToPhone(): ByteArray = HeyCyanWireFrameCodec.encode(
+        action = HeyCyanCommandCatalog.ACTION_SPEAK_SOUND_SWITCH,
+        payload = byteArrayOf(0x02, 0x02)
     )
 
     /**

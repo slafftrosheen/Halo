@@ -24,6 +24,7 @@ This document outlines the test procedure for the 7-day hardware validation peri
 
 ### 1. DAY-TO-DAY (Daily Workflows)
 - **Morning Startup**: Power on glasses, open Halo app, confirm auto-connect and transition to `READY`.
+- **Speech Output Routing Invariant**: A voice turn initiated on a wearable returns speech to that wearable unless the user has explicitly enabled another fallback policy.
 - **Normal Usage**: Trigger photo capture, video recording start/stop, and audio recording.
 - **Provider Switching**: Toggle between Ollama, OpenRouter, and System Assistant.
 - **Recharging Lifecycle**: Place glasses on charger, observe `BatteryUpdated` and `charging` state, remove from charger and verify live battery telemetry updates.

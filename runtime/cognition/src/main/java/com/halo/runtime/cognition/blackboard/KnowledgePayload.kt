@@ -9,6 +9,14 @@ import com.halo.cognition.language.Entity
 import com.halo.cognition.language.Intent
 import com.halo.cognition.language.ConversationIntent
 import com.halo.cognition.language.InterpretationStrategy
+import com.halo.sdk.runtime.SpeechInputRoute
+
+data class InteractionOrigin(
+    val source: Source,
+    val sourceDeviceId: String? = null,
+    val captureId: String? = null,
+    val speechRoute: SpeechInputRoute? = null
+)
 
 data class Interpretation(
     val transcript: String = "",
@@ -18,7 +26,8 @@ data class Interpretation(
     val confidence: Float = 0.0f,
     val source: Source = Source.USER,
     val metadata: Map<String, String> = emptyMap(),
-    val strategy: InterpretationStrategy = InterpretationStrategy.Semantic
+    val strategy: InterpretationStrategy = InterpretationStrategy.Semantic,
+    val origin: InteractionOrigin? = null
 )
 
 interface KnowledgePayload

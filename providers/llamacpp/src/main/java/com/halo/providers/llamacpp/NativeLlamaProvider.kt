@@ -61,10 +61,10 @@ class NativeLlamaProvider(
     override suspend fun getStatus(): ProviderStatus {
         val activeId = downloadManager.activeModelId.value
         val current = when {
-            activeId == null -> ProviderStatus.UNCONFIGURED
-            engine != null && loadedModelId == activeId -> ProviderStatus.READY
-            downloadManager.getModelFile(activeId) != null -> ProviderStatus(ProviderStatus.State.READY, "Model downloaded; ready to load: $activeId")
-            else -> ProviderStatus(ProviderStatus.State.UNAVAILABLE, "Model not downloaded: $activeId")
+            activeId == null -> ProviderStatus(ProviderStatus.State.UNCONFIGURED, "No model selected", ProviderReadiness.Unconfigured)
+            engine != null && loadedModelId == activeId -> ProviderStatus(ProviderStatus.State.READY, null, ProviderReadiness.Ready)
+            downloadManager.getModelFile(activeId) != null -> ProviderStatus(ProviderStatus.State.STANDBY, "Model downloaded; ready to load: $activeId", ProviderReadiness.ConfiguredCold)
+            else -> ProviderStatus(ProviderStatus.State.UNAVAILABLE, "Model not downloaded: $activeId", ProviderReadiness.Failed("Not downloaded"))
         }
         _status.value = current
         return current

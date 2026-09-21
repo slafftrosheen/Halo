@@ -6,6 +6,8 @@ import com.halo.app.embodiment.DeviceAutoConnectCoordinator
 import com.halo.host.android.system.AndroidPlatformStateMonitor
 import com.halo.app.ai.readRuntimeAiContextPolicy
 import com.halo.app.RuntimeStartupTrace
+import com.halo.app.audio.HaloSpeechOutputCoordinator
+import com.halo.app.audio.SpeechOutputRouteController
 import com.halo.app.data.AppDatabase
 import com.halo.app.data.notebook.RoomNotebookRepository
 import com.halo.app.notebook.NotebookUseCases
@@ -21,6 +23,7 @@ import com.halo.providers.sherpa.stt.ReloadableSpeechRecognitionProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import com.halo.engines.memory.WorkingMemoryProcess
+import com.halo.providers.android.tts.AndroidTTSProvider
 import com.halo.runtime.cognition.session.CognitiveSession
 import com.halo.runtime.kernel.HaloMicrokernel
 
@@ -160,7 +163,7 @@ object ManualDependencyGraph {
                 commandBus = commandBus,
                 eventBus = eventBus,
                 cognitiveSession = cognitiveSession,
-                stopSpeechOutput = { androidSpeaker.stop() },
+                stopSpeechOutput = { haloSpeechOutputCoordinator.stop("User stop") },
                 aiProviderRouter = aiProviderRouter,
                 speechAvailability = speechRecognitionAvailability,
                 microphonePermission = platformStateMonitor.microphonePermissionGranted,
@@ -198,10 +201,20 @@ object ManualDependencyGraph {
 
     val runtimeSnapshotManager get() = observerGraph.runtimeSnapshotManager
 
-    private val androidSpeakerDelegate = lazy { com.halo.host.android.audio.AndroidSpeaker(applicationContext, infra.eventBus) }
-    val androidSpeaker: com.halo.host.android.audio.AndroidSpeaker get() = androidSpeakerDelegate.value
-    fun startAndroidSpeaker() { androidSpeakerDelegate.value.start() }
-    fun shutdownAndroidSpeaker() { if (androidSpeakerDelegate.isInitialized()) androidSpeakerDelegate.value.shutdown() }
+    val speechOutputRouteController by lazy {
+        SpeechOutputRouteController(applicationContext, heyCyanDriver)
+    }
+
+    private val speechOutputCoordinatorDelegate = lazy {
+        HaloSpeechOutputCoordinator(
+            eventBus = infra.eventBus,
+            routeController = speechOutputRouteController,
+            ttsProvider = AndroidTTSProvider(applicationContext)
+        )
+    }
+    val haloSpeechOutputCoordinator: HaloSpeechOutputCoordinator get() = speechOutputCoordinatorDelegate.value
+    fun startAndroidSpeaker() { speechOutputCoordinatorDelegate.value.start() }
+    fun shutdownAndroidSpeaker() { if (speechOutputCoordinatorDelegate.isInitialized()) speechOutputCoordinatorDelegate.value.shutdown() }
 
     val microkernel by lazy {
         RuntimeStartupTrace.measure("graph.microkernel") {

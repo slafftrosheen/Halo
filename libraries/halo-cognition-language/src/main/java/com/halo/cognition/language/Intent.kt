@@ -2,6 +2,10 @@ package com.halo.cognition.language
 
 sealed interface Intent
 
+sealed interface SystemFactIntent : Intent
+data object CurrentTimeIntent : SystemFactIntent
+data object CurrentDateIntent : SystemFactIntent
+
 data object OpenIntent : Intent
 data object CallIntent : Intent
 data object NavigateIntent : Intent

@@ -92,7 +92,7 @@ class ModelDownloadManager(private val context: Context) {
         val persisted = prefs.getString("active_model", null)
         val downloaded = getAllModels().firstOrNull { getModelFile(it.id) != null }
         val selected = when {
-            persisted != null && getModelFile(persisted) != null -> persisted
+            persisted != null -> persisted
             downloaded != null -> downloaded.id
             else -> null
         }

@@ -16,6 +16,8 @@ sealed interface HeyCyanOperation {
     data object PrepareVoiceRouting : HeyCyanOperation
     /** Select the glasses as the playback target for speech/audio. */
     data object RouteAudioToGlasses : HeyCyanOperation
+    /** Select the phone as the playback target for speech/audio. */
+    data object RouteAudioToPhone : HeyCyanOperation
     data object GenerateAIPhoto : HeyCyanOperation
     data object EnterWifiTransferMode : HeyCyanOperation
     data object SynchronizeMedia : HeyCyanOperation

@@ -1,6 +1,7 @@
 package com.halo.engines.interpretation.rules
 
 import com.halo.cognition.language.ApplicationEntity
+import com.halo.cognition.language.CurrentTimeIntent
 import com.halo.engines.interpretation.api.InterpretationContext
 import com.halo.engines.interpretation.api.InterpretationRule
 import com.halo.engines.interpretation.api.RuleMatch
@@ -18,9 +19,9 @@ class TimeRule : InterpretationRule {
         // 1. Explicit current-time query matching
         if (currentTimePattern.containsMatchIn(transcript)) {
             return RuleMatch(
-                confidence = 0.99f,
-                intent = OpenIntent,
-                entities = listOf(ApplicationEntity("time", 0.99f)),
+                confidence = 1.0f,
+                intent = CurrentTimeIntent,
+                entities = emptyList(),
                 consumedTokens = consumedTokens,
                 diagnostics = "Detected explicit current time query"
             )

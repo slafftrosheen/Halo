@@ -14,6 +14,7 @@ import com.halo.runtime.cognition.blackboard.Blackboard
 import com.halo.runtime.cognition.blackboard.Confidence
 import com.halo.runtime.cognition.blackboard.EntityKnowledge
 import com.halo.runtime.cognition.blackboard.IntentKnowledge
+import com.halo.runtime.cognition.blackboard.InteractionOrigin
 import com.halo.runtime.cognition.blackboard.InterpretationKnowledge
 import com.halo.runtime.cognition.blackboard.Knowledge
 import com.halo.runtime.cognition.blackboard.KnowledgeId
@@ -30,6 +31,7 @@ import com.halo.sdk.runtime.Observation
 import com.halo.sdk.runtime.ObservationCreated
 import com.halo.sdk.runtime.ServiceKey
 import com.halo.sdk.runtime.Source
+import com.halo.sdk.runtime.SpeechInputRoute
 import java.util.UUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CancellationException
@@ -166,7 +168,17 @@ open class DefaultInterpretationEngine(
                 timestamp = Instant.fromEpochMilliseconds(observation.timestamp)
             )
         )
-        val interpretation = result.interpretation.copy(metadata = result.interpretation.metadata + buildMap {
+        val speechRoute = observation.metadata["inputRoute"] as? SpeechInputRoute
+        val origin = InteractionOrigin(
+            source = observation.source,
+            sourceDeviceId = observation.sourceDeviceId,
+            captureId = observation.metadata["captureId"]?.toString(),
+            speechRoute = speechRoute
+        )
+
+        val interpretation = result.interpretation.copy(
+            origin = origin,
+            metadata = result.interpretation.metadata + buildMap {
             put("observationId", observation.id.value)
             put("inputSource", observation.origin?.source?.toString() ?: observation.source.name)
             observation.sourceDeviceId?.let { put("sourceDeviceId", it) }

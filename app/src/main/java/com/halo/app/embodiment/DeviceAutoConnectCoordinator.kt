@@ -2,6 +2,7 @@ package com.halo.app.embodiment
 
 import android.util.Log
 import com.halo.drivers.heycyan.HeyCyanHost
+import com.halo.sdk.runtime.embodiment.DeviceDescriptor
 import com.halo.sdk.runtime.embodiment.DeviceKind
 import com.halo.sdk.runtime.embodiment.DeviceRegistry
 import com.halo.sdk.runtime.embodiment.DeviceSessionManager
@@ -34,11 +35,13 @@ internal fun normalizeLegacyDeviceRecord(
         identity.displayName == "HEYCYAN_GLASSES" &&
         identity.deviceType != "HEYCYAN_GLASSES"
     ) {
+        val newIdentity = identity.copy(
+            deviceType = "HEYCYAN_GLASSES",
+            displayName = identity.deviceType.ifBlank { "HeyCyan Glasses" }
+        )
         return record.copy(
-            identity = identity.copy(
-                deviceType = "HEYCYAN_GLASSES",
-                displayName = identity.deviceType.ifBlank { "HeyCyan Glasses" }
-            )
+            identity = newIdentity,
+            descriptor = DeviceDescriptor.fromDeviceType(newIdentity.deviceType)
         )
     }
 

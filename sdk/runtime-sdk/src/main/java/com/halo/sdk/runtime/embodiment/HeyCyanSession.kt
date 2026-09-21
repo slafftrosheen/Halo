@@ -129,10 +129,10 @@ class HeyCyanSession(
                     onSuccess = { executionResult ->
                         when (executionResult) {
                             is HeyCyanExecutionResult.Acknowledged -> {
-                                reportResult(intent.intentId, EmbodimentExecutionStatus.ACCEPTED)
+                                reportResult(intent.intentId, EmbodimentExecutionStatus.DISPATCHED)
                                 val completed = completion.await()
                                 if (completed) reportResult(intent.intentId, EmbodimentExecutionStatus.SUCCEEDED)
-                                else reportResult(intent.intentId, EmbodimentExecutionStatus.FAILED, "Execution timed out")
+                                else reportResult(intent.intentId, EmbodimentExecutionStatus.UNCONFIRMED, "Execution dispatched but confirmation timed out")
                             }
                             is HeyCyanExecutionResult.Completed -> {
                                 completion.cancel()
@@ -163,17 +163,24 @@ class HeyCyanSession(
     private suspend fun waitForCompletionSignal(operation: HeyCyanOperation): Boolean {
         return withTimeoutOrNull(30000L) {
             fun ObservationUpdated.belongsToThisDevice(): Boolean = observation.sourceDeviceId == identity.deviceId
-            fun ObservationUpdated.modeString(): String? = observation.metadata["mode"]?.toString()
+            fun ObservationUpdated.isPhoto(): Boolean {
+                val mode = observation.metadata["mode"]?.toString()
+                return mode == "1" || mode == "PHOTO" || mode == "0x01"
+            }
+            fun ObservationUpdated.isVideo(): Boolean {
+                val mode = observation.metadata["mode"]?.toString()
+                return mode == "2" || mode == "VIDEO" || mode == "0x02"
+            }
 
             when (operation) {
                 HeyCyanOperation.TakePhoto -> eventBus.observe(ObservationUpdated::class.java).first {
-                    it.belongsToThisDevice() && it.observation.metadata["event"] == "MODE_CHANGED" && it.modeString() == "1"
+                    it.belongsToThisDevice() && it.observation.metadata["event"] == "MODE_CHANGED" && it.isPhoto()
                 }
                 HeyCyanOperation.StartVideo -> eventBus.observe(ObservationUpdated::class.java).first {
-                    it.belongsToThisDevice() && it.observation.metadata["event"] == "MODE_CHANGED" && it.modeString() == "2"
+                    it.belongsToThisDevice() && it.observation.metadata["event"] == "MODE_CHANGED" && it.isVideo()
                 }
                 HeyCyanOperation.StopVideo -> eventBus.observe(ObservationUpdated::class.java).first {
-                    it.belongsToThisDevice() && it.observation.metadata["event"] == "MODE_CHANGED" && it.modeString() != "2"
+                    it.belongsToThisDevice() && it.observation.metadata["event"] == "MODE_CHANGED" && !it.isVideo()
                 }
                 else -> delay(500L)
             }

@@ -58,7 +58,7 @@ class CommandResponseProcess(
                                 )
                             )
                             if (delivery == ResponseDelivery.SPEECH_AND_VISUAL) {
-                                eventBus.publish(TtsRequested(text = responseText))
+                                eventBus.publish(TtsRequested(text = responseText, transactionId = event.planId))
                             }
                         }
                     }
