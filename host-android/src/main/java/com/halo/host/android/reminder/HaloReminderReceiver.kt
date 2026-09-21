@@ -31,5 +31,6 @@ class HaloReminderReceiver : BroadcastReceiver() {
             .build()
 
         notificationManager.notify(System.currentTimeMillis().toInt(), notification)
+        intent.getStringExtra("reminder_id")?.let { ReminderRecordStore(context).remove(it) }
     }
 }

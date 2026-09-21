@@ -64,9 +64,9 @@ class OllamaProvider(
     override val displayName: String = "Ollama"
     override val isLocal: Boolean = true
 
-    override suspend fun getStatus(): ProviderStatus {
+    override suspend fun getStatus(): ProviderStatus = withContext(Dispatchers.IO) {
         val endpoint = normalizedEndpointOrNull()
-            ?: return ProviderStatus(
+            ?: return@withContext ProviderStatus(
                 ProviderStatus.State.UNCONFIGURED,
                 "Ollama endpoint is not configured"
             ).also { _status.value = it }
@@ -78,7 +78,7 @@ class OllamaProvider(
             else -> ProviderStatus(ProviderStatus.State.READY, "Connected to $endpoint • $modelId")
         }
         _status.value = status
-        return status
+        status
     }
 
     override suspend fun getCapabilities(): Set<AiCapability> = setOf(AiCapability.TEXT, AiCapability.STREAMING)
@@ -184,7 +184,9 @@ class OllamaProvider(
         catch (e: Exception) { throw AiProviderException(AiErrorType.LOCAL_MODEL_UNAVAILABLE, "Ollama stream failed: ${e.message ?: "network error"}", e) }
     }.flowOn(Dispatchers.IO)
 
-    override suspend fun listModels(): List<AiModel> = fetchModels(normalizedEndpointOrNull()).models
+    override suspend fun listModels(): List<AiModel> = withContext(Dispatchers.IO) {
+        fetchModels(normalizedEndpointOrNull()).models
+    }
 
     private data class ModelProbe(val models: List<AiModel>, val error: String?)
 

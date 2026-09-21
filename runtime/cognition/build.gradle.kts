@@ -9,9 +9,9 @@ dependencies {
     implementation(project(":runtime:provider-core"))
     api(project(":libraries:halo-cognition-language"))
     api(libs.kotlinx.datetime)
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    implementation(libs.kotlinx.coroutines.core)
     
     // Test dependencies
     testImplementation("junit:junit:4.13.2")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+    testImplementation(libs.kotlinx.coroutines.test)
 }

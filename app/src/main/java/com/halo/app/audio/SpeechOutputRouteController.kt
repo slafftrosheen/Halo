@@ -1,9 +1,6 @@
 package com.halo.app.audio
 
 import android.content.Context
-import android.media.AudioDeviceInfo
-import android.media.AudioManager
-import android.os.Build
 import android.util.Log
 import com.halo.drivers.heycyan.RealHeyCyanDriver
 import com.halo.drivers.heycyan.protocol.HeyCyanCommand
@@ -23,12 +20,11 @@ data class SpeechRouteRequest(
 )
 
 class SpeechOutputRouteController(
-    private val context: Context,
+    context: Context,
     private val heyCyanDriver: RealHeyCyanDriver,
-    private val routeMonitor: BluetoothAudioRouteMonitor = AndroidBluetoothAudioRouteMonitor(context)
+    private val routeMonitor: BluetoothAudioRouteMonitor = AndroidBluetoothAudioRouteMonitor(context),
+    private val audioPairingCoordinator: HeyCyanAudioPairingCoordinator? = null
 ) {
-    private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-
     suspend fun prepareRoute(request: SpeechRouteRequest): SpeechRoutePreparation {
         val target = request.target
         return when (target) {
@@ -72,9 +68,19 @@ class SpeechOutputRouteController(
                     Log.w("HaloAudio", "HEYCYAN_CLASSIC_ENABLE device=${target.deviceId} result=failed")
                     return SpeechRoutePreparation.Unavailable(target, SpeechRouteFailureReason.COMMAND_FAILED)
                 }
-                Log.i("HaloAudio", "HEYCYAN_CLASSIC_ENABLE device=${target.deviceId} result=success")
 
-                val endpointsBeforeRoute = routeMonitor.routes.value
+                when (audioPairingCoordinator?.state?.value) {
+                    HeyCyanAudioPairingState.NotAssociated,
+                    HeyCyanAudioPairingState.Discovering,
+                    HeyCyanAudioPairingState.AwaitingUserConfirmation,
+                    is HeyCyanAudioPairingState.Failed,
+                    HeyCyanAudioPairingState.Unknown -> return SpeechRoutePreparation.Pending(
+                        target = target,
+                        reason = SpeechRoutePendingReason.PAIRING_REQUIRED
+                    )
+                    else -> Unit
+                }
+                Log.i("HaloAudio", "HEYCYAN_CLASSIC_ENABLE device=${target.deviceId} result=success")
 
                 // 2. Send RouteAudioToGlasses command
                 val routeResult = heyCyanDriver.capabilityController.execute(HeyCyanOperation.RouteAudioToGlasses)
@@ -89,14 +95,7 @@ class SpeechOutputRouteController(
 
                 // 3. Await/verify Android Bluetooth audio endpoint
                 val endpoint = routeMonitor.awaitEndpoint(
-                    predicate = { ep ->
-                        ep.connected && (
-                            ep.address?.equals(target.deviceId, ignoreCase = true) == true ||
-                                endpointsBeforeRoute.none { before ->
-                                    before.address == ep.address && before.type == ep.type
-                                }
-                            )
-                    },
+                    predicate = { ep -> audioPairingCoordinator?.matchesEndpoint(target.deviceId, ep) == true },
                     timeoutMs = 2_000L
                 )
 
@@ -120,21 +119,6 @@ class SpeechOutputRouteController(
                     )
                 )
             }
-        }
-    }
-
-    private fun verifyAndroidMediaRoute() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val outputs = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
-                .filter {
-                    it.type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP ||
-                        it.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO ||
-                        it.type == AudioDeviceInfo.TYPE_BLE_HEADSET
-                }
-                .joinToString { "type=${it.type},name=${it.productName}" }
-            Log.i("HaloAudio", "HALO_AUDIO_ROUTE_ANDROID usage=MEDIA candidates=[$outputs]")
-        } else {
-            Log.i("HaloAudio", "HALO_AUDIO_ROUTE_ANDROID usage=MEDIA candidates=unknown(API<23)")
         }
     }
 }

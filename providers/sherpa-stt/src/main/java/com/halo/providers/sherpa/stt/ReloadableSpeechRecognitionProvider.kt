@@ -9,6 +9,8 @@ import com.halo.sdk.provider.RecognitionResult
 import com.halo.sdk.provider.SpeechRecognitionMode
 import com.halo.sdk.provider.SpeechRecognitionProvider
 import com.halo.sdk.runtime.NativeResourceCoordinator
+import com.halo.sdk.runtime.HaloDispatchers
+import com.halo.sdk.runtime.productionHaloDispatchers
 import java.io.File
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.*
@@ -29,12 +31,15 @@ import kotlinx.coroutines.flow.asStateFlow
 class ReloadableSpeechRecognitionProvider(
     private val modelDirectory: File,
     private val getLanguage: () -> String = { "en" },
-    private val nativeResourceCoordinator: NativeResourceCoordinator? = null
+    private val nativeResourceCoordinator: NativeResourceCoordinator? = null,
+    private val dispatchers: HaloDispatchers = productionHaloDispatchers()
 ) : BufferedSpeechRecognitionProvider {
 
     private val lifecycle = Mutex()
-    private val cleanupScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private val currentDelegate = AtomicReference<BufferedSpeechRecognitionProvider>()
+    private val cleanupScope = CoroutineScope(SupervisorJob() + dispatchers.io)
+    private val currentDelegate = AtomicReference<BufferedSpeechRecognitionProvider>(
+        UnavailableSpeechRecognitionProvider("Checking local speech model availability")
+    )
     private val _availability = MutableStateFlow(false)
     val availability: StateFlow<Boolean> = _availability.asStateFlow()
 
@@ -43,6 +48,10 @@ class ReloadableSpeechRecognitionProvider(
     }
 
     fun refresh() {
+        cleanupScope.launch { refreshNow() }
+    }
+
+    private suspend fun refreshNow() = lifecycle.withLock {
         val newDelegate: BufferedSpeechRecognitionProvider = if (SherpaOfflineSpeechRecognitionProvider.isInstalled(modelDirectory)) {
             SherpaOfflineSpeechRecognitionProvider(
                 modelDirectory = modelDirectory,
@@ -57,9 +66,7 @@ class ReloadableSpeechRecognitionProvider(
         val old = currentDelegate.getAndSet(newDelegate)
         _availability.value = newDelegate !is UnavailableSpeechRecognitionProvider
         if (old != null && old != newDelegate) {
-            cleanupScope.launch {
-                lifecycle.withLock { old.close() }
-            }
+            old.close()
         }
     }
 
@@ -72,14 +79,17 @@ class ReloadableSpeechRecognitionProvider(
     override val mode: SpeechRecognitionMode
         get() = currentDelegate.get().mode
 
-    override suspend fun health(): Boolean =
+    override suspend fun health(): Boolean = withContext(dispatchers.io) {
         currentDelegate.get().health()
+    }
 
-    override suspend fun healthDetails(): ProviderHealth =
+    override suspend fun healthDetails(): ProviderHealth = withContext(dispatchers.io) {
         currentDelegate.get().healthDetails()
+    }
 
-    override suspend fun recognize(audio: AudioBuffer): RecognitionResult =
+    override suspend fun recognize(audio: AudioBuffer): RecognitionResult = withContext(dispatchers.default) {
         lifecycle.withLock { currentDelegate.get().recognize(audio) }
+    }
 
     override suspend fun close() {
         lifecycle.withLock { currentDelegate.get()?.close() }

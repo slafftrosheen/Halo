@@ -22,7 +22,7 @@ class HostGraph(
 ) {
 
     private val speechModelDirectory by lazy {
-        File(context.filesDir, "speech")
+        com.halo.app.storage.haloStorageLayout(context).speechModels
     }
 
     private val vad by lazy {
@@ -45,6 +45,9 @@ class HostGraph(
     val audioPipeline by lazy {
         com.halo.engines.speech.AudioPipeline(
             vad = vad ?: com.halo.engines.speech.EnergyVAD(threshold = 1000),
+            speechActivityEstimator = SherpaOrEnergySpeechActivityEstimator(
+                modelFile = { File(speechModelDirectory, SherpaSpeechModelCatalog.SILERO_VAD_FILE) }
+            ),
             wakeWordDetector = providerGraph.providers.wakeWord,
             sttProvider = providerGraph.providers.speechRecognition,
             eventBus = infra.eventBus,

@@ -1,21 +1,23 @@
 [versions]
+workRuntimeKtx = "2.10.0"
+appsearch = "1.1.0"
 agp = "9.4.0"
 coreKtx = "1.18.0"
 junit = "4.13.2"
 junitVersion = "1.3.0"
 espressoCore = "3.7.0"
-lifecycleRuntimeKtx = "2.8.7"
-lifecycleViewmodelCompose = "2.8.7"
-lifecycleRuntimeCompose = "2.8.7"
+lifecycleRuntimeKtx = "2.11.0"
+lifecycleViewmodelCompose = "2.11.0"
+lifecycleRuntimeCompose = "2.11.0"
 activityCompose = "1.10.1"
 fragment = "1.8.9"
 kotlin = "2.2.10"
-composeBom = "2024.09.00"
+composeBom = "2026.09.00"
 googleDevtoolsKsp = "2.3.6"
-navigationCompose = "2.8.9"
-roomRuntime = "2.7.0"
-roomKtx = "2.7.0"
-roomCompiler = "2.7.0"
+navigationCompose = "2.10.1"
+roomRuntime = "2.8.5"
+roomKtx = "2.8.5"
+roomCompiler = "2.8.5"
 kotlinxCoroutinesTest = "1.10.2"
 core = "1.6.1"
 runner = "1.6.2"
@@ -31,11 +33,12 @@ cameraCamera2 = "1.5.0"
 cameraLifecycle = "1.5.0"
 cameraView = "1.5.0"
 cameraCore = "1.5.0"
-loggingInterceptor = "4.10.0"
-okhttp = "4.10.0"
+loggingInterceptor = "4.12.0"
+okhttp = "4.12.0"
 moshiKotlin = "1.15.2"
 moshiKotlinCodegen = "1.15.2"
-datastorePreferences = "1.1.7"
+datastorePreferences = "1.2.1"
+documentFile = "1.1.0"
 robolectric = "4.16.1"
 roborazzi = "1.59.0"
 firebaseBom = "34.15.0"
@@ -44,9 +47,16 @@ googleServices = "4.5.0"
 credentials = "1.5.0"
 googleid = "1.1.1"
 media3 = "1.11.1"
+benchmark = "1.4.1"
+uiautomator = "2.3.0"
+baselineprofile = "1.4.1"
 
 
 [libraries]
+androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workRuntimeKtx" }
+androidx-appsearch = { group = "androidx.appsearch", name = "appsearch", version.ref = "appsearch" }
+androidx-appsearch-local-storage = { group = "androidx.appsearch", name = "appsearch-local-storage", version.ref = "appsearch" }
+androidx-appsearch-compiler = { group = "androidx.appsearch", name = "appsearch-compiler", version.ref = "appsearch" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
@@ -91,6 +101,7 @@ moshi-kotlin = { group = "com.squareup.moshi", name = "moshi-kotlin", version.re
 moshi-kotlin-codegen = { group = "com.squareup.moshi", name = "moshi-kotlin-codegen", version.ref = "moshiKotlinCodegen" }
 moshi-adapters = { group = "com.squareup.moshi", name = "moshi-adapters", version.ref = "moshiKotlin" }
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastorePreferences" }
+androidx-documentfile = { group = "androidx.documentfile", name = "documentfile", version.ref = "documentFile" }
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 roborazzi = { group = "io.github.takahirom.roborazzi", name = "roborazzi", version.ref = "roborazzi" }
 roborazzi-compose = { group = "io.github.takahirom.roborazzi", name = "roborazzi-compose", version.ref = "roborazzi" }
@@ -105,11 +116,16 @@ androidx-credentials-play-services = { group = "androidx.credentials", name = "c
 googleid = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version.ref = "googleid" }
 androidx-media3-session = { group = "androidx.media3", name = "media3-session", version.ref = "media3" }
 androidx-media3-common = { group = "androidx.media3", name = "media3-common", version.ref = "media3" }
+androidx-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version.ref = "benchmark" }
+androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version = "1.4.1" }
+androidx-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiautomator" }
 
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
+android-test = { id = "com.android.test", version.ref = "agp" }
+androidx-baselineprofile = { id = "androidx.baselineprofile", version.ref = "baselineprofile" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 google-devtools-ksp = { id = "com.google.devtools.ksp", version.ref = "googleDevtoolsKsp" }
 roborazzi = { id = "io.github.takahirom.roborazzi", version.ref = "roborazzi" }

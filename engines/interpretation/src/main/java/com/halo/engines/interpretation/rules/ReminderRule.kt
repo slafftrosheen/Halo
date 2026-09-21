@@ -30,9 +30,9 @@ class ReminderRule : InterpretationRule {
     private companion object {
         val patterns = listOf(
             Regex("^remind me to (?<message>.+?)(?:\\s+(?<time>(?:today|tomorrow|tonight)?\\s*(?:at|in)\\s+.+))?$", RegexOption.IGNORE_CASE),
-            Regex("^remind me (?<time>(?:today|tomorrow|tonight)?\\s*at\\s+.+?) to (?<message>.+)$", RegexOption.IGNORE_CASE),
-            Regex("^set (?:a )?reminder (?:to|for) (?<message>.+?)(?:[, ]+(?<time>(?:today|tomorrow|tonight)?\\s*at\\s+.+))$", RegexOption.IGNORE_CASE),
-            Regex("^reminder (?<time>(?:today|tomorrow|tonight)?\\s*at\\s+.+?):\\s*(?<message>.+)$", RegexOption.IGNORE_CASE)
+            Regex("^remind me (?<time>(?:today|tomorrow|tonight)?\\s*(?:at|in)\\s+.+?) to (?<message>.+)$", RegexOption.IGNORE_CASE),
+            Regex("^set (?:a )?reminder (?:to|for) (?<message>.+?)(?:[, ]+(?<time>(?:today|tomorrow|tonight)?\\s*(?:at|in)\\s+.+))$", RegexOption.IGNORE_CASE),
+            Regex("^reminder (?<time>(?:today|tomorrow|tonight)?\\s*(?:at|in)\\s+.+?):\\s*(?<message>.+)$", RegexOption.IGNORE_CASE)
         )
     }
 }

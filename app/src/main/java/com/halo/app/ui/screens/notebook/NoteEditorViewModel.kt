@@ -17,7 +17,9 @@ enum class SaveStatus { LOADING, SAVED, SAVING, ERROR, MISSING }
 data class NoteEditorUiState(
     val body: String = "",
     val lifecycle: WorkspaceLifecycle = WorkspaceLifecycle.ACTIVE,
-    val status: SaveStatus = SaveStatus.LOADING
+    val status: SaveStatus = SaveStatus.LOADING,
+    val transformPreview: String? = null,
+    val isTransforming: Boolean = false
 )
 
 class NoteEditorViewModel(
@@ -57,6 +59,40 @@ class NoteEditorViewModel(
         draftJob?.cancel()
         draftJob = viewModelScope.launch { useCases.saveDraft(noteId, body) }
         scheduleCommit(body)
+    }
+
+    fun insertMarkdownHelper(symbol: String) {
+        val current = mutableUiState.value.body
+        val newBody = when (symbol) {
+            "#" -> if (current.isEmpty()) "# " else "$current\n# "
+            "✓" -> if (current.isEmpty()) "- [ ] " else "$current\n- [ ] "
+            "•" -> if (current.isEmpty()) "- " else "$current\n- "
+            "1." -> if (current.isEmpty()) "1. " else "$current\n1. "
+            "Link" -> "$current [[object-id]]"
+            else -> current + symbol
+        }
+        updateBody(newBody)
+    }
+
+    fun setTransformPreview(previewText: String?) {
+        mutableUiState.value = mutableUiState.value.copy(transformPreview = previewText)
+    }
+
+    fun applyPreviewReplace() {
+        val preview = mutableUiState.value.transformPreview ?: return
+        updateBody(preview)
+        mutableUiState.value = mutableUiState.value.copy(transformPreview = null)
+    }
+
+    fun applyPreviewInsertBelow() {
+        val preview = mutableUiState.value.transformPreview ?: return
+        val current = mutableUiState.value.body
+        updateBody("$current\n\n$preview")
+        mutableUiState.value = mutableUiState.value.copy(transformPreview = null)
+    }
+
+    fun discardPreview() {
+        mutableUiState.value = mutableUiState.value.copy(transformPreview = null)
     }
 
     private fun scheduleCommit(body: String) {

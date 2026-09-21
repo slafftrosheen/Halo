@@ -36,14 +36,14 @@ class OpenRouterProvider(
     private val apiKey: String? get() = storage.getString("openrouter_api_key")
     private val selectedModelId: String get() = storage.getString("openrouter_model") ?: "openrouter/auto"
 
-    override suspend fun getStatus(): ProviderStatus {
+    override suspend fun getStatus(): ProviderStatus = withContext(Dispatchers.IO) {
         val current = if (apiKey.isNullOrBlank()) {
             ProviderStatus.UNCONFIGURED
         } else {
             statusFromLastErrorOrReady()
         }
         _status.value = current
-        return current
+        current
     }
 
     override suspend fun testConnection(): Boolean = withContext(Dispatchers.IO) {

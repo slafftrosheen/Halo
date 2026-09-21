@@ -314,7 +314,10 @@ class AudioPipeline(
                 audioDurationMs = acousticQuality?.durationMs ?: result.quality.audioDurationMs,
                 peakAmplitude = acousticQuality?.peakAmplitude ?: result.quality.peakAmplitude,
                 voicedDurationMs = acousticQuality?.voicedDurationMs ?: result.quality.voicedDurationMs,
-                voicedRatio = acousticQuality?.voicedRatio ?: result.quality.voicedRatio
+                voicedRatio = acousticQuality?.voicedRatio ?: result.quality.voicedRatio,
+                segmentCount = acousticQuality?.segmentCount ?: result.quality.segmentCount,
+                longestSegmentMs = acousticQuality?.longestSegmentMs ?: result.quality.longestSegmentMs,
+                qualityEstimator = acousticQuality?.estimator?.name ?: result.quality.qualityEstimator
             )
 
             // Transaction ownership, not coroutine activity, decides whether a

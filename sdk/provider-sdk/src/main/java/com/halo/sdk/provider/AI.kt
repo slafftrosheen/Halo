@@ -140,8 +140,10 @@ interface AiProvider {
     val isLocal: Boolean
     val status: StateFlow<ProviderStatus>
 
+    /** Implementations must internally dispatch any disk, network, or native work. */
     suspend fun getStatus(): ProviderStatus = status.value
     suspend fun getCapabilities(): Set<AiCapability>
+    /** Main-safe diagnostic probe; callers do not choose an IO dispatcher. */
     suspend fun testConnection(): Boolean = getStatus().state == ProviderStatus.State.READY
 }
 

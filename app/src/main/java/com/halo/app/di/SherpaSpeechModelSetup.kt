@@ -25,7 +25,7 @@ class SherpaSpeechModelSetup(private val context: Context) {
         val missingFiles: List<String>
     )
 
-    private val rootDirectory = File(context.filesDir, "speech")
+    private val rootDirectory = com.halo.app.storage.haloStorageLayout(context).speechModels
 
     fun status(id: ModelId): ModelStatus {
         val (directory, spec) = model(id)

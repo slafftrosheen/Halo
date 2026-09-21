@@ -1,6 +1,6 @@
 # Persistence implementation
 
-Status: CURRENT SOURCE MAP. Reviewed 2026-09-18.
+Status: CURRENT SOURCE MAP. Reviewed 2026-09-21.
 
 [AppDatabase](../../app/src/main/java/com/halo/app/data/AppDatabase.kt) is Room version 3,
 exportSchema=false. It retains the original Memory entity and adds the NB-01
@@ -28,6 +28,11 @@ use maps; some searches return all values or are marked as mocked retrieval.
 uses ordinary private SharedPreferences. Provider configuration and the persistent device
 registry use Storage. IntelligenceViewModel writes the OpenRouter key through this path;
 application-level encryption is not provided by AndroidStorage.
+
+`HaloSettingsRepository` is the typed asynchronous DataStore boundary introduced for user settings.
+Speech language mode/version/user-selection now use it with one-time migration from `halo_storage`.
+Provider credentials and several legacy settings still use AndroidStorage, so the migration is
+incremental rather than a claim that SharedPreferences has been eliminated repository-wide.
 
 Previously listed Devices/Providers/Plugins/Automations/History/Settings Room tables,
 SQLCipher support and universal JSON/CSV export were proposals, not this schema.

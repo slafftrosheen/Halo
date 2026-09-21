@@ -11,6 +11,15 @@ import java.io.File
  * It intentionally reads only the header and metadata section; tensor data is never
  * loaded into memory. The reader is used for capability discovery, not model loading.
  */
+data class GgufModelMetadata(
+    val architecture: String?,
+    val contextLength: Int?,
+    val blockCount: Int?,
+    val embeddingLength: Int?,
+    val attentionHeadCount: Int?,
+    val attentionHeadCountKv: Int?,
+)
+
 internal object GgufMetadataReader {
     private const val MAGIC = 0x46554747L
     private const val MIN_VERSION = 2L
@@ -18,16 +27,7 @@ internal object GgufMetadataReader {
     private const val MAX_STRING_BYTES = 1L * 1024L * 1024L
     private const val MAX_ARRAY_ELEMENTS = 1_000_000L
 
-    data class Metadata(
-        val architecture: String?,
-        val contextLength: Int?,
-        val blockCount: Int?,
-        val embeddingLength: Int?,
-        val attentionHeadCount: Int?,
-        val attentionHeadCountKv: Int?,
-    )
-
-    fun read(file: File): Metadata? {
+    fun read(file: File): GgufModelMetadata? {
         if (!file.isFile || file.length() <= 0L) return null
         return try {
             DataInputStream(BufferedInputStream(file.inputStream(), 64 * 1024)).use { input ->
@@ -72,7 +72,7 @@ internal object GgufMetadataReader {
                     attentionHeadCountKv = pending["$prefix.attention.head_count_kv"].asPositiveInt()
                 }
 
-                Metadata(architecture, contextLength, blockCount, embeddingLength, attentionHeadCount, attentionHeadCountKv)
+                GgufModelMetadata(architecture, contextLength, blockCount, embeddingLength, attentionHeadCount, attentionHeadCountKv)
             }
         } catch (_: EOFException) {
             null

@@ -27,20 +27,27 @@ import com.halo.app.di.ManualDependencyGraph
 import com.halo.app.ui.glass.components.HaloNavigation
 import com.halo.app.ui.glass.components.NavigationItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.rememberCoroutineScope
 import com.halo.app.ui.screens.activity.ActivityScreen
 import com.halo.app.ui.screens.devices.BuddyBotControlScreen
 import com.halo.app.ui.screens.devices.DevicesScreen
 import com.halo.app.ui.screens.devices.HeyCyanControlScreen
 import com.halo.app.ui.screens.discovery.PairingScreen
 import com.halo.app.ui.screens.home.HomeScreen
+import com.halo.app.ui.screens.notebook.ConversationDetailScreen
+import com.halo.app.ui.screens.notebook.ConversationsListScreen
 import com.halo.app.ui.screens.notebook.NoteEditorScreen
 import com.halo.app.ui.screens.notebook.NoteEditorViewModel
 import com.halo.app.ui.screens.notebook.NotebookNavigation
 import com.halo.app.ui.screens.notebook.NotebookScreen
 import com.halo.app.ui.screens.settings.IntelligenceScreen
 import com.halo.app.ui.screens.settings.SettingsScreen
+import com.halo.app.ui.screens.settings.SkillsScreen
 import com.halo.app.ui.screens.settings.VoiceSettingsScreen
+import com.halo.app.ui.screens.settings.StorageBackupScreen
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 sealed class Screen(val route: String, val title: String, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
     data object Home : Screen("home", "Home", Icons.Default.Home)
@@ -145,6 +152,46 @@ fun AppShell(
                     }
                 }
 
+                composable("skills") {
+                    SkillsScreen(
+                        skillRegistry = ManualDependencyGraph.skillRegistry,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+
+                composable("notebook/conversations") {
+                    ConversationsListScreen(
+                        conversationStore = ManualDependencyGraph.conversationStore,
+                        onOpenConversation = { navigateSafely("notebook/conversation/$it") },
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+
+                composable(
+                    "notebook/conversation/{conversationId}",
+                    arguments = listOf(navArgument("conversationId") { type = NavType.StringType })
+                ) { entry ->
+                    val conversationId = entry.arguments?.getString("conversationId")
+                    val scope = rememberCoroutineScope()
+                    if (conversationId == null) {
+                        LaunchedEffect(Unit) { navController.popBackStack() }
+                    } else {
+                        val history by ManualDependencyGraph.conversationStore.history.collectAsState()
+                        val turns = history.filter { it.conversationId == conversationId }
+                        ConversationDetailScreen(
+                            conversationId = conversationId,
+                            turns = turns,
+                            onContinue = {
+                                scope.launch {
+                                    ManualDependencyGraph.conversationStore.open(conversationId)
+                                }
+                                navController.popBackStack()
+                            },
+                            onBack = { navController.popBackStack() }
+                        )
+                    }
+                }
+
                 composable(Screen.Settings.route) {
                     val viewModel = ManualDependencyGraph.settingsViewModel
                     LaunchedEffect(viewModel) { viewModel.navigationEvents.collectLatest(::navigateSafely) }
@@ -168,8 +215,13 @@ fun AppShell(
                 composable("permissions") {
                     PermissionsScreen(
                         onBack = { navController.popBackStack() },
-                        onRequestPermissions = onRequestPermissions
+                        onRequestPermissions = onRequestPermissions,
+                        storageAccessRepository = ManualDependencyGraph.storageAccessRepository,
+                        onOpenStorageBackup = { navigateSafely("storage_backup") },
                     )
+                }
+                composable("storage_backup") {
+                    StorageBackupScreen(ManualDependencyGraph.storageBackupViewModel) { navController.popBackStack() }
                 }
                 composable("discovery") {
                     val viewModel = ManualDependencyGraph.pairingViewModel

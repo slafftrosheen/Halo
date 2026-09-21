@@ -16,6 +16,7 @@ class HaloSpeechOutputCoordinator(
     private val eventBus: EventBus,
     private val routeController: SpeechOutputRouteController,
     private val ttsProvider: AndroidTTSProvider,
+    private val routedSpeechPlaybackProvider: RoutedSpeechPlaybackProvider? = null,
     private val nativeResourceCoordinator: NativeResourceCoordinator? = null
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -87,7 +88,7 @@ class HaloSpeechOutputCoordinator(
 
                 // 2. Synthesize with onStarted callback to publish TtsStarted when audible playback actually begins
                 val request = SpeechRequest(text = event.text)
-                val result = ttsProvider.synthesize(request) {
+                val onStarted: () -> Unit = {
                     scope.launch {
                         nativeResourceCoordinator?.hint(NativeNextUseHint.EXPECT_ASR)
                         eventBus.publish(
@@ -98,6 +99,17 @@ class HaloSpeechOutputCoordinator(
                             )
                         )
                     }
+                    Unit
+                }
+                val result = if (event.target is SpeechOutputTarget.Wearable) {
+                    val evidence = (routePreparation as? SpeechRoutePreparation.Ready)?.evidence
+                    if (evidence == null || routedSpeechPlaybackProvider == null) {
+                        com.halo.sdk.provider.SpeechResult(0, false)
+                    } else {
+                        routedSpeechPlaybackProvider.synthesize(request, evidence, onStarted)
+                    }
+                } else {
+                    ttsProvider.synthesize(request, onStarted)
                 }
 
                 // 3. Publish result
@@ -149,6 +161,7 @@ class HaloSpeechOutputCoordinator(
         val currentTx = activeTransactionId
         activeTransactionId = null
         ttsProvider.stopCurrent()
+        routedSpeechPlaybackProvider?.stopCurrent()
         if (currentTx != null) {
             scope.launch {
                 eventBus.publish(

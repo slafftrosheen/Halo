@@ -18,7 +18,7 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.moshi.kotlin)
     
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    implementation(libs.kotlinx.coroutines.core)
     
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

@@ -1,18 +1,15 @@
 package com.halo.app.ui.screens.settings
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.halo.app.di.ProviderGraph
-import com.halo.providers.sherpa.stt.SherpaSpeechModelCatalog
-import com.halo.providers.sherpa.stt.WhisperModelDownloader
-import com.halo.sdk.runtime.Storage
-import java.io.File
+import com.halo.providers.sherpa.stt.SpeechModelInventoryRepository
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 data class LocaleOption(
@@ -28,9 +25,8 @@ data class VoiceSettingsUiState(
     val downloadError: String? = null,
     val missingFiles: List<String> = emptyList(),
     val installedSizeBytes: Long = 0L,
-    val selectedLocale: String = "auto",
+    val selectedLocale: String = "en",
     val availableLocales: List<LocaleOption> = listOf(
-        LocaleOption("Auto (Default)", "auto"),
         LocaleOption("English", "en"),
         LocaleOption("Spanish", "es"),
         LocaleOption("French", "fr"),
@@ -39,13 +35,14 @@ data class VoiceSettingsUiState(
         LocaleOption("Japanese", "ja"),
         LocaleOption("Portuguese", "pt"),
         LocaleOption("Russian", "ru"),
-        LocaleOption("Italian", "it")
+        LocaleOption("Italian", "it"),
+        LocaleOption("Detect language automatically (Advanced)", "auto")
     )
 )
 
 class VoiceSettingsViewModel(
-    private val context: Context,
-    private val storage: Storage,
+    private val speechInventory: SpeechModelInventoryRepository,
+    private val languageSettings: SpeechLanguageSettingsRepository,
     private val providerGraph: ProviderGraph? = null
 ) : ViewModel() {
 
@@ -55,29 +52,26 @@ class VoiceSettingsViewModel(
     private val _navigationEvents = MutableSharedFlow<String>(extraBufferCapacity = 8)
     val navigationEvents = _navigationEvents.asSharedFlow()
 
-    private val speechModelDirectory: File
-        get() = File(context.filesDir, "speech/${SherpaSpeechModelCatalog.WHISPER_TINY_DIRECTORY}")
-
     init {
-        refreshState()
+        viewModelScope.launch {
+            languageSettings.loadAndMigrate()
+            speechInventory.refresh(languageSettings.languageMode.value)
+            combine(speechInventory.state, languageSettings.languageMode) { inventory, language ->
+                inventory to language
+            }.collect { (inventory, language) ->
+                _uiState.value = _uiState.value.copy(
+                    isInstalled = inventory.installed,
+                    missingFiles = inventory.missingFiles,
+                    installedSizeBytes = inventory.totalBytes,
+                    selectedLocale = language,
+                    downloadError = inventory.error
+                )
+            }
+        }
     }
 
     fun refreshState() {
-        val spec = SherpaSpeechModelCatalog.whisperTiny
-        val installed = SherpaSpeechModelCatalog.isInstalled(speechModelDirectory, spec)
-        val missing = SherpaSpeechModelCatalog.missingFiles(speechModelDirectory, spec)
-        val installedSize = if (speechModelDirectory.exists()) {
-            speechModelDirectory.walkTopDown().filter { it.isFile }.sumOf { it.length() }
-        } else 0L
-
-        val savedLocale = storage.getString("speech_locale") ?: "auto"
-
-        _uiState.value = _uiState.value.copy(
-            isInstalled = installed,
-            missingFiles = missing,
-            installedSizeBytes = installedSize,
-            selectedLocale = savedLocale
-        )
+        viewModelScope.launch { speechInventory.refresh(languageSettings.languageMode.value) }
     }
 
     fun installWhisperTiny() {
@@ -91,9 +85,7 @@ class VoiceSettingsViewModel(
                 downloadError = null
             )
 
-            val result = WhisperModelDownloader.downloadAndInstall(
-                destinationDirectory = speechModelDirectory
-            ) { progress, currentFile ->
+            val result = speechInventory.installWhisperTiny { progress, currentFile ->
                 _uiState.value = _uiState.value.copy(
                     downloadProgress = progress,
                     currentFileDownloading = currentFile
@@ -118,9 +110,11 @@ class VoiceSettingsViewModel(
     }
 
     fun selectLocale(tag: String) {
-        storage.putString("speech_locale", tag)
-        _uiState.value = _uiState.value.copy(selectedLocale = tag)
-        providerGraph?.reloadSpeechProvider()
+        viewModelScope.launch {
+            languageSettings.select(tag)
+            speechInventory.refresh(tag)
+            providerGraph?.reloadSpeechProvider()
+        }
     }
 
     fun goBack() {

@@ -12,5 +12,10 @@ interface AiInferenceProvider : AiProvider {
     override suspend fun getCapabilities(): Set<AiCapability>
     suspend fun generate(request: AiRequest, context: AiContext): AiResponse
     fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent>
+    /**
+     * Returns provider models without blocking the caller's dispatcher.
+     * Implementations own dispatching for filesystem, network, DNS, native
+     * metadata, and large parsing work, so callers may safely invoke this on Main.
+     */
     suspend fun listModels(): List<AiModel>
 }

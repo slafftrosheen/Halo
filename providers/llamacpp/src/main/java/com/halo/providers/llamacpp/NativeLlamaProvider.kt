@@ -29,6 +29,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.withContext
 import org.nehuatl.llamacpp.LlamaHelper
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
@@ -71,7 +72,7 @@ class NativeLlamaProvider(
     }
 
     override suspend fun testConnection(): Boolean = try {
-        loadModelIfNeeded()
+        withContext(Dispatchers.IO) { loadModelIfNeeded() }
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
@@ -79,8 +80,9 @@ class NativeLlamaProvider(
         false
     }
 
-    suspend fun loadModelIfNeeded(): Boolean = modelLoadMutex.withLock {
-        inferenceMutex.withLock {
+    suspend fun loadModelIfNeeded(): Boolean = withContext(Dispatchers.IO) {
+        modelLoadMutex.withLock {
+            inferenceMutex.withLock {
             val activeId = downloadManager.activeModelId.value
             if (activeId == null) {
                 _status.value = ProviderStatus.UNCONFIGURED
@@ -97,13 +99,13 @@ class NativeLlamaProvider(
                 return@withLock false
             }
 
-            if (nativeResourceCoordinator?.acquire(this) == false) {
+            if (nativeResourceCoordinator?.acquire(this@NativeLlamaProvider) == false) {
                 val message = "Native llama.cpp load deferred: another heavyweight native model is busy"
                 Log.w(TAG, message)
                 _status.value = ProviderStatus(ProviderStatus.State.ERROR, message)
                 return@withLock false
             }
-            nativeResourceCoordinator?.mark(this, NativeResourceState.LOADING, "loading llama.cpp model $activeId")
+            nativeResourceCoordinator?.mark(this@NativeLlamaProvider, NativeResourceState.LOADING, "loading llama.cpp model $activeId")
 
             val modelBytes = file.length()
             val androidMemory = AndroidMemorySnapshot.read(context)
@@ -158,7 +160,7 @@ class NativeLlamaProvider(
                 }
                 Log.e(TAG, message)
                 _status.value = ProviderStatus(ProviderStatus.State.ERROR, message)
-                nativeResourceCoordinator?.release(this)
+                nativeResourceCoordinator?.release(this@NativeLlamaProvider)
                 return@withLock false
             }
 
@@ -176,7 +178,7 @@ class NativeLlamaProvider(
                 val message = "Native model load blocked: no safe context size fits the current memory envelope. Close other apps or lower the llama.cpp context setting."
                 Log.e(TAG, message)
                 _status.value = ProviderStatus(ProviderStatus.State.ERROR, message)
-                nativeResourceCoordinator?.release(this)
+                nativeResourceCoordinator?.release(this@NativeLlamaProvider)
                 return@withLock false
             }
 
@@ -251,7 +253,7 @@ class NativeLlamaProvider(
                         loadedModelId = activeId
                         loadedContextSize = effectiveContextSize
                         installed = true
-                        nativeResourceCoordinator?.mark(this, NativeResourceState.RESIDENT, "llama.cpp model resident: $activeId")
+                        nativeResourceCoordinator?.mark(this@NativeLlamaProvider, NativeResourceState.RESIDENT, "llama.cpp model resident: $activeId")
                         _status.value = ProviderStatus.READY
                         true
                     }
@@ -261,12 +263,12 @@ class NativeLlamaProvider(
                 }
             } catch (error: CancellationException) {
                 releaseCurrentModel()
-                nativeResourceCoordinator?.release(this)
+                nativeResourceCoordinator?.release(this@NativeLlamaProvider)
                 _status.value = ProviderStatus(ProviderStatus.State.UNAVAILABLE, "Model loading cancelled")
                 throw error
             } catch (error: Throwable) {
                 releaseCurrentModel()
-                nativeResourceCoordinator?.release(this)
+                nativeResourceCoordinator?.release(this@NativeLlamaProvider)
                 Log.e(TAG, "Failed loading model ${file.absolutePath}", error)
                 _status.value = ProviderStatus(
                     ProviderStatus.State.ERROR,
@@ -274,7 +276,8 @@ class NativeLlamaProvider(
                 )
                 false
             }.also { loaded ->
-                if (!loaded) nativeResourceCoordinator?.release(this)
+                if (!loaded) nativeResourceCoordinator?.release(this@NativeLlamaProvider)
+            }
             }
         }
     }
@@ -306,12 +309,11 @@ class NativeLlamaProvider(
     }
 
     suspend fun health(): Boolean = downloadManager.activeModelId.value
-        ?.let { downloadManager.getModelFile(it) }
-        ?.let { it.exists() && it.length() > 0 } == true
+        ?.let { downloadManager.getModelFile(it) } != null
 
-    private fun buildPrompt(request: AiRequest, context: AiContext): String {
+    private suspend fun buildPrompt(request: AiRequest, context: AiContext): String = withContext(Dispatchers.IO) {
         val history = context.conversation.joinToString("\n") { "${it.role.name.lowercase()}: ${it.content}" }
-        return buildString {
+        buildString {
             append("<|im_start|>system\n")
             append(systemPrompt)
             append("<|im_end|>\n")
@@ -462,6 +464,7 @@ class NativeLlamaProvider(
         val eventChannel = Channel<LlamaHelper.LLMEvent>(Channel.UNLIMITED)
         var eventCount = 0
         var tokenCount = 0
+        val generated = StringBuilder()
         var terminalEvent: String? = null
         val collector = launch { currentEvents.collect { eventChannel.send(it) } }
         try {
@@ -475,6 +478,14 @@ class NativeLlamaProvider(
                     when (event) {
                         is LlamaHelper.LLMEvent.Ongoing -> if (event.word.isNotEmpty()) {
                             tokenCount++
+                            generated.append(event.word)
+                            if (hasGenerationLoop(generated)) {
+                                terminalEvent = "RepetitionGuard"
+                                throw AiProviderException(
+                                    AiErrorType.GENERATION_FAILED,
+                                    "llama.cpp generation stopped after detecting a repetitive output loop"
+                                )
+                            }
                             send(event.word)
                         }
                         is LlamaHelper.LLMEvent.Done -> {
@@ -516,8 +527,7 @@ class NativeLlamaProvider(
         return downloaded
             .sortedWith(compareByDescending<CognitiveModel> { it.id == activeId }.thenBy { it.name })
             .map { model ->
-                val file = downloadManager.getModelFile(model.id)
-                val metadata = file?.let(GgufMetadataReader::read)
+                val metadata = downloadManager.resolveModel(model.id)?.ggufMetadata
                 AiModel(
                     id = model.id,
                     displayName = model.name,
@@ -528,6 +538,21 @@ class NativeLlamaProvider(
                     supportsTools = false
                 )
             }
+    }
+
+    private fun hasGenerationLoop(output: CharSequence): Boolean {
+        val normalized = output.toString().lowercase()
+            .replace(Regex("\\s+"), " ")
+            .trim()
+        if (normalized.length < MIN_LOOP_PHRASE_CHARS * LOOP_REPETITIONS) return false
+        val maxPhrase = minOf(MAX_LOOP_PHRASE_CHARS, normalized.length / LOOP_REPETITIONS)
+        for (phraseLength in MIN_LOOP_PHRASE_CHARS..maxPhrase) {
+            val suffixLength = phraseLength * LOOP_REPETITIONS
+            val suffix = normalized.takeLast(suffixLength)
+            val phrase = suffix.take(phraseLength)
+            if (phrase.isNotBlank() && suffix == phrase.repeat(LOOP_REPETITIONS)) return true
+        }
+        return false
     }
 
     suspend fun close() {
@@ -543,6 +568,9 @@ class NativeLlamaProvider(
     private companion object {
         private const val TAG = "NativeLlamaProvider"
         private const val MODEL_LOAD_TIMEOUT_MS = 120_000L
+        private const val LOOP_REPETITIONS = 3
+        private const val MIN_LOOP_PHRASE_CHARS = 12
+        private const val MAX_LOOP_PHRASE_CHARS = 160
         private const val GENERATION_TIMEOUT_MS = 180_000L
         private const val BYTES_PER_MB = 1024L * 1024L
     }

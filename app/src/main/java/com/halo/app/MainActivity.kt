@@ -4,6 +4,7 @@ import android.Manifest
 import android.bluetooth.BluetoothAdapter
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -44,6 +45,7 @@ class MainActivity : ComponentActivity() {
     private var runtimeError by mutableStateOf<String?>(null)
     private lateinit var runtime: HaloRuntime
     private var runtimeLoopStarted = false
+    private var fullyDrawnReported = false
     private var uiGraphJob: Job? = null
     private var runtimeJob: Job? = null
 
@@ -181,7 +183,27 @@ class MainActivity : ComponentActivity() {
 
         startUiGraphBootstrap()
         startRuntimeLoop()
+        handleIncomingShareIntent(intent)
         RuntimeStartupTrace.mark("activity.onCreate.end", startedAt)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleIncomingShareIntent(intent)
+    }
+
+    private fun handleIncomingShareIntent(intent: Intent?) {
+        if (intent == null) return
+        val action = intent.action
+        if (action == Intent.ACTION_SEND || action == Intent.ACTION_SEND_MULTIPLE) {
+            lifecycleScope.launch(Dispatchers.IO) {
+                try {
+                    ManualDependencyGraph.sendIntentHandler.handleIntent(intent)
+                } catch (e: Exception) {
+                    Log.e("MainActivity", "Error handling shared intent", e)
+                }
+            }
+        }
     }
 
     private fun startUiGraphBootstrap(force: Boolean = false) {
@@ -246,6 +268,10 @@ class MainActivity : ComponentActivity() {
                 ManualDependencyGraph.deviceAutoConnectCoordinator.start()
                 withContext(Dispatchers.Main.immediate) {
                     runtimeReady = true
+                    if (!fullyDrawnReported) {
+                        fullyDrawnReported = true
+                        reportFullyDrawn()
+                    }
                 }
                 RuntimeStartupTrace.mark("activity.runtime.ready", startedAt)
             } catch (error: CancellationException) {

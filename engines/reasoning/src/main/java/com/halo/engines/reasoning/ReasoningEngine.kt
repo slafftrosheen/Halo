@@ -100,7 +100,7 @@ class ReasoningEngine(
                             println(
                                 "[HALO-TXN] reasoning knowledgeId=$knowledgeId " +
                                     "intent=${interpretation.intent::class.simpleName} " +
-                                    "goal=${goal.type} payload=${goal.payload}"
+                                    "goal=${goal.type} payloadType=${goal.payload::class.simpleName}"
                             )
 
                             eventBus.publish(

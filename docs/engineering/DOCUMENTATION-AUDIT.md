@@ -1,6 +1,6 @@
 # Documentation reconciliation audit
 
-Status: CURRENT SOURCE MAP / AUDIT RECORD. Reviewed 2026-09-18.
+Status: CURRENT SOURCE MAP / AUDIT RECORD. Reviewed 2026-09-21.
 
 ## Scope and limits
 
@@ -43,6 +43,9 @@ Declared contracts, comments, module names and screenshots are insufficient by t
 | CI runs instrumentation/API/docs/performance gates | Workflow does not declare those; detekt/ktlint invocations lack inspected Gradle configuration |
 | TestFlight release and “all tests pass” are current | Replaced with Android release checklist and explicit absence of a fresh run |
 | Recorder requests MTU 517 / emits no writes of any kind | It reads negotiated mtu_size; subscribing notifications may write CCCDs |
+| HeyCyan control connected means audio connected | BLE control and Android audio association/profile/endpoint are separate states |
+| Any new Bluetooth endpoint proves HeyCyan routing | Route verification now requires the persisted user-approved association address |
+| Benchmark build type proves performance | Macrobenchmark/profile source exists; numbers and generated profile require a physical run |
 
 ## Source anchors
 

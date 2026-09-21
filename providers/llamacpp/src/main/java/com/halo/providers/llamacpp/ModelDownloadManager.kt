@@ -5,13 +5,17 @@ import android.content.Context
 import android.net.Uri
 import android.os.Environment
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import com.halo.sdk.runtime.HaloDispatchers
+import com.halo.sdk.runtime.productionHaloDispatchers
 import java.io.File
 
 
@@ -21,21 +25,39 @@ data class CognitiveModel(
     val description: String,
     val downloadUrl: String,
     val sizeMb: Int,
-    val isCustom: Boolean = false
+    val isCustom: Boolean = false,
+    val tier: LocalModelTier = LocalModelTier.STANDARD,
+    val parameterCount: String? = null,
+    val quantization: String? = null,
+    val expectedContextLength: Int? = null
 )
 
+enum class LocalModelTier { FAST, STANDARD, QUALITY }
+
 val AvailableModels = listOf(
-    CognitiveModel("qwen1.5-0.5b", "Qwen 1.5 (0.5B) Chat", "Extremely fast, tiny model. Great for testing pipeline.", "https://huggingface.co/Qwen/Qwen1.5-0.5B-Chat-GGUF/resolve/main/qwen1_5-0_5b-chat-q4_k_m.gguf", 398),
-    CognitiveModel("phi3-mini", "Phi-3 Mini (3.8B) Instruct", "Microsoft's highly capable reasoning model.", "https://huggingface.co/microsoft/Phi-3-mini-4k-instruct-gguf/resolve/main/Phi-3-mini-4k-instruct-q4.gguf", 2390),
-    CognitiveModel("llama3-8b", "Llama 3 (8B) Instruct", "State-of-the-art 8B model. Pushes 8GB RAM to the limit.", "https://huggingface.co/QuantFactory/Meta-Llama-3-8B-Instruct-GGUF/resolve/main/Meta-Llama-3-8B-Instruct.Q4_K_M.gguf", 4920)
+    CognitiveModel("qwen1.5-0.5b", "Qwen 1.5 (0.5B) Chat", "Legacy tiny compatibility model.", "https://huggingface.co/Qwen/Qwen1.5-0.5B-Chat-GGUF/resolve/main/qwen1_5-0_5b-chat-q4_k_m.gguf", 398, tier = LocalModelTier.FAST, parameterCount = "0.5B", quantization = "Q4_K_M", expectedContextLength = 32_768),
+    CognitiveModel("qwen3-0.6b-q4", "Qwen3 0.6B", "Modern tiny-device candidate; selectable but not the default until Android binding validation is complete.", "https://huggingface.co/ggml-org/Qwen3-0.6B-GGUF/resolve/main/Qwen3-0.6B-Q4_K_M.gguf", 522, tier = LocalModelTier.FAST, parameterCount = "0.6B", quantization = "Q4_K_M", expectedContextLength = 40_960),
+    CognitiveModel("qwen3-1.7b-q4", "Qwen3 1.7B", "Higher-quality local tier for devices with sufficient memory.", "https://huggingface.co/ggml-org/Qwen3-1.7B-GGUF/resolve/main/Qwen3-1.7B-Q4_K_M.gguf", 1280, tier = LocalModelTier.QUALITY, parameterCount = "1.7B", quantization = "Q4_K_M", expectedContextLength = 40_960),
+    CognitiveModel("phi3-mini", "Phi-3 Mini (3.8B) Instruct", "Microsoft's capable reasoning model.", "https://huggingface.co/microsoft/Phi-3-mini-4k-instruct-gguf/resolve/main/Phi-3-mini-4k-instruct-q4.gguf", 2390, tier = LocalModelTier.QUALITY, parameterCount = "3.8B", quantization = "Q4"),
+    CognitiveModel("llama3-8b", "Llama 3 (8B) Instruct", "Large local tier; requires substantial memory.", "https://huggingface.co/QuantFactory/Meta-Llama-3-8B-Instruct-GGUF/resolve/main/Meta-Llama-3-8B-Instruct.Q4_K_M.gguf", 4920, tier = LocalModelTier.QUALITY, parameterCount = "8B", quantization = "Q4_K_M")
 )
 
 enum class DownloadState { NotDownloaded, Downloading, Downloaded, Failed }
 
-class ModelDownloadManager(private val context: Context) {
+class ModelDownloadManager(
+    private val context: Context,
+    private val modelRoot: File = File(context.noBackupFilesDir, "models"),
+    private val dispatchers: HaloDispatchers = productionHaloDispatchers()
+) : LocalModelInventoryRepository {
     private val prefs = context.getSharedPreferences("halo_models", Context.MODE_PRIVATE)
     private val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val scope = CoroutineScope(SupervisorJob() + dispatchers.io)
+    private val inventoryMutex = Mutex()
+    private val metadataCache = GgufMetadataCache()
+    @Volatile private var modelDirectories: List<File>? = null
+    private val resolvedFiles = MutableStateFlow<Map<String, File>>(emptyMap())
+    private val _inventoryState = MutableStateFlow<LocalModelInventoryState>(LocalModelInventoryState.Loading)
+    override val inventoryState: StateFlow<LocalModelInventoryState> = _inventoryState
     private val downloadsLock = Any()
     private val activeDownloads = mutableMapOf<Long, String>()
     private val downloadJobs = mutableMapOf<Long, Job>()
@@ -44,76 +66,131 @@ class ModelDownloadManager(private val context: Context) {
     private val _downloadStates = MutableStateFlow<Map<String, DownloadState>>(emptyMap())
     val downloadStates: StateFlow<Map<String, DownloadState>> = _downloadStates
 
-    private val _activeModelId = MutableStateFlow<String?>(prefs.getString("active_model", null))
+    private val _activeModelId = MutableStateFlow<String?>(null)
     val activeModelId: StateFlow<String?> = _activeModelId
 
     private val _customModels = MutableStateFlow<List<CognitiveModel>>(emptyList())
     val customModels: StateFlow<List<CognitiveModel>> = _customModels
 
     init {
-        loadCustomModels()
-        refreshStates()
-        recoverPersistedDownloads()
+        scope.launch {
+            loadCustomModels()
+            refresh(ModelInventoryRefreshReason.STARTUP)
+            recoverPersistedDownloads()
+        }
     }
 
     fun getAllModels(): List<CognitiveModel> = AvailableModels + _customModels.value
 
-    fun getModelFile(modelId: String): File? {
+    /** Cached snapshot access only. This method never touches the filesystem. */
+    fun getModelFile(modelId: String): File? = resolvedFiles.value[modelId]
+
+    private fun findModelFile(modelId: String): Pair<File, GgufModelMetadata>? {
         val model = getAllModels().find { it.id == modelId }
         val fileName = model?.downloadUrl?.substringAfterLast("/") ?: "$modelId.gguf"
-        val candidates = listOfNotNull(
-            context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)?.let { File(it, fileName) },
-            context.getExternalFilesDir(null)?.let { File(it, "Download/$fileName") },
-            context.getExternalFilesDir(null)?.let { File(it, fileName) },
-            File(context.filesDir, fileName),
-            runCatching { File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), fileName) }.getOrNull()
-        )
-        return candidates.firstOrNull { isUsableGguf(it) }
+        val candidates = resolveModelDirectories().map { directory -> File(directory, fileName) }
+        return candidates.firstNotNullOfOrNull { file ->
+            val metadata = readUsableMetadata(file) ?: return@firstNotNullOfOrNull null
+            file to metadata
+        }
     }
 
-    private fun isUsableGguf(file: File): Boolean =
-        file.exists() && file.isFile && file.length() > 0L && GgufMetadataReader.read(file) != null
+    /** Called only from the repository's IO-confined inventory scan. */
+    private fun resolveModelDirectories(): List<File> = modelDirectories ?: listOfNotNull(
+        modelRoot,
+    ).distinctBy { it.absolutePath }.also { modelDirectories = it }
+
+    private fun readUsableMetadata(file: File): GgufModelMetadata? {
+        if (!file.exists() || !file.isFile) return null
+        val length = file.length()
+        if (length <= 0L) return null
+        val fingerprint = FileFingerprint(file.absolutePath, length, file.lastModified())
+        return metadataCache.getOrRead(fingerprint) { GgufMetadataReader.read(file) }
+    }
 
     fun refreshStates() {
-        if (closed) return
-        val states = mutableMapOf<String, DownloadState>()
-        getAllModels().forEach { model ->
-            states[model.id] = if (getModelFile(model.id) != null) {
-                DownloadState.Downloaded
-            } else {
-                _downloadStates.value[model.id] ?: DownloadState.NotDownloaded
-            }
-        }
-        _downloadStates.value = states
-        selectPersistedOrFirstDownloaded()
+        if (!closed) scope.launch { refresh(ModelInventoryRefreshReason.USER_REQUEST) }
     }
 
-    private fun selectPersistedOrFirstDownloaded() {
+    override suspend fun refresh(reason: ModelInventoryRefreshReason) = inventoryMutex.withLock {
+        if (closed) return@withLock
+        _inventoryState.value = LocalModelInventoryState.Loading
+        runCatching {
+            withContext(dispatchers.io) {
+                val descriptors = mutableListOf<LocalModelDescriptor>()
+                val files = mutableMapOf<String, File>()
+                val states = mutableMapOf<String, DownloadState>()
+                getAllModels().forEach { model ->
+                    val resolved = findModelFile(model.id)
+                    if (resolved != null) {
+                        val (file, metadata) = resolved
+                        files[model.id] = file
+                        descriptors += LocalModelDescriptor(
+                            id = model.id,
+                            displayName = model.name,
+                            path = file.absolutePath,
+                            bytes = file.length(),
+                            modifiedAt = file.lastModified(),
+                            ggufMetadata = metadata,
+                            valid = true
+                        )
+                        states[model.id] = DownloadState.Downloaded
+                    } else states[model.id] = _downloadStates.value[model.id] ?: DownloadState.NotDownloaded
+                }
+                val selected = selectPersistedOrFirstDownloaded(files)
+                InventoryResult(files.toMap(), descriptors.toList(), states.toMap(), selected)
+            }
+        }.onSuccess { (files, descriptors, states, selected) ->
+            resolvedFiles.value = files
+            _downloadStates.value = states
+            _activeModelId.value = selected
+            _inventoryState.value = LocalModelInventoryState.Ready(descriptors, System.currentTimeMillis())
+        }.onFailure { error ->
+            _inventoryState.value = LocalModelInventoryState.Failed(error.message ?: "Model inventory scan failed")
+        }
+    }
+
+    override suspend fun resolveModel(modelId: String): LocalModelDescriptor? {
+        val ready = inventoryState.value as? LocalModelInventoryState.Ready
+        return ready?.models?.firstOrNull { it.id == modelId }
+    }
+
+    override fun invalidate(reason: String) {
+        metadataCache.invalidate()
+        _inventoryState.value = LocalModelInventoryState.Loading
+        if (!closed) scope.launch { refresh(ModelInventoryRefreshReason.INVALIDATED) }
+    }
+
+    private fun selectPersistedOrFirstDownloaded(files: Map<String, File>): String? {
         val persisted = prefs.getString("active_model", null)
-        val downloaded = getAllModels().firstOrNull { getModelFile(it.id) != null }
+        val downloaded = getAllModels().firstOrNull { files.containsKey(it.id) }
         val selected = when {
-            persisted != null -> persisted
+            persisted != null && files.containsKey(persisted) -> persisted
             downloaded != null -> downloaded.id
             else -> null
         }
-        if (_activeModelId.value != selected) _activeModelId.value = selected
         if (selected != null) prefs.edit().putString("active_model", selected).apply()
         else prefs.edit().remove("active_model").apply()
+        return selected
     }
 
     fun downloadModel(modelId: String) {
         if (closed) return
-        getAllModels().find { it.id == modelId }?.let { downloadUrl(it.id, it.name, it.downloadUrl) }
+        scope.launch {
+            getAllModels().find { it.id == modelId }?.let { downloadUrl(it.id, it.name, it.downloadUrl) }
+        }
     }
 
     fun downloadCustomUrl(url: String, name: String) {
         if (closed || url.isBlank()) return
-        val id = "custom_" + url.hashCode().toString().replace("-", "n")
-        val modelName = name.ifBlank { url.substringAfterLast("/") }
-        _customModels.value = _customModels.value.filter { it.id != id } +
-            CognitiveModel(id, modelName, "Custom GGUF Model from Hugging Face", url, 0, true)
-        saveCustomModels()
-        downloadUrl(id, modelName, url)
+        scope.launch {
+            val id = "custom_" + url.hashCode().toString().replace("-", "n")
+            val modelName = name.ifBlank { url.substringAfterLast("/") }
+            _customModels.value = _customModels.value.filter { it.id != id } +
+                CognitiveModel(id, modelName, "Custom GGUF Model from Hugging Face", url, 0, true)
+            saveCustomModels()
+            downloadUrl(id, modelName, url)
+        }
     }
 
     private fun downloadUrl(id: String, name: String, url: String) {
@@ -137,7 +214,7 @@ class ModelDownloadManager(private val context: Context) {
         }
     }
 
-    private fun recoverPersistedDownloads() {
+    private suspend fun recoverPersistedDownloads() {
         if (closed) return
         val pending = prefs.all
             .asSequence()
@@ -170,6 +247,8 @@ class ModelDownloadManager(private val context: Context) {
                     }
                 }
                 DownloadManager.STATUS_SUCCESSFUL -> {
+                    finalizeDownloadedModel(modelId)
+                    refresh(ModelInventoryRefreshReason.DOWNLOAD_COMPLETED)
                     clearPersistedDownload(downloadId)
                     if (getModelFile(modelId) == null) setState(modelId, DownloadState.Failed)
                     else setState(modelId, DownloadState.Downloaded)
@@ -202,7 +281,8 @@ class ModelDownloadManager(private val context: Context) {
                     } else {
                         when (cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))) {
                             DownloadManager.STATUS_SUCCESSFUL -> {
-                                refreshStates()
+                                finalizeDownloadedModel(modelId)
+                                refresh(ModelInventoryRefreshReason.DOWNLOAD_COMPLETED)
                                 if (getModelFile(modelId) == null) setState(modelId, DownloadState.Failed)
                                 else setState(modelId, DownloadState.Downloaded)
                                 true
@@ -224,7 +304,7 @@ class ModelDownloadManager(private val context: Context) {
                 downloadJobs.remove(downloadId)
             }
             if (terminal) clearPersistedDownload(downloadId)
-            if (!closed) refreshStates()
+            if (!closed) refresh(ModelInventoryRefreshReason.DOWNLOAD_COMPLETED)
         }
     }
 
@@ -233,11 +313,28 @@ class ModelDownloadManager(private val context: Context) {
         _downloadStates.value = _downloadStates.value.toMutableMap().apply { put(modelId, state) }
     }
 
+    private fun finalizeDownloadedModel(modelId: String) {
+        val model = getAllModels().firstOrNull { it.id == modelId } ?: return
+        val fileName = model.downloadUrl.substringAfterLast("/")
+        val source = listOfNotNull(
+            context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)?.let { File(it, fileName) },
+            context.getExternalFilesDir(null)?.let { File(File(it, "Download"), fileName) },
+        ).firstOrNull(File::isFile) ?: return
+        modelRoot.mkdirs()
+        val destination = File(modelRoot, fileName)
+        val temporary = File(modelRoot, ".$fileName.download")
+        source.inputStream().use { input -> temporary.outputStream().use(input::copyTo) }
+        if (temporary.length() == source.length()) {
+            if (!destination.exists() && temporary.renameTo(destination)) source.delete()
+            else temporary.delete()
+        } else temporary.delete()
+        modelDirectories = null
+    }
+
     fun setActiveModel(modelId: String) {
         if (closed || getModelFile(modelId) == null) return
         _activeModelId.value = modelId
-        prefs.edit().putString("active_model", modelId).apply()
-        refreshStates()
+        scope.launch { prefs.edit().putString("active_model", modelId).apply() }
     }
 
     private fun loadCustomModels() {
@@ -280,4 +377,11 @@ class ModelDownloadManager(private val context: Context) {
     private companion object {
         private const val DOWNLOAD_PREF_PREFIX = "active_download_"
     }
+
+    private data class InventoryResult(
+        val files: Map<String, File>,
+        val descriptors: List<LocalModelDescriptor>,
+        val states: Map<String, DownloadState>,
+        val selectedModelId: String?
+    )
 }

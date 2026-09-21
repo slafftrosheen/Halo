@@ -1,0 +1,13 @@
+id: halo.notebook
+name: Notebook
+description: Work with the user's local Halo workspace notes and objects.
+category: workspace
+
+tools:
+  - halo_create_note
+  - halo_search_notebook
+  - halo_get_workspace_object
+  - halo_add_to_working_set
+  - halo_remove_from_working_set
+
+risk: safe

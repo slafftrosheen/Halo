@@ -1,20 +1,19 @@
 package com.halo.app.ui.screens.settings
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.halo.app.ui.theme.AppearanceMode
 import com.halo.app.ui.theme.AppearancePreferences
-import com.halo.providers.sherpa.stt.SherpaSpeechModelCatalog
+import com.halo.providers.sherpa.stt.SpeechModelInventoryRepository
 import com.halo.sdk.provider.AiProviderRouter
 import com.halo.sdk.runtime.RuntimeSnapshotSource
-import java.io.File
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 /** System-level settings only. Provider/model configuration lives in Intelligence. */
 data class SettingsUiState(
@@ -26,32 +25,29 @@ data class SettingsUiState(
 )
 
 class SettingsViewModel(
-    private val context: Context,
     private val snapshotManager: RuntimeSnapshotSource,
     private val aiProviderRouter: AiProviderRouter,
-    private val appearancePreferences: AppearancePreferences
+    private val appearancePreferences: AppearancePreferences,
+    private val speechInventory: SpeechModelInventoryRepository
 ) : ViewModel() {
-    private val appContext = context.applicationContext
     private val _navigationEvents = MutableSharedFlow<String>(extraBufferCapacity = 8)
     val navigationEvents = _navigationEvents.asSharedFlow()
 
-    private val speechModelDirectory: File
-        get() = File(appContext.filesDir, "speech/${SherpaSpeechModelCatalog.WHISPER_TINY_DIRECTORY}")
+    init {
+        viewModelScope.launch { speechInventory.refresh() }
+    }
 
     val uiState: StateFlow<SettingsUiState> = combine(
         snapshotManager.snapshot,
         aiProviderRouter.selectedProviderId,
-        appearancePreferences.mode
-    ) { snapshot, selectedId, appearanceMode ->
+        appearancePreferences.mode,
+        speechInventory.state
+    ) { snapshot, selectedId, appearanceMode, speechState ->
         val provider = aiProviderRouter.getAllProviders().firstOrNull { it.id == selectedId }
-        val isVoiceReady = SherpaSpeechModelCatalog.isInstalled(
-            speechModelDirectory,
-            SherpaSpeechModelCatalog.whisperTiny
-        )
         SettingsUiState(
             version = "v${snapshot.runtimeVersion} (${snapshot.buildNumber})",
             provider = provider?.displayName ?: "Not configured",
-            voiceStatus = if (isVoiceReady) "Ready" else "Not installed",
+            voiceStatus = if (speechState.installed) "Ready" else if (speechState.loading) "Checking…" else "Not installed",
             deviceName = snapshot.deviceContext.name ?: "Not reported",
             appearanceMode = appearanceMode
         )
@@ -67,6 +63,8 @@ class SettingsViewModel(
 
     fun openIntelligence() { _navigationEvents.tryEmit("ai_settings") }
     fun openVoice() { _navigationEvents.tryEmit("voice_settings") }
+    fun openSkills() { _navigationEvents.tryEmit("skills") }
     fun openDevices() { _navigationEvents.tryEmit("devices") }
     fun openPermissions() { _navigationEvents.tryEmit("permissions") }
+    fun openStorageBackup() { _navigationEvents.tryEmit("storage_backup") }
 }

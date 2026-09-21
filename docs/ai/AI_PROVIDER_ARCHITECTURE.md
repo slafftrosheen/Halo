@@ -1,6 +1,6 @@
 # AI providers and sessions
 
-Status: CURRENT SOURCE MAP. Reviewed 2026-09-18.
+Status: CURRENT SOURCE MAP. Reviewed 2026-09-21.
 
 [AI.kt](../../sdk/provider-sdk/src/main/java/com/halo/sdk/provider/AI.kt) separates
 AiProvider metadata from inference and handoff contracts. AiRequest contains
@@ -21,6 +21,12 @@ local/cloud fallback or that all models support every request field.
 
 Ollama's local metadata does not mean on-phone: its endpoint may be another machine.
 External assistant handoff does not establish local processing by that assistant.
+
+Local llama.cpp discovery is now an asynchronous inventory boundary with immutable snapshots and a
+fingerprint-keyed in-memory GGUF metadata cache. `listModels()` consumes that cache rather than
+reopening GGUF headers. Qwen3 0.6B Q4_K_M and 1.7B Q4_K_M are catalogued as opt-in validation
+candidates; neither is the default until the existing Android binding and chat behavior are tested.
+Streaming native output has a conservative repeated-suffix guard before response/TTS completion.
 
 [CognitiveSession](../../runtime/cognition/src/main/java/com/halo/runtime/cognition/session/CognitiveSession.kt)
 already performs bounded tool rounds, authorization and result feedback.

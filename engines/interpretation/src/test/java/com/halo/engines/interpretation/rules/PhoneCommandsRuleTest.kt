@@ -12,6 +12,7 @@ import com.halo.engines.interpretation.model.PlayIntent
 import com.halo.engines.interpretation.model.QuestionIntent
 import com.halo.engines.interpretation.model.ReminderIntent
 import com.halo.engines.interpretation.model.SearchIntent
+import com.halo.engines.interpretation.model.SetAlarmIntent
 import com.halo.engines.interpretation.model.WebEntity
 import com.halo.engines.speech.SpeechRecognizedPayload
 import com.halo.runtime.cognition.workingmemory.WorkingMemorySnapshot
@@ -100,9 +101,11 @@ class PhoneCommandsRuleTest {
         assertTrue(match2.entities.any { it is PlaceEntity && it.name == "Riga" })
     }
 
+    private val reminderRule = ReminderRule()
+
     @Test
     fun testReminder() = runBlocking {
-        val match = speechRule.match(createContext("remind me in 10 minutes to call John"))
+        val match = reminderRule.match(createContext("remind me in 10 minutes to call John"))
         assertNotNull(match)
         assertEquals(ReminderIntent, match!!.intent)
     }
@@ -111,7 +114,7 @@ class PhoneCommandsRuleTest {
     fun testAlarm() = runBlocking {
         val match = speechRule.match(createContext("set an alarm for 07:30"))
         assertNotNull(match)
-        assertEquals(OpenIntent, match!!.intent)
+        assertEquals(SetAlarmIntent, match!!.intent)
     }
 
     @Test

@@ -4,9 +4,11 @@ import android.app.*
 import android.os.Bundle
 import android.os.StrictMode
 import android.content.ComponentCallbacks2
+import com.halo.app.backup.BrainBackupScheduler
 import com.halo.app.di.ManualDependencyGraph
 import com.halo.sdk.runtime.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.first
 
 class HaloApplication : Application(), Application.ActivityLifecycleCallbacks {
     private val resourceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -33,7 +35,27 @@ class HaloApplication : Application(), Application.ActivityLifecycleCallbacks {
                     .build()
             )
         }
+        val layout = com.halo.app.storage.haloStorageLayout(this)
+        kotlinx.coroutines.runBlocking(Dispatchers.IO) {
+            com.halo.app.storage.LocalAssetStorageMigration(this@HaloApplication, layout).migrate()
+            com.halo.app.security.SecretMigration(
+                this@HaloApplication,
+                com.halo.app.security.AndroidKeystoreSecretStore(layout),
+            ).migrate()
+        }
         ManualDependencyGraph.init(this)
+        resourceScope.launch {
+            val schedule = runCatching {
+                com.halo.app.backup.AutomaticBackupSchedule.valueOf(
+                    ManualDependencyGraph.settingsRepository.settings.first().automaticBackup
+                )
+            }.getOrDefault(com.halo.app.backup.AutomaticBackupSchedule.OFF)
+            runCatching {
+                BrainBackupScheduler.schedule(this@HaloApplication, schedule)
+            }
+            ManualDependencyGraph.storageAccessRepository.validatePersistedAccess()
+            ManualDependencyGraph.restoreReconciler.reconcileAfterSystemRestore()
+        }
         registerActivityLifecycleCallbacks(this)
         refreshBudget(NativeMemoryPressure.NORMAL)
     }

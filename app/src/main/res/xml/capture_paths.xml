@@ -1,1 +1,4 @@
-<paths xmlns:android="http://schemas.android.com/apk/res/android"><files-path name="images" path="captures/images/" /></paths>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <files-path name="images" path="captures/images/" />
+    <files-path name="workspace-owned" path="workspace/owned/" />
+</paths>

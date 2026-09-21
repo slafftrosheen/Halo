@@ -1,0 +1,11 @@
+id: halo.files
+name: Files
+description: Access user-imported document metadata and text content.
+category: workspace
+
+tools:
+  - halo_search_files
+  - halo_get_file_metadata
+  - halo_read_text_file
+
+risk: safe

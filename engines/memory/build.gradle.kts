@@ -11,5 +11,5 @@ dependencies {
     implementation(project(":runtime:services"))
     implementation(project(":runtime:cognition"))
     api(libs.kotlinx.datetime)
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    implementation(libs.kotlinx.coroutines.core)
 }

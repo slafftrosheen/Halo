@@ -15,6 +15,9 @@ import kotlinx.coroutines.launch
 import com.halo.providers.llamacpp.ModelDownloadManager
 import com.halo.providers.llamacpp.CognitiveModel
 import com.halo.providers.llamacpp.DownloadState
+import com.halo.sdk.runtime.HaloDispatchers
+import com.halo.sdk.runtime.productionHaloDispatchers
+import kotlinx.coroutines.withContext
 
 data class IntelligenceUiState(
     val activeProviderId: String = "",
@@ -66,7 +69,8 @@ class IntelligenceViewModel(
     private val aiProviderRouter: AiProviderRouter,
     private val cognitiveSession: CognitiveSession,
     private val storage: Storage,
-    private val modelDownloadManager: ModelDownloadManager? = null
+    private val modelDownloadManager: ModelDownloadManager? = null,
+    private val dispatchers: HaloDispatchers = productionHaloDispatchers()
 ) : ViewModel() {
     private val _refreshTrigger = MutableStateFlow(0)
     private val _availableModels = MutableStateFlow<List<AiModel>>(emptyList())
@@ -78,8 +82,8 @@ class IntelligenceViewModel(
     private val _settings = MutableStateFlow(IntelligenceSettings())
 
     init {
-        loadSettings()
         modelDownloadManager?.refreshStates()
+        viewModelScope.launch { loadSettings() }
         viewModelScope.launch {
             aiProviderRouter.selectedProviderId.collectLatest { providerId ->
                 if (providerId != null) {
@@ -95,20 +99,22 @@ class IntelligenceViewModel(
         }
     }
 
-    private fun loadSettings() {
-        val storedOpenRouterModel = storage.getString("openrouter_model")?.trim()?.ifBlank { null }
-        val openRouterModel = storedOpenRouterModel ?: "openrouter/free"
-        if (storedOpenRouterModel == null) storage.putString("openrouter_model", openRouterModel)
-        _settings.value = IntelligenceSettings(
-            openRouterKey = storage.getString("openrouter_api_key") ?: "",
-            openRouterModel = openRouterModel,
-            ollamaEndpoint = storage.getString("ollama_endpoint") ?: "",
-            ollamaModel = storage.getString("ollama_model") ?: "llama3",
-            llamacppModel = storage.getString("llamacpp_model") ?: "qwen1.5-0.5b",
-            llamacppContext = storage.getInt("llamacpp_context", 4096),
-            temperature = storage.getInt("ai_temperature", 70) / 100f,
-            policy = storage.readRuntimeAiContextPolicy()
-        )
+    private suspend fun loadSettings() {
+        _settings.value = withContext(dispatchers.io) {
+            val storedOpenRouterModel = storage.getString("openrouter_model")?.trim()?.ifBlank { null }
+            val openRouterModel = storedOpenRouterModel ?: "openrouter/free"
+            if (storedOpenRouterModel == null) storage.putString("openrouter_model", openRouterModel)
+            IntelligenceSettings(
+                openRouterKey = storage.getString("openrouter_api_key") ?: "",
+                openRouterModel = openRouterModel,
+                ollamaEndpoint = storage.getString("ollama_endpoint") ?: "",
+                ollamaModel = storage.getString("ollama_model") ?: "llama3",
+                llamacppModel = storage.getString("llamacpp_model") ?: "qwen1.5-0.5b",
+                llamacppContext = storage.getInt("llamacpp_context", 4096),
+                temperature = storage.getInt("ai_temperature", 70) / 100f,
+                policy = storage.readRuntimeAiContextPolicy()
+            )
+        }
     }
 
     private suspend fun syncStoredModelSelection(providerId: String) {
@@ -329,10 +335,22 @@ class IntelligenceViewModel(
         val current = _settings.value.policy
         val updated = current.copy(includeConversation = conversation ?: current.includeConversation, includeDeviceState = deviceState ?: current.includeDeviceState, includeRecentEvents = recentEvents ?: current.includeRecentEvents, includeMemories = memories ?: current.includeMemories, includeAvailableTools = tools ?: current.includeAvailableTools, includeLocation = location ?: current.includeLocation, includeImages = images ?: current.includeImages, includeAudio = audio ?: current.includeAudio, includeVideo = video ?: current.includeVideo)
         updateSettings { it.copy(policy = updated) }
-        conversation?.let { storage.putBoolean("policy_conversation", it) }; deviceState?.let { storage.putBoolean("policy_device_state", it) }; recentEvents?.let { storage.putBoolean("policy_recent_events", it) }; memories?.let { storage.putBoolean("policy_memories", it) }; tools?.let { storage.putBoolean("policy_tools", it) }; location?.let { storage.putBoolean("policy_location", it) }; images?.let { storage.putBoolean("policy_images", it) }; audio?.let { storage.putBoolean("policy_audio", it) }; video?.let { storage.putBoolean("policy_video", it) }
+        persist {
+            conversation?.let { storage.putBoolean("policy_conversation", it) }
+            deviceState?.let { storage.putBoolean("policy_device_state", it) }
+            recentEvents?.let { storage.putBoolean("policy_recent_events", it) }
+            memories?.let { storage.putBoolean("policy_memories", it) }
+            tools?.let { storage.putBoolean("policy_tools", it) }
+            location?.let { storage.putBoolean("policy_location", it) }
+            images?.let { storage.putBoolean("policy_images", it) }
+            audio?.let { storage.putBoolean("policy_audio", it) }
+            video?.let { storage.putBoolean("policy_video", it) }
+        }
         _refreshTrigger.update { it + 1 }
     }
     private inline fun updateSettings(transform: (IntelligenceSettings) -> IntelligenceSettings) { _settings.update(transform) }
-    private fun persist(write: () -> Unit) { write() }
+    private fun persist(write: () -> Unit) {
+        viewModelScope.launch(dispatchers.io) { write() }
+    }
     fun navigateTo(route: String) { viewModelScope.launch { _navigationEvents.emit(route) } }
 }

@@ -11,7 +11,7 @@ plugins {
 
 android {
   namespace = "com.halo.app"
-  compileSdk { version = release(36) { minorApiLevel = 1 } }
+  compileSdk = 37
 
   defaultConfig {
     applicationId = "com.aistudio.braintool.xkqzps"
@@ -65,12 +65,15 @@ android {
     }
   }
   compileOptions {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
   }
   buildFeatures {
     compose = true
     buildConfig = true
+  }
+  ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
   }
   testOptions { unitTests { isIncludeAndroidResources = true } }
 }
@@ -83,6 +86,10 @@ secrets {
 }
 
 googleServices { missingGoogleServicesStrategy = MissingGoogleServicesStrategy.WARN }
+
+// pluginManager.withPlugin("com.android.application") {
+//   pluginManager.apply("androidx.baselineprofile")
+// }
 
 // Some unused dependencies are commented out below instead of being removed.
 // This makes it easy to add them back in the future if needed.
@@ -110,13 +117,18 @@ dependencies {
   implementation(libs.androidx.compose.ui.graphics)
   implementation(libs.androidx.compose.ui.tooling.preview)
   implementation(libs.androidx.core.ktx)
-  // implementation(libs.androidx.datastore.preferences)
+  implementation(libs.androidx.datastore.preferences)
+  implementation(libs.androidx.documentfile)
   implementation(libs.androidx.lifecycle.runtime.compose)
   implementation(libs.androidx.lifecycle.runtime.ktx)
   implementation(libs.androidx.lifecycle.viewmodel.compose)
   implementation(libs.androidx.navigation.compose)
+  implementation(libs.androidx.profileinstaller)
   implementation(libs.androidx.room.ktx)
   implementation(libs.androidx.room.runtime)
+  implementation(libs.androidx.appsearch)
+  implementation(libs.androidx.appsearch.local.storage)
+  implementation(libs.androidx.work.runtime.ktx)
   // implementation(libs.coil.compose)
   implementation(libs.converter.moshi)
   implementation(libs.firebase.ai)
@@ -148,7 +160,9 @@ dependencies {
   testImplementation(libs.roborazzi.junit.rule)
   debugImplementation(libs.androidx.compose.ui.test.manifest)
   debugImplementation(libs.androidx.compose.ui.tooling)
+  // "baselineProfile"(project(":baselineprofile"))
   "ksp"(libs.androidx.room.compiler)
+  "ksp"(libs.androidx.appsearch.compiler)
   "ksp"(libs.moshi.kotlin.codegen)
   debugImplementation("com.squareup.leakcanary:leakcanary-android:2.14")
 }

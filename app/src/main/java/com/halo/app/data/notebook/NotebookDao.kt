@@ -49,6 +49,30 @@ interface NotebookDao {
     @Query("SELECT * FROM note_drafts WHERE objectId = :id LIMIT 1")
     suspend fun getDraft(id: String): NoteDraftEntity?
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertWorkspaceObject(entity: WorkspaceObjectEntity)
+
+    @Query("UPDATE workspace_objects SET title = :title, updatedAt = :updatedAt WHERE id = :id")
+    suspend fun updateTitle(id: String, title: String, updatedAt: Long): Int
+
+    @Query("SELECT * FROM workspace_objects WHERE id = :id LIMIT 1")
+    suspend fun getWorkspaceObject(id: String): WorkspaceObjectEntity?
+
+    @Query(
+        """
+        SELECT * FROM workspace_objects
+        WHERE lifecycle = :lifecycle
+          AND (:inboxOnly = 0 OR inInbox = 1)
+          AND (:searchPattern = '' OR title LIKE :searchPattern ESCAPE '\')
+        ORDER BY updatedAt DESC
+        """
+    )
+    fun observeWorkspaceObjects(
+        searchPattern: String,
+        lifecycle: String,
+        inboxOnly: Boolean
+    ): Flow<List<WorkspaceObjectEntity>>
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertObject(entity: WorkspaceObjectEntity)
 

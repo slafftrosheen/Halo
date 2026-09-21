@@ -100,7 +100,8 @@ class DevicesViewModel(
     private val heyCyanDriverProvider: () -> RealHeyCyanDriver?,
     val buddyBotHost: BuddyBotHost? = null,
     private val autoConnectCoordinator: DeviceAutoConnectCoordinator? = null,
-    private val captures: () -> com.halo.app.capture.WearableCaptureCoordinator? = { null }
+    private val captures: () -> com.halo.app.capture.WearableCaptureCoordinator? = { null },
+    private val audioPairingCoordinator: com.halo.app.audio.HeyCyanAudioPairingCoordinator? = null
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(DevicesUiState())
     val uiState: StateFlow<DevicesUiState> = _uiState.asStateFlow()
@@ -109,9 +110,16 @@ class DevicesViewModel(
     private val _registryRevision = MutableStateFlow(0L)
     private val _navigationEvents = MutableSharedFlow<String>(extraBufferCapacity = 8)
     val navigationEvents = _navigationEvents.asSharedFlow()
+    val audioPairingState: StateFlow<com.halo.app.audio.HeyCyanAudioPairingState> =
+        audioPairingCoordinator?.state ?: MutableStateFlow(com.halo.app.audio.HeyCyanAudioPairingState.Unknown)
+    val audioConfirmationRequests = audioPairingCoordinator?.confirmationRequests
+        ?: MutableSharedFlow<android.content.IntentSender>()
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
+            deviceRegistry.getSavedDevices()
+                .firstOrNull { it.descriptor.kind == com.halo.sdk.runtime.embodiment.DeviceKind.HEYCYAN_GLASSES }
+                ?.let { audioPairingCoordinator?.restore(it.identity.deviceId) }
             val driver = heyCyanDriverProvider()
             val heyCyanStateFlow = driver?.deviceState ?: MutableStateFlow(HeyCyanDeviceState())
             val buddyBotTelemetryFlow = buddyBotHost?.telemetry ?: MutableStateFlow(
@@ -252,6 +260,19 @@ class DevicesViewModel(
     )
 
     fun mediaCoordinator() = captures()
+    fun restoreAudioAssociation(deviceId: String) = audioPairingCoordinator?.restore(deviceId)
+    fun connectAudio(deviceId: String) {
+        viewModelScope.launch {
+            val driver = heyCyanDriverProvider()
+            val enabled = driver?.capabilityController
+                ?.execute(com.halo.sdk.runtime.embodiment.heycyan.HeyCyanOperation.EnableClassicBluetooth)
+                ?.isSuccess == true
+            if (enabled) audioPairingCoordinator?.requestAssociation(deviceId)
+            else audioPairingCoordinator?.fail("Could not enable the glasses audio radio")
+        }
+    }
+    fun onAudioAssociationResult(resultCode: Int, data: android.content.Intent?) =
+        audioPairingCoordinator?.onConfirmationResult(resultCode, data)
     fun syncMedia() { viewModelScope.launch(Dispatchers.IO) { captures()?.sync() } }
     fun refreshMedia() { viewModelScope.launch { heyCyanDriverProvider()?.capabilityController?.execute(com.halo.sdk.runtime.embodiment.heycyan.HeyCyanOperation.GetMediaInventory) } }
     fun takePhoto(deviceId: String) {

@@ -1,6 +1,6 @@
 # Current architecture
 
-Status: CURRENT SOURCE MAP. Reviewed 2026-09-18.
+Status: CURRENT SOURCE MAP. Reviewed 2026-09-21.
 
 ## Modules and composition
 
@@ -29,6 +29,11 @@ failure runs cleanup. This is source behavior, not proof of every failure scenar
 
 HostGraph injects AndroidAudioSource into the phone audio engine. HeyCyan construction is lazy.
 An existing HybridAudioSource is not proof it is selected in that production path.
+
+Blocking model/speech discovery is owned by repositories with injected `HaloDispatchers`; settings
+ViewModels consume cached flows and launch refreshes. External HeyCyan buffers are analyzed by a
+whole-capture Silero estimator when installed, with an explicitly labeled energy fallback. Audio
+association is a separate app boundary from the working driver GATT control queue.
 
 ## Boundaries and limitations
 

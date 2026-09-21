@@ -9,7 +9,15 @@ import com.halo.app.RuntimeStartupTrace
 import com.halo.app.audio.HaloSpeechOutputCoordinator
 import com.halo.app.audio.SpeechOutputRouteController
 import com.halo.app.data.AppDatabase
+import com.halo.app.data.WorkspaceContextStore
+import com.halo.app.data.agent.RoomAgentRunRepository
+import com.halo.app.data.memory.BoundedMemoryContextSource
+import com.halo.app.data.memory.RoomMemoryRepository
 import com.halo.app.data.notebook.RoomNotebookRepository
+import com.halo.app.data.workspace.RoomWorkspaceRepository
+import com.halo.app.data.workspace.SendIntentHandler
+import com.halo.app.di.tools.StorageStatusToolExecutor
+import com.halo.app.di.tools.WorkspaceToolExecutor
 import com.halo.app.notebook.NotebookUseCases
 import com.halo.app.ui.screens.activity.ActivityViewModel
 import com.halo.app.ui.screens.devices.DevicesViewModel
@@ -25,6 +33,8 @@ import kotlinx.coroutines.flow.StateFlow
 import com.halo.engines.memory.WorkingMemoryProcess
 import com.halo.providers.android.tts.AndroidTTSProvider
 import com.halo.runtime.cognition.session.CognitiveSession
+import com.halo.runtime.cognition.skills.DefaultSkillRegistry
+import com.halo.runtime.cognition.tools.CurrentTimeToolExecutor
 import com.halo.runtime.kernel.HaloMicrokernel
 
 /** Thin façade that wires sub-graphs together. This is the sole composition root. */
@@ -36,7 +46,10 @@ object ManualDependencyGraph {
     }
 
     val infra by lazy { RuntimeStartupTrace.measure("graph.infra") { InfrastructureGraph() } }
-    val storage by lazy { RuntimeStartupTrace.measure("graph.storage") { com.halo.host.android.AndroidStorage(applicationContext) } }
+    val storageLayout by lazy { com.halo.app.storage.haloStorageLayout(applicationContext).also { it.ensureDirectories() } }
+    val secretStore by lazy { com.halo.app.security.AndroidKeystoreSecretStore(storageLayout) }
+    private val preferenceStorage by lazy { com.halo.host.android.AndroidStorage(applicationContext) }
+    val storage by lazy { RuntimeStartupTrace.measure("graph.storage") { com.halo.app.security.SecretBackedStorage(preferenceStorage, secretStore) } }
     val providerGraph by lazy { RuntimeStartupTrace.measure("graph.providers") { ProviderGraph(applicationContext, storage) } }
     val deviceRegistry by lazy { com.halo.sdk.runtime.embodiment.PersistentDeviceRegistry(storage) }
     val deviceSessionManager by lazy { com.halo.sdk.runtime.embodiment.DeviceSessionManager(deviceRegistry) }
@@ -107,10 +120,26 @@ object ManualDependencyGraph {
     val speechPerceptionBridge get() = engineGraph.speechPerceptionBridge
 
     val conversationStore by lazy { com.halo.app.data.RoomConversationStore(appDatabase, infra.scope) }
-    val toolRegistry by lazy { com.halo.runtime.cognition.tools.ToolRegistry(listOf(AndroidCapabilityTools(applicationContext, eventBus), com.halo.runtime.cognition.tools.CurrentTimeToolExecutor())) }
-    val workspaceContext by lazy { com.halo.app.data.WorkspaceContextStore(appDatabase, notebookRepository, storage) }
+    val workspaceRepository by lazy { RoomWorkspaceRepository(appDatabase.notebookDao()) }
+    val memoryRepository by lazy { RoomMemoryRepository(appDatabase) }
+    val memoryContextSource by lazy { BoundedMemoryContextSource(memoryRepository) }
+    val skillRegistry by lazy { DefaultSkillRegistry(storage) }
+    val agentRunRepository by lazy { RoomAgentRunRepository(appDatabase) }
+    val toolRegistry by lazy {
+        com.halo.runtime.cognition.tools.ToolRegistry(
+            listOf(
+                AndroidCapabilityTools(applicationContext, eventBus),
+                CurrentTimeToolExecutor(),
+                StorageStatusToolExecutor(storageUsageRepository, storageAccessRepository),
+                WorkspaceToolExecutor(notebookRepository, workspaceRepository, workspaceContext),
+                com.halo.app.di.tools.MemoryToolExecutor(memoryRepository, memoryContextSource),
+                com.halo.app.di.tools.HostTools(applicationContext),
+            )
+        )
+    }
+    val workspaceContext by lazy { WorkspaceContextStore(appDatabase, notebookRepository, storage) }
     val contextAssembler by lazy { com.halo.runtime.cognition.context.DefaultContextAssembler(conversationStore, blackboard, toolRegistry, workspaceContext) }
-    val toolAuthorizer by lazy { com.halo.runtime.cognition.tools.InMemoryToolAuthorizer(toolRegistry) }
+    val toolAuthorizer by lazy { com.halo.runtime.cognition.tools.PolicyToolAuthorizer() }
     val cognitiveSession by lazy {
         CognitiveSession(
             eventBus = eventBus,
@@ -173,8 +202,53 @@ object ManualDependencyGraph {
             )
         }
     }
-    val settingsViewModel by lazy { SettingsViewModel(applicationContext, runtimeSnapshotManager, aiProviderRouter, appearancePreferences) }
-    val voiceSettingsViewModel by lazy { VoiceSettingsViewModel(applicationContext, storage, providerGraph) }
+    val settingsRepository by lazy { com.halo.app.data.settings.HaloSettingsRepository(applicationContext) }
+    val storageAccessRepository by lazy { com.halo.app.backup.AndroidStorageAccessRepository(applicationContext, settingsRepository) }
+    val brainSnapshotSource by lazy { com.halo.app.backup.RoomBrainSnapshotSource(applicationContext, appDatabase, storage) }
+    val moshi by lazy { com.squareup.moshi.Moshi.Builder().build() }
+    val brainExportRepository by lazy { com.halo.app.backup.ZipBrainExporter(brainSnapshotSource, appDatabase, storageLayout, moshi) }
+    val brainImportRepository by lazy {
+        com.halo.app.backup.StagedBrainImporter(applicationContext, storageLayout, appDatabase, brainExportRepository, storage, moshi, restoreReconciler)
+    }
+    val restoreReconciler by lazy { com.halo.app.backup.RestoreReconciler(applicationContext, appDatabase, settingsRepository) }
+    val vaultRepository by lazy {
+        com.halo.app.backup.AndroidHaloVaultRepository(applicationContext, storageAccessRepository, brainExportRepository, brainImportRepository, appDatabase, settingsRepository)
+    }
+    val storageUsageRepository by lazy { com.halo.app.storage.AndroidStorageUsageRepository(applicationContext, storageLayout) }
+    val workspaceFileRepository by lazy { com.halo.app.data.workspace.RoomWorkspaceFileRepository(applicationContext, appDatabase) }
+    val sendIntentHandler by lazy { SendIntentHandler(notebookRepository, workspaceFileRepository) }
+    val storageBackupViewModel by lazy {
+        com.halo.app.ui.screens.settings.StorageBackupViewModel(
+            applicationContext,
+            storageAccessRepository,
+            vaultRepository,
+            brainExportRepository,
+            brainImportRepository,
+            storageUsageRepository,
+            settingsRepository,
+            storageLayout,
+            workspaceFileRepository,
+            canClearModels = {
+                com.halo.sdk.runtime.NativeResourceKind.HEAVY_LLM !in providerGraph.nativeResourceCoordinator.activeKinds()
+            },
+            onModelsCleared = { modelDownloadManager.invalidate("model downloads cleared") },
+            onAppearanceRestored = {
+                val saved = applicationContext.getSharedPreferences("halo_appearance", Context.MODE_PRIVATE)
+                    .getString("mode", null)
+                val mode = saved?.let { runCatching { com.halo.app.ui.theme.AppearanceMode.valueOf(it) }.getOrNull() }
+                if (mode != null) appearancePreferences.setMode(mode)
+            },
+        )
+    }
+    val speechLanguageSettingsRepository by lazy {
+        com.halo.app.ui.screens.settings.SpeechLanguageSettingsRepository(settingsRepository)
+    }
+    val settingsViewModel by lazy {
+        SettingsViewModel(runtimeSnapshotManager, aiProviderRouter, appearancePreferences, providerGraph.speechModelInventory)
+    }
+    val voiceSettingsViewModel by lazy {
+        VoiceSettingsViewModel(providerGraph.speechModelInventory, speechLanguageSettingsRepository, providerGraph)
+    }
     val activityViewModel by lazy { ActivityViewModel(runtimeSnapshotManager) }
     val notebookViewModel by lazy { NotebookViewModel(notebookUseCases, workspaceContext, conversationStore) }
     val devicesViewModel by lazy {
@@ -186,7 +260,8 @@ object ManualDependencyGraph {
             heyCyanDriverProvider = { heyCyanDriver },
             buddyBotHost = buddyBotHost,
             autoConnectCoordinator = deviceAutoConnectCoordinator,
-            captures = { hostGraph.captureCoordinator }
+            captures = { hostGraph.captureCoordinator },
+            audioPairingCoordinator = heyCyanAudioPairingCoordinator
         )
     }
     val pairingViewModel by lazy {
@@ -208,14 +283,39 @@ object ManualDependencyGraph {
             .build()
     }
 
+    val bluetoothAudioRouteMonitor by lazy {
+        com.halo.host.android.audio.AndroidBluetoothAudioRouteMonitor(
+            applicationContext,
+            assistantSpeechAudioAttributes
+        )
+    }
+
+    val heyCyanAudioPairingCoordinator by lazy {
+        com.halo.app.audio.HeyCyanAudioPairingCoordinator(
+            applicationContext,
+            storage,
+            bluetoothAudioRouteMonitor
+        )
+    }
+
     val speechOutputRouteController by lazy {
         SpeechOutputRouteController(
             applicationContext,
             heyCyanDriver,
-            com.halo.host.android.audio.AndroidBluetoothAudioRouteMonitor(
-                applicationContext,
-                assistantSpeechAudioAttributes
-            )
+            bluetoothAudioRouteMonitor,
+            heyCyanAudioPairingCoordinator
+        )
+    }
+
+    val androidTtsProvider by lazy {
+        AndroidTTSProvider(applicationContext, assistantSpeechAudioAttributes)
+    }
+
+    val routedSpeechPlaybackProvider by lazy {
+        com.halo.app.audio.RoutedSpeechPlaybackProvider(
+            applicationContext,
+            androidTtsProvider,
+            assistantSpeechAudioAttributes
         )
     }
 
@@ -223,7 +323,8 @@ object ManualDependencyGraph {
         HaloSpeechOutputCoordinator(
             eventBus = infra.eventBus,
             routeController = speechOutputRouteController,
-            ttsProvider = AndroidTTSProvider(applicationContext, assistantSpeechAudioAttributes),
+            ttsProvider = androidTtsProvider,
+            routedSpeechPlaybackProvider = routedSpeechPlaybackProvider,
             nativeResourceCoordinator = providerGraph.nativeResourceCoordinator
         )
     }

@@ -5,9 +5,53 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
-enum class WorkspaceLifecycle { ACTIVE, ARCHIVED, TRASHED }
+@JvmInline
+value class WorkspaceObjectId(val value: String)
+
+enum class WorkspaceObjectType {
+    NOTE,
+    FILE,
+    CONVERSATION,
+    MEMORY,
+    MEDIA,
+    ARTIFACT
+}
+
+enum class WorkspaceObjectSource {
+    USER_CREATED,
+    QUICK_CAPTURE,
+    IMPORT,
+    HALO_GENERATED,
+    DEVICE_CAPTURE,
+    CONVERSATION,
+    SHARE_INTENT
+}
+
+enum class WorkspaceObjectLifecycle { ACTIVE, ARCHIVED, TRASHED }
+typealias WorkspaceLifecycle = WorkspaceObjectLifecycle
 
 enum class WorkspaceSource { QUICK_NOTE, USER_CREATED, DEVICE_CAPTURE, IMPORT }
+
+data class WorkspaceProvenance(
+    val sourceType: WorkspaceObjectSource,
+    val sourceObjectId: String? = null,
+    val sourceDeviceId: String? = null,
+    val sourceRevision: String? = null,
+    val capturedAt: Long? = null
+)
+
+data class WorkspaceObject(
+    val id: WorkspaceObjectId,
+    val type: WorkspaceObjectType,
+    val title: String,
+    val createdAt: Long,
+    val updatedAt: Long,
+    val source: WorkspaceObjectSource,
+    val lifecycle: WorkspaceObjectLifecycle,
+    val inInbox: Boolean,
+    val contentRef: String,
+    val provenance: WorkspaceProvenance? = null
+)
 
 @Entity(
     tableName = "workspace_objects",

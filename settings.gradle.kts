@@ -30,6 +30,8 @@ dependencyResolutionManagement {
 rootProject.name = "Halo"
 
 include(":app")
+include(":benchmark")
+include(":baselineprofile")
 
 include(":runtime:kernel")
 include(":runtime:events")

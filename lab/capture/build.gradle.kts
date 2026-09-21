@@ -4,7 +4,7 @@ plugins {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    implementation(libs.kotlinx.coroutines.core)
     // NOTE: BLE capture types (BleCapture, CaptureSessionStore, etc.) currently
     // live in :drivers:heycyan:codec. They will be migrated here when a second
     // driver needs them. The dependency below is intentionally absent until

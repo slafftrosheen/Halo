@@ -6,7 +6,11 @@ import com.halo.runtime.cognition.context.WorkspaceContextSource
 import kotlinx.coroutines.flow.Flow
 
 @Entity(tableName = "working_set")
-data class WorkingSetEntry(@PrimaryKey val objectId: String)
+data class WorkingSetEntry(
+    @PrimaryKey val objectId: String,
+    val addedAt: Long = 0L,
+    val source: String = "USER"
+)
 
 @Entity(tableName = "object_provenance")
 data class ObjectProvenance(@PrimaryKey val objectId: String, val sourceId: String, val revision: String, val metadata: String)

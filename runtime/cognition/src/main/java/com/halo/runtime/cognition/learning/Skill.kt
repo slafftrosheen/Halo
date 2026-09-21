@@ -2,7 +2,10 @@ package com.halo.runtime.cognition.learning
 
 import java.util.UUID
 
-data class Skill(
+@Deprecated("Use SkillDescriptor for user-facing skills")
+typealias Skill = LearnedSkillPerformance
+
+data class LearnedSkillPerformance(
     val id: UUID = UUID.randomUUID(),
     val name: String,
     val capabilityId: String,

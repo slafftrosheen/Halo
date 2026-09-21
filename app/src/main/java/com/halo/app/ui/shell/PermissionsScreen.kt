@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Wifi
+import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -28,6 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -43,11 +45,15 @@ import com.halo.app.ui.workspace.HaloWorkspaceButton
 import com.halo.app.ui.workspace.HaloWorkspaceCard
 import com.halo.app.ui.workspace.HaloWorkspaceHeader
 import com.halo.app.ui.workspace.HaloWorkspaceSection
+import com.halo.app.backup.BackupLocationState
+import com.halo.app.backup.StorageAccessRepository
 
 @Composable
 fun PermissionsScreen(
     onRequestPermissions: () -> Unit,
-    onBack: (() -> Unit)? = null
+    onBack: (() -> Unit)? = null,
+    storageAccessRepository: StorageAccessRepository? = null,
+    onOpenStorageBackup: (() -> Unit)? = null,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -77,6 +83,7 @@ fun PermissionsScreen(
     }
     val wifiGranted = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
         granted(Manifest.permission.NEARBY_WIFI_DEVICES)
+    val storageState = storageAccessRepository?.state?.collectAsState()?.value
 
     Column(
         modifier = Modifier
@@ -118,6 +125,32 @@ fun PermissionsScreen(
             }
         }
 
+        Spacer(Modifier.height(20.dp))
+        HaloWorkspaceSection(title = "Storage & Backup") {
+            PermissionDetailRow(Icons.Default.Storage, "Workspace storage", "Private on this phone")
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            PermissionDetailRow(
+                Icons.Default.Storage,
+                "Backup folder",
+                when (storageState?.backupLocation) {
+                    is BackupLocationState.Available -> "User-selected folder · Connected"
+                    is BackupLocationState.PermissionLost -> "Access removed · Choose again"
+                    is BackupLocationState.Unavailable -> "Unavailable"
+                    else -> "Not selected"
+                }
+            )
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            PermissionDetailRow(Icons.Default.Storage, "Imported files", "Selected files only")
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            PermissionDetailRow(Icons.Default.Storage, "Media library", "No broad access")
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            PermissionDetailRow(Icons.Default.Storage, "All files access", "Not requested")
+        }
+        if (onOpenStorageBackup != null) {
+            Spacer(Modifier.height(12.dp))
+            HaloWorkspaceButton("Manage Storage & Backup", onOpenStorageBackup, Modifier.fillMaxWidth())
+        }
+
         if (!micGranted) {
             Spacer(Modifier.height(20.dp))
             HaloWorkspaceButton(
@@ -131,6 +164,17 @@ fun PermissionsScreen(
         }
 
         Spacer(Modifier.height(32.dp))
+    }
+}
+
+@Composable
+private fun PermissionDetailRow(icon: ImageVector, title: String, detail: String) {
+    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Column(Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.bodyLarge)
+            Text(detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     }
 }
 

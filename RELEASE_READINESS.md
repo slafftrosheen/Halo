@@ -1,13 +1,13 @@
 # Release readiness
 
-Status: NOT ESTABLISHED FOR CURRENT CHECKOUT. Reviewed 2026-09-18.
+Status: NOT ESTABLISHED FOR CURRENT CHECKOUT. Reviewed 2026-09-21.
 
 The previous RC1 GREEN/test/security claims are withdrawn as current evidence.
 The app declares versionName 1.0-RC1, versionCode 2 and targetSdk 36; labels do not
 establish release acceptance. No fresh build/test/hardware run was performed in this audit.
 
-Historical reports mention GATT status 147; present reproducibility needs a dated
-phone/OS/build/firmware result. See [audit](docs/engineering/DOCUMENTATION-AUDIT.md)
+The supplied 2026-09-21 hardware trace validates callback-serialized HeyCyan GATT writes and
+wearable microphone input. It does not validate an Android HeyCyan speaker endpoint. See [audit](docs/engineering/DOCUMENTATION-AUDIT.md)
 for CI, credential and capability issues.
 
 Required evidence:
@@ -17,6 +17,8 @@ Required evidence:
 - [ ] Physical advertised connection/media/speech behavior accepted.
 - [ ] Credential/backup/redaction/permission behavior reviewed.
 - [ ] Named-hardware frame/latency/memory/thermal/battery measurements.
+- [ ] Generate Macrobenchmark results and the app Baseline Profile on the target phone.
+- [ ] Approve CompanionDeviceManager audio association, verify the mapped endpoint, and confirm strict no-phone-fallback output.
 - [ ] Execute and record the concrete [real-device burn-in matrix](docs/04-architecture/REAL_DEVICE_BURN_IN.md), then complete the [hardware-week](docs/testing/7-day-hardware-test.md).
 - [ ] Known issues and actual Android signing/distribution process recorded.
 
@@ -38,3 +40,10 @@ The current source is prepared to test recovery rather than treating prerequisit
 
 These are implementation claims only. None of the release gates above should be checked until the
 referenced scenarios are executed on a named build/device and the evidence is recorded.
+
+## Batch 04 source boundary — 2026-09-21
+
+- Settings, Voice and Intelligence initialization no longer intentionally perform model/speech filesystem scans synchronously.
+- External wearable speech admission rejects insufficient voiced audio and repetitive/language-mismatch hallucination evidence before Blackboard publication.
+- BLE control and Bluetooth audio transport are separate states; an unrelated headset cannot satisfy exact association-address verification.
+- Macrobenchmark and Baseline Profile modules exist, but this pass deliberately records no generated measurement or profile artifact.

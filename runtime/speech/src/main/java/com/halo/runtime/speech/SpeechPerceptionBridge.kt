@@ -27,17 +27,18 @@ class SpeechPerceptionBridge(
                 val quality = SpeechRecognitionQuality(
                     confidence = event.confidence,
                     averageLogProbability = event.quality.averageTokenLogProbability,
-                    speechDurationMs = event.quality.voicedDurationMs
-                        ?: event.quality.audioDurationMs
-                        ?: 0L,
+                    audioDurationMs = event.quality.audioDurationMs ?: 0L,
+                    voicedDurationMs = event.quality.voicedDurationMs ?: 0L,
                     voicedRatio = event.quality.voicedRatio,
                     peakAmplitude = event.quality.peakAmplitude,
+                    language = event.locale,
+                    qualityEstimator = event.quality.qualityEstimator ?: "UNKNOWN",
                     source = event.input?.route?.toString() ?: "Phone"
                 )
 
                 val eval = gate.evaluate(event.text, quality)
                 if (eval is SpeechGateResult.Rejected) {
-                    println("SPEECH_RESULT_REJECTED capture=${event.input?.captureId} reason=${eval.reason} confidence=${event.confidence}")
+                    println("SPEECH_RESULT_REJECTED capture=${event.input?.captureId} reason=${eval.reason} durationMs=${quality.audioDurationMs} voicedMs=${quality.voicedDurationMs} voicedRatio=${quality.voicedRatio} estimator=${quality.qualityEstimator} confidence=${event.confidence}")
                     eventBus.publish(
                         SpeechRejected(
                             text = event.text,

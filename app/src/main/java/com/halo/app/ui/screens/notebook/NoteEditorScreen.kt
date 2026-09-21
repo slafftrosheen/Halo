@@ -23,6 +23,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
@@ -123,7 +124,85 @@ fun NoteEditorScreen(viewModel: NoteEditorViewModel, onBack: () -> Unit) {
                     .height(1.dp)
                     .background(MaterialTheme.colorScheme.outlineVariant)
             )
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(8.dp))
+
+            // Markdown & Action Toolbar
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                val helpers = listOf("#", "✓", "•", "1.", "Link")
+                helpers.forEach { symbol ->
+                    Surface(
+                        onClick = { viewModel.insertMarkdownHelper(symbol) },
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant
+                    ) {
+                        Text(
+                            text = symbol,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                Spacer(Modifier.weight(1f))
+                Surface(
+                    onClick = {
+                        viewModel.setTransformPreview("Summary of this note:\n- High level points outlined.\n- Ready for execution.")
+                    },
+                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer
+                ) {
+                    Text(
+                        text = "Ask Halo",
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            // Transformation Preview Box if active
+            state.transformPreview?.let { preview ->
+                Surface(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.secondaryContainer
+                ) {
+                    Column(Modifier.padding(12.dp)) {
+                        Text(
+                            text = "AI Transformation Preview",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = preview,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            TextButton(onClick = viewModel::applyPreviewReplace) {
+                                Text("Replace")
+                            }
+                            TextButton(onClick = viewModel::applyPreviewInsertBelow) {
+                                Text("Insert below")
+                            }
+                            TextButton(onClick = viewModel::discardPreview) {
+                                Text("Discard")
+                            }
+                        }
+                    }
+                }
+            }
 
             BasicTextField(
                 value = state.body,

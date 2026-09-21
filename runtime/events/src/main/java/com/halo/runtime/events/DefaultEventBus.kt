@@ -13,7 +13,9 @@ class DefaultEventBus : EventBus {
     private val stream = MutableSharedFlow<HaloEvent>(replay = 0, extraBufferCapacity = 128)
 
     override suspend fun publish(event: HaloEvent) {
-        println("[EVENT] ${event.javaClass.simpleName}: $event")
+        // Event payloads may contain transcripts, prompts, credentials, or media
+        // metadata. Production-safe diagnostics log identity, never toString().
+        println("[EVENT] type=${event.javaClass.simpleName} id=${event.id} timestamp=${event.timestamp}")
         stream.emit(event)
     }
 

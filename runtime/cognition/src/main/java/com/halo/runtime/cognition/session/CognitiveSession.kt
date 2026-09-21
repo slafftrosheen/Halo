@@ -114,7 +114,7 @@ class CognitiveSession(
                     scope.launch {
                         val fact = factResolver.resolve(intent)
                         if (fact != null) {
-                            println("[HALO-TXN] speech knowledgeId=$knowledgeId intent=${intent::class.simpleName} -> RESOLVED LOCALLY: ${fact.text}")
+                            println("[HALO-TXN] speech knowledgeId=$knowledgeId intent=${intent::class.simpleName} -> RESOLVED_LOCALLY")
                             
                             val requestId = UUID.randomUUID().toString()
                             eventBus.publish(CognitiveRequestStarted(requestId = requestId))
@@ -168,7 +168,6 @@ class CognitiveSession(
                 if (intent !is ConversationIntent && intent !is QuestionIntent) {
                     println(
                         "[HALO-TXN] speech knowledgeId=$knowledgeId " +
-                            "text=\"${interpretation.transcript}\" " +
                             "intent=${intent::class.simpleName} -> BYPASSING LLM (deterministic execution)"
                     )
                     return@collect
@@ -183,7 +182,7 @@ class CognitiveSession(
                 }
 
                 println(
-                    "[HALO-TXN] speech knowledgeId=$knowledgeId text=\"$text\" " +
+                    "[HALO-TXN] speech knowledgeId=$knowledgeId textLength=${text.length} " +
                         "intent=${intent::class.simpleName} delivery=$responseDelivery -> SUBMITTING TO LLM"
                 )
                 submit(

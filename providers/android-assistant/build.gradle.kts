@@ -12,7 +12,7 @@ android {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
+    implementation(libs.kotlinx.coroutines.core)
     implementation("androidx.core:core-ktx:1.12.0")
     implementation(project(":sdk:provider-sdk"))
 }

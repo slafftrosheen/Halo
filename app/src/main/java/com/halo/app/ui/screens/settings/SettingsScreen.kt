@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.SmartToy
+import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -81,6 +82,13 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             onClick = viewModel::openIntelligence
         )
         SettingsRow(
+            icon = Icons.Default.SmartToy,
+            tint = HaloPastelLilac,
+            title = "Skills & Actions",
+            subtitle = "Control agent capabilities",
+            onClick = viewModel::openSkills
+        )
+        SettingsRow(
             icon = Icons.Default.Mic,
             tint = HaloPastelLilac,
             title = "Speech",
@@ -100,6 +108,13 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             title = "Permissions",
             subtitle = "Android system access",
             onClick = viewModel::openPermissions
+        )
+        SettingsRow(
+            icon = Icons.Default.Storage,
+            tint = HaloPastelMint,
+            title = "Storage & Backup",
+            subtitle = "Halo Brain, Vault and restore",
+            onClick = viewModel::openStorageBackup
         )
 
         Spacer(Modifier.height(18.dp))

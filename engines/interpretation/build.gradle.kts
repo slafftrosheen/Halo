@@ -11,7 +11,6 @@ dependencies {
     implementation(project(":engines:speech"))
     implementation(project(":libraries:halo-cognition-language"))
     implementation(project(":runtime:kernel"))
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    implementation(libs.kotlinx.coroutines.core)
     testImplementation(libs.junit)
 }
-

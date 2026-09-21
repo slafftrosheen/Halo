@@ -37,10 +37,8 @@ class AndroidProviderFactory(
         // expose an explicit unavailable provider instead of silently falling
         // back to Android SpeechRecognizer, which can invoke an OEM/system
         // recognition service and take microphone ownership outside Halo's path.
-        val sherpaModelDirectory = File(
-            context.filesDir,
-            "speech/${SherpaSpeechModelCatalog.WHISPER_TINY_DIRECTORY}"
-        )
+        val speechRoot = com.halo.app.storage.haloStorageLayout(context).speechModels
+        val sherpaModelDirectory = File(speechRoot, SherpaSpeechModelCatalog.WHISPER_TINY_DIRECTORY)
         val speechRecognition: SpeechRecognitionProvider = ReloadableSpeechRecognitionProvider(
             modelDirectory = sherpaModelDirectory,
             getLanguage = {
@@ -52,10 +50,7 @@ class AndroidProviderFactory(
             nativeResourceCoordinator = nativeResourceCoordinator
         )
 
-        val sherpaKwsDirectory = File(
-            context.filesDir,
-            "speech/${SherpaSpeechModelCatalog.KWS_ENGLISH_DIRECTORY}"
-        )
+        val sherpaKwsDirectory = File(speechRoot, SherpaSpeechModelCatalog.KWS_ENGLISH_DIRECTORY)
         val sherpaKwsKeywords = File(
             sherpaKwsDirectory,
             SherpaSpeechModelCatalog.KWS_ENGLISH_KEYWORDS_FILE

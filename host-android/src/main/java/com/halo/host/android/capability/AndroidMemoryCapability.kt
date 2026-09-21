@@ -6,6 +6,8 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import com.halo.host.android.reminder.HaloReminderReceiver
+import com.halo.host.android.reminder.ReminderRecord
+import com.halo.host.android.reminder.ReminderRecordStore
 import com.halo.runtime.cognition.Capability
 import com.halo.runtime.cognition.MemoryTask
 import com.halo.runtime.cognition.Outcome
@@ -57,7 +59,9 @@ class AndroidMemoryCapability(
                 putExtra("title", "Halo Reminder")
                 putExtra("text", spec.message)
             }
-            val stableId = "${spec.message}|$triggerTime".hashCode()
+            val reminderId = "${spec.message}|$triggerTime"
+            intent.putExtra("reminder_id", reminderId)
+            val stableId = reminderId.hashCode()
             val pendingIntent = PendingIntent.getBroadcast(
                 context,
                 stableId,
@@ -70,6 +74,7 @@ class AndroidMemoryCapability(
             } else {
                 alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
             }
+            ReminderRecordStore(context).save(ReminderRecord(reminderId, spec.message, triggerTime, spec.precision.name))
             Outcome.Success("Reminder set")
         } catch (e: Exception) {
             Outcome.RetryableFailure(e.message ?: "Failed to set reminder")

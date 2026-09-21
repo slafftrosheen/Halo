@@ -23,6 +23,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -45,6 +49,16 @@ fun HeyCyanControlScreen(
     viewModel: DevicesViewModel,
     onBack: () -> Unit
 ) {
+    val audioPairing by viewModel.audioPairingState.collectAsState()
+    val audioAssociationLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { result -> viewModel.onAudioAssociationResult(result.resultCode, result.data) }
+    LaunchedEffect(deviceId) {
+        viewModel.restoreAudioAssociation(deviceId)
+        viewModel.audioConfirmationRequests.collect { sender ->
+            audioAssociationLauncher.launch(IntentSenderRequest.Builder(sender).build())
+        }
+    }
     val media by (viewModel.mediaCoordinator()?.state ?: kotlinx.coroutines.flow.MutableStateFlow(com.halo.app.capture.WearableCaptureStatus())).collectAsState()
     val uiState by viewModel.uiState.collectAsState()
     val device = uiState.devices.find { it.id == deviceId }
@@ -216,6 +230,34 @@ fun HeyCyanControlScreen(
 
         Spacer(Modifier.height(20.dp))
 
+        HaloWorkspaceSection(title = "Audio") {
+            val audioStatus = when (val state = audioPairing) {
+                com.halo.app.audio.HeyCyanAudioPairingState.Unknown -> "Checking…"
+                com.halo.app.audio.HeyCyanAudioPairingState.NotAssociated -> "Not paired"
+                com.halo.app.audio.HeyCyanAudioPairingState.Discovering -> "Finding audio device…"
+                com.halo.app.audio.HeyCyanAudioPairingState.AwaitingUserConfirmation -> "Waiting for approval"
+                is com.halo.app.audio.HeyCyanAudioPairingState.Bonding -> "Pairing with ${state.association.deviceName ?: "audio device"}"
+                is com.halo.app.audio.HeyCyanAudioPairingState.Associated -> "Paired · waiting for media profile"
+                is com.halo.app.audio.HeyCyanAudioPairingState.AudioConnected -> "Connected · ${state.endpoint.type.name.replace('_', ' ')}"
+                is com.halo.app.audio.HeyCyanAudioPairingState.Failed -> state.message
+            }
+            DeviceRow("Control", if (isConnected) "Connected · BLE" else connectionState)
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            DeviceRow("Audio", audioStatus)
+            if (audioPairing is com.halo.app.audio.HeyCyanAudioPairingState.NotAssociated ||
+                audioPairing is com.halo.app.audio.HeyCyanAudioPairingState.Failed
+            ) {
+                HaloWorkspaceButton(
+                    text = "Connect audio",
+                    onClick = { viewModel.connectAudio(deviceId) },
+                    enabled = isReady,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+
+        Spacer(Modifier.height(20.dp))
+
         HaloWorkspaceSection(title = "Device state") {
             DeviceRow("Connection", connectionState)
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -234,7 +276,14 @@ fun HeyCyanControlScreen(
 
         HaloWorkspaceSection(title = "Halo speech") {
             DeviceRow("Input", "Physical glasses activation automatically uses Halo")
-            DeviceRow("Output", "Phone � Android speaker")
+            DeviceRow(
+                "Output",
+                if (audioPairing is com.halo.app.audio.HeyCyanAudioPairingState.AudioConnected) {
+                    "Verified HeyCyan audio endpoint"
+                } else {
+                    "Phone · Android speaker"
+                }
+            )
             DeviceRow("Input policy", "An active turn owns input; activation during playback is ignored")
         }
         Spacer(Modifier.height(20.dp))

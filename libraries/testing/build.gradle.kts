@@ -4,11 +4,10 @@ plugins {
     }
 
 dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    implementation(libs.kotlinx.coroutines.core)
     implementation(project(":libraries:common"))
     implementation(project(":sdk:runtime-sdk"))
     implementation(project(":sdk:driver-sdk"))
     implementation(project(":sdk:provider-sdk"))
     implementation(project(":sdk:host-sdk"))
 }
-

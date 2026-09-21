@@ -1,0 +1,10 @@
+id: halo.device
+name: Device controls
+description: Control local device hardware like volume and flashlight.
+category: device
+
+tools:
+  - halo_volume
+  - halo_flashlight
+
+risk: reversible

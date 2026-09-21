@@ -1,6 +1,6 @@
 # HeyCyan implementation status
 
-Status: CURRENT SOURCE MAP. Reviewed 2026-09-18.
+Status: CURRENT SOURCE MAP. Reviewed 2026-09-21.
 This describes code paths, not newly verified device behavior.
 
 ## Current sources
@@ -43,7 +43,22 @@ and provenance. Vendor documentation is evidence about the vendor, not proof tha
 Halo build or a connected device implements every command.
 
 See [hardware confirmation matrix](HARDWARE_CONFIRMATION_MATRIX.md) for planned tests.
-No physical acceptance or current test pass is certified by this review.
+The supplied 2026-09-21 trace physically validates callback-gated GATT command serialization and
+HeyCyan microphone transport. Android speaker routing remains unvalidated.
+
+## Audio association boundary
+
+`HeyCyanAudioPairingCoordinator` uses CompanionDeviceManager approval, public bonding APIs,
+persistent BLE-control-to-audio identity mapping, bond observation and continuous audio endpoint
+observation. Route acceptance requires the mapped Bluetooth address; a newly appearing or unrelated
+headset is not sufficient. The Devices detail view reports BLE control and audio separately.
+
+This source implementation is not evidence that the media profile appears on the target hardware.
+
+Wearable speech output uses a separate strict PCM prototype: Android TTS synthesizes chunks without
+playing them, AudioTrack requests the mapped device, silent probe audio establishes `routedDevice`,
+and only an exact address match permits `TtsStarted` and audible chunks. Route loss during playback
+fails the utterance. Normal phone speech retains the ordinary Android TTS path.
 
 
 ## Current semantic control path

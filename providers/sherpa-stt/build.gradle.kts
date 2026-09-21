@@ -13,7 +13,7 @@ android {
 
 dependencies {
     api("com.github.k2-fsa.sherpa-onnx:sherpa-onnx:v1.13.8")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    implementation(libs.kotlinx.coroutines.core)
     implementation(project(":sdk:runtime-sdk"))
     implementation(project(":sdk:provider-sdk"))
     implementation(project(":sdk:host-sdk"))

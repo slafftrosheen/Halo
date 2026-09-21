@@ -4,11 +4,10 @@ plugins {
     }
 
 dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    implementation(libs.kotlinx.coroutines.core)
     implementation(project(":runtime:cognition"))
     api(project(":sdk:runtime-sdk"))
     api(project(":sdk:driver-sdk"))
     api(project(":sdk:provider-sdk"))
     api(project(":runtime:plugins"))
 }
-

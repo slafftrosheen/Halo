@@ -1,16 +1,17 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-   Sample data extraction rules file; uncomment and customize as necessary.
-   See https://developer.android.com/about/versions/12/backup-restore#xml-changes
-   for details.
--->
+<?xml version="1.0" encoding="utf-8"?>
 <data-extraction-rules>
-    <cloud-backup>
-        <!-- Use <include> and <exclude> to control what is backed up. -->
+    <cloud-backup disableIfNoEncryptionCapabilities="true">
+        <include domain="database" path="halo.db" />
+        <include domain="file" path="datastore/" />
+        <include domain="sharedpref" path="halo_appearance.xml" />
+        <exclude domain="file" path="workspace/owned/" />
+        <exclude domain="file" path="workspace/artifacts/" />
+        <exclude domain="file" path="captures/" />
     </cloud-backup>
-    <!--
     <device-transfer>
-        <include .../>
-        <exclude .../>
+        <include domain="database" path="halo.db" />
+        <include domain="file" path="datastore/" />
+        <include domain="sharedpref" path="halo_appearance.xml" />
+        <exclude domain="file" path="captures/" />
     </device-transfer>
-    -->
 </data-extraction-rules>
