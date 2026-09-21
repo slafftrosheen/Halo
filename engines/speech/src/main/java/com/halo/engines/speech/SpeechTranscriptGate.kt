@@ -14,6 +14,7 @@ data class SpeechRecognitionQuality(
     val noSpeechProbability: Float? = null,
     val averageLogProbability: Float? = null,
     val speechDurationMs: Long = 0L,
+    val voicedRatio: Float? = null,
     val peakAmplitude: Int? = null,
     val source: String = "unknown"
 )
@@ -31,6 +32,10 @@ class SpeechTranscriptGate {
         val trimmed = transcript.trim()
         if (trimmed.isEmpty()) {
             return SpeechGateResult.Rejected(SpeechRejectionReason.EMPTY, quality)
+        }
+
+        if (trimmed.none(Char::isLetterOrDigit)) {
+            return SpeechGateResult.Rejected(SpeechRejectionReason.NON_SPEECH, quality)
         }
 
         // Parentheses or bracketed sound annotations e.g. (door closing), [laughter]
@@ -52,6 +57,15 @@ class SpeechTranscriptGate {
 
         if (quality.confidence != null && quality.confidence < 0.20f) {
             return SpeechGateResult.Rejected(SpeechRejectionReason.LOW_CONFIDENCE, quality)
+        }
+
+
+        if (quality.peakAmplitude != null && quality.peakAmplitude == 0) {
+            return SpeechGateResult.Rejected(SpeechRejectionReason.NON_SPEECH, quality)
+        }
+
+        if (quality.voicedRatio != null && quality.voicedRatio <= 0f) {
+            return SpeechGateResult.Rejected(SpeechRejectionReason.NON_SPEECH, quality)
         }
 
         return SpeechGateResult.Accepted(trimmed, quality)

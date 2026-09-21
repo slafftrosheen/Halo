@@ -24,6 +24,12 @@ data class TimeEntity(
     override val confidence: Float
 ) : Entity
 
+data class ReminderEntity(
+    val message: String,
+    val temporalExpression: String?,
+    override val confidence: Float
+) : Entity
+
 data class DateEntity(
     val expression: String,
     override val confidence: Float

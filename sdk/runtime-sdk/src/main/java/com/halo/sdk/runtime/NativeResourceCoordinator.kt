@@ -21,6 +21,12 @@ enum class NativeResourceState {
     IN_USE
 }
 
+enum class NativeNextUseHint {
+    EXPECT_ASR,
+    EXPECT_LLM,
+    NONE
+}
+
 data class NativeResourceSnapshot(
     val ownerId: String,
     val kind: NativeResourceKind,
@@ -52,6 +58,25 @@ class NativeResourceCoordinator {
     private val expiry = mutableMapOf<NativeResourceOwner, Job>()
     private val _budget = MutableStateFlow(NativeResourceBudget())
     val budget: StateFlow<NativeResourceBudget> = _budget.asStateFlow()
+    private val _nextUseHint = MutableStateFlow(NativeNextUseHint.NONE)
+    val nextUseHint: StateFlow<NativeNextUseHint> = _nextUseHint.asStateFlow()
+
+    suspend fun hint(next: NativeNextUseHint) = mutex.withLock {
+        _nextUseHint.value = next
+        val idleKind = when (next) {
+            NativeNextUseHint.EXPECT_ASR -> NativeResourceKind.HEAVY_LLM
+            NativeNextUseHint.EXPECT_LLM -> NativeResourceKind.HEAVY_ASR
+            NativeNextUseHint.NONE -> null
+        }
+        if (idleKind != null && !_budget.value.allowConcurrentHeavyweights) {
+            active.filter { it.nativeResourceKind == idleKind && it.releaseIfIdle() }
+                .forEach { owner ->
+                    active -= owner
+                    expiry.remove(owner)?.cancel()
+                    publish(owner, NativeResourceState.RELEASED, "next use hint=$next")
+                }
+        }
+    }
 
     suspend fun updateBudget(value: NativeResourceBudget) {
         _budget.value = value

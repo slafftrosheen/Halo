@@ -4,6 +4,7 @@ import android.content.Context
 import android.media.AudioDeviceCallback
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
+import android.media.AudioAttributes
 import android.os.Build
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
@@ -20,14 +21,24 @@ import kotlinx.coroutines.withTimeoutOrNull
 enum class BluetoothAudioEndpointType {
     A2DP,
     SCO,
-    BLE_HEADSET
+    BLE_HEADSET,
+    BLE_SPEAKER
+}
+
+enum class RouteEvidence {
+    PERSISTED_EXACT_ADDRESS,
+    COMPANION_ASSOCIATION,
+    NEW_ENDPOINT_AFTER_ROUTE_COMMAND,
+    NAME_HEURISTIC,
+    UNKNOWN
 }
 
 data class BluetoothAudioEndpoint(
     val address: String?,
     val name: String?,
     val type: BluetoothAudioEndpointType,
-    val connected: Boolean
+    val connected: Boolean,
+    val routeEvidence: RouteEvidence = RouteEvidence.UNKNOWN
 )
 
 interface BluetoothAudioRouteMonitor {
@@ -40,7 +51,11 @@ interface BluetoothAudioRouteMonitor {
 }
 
 class AndroidBluetoothAudioRouteMonitor(
-    private val context: Context
+    private val context: Context,
+    private val audioAttributes: AudioAttributes = AudioAttributes.Builder()
+        .setUsage(AudioAttributes.USAGE_ASSISTANT)
+        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+        .build()
 ) : BluetoothAudioRouteMonitor {
 
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
@@ -66,7 +81,11 @@ class AndroidBluetoothAudioRouteMonitor(
     fun refreshEndpoints() {
         val list = mutableListOf<BluetoothAudioEndpoint>()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val outputs = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
+            val outputs = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                audioManager.getAudioDevicesForAttributes(audioAttributes).toTypedArray()
+            } else {
+                audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
+            }
             for (device in outputs) {
                 val endpointType = when (device.type) {
                     AudioDeviceInfo.TYPE_BLUETOOTH_A2DP -> BluetoothAudioEndpointType.A2DP
@@ -74,6 +93,8 @@ class AndroidBluetoothAudioRouteMonitor(
                     else -> {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && device.type == AudioDeviceInfo.TYPE_BLE_HEADSET) {
                             BluetoothAudioEndpointType.BLE_HEADSET
+                        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && device.type == AudioDeviceInfo.TYPE_BLE_SPEAKER) {
+                            BluetoothAudioEndpointType.BLE_SPEAKER
                         } else null
                     }
                 }

@@ -26,6 +26,12 @@ class SpeechPerceptionBridge(
             eventBus.observe(SpeechRecognized::class.java).collect { event ->
                 val quality = SpeechRecognitionQuality(
                     confidence = event.confidence,
+                    averageLogProbability = event.quality.averageTokenLogProbability,
+                    speechDurationMs = event.quality.voicedDurationMs
+                        ?: event.quality.audioDurationMs
+                        ?: 0L,
+                    voicedRatio = event.quality.voicedRatio,
+                    peakAmplitude = event.quality.peakAmplitude,
                     source = event.input?.route?.toString() ?: "Phone"
                 )
 
@@ -54,13 +60,16 @@ class SpeechPerceptionBridge(
                     source = Source.MICROPHONE,
                     sourceDeviceId = (event.input?.route as? SpeechInputRoute.Wearable)?.deviceId,
                     origin = ObservationOrigin(event.input?.source ?: com.halo.sdk.host.ObservationSource.AndroidPhoneMic),
-                    confidence = accepted.quality.confidence ?: 0.8f,
+                    confidence = accepted.quality.confidence
+                        ?: UNKNOWN_RECOGNITION_OBSERVATION_CONFIDENCE,
                     payload = SpeechRecognizedPayload(accepted.transcript, event.locale),
-                    metadata = mapOf(
-                        "engine" to "SpeechPerceptionBridge",
-                        "captureId" to (event.input?.captureId ?: event.id),
-                        "inputRoute" to (event.input?.route ?: SpeechInputRoute.Phone)
-                    )
+                    metadata = buildMap {
+                        put("engine", "SpeechPerceptionBridge")
+                        put("captureId", event.input?.captureId ?: event.id)
+                        put("inputRoute", event.input?.route ?: SpeechInputRoute.Phone)
+                        event.confidence?.let { put("recognitionConfidence", it) }
+                        put("recognitionQuality", event.quality)
+                    }
                 )
 
                 // Publish to EventBus for reactive observation
@@ -77,5 +86,9 @@ class SpeechPerceptionBridge(
     fun stop() {
         bridgeJob?.cancel()
         bridgeJob = null
+    }
+
+    private companion object {
+        const val UNKNOWN_RECOGNITION_OBSERVATION_CONFIDENCE = 0.5f
     }
 }

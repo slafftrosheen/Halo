@@ -9,6 +9,7 @@ class InterpretationEngine(
         com.halo.engines.interpretation.internal.RulePipeline(
             com.halo.engines.interpretation.internal.RuleRegistry().apply {
                 registerContextRule(com.halo.engines.interpretation.rules.ContactRule())
+                registerContextRule(com.halo.engines.interpretation.rules.ReminderRule())
                 registerContextRule(com.halo.engines.interpretation.rules.TimeRule())
                 registerContextRule(com.halo.engines.interpretation.rules.SpeechRule())
             }

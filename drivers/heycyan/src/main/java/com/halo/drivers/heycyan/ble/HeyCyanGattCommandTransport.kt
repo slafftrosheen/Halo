@@ -2,8 +2,7 @@ package com.halo.drivers.heycyan.ble
 
 import com.halo.drivers.heycyan.debug.HeyCyanLogger
 import com.halo.drivers.heycyan.protocol.HeyCyanCommandTransport
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import android.bluetooth.BluetoothGattCharacteristic
 import java.util.UUID
 
 /**
@@ -19,9 +18,7 @@ class HeyCyanGattCommandTransport(
     private val commandCharacteristic: UUID?,
 ) : HeyCyanCommandTransport {
 
-    private val writeMutex = Mutex()
-
-    override suspend fun send(bytes: ByteArray): Result<Unit> = writeMutex.withLock {
+    override suspend fun send(bytes: ByteArray): Result<Unit> {
         val characteristicUuid = commandCharacteristic
             ?: return Result.failure(
                 IllegalStateException(
@@ -35,17 +32,18 @@ class HeyCyanGattCommandTransport(
             "GATT TX uuid=$characteristicUuid bytes=$bytesHex"
         )
 
-        val success = gatt.write(
+        val result = gatt.writeCharacteristic(
             characteristicUuid = characteristicUuid,
             payload = bytes,
+            writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
         )
 
-        return if (success) {
+        return if (result is GattOperationResult.Success) {
             Result.success(Unit)
         } else {
             Result.failure(
                 IllegalStateException(
-                    "HeyCyan GATT command write failed for verified characteristic $characteristicUuid"
+                    "HeyCyan GATT command write failed for verified characteristic $characteristicUuid: $result"
                 )
             )
         }

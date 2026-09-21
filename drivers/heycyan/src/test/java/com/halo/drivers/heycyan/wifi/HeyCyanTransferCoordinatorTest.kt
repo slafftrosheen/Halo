@@ -85,7 +85,7 @@ class HeyCyanTransferCoordinatorTest {
     @Test
     fun transferRequiresCredentials() = runTest {
         // State has no Wi-Fi credentials set
-        val result = coordinator.synchronizeManifest()
+        val result = coordinator.synchronizeManifest("device")
         assertTrue(result.isFailure)
         val state = coordinator.state.value
         assertTrue(state is HeyCyanTransferState.WaitingForCredentials)
@@ -98,7 +98,7 @@ class HeyCyanTransferCoordinatorTest {
             com.halo.drivers.heycyan.protocol.HeyCyanEvent.WiFiHotspotReady("TestSSID", "TestPass")
         )
 
-        val result = coordinator.synchronizeManifest()
+        val result = coordinator.synchronizeManifest("device")
         assertTrue(result.isSuccess)
 
         // Verify BLE command issued to enter transfer mode (SetMode(TRANSFER))
@@ -114,7 +114,7 @@ class HeyCyanTransferCoordinatorTest {
         )
         wifiConnection.shouldFailConnect = true
 
-        val result = coordinator.synchronizeManifest()
+        val result = coordinator.synchronizeManifest("device")
         assertTrue(result.isFailure)
         val state = coordinator.state.value
         assertTrue(state is HeyCyanTransferState.Failed)
@@ -128,7 +128,7 @@ class HeyCyanTransferCoordinatorTest {
         )
         fakeApi.manifestToReturn = Result.failure(RuntimeException("HTTP 500 Server Error"))
 
-        val result = coordinator.synchronizeManifest()
+        val result = coordinator.synchronizeManifest("device")
         assertTrue(result.isFailure)
         val state = coordinator.state.value
         assertTrue(state is HeyCyanTransferState.Failed)

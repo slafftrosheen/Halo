@@ -12,6 +12,8 @@ data object NavigateIntent : Intent
 data object PlayIntent : Intent
 data object PauseIntent : Intent
 data object ReminderIntent : Intent
+data object SetAlarmIntent : Intent
+data object ShowAlarmsIntent : Intent
 data object SearchIntent : Intent
 data object QuestionIntent : Intent
 data object ConversationIntent : Intent

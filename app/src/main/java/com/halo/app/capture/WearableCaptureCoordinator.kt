@@ -1,6 +1,7 @@
 package com.halo.app.capture
 
 import android.content.Context
+import android.util.Log
 import com.halo.drivers.heycyan.RealHeyCyanDriver
 import com.halo.drivers.heycyan.protocol.HeyCyanEvent
 import com.halo.drivers.heycyan.wifi.*
@@ -16,6 +17,11 @@ import java.net.InetAddress
 import java.util.UUID
 
 data class WearableCaptureStatus(val busy: Boolean = false, val message: String = "Ready", val received: Int = 0, val lastSync: Long? = null)
+data class PendingCaptureOperation(
+    val operationId: String,
+    val deviceId: String,
+    val requestedAt: Long
+)
 
 /** Existing verified transport composition. Receipt, rather than BLE write, establishes success. */
 class WearableCaptureCoordinator(private val context: Context, private val driver: RealHeyCyanDriver,
@@ -24,6 +30,8 @@ class WearableCaptureCoordinator(private val context: Context, private val drive
     private val _state = MutableStateFlow(WearableCaptureStatus())
     val state = _state.asStateFlow()
     private val imported = context.getSharedPreferences("received_wearable_media", Context.MODE_PRIVATE)
+    private val pendingCaptureStore = context.getSharedPreferences("pending_wearable_capture", Context.MODE_PRIVATE)
+    private var pendingCaptureOperation: PendingCaptureOperation? = loadPendingCapture()
     private val connector = HeyCyanWifiConnector(context)
     private val wifiState = MutableStateFlow(WifiConnectionState.DISCONNECTED)
     private val wifi = object : HeyCyanWifiConnection {
@@ -73,6 +81,8 @@ class WearableCaptureCoordinator(private val context: Context, private val drive
                 events.publish(ActionReceipt(operationId = id, category = "Vision", title = "Wearable capture", stage = "Dispatched", detail = "Photo command sent; image receipt pending", sourceDeviceId = device))
             }
             driver.capabilityController.execute(HeyCyanOperation.GetMediaInventory).getOrThrow()
+            Log.i("HaloMedia", "MEDIA_INVENTORY_REQUESTED operation=$id device=$device")
+            pendingCaptureOperation = PendingCaptureOperation(id, device, System.currentTimeMillis()).also(::persistPendingCapture)
             _state.value = _state.value.copy(message = "Capture requested. Sync media to receive the image.")
         } catch (error: Exception) {
             if (error is CancellationException) throw error
@@ -85,30 +95,30 @@ class WearableCaptureCoordinator(private val context: Context, private val drive
             pendingSync.value = true
             return
         }
-        val id = UUID.randomUUID().toString()
         val device = driver.activeDeviceId
+        val id = pendingCaptureOperation
+            ?.takeIf { it.deviceId == device }
+            ?.operationId
+            ?: UUID.randomUUID().toString()
         try {
             requireNotNull(device) { "No connected HeyCyan device" }
-            _state.value = _state.value.copy(busy = true, message = "Entering transfer mode")
-            driver.capabilityController.execute(HeyCyanOperation.EnterWifiTransferMode).getOrThrow()
-
             val credentialsProvider = DeviceStateWifiCredentialProvider(driver.deviceState)
             _state.value = _state.value.copy(busy = true, message = "Awaiting transfer credentials")
             events.publish(ActionReceipt(operationId = id, category = "Vision", title = "Media synchronization", stage = "Pending", detail = "Awaiting transfer credentials", sourceDeviceId = device))
-            
-            val credentials = credentialsProvider.await(device, 30_000L)
-            if (credentials == null) {
-                pendingSync.value = true
-                _state.value = _state.value.copy(busy = false, message = "Awaiting transfer credentials")
-                return
-            }
 
-            _state.value = _state.value.copy(busy = true, message = "Transfer ready")
-            events.publish(ActionReceipt(operationId = id, category = "Vision", title = "Media synchronization", stage = "Transfer ready", detail = "Credentials acquired", sourceDeviceId = device))
             var api: HeyCyanMediaApi? = null
             val transfer = HeyCyanTransferCoordinator(driver.capabilityController, credentialsProvider, wifi,
                 HeyCyanMediaApiFactory { address -> DefaultHeyCyanMediaApi(address).also { api = it } })
-            transfer.synchronizeManifest().getOrThrow()
+            transfer.synchronizeManifest(device).getOrElse { error ->
+                if (transfer.state.value is HeyCyanTransferState.WaitingForCredentials) {
+                    pendingSync.value = true
+                    _state.value = _state.value.copy(busy = false, message = "Awaiting transfer credentials")
+                    return
+                }
+                throw error
+            }
+            _state.value = _state.value.copy(busy = true, message = "Transfer ready")
+            events.publish(ActionReceipt(operationId = id, category = "Vision", title = "Media synchronization", stage = "Transfer ready", detail = "Credentials acquired", sourceDeviceId = device))
             val activeApi = checkNotNull(api)
             val deviceKey = UUID.nameUUIDFromBytes(device.toByteArray()).toString()
             val repository = FileHeyCyanMediaRepository(File(context.filesDir, "captures/transfer/$deviceKey"))
@@ -136,10 +146,31 @@ class WearableCaptureCoordinator(private val context: Context, private val drive
             check(result.failed == 0) { "${result.failed} media downloads failed; received images remain in Inbox" }
             _state.value = WearableCaptureStatus(message = "$received images received in Inbox", received = received, lastSync = System.currentTimeMillis())
             events.publish(ActionReceipt(operationId = id, category = "Vision", title = "Media synchronization", stage = "Completed", detail = _state.value.message, sourceDeviceId = device))
+            if (pendingCaptureOperation?.operationId == id) clearPendingCapture()
         } catch (error: Exception) {
             if (error is CancellationException) throw error
             _state.value = _state.value.copy(message = error.message ?: "Media transfer failed")
             events.publish(ActionReceipt(operationId = id, category = "Vision", title = "Media synchronization", stage = "Failed", detail = _state.value.message, sourceDeviceId = device))
         } finally { withContext(NonCancellable) { wifi.disconnect() }; _state.value = _state.value.copy(busy = false); mutex.unlock() }
+    }
+
+    private fun loadPendingCapture(): PendingCaptureOperation? {
+        val operationId = pendingCaptureStore.getString("operationId", null) ?: return null
+        val deviceId = pendingCaptureStore.getString("deviceId", null) ?: return null
+        val requestedAt = pendingCaptureStore.getLong("requestedAt", 0L)
+        return PendingCaptureOperation(operationId, deviceId, requestedAt)
+    }
+
+    private fun persistPendingCapture(operation: PendingCaptureOperation) {
+        pendingCaptureStore.edit()
+            .putString("operationId", operation.operationId)
+            .putString("deviceId", operation.deviceId)
+            .putLong("requestedAt", operation.requestedAt)
+            .apply()
+    }
+
+    private fun clearPendingCapture() {
+        pendingCaptureOperation = null
+        pendingCaptureStore.edit().clear().apply()
     }
 }

@@ -192,7 +192,9 @@ class PlanningEngine(
                     ?: return unsupportedGoal(goal)
 
                 DeviceTask(
-                    action = payload.action
+                    action = payload.action,
+                    parameters = if (payload.target.isBlank()) emptyMap()
+                    else mapOf("target" to payload.target)
                 )
             }
 

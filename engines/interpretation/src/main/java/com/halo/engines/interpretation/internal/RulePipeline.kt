@@ -31,7 +31,8 @@ class RulePipeline(
     suspend fun execute(context: InterpretationContext): InterpretationResult {
         val matches = mutableListOf<RuleMatch>()
         val executions = mutableListOf<RuleExecution>()
-        var maxConfidence = 0f
+        var maxIntentConfidence = 0f
+        var maxEntityConfidence = 0f
         var strategy: InterpretationStrategy = InterpretationStrategy.Deterministic
 
         // 1. Hard Rules
@@ -40,14 +41,15 @@ class RulePipeline(
             executions.add(execution)
             if (match != null) {
                 matches.add(match)
-                if (match.confidence > maxConfidence) {
-                    maxConfidence = match.confidence
+                if (match.intent != null && match.confidence > maxIntentConfidence) {
+                    maxIntentConfidence = match.confidence
                     strategy = InterpretationStrategy.Deterministic
                 }
+                if (match.entities.isNotEmpty()) maxEntityConfidence = maxOf(maxEntityConfidence, match.confidence)
             }
         }
         
-        if (maxConfidence >= 0.90f) {
+        if (maxIntentConfidence >= 0.90f) {
             return InterpretationResult(
                 interpretation = buildInterpretation(context, matches, strategy),
                 matches = matches.sortedForMerge(),
@@ -61,14 +63,15 @@ class RulePipeline(
             executions.add(execution)
             if (match != null) {
                 matches.add(match)
-                if (match.confidence > maxConfidence) {
-                    maxConfidence = match.confidence
+                if (match.intent != null && match.confidence > maxIntentConfidence) {
+                    maxIntentConfidence = match.confidence
                     strategy = InterpretationStrategy.Contextual
                 }
+                if (match.entities.isNotEmpty()) maxEntityConfidence = maxOf(maxEntityConfidence, match.confidence)
             }
         }
 
-        if (maxConfidence >= 0.50f) {
+        if (maxIntentConfidence >= 0.50f) {
             return InterpretationResult(
                 interpretation = buildInterpretation(context, matches, strategy),
                 matches = matches.sortedForMerge(),
@@ -82,10 +85,11 @@ class RulePipeline(
             executions.add(execution)
             if (match != null) {
                 matches.add(match)
-                if (match.confidence > maxConfidence) {
-                    maxConfidence = match.confidence
+                if (match.intent != null && match.confidence > maxIntentConfidence) {
+                    maxIntentConfidence = match.confidence
                     strategy = InterpretationStrategy.Semantic
                 }
+                if (match.entities.isNotEmpty()) maxEntityConfidence = maxOf(maxEntityConfidence, match.confidence)
             }
         }
 

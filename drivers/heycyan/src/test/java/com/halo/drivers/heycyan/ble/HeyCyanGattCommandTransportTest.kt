@@ -23,10 +23,14 @@ class HeyCyanGattCommandTransportTest {
         var lastWrittenUuid: UUID? = null
         var lastWrittenPayload: ByteArray? = null
 
-        override fun write(characteristicUuid: UUID, payload: ByteArray): Boolean {
+        override suspend fun writeCharacteristic(
+            characteristicUuid: UUID,
+            payload: ByteArray,
+            writeType: Int
+        ): GattOperationResult {
             lastWrittenUuid = characteristicUuid
             lastWrittenPayload = payload.copyOf()
-            return true
+            return GattOperationResult.Success(0, 1L)
         }
     }
 

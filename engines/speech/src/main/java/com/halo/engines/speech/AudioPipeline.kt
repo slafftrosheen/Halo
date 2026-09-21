@@ -30,6 +30,7 @@ class AudioPipeline(
     private val sttProvider: SpeechRecognitionProvider,
     private val eventBus: EventBus,
     private val scope: CoroutineScope,
+    private val speechActivityEstimator: SpeechActivityEstimator = EnergySpeechActivityEstimator(),
     preRollMillis: Long = 400
 ) {
     private val preRollBuffer = AudioBuffer(maxMillis = preRollMillis)
@@ -264,10 +265,13 @@ class AudioPipeline(
                             _state.value = SpeechState.Thinking
                             eventBus.publish(
                                 SpeechRecognized(
-                                    id = UUID.randomUUID().toString(),
+                                    id = activeSpeechTransactionId ?: UUID.randomUUID().toString(),
                                     text = event.result.text,
-                                    locale = "en",
-                                    timestamp = System.currentTimeMillis()
+                                    locale = event.result.language,
+                                    timestamp = System.currentTimeMillis(),
+                                    input = inputTurn,
+                                    confidence = event.result.confidence,
+                                    quality = event.result.quality
                                 )
                             )
                             eventBus.publish(RecognitionFinished(id = UUID.randomUUID().toString()))
@@ -303,6 +307,15 @@ class AudioPipeline(
 
         try {
             val result = provider.recognize(segment.audioBuffer)
+            val acousticQuality = if (inputTurn?.boundary == com.halo.sdk.runtime.CaptureBoundary.EXTERNAL) {
+                speechActivityEstimator.estimate(segment.audioBuffer)
+            } else null
+            val resultQuality = result.quality.copy(
+                audioDurationMs = acousticQuality?.durationMs ?: result.quality.audioDurationMs,
+                peakAmplitude = acousticQuality?.peakAmplitude ?: result.quality.peakAmplitude,
+                voicedDurationMs = acousticQuality?.voicedDurationMs ?: result.quality.voicedDurationMs,
+                voicedRatio = acousticQuality?.voicedRatio ?: result.quality.voicedRatio
+            )
 
             // Transaction ownership, not coroutine activity, decides whether a
             // completed native result is still valid. Buffered JNI decode is
@@ -336,9 +349,11 @@ class AudioPipeline(
                     SpeechRecognized(
                         id = transactionId,
                         text = text,
-                        locale = "en",
+                        locale = result.language,
                         timestamp = System.currentTimeMillis(),
-                        input = inputTurn
+                        input = inputTurn,
+                        confidence = result.confidence,
+                        quality = resultQuality
                     )
                 )
                 eventBus.publish(RecognitionFinished(id = transactionId))

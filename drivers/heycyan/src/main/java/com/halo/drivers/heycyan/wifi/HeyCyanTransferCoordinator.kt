@@ -36,7 +36,7 @@ class HeyCyanTransferCoordinator(
      * Connects to Wi-Fi, discovers the device endpoint, and fetches the media manifest.
      * Separated from file downloading so synchronization choices (e.g., download new only) can be handled upstream.
      */
-    suspend fun synchronizeManifest(): Result<HeyCyanMediaManifest> {
+    suspend fun synchronizeManifest(deviceId: String): Result<HeyCyanMediaManifest> {
         // 1. Put glasses into transfer mode via BLE FIRST
         _state.value = HeyCyanTransferState.EnteringTransferMode
         commandController.execute(HeyCyanOperation.EnterWifiTransferMode).getOrElse { err ->
@@ -47,7 +47,7 @@ class HeyCyanTransferCoordinator(
 
         // 2. Obtain credentials (await credentials from device state observation)
         _state.value = HeyCyanTransferState.WaitingForCredentials
-        val creds = credentialsProvider.await("device", timeoutMs = 30_000L)
+        val creds = credentialsProvider.await(deviceId, timeoutMs = 30_000L)
             ?: run {
                 _state.value = HeyCyanTransferState.WaitingForCredentials
                 return Result.failure(IllegalStateException("Awaiting Wi-Fi transfer credentials"))
@@ -107,7 +107,7 @@ class HeyCyanTransferCoordinator(
     /**
      * Full convenience pipeline to synchronize manifest and return result.
      */
-    suspend fun synchronize(): Result<HeyCyanMediaManifest> {
-        return synchronizeManifest()
+    suspend fun synchronize(deviceId: String): Result<HeyCyanMediaManifest> {
+        return synchronizeManifest(deviceId)
     }
 }

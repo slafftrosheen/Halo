@@ -15,6 +15,13 @@ import com.halo.host.android.audio.BluetoothAudioRouteMonitor
 import com.halo.host.android.audio.AndroidBluetoothAudioRouteMonitor
 import com.halo.sdk.runtime.*
 
+data class SpeechRouteRequest(
+    val transactionId: String,
+    val target: SpeechOutputTarget,
+    val fallback: SpeechOutputFallback,
+    val sourceCaptureId: String?
+)
+
 class SpeechOutputRouteController(
     private val context: Context,
     private val heyCyanDriver: RealHeyCyanDriver,
@@ -22,10 +29,11 @@ class SpeechOutputRouteController(
 ) {
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
-    suspend fun prepareRoute(target: SpeechOutputTarget): SpeechRoutePreparation {
+    suspend fun prepareRoute(request: SpeechRouteRequest): SpeechRoutePreparation {
+        val target = request.target
         return when (target) {
             is SpeechOutputTarget.Phone -> {
-                Log.i("HaloAudio", "AUDIO_ROUTE_REQUEST transaction=N/A target=Phone")
+                Log.i("HaloAudio", "AUDIO_ROUTE_REQUEST transaction=${request.transactionId} target=Phone")
                 heyCyanDriver.capabilityController.execute(HeyCyanOperation.RouteAudioToPhone)
                 SpeechRoutePreparation.Ready(
                     target = target,
@@ -39,7 +47,7 @@ class SpeechOutputRouteController(
                 )
             }
             is SpeechOutputTarget.Wearable -> {
-                Log.i("HaloAudio", "AUDIO_ROUTE_REQUEST transaction=N/A target=Wearable device=${target.deviceId}")
+                Log.i("HaloAudio", "AUDIO_ROUTE_REQUEST transaction=${request.transactionId} target=Wearable device=${target.deviceId}")
                 
                 val activeDevice = heyCyanDriver.activeDeviceId
                 if (activeDevice == null || activeDevice != target.deviceId) {
@@ -62,9 +70,11 @@ class SpeechOutputRouteController(
                 val btResult = heyCyanDriver.capabilityController.execute(HeyCyanOperation.EnableClassicBluetooth)
                 if (btResult.isFailure) {
                     Log.w("HaloAudio", "HEYCYAN_CLASSIC_ENABLE device=${target.deviceId} result=failed")
-                } else {
-                    Log.i("HaloAudio", "HEYCYAN_CLASSIC_ENABLE device=${target.deviceId} result=success")
+                    return SpeechRoutePreparation.Unavailable(target, SpeechRouteFailureReason.COMMAND_FAILED)
                 }
+                Log.i("HaloAudio", "HEYCYAN_CLASSIC_ENABLE device=${target.deviceId} result=success")
+
+                val endpointsBeforeRoute = routeMonitor.routes.value
 
                 // 2. Send RouteAudioToGlasses command
                 val routeResult = heyCyanDriver.capabilityController.execute(HeyCyanOperation.RouteAudioToGlasses)
@@ -79,7 +89,14 @@ class SpeechOutputRouteController(
 
                 // 3. Await/verify Android Bluetooth audio endpoint
                 val endpoint = routeMonitor.awaitEndpoint(
-                    predicate = { ep -> ep.connected },
+                    predicate = { ep ->
+                        ep.connected && (
+                            ep.address?.equals(target.deviceId, ignoreCase = true) == true ||
+                                endpointsBeforeRoute.none { before ->
+                                    before.address == ep.address && before.type == ep.type
+                                }
+                            )
+                    },
                     timeoutMs = 2_000L
                 )
 

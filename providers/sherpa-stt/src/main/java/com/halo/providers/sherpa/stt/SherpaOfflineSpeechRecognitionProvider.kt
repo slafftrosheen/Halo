@@ -10,6 +10,8 @@ import com.halo.sdk.runtime.NativeResourceCoordinator
 import com.halo.sdk.runtime.NativeResourceKind
 import com.halo.sdk.runtime.NativeResourceOwner
 import com.halo.sdk.runtime.NativeResourceState
+import com.halo.sdk.runtime.NativeNextUseHint
+import com.halo.sdk.runtime.RecognitionQuality
 import com.k2fsa.sherpa.onnx.FeatureConfig
 import com.k2fsa.sherpa.onnx.OfflineModelConfig
 import com.k2fsa.sherpa.onnx.OfflineRecognizer
@@ -26,7 +28,7 @@ import kotlinx.coroutines.sync.withLock
 /** Fully local, buffered ASR backed by sherpa-onnx. */
 class SherpaOfflineSpeechRecognitionProvider(
     private val modelDirectory: File,
-    private val language: String = "",
+    private val language: String = "en",
     private val numThreads: Int = 2,
     private val nativeResourceCoordinator: NativeResourceCoordinator? = null
 ) : BufferedSpeechRecognitionProvider, NativeResourceOwner {
@@ -68,7 +70,7 @@ class SherpaOfflineSpeechRecognitionProvider(
         Thread(runnable, "HaloSTT-Cleanup").apply { isDaemon = true }
     }
 
-    private val whisperLanguage = language.trim()
+    private val whisperLanguage = language.trim().ifBlank { "en" }
         .takeUnless { it.equals("auto", ignoreCase = true) }
         .orEmpty()
 
@@ -149,14 +151,19 @@ class SherpaOfflineSpeechRecognitionProvider(
                     "STT_DONE decodeMs=${SystemClock.elapsedRealtime() - decodeStartedAt} " +
                         "totalMs=${SystemClock.elapsedRealtime() - startedAt} chars=${text.length}"
                 )
+                nativeResourceCoordinator?.hint(NativeNextUseHint.EXPECT_LLM)
 
                 // getResult() has copied the transcript into Kotlin. From this
                 // point on, native stream destruction must not delay handoff to
                 // SpeechRecognized/cognition.
                 RecognitionResult(
-                    text,
-                    whisperLanguage.ifBlank { "auto" },
-                    0.0f
+                    text = text,
+                    language = whisperLanguage.ifBlank { "auto" },
+                    confidence = null,
+                    quality = RecognitionQuality(
+                        audioDurationMs = audioDurationMs,
+                        peakAmplitude = peak
+                    )
                 )
             } finally {
                 releaseStreamOutOfBand(stream)

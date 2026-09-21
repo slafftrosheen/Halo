@@ -13,8 +13,10 @@ import com.halo.engines.interpretation.model.PauseIntent
 import com.halo.engines.interpretation.model.PlaceEntity
 import com.halo.engines.interpretation.model.PlayIntent
 import com.halo.engines.interpretation.model.QuestionIntent
-import com.halo.engines.interpretation.model.ReminderIntent
 import com.halo.engines.interpretation.model.SearchIntent
+import com.halo.engines.interpretation.model.SetAlarmIntent
+import com.halo.engines.interpretation.model.ShowAlarmsIntent
+import com.halo.engines.interpretation.model.TimeEntity
 import com.halo.engines.interpretation.model.WebEntity
 import com.halo.engines.speech.SpeechRecognizedPayload
 
@@ -56,6 +58,13 @@ class SpeechRule : InterpretationRule {
                 }
             }
 
+            showAlarmsPattern.matches(normalized) -> RuleMatch(
+                confidence = 0.99f,
+                intent = ShowAlarmsIntent,
+                consumedTokens = consumedTokens,
+                diagnostics = "Detected show alarms command"
+            )
+
             normalized.startsWith("open ") || normalized.startsWith("launch ") || normalized.startsWith("start ") -> {
                 val application = transcript.afterFirstWord()
                 application.takeIf { it.isNotBlank() }?.let {
@@ -89,18 +98,12 @@ class SpeechRule : InterpretationRule {
                 diagnostics = "Detected pause command"
             )
 
-            normalized.startsWith("remind me") || normalized.startsWith("set a reminder") -> RuleMatch(
-                confidence = 0.94f,
-                intent = ReminderIntent,
-                consumedTokens = consumedTokens,
-                diagnostics = "Detected reminder command"
-            )
-
-            normalized.startsWith("set an alarm") || normalized.startsWith("alarm for") || normalized.startsWith("wake me at") -> {
+            alarmPattern.matches(transcript) -> {
+                val expression = alarmPattern.matchEntire(transcript)?.groupValues?.get(1)?.trim().orEmpty()
                 RuleMatch(
-                    confidence = 0.95f,
-                    intent = OpenIntent,
-                    entities = listOf(ApplicationEntity("alarm", 0.95f)),
+                    confidence = 0.99f,
+                    intent = SetAlarmIntent,
+                    entities = listOf(TimeEntity(expression, 0.99f)),
                     consumedTokens = consumedTokens,
                     diagnostics = "Detected alarm command"
                 )
@@ -160,6 +163,14 @@ class SpeechRule : InterpretationRule {
         )
         val questionPattern = Regex(
             "^\\s*(?:what|when|where|who|why|how|can|could|would|is|are|do|does)\\b|\\?$",
+            RegexOption.IGNORE_CASE
+        )
+        val alarmPattern = Regex(
+            "^\\s*(?:set (?:an? )?alarm(?: for)?|alarm for|wake me at)\\s+(.+?)\\s*$",
+            RegexOption.IGNORE_CASE
+        )
+        val showAlarmsPattern = Regex(
+            "^\\s*(?:(?:show|open)(?: my)? alarms|upcoming alarms)\\s*$",
             RegexOption.IGNORE_CASE
         )
     }

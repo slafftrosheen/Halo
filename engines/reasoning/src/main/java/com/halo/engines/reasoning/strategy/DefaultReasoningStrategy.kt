@@ -12,7 +12,11 @@ import com.halo.cognition.language.PersonEntity
 import com.halo.cognition.language.PlayIntent
 import com.halo.cognition.language.QuestionIntent
 import com.halo.cognition.language.ReminderIntent
+import com.halo.cognition.language.ReminderEntity
 import com.halo.cognition.language.SearchIntent
+import com.halo.cognition.language.SetAlarmIntent
+import com.halo.cognition.language.ShowAlarmsIntent
+import com.halo.cognition.language.TimeEntity
 import com.halo.engines.reasoning.service.GoalManager
 import com.halo.icl.ontology.CommunicationPayload
 import com.halo.icl.ontology.ConversationPayload
@@ -44,7 +48,7 @@ class DefaultReasoningStrategy(
             is ReminderIntent -> GoalType.MEMORY
             is SearchIntent -> GoalType.SEARCH
             is CallIntent -> GoalType.COMMUNICATION
-            is OpenIntent, is CurrentTimeIntent -> GoalType.DEVICE
+            is OpenIntent, is CurrentTimeIntent, is SetAlarmIntent, is ShowAlarmsIntent -> GoalType.DEVICE
             is QuestionIntent, is ConversationIntent -> GoalType.CONVERSATION
             else -> GoalType.CONVERSATION
         }
@@ -87,10 +91,15 @@ class DefaultReasoningStrategy(
 
             is PauseIntent -> MediaPayload(query = "", action = "pause")
 
-            is ReminderIntent -> MemoryPayload(
-                fact = interpretation.entities.firstOrNull()?.toString()
-                    ?: interpretation.transcript
-            )
+            is ReminderIntent -> {
+                val reminder = interpretation.entities.filterIsInstance<ReminderEntity>().firstOrNull()
+                MemoryPayload(
+                    fact = if (reminder != null) {
+                        listOfNotNull(reminder.message, reminder.temporalExpression)
+                            .joinToString(REMINDER_FIELD_SEPARATOR)
+                    } else interpretation.transcript
+                )
+            }
 
             is SearchIntent -> SearchPayload(
                 query = interpretation.entities.firstOrNull()?.toString()
@@ -106,6 +115,14 @@ class DefaultReasoningStrategy(
             )
 
             is CurrentTimeIntent -> DevicePayload(action = "time", target = "")
+
+            is SetAlarmIntent -> DevicePayload(
+                action = "set_alarm",
+                target = interpretation.entities.filterIsInstance<TimeEntity>()
+                    .firstOrNull()?.expression.orEmpty()
+            )
+
+            is ShowAlarmsIntent -> DevicePayload(action = "show_alarms", target = "")
 
             is OpenIntent -> {
                 val appName = interpretation.entities
@@ -133,5 +150,9 @@ class DefaultReasoningStrategy(
             confidence = interpretation.confidence,
             parentId = parentKnowledgeId
         )
+    }
+
+    private companion object {
+        const val REMINDER_FIELD_SEPARATOR = "\u001F"
     }
 }

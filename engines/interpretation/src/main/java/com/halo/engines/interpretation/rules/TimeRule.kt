@@ -16,10 +16,11 @@ class TimeRule : InterpretationRule {
 
     override suspend fun match(context: InterpretationContext): RuleMatch? {
         val transcript = transcript(context) ?: return null
+        val normalizedTranscript = transcript.trim().lowercase().trimEnd('?', '.', '!').trim()
         val consumedTokens = transcript.tokenCount()
 
         // 1. Explicit current-time query matching
-        if (currentTimePattern.containsMatchIn(transcript)) {
+        if (normalizedTranscript in currentTimeForms || currentTimePattern.matches(normalizedTranscript)) {
             return RuleMatch(
                 confidence = 1.0f,
                 intent = CurrentTimeIntent,
@@ -30,7 +31,7 @@ class TimeRule : InterpretationRule {
         }
 
         // 2. Explicit current-date query matching
-        if (currentDatePattern.containsMatchIn(transcript)) {
+        if (normalizedTranscript in currentDateForms || currentDatePattern.matches(normalizedTranscript)) {
             return RuleMatch(
                 confidence = 1.0f,
                 intent = CurrentDateIntent,
@@ -85,13 +86,15 @@ class TimeRule : InterpretationRule {
 
     private companion object {
         val currentTimePattern = Regex(
-            "^\\s*(?:what(?:'s|\\s+is)?(?:\\s+the)?\\s+time|current\\s+time|what\\s+time\\s+is\\s+it|what\\s+time\\s+do\\s+we\\s+have)\\b",
+            "(?:what(?:'s|\\s+is)?(?:\\s+the)?\\s+time|current\\s+time|what\\s+time\\s+is\\s+it|what\\s+time\\s+do\\s+we\\s+have)",
             RegexOption.IGNORE_CASE
         )
         val currentDatePattern = Regex(
-            "^\\s*(?:what(?:'s|\\s+is)?(?:\\s+the)?\\s+date|what\\s+date\\s+is\\s+it|what(?:'s|\\s+is)?\\s+today(?:'s)?\\s+date|what\\s+day\\s+is\\s+it|current\\s+date)\\b",
+            "(?:what(?:'s|\\s+is)?(?:\\s+the)?\\s+date|what\\s+date\\s+is\\s+it|what(?:'s|\\s+is)?\\s+today(?:'s)?\\s+date|what\\s+day\\s+is\\s+it|current\\s+date)",
             RegexOption.IGNORE_CASE
         )
+        val currentTimeForms = setOf("time", "the time", "current time")
+        val currentDateForms = setOf("date", "today's date", "current date")
         val timePattern = Regex(
             "\\b(today|tomorrow|tonight)(?:\\s+(?:at\\s+)?(\\d{1,2}(?::\\d{2})?\\s*(?:am|pm)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|morning|afternoon|evening))?",
             RegexOption.IGNORE_CASE

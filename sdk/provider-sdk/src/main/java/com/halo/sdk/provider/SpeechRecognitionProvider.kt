@@ -2,11 +2,13 @@ package com.halo.sdk.provider
 
 import com.halo.sdk.host.AudioBuffer
 import kotlinx.coroutines.flow.Flow
+import com.halo.sdk.runtime.RecognitionQuality
 
 data class RecognitionResult(
     val text: String,
     val language: String,
-    val confidence: Float
+    val confidence: Float? = null,
+    val quality: RecognitionQuality = RecognitionQuality()
 )
 
 sealed interface RecognitionEvent {

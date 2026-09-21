@@ -201,15 +201,30 @@ object ManualDependencyGraph {
 
     val runtimeSnapshotManager get() = observerGraph.runtimeSnapshotManager
 
+    private val assistantSpeechAudioAttributes by lazy {
+        android.media.AudioAttributes.Builder()
+            .setUsage(android.media.AudioAttributes.USAGE_ASSISTANT)
+            .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SPEECH)
+            .build()
+    }
+
     val speechOutputRouteController by lazy {
-        SpeechOutputRouteController(applicationContext, heyCyanDriver)
+        SpeechOutputRouteController(
+            applicationContext,
+            heyCyanDriver,
+            com.halo.host.android.audio.AndroidBluetoothAudioRouteMonitor(
+                applicationContext,
+                assistantSpeechAudioAttributes
+            )
+        )
     }
 
     private val speechOutputCoordinatorDelegate = lazy {
         HaloSpeechOutputCoordinator(
             eventBus = infra.eventBus,
             routeController = speechOutputRouteController,
-            ttsProvider = AndroidTTSProvider(applicationContext)
+            ttsProvider = AndroidTTSProvider(applicationContext, assistantSpeechAudioAttributes),
+            nativeResourceCoordinator = providerGraph.nativeResourceCoordinator
         )
     }
     val haloSpeechOutputCoordinator: HaloSpeechOutputCoordinator get() = speechOutputCoordinatorDelegate.value

@@ -28,7 +28,7 @@ import kotlinx.coroutines.flow.asStateFlow
  */
 class ReloadableSpeechRecognitionProvider(
     private val modelDirectory: File,
-    private val getLanguage: () -> String = { "" },
+    private val getLanguage: () -> String = { "en" },
     private val nativeResourceCoordinator: NativeResourceCoordinator? = null
 ) : BufferedSpeechRecognitionProvider {
 

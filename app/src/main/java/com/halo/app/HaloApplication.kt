@@ -2,6 +2,7 @@ package com.halo.app
 
 import android.app.*
 import android.os.Bundle
+import android.os.StrictMode
 import android.content.ComponentCallbacks2
 import com.halo.app.di.ManualDependencyGraph
 import com.halo.sdk.runtime.*
@@ -14,6 +15,24 @@ class HaloApplication : Application(), Application.ActivityLifecycleCallbacks {
     private val governor get() = ManualDependencyGraph.providerGraph.nativeResourceCoordinator
     override fun onCreate() {
         super.onCreate()
+        if (BuildConfig.DEBUG) {
+            StrictMode.setThreadPolicy(
+                StrictMode.ThreadPolicy.Builder()
+                    .detectDiskReads()
+                    .detectDiskWrites()
+                    .detectNetwork()
+                    .detectCustomSlowCalls()
+                    .penaltyLog()
+                    .build()
+            )
+            StrictMode.setVmPolicy(
+                StrictMode.VmPolicy.Builder()
+                    .detectLeakedClosableObjects()
+                    .detectActivityLeaks()
+                    .penaltyLog()
+                    .build()
+            )
+        }
         ManualDependencyGraph.init(this)
         registerActivityLifecycleCallbacks(this)
         refreshBudget(NativeMemoryPressure.NORMAL)

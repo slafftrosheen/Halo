@@ -15,7 +15,8 @@ import kotlinx.coroutines.CancellationException
 class HaloSpeechOutputCoordinator(
     private val eventBus: EventBus,
     private val routeController: SpeechOutputRouteController,
-    private val ttsProvider: AndroidTTSProvider
+    private val ttsProvider: AndroidTTSProvider,
+    private val nativeResourceCoordinator: NativeResourceCoordinator? = null
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var eventJob: Job? = null
@@ -44,7 +45,14 @@ class HaloSpeechOutputCoordinator(
         activeJob = scope.launch {
             try {
                 // 1. Prepare Route
-                val routePreparation = routeController.prepareRoute(event.target)
+                val routePreparation = routeController.prepareRoute(
+                    SpeechRouteRequest(
+                        transactionId = event.transactionId,
+                        target = event.target,
+                        fallback = event.fallback,
+                        sourceCaptureId = event.sourceCaptureId
+                    )
+                )
                 when (routePreparation) {
                     is SpeechRoutePreparation.Unavailable -> {
                         Log.i("HaloAudio", "HALO_AUDIO_ROUTE_FAILED transaction=${event.transactionId} reason=${routePreparation.reason} fallback=${event.fallback}")
@@ -81,6 +89,7 @@ class HaloSpeechOutputCoordinator(
                 val request = SpeechRequest(text = event.text)
                 val result = ttsProvider.synthesize(request) {
                     scope.launch {
+                        nativeResourceCoordinator?.hint(NativeNextUseHint.EXPECT_ASR)
                         eventBus.publish(
                             TtsStarted(
                                 transactionId = event.transactionId,

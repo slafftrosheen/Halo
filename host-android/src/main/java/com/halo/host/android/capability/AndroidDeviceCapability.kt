@@ -5,6 +5,8 @@ import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.media.AudioManager
+import android.content.Intent
+import android.provider.AlarmClock
 import android.text.format.DateFormat
 import com.halo.runtime.cognition.Capability
 import com.halo.runtime.cognition.DeviceTask
@@ -29,6 +31,16 @@ class AndroidDeviceCapability(private val context: Context) : Capability {
                 action == "time" -> {
                     val formatted = DateFormat.getTimeFormat(context).format(Date())
                     Outcome.Success("It's $formatted.")
+                }
+
+                action == "set_alarm" -> setSystemAlarm(task.parameters["target"].orEmpty())
+
+                action == "show_alarms" -> {
+                    context.startActivity(
+                        Intent(AlarmClock.ACTION_SHOW_ALARMS)
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    )
+                    Outcome.Success("Opened alarms")
                 }
 
                 action.contains("flashlight_on") || action.contains("turn_on_flashlight") -> {
@@ -92,5 +104,34 @@ class AndroidDeviceCapability(private val context: Context) : Capability {
     private fun adjustVolume(direction: Int) {
         val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, direction, 0)
+    }
+
+    private fun setSystemAlarm(expression: String): Outcome {
+        val match = Regex("^(?:today\\s+|tomorrow\\s+|at\\s+)?(\\d{1,2})(?::(\\d{2}))?\\s*(am|pm)?$", RegexOption.IGNORE_CASE)
+            .matchEntire(expression.trim())
+            ?: return Outcome.PermanentFailure("I couldn't understand the alarm time")
+        var hour = match.groupValues[1].toIntOrNull()
+            ?: return Outcome.PermanentFailure("Invalid alarm hour")
+        val minute = match.groupValues[2].ifBlank { "0" }.toIntOrNull()
+            ?: return Outcome.PermanentFailure("Invalid alarm minute")
+        val period = match.groupValues[3].lowercase()
+        if (period.isNotBlank()) {
+            if (hour !in 1..12) return Outcome.PermanentFailure("Invalid alarm hour")
+            if (period == "pm" && hour < 12) hour += 12
+            if (period == "am" && hour == 12) hour = 0
+        }
+        if (hour !in 0..23 || minute !in 0..59) {
+            return Outcome.PermanentFailure("Invalid alarm time")
+        }
+        context.startActivity(
+            Intent(AlarmClock.ACTION_SET_ALARM).apply {
+                putExtra(AlarmClock.EXTRA_HOUR, hour)
+                putExtra(AlarmClock.EXTRA_MINUTES, minute)
+                putExtra(AlarmClock.EXTRA_MESSAGE, "Halo alarm")
+                putExtra(AlarmClock.EXTRA_SKIP_UI, false)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+        )
+        return Outcome.Success("Alarm set")
     }
 }

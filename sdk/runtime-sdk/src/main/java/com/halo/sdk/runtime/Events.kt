@@ -10,7 +10,8 @@ data class SpeechRecognized(
     val text: String,
     val locale: String,
     val input: SpeechInputTurn? = null,
-    val confidence: Float? = null
+    val confidence: Float? = null,
+    val quality: RecognitionQuality = RecognitionQuality()
 ) : HaloEvent
 
 data class SpeechRejected(

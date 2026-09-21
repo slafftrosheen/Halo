@@ -18,7 +18,7 @@ class HeyCyanTransferCapability(
      *
      * @return [Result.success] with [HeyCyanMediaManifest] when Wi-Fi connects and manifest is retrieved.
      */
-    suspend fun synchronizeMedia(): Result<HeyCyanMediaManifest> {
-        return transferCoordinator.synchronizeManifest()
+    suspend fun synchronizeMedia(deviceId: String): Result<HeyCyanMediaManifest> {
+        return transferCoordinator.synchronizeManifest(deviceId)
     }
 }

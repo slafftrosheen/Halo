@@ -8,6 +8,7 @@ import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattDescriptor
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
+import android.bluetooth.BluetoothStatusCodes
 import android.content.Context
 import com.halo.drivers.heycyan.codec.CaptureGattStage
 import com.halo.drivers.heycyan.codec.CaptureStagePhase
@@ -24,19 +25,26 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
-import java.util.ArrayDeque
 import java.util.UUID
+import java.util.concurrent.atomic.AtomicLong
 
 @SuppressLint("MissingPermission")
 open class HeyCyanGattClient(
     private val context: Context? = null,
-    private val tracer: PacketTracer = NoOpPacketTracer
+    private val tracer: PacketTracer = NoOpPacketTracer,
+    private val platformWriter: GattPlatformWriter = AndroidGattPlatformWriter
 ) {
     companion object {
         private val CCCD_UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
         private const val REQUESTED_MTU = 517
+        private const val GATT_OPERATION_TIMEOUT_MS = 3_000L
     }
 
     private data class PendingDescriptorWrite(
@@ -63,14 +71,22 @@ open class HeyCyanGattClient(
     private var activeAttempt: ConnectionAttempt? = null
     private var activeAttemptId = 0L
     private var serviceDiscoveryStarted = false
-    private var descriptorWriteInFlight: PendingDescriptorWrite? = null
-    private val pendingDescriptorWrites = ArrayDeque<PendingDescriptorWrite>()
+    private val pendingDescriptorWrites = mutableListOf<PendingDescriptorWrite>()
     private val characteristics = mutableMapOf<UUID, BluetoothGattCharacteristic>()
+    private val operationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val operationQueue = Channel<GattOperation>(capacity = Channel.UNLIMITED)
+    @Volatile private var inFlightOperation: GattOperation? = null
+    @Volatile private var inFlightStartedAtMs: Long = 0L
+    private val operationSequence = AtomicLong(0L)
 
     private val _state = MutableStateFlow<DriverState>(DriverState.Disconnected)
     val state: StateFlow<DriverState> = _state.asStateFlow()
     private val _incomingBytes = MutableSharedFlow<Pair<UUID, ByteArray>>(extraBufferCapacity = 64)
     val incomingBytes: SharedFlow<Pair<UUID, ByteArray>> = _incomingBytes.asSharedFlow()
+
+    init {
+        operationScope.launch { operationLoop() }
+    }
 
     private fun callbackFor(attempt: ConnectionAttempt) = object : BluetoothGattCallback() {
         override fun onConnectionStateChange(callbackGatt: BluetoothGatt, status: Int, newState: Int) {
@@ -151,7 +167,6 @@ open class HeyCyanGattClient(
             )
             serviceDiscoveryStarted = true
             pendingDescriptorWrites.clear()
-            descriptorWriteInFlight = null
             for (service in callbackGatt.services) {
                 tracer.onDiscoveredService(service.uuid, service.type)
                 for (characteristic in service.characteristics) {
@@ -188,7 +203,7 @@ open class HeyCyanGattClient(
                     }
                 }
             }
-            writeNextDescriptor(callbackGatt, attempt)
+            configureNotificationDescriptors(callbackGatt, attempt)
         }
 
         override fun onDescriptorWrite(
@@ -199,32 +214,22 @@ open class HeyCyanGattClient(
             val currentGatt = callbackGatt ?: attempt.gatt
             if (descriptor == null || currentGatt == null || !isCurrentAttempt(attempt, currentGatt)) return
             tracer.onDescriptorWrite(descriptor.uuid, status)
-            if (descriptorWriteInFlight?.descriptor !== descriptor) return
-            val inFlight = descriptorWriteInFlight
-            descriptorWriteInFlight = null
-            if (status != BluetoothGatt.GATT_SUCCESS) {
-                tracer.onGattStage(
-                    attempt.id,
-                    CaptureGattStage.CCCD,
-                    CaptureStagePhase.FAILED,
-                    status,
-                    "characteristic=${inFlight?.characteristic?.uuid} descriptor=${descriptor.uuid}"
-                )
-                failGatt(
-                    currentGatt,
-                    RuntimeException("CCCD write failed: status=$status attempt=${attempt.id} uuid=${descriptor.uuid}"),
-                    attempt = attempt
-                )
+            val operation = inFlightOperation as? GattOperation.DescriptorWrite ?: return
+            if (operation.connectionGeneration != attempt.id) {
+                operation.completion.complete(GattOperationResult.StaleConnection)
                 return
             }
-            tracer.onGattStage(
-                attempt.id,
-                CaptureGattStage.CCCD,
-                CaptureStagePhase.SUCCEEDED,
-                status,
-                "characteristic=${inFlight?.characteristic?.uuid} descriptor=${descriptor.uuid}"
+            if (operation.descriptorUuid != descriptor.uuid ||
+                operation.characteristicUuid != descriptor.characteristic.uuid
+            ) return
+            operation.completion.complete(
+                if (status == BluetoothGatt.GATT_SUCCESS) {
+                    GattOperationResult.Success(
+                        callbackStatus = status,
+                        elapsedMs = android.os.SystemClock.elapsedRealtime() - inFlightStartedAtMs
+                    )
+                } else GattOperationResult.CallbackFailed(status)
             )
-            writeNextDescriptor(currentGatt, attempt)
         }
 
         override fun onCharacteristicWrite(
@@ -238,6 +243,22 @@ open class HeyCyanGattClient(
                 "onCharacteristicWrite: attempt=${attempt.id} uuid=${characteristic.uuid} status=$status"
             )
             tracer.onCharacteristicWrite(characteristic.uuid, status)
+            val operation = inFlightOperation as? GattOperation.CharacteristicWrite ?: return
+            if (operation.connectionGeneration != attempt.id) {
+                operation.completion.complete(GattOperationResult.StaleConnection)
+                return
+            }
+            if (operation.characteristicUuid != characteristic.uuid) return
+            operation.completion.complete(
+                if (status == BluetoothGatt.GATT_SUCCESS) {
+                    GattOperationResult.Success(
+                        callbackStatus = status,
+                        elapsedMs = android.os.SystemClock.elapsedRealtime() - inFlightStartedAtMs
+                    )
+                } else {
+                    GattOperationResult.CallbackFailed(status)
+                }
+            )
         }
 
         @Suppress("DEPRECATION")
@@ -406,25 +427,92 @@ open class HeyCyanGattClient(
         }
     }
 
-    open fun write(characteristicUuid: UUID, payload: ByteArray): Boolean {
-        val currentGatt = gatt ?: return false
-        val characteristic = characteristics[characteristicUuid] ?: return false
-        val writeType = if (
-            characteristic.properties and BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE != 0
-        ) {
-            "WRITE_NO_RESPONSE"
-        } else {
-            "WRITE"
-        }
-        HeyCyanProtocolCapture.instance.recordFrame(
+    open suspend fun writeCharacteristic(
+        characteristicUuid: UUID,
+        payload: ByteArray,
+        writeType: Int = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+    ): GattOperationResult {
+        val generation = activeAttempt?.id ?: return GattOperationResult.Disconnected
+        if (_state.value != DriverState.Ready) return GattOperationResult.Disconnected
+        val operation = GattOperation.CharacteristicWrite(
+            sequence = operationSequence.incrementAndGet(),
+            connectionGeneration = generation,
             characteristicUuid = characteristicUuid,
-            payload = payload,
-            direction = PacketDirection.TX,
+            value = payload.copyOf(),
             writeType = writeType
         )
-        tracer.onTx(characteristicUuid, payload)
-        characteristic.value = payload
-        return currentGatt.writeCharacteristic(characteristic)
+        android.util.Log.d("HeyCyanGattClient", "GATT_OP_ENQUEUED seq=${operation.sequence} uuid=$characteristicUuid")
+        operationQueue.send(operation)
+        return operation.completion.await()
+    }
+
+    @Deprecated("Use writeCharacteristic(), which completes from the Android callback")
+    open fun write(characteristicUuid: UUID, payload: ByteArray): Boolean = false
+
+    private suspend fun operationLoop() {
+        for (operation in operationQueue) {
+            if (operation.connectionGeneration != activeAttempt?.id) {
+                operation.completion.complete(GattOperationResult.StaleConnection)
+                continue
+            }
+            val currentGatt = gatt
+            if (currentGatt == null) {
+                operation.completion.complete(GattOperationResult.Disconnected)
+                continue
+            }
+            inFlightOperation = operation
+            inFlightStartedAtMs = android.os.SystemClock.elapsedRealtime()
+            android.util.Log.d("HeyCyanGattClient", "GATT_OP_STARTED seq=${operation.sequence}")
+            val platformStatus = when (operation) {
+                is GattOperation.CharacteristicWrite -> startCharacteristicWrite(currentGatt, operation)
+                is GattOperation.DescriptorWrite -> startDescriptorWrite(currentGatt, operation)
+            }
+            if (platformStatus != BluetoothStatusCodes.SUCCESS) {
+                operation.completion.complete(GattOperationResult.InitiationFailed(platformStatus))
+            } else {
+                val completed = withTimeoutOrNull(GATT_OPERATION_TIMEOUT_MS) {
+                    operation.completion.await()
+                }
+                if (completed == null) operation.completion.complete(GattOperationResult.Timeout)
+            }
+            android.util.Log.d(
+                "HeyCyanGattClient",
+                "GATT_OP_COMPLETED seq=${operation.sequence} result=${operation.completion.await()}"
+            )
+            if (inFlightOperation === operation) inFlightOperation = null
+        }
+    }
+
+    private fun startCharacteristicWrite(
+        currentGatt: BluetoothGatt,
+        operation: GattOperation.CharacteristicWrite
+    ): Int {
+        val characteristic = characteristics[operation.characteristicUuid]
+            ?: return BluetoothGatt.GATT_FAILURE
+        val actualWriteType = if (
+            operation.writeType == BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT &&
+            characteristic.properties and BluetoothGattCharacteristic.PROPERTY_WRITE == 0 &&
+            characteristic.properties and BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE != 0
+        ) BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE else operation.writeType
+        HeyCyanProtocolCapture.instance.recordFrame(
+            characteristicUuid = operation.characteristicUuid,
+            payload = operation.value,
+            direction = PacketDirection.TX,
+            writeType = if (actualWriteType == BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE) "WRITE_NO_RESPONSE" else "WRITE"
+        )
+        tracer.onTx(operation.characteristicUuid, operation.value)
+        return platformWriter.writeCharacteristic(currentGatt, characteristic, operation.value, actualWriteType)
+    }
+
+    private fun startDescriptorWrite(
+        currentGatt: BluetoothGatt,
+        operation: GattOperation.DescriptorWrite
+    ): Int {
+        val characteristic = characteristics[operation.characteristicUuid]
+            ?: return BluetoothGatt.GATT_FAILURE
+        val descriptor = characteristic.getDescriptor(operation.descriptorUuid)
+            ?: return BluetoothGatt.GATT_FAILURE
+        return platformWriter.writeDescriptor(currentGatt, descriptor, operation.value)
     }
 
     fun findCharacteristicByProperty(property: Int): BluetoothGattCharacteristic? =
@@ -492,7 +580,6 @@ open class HeyCyanGattClient(
         _state.value = DriverState.Connected
         serviceDiscoveryStarted = false
         pendingDescriptorWrites.clear()
-        descriptorWriteInFlight = null
         tracer.onMtuRequested(REQUESTED_MTU)
         tracer.onGattStage(
             attempt.id,
@@ -530,49 +617,54 @@ open class HeyCyanGattClient(
         }
     }
 
-    private fun writeNextDescriptor(gatt: BluetoothGatt?, attempt: ConnectionAttempt) {
-        if (gatt == null || !isCurrentAttempt(attempt, gatt) || descriptorWriteInFlight != null) return
-        val next = if (pendingDescriptorWrites.isEmpty()) null else pendingDescriptorWrites.removeFirst()
-        if (next == null) {
+    private fun configureNotificationDescriptors(gatt: BluetoothGatt, attempt: ConnectionAttempt) {
+        val descriptors = pendingDescriptorWrites.toList()
+        pendingDescriptorWrites.clear()
+        operationScope.launch {
+            for (next in descriptors) {
+                if (!isCurrentAttempt(attempt, gatt)) return@launch
+                val supportsNotifications = next.characteristic.properties and
+                    BluetoothGattCharacteristic.PROPERTY_NOTIFY != 0
+                val operation = GattOperation.DescriptorWrite(
+                    sequence = operationSequence.incrementAndGet(),
+                    connectionGeneration = attempt.id,
+                    characteristicUuid = next.characteristic.uuid,
+                    descriptorUuid = next.descriptor.uuid,
+                    value = if (supportsNotifications) {
+                        BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE.copyOf()
+                    } else BluetoothGattDescriptor.ENABLE_INDICATION_VALUE.copyOf()
+                )
+                tracer.onGattStage(
+                    attempt.id,
+                    CaptureGattStage.CCCD,
+                    CaptureStagePhase.STARTED,
+                    detail = "characteristic=${next.characteristic.uuid} descriptor=${next.descriptor.uuid}"
+                )
+                operationQueue.send(operation)
+                val result = operation.completion.await()
+                if (result !is GattOperationResult.Success) {
+                    tracer.onGattStage(
+                        attempt.id,
+                        CaptureGattStage.CCCD,
+                        CaptureStagePhase.FAILED,
+                        detail = "characteristic=${next.characteristic.uuid} descriptor=${next.descriptor.uuid} result=$result"
+                    )
+                    failGatt(gatt, RuntimeException("CCCD write failed: $result"), attempt = attempt)
+                    return@launch
+                }
+                tracer.onGattStage(
+                    attempt.id,
+                    CaptureGattStage.CCCD,
+                    CaptureStagePhase.SUCCEEDED,
+                    result.callbackStatus,
+                    "characteristic=${next.characteristic.uuid} descriptor=${next.descriptor.uuid}"
+                )
+            }
+            if (!isCurrentAttempt(attempt, gatt)) return@launch
             _state.value = DriverState.Ready
             tracer.onGattStage(attempt.id, CaptureGattStage.READY, CaptureStagePhase.SUCCEEDED)
             tracer.onReady()
             android.util.Log.i("HeyCyanGattClient", "GATT ready: attempt=${attempt.id}")
-            return
-        }
-        descriptorWriteInFlight = next
-        val supportsNotifications =
-            next.characteristic.properties and BluetoothGattCharacteristic.PROPERTY_NOTIFY != 0
-        next.descriptor.value = if (supportsNotifications) {
-            BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
-        } else {
-            BluetoothGattDescriptor.ENABLE_INDICATION_VALUE
-        }
-        tracer.onGattStage(
-            attempt.id,
-            CaptureGattStage.CCCD,
-            CaptureStagePhase.STARTED,
-            detail = "characteristic=${next.characteristic.uuid} descriptor=${next.descriptor.uuid}"
-        )
-        android.util.Log.d(
-            "HeyCyanGattClient",
-            "Writing CCCD: attempt=${attempt.id} characteristic=${next.characteristic.uuid} descriptor=${next.descriptor.uuid}"
-        )
-        if (!gatt.writeDescriptor(next.descriptor)) {
-            tracer.onDescriptorWrite(next.descriptor.uuid, BluetoothGatt.GATT_FAILURE)
-            tracer.onGattStage(
-                attempt.id,
-                CaptureGattStage.CCCD,
-                CaptureStagePhase.FAILED,
-                BluetoothGatt.GATT_FAILURE,
-                "characteristic=${next.characteristic.uuid} descriptor=${next.descriptor.uuid} writeDescriptor returned false"
-            )
-            descriptorWriteInFlight = null
-            failGatt(
-                gatt,
-                RuntimeException("Unable to start CCCD write attempt=${attempt.id} uuid=${next.descriptor.uuid}"),
-                attempt = attempt
-            )
         }
     }
 
@@ -641,10 +733,19 @@ open class HeyCyanGattClient(
     }
 
     private fun resetConnectionState() {
+        cancelOperations(GattOperationResult.Disconnected)
         serviceDiscoveryStarted = false
         pendingDescriptorWrites.clear()
-        descriptorWriteInFlight = null
         characteristics.clear()
+    }
+
+    private fun cancelOperations(result: GattOperationResult) {
+        inFlightOperation?.completion?.complete(result)
+        inFlightOperation = null
+        while (true) {
+            val pending = operationQueue.tryReceive().getOrNull() ?: break
+            pending.completion.complete(result)
+        }
     }
 
     private fun clearGatt(gattToClose: BluetoothGatt?, attempt: ConnectionAttempt? = activeAttempt) {
