@@ -233,10 +233,7 @@ object ManualDependencyGraph {
             },
             onModelsCleared = { modelDownloadManager.invalidate("model downloads cleared") },
             onAppearanceRestored = {
-                val saved = applicationContext.getSharedPreferences("halo_appearance", Context.MODE_PRIVATE)
-                    .getString("mode", null)
-                val mode = saved?.let { runCatching { com.halo.app.ui.theme.AppearanceMode.valueOf(it) }.getOrNull() }
-                if (mode != null) appearancePreferences.setMode(mode)
+                appearancePreferences.reloadFromDisk()
             },
         )
     }

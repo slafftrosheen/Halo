@@ -52,32 +52,38 @@ class MainActivity : ComponentActivity() {
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) {
-        ManualDependencyGraph.platformStateMonitor.refreshMicrophonePermission()
-        RuntimeStartupTrace.mark(
-            "permissions.microphone.result granted=" +
-                ManualDependencyGraph.platformStateMonitor.microphonePermissionGranted.value
-        )
+        lifecycleScope.launch(Dispatchers.IO) {
+            ManualDependencyGraph.platformStateMonitor.refreshMicrophonePermission()
+            RuntimeStartupTrace.mark(
+                "permissions.microphone.result granted=" +
+                    ManualDependencyGraph.platformStateMonitor.microphonePermissionGranted.value
+            )
+        }
     }
 
     private val devicePermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) {
-        runCatching {
-            ManualDependencyGraph.platformStateMonitor.refreshBluetoothState()
-            ManualDependencyGraph.pairingViewModel.refreshPrerequisites()
-        }.onFailure { error ->
-            android.util.Log.w("MainActivity", "Could not refresh pairing permissions", error)
+        lifecycleScope.launch(Dispatchers.IO) {
+            runCatching {
+                ManualDependencyGraph.platformStateMonitor.refreshBluetoothState()
+                ManualDependencyGraph.pairingViewModel.refreshPrerequisites()
+            }.onFailure { error ->
+                android.util.Log.w("MainActivity", "Could not refresh pairing permissions", error)
+            }
         }
     }
 
     private val bluetoothEnableLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) {
-        runCatching {
-            ManualDependencyGraph.platformStateMonitor.refreshBluetoothState()
-            ManualDependencyGraph.pairingViewModel.refreshPrerequisites()
-        }.onFailure { error ->
-            android.util.Log.w("MainActivity", "Could not refresh Bluetooth state", error)
+        lifecycleScope.launch(Dispatchers.IO) {
+            runCatching {
+                ManualDependencyGraph.platformStateMonitor.refreshBluetoothState()
+                ManualDependencyGraph.pairingViewModel.refreshPrerequisites()
+            }.onFailure { error ->
+                android.util.Log.w("MainActivity", "Could not refresh Bluetooth state", error)
+            }
         }
     }
 
@@ -218,6 +224,7 @@ class MainActivity : ComponentActivity() {
             val startedAt = android.os.SystemClock.elapsedRealtime()
             RuntimeStartupTrace.mark("activity.uiBootstrap.begin", startedAt)
             try {
+                (application as? HaloApplication)?.awaitStorageBootstrap()
                 ManualDependencyGraph.homeViewModel
                 RuntimeStartupTrace.mark("activity.uiBootstrap.graphReady", startedAt)
                 withContext(Dispatchers.Main.immediate) { uiGraphReady = true }
@@ -291,7 +298,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        ManualDependencyGraph.platformStateMonitor.refreshMicrophonePermission()
+        lifecycleScope.launch(Dispatchers.IO) {
+            ManualDependencyGraph.platformStateMonitor.refreshMicrophonePermission()
+        }
         startUiGraphBootstrap()
         startRuntimeLoop()
     }

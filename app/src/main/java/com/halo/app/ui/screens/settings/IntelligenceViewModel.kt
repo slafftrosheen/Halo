@@ -135,9 +135,14 @@ class IntelligenceViewModel(
     }
 
     private suspend fun refreshAssistantInfo(providerId: String) {
-        if (providerId != ProviderIds.ANDROID_ASSISTANT) { _assistantPackage.value = null; return }
+        if (providerId != ProviderIds.ANDROID_ASSISTANT) {
+            _assistantPackage.value = null
+            return
+        }
         val provider = aiProviderRouter.getAllProviders().firstOrNull { it.id == providerId }
-        _assistantPackage.value = (provider as? AndroidAssistantProvider)?.assistantPackageName()
+        _assistantPackage.value = withContext(dispatchers.io) {
+            (provider as? AndroidAssistantProvider)?.assistantPackageName()
+        }
     }
 
     val uiState: StateFlow<IntelligenceUiState> = combine(
@@ -167,7 +172,7 @@ class IntelligenceViewModel(
             activeProviderId = selectedProviderId ?: "",
             activeProviderName = snapshotProvider?.name ?: activeProvider?.displayName ?: "None",
             activeProviderStatus = activeStatus,
-            capabilities = activeProvider?.getCapabilities() ?: emptySet(),
+            capabilities = activeDiagnostic?.capabilities ?: emptySet(),
             activeModelId = selectedModelId ?: snapshotProvider?.activeModel ?: if (selectedProviderId == ProviderIds.LLAMACPP) activeLocalId ?: settings.llamacppModel else null,
             providers = allProviders.map { routerProv ->
                 val snap = snapshot.providers.find { it.id == routerProv.id }
@@ -179,7 +184,7 @@ class IntelligenceViewModel(
                     snap?.name ?: routerProv.displayName,
                     status,
                     routerProv.id == selectedProviderId,
-                    routerProv.getCapabilities()
+                    diagnostic?.capabilities ?: emptySet()
                 )
             },
             availableModels = _availableModels.value,

@@ -44,7 +44,7 @@ class StorageBackupViewModel(
     private val workspaceFiles: WorkspaceFileRepository,
     private val canClearModels: suspend () -> Boolean,
     private val onModelsCleared: () -> Unit,
-    private val onAppearanceRestored: () -> Unit,
+    private val onAppearanceRestored: suspend () -> Unit,
 ) : ViewModel() {
     private val operation = MutableStateFlow(OperationState())
     private var stagedImport: java.io.File? = null

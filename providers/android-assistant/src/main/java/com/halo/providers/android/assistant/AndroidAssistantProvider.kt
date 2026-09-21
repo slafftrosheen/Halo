@@ -10,7 +10,9 @@ import com.halo.sdk.provider.AiHandoffProvider
 import com.halo.sdk.provider.ProviderStatus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.withContext
 
 /**
  * Android assistant bridge.
@@ -34,9 +36,12 @@ class AndroidAssistantProvider(
 
     override suspend fun getCapabilities(): Set<AiCapability> = emptySet()
 
-    override fun isAvailable(): Boolean = resolveAssistantPackage() != null
+    @Volatile
+    private var cachedAssistantPackageName: String? = null
 
-    override fun assistantPackageName(): String? = resolveAssistantPackage()
+    override fun isAvailable(): Boolean = cachedAssistantPackageName != null
+
+    override fun assistantPackageName(): String? = cachedAssistantPackageName
 
     override fun handoff(prompt: String?) {
         context.startActivity(buildAssistIntent(prompt))
@@ -45,14 +50,17 @@ class AndroidAssistantProvider(
     private val _status = MutableStateFlow(ProviderStatus.UNAVAILABLE)
     override val status: StateFlow<ProviderStatus> = _status.asStateFlow()
 
-    override suspend fun getStatus(): ProviderStatus {
+    override suspend fun getStatus(): ProviderStatus = withContext(Dispatchers.IO) {
         val packageName = resolveAssistantPackage()
+        cachedAssistantPackageName = packageName
+
         val roleHeld = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             context.getSystemService(RoleManager::class.java)
                 ?.isRoleHeld(RoleManager.ROLE_ASSISTANT) == true
         } else {
             false
         }
+
         val current = when {
             packageName == null -> ProviderStatus(
                 ProviderStatus.State.UNAVAILABLE,
@@ -68,7 +76,7 @@ class AndroidAssistantProvider(
             )
         }
         _status.value = current
-        return current
+        current
     }
 
     private fun buildAssistIntent(prompt: String?): Intent = Intent(Intent.ACTION_ASSIST).apply {

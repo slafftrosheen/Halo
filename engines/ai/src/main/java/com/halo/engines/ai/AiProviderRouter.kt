@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.CancellationException
 import java.util.UUID
 
@@ -153,18 +154,29 @@ class DefaultAiProviderRouter(
         }
     }
 
-    private suspend fun refreshDiagnostics(): List<AiProviderDiagnostic> {
+    private suspend fun refreshDiagnostics(): List<AiProviderDiagnostic> = withContext(Dispatchers.IO) {
         val selectedId = _selectedProviderId.value
         val list = allProviders.map { provider ->
-            val status = runCatching { provider.getStatus() }.getOrElse { ProviderStatus(ProviderStatus.State.ERROR, it.message ?: "Status check failed") }
+            val status = runCatching { provider.getStatus() }.getOrElse {
+                ProviderStatus(
+                    ProviderStatus.State.ERROR,
+                    it.message ?: "Status check failed"
+                )
+            }
             val capabilities = runCatching { provider.getCapabilities() }.getOrDefault(emptySet())
             AiProviderDiagnostic(
-                provider.id, provider.displayName, status.state, status.message, capabilities,
-                provider.id == selectedId, if (provider.id == selectedId) _selectedModelId.value else null, provider.isLocal
+                provider.id,
+                provider.displayName,
+                status.state,
+                status.message,
+                capabilities,
+                provider.id == selectedId,
+                if (provider.id == selectedId) _selectedModelId.value else null,
+                provider.isLocal
             )
         }
         _diagnosticsFlow.value = list
-        return list
+        list
     }
 
     override suspend fun getEligibleProvider(request: AiRequest): AiProvider = resolveExecutionTarget(request).provider

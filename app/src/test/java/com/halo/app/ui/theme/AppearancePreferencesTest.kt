@@ -2,6 +2,7 @@ package com.halo.app.ui.theme
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -25,17 +26,19 @@ class AppearancePreferencesTest {
     }
 
     @Test
-    fun defaultsToSystemAndPersistsExplicitMode() {
+    fun defaultsToSystemAndPersistsExplicitMode() = runBlocking {
         val preferences = AppearancePreferences(context)
+        preferences.awaitLoaded()
 
         assertEquals(AppearanceMode.SYSTEM, preferences.mode.value)
 
         preferences.setMode(AppearanceMode.DARK)
+        preferences.awaitPersistence()
 
         assertEquals(AppearanceMode.DARK, preferences.mode.value)
-        assertEquals(
-            AppearanceMode.DARK,
-            AppearancePreferences(context).mode.value
-        )
+
+        val restored = AppearancePreferences(context)
+        restored.awaitLoaded()
+        assertEquals(AppearanceMode.DARK, restored.mode.value)
     }
 }

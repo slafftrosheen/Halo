@@ -56,7 +56,14 @@ class SpeechTranscriptGate(private val policy: SpeechAdmissionPolicy = SpeechAdm
         if (quality.voicedRatio != null && quality.voicedDurationMs < policy.minimumVoicedMs) {
             return reject(SpeechRejectionReason.INSUFFICIENT_VOICED_AUDIO)
         }
-        if (quality.audioDurationMs >= policy.longCaptureThresholdMs &&
+        // A whole-capture voiced-ratio threshold is only trustworthy when the
+        // estimator provides real VAD semantics. SIMPLE_ENERGY is deliberately a
+        // fallback and underestimates low-gain wearable speech; absolute voiced
+        // duration still protects that path from empty/noise-only captures.
+        val reliableVoicedRatio =
+            quality.qualityEstimator.equals("SILERO", ignoreCase = true)
+        if (reliableVoicedRatio &&
+            quality.audioDurationMs >= policy.longCaptureThresholdMs &&
             quality.voicedRatio?.let { it < policy.minimumVoicedRatioForLongCapture } == true
         ) return reject(SpeechRejectionReason.INSUFFICIENT_VOICED_AUDIO)
         if (policy.minimumRecognizerConfidence != null &&
