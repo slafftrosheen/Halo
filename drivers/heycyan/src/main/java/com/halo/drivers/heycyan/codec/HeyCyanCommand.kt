@@ -80,6 +80,11 @@ object HeyCyanCommand {
         payload = byteArrayOf(0x02, 0x02)
     )
 
+    fun enableClassicBluetooth(): ByteArray = HeyCyanWireFrameCodec.encode(
+        action = HeyCyanCommandCatalog.ACTION_BT_CONNECT,
+        payload = byteArrayOf(0x02, 0x01)
+    )
+
     /**
      * Constructs a MEDIA_COUNT command wire frame.
      * Output: BC 41 02 00 01 13 02 04

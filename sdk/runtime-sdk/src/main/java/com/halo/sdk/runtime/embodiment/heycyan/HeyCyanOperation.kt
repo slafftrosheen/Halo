@@ -18,6 +18,8 @@ sealed interface HeyCyanOperation {
     data object RouteAudioToGlasses : HeyCyanOperation
     /** Select the phone as the playback target for speech/audio. */
     data object RouteAudioToPhone : HeyCyanOperation
+    /** Command the glasses to enable Classic Bluetooth audio connection (0x49 / 02 01). */
+    data object EnableClassicBluetooth : HeyCyanOperation
     data object GenerateAIPhoto : HeyCyanOperation
     data object EnterWifiTransferMode : HeyCyanOperation
     data object SynchronizeMedia : HeyCyanOperation

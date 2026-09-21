@@ -16,8 +16,13 @@ import kotlinx.coroutines.flow.StateFlow
  *   - Never put credentials into Timeline, Replay, Metrics, RuntimeSnapshot
  *   - [HeyCyanWifiCredentials.toString] is redacted to enforce this
  */
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.withTimeoutOrNull
+
 interface HeyCyanWifiCredentialProvider {
     fun credentials(): HeyCyanWifiCredentials?
+    suspend fun await(deviceId: String, timeoutMs: Long = 30_000L): HeyCyanWifiCredentials?
 }
 
 /**
@@ -32,6 +37,19 @@ class DeviceStateWifiCredentialProvider(
 
     override fun credentials(): HeyCyanWifiCredentials? {
         return state.value.wifiCredentials?.let { stored ->
+            HeyCyanWifiCredentials(
+                ssid = stored.ssid,
+                password = stored.password,
+            )
+        }
+    }
+
+    override suspend fun await(deviceId: String, timeoutMs: Long): HeyCyanWifiCredentials? {
+        val current = credentials()
+        if (current != null) return current
+        return withTimeoutOrNull(timeoutMs) {
+            state.mapNotNull { it.wifiCredentials }.first()
+        }?.let { stored ->
             HeyCyanWifiCredentials(
                 ssid = stored.ssid,
                 password = stored.password,

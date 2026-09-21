@@ -14,6 +14,43 @@ enum class SpeechOutputFallback {
     ALLOW_PHONE
 }
 
+enum class SpeechRoutePendingReason {
+    PAIRING_REQUIRED,
+    WAITING_FOR_ENDPOINT
+}
+
+enum class SpeechRouteFailureReason {
+    DEVICE_DISCONNECTED,
+    COMMAND_FAILED,
+    AUDIO_TRANSPORT_NOT_CONNECTED,
+    WRONG_DEVICE
+}
+
+data class SpeechRouteEvidence(
+    val vendorRouteCommandSent: Boolean,
+    val androidDeviceType: Int?,
+    val androidDeviceName: String?,
+    val androidDeviceAddress: String?,
+    val verifiedAtMs: Long = System.currentTimeMillis()
+)
+
+sealed interface SpeechRoutePreparation {
+    data class Ready(
+        val target: SpeechOutputTarget,
+        val evidence: SpeechRouteEvidence
+    ) : SpeechRoutePreparation
+
+    data class Pending(
+        val target: SpeechOutputTarget,
+        val reason: SpeechRoutePendingReason
+    ) : SpeechRoutePreparation
+
+    data class Unavailable(
+        val target: SpeechOutputTarget,
+        val reason: SpeechRouteFailureReason
+    ) : SpeechRoutePreparation
+}
+
 data class SpeechTurnContext(
     val captureId: String?,
     val sourceDeviceId: String?,

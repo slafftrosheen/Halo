@@ -30,12 +30,6 @@ class HaloSpeechOutputCoordinator(
                 when (event) {
                     is TtsRequested -> speak(event)
                     is ListeningStarted -> stop("ListeningStarted")
-                    is TtsCancelled -> stop("TtsCancelled")
-                    is TtsStarted -> {
-                        // TtsStarted is emitted by the TTS provider. We re-emit it with the transactionId.
-                        // Wait, AndroidTTSProvider doesn't emit TtsStarted, it uses UtteranceProgressListener.
-                        // I'll emit it here inside `speak()`.
-                    }
                 }
             }
         }
@@ -50,33 +44,54 @@ class HaloSpeechOutputCoordinator(
         activeJob = scope.launch {
             try {
                 // 1. Prepare Route
-                val routePrepared = routeController.prepareRoute(event.target)
-                if (!routePrepared && event.fallback == SpeechOutputFallback.DISALLOW_PHONE) {
-                    Log.i("HaloAudio", "HALO_AUDIO_ROUTE_FAILED transaction=${event.transactionId} fallback=DISALLOW_PHONE")
-                    eventBus.publish(
-                        TtsFailed(
-                            transactionId = event.transactionId,
-                            target = event.target,
-                            reason = "OUTPUT_ROUTE_UNAVAILABLE"
+                val routePreparation = routeController.prepareRoute(event.target)
+                when (routePreparation) {
+                    is SpeechRoutePreparation.Unavailable -> {
+                        Log.i("HaloAudio", "HALO_AUDIO_ROUTE_FAILED transaction=${event.transactionId} reason=${routePreparation.reason} fallback=${event.fallback}")
+                        eventBus.publish(
+                            TtsFailed(
+                                transactionId = event.transactionId,
+                                target = event.target,
+                                reason = routePreparation.reason.name
+                            )
                         )
-                    )
-                    return@launch
+                        if (event.fallback == SpeechOutputFallback.DISALLOW_PHONE) {
+                            return@launch
+                        }
+                    }
+                    is SpeechRoutePreparation.Pending -> {
+                        Log.i("HaloAudio", "HALO_AUDIO_ROUTE_PENDING transaction=${event.transactionId} reason=${routePreparation.reason}")
+                        eventBus.publish(
+                            TtsFailed(
+                                transactionId = event.transactionId,
+                                target = event.target,
+                                reason = "OUTPUT_ROUTE_PENDING"
+                            )
+                        )
+                        if (event.fallback == SpeechOutputFallback.DISALLOW_PHONE) {
+                            return@launch
+                        }
+                    }
+                    is SpeechRoutePreparation.Ready -> {
+                        // Route is ready
+                    }
                 }
 
-                // 2. Publish TtsStarted
-                eventBus.publish(
-                    TtsStarted(
-                        transactionId = event.transactionId,
-                        target = event.target,
-                        textLength = event.text.length
-                    )
-                )
-
-                // 3. Synthesize
+                // 2. Synthesize with onStarted callback to publish TtsStarted when audible playback actually begins
                 val request = SpeechRequest(text = event.text)
-                val result = ttsProvider.synthesize(request)
+                val result = ttsProvider.synthesize(request) {
+                    scope.launch {
+                        eventBus.publish(
+                            TtsStarted(
+                                transactionId = event.transactionId,
+                                target = event.target,
+                                textLength = event.text.length
+                            )
+                        )
+                    }
+                }
 
-                // 4. Publish result
+                // 3. Publish result
                 if (result.successful) {
                     eventBus.publish(
                         TtsCompleted(
@@ -122,9 +137,17 @@ class HaloSpeechOutputCoordinator(
         Log.i("HaloAudio", "Stopping speech output. Reason: $reason")
         activeJob?.cancel()
         activeJob = null
+        val currentTx = activeTransactionId
         activeTransactionId = null
-        scope.launch {
-            ttsProvider.close() // Stops the current TTS utterance.
+        ttsProvider.stopCurrent()
+        if (currentTx != null) {
+            scope.launch {
+                eventBus.publish(
+                    TtsCancelled(
+                        transactionId = currentTx
+                    )
+                )
+            }
         }
     }
 

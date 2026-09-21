@@ -40,6 +40,7 @@ import com.halo.sdk.runtime.ContextAssembled
 import com.halo.sdk.runtime.ConversationTurnCompleted
 import com.halo.sdk.runtime.EventBus
 import com.halo.sdk.runtime.ResponseDelivery
+import com.halo.sdk.runtime.RuntimeFactResolved
 import com.halo.sdk.runtime.SpeechInputRoute
 import com.halo.sdk.runtime.SpeechOutputFallback
 import com.halo.sdk.runtime.SpeechOutputTarget
@@ -117,6 +118,13 @@ class CognitiveSession(
                             
                             val requestId = UUID.randomUUID().toString()
                             eventBus.publish(CognitiveRequestStarted(requestId = requestId))
+                            eventBus.publish(
+                                RuntimeFactResolved(
+                                    transactionId = requestId,
+                                    factType = intent::class.java.simpleName,
+                                    valueSource = "system_clock"
+                                )
+                            )
                             _state.value = CognitiveSessionState.Completed(AiResponse(text = fact.text, providerId = "local", modelId = "fact-resolver", finishReason = "stop"))
                             eventBus.publish(CognitiveCompleted(requestId = requestId, response = fact.text))
                             eventBus.publish(
@@ -226,7 +234,7 @@ class CognitiveSession(
 
                 val assembly = contextAssembler.assemble(policy = targetPolicy, capabilities = capabilities)
                 val context = assembly.context
-                val requestWithContext = bindAssembledContext(finalRequest, assembly)
+                val requestWithContext = bindAssembledContext(finalRequest, assembly, responseDelivery)
 
                 eventBus.publish(
                     ContextAssembled(
@@ -348,11 +356,17 @@ class CognitiveSession(
 
     private fun bindAssembledContext(
         request: AiRequest,
-        assembly: ContextAssemblyResult
+        assembly: ContextAssemblyResult,
+        responseDelivery: ResponseDelivery
     ): AiRequest {
-        val image = assembly.image ?: return request
-        if (request.image != null) return request
-        return request.copy(image = image.imageBytes, mimeTypes = listOf(image.mimeType))
+        var result = request
+        if (responseDelivery == ResponseDelivery.SPEECH_AND_VISUAL && !request.text.isNullOrBlank()) {
+            val styleInstruction = "[Instruction: Respond conversationally and concisely in 1-2 short sentences. Do not say 'an AI language model'.]\n\n"
+            result = result.copy(text = styleInstruction + request.text)
+        }
+        val image = assembly.image ?: return result
+        if (result.image != null) return result
+        return result.copy(image = image.imageBytes, mimeTypes = listOf(image.mimeType))
     }
 
     private suspend fun executeProviderRequest(

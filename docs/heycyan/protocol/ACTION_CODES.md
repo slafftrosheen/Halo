@@ -16,8 +16,8 @@ Constants alone do not establish executable payloads or device support.
 | Heartbeat | 0x45 |
 | Wear | 0x46 |
 | Wear support | 0x47 |
-| Voice status | 0x4C |
-| BT connect | 0x4D |
+| Voice status | 0x48 |
+| BT connect | 0x49 |
 | Volume | 0x51 |
 | Sound switch | 0x52 |
 | GPT upload | 0x59 |

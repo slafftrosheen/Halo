@@ -45,9 +45,7 @@ class DefaultReasoningStrategy(
             is SearchIntent -> GoalType.SEARCH
             is CallIntent -> GoalType.COMMUNICATION
             is OpenIntent, is CurrentTimeIntent -> GoalType.DEVICE
-            is QuestionIntent, is ConversationIntent -> {
-                if (interpretation.transcript.lowercase().contains("time")) GoalType.DEVICE else GoalType.CONVERSATION
-            }
+            is QuestionIntent, is ConversationIntent -> GoalType.CONVERSATION
             else -> GoalType.CONVERSATION
         }
 
@@ -122,13 +120,8 @@ class DefaultReasoningStrategy(
                 }
             }
 
-            is ConversationIntent, is QuestionIntent -> {
-                if (interpretation.transcript.lowercase().contains("time")) {
-                    DevicePayload(action = "time", target = "")
-                } else {
-                    ConversationPayload(topic = interpretation.transcript)
-                }
-            }
+            is ConversationIntent, is QuestionIntent ->
+                ConversationPayload(topic = interpretation.transcript)
 
             else -> ConversationPayload(topic = interpretation.transcript)
         }

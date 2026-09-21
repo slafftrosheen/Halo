@@ -26,6 +26,7 @@ sealed interface HeyCyanCommand {
     data object PrepareVoiceRouting : HeyCyanCommand
     data object RouteAudioToGlasses : HeyCyanCommand
     data object RouteAudioToPhone : HeyCyanCommand
+    data object EnableClassicBluetooth : HeyCyanCommand
 
     // Network / Transfer
     data object EnterWifiTransferMode : HeyCyanCommand
@@ -51,6 +52,7 @@ fun HeyCyanOperation.toCommand(): HeyCyanCommand =
         HeyCyanOperation.PrepareVoiceRouting -> HeyCyanCommand.PrepareVoiceRouting
         HeyCyanOperation.RouteAudioToGlasses -> HeyCyanCommand.RouteAudioToGlasses
         HeyCyanOperation.RouteAudioToPhone -> HeyCyanCommand.RouteAudioToPhone
+        HeyCyanOperation.EnableClassicBluetooth -> HeyCyanCommand.EnableClassicBluetooth
         HeyCyanOperation.GenerateAIPhoto -> HeyCyanCommand.AiThumbnail
         HeyCyanOperation.EnterWifiTransferMode -> HeyCyanCommand.EnterWifiTransferMode
         HeyCyanOperation.SynchronizeMedia ->

@@ -34,12 +34,17 @@ class WearableSpeechInputBridge(
                         HeyCyanEvent.VoiceActivationStarted -> {
                             val deviceId = driver.activeDeviceId ?: return@collect
                             
-                            if (activeTtsTarget != null) {
-                                Log.i("SPEECH_INPUT_ROUTE", "Barge-in: cancelling active TTS")
+                            val activeTarget = activeTtsTarget
+                            val isWearableTarget = activeTarget is SpeechOutputTarget.Wearable && activeTarget.deviceId == deviceId
+                            if (activeTarget != null && (isWearableTarget || activeTarget is SpeechOutputTarget.Phone)) {
+                                Log.i("SPEECH_INPUT_ROUTE", "Barge-in: cancelling active TTS on device $deviceId")
                                 cancelSpeechOutput()
                                 delay(150)
-                            } else if (System.currentTimeMillis() < quietAfter) {
-                                delay(System.currentTimeMillis() - quietAfter)
+                            } else {
+                                val remaining = quietAfter - System.currentTimeMillis()
+                                if (remaining > 0L) {
+                                    delay(remaining)
+                                }
                             }
                             
                             if (captureId == null) {

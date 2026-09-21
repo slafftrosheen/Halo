@@ -38,6 +38,18 @@ class HeyCyanCommandTest {
     }
 
     @Test
+    fun `enableClassicBluetooth builds valid wire frame`() {
+        val bytes = HeyCyanCommand.enableClassicBluetooth()
+        val result = HeyCyanWireFrameCodec.decode(bytes)
+
+        assertTrue(result is WireFrameDecodeResult.Success)
+        val success = result as WireFrameDecodeResult.Success
+        assertEquals(0x49.toByte(), success.action)
+        assertArrayEquals(byteArrayOf(0x02, 0x01), success.payload)
+        assertTrue(success.isValidCrc)
+    }
+
+    @Test
     fun `ai command builds valid wire frame with thumbnail size`() {
         val bytes = HeyCyanCommand.ai(0)
         val result = HeyCyanWireFrameCodec.decode(bytes)

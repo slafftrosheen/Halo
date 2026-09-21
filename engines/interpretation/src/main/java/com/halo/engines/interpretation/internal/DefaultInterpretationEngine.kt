@@ -217,7 +217,8 @@ open class DefaultInterpretationEngine(
         )
         blackboard.publish(knowledge)
 
-        return ProcessedInterpretation(result, knowledge)
+        val updatedResult = result.copy(interpretation = interpretation)
+        return ProcessedInterpretation(updatedResult, knowledge)
     }
 
     private fun Observation.asKnowledge(): Knowledge = Knowledge(

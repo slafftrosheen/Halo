@@ -18,6 +18,8 @@ interface SpeechSynthesisProvider {
     val metadata: ProviderMetadata
         get() = ProviderMetadata(id = this::class.java.name, supportsStreaming = true)
     suspend fun synthesize(request: SpeechRequest): SpeechResult
+    fun synthesizeWithListener(request: SpeechRequest, onStart: () -> Unit): suspend () -> SpeechResult = { synthesize(request) }
+    fun stopCurrent() = Unit
     fun stream(text: String): Flow<AudioFrame>
     suspend fun health(): Boolean
     suspend fun healthDetails(): ProviderHealth = ProviderHealth(healthy = health())

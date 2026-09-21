@@ -9,6 +9,8 @@ import com.halo.engines.interpretation.model.OpenIntent
 import com.halo.engines.interpretation.model.TimeEntity
 import com.halo.engines.speech.SpeechRecognizedPayload
 
+import com.halo.cognition.language.CurrentDateIntent
+
 class TimeRule : InterpretationRule {
     override val priority: Int = 600
 
@@ -24,6 +26,17 @@ class TimeRule : InterpretationRule {
                 entities = emptyList(),
                 consumedTokens = consumedTokens,
                 diagnostics = "Detected explicit current time query"
+            )
+        }
+
+        // 2. Explicit current-date query matching
+        if (currentDatePattern.containsMatchIn(transcript)) {
+            return RuleMatch(
+                confidence = 1.0f,
+                intent = CurrentDateIntent,
+                entities = emptyList(),
+                consumedTokens = consumedTokens,
+                diagnostics = "Detected explicit current date query"
             )
         }
 
@@ -73,6 +86,10 @@ class TimeRule : InterpretationRule {
     private companion object {
         val currentTimePattern = Regex(
             "^\\s*(?:what(?:'s|\\s+is)?(?:\\s+the)?\\s+time|current\\s+time|what\\s+time\\s+is\\s+it|what\\s+time\\s+do\\s+we\\s+have)\\b",
+            RegexOption.IGNORE_CASE
+        )
+        val currentDatePattern = Regex(
+            "^\\s*(?:what(?:'s|\\s+is)?(?:\\s+the)?\\s+date|what\\s+date\\s+is\\s+it|what(?:'s|\\s+is)?\\s+today(?:'s)?\\s+date|what\\s+day\\s+is\\s+it|current\\s+date)\\b",
             RegexOption.IGNORE_CASE
         )
         val timePattern = Regex(

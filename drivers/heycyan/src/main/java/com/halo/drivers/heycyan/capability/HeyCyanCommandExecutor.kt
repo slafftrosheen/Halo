@@ -96,6 +96,10 @@ class DefaultHeyCyanCommandExecutor(
                     action = HeyCyanCommandCatalog.ACTION_SPEAK_SOUND_SWITCH
                     payload = byteArrayOf(0x02, 0x02)
                 }
+                is HeyCyanCommand.EnableClassicBluetooth -> {
+                    action = HeyCyanCommandCatalog.ACTION_BT_CONNECT
+                    payload = byteArrayOf(0x02, 0x01)
+                }
                 is HeyCyanCommand.SetDateTime -> return Result.failure(
                     com.halo.drivers.heycyan.protocol.ProtocolNotVerifiedException(
                         operation = command.toString(),

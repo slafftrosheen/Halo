@@ -89,21 +89,20 @@ class WearableCaptureCoordinator(private val context: Context, private val drive
         val device = driver.activeDeviceId
         try {
             requireNotNull(device) { "No connected HeyCyan device" }
-            _state.value = _state.value.copy(busy = true, message = "Connecting for media transfer")
+            _state.value = _state.value.copy(busy = true, message = "Entering transfer mode")
+            driver.capabilityController.execute(HeyCyanOperation.EnterWifiTransferMode).getOrThrow()
+
             val credentialsProvider = DeviceStateWifiCredentialProvider(driver.deviceState)
-            var credentials = credentialsProvider.credentials()
+            _state.value = _state.value.copy(busy = true, message = "Awaiting transfer credentials")
+            events.publish(ActionReceipt(operationId = id, category = "Vision", title = "Media synchronization", stage = "Pending", detail = "Awaiting transfer credentials", sourceDeviceId = device))
+            
+            val credentials = credentialsProvider.await(device, 30_000L)
             if (credentials == null) {
-                _state.value = _state.value.copy(busy = true, message = "Awaiting transfer credentials")
-                events.publish(ActionReceipt(operationId = id, category = "Vision", title = "Media synchronization", stage = "Pending", detail = "Awaiting transfer credentials", sourceDeviceId = device))
-                withTimeoutOrNull(30_000L) {
-                    driver.deviceState.mapNotNull { it.wifiCredentials }.first()
-                }
-                credentials = credentialsProvider.credentials()
-                if (credentials == null) {
-                    pendingSync.value = true
-                    error("Media transfer unavailable: glasses have not supplied Wi-Fi credentials")
-                }
+                pendingSync.value = true
+                _state.value = _state.value.copy(busy = false, message = "Awaiting transfer credentials")
+                return
             }
+
             _state.value = _state.value.copy(busy = true, message = "Transfer ready")
             events.publish(ActionReceipt(operationId = id, category = "Vision", title = "Media synchronization", stage = "Transfer ready", detail = "Credentials acquired", sourceDeviceId = device))
             var api: HeyCyanMediaApi? = null

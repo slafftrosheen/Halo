@@ -7,40 +7,101 @@ import android.os.Build
 import android.util.Log
 import com.halo.drivers.heycyan.RealHeyCyanDriver
 import com.halo.drivers.heycyan.protocol.HeyCyanCommand
+import com.halo.drivers.heycyan.protocol.HeyCyanConnectionState
 import com.halo.sdk.runtime.SpeechOutputTarget
 import com.halo.sdk.runtime.embodiment.heycyan.HeyCyanOperation
 
+import com.halo.host.android.audio.BluetoothAudioRouteMonitor
+import com.halo.host.android.audio.AndroidBluetoothAudioRouteMonitor
+import com.halo.sdk.runtime.*
+
 class SpeechOutputRouteController(
     private val context: Context,
-    private val heyCyanDriver: RealHeyCyanDriver
+    private val heyCyanDriver: RealHeyCyanDriver,
+    private val routeMonitor: BluetoothAudioRouteMonitor = AndroidBluetoothAudioRouteMonitor(context)
 ) {
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
-    suspend fun prepareRoute(target: SpeechOutputTarget): Boolean {
+    suspend fun prepareRoute(target: SpeechOutputTarget): SpeechRoutePreparation {
         return when (target) {
             is SpeechOutputTarget.Phone -> {
-                Log.i("HaloAudio", "HALO_AUDIO_ROUTE_REQUEST target=phone")
-                // For phone, we don't send commands to HeyCyan. We could restore phone route.
-                val result = heyCyanDriver.capabilityController.execute(HeyCyanOperation.RouteAudioToPhone)
-                if (result.isSuccess) {
-                    Log.i("HaloAudio", "HALO_AUDIO_ROUTE_PHONE command=0x52 payload=0202 result=success")
-                } else {
-                    Log.i("HaloAudio", "HALO_AUDIO_ROUTE_PHONE result=failed (device not ready or not connected)")
-                }
-                true
+                Log.i("HaloAudio", "AUDIO_ROUTE_REQUEST transaction=N/A target=Phone")
+                heyCyanDriver.capabilityController.execute(HeyCyanOperation.RouteAudioToPhone)
+                SpeechRoutePreparation.Ready(
+                    target = target,
+                    evidence = SpeechRouteEvidence(
+                        vendorRouteCommandSent = true,
+                        androidDeviceType = null,
+                        androidDeviceName = "Phone Speaker",
+                        androidDeviceAddress = null,
+                        verifiedAtMs = System.currentTimeMillis()
+                    )
+                )
             }
             is SpeechOutputTarget.Wearable -> {
-                Log.i("HaloAudio", "HALO_AUDIO_ROUTE_REQUEST target=wearable device=${target.deviceId}")
-                // Send the vendor command RouteAudioToGlasses
-                val result = heyCyanDriver.capabilityController.execute(HeyCyanOperation.RouteAudioToGlasses)
-                if (result.isFailure) {
-                    Log.e("HaloAudio", "HALO_AUDIO_ROUTE_FAILED transaction=NA reason=HeyCyan command failed")
-                    return false
+                Log.i("HaloAudio", "AUDIO_ROUTE_REQUEST transaction=N/A target=Wearable device=${target.deviceId}")
+                
+                val activeDevice = heyCyanDriver.activeDeviceId
+                if (activeDevice == null || activeDevice != target.deviceId) {
+                    Log.i("HaloAudio", "AUDIO_ROUTE_FAILED target=wearable reason=WRONG_DEVICE")
+                    return SpeechRoutePreparation.Unavailable(
+                        target = target,
+                        reason = SpeechRouteFailureReason.WRONG_DEVICE
+                    )
                 }
-                Log.i("HaloAudio", "HALO_AUDIO_ROUTE_HEYCYAN command=0x52 payload=0201 result=success")
-                verifyAndroidMediaRoute()
-                Log.i("HaloAudio", "HALO_AUDIO_ROUTE_READY target=wearable device=${target.deviceId}")
-                true
+
+                if (heyCyanDriver.deviceState.value.connection != HeyCyanConnectionState.READY) {
+                    Log.i("HaloAudio", "AUDIO_ROUTE_FAILED target=wearable reason=DEVICE_DISCONNECTED")
+                    return SpeechRoutePreparation.Unavailable(
+                        target = target,
+                        reason = SpeechRouteFailureReason.DEVICE_DISCONNECTED
+                    )
+                }
+
+                // 1. Enable Classic Bluetooth on glasses
+                val btResult = heyCyanDriver.capabilityController.execute(HeyCyanOperation.EnableClassicBluetooth)
+                if (btResult.isFailure) {
+                    Log.w("HaloAudio", "HEYCYAN_CLASSIC_ENABLE device=${target.deviceId} result=failed")
+                } else {
+                    Log.i("HaloAudio", "HEYCYAN_CLASSIC_ENABLE device=${target.deviceId} result=success")
+                }
+
+                // 2. Send RouteAudioToGlasses command
+                val routeResult = heyCyanDriver.capabilityController.execute(HeyCyanOperation.RouteAudioToGlasses)
+                if (routeResult.isFailure) {
+                    Log.i("HaloAudio", "HEYCYAN_VENDOR_ROUTE device=${target.deviceId} route=GLASSES result=failed")
+                    return SpeechRoutePreparation.Unavailable(
+                        target = target,
+                        reason = SpeechRouteFailureReason.COMMAND_FAILED
+                    )
+                }
+                Log.i("HaloAudio", "HEYCYAN_VENDOR_ROUTE device=${target.deviceId} route=GLASSES result=success")
+
+                // 3. Await/verify Android Bluetooth audio endpoint
+                val endpoint = routeMonitor.awaitEndpoint(
+                    predicate = { ep -> ep.connected },
+                    timeoutMs = 2_000L
+                )
+
+                if (endpoint == null) {
+                    Log.i("HaloAudio", "AUDIO_ROUTE_FAILED target=wearable reason=AUDIO_TRANSPORT_NOT_CONNECTED")
+                    return SpeechRoutePreparation.Unavailable(
+                        target = target,
+                        reason = SpeechRouteFailureReason.AUDIO_TRANSPORT_NOT_CONNECTED
+                    )
+                }
+
+                Log.i("HaloAudio", "AUDIO_ROUTE_READY target=wearable verified=true endpoint=${endpoint.name}")
+                SpeechRoutePreparation.Ready(
+                    target = target,
+                    evidence = SpeechRouteEvidence(
+                        vendorRouteCommandSent = true,
+                        androidDeviceType = endpoint.type.ordinal,
+                        androidDeviceName = endpoint.name,
+                        androidDeviceAddress = endpoint.address,
+                        verifiedAtMs = System.currentTimeMillis()
+                    )
+                )
             }
         }
     }

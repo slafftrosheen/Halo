@@ -15,6 +15,10 @@ sealed interface HeyCyanTransferState {
 
     data object EnteringTransferMode : HeyCyanTransferState
 
+    data object WaitingForCredentials : HeyCyanTransferState
+
+    data class Paused(val reason: String) : HeyCyanTransferState
+
     data object ConnectingWifi : HeyCyanTransferState
 
     data object DiscoveringDevice : HeyCyanTransferState

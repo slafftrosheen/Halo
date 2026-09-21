@@ -40,9 +40,17 @@ data class HardwareInputState(
     val lastInputTimestampMs: Long? = null
 )
 
+data class HeyCyanTransportIdentity(
+    val controlBleAddress: String,
+    val classicAudioAddress: String? = null,
+    val classicAudioName: String? = null
+)
+
 data class HeyCyanDeviceState(
     val connection: HeyCyanConnectionState =
         HeyCyanConnectionState.DISCONNECTED,
+
+    val transportIdentity: HeyCyanTransportIdentity? = null,
 
     val battery: BatteryState? = null,
 

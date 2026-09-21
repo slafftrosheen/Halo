@@ -88,8 +88,7 @@ class HeyCyanTransferCoordinatorTest {
         val result = coordinator.synchronizeManifest()
         assertTrue(result.isFailure)
         val state = coordinator.state.value
-        assertTrue(state is HeyCyanTransferState.Failed)
-        assertEquals("Wi-Fi credentials unavailable", (state as HeyCyanTransferState.Failed).message)
+        assertTrue(state is HeyCyanTransferState.WaitingForCredentials)
     }
 
     @Test

@@ -94,7 +94,13 @@ class AndroidTTSProvider(
         }
     }
 
-    override suspend fun synthesize(request: SpeechRequest): SpeechResult =
+    override fun stopCurrent() {
+        tts?.stop()
+    }
+
+    override suspend fun synthesize(request: SpeechRequest): SpeechResult = synthesize(request, null)
+
+    suspend fun synthesize(request: SpeechRequest, onStarted: (() -> Unit)? = null): SpeechResult =
         synthesizeMutex.withLock {
             val ready = ensureTts()
             if (!ready) return@withLock SpeechResult(0, false)
@@ -128,6 +134,7 @@ class AndroidTTSProvider(
                         if (id == utteranceId) {
                             logCurrentBluetoothOutputs("TTS started")
                             Log.d(TAG, "TTS started utterance=$utteranceId")
+                            onStarted?.invoke()
                         }
                     }
 

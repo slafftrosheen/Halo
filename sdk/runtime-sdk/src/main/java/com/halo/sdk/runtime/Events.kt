@@ -4,7 +4,30 @@ import java.util.UUID
 import com.halo.sdk.runtime.embodiment.ExecutionResult
 
 data class WakeWordDetected(override val id: String = UUID.randomUUID().toString(), override val timestamp: Long) : HaloEvent
-data class SpeechRecognized(override val id: String = UUID.randomUUID().toString(), override val timestamp: Long, val text: String, val locale: String, val input: SpeechInputTurn? = null) : HaloEvent
+data class SpeechRecognized(
+    override val id: String = UUID.randomUUID().toString(),
+    override val timestamp: Long,
+    val text: String,
+    val locale: String,
+    val input: SpeechInputTurn? = null,
+    val confidence: Float? = null
+) : HaloEvent
+
+data class SpeechRejected(
+    override val id: String = UUID.randomUUID().toString(),
+    override val timestamp: Long = System.currentTimeMillis(),
+    val text: String,
+    val reason: String,
+    val captureId: String? = null
+) : HaloEvent
+
+data class RuntimeFactResolved(
+    override val id: String = UUID.randomUUID().toString(),
+    override val timestamp: Long = System.currentTimeMillis(),
+    val transactionId: String,
+    val factType: String,
+    val valueSource: String = "system_clock"
+) : HaloEvent
 data class IntentRecognized(override val id: String = UUID.randomUUID().toString(), override val timestamp: Long, val intent: HaloIntent) : HaloEvent
 data class AIResponseGenerated(override val id: String = UUID.randomUUID().toString(), override val timestamp: Long, val response: String) : HaloEvent
 

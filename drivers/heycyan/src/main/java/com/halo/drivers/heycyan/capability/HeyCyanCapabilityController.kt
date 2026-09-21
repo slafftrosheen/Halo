@@ -121,7 +121,7 @@ class HeyCyanCapabilityController(
         HeyCyanOperation.StartVideo, HeyCyanOperation.StopVideo -> HeyCyanCapabilities.video
         HeyCyanOperation.StartRecording, HeyCyanOperation.StopRecording -> HeyCyanCapabilities.audioRecording
         HeyCyanOperation.PrepareVoiceRouting -> HeyCyanCapabilities.liveAudio
-        HeyCyanOperation.RouteAudioToGlasses, HeyCyanOperation.RouteAudioToPhone -> HeyCyanCapabilities.speakerOutput
+        HeyCyanOperation.RouteAudioToGlasses, HeyCyanOperation.RouteAudioToPhone, HeyCyanOperation.EnableClassicBluetooth -> HeyCyanCapabilities.speakerOutput
         HeyCyanOperation.GenerateAIPhoto -> HeyCyanCapabilities.aiPhoto
         HeyCyanOperation.EnterWifiTransferMode, HeyCyanOperation.SynchronizeMedia -> HeyCyanCapabilities.wifiTransfer
     }

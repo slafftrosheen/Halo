@@ -1,5 +1,6 @@
 package com.halo.engines.reasoning.strategy
 
+import com.halo.cognition.language.CurrentTimeIntent
 import com.halo.cognition.language.MediaEntity
 import com.halo.cognition.language.PlayIntent
 import com.halo.cognition.language.QuestionIntent
@@ -92,7 +93,7 @@ class DefaultReasoningStrategyTest {
     fun testTimeQuestionMapsToDeviceTimePayload() {
         val interpretation = Interpretation(
             transcript = "what time is it",
-            intent = QuestionIntent
+            intent = CurrentTimeIntent
         )
         val goal = strategy.generateGoal(interpretation)
 
