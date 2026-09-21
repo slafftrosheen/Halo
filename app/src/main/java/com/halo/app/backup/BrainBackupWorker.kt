@@ -7,11 +7,13 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import com.halo.app.HaloApplication
 import com.halo.app.di.ManualDependencyGraph
 import java.util.concurrent.TimeUnit
 
 class BrainBackupWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result = try {
+        (applicationContext as? HaloApplication)?.awaitStorageBootstrap()
         ManualDependencyGraph.vaultRepository.createBackup(
             BrainExportRequest(profile = BrainExportProfile.FULL_USER_BACKUP)
         )

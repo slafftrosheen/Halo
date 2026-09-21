@@ -1,6 +1,7 @@
 package com.halo.app.ui.theme
 
 import android.content.Context
+import android.util.Log
 import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -61,12 +62,13 @@ class AppearancePreferences(
 
         persistenceJob = scope.launch {
             writes.withLock {
-                check(
-                    preferences()
-                        .edit()
-                        .putString(KEY_MODE, mode.name)
-                        .commit()
-                ) { "Could not persist Halo appearance mode" }
+                val persisted = preferences()
+                    .edit()
+                    .putString(KEY_MODE, mode.name)
+                    .commit()
+                if (!persisted) {
+                    Log.w(TAG, "Could not persist Halo appearance mode")
+                }
             }
         }
     }
@@ -98,6 +100,7 @@ class AppearancePreferences(
         appContext.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
 
     private companion object {
+        const val TAG = "HaloAppearance"
         const val PREFERENCES_NAME = "halo_appearance"
         const val KEY_MODE = "mode"
     }

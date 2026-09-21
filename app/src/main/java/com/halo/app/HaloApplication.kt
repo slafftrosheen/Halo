@@ -121,7 +121,7 @@ class HaloApplication :
     private fun refreshBudget(pressure: NativeMemoryPressure) {
         if (!::storageBootstrap.isInitialized) return
         resourceScope.launch {
-            storageBootstrap.await()
+            if (runCatching { storageBootstrap.await() }.isFailure) return@launch
             val info = ActivityManager.MemoryInfo()
             getSystemService(ActivityManager::class.java).getMemoryInfo(info)
             governor.updateBudget(
@@ -159,7 +159,9 @@ class HaloApplication :
         if (visibleActivities == 0) {
             backgroundRelease = resourceScope.launch {
                 delay(30_000)
-                governor.releaseIdle("application_backgrounded")
+                if (runCatching { storageBootstrap.await() }.isSuccess) {
+                    governor.releaseIdle("application_backgrounded")
+                }
             }
         }
     }
