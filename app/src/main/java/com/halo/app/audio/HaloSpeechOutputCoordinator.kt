@@ -44,48 +44,66 @@ class HaloSpeechOutputCoordinator(
         activeTransactionId = event.transactionId
 
         activeJob = scope.launch {
+            var playbackTarget = event.target
             try {
-                // 1. Prepare Route
-                val routePreparation = routeController.prepareRoute(
+                // 1. Prepare the requested route.
+                var routePreparation = routeController.prepareRoute(
                     SpeechRouteRequest(
                         transactionId = event.transactionId,
-                        target = event.target,
+                        target = playbackTarget,
                         fallback = event.fallback,
                         sourceCaptureId = event.sourceCaptureId
                     )
                 )
-                when (routePreparation) {
-                    is SpeechRoutePreparation.Unavailable -> {
-                        Log.i("HaloAudio", "HALO_AUDIO_ROUTE_FAILED transaction=${event.transactionId} reason=${routePreparation.reason} fallback=${event.fallback}")
+
+                if (routePreparation !is SpeechRoutePreparation.Ready) {
+                    val reason = when (routePreparation) {
+                        is SpeechRoutePreparation.Unavailable -> routePreparation.reason.name
+                        is SpeechRoutePreparation.Pending -> "OUTPUT_ROUTE_PENDING"
+                        is SpeechRoutePreparation.Ready -> error("Unreachable route state")
+                    }
+
+                    if (event.fallback == SpeechOutputFallback.DISALLOW_PHONE) {
+                        Log.i(
+                            "HaloAudio",
+                            "HALO_AUDIO_ROUTE_FAILED transaction=${event.transactionId} " +
+                                "reason=$reason fallback=${event.fallback}"
+                        )
                         eventBus.publish(
                             TtsFailed(
                                 transactionId = event.transactionId,
-                                target = event.target,
-                                reason = routePreparation.reason.name
+                                target = playbackTarget,
+                                reason = reason
                             )
                         )
-                        if (event.fallback == SpeechOutputFallback.DISALLOW_PHONE) {
-                            return@launch
-                        }
+                        return@launch
                     }
-                    is SpeechRoutePreparation.Pending -> {
-                        Log.i("HaloAudio", "HALO_AUDIO_ROUTE_PENDING transaction=${event.transactionId} reason=${routePreparation.reason}")
+
+                    Log.i(
+                        "HaloAudio",
+                        "HALO_AUDIO_ROUTE_FALLBACK transaction=${event.transactionId} " +
+                            "from=${event.target::class.simpleName} to=Phone reason=$reason"
+                    )
+                    playbackTarget = SpeechOutputTarget.Phone
+                    routePreparation = routeController.prepareRoute(
+                        SpeechRouteRequest(
+                            transactionId = event.transactionId,
+                            target = playbackTarget,
+                            fallback = SpeechOutputFallback.ALLOW_PHONE,
+                            sourceCaptureId = event.sourceCaptureId
+                        )
+                    )
+                    if (routePreparation !is SpeechRoutePreparation.Ready) {
                         eventBus.publish(
                             TtsFailed(
                                 transactionId = event.transactionId,
-                                target = event.target,
-                                reason = "OUTPUT_ROUTE_PENDING"
+                                target = playbackTarget,
+                                reason = "PHONE_FALLBACK_ROUTE_FAILED"
                             )
                         )
-                        if (event.fallback == SpeechOutputFallback.DISALLOW_PHONE) {
-                            return@launch
-                        }
-                    }
-                    is SpeechRoutePreparation.Ready -> {
-                        // Route is ready
+                        return@launch
                     }
                 }
-
                 // 2. Synthesize with onStarted callback to publish TtsStarted when audible playback actually begins
                 val request = SpeechRequest(text = event.text)
                 val onStarted: () -> Unit = {
@@ -94,14 +112,14 @@ class HaloSpeechOutputCoordinator(
                         eventBus.publish(
                             TtsStarted(
                                 transactionId = event.transactionId,
-                                target = event.target,
+                                target = playbackTarget,
                                 textLength = event.text.length
                             )
                         )
                     }
                     Unit
                 }
-                val result = if (event.target is SpeechOutputTarget.Wearable) {
+                val result = if (playbackTarget is SpeechOutputTarget.Wearable) {
                     val evidence = (routePreparation as? SpeechRoutePreparation.Ready)?.evidence
                     if (evidence == null || routedSpeechPlaybackProvider == null) {
                         com.halo.sdk.provider.SpeechResult(0, false)
@@ -117,14 +135,14 @@ class HaloSpeechOutputCoordinator(
                     eventBus.publish(
                         TtsCompleted(
                             transactionId = event.transactionId,
-                            target = event.target
+                            target = playbackTarget
                         )
                     )
                 } else {
                     eventBus.publish(
                         TtsFailed(
                             transactionId = event.transactionId,
-                            target = event.target,
+                            target = playbackTarget,
                             reason = "TTS_FAILED"
                         )
                     )
@@ -133,7 +151,7 @@ class HaloSpeechOutputCoordinator(
                 eventBus.publish(
                     TtsCancelled(
                         transactionId = event.transactionId,
-                        target = event.target
+                        target = playbackTarget
                     )
                 )
                 throw e
@@ -142,7 +160,7 @@ class HaloSpeechOutputCoordinator(
                 eventBus.publish(
                     TtsFailed(
                         transactionId = event.transactionId,
-                        target = event.target,
+                        target = playbackTarget,
                         reason = e.message ?: "UNKNOWN_ERROR"
                     )
                 )
@@ -158,19 +176,11 @@ class HaloSpeechOutputCoordinator(
         Log.i("HaloAudio", "Stopping speech output. Reason: $reason")
         activeJob?.cancel()
         activeJob = null
-        val currentTx = activeTransactionId
         activeTransactionId = null
         ttsProvider.stopCurrent()
         routedSpeechPlaybackProvider?.stopCurrent()
-        if (currentTx != null) {
-            scope.launch {
-                eventBus.publish(
-                    TtsCancelled(
-                        transactionId = currentTx
-                    )
-                )
-            }
-        }
+        // activeJob cancellation is the single cancellation event source. The
+        // coroutine retains the actual playback target, including phone fallback.
     }
 
     fun shutdown() {

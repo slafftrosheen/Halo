@@ -62,6 +62,9 @@ class SpeechOutputRouteController(
                     )
                 }
 
+                // Restore persisted Classic-audio identity independently of Devices UI.
+                audioPairingCoordinator?.ensureRestored(target.deviceId)
+
                 // 1. Enable Classic Bluetooth on glasses
                 val btResult = heyCyanDriver.capabilityController.execute(HeyCyanOperation.EnableClassicBluetooth)
                 if (btResult.isFailure) {

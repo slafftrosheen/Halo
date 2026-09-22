@@ -33,6 +33,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 data class WearableAudioAssociation(
     val wearableDeviceId: String,
@@ -111,6 +113,7 @@ class HeyCyanAudioPairingCoordinator(
     val confirmationRequests: SharedFlow<IntentSender> = _confirmationRequests.asSharedFlow()
     @Volatile private var activeWearableId: String? = null
     @Volatile private var association: WearableAudioAssociation? = null
+    private val restoreMutex = Mutex()
 
     private val bondReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -137,18 +140,33 @@ class HeyCyanAudioPairingCoordinator(
     }
 
     fun restore(wearableDeviceId: String) {
+        scope.launch { ensureRestored(wearableDeviceId) }
+    }
+
+    /**
+     * Process-level, UI-independent association restoration.
+     *
+     * Speech routing calls this before evaluating pairing state so a fresh process
+     * can answer on already-paired glasses even when the Devices screen was never opened.
+     */
+    suspend fun ensureRestored(wearableDeviceId: String) = restoreMutex.withLock {
+        val currentState = _state.value
+        if (activeWearableId == wearableDeviceId &&
+            currentState !is HeyCyanAudioPairingState.Unknown
+        ) {
+            return@withLock
+        }
+
         activeWearableId = wearableDeviceId
-        scope.launch {
-            val saved = repository.read(wearableDeviceId)
-            association = saved
-            if (saved == null) {
-                _state.value = HeyCyanAudioPairingState.NotAssociated
-            } else if (!associationStillExists(saved)) {
-                _state.value = HeyCyanAudioPairingState.Failed("Audio association needs repair")
-            } else {
-                _state.value = HeyCyanAudioPairingState.Associated(saved)
-                reconcileRoute(routeMonitor.routes.value)
-            }
+        val saved = repository.read(wearableDeviceId)
+        association = saved
+        if (saved == null) {
+            _state.value = HeyCyanAudioPairingState.NotAssociated
+        } else if (!associationStillExists(saved)) {
+            _state.value = HeyCyanAudioPairingState.Failed("Audio association needs repair")
+        } else {
+            _state.value = HeyCyanAudioPairingState.Associated(saved)
+            reconcileRoute(routeMonitor.routes.value)
         }
     }
 
