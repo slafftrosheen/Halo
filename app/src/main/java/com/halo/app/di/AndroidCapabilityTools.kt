@@ -80,6 +80,7 @@ class AndroidCapabilityTools(private val context: Context, private val events: E
             is Outcome.RetryableFailure -> result.reason
             is Outcome.Cancelled -> result.reason ?: "Cancelled"
             is Outcome.Partial -> result.message
+            is Outcome.NeedsClarification -> result.prompt
         }
         events.publish(ActionReceipt(operationId = toolCall.id, category = "Actions", title = definition.id, stage = stage, detail = detail))
         return if (result is Outcome.Success) ToolExecutionResult.Success(toolCall.id, definition.id, "$stage: $detail")

@@ -165,7 +165,8 @@ class ExecutionEngine(
             when (result) {
                 is Outcome.PermanentFailure,
                 is Outcome.RetryableFailure,
-                is Outcome.Cancelled -> {
+                is Outcome.Cancelled,
+                is Outcome.NeedsClarification -> {
                     finalOutcome = result
                     break
                 }
@@ -184,5 +185,6 @@ class ExecutionEngine(
         is Outcome.RetryableFailure -> reason
         is Outcome.Partial -> message
         is Outcome.Cancelled -> reason.orEmpty()
+        is Outcome.NeedsClarification -> prompt
     }
 }

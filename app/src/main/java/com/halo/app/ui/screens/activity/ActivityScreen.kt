@@ -1,5 +1,6 @@
 package com.halo.app.ui.screens.activity
 
+import android.os.Trace
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -72,7 +73,7 @@ fun ActivityScreen(viewModel: ActivityViewModel, onOpenObject: (String) -> Unit 
                 contentPadding = PaddingValues(bottom = 80.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                items(filtered, key = { it.presentationId }) { event ->
+                items(filtered, key = { it.id }) { event ->
                     ActivityListItem(event, onOpenObject)
                 }
             }
@@ -149,7 +150,7 @@ data class ActivityStory(
     val kind: ActivityKind,
     val title: String,
     val summary: String,
-    val timestamp: Long,
+    val timestamp: Instant,
     val status: ActivityStatus,
     val steps: List<ActivityStep>,
     val objectId: String? = null
@@ -161,6 +162,22 @@ data class ActivityUiState(
 
 class ActivityUiMapper {
     fun map(timeline: List<TimelineEvent>): ActivityUiState {
+        return try {
+            Trace.beginSection("Halo.Activity.map")
+            mapInternal(timeline)
+        } catch (_: Throwable) {
+            mapInternal(timeline)
+        } finally {
+            runCatching { Trace.endSection() }
+        }
+    }
+
+    private fun mapInternal(timeline: List<TimelineEvent>): ActivityUiState {
+        check(
+            timeline.map { it.presentationId }
+                .distinct()
+                .size == timeline.size
+        )
         val stories = mutableListOf<ActivityStory>()
         val byCorrelation = timeline.groupBy { it.correlationId }
         for ((correlationId, events) in byCorrelation) {
@@ -173,7 +190,7 @@ class ActivityUiMapper {
                             kind = kindFor(event),
                             title = event.title,
                             summary = event.description,
-                            timestamp = event.timestamp.toEpochMilli(),
+                            timestamp = event.timestamp,
                             status = statusFor(event),
                             steps = listOf(ActivityStep(event.presentationId, event.title, event.description, statusFor(event) == ActivityStatus.FAILED)),
                             objectId = event.objectId
@@ -192,7 +209,7 @@ class ActivityUiMapper {
                         kind = kindFor(start),
                         title = start.title,
                         summary = lastMeaningful.description,
-                        timestamp = start.timestamp.toEpochMilli(),
+                        timestamp = start.timestamp,
                         status = if (isError) ActivityStatus.FAILED else ActivityStatus.SUCCESS,
                         steps = sorted.map { ActivityStep(it.presentationId, it.title, it.description, statusFor(it) == ActivityStatus.FAILED) },
                         objectId = sorted.firstNotNullOfOrNull { it.objectId }
@@ -235,4 +252,4 @@ class ActivityViewModel(
 
 private val activityTimeFormatter = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
 
-private fun Long.formatTime(): String = activityTimeFormatter.format(Instant.ofEpochMilli(this))
+private fun Instant.formatTime(): String = activityTimeFormatter.format(this)

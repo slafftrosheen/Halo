@@ -8,7 +8,7 @@ import com.halo.engines.interpretation.api.RuleMatch
 import com.halo.engines.interpretation.model.OpenIntent
 import com.halo.engines.interpretation.model.TimeEntity
 import com.halo.engines.speech.SpeechRecognizedPayload
-import com.halo.engines.interpretation.parser.TemporalExpressionParser
+import com.halo.cognition.language.TemporalExpressionParser
 
 import com.halo.cognition.language.CurrentDateIntent
 
@@ -73,5 +73,6 @@ class TimeRule : InterpretationRule {
             RegexOption.IGNORE_CASE
         )
         val currentTimeForms = setOf("time", "the time", "current time")
+        val currentDateForms = setOf("date", "the date", "current date", "today's date")
     }
 }

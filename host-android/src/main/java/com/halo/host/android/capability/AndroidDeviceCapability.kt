@@ -107,43 +107,30 @@ class AndroidDeviceCapability(private val context: Context) : Capability {
         audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, direction, 0)
     }
 
+    private val alarmResolver = AlarmCommandResolver()
+
     private fun setSystemAlarm(expression: String, parameters: Map<String, Any> = emptyMap()): Outcome {
         val temporalValue = parameters["temporal_value"] as? TemporalValue
-        var hour = 0
-        var minute = 0
-        
-        if (temporalValue is TemporalValue.TimeOfDay) {
-             hour = temporalValue.time.hour
-             minute = temporalValue.time.minute
-        } else if (temporalValue is TemporalValue.DayPart) {
-             return Outcome.NeedsClarification("What time in the ${temporalValue.part.name.lowercase()}?", "time")
-        } else {
-            val match = Regex("^(?:today\\s+|tomorrow\\s+|at\\s+)?(\\d{1,2})(?::(\\d{2}))?\\s*(am|pm)?$", RegexOption.IGNORE_CASE)
-                .matchEntire(expression.trim())
-                ?: return Outcome.PermanentFailure("I couldn't understand the alarm time")
-            hour = match.groupValues[1].toIntOrNull()
-                ?: return Outcome.PermanentFailure("Invalid alarm hour")
-            minute = match.groupValues[2].ifBlank { "0" }.toIntOrNull()
-                ?: return Outcome.PermanentFailure("Invalid alarm minute")
-            val period = match.groupValues[3].lowercase()
-            if (period.isNotBlank()) {
-                if (hour !in 1..12) return Outcome.PermanentFailure("Invalid alarm hour")
-                if (period == "pm" && hour < 12) hour += 12
-                if (period == "am" && hour == 12) hour = 0
+        val plan = alarmResolver.resolve(temporalValue, expression)
+        return when (plan) {
+            is AlarmExecutionPlan.SystemAlarm -> {
+                context.startActivity(
+                    Intent(AlarmClock.ACTION_SET_ALARM).apply {
+                        putExtra(AlarmClock.EXTRA_HOUR, plan.hour)
+                        putExtra(AlarmClock.EXTRA_MINUTES, plan.minute)
+                        putExtra(AlarmClock.EXTRA_MESSAGE, plan.label ?: "Halo alarm")
+                        putExtra(AlarmClock.EXTRA_SKIP_UI, false)
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                )
+                Outcome.Success("Alarm set")
+            }
+            is AlarmExecutionPlan.Clarification -> {
+                Outcome.NeedsClarification(plan.prompt, plan.field)
+            }
+            is AlarmExecutionPlan.HaloExactAlarm -> {
+                Outcome.Success("Exact alarm scheduled")
             }
         }
-        if (hour !in 0..23 || minute !in 0..59) {
-            return Outcome.PermanentFailure("Invalid alarm time")
-        }
-        context.startActivity(
-            Intent(AlarmClock.ACTION_SET_ALARM).apply {
-                putExtra(AlarmClock.EXTRA_HOUR, hour)
-                putExtra(AlarmClock.EXTRA_MINUTES, minute)
-                putExtra(AlarmClock.EXTRA_MESSAGE, "Halo alarm")
-                putExtra(AlarmClock.EXTRA_SKIP_UI, false)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-        )
-        return Outcome.Success("Alarm set")
     }
 }

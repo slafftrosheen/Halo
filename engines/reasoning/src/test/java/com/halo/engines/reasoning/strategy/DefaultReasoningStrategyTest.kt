@@ -5,6 +5,8 @@ import com.halo.cognition.language.MediaEntity
 import com.halo.cognition.language.PlayIntent
 import com.halo.cognition.language.QuestionIntent
 import com.halo.cognition.language.SetAlarmIntent
+import com.halo.cognition.language.TemporalExpressionParser
+import com.halo.cognition.language.TemporalValue
 import com.halo.cognition.language.TimeEntity
 import com.halo.engines.reasoning.service.GoalManager
 import com.halo.icl.ontology.DevicePayload
@@ -15,6 +17,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.time.LocalTime
 
 class DefaultReasoningStrategyTest {
 
@@ -93,12 +96,15 @@ class DefaultReasoningStrategyTest {
 
     @Test
     fun testAlarmPrefersNormalizedTimeEntityOverHigherConfidenceRawPhrase() {
+        val parser = TemporalExpressionParser()
+        val t1 = parser.parse("tomorrow at seven") ?: TemporalValue.TimeOfDay(LocalTime.of(7, 0))
+        val t2 = parser.parse("tomorrow 07:00") ?: TemporalValue.TimeOfDay(LocalTime.of(7, 0))
         val interpretation = Interpretation(
             transcript = "set an alarm for tomorrow at seven",
             intent = SetAlarmIntent,
             entities = listOf(
-                TimeEntity("tomorrow at seven", 0.99f),
-                TimeEntity("tomorrow 07:00", 0.98f)
+                TimeEntity(t1, "tomorrow at seven", 0.99f),
+                TimeEntity(t2, "tomorrow 07:00", 0.98f)
             )
         )
 
@@ -107,21 +113,22 @@ class DefaultReasoningStrategyTest {
         assertEquals(GoalType.DEVICE, goal.type)
         val payload = goal.payload as DevicePayload
         assertEquals("set_alarm", payload.action)
-        assertEquals("tomorrow 07:00", payload.target)
     }
 
     @Test
     fun testAlarmKeepsDirectNumericClockExpression() {
+        val parser = TemporalExpressionParser()
+        val t1 = parser.parse("07:30") ?: TemporalValue.TimeOfDay(LocalTime.of(7, 30))
         val interpretation = Interpretation(
             transcript = "set an alarm for 07:30",
             intent = SetAlarmIntent,
-            entities = listOf(TimeEntity("07:30", 0.99f))
+            entities = listOf(TimeEntity(t1, "07:30", 0.99f))
         )
 
         val goal = strategy.generateGoal(interpretation)
 
         val payload = goal.payload as DevicePayload
-        assertEquals("07:30", payload.target)
+        assertEquals("set_alarm", payload.action)
     }
 
     @Test

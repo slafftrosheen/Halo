@@ -1,6 +1,9 @@
 package com.halo.engines.interpretation.rules
 
+import com.halo.cognition.language.DayPartKind
 import com.halo.cognition.language.PersonEntity
+import com.halo.cognition.language.TemporalExpressionParser
+import com.halo.cognition.language.TemporalValue
 import com.halo.engines.interpretation.api.InterpretationContext
 import com.halo.engines.interpretation.api.InterpretationRule
 import com.halo.engines.interpretation.api.RuleMatch
@@ -100,10 +103,12 @@ class SpeechRule : InterpretationRule {
 
             alarmPattern.matches(transcript) -> {
                 val expression = alarmPattern.matchEntire(transcript)?.groupValues?.get(1)?.trim().orEmpty()
+                val parsedValue = TemporalExpressionParser().parse(expression)
+                    ?: TemporalValue.DayPart(DayPartKind.MORNING)
                 RuleMatch(
                     confidence = 0.99f,
                     intent = SetAlarmIntent,
-                    entities = listOf(TimeEntity(expression, 0.99f)),
+                    entities = listOf(TimeEntity(parsedValue, expression, 0.99f)),
                     consumedTokens = consumedTokens,
                     diagnostics = "Detected alarm command"
                 )
