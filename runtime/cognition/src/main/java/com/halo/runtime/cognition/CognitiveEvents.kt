@@ -3,12 +3,17 @@ package com.halo.runtime.cognition
 import com.halo.icl.ontology.Goal
 import com.halo.sdk.runtime.HaloEvent
 import com.halo.sdk.runtime.ResponseDelivery
+import com.halo.sdk.runtime.SpeechOutputFallback
+import com.halo.sdk.runtime.SpeechOutputTarget
 import java.util.UUID
 
 data class GoalCreated(
     override val id: String = UUID.randomUUID().toString(),
     val goal: Goal,
     val responseDelivery: ResponseDelivery = ResponseDelivery.VISUAL_ONLY,
+    val speechOutputTarget: SpeechOutputTarget = SpeechOutputTarget.Phone,
+    val speechOutputFallback: SpeechOutputFallback = SpeechOutputFallback.ALLOW_PHONE,
+    val sourceCaptureId: String? = null,
     override val timestamp: Long = System.currentTimeMillis()
 ) : HaloEvent
 

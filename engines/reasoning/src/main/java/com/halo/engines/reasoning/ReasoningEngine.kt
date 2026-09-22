@@ -15,6 +15,9 @@ import com.halo.sdk.runtime.EngineMetadata
 import com.halo.sdk.runtime.EngineState
 import com.halo.sdk.runtime.EventBus
 import com.halo.sdk.runtime.ServiceKey
+import com.halo.sdk.runtime.SpeechInputRoute
+import com.halo.sdk.runtime.SpeechOutputFallback
+import com.halo.sdk.runtime.SpeechOutputTarget
 import com.halo.sdk.runtime.defaultResponseDelivery
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -103,10 +106,28 @@ class ReasoningEngine(
                                     "goal=${goal.type} payloadType=${goal.payload::class.simpleName}"
                             )
 
+                            val speechOutputTarget = when (val route = interpretation.origin?.speechRoute) {
+                                is SpeechInputRoute.Wearable -> SpeechOutputTarget.Wearable(
+                                    deviceId = route.deviceId,
+                                    displayName = route.displayName
+                                )
+                                SpeechInputRoute.Phone,
+                                null -> SpeechOutputTarget.Phone
+                            }
+                            val speechOutputFallback =
+                                if (speechOutputTarget is SpeechOutputTarget.Wearable) {
+                                    SpeechOutputFallback.DISALLOW_PHONE
+                                } else {
+                                    SpeechOutputFallback.ALLOW_PHONE
+                                }
+
                             eventBus.publish(
                                 GoalCreated(
                                     goal = goal,
-                                    responseDelivery = interpretation.source.defaultResponseDelivery()
+                                    responseDelivery = interpretation.source.defaultResponseDelivery(),
+                                    speechOutputTarget = speechOutputTarget,
+                                    speechOutputFallback = speechOutputFallback,
+                                    sourceCaptureId = interpretation.origin?.captureId
                                 )
                             )
                             _health.value = EngineHealth.Healthy

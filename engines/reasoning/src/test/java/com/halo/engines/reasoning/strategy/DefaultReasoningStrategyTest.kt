@@ -4,6 +4,8 @@ import com.halo.cognition.language.CurrentTimeIntent
 import com.halo.cognition.language.MediaEntity
 import com.halo.cognition.language.PlayIntent
 import com.halo.cognition.language.QuestionIntent
+import com.halo.cognition.language.SetAlarmIntent
+import com.halo.cognition.language.TimeEntity
 import com.halo.engines.reasoning.service.GoalManager
 import com.halo.icl.ontology.DevicePayload
 import com.halo.icl.ontology.GoalType
@@ -87,6 +89,39 @@ class DefaultReasoningStrategyTest {
         val payload = goal.payload as MediaPayload
         assertEquals("One More Time", payload.query)
         assertEquals("play", payload.action)
+    }
+
+    @Test
+    fun testAlarmPrefersNormalizedTimeEntityOverHigherConfidenceRawPhrase() {
+        val interpretation = Interpretation(
+            transcript = "set an alarm for tomorrow at seven",
+            intent = SetAlarmIntent,
+            entities = listOf(
+                TimeEntity("tomorrow at seven", 0.99f),
+                TimeEntity("tomorrow 07:00", 0.98f)
+            )
+        )
+
+        val goal = strategy.generateGoal(interpretation)
+
+        assertEquals(GoalType.DEVICE, goal.type)
+        val payload = goal.payload as DevicePayload
+        assertEquals("set_alarm", payload.action)
+        assertEquals("tomorrow 07:00", payload.target)
+    }
+
+    @Test
+    fun testAlarmKeepsDirectNumericClockExpression() {
+        val interpretation = Interpretation(
+            transcript = "set an alarm for 07:30",
+            intent = SetAlarmIntent,
+            entities = listOf(TimeEntity("07:30", 0.99f))
+        )
+
+        val goal = strategy.generateGoal(interpretation)
+
+        val payload = goal.payload as DevicePayload
+        assertEquals("07:30", payload.target)
     }
 
     @Test

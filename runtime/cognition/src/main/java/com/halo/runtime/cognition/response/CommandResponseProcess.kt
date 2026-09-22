@@ -8,6 +8,8 @@ import com.halo.sdk.runtime.EventBus
 import com.halo.sdk.runtime.ExecutionFinished
 import com.halo.sdk.runtime.ResponseDelivery
 import com.halo.sdk.runtime.RuntimeLogger
+import com.halo.sdk.runtime.SpeechOutputFallback
+import com.halo.sdk.runtime.SpeechOutputTarget
 import com.halo.sdk.runtime.TtsRequested
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -44,7 +46,8 @@ class CommandResponseProcess(
                         val responseText = mapper.mapExecution(results)
 
                         if (!responseText.isNullOrBlank()) {
-                            val delivery = responseDeliveryForPlan(event.planId)
+                            val plan = planForId(event.planId)
+                            val delivery = plan?.responseDelivery ?: ResponseDelivery.VISUAL_ONLY
                             logger?.info(
                                 "HALO-TXN",
                                 "execution=${event.id} plan=${event.planId} tasks=${results.size} " +
@@ -58,7 +61,15 @@ class CommandResponseProcess(
                                 )
                             )
                             if (delivery == ResponseDelivery.SPEECH_AND_VISUAL) {
-                                eventBus.publish(TtsRequested(text = responseText, transactionId = event.planId))
+                                eventBus.publish(
+                                    TtsRequested(
+                                        text = responseText,
+                                        transactionId = event.planId,
+                                        target = plan?.speechOutputTarget ?: SpeechOutputTarget.Phone,
+                                        fallback = plan?.speechOutputFallback ?: SpeechOutputFallback.ALLOW_PHONE,
+                                        sourceCaptureId = plan?.sourceCaptureId
+                                    )
+                                )
                             }
                         }
                     }
@@ -73,11 +84,8 @@ class CommandResponseProcess(
         pendingResults.clear()
     }
 
-    private fun responseDeliveryForPlan(planId: String): ResponseDelivery {
-        val plan = blackboard.flow.value.asReversed()
+    private fun planForId(planId: String) =
+        blackboard.flow.value.asReversed()
             .mapNotNull { knowledge -> (knowledge.payload as? PlanKnowledge)?.plan }
             .firstOrNull { it.id.toString() == planId }
-
-        return plan?.responseDelivery ?: ResponseDelivery.VISUAL_ONLY
-    }
 }

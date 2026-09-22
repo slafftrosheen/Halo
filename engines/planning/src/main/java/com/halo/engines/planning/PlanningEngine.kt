@@ -89,7 +89,10 @@ class PlanningEngine(
                 try {
                     val plan = createPlan(
                         goal = event.goal,
-                        responseDelivery = event.responseDelivery
+                        responseDelivery = event.responseDelivery,
+                        speechOutputTarget = event.speechOutputTarget,
+                        speechOutputFallback = event.speechOutputFallback,
+                        sourceCaptureId = event.sourceCaptureId
                     )
 
                     blackboard.publish(
@@ -135,14 +138,20 @@ class PlanningEngine(
 
     fun createPlan(
         goal: Goal,
-        responseDelivery: ResponseDelivery = ResponseDelivery.VISUAL_ONLY
+        responseDelivery: ResponseDelivery = ResponseDelivery.VISUAL_ONLY,
+        speechOutputTarget: SpeechOutputTarget = SpeechOutputTarget.Phone,
+        speechOutputFallback: SpeechOutputFallback = SpeechOutputFallback.ALLOW_PHONE,
+        sourceCaptureId: String? = null
     ): ExecutionPlan {
         val task = createTask(goal)
 
         return ExecutionPlan(
             goal = goal,
             tasks = listOf(task),
-            responseDelivery = responseDelivery
+            responseDelivery = responseDelivery,
+            speechOutputTarget = speechOutputTarget,
+            speechOutputFallback = speechOutputFallback,
+            sourceCaptureId = sourceCaptureId
         )
     }
 

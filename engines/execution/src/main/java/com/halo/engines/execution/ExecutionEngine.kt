@@ -142,6 +142,16 @@ class ExecutionEngine(
                 Outcome.PermanentFailure("Unable to complete action.", error)
             }
 
+            val taskLabel = when (task) {
+                is com.halo.runtime.cognition.DeviceTask ->
+                    "DeviceTask:${task.action}"
+                else -> task::class.simpleName ?: "UnknownTask"
+            }
+            context?.runtime?.logger?.info(
+                "HALO-TXN",
+                "execution=$executionId task=$taskLabel outcome=${result::class.simpleName ?: "UnknownOutcome"}"
+            )
+
             eventBus.publish(
                 ExecutionResultPublished(
                     executionId = executionId,

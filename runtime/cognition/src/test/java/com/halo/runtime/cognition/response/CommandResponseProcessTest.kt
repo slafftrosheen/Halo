@@ -21,6 +21,8 @@ import com.halo.sdk.runtime.EventBus
 import com.halo.sdk.runtime.ExecutionFinished
 import com.halo.sdk.runtime.HaloEvent
 import com.halo.sdk.runtime.ResponseDelivery
+import com.halo.sdk.runtime.SpeechOutputFallback
+import com.halo.sdk.runtime.SpeechOutputTarget
 import com.halo.sdk.runtime.TtsRequested
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -38,6 +40,23 @@ import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CommandResponseProcessTest {
+
+    @Test
+    fun `alarm mapper recognizes canonical set alarm action`() {
+        val mapper = CommandResponseMapper()
+
+        assertEquals(
+            "Alarm set.",
+            mapper.mapResponse(DeviceTask(action = "set_alarm"), Outcome.Success("Alarm set"))
+        )
+        assertEquals(
+            "I couldn't understand the alarm time",
+            mapper.mapResponse(
+                DeviceTask(action = "set_alarm"),
+                Outcome.PermanentFailure("I couldn't understand the alarm time")
+            )
+        )
+    }
 
     @Test
     fun `visual only command publishes response without tts`() = runTest {
@@ -74,6 +93,54 @@ class CommandResponseProcessTest {
         assertEquals("Opening settings.", response.text)
         assertEquals(ResponseDelivery.VISUAL_ONLY, response.delivery)
         assertFalse(eventBus.published.any { it is TtsRequested })
+
+        process.stop()
+    }
+
+    @Test
+    fun `wearable speech command preserves wearable tts route`() = runTest {
+        val eventBus = FakeEventBus()
+        val blackboard = DefaultBlackboard()
+        val process = CommandResponseProcess(
+            eventBus = eventBus,
+            blackboard = blackboard,
+            scope = this
+        )
+        process.start()
+        runCurrent()
+
+        val wearableTarget = SpeechOutputTarget.Wearable(
+            deviceId = "AA:BB:CC:DD:EE:FF",
+            displayName = "HeyCyan"
+        )
+        val (plan, task) = createPlan(
+            delivery = ResponseDelivery.SPEECH_AND_VISUAL,
+            speechOutputTarget = wearableTarget,
+            speechOutputFallback = SpeechOutputFallback.DISALLOW_PHONE,
+            sourceCaptureId = "capture-1"
+        )
+        publishPlan(blackboard, plan)
+
+        eventBus.publish(
+            ExecutionResultPublished(
+                executionId = "exec-wearable",
+                planId = plan.id.toString(),
+                task = task,
+                outcome = Outcome.Success("settings")
+            )
+        )
+        eventBus.publish(
+            ExecutionFinished(
+                id = "exec-wearable",
+                planId = plan.id.toString()
+            )
+        )
+        runCurrent()
+
+        val tts = eventBus.published.filterIsInstance<TtsRequested>().single()
+        assertEquals(wearableTarget, tts.target)
+        assertEquals(SpeechOutputFallback.DISALLOW_PHONE, tts.fallback)
+        assertEquals("capture-1", tts.sourceCaptureId)
 
         process.stop()
     }
@@ -134,7 +201,12 @@ class CommandResponseProcessTest {
         )
     }
 
-    private fun createPlan(delivery: ResponseDelivery): Pair<ExecutionPlan, DeviceTask> {
+    private fun createPlan(
+        delivery: ResponseDelivery,
+        speechOutputTarget: SpeechOutputTarget = SpeechOutputTarget.Phone,
+        speechOutputFallback: SpeechOutputFallback = SpeechOutputFallback.ALLOW_PHONE,
+        sourceCaptureId: String? = null
+    ): Pair<ExecutionPlan, DeviceTask> {
         val goal = Goal(
             id = CognitiveId(),
             created = Clock.System.now(),
@@ -148,7 +220,10 @@ class CommandResponseProcessTest {
         return ExecutionPlan(
             goal = goal,
             tasks = listOf(task),
-            responseDelivery = delivery
+            responseDelivery = delivery,
+            speechOutputTarget = speechOutputTarget,
+            speechOutputFallback = speechOutputFallback,
+            sourceCaptureId = sourceCaptureId
         ) to task
     }
 

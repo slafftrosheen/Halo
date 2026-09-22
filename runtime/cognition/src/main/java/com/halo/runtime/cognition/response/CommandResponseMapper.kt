@@ -113,8 +113,17 @@ class CommandResponseMapper {
                         }
                     }
 
-                    task.action.equals("alarm", ignoreCase = true) -> {
-                        if (isSuccess) "Alarm set." else "Unable to set alarm."
+                    task.action.equals("set_alarm", ignoreCase = true) -> {
+                        when {
+                            isSuccess -> "Alarm set."
+                            outcome is Outcome.PermanentFailure && outcome.reason.isNotBlank() ->
+                                outcome.reason
+                            else -> "Unable to set alarm."
+                        }
+                    }
+
+                    task.action.equals("show_alarms", ignoreCase = true) -> {
+                        if (isSuccess) "Opening alarms." else "Unable to open alarms."
                     }
 
                     task.action.equals("settings", ignoreCase = true) -> {
