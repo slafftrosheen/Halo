@@ -16,6 +16,7 @@ sealed interface TaskResult {
     data class Retry(val attempt: Int, val delayMs: Long) : TaskResult
     object Cancelled : TaskResult
     data class Partial(val completedItems: Int, val totalItems: Int) : TaskResult
+    data class NeedsClarification(val prompt: String, val field: String) : TaskResult
 }
 
 sealed interface Task {
@@ -37,7 +38,7 @@ data class DeviceTask(
     override val dependencies: List<Task> = emptyList(),
     override val isParallel: Boolean = false,
     val action: String,
-    val parameters: Map<String, String> = emptyMap()
+    val parameters: Map<String, Any> = emptyMap()
 ) : Task
 
 data class ApplicationTask(

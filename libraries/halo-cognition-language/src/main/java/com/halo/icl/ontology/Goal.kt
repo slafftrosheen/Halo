@@ -16,7 +16,7 @@ interface GoalPayload
 data class ConversationPayload(val topic: String? = null) : GoalPayload
 data class NavigationPayload(val destination: String) : GoalPayload
 data class MediaPayload(val query: String, val action: String = "play") : GoalPayload
-data class DevicePayload(val action: String, val target: String) : GoalPayload
+data class DevicePayload(val action: String, val target: String, val parameters: Map<String, Any> = emptyMap()) : GoalPayload
 data class AutomationPayload(val routine: String) : GoalPayload
 data class SearchPayload(val query: String) : GoalPayload
 data class MemoryPayload(val fact: String) : GoalPayload

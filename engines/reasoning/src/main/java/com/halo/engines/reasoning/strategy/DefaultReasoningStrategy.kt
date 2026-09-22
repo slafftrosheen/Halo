@@ -116,10 +116,18 @@ class DefaultReasoningStrategy(
 
             is CurrentTimeIntent -> DevicePayload(action = "time", target = "")
 
-            is SetAlarmIntent -> DevicePayload(
-                action = "set_alarm",
-                target = selectAlarmExpression(interpretation)
-            )
+            is SetAlarmIntent -> {
+                val timeEntity = selectAlarmEntity(interpretation)
+                if (timeEntity != null) {
+                    DevicePayload(
+                        action = "set_alarm",
+                        target = "", // The payload target string isn't expressive enough for TemporalValue
+                        parameters = mapOf("temporal_value" to timeEntity.value)
+                    )
+                } else {
+                    DevicePayload(action = "set_alarm", target = "")
+                }
+            }
 
             is ShowAlarmsIntent -> DevicePayload(action = "show_alarms", target = "")
 
@@ -151,31 +159,12 @@ class DefaultReasoningStrategy(
         )
     }
 
-    /**
-     * SpeechRule identifies the command and may contribute the raw temporal phrase,
-     * while TimeRule contributes a normalized clock expression. Prefer the normalized
-     * form even when its rule confidence is slightly lower; capability execution needs
-     * an executable time, not merely the highest-confidence surface phrase.
-     */
-    private fun selectAlarmExpression(interpretation: Interpretation): String =
+    private fun selectAlarmEntity(interpretation: Interpretation): TimeEntity? =
         interpretation.entities
             .filterIsInstance<TimeEntity>()
-            .sortedWith(
-                compareByDescending<TimeEntity> { it.expression.isExecutableClockExpression() }
-                    .thenByDescending { it.confidence }
-            )
-            .firstOrNull()
-            ?.expression
-            .orEmpty()
-
-    private fun String.isExecutableClockExpression(): Boolean =
-        NORMALIZED_ALARM_EXPRESSION.matches(trim())
+            .maxByOrNull { it.confidence }
 
     private companion object {
         const val REMINDER_FIELD_SEPARATOR = "\u001F"
-        val NORMALIZED_ALARM_EXPRESSION = Regex(
-            "^(?:(?:today|tomorrow|tonight)\\s+)?(?:[01]?\\d|2[0-3]):[0-5]\\d$",
-            RegexOption.IGNORE_CASE
-        )
     }
 }

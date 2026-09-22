@@ -1,5 +1,36 @@
 package com.halo.cognition.language
 
+import java.time.LocalTime
+import java.time.Instant
+
+sealed interface TemporalValue {
+    data class TimeOfDay(
+        val time: LocalTime,
+        val dayRelation: DayRelation? = null,
+    ) : TemporalValue
+
+    data class InstantValue(
+        val instant: Instant,
+    ) : TemporalValue
+
+    data class DayPart(
+        val part: DayPartKind,
+        val dayRelation: DayRelation? = null,
+    ) : TemporalValue
+}
+
+enum class DayRelation {
+    TODAY,
+    TOMORROW,
+}
+
+enum class DayPartKind {
+    MORNING,
+    AFTERNOON,
+    EVENING,
+    NIGHT,
+}
+
 sealed interface Entity {
     val confidence: Float
 }
@@ -20,6 +51,8 @@ data class PlaceEntity(
 ) : Entity
 
 data class TimeEntity(
+    val value: TemporalValue,
+    @Deprecated("Migrate to TemporalValue")
     val expression: String,
     override val confidence: Float
 ) : Entity
