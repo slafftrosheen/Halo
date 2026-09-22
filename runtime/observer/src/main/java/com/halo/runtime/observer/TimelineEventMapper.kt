@@ -7,20 +7,52 @@ interface TimelineEventMapper {
     fun map(event: HaloEvent): TimelineEvent?
 }
 
+fun timelinePresentationId(
+    type: String,
+    correlationId: String?,
+    timestamp: Instant,
+    discriminator: String,
+): String = buildString {
+    append(type)
+    append(':')
+    append(correlationId ?: "none")
+    append(':')
+    append(timestamp.toEpochMilli())
+    append(':')
+    append(discriminator)
+}
+
 class DefaultTimelineEventMapper : TimelineEventMapper {
     override fun map(event: HaloEvent): TimelineEvent? {
         val timestamp = Instant.ofEpochMilli(event.timestamp)
+        val correlationId = event.id
         return when (event) {
-            is ActionReceipt -> TimelineEvent(event.id, event.title, event.detail, timestamp, event.stage,
+            is ActionReceipt -> TimelineEvent(
+                presentationId = timelinePresentationId("ActionReceipt", correlationId, timestamp, "receipt"),
+                correlationId = correlationId,
+                title = event.title, description = event.detail, timestamp = timestamp, status = event.stage,
                 intentId = event.operationId, category = event.category, objectId = event.objectId,
                 details = mapOf("operation" to event.operationId, "source" to (event.sourceDeviceId?.takeLast(5) ?: "Phone")))
-            is ToolCallRequested -> TimelineEvent(event.id, event.toolId, "Model requested a tool", timestamp, "Requested", event.toolCallId, "Actions")
-            is ToolCallAuthorized -> TimelineEvent(event.id, event.toolId, "Tool authorized", timestamp, "Authorized", event.toolCallId, "Actions")
-            is ToolCallRejected -> TimelineEvent(event.id, event.toolId, event.reason, timestamp, "Rejected", event.toolCallId, "Actions")
-            is ToolCallCompleted -> TimelineEvent(event.id, event.toolId, "Tool executor returned; see action receipt for dispatch/completion", timestamp,
-                if (event.success) "Returned" else "Failed", event.toolCallId, "Actions")
+            is ToolCallRequested -> TimelineEvent(
+                presentationId = timelinePresentationId("ToolCall", correlationId, timestamp, "requested"),
+                correlationId = correlationId,
+                title = event.toolId, description = "Model requested a tool", timestamp = timestamp, status = "Requested", intentId = event.toolCallId, category = "Actions")
+            is ToolCallAuthorized -> TimelineEvent(
+                presentationId = timelinePresentationId("ToolCall", correlationId, timestamp, "authorized"),
+                correlationId = correlationId,
+                title = event.toolId, description = "Tool authorized", timestamp = timestamp, status = "Authorized", intentId = event.toolCallId, category = "Actions")
+            is ToolCallRejected -> TimelineEvent(
+                presentationId = timelinePresentationId("ToolCall", correlationId, timestamp, "rejected"),
+                correlationId = correlationId,
+                title = event.toolId, description = event.reason, timestamp = timestamp, status = "Rejected", intentId = event.toolCallId, category = "Actions")
+            is ToolCallCompleted -> TimelineEvent(
+                presentationId = timelinePresentationId("ToolCall", correlationId, timestamp, "completed"),
+                correlationId = correlationId,
+                title = event.toolId, description = "Tool executor returned; see action receipt for dispatch/completion", timestamp = timestamp,
+                status = if (event.success) "Returned" else "Failed", intentId = event.toolCallId, category = "Actions")
             is AssistantResponsePublished -> TimelineEvent(
-                id = event.id,
+                presentationId = timelinePresentationId("Assistant", correlationId, timestamp, "published"),
+                correlationId = correlationId,
                 title = "Halo",
                 description = event.text,
                 timestamp = timestamp,
@@ -32,7 +64,8 @@ class DefaultTimelineEventMapper : TimelineEventMapper {
                     event.observation.source == Source.MICROPHONE
                 if (input != null && userInput && input.transcript.isNotBlank()) {
                     TimelineEvent(
-                        id = event.id,
+                        presentationId = timelinePresentationId("Observation", correlationId, timestamp, "created"),
+                        correlationId = correlationId,
                         title = "You",
                         description = input.transcript.trim(),
                         timestamp = Instant.ofEpochMilli(event.observation.timestamp),
@@ -53,119 +86,136 @@ class DefaultTimelineEventMapper : TimelineEventMapper {
             // microphone and keyboard input, avoiding duplicate Activity entries.
             is SpeechRecognized -> null
             is IntentRecognized -> TimelineEvent(
-                id = event.id,
+                presentationId = timelinePresentationId("Intent", correlationId, timestamp, "recognized"),
+                correlationId = correlationId,
                 title = "Intent Recognized",
                 description = event.intent.javaClass.simpleName,
                 timestamp = timestamp,
                 status = "Success"
             )
             is AIResponseGenerated -> TimelineEvent(
-                id = event.id,
+                presentationId = timelinePresentationId("AI", correlationId, timestamp, "generated"),
+                correlationId = correlationId,
                 title = "AI Response",
                 description = event.response,
                 timestamp = timestamp,
                 status = "Success"
             )
             is EngineStarted -> TimelineEvent(
-                id = event.id,
+                presentationId = timelinePresentationId("Engine", correlationId, timestamp, "started"),
+                correlationId = correlationId,
                 title = "Engine Started",
                 description = event.engineId,
                 timestamp = timestamp,
                 status = "Started"
             )
             is EngineFailed -> TimelineEvent(
-                id = event.id,
+                presentationId = timelinePresentationId("Engine", correlationId, timestamp, "failed"),
+                correlationId = correlationId,
                 title = "Engine Failed",
                 description = "${event.engineId}: ${event.reason}",
                 timestamp = timestamp,
                 status = "Failed"
             )
             is GoalCreated -> TimelineEvent(
-                id = event.id,
+                presentationId = timelinePresentationId("Goal", correlationId, timestamp, "created"),
+                correlationId = correlationId,
                 title = "Goal Created",
                 description = event.goalId,
                 timestamp = timestamp,
                 status = "Created"
             )
             is PlanGenerated -> TimelineEvent(
-                id = event.id,
+                presentationId = timelinePresentationId("Plan", correlationId, timestamp, "generated"),
+                correlationId = correlationId,
                 title = "Plan Generated",
                 description = event.planId,
                 timestamp = timestamp,
                 status = "Generated"
             )
             is ExecutionStarted -> TimelineEvent(
-                id = event.id,
+                presentationId = timelinePresentationId("Execution", correlationId, timestamp, "started"),
+                correlationId = correlationId,
                 title = "Execution Started",
                 description = event.planId,
                 timestamp = timestamp,
                 status = "Started"
             )
             is ExecutionFinished -> TimelineEvent(
-                id = event.id,
+                presentationId = timelinePresentationId("Execution", correlationId, timestamp, "finished"),
+                correlationId = correlationId,
                 title = "Execution Finished",
                 description = event.planId,
                 timestamp = timestamp,
                 status = "Finished"
             )
             is OutcomePublished -> TimelineEvent(
-                id = event.id,
+                presentationId = timelinePresentationId("Outcome", correlationId, timestamp, "published"),
+                correlationId = correlationId,
                 title = "Outcome Published",
                 description = event.outcome,
                 timestamp = timestamp,
                 status = "Published"
             )
             is CognitiveRequestStarted -> TimelineEvent(
-                id = event.id,
+                presentationId = timelinePresentationId("Cognitive", correlationId, timestamp, "started"),
+                correlationId = correlationId,
                 title = "Cognitive Request",
                 description = "Started",
                 timestamp = timestamp,
                 status = "Started"
             )
             is CognitiveReasoningStarted -> TimelineEvent(
-                id = event.id,
+                presentationId = timelinePresentationId("Reasoning", correlationId, timestamp, "started"),
+                correlationId = correlationId,
                 title = "Reasoning",
                 description = "Provider: ${event.providerId}",
                 timestamp = timestamp,
                 status = "Started"
             )
             is CognitiveCompleted -> TimelineEvent(
-                id = event.id,
+                presentationId = timelinePresentationId("Cognitive", correlationId, timestamp, "completed"),
+                correlationId = correlationId,
                 title = "Cognitive Response",
                 description = event.response ?: "Completed",
                 timestamp = timestamp,
                 status = "Success"
             )
             is CognitiveFailed -> TimelineEvent(
-                id = event.id,
+                presentationId = timelinePresentationId("Cognitive", correlationId, timestamp, "failed"),
+                correlationId = correlationId,
                 title = "Halo",
                 description = event.message,
                 timestamp = timestamp,
                 status = "Failed"
             )
             is StageMetricsPublished -> TimelineEvent(
-                id = event.id,
+                presentationId = timelinePresentationId("Metrics", correlationId, timestamp, "published"),
+                correlationId = correlationId,
                 title = event.stage.name,
                 description = "${event.latency} ms\n" + if (event.success) "✓" else "✗",
                 timestamp = timestamp,
                 status = if (event.success) "Success" else "Failed"
             )
             is ObservationReceived -> TimelineEvent(
-                id = event.id,
+                presentationId = timelinePresentationId("Observation", correlationId, timestamp, "received"),
+                correlationId = correlationId,
                 title = "Observation",
                 description = "${event.source}: ${event.content}",
                 timestamp = timestamp,
                 status = "Received"
             )
             is InterpretationProduced -> TimelineEvent(
-                id = event.id,
+                presentationId = timelinePresentationId("Interpretation", correlationId, timestamp, "produced"),
+                correlationId = correlationId,
                 title = "Interpretation",
                 description = event.interpretation,
                 timestamp = timestamp,
                 status = "Produced"
             )
             is IntentCreated -> TimelineEvent(
-                id = event.id,
+                presentationId = timelinePresentationId("Intent", correlationId, timestamp, "created"),
+                correlationId = correlationId,
                 title = "Intent Created",
                 description = "${event.intentKind} [${event.intentId}]",
                 timestamp = timestamp,
@@ -173,7 +223,8 @@ class DefaultTimelineEventMapper : TimelineEventMapper {
                 intentId = event.intentId
             )
             is IntentResolved -> TimelineEvent(
-                id = event.id,
+                presentationId = timelinePresentationId("Intent", correlationId, timestamp, "resolved"),
+                correlationId = correlationId,
                 title = "Intent Resolved",
                 description = "Device: ${event.deviceId}",
                 timestamp = timestamp,
@@ -181,7 +232,8 @@ class DefaultTimelineEventMapper : TimelineEventMapper {
                 intentId = event.intentId
             )
             is IntentDispatched -> TimelineEvent(
-                id = event.id,
+                presentationId = timelinePresentationId("Intent", correlationId, timestamp, "dispatched"),
+                correlationId = correlationId,
                 title = "Intent Dispatched",
                 description = "To: ${event.deviceId}",
                 timestamp = timestamp,
@@ -189,63 +241,72 @@ class DefaultTimelineEventMapper : TimelineEventMapper {
                 intentId = event.intentId
             )
             is DeviceConnected -> TimelineEvent(
-                id = event.id,
+                presentationId = timelinePresentationId("Device", correlationId, timestamp, "connected"),
+                correlationId = correlationId,
                 title = "Device Connected",
                 description = "${event.deviceId} (${event.sessionId})",
                 timestamp = timestamp,
                 status = "Connected"
             )
             is DeviceReady -> TimelineEvent(
-                id = event.id,
+                presentationId = timelinePresentationId("Device", correlationId, timestamp, "ready"),
+                correlationId = correlationId,
                 title = "Device Ready",
                 description = event.deviceId,
                 timestamp = timestamp,
                 status = "Ready"
             )
             is DeviceDisconnected -> TimelineEvent(
-                id = event.id,
+                presentationId = timelinePresentationId("Device", correlationId, timestamp, "disconnected"),
+                correlationId = correlationId,
                 title = "Device Disconnected",
                 description = event.deviceId,
                 timestamp = timestamp,
                 status = "Disconnected"
             )
             is CapabilityUpdated -> TimelineEvent(
-                id = event.id,
+                presentationId = timelinePresentationId("Capability", correlationId, timestamp, "updated"),
+                correlationId = correlationId,
                 title = "Capabilities Updated",
                 description = "${event.deviceId}: ${event.capabilities.size} capabilities",
                 timestamp = timestamp,
                 status = "Updated"
             )
             is RuntimeStateChanged -> TimelineEvent(
-                id = event.id,
+                presentationId = timelinePresentationId("State", correlationId, timestamp, "changed"),
+                correlationId = correlationId,
                 title = "State Changed",
                 description = "${event.deviceId} -> ${event.state}",
                 timestamp = timestamp,
                 status = "Changed"
             )
             is ProviderRequest -> TimelineEvent(
-                id = event.id,
+                presentationId = timelinePresentationId("Provider", correlationId, timestamp, "request"),
+                correlationId = correlationId,
                 title = "Provider Request",
                 description = "${event.providerId} [${event.requestId}]",
                 timestamp = timestamp,
                 status = "Started"
             )
             is ProviderResult -> TimelineEvent(
-                id = event.id,
+                presentationId = timelinePresentationId("Provider", correlationId, timestamp, "result"),
+                correlationId = correlationId,
                 title = "Provider Result",
                 description = if (event.success) "Success" else "Failed: ${event.reason}",
                 timestamp = timestamp,
                 status = if (event.success) "Success" else "Failed"
             )
             is ProviderFailure -> TimelineEvent(
-                id = event.id,
+                presentationId = timelinePresentationId("Provider", correlationId, timestamp, "failure"),
+                correlationId = correlationId,
                 title = "Provider Error",
                 description = "${event.providerId}: ${event.reason}",
                 timestamp = timestamp,
                 status = "Failed"
             )
             is EmbodimentExecutionEvent -> TimelineEvent(
-                id = event.id,
+                presentationId = timelinePresentationId("Embodiment", correlationId, timestamp, "execution"),
+                correlationId = correlationId,
                 title = "Execution Result",
                 description = "${event.device.displayName}: ${event.result.reason ?: event.result.status}",
                 timestamp = timestamp,

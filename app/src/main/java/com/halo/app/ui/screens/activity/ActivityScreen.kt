@@ -34,12 +34,14 @@ import com.halo.app.ui.presence.HaloSignalGlyph
 import com.halo.app.ui.presence.HaloSignalKind
 import com.halo.sdk.runtime.RuntimeSnapshotSource
 import com.halo.sdk.runtime.TimelineEvent
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.time.format.DateTimeFormatter
+import java.time.Instant
+import java.time.ZoneId
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 
 @Composable
@@ -70,7 +72,7 @@ fun ActivityScreen(viewModel: ActivityViewModel, onOpenObject: (String) -> Unit 
                 contentPadding = PaddingValues(bottom = 80.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                items(filtered, key = { it.id }) { event ->
+                items(filtered, key = { it.presentationId }) { event ->
                     ActivityListItem(event, onOpenObject)
                 }
             }
@@ -79,15 +81,14 @@ fun ActivityScreen(viewModel: ActivityViewModel, onOpenObject: (String) -> Unit 
 }
 
 @Composable
-private fun ActivityListItem(event: ActivityEvent, onOpenObject: (String) -> Unit) {
-    val signalKind = when {
-        event.failed -> HaloSignalKind.ERROR
-        event.speaker == ActivitySpeaker.User -> HaloSignalKind.USER
-        event.speaker == ActivitySpeaker.System -> HaloSignalKind.DEVICE
-        else -> HaloSignalKind.HALO
+private fun ActivityListItem(story: ActivityStory, onOpenObject: (String) -> Unit) {
+    val signalKind = when (story.kind) {
+        ActivityKind.ERROR -> HaloSignalKind.ERROR
+        ActivityKind.USER -> HaloSignalKind.USER
+        ActivityKind.SYSTEM -> HaloSignalKind.DEVICE
+        ActivityKind.HALO -> HaloSignalKind.HALO
     }
-    var expanded by remember(event.id) { mutableStateOf(false) }
-    val title = event.title
+    var expanded by remember(story.id) { mutableStateOf(false) }
 
     Row(
         modifier = Modifier
@@ -97,7 +98,7 @@ private fun ActivityListItem(event: ActivityEvent, onOpenObject: (String) -> Uni
         verticalAlignment = Alignment.Top
     ) {
         Text(
-            text = event.timestamp.formatTime(),
+            text = story.timestamp.formatTime(),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier
@@ -107,18 +108,21 @@ private fun ActivityListItem(event: ActivityEvent, onOpenObject: (String) -> Uni
         Spacer(Modifier.width(14.dp))
         Column(modifier = Modifier.weight(1f)) {
             if (expanded) {
-                event.details.forEach { (key, value) -> Text("$key: $value", style = MaterialTheme.typography.bodySmall) }
-                event.objectId?.let { id -> TextButton(onClick = { onOpenObject(id) }) { Text("Open Notebook object") } }
+                story.steps.forEach { step ->
+                    Text("${step.title}: ${step.message}", style = MaterialTheme.typography.bodySmall,
+                        color = if (step.failed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                story.objectId?.let { id -> TextButton(onClick = { onOpenObject(id) }) { Text("Open Notebook object") } }
             }
             Text(
-                text = title,
+                text = story.title,
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold,
-                color = if (event.failed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground
+                color = if (story.status == ActivityStatus.FAILED) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground
             )
             Spacer(Modifier.size(3.dp))
             Text(
-                text = event.message,
+                text = story.summary,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 4
@@ -127,60 +131,90 @@ private fun ActivityListItem(event: ActivityEvent, onOpenObject: (String) -> Uni
     }
 }
 
-enum class ActivitySpeaker(val label: String) {
-    User("You"),
-    Halo("Halo"),
-    System("System")
-}
 
-data class ActivityEvent(
-    val id: String,
-    val speaker: ActivitySpeaker,
+
+data class ActivityStep(
+    val presentationId: String,
+    val title: String,
     val message: String,
+    val failed: Boolean = false
+)
+
+enum class ActivityKind { USER, SYSTEM, HALO, ERROR }
+enum class ActivityStatus { PENDING, SUCCESS, FAILED }
+
+data class ActivityStory(
+    val id: String,
+    val correlationId: String?,
+    val kind: ActivityKind,
+    val title: String,
+    val summary: String,
     val timestamp: Long,
-    val failed: Boolean = false,
-    val title: String = speaker.label,
-    val status: String = "Received",
-    val category: String = "All",
-    val objectId: String? = null,
-    val details: Map<String, String> = emptyMap()
+    val status: ActivityStatus,
+    val steps: List<ActivityStep>,
+    val objectId: String? = null
 )
 
 data class ActivityUiState(
-    val events: List<ActivityEvent> = emptyList()
+    val events: List<ActivityStory> = emptyList()
 )
 
 class ActivityUiMapper {
     fun map(timeline: List<TimelineEvent>): ActivityUiState {
-        val events = timeline.asSequence()
-            .mapNotNull { event ->
-                val message = event.description.trim()
-                if (message.isEmpty()) return@mapNotNull null
-                ActivityEvent(
-                    id = event.id,
-                    speaker = when (event.title) {
-                        "You" -> ActivitySpeaker.User
-                        "Halo" -> ActivitySpeaker.Halo
-                        else -> ActivitySpeaker.System
-                    },
-                    title = event.title,
-                    status = event.status,
-                    category = if (event.category != "All") event.category else when {
-                        event.title.startsWith("Device") || event.title.startsWith("Capabilities") || event.title == "State Changed" -> "Devices"
-                        event.title.startsWith("Intent") || event.title.startsWith("Execution") -> "Actions"
-                        else -> "All"
-                    },
-                    objectId = event.objectId,
-                    details = event.details + listOfNotNull(event.intentId?.let { "identity" to it }).toMap(),
-                    message = message,
-                    timestamp = event.timestamp.toEpochMilli(),
-                    failed = event.status.equals("Failed", ignoreCase = true) ||
-                        event.status.equals("Error", ignoreCase = true) || event.status.equals("Rejected", ignoreCase = true)
+        val stories = mutableListOf<ActivityStory>()
+        val byCorrelation = timeline.groupBy { it.correlationId }
+        for ((correlationId, events) in byCorrelation) {
+            if (correlationId == null) {
+                events.forEach { event ->
+                    stories.add(
+                        ActivityStory(
+                            id = event.presentationId,
+                            correlationId = null,
+                            kind = kindFor(event),
+                            title = event.title,
+                            summary = event.description,
+                            timestamp = event.timestamp.toEpochMilli(),
+                            status = statusFor(event),
+                            steps = listOf(ActivityStep(event.presentationId, event.title, event.description, statusFor(event) == ActivityStatus.FAILED)),
+                            objectId = event.objectId
+                        )
+                    )
+                }
+            } else {
+                val sorted = events.sortedBy { it.timestamp }
+                val start = sorted.first()
+                val isError = sorted.any { statusFor(it) == ActivityStatus.FAILED }
+                val lastMeaningful = sorted.lastOrNull { statusFor(it) != ActivityStatus.PENDING } ?: sorted.last()
+                stories.add(
+                    ActivityStory(
+                        id = correlationId,
+                        correlationId = correlationId,
+                        kind = kindFor(start),
+                        title = start.title,
+                        summary = lastMeaningful.description,
+                        timestamp = start.timestamp.toEpochMilli(),
+                        status = if (isError) ActivityStatus.FAILED else ActivityStatus.SUCCESS,
+                        steps = sorted.map { ActivityStep(it.presentationId, it.title, it.description, statusFor(it) == ActivityStatus.FAILED) },
+                        objectId = sorted.firstNotNullOfOrNull { it.objectId }
+                    )
                 )
             }
-            .sortedByDescending { it.timestamp }
-            .toList()
-        return ActivityUiState(events = events)
+        }
+        val sortedStories = stories.sortedByDescending { it.timestamp }
+        return ActivityUiState(events = sortedStories)
+    }
+
+    private fun kindFor(event: TimelineEvent): ActivityKind = when {
+        statusFor(event) == ActivityStatus.FAILED -> ActivityKind.ERROR
+        event.title == "You" -> ActivityKind.USER
+        event.title.startsWith("Device") || event.title.startsWith("Capabilities") || event.title == "State Changed" -> ActivityKind.SYSTEM
+        else -> ActivityKind.HALO
+    }
+
+    private fun statusFor(event: TimelineEvent): ActivityStatus = when {
+        event.status.equals("Failed", ignoreCase = true) || event.status.equals("Error", ignoreCase = true) || event.status.equals("Rejected", ignoreCase = true) -> ActivityStatus.FAILED
+        event.status.equals("Started", ignoreCase = true) || event.status.equals("Requested", ignoreCase = true) -> ActivityStatus.PENDING
+        else -> ActivityStatus.SUCCESS
     }
 }
 
@@ -189,7 +223,9 @@ class ActivityViewModel(
     private val mapper: ActivityUiMapper = ActivityUiMapper()
 ) : ViewModel() {
     val uiState: StateFlow<ActivityUiState> = snapshotManager.snapshot
-        .map { snapshot -> mapper.map(snapshot.timeline) }
+        .map { snapshot -> mapper.map(snapshot.timeline.takeLast(500)) } // Process up to 500
+        .map { state -> ActivityUiState(events = state.events.take(100)) } // Display recent 100
+        .flowOn(Dispatchers.Default)
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
@@ -197,5 +233,6 @@ class ActivityViewModel(
         )
 }
 
-private fun Long.formatTime(): String =
-    SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(this))
+private val activityTimeFormatter = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
+
+private fun Long.formatTime(): String = activityTimeFormatter.format(Instant.ofEpochMilli(this))

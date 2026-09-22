@@ -61,7 +61,8 @@ data class ObservationTrace(
 )
 
 data class TimelineEvent(
-    val id: String,
+    val presentationId: String,
+    val correlationId: String?,
     val title: String,
     val description: String,
     val timestamp: Instant,

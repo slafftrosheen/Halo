@@ -22,10 +22,10 @@ class ActivityUiMapperTest {
         )
 
         assertEquals(4, state.events.size)
-        assertEquals(ActivitySpeaker.Halo, state.events[0].speaker)
-        assertEquals("It is 18:30.", state.events[0].message)
-        assertEquals(ActivitySpeaker.User, state.events[2].speaker)
-        assertEquals("What time is it?", state.events[2].message)
+        assertEquals(ActivityKind.HALO, state.events[0].kind)
+        assertEquals("It is 18:30.", state.events[0].summary)
+        assertEquals(ActivityKind.USER, state.events[2].kind)
+        assertEquals("What time is it?", state.events[2].summary)
     }
 
     @Test
@@ -35,7 +35,7 @@ class ActivityUiMapperTest {
         )
 
         assertEquals(1, state.events.size)
-        assertTrue(state.events.single().failed)
+        assertTrue(state.events.single().status == ActivityStatus.FAILED)
     }
 
     @Test
@@ -47,17 +47,36 @@ class ActivityUiMapperTest {
             )
         )
 
-        assertFalse(state.events.any { it.failed })
+        assertFalse(state.events.any { it.status == ActivityStatus.FAILED })
+    }
+
+    @Test
+    fun `same execution identity produces distinct presentation ids and avoids duplicate keys`() {
+        val state = mapper.map(
+            listOf(
+                event("ExecutionStarted:exec-1:1000:started", "Execution Started", "plan-1", 1_000L, "Started", "exec-1"),
+                event("ExecutionResult:exec-1:2000:result", "Execution Result", "result", 2_000L, "Completed", "exec-1"),
+                event("ExecutionFinished:exec-1:3000:finished", "Execution Finished", "plan-1", 3_000L, "Finished", "exec-1")
+            )
+        )
+
+        assertEquals(1, state.events.size)
+        val story = state.events.single()
+        assertEquals("exec-1", story.correlationId)
+        assertEquals(3, story.steps.size)
+        assertEquals(3, story.steps.map { it.presentationId }.distinct().size)
     }
 
     private fun event(
-        id: String,
+        presentationId: String,
         title: String,
         description: String,
         timestamp: Long,
-        status: String
+        status: String,
+        correlationId: String? = null
     ) = TimelineEvent(
-        id = id,
+        presentationId = presentationId,
+        correlationId = correlationId,
         title = title,
         description = description,
         timestamp = Instant.ofEpochMilli(timestamp),
