@@ -37,7 +37,8 @@ class PolicyToolAuthorizer(
 
         val risk = mapRisk(toolName)
 
-        if (policy == ToolApprovalPolicy.ALWAYS_ALLOW && risk == SkillRisk.READ_ONLY) {
+        if (policy == ToolApprovalPolicy.ALWAYS_ALLOW &&
+            risk != SkillRisk.DESTRUCTIVE && risk != SkillRisk.SENSITIVE) {
             return ToolAuthorization.Authorized(toolCall)
         }
 
@@ -47,18 +48,20 @@ class PolicyToolAuthorizer(
             return coordinator.authorizeRequest(toolCall, preview)
         }
 
-        return if (risk == SkillRisk.READ_ONLY || risk == SkillRisk.REVERSIBLE) {
-            ToolAuthorization.Authorized(toolCall)
-        } else {
-            ToolAuthorization.Rejected(toolCall, "Interactive confirmation required for $toolName")
-        }
+        return ToolAuthorization.Rejected(toolCall, "Interactive confirmation required for $toolName")
     }
 
     private fun mapRisk(toolName: String): SkillRisk = when {
-        toolName.startsWith("halo_search") || toolName.startsWith("halo_get") || toolName.startsWith("halo_list") -> SkillRisk.READ_ONLY
-        toolName == "halo_volume" || toolName == "halo_flashlight" || toolName == "halo_add_to_working_set" -> SkillRisk.REVERSIBLE
+        toolName.startsWith("halo_search") || toolName.startsWith("halo_get") ||
+            toolName.startsWith("halo_list") || toolName == "halo_storage_status" -> SkillRisk.READ_ONLY
+        toolName == "halo_volume" || toolName == "halo_flashlight" ||
+            toolName == "halo_media" || toolName == "halo_add_to_working_set" ||
+            toolName == "halo_remove_from_working_set" -> SkillRisk.REVERSIBLE
+        toolName == "halo_propose_memory" -> SkillRisk.READ_ONLY
         toolName == "halo_create_note" || toolName == "halo_remember_text" || toolName == "halo_create_reminder" -> SkillRisk.REVERSIBLE
-        toolName == "halo_open_app" || toolName == "halo_navigation" || toolName == "halo_browser" || toolName == "halo_share_text" -> SkillRisk.EXTERNAL_SIDE_EFFECT
+        toolName == "halo_open_app" || toolName == "halo_navigation" ||
+            toolName == "halo_browser" || toolName == "halo_share_text" ||
+            toolName == "halo_open_settings" || toolName == "halo_prepare_contact" -> SkillRisk.EXTERNAL_SIDE_EFFECT
         else -> SkillRisk.SENSITIVE
     }
 

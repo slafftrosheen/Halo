@@ -1,0 +1,1 @@
+{"id":"halo.memory","name":"Memory","description":"Recall and propose remembered facts.","category":"WORKSPACE","risk":"REVERSIBLE","tools":["halo_search_memory","halo_propose_memory"]}

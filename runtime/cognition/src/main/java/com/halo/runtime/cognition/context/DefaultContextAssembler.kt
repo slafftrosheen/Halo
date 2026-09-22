@@ -4,6 +4,7 @@ import com.halo.runtime.cognition.blackboard.Blackboard
 import com.halo.runtime.cognition.blackboard.ObservationKnowledge
 import com.halo.runtime.cognition.conversation.ConversationStore
 import com.halo.runtime.cognition.tools.ToolRegistry
+import com.halo.runtime.cognition.skills.SkillRegistry
 import com.halo.sdk.provider.AiCapability
 import com.halo.sdk.provider.AiContext
 import com.halo.sdk.provider.AiContextPolicy
@@ -22,7 +23,8 @@ class DefaultContextAssembler(
     private val conversationStore: ConversationStore,
     private val blackboard: Blackboard,
     private val toolRegistry: ToolRegistry? = null,
-    private val workspace: WorkspaceContextSource? = null
+    private val workspace: WorkspaceContextSource? = null,
+    private val skillRegistry: SkillRegistry? = null
 ) : ContextAssembler {
 
     companion object {
@@ -187,9 +189,9 @@ class DefaultContextAssembler(
                     )
                 ) {
 
-                    toolRegistry
-                        ?.definitions()
-                        .orEmpty()
+                    toolRegistry?.definitions()?.let { definitions ->
+                        skillRegistry?.enabledTools(definitions) ?: definitions
+                    }.orEmpty()
 
                 } else {
 

@@ -1,0 +1,1 @@
+{"id":"halo.files","name":"Files","description":"Search and read imported documents.","category":"WORKSPACE","risk":"READ_ONLY","tools":["halo_search_files","halo_get_file_metadata","halo_read_text_file"]}

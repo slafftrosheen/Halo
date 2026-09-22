@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.halo.app.di.ProviderGraph
 import com.halo.providers.sherpa.stt.SpeechModelInventoryRepository
+import com.halo.sdk.runtime.Storage
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,6 +27,7 @@ data class VoiceSettingsUiState(
     val missingFiles: List<String> = emptyList(),
     val installedSizeBytes: Long = 0L,
     val selectedLocale: String = "en",
+    val wearablePhoneFallback: Boolean = false,
     val availableLocales: List<LocaleOption> = listOf(
         LocaleOption("English", "en"),
         LocaleOption("Spanish", "es"),
@@ -43,10 +45,13 @@ data class VoiceSettingsUiState(
 class VoiceSettingsViewModel(
     private val speechInventory: SpeechModelInventoryRepository,
     private val languageSettings: SpeechLanguageSettingsRepository,
-    private val providerGraph: ProviderGraph? = null
+    private val providerGraph: ProviderGraph? = null,
+    private val storage: Storage? = null
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(VoiceSettingsUiState())
+    private val _uiState = MutableStateFlow(VoiceSettingsUiState(
+        wearablePhoneFallback = storage?.getBoolean("wearable_phone_fallback", false) ?: false
+    ))
     val uiState: StateFlow<VoiceSettingsUiState> = _uiState.asStateFlow()
 
     private val _navigationEvents = MutableSharedFlow<String>(extraBufferCapacity = 8)
@@ -115,6 +120,11 @@ class VoiceSettingsViewModel(
             speechInventory.refresh(tag)
             providerGraph?.reloadSpeechProvider()
         }
+    }
+
+    fun setWearablePhoneFallback(enabled: Boolean) {
+        storage?.putBoolean("wearable_phone_fallback", enabled)
+        _uiState.value = _uiState.value.copy(wearablePhoneFallback = enabled)
     }
 
     fun goBack() {

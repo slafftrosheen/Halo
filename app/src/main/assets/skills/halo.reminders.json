@@ -1,0 +1,1 @@
+{"id":"halo.reminders","name":"Settings & Contacts","description":"Open device settings and prepare a contact action.","category":"AUTOMATION","risk":"EXTERNAL_SIDE_EFFECT","tools":["halo_open_settings","halo_prepare_contact"]}

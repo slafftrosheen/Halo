@@ -11,6 +11,28 @@ import kotlinx.coroutines.flow.Flow
 interface NotebookDao {
     @Query(
         """
+        SELECT w.id AS id, w.type AS type, w.title AS title,
+               COALESCE(
+                   (SELECT SUBSTR(n.body, 1, 160) FROM notes n WHERE n.objectId = w.id),
+                   (SELECT SUBSTR(m.content, 1, 160) FROM memory_records m WHERE m.id = w.id),
+                   (SELECT SUBSTR(c.userText || ' ' || c.assistantText, 1, 160)
+                    FROM conversation_turns c WHERE c.conversationId = w.id ORDER BY c.timestamp DESC LIMIT 1),
+                   w.title
+               ) AS snippet
+        FROM workspace_objects w
+        WHERE w.title LIKE :pattern ESCAPE '\'
+           OR EXISTS (SELECT 1 FROM notes n WHERE n.objectId = w.id AND n.body LIKE :pattern ESCAPE '\')
+           OR EXISTS (SELECT 1 FROM memory_records m WHERE m.id = w.id AND m.content LIKE :pattern ESCAPE '\')
+           OR EXISTS (SELECT 1 FROM conversation_turns c WHERE c.conversationId = w.id
+                      AND (c.userText LIKE :pattern ESCAPE '\' OR c.assistantText LIKE :pattern ESCAPE '\'))
+        ORDER BY w.updatedAt DESC
+        LIMIT :limit
+        """
+    )
+    suspend fun searchWorkspaceObjects(pattern: String, limit: Int): List<WorkspaceSearchRow>
+
+    @Query(
+        """
         SELECT workspace_objects.id, workspace_objects.title, notes.body,
                workspace_objects.createdAt, workspace_objects.updatedAt,
                workspace_objects.source, workspace_objects.lifecycle,
@@ -121,3 +143,10 @@ interface NotebookDao {
     @Query("DELETE FROM workspace_objects WHERE id = :id AND lifecycle = 'TRASHED'")
     suspend fun permanentlyDeleteTrashed(id: String): Int
 }
+
+data class WorkspaceSearchRow(
+    val id: String,
+    val type: String,
+    val title: String,
+    val snippet: String?
+)

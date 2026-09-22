@@ -1,0 +1,1 @@
+{"id":"halo.apps","name":"Apps & Navigation","description":"Open apps and navigation routes.","category":"NAVIGATION","risk":"EXTERNAL_SIDE_EFFECT","tools":["halo_open_app","halo_navigation","halo_browser","halo_search","halo_media"]}

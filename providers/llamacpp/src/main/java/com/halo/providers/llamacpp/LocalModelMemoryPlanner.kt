@@ -6,7 +6,7 @@ package com.halo.providers.llamacpp
  * This is intentionally an estimator, not a claim about llama.cpp's exact allocator
  * behaviour. The native backend remains the final authority when creating a context.
  */
-internal object LocalModelMemoryPlanner {
+object LocalModelMemoryPlanner {
     private const val BYTES_PER_MB = 1024L * 1024L
 
     /** Maximum extra native/process headroom kept outside the model estimate. */
@@ -42,6 +42,38 @@ internal object LocalModelMemoryPlanner {
         val estimatedBytes: Long,
         val remainingBytes: Long,
     )
+
+    sealed interface RemoteModelFit {
+        val context: Int?
+        data class Recommended(override val context: Int, val estimatedBytes: Long) : RemoteModelFit
+        data class Fits(override val context: Int, val estimatedBytes: Long) : RemoteModelFit
+        data class Tight(override val context: Int, val estimatedBytes: Long) : RemoteModelFit
+        data class TooLarge(val requiredBytes: Long, val availableBytes: Long) : RemoteModelFit {
+            override val context: Int? = null
+        }
+        data object Unknown : RemoteModelFit { override val context: Int? = null }
+    }
+
+    fun preflightRemote(
+        modelBytes: Long,
+        memory: MemorySnapshot,
+        modelProfile: ModelProfile? = null,
+    ): RemoteModelFit {
+        if (modelBytes <= 0L) return RemoteModelFit.Unknown
+        val contexts = listOf(16_384, 8_192, 4_096, 2_048)
+        val plan = choose(modelBytes, memory, contexts.map { Candidate(it, 0) }, modelProfile)
+            ?: return RemoteModelFit.TooLarge(
+                modelBytes + estimateContextBytes(2_048, modelProfile),
+                (memory.availableBytes - ModelMemoryAdmission.reserveBytesFor(modelBytes)).coerceAtLeast(0L)
+            )
+        return when {
+            plan.candidate.contextSize >= 8_192 && plan.remainingBytes >= modelBytes / 2 ->
+                RemoteModelFit.Recommended(plan.candidate.contextSize, plan.estimatedBytes)
+            plan.remainingBytes < modelBytes / 4 ->
+                RemoteModelFit.Tight(plan.candidate.contextSize, plan.estimatedBytes)
+            else -> RemoteModelFit.Fits(plan.candidate.contextSize, plan.estimatedBytes)
+        }
+    }
 
     fun choose(
         modelBytes: Long,

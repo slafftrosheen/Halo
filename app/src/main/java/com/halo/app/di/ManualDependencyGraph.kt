@@ -19,6 +19,7 @@ import com.halo.app.data.workspace.SendIntentHandler
 import com.halo.app.di.tools.StorageStatusToolExecutor
 import com.halo.app.di.tools.WorkspaceToolExecutor
 import com.halo.app.notebook.NotebookUseCases
+import com.halo.app.notebook.WorkspaceUseCases
 import com.halo.app.ui.screens.activity.ActivityViewModel
 import com.halo.app.ui.screens.devices.DevicesViewModel
 import com.halo.app.ui.screens.discovery.PairingViewModel
@@ -121,9 +122,28 @@ object ManualDependencyGraph {
 
     val conversationStore by lazy { com.halo.app.data.RoomConversationStore(appDatabase, infra.scope) }
     val workspaceRepository by lazy { RoomWorkspaceRepository(appDatabase.notebookDao()) }
+    val workspaceSearchEngine by lazy {
+        com.halo.app.data.search.AppSearchWorkspaceSearchEngine(applicationContext, appDatabase.notebookDao())
+    }
+    val workspaceUseCases by lazy {
+        WorkspaceUseCases(workspaceRepository, workspaceSearchEngine, workspaceContext,
+            conversationStore, workspaceFileRepository, memoryRepository, notebookUseCases)
+    }
     val memoryRepository by lazy { RoomMemoryRepository(appDatabase) }
     val memoryContextSource by lazy { BoundedMemoryContextSource(memoryRepository) }
-    val skillRegistry by lazy { DefaultSkillRegistry(storage) }
+    val skillRegistry by lazy {
+        val permissions = AndroidSkillPermissionChecker(applicationContext)
+        DefaultSkillRegistry(
+            storage,
+            initialBuiltIns = BuiltInSkillManifestLoader(applicationContext).load(),
+            availabilityResolver = com.halo.runtime.cognition.skills.SkillAvailabilityResolver(
+                permissionGranted = permissions::granted,
+                registeredToolNames = {
+                    toolRegistry.definitions().flatMap { listOf(it.id, it.name) }.toSet()
+                }
+            )
+        )
+    }
     val agentRunRepository by lazy { RoomAgentRunRepository(appDatabase) }
     val toolRegistry by lazy {
         com.halo.runtime.cognition.tools.ToolRegistry(
@@ -138,8 +158,12 @@ object ManualDependencyGraph {
         )
     }
     val workspaceContext by lazy { WorkspaceContextStore(appDatabase, notebookRepository, storage) }
-    val contextAssembler by lazy { com.halo.runtime.cognition.context.DefaultContextAssembler(conversationStore, blackboard, toolRegistry, workspaceContext) }
-    val toolAuthorizer by lazy { com.halo.runtime.cognition.tools.PolicyToolAuthorizer() }
+    val contextAssembler by lazy { com.halo.runtime.cognition.context.DefaultContextAssembler(conversationStore, blackboard, toolRegistry, workspaceContext, skillRegistry) }
+    val toolAuthorizer by lazy {
+        com.halo.runtime.cognition.tools.PolicyToolAuthorizer(
+            defaultPolicyProvider = skillRegistry::approvalPolicyForTool
+        )
+    }
     val cognitiveSession by lazy {
         CognitiveSession(
             eventBus = eventBus,
@@ -148,6 +172,7 @@ object ManualDependencyGraph {
             contextAssembler = contextAssembler,
             toolRegistry = toolRegistry,
             toolAuthorizer = toolAuthorizer,
+            skillRegistry = skillRegistry,
             scope = infra.scope,
             blackboard = blackboard,
             defaultPolicyProvider = { storage.readRuntimeAiContextPolicy() }
@@ -244,10 +269,10 @@ object ManualDependencyGraph {
         SettingsViewModel(runtimeSnapshotManager, aiProviderRouter, appearancePreferences, providerGraph.speechModelInventory)
     }
     val voiceSettingsViewModel by lazy {
-        VoiceSettingsViewModel(providerGraph.speechModelInventory, speechLanguageSettingsRepository, providerGraph)
+        VoiceSettingsViewModel(providerGraph.speechModelInventory, speechLanguageSettingsRepository, providerGraph, storage)
     }
     val activityViewModel by lazy { ActivityViewModel(runtimeSnapshotManager) }
-    val notebookViewModel by lazy { NotebookViewModel(notebookUseCases, workspaceContext, conversationStore) }
+    val notebookViewModel by lazy { NotebookViewModel(workspaceUseCases, notebookUseCases) }
     val devicesViewModel by lazy {
         DevicesViewModel(
             deviceRegistry = deviceRegistry,
@@ -269,13 +294,15 @@ object ManualDependencyGraph {
             bluetoothEnabled = platformStateMonitor.bluetoothEnabled
         )
     }
-    val intelligenceViewModel by lazy { com.halo.app.ui.screens.settings.IntelligenceViewModel(runtimeSnapshotManager, aiProviderRouter, cognitiveSession, storage, modelDownloadManager) }
+    val modelCatalog by lazy { com.halo.app.models.HuggingFaceGgufCatalog(applicationContext) }
+    val intelligenceViewModel by lazy { com.halo.app.ui.screens.settings.IntelligenceViewModel(
+        runtimeSnapshotManager, aiProviderRouter, cognitiveSession, storage, modelDownloadManager, modelCatalog) }
 
     val runtimeSnapshotManager get() = observerGraph.runtimeSnapshotManager
 
     private val assistantSpeechAudioAttributes by lazy {
         android.media.AudioAttributes.Builder()
-            .setUsage(android.media.AudioAttributes.USAGE_ASSISTANT)
+            .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
             .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SPEECH)
             .build()
     }
@@ -318,6 +345,9 @@ object ManualDependencyGraph {
 
     private val speechOutputCoordinatorDelegate = lazy {
         HaloSpeechOutputCoordinator(
+            context = applicationContext,
+            speechAudioAttributes = assistantSpeechAudioAttributes,
+            storage = storage,
             eventBus = infra.eventBus,
             routeController = speechOutputRouteController,
             ttsProvider = androidTtsProvider,

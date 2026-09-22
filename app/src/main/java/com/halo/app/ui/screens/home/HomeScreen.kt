@@ -36,6 +36,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -53,6 +54,8 @@ import com.halo.app.ui.glass.components.HaloMarkdownText
 import com.halo.app.ui.glass.material.HaloRuntimeState
 import com.halo.app.ui.presence.HaloOrb
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import com.halo.app.ui.theme.HaloPastelBlue
@@ -171,125 +174,15 @@ fun HomeScreen(
             .padding(horizontal = 24.dp, vertical = 18.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column {
-                Text(
-                    text = "halo",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    letterSpacing = 3.sp,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Text(
-                    text = uiState.activeProvider,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Surface(
-                shape = RoundedCornerShape(14.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant
-            ) {
-                Text(
-                    text = "${uiState.providerLocality} · ${uiState.activeProviderStatus.lowercase()}",
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
+        Text("Halo", style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
 
-        AnimatedVisibility(visible = providerNeedsAttention) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 18.dp)
-            ) {
-                HaloWorkspaceCard(accent = HaloWarning) {
-                    Text(
-                        text = "AI provider needs attention",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = uiState.activeProviderMessage ?: when (uiState.activeProviderState) {
-                            ProviderStatus.State.UNCONFIGURED -> "Finish provider setup before using it."
-                            ProviderStatus.State.OFFLINE -> "The selected provider is currently offline."
-                            ProviderStatus.State.MODEL_MISSING -> "Choose or install a model for this provider."
-                            ProviderStatus.State.ERROR -> "The provider reported an error."
-                            ProviderStatus.State.UNAVAILABLE -> "The selected provider is unavailable."
-                            else -> "Choose and configure an AI provider."
-                        },
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    HaloWorkspaceButton(
-                        text = "Open Intelligence",
-                        onClick = viewModel::navigateToIntelligence,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            }
-        }
-
-        AnimatedVisibility(visible = !providerNeedsAttention && !uiState.microphonePermissionGranted && !isActiveSession) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 12.dp)
-            ) {
-                HaloWorkspaceCard(accent = HaloWarning) {
-                    Text(
-                        text = "Microphone access is off",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = "Text, Notebook and device controls still work. Grant microphone access only when you want voice input.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    HaloWorkspaceButton(
-                        text = "Grant microphone access",
-                        onClick = onRequestMicrophonePermission,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            }
-        }
-
-        AnimatedVisibility(visible = !providerNeedsAttention && uiState.microphonePermissionGranted && !uiState.speechReady && !isActiveSession) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 12.dp)
-            ) {
-                HaloWorkspaceCard(accent = HaloPastelBlue) {
-                    Text(
-                        text = "Voice input needs setup",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = "Install the local Whisper Tiny model to enable private voice input.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    HaloWorkspaceButton(
-                        text = "Set up Voice",
-                        onClick = viewModel::navigateToVoice,
-                        modifier = Modifier.fillMaxWidth(),
-                        primary = false
-                    )
-                }
-            }
+        if (providerNeedsAttention) {
+            TextButton(onClick = viewModel::navigateToIntelligence) { Text("Set up intelligence") }
+        } else if (!uiState.microphonePermissionGranted) {
+            TextButton(onClick = onRequestMicrophonePermission) { Text("Enable voice input") }
+        } else if (!uiState.speechReady) {
+            TextButton(onClick = viewModel::navigateToVoice) { Text("Set up voice") }
         }
 
         Spacer(Modifier.height(30.dp))
@@ -347,29 +240,34 @@ fun HomeScreen(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(Modifier.height(8.dp))
-        Text(
-            text = "Input: ${uiState.orb.source} · Output: Phone",
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.82f)
-        )
-
-        Text("Working Set: ${selectedContext.size} selected", style = MaterialTheme.typography.bodySmall)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            TextButton(onClick = ::togglePresence) { Text("Talk") }
-            TextButton(onClick = {
-                if (context.checkSelfPermission(android.Manifest.permission.CAMERA) == android.content.pm.PackageManager.PERMISSION_GRANTED) launchCamera()
-                else cameraPermission.launch(android.Manifest.permission.CAMERA)
-            }) { Text("Capture") }
-            TextButton(onClick = viewModel::createNote) { Text("New note") }
-            TextButton(onClick = viewModel::navigateToDevices) { Text("Devices") }
+        Text("Context Â· ${selectedContext.size}", style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        var showActions by remember { mutableStateOf(false) }
+        Box {
+            TextButton(onClick = { showActions = true }) { Text("More") }
+            DropdownMenu(expanded = showActions, onDismissRequest = { showActions = false }) {
+                DropdownMenuItem(text = { Text("Capture") }, onClick = {
+                    showActions = false
+                    if (context.checkSelfPermission(android.Manifest.permission.CAMERA) ==
+                        android.content.pm.PackageManager.PERMISSION_GRANTED) launchCamera()
+                    else cameraPermission.launch(android.Manifest.permission.CAMERA)
+                })
+                DropdownMenuItem(text = { Text("New note") }, onClick = {
+                    showActions = false
+                    viewModel.createNote()
+                })
+                DropdownMenuItem(text = { Text("New conversation") }, onClick = {
+                    showActions = false
+                    viewModel.newConversation()
+                })
+                DropdownMenuItem(text = { Text("Clear conversation") }, onClick = {
+                    showActions = false
+                    viewModel.clearConversation()
+                })
+            }
         }
         captureMessage?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
         uiState.inputStatus.rejection?.let { Text(it.replace('_', ' '), style = MaterialTheme.typography.bodySmall) }
-        if (isActiveSession) HaloWorkspaceCard(accent = HaloPastelBlue) {
-            Text(uiState.contextualText, style = MaterialTheme.typography.titleSmall)
-            Text(uiState.activeProvider, style = MaterialTheme.typography.bodyMedium)
-            TextButton(onClick = viewModel::cancelSession) { Text("Stop") }
-        }
         AnimatedVisibility(visible = responseText.isNotBlank()) {
             Column(
                 modifier = Modifier
@@ -427,10 +325,6 @@ fun HomeScreen(
             showStop = isActiveSession
         )
 
-        Row {
-            TextButton(onClick = viewModel::newConversation, enabled = !isActiveSession) { Text("New conversation") }
-            TextButton(onClick = viewModel::clearConversation, enabled = !isActiveSession) { Text("Clear conversation") }
-        }
         Spacer(Modifier.height(24.dp))
     }
 }

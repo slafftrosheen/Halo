@@ -14,6 +14,7 @@ import com.halo.runtime.cognition.tools.ToolAuthorizer
 import com.halo.runtime.cognition.tools.ToolExecutionLimits
 import com.halo.runtime.cognition.tools.ToolExecutionResult
 import com.halo.runtime.cognition.tools.ToolRegistry
+import com.halo.runtime.cognition.skills.SkillRegistry
 import com.halo.runtime.provider.response.AiResponseValidator
 import com.halo.sdk.provider.AIMessage
 import com.halo.sdk.provider.AiCapability
@@ -84,7 +85,8 @@ class CognitiveSession(
     private val scope: CoroutineScope,
     private val blackboard: Blackboard = DefaultBlackboard(),
     private val defaultPolicyProvider: () -> AiContextPolicy = { AiContextPolicy.CONSERVATIVE },
-    private val factResolver: RuntimeFactResolver = DefaultRuntimeFactResolver()
+    private val factResolver: RuntimeFactResolver = DefaultRuntimeFactResolver(),
+    private val skillRegistry: SkillRegistry? = null
 ) {
     private val _state = MutableStateFlow<CognitiveSessionState>(CognitiveSessionState.Idle)
     val state: StateFlow<CognitiveSessionState> = _state.asStateFlow()
@@ -476,10 +478,17 @@ class CognitiveSession(
                     )
                 )
 
-                if (!policy.includeAvailableTools || toolRegistry == null || toolAuthorizer == null) {
+                val toolIsEnabled = toolRegistry?.let { registry ->
+                    skillRegistry?.enabledTools(registry.definitions())?.any {
+                        it.name == toolCall.functionName || it.id == toolCall.functionName
+                    } ?: true
+                } ?: false
+                if (!policy.includeAvailableTools || toolRegistry == null || toolAuthorizer == null ||
+                    !toolIsEnabled) {
                     val reason = when {
                         !policy.includeAvailableTools -> "Tools disabled by runtime policy"
                         toolRegistry == null -> "Tool registry unavailable"
+                        !toolIsEnabled -> "Skill unavailable or disabled"
                         else -> "Tool authorization service unavailable"
                     }
                     eventBus.publish(

@@ -20,6 +20,8 @@ import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.Restore
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -28,6 +30,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
@@ -85,7 +90,8 @@ fun NoteEditorScreen(viewModel: NoteEditorViewModel, onBack: () -> Unit) {
             },
             onArchive = viewModel::archive,
             onTrash = viewModel::moveToTrash,
-            onRestore = viewModel::restore
+            onRestore = viewModel::restore,
+            onRemember = viewModel::rememberNote
         )
 
         if (state.status == SaveStatus.MISSING) {
@@ -151,13 +157,13 @@ fun NoteEditorScreen(viewModel: NoteEditorViewModel, onBack: () -> Unit) {
                 Spacer(Modifier.weight(1f))
                 Surface(
                     onClick = {
-                        viewModel.setTransformPreview("Summary of this note:\n- High level points outlined.\n- Ready for execution.")
+                        viewModel.requestSummary()
                     },
                     shape = RoundedCornerShape(8.dp),
                     color = MaterialTheme.colorScheme.primaryContainer
                 ) {
                     Text(
-                        text = "Ask Halo",
+                            text = if (state.isTransforming) "Summarizing…" else "Summarize",
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.SemiBold,
@@ -203,6 +209,10 @@ fun NoteEditorScreen(viewModel: NoteEditorViewModel, onBack: () -> Unit) {
                     }
                 }
             }
+            state.transformError?.let { error ->
+                Text(error, style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error)
+            }
 
             BasicTextField(
                 value = state.body,
@@ -240,8 +250,10 @@ private fun EditorToolbar(
     onBack: () -> Unit,
     onArchive: () -> Unit,
     onTrash: () -> Unit,
-    onRestore: () -> Unit
+    onRestore: () -> Unit,
+    onRemember: () -> Unit
 ) {
+    var menuExpanded by remember { mutableStateOf(false) }
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -262,46 +274,29 @@ private fun EditorToolbar(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        Row {
-            when (lifecycle) {
-                WorkspaceLifecycle.ACTIVE -> {
-                    IconButton(onClick = onArchive) {
-                        Icon(
-                            Icons.Rounded.Archive,
-                            contentDescription = "Archive note",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    IconButton(onClick = onTrash) {
-                        Icon(
-                            Icons.Rounded.DeleteOutline,
-                            contentDescription = "Move note to trash",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+        Box {
+            TextButton(onClick = { menuExpanded = true }) { Text("More") }
+            DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                if (lifecycle == WorkspaceLifecycle.ACTIVE) {
+                    DropdownMenuItem(text = { Text("Remember") }, onClick = {
+                        menuExpanded = false
+                        onRemember()
+                    })
+                    DropdownMenuItem(text = { Text("Archive") }, onClick = {
+                        menuExpanded = false
+                        onArchive()
+                    })
+                } else {
+                    DropdownMenuItem(text = { Text("Restore") }, onClick = {
+                        menuExpanded = false
+                        onRestore()
+                    })
                 }
-                WorkspaceLifecycle.ARCHIVED -> {
-                    IconButton(onClick = onRestore) {
-                        Icon(
-                            Icons.Rounded.Restore,
-                            contentDescription = "Restore note",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                    IconButton(onClick = onTrash) {
-                        Icon(
-                            Icons.Rounded.DeleteOutline,
-                            contentDescription = "Move note to trash",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-                WorkspaceLifecycle.TRASHED -> IconButton(onClick = onRestore) {
-                    Icon(
-                        Icons.Rounded.Restore,
-                        contentDescription = "Restore note",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
+                if (lifecycle != WorkspaceLifecycle.TRASHED) {
+                    DropdownMenuItem(text = { Text("Move to trash") }, onClick = {
+                        menuExpanded = false
+                        onTrash()
+                    })
                 }
             }
         }

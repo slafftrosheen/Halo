@@ -29,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.halo.app.ui.design.HaloScreenHeader
 import com.halo.app.ui.presence.HaloSignalGlyph
 import com.halo.app.ui.presence.HaloSignalKind
 import com.halo.sdk.runtime.RuntimeSnapshotSource
@@ -44,8 +45,7 @@ import kotlinx.coroutines.flow.stateIn
 @Composable
 fun ActivityScreen(viewModel: ActivityViewModel, onOpenObject: (String) -> Unit = {}) {
     val uiState by viewModel.uiState.collectAsState()
-    var category by remember { mutableStateOf("All") }
-    val filtered = uiState.events.filter { category == "All" || it.category == category || (category == "Errors" && it.failed) }
+    val filtered = uiState.events
 
     Column(
         modifier = Modifier
@@ -53,25 +53,9 @@ fun ActivityScreen(viewModel: ActivityViewModel, onOpenObject: (String) -> Unit 
             .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 24.dp)
     ) {
-        Spacer(Modifier.size(16.dp))
-        Text(
-            text = "Activity",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-        Text(
-            text = "What happened, in order.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        HaloScreenHeader("Activity", "What Halo did")
         Spacer(Modifier.size(24.dp))
 
-        Row(Modifier.horizontalScroll(rememberScrollState())) {
-            listOf("All", "Voice", "Vision", "Actions", "Devices", "Errors").forEach { filter ->
-                TextButton(onClick = { category = filter }) { Text(if (category == filter) "• $filter" else filter) }
-            }
-        }
         if (filtered.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
@@ -103,7 +87,7 @@ private fun ActivityListItem(event: ActivityEvent, onOpenObject: (String) -> Uni
         else -> HaloSignalKind.HALO
     }
     var expanded by remember(event.id) { mutableStateOf(false) }
-    val title = "${event.title} · ${event.status}"
+    val title = event.title
 
     Row(
         modifier = Modifier
@@ -119,10 +103,6 @@ private fun ActivityListItem(event: ActivityEvent, onOpenObject: (String) -> Uni
             modifier = Modifier
                 .width(48.dp)
                 .padding(top = 8.dp)
-        )
-        HaloSignalGlyph(
-            kind = signalKind,
-            size = 36.dp
         )
         Spacer(Modifier.width(14.dp))
         Column(modifier = Modifier.weight(1f)) {

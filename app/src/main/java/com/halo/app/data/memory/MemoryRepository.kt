@@ -2,6 +2,8 @@ package com.halo.app.data.memory
 
 import com.halo.app.data.AppDatabase
 import com.halo.app.data.notebook.WorkspaceObjectId
+import com.halo.app.data.notebook.WorkspaceObjectEntity
+import androidx.room.withTransaction
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.util.UUID
@@ -79,7 +81,17 @@ class RoomMemoryRepository(
             confidence = 1.0f,
             status = MemoryStatus.ACTIVE.name
         )
-        db.memoryRecordDao().insertRecord(entity)
+        db.withTransaction {
+            db.memoryRecordDao().insertRecord(entity)
+            db.notebookDao().insertWorkspaceObject(
+                WorkspaceObjectEntity(
+                    id = id, type = "MEMORY", title = candidate.content.trim().take(80),
+                    createdAt = timestamp, updatedAt = timestamp, source = "USER_CREATED",
+                    lifecycle = "ACTIVE", inInbox = false, indexingState = "READY",
+                    contentRef = "memory:$id"
+                )
+            )
+        }
         return requireNotNull(getMemory(id))
     }
 
@@ -96,13 +108,21 @@ class RoomMemoryRepository(
             changedAt = timestamp,
             reason = reason
         )
-        db.memoryRecordDao().insertRevision(revisionEntity)
-        db.memoryRecordDao().updateContent(id, newContent.trim(), timestamp)
+        db.withTransaction {
+            db.memoryRecordDao().insertRevision(revisionEntity)
+            db.memoryRecordDao().updateContent(id, newContent.trim(), timestamp)
+            db.notebookDao().updateTitle(id, newContent.trim().take(80), timestamp)
+        }
         return true
     }
 
     override suspend fun forgetMemory(id: String): Boolean {
-        return db.memoryRecordDao().forget(id, now()) > 0
+        val timestamp = now()
+        return db.withTransaction {
+            val forgotten = db.memoryRecordDao().forget(id, timestamp) > 0
+            if (forgotten) db.notebookDao().setLifecycle(id, "TRASHED", timestamp)
+            forgotten
+        }
     }
 
     override fun observeRevisions(memoryId: String): Flow<List<MemoryRevision>> {

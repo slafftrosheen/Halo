@@ -1,6 +1,8 @@
 package com.halo.app.ui.shell
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -12,15 +14,21 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.halo.app.di.ManualDependencyGraph
@@ -40,6 +48,7 @@ import com.halo.app.ui.screens.notebook.NoteEditorScreen
 import com.halo.app.ui.screens.notebook.NoteEditorViewModel
 import com.halo.app.ui.screens.notebook.NotebookNavigation
 import com.halo.app.ui.screens.notebook.NotebookScreen
+import com.halo.app.ui.screens.notebook.WorkspaceObjectDetailScreen
 import com.halo.app.ui.screens.settings.IntelligenceScreen
 import com.halo.app.ui.screens.settings.SettingsScreen
 import com.halo.app.ui.screens.settings.SkillsScreen
@@ -67,6 +76,7 @@ fun AppShell(
 ) {
     val navController = rememberNavController()
     val homeViewModel = ManualDependencyGraph.homeViewModel
+    val shellScope = rememberCoroutineScope()
 
     fun navigateSafely(route: String) {
         if (navController.currentDestination?.route != route) {
@@ -78,18 +88,36 @@ fun AppShell(
         homeViewModel.navigationEvents.collectLatest(::navigateSafely)
     }
 
+    BoxWithConstraints {
+    val expandedNavigation = maxWidth >= 600.dp
+    val backStackEntry by navController.currentBackStackEntryAsState()
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            HaloNavigation(
-                navController = navController,
-                items = bottomNavItems.map { NavigationItem(it.route, it.title, it.icon) }
-            )
+            if (!expandedNavigation) {
+                HaloNavigation(
+                    navController = navController,
+                    items = bottomNavItems.map { NavigationItem(it.route, it.title, it.icon) }
+                )
+            }
         },
         contentWindowInsets = WindowInsets.safeDrawing
     ) { innerPadding ->
-        Box(Modifier.fillMaxSize().padding(innerPadding)) {
+        Row(Modifier.fillMaxSize().padding(innerPadding)) {
+            if (expandedNavigation) {
+                NavigationRail {
+                    bottomNavItems.forEach { item ->
+                        NavigationRailItem(
+                            selected = backStackEntry?.destination?.route == item.route,
+                            onClick = { navigateSafely(item.route) },
+                            icon = { Icon(item.icon, contentDescription = item.title) },
+                            label = { Text(item.title) }
+                        )
+                    }
+                }
+            }
+        Box(Modifier.weight(1f).fillMaxSize()) {
             NavHost(
                 navController = navController,
                 startDestination = Screen.Home.route,
@@ -101,7 +129,23 @@ fun AppShell(
                         onRequestMicrophonePermission = onRequestPermissions
                     )
                 }
-                composable(Screen.Activity.route) { ActivityScreen(ManualDependencyGraph.activityViewModel, onOpenObject = { navigateSafely("notebook/note/$it") }) }
+                composable(Screen.Activity.route) {
+                    ActivityScreen(ManualDependencyGraph.activityViewModel, onOpenObject = { id ->
+                        shellScope.launch {
+                            val item = ManualDependencyGraph.workspaceUseCases.getObject(id)
+                            val route = when (item?.type) {
+                                com.halo.app.data.notebook.WorkspaceObjectType.NOTE -> "notebook/note/$id"
+                                com.halo.app.data.notebook.WorkspaceObjectType.CONVERSATION -> "notebook/conversation/$id"
+                                com.halo.app.data.notebook.WorkspaceObjectType.MEMORY -> "notebook/memory/$id"
+                                com.halo.app.data.notebook.WorkspaceObjectType.FILE,
+                                com.halo.app.data.notebook.WorkspaceObjectType.MEDIA,
+                                com.halo.app.data.notebook.WorkspaceObjectType.ARTIFACT -> "notebook/file/$id"
+                                null -> Screen.Notebook.route
+                            }
+                            navigateSafely(route)
+                        }
+                    })
+                }
 
                 composable(Screen.Notebook.route) {
                     val notebookViewModel = ManualDependencyGraph.notebookViewModel
@@ -109,6 +153,9 @@ fun AppShell(
                         notebookViewModel.navigationEvents.collectLatest { event ->
                             when (event) {
                                 is NotebookNavigation.OpenNote -> navigateSafely("notebook/note/${event.id}")
+                                is NotebookNavigation.OpenConversation -> navigateSafely("notebook/conversation/${event.id}")
+                                is NotebookNavigation.OpenFile -> navigateSafely("notebook/file/${event.id}")
+                                is NotebookNavigation.OpenMemory -> navigateSafely("notebook/memory/${event.id}")
                             }
                         }
                     }
@@ -125,9 +172,31 @@ fun AppShell(
                     } else {
                         val editorViewModel: NoteEditorViewModel = viewModel(
                             key = "note-editor-$noteId",
-                            factory = NoteEditorViewModel.Factory(noteId, ManualDependencyGraph.notebookUseCases)
+                            factory = NoteEditorViewModel.Factory(
+                                noteId, ManualDependencyGraph.notebookUseCases,
+                                ManualDependencyGraph.workspaceUseCases,
+                                ManualDependencyGraph.aiProviderRouter,
+                                { ManualDependencyGraph.workspaceContext.cloudSharing.value }
+                            )
                         )
                         NoteEditorScreen(editorViewModel) { navController.popBackStack() }
+                    }
+                }
+
+                composable("notebook/file/{objectId}",
+                    arguments = listOf(navArgument("objectId") { type = NavType.StringType })) { entry ->
+                    entry.arguments?.getString("objectId")?.let { id ->
+                        WorkspaceObjectDetailScreen(id, "file", ManualDependencyGraph.workspaceUseCases) {
+                            navController.popBackStack()
+                        }
+                    }
+                }
+                composable("notebook/memory/{objectId}",
+                    arguments = listOf(navArgument("objectId") { type = NavType.StringType })) { entry ->
+                    entry.arguments?.getString("objectId")?.let { id ->
+                        WorkspaceObjectDetailScreen(id, "memory", ManualDependencyGraph.workspaceUseCases) {
+                            navController.popBackStack()
+                        }
                     }
                 }
 
@@ -201,7 +270,14 @@ fun AppShell(
                 composable("ai_settings") {
                     val viewModel = ManualDependencyGraph.intelligenceViewModel
                     LaunchedEffect(viewModel) { viewModel.navigationEvents.collectLatest(::navigateSafely) }
-                    IntelligenceScreen(viewModel) { navController.popBackStack() }
+                    IntelligenceScreen(viewModel, { navController.popBackStack() },
+                        onBrowseModels = { navigateSafely("model_browser") })
+                }
+                composable("model_browser") {
+                    com.halo.app.ui.screens.settings.ModelBrowserScreen(
+                        ManualDependencyGraph.intelligenceViewModel,
+                        onBack = { navController.popBackStack() }
+                    )
                 }
 
                 composable("voice_settings") {
@@ -236,5 +312,7 @@ fun AppShell(
                 }
             }
         }
+        }
+    }
     }
 }

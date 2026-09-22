@@ -113,6 +113,18 @@ fun VoiceSettingsScreen(
 
         Spacer(Modifier.height(20.dp))
 
+        HaloWorkspaceSection(title = "Wearable audio") {
+            HaloWorkspaceRow(title = "Reply on glasses", trailingText = "On")
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            HaloWorkspaceRow(
+                title = "If glasses audio is unavailable",
+                trailingText = if (uiState.wearablePhoneFallback) "Use phone speaker" else "Stay silent",
+                onClick = { viewModel.setWearablePhoneFallback(!uiState.wearablePhoneFallback) }
+            )
+        }
+
+        Spacer(Modifier.height(20.dp))
+
         when {
             uiState.isDownloading -> {
                 HaloWorkspaceCard(accent = HaloPastelBlue) {

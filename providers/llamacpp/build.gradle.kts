@@ -12,6 +12,7 @@ android {
 
 dependencies {
     implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.androidx.work.runtime.ktx)
     implementation(project(":sdk:runtime-sdk"))
     implementation(project(":libraries:common"))
     implementation(project(":sdk:provider-sdk"))

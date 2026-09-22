@@ -14,6 +14,12 @@ enum class SpeechOutputFallback {
     ALLOW_PHONE
 }
 
+enum class SpeechReplyPolicy {
+    SAME_DEVICE,
+    PHONE,
+    USER_SELECTED
+}
+
 enum class SpeechRoutePendingReason {
     PAIRING_REQUIRED,
     WAITING_FOR_ENDPOINT

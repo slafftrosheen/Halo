@@ -41,7 +41,8 @@ import com.halo.sdk.provider.ProviderStatus
 @Composable
 fun IntelligenceScreen(
     viewModel: IntelligenceViewModel,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onBrowseModels: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var openRouterKeyDraft by rememberSaveable(uiState.activeProviderId) {
@@ -247,15 +248,24 @@ fun IntelligenceScreen(
             Spacer(Modifier.height(20.dp))
 
             Text(
-                text = "Local GGUF models",
+                text = "On-device model",
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 2.dp, vertical = 8.dp)
             )
 
+            HaloWorkspaceButton(
+                text = "Browse models for this phone",
+                onClick = onBrowseModels,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(12.dp))
+
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                uiState.localModels.forEach { model ->
+                uiState.localModels.filter {
+                    uiState.downloadStates[it.id] == DownloadState.Downloaded
+                }.forEach { model ->
                     val downloadState = uiState.downloadStates[model.id] ?: DownloadState.NotDownloaded
                     val isActive = model.id == uiState.activeLocalModelId
 

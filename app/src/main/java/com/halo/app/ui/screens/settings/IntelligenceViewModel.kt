@@ -15,6 +15,9 @@ import kotlinx.coroutines.launch
 import com.halo.providers.llamacpp.ModelDownloadManager
 import com.halo.providers.llamacpp.CognitiveModel
 import com.halo.providers.llamacpp.DownloadState
+import com.halo.app.models.ModelCatalogEntry
+import com.halo.app.models.ModelCatalogState
+import com.halo.app.models.RemoteModelCatalog
 import com.halo.sdk.runtime.HaloDispatchers
 import com.halo.sdk.runtime.productionHaloDispatchers
 import kotlinx.coroutines.withContext
@@ -35,6 +38,7 @@ data class IntelligenceUiState(
     val llamacppModel: String = "",
     val llamacppContext: Int = 4096,
     val localModels: List<CognitiveModel> = emptyList(),
+    val catalogState: ModelCatalogState = ModelCatalogState.Idle,
     val downloadStates: Map<String, DownloadState> = emptyMap(),
     val activeLocalModelId: String? = null,
     val temperature: Float = 0.7f,
@@ -70,6 +74,7 @@ class IntelligenceViewModel(
     private val cognitiveSession: CognitiveSession,
     private val storage: Storage,
     private val modelDownloadManager: ModelDownloadManager? = null,
+    private val modelCatalog: RemoteModelCatalog? = null,
     private val dispatchers: HaloDispatchers = productionHaloDispatchers()
 ) : ViewModel() {
     private val _refreshTrigger = MutableStateFlow(0)
@@ -97,6 +102,10 @@ class IntelligenceViewModel(
         viewModelScope.launch {
             modelDownloadManager?.downloadStates?.collect { _refreshTrigger.update { it + 1 } }
         }
+        viewModelScope.launch {
+            modelCatalog?.state?.collect { _refreshTrigger.update { it + 1 } }
+        }
+        viewModelScope.launch { modelCatalog?.refresh() }
     }
 
     private suspend fun loadSettings() {
@@ -196,6 +205,7 @@ class IntelligenceViewModel(
             llamacppModel = settings.llamacppModel,
             llamacppContext = settings.llamacppContext,
             localModels = modelDownloadManager?.getAllModels() ?: emptyList(),
+            catalogState = modelCatalog?.state?.value ?: ModelCatalogState.Idle,
             downloadStates = dlStates,
             activeLocalModelId = activeLocalId ?: settings.llamacppModel,
             temperature = settings.temperature,
@@ -213,6 +223,13 @@ class IntelligenceViewModel(
         _refreshTrigger.update { it + 1 }
     }
     fun downloadModel(modelId: String) { modelDownloadManager?.downloadModel(modelId) }
+    fun refreshCatalog() { viewModelScope.launch { modelCatalog?.refresh(force = true) } }
+    fun downloadCatalogEntry(entry: ModelCatalogEntry) {
+        modelDownloadManager?.downloadCatalogModel(entry.model.repoId, entry.model.revision,
+            entry.file.filename, entry.file.bytes, entry.file.quantization.name)
+    }
+    fun catalogModelId(entry: ModelCatalogEntry): String? =
+        modelDownloadManager?.catalogModelId(entry.model.repoId, entry.model.revision, entry.file.filename)
     fun downloadCustomUrl(url: String, name: String) {
         val normalizedUrl = url.trim(); val normalizedName = name.trim()
         if (normalizedUrl.isBlank() || normalizedName.isBlank()) return

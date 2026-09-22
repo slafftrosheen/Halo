@@ -1,0 +1,1 @@
+{"id":"halo.device","name":"Device controls","description":"Control local phone volume and flashlight.","category":"DEVICE","risk":"REVERSIBLE","tools":["halo_volume","halo_flashlight"]}

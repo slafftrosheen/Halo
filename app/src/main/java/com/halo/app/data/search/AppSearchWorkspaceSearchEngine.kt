@@ -106,6 +106,15 @@ class AppSearchWorkspaceSearchEngine(
             return@withContext WorkspaceSearchResult(rawQuery, emptyList())
         }
 
+        val roomHits = dao.searchWorkspaceObjects(
+            "%${rawQuery.replace("%", "\\%").replace("_", "\\_")}%",
+            query.maxHits
+        ).mapNotNull { row ->
+            val type = runCatching { WorkspaceObjectType.valueOf(row.type) }.getOrNull()
+                ?: return@mapNotNull null
+            if (query.types.isNotEmpty() && type !in query.types) return@mapNotNull null
+            WorkspaceSearchHit(WorkspaceObjectId(row.id), type, row.title, row.snippet, 0f)
+        }
         val s = ensureSession()
         if (s != null) {
             val appSearchResults = try {
@@ -139,11 +148,13 @@ class AppSearchWorkspaceSearchEngine(
             }
 
             if (appSearchResults != null) {
-                return@withContext WorkspaceSearchResult(rawQuery, appSearchResults)
+                val merged = (appSearchResults + roomHits)
+                    .distinctBy { it.objectId.value }
+                    .take(query.maxHits)
+                return@withContext WorkspaceSearchResult(rawQuery, merged)
             }
         }
 
-        // Fallback search
-        WorkspaceSearchResult(rawQuery, emptyList())
+        WorkspaceSearchResult(rawQuery, roomHits)
     }
 }

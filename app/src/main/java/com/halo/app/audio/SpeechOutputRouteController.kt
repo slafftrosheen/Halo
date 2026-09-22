@@ -1,6 +1,7 @@
 package com.halo.app.audio
 
 import android.content.Context
+import android.media.AudioDeviceInfo
 import android.util.Log
 import com.halo.drivers.heycyan.RealHeyCyanDriver
 import com.halo.drivers.heycyan.protocol.HeyCyanCommand
@@ -11,6 +12,7 @@ import com.halo.sdk.runtime.embodiment.heycyan.HeyCyanOperation
 import com.halo.host.android.audio.BluetoothAudioRouteMonitor
 import com.halo.host.android.audio.AndroidBluetoothAudioRouteMonitor
 import com.halo.sdk.runtime.*
+import kotlinx.coroutines.CancellationException
 
 data class SpeechRouteRequest(
     val transactionId: String,
@@ -25,16 +27,31 @@ class SpeechOutputRouteController(
     private val routeMonitor: BluetoothAudioRouteMonitor = AndroidBluetoothAudioRouteMonitor(context),
     private val audioPairingCoordinator: HeyCyanAudioPairingCoordinator? = null
 ) {
+    @Volatile private var lastGlassesDeviceId: String? = null
+
     suspend fun prepareRoute(request: SpeechRouteRequest): SpeechRoutePreparation {
         val target = request.target
         return when (target) {
             is SpeechOutputTarget.Phone -> {
                 Log.i("HaloAudio", "AUDIO_ROUTE_REQUEST transaction=${request.transactionId} target=Phone")
-                heyCyanDriver.capabilityController.execute(HeyCyanOperation.RouteAudioToPhone)
+                val previousDevice = lastGlassesDeviceId
+                val vendorCommandSent = if (previousDevice != null && heyCyanDriver.activeDeviceId == previousDevice &&
+                    heyCyanDriver.deviceState.value.connection == HeyCyanConnectionState.READY) {
+                    try {
+                        heyCyanDriver.capabilityController.execute(HeyCyanOperation.RouteAudioToPhone)
+                        true
+                    } catch (cancelled: CancellationException) {
+                        throw cancelled
+                    } catch (error: Exception) {
+                        Log.w("HaloAudio", "Ignoring wearable route reset failure for phone speech", error)
+                        false
+                    }
+                } else false
+                lastGlassesDeviceId = null
                 SpeechRoutePreparation.Ready(
                     target = target,
                     evidence = SpeechRouteEvidence(
-                        vendorRouteCommandSent = true,
+                        vendorRouteCommandSent = vendorCommandSent,
                         androidDeviceType = null,
                         androidDeviceName = "Phone Speaker",
                         androidDeviceAddress = null,
@@ -95,6 +112,7 @@ class SpeechOutputRouteController(
                     )
                 }
                 Log.i("HaloAudio", "HEYCYAN_VENDOR_ROUTE device=${target.deviceId} route=GLASSES result=success")
+                lastGlassesDeviceId = target.deviceId
 
                 // 3. Await/verify Android Bluetooth audio endpoint
                 val endpoint = routeMonitor.awaitEndpoint(
@@ -115,7 +133,12 @@ class SpeechOutputRouteController(
                     target = target,
                     evidence = SpeechRouteEvidence(
                         vendorRouteCommandSent = true,
-                        androidDeviceType = endpoint.type.ordinal,
+                        androidDeviceType = when (endpoint.type) {
+                            com.halo.host.android.audio.BluetoothAudioEndpointType.A2DP -> AudioDeviceInfo.TYPE_BLUETOOTH_A2DP
+                            com.halo.host.android.audio.BluetoothAudioEndpointType.SCO -> AudioDeviceInfo.TYPE_BLUETOOTH_SCO
+                            com.halo.host.android.audio.BluetoothAudioEndpointType.BLE_HEADSET -> AudioDeviceInfo.TYPE_BLE_HEADSET
+                            com.halo.host.android.audio.BluetoothAudioEndpointType.BLE_SPEAKER -> AudioDeviceInfo.TYPE_BLE_SPEAKER
+                        },
                         androidDeviceName = endpoint.name,
                         androidDeviceAddress = endpoint.address,
                         verifiedAtMs = System.currentTimeMillis()

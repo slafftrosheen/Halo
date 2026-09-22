@@ -10,6 +10,7 @@ import com.halo.providers.android.tts.AndroidTTSProvider
 import com.halo.sdk.provider.SpeechRequest
 import com.halo.sdk.provider.SpeechResult
 import com.halo.sdk.runtime.SpeechRouteEvidence
+import com.halo.sdk.runtime.SpeechOutputTarget
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
@@ -26,11 +27,20 @@ class RoutedSpeechPlaybackProvider(
     suspend fun synthesize(
         request: SpeechRequest,
         evidence: SpeechRouteEvidence,
-        onStarted: (() -> Unit)? = null
+        onStarted: (() -> Unit)? = null,
+        outputTarget: SpeechOutputTarget.Wearable? = null
     ): SpeechResult {
         val startedAt = System.currentTimeMillis()
         val pcm = ttsProvider.synthesizeToPcm(request) ?: return SpeechResult(0, false)
         val target = resolveTarget(evidence) ?: return SpeechResult(0, false)
+        val acquiredAt = System.currentTimeMillis()
+        val lease = SpeechRouteLease(
+            outputTarget ?: SpeechOutputTarget.Wearable(
+                evidence.androidDeviceAddress ?: return SpeechResult(0, false)),
+            evidence,
+            acquiredAt,
+            acquiredAt + 5_000L
+        )
         val channelMask = when (pcm.channelCount) {
             1 -> AudioFormat.CHANNEL_OUT_MONO
             2 -> AudioFormat.CHANNEL_OUT_STEREO
@@ -51,7 +61,8 @@ class RoutedSpeechPlaybackProvider(
             .build()
         activeTrack = track
         return try {
-            if (!track.setPreferredDevice(target)) return SpeechResult(0, false)
+            if (!lease.isValid() || resolveTarget(evidence)?.id != target.id ||
+                !track.setPreferredDevice(target)) return SpeechResult(0, false)
             track.setVolume(0f)
             track.play()
             val bytesPerSample = when (pcm.audioFormat) {
@@ -63,9 +74,9 @@ class RoutedSpeechPlaybackProvider(
             if (track.write(probeSilence, 0, probeSilence.size, AudioTrack.WRITE_BLOCKING) < 0) {
                 return SpeechResult(0, false)
             }
-            if (!awaitVerifiedRoute(track, evidence)) return SpeechResult(0, false)
+            if (!lease.isValid() || !awaitVerifiedRoute(track, target.id, evidence)) return SpeechResult(0, false)
             track.setVolume(1f)
-            onStarted?.invoke()
+            var started = false
             var totalBytesWritten = probeSilence.size.toLong()
             for (chunk in pcm.chunks) {
                 currentCoroutineContext().ensureActive()
@@ -76,8 +87,14 @@ class RoutedSpeechPlaybackProvider(
                     if (written <= 0) return SpeechResult(0, false)
                     offset += written
                     totalBytesWritten += written
+                    if (!started && track.playState == AudioTrack.PLAYSTATE_PLAYING &&
+                        routeMatches(track.routedDevice, evidence)) {
+                        started = true
+                        onStarted?.invoke()
+                    }
                 }
             }
+            if (!started) return SpeechResult(0, false)
             val expectedFrames = totalBytesWritten / (bytesPerSample * pcm.channelCount)
             while (track.playbackHeadPosition.toLong() < expectedFrames) {
                 currentCoroutineContext().ensureActive()
@@ -86,7 +103,7 @@ class RoutedSpeechPlaybackProvider(
             }
             SpeechResult(System.currentTimeMillis() - startedAt, true)
         } finally {
-            activeTrack = null
+            if (activeTrack === track) activeTrack = null
             runCatching { track.pause() }
             runCatching { track.flush() }
             runCatching { track.stop() }
@@ -102,9 +119,10 @@ class RoutedSpeechPlaybackProvider(
         }
     }
 
-    private suspend fun awaitVerifiedRoute(track: AudioTrack, evidence: SpeechRouteEvidence): Boolean {
-        repeat(20) {
-            if (routeMatches(track.routedDevice, evidence)) return true
+    private suspend fun awaitVerifiedRoute(track: AudioTrack, expectedDeviceId: Int, evidence: SpeechRouteEvidence): Boolean {
+        repeat(30) {
+            if (track.playState == AudioTrack.PLAYSTATE_PLAYING &&
+                track.routedDevice?.id == expectedDeviceId && routeMatches(track.routedDevice, evidence)) return true
             delay(25L)
         }
         return false

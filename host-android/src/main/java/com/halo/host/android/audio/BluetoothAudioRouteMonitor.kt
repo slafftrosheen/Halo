@@ -53,7 +53,7 @@ interface BluetoothAudioRouteMonitor {
 class AndroidBluetoothAudioRouteMonitor(
     private val context: Context,
     private val audioAttributes: AudioAttributes = AudioAttributes.Builder()
-        .setUsage(AudioAttributes.USAGE_ASSISTANT)
+        .setUsage(AudioAttributes.USAGE_MEDIA)
         .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
         .build()
 ) : BluetoothAudioRouteMonitor {

@@ -7,6 +7,8 @@ import com.halo.sdk.runtime.skills.SkillDescriptor
 import com.halo.sdk.runtime.skills.SkillId
 import com.halo.sdk.runtime.skills.SkillRisk
 import com.halo.sdk.runtime.skills.SkillSource
+import com.halo.sdk.runtime.skills.SkillAvailability
+import com.halo.runtime.cognition.tools.ToolApprovalPolicy
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,11 +18,16 @@ interface SkillRegistry {
     fun get(id: SkillId): SkillDescriptor?
     fun enabledTools(allTools: List<ToolDefinition>): List<ToolDefinition>
     suspend fun setEnabled(id: SkillId, enabled: Boolean)
+    fun refreshAvailability() {}
+    fun approvalPolicy(id: SkillId): ToolApprovalPolicy = ToolApprovalPolicy.ASK_EVERY_TIME
+    fun approvalPolicyForTool(toolName: String): ToolApprovalPolicy = ToolApprovalPolicy.ASK_EVERY_TIME
+    suspend fun setApprovalPolicy(id: SkillId, policy: ToolApprovalPolicy) {}
 }
 
 class DefaultSkillRegistry(
     private val storage: Storage,
-    initialBuiltIns: List<SkillDescriptor> = defaultBuiltInSkills()
+    initialBuiltIns: List<SkillDescriptor> = defaultBuiltInSkills(),
+    private val availabilityResolver: SkillAvailabilityResolver = SkillAvailabilityResolver()
 ) : SkillRegistry {
 
     private val _skills = MutableStateFlow<List<SkillDescriptor>>(emptyList())
@@ -31,7 +38,7 @@ class DefaultSkillRegistry(
             val savedEnabled = storage.getBoolean("skill_enabled_${skill.id.value}", skill.enabled)
             skill.copy(enabled = savedEnabled)
         }
-        _skills.value = list
+        _skills.value = list.map { it.copy(availability = availabilityResolver.resolve(it)) }
     }
 
     override fun get(id: SkillId): SkillDescriptor? {
@@ -39,8 +46,9 @@ class DefaultSkillRegistry(
     }
 
     override fun enabledTools(allTools: List<ToolDefinition>): List<ToolDefinition> {
+        refreshAvailability()
         val enabledToolNames = _skills.value
-            .filter { it.enabled }
+            .filter { it.enabled && it.availability == SkillAvailability.Available }
             .flatMap { it.tools }
             .toSet()
 
@@ -52,8 +60,42 @@ class DefaultSkillRegistry(
     override suspend fun setEnabled(id: SkillId, enabled: Boolean) {
         storage.putBoolean("skill_enabled_${id.value}", enabled)
         _skills.value = _skills.value.map { skill ->
-            if (skill.id == id) skill.copy(enabled = enabled) else skill
+            val next = if (skill.id == id) skill.copy(enabled = enabled) else skill
+            next.copy(availability = availabilityResolver.resolve(next))
         }
+    }
+
+    override fun refreshAvailability() {
+        val current = _skills.value
+        val refreshed = current.map { it.copy(availability = availabilityResolver.resolve(it)) }
+        if (refreshed != current) _skills.value = refreshed
+    }
+
+    override fun approvalPolicy(id: SkillId): ToolApprovalPolicy {
+        val skill = get(id) ?: return ToolApprovalPolicy.DENY
+        val default = if (skill.risk == SkillRisk.READ_ONLY) ToolApprovalPolicy.ALWAYS_ALLOW
+            else ToolApprovalPolicy.ASK_EVERY_TIME
+        return storage.getString("skill_approval_${id.value}")?.let {
+            runCatching { ToolApprovalPolicy.valueOf(it) }.getOrNull()
+        } ?: default
+    }
+
+    override fun approvalPolicyForTool(toolName: String): ToolApprovalPolicy {
+        val skill = _skills.value.firstOrNull { toolName in it.tools }
+            ?: return ToolApprovalPolicy.DENY
+        if (!skill.enabled || skill.availability != SkillAvailability.Available) return ToolApprovalPolicy.DENY
+        if (storage.getString("skill_approval_${skill.id.value}") == null &&
+            (toolName.startsWith("halo_search") || toolName.startsWith("halo_get") ||
+                toolName.startsWith("halo_list") || toolName == "halo_storage_status")) {
+            return ToolApprovalPolicy.ALWAYS_ALLOW
+        }
+        return approvalPolicy(skill.id)
+    }
+
+    override suspend fun setApprovalPolicy(id: SkillId, policy: ToolApprovalPolicy) {
+        if (get(id) == null) return
+        storage.putString("skill_approval_${id.value}", policy.name)
+        _skills.value = _skills.value.toList()
     }
 
     companion object {

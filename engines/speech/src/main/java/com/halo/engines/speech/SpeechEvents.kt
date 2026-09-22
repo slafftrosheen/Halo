@@ -3,7 +3,12 @@ package com.halo.engines.speech
 import com.halo.sdk.runtime.HaloEvent
 import java.util.UUID
 
-data class ListeningStarted(override val id: String = UUID.randomUUID().toString(), override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
+data class ListeningStarted(
+    override val id: String = UUID.randomUUID().toString(),
+    override val timestamp: Long = System.currentTimeMillis(),
+    val source: com.halo.sdk.runtime.SpeechInputRoute = com.halo.sdk.runtime.SpeechInputRoute.Phone,
+    val captureId: String = id
+) : HaloEvent
 data class SpeechStarted(override val id: String = UUID.randomUUID().toString(), override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
 data class SpeechEnded(override val id: String = UUID.randomUUID().toString(), override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
 data class RecognitionStarted(override val id: String, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent

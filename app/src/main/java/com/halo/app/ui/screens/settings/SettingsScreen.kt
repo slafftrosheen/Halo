@@ -47,6 +47,7 @@ import com.halo.app.ui.theme.HaloPastelBlue
 import com.halo.app.ui.theme.HaloPastelLilac
 import com.halo.app.ui.theme.HaloPastelMint
 import com.halo.app.ui.theme.HaloPastelYellow
+import com.halo.app.ui.design.HaloScreenHeader
 
 @Composable
 fun SettingsScreen(viewModel: SettingsViewModel) {
@@ -60,60 +61,43 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             .padding(horizontal = 24.dp)
     ) {
         Spacer(Modifier.height(16.dp))
-        Text(
-            text = "Settings",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-        Text(
-            text = "System configuration without the noise.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        HaloScreenHeader("Settings", "Make Halo yours.")
 
         Spacer(Modifier.height(28.dp))
 
         SettingsRow(
             icon = Icons.Default.SmartToy,
             tint = HaloPastelBlue,
-            title = "AI providers",
-            subtitle = uiState.provider,
+            title = "Intelligence",
+            subtitle = "Models & providers · ${uiState.provider}",
             onClick = viewModel::openIntelligence
         )
         SettingsRow(
             icon = Icons.Default.SmartToy,
             tint = HaloPastelLilac,
-            title = "Skills & Actions",
-            subtitle = "Control agent capabilities",
+            title = "Skills",
+            subtitle = "Actions Halo can use",
             onClick = viewModel::openSkills
         )
         SettingsRow(
             icon = Icons.Default.Mic,
             tint = HaloPastelLilac,
-            title = "Speech",
-            subtitle = uiState.voiceStatus,
+            title = "Voice",
+            subtitle = "Speech and audio · ${uiState.voiceStatus}",
             onClick = viewModel::openVoice
-        )
-        SettingsRow(
-            icon = Icons.Default.Devices,
-            tint = HaloPastelMint,
-            title = "Devices",
-            subtitle = uiState.deviceName,
-            onClick = viewModel::openDevices
         )
         SettingsRow(
             icon = Icons.Default.Security,
             tint = HaloPastelYellow,
             title = "Permissions",
-            subtitle = "Android system access",
+            subtitle = "Device and data access",
             onClick = viewModel::openPermissions
         )
         SettingsRow(
             icon = Icons.Default.Storage,
             tint = HaloPastelMint,
             title = "Storage & Backup",
-            subtitle = "Halo Brain, Vault and restore",
+            subtitle = "Halo Brain and Vault",
             onClick = viewModel::openStorageBackup
         )
 
@@ -123,18 +107,12 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(vertical = 8.dp)
         ) {
-            Surface(
-                shape = RoundedCornerShape(11.dp),
-                color = HaloPastelLilac.copy(alpha = 0.22f),
-                modifier = Modifier.size(36.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Palette,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(9.dp)
-                )
-            }
+            Icon(
+                imageVector = Icons.Default.Palette,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(20.dp)
+            )
             Spacer(Modifier.size(12.dp))
             Column {
                 Text(
@@ -230,20 +208,13 @@ private fun SettingsRow(
             .padding(vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Surface(
-            shape = RoundedCornerShape(12.dp),
-            color = tint.copy(alpha = 0.22f),
-            modifier = Modifier.size(42.dp)
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(10.dp)
-            )
-        }
-
-        Spacer(Modifier.size(14.dp))
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(Modifier.size(18.dp))
 
         Column(modifier = Modifier.weight(1f)) {
             Text(

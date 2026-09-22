@@ -4,6 +4,13 @@ import android.app.DownloadManager
 import android.content.Context
 import android.net.Uri
 import android.os.Environment
+import androidx.work.Constraints
+import androidx.work.ExistingWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
+import androidx.work.workDataOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -17,6 +24,10 @@ import kotlinx.coroutines.sync.withLock
 import com.halo.sdk.runtime.HaloDispatchers
 import com.halo.sdk.runtime.productionHaloDispatchers
 import java.io.File
+import org.json.JSONArray
+import org.json.JSONObject
+import java.net.URLDecoder
+import java.security.MessageDigest
 
 
 data class CognitiveModel(
@@ -61,6 +72,7 @@ class ModelDownloadManager(
     private val downloadsLock = Any()
     private val activeDownloads = mutableMapOf<Long, String>()
     private val downloadJobs = mutableMapOf<Long, Job>()
+    private val workerJobs = mutableMapOf<String, Job>()
     @Volatile private var closed = false
 
     private val _downloadStates = MutableStateFlow<Map<String, DownloadState>>(emptyMap())
@@ -77,6 +89,7 @@ class ModelDownloadManager(
             loadCustomModels()
             refresh(ModelInventoryRefreshReason.STARTUP)
             recoverPersistedDownloads()
+            recoverWorkerDownloads()
         }
     }
 
@@ -87,8 +100,10 @@ class ModelDownloadManager(
 
     private fun findModelFile(modelId: String): Pair<File, GgufModelMetadata>? {
         val model = getAllModels().find { it.id == modelId }
-        val fileName = model?.downloadUrl?.substringAfterLast("/") ?: "$modelId.gguf"
-        val candidates = resolveModelDirectories().map { directory -> File(directory, fileName) }
+        val candidates = resolveModelDirectories().flatMap { directory ->
+            listOfNotNull(model?.let { File(directory, fileNameFor(it)) },
+                model?.downloadUrl?.substringAfterLast("/")?.let { File(directory, it) })
+        }
         return candidates.firstNotNullOfOrNull { file ->
             val metadata = readUsableMetadata(file) ?: return@firstNotNullOfOrNull null
             file to metadata
@@ -98,6 +113,7 @@ class ModelDownloadManager(
     /** Called only from the repository's IO-confined inventory scan. */
     private fun resolveModelDirectories(): List<File> = modelDirectories ?: listOfNotNull(
         modelRoot,
+        context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS),
     ).distinctBy { it.absolutePath }.also { modelDirectories = it }
 
     private fun readUsableMetadata(file: File): GgufModelMetadata? {
@@ -105,7 +121,11 @@ class ModelDownloadManager(
         val length = file.length()
         if (length <= 0L) return null
         val fingerprint = FileFingerprint(file.absolutePath, length, file.lastModified())
-        return metadataCache.getOrRead(fingerprint) { GgufMetadataReader.read(file) }
+        return metadataCache.getOrRead(fingerprint) {
+            GgufMetadataReader.read(file)?.takeIf {
+                BundledLlamaArchitectureSupport.supports(it.architecture)
+            }
+        }
     }
 
     fun refreshStates() {
@@ -137,7 +157,7 @@ class ModelDownloadManager(
                         states[model.id] = DownloadState.Downloaded
                     } else states[model.id] = _downloadStates.value[model.id] ?: DownloadState.NotDownloaded
                 }
-                val selected = selectPersistedOrFirstDownloaded(files)
+                val selected = selectPersistedDownloaded(files)
                 InventoryResult(files.toMap(), descriptors.toList(), states.toMap(), selected)
             }
         }.onSuccess { (files, descriptors, states, selected) ->
@@ -161,14 +181,9 @@ class ModelDownloadManager(
         if (!closed) scope.launch { refresh(ModelInventoryRefreshReason.INVALIDATED) }
     }
 
-    private fun selectPersistedOrFirstDownloaded(files: Map<String, File>): String? {
+    private fun selectPersistedDownloaded(files: Map<String, File>): String? {
         val persisted = prefs.getString("active_model", null)
-        val downloaded = getAllModels().firstOrNull { files.containsKey(it.id) }
-        val selected = when {
-            persisted != null && files.containsKey(persisted) -> persisted
-            downloaded != null -> downloaded.id
-            else -> null
-        }
+        val selected = persisted?.takeIf(files::containsKey)
         if (selected != null) prefs.edit().putString("active_model", selected).apply()
         else prefs.edit().remove("active_model").apply()
         return selected
@@ -193,16 +208,94 @@ class ModelDownloadManager(
         }
     }
 
+    fun downloadCatalogModel(repoId: String, revision: String, filename: String,
+                             bytes: Long, quantization: String) {
+        if (closed || !Regex("[0-9a-f]{40}").matches(revision) ||
+            !filename.endsWith(".gguf", true) || bytes <= 0L) return
+        val url = "https://huggingface.co/$repoId/resolve/$revision/" +
+            filename.split('/').joinToString("/") {
+                java.net.URLEncoder.encode(it, "UTF-8").replace("+", "%20")
+            }
+        val id = catalogModelId(repoId, revision, filename)
+        scope.launch {
+            val model = CognitiveModel(id, repoId.substringAfterLast('/'), "Hugging Face GGUF",
+                url, ((bytes + 1024L * 1024L - 1) / (1024L * 1024L)).toInt(), true,
+                quantization = quantization)
+            _customModels.value = _customModels.value.filter { it.id != id } + model
+            saveCustomModels()
+            if (workerJobs[id]?.isActive == true) return@launch
+            val work = OneTimeWorkRequestBuilder<ModelDownloadWorker>()
+                .setInputData(workDataOf(
+                    ModelDownloadWorker.KEY_URL to url,
+                    ModelDownloadWorker.KEY_FILENAME to fileNameFor(model),
+                    ModelDownloadWorker.KEY_BYTES to bytes
+                ))
+                .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+                .addTag("halo_model_$id")
+                .build()
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                "halo_model_$id", ExistingWorkPolicy.REPLACE, work
+            )
+            setState(id, DownloadState.Downloading)
+            workerJobs[id] = scope.launch { monitorWorker(id) }
+        }
+    }
+
+    private suspend fun recoverWorkerDownloads() {
+        _customModels.value.filter { it.id.startsWith("hf_") }.forEach { model ->
+            val info = WorkManager.getInstance(context)
+                .getWorkInfosForUniqueWork("halo_model_${model.id}").get().lastOrNull()
+            if (info?.state in listOf(WorkInfo.State.ENQUEUED, WorkInfo.State.RUNNING, WorkInfo.State.BLOCKED)) {
+                setState(model.id, DownloadState.Downloading)
+                if (workerJobs[model.id]?.isActive != true) {
+                    workerJobs[model.id] = scope.launch { monitorWorker(model.id) }
+                }
+            }
+        }
+    }
+
+    private suspend fun monitorWorker(modelId: String) {
+        try {
+            while (!closed) {
+                val info = WorkManager.getInstance(context)
+                    .getWorkInfosForUniqueWork("halo_model_$modelId").get().lastOrNull()
+                when (info?.state) {
+                    WorkInfo.State.SUCCEEDED -> {
+                        refresh(ModelInventoryRefreshReason.DOWNLOAD_COMPLETED)
+                        setState(modelId, if (getModelFile(modelId) != null)
+                            DownloadState.Downloaded else DownloadState.Failed)
+                        return
+                    }
+                    WorkInfo.State.FAILED, WorkInfo.State.CANCELLED -> {
+                        setState(modelId, DownloadState.Failed)
+                        return
+                    }
+                    else -> delay(1_000L)
+                }
+            }
+        } finally {
+            workerJobs.remove(modelId)
+        }
+    }
+
+    fun catalogModelId(repoId: String, revision: String, filename: String): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+            .digest("$repoId:$revision:$filename".toByteArray())
+            .take(12).joinToString("") { "%02x".format(it) }
+        return "hf_$digest"
+    }
+
     private fun downloadUrl(id: String, name: String, url: String) {
         if (closed) return
         synchronized(downloadsLock) {
             if (activeDownloads.values.any { it == id }) return
+            val model = getAllModels().firstOrNull { it.id == id } ?: return
 
             val request = DownloadManager.Request(Uri.parse(url)).apply {
                 setTitle("Downloading $name")
                 setDescription("Halo on-device GGUF model download.")
                 setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                setDestinationInExternalFilesDir(context, Environment.DIRECTORY_DOWNLOADS, url.substringAfterLast("/"))
+                setDestinationInExternalFilesDir(context, Environment.DIRECTORY_DOWNLOADS, fileNameFor(model))
                 setAllowedOverMetered(true)
                 setAllowedOverRoaming(true)
             }
@@ -314,21 +407,19 @@ class ModelDownloadManager(
     }
 
     private fun finalizeDownloadedModel(modelId: String) {
-        val model = getAllModels().firstOrNull { it.id == modelId } ?: return
-        val fileName = model.downloadUrl.substringAfterLast("/")
-        val source = listOfNotNull(
-            context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)?.let { File(it, fileName) },
-            context.getExternalFilesDir(null)?.let { File(File(it, "Download"), fileName) },
-        ).firstOrNull(File::isFile) ?: return
-        modelRoot.mkdirs()
-        val destination = File(modelRoot, fileName)
-        val temporary = File(modelRoot, ".$fileName.download")
-        source.inputStream().use { input -> temporary.outputStream().use(input::copyTo) }
-        if (temporary.length() == source.length()) {
-            if (!destination.exists() && temporary.renameTo(destination)) source.delete()
-            else temporary.delete()
-        } else temporary.delete()
+        // DownloadManager writes directly to the app-specific model directory.
+        // The inventory scan validates GGUF before exposing it to the native provider.
         modelDirectories = null
+    }
+
+    private fun fileNameFor(model: CognitiveModel): String {
+        if (model.id.startsWith("hf_")) {
+            val path = model.downloadUrl.substringAfter("/resolve/").substringAfter('/')
+            val safePath = URLDecoder.decode(path, "UTF-8").replace('/', '_')
+            return "${model.id}_$safePath"
+        }
+        val basename = model.downloadUrl.substringAfterLast('/').substringBefore('?')
+        return if (model.isCustom) "${model.id}_$basename" else basename
     }
 
     fun setActiveModel(modelId: String) {
@@ -339,7 +430,17 @@ class ModelDownloadManager(
 
     private fun loadCustomModels() {
         val json = prefs.getString("custom_models_json", "") ?: ""
-        if (json.isNotBlank()) {
+        if (json.startsWith("[")) {
+            val array = runCatching { JSONArray(json) }.getOrNull() ?: return
+            _customModels.value = (0 until array.length()).mapNotNull { index ->
+                val row = array.optJSONObject(index) ?: return@mapNotNull null
+                runCatching {
+                    CognitiveModel(row.getString("id"), row.getString("name"),
+                        row.optString("description"), row.getString("url"), row.optInt("sizeMb"),
+                        true, quantization = row.optString("quantization").takeIf { it.isNotBlank() && it != "null" })
+                }.getOrNull()
+            }
+        } else if (json.isNotBlank()) {
             _customModels.value = json.split(";;;").mapNotNull { entry ->
                 val parts = entry.split("|||")
                 if (parts.size < 5) return@mapNotNull null
@@ -352,14 +453,19 @@ class ModelDownloadManager(
                     isCustom = true
                 )
             }
+            saveCustomModels()
         }
     }
 
     private fun saveCustomModels() {
-        val json = _customModels.value.joinToString(";;;") { model ->
-            listOf(model.id, model.name, model.description, model.downloadUrl, model.sizeMb.toString()).joinToString("|||")
+        val json = JSONArray().apply {
+            _customModels.value.forEach { model ->
+                put(JSONObject().put("id", model.id).put("name", model.name)
+                    .put("description", model.description).put("url", model.downloadUrl)
+                    .put("sizeMb", model.sizeMb).put("quantization", model.quantization))
+            }
         }
-        prefs.edit().putString("custom_models_json", json).apply()
+        prefs.edit().putString("custom_models_json", json.toString()).apply()
     }
 
     fun close() {
@@ -371,6 +477,8 @@ class ModelDownloadManager(
             current
         }
         jobs.forEach { it.cancel() }
+        workerJobs.values.forEach { it.cancel() }
+        workerJobs.clear()
         scope.coroutineContext[Job]?.cancel()
     }
 

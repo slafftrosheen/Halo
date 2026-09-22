@@ -1,0 +1,1 @@
+{"id":"halo.notebook","name":"Notebook","description":"Create, search, and manage local workspace items.","category":"WORKSPACE","risk":"REVERSIBLE","tools":["halo_create_note","halo_search_notebook","halo_add_to_working_set","halo_remove_from_working_set"]}
