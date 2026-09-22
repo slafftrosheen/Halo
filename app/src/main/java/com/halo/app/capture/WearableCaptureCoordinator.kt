@@ -48,6 +48,7 @@ class WearableCaptureCoordinator(private val context: Context, private val drive
     private val pendingSync = MutableStateFlow(false)
 
     fun start() {
+        pendingSync.value = pendingCaptureOperation != null
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             driver.heyCyanEvents.collect { event ->
                 if (event == HeyCyanEvent.AiImageRecognition) {
@@ -55,6 +56,7 @@ class WearableCaptureCoordinator(private val context: Context, private val drive
                     scope.launch {
                         capture(requestPhoto = false)
                         pendingSync.value = true
+                        sync()
                     }
                 }
             }
@@ -74,7 +76,7 @@ class WearableCaptureCoordinator(private val context: Context, private val drive
         val device = driver.activeDeviceId
         try {
             requireNotNull(device) { "No connected HeyCyan device" }
-            _state.value = _state.value.copy(busy = true, message = "Requested � waiting for media")
+            _state.value = _state.value.copy(busy = true, message = "Requested · waiting for media")
             events.publish(ActionReceipt(operationId = id, category = "Vision", title = "Wearable capture", stage = "Requested", detail = "Waiting for actual media", sourceDeviceId = device))
             if (requestPhoto) {
                 driver.capabilityController.execute(HeyCyanOperation.TakePhoto).getOrThrow()
@@ -127,7 +129,7 @@ class WearableCaptureCoordinator(private val context: Context, private val drive
             val progress = scope.launch {
                 sync.state.collect { value ->
                     if (value is HeyCyanMediaSyncState.Downloading) _state.value = _state.value.copy(
-                        message = "Receiving item ${value.index}/${value.total} � ${value.progress.bytesReceived} bytes")
+                        message = "Receiving item ${value.index}/${value.total} · ${value.progress.bytesReceived} bytes")
                 }
             }
             val result = try { sync.synchronize(MediaSyncRequest(mediaTypes = setOf(HeyCyanMediaType.PHOTO))).getOrThrow() }

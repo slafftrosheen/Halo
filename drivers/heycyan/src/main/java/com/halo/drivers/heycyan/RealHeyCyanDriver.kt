@@ -175,6 +175,23 @@ class RealHeyCyanDriver(
             is HeyCyanEvent.ModeChanged -> { emitDeviceEvent(event); val deviceId = currentObservationDeviceId() ?: return; eventBus?.publish(
                 ObservationUpdated(observation = Observation(modality = Modality.SYSTEM, source = Source.BLUETOOTH, payload = SystemObservationPayload("MODE_CHANGED"), sourceDeviceId = deviceId, metadata = mapOf("event" to "MODE_CHANGED", "mode" to event.mode)))
             ) }
+            is HeyCyanEvent.MediaCountsUpdated -> { emitDeviceEvent(event); val deviceId = currentObservationDeviceId() ?: return; eventBus?.publish(
+                ObservationUpdated(
+                    observation = Observation(
+                        modality = Modality.SYSTEM,
+                        source = Source.BLUETOOTH,
+                        payload = SystemObservationPayload("MEDIA_COUNTS_UPDATED"),
+                        sourceDeviceId = deviceId,
+                        metadata = mapOf(
+                            "event" to "MEDIA_COUNTS_UPDATED",
+                            "photos" to event.photoCount,
+                            "videos" to event.videoCount,
+                            "audio" to event.audioCount,
+                            "mediaType" to event.mediaType
+                        )
+                    )
+                )
+            ) }
             is HeyCyanEvent.MemoryInsufficient -> { emitDeviceEvent(event); val deviceId = currentObservationDeviceId() ?: return; eventBus?.publish(
                 ObservationUpdated(observation = Observation(modality = Modality.SYSTEM, source = Modality.SYSTEM.let { Source.BLUETOOTH }, payload = SystemObservationPayload("MEMORY_INSUFFICIENT"), sourceDeviceId = deviceId, metadata = mapOf("fault" to "MEMORY_INSUFFICIENT")))
             ) }

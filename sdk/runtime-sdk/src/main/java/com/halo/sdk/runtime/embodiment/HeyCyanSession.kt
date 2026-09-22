@@ -171,20 +171,52 @@ class HeyCyanSession(
                 val mode = observation.metadata["mode"]?.toString()
                 return mode == "2" || mode == "VIDEO" || mode == "0x02"
             }
+            fun ObservationUpdated.isAudio(): Boolean {
+                val mode = observation.metadata["mode"]?.toString()
+                return mode == "4" || mode == "AUDIO" || mode == "0x04"
+            }
+            fun ObservationUpdated.isEvent(name: String): Boolean =
+                belongsToThisDevice() && observation.metadata["event"] == name
 
             when (operation) {
-                HeyCyanOperation.TakePhoto -> eventBus.observe(ObservationUpdated::class.java).first {
-                    it.belongsToThisDevice() && it.observation.metadata["event"] == "MODE_CHANGED" && it.isPhoto()
+                HeyCyanOperation.TakePhoto -> {
+                    eventBus.observe(ObservationUpdated::class.java).first {
+                        it.isEvent("MODE_CHANGED") && it.isPhoto()
+                    }
+                    true
                 }
-                HeyCyanOperation.StartVideo -> eventBus.observe(ObservationUpdated::class.java).first {
-                    it.belongsToThisDevice() && it.observation.metadata["event"] == "MODE_CHANGED" && it.isVideo()
+                HeyCyanOperation.StartVideo -> {
+                    eventBus.observe(ObservationUpdated::class.java).first {
+                        it.isEvent("MODE_CHANGED") && it.isVideo()
+                    }
+                    true
                 }
-                HeyCyanOperation.StopVideo -> eventBus.observe(ObservationUpdated::class.java).first {
-                    it.belongsToThisDevice() && it.observation.metadata["event"] == "MODE_CHANGED" && !it.isVideo()
+                HeyCyanOperation.StopVideo -> {
+                    eventBus.observe(ObservationUpdated::class.java).first {
+                        it.isEvent("MODE_CHANGED") && !it.isVideo()
+                    }
+                    true
                 }
-                else -> delay(500L)
+                HeyCyanOperation.StartRecording -> {
+                    eventBus.observe(ObservationUpdated::class.java).first {
+                        it.isEvent("MODE_CHANGED") && it.isAudio()
+                    }
+                    true
+                }
+                HeyCyanOperation.StopRecording -> {
+                    eventBus.observe(ObservationUpdated::class.java).first {
+                        it.isEvent("MODE_CHANGED") && !it.isAudio()
+                    }
+                    true
+                }
+                HeyCyanOperation.GetMediaInventory -> {
+                    eventBus.observe(ObservationUpdated::class.java).first {
+                        it.isEvent("MEDIA_COUNTS_UPDATED")
+                    }
+                    true
+                }
+                else -> false
             }
-            true
         } ?: false
     }
 
