@@ -299,6 +299,9 @@ Same structure as E7.
 
 Expected:
 - Video/audio mutual-exclusion checks are respected.
+- Start becomes `SUCCEEDED` only after this device emits `MODE_CHANGED` with AUDIO mode (`0x04` in the normalized event model).
+- Stop becomes `SUCCEEDED` only after this device emits a non-AUDIO mode transition.
+- A successful command dispatch without the expected transition becomes `UNCONFIRMED`, not `SUCCEEDED` or `FAILED`.
 - No UI state claims recording unless device/session state supports it.
 
 ### E9. Media count
@@ -308,7 +311,31 @@ Trigger media inventory from the currently exposed flow.
 Expected:
 - Semantic operation reaches `GetMediaInventory`.
 - Verified BLE command path is used.
+- `SUCCEEDED` requires a matching `MEDIA_COUNTS_UPDATED` observation from this device.
+- A dispatched inventory request with no media-count event becomes `UNCONFIRMED`.
 - Result must come from device response/state, not from a hardcoded count.
+
+### E10. HeyCyan voice round-trip to glasses speakers
+
+1. Associate/bond the HeyCyan Classic audio endpoint once from device detail.
+2. Leave Auto-connect ON.
+3. Force-stop Halo.
+4. Relaunch Halo and **do not open Devices**.
+5. After the session reaches READY, initiate a voice turn from the glasses, for example: “What time is it?”
+
+Expected:
+- HeyCyan microphone frames are accepted into the production speech pipeline.
+- The resulting speech turn retains the originating HeyCyan device ID.
+- Deterministic or model response emits `TtsRequested` with `target=Wearable(deviceId=<same glasses>)` and `fallback=DISALLOW_PHONE`.
+- Persisted audio association is restored by the speech-routing path without relying on `DevicesViewModel`.
+- Logcat shows `AUDIO_ROUTE_REQUEST ... target=Wearable`, successful HeyCyan Classic/vendor-route dispatch, Android endpoint evidence, then `AUDIO_ROUTE_READY`.
+- `TtsStarted` is emitted only after strict routed-device verification.
+- The answer is physically audible from the glasses speakers and the phone loudspeaker remains silent.
+
+If the wearable endpoint cannot be proven:
+- visual response remains available;
+- TTS fails/pends explicitly;
+- Halo must not silently speak the wearable-origin response from the phone.
 
 Note: `HeyCyanEmbodimentTransport.send(String/ByteArray)` is currently not the semantic
 command path and remains unsupported. Current accepted controls use the controller ->

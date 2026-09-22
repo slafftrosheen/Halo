@@ -44,14 +44,14 @@ Halo build or a connected device implements every command.
 
 See [hardware confirmation matrix](HARDWARE_CONFIRMATION_MATRIX.md) for planned tests.
 The supplied 2026-09-21 trace physically validates callback-gated GATT command serialization and
-HeyCyan microphone transport. Android speaker routing remains unvalidated.
+HeyCyan microphone transport. Android speaker routing remains unvalidated on the current post-fix build.
 
 ## Audio association boundary
 
 `HeyCyanAudioPairingCoordinator` uses CompanionDeviceManager approval, public bonding APIs,
 persistent BLE-control-to-audio identity mapping, bond observation and continuous audio endpoint
 observation. Route acceptance requires the mapped Bluetooth address; a newly appearing or unrelated
-headset is not sufficient. The Devices detail view reports BLE control and audio separately.
+headset is not sufficient. The Devices detail view reports BLE control and audio separately. Persisted audio association restoration is also invoked by the process-level speech-routing path, so a fresh process does not require opening the Devices tab before a wearable response can resolve its saved Classic-audio identity.
 
 This source implementation is not evidence that the media profile appears on the target hardware.
 
@@ -79,8 +79,9 @@ DevicesViewModel
 
 The command executor accepts only catalogued/evidence-backed mappings and emits
 `HALO-TX-TRACE` before the verified GATT write. Session success is not inferred merely from a
-successful write; operations that have a completion signal wait for the corresponding device
-observation/state transition.
+successful write. Photo/video/audio-recording operations wait for the corresponding mode transition,
+and media inventory waits for `MEDIA_COUNTS_UPDATED`. An acknowledged dispatch with no expected
+confirmation becomes `UNCONFIRMED`, not synthetic success and not transport failure.
 
 `HeyCyanEmbodimentTransport.send(String)` and `send(ByteArray)` remain unsupported generic
 transport methods in current source and return false. They are not the command path used by the
