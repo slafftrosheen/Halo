@@ -47,9 +47,9 @@ data class RelationSnapshot(val id: String, val fromId: String, val type: String
 @JsonClass(generateAdapter = true)
 data class FileSnapshot(val objectId: String, val uri: String, val displayName: String, val mimeType: String, val sizeBytes: Long?, val modifiedAt: Long?, val ownedCopyPath: String?, val permissionPersisted: Boolean, val ownership: String, val availability: String, val sha256: String?)
 @JsonClass(generateAdapter = true)
-data class AgentRunSnapshot(val id: String, val request: String, val startedAt: Long, val completedAt: Long?, val state: String)
+data class AgentRunSnapshot(val id: String, val interactionId: String = id, val request: String, val startedAt: Long, val updatedAt: Long = startedAt, val completedAt: Long?, val state: String)
 @JsonClass(generateAdapter = true)
-data class AgentStepSnapshot(val id: String, val runId: String, val stepType: String, val payload: String, val timestamp: Long)
+data class AgentStepSnapshot(val id: String, val runId: String, val interactionId: String = runId, val ordinal: Int = 0, val stepType: String, val schemaVersion: Int = 2, val payload: String, val idempotencyKey: String? = null, val state: String = "COMPLETED", val timestamp: Long)
 @JsonClass(generateAdapter = true)
 data class ReminderSnapshot(val id: String, val message: String, val triggerAtEpochMs: Long, val precision: String)
 @JsonClass(generateAdapter = true)
@@ -120,8 +120,8 @@ class RoomBrainSnapshotSource(
             provenance = provenance.map { ProvenanceSnapshot(it.objectId, it.sourceId, it.revision, it.metadata) },
             relations = dao.relations().map { RelationSnapshot(it.id, it.fromId, it.type, it.toId, it.createdAt) },
             files = storedFiles.map { FileSnapshot(it.objectId, it.uri, it.displayName, it.mimeType, it.sizeBytes, it.modifiedAt, it.ownedCopyPath, it.permissionPersisted, it.ownership, it.availability, it.sha256) } + captureFiles,
-            agentRuns = dao.agentRuns().map { AgentRunSnapshot(it.id, it.request, it.startedAt, it.completedAt, it.state) },
-            agentSteps = dao.agentSteps().map { AgentStepSnapshot(it.id, it.runId, it.stepType, it.payload, it.timestamp) },
+            agentRuns = dao.agentRuns().map { AgentRunSnapshot(it.id, it.interactionId, it.request, it.startedAt, it.updatedAt, it.completedAt, it.state) },
+            agentSteps = dao.agentSteps().map { AgentStepSnapshot(it.id, it.runId, it.interactionId, it.ordinal, it.type, it.schemaVersion, it.payloadJson, it.idempotencyKey, it.state, it.createdAt) },
             reminders = ReminderRecordStore(context).all().map { ReminderSnapshot(it.id, it.message, it.triggerAtEpochMs, it.precision) },
             devices = PersistentDeviceRegistry(storage).getSavedDevices().map {
                 DeviceConfigurationSnapshot(it.identity.deviceId, it.identity.displayName, it.identity.deviceType, it.firmwareVersion, it.autoConnect)
@@ -157,8 +157,8 @@ internal fun BrainSnapshot.toRoomContent() = RoomBrainContent(
     provenance.map { ObjectProvenance(it.objectId, it.sourceId, it.revision, it.metadata) },
     relations.map { WorkspaceRelationEntity(it.id, it.fromId, it.type, it.toId, it.createdAt) },
     files.map { WorkspaceFileEntity(it.objectId, it.uri, it.displayName, it.mimeType, it.sizeBytes, it.modifiedAt, it.ownedCopyPath, it.permissionPersisted, it.ownership, it.availability, it.sha256) },
-    agentRuns.map { AgentRunEntity(it.id, it.request, it.startedAt, it.completedAt, it.state) },
-    agentSteps.map { AgentStepEntity(it.id, it.runId, it.stepType, it.payload, it.timestamp) },
+    agentRuns.map { AgentRunEntity(it.id, it.interactionId, it.request, it.startedAt, it.updatedAt, it.completedAt, it.state) },
+    agentSteps.map { AgentStepEntity(it.id, it.runId, it.interactionId, it.ordinal, it.stepType, it.schemaVersion, it.payload, it.idempotencyKey, it.state, it.timestamp, it.timestamp) },
 )
 
 internal data class RoomBrainContent(

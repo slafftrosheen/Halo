@@ -25,7 +25,39 @@ fun timelinePresentationId(
 class DefaultTimelineEventMapper : TimelineEventMapper {
     override fun map(event: HaloEvent): TimelineEvent? {
         val timestamp = Instant.ofEpochMilli(event.timestamp)
-        val correlationId = event.id
+        val correlationId = when (event) {
+            is ActionReceipt -> event.operationId
+            is ToolCallRequested -> event.requestId
+            is ToolCallAuthorized -> event.requestId
+            is ToolCallRejected -> event.requestId
+            is ToolCallCompleted -> event.requestId
+            is AssistantResponsePublished -> event.id
+            is ObservationCreated -> event.observation.id.value
+            is IntentRecognized -> event.id
+            is AIResponseGenerated -> event.id
+            is EngineStarted -> event.engineId
+            is EngineFailed -> event.engineId
+            is GoalCreated -> event.goalId
+            is PlanGenerated -> event.planId
+            is ExecutionStarted -> event.planId
+            is ExecutionFinished -> event.planId
+            is OutcomePublished -> event.id
+            is CognitiveRequestStarted -> event.requestId
+            is CognitiveReasoningStarted -> event.requestId
+            is CognitiveCompleted -> event.requestId
+            is CognitiveFailed -> event.requestId
+            is StageMetricsPublished -> event.observationId
+            is ObservationReceived -> event.observationId
+            is InterpretationProduced -> event.observationId
+            is IntentCreated -> event.intentId
+            is IntentResolved -> event.intentId
+            is IntentDispatched -> event.intentId
+            is ProviderRequest -> event.requestId
+            is ProviderResult -> event.requestId
+            is ProviderFailure -> event.requestId
+            is EmbodimentExecutionEvent -> event.result.intentId
+            else -> event.id
+        }
         return when (event) {
             is ActionReceipt -> TimelineEvent(
                 presentationId = timelinePresentationId("ActionReceipt", correlationId, timestamp, "receipt"),

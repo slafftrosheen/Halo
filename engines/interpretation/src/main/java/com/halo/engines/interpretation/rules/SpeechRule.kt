@@ -3,7 +3,9 @@ package com.halo.engines.interpretation.rules
 import com.halo.cognition.language.DayPartKind
 import com.halo.cognition.language.PersonEntity
 import com.halo.cognition.language.TemporalExpressionParser
+import com.halo.cognition.language.TemporalParseResult
 import com.halo.cognition.language.TemporalValue
+import com.halo.cognition.language.UnresolvedTimeEntity
 import com.halo.engines.interpretation.api.InterpretationContext
 import com.halo.engines.interpretation.api.InterpretationRule
 import com.halo.engines.interpretation.api.RuleMatch
@@ -103,12 +105,37 @@ class SpeechRule : InterpretationRule {
 
             alarmPattern.matches(transcript) -> {
                 val expression = alarmPattern.matchEntire(transcript)?.groupValues?.get(1)?.trim().orEmpty()
-                val parsedValue = TemporalExpressionParser().parse(expression)
-                    ?: TemporalValue.DayPart(DayPartKind.MORNING)
+                val parsed = TemporalExpressionParser().parse(expression)
+                val entities = when (parsed) {
+                    is TemporalParseResult.Parsed ->
+                        listOf(
+                            TimeEntity(
+                                value = parsed.value,
+                                expression = expression,
+                                confidence = 0.99f
+                            )
+                        )
+                    is TemporalParseResult.Incomplete ->
+                        listOf(
+                            UnresolvedTimeEntity(
+                                originalText = expression,
+                                missingField = parsed.missingField,
+                                confidence = 0.99f
+                            )
+                        )
+                    is TemporalParseResult.Invalid ->
+                        listOf(
+                            UnresolvedTimeEntity(
+                                originalText = expression,
+                                missingField = null,
+                                confidence = 0.99f
+                            )
+                        )
+                }
                 RuleMatch(
                     confidence = 0.99f,
                     intent = SetAlarmIntent,
-                    entities = listOf(TimeEntity(parsedValue, expression, 0.99f)),
+                    entities = entities,
                     consumedTokens = consumedTokens,
                     diagnostics = "Detected alarm command"
                 )

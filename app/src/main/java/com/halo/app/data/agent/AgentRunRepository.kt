@@ -8,6 +8,7 @@ import java.util.UUID
 
 data class AgentRun(
     val id: String,
+    val interactionId: String = id,
     val request: String,
     val startedAt: Long,
     val completedAt: Long? = null,
@@ -64,6 +65,7 @@ class RoomAgentRunRepository(
                 val state = runCatching { AgentRunState.valueOf(entity.state) }.getOrDefault(AgentRunState.COMPLETED)
                 AgentRun(
                     id = entity.id,
+                    interactionId = entity.interactionId,
                     request = entity.request,
                     startedAt = entity.startedAt,
                     completedAt = entity.completedAt,
@@ -78,13 +80,15 @@ class RoomAgentRunRepository(
         val timestamp = now()
         val entity = AgentRunEntity(
             id = id,
+            interactionId = id,
             request = request,
             startedAt = timestamp,
+            updatedAt = timestamp,
             completedAt = null,
             state = AgentRunState.EXECUTING.name
         )
         db.agentRunDao().insertRun(entity)
-        return AgentRun(id = id, request = request, startedAt = timestamp, state = AgentRunState.EXECUTING)
+        return AgentRun(id = id, interactionId = id, request = request, startedAt = timestamp, state = AgentRunState.EXECUTING)
     }
 
     override suspend fun addStep(step: AgentStep) {
@@ -96,9 +100,15 @@ class RoomAgentRunRepository(
         val entity = AgentStepEntity(
             id = step.id,
             runId = step.runId,
-            stepType = type,
-            payload = payload,
-            timestamp = step.timestamp
+            interactionId = step.runId,
+            ordinal = 0,
+            type = type,
+            schemaVersion = 2,
+            payloadJson = payload,
+            idempotencyKey = null,
+            state = "COMPLETED",
+            createdAt = step.timestamp,
+            completedAt = step.timestamp
         )
         db.agentRunDao().insertStep(entity)
     }

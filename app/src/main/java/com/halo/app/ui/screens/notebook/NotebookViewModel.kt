@@ -9,13 +9,18 @@ import com.halo.app.data.notebook.WorkspaceObjectType
 import com.halo.app.data.workspace.WorkspaceQuery
 import com.halo.app.notebook.NotebookUseCases
 import com.halo.app.notebook.WorkspaceUseCases
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -42,7 +47,7 @@ sealed interface NotebookNavigation {
     data class OpenMemory(val id: String) : NotebookNavigation
 }
 
-@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+@OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 class NotebookViewModel(
     private val workspace: WorkspaceUseCases,
     private val notes: NotebookUseCases
@@ -56,8 +61,13 @@ class NotebookViewModel(
     val useMemories = workspace.useMemories
     val cloudSharing = workspace.cloudSharing
 
-    val uiState: StateFlow<NotebookUiState> = combine(query, filter, ::Pair)
-        .flatMapLatest { (text, selectedFilter) ->
+    private val debouncedQuery = query
+        .map { it.trim() }
+        .debounce(225L)
+        .distinctUntilChanged()
+
+    val uiState: StateFlow<NotebookUiState> = combine(query, debouncedQuery, filter, ::Triple)
+        .flatMapLatest { (rawText, text, selectedFilter) ->
             val lifecycle = when (selectedFilter) {
                 NotebookFilter.ARCHIVED -> WorkspaceObjectLifecycle.ARCHIVED
                 NotebookFilter.TRASH -> WorkspaceObjectLifecycle.TRASHED
@@ -72,7 +82,7 @@ class NotebookViewModel(
             }
             val objects = workspace.observe(WorkspaceQuery(types = types, lifecycle = lifecycle,
                 inboxOnly = selectedFilter == NotebookFilter.INBOX))
-            val hits = flow { emit(if (text.isBlank()) null else workspace.search(text.trim())) }
+            val hits = flow { emit(if (text.isBlank()) null else workspace.search(text)) }
             combine(objects, hits, workspace.workingSet, workspace.observe(WorkspaceQuery())) {
                 rows, result, selected, allObjects ->
                 val matches = result?.hits?.associateBy { it.objectId.value }.orEmpty()
@@ -83,7 +93,7 @@ class NotebookViewModel(
                     items = visible.sortedByDescending { it.updatedAt }.map { row ->
                         NotebookWorkspaceItem(row, matches[row.id.value]?.snippet)
                     },
-                    query = text,
+                    query = rawText,
                     filter = selectedFilter,
                     workingSet = selected.toSet(),
                     workingSetItems = allObjects.filter { it.id.value in selected }

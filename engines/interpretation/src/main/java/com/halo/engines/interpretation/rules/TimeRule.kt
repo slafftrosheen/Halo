@@ -11,6 +11,8 @@ import com.halo.engines.speech.SpeechRecognizedPayload
 import com.halo.cognition.language.TemporalExpressionParser
 
 import com.halo.cognition.language.CurrentDateIntent
+import com.halo.cognition.language.TemporalParseResult
+import com.halo.cognition.language.UnresolvedTimeEntity
 
 class TimeRule : InterpretationRule {
     override val priority: Int = 600
@@ -44,13 +46,20 @@ class TimeRule : InterpretationRule {
 
         // 2. Relative day/time expressions (e.g., "today at 5pm")
         val parser = TemporalExpressionParser()
-        val parsedValue = parser.parse(transcript) ?: return null
+        val parseResult = parser.parse(transcript)
+        val entity = when (parseResult) {
+            is TemporalParseResult.Parsed ->
+                TimeEntity(parseResult.value, transcript, 0.98f)
+            is TemporalParseResult.Incomplete ->
+                UnresolvedTimeEntity(transcript, parseResult.missingField, 0.98f)
+            is TemporalParseResult.Invalid -> return null
+        }
         
         return RuleMatch(
             confidence = 0.98f,
-            entities = listOf(TimeEntity(parsedValue, transcript, 0.98f)),
+            entities = listOf(entity),
             consumedTokens = consumedTokens,
-            diagnostics = "Extracted time ${parsedValue}"
+            diagnostics = "Extracted time $entity"
         )
     }
 

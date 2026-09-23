@@ -84,12 +84,14 @@ class DefaultSkillRegistry(
         val skill = _skills.value.firstOrNull { toolName in it.tools }
             ?: return ToolApprovalPolicy.DENY
         if (!skill.enabled || skill.availability != SkillAvailability.Available) return ToolApprovalPolicy.DENY
-        if (storage.getString("skill_approval_${skill.id.value}") == null &&
-            (toolName.startsWith("halo_search") || toolName.startsWith("halo_get") ||
-                toolName.startsWith("halo_list") || toolName == "halo_storage_status")) {
-            return ToolApprovalPolicy.ALWAYS_ALLOW
-        }
-        return approvalPolicy(skill.id)
+
+        val toolRisk = skill.toolDefinitions.firstOrNull { it.toolId == toolName }?.risk ?: skill.risk
+        val default = if (toolRisk == SkillRisk.READ_ONLY) ToolApprovalPolicy.ALWAYS_ALLOW
+            else ToolApprovalPolicy.ASK_EVERY_TIME
+
+        return storage.getString("skill_approval_${skill.id.value}")?.let {
+            runCatching { ToolApprovalPolicy.valueOf(it) }.getOrNull()
+        } ?: default
     }
 
     override suspend fun setApprovalPolicy(id: SkillId, policy: ToolApprovalPolicy) {

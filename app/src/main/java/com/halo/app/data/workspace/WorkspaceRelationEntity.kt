@@ -7,7 +7,10 @@ enum class WorkspaceRelationType {
     SOURCE_OF,
     DERIVED_FROM,
     REFERENCES,
-    RELATED_TO
+    RELATED_TO,
+    CONTINUES,
+    ATTACHMENT_OF,
+    GENERATED_FROM
 }
 
 @Entity(tableName = "workspace_relations")

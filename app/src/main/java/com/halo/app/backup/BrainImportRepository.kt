@@ -244,7 +244,12 @@ class StagedBrainImporter(
                 dao.putProvenance(room.provenance)
                 dao.putRelations(room.relations)
                 dao.putFiles(room.files)
-                dao.putAgentRuns(room.agentRuns)
+                val normalizedAgentRuns = room.agentRuns.map { run ->
+                    if (run.state in setOf("EXECUTING", "PLANNING", "WAITING_FOR_APPROVAL", "WAITING_FOR_CLARIFICATION", "CREATED")) {
+                        run.copy(state = "INTERRUPTED")
+                    } else run
+                }
+                dao.putAgentRuns(normalizedAgentRuns)
                 dao.putAgentSteps(room.agentSteps)
             }
             snapshot.settings.values.forEach { (key, value) -> settingsStorage.putString(key, value) }

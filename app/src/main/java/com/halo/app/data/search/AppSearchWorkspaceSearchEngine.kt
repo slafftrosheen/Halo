@@ -1,6 +1,7 @@
 package com.halo.app.data.search
 
 import android.content.Context
+import android.util.Log
 import androidx.appsearch.app.AppSearchSession
 import androidx.appsearch.app.PutDocumentsRequest
 import androidx.appsearch.app.RemoveByDocumentIdRequest
@@ -12,9 +13,10 @@ import com.halo.app.data.notebook.NotebookDao
 import com.halo.app.data.notebook.WorkspaceObjectId
 import com.halo.app.data.notebook.WorkspaceObjectType
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
-import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -38,33 +40,36 @@ class AppSearchWorkspaceSearchEngine(
 ) : WorkspaceSearchEngine {
 
     private var session: AppSearchSession? = null
-    private val initializing = AtomicBoolean(false)
+    private val sessionMutex = Mutex()
 
-    private suspend fun ensureSession(): AppSearchSession? {
-        if (session != null) return session
-        if (initializing.compareAndSet(false, true)) {
-            try {
-                val future = LocalStorage.createSearchSessionAsync(
-                    LocalStorage.SearchContext.Builder(context, "halo_workspace").build()
-                )
-                val s = future.await()
-                val setSchemaFuture = s.setSchemaAsync(
-                    SetSchemaRequest.Builder()
-                        .addDocumentClasses(WorkspaceSearchDocument::class.java)
-                        .build()
-                )
-                setSchemaFuture.await()
-                session = s
-            } catch (_: Throwable) {
-                initializing.set(false)
-            }
+    private suspend fun ensureSession(): AppSearchSession? = sessionMutex.withLock {
+        if (session != null) return@withLock session
+        try {
+            val future = LocalStorage.createSearchSessionAsync(
+                LocalStorage.SearchContext.Builder(context, "halo_workspace").build()
+            )
+            val s = future.await()
+            val setSchemaFuture = s.setSchemaAsync(
+                SetSchemaRequest.Builder()
+                    .addDocumentClasses(WorkspaceSearchDocument::class.java)
+                    .build()
+            )
+            setSchemaFuture.await()
+            session = s
+            s
+        } catch (e: Throwable) {
+            Log.w("AppSearch", "Failed to initialize AppSearch session", e)
+            null
         }
-        return session
     }
 
     suspend fun clearDerivedIndex() {
         val s = ensureSession() ?: return
-        s.removeAsync("", SearchSpec.Builder().setTermMatch(SearchSpec.TERM_MATCH_PREFIX).build()).await()
+        try {
+            s.removeAsync("", SearchSpec.Builder().setTermMatch(SearchSpec.TERM_MATCH_PREFIX).build()).await()
+        } catch (e: Throwable) {
+            Log.w("AppSearch", "Failed to clear derived index", e)
+        }
     }
 
     override suspend fun indexObject(
@@ -87,7 +92,9 @@ class AppSearchWorkspaceSearchEngine(
                 .addDocuments(doc)
                 .build()
             s.putAsync(putRequest).await()
-        } catch (_: Throwable) {}
+        } catch (e: Throwable) {
+            Log.w("AppSearch", "Failed to index object ${objectId.value}", e)
+        }
     }
 
     override suspend fun removeObject(objectId: WorkspaceObjectId) {
@@ -97,7 +104,9 @@ class AppSearchWorkspaceSearchEngine(
                 .addIds(objectId.value)
                 .build()
             s.removeAsync(removeRequest).await()
-        } catch (_: Throwable) {}
+        } catch (e: Throwable) {
+            Log.w("AppSearch", "Failed to remove object ${objectId.value}", e)
+        }
     }
 
     override suspend fun search(query: WorkspaceSearchQuery): WorkspaceSearchResult = withContext(Dispatchers.IO) {
@@ -122,6 +131,9 @@ class AppSearchWorkspaceSearchEngine(
                     .setResultCountPerPage(query.maxHits)
                     .setTermMatch(SearchSpec.TERM_MATCH_PREFIX)
                     .setRankingStrategy(SearchSpec.RANKING_STRATEGY_RELEVANCE_SCORE)
+                    .setSnippetCount(query.maxHits)
+                    .setSnippetCountPerProperty(1)
+                    .setMaxSnippetSize(180)
                     .build()
 
                 val searchResults = s.search(rawQuery, spec)
@@ -133,17 +145,23 @@ class AppSearchWorkspaceSearchEngine(
                     if (query.types.isNotEmpty() && type !in query.types) {
                         null
                     } else {
-                        val snippet = doc.content.take(120)
+                        val matchSnippet = searchResult.matchInfos.firstOrNull()?.exactMatchRange?.let { range ->
+                            val start = (range.start - 20).coerceAtLeast(0)
+                            val end = (range.end + 100).coerceAtMost(doc.content.length)
+                            if (start < end) "..." + doc.content.substring(start, end) + "..." else null
+                        } ?: doc.content.take(120)
+
                         WorkspaceSearchHit(
                             objectId = WorkspaceObjectId(doc.id),
                             type = type,
                             title = doc.title,
-                            snippet = snippet,
+                            snippet = matchSnippet,
                             score = searchResult.rankingSignal.toFloat()
                         )
                     }
                 }
-            } catch (_: Throwable) {
+            } catch (e: Throwable) {
+                Log.w("AppSearch", "AppSearch search failed", e)
                 null
             }
 

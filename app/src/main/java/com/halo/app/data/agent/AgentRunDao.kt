@@ -20,6 +20,6 @@ interface AgentRunDao {
     @Query("SELECT * FROM agent_runs ORDER BY startedAt DESC")
     fun observeRuns(): Flow<List<AgentRunEntity>>
 
-    @Query("SELECT * FROM agent_steps WHERE runId = :runId ORDER BY timestamp ASC")
+    @Query("SELECT * FROM agent_steps WHERE runId = :runId ORDER BY ordinal ASC, createdAt ASC")
     fun observeStepsForRun(runId: String): Flow<List<AgentStepEntity>>
 }

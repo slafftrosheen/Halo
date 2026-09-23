@@ -1,0 +1,90 @@
+package com.halo.runtime.cognition.context
+
+import com.halo.cognition.language.InteractionId
+import com.halo.sdk.provider.AiCapability
+import com.halo.sdk.runtime.ObservationOrigin
+import java.time.Instant
+
+@JvmInline
+value class ContextCandidateId(val value: String)
+
+enum class ContextTrust {
+    USER_AUTHORED,
+    HALO_GENERATED,
+    TRUSTED_RUNTIME,
+    EXTERNAL_UNTRUSTED,
+}
+
+enum class ContextPriority {
+    CRITICAL,
+    HIGH,
+    NORMAL,
+    LOW,
+}
+
+enum class ContextFreshness {
+    REALTIME,
+    RECENT,
+    STALE,
+}
+
+enum class ContextOmissionReason {
+    BUDGET,
+    LOW_RELEVANCE,
+    DUPLICATE,
+    POLICY,
+    PROVIDER_CAPABILITY,
+    PRIVACY,
+    TOO_LARGE,
+}
+
+sealed interface ContextSource {
+    data object CurrentRequest : ContextSource
+    data object Conversation : ContextSource
+    data object ExplicitWorkspaceContext : ContextSource
+    data object Memory : ContextSource
+    data object WorkspaceSearch : ContextSource
+    data object DeviceState : ContextSource
+    data object RuntimeState : ContextSource
+    data object ToolResult : ContextSource
+    data object Notification : ContextSource
+    data object ScreenContext : ContextSource
+    data object ImportedFile : ContextSource
+}
+
+sealed interface ContextContent {
+    data class Text(val text: String) : ContextContent
+    data class ImageContent(val assetId: String, val mimeType: String, val uriString: String) : ContextContent
+    data class FactContent(val key: String, val value: String) : ContextContent
+}
+
+data class ContextCandidate(
+    val id: ContextCandidateId,
+    val source: ContextSource,
+    val content: ContextContent,
+    val trust: ContextTrust,
+    val relevance: Float,
+    val priority: ContextPriority,
+    val estimatedTokens: Int,
+    val freshness: ContextFreshness,
+    val objectId: String? = null,
+)
+
+data class OmittedContextCandidate(
+    val candidate: ContextCandidate,
+    val reason: ContextOmissionReason,
+)
+
+data class ContextQuery(
+    val interactionId: InteractionId,
+    val text: String,
+    val requestedCapabilities: Set<AiCapability> = emptySet(),
+    val activeWorkspaceObjectId: String? = null,
+    val origin: ObservationOrigin? = null,
+    val maximumCandidates: Int = 20,
+)
+
+interface ContextSourceProvider {
+    val source: ContextSource
+    suspend fun retrieve(query: ContextQuery, limit: Int): List<ContextCandidate>
+}

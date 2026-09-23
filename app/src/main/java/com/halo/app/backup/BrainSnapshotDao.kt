@@ -30,7 +30,7 @@ interface BrainSnapshotDao {
     @Query("SELECT * FROM workspace_relations ORDER BY createdAt, id") suspend fun relations(): List<WorkspaceRelationEntity>
     @Query("SELECT * FROM workspace_files ORDER BY objectId") suspend fun files(): List<WorkspaceFileEntity>
     @Query("SELECT * FROM agent_runs ORDER BY startedAt, id") suspend fun agentRuns(): List<AgentRunEntity>
-    @Query("SELECT * FROM agent_steps ORDER BY timestamp, id") suspend fun agentSteps(): List<AgentStepEntity>
+    @Query("SELECT * FROM agent_steps ORDER BY createdAt, id") suspend fun agentSteps(): List<AgentStepEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun putWorkspaceObjects(values: List<WorkspaceObjectEntity>)
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun putNotes(values: List<NoteEntity>)

@@ -1,5 +1,5 @@
 [versions]
-workRuntimeKtx = "2.10.0"
+workRuntimeKtx = "2.11.2"
 appsearch = "1.1.0"
 agp = "9.4.0"
 coreKtx = "1.18.0"
@@ -47,9 +47,9 @@ googleServices = "4.5.0"
 credentials = "1.5.0"
 googleid = "1.1.1"
 media3 = "1.11.1"
-benchmark = "1.4.1"
+benchmark = "1.5.0"
 uiautomator = "2.3.0"
-baselineprofile = "1.4.1"
+baselineprofile = "1.5.0"
 
 
 [libraries]

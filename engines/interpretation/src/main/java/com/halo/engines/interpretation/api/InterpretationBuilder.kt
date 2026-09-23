@@ -2,7 +2,9 @@ package com.halo.engines.interpretation.api
 
 import com.halo.cognition.language.DayPartKind
 import com.halo.cognition.language.TemporalExpressionParser
+import com.halo.cognition.language.TemporalParseResult
 import com.halo.cognition.language.TemporalValue
+import com.halo.cognition.language.UnresolvedTimeEntity
 import com.halo.engines.interpretation.model.ApplicationEntity
 import com.halo.engines.interpretation.model.CallIntent
 import com.halo.engines.interpretation.model.ConversationIntent
@@ -55,8 +57,14 @@ class InterpretationBuilder {
         confidence: Float
     ): InterpretationBuilder {
         val parsed = TemporalExpressionParser().parse(expression)
-            ?: TemporalValue.DayPart(DayPartKind.MORNING)
-        return entity(TimeEntity(parsed, expression, confidence))
+        return when (parsed) {
+            is TemporalParseResult.Parsed ->
+                entity(TimeEntity(parsed.value, expression, confidence))
+            is TemporalParseResult.Incomplete ->
+                entity(UnresolvedTimeEntity(expression, parsed.missingField, confidence))
+            is TemporalParseResult.Invalid ->
+                entity(UnresolvedTimeEntity(expression, null, confidence))
+        }
     }
 
     fun transcript(transcript: String): InterpretationBuilder = apply {

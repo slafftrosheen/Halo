@@ -6,6 +6,7 @@ import com.halo.cognition.language.PlayIntent
 import com.halo.cognition.language.QuestionIntent
 import com.halo.cognition.language.SetAlarmIntent
 import com.halo.cognition.language.TemporalExpressionParser
+import com.halo.cognition.language.TemporalParseResult
 import com.halo.cognition.language.TemporalValue
 import com.halo.cognition.language.TimeEntity
 import com.halo.engines.reasoning.service.GoalManager
@@ -97,8 +98,8 @@ class DefaultReasoningStrategyTest {
     @Test
     fun testAlarmPrefersNormalizedTimeEntityOverHigherConfidenceRawPhrase() {
         val parser = TemporalExpressionParser()
-        val t1 = parser.parse("tomorrow at seven") ?: TemporalValue.TimeOfDay(LocalTime.of(7, 0))
-        val t2 = parser.parse("tomorrow 07:00") ?: TemporalValue.TimeOfDay(LocalTime.of(7, 0))
+        val t1 = (parser.parse("tomorrow at seven") as? TemporalParseResult.Parsed)?.value ?: TemporalValue.TimeOfDay(LocalTime.of(7, 0))
+        val t2 = (parser.parse("tomorrow 07:00") as? TemporalParseResult.Parsed)?.value ?: TemporalValue.TimeOfDay(LocalTime.of(7, 0))
         val interpretation = Interpretation(
             transcript = "set an alarm for tomorrow at seven",
             intent = SetAlarmIntent,
@@ -118,7 +119,7 @@ class DefaultReasoningStrategyTest {
     @Test
     fun testAlarmKeepsDirectNumericClockExpression() {
         val parser = TemporalExpressionParser()
-        val t1 = parser.parse("07:30") ?: TemporalValue.TimeOfDay(LocalTime.of(7, 30))
+        val t1 = (parser.parse("07:30") as? TemporalParseResult.Parsed)?.value ?: TemporalValue.TimeOfDay(LocalTime.of(7, 30))
         val interpretation = Interpretation(
             transcript = "set an alarm for 07:30",
             intent = SetAlarmIntent,

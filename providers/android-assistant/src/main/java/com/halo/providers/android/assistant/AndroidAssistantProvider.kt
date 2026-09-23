@@ -39,11 +39,14 @@ class AndroidAssistantProvider(
     @Volatile
     private var cachedAssistantPackageName: String? = null
 
-    override fun isAvailable(): Boolean = cachedAssistantPackageName != null
+    override fun isAvailable(): Boolean =
+        cachedAssistantPackageName != null && cachedAssistantPackageName != context.packageName
 
-    override fun assistantPackageName(): String? = cachedAssistantPackageName
+    override fun assistantPackageName(): String? =
+        cachedAssistantPackageName?.takeIf { it != context.packageName }
 
     override fun handoff(prompt: String?) {
+        if (cachedAssistantPackageName == context.packageName) return
         context.startActivity(buildAssistIntent(prompt))
     }
 

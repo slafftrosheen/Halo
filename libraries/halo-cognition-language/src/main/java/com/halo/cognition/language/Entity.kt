@@ -57,6 +57,12 @@ data class TimeEntity(
     override val confidence: Float
 ) : Entity
 
+data class UnresolvedTimeEntity(
+    val originalText: String,
+    val missingField: TemporalField?,
+    override val confidence: Float
+) : Entity
+
 data class ReminderEntity(
     val message: String,
     val temporalExpression: String?,

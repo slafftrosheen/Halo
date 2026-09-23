@@ -114,10 +114,11 @@ class CommandResponseMapper {
                     }
 
                     task.action.equals("set_alarm", ignoreCase = true) -> {
-                        when {
-                            isSuccess -> "Alarm set."
-                            outcome is Outcome.PermanentFailure && outcome.reason.isNotBlank() ->
-                                outcome.reason
+                        when (outcome) {
+                            is Outcome.Success -> "Alarm set."
+                            is Outcome.NeedsClarification -> outcome.prompt
+                            is Outcome.PermanentFailure -> outcome.reason
+                            is Outcome.RetryableFailure -> "I couldn't set the alarm yet."
                             else -> "Unable to set alarm."
                         }
                     }
