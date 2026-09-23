@@ -12,15 +12,21 @@ import com.halo.app.data.agent.AgentStepEntity
 import com.halo.app.data.memory.MemoryRecordDao
 import com.halo.app.data.memory.MemoryRecordEntity
 import com.halo.app.data.memory.MemoryRevisionEntity
+import com.halo.app.data.models.ModelArtifactEntity
+import com.halo.app.data.notification.NotificationEntity
 import com.halo.app.data.notebook.NoteEntity
 import com.halo.app.data.notebook.NoteDraftEntity
 import com.halo.app.data.notebook.WorkspaceObjectEntity
+import com.halo.app.data.routine.RoutineEntity
+import com.halo.app.data.routine.RoutineRunEntity
+import com.halo.app.data.workspace.WorkspaceAssetEntity
 import com.halo.app.data.workspace.WorkspaceFileDao
 import com.halo.app.data.workspace.WorkspaceFileEntity
 import com.halo.app.data.workspace.WorkspaceRelationEntity
 import com.halo.app.backup.BackupRecordDao
 import com.halo.app.backup.BackupRecordEntity
 import com.halo.app.backup.BrainSnapshotDao
+import com.halo.app.data.notebook.NotebookDao
 
 @Database(
     entities = [
@@ -38,9 +44,14 @@ import com.halo.app.backup.BrainSnapshotDao
         WorkspaceRelationEntity::class,
         AgentRunEntity::class,
         AgentStepEntity::class,
-        BackupRecordEntity::class
+        BackupRecordEntity::class,
+        ModelArtifactEntity::class,
+        NotificationEntity::class,
+        RoutineEntity::class,
+        RoutineRunEntity::class,
+        WorkspaceAssetEntity::class
     ],
-    version = 9,
+    version = 10,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -49,7 +60,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun workspaceContextDao(): WorkspaceContextDao
     abstract fun memoryDao(): MemoryDao
     abstract fun memoryRecordDao(): MemoryRecordDao
-    abstract fun notebookDao(): com.halo.app.data.notebook.NotebookDao
+    abstract fun notebookDao(): NotebookDao
     abstract fun workspaceFileDao(): WorkspaceFileDao
     abstract fun brainSnapshotDao(): BrainSnapshotDao
     abstract fun backupRecordDao(): BackupRecordDao
@@ -255,9 +266,169 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Safely migrate agent_runs
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS agent_runs_new (
+                        id TEXT NOT NULL PRIMARY KEY,
+                        interactionId TEXT NOT NULL,
+                        request TEXT NOT NULL,
+                        startedAt INTEGER NOT NULL,
+                        updatedAt INTEGER NOT NULL,
+                        completedAt INTEGER,
+                        state TEXT NOT NULL,
+                        failureReason TEXT
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    INSERT INTO agent_runs_new (
+                        id, interactionId, request, startedAt, updatedAt, completedAt, state, failureReason
+                    )
+                    SELECT 
+                        id, id, request, startedAt, startedAt, completedAt, state, NULL
+                    FROM agent_runs
+                    """.trimIndent()
+                )
+                db.execSQL("DROP TABLE agent_runs")
+                db.execSQL("ALTER TABLE agent_runs_new RENAME TO agent_runs")
+
+                // Safely migrate agent_steps
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS agent_steps_new (
+                        id TEXT NOT NULL PRIMARY KEY,
+                        runId TEXT NOT NULL,
+                        interactionId TEXT NOT NULL,
+                        ordinal INTEGER NOT NULL,
+                        type TEXT NOT NULL,
+                        schemaVersion INTEGER NOT NULL,
+                        payloadJson TEXT NOT NULL,
+                        idempotencyKey TEXT,
+                        state TEXT NOT NULL,
+                        createdAt INTEGER NOT NULL,
+                        completedAt INTEGER
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    INSERT INTO agent_steps_new (
+                        id, runId, interactionId, ordinal, type, schemaVersion, payloadJson, idempotencyKey, state, createdAt, completedAt
+                    )
+                    SELECT 
+                        id, runId, runId, 0, stepType, 1, payload, NULL, 'COMPLETED', timestamp, timestamp
+                    FROM agent_steps
+                    """.trimIndent()
+                )
+                db.execSQL("DROP TABLE agent_steps")
+                db.execSQL("ALTER TABLE agent_steps_new RENAME TO agent_steps")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_agent_steps_runId ON agent_steps(runId)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_agent_steps_interactionId ON agent_steps(interactionId)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_agent_steps_idempotencyKey ON agent_steps(idempotencyKey)")
+
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS model_artifacts (
+                        id TEXT NOT NULL PRIMARY KEY,
+                        source TEXT NOT NULL,
+                        repoId TEXT,
+                        revisionSha TEXT,
+                        filename TEXT NOT NULL,
+                        displayName TEXT NOT NULL,
+                        expectedBytes INTEGER,
+                        actualBytes INTEGER,
+                        quantization TEXT,
+                        architecture TEXT,
+                        localPath TEXT,
+                        validationState TEXT NOT NULL,
+                        transferState TEXT NOT NULL,
+                        createdAt INTEGER NOT NULL,
+                        updatedAt INTEGER NOT NULL,
+                        failureReason TEXT
+                    )
+                    """.trimIndent()
+                )
+
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS notifications (
+                        key TEXT NOT NULL PRIMARY KEY,
+                        packageName TEXT NOT NULL,
+                        appLabel TEXT,
+                        title TEXT,
+                        text TEXT,
+                        category TEXT,
+                        postedAt INTEGER NOT NULL,
+                        removedAt INTEGER,
+                        active INTEGER NOT NULL,
+                        sensitivity TEXT NOT NULL DEFAULT 'NORMAL'
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_notifications_packageName ON notifications(packageName)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_notifications_postedAt ON notifications(postedAt)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_notifications_active ON notifications(active)")
+
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS routines (
+                        id TEXT NOT NULL PRIMARY KEY,
+                        name TEXT NOT NULL,
+                        enabled INTEGER NOT NULL,
+                        triggerJson TEXT NOT NULL,
+                        conditionsJson TEXT NOT NULL,
+                        actionsJson TEXT NOT NULL,
+                        schemaVersion INTEGER NOT NULL,
+                        createdAt INTEGER NOT NULL,
+                        updatedAt INTEGER NOT NULL,
+                        lastRunAt INTEGER,
+                        nextRunAt INTEGER
+                    )
+                    """.trimIndent()
+                )
+
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS routine_runs (
+                        id TEXT NOT NULL PRIMARY KEY,
+                        routineId TEXT NOT NULL,
+                        agentRunId TEXT NOT NULL,
+                        triggerAt INTEGER NOT NULL,
+                        state TEXT NOT NULL
+                    )
+                    """.trimIndent()
+                )
+
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS workspace_assets (
+                        id TEXT NOT NULL PRIMARY KEY,
+                        objectId TEXT NOT NULL,
+                        type TEXT NOT NULL,
+                        mimeType TEXT NOT NULL,
+                        storageType TEXT NOT NULL,
+                        pathOrUri TEXT NOT NULL,
+                        permissionPersisted INTEGER NOT NULL,
+                        displayName TEXT,
+                        bytes INTEGER,
+                        width INTEGER,
+                        height INTEGER,
+                        durationMs INTEGER,
+                        createdAtEpochMs INTEGER NOT NULL
+                    )
+                    """.trimIndent()
+                )
+            }
+        }
+
         fun create(context: Context): AppDatabase =
             Room.databaseBuilder(context, AppDatabase::class.java, "halo.db")
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
+                .fallbackToDestructiveMigration(true)
                 .build()
     }
 }

@@ -50,7 +50,7 @@ interface WorkspaceFileRepository {
 class RoomWorkspaceFileRepository(
     private val context: Context,
     private val db: AppDatabase,
-    private val ownedRoot: File = com.halo.app.storage.haloStorageLayout(context).managedWorkspaceFiles,
+    private val ownedRoot: File,
     private val now: () -> Long = System::currentTimeMillis,
     private val newId: () -> String = { UUID.randomUUID().toString() }
 ) : WorkspaceFileRepository {

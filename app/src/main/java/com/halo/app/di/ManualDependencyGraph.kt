@@ -14,10 +14,13 @@ import com.halo.app.data.agent.RoomAgentRunRepository
 import com.halo.app.data.memory.BoundedMemoryContextSource
 import com.halo.app.data.memory.RoomMemoryRepository
 import com.halo.app.data.notebook.RoomNotebookRepository
+import com.halo.app.data.workspace.RoomWorkspaceFileRepository
 import com.halo.app.data.workspace.RoomWorkspaceRepository
 import com.halo.app.data.workspace.SendIntentHandler
 import com.halo.app.di.tools.StorageStatusToolExecutor
 import com.halo.app.di.tools.WorkspaceToolExecutor
+import com.halo.app.models.HuggingFaceGgufCatalog
+import com.halo.app.models.SharedPreferencesModelCatalogCache
 import com.halo.app.notebook.NotebookUseCases
 import com.halo.app.notebook.WorkspaceUseCases
 import com.halo.app.ui.screens.activity.ActivityViewModel
@@ -240,7 +243,7 @@ object ManualDependencyGraph {
         com.halo.app.backup.AndroidHaloVaultRepository(applicationContext, storageAccessRepository, brainExportRepository, brainImportRepository, appDatabase, settingsRepository)
     }
     val storageUsageRepository by lazy { com.halo.app.storage.AndroidStorageUsageRepository(applicationContext, storageLayout) }
-    val workspaceFileRepository by lazy { com.halo.app.data.workspace.RoomWorkspaceFileRepository(applicationContext, appDatabase) }
+    val workspaceFileRepository by lazy { RoomWorkspaceFileRepository(applicationContext, appDatabase, storageLayout.managedWorkspaceFiles) }
     val sendIntentHandler by lazy { SendIntentHandler(notebookRepository, workspaceFileRepository) }
     val storageBackupViewModel by lazy {
         com.halo.app.ui.screens.settings.StorageBackupViewModel(
@@ -294,7 +297,8 @@ object ManualDependencyGraph {
             bluetoothEnabled = platformStateMonitor.bluetoothEnabled
         )
     }
-    val modelCatalog by lazy { com.halo.app.models.HuggingFaceGgufCatalog(applicationContext) }
+    val modelCatalogCache by lazy { SharedPreferencesModelCatalogCache(applicationContext) }
+    val modelCatalog by lazy { HuggingFaceGgufCatalog(applicationContext, modelCatalogCache) }
     val intelligenceViewModel by lazy { com.halo.app.ui.screens.settings.IntelligenceViewModel(
         runtimeSnapshotManager, aiProviderRouter, cognitiveSession, storage, modelDownloadManager, modelCatalog) }
 

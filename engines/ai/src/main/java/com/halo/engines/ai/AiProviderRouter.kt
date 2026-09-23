@@ -123,6 +123,32 @@ class DefaultAiProviderRouter(
 
     override fun getAllProviders(): List<AiProvider> = allProviders
     override suspend fun diagnostics(): List<AiProviderDiagnostic> = refreshDiagnostics()
+    override suspend fun getEligibleProvider(request: AiRequest): AiProvider = resolveExecutionTarget(request).provider
+
+    override suspend fun resolveExecutionTarget(request: AiRequest): AiExecutionTarget {
+        val selectedProvider = allProviders.firstOrNull { it.id == _selectedProviderId.value }
+        if (selectedProvider is AiHandoffProvider && _routingPolicy.value == AiRoutingPolicy.EXPLICIT) {
+            throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY, "Provider ${selectedProvider.id} is a handoff target, not a normal inference backend")
+        }
+        val preferredProvider = if (selectedProvider is AiHandoffProvider) null else selectedProvider as? AiInferenceProvider
+        return when (_routingPolicy.value) {
+            AiRoutingPolicy.EXPLICIT -> resolveExplicitTarget(preferredProvider, selectedProvider, request)
+            AiRoutingPolicy.PREFERRED_WITH_FALLBACK -> resolvePreferredWithFallbackTarget(preferredProvider, request)
+            AiRoutingPolicy.LOCAL_ONLY -> resolveAutomaticTarget(preferredProvider, request, localOnly = true)
+            AiRoutingPolicy.AUTOMATIC -> resolveAutomaticTarget(preferredProvider, request, localOnly = false)
+        }
+    }
+
+    private fun recordRoutingDecision(
+        selectedProviderId: String?,
+        selectedModelId: String?,
+        resolvedProviderId: String?,
+        resolvedModelId: String?,
+        rejections: List<RejectedAiTarget>
+    ) {
+        // A complete implementation would expose this as a StateFlow/Flow or write to a diagnostic log.
+        logger?.info("AiProviderRouter", "Resolved target $resolvedProviderId / $resolvedModelId (policy=${_routingPolicy.value})")
+    }
 
     private fun restoreStoredModel(providerId: String) {
         val modelId = when (providerId) {
@@ -179,21 +205,7 @@ class DefaultAiProviderRouter(
         list
     }
 
-    override suspend fun getEligibleProvider(request: AiRequest): AiProvider = resolveExecutionTarget(request).provider
 
-    override suspend fun resolveExecutionTarget(request: AiRequest): AiExecutionTarget {
-        val selectedProvider = allProviders.firstOrNull { it.id == _selectedProviderId.value }
-        if (selectedProvider is AiHandoffProvider && _routingPolicy.value == AiRoutingPolicy.EXPLICIT) {
-            throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY, "Provider ${selectedProvider.id} is a handoff target, not a normal inference backend")
-        }
-        val preferredProvider = if (selectedProvider is AiHandoffProvider) null else selectedProvider as? AiInferenceProvider
-        return when (_routingPolicy.value) {
-            AiRoutingPolicy.EXPLICIT -> resolveExplicitTarget(preferredProvider, selectedProvider, request)
-            AiRoutingPolicy.PREFERRED_WITH_FALLBACK -> resolvePreferredWithFallbackTarget(preferredProvider, request)
-            AiRoutingPolicy.LOCAL_ONLY -> resolveAutomaticTarget(preferredProvider, request, localOnly = true)
-            AiRoutingPolicy.AUTOMATIC -> resolveAutomaticTarget(preferredProvider, request, localOnly = false)
-        }
-    }
 
     private suspend fun resolveExplicitTarget(preferredProvider: AiInferenceProvider?, selectedProvider: AiProvider?, request: AiRequest): AiExecutionTarget {
         val provider = preferredProvider ?: throw AiProviderException(

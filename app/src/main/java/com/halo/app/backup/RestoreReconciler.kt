@@ -7,6 +7,7 @@ import com.halo.app.data.notebook.WorkspaceObjectType
 import com.halo.app.data.search.AppSearchWorkspaceSearchEngine
 import com.halo.app.data.settings.HaloSettingsRepository
 import com.halo.app.data.workspace.RoomWorkspaceFileRepository
+import com.halo.app.storage.haloStorageLayout
 import com.halo.host.android.reminder.ReminderRecordStore
 import java.io.File
 import kotlinx.coroutines.Dispatchers
@@ -20,7 +21,7 @@ class RestoreReconciler(
     private val settings: HaloSettingsRepository,
 ) {
     suspend fun reconcile() = withContext(Dispatchers.IO) {
-        RoomWorkspaceFileRepository(context, database).reconcileAvailability()
+        RoomWorkspaceFileRepository(context, database, haloStorageLayout(context).managedWorkspaceFiles).reconcileAvailability()
         ReminderRecordStore(context).reconcile()
         val search = AppSearchWorkspaceSearchEngine(context, database.notebookDao())
         runCatching { search.clearDerivedIndex() }

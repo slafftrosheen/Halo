@@ -37,7 +37,17 @@ data class CognitiveRequestStarted(override val id: String = UUID.randomUUID().t
 data class CognitiveReasoningStarted(override val id: String = UUID.randomUUID().toString(), val requestId: String, val providerId: String, val modelId: String?, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
 data class CognitiveTokenReceived(override val id: String = UUID.randomUUID().toString(), val requestId: String, val token: String, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
 data class CognitiveCompleted(override val id: String = UUID.randomUUID().toString(), val requestId: String, val response: String?, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
-data class CognitiveFailed(override val id: String = UUID.randomUUID().toString(), val requestId: String, val message: String, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
+data class CognitiveFailed(
+    override val id: String = UUID.randomUUID().toString(),
+    val requestId: String,
+    val message: String,
+    val stage: String = "UNKNOWN",
+    val type: String? = null,
+    val providerId: String? = null,
+    val modelId: String? = null,
+    val userRecoverable: Boolean = false,
+    override val timestamp: Long = System.currentTimeMillis()
+) : HaloEvent
 
 data class ConversationTurnCompleted(
     override val id: String = UUID.randomUUID().toString(),

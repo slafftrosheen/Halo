@@ -92,18 +92,103 @@ interface RemoteModelCatalog {
     suspend fun search(query: String): List<ModelCatalogEntry>
 }
 
+interface ModelCatalogCache {
+    suspend fun read(): Pair<List<ModelCatalogEntry>, Long>?
+    suspend fun write(entries: List<ModelCatalogEntry>, updatedAt: Long)
+    suspend fun getEtag(): String?
+    suspend fun setEtag(etag: String)
+}
+
+class SharedPreferencesModelCatalogCache(private val context: Context) : ModelCatalogCache {
+    private val prefs by lazy { context.getSharedPreferences("halo_gguf_catalog", Context.MODE_PRIVATE) }
+
+    override suspend fun read(): Pair<List<ModelCatalogEntry>, Long>? = withContext(Dispatchers.IO) {
+        runCatching {
+            val raw = prefs.getString("entries", null) ?: return@withContext null
+            val root = JSONObject(raw)
+            val updatedAt = root.getLong("updatedAt")
+            val array = root.getJSONArray("items")
+            val memory = memorySnapshot(context)
+            val entries = (0 until array.length()).mapNotNull { index ->
+                val row = array.optJSONObject(index) ?: return@mapNotNull null
+                val model = RemoteGgufModel(
+                    row.getString("repo"), row.getString("sha"), row.optString("author").takeIf { it.isNotBlank() },
+                    "text-generation", row.optString("tags").split('|').filter { it.isNotBlank() }.toSet(),
+                    row.optLong("downloads"), row.optInt("likes"),
+                    runCatching { Instant.parse(row.optString("modified")) }.getOrNull(),
+                    row.optString("license").takeIf { it.isNotBlank() }, false, emptyList()
+                )
+                val file = RemoteGgufFile(row.getString("file"), row.getLong("bytes"),
+                    parseQuantization(row.getString("file")))
+                val fit = LocalModelMemoryPlanner.preflightRemote(file.bytes, memory)
+                ModelCatalogEntry(model.copy(files = listOf(file)), file, fit, score(model, file, fit))
+            }.sortedByDescending { it.score }
+            entries to updatedAt
+        }.getOrNull()
+    }
+
+    override suspend fun write(entries: List<ModelCatalogEntry>, updatedAt: Long) = withContext(Dispatchers.IO) {
+        val items = JSONArray()
+        entries.forEach { entry ->
+            val model = entry.model
+            items.put(JSONObject().put("repo", model.repoId).put("sha", model.revision)
+                .put("author", model.author).put("tags", model.tags.joinToString("|"))
+                .put("downloads", model.downloads).put("likes", model.likes)
+                .put("modified", model.lastModified?.toString()).put("license", model.license)
+                .put("file", entry.file.filename).put("bytes", entry.file.bytes))
+        }
+        prefs.edit().putString("entries", JSONObject().put("updatedAt", updatedAt)
+            .put("items", items).toString()).apply()
+    }
+
+    override suspend fun getEtag(): String? = withContext(Dispatchers.IO) {
+        prefs.getString("etag", null)
+    }
+
+    override suspend fun setEtag(etag: String) = withContext(Dispatchers.IO) {
+        prefs.edit().putString("etag", etag).apply()
+    }
+
+    private fun memorySnapshot(context: Context): LocalModelMemoryPlanner.MemorySnapshot {
+        val info = ActivityManager.MemoryInfo()
+        (context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager).getMemoryInfo(info)
+        return LocalModelMemoryPlanner.MemorySnapshot(info.totalMem, info.availMem, info.lowMemory)
+    }
+
+    private fun score(model: RemoteGgufModel, file: RemoteGgufFile, fit: LocalModelMemoryPlanner.RemoteModelFit): Int {
+        val fitScore = when (fit) {
+            is LocalModelMemoryPlanner.RemoteModelFit.Recommended -> 4
+            is LocalModelMemoryPlanner.RemoteModelFit.Fits -> 3
+            is LocalModelMemoryPlanner.RemoteModelFit.Tight -> 2
+            is LocalModelMemoryPlanner.RemoteModelFit.TooLarge -> 0
+            LocalModelMemoryPlanner.RemoteModelFit.Unknown -> 1
+        }
+        val quantScore = when (file.quantization) {
+            GgufQuantization.Q4_K_M -> 7
+            GgufQuantization.Q4_K_S -> 6
+            GgufQuantization.Q5_K_M -> 5
+            GgufQuantization.Q5_K_S -> 4
+            GgufQuantization.Q3_K_M -> 3
+            GgufQuantization.Q6_K -> 2
+            GgufQuantization.Q8_0 -> 1
+            else -> 0
+        }
+        val isInstructionModel = listOf("instruct", "chat", "assistant", "-it", "_it").any { it in "${model.repoId} ${model.tags.joinToString(" ")}".lowercase() }
+        return fitScore * 100 + (if (isInstructionModel) 30 else 0) + quantScore * 2 + (model.downloads ?: 0L).coerceAtMost(1_000_000L).div(100_000L).toInt()
+    }
+}
+
 class HuggingFaceGgufCatalog(
-    context: Context,
+    private val appContext: Context,
+    private val cache: ModelCatalogCache,
     private val client: OkHttpClient = OkHttpClient.Builder()
         .callTimeout(20, TimeUnit.SECONDS).build()
 ) : RemoteModelCatalog {
-    private val appContext = context.applicationContext
-    private val prefs = appContext.getSharedPreferences("halo_gguf_catalog", Context.MODE_PRIVATE)
     private val mutableState = MutableStateFlow<ModelCatalogState>(ModelCatalogState.Idle)
     override val state: StateFlow<ModelCatalogState> = mutableState
 
     override suspend fun refresh(force: Boolean) = withContext(Dispatchers.IO) {
-        val cached = readCache()
+        val cached = cache.read()
         if (cached != null) mutableState.value = ModelCatalogState.OfflineCache(cached.first, cached.second)
         if (!force && cached != null && System.currentTimeMillis() - cached.second < 6 * 60 * 60 * 1000L) {
             mutableState.value = ModelCatalogState.Ready(cached.first, cached.second)
@@ -115,7 +200,7 @@ class HuggingFaceGgufCatalog(
                 "&sort=trendingScore&direction=-1&limit=100&expand=sha&expand=siblings"
             val request = Request.Builder().url(url)
                 .header("Accept", "application/json")
-                .apply { if (cached != null) prefs.getString("etag", null)?.let { header("If-None-Match", it) } }
+                .apply { if (cached != null) cache.getEtag()?.let { header("If-None-Match", it) } }
                 .build()
             val response = client.newCall(request).execute()
             val listing = response.use {
@@ -125,7 +210,7 @@ class HuggingFaceGgufCatalog(
                 }
                 if (!it.isSuccessful) throw IOException("Hub returned HTTP ${it.code}")
                 val body = it.body?.string() ?: throw IOException("Empty Hub response")
-                it.header("ETag")?.let { etag -> prefs.edit().putString("etag", etag).apply() }
+                it.header("ETag")?.let { etag -> cache.setEtag(etag) }
                 JSONArray(body)
             }
             val semaphore = Semaphore(5)
@@ -153,7 +238,7 @@ class HuggingFaceGgufCatalog(
                 .thenBy { it.model.repoId }.thenBy { it.file.filename })
             if (entries.isEmpty()) throw IOException("No compatible GGUF files in Hub response")
             val updatedAt = System.currentTimeMillis()
-            saveCache(entries, updatedAt)
+            cache.write(entries, updatedAt)
             mutableState.value = ModelCatalogState.Ready(entries, updatedAt)
         } catch (error: Exception) {
             if (error is CancellationException) throw error
@@ -253,44 +338,6 @@ class HuggingFaceGgufCatalog(
             quantScore * 2 + (model.downloads ?: 0L).coerceAtMost(1_000_000L).div(100_000L).toInt()
     }
 
-    private fun readCache(): Pair<List<ModelCatalogEntry>, Long>? {
-        return runCatching {
-        val raw = prefs.getString("entries", null) ?: return null
-        val root = JSONObject(raw)
-        val updatedAt = root.getLong("updatedAt")
-        val array = root.getJSONArray("items")
-        val memory = memorySnapshot()
-        val entries = (0 until array.length()).mapNotNull { index ->
-            val row = array.optJSONObject(index) ?: return@mapNotNull null
-            val model = RemoteGgufModel(
-                row.getString("repo"), row.getString("sha"), row.optString("author").takeIf(String::isNotBlank),
-                "text-generation", row.optString("tags").split('|').filter(String::isNotBlank).toSet(),
-                row.optLong("downloads"), row.optInt("likes"),
-                runCatching { Instant.parse(row.optString("modified")) }.getOrNull(),
-                row.optString("license").takeIf(String::isNotBlank), false, emptyList()
-            )
-            val file = RemoteGgufFile(row.getString("file"), row.getLong("bytes"),
-                parseQuantization(row.getString("file")))
-            val fit = LocalModelMemoryPlanner.preflightRemote(file.bytes, memory)
-            ModelCatalogEntry(model.copy(files = listOf(file)), file, fit, score(model, file, fit))
-        }.sortedByDescending { it.score }
-        entries to updatedAt
-        }.getOrNull()
-    }
-
-    private fun saveCache(entries: List<ModelCatalogEntry>, updatedAt: Long) {
-        val items = JSONArray()
-        entries.forEach { entry ->
-            val model = entry.model
-            items.put(JSONObject().put("repo", model.repoId).put("sha", model.revision)
-                .put("author", model.author).put("tags", model.tags.joinToString("|"))
-                .put("downloads", model.downloads).put("likes", model.likes)
-                .put("modified", model.lastModified?.toString()).put("license", model.license)
-                .put("file", entry.file.filename).put("bytes", entry.file.bytes))
-        }
-        prefs.edit().putString("entries", JSONObject().put("updatedAt", updatedAt)
-            .put("items", items).toString()).apply()
-    }
 }
 
 private fun isInstruction(repoId: String, tags: Set<String>): Boolean {
