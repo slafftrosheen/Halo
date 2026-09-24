@@ -233,7 +233,8 @@ object ManualDependencyGraph {
     val toolAuthorizer by lazy {
         com.halo.runtime.cognition.tools.PolicyToolAuthorizer(
             coordinator = toolAuthorizationCoordinator,
-            defaultPolicyProvider = skillRegistry::approvalPolicyForTool
+            defaultPolicyProvider = skillRegistry::approvalPolicyForTool,
+            authorizationGroupProvider = skillRegistry::authorizationGroupForTool
         )
     }
     val cognitiveSession by lazy {

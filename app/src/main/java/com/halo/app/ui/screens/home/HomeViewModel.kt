@@ -77,7 +77,10 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
             sessionState is CognitiveSessionState.Reasoning -> HaloRuntimeState.Reasoning
             sessionState is CognitiveSessionState.Streaming -> HaloRuntimeState.Reasoning
             sessionState is CognitiveSessionState.ExecutingTool -> HaloRuntimeState.Executing
-            sessionState is CognitiveSessionState.Failed -> HaloRuntimeState.Recovering
+            // A failed cognitive turn is terminal and must not hold the presence in
+            // Recovering. Keep the error text visible while returning the orb and
+            // microphone affordance to the actual speech runtime state.
+            sessionState is CognitiveSessionState.Failed -> speechRuntimeState
             else -> speechRuntimeState
         }
 

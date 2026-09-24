@@ -57,8 +57,8 @@ class OllamaProvider(
     }
     private val moshi = com.squareup.moshi.Moshi.Builder()
         .addLast(com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory()).build()
-    private val generateRequestAdapter = moshi.adapter(OllamaGenerateRequest::class.java)
-    private val generateResponseAdapter = moshi.adapter(OllamaGenerateResponse::class.java)
+    private val chatRequestAdapter = moshi.adapter(OllamaChatRequest::class.java)
+    private val chatResponseAdapter = moshi.adapter(OllamaChatResponse::class.java)
 
     override val id: String = "provider.ollama"
     override val displayName: String = "Ollama"
@@ -74,7 +74,7 @@ class OllamaProvider(
         val status = when {
             probe.error != null -> ProviderStatus(ProviderStatus.State.OFFLINE, "Ollama unreachable at $endpoint: ${probe.error}")
             probe.models.isEmpty() -> ProviderStatus(ProviderStatus.State.OFFLINE, "Ollama responded at $endpoint but returned no models")
-            probe.models.none { it.id == modelId } -> ProviderStatus(ProviderStatus.State.MODEL_MISSING, "Connected to $endpoint, but model '$modelId' is not pulled")
+            probe.models.none { sameModel(it.id, modelId) } -> ProviderStatus(ProviderStatus.State.MODEL_MISSING, "Connected to $endpoint, but model '$modelId' is not pulled")
             else -> ProviderStatus(ProviderStatus.State.READY, "Connected to $endpoint • $modelId")
         }
         _status.value = status
@@ -98,20 +98,20 @@ class OllamaProvider(
         request.validateForTextGeneration()
         emit(AiStreamEvent.Started)
         val model = request.modelId?.trim()?.ifBlank { null } ?: modelId
-        val prompt = context.conversation.toMutableList().apply { add(AIMessage(Role.USER, request.text!!)) }
-            .joinToString("\n") { "${it.role.name.lowercase()}: ${it.content}" }
+        val messages = context.conversation.toMutableList().apply { add(AIMessage(Role.USER, request.text!!)) }
+            .map(::toOllamaMessage)
         val endpoint = normalizedEndpointOrNull()
             ?: throw AiProviderException(AiErrorType.LOCAL_MODEL_UNAVAILABLE, "Ollama endpoint is not configured")
-        val body = generateRequestAdapter.toJson(
-            OllamaGenerateRequest(model = model, prompt = prompt, stream = true)
+        val body = chatRequestAdapter.toJson(
+            OllamaChatRequest(model = model, messages = messages, stream = true)
         ).toRequestBody(JSON)
         val output = StringBuilder()
         try {
-            client.newCall(Request.Builder().url("$endpoint/api/generate").post(body).build()).execute().use { response ->
+            client.newCall(Request.Builder().url("$endpoint/api/chat").post(body).build()).execute().use { response ->
                 if (!response.isSuccessful) {
                     throw AiProviderException(
                         if (response.code == 404) AiErrorType.MODEL_UNAVAILABLE else AiErrorType.LOCAL_MODEL_UNAVAILABLE,
-                        "Ollama error: ${response.code}"
+                        ollamaHttpError(response.code, response.body?.string())
                     )
                 }
                 val source = response.body?.source()
@@ -120,10 +120,11 @@ class OllamaProvider(
                     currentCoroutineContext().ensureActive()
                     val line = source.readUtf8Line() ?: break
                     if (line.isNotBlank()) {
-                        generateResponseAdapter.fromJson(line)?.let {
-                            if (it.response.isNotEmpty()) {
-                                output.append(it.response)
-                                emit(AiStreamEvent.Token(it.response))
+                        chatResponseAdapter.fromJson(line)?.let {
+                            val token = it.message?.content.orEmpty()
+                            if (token.isNotEmpty()) {
+                                output.append(token)
+                                emit(AiStreamEvent.Token(token))
                             }
                             if (it.done) return@use
                         }
@@ -147,14 +148,14 @@ class OllamaProvider(
     private suspend fun completeWithModel(request: AIRequestLegacy, model: String): AIResponseLegacy = withContext(Dispatchers.IO) {
         val endpoint = normalizedEndpointOrNull() ?: throw AiProviderException(AiErrorType.LOCAL_MODEL_UNAVAILABLE, "Ollama endpoint is not configured")
         val startTime = System.currentTimeMillis()
-        val prompt = request.conversation.messages.joinToString("\n") { "${it.role.name.lowercase()}: ${it.content}" }
-        val body = generateRequestAdapter.toJson(OllamaGenerateRequest(model = model, prompt = prompt, stream = false, options = mapOf("temperature" to request.temperature, "num_predict" to request.maxTokens))).toRequestBody(JSON)
+        val messages = request.conversation.messages.map(::toOllamaMessage)
+        val body = chatRequestAdapter.toJson(OllamaChatRequest(model = model, messages = messages, stream = false, options = mapOf("temperature" to request.temperature, "num_predict" to request.maxTokens))).toRequestBody(JSON)
         try {
-            client.newCall(Request.Builder().url("$endpoint/api/generate").post(body).build()).execute().use { response ->
-                if (!response.isSuccessful) throw AiProviderException(if (response.code == 404) AiErrorType.MODEL_UNAVAILABLE else AiErrorType.LOCAL_MODEL_UNAVAILABLE, "Ollama error: ${response.code}")
+            client.newCall(Request.Builder().url("$endpoint/api/chat").post(body).build()).execute().use { response ->
+                if (!response.isSuccessful) throw AiProviderException(if (response.code == 404) AiErrorType.MODEL_UNAVAILABLE else AiErrorType.LOCAL_MODEL_UNAVAILABLE, ollamaHttpError(response.code, response.body?.string()))
                 val json = response.body?.string() ?: throw AiProviderException(AiErrorType.INVALID_RESPONSE, "Empty body")
-                val result = generateResponseAdapter.fromJson(json) ?: throw AiProviderException(AiErrorType.INVALID_RESPONSE, "Failed to parse response")
-                AIResponseLegacy(result.response, if (result.done) "stop" else "length", System.currentTimeMillis() - startTime)
+                val result = chatResponseAdapter.fromJson(json) ?: throw AiProviderException(AiErrorType.INVALID_RESPONSE, "Failed to parse response")
+                AIResponseLegacy(result.message?.content.orEmpty(), if (result.done) "stop" else "length", System.currentTimeMillis() - startTime)
             }
         } catch (e: kotlinx.coroutines.CancellationException) { throw e }
         catch (e: AiProviderException) { throw e }
@@ -163,17 +164,17 @@ class OllamaProvider(
 
     fun stream(prompt: String): Flow<String> = flow {
         val endpoint = normalizedEndpointOrNull() ?: throw AiProviderException(AiErrorType.LOCAL_MODEL_UNAVAILABLE, "Ollama endpoint is not configured")
-        val body = generateRequestAdapter.toJson(OllamaGenerateRequest(model = modelId, prompt = prompt, stream = true)).toRequestBody(JSON)
+        val body = chatRequestAdapter.toJson(OllamaChatRequest(model = modelId, messages = listOf(OllamaChatMessage("user", prompt)), stream = true)).toRequestBody(JSON)
         try {
-            client.newCall(Request.Builder().url("$endpoint/api/generate").post(body).build()).execute().use { response ->
-                if (!response.isSuccessful) throw AiProviderException(if (response.code == 404) AiErrorType.MODEL_UNAVAILABLE else AiErrorType.LOCAL_MODEL_UNAVAILABLE, "Ollama error: ${response.code}")
+            client.newCall(Request.Builder().url("$endpoint/api/chat").post(body).build()).execute().use { response ->
+                if (!response.isSuccessful) throw AiProviderException(if (response.code == 404) AiErrorType.MODEL_UNAVAILABLE else AiErrorType.LOCAL_MODEL_UNAVAILABLE, ollamaHttpError(response.code, response.body?.string()))
                 val source = response.body?.source() ?: throw AiProviderException(AiErrorType.INVALID_RESPONSE, "Empty body")
                 while (!source.exhausted()) {
                     currentCoroutineContext().ensureActive()
                     val line = source.readUtf8Line() ?: break
                     if (line.isNotBlank()) {
-                        generateResponseAdapter.fromJson(line)?.let {
-                            emit(it.response)
+                        chatResponseAdapter.fromJson(line)?.let {
+                            emit(it.message?.content.orEmpty())
                             if (it.done) return@use
                         }
                     }
@@ -209,7 +210,11 @@ class OllamaProvider(
     }
 
     private fun normalizedEndpointOrNull(): String? {
-        val raw = storage.getString("ollama_endpoint")?.trim()?.trimEnd('/') ?: defaultEndpoint
+        val configured = storage.getString("ollama_endpoint")?.trim()?.trimEnd('/')
+        val raw = configured?.takeIf { it.isNotBlank() }?.let {
+            val withScheme = if (it.contains("://")) it else "http://$it"
+            withScheme.removeSuffix("/api")
+        } ?: defaultEndpoint
         if (raw.isNullOrBlank()) return null
         return runCatching {
             val uri = URI(raw)
@@ -217,6 +222,25 @@ class OllamaProvider(
             require(!uri.host.isNullOrBlank())
             raw
         }.getOrNull()
+    }
+
+    private fun toOllamaMessage(message: AIMessage): OllamaChatMessage = OllamaChatMessage(
+        role = when (message.role) {
+            Role.SYSTEM -> "system"
+            Role.USER -> "user"
+            Role.ASSISTANT -> "assistant"
+            Role.TOOL -> "tool"
+        },
+        content = message.content
+    )
+
+    private fun sameModel(advertised: String, selected: String): Boolean =
+        advertised == selected || advertised.removeSuffix(":latest") == selected.removeSuffix(":latest")
+
+    private fun ollamaHttpError(code: Int, body: String?): String {
+        val detail = body?.let { runCatching { JSONObject(it).optString("error") }.getOrNull() }
+            ?.takeIf { it.isNotBlank() }
+        return if (detail == null) "Ollama returned HTTP $code" else "Ollama returned HTTP $code: $detail"
     }
 
     private fun isAndroidEmulator(): Boolean =

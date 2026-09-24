@@ -278,14 +278,13 @@ class HuggingFaceGgufCatalog(
         val gated = gatedValue == true || (gatedValue is String && gatedValue != "false")
         if (gated || detail.optBoolean("private", false)) return null
         val siblings = detail.optJSONArray("siblings") ?: return null
-        val names = (0 until siblings.length()).mapNotNull { siblings.optJSONObject(it)?.optString("rfilename") }
-        if (names.any { it.contains("mmproj", true) || it.contains("vision", true) ||
-                it.contains("projector", true) }) return null
         val files = (0 until siblings.length()).mapNotNull { index ->
             val sibling = siblings.optJSONObject(index) ?: return@mapNotNull null
             val filename = sibling.optString("rfilename")
             val bytes = sibling.optLong("size", -1L)
             if (!filename.endsWith(".gguf", true) || bytes <= 0L ||
+                filename.contains("mmproj", true) || filename.contains("vision", true) ||
+                filename.contains("projector", true) ||
                 Regex("-\\d{5}-of-\\d{5}\\.gguf$", RegexOption.IGNORE_CASE).containsMatchIn(filename)) {
                 return@mapNotNull null
             }

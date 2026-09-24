@@ -9,7 +9,7 @@ import com.halo.sdk.runtime.RuntimeClock
 import com.halo.runtime.cognition.workingmemory.WorkingMemory
 import com.halo.runtime.cognition.ICapabilityRegistry
 
-// Basic permission manager placeholder for now
+/** Host-provided permission boundary exposed to plugins. */
 interface PermissionManager {
     fun hasPermission(permission: String): Boolean
 }

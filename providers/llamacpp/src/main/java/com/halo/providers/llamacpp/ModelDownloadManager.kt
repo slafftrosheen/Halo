@@ -126,9 +126,7 @@ class ModelDownloadManager(
         if (length <= 0L) return null
         val fingerprint = FileFingerprint(file.absolutePath, length, file.lastModified())
         return metadataCache.getOrRead(fingerprint) {
-            GgufMetadataReader.read(file)?.takeIf {
-                BundledLlamaArchitectureSupport.supports(it.architecture)
-            }
+            GgufMetadataReader.read(file)?.takeIf { !it.architecture.isNullOrBlank() }
         }
     }
 

@@ -18,4 +18,8 @@ interface ToolAuthorizer {
     suspend fun authorize(
         toolCall: ToolCall
     ): ToolAuthorization
+
+    suspend fun authorize(toolCall: ToolCall, scopeId: String): ToolAuthorization = authorize(toolCall)
+
+    fun clearScope(scopeId: String) = Unit
 }

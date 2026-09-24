@@ -2,6 +2,7 @@ package com.halo.runtime.cognition.tools
 
 import com.halo.sdk.provider.ToolCall
 import com.halo.sdk.runtime.skills.SkillRisk
+import java.util.concurrent.ConcurrentHashMap
 
 enum class ToolApprovalPolicy {
     ALWAYS_ALLOW,
@@ -24,10 +25,22 @@ interface ToolAuthorizationCoordinator {
 
 class PolicyToolAuthorizer(
     private val coordinator: ToolAuthorizationCoordinator? = null,
-    private val defaultPolicyProvider: (String) -> ToolApprovalPolicy = { ToolApprovalPolicy.ASK_EVERY_TIME }
+    private val defaultPolicyProvider: (String) -> ToolApprovalPolicy = { ToolApprovalPolicy.ASK_EVERY_TIME },
+    private val authorizationGroupProvider: (String) -> String = { it }
 ) : ToolAuthorizer {
 
-    override suspend fun authorize(toolCall: ToolCall): ToolAuthorization {
+    private val scopedGrants = ConcurrentHashMap<String, MutableSet<String>>()
+
+    override suspend fun authorize(toolCall: ToolCall): ToolAuthorization = authorizeInternal(toolCall, null)
+
+    override suspend fun authorize(toolCall: ToolCall, scopeId: String): ToolAuthorization =
+        authorizeInternal(toolCall, scopeId)
+
+    override fun clearScope(scopeId: String) {
+        scopedGrants.remove(scopeId)
+    }
+
+    private suspend fun authorizeInternal(toolCall: ToolCall, scopeId: String?): ToolAuthorization {
         val toolName = toolCall.functionName
         val policy = defaultPolicyProvider(toolName)
 
@@ -37,15 +50,25 @@ class PolicyToolAuthorizer(
 
         val risk = mapRisk(toolName)
 
-        if (policy == ToolApprovalPolicy.ALWAYS_ALLOW &&
-            risk != SkillRisk.DESTRUCTIVE && risk != SkillRisk.SENSITIVE) {
+        if (policy == ToolApprovalPolicy.ALWAYS_ALLOW && risk != SkillRisk.DESTRUCTIVE) {
+            return ToolAuthorization.Authorized(toolCall)
+        }
+
+        val group = authorizationGroupProvider(toolName)
+        if (risk != SkillRisk.DESTRUCTIVE && scopeId != null &&
+            scopedGrants[scopeId]?.contains(group) == true) {
             return ToolAuthorization.Authorized(toolCall)
         }
 
         val preview = generatePreview(toolCall, risk)
 
         if (coordinator != null) {
-            return coordinator.authorizeRequest(toolCall, preview)
+            return coordinator.authorizeRequest(toolCall, preview).also { authorization ->
+                if (authorization is ToolAuthorization.Authorized &&
+                    risk != SkillRisk.DESTRUCTIVE && scopeId != null) {
+                    scopedGrants.computeIfAbsent(scopeId) { ConcurrentHashMap.newKeySet() }.add(group)
+                }
+            }
         }
 
         return ToolAuthorization.Rejected(toolCall, "Interactive confirmation required for $toolName")

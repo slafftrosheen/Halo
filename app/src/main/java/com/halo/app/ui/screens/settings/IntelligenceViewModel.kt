@@ -224,8 +224,11 @@ class IntelligenceViewModel(
 
     fun handoffToAssistant(prompt: String? = null) {
         val provider = aiProviderRouter.getAllProviders().firstOrNull { it.id == ProviderIds.ANDROID_ASSISTANT } as? AndroidAssistantProvider ?: return
-        runCatching { provider.handoff(prompt) }.onFailure { error -> Log.w("IntelligenceViewModel", "Assistant handoff failed", error) }
-        _refreshTrigger.update { it + 1 }
+        viewModelScope.launch(dispatchers.io) {
+            runCatching { provider.handoff(prompt) }
+                .onFailure { error -> Log.w("IntelligenceViewModel", "Assistant handoff failed", error) }
+            _refreshTrigger.update { it + 1 }
+        }
     }
     fun downloadModel(modelId: String) { modelDownloadManager?.downloadModel(modelId) }
     fun refreshCatalog() { viewModelScope.launch { modelCatalog?.refresh(force = true) } }

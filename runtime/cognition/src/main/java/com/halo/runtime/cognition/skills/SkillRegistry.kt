@@ -21,6 +21,7 @@ interface SkillRegistry {
     fun refreshAvailability() {}
     fun approvalPolicy(id: SkillId): ToolApprovalPolicy = ToolApprovalPolicy.ASK_EVERY_TIME
     fun approvalPolicyForTool(toolName: String): ToolApprovalPolicy = ToolApprovalPolicy.ASK_EVERY_TIME
+    fun authorizationGroupForTool(toolName: String): String = toolName
     suspend fun setApprovalPolicy(id: SkillId, policy: ToolApprovalPolicy) {}
 }
 
@@ -99,6 +100,9 @@ class DefaultSkillRegistry(
             runCatching { ToolApprovalPolicy.valueOf(it) }.getOrNull()
         } ?: default
     }
+
+    override fun authorizationGroupForTool(toolName: String): String =
+        _skills.value.firstOrNull { toolName in it.tools }?.id?.value ?: toolName
 
     override suspend fun setApprovalPolicy(id: SkillId, policy: ToolApprovalPolicy) {
         if (get(id) == null) return

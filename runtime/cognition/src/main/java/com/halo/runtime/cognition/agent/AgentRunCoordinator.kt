@@ -75,7 +75,7 @@ class DefaultAgentRunCoordinator(
     override suspend fun transition(runId: AgentRunId, state: AgentRunState, reason: String?) = mutex.withLock {
         val run = requireNotNull(store.get(runId)) { "Unknown run ${runId.value}" }
         if (run.state == state) return@withLock
-        check(!run.state.isTerminal) { "Cannot transition ${run.state} to $state" }
+        if (run.state.isTerminal) return@withLock
         val allowed = when (run.state) {
             AgentRunState.CREATED -> setOf(AgentRunState.PLANNING)
             AgentRunState.PLANNING -> setOf(AgentRunState.EXECUTING, AgentRunState.WAITING_FOR_CLARIFICATION, AgentRunState.WAITING_FOR_CAPABILITY)
@@ -85,14 +85,19 @@ class DefaultAgentRunCoordinator(
             else -> emptySet()
         } + setOf(AgentRunState.CANCELLED, AgentRunState.FAILED, AgentRunState.INTERRUPTED)
         require(state in allowed) { "Invalid transition ${run.state} -> $state" }
-        check(state != AgentRunState.COMPLETED || !run.hasUnknownAction) { "Cannot complete an unknown action" }
         val now = Instant.now(clock)
         val finalState = when {
             state == AgentRunState.FAILED && run.hasUnknownAction -> AgentRunState.INTERRUPTED
+            state == AgentRunState.COMPLETED && run.hasUnknownAction -> AgentRunState.INTERRUPTED
             state == AgentRunState.COMPLETED && run.steps.any { it is AgentStep.ToolFailed || (it is AgentStep.ToolCompleted && !it.success) } -> AgentRunState.FAILED
             else -> state
         }
+        val finalReason = reason ?: when (finalState) {
+            AgentRunState.INTERRUPTED -> "External action completion is unknown; it will not be replayed."
+            AgentRunState.FAILED -> "One or more actions failed"
+            else -> null
+        }
         store.update(run.copy(state = finalState, updatedAt = now,
-            completedAt = now.takeIf { finalState.isTerminal }, failureReason = reason ?: "One or more actions failed".takeIf { finalState == AgentRunState.FAILED }))
+            completedAt = now.takeIf { finalState.isTerminal }, failureReason = finalReason))
     }
 }

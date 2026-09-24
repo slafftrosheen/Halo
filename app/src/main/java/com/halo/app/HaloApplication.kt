@@ -88,7 +88,7 @@ class HaloApplication :
                 val prior = previous
                 previous = runs.associate { it.id.value to it.state }
                 if (prior != null) runs.filter { run ->
-                    !run.interactionId.value.startsWith("routine:") &&
+                    run.interactionId.value.startsWith("routine:") &&
                     prior[run.id.value] != null && prior[run.id.value] != run.state &&
                         run.state in setOf(com.halo.runtime.cognition.agent.AgentRunState.COMPLETED,
                             com.halo.runtime.cognition.agent.AgentRunState.FAILED,

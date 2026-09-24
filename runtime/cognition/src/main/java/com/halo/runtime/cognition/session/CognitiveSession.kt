@@ -233,16 +233,20 @@ class CognitiveSession(
             val interactionId = InteractionId(metadata["interactionId"] ?: UUID.randomUUID().toString())
             val requestId = UUID.randomUUID().toString()
             var runId: AgentRunId? = null
+            var resolvedProviderId: String? = null
+            var resolvedModelId: String? = null
             try {
+                _state.value = CognitiveSessionState.PreparingContext
+                eventBus.publish(CognitiveRequestStarted(requestId = requestId, interactionId = interactionId.value))
+
                 val target = providerRouter.resolveExecutionTarget(request)
+                resolvedProviderId = target.providerId
+                resolvedModelId = target.modelId
                 val provider = target.provider
                 val finalRequest = request.copy(modelId = target.modelId)
                 val capabilities = target.providerCapabilities
                 val targetPolicy = effectivePolicy.copy(includeWorkspace = effectivePolicy.includeWorkspace &&
                     (target.provider.isLocal || effectivePolicy.allowCloudWorkspace))
-
-                _state.value = CognitiveSessionState.PreparingContext
-                eventBus.publish(CognitiveRequestStarted(requestId = requestId, interactionId = interactionId.value))
 
                 val assembly = contextAssembler.assemble(policy = targetPolicy, capabilities = capabilities)
                 val context = assembly.context
@@ -324,6 +328,10 @@ class CognitiveSession(
                     expectedModelId = target.modelId,
                     response = response
                 )
+                runId?.let {
+                    agentRunCoordinator?.recordStep(AgentStep.ResponseProduced(newStepId(), it, Instant.now(), requestId, response.text))
+                    agentRunCoordinator?.complete(it)
+                }
                 val responseText = response.text.trim()
                 val userText = finalRequest.text?.trim().orEmpty()
                 if (responseText.isNotBlank()) {
@@ -367,10 +375,6 @@ class CognitiveSession(
                     _state.value = CognitiveSessionState.Completed(response)
                     eventBus.publish(CognitiveCompleted(requestId = requestId, response = response.text))
                 }
-                runId?.let {
-                    agentRunCoordinator?.recordStep(AgentStep.ResponseProduced(newStepId(), it, Instant.now(), requestId, response.text))
-                    agentRunCoordinator?.complete(it)
-                }
             } catch (e: CancellationException) {
                 withContext(NonCancellable) {
                     runId?.let { agentRunCoordinator?.cancel(it, "Interaction cancelled") }
@@ -380,6 +384,12 @@ class CognitiveSession(
                 throw e
             } catch (e: Exception) {
                 val message = mapErrorMessage(e)
+                println(
+                    "[HALO-COGNITION-FAIL] requestId=$requestId interactionId=${interactionId.value} " +
+                        "provider=${resolvedProviderId ?: "unresolved"} model=${resolvedModelId ?: "unresolved"} " +
+                        "type=${e.javaClass.simpleName} message=${e.message ?: "none"}"
+                )
+                e.printStackTrace()
                 runId?.let { agentRunCoordinator?.fail(it, message) }
                 _state.value = CognitiveSessionState.Failed(message)
                 eventBus.publish(CognitiveFailed(
@@ -477,6 +487,8 @@ class CognitiveSession(
         capabilities: Set<AiCapability>,
         policy: AiContextPolicy
     ): AiResponse {
+        val authorizationScopeId = interactionId.value
+        try {
         var response = initialResponse
         var currentContext = initialContext
         var round = 0
@@ -559,7 +571,7 @@ class CognitiveSession(
                     continue
                 }
 
-                val authorization = toolAuthorizer.authorize(toolCall)
+                val authorization = toolAuthorizer.authorize(toolCall, authorizationScopeId)
                 when (authorization) {
                     is ToolAuthorization.Rejected -> {
                         runId?.let { agentRunCoordinator?.recordStep(AgentStep.ToolFailed(newStepId(), it, Instant.now(), toolCall.id, toolCall.functionName, authorization.reason)) }
@@ -696,6 +708,9 @@ class CognitiveSession(
             }
         }
         return if (hasUnconfirmedAction) response.copy(text = "The action was dispatched, but I could not confirm its completion. I will not repeat it automatically.") else response
+        } finally {
+            toolAuthorizer?.clearScope(authorizationScopeId)
+        }
     }
 
     private fun newStepId() = AgentStepId(UUID.randomUUID().toString())

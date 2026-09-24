@@ -4,6 +4,7 @@ import java.io.BufferedInputStream
 import java.io.DataInputStream
 import java.io.EOFException
 import java.io.File
+import java.io.IOException
 
 /**
  * Minimal, defensive GGUF metadata reader.
@@ -79,6 +80,8 @@ internal object GgufMetadataReader {
         } catch (_: IllegalArgumentException) {
             null
         } catch (_: SecurityException) {
+            null
+        } catch (_: IOException) {
             null
         }
     }

@@ -6,6 +6,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.pm.ServiceInfo
 import android.os.Build
+import android.util.Log
 import androidx.work.ForegroundInfo
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineStart
@@ -31,27 +32,25 @@ class ModelDownloadWorker(context: Context, parameters: WorkerParameters) :
     private val client = OkHttpClient.Builder().callTimeout(0, TimeUnit.MILLISECONDS).build()
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
-        val url = inputData.getString(KEY_URL) ?: return@withContext Result.failure()
-        val filename = inputData.getString(KEY_FILENAME) ?: return@withContext Result.failure()
+        val url = inputData.getString(KEY_URL) ?: return@withContext failure("Download URL is missing")
+        val filename = inputData.getString(KEY_FILENAME) ?: return@withContext failure("Download filename is missing")
         val expectedBytes = inputData.getLong(KEY_BYTES, -1L)
         if (!url.startsWith("https://huggingface.co/") || !filename.endsWith(".gguf", true) ||
             filename.contains('/') || filename.contains('\\') || expectedBytes <= 0L) {
-            return@withContext Result.failure()
+            return@withContext failure("Download request metadata is invalid")
         }
         val root = File(applicationContext.noBackupFilesDir, "models")
         root.mkdirs()
         val destination = File(root, filename)
         val part = File(root, "$filename.part")
         if (destination.isFile && destination.length() == expectedBytes &&
-            GgufMetadataReader.read(destination)?.let {
-                BundledLlamaArchitectureSupport.supports(it.architecture)
-            } == true) {
+            GgufMetadataReader.read(destination)?.architecture.isNullOrBlank().not()) {
             return@withContext Result.success()
         }
         if (part.length() > expectedBytes) part.delete()
         // A completed transfer may have been interrupted before rename. Never discard it on HTTP 416.
-        if (part.length() == expectedBytes && GgufMetadataReader.read(part)?.let {
-                BundledLlamaArchitectureSupport.supports(it.architecture) } == true) {
+        if (part.length() == expectedBytes &&
+            GgufMetadataReader.read(part)?.architecture.isNullOrBlank().not()) {
             if (destination.exists() && !destination.delete()) return@withContext failure("Unable to replace the previous model file")
             return@withContext if (part.renameTo(destination)) Result.success() else failure("Unable to finish model installation")
         }
@@ -121,17 +120,31 @@ class ModelDownloadWorker(context: Context, parameters: WorkerParameters) :
         } finally { cancellation.cancel() }
         if (part.length() != expectedBytes) return@withContext retryOrFail("Incomplete model transfer")
         val metadata = GgufMetadataReader.read(part)
-        if (metadata == null || !BundledLlamaArchitectureSupport.supports(metadata.architecture)) {
+        if (metadata == null) {
             part.delete()
-            return@withContext failure("Invalid GGUF or architecture unsupported by this Halo build")
+            return@withContext failure("Downloaded file is not a complete, valid GGUF")
+        }
+        if (metadata.architecture.isNullOrBlank()) {
+            part.delete()
+            return@withContext failure("GGUF is missing general.architecture metadata")
         }
         if (destination.exists()) destination.delete()
         if (!part.renameTo(destination)) return@withContext retryOrFail("Unable to complete the model transfer")
         Result.success()
     }
 
-    private fun failure(message: String) = Result.failure(workDataOf(KEY_ERROR to message.take(1000)))
-    private fun retryOrFail(message: String) = if (runAttemptCount < 5) Result.retry() else failure(message)
+    private fun failure(message: String): Result {
+        Log.e(TAG, "GGUF download failed: $message")
+        return Result.failure(workDataOf(KEY_ERROR to message.take(1000)))
+    }
+
+    private fun retryOrFail(message: String): Result {
+        if (runAttemptCount < MAX_ATTEMPTS) {
+            Log.w(TAG, "GGUF download interrupted; retry ${runAttemptCount + 1}/$MAX_ATTEMPTS: $message")
+            return Result.retry()
+        }
+        return failure(message)
+    }
     private fun foregroundInfo(filename: String): ForegroundInfo {
         val manager = applicationContext.getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(NotificationChannel("halo_model_downloads", "Model downloads", NotificationManager.IMPORTANCE_LOW))
@@ -142,6 +155,8 @@ class ModelDownloadWorker(context: Context, parameters: WorkerParameters) :
             else ForegroundInfo(id.hashCode(), notification)
     }
     companion object {
+        private const val TAG = "HaloGgufDownload"
+        private const val MAX_ATTEMPTS = 5
         const val KEY_ERROR = "error"
         const val KEY_URL = "url"
         const val KEY_FILENAME = "filename"

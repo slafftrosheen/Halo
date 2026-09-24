@@ -312,16 +312,20 @@ class NativeLlamaProvider(
         ?.let { downloadManager.getModelFile(it) } != null
 
     private suspend fun buildPrompt(request: AiRequest, context: AiContext): String = withContext(Dispatchers.IO) {
-        val history = context.conversation.joinToString("\n") { "${it.role.name.lowercase()}: ${it.content}" }
         buildString {
-            append("<|im_start|>system\n")
-            append(systemPrompt)
-            append("<|im_end|>\n")
-            if (history.isNotBlank()) append(history).append("\n")
-            append("<|im_start|>user\n")
-            append(request.text!!.trim())
-            append("<|im_end|>\n<|im_start|>assistant\n")
+            appendChatMessage("system", systemPrompt)
+            context.conversation.forEach { message ->
+                appendChatMessage(message.role.name.lowercase(), message.content)
+            }
+            appendChatMessage("user", request.text!!.trim())
+            append("<|im_start|>assistant\n")
         }
+    }
+
+    private fun StringBuilder.appendChatMessage(role: String, content: String) {
+        if (content.isBlank()) return
+        append("<|im_start|>").append(role).append('\n')
+        append(content.trim()).append("<|im_end|>\n")
     }
 
     private suspend fun requireSelectedModel(request: AiRequest): String {

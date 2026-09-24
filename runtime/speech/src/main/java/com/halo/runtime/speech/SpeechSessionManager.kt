@@ -63,8 +63,14 @@ class SpeechSessionManager(private val eventBus: EventBus, private val commandBu
                         }
                     }
                     is SpeechRejected -> if (event.captureId == null || event.captureId == captureId) finishThinking()
-                    is CognitiveFailed -> if (event.requestId == cognitiveRequestId) { cognitiveRequestId = null; finishThinking() }
-                    is CognitiveCompleted -> if (event.requestId == cognitiveRequestId) { cognitiveRequestId = null; finishThinking() }
+                    is CognitiveFailed -> if (matchesActiveCognitiveTurn(event.requestId)) {
+                        cognitiveRequestId = null
+                        finishThinking()
+                    }
+                    is CognitiveCompleted -> if (matchesActiveCognitiveTurn(event.requestId)) {
+                        cognitiveRequestId = null
+                        finishThinking()
+                    }
                     is OutcomePublished -> if (cognitiveRequestId == null) finishThinking()
                     is TtsRequested -> outputId = event.transactionId
                     is TtsStarted -> if (outputId == event.transactionId) mutableState.value = SpeechSessionState.Speaking
@@ -76,6 +82,16 @@ class SpeechSessionManager(private val eventBus: EventBus, private val commandBu
             }
         }
     }
+
+    /**
+     * Failure can be emitted immediately after speech recognition when provider
+     * routing fails. Accept that terminal event while Thinking even if this
+     * collector has not observed the corresponding start event yet.
+     */
+    private fun matchesActiveCognitiveTurn(requestId: String): Boolean =
+        requestId == cognitiveRequestId ||
+            (cognitiveRequestId == null && mutableState.value == SpeechSessionState.Thinking)
+
     private fun finishThinking() {
         if (mutableState.value in setOf(SpeechSessionState.Thinking, SpeechSessionState.Processing,
                 SpeechSessionState.Handoff, SpeechSessionState.Recovering)) {
