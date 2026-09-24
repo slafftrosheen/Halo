@@ -43,5 +43,5 @@ Universal use-case layering, immutable state, privacy interception, persistent r
 and platform independence are not demonstrated repository-wide properties.
 
 See [UI](../11-ui/UI-ARCHITECTURE.md), [storage](DATABASE.md),
-[providers](../ai/AI_PROVIDER_ARCHITECTURE.md) and [security](../12-security/THREAT_MODEL.md).
+[providers](../08-providers/ARCHITECTURE.md) and [security](../12-security/THREAT_MODEL.md).
 Portability beyond Android remains direction, not verified production host support.

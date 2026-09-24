@@ -1,81 +1,41 @@
-> Status: SUPERSEDED DESIGN DRAFT. Classified 2026-09-18.
->
-> Legacy design intent, not implemented behavior. The user-provided 2026-09-18 workspace mockup supersedes conflicting dark-only, four-tab and old orb directions. Examples here are illustrative, not a compiled component API.
->
-> [Current reference](HALO-WORKSPACE-DESIGN.md).
+# Halo Design System
 
-Status: SUPERSEDED
-Authority: docs/03-design/halo-glass/HALO-GLASS-DESIGN.md
+Status: DESIGN TARGET. Reviewed 2026-09-24.
 
-# HPS-201: Halo Design System
+This document describes the 2026–27 visual language for the Halo ecosystem. (For the specific workspace implementation redesign, see [HALO-WORKSPACE-DESIGN.md](HALO-WORKSPACE-DESIGN.md)).
 
-## Philosophy
-Not Material. Not iOS. Not Windows. Halo.
-Three words: **Calm. Trustworthy. Precise.**
+## Visual Doctrine
 
-## Visual Identity
-The interface should feel like professional equipment (Sony Alpha Camera, DJI RC Controller, Ableton Live). Never playful.
+- Airy, bright default theme
+- Charcoal dark counterpart
+- Spatial translucent cell identity
+- Pastel semantic surfaces
+- Quiet depth
+- Subtle glow
+- Clean typography
+- High information clarity
+- Soft geometry
+- Strong whitespace
+- 2026–27 mobile interaction conventions
 
-## Color Language
-Semantic colors based on "Olive Spruce". No blue, no purple, no gradients, very little saturation.
+### Rejected Concepts
 
-* **Canvas**: `#10130F`
-* **Surface**: `#181D17`
-* **Surface Elevated**: `#232A20`
-* **Accent (Olive Spruce)**: `#4A5F3C`
-* **Success**: `#6D8C52`
-* **Warning (Terracotta)**: `$E2725B`
-* **Muted**: `#8A9386`
-* **Text**: `#F5F5F2`
+We explicitly reject the following constraints from previous generations:
+- No blue / No purple / No gradients
+- Almost monochrome only
+- Professional lab equipment aesthetic
+- Robotic eye/orb or mechanical halo ring
+- Radial system gauges as the core identity
 
-## Typography
-One font. Inter, SF Pro, or IBM Plex Sans.
-Mono: JetBrains Mono.
+**Halo Presence** is a living status, input, and output surface, not merely decoration. 
 
-## Spacing Scale
-`2, 4, 8, 12, 16, 24, 32, 48, 64`. No magic numbers.
+Dark mode is the exact same design language rendered under different luminance; it is not a separate skin.
 
-## Radius
-`4, 8, 12`. Never arbitrary.
+## Accessibility
 
-## Motion
-Maximum duration: 300ms.
-* **Immediate**: 120ms
-* **Navigation**: 180ms
-* **Large**: 250ms
-# HPS-201: Halo Design System
-
-## Philosophy
-Not Material. Not iOS. Not Windows. Halo.
-Three words: **Calm. Trustworthy. Precise.**
-
-## Visual Identity
-The interface should feel like professional equipment (Sony Alpha Camera, DJI RC Controller, Ableton Live). Never playful.
-
-## Color Language
-Semantic colors based on "Olive Spruce". No blue, no purple, no gradients, very little saturation.
-
-* **Canvas**: `#10130F`
-* **Surface**: `#181D17`
-* **Surface Elevated**: `#232A20`
-* **Accent (Olive Spruce)**: `#4A5F3C`
-* **Success**: `#6D8C52`
-* **Warning (Terracotta)**: `#E2725B`
-* **Muted**: `#8A9386`
-* **Text**: `#F5F5F2`
-
-## Typography
-One font. Inter, SF Pro, or IBM Plex Sans.
-Mono: JetBrains Mono.
-
-## Spacing Scale
-`2, 4, 8, 12, 16, 24, 32, 48, 64`. No magic numbers.
-
-## Radius
-`4, 8, 12`. Never arbitrary.
-
-## Motion
-Maximum duration: 300ms.
-* **Immediate**: 120ms
-* **Navigation**: 180ms
-* **Large**: 250ms
+- 48dp touch minimum target size
+- Large text support
+- TalkBack integration
+- Reduced motion settings respected
+- Clear selection and focus states
+- No gesture-only critical actions

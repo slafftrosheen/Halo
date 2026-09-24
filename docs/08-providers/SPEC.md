@@ -2,7 +2,7 @@
 
 Status: CURRENT SOURCE MAP. Reviewed 2026-09-24.
 
-Use [provider architecture](../ai/AI_PROVIDER_ARCHITECTURE.md),
+Use [provider architecture](ARCHITECTURE.md),
 [provider setup](SETUP.md) and [sdk/provider-sdk](../../sdk/provider-sdk).
 
 Provider abstraction is not a security sandbox. Adapters own platform/native/network integration.

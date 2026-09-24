@@ -1,47 +1,34 @@
-# Halo documentation
+# Halo
 
-Status: CURRENT SOURCE MAP. Reviewed 2026-09-18.
+Status: CURRENT SOURCE MAP. Reviewed 2026-09-24.
 
-**Current executable code and its actual wiring are the source of truth for implemented behavior.**
-Tests establish what their assertions exercise; passing runs need dated results.
-Physical behavior needs build/device/firmware evidence. Comments, filenames, enum labels
-and old reports do not establish that something works.
+**Halo is a host-native personal cognitive runtime that connects a user's operating system, models, workspace and physical devices into one coherent assistant.**
 
-## Start here
+## What makes Halo different?
 
-- [Current state](../CURRENT-STATE.md)
-- [Current architecture](04-architecture/ARCHITECTURE.md)
-- [Documentation audit](engineering/DOCUMENTATION-AUDIT.md)
-- [Product direction](../PROJECT-DIRECTION.md)
-- [Proposed next phase](14-roadmap/NEXT-PHASE-2027.md)
-- [GitHub/web implementation research](engineering/IMPLEMENTATION-RESEARCH-2026-09.md)
-- [HeyCyan implementation](protocols/heycyan/IMPLEMENTATION_STATUS.md)
-- [UI route inventory](11-ui/UI-IMPLEMENTATION-STATUS.md)
-- [User redesign guide](03-design/HALO-WORKSPACE-DESIGN.md)
-- [Notebook blueprint](02-product/NOTEBOOK-WORKSPACE-BLUEPRINT.md) and [delivery plan](02-product/NOTEBOOK-DELIVERY.md) — proposed, not current storage/UI
+Halo feels like one intelligence that follows the user across their operating system and the devices around them. 
 
-## Interpretation rules
+- **Android** is our first host, not the architecture itself. Future hosts could include Linux and Windows through equivalent native adapters.
+- **HeyCyan** is our first deeply tested wearable driver. Wearables are first-class interaction devices, but Halo is not tied to any individual hardware family. 
+- **llama.cpp** is the default local inference path, but AI providers are replaceable reasoning backends, not the runtime itself.
 
-| Label | Meaning |
-|---|---|
-| CURRENT SOURCE MAP | Source-backed description, not a build or hardware certificate |
-| DESIGN TARGET | Intended requirements/examples; conformance is not implied |
-| PLANNED / PROPOSED | Future work |
-| HISTORICAL RESEARCH | Recorded observations/vendor analysis, not current implementation |
-| HISTORICAL REPORT | Previous narrative, not current verification |
-| THIRD-PARTY / RAW EVIDENCE | Preserved material; provenance and attribution matter |
+None of these individual technologies define Halo. Core functionality remains useful without a mandatory cloud account, companion application, or subscription.
 
-For factual conflicts, trace the caller, implementation and configuration in the checkout.
-Record disagreements inside code instead of selecting the most optimistic comment.
-For intended direction use PROJECT-DIRECTION, CONSTITUTION and the relevant design/RFC.
-Neither a specification nor this index turns an unimplemented requirement into a feature.
+## Current Status
+Check [CURRENT-STATE.md](CURRENT-STATE.md) for the exact capabilities of the current implementation.
 
-HPS documents are design drafts, not executable SDK definitions. Protocol research retains
-provenance; use the implementation status page to enter the current driver. Vendor documents
-and raw captures are not rewritten to agree with code.
+## Project Navigation
 
-## Maintenance
+- [Project Direction](PROJECT-DIRECTION.md)
+- [Current Implementation State](CURRENT-STATE.md)
 
-Link implementation claims to source and state whether they are wired, merely declared,
-tested or hardware-observed. Record commit, command/scenario and result for verification.
-Keep external ideas in research until implemented. Correct source maps when behavior changes.
+### Detailed Documentation
+For further reading, see our [Documentation Index](docs/README.md), or jump directly to:
+
+- **[Vision & Principles](docs/01-vision/VISION.md)**: Canonical product vision.
+- **[Architecture](docs/04-architecture/ARCHITECTURE.md)**: Technical structure and design targets.
+- **[Design System](docs/03-design/DESIGN-SYSTEM.md)**: Visual language and interaction guidelines.
+- **[Roadmap](docs/14-roadmap/ROADMAP.md)**: Planned work and next steps.
+- **[HeyCyan Protocol](docs/protocols/heycyan/IMPLEMENTATION_STATUS.md)**: Hardware reference implementation status.
+
+**Note:** Executable code and actual wiring are the source of truth for implemented behavior. Specifications describe desired changes; historical reports do not override code.

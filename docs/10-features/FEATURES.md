@@ -1,20 +1,20 @@
 # Feature requirements and implementation boundary
 
-Status: CURRENT SOURCE MAP / PLANNED. Reviewed 2026-09-18.
+Status: CURRENT SOURCE MAP / PLANNED. Reviewed 2026-09-24.
 
 | Feature | Current code | Remaining target |
 |---|---|---|
-| Personal memory | In-memory cognitive stores; separate Room Memory entity/DAO/repository | Integrate durable searchable/editable/deletable facts, provenance and export |
-| Reminders | AndroidMemoryCapability exact-alarm scheduling with simple duration parser | Clarification, exact-alarm access handling, CRUD, reboot/timezone recovery |
-| Automation | Named engine module/contracts | Persisted IF/THEN time/location/device triggers and auditable bounded execution |
-| Notification summarization | host-android system NotificationListener is an empty class | Registered listener service, scoped permission, filtering, summary/delivery |
-| Agentic tools | CognitiveSession loop and echo/time tools | Typed bridges to useful phone/device capabilities |
-| Notebook | No current AppShell route or integrated workspace repository | Persistent notes, Inbox, conversations/files, memory management, explicit Working Set and local search per user blueprint |
+| Notebook | Implemented AppShell route (NB-01 notes/search/lifecycle flow). | Expand to full inbox, conversation, and files integration; implement explicit Working Set and robust local search. |
+| Personal memory | Wired in-memory cognitive stores; declared Room Memory entity/DAO. | Reconcile in-memory vs Room architectures. Implement durable, searchable, editable, and exportable facts with provenance. |
+| Reminders | Wired `AndroidMemoryCapability` exact-alarm scheduling with simple duration parser. | Handle scheduling permissions gracefully, implement CRUD, reboot/timezone recovery, and complex ambiguity resolution. |
+| Automation | Declared named engine module/contracts. | Target: Persisted IF/THEN time/location/device triggers and auditable bounded execution. |
+| Notification summarization | Declared empty `NotificationListener` class in `host-android`. | Target: Registered listener service, scoped permission, intelligent filtering, and contextual summary delivery. |
+| Agentic tools | Wired `CognitiveSession` loop; implemented basic echo/time tools. | Target: Typed bridges to complex phone/device capabilities beyond basic utilities. |
 
-Source maps: [architecture](../04-architecture/ARCHITECTURE.md),
-[persistence](../04-architecture/DATABASE.md), [providers](../ai/AI_PROVIDER_ARCHITECTURE.md).
-The feature list is not a statement that the desired flows are implemented.
-
-Notebook scope: [user blueprint](../02-product/NOTEBOOK-WORKSPACE-BLUEPRINT.md) and
-[delivery slices](../02-product/NOTEBOOK-DELIVERY.md). Canvas/projects/hybrid retrieval
-are beta targets; basic workspace use must not require an AI provider.
+*Definitions:*
+- **Implemented**: Type exists and has a reachable execution path in the current composition.
+- **Wired**: Configured in DI or system startup, but might have incomplete capability.
+- **Declared**: Type/interface exists but is not wired or reachable.
+- **Tested**: Covered by automated tests.
+- **Hardware-verified**: Proven on physical devices.
+- **Target**: Intended future behavior.

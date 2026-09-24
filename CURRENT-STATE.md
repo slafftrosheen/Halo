@@ -34,12 +34,14 @@ the selected inference provider and the native-resource budget permits concurren
 models. Neither change is counted as hardware or latency acceptance until rerun on the physical
 glasses/phone pair.
 
+Additional recent source additions: The codebase now includes structured `AiFailureDetails`, provider retry/cooldown behavior, `LOCAL_ONLY` routing, unified error presentation, detailed interaction turn lifecycles, barge-in evidence tracking, observation freshness and supersession, explicit local-inference readiness/preload stages, latency tracing, HeyCyan arbitration and thumbnail decoding work, and significant `llama.cpp` runtime improvements. As with the rest of the file, these are present in code but not yet validated as physically accepted on real hardware.
+
 See [architecture](docs/04-architecture/ARCHITECTURE.md),
-[providers](docs/ai/AI_PROVIDER_ARCHITECTURE.md),
+[providers](docs/08-providers/ARCHITECTURE.md),
 [persistence](docs/04-architecture/DATABASE.md),
 [security](docs/12-security/THREAT_MODEL.md),
 [HeyCyan](docs/protocols/heycyan/IMPLEMENTATION_STATUS.md) and
 [audit ledger](docs/engineering/DOCUMENTATION-AUDIT.md).
 
-Read [release readiness](RELEASE_READINESS.md) separately. Code presence is not measured
+Read [release readiness](docs/13-engineering/README.md) separately. Code presence is not measured
 latency, power consumption, passing tests or physical acceptance.

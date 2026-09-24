@@ -1,38 +1,24 @@
-> Status: DESIGN TARGET. Classified 2026-09-18.
->
-> Requirements, examples and proposed behavior; not an implementation or verification report. Read present-tense guarantees below as intended acceptance criteria, not achieved properties. Current code and actual wiring determine behavior. Any previous ACTIVE/authority wording applies only to historical design intent.
->
-> [Current reference](../../CURRENT-STATE.md).
+# Halo Product Requirements Document
 
-# Product Requirements Document (PRD)
+Status: DESIGN TARGET. Reviewed 2026-09-24.
 
-## What problem are we solving?
-Today's wearable AI relies on walled gardens. Devices are locked to specific providers, clouds, and ecosystems. Halo solves this by decoupling the hardware from the intelligence, placing the orchestrator (the Android phone) firmly under the user's control.
+Halo is a host-native personal cognitive runtime that connects a user's operating system, models, workspace and physical devices into one coherent assistant.
 
-## Target Audience
+Halo remains useful as a phone assistant without any wearable attached. Wearables enhance its reach.
 
-### Primary
-* Engineers and Developers
-* IT Admins
-* Field Technicians
-* Makers and Hardware Hackers
-* Power Users
+## Primary Surfaces
 
-### Secondary
-* Accessibility Users
-* Professionals
-* Students
+The product is defined around five primary navigational surfaces:
 
-*Non-Goals*: We are not optimizing for social media, gaming, or general entertainment.
+1. **Home**: Immediate interaction, current work, and Halo presence.
+2. **Activity**: What happened and why (timeline of interactions, errors, and system events).
+3. **Notebook**: The persistent cognitive workspace.
+4. **Devices**: Where Halo can perceive and act (managing connected hardware capabilities).
+5. **Settings**: How Halo behaves (provider configuration, permissions, preferences).
 
-## Success Metrics
-Success is measured by efficiency, trust, and speed, not engagement.
-* **Wake Word Latency**: < 150ms
-* **Time to Answer**: < 1 second for local tasks
-* **Battery Drain**: < 1.5% per hour in background
-* **Local Inference Rate**: Maximized
-* **Percentage of Tasks Completed Offline**: > 80% for system controls
-* **User Trust**: Minimal external network requests per day
+## User Outcomes
 
-## Minimum Viable Product (MVP)
-The MVP establishes the Runtime, connects to one Driver (HeyCyan), and supports local audio pipeline (Wake Word + STT + TTS) with basic intent routing, before any complex AI integration.
+- **Ubiquitous Access**: Users can invoke their intelligence layer naturally from the phone, wearables, or ambient devices.
+- **Contextual Continuity**: The system understands where the user is and what they are looking at, routing responses appropriately (e.g., earbud microphone to earbud speaker).
+- **Persistent Memory**: The Notebook acts as an accessible, durable mind palace that is user-manageable and transparent.
+- **Local Control**: The user owns their models and their data, choosing local or remote processing independently.

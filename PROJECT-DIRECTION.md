@@ -10,7 +10,7 @@ inspectable actions and the pixel/glass identity guide development.
 
 Current source and its wiring determine what exists. [CURRENT-STATE](CURRENT-STATE.md)
 maps that implementation. Tests and physical evidence have distinct verification scopes.
-The [constitution](CONSTITUTION.md) records engineering targets, not universal conformance.
+The [constitution](.agents/AGENTS.md) records engineering targets, not universal conformance.
 Specifications describe desired changes; historical reports do not override code.
 
 References to missing ARCHITECTURE-GUARDRAILS files have been removed. No unseen guardrail

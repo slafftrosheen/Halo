@@ -1,5 +1,7 @@
 # HALO PERFORMANCE & BENCHMARK REPORT
 
+Status: CURRENT SOURCE MAP. Reviewed 2026-09-22.
+
 **Date**: 2026-09-22  
 **Target Variant**: `:app:benchmark` (Non-debuggable, profileable)  
 **Toolchain**:
