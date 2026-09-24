@@ -79,11 +79,13 @@ class AndroidProviderFactory(
             speechRecognition = speechRecognition,
             speechSynthesis = AndroidTTSProvider(context),
             wakeWord = wakeWord,
+            // Native llama.cpp is Halo's zero-server/default inference path.
+            // Optional network/cloud providers follow it; Android Assistant is handoff-only.
             aiProviders = listOfNotNull(
-                runCatching { AndroidAssistantProvider(context) }.getOrNull(),
-                runCatching { OpenRouterProvider(storage) }.getOrNull(),
+                llamaProvider,
                 runCatching { OllamaProvider(storage) }.getOrNull(),
-                llamaProvider
+                runCatching { OpenRouterProvider(storage) }.getOrNull(),
+                runCatching { AndroidAssistantProvider(context) }.getOrNull()
             )
         )
     }

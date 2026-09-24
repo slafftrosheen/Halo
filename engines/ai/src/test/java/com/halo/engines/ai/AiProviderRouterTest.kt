@@ -229,6 +229,39 @@ class AiProviderRouterTest {
     }
 
     @Test
+    fun `designated default provider wins registration order on clean install`() = runTest {
+        val storage = FakeStorage()
+        val ollama = MockProvider("provider.ollama", "Ollama", isLocal = true)
+        val native = MockProvider("provider.llamacpp.native", "llama.cpp", isLocal = true)
+        val router = DefaultAiProviderRouter(
+            providers = listOf(ollama, native),
+            storage = storage,
+            defaultInferenceProviderId = native.id
+        )
+
+        assertEquals(native.id, router.selectedProviderId.value)
+        assertEquals(AiRoutingPolicy.LOCAL_ONLY, router.routingPolicy.value)
+    }
+
+    @Test
+    fun `persisted provider selection wins designated default`() = runTest {
+        val storage = FakeStorage().apply {
+            putString("active_ai_provider", "provider.ollama")
+            putString("ai_routing_policy", AiRoutingPolicy.EXPLICIT.name)
+        }
+        val ollama = MockProvider("provider.ollama", "Ollama", isLocal = true)
+        val native = MockProvider("provider.llamacpp.native", "llama.cpp", isLocal = true)
+        val router = DefaultAiProviderRouter(
+            providers = listOf(native, ollama),
+            storage = storage,
+            defaultInferenceProviderId = native.id
+        )
+
+        assertEquals(ollama.id, router.selectedProviderId.value)
+        assertEquals(AiRoutingPolicy.EXPLICIT, router.routingPolicy.value)
+    }
+
+    @Test
     fun `router defaults to local-only routing`() = runTest {
         val storage = FakeStorage()
         val cloud = MockProvider("cloud", "Cloud", isLocal = false)

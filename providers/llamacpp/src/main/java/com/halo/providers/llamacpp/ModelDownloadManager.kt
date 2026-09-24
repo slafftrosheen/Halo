@@ -126,7 +126,8 @@ class ModelDownloadManager(
         if (length <= 0L) return null
         val fingerprint = FileFingerprint(file.absolutePath, length, file.lastModified())
         return metadataCache.getOrRead(fingerprint) {
-            GgufMetadataReader.read(file)?.takeIf { !it.architecture.isNullOrBlank() }
+            // Metadata enrichment is advisory; the native loader owns compatibility.
+            GgufMetadataReader.read(file)
         }
     }
 

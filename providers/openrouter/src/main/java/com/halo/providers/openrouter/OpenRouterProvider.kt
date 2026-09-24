@@ -34,7 +34,7 @@ class OpenRouterProvider(
     override val status: StateFlow<ProviderStatus> = _status.asStateFlow()
 
     private val apiKey: String? get() = storage.getString("openrouter_api_key")
-    private val selectedModelId: String get() = storage.getString("openrouter_model") ?: "openrouter/auto"
+    private val selectedModelId: String get() = storage.getString("openrouter_model") ?: "openrouter/free"
 
     override suspend fun getStatus(): ProviderStatus = withContext(Dispatchers.IO) {
         val current = if (apiKey.isNullOrBlank()) {
@@ -279,9 +279,8 @@ class OpenRouterProvider(
     }
 
     private suspend fun resolveModel(modelId: String): String {
-        if (modelId != "free") return modelId
-        return listModels().firstOrNull { it.isFree }?.id
-            ?: throw AiProviderException(AiErrorType.MODEL_UNAVAILABLE, "No free OpenRouter model is currently available")
+        // Legacy shorthand maps to the same router used by the current UI/default.
+        return if (modelId == "free") "openrouter/free" else modelId
     }
 
     private fun buildRequestBody(request: AiRequest, context: AiContext, model: String, stream: Boolean): JSONObject {

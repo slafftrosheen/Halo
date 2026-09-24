@@ -43,14 +43,12 @@ class ModelDownloadWorker(context: Context, parameters: WorkerParameters) :
         root.mkdirs()
         val destination = File(root, filename)
         val part = File(root, "$filename.part")
-        if (destination.isFile && destination.length() == expectedBytes &&
-            GgufMetadataReader.read(destination)?.architecture.isNullOrBlank().not()) {
+        if (GgufMetadataReader.isCompleteDownload(destination, expectedBytes)) {
             return@withContext Result.success()
         }
         if (part.length() > expectedBytes) part.delete()
         // A completed transfer may have been interrupted before rename. Never discard it on HTTP 416.
-        if (part.length() == expectedBytes &&
-            GgufMetadataReader.read(part)?.architecture.isNullOrBlank().not()) {
+        if (GgufMetadataReader.isCompleteDownload(part, expectedBytes)) {
             if (destination.exists() && !destination.delete()) return@withContext failure("Unable to replace the previous model file")
             return@withContext if (part.renameTo(destination)) Result.success() else failure("Unable to finish model installation")
         }
@@ -125,8 +123,11 @@ class ModelDownloadWorker(context: Context, parameters: WorkerParameters) :
             return@withContext failure("Downloaded file is not a complete, valid GGUF")
         }
         if (metadata.architecture.isNullOrBlank()) {
-            part.delete()
-            return@withContext failure("GGUF is missing general.architecture metadata")
+            Log.w(
+                TAG,
+                "GGUF transfer is complete but Halo metadata projection did not resolve general.architecture; " +
+                    "retaining the file and deferring compatibility validation to native llama.cpp"
+            )
         }
         if (destination.exists()) destination.delete()
         if (!part.renameTo(destination)) return@withContext retryOrFail("Unable to complete the model transfer")

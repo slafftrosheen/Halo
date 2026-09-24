@@ -1,6 +1,6 @@
 # Halo current state
 
-Status: CURRENT SOURCE MAP. Reviewed 2026-09-22.
+Status: CURRENT SOURCE MAP. Provider review updated 2026-09-24.
 Source review is correlated with the supplied 2026-09-21 device trace. No post-fix build, instrumented test, benchmark, or hardware rerun is claimed.
 
 [ManualDependencyGraph](app/src/main/java/com/halo/app/di/ManualDependencyGraph.kt) is
@@ -14,7 +14,7 @@ excludes the older microkernel/ProcessManager path from normal phone startup.
 | Presence | Asymmetric rounded-cell renderer driven by HaloRuntimeState; no permanent idle animation; compact signal-cell glyphs in Activity/Notebook/navigation; Android animator-scale zero disables Presence transitions | No measured audio/output envelope yet; low-power behavior beyond platform animation removal is not established |
 | Cognition | Engine pipeline and CognitiveSession streaming/tool rounds; persisted AiContextPolicy from Intelligence is resolved for each new default conversational turn; Tools UI controls real tool exposure | General model-to-Android capability bridge is not wired; memory context source is still unpopulated, so Memory UI is intentionally hidden; no authoritative agent-mode switch exists yet |
 | Model tools | Echo and current time registered in app graph | Not general phone/device actions |
-| Providers | llama.cpp, Ollama, OpenRouter inference; Android assistant handoff; Sherpa and Android TTS speech; model inventory and GGUF metadata are cached/asynchronous; Qwen3 0.6B and 1.7B are selectable validation candidates | Qwen3 Android binding/chat-template behavior is not yet physically validated or made default; credential storage is not an encrypted vault |
+| Providers | Native llama.cpp is the designated clean-install/default inference provider; Ollama is optional LAN HTTP inference; OpenRouter is optional cloud inference with `openrouter/free` as its default router; Android assistant is handoff-only; Sherpa and Android TTS own speech. GGUF download integrity no longer depends on Halo projecting `general.architecture`. | Model compatibility is still proven by the native loader at load time; Ollama/OpenRouter require explicit setup; Qwen3 Android binding/chat-template behavior still needs physical acceptance. |
 | Speech input | Physical HeyCyan microphone capture was validated in the supplied 2026-09-21 run with zero packet/frame drops in sampled turns; external buffers receive whole-capture analysis with labeled Silero/energy estimation; low-gain `SIMPLE_ENERGY` captures are no longer rejected solely by the Silero voiced-ratio threshold | Threshold/corpus acceptance remains manual; post-fix acceptance still requires a fresh hardware run |
 | Persistence | Room Memory plus NB-01 workspace-object/note/recovery-draft tables, local note search and lifecycle management; in-memory cognitive/conversation stores | Notebook storage is not cognitive memory; Room-backed CognitiveSession and remaining Notebook object types are not established |
 | Reminders | Exact-alarm adapter with simple duration parsing | Complete CRUD, robust ambiguity, permission/reboot recovery not established |

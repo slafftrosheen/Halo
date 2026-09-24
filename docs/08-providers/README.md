@@ -1,9 +1,13 @@
-> Status: DOCUMENTATION INDEX. Classified 2026-09-18.
+> Status: DOCUMENTATION INDEX. Reviewed 2026-09-24.
 >
-> Index of a documentation domain. Implementation claims require current source and wiring; linked drafts are not shipped features.
->
-> [Current reference](../README.md).
+> Index of the provider domain. Implementation claims require current source and wiring.
 
 # 08-providers
 
-Index and documentation for the 08-providers domain.
+- [Setup and troubleshooting](SETUP.md)
+- [Provider contracts](SPEC.md)
+- [AI provider architecture](../ai/AI_PROVIDER_ARCHITECTURE.md)
+
+Native llama.cpp is the Android host's designated clean-install inference provider. Ollama and
+OpenRouter are optional configured inference backends; Android Assistant is a handoff boundary,
+not an inference backend.

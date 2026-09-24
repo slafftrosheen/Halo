@@ -124,16 +124,36 @@ fun IntelligenceScreen(
 
         Spacer(Modifier.height(20.dp))
 
-        HaloWorkspaceSection(title = "Provider") {
-            uiState.providers.forEachIndexed { index, provider ->
+        val inferenceProviders = uiState.providers.filterNot { it.isHandoff }
+        HaloWorkspaceSection(title = "Inference providers") {
+            inferenceProviders.forEachIndexed { index, provider ->
                 HaloWorkspaceRow(
                     title = provider.name,
+                    subtitle = providerSetupSummary(provider.id),
                     trailingText = if (provider.isSelected) "Selected" else null,
                     selected = provider.isSelected,
                     onClick = { viewModel.selectProvider(provider.id) }
                 )
-                if (index < uiState.providers.lastIndex) {
+                if (index < inferenceProviders.lastIndex) {
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                }
+            }
+        }
+
+        val handoffProviders = uiState.providers.filter { it.isHandoff }
+        if (handoffProviders.isNotEmpty()) {
+            Spacer(Modifier.height(20.dp))
+            HaloWorkspaceSection(title = "External assistant") {
+                handoffProviders.forEachIndexed { index, provider ->
+                    HaloWorkspaceRow(
+                        title = provider.name,
+                        subtitle = "Handoff to Android's configured assistant · not Halo inference",
+                        trailingText = "Open",
+                        onClick = { viewModel.selectProvider(provider.id) }
+                    )
+                    if (index < handoffProviders.lastIndex) {
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    }
                 }
             }
         }
@@ -185,7 +205,7 @@ fun IntelligenceScreen(
                             placeholder = { Text("http://192.168.1.10:11434") }
                         )
                         Text(
-                            text = "Use the reachable HTTP endpoint for the Ollama host on your local network.",
+                            text = "Optional local-network server. Native llama.cpp is Halo's default and does not require Ollama. Use the reachable HTTP endpoint for the Ollama host.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -336,6 +356,13 @@ fun IntelligenceScreen(
 
         Spacer(Modifier.height(32.dp))
     }
+}
+
+private fun providerSetupSummary(providerId: String): String = when (providerId) {
+    ProviderIds.LLAMACPP -> "Default · on-device GGUF · no server or API key"
+    ProviderIds.OLLAMA -> "Optional local-network server · endpoint required"
+    ProviderIds.OPENROUTER -> "Optional cloud inference · API key required"
+    else -> "Optional inference provider"
 }
 
 @Composable

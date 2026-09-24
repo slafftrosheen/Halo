@@ -5,6 +5,7 @@ import java.nio.file.Files
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class GgufMetadataReaderTest {
@@ -82,6 +83,14 @@ class GgufMetadataReaderTest {
             assertNotNull(metadata)
             assertNull(metadata!!.architecture)
             assertNull(metadata.contextLength)
+        } finally { file.delete() }
+    }
+
+    @Test
+    fun completeDownloadDoesNotRequireArchitectureProjection() {
+        val file = writeGguf(emptyList())
+        try {
+            assertTrue(GgufMetadataReader.isCompleteDownload(file, file.length()))
         } finally { file.delete() }
     }
 

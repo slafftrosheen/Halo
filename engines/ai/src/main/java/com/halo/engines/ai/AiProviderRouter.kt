@@ -24,14 +24,22 @@ class DefaultAiProviderRouter(
     private val providerRegistry: AiProviderRegistry,
     private val storage: Storage,
     private val eventBus: EventBus? = null,
-    private val logger: RuntimeLogger? = null
+    private val logger: RuntimeLogger? = null,
+    private val defaultInferenceProviderId: String? = null
 ) : AiProviderRouter {
     constructor(
         providers: List<AiProvider>,
         storage: Storage,
         eventBus: EventBus? = null,
-        logger: RuntimeLogger? = null
-    ) : this(AiProviderRegistry.from(providers), storage, eventBus, logger)
+        logger: RuntimeLogger? = null,
+        defaultInferenceProviderId: String? = null
+    ) : this(
+        AiProviderRegistry.from(providers),
+        storage,
+        eventBus,
+        logger,
+        defaultInferenceProviderId
+    )
 
     private val inferenceProviders: List<AiInferenceProvider> = providerRegistry.inference
     private val allProviders: List<AiProvider> = providerRegistry.all
@@ -61,7 +69,14 @@ class DefaultAiProviderRouter(
     private fun restoreStoredRoutingState() {
         val storedProvider = storage.getString("active_ai_provider")
             ?.takeIf { id -> inferenceProviders.any { it.id == id } }
-        val restoredProvider = storedProvider ?: inferenceProviders.firstOrNull { it.isLocal }?.id ?: inferenceProviders.firstOrNull()?.id
+        val designatedDefault = defaultInferenceProviderId
+            ?.let { id -> inferenceProviders.firstOrNull { it.id == id } }
+        // Never let registration order choose the clean-install provider.
+        // A valid persisted user selection remains authoritative.
+        val restoredProvider = storedProvider
+            ?: designatedDefault?.id
+            ?: inferenceProviders.firstOrNull { it.isLocal }?.id
+            ?: inferenceProviders.firstOrNull()?.id
 
         val rawPolicy = storage.getString("ai_routing_policy")
         val restoredPolicy = rawPolicy?.let {

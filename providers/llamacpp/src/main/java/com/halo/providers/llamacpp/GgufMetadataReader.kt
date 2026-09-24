@@ -86,6 +86,16 @@ internal object GgufMetadataReader {
         }
     }
 
+    /**
+     * Download integrity gate only. A complete GGUF container is retained even when
+     * Halo's lightweight metadata projection cannot resolve model architecture.
+     * Native llama.cpp is the authoritative compatibility check at load time.
+     */
+    fun isCompleteDownload(file: File, expectedBytes: Long): Boolean {
+        if (expectedBytes <= 0L || !file.isFile || file.length() != expectedBytes) return false
+        return read(file) != null
+    }
+
     private fun DataInputStream.readValue(type: Long): Any? = when (type) {
         0L -> readUInt8()
         1L -> readInt8()

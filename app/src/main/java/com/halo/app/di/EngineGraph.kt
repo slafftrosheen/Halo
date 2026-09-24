@@ -100,7 +100,8 @@ class EngineGraph(
             providerRegistry = providerGraph.providers.aiRegistry,
             storage = ManualDependencyGraph.storage,
             eventBus = infra.eventBus,
-            logger = infra.logger
+            logger = infra.logger,
+            defaultInferenceProviderId = providerGraph.providers.inference.id
         )
     }
     val aiEngine by lazy { AIEngine(aiProviderRouter, ManualDependencyGraph.storage) }

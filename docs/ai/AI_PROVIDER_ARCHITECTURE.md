@@ -1,40 +1,38 @@
 # AI providers and sessions
 
-Status: CURRENT SOURCE MAP. Reviewed 2026-09-21.
+Status: CURRENT SOURCE MAP. Reviewed 2026-09-24.
 
-[AI.kt](../../sdk/provider-sdk/src/main/java/com/halo/sdk/provider/AI.kt) separates
-AiProvider metadata from inference and handoff contracts. AiRequest contains
-text/image/audio/video fields; actual modality support is provider/model-specific.
-AiResponse carries text/tool calls/metadata. AiStreamEvent represents streamed data and outcomes.
+[AI.kt](../../sdk/provider-sdk/src/main/java/com/halo/sdk/provider/AI.kt) separates provider metadata,
+inference and handoff contracts. [DefaultAiProviderRouter](../../engines/ai/src/main/java/com/halo/engines/ai/AiProviderRouter.kt)
+receives the Android host's designated `Providers.inference` backend as the clean-install default.
+That backend is native llama.cpp. Registration order no longer makes Ollama the implicit default;
+a valid persisted user selection still takes precedence.
 
-[DefaultAiProviderRouter](../../engines/ai/src/main/java/com/halo/engines/ai/AiProviderRouter.kt)
-is the routing implementation. Read its policy/capability checks; do not assume automatic
-local/cloud fallback or that all models support every request field.
+| Adapter | Role / boundary | Setup |
+|---|---|---|
+| Native llama.cpp | Default on-device inference; TEXT + STREAMING | Download/select an app-managed GGUF; no server/key |
+| Ollama | Optional HTTP inference server; TEXT + STREAMING | Configure reachable endpoint and select a model advertised by Ollama |
+| OpenRouter | Optional cloud inference, discovery, streaming and tool-call parsing | Configure API key; default router is `openrouter/free` |
+| Android assistant | ACTION_ASSIST handoff only | Configure Android system assistant; never treated as an inference result |
+| Sherpa | Local speech recognition | Install supported speech model from Voice setup |
+| Android TTS | Speech synthesis | Uses Android TTS engine; output routing is separate |
 
-| Adapter | Boundary |
-|---|---|
-| OpenRouter | Network inference, discovery, streaming and tool-call parsing/serialization |
-| Ollama | Configured endpoint; currently advertises TEXT and STREAMING, not TOOLS |
-| Native llama.cpp | Native inference; model metadata reports supportsTools=false |
-| Android assistant | ACTION_ASSIST handoff; custom prompt extras are not guaranteed Android APIs; no inference result |
-| Sherpa / Android TTS | Speech providers, not conversational LLM substitutes |
+Full setup: [Provider setup](../08-providers/SETUP.md).
 
-Ollama's local metadata does not mean on-phone: its endpoint may be another machine.
-External assistant handoff does not establish local processing by that assistant.
+Ollama's local classification does not mean on-phone: its endpoint may be another machine on the LAN.
+The `10.0.2.2:11434` endpoint is an emulator-only development convenience. OpenRouter is explicit
+network/cloud inference.
 
-Local llama.cpp discovery is now an asynchronous inventory boundary with immutable snapshots and a
-fingerprint-keyed in-memory GGUF metadata cache. `listModels()` consumes that cache rather than
-reopening GGUF headers. Qwen3 0.6B Q4_K_M and 1.7B Q4_K_M are catalogued as opt-in validation
-candidates; neither is the default until the existing Android binding and chat behavior are tested.
-Streaming native output has a conservative repeated-suffix guard before response/TTS completion.
+Local llama.cpp discovery uses app-managed inventory and cached GGUF metadata. Download integrity is
+separate from metadata enrichment: a complete parseable GGUF is not deleted merely because Halo's
+lightweight reader cannot project `general.architecture`. Native llama.cpp is the authoritative
+compatibility check at model load time. Memory admission may reduce context size or reject a load
+when Android memory headroom is insufficient.
 
 [CognitiveSession](../../runtime/cognition/src/main/java/com/halo/runtime/cognition/session/CognitiveSession.kt)
-already performs bounded tool rounds, authorization and result feedback.
-The app ToolRegistry is initialized with echo and current time; general Android/wearable
-capability tools are not thereby exposed.
+performs bounded tool rounds, authorization and result feedback. Tool capability remains
+provider/model-specific. Native llama.cpp and Halo's Ollama adapter currently do not advertise
+TOOLS merely because upstream engines may support tool formats.
 
-[InMemoryToolAuthorizer](../../runtime/cognition/src/main/java/com/halo/runtime/cognition/tools/InMemoryToolAuthorizer.kt)
-checks registry validation/registration, not complete user-confirmation/Android permission
-or physical-safety policy. Context sharing policy exists in session assembly but is not
-a mandatory global network firewall. The older AIEngine supplies an empty availableTools
-list in both policy branches. These integration gaps are [planned work](../14-roadmap/NEXT-PHASE-2027.md).
+Provider diagnostics are on-demand. Startup restores persisted local state without probing every
+network provider.
