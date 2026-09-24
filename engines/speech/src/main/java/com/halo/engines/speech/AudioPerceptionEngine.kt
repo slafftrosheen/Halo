@@ -142,7 +142,7 @@ class AudioPerceptionEngine(
         try {
             if (!audioPipeline.usesLiveRecognition) source.start()
             _health.value = EngineHealth.Healthy
-            eventBus.publish(ListeningStarted())
+            eventBus.publish(ListeningStarted(captureId = turn.captureId, source = turn.route))
             context.runtime.logger.info("SPEECH_INPUT_ROUTE", "capture=${turn.captureId} source=${turn.source}")
             captureJob = scope.launch(start = kotlinx.coroutines.CoroutineStart.UNDISPATCHED) {
                 try {
@@ -184,6 +184,10 @@ class AudioPerceptionEngine(
         }
     }
 
+    suspend fun cancelExternalInput(captureId: String) {
+        stopCapture(finalizeUserCapture = false, expectedCaptureId = captureId)
+    }
+
     suspend fun finishExternalInput(captureId: String) = transactionMutex.withLock {
         if (_inputStatus.value.turn?.captureId != captureId) return@withLock
         // The external source has sent EOS. Let its bounded channel empty before
@@ -223,11 +227,6 @@ class AudioPerceptionEngine(
     private suspend fun stopCapture(finalizeUserCapture: Boolean, expectedCaptureId: String? = null) {
         transactionMutex.withLock {
             if (expectedCaptureId != null && _inputStatus.value.turn?.captureId != expectedCaptureId) return@withLock
-            if (audioPipeline.usesLiveRecognition) {
-                audioPipeline.reset()
-                return@withLock
-            }
-
             val job = captureJob
             val hadActiveCapture = job?.isActive == true
 
@@ -239,7 +238,7 @@ class AudioPerceptionEngine(
             }
 
             when {
-                !finalizeUserCapture -> audioPipeline.reset()
+                !finalizeUserCapture || audioPipeline.usesLiveRecognition -> audioPipeline.reset()
                 hadActiveCapture -> audioPipeline.finishCapture()
                 else -> {
                     // If VAD already ended capture, StopListening means the user

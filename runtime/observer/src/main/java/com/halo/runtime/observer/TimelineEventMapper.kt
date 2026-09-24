@@ -23,16 +23,24 @@ fun timelinePresentationId(
 }
 
 class DefaultTimelineEventMapper : TimelineEventMapper {
+    private val interactions = object : LinkedHashMap<String, String>() {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, String>?) = size > 1000
+    }
+    @Synchronized
     override fun map(event: HaloEvent): TimelineEvent? {
+        if (event is CognitiveRequestStarted) {
+            val iId = event.interactionId
+            if (iId != null) interactions[event.requestId] = iId
+        }
         val timestamp = Instant.ofEpochMilli(event.timestamp)
         val correlationId = when (event) {
             is ActionReceipt -> event.operationId
-            is ToolCallRequested -> event.requestId
-            is ToolCallAuthorized -> event.requestId
-            is ToolCallRejected -> event.requestId
-            is ToolCallCompleted -> event.requestId
-            is AssistantResponsePublished -> event.id
-            is ObservationCreated -> event.observation.id.value
+            is ToolCallRequested -> interactions[event.requestId] ?: event.requestId
+            is ToolCallAuthorized -> interactions[event.requestId] ?: event.requestId
+            is ToolCallRejected -> interactions[event.requestId] ?: event.requestId
+            is ToolCallCompleted -> interactions[event.requestId] ?: event.requestId
+            is AssistantResponsePublished -> interactions[event.transactionId] ?: event.transactionId
+            is ObservationCreated -> event.observation.interactionId
             is IntentRecognized -> event.id
             is AIResponseGenerated -> event.id
             is EngineStarted -> event.engineId
@@ -42,19 +50,19 @@ class DefaultTimelineEventMapper : TimelineEventMapper {
             is ExecutionStarted -> event.planId
             is ExecutionFinished -> event.planId
             is OutcomePublished -> event.id
-            is CognitiveRequestStarted -> event.requestId
-            is CognitiveReasoningStarted -> event.requestId
-            is CognitiveCompleted -> event.requestId
-            is CognitiveFailed -> event.requestId
+            is CognitiveRequestStarted -> interactions[event.requestId] ?: event.requestId
+            is CognitiveReasoningStarted -> interactions[event.requestId] ?: event.requestId
+            is CognitiveCompleted -> interactions[event.requestId] ?: event.requestId
+            is CognitiveFailed -> interactions[event.requestId] ?: event.requestId
             is StageMetricsPublished -> event.observationId
             is ObservationReceived -> event.observationId
             is InterpretationProduced -> event.observationId
             is IntentCreated -> event.intentId
             is IntentResolved -> event.intentId
             is IntentDispatched -> event.intentId
-            is ProviderRequest -> event.requestId
-            is ProviderResult -> event.requestId
-            is ProviderFailure -> event.requestId
+            is ProviderRequest -> interactions[event.requestId] ?: event.requestId
+            is ProviderResult -> interactions[event.requestId] ?: event.requestId
+            is ProviderFailure -> interactions[event.requestId] ?: event.requestId
             is EmbodimentExecutionEvent -> event.result.intentId
             else -> event.id
         }

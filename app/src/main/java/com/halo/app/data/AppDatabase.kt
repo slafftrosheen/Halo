@@ -55,6 +55,8 @@ import com.halo.app.data.notebook.NotebookDao
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
+    abstract fun notificationDao(): com.halo.app.data.notification.NotificationDao
+    abstract fun routineDao(): com.halo.app.data.routine.RoutineDao
     abstract fun agentRunDao(): AgentRunDao
     abstract fun conversationDao(): ConversationDao
     abstract fun workspaceContextDao(): WorkspaceContextDao
@@ -268,6 +270,13 @@ abstract class AppDatabase : RoomDatabase() {
 
         val MIGRATION_9_10 = object : Migration(9, 10) {
             override fun migrate(db: SupportSQLiteDatabase) {
+                // v9 was shipped/exported in both legacy and already-expanded agent layouts.
+                val expandedAgents = db.query("PRAGMA table_info(agent_runs)").use { cursor ->
+                    var expanded = false
+                    while (cursor.moveToNext()) if (cursor.getString(cursor.getColumnIndexOrThrow("name")) == "interactionId") expanded = true
+                    expanded
+                }
+                if (!expandedAgents) {
                 // Safely migrate agent_runs
                 db.execSQL(
                     """
@@ -289,12 +298,10 @@ abstract class AppDatabase : RoomDatabase() {
                         id, interactionId, request, startedAt, updatedAt, completedAt, state, failureReason
                     )
                     SELECT 
-                        id, id, request, startedAt, startedAt, completedAt, state, NULL
+                        id, 'legacy:' || id, request, startedAt, startedAt, completedAt, state, NULL
                     FROM agent_runs
                     """.trimIndent()
                 )
-                db.execSQL("DROP TABLE agent_runs")
-                db.execSQL("ALTER TABLE agent_runs_new RENAME TO agent_runs")
 
                 // Safely migrate agent_steps
                 db.execSQL(
@@ -320,15 +327,22 @@ abstract class AppDatabase : RoomDatabase() {
                         id, runId, interactionId, ordinal, type, schemaVersion, payloadJson, idempotencyKey, state, createdAt, completedAt
                     )
                     SELECT 
-                        id, runId, runId, 0, stepType, 1, payload, NULL, 'COMPLETED', timestamp, timestamp
-                    FROM agent_steps
+                        s.id, s.runId, 'legacy:' || s.runId,
+                        (SELECT COUNT(*) FROM agent_steps prior WHERE prior.runId = s.runId AND
+                            (prior.timestamp < s.timestamp OR (prior.timestamp = s.timestamp AND prior.id < s.id))),
+                        s.stepType, 1, s.payload, NULL, 'UNKNOWN', s.timestamp, s.timestamp
+                    FROM agent_steps s
                     """.trimIndent()
                 )
                 db.execSQL("DROP TABLE agent_steps")
+                db.execSQL("DROP TABLE agent_runs")
+                db.execSQL("ALTER TABLE agent_runs_new RENAME TO agent_runs")
                 db.execSQL("ALTER TABLE agent_steps_new RENAME TO agent_steps")
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_agent_steps_runId ON agent_steps(runId)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_agent_steps_interactionId ON agent_steps(interactionId)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_agent_steps_idempotencyKey ON agent_steps(idempotencyKey)")
+
+                }
 
                 db.execSQL(
                     """
@@ -428,7 +442,6 @@ abstract class AppDatabase : RoomDatabase() {
         fun create(context: Context): AppDatabase =
             Room.databaseBuilder(context, AppDatabase::class.java, "halo.db")
                 .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
-                .fallbackToDestructiveMigration(true)
                 .build()
     }
 }

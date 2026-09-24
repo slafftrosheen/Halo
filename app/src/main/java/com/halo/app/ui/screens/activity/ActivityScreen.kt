@@ -42,6 +42,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
+import com.halo.runtime.cognition.agent.*
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 
@@ -142,7 +145,7 @@ data class ActivityStep(
 )
 
 enum class ActivityKind { USER, SYSTEM, HALO, ERROR }
-enum class ActivityStatus { PENDING, SUCCESS, FAILED }
+enum class ActivityStatus { PENDING, SUCCESS, FAILED, INTERRUPTED, UNKNOWN, CANCELLED }
 
 data class ActivityStory(
     val id: String,
@@ -237,17 +240,58 @@ class ActivityUiMapper {
 
 class ActivityViewModel(
     snapshotManager: RuntimeSnapshotSource,
-    private val mapper: ActivityUiMapper = ActivityUiMapper()
+    private val mapper: ActivityUiMapper = ActivityUiMapper(),
+    agentRunStore: AgentRunStore? = null
 ) : ViewModel() {
-    val uiState: StateFlow<ActivityUiState> = snapshotManager.snapshot
-        .map { snapshot -> mapper.map(snapshot.timeline.takeLast(500)) } // Process up to 500
-        .map { state -> ActivityUiState(events = state.events.take(100)) } // Display recent 100
+    val uiState: StateFlow<ActivityUiState> = combine(snapshotManager.snapshot,
+        agentRunStore?.observeRuns() ?: flowOf(emptyList<AgentRun>())) { snapshot, runs ->
+        val durableIds = runs.flatMap { run ->
+            listOf(run.interactionId.value) + run.steps.mapNotNull { step -> when (step) {
+                is AgentStep.PlanCreated -> step.planId
+                is AgentStep.ToolRequested -> step.toolCallId
+                is AgentStep.ToolDispatched -> step.toolCallId
+                is AgentStep.ToolCompleted -> step.toolCallId
+                is AgentStep.ToolFailed -> step.toolCallId
+                is AgentStep.ResponseProduced -> step.responseId
+                else -> null
+            } }
+        }.toSet()
+        val history = mapper.map(snapshot.timeline.takeLast(500)).events.filterNot { it.correlationId in durableIds }
+        ActivityUiState((history + runs.map { it.toStory() }).sortedByDescending { it.timestamp }.take(100))
+    }
         .flowOn(Dispatchers.Default)
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = ActivityUiState()
         )
+}
+
+private fun AgentRun.toStory(): ActivityStory {
+    val status = when {
+        hasUnknownAction -> ActivityStatus.UNKNOWN
+        state == AgentRunState.INTERRUPTED -> ActivityStatus.INTERRUPTED
+        state == AgentRunState.FAILED -> ActivityStatus.FAILED
+        state == AgentRunState.CANCELLED -> ActivityStatus.CANCELLED
+        state == AgentRunState.COMPLETED -> ActivityStatus.SUCCESS
+        else -> ActivityStatus.PENDING
+    }
+    return ActivityStory("agent:${id.value}", interactionId.value, ActivityKind.HALO, request,
+        listOfNotNull(state.name, "UNKNOWN external completion".takeIf { hasUnknownAction }, failureReason).joinToString(" · "),
+        createdAt, status, steps.map { step ->
+            val message = when (step) {
+                is AgentStep.PlanCreated -> step.summary
+                is AgentStep.ClarificationRequested -> step.question
+                is AgentStep.ApprovalRequested -> step.action
+                is AgentStep.ToolRequested -> step.toolId
+                is AgentStep.ToolDispatched -> "${step.toolId}: dispatched"
+                is AgentStep.ToolCompleted -> step.resultSummary
+                is AgentStep.ToolFailed -> step.reason
+                is AgentStep.ResponseProduced -> step.text
+            }
+            ActivityStep("agent-step:${step.id.value}", step::class.java.simpleName, message,
+                step is AgentStep.ToolFailed || (step is AgentStep.ToolCompleted && !step.success))
+        })
 }
 
 private val activityTimeFormatter = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())

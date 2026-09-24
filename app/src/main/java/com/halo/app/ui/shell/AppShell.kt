@@ -77,6 +77,16 @@ fun AppShell(
     val navController = rememberNavController()
     val homeViewModel = ManualDependencyGraph.homeViewModel
     val shellScope = rememberCoroutineScope()
+    val approvals = ManualDependencyGraph.toolAuthorizationCoordinator
+    val pendingApproval by approvals.pending.collectAsState()
+    pendingApproval?.let { pending ->
+        com.halo.app.ui.screens.settings.ToolApprovalSheet(
+            preview = pending.preview,
+            onApprove = { approvals.respond(pending.id, true) },
+            onDeny = { approvals.respond(pending.id, false) },
+            onDismiss = { approvals.respond(pending.id, false) }
+        )
+    }
 
     fun navigateSafely(route: String) {
         if (navController.currentDestination?.route != route) {
@@ -267,6 +277,14 @@ fun AppShell(
                     SettingsScreen(viewModel)
                 }
 
+                composable("automation") {
+                    com.halo.app.ui.screens.settings.AutomationScreen(ManualDependencyGraph.routinesViewModel,
+                        onBack = { navController.popBackStack() }, onNotifications = { navigateSafely("notification_settings") })
+                }
+                composable("notification_settings") {
+                    com.halo.app.ui.screens.settings.NotificationSettingsScreen(ManualDependencyGraph.routinesViewModel,
+                        onBack = { navController.popBackStack() })
+                }
                 composable("ai_settings") {
                     val viewModel = ManualDependencyGraph.intelligenceViewModel
                     LaunchedEffect(viewModel) { viewModel.navigationEvents.collectLatest(::navigateSafely) }

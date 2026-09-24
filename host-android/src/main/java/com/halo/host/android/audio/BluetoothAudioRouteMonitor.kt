@@ -81,11 +81,9 @@ class AndroidBluetoothAudioRouteMonitor(
     fun refreshEndpoints() {
         val list = mutableListOf<BluetoothAudioEndpoint>()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val outputs = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                audioManager.getAudioDevicesForAttributes(audioAttributes).toTypedArray()
-            } else {
-                audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
-            }
+            // Enumerate selectable endpoints. getAudioDevicesForAttributes only reports
+            // the current policy route and can hide connected glasses before selection.
+            val outputs = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
             for (device in outputs) {
                 val endpointType = when (device.type) {
                     AudioDeviceInfo.TYPE_BLUETOOTH_A2DP -> BluetoothAudioEndpointType.A2DP

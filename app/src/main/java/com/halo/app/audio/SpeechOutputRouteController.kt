@@ -27,6 +27,7 @@ class SpeechOutputRouteController(
     private val routeMonitor: BluetoothAudioRouteMonitor = AndroidBluetoothAudioRouteMonitor(context),
     private val audioPairingCoordinator: HeyCyanAudioPairingCoordinator? = null
 ) {
+    private val audioManager = context.applicationContext.getSystemService(android.media.AudioManager::class.java)
     @Volatile private var lastGlassesDeviceId: String? = null
 
     suspend fun prepareRoute(request: SpeechRouteRequest): SpeechRoutePreparation {
@@ -38,8 +39,7 @@ class SpeechOutputRouteController(
                 val vendorCommandSent = if (previousDevice != null && heyCyanDriver.activeDeviceId == previousDevice &&
                     heyCyanDriver.deviceState.value.connection == HeyCyanConnectionState.READY) {
                     try {
-                        heyCyanDriver.capabilityController.execute(HeyCyanOperation.RouteAudioToPhone)
-                        true
+                        heyCyanDriver.capabilityController.execute(HeyCyanOperation.RouteAudioToPhone).isSuccess
                     } catch (cancelled: CancellationException) {
                         throw cancelled
                     } catch (error: Exception) {
@@ -48,13 +48,17 @@ class SpeechOutputRouteController(
                     }
                 } else false
                 lastGlassesDeviceId = null
+                val speaker = audioManager.getDevices(android.media.AudioManager.GET_DEVICES_OUTPUTS)
+                    .firstOrNull { it.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER }
+                    ?: return SpeechRoutePreparation.Unavailable(target, SpeechRouteFailureReason.AUDIO_TRANSPORT_NOT_CONNECTED)
                 SpeechRoutePreparation.Ready(
                     target = target,
                     evidence = SpeechRouteEvidence(
                         vendorRouteCommandSent = vendorCommandSent,
-                        androidDeviceType = null,
-                        androidDeviceName = "Phone Speaker",
+                        androidDeviceType = speaker.type,
+                        androidDeviceName = speaker.productName.toString(),
                         androidDeviceAddress = null,
+                        androidDeviceId = speaker.id,
                         verifiedAtMs = System.currentTimeMillis()
                     )
                 )
@@ -116,7 +120,8 @@ class SpeechOutputRouteController(
 
                 // 3. Await/verify Android Bluetooth audio endpoint
                 val endpoint = routeMonitor.awaitEndpoint(
-                    predicate = { ep -> audioPairingCoordinator?.matchesEndpoint(target.deviceId, ep) == true },
+                    predicate = { ep -> ep.type != com.halo.host.android.audio.BluetoothAudioEndpointType.SCO &&
+                        audioPairingCoordinator?.matchesEndpoint(target.deviceId, ep) == true },
                     timeoutMs = 2_000L
                 )
 

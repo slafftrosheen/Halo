@@ -4,9 +4,11 @@ import com.halo.cognition.language.InteractionId
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import java.time.Instant
 
 enum class DevicePresenceState {
+    ASSOCIATED,
     UNKNOWN,
     ABSENT,
     NEARBY,
@@ -27,6 +29,7 @@ data class DevicePresence(
     val state: DevicePresenceState,
     val evidence: Set<PresenceEvidence> = emptySet(),
     val updatedAt: Instant = Instant.now(),
+    val lastSeenAt: Instant? = null,
 )
 
 data class InteractionContinuity(
@@ -35,6 +38,7 @@ data class InteractionContinuity(
     val currentInputRoute: String,
     val currentOutputRoute: String,
     val startedAt: Instant = Instant.now(),
+    val allowHandoff: Boolean = false,
 )
 
 interface DevicePresenceRepository {
@@ -48,14 +52,11 @@ class InMemoryDevicePresenceRepository : DevicePresenceRepository {
     override val presenceMap: StateFlow<Map<String, DevicePresence>> = mutablePresence.asStateFlow()
 
     override suspend fun updatePresence(presence: DevicePresence) {
-        val current = mutablePresence.value.toMutableMap()
-        val existing = current[presence.deviceId]
-        // Prevent stale ABSENT from overwriting READY unless timestamp is newer
-        if (existing != null && presence.state == DevicePresenceState.ABSENT && existing.state == DevicePresenceState.READY) {
-            if (presence.updatedAt.isBefore(existing.updatedAt)) return
+        mutablePresence.update { current ->
+            val existing = current[presence.deviceId]
+            if (existing != null && presence.updatedAt.isBefore(existing.updatedAt)) current
+            else current + (presence.deviceId to presence.copy(lastSeenAt = presence.lastSeenAt ?: existing?.lastSeenAt))
         }
-        current[presence.deviceId] = presence
-        mutablePresence.value = current
     }
 
     override fun getPresence(deviceId: String): DevicePresence? {

@@ -5,6 +5,7 @@ plugins {
 
 dependencies { 
     implementation(project(":sdk:runtime-sdk"))
+    implementation(project(":sdk:host-sdk"))
     implementation(project(":sdk:provider-sdk"))
     implementation(project(":runtime:provider-core"))
     api(project(":libraries:halo-cognition-language"))

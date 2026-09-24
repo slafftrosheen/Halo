@@ -23,6 +23,8 @@ class RestoreReconciler(
     suspend fun reconcile() = withContext(Dispatchers.IO) {
         RoomWorkspaceFileRepository(context, database, haloStorageLayout(context).managedWorkspaceFiles).reconcileAvailability()
         ReminderRecordStore(context).reconcile()
+        com.halo.app.di.ManualDependencyGraph.notificationRepository.reconcilePolicies()
+        com.halo.app.di.ManualDependencyGraph.routineScheduler.reconcile()
         val search = AppSearchWorkspaceSearchEngine(context, database.notebookDao())
         runCatching { search.clearDerivedIndex() }
         val bodies = database.brainSnapshotDao().notes().associateBy { it.objectId }

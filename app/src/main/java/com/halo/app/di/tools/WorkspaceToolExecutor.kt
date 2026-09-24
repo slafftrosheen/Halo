@@ -17,6 +17,9 @@ class WorkspaceToolExecutor(
 ) : ToolExecutor {
 
     override fun definitions(): List<ToolDefinition> = listOf(
+        ToolDefinition("halo_get_workspace_object", "halo_get_workspace_object", "Read an existing workspace object and its note content.",
+            mapOf("type" to "object", "properties" to mapOf("objectId" to mapOf("type" to "string", "maxLength" to 100)),
+                "required" to listOf("objectId"), "additionalProperties" to false)),
         ToolDefinition(
             id = "halo_create_note",
             name = "halo_create_note",
@@ -24,7 +27,7 @@ class WorkspaceToolExecutor(
             parameters = mapOf(
                 "type" to "object",
                 "properties" to mapOf(
-                    "body" to mapOf("type" to "string", "maxLength" to 20000)
+                    "body" to mapOf("type" to "string", "maxLength" to 2000)
                 ),
                 "required" to listOf("body"),
                 "additionalProperties" to false
@@ -74,7 +77,25 @@ class WorkspaceToolExecutor(
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
         fun reject(reason: String) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason)
 
+        val key = when (toolCall.functionName) {
+            "halo_create_note" -> "body"
+            "halo_search_notebook" -> "query"
+            else -> "objectId"
+        }
+        val value = toolCall.arguments[key] as? String ?: return reject("Expected $key text")
+        val limit = if (key == "body") 2000 else if (key == "query") 500 else 100
+        if (toolCall.arguments.keys != setOf(key) || value.length > limit || (key != "query" && value.isBlank())) return reject("Invalid $key")
+        if (key == "objectId") {
+            val item = workspaceRepository.get(WorkspaceObjectId(value.trim())) ?: return reject("Workspace object not found")
+            if (item.lifecycle == com.halo.app.data.notebook.WorkspaceObjectLifecycle.TRASHED) return reject("Workspace object is in trash")
+        }
         return when (toolCall.functionName) {
+            "halo_get_workspace_object" -> {
+                val item = requireNotNull(workspaceRepository.get(WorkspaceObjectId(value.trim())))
+                val note = notebookRepository.getNote(item.id.value)
+                ToolExecutionResult.Success(toolCall.id, toolCall.functionName,
+                    "[${item.id.value}] ${item.type}: ${item.title}\n${note?.body.orEmpty()}".take(4000))
+            }
             "halo_create_note" -> {
                 val body = toolCall.arguments["body"]?.toString()?.trim().orEmpty()
                 if (body.isBlank()) return reject("Body parameter is required")

@@ -123,13 +123,13 @@ class AndroidDeviceCapability(private val context: Context) : Capability {
                         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     }
                 )
-                Outcome.Success("Alarm set")
+                Outcome.Partial("Opened the clock app to create the alarm. Alarm creation is not confirmed.")
             }
             is AlarmExecutionPlan.Clarification -> {
                 Outcome.NeedsClarification(plan.prompt, plan.field)
             }
             is AlarmExecutionPlan.HaloExactAlarm -> {
-                Outcome.Success("Exact alarm scheduled")
+                Outcome.PermanentFailure("Date-specific system alarms are unsupported. Use a Halo reminder instead.")
             }
         }
     }

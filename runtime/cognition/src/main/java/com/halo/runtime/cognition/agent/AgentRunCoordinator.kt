@@ -2,84 +2,97 @@ package com.halo.runtime.cognition.agent
 
 import com.halo.cognition.language.InteractionId
 import com.halo.sdk.runtime.ObservationOrigin
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import java.time.Clock
 import java.time.Instant
 import java.util.UUID
 
 data class AgentRequest(
-    val interactionId: InteractionId,
-    val text: String,
-    val origin: ObservationOrigin? = null
+    val interactionId: InteractionId, val text: String, val origin: ObservationOrigin? = null,
+    val speechOutputTarget: com.halo.sdk.runtime.SpeechOutputTarget? = null,
+    val speechOutputFallback: com.halo.sdk.runtime.SpeechOutputFallback = com.halo.sdk.runtime.SpeechOutputFallback.DISALLOW_PHONE,
+    val sourceCaptureId: String? = null,
 )
 
 interface AgentRunCoordinator {
     val activeRuns: StateFlow<List<AgentRun>>
     suspend fun start(request: AgentRequest): AgentRunId
-    suspend fun recordStep(step: AgentStep)
-    suspend fun resume(runId: AgentRunId)
-    suspend fun cancel(runId: AgentRunId, reason: String)
+    suspend fun recordStep(step: AgentStep): Boolean
+    suspend fun transition(runId: AgentRunId, state: AgentRunState, reason: String? = null)
+    suspend fun resume(runId: AgentRunId) = transition(runId, AgentRunState.EXECUTING)
+    suspend fun complete(runId: AgentRunId) = transition(runId, AgentRunState.COMPLETED)
+    suspend fun fail(runId: AgentRunId, reason: String) = transition(runId, AgentRunState.FAILED, reason)
+    suspend fun cancel(runId: AgentRunId, reason: String) = transition(runId, AgentRunState.CANCELLED, reason)
     suspend fun reconcileInterruptedRuns()
 }
 
-class DefaultAgentRunCoordinator : AgentRunCoordinator {
-    private val mutableActiveRuns = MutableStateFlow<List<AgentRun>>(emptyList())
-    override val activeRuns: StateFlow<List<AgentRun>> = mutableActiveRuns.asStateFlow()
+class DefaultAgentRunCoordinator(
+    private val store: AgentRunStore,
+    scope: CoroutineScope,
+    private val clock: Clock = Clock.systemUTC(),
+    private val newId: () -> String = { UUID.randomUUID().toString() },
+) : AgentRunCoordinator {
+    private val mutex = Mutex()
+    private var reconciled = false
+    override val activeRuns = store.observeRuns().map { runs -> runs.filterNot { it.state.isTerminal } }
+        .stateIn(scope, SharingStarted.Eagerly, emptyList())
 
-    override suspend fun start(request: AgentRequest): AgentRunId {
-        val runId = AgentRunId(UUID.randomUUID().toString())
-        val now = Instant.now()
-        val run = AgentRun(
-            id = runId,
-            interactionId = request.interactionId,
-            request = request.text,
-            state = AgentRunState.CREATED,
-            origin = request.origin,
-            createdAt = now,
-            updatedAt = now,
-            startedAt = now
-        )
-        mutableActiveRuns.value = mutableActiveRuns.value + run
-        return runId
+    private suspend fun reconcile() {
+        if (reconciled) return
+        store.interruptedRuns().forEach { run ->
+            val now = Instant.now(clock)
+            store.update(run.copy(state = AgentRunState.INTERRUPTED, updatedAt = now, completedAt = now,
+                failureReason = if (run.hasUnknownAction) "External action completion is unknown; it will not be replayed."
+                else "Execution interrupted by process restart."))
+        }
+        reconciled = true
     }
 
-    override suspend fun recordStep(step: AgentStep) {
-        val currentList = mutableActiveRuns.value
-        mutableActiveRuns.value = currentList.map { run ->
-            if (run.id == step.runId) {
-                run.copy(
-                    steps = run.steps + step,
-                    updatedAt = Instant.now(),
-                    currentStepId = step.id
-                )
-            } else run
-        }
+    override suspend fun reconcileInterruptedRuns() = mutex.withLock { reconcile() }
+
+    override suspend fun start(request: AgentRequest): AgentRunId = mutex.withLock {
+        reconcile()
+        val id = AgentRunId(newId())
+        val now = Instant.now(clock)
+        store.create(AgentRun(id, request.interactionId, request.text, AgentRunState.CREATED,
+            request.origin, now, now, startedAt = now, speechOutputTarget = request.speechOutputTarget,
+            speechOutputFallback = request.speechOutputFallback, sourceCaptureId = request.sourceCaptureId))
+        id
     }
 
-    override suspend fun resume(runId: AgentRunId) {
-        mutableActiveRuns.value = mutableActiveRuns.value.map { run ->
-            if (run.id == runId) run.copy(state = AgentRunState.EXECUTING, updatedAt = Instant.now())
-            else run
-        }
+    override suspend fun recordStep(step: AgentStep): Boolean = mutex.withLock {
+        val run = requireNotNull(store.get(step.runId)) { "Unknown run ${step.runId.value}" }
+        check(!run.state.isTerminal) { "Cannot append to ${run.state}" }
+        store.appendStep(step)
     }
 
-    override suspend fun cancel(runId: AgentRunId, reason: String) {
-        mutableActiveRuns.value = mutableActiveRuns.value.map { run ->
-            if (run.id == runId) run.copy(state = AgentRunState.CANCELLED, failureReason = reason, updatedAt = Instant.now())
-            else run
+    override suspend fun transition(runId: AgentRunId, state: AgentRunState, reason: String?) = mutex.withLock {
+        val run = requireNotNull(store.get(runId)) { "Unknown run ${runId.value}" }
+        if (run.state == state) return@withLock
+        check(!run.state.isTerminal) { "Cannot transition ${run.state} to $state" }
+        val allowed = when (run.state) {
+            AgentRunState.CREATED -> setOf(AgentRunState.PLANNING)
+            AgentRunState.PLANNING -> setOf(AgentRunState.EXECUTING, AgentRunState.WAITING_FOR_CLARIFICATION, AgentRunState.WAITING_FOR_CAPABILITY)
+            AgentRunState.EXECUTING -> setOf(AgentRunState.COMPLETED, AgentRunState.WAITING_FOR_APPROVAL, AgentRunState.WAITING_FOR_CAPABILITY, AgentRunState.SUSPENDED)
+            AgentRunState.WAITING_FOR_CLARIFICATION -> setOf(AgentRunState.PLANNING, AgentRunState.EXECUTING)
+            AgentRunState.WAITING_FOR_APPROVAL, AgentRunState.WAITING_FOR_CAPABILITY, AgentRunState.SUSPENDED -> setOf(AgentRunState.EXECUTING)
+            else -> emptySet()
+        } + setOf(AgentRunState.CANCELLED, AgentRunState.FAILED, AgentRunState.INTERRUPTED)
+        require(state in allowed) { "Invalid transition ${run.state} -> $state" }
+        check(state != AgentRunState.COMPLETED || !run.hasUnknownAction) { "Cannot complete an unknown action" }
+        val now = Instant.now(clock)
+        val finalState = when {
+            state == AgentRunState.FAILED && run.hasUnknownAction -> AgentRunState.INTERRUPTED
+            state == AgentRunState.COMPLETED && run.steps.any { it is AgentStep.ToolFailed || (it is AgentStep.ToolCompleted && !it.success) } -> AgentRunState.FAILED
+            else -> state
         }
-    }
-
-    override suspend fun reconcileInterruptedRuns() {
-        mutableActiveRuns.value = mutableActiveRuns.value.map { run ->
-            if (run.state in setOf(AgentRunState.EXECUTING, AgentRunState.PLANNING, AgentRunState.CREATED)) {
-                run.copy(
-                    state = AgentRunState.INTERRUPTED,
-                    failureReason = "This action may have been started before Halo restarted.",
-                    updatedAt = Instant.now()
-                )
-            } else run
-        }
+        store.update(run.copy(state = finalState, updatedAt = now,
+            completedAt = now.takeIf { finalState.isTerminal }, failureReason = reason ?: "One or more actions failed".takeIf { finalState == AgentRunState.FAILED }))
     }
 }

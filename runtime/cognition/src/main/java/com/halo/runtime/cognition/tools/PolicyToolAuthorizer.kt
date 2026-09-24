@@ -52,15 +52,15 @@ class PolicyToolAuthorizer(
     }
 
     private fun mapRisk(toolName: String): SkillRisk = when {
-        toolName.startsWith("halo_search") || toolName.startsWith("halo_get") ||
-            toolName.startsWith("halo_list") || toolName == "halo_storage_status" -> SkillRisk.READ_ONLY
+        toolName.startsWith("halo_search_") || toolName.startsWith("halo_get") ||
+            toolName.startsWith("halo_list") || toolName == "halo_storage_status" || toolName == "halo_notification_digest" || toolName == "halo.current_time" || toolName == "halo_current_time" || toolName == "halo_read_text_file" -> SkillRisk.READ_ONLY
         toolName == "halo_volume" || toolName == "halo_flashlight" ||
             toolName == "halo_media" || toolName == "halo_add_to_working_set" ||
             toolName == "halo_remove_from_working_set" -> SkillRisk.REVERSIBLE
-        toolName == "halo_propose_memory" -> SkillRisk.READ_ONLY
+        toolName == "halo_propose_memory" -> SkillRisk.REVERSIBLE
         toolName == "halo_create_note" || toolName == "halo_remember_text" || toolName == "halo_create_reminder" -> SkillRisk.REVERSIBLE
         toolName == "halo_open_app" || toolName == "halo_navigation" ||
-            toolName == "halo_browser" || toolName == "halo_share_text" ||
+            toolName == "halo_browser" || toolName == "halo_search" || toolName == "halo_share_text" ||
             toolName == "halo_open_settings" || toolName == "halo_prepare_contact" -> SkillRisk.EXTERNAL_SIDE_EFFECT
         else -> SkillRisk.SENSITIVE
     }
@@ -77,7 +77,10 @@ class PolicyToolAuthorizer(
             "halo_browser" -> "Open browser" to "Navigate to web address: $target"
             "halo_flashlight" -> "Flashlight" to "Turn flashlight $target"
             "halo_volume" -> "Adjust volume" to "Change volume $target"
-            "halo_create_reminder" -> "Create reminder" to "Set reminder: $target"
+            "halo_create_reminder" -> "Create reminder" to "${args["message"]} at ${args["at"]} (${args["precision"] ?: "FLEXIBLE"})"
+            "halo_propose_memory" -> "Save memory" to "Remember: ${args["content"]}"
+            "halo_share_text" -> "Share text" to "Open the share sheet with: ${args["text"]}"
+            "halo_prepare_contact" -> "Prepare contact" to "Open contact draft: ${args["name"]}, ${args["phone"] ?: ""}, ${args["email"] ?: ""}"
             else -> "Execute $name" to "Perform action: $args"
         }
 

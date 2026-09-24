@@ -25,7 +25,7 @@ class TemporalExpressionParser : TemporalParser {
             )
         }
 
-        var remaining = normalized
+        var remaining = normalized.replace("in the evening", "pm").replace("in the afternoon", "pm").replace("in the morning", "am")
 
         // 1. Day relation
         var dayRelation: DayRelation? = null
@@ -140,6 +140,13 @@ class TemporalExpressionParser : TemporalParser {
         }
 
         if (hour !in 0..23) {
+            return TemporalParseResult.Invalid(original, TemporalParseFailure.INVALID_HOUR)
+        }
+
+        if (!isPm && !isAm && hour in 1..12 && !remaining.startsWith("0")) {
+            return TemporalParseResult.Incomplete(original, TemporalField.AM_PM)
+        }
+        if ((isPm || isAm) && hour !in 1..12) {
             return TemporalParseResult.Invalid(original, TemporalParseFailure.INVALID_HOUR)
         }
 

@@ -3,6 +3,8 @@ package com.halo.engines.interpretation
 class InterpretationEngine(
     blackboard: com.halo.runtime.cognition.blackboard.Blackboard,
     eventBus: com.halo.sdk.runtime.EventBus,
+    clarificationCoordinator: com.halo.runtime.cognition.clarification.ClarificationCoordinator? = null,
+    agentRunCoordinator: com.halo.runtime.cognition.agent.AgentRunCoordinator? = null,
     workingMemory: com.halo.runtime.cognition.workingmemory.WorkingMemory =
         com.halo.runtime.cognition.workingmemory.DefaultWorkingMemory(blackboard),
     pipeline: com.halo.engines.interpretation.internal.RulePipeline =
@@ -17,5 +19,7 @@ class InterpretationEngine(
 ) : com.halo.engines.interpretation.internal.DefaultInterpretationEngine(
     pipeline = pipeline,
     blackboard = blackboard,
-    eventBus = eventBus
+    eventBus = eventBus,
+    clarificationCoordinator = clarificationCoordinator,
+    agentRunCoordinator = agentRunCoordinator
 )

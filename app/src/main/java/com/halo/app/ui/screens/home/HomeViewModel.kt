@@ -333,7 +333,10 @@ class HomeViewModel(
         viewModelScope.launch {
             listeningCommandMutex.withLock {
                 val command = if (shouldStart) StartListening else StopListening
-                runCatching { commandBus.dispatch(command) }
+                runCatching {
+                    if (shouldStart) { cognitiveSession.cancel(); stopSpeechOutput() }
+                    commandBus.dispatch(command)
+                }
                     .onFailure {
                         if (shouldStart) _listeningRequested.value = false
                         Log.e("HomeViewModel", "Failed to dispatch speech command", it)
@@ -347,7 +350,11 @@ class HomeViewModel(
         _listeningRequested.value = true
         viewModelScope.launch {
             listeningCommandMutex.withLock {
-                runCatching { commandBus.dispatch(StartListening) }
+                runCatching {
+                    cognitiveSession.cancel()
+                    stopSpeechOutput()
+                    commandBus.dispatch(StartListening)
+                }
                     .onFailure {
                         _listeningRequested.value = false
                         Log.e("HomeViewModel", "Failed to start listening", it)

@@ -50,6 +50,9 @@ data class AgentRun(
     val currentStepId: AgentStepId? = null,
     val failureReason: String? = null,
     val steps: List<AgentStep> = emptyList(),
+    val speechOutputTarget: com.halo.sdk.runtime.SpeechOutputTarget? = null,
+    val speechOutputFallback: com.halo.sdk.runtime.SpeechOutputFallback = com.halo.sdk.runtime.SpeechOutputFallback.DISALLOW_PHONE,
+    val sourceCaptureId: String? = null,
 )
 
 sealed interface AgentStep {
@@ -106,7 +109,8 @@ sealed interface AgentStep {
         val toolCallId: String,
         val toolId: String,
         val resultSummary: String,
-        val success: Boolean
+        val success: Boolean,
+        val actionTruth: ActionTruth = if (success) ActionTruth.CONFIRMED else ActionTruth.FAILED,
     ) : AgentStep
 
     data class ToolFailed(

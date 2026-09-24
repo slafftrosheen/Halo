@@ -158,7 +158,8 @@ sealed interface ProviderReadiness {
 data class ProviderStatus(
     val state: State,
     val message: String? = null,
-    val readiness: ProviderReadiness = ProviderReadiness.Unconfigured
+    val readiness: ProviderReadiness = ProviderReadiness.Unconfigured,
+    val rejectionReason: TargetRejectionReason? = null,
 ) {
     enum class State {
         READY,

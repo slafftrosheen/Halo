@@ -48,7 +48,7 @@ class DefaultSkillRegistry(
     override fun enabledTools(allTools: List<ToolDefinition>): List<ToolDefinition> {
         refreshAvailability()
         val enabledToolNames = _skills.value
-            .filter { it.enabled && it.availability == SkillAvailability.Available }
+            .filter { it.enabled && (it.availability == SkillAvailability.Available || it.availability is SkillAvailability.PartiallyAvailable) }
             .flatMap { it.tools }
             .toSet()
 
@@ -81,9 +81,15 @@ class DefaultSkillRegistry(
     }
 
     override fun approvalPolicyForTool(toolName: String): ToolApprovalPolicy {
+        refreshAvailability()
         val skill = _skills.value.firstOrNull { toolName in it.tools }
             ?: return ToolApprovalPolicy.DENY
-        if (!skill.enabled || skill.availability != SkillAvailability.Available) return ToolApprovalPolicy.DENY
+        if (!skill.enabled) return ToolApprovalPolicy.DENY
+        when (val availability = skill.availability) {
+            SkillAvailability.Available -> Unit
+            is SkillAvailability.PartiallyAvailable -> if (toolName in availability.unavailableTools) return ToolApprovalPolicy.DENY
+            else -> return ToolApprovalPolicy.DENY
+        }
 
         val toolRisk = skill.toolDefinitions.firstOrNull { it.toolId == toolName }?.risk ?: skill.risk
         val default = if (toolRisk == SkillRisk.READ_ONLY) ToolApprovalPolicy.ALWAYS_ALLOW
@@ -102,13 +108,22 @@ class DefaultSkillRegistry(
 
     companion object {
         fun defaultBuiltInSkills(): List<SkillDescriptor> = listOf(
+            SkillDescriptor(id = SkillId("halo.time"), name = "Date & time", description = "Read local time and time zone.",
+                category = SkillCategory.INFORMATION, tools = setOf("halo_current_time")),
+            SkillDescriptor(id = SkillId("halo.storage"), name = "Storage status", description = "Read available storage.",
+                category = SkillCategory.INFORMATION, tools = setOf("halo_storage_status")),
+            SkillDescriptor(
+                id = SkillId("halo.notifications"), name = "Notification digests",
+                description = "Build private offline notification digests.", category = SkillCategory.AUTOMATION,
+                tools = setOf("halo_notification_digest"), risk = SkillRisk.READ_ONLY, source = SkillSource.BUILT_IN
+            ),
             SkillDescriptor(
                 id = SkillId("halo.notebook"),
                 name = "Notebook",
                 description = "Create, search, and manage local notes and workspace items.",
                 category = SkillCategory.WORKSPACE,
                 tools = setOf("halo_create_note", "halo_search_notebook", "halo_get_workspace_object", "halo_add_to_working_set", "halo_remove_from_working_set"),
-                risk = SkillRisk.READ_ONLY,
+                risk = SkillRisk.REVERSIBLE,
                 source = SkillSource.BUILT_IN
             ),
             SkillDescriptor(
@@ -116,8 +131,8 @@ class DefaultSkillRegistry(
                 name = "Memory",
                 description = "Recall and propose user preferences and facts.",
                 category = SkillCategory.WORKSPACE,
-                tools = setOf("halo_search_memory", "halo_propose_memory", "halo_remember_text"),
-                risk = SkillRisk.READ_ONLY,
+                tools = setOf("halo_search_memory", "halo_propose_memory"),
+                risk = SkillRisk.REVERSIBLE,
                 source = SkillSource.BUILT_IN
             ),
             SkillDescriptor(
@@ -143,7 +158,7 @@ class DefaultSkillRegistry(
                 name = "Apps & Navigation",
                 description = "Open launchable apps and navigation routes in installed maps.",
                 category = SkillCategory.NAVIGATION,
-                tools = setOf("halo_open_app", "halo_navigation", "halo_browser", "halo_search", "halo_media"),
+                tools = setOf("halo_open_app", "halo_navigation", "halo_browser", "halo_search", "halo_media", "halo_list_apps"),
                 risk = SkillRisk.EXTERNAL_SIDE_EFFECT,
                 source = SkillSource.BUILT_IN
             ),
@@ -152,10 +167,17 @@ class DefaultSkillRegistry(
                 name = "Reminders & Settings",
                 description = "Set reminders and open device settings.",
                 category = SkillCategory.AUTOMATION,
-                tools = setOf("halo_create_reminder", "halo_open_settings", "halo_share_text", "halo_prepare_contact"),
+                tools = setOf("halo_create_reminder", "halo_open_settings", "halo_share_text", "halo_prepare_contact", "halo_list_reminders"),
                 risk = SkillRisk.REVERSIBLE,
                 source = SkillSource.BUILT_IN
             )
-        )
+        ).map { skill ->
+            skill.copy(toolDefinitions = skill.tools.map { name ->
+                com.halo.sdk.runtime.skills.SkillToolDefinition(name,
+                    if (name.startsWith("halo_search_") && name != "halo_search" ||
+                        name.startsWith("halo_get_") || name.startsWith("halo_read_") || name.startsWith("halo_list_"))
+                        SkillRisk.READ_ONLY else skill.risk)
+            })
+        }
     }
 }

@@ -40,6 +40,7 @@ class AndroidMemoryCapability(
 
     override suspend fun execute(task: Task): Outcome {
         require(task is MemoryTask)
+        var schedulingStarted = false
         return try {
             val spec = parseReminder(task.memoryAction)
                 ?: return Outcome.PermanentFailure("I couldn't understand when to schedule that reminder")
@@ -48,36 +49,20 @@ class AndroidMemoryCapability(
                 return Outcome.PermanentFailure("That reminder time is in the past")
             }
 
-            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-            if (spec.precision == ReminderPrecision.EXACT &&
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
-                !alarmManager.canScheduleExactAlarms()
-            ) {
-                return Outcome.PermanentFailure("NEEDS_EXACT_ALARM_ACCESS")
-            }
-            val intent = Intent(context, HaloReminderReceiver::class.java).apply {
-                putExtra("title", "Halo Reminder")
-                putExtra("text", spec.message)
-            }
             val reminderId = "${spec.message}|$triggerTime"
-            intent.putExtra("reminder_id", reminderId)
-            val stableId = reminderId.hashCode()
-            val pendingIntent = PendingIntent.getBroadcast(
-                context,
-                stableId,
-                intent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-
-            if (spec.precision == ReminderPrecision.EXACT) {
-                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
-            } else {
-                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
+            val store = ReminderRecordStore(context)
+            store.save(ReminderRecord(reminderId, spec.message, triggerTime, spec.precision.name))
+            schedulingStarted = true
+            store.reconcile(clock.millis())
+            when (store.status(reminderId)) {
+                com.halo.host.android.reminder.ReminderStatus.Scheduled -> Outcome.Success("Reminder set")
+                com.halo.host.android.reminder.ReminderStatus.Blocked -> Outcome.PermanentFailure("NEEDS_EXACT_ALARM_ACCESS: reminder retained; grant exact alarm access in Settings")
+                com.halo.host.android.reminder.ReminderStatus.Expired -> Outcome.PermanentFailure("That reminder time is in the past")
+                else -> Outcome.PermanentFailure("Reminder was not scheduled")
             }
-            ReminderRecordStore(context).save(ReminderRecord(reminderId, spec.message, triggerTime, spec.precision.name))
-            Outcome.Success("Reminder set")
         } catch (e: Exception) {
-            Outcome.RetryableFailure(e.message ?: "Failed to set reminder")
+            if (schedulingStarted) Outcome.Partial("Reminder scheduling was attempted; completion is unknown")
+            else Outcome.PermanentFailure(e.message ?: "Failed to prepare reminder")
         }
     }
 
@@ -114,7 +99,8 @@ class AndroidMemoryCapability(
             "tomorrow" -> now.toLocalDate().plusDays(1)
             else -> now.toLocalDate()
         }
-        val trigger = ZonedDateTime.of(date, LocalTime.of(hour, minute), zoneId)
+        var trigger = ZonedDateTime.of(date, LocalTime.of(hour, minute), zoneId)
+        if (day.isBlank() && !trigger.isAfter(now)) trigger = trigger.plusDays(1)
         return ReminderSpec(message, trigger.toInstant(), ReminderPrecision.EXACT)
     }
 

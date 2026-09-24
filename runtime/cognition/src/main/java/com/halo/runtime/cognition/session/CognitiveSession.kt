@@ -1,5 +1,10 @@
 package com.halo.runtime.cognition.session
 
+import com.halo.runtime.cognition.agent.*
+import com.halo.cognition.language.InteractionId
+import java.time.Instant
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import com.halo.cognition.language.ConversationIntent
 import com.halo.cognition.language.QuestionIntent
 import com.halo.runtime.cognition.blackboard.Blackboard
@@ -86,7 +91,8 @@ class CognitiveSession(
     private val blackboard: Blackboard = DefaultBlackboard(),
     private val defaultPolicyProvider: () -> AiContextPolicy = { AiContextPolicy.CONSERVATIVE },
     private val factResolver: RuntimeFactResolver = DefaultRuntimeFactResolver(),
-    private val skillRegistry: SkillRegistry? = null
+    private val skillRegistry: SkillRegistry? = null,
+    private val agentRunCoordinator: AgentRunCoordinator? = null
 ) {
     private val _state = MutableStateFlow<CognitiveSessionState>(CognitiveSessionState.Idle)
     val state: StateFlow<CognitiveSessionState> = _state.asStateFlow()
@@ -109,6 +115,8 @@ class CognitiveSession(
                 }
 
                 val interpretation = payload.interpretation
+                if (interpretation.metadata["clarificationOnly"] == "true") return@collect
+
                 val intent = interpretation.intent
                 val responseDelivery = interpretation.source.defaultResponseDelivery()
 
@@ -118,8 +126,9 @@ class CognitiveSession(
                         if (fact != null) {
                             println("[HALO-TXN] speech knowledgeId=$knowledgeId intent=${intent::class.simpleName} -> RESOLVED_LOCALLY")
                             
+                            val interactionIdStr = interpretation.metadata["interactionId"]
                             val requestId = UUID.randomUUID().toString()
-                            eventBus.publish(CognitiveRequestStarted(requestId = requestId))
+                            eventBus.publish(CognitiveRequestStarted(requestId = requestId, interactionId = interactionIdStr))
                             eventBus.publish(
                                 RuntimeFactResolved(
                                     transactionId = requestId,
@@ -221,7 +230,9 @@ class CognitiveSession(
         val effectivePolicy = policy ?: defaultPolicyProvider()
         activeJob?.cancel()
         activeJob = scope.launch {
+            val interactionId = InteractionId(metadata["interactionId"] ?: UUID.randomUUID().toString())
             val requestId = UUID.randomUUID().toString()
+            var runId: AgentRunId? = null
             try {
                 val target = providerRouter.resolveExecutionTarget(request)
                 val provider = target.provider
@@ -231,7 +242,7 @@ class CognitiveSession(
                     (target.provider.isLocal || effectivePolicy.allowCloudWorkspace))
 
                 _state.value = CognitiveSessionState.PreparingContext
-                eventBus.publish(CognitiveRequestStarted(requestId = requestId))
+                eventBus.publish(CognitiveRequestStarted(requestId = requestId, interactionId = interactionId.value))
 
                 val assembly = contextAssembler.assemble(policy = targetPolicy, capabilities = capabilities)
                 val context = assembly.context
@@ -283,7 +294,19 @@ class CognitiveSession(
                 }
 
                 if (response.toolCalls.isNotEmpty()) {
+                    runId = agentRunCoordinator?.start(AgentRequest(interactionId, request.text ?: "", origin?.let {
+                        com.halo.sdk.runtime.ObservationOrigin(
+                            if (it.speechRoute is SpeechInputRoute.Wearable) com.halo.sdk.host.ObservationSource.HeyCyanGlasses
+                            else com.halo.sdk.host.ObservationSource.AndroidPhoneMic, it.sourceDeviceId)
+                    }, speechOutputTarget = outputTarget, speechOutputFallback = fallbackPolicy, sourceCaptureId = origin?.captureId))
+                    runId?.let {
+                        agentRunCoordinator?.transition(it, AgentRunState.PLANNING)
+                        agentRunCoordinator?.recordStep(AgentStep.PlanCreated(newStepId(), it, Instant.now(), requestId, "Execute requested tools"))
+                        agentRunCoordinator?.transition(it, AgentRunState.EXECUTING)
+                    }
                     response = executeToolLoop(
+                        runId = runId,
+                        interactionId = interactionId,
                         requestId = requestId,
                         target = target,
                         request = requestWithContext,
@@ -308,7 +331,7 @@ class CognitiveSession(
                         val turn = conversationStore.append(
                             userText = userText,
                             assistantText = responseText,
-                            metadata = metadata + mapOf("requestId" to requestId, "provider" to target.providerId, "model" to (target.modelId ?: ""))
+                            metadata = metadata + mapOf("interactionId" to interactionId.value, "requestId" to requestId, "provider" to target.providerId, "model" to (target.modelId ?: ""))
                         )
                         eventBus.publish(
                             ConversationTurnCompleted(
@@ -344,13 +367,28 @@ class CognitiveSession(
                     _state.value = CognitiveSessionState.Completed(response)
                     eventBus.publish(CognitiveCompleted(requestId = requestId, response = response.text))
                 }
+                runId?.let {
+                    agentRunCoordinator?.recordStep(AgentStep.ResponseProduced(newStepId(), it, Instant.now(), requestId, response.text))
+                    agentRunCoordinator?.complete(it)
+                }
             } catch (e: CancellationException) {
-                _state.value = CognitiveSessionState.Idle
+                withContext(NonCancellable) {
+                    runId?.let { agentRunCoordinator?.cancel(it, "Interaction cancelled") }
+                    eventBus.publish(CognitiveFailed(requestId = requestId, message = "Interaction cancelled"))
+                }
+                if (activeJob === kotlinx.coroutines.currentCoroutineContext()[Job]) _state.value = CognitiveSessionState.Idle
                 throw e
             } catch (e: Exception) {
                 val message = mapErrorMessage(e)
+                runId?.let { agentRunCoordinator?.fail(it, message) }
                 _state.value = CognitiveSessionState.Failed(message)
-                eventBus.publish(CognitiveFailed(requestId = requestId, message = message))
+                eventBus.publish(CognitiveFailed(
+                    requestId = requestId,
+                    message = message,
+                    stage = "SESSION_EXECUTION",
+                    type = e.javaClass.simpleName,
+                    userRecoverable = false
+                ))
             }
         }
     }
@@ -428,6 +466,8 @@ class CognitiveSession(
     }
 
     private suspend fun executeToolLoop(
+        runId: AgentRunId?,
+        interactionId: InteractionId,
         requestId: String,
         target: com.halo.sdk.provider.AiExecutionTarget,
         request: AiRequest,
@@ -441,6 +481,7 @@ class CognitiveSession(
         var currentContext = initialContext
         var round = 0
         var totalToolCalls = 0
+        var hasUnconfirmedAction = false
 
         while (response.toolCalls.isNotEmpty()) {
             round++
@@ -470,6 +511,9 @@ class CognitiveSession(
                         "Maximum total tool calls (${ToolExecutionLimits.MAX_TOTAL_TOOL_CALLS}) exceeded"
                     )
                 }
+                runId?.let {
+                    agentRunCoordinator?.recordStep(AgentStep.ToolRequested(newStepId(), it, Instant.now(), toolCall.id, toolCall.functionName, "{}"))
+                }
                 eventBus.publish(
                     ToolCallRequested(
                         requestId = requestId,
@@ -478,19 +522,25 @@ class CognitiveSession(
                     )
                 )
 
-                val toolIsEnabled = toolRegistry?.let { registry ->
+                val workspaceReadAllowed = toolCall.functionName !in com.halo.runtime.cognition.tools.WorkspaceToolAccess.readTools ||
+                    policy.includeWorkspace
+                val toolIsEnabled = workspaceReadAllowed && (toolRegistry?.let { registry ->
                     skillRegistry?.enabledTools(registry.definitions())?.any {
                         it.name == toolCall.functionName || it.id == toolCall.functionName
                     } ?: true
-                } ?: false
+                } ?: false)
+                val invalidArguments = toolRegistry?.validate(toolCall)
                 if (!policy.includeAvailableTools || toolRegistry == null || toolAuthorizer == null ||
-                    !toolIsEnabled) {
+                    !toolIsEnabled || invalidArguments != null) {
                     val reason = when {
                         !policy.includeAvailableTools -> "Tools disabled by runtime policy"
                         toolRegistry == null -> "Tool registry unavailable"
+                        !workspaceReadAllowed -> "Private workspace access is disabled for this provider"
                         !toolIsEnabled -> "Skill unavailable or disabled"
+                        invalidArguments != null -> invalidArguments.reason
                         else -> "Tool authorization service unavailable"
                     }
+                    runId?.let { agentRunCoordinator?.recordStep(AgentStep.ToolFailed(newStepId(), it, Instant.now(), toolCall.id, toolCall.functionName, reason)) }
                     eventBus.publish(
                         ToolCallRejected(
                             requestId = requestId,
@@ -512,6 +562,7 @@ class CognitiveSession(
                 val authorization = toolAuthorizer.authorize(toolCall)
                 when (authorization) {
                     is ToolAuthorization.Rejected -> {
+                        runId?.let { agentRunCoordinator?.recordStep(AgentStep.ToolFailed(newStepId(), it, Instant.now(), toolCall.id, toolCall.functionName, authorization.reason)) }
                         eventBus.publish(
                             ToolCallRejected(
                                 requestId = requestId,
@@ -542,8 +593,15 @@ class CognitiveSession(
                 }
 
                 val authorized = authorization as ToolAuthorization.Authorized
+                if (runId != null) {
+                    val claimed = agentRunCoordinator?.recordStep(AgentStep.ToolDispatched(newStepId(), runId,
+                        Instant.now(), toolCall.id, toolCall.functionName, "${interactionId.value}:${toolCall.id}")) == true
+                    check(claimed) { "Tool dispatch already recorded; completion must be reconciled before retry" }
+                }
                 when (val result = toolRegistry.executeAuthorized(authorized)) {
                     is ToolExecutionResult.Success -> {
+                        hasUnconfirmedAction = hasUnconfirmedAction || result.actionTruth != ActionTruth.CONFIRMED
+                        runId?.let { agentRunCoordinator?.recordStep(AgentStep.ToolCompleted(newStepId(), it, Instant.now(), toolCall.id, toolCall.functionName, result.output.take(ToolExecutionLimits.MAX_TOOL_OUTPUT_CHARS), true, result.actionTruth)) }
                         eventBus.publish(
                             ToolCallCompleted(
                                 requestId = requestId,
@@ -562,6 +620,7 @@ class CognitiveSession(
                     }
 
                     is ToolExecutionResult.Rejected -> {
+                        runId?.let { agentRunCoordinator?.recordStep(AgentStep.ToolFailed(newStepId(), it, Instant.now(), toolCall.id, toolCall.functionName, result.reason)) }
                         eventBus.publish(
                             ToolCallRejected(
                                 requestId = requestId,
@@ -580,6 +639,8 @@ class CognitiveSession(
                     }
 
                     is ToolExecutionResult.Failed -> {
+                        hasUnconfirmedAction = hasUnconfirmedAction || result.completionUnknown
+                        if (!result.completionUnknown) runId?.let { agentRunCoordinator?.recordStep(AgentStep.ToolFailed(newStepId(), it, Instant.now(), toolCall.id, toolCall.functionName, result.message)) }
                         eventBus.publish(
                             ToolCallCompleted(
                                 requestId = requestId,
@@ -615,6 +676,8 @@ class CognitiveSession(
                 }
             )
 
+            val roundRequestId = UUID.randomUUID().toString()
+            eventBus.publish(CognitiveRequestStarted(requestId = roundRequestId, interactionId = interactionId.value))
             response = when (
                 val outcome = executeProviderRequest(
                     provider = provider,
@@ -622,7 +685,7 @@ class CognitiveSession(
                     expectedModelId = target.modelId,
                     request = request.copy(modelId = target.modelId),
                     context = currentContext,
-                    requestId = requestId
+                    requestId = roundRequestId
                 )
             ) {
                 is AiExecutionOutcome.Response -> outcome.response
@@ -632,8 +695,10 @@ class CognitiveSession(
                 )
             }
         }
-        return response
+        return if (hasUnconfirmedAction) response.copy(text = "The action was dispatched, but I could not confirm its completion. I will not repeat it automatically.") else response
     }
+
+    private fun newStepId() = AgentStepId(UUID.randomUUID().toString())
 
     private fun mapErrorMessage(e: Exception): String {
         if (e is AiProviderException) return e.message ?: "AI provider request failed"

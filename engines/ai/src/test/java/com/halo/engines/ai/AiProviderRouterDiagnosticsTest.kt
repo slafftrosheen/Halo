@@ -140,4 +140,20 @@ class AiProviderRouterDiagnosticsTest {
         val e4 = AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY, "no vision")
         assertEquals("This AI provider cannot perform that type of request.", presenter.message(e4))
     }
+    @Test fun `routing decision records exact rejected readiness and selected target`() = runTest {
+        val storage = FakeStorage().apply { putString("active_ai_provider", "missing") }
+        val router = DefaultAiProviderRouter(listOf(
+            MockProvider("missing", "Missing", ProviderStatus.MODEL_MISSING),
+            MockProvider("ready", "Ready")), storage)
+        assertEquals("ready", router.resolveExecutionTarget(AiRequest(text = "hello")).providerId)
+        val decision = requireNotNull(router.lastRoutingDecision.value)
+        assertEquals("ready", decision.resolvedProviderId)
+        assertEquals(TargetRejectionReason.MODEL_NOT_INSTALLED, decision.rejectedTargets.single().reason)
+    }
+    @Test fun `local only records cloud policy exclusion`() = runTest {
+        val router = DefaultAiProviderRouter(listOf(MockProvider("cloud", "Cloud", isLocal = false)), FakeStorage())
+        assertTrue(runCatching { router.resolveExecutionTarget(AiRequest(text = "hello")) }.isFailure)
+        assertEquals(TargetRejectionReason.POLICY_EXCLUDED, router.lastRoutingDecision.value?.rejectedTargets?.single()?.reason)
+        assertNull(router.lastRoutingDecision.value?.resolvedProviderId)
+    }
 }

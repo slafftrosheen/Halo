@@ -101,6 +101,14 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             onClick = viewModel::openStorageBackup
         )
 
+        SettingsRow(
+            icon = Icons.Default.SmartToy,
+            tint = HaloPastelMint,
+            title = "Automation",
+            subtitle = "Routines & notification digests",
+            onClick = viewModel::openAutomation
+        )
+
         Spacer(Modifier.height(18.dp))
 
         Row(

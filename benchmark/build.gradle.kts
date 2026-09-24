@@ -17,7 +17,7 @@ android {
 
     buildTypes {
         create("benchmark") {
-            isDebuggable = true
+            isDebuggable = false
             matchingFallbacks += "release"
         }
     }

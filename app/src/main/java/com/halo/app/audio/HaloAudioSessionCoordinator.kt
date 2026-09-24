@@ -76,6 +76,16 @@ class HaloAudioSessionCoordinator {
         mutableState.value = HaloAudioSessionState.Idle
     }
 
+    fun finishInput(captureId: String) {
+        val current = mutableState.value
+        val ownedCapture = when (current) {
+            is HaloAudioSessionState.Listening -> current.captureId
+            is HaloAudioSessionState.Thinking -> current.captureId
+            else -> null
+        }
+        if (ownedCapture == captureId) mutableState.compareAndSet(current, HaloAudioSessionState.Idle)
+    }
+
     private fun finishGuard() {
         playbackGuard = playbackGuard?.copy(endedAt = System.currentTimeMillis())
     }

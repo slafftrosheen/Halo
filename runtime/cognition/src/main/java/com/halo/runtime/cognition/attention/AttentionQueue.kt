@@ -12,6 +12,7 @@ data class QueuedAttentionRequest(
     val decisionReason: AttentionDecisionReason,
     val queuedAt: Instant,
     val expiresAt: Instant? = request.expiresAt,
+    val releaseCondition: AttentionReleaseCondition = AttentionReleaseCondition.HALO_FOREGROUND,
 )
 
 interface AttentionQueue {
@@ -37,15 +38,9 @@ class InMemoryAttentionQueue(
             current.removeAll { it.request.deduplicationKey == request.request.deduplicationKey }
         }
 
+        current.removeAll { it.request.id == request.request.id }
+        check(current.size < maxItems) { "Attention queue is full" }
         current.add(request)
-
-        // Enforce bounds
-        if (current.size > maxItems) {
-            current.sortBy { it.queuedAt }
-            while (current.size > maxItems) {
-                current.removeAt(0)
-            }
-        }
 
         _pending.value = current
     }
@@ -54,17 +49,6 @@ class InMemoryAttentionQueue(
         _pending.value = _pending.value.filterNot { it.request.id == requestId }
     }
 
-    override suspend fun releaseEligible(context: AttentionContext) = mutex.withLock {
-        val now = context.currentTime
-        val current = _pending.value
-
-        val valid = current.filterNot { it.expiresAt != null && now.isAfter(it.expiresAt) }
-        
-        // Detailed eligibility resolution logic (e.g. check DND/Focus bounds) happens
-        // in AttentionDeliveryCoordinator or a similar orchestrator, which reads `pending`
-        // and can call `remove` as items are delivered. This method primarily handles expiry.
-        if (valid.size != current.size) {
-            _pending.value = valid
-        }
-    }
+    // Expiry and release belong to AttentionController so every removal has a receipt.
+    override suspend fun releaseEligible(context: AttentionContext) = Unit
 }

@@ -59,8 +59,9 @@ fun ModelBrowserScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit) {
     }
     selected?.let { entry ->
         ModelDetailDialog(entry, viewModel.catalogModelId(entry)?.let { ui.downloadStates[it] },
+            error = viewModel.catalogModelId(entry)?.let { ui.downloadErrors[it] },
             onDismiss = { selected = null },
-            onDownload = { viewModel.downloadCatalogEntry(entry); selected = null },
+            onDownload = { viewModel.downloadCatalogEntry(entry) },
             onSelect = {
                 viewModel.catalogModelId(entry)?.let(viewModel::setActiveLocalModel)
                 selected = null
@@ -113,6 +114,7 @@ fun ModelBrowserScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit) {
                                 when (downloadState) {
                                     DownloadState.Downloaded -> "Downloaded"
                                     DownloadState.Downloading -> "Downloading"
+                                    DownloadState.Failed -> modelId?.let { ui.downloadErrors[it] } ?: "Download failed; tap to retry"
                                     else -> fitLabel(entry.fit)
                                 },
                                 style = MaterialTheme.typography.bodySmall,
@@ -130,6 +132,7 @@ fun ModelBrowserScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit) {
 private fun ModelDetailDialog(
     entry: ModelCatalogEntry,
     downloadState: DownloadState?,
+    error: String?,
     onDismiss: () -> Unit,
     onDownload: () -> Unit,
     onSelect: () -> Unit
@@ -140,6 +143,7 @@ private fun ModelDetailDialog(
         title = { Text(entry.model.repoId.substringAfterLast('/')) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                 Text("Repository · ${entry.model.repoId}")
                 Text("File · ${entry.file.filename}")
                 Text("Quantization · ${entry.file.quantization.name}")

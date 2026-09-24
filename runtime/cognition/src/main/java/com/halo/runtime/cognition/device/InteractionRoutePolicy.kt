@@ -11,6 +11,7 @@ enum class HandoffReason {
 
 sealed interface HandoffDecision {
     data object Stay : HandoffDecision
+    data class Unavailable(val reason: HandoffReason) : HandoffDecision
     data class Offer(val targetDeviceId: String) : HandoffDecision
     data class Required(val targetDeviceId: String, val reason: HandoffReason) : HandoffDecision
 }
@@ -37,11 +38,14 @@ class DefaultInteractionRoutePolicy : InteractionRoutePolicy {
         val currentDevice = continuity.originDeviceId
             ?.let { id -> availableDevices.firstOrNull { it.id == id } }
 
-        if (currentDevice?.connected == true) {
+        if (currentDevice?.connected == true && currentDevice.capabilities.any { it is DeviceCapability.AudioOutput }) {
             return HandoffDecision.Stay
         }
 
-        // Simplistic fallback for testability/stubbing: Require handoff to local phone if origin is lost
-        return HandoffDecision.Required("local_phone", HandoffReason.ORIGIN_DISCONNECTED)
+        val reason = if (currentDevice?.connected == true) HandoffReason.CAPABILITY_UNAVAILABLE else HandoffReason.ORIGIN_DISCONNECTED
+        if (!continuity.allowHandoff) return HandoffDecision.Unavailable(reason)
+        val target = availableDevices.firstOrNull { it.connected && it.capabilities.any { cap -> cap is DeviceCapability.AudioOutput } }
+            ?: return HandoffDecision.Unavailable(reason)
+        return HandoffDecision.Required(target.id, HandoffReason.EXPLICIT_USER_REQUEST)
     }
 }

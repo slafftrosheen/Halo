@@ -5,7 +5,8 @@ sealed interface ToolExecutionResult {
     data class Success(
         val toolCallId: String,
         val toolId: String,
-        val output: String
+        val output: String,
+        val actionTruth: com.halo.runtime.cognition.agent.ActionTruth = com.halo.runtime.cognition.agent.ActionTruth.CONFIRMED
     ) : ToolExecutionResult
 
     data class Rejected(
@@ -17,6 +18,7 @@ sealed interface ToolExecutionResult {
     data class Failed(
         val toolCallId: String,
         val toolId: String,
-        val message: String
+        val message: String,
+        val completionUnknown: Boolean = false
     ) : ToolExecutionResult
 }

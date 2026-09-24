@@ -1,1 +1,36 @@
-{"id":"halo.notebook","name":"Notebook","description":"Create, search, and manage local workspace items.","category":"WORKSPACE","risk":"REVERSIBLE","tools":["halo_create_note","halo_search_notebook","halo_add_to_working_set","halo_remove_from_working_set"]}
+{
+  "id": "halo.notebook",
+  "name": "Notebook",
+  "description": "Create, search, and manage local workspace items.",
+  "category": "WORKSPACE",
+  "risk": "REVERSIBLE",
+  "tools": [
+    "halo_create_note",
+    "halo_search_notebook",
+    "halo_add_to_working_set",
+    "halo_remove_from_working_set",
+    "halo_get_workspace_object"
+  ],
+  "toolDefinitions": [
+    {
+      "toolId": "halo_create_note",
+      "risk": "REVERSIBLE"
+    },
+    {
+      "toolId": "halo_search_notebook",
+      "risk": "READ_ONLY"
+    },
+    {
+      "toolId": "halo_add_to_working_set",
+      "risk": "REVERSIBLE"
+    },
+    {
+      "toolId": "halo_remove_from_working_set",
+      "risk": "REVERSIBLE"
+    },
+    {
+      "toolId": "halo_get_workspace_object",
+      "risk": "READ_ONLY"
+    }
+  ]
+}

@@ -10,6 +10,12 @@ import android.content.Intent
 
 class HaloReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
+        val store = ReminderRecordStore(context)
+        val id = intent.getStringExtra("reminder_id") ?: return
+        if (store.all().none { it.id == id }) return
+        // Consume before delivery; a duplicate broadcast must not post a second reminder.
+        store.remove(id)
+        store.mark(id, ReminderStatus.Fired)
         val title = intent.getStringExtra("title") ?: "Halo Reminder"
         val text = intent.getStringExtra("text") ?: "You have a reminder."
 
@@ -30,7 +36,12 @@ class HaloReminderReceiver : BroadcastReceiver() {
             .setAutoCancel(true)
             .build()
 
-        notificationManager.notify(System.currentTimeMillis().toInt(), notification)
-        intent.getStringExtra("reminder_id")?.let { ReminderRecordStore(context).remove(it) }
+        if (!notificationManager.areNotificationsEnabled() ||
+            (android.os.Build.VERSION.SDK_INT >= 33 && context.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED)) {
+            store.mark(id, ReminderStatus.DeliveryBlocked)
+            return
+        }
+        try { notificationManager.notify(id, 0, notification) }
+        catch (_: SecurityException) { store.mark(id, ReminderStatus.DeliveryBlocked) }
     }
 }

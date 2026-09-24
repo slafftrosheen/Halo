@@ -14,7 +14,11 @@ class ExecutionScheduler(
     private val capabilityRegistry: CapabilityRegistry,
     private val retryPolicy: RetryPolicy = DefaultRetryPolicy()
 ) {
-    suspend fun executeTaskGraph(task: Task): Outcome = coroutineScope {
+    suspend fun executeTaskGraph(
+        task: Task,
+        beforeDispatch: suspend (Task) -> Unit = {},
+        afterDispatch: suspend (Task, Outcome) -> Unit = { _, _ -> },
+    ): Outcome = coroutineScope {
 
         /*
          * 1. Execute dependencies first (they are prerequisites).
@@ -22,19 +26,19 @@ class ExecutionScheduler(
         if (task.dependencies.isNotEmpty()) {
             if (task.isParallel) {
                 val deferreds = task.dependencies.map { dep ->
-                    async { executeTaskGraph(dep) }
+                    async { executeTaskGraph(dep, beforeDispatch, afterDispatch) }
                 }
                 val results = deferreds.awaitAll()
                 val firstFailure = results.firstOrNull { 
-                    it !is Outcome.Success && it !is Outcome.Partial 
+                    it !is Outcome.Success 
                 }
                 if (firstFailure != null) {
                     return@coroutineScope firstFailure
                 }
             } else {
                 for (dep in task.dependencies) {
-                    val depResult = executeTaskGraph(dep)
-                    if (depResult !is Outcome.Success && depResult !is Outcome.Partial) {
+                    val depResult = executeTaskGraph(dep, beforeDispatch, afterDispatch)
+                    if (depResult !is Outcome.Success) {
                         return@coroutineScope depResult
                     }
                 }
@@ -49,36 +53,18 @@ class ExecutionScheduler(
                 "No capability found for task ${task::class.simpleName}"
             )
 
-        /*
-         * 3. Execute with bounded retry.
-         */
-        var attempts = 0
-        var result: Outcome = Outcome.PermanentFailure("Initialization failed")
-
-        while (true) {
-            attempts++
-            result = try {
-                withTimeout(5.seconds) {
-                    capability.execute(task)
-                }
-            } catch (e: TimeoutCancellationException) {
-                Outcome.RetryableFailure("Capability execution timed out after 5 seconds")
-            } catch (e: CancellationException) {
-                return@coroutineScope Outcome.Cancelled("Execution cancelled")
-            } catch (e: Exception) {
-                Outcome.RetryableFailure(e.message ?: "Execution failed with exception")
-            }
-
-            if (result is Outcome.Success) {
-                break
-            }
-
-            if (retryPolicy.shouldRetry(attempts, result)) {
-                delay(retryPolicy.nextDelay(attempts, result))
-            } else {
-                break
-            }
+        // Side effects are dispatched once. A timeout does not prove they did not happen.
+        beforeDispatch(task)
+        val result = try {
+            withTimeout(5.seconds) { capability.execute(task) }
+        } catch (e: TimeoutCancellationException) {
+            Outcome.Partial("Capability timed out; external completion is unknown")
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Outcome.Partial("Capability threw; external completion is unknown")
         }
+        afterDispatch(task, result)
 
         return@coroutineScope result
     }

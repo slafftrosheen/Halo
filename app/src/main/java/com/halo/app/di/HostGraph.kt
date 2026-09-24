@@ -57,7 +57,9 @@ class HostGraph(
 
     val audioPerceptionEngine by lazy {
         com.halo.engines.speech.AudioPerceptionEngine(
-            audioSource = com.halo.host.android.audio.AndroidAudioSource(),
+            audioSource = com.halo.app.audio.ForegroundAudioSource(context,
+                com.halo.host.android.audio.AndroidAudioSource(context),
+                com.halo.app.audio.HaloAudioForegroundService.Kind.PHONE_INPUT),
             preprocessor = com.halo.engines.speech.DefaultAudioPreprocessor(),
             audioPipeline = audioPipeline,
             eventBus = infra.eventBus,
@@ -76,11 +78,15 @@ class HostGraph(
     val heyCyanDriver: RealHeyCyanDriver by lazy {
         RealHeyCyanDriver(context, infra.eventBus).also { driver ->
             WearableSpeechInputBridge(
+                context,
                 driver,
                 audioPerceptionEngine,
                 infra.eventBus,
                 infra.scope,
-                cancelSpeechOutput = { ManualDependencyGraph.haloSpeechOutputCoordinator.stop("Barge-in") }
+                cancelSpeechOutput = {
+                    ManualDependencyGraph.cognitiveSession.cancel()
+                    ManualDependencyGraph.haloSpeechOutputCoordinator.stop("Barge-in")
+                }
             ).start()
             captureCoordinator = com.halo.app.capture.WearableCaptureCoordinator(context, driver,
                 ManualDependencyGraph.captures, infra.eventBus, infra.scope).also { it.start() }

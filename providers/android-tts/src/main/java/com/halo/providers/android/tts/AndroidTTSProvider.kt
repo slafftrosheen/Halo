@@ -21,6 +21,9 @@ import java.io.File
 import java.util.Collections
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Android TTS host implementation.
@@ -56,10 +59,23 @@ class AndroidTTSProvider(
     private var isInitialized = false
     private val initLock = Any()
     private var initCallback: ((Boolean) -> Unit)? = null
+    private var initGeneration = 0L
 
     private suspend fun ensureTts(): Boolean {
-        if (isInitialized && tts != null) return true
-        return suspendCancellableCoroutine { continuation ->
+        val ready = withTimeoutOrNull(10_000L) { awaitTts() } == true
+        if (!ready) synchronized(initLock) {
+            initGeneration++
+            tts?.shutdown()
+            tts = null
+            isInitialized = false
+            initCallback = null
+        }
+        return ready
+    }
+
+    private suspend fun awaitTts(): Boolean = withContext(Dispatchers.Main) {
+        if (isInitialized && tts != null) return@withContext true
+        suspendCancellableCoroutine { continuation ->
             synchronized(initLock) {
                 if (isInitialized && tts != null) {
                     continuation.resume(true)
@@ -72,7 +88,14 @@ class AndroidTTSProvider(
                 }
                 if (tts == null) {
                     Log.i(TAG, "Initializing TextToSpeech lazily on demand")
-                    tts = TextToSpeech(appContext, this)
+                    val generation = ++initGeneration
+                    tts = TextToSpeech(appContext) { status ->
+                        android.os.Handler(android.os.Looper.getMainLooper()).post {
+                            synchronized(initLock) {
+                                if (generation == initGeneration && tts != null) onInit(status)
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -109,8 +132,39 @@ class AndroidTTSProvider(
 
     /** Produces PCM without letting TextToSpeech own playback or routing. */
     suspend fun synthesizeToPcm(request: SpeechRequest): PcmSynthesis? = withContext(Dispatchers.IO) {
+        withTimeoutOrNull(90_000L) {
+            if (request.text.isBlank() || request.text.length > 24_000) return@withTimeoutOrNull null
+            val chunks = mutableListOf<ByteArray>()
+            var format: PcmSynthesis? = null
+            var bytes = 0L
+            var offset = 0
+            val maximum = TextToSpeech.getMaxSpeechInputLength() - 1
+            while (offset < request.text.length) {
+                var end = minOf(offset + maximum, request.text.length)
+                if (end < request.text.length) {
+                    val boundary = request.text.lastIndexOf(' ', end - 1)
+                    if (boundary > offset) end = boundary
+                    else if (request.text[end - 1].isHighSurrogate()) end--
+                }
+                val part = synthesizePcm(request.copy(text = request.text.substring(offset, end))) ?: return@withTimeoutOrNull null
+                val first = format
+                if (first != null && (part.sampleRate != first.sampleRate || part.channelCount != first.channelCount || part.audioFormat != first.audioFormat))
+                    return@withTimeoutOrNull null
+                format = part
+                bytes += part.chunks.sumOf { it.size.toLong() }
+                if (bytes > 32L * 1024 * 1024) return@withTimeoutOrNull null
+                chunks.addAll(part.chunks)
+                offset = end
+                while (offset < request.text.length && request.text[offset].isWhitespace()) offset++
+            }
+            format?.copy(chunks = chunks)
+        }
+    }
+
+    private suspend fun synthesizePcm(request: SpeechRequest): PcmSynthesis? =
         synthesizeMutex.withLock {
-            if (!ensureTts()) return@withLock null
+            if (request.text.isBlank() || request.text.length > TextToSpeech.getMaxSpeechInputLength()) return@withLock null
+            if (!ensureTts() || !configureVoice(request)) return@withLock null
             suspendCancellableCoroutine { continuation ->
             val engine = tts
             if (engine == null || !isInitialized) {
@@ -124,13 +178,17 @@ class AndroidTTSProvider(
             var channelCount = 0
             val outputFile = File.createTempFile("halo-tts-", ".pcm", appContext.cacheDir)
 
+            val finished = AtomicBoolean(false)
+            val bytes = AtomicLong(0)
             fun finish(result: PcmSynthesis?) {
+                if (!finished.compareAndSet(false, true)) return
                 outputFile.delete()
                 if (continuation.isActive) continuation.resume(result)
             }
 
             engine.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
                 override fun onStart(id: String?) = Unit
+                override fun onStop(id: String?, interrupted: Boolean) { if (id == utteranceId) finish(null) }
 
                 override fun onBeginSynthesis(id: String?, rate: Int, format: Int, channels: Int) {
                     if (id == utteranceId) {
@@ -141,7 +199,12 @@ class AndroidTTSProvider(
                 }
 
                 override fun onAudioAvailable(id: String?, audio: ByteArray) {
-                    if (id == utteranceId) chunks += audio.copyOf()
+                    if (id == utteranceId && !finished.get()) {
+                        if (bytes.addAndGet(audio.size.toLong()) > 32L * 1024 * 1024) {
+                            finish(null)
+                            engine.stop()
+                        } else chunks += audio.copyOf()
+                    }
                 }
 
                 override fun onDone(id: String?) {
@@ -166,17 +229,22 @@ class AndroidTTSProvider(
             val result = engine.synthesizeToFile(request.text, Bundle(), outputFile, utteranceId)
             if (result == TextToSpeech.ERROR) finish(null)
             continuation.invokeOnCancellation {
+                finished.set(true)
                 engine.stop()
                 outputFile.delete()
             }
             }
         }
+
+    suspend fun synthesize(request: SpeechRequest, onStarted: (() -> Unit)? = null): SpeechResult = withContext(Dispatchers.IO) {
+        withTimeoutOrNull(120_000L) { speak(request, onStarted) } ?: SpeechResult(0, false)
     }
 
-    suspend fun synthesize(request: SpeechRequest, onStarted: (() -> Unit)? = null): SpeechResult =
+    private suspend fun speak(request: SpeechRequest, onStarted: (() -> Unit)?): SpeechResult =
         synthesizeMutex.withLock {
+            if (request.text.isBlank() || request.text.length > TextToSpeech.getMaxSpeechInputLength()) return@withLock SpeechResult(0, false)
             val ready = ensureTts()
-            if (!ready) return@withLock SpeechResult(0, false)
+            if (!ready || !configureVoice(request)) return@withLock SpeechResult(0, false)
             suspendCancellableCoroutine { continuation ->
                 val ttsEngine = tts
                 if (ttsEngine == null || !isInitialized) {
@@ -187,13 +255,15 @@ class AndroidTTSProvider(
                 val utteranceId = java.util.UUID.randomUUID().toString()
                 val startTime = System.currentTimeMillis()
 
+                val finished = AtomicBoolean(false)
                 fun finish(success: Boolean) {
-                    if (!continuation.isActive) return
+                    if (!finished.compareAndSet(false, true) || !continuation.isActive) return
                     val duration = if (success) System.currentTimeMillis() - startTime else 0L
                     continuation.resume(SpeechResult(duration, success))
                 }
 
                 ttsEngine.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+                    override fun onStop(id: String?, interrupted: Boolean) { if (id == utteranceId) finish(false) }
                     override fun onStart(id: String?) {
                         if (id == utteranceId) {
                             Log.d(TAG, "TTS started utterance=$utteranceId")
@@ -223,15 +293,26 @@ class AndroidTTSProvider(
                     null,
                     utteranceId
                 )
-                if (result == TextToSpeech.ERROR && continuation.isActive) {
-                    continuation.resume(SpeechResult(0, false))
-                }
+                if (result == TextToSpeech.ERROR) finish(false)
 
                 continuation.invokeOnCancellation {
+                    finished.set(true)
                     ttsEngine.stop()
                 }
             }
         }
+
+    private fun configureVoice(request: SpeechRequest): Boolean {
+        val engine = tts ?: return false
+        request.voiceId?.let { id ->
+            val voice = engine.voices?.firstOrNull { it.name == id } ?: return false
+            return engine.setVoice(voice) != TextToSpeech.ERROR
+        }
+        val locale = request.language?.let(Locale::forLanguageTag) ?: Locale.getDefault()
+        val status = engine.setLanguage(locale)
+        if (status >= TextToSpeech.LANG_AVAILABLE) return true
+        return request.language == null && engine.setLanguage(Locale.US) >= TextToSpeech.LANG_AVAILABLE
+    }
 
     override fun stream(text: String): Flow<AudioFrame> = emptyFlow()
 
@@ -241,10 +322,15 @@ class AndroidTTSProvider(
         // Do not acquire synthesizeMutex here: synthesize() may be waiting for
         // an Android TTS callback while holding it. stop() is intentionally
         // allowed to trigger that callback and release the suspended call.
-        tts?.stop()
-        tts?.shutdown()
-        tts = null
-        isInitialized = false
+        synchronized(initLock) {
+            initGeneration++
+            tts?.stop()
+            tts?.shutdown()
+            tts = null
+            isInitialized = false
+            initCallback?.invoke(false)
+            initCallback = null
+        }
     }
 
     private companion object {

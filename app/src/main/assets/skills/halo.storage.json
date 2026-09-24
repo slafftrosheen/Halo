@@ -1,1 +1,16 @@
-{"id":"halo.storage","name":"Storage status","description":"Read available local storage information.","category":"INFORMATION","risk":"READ_ONLY","tools":["halo_storage_status"]}
+{
+  "id": "halo.storage",
+  "name": "Storage status",
+  "description": "Read available local storage information.",
+  "category": "INFORMATION",
+  "risk": "READ_ONLY",
+  "tools": [
+    "halo_storage_status"
+  ],
+  "toolDefinitions": [
+    {
+      "toolId": "halo_storage_status",
+      "risk": "READ_ONLY"
+    }
+  ]
+}

@@ -1,6 +1,9 @@
 package com.halo.host.android.audio
 
 import android.annotation.SuppressLint
+import android.content.Context
+import android.media.AudioManager
+import android.media.AudioDeviceInfo
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
@@ -30,7 +33,8 @@ import kotlinx.coroutines.withContext
  * Sherpa-ONNX Android microphone examples and avoids rapid stop/release/new
  * AudioRecord races on Android audio HALs.
  */
-class AndroidAudioSource : AudioSource {
+class AndroidAudioSource(context: Context? = null) : AudioSource {
+    private val audioManager = context?.applicationContext?.getSystemService(AudioManager::class.java)
     private val _state = MutableStateFlow(AudioSourceState.IDLE)
     override val state: StateFlow<AudioSourceState> = _state.asStateFlow()
 
@@ -62,7 +66,7 @@ class AndroidAudioSource : AudioSource {
 
     @SuppressLint("MissingPermission")
     private fun createRecorder(): AudioRecord {
-        check(recorderBufferSizeBytes > 0) {
+        check(minimumBufferSizeBytes > 0) {
             "Unable to determine a valid AudioRecord buffer size: $recorderBufferSizeBytes"
         }
 
@@ -73,8 +77,9 @@ class AndroidAudioSource : AudioSource {
             audioFormat,
             recorderBufferSizeBytes
         ).also { recorder ->
-            check(recorder.state == AudioRecord.STATE_INITIALIZED) {
-                "AudioRecord failed to initialize"
+            if (recorder.state != AudioRecord.STATE_INITIALIZED) {
+                recorder.release()
+                error("AudioRecord failed to initialize")
             }
         }
     }
@@ -88,6 +93,12 @@ class AndroidAudioSource : AudioSource {
                 val recorder = audioRecord ?: createRecorder().also { audioRecord = it }
 
                 try {
+                    audioManager?.let { manager ->
+                        val microphone = manager.getDevices(AudioManager.GET_DEVICES_INPUTS)
+                            .firstOrNull { it.type == AudioDeviceInfo.TYPE_BUILTIN_MIC }
+                            ?: error("Phone microphone is unavailable")
+                        check(recorder.setPreferredDevice(microphone)) { "Unable to select the phone microphone" }
+                    }
                     recorder.startRecording()
                     check(recorder.recordingState == AudioRecord.RECORDSTATE_RECORDING) {
                         "AudioRecord failed to start recording"
@@ -96,11 +107,10 @@ class AndroidAudioSource : AudioSource {
                     _state.value = AudioSourceState.ACTIVE
                     Log.i("HaloAudio", "MIC_START")
                 } catch (exception: Exception) {
-                    // Do not immediately release/recreate the recorder here.
-                    // Releasing an AudioRecord and creating another one during
-                    // rapid UI interaction is the failure mode seen in the logs:
-                    // "AudioRecord cleanup is still in progress".
+                    // A failed platform recorder is unusable. Retire it before a later start.
                     isRecording = false
+                    audioRecord = null
+                    runCatching { recorder.release() }
                     _state.value = AudioSourceState.ERROR
                     throw IllegalStateException("Unable to start AudioRecord", exception)
                 }
@@ -143,7 +153,7 @@ class AndroidAudioSource : AudioSource {
     }
 
     override val frames: Flow<AudioFrame> = flow {
-        check(recorderBufferSizeBytes > 0) {
+        check(minimumBufferSizeBytes > 0) {
             "Unable to determine a valid AudioRecord buffer size: $recorderBufferSizeBytes"
         }
 
@@ -155,7 +165,7 @@ class AndroidAudioSource : AudioSource {
                 if (!isRecording || recorder == null) break
 
                 val read = try {
-                    recorder.read(buffer, 0, buffer.size)
+                    recorder.read(buffer, 0, buffer.size, AudioRecord.READ_NON_BLOCKING)
                 } catch (exception: IllegalStateException) {
                     if (!isRecording) break
                     throw IllegalStateException("AudioRecord read failed", exception)
@@ -165,6 +175,9 @@ class AndroidAudioSource : AudioSource {
 
                 when {
                     read > 0 -> {
+                        if (audioManager != null && recorder.routedDevice?.type != AudioDeviceInfo.TYPE_BUILTIN_MIC) {
+                            throw IllegalStateException("Phone microphone route changed; start listening again")
+                        }
                         emit(
                             AudioFrame(
                                 samples = buffer.copyOf(read),
@@ -179,8 +192,16 @@ class AndroidAudioSource : AudioSource {
                         throw IllegalStateException("AudioRecord read failed: invalid operation")
                     read == AudioRecord.ERROR_BAD_VALUE ->
                         throw IllegalStateException("AudioRecord read failed: invalid buffer parameters")
-                    read == AudioRecord.ERROR_DEAD_OBJECT ->
-                        throw IllegalStateException("AudioRecord read failed: recorder is no longer available")
+                    read == AudioRecord.ERROR_DEAD_OBJECT -> {
+                        recorderMutex.withLock {
+                            if (audioRecord === recorder) {
+                                isRecording = false
+                                audioRecord = null
+                                runCatching { recorder.release() }
+                            }
+                        }
+                        throw IllegalStateException("Phone microphone disconnected; start listening again")
+                    }
                     else ->
                         throw IllegalStateException("AudioRecord read failed with code $read")
                 }

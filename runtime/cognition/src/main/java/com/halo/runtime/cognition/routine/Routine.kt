@@ -10,7 +10,8 @@ value class RoutineId(val value: String)
 sealed interface RoutineTrigger {
     data class AtTime(
         val localTime: LocalTime,
-        val days: Set<DayOfWeek> = emptySet()
+        val days: Set<DayOfWeek> = emptySet(),
+        val zoneId: java.time.ZoneId = java.time.ZoneId.systemDefault()
     ) : RoutineTrigger
 
     data class Once(

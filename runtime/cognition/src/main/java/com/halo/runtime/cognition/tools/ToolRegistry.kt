@@ -62,6 +62,53 @@ class ToolRegistry(
             )
         }
 
+        val definition = definitions().firstOrNull { it.id == toolCall.functionName || it.name == toolCall.functionName }
+            ?: return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Tool is no longer available")
+        val schemaError = validateSchema(toolCall.arguments, definition.parameters, "arguments")
+        return schemaError?.let { ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, it) }
+    }
+
+    private fun validateSchema(value: Any?, schema: Map<*, *>, path: String): String? {
+        val allowed = schema["enum"] as? List<*>
+        if (allowed != null && value !in allowed) return "$path has an unsupported value"
+        when (schema["type"]) {
+            "object" -> {
+                val objectValue = value as? Map<*, *> ?: return "$path must be an object"
+                val properties = schema["properties"] as? Map<*, *> ?: emptyMap<Any, Any>()
+                val required = schema["required"] as? List<*> ?: emptyList<Any>()
+                if (required.any { it !in objectValue }) return "$path is missing a required argument"
+                if (schema["additionalProperties"] == false && objectValue.keys.any { it !in properties })
+                    return "$path contains an unexpected argument"
+                for ((key, nested) in objectValue) {
+                    val childSchema = properties[key] as? Map<*, *> ?: continue
+                    validateSchema(nested, childSchema, "$path.$key")?.let { return it }
+                }
+            }
+            "string" -> {
+                val text = value as? String ?: return "$path must be text"
+                val min = (schema["minLength"] as? Number)?.toInt() ?: 0
+                val max = (schema["maxLength"] as? Number)?.toInt() ?: Int.MAX_VALUE
+                if (text.length !in min..max) return "$path has an invalid length"
+            }
+            "integer", "number" -> {
+                val number = (value as? Number)?.toDouble() ?: return "$path must be a number"
+                if (!number.isFinite() || (schema["type"] == "integer" && number % 1.0 != 0.0)) return "$path must be a finite ${schema["type"]}"
+                val min = (schema["minimum"] as? Number)?.toDouble()
+                val max = (schema["maximum"] as? Number)?.toDouble()
+                if ((min != null && number < min) || (max != null && number > max)) return "$path is out of range"
+            }
+            "boolean" -> if (value !is Boolean) return "$path must be true or false"
+            "array" -> {
+                val list = value as? List<*> ?: return "$path must be a list"
+                val min = (schema["minItems"] as? Number)?.toInt() ?: 0
+                val max = (schema["maxItems"] as? Number)?.toInt() ?: Int.MAX_VALUE
+                if (list.size !in min..max) return "$path has an invalid number of items"
+                val itemSchema = schema["items"] as? Map<*, *>
+                if (itemSchema != null) list.forEachIndexed { index, item ->
+                    validateSchema(item, itemSchema, "$path[$index]")?.let { return it }
+                }
+            }
+        }
         return null
     }
 
@@ -105,7 +152,8 @@ class ToolRegistry(
             ToolExecutionResult.Failed(
                 toolCallId = toolCall.id,
                 toolId = toolCall.functionName,
-                message = "Tool execution timed out"
+                message = "Tool execution timed out; completion unknown",
+                completionUnknown = true
             )
         } catch (e: CancellationException) {
             throw e
@@ -113,7 +161,8 @@ class ToolRegistry(
             ToolExecutionResult.Failed(
                 toolCallId = toolCall.id,
                 toolId = toolCall.functionName,
-                message = t.message ?: "Tool execution failed"
+                message = "Tool executor threw; completion unknown",
+                completionUnknown = true
             )
         }
     }

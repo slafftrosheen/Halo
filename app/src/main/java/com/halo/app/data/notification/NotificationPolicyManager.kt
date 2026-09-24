@@ -9,20 +9,13 @@ class NotificationPolicyManager(context: Context) {
     fun policyForApp(packageName: String): NotificationAccessPolicy {
         val saved = prefs.getString("policy_$packageName", null)
         if (saved != null) {
-            return runCatching { NotificationAccessPolicy.valueOf(saved) }.getOrDefault(NotificationAccessPolicy.SUMMARIZE_ONLY)
+            return runCatching { NotificationAccessPolicy.valueOf(saved) }.getOrDefault(NotificationAccessPolicy.BLOCK)
         }
 
-        val pkg = packageName.lowercase()
-        return when {
-            pkg.contains("pass") || pkg.contains("authenticator") || pkg.contains("authy") || pkg.contains("bank") || pkg.contains("finance") ->
-                NotificationAccessPolicy.HIDE_CONTENT
-            pkg.contains("health") || pkg.contains("medical") ->
-                NotificationAccessPolicy.HIDE_CONTENT
-            else -> NotificationAccessPolicy.SUMMARIZE_ONLY
-        }
+        return NotificationAccessPolicy.BLOCK
     }
 
     fun setPolicyForApp(packageName: String, policy: NotificationAccessPolicy) {
-        prefs.edit().putString("policy_$packageName", policy.name).apply()
+        check(prefs.edit().putString("policy_$packageName", policy.name).commit()) { "Could not save notification policy" }
     }
 }

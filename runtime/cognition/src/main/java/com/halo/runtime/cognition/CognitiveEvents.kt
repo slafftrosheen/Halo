@@ -14,6 +14,9 @@ data class GoalCreated(
     val speechOutputTarget: SpeechOutputTarget = SpeechOutputTarget.Phone,
     val speechOutputFallback: SpeechOutputFallback = SpeechOutputFallback.ALLOW_PHONE,
     val sourceCaptureId: String? = null,
+    val interactionId: String? = null,
+    val agentRunId: String? = null,
+    val userRequest: String? = null,
     override val timestamp: Long = System.currentTimeMillis()
 ) : HaloEvent
 

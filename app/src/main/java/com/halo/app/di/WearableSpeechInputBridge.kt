@@ -1,16 +1,24 @@
 package com.halo.app.di
 
+import android.content.Context
 import android.util.Log
+import com.halo.app.audio.ForegroundAudioSource
+import com.halo.app.audio.HaloAudioForegroundService
 import com.halo.drivers.heycyan.*
 import com.halo.drivers.heycyan.protocol.HeyCyanEvent
 import com.halo.engines.speech.AudioPerceptionEngine
+import com.halo.engines.speech.RecognitionFailed
 import com.halo.sdk.host.ObservationSource
 import com.halo.sdk.runtime.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.util.UUID
 
-/** Process-level adapter; physical input works independently of the visible screen. */
+/** All vendor boundaries, disconnects and watchdogs share one capture owner. */
 class WearableSpeechInputBridge(
+    context: Context,
     private val driver: RealHeyCyanDriver,
     private val engine: AudioPerceptionEngine,
     private val events: EventBus,
@@ -18,73 +26,83 @@ class WearableSpeechInputBridge(
     private val cancelSpeechOutput: () -> Unit
 ) {
     private val source = HeyCyanAudioSource(driver, externallyManaged = true)
+    private val foregroundSource = ForegroundAudioSource(context, source, HaloAudioForegroundService.Kind.WEARABLE_INPUT)
+    private val mutex = Mutex()
     private var captureId: String? = null
-    private var activeTtsTarget: SpeechOutputTarget? = null
-    @Volatile private var quietAfter = 0L
+    private var worker: Job? = null
+    private var watchdog: Job? = null
 
     fun start() {
-        scope.launch(start = CoroutineStart.UNDISPATCHED) { events.observe(TtsStarted::class.java).collect { activeTtsTarget = it.target } }
-        scope.launch(start = CoroutineStart.UNDISPATCHED) { events.observe(TtsCompleted::class.java).collect { outputEnded(it.target) } }
-        scope.launch(start = CoroutineStart.UNDISPATCHED) { events.observe(TtsFailed::class.java).collect { outputEnded(it.target) } }
-        scope.launch(start = CoroutineStart.UNDISPATCHED) { events.observe(TtsCancelled::class.java).collect { outputEnded(it.target) } }
-        scope.launch(start = CoroutineStart.UNDISPATCHED) {
-            driver.heyCyanEvents.collect { event ->
-                try {
-                    when (event) {
-                        HeyCyanEvent.VoiceActivationStarted -> {
-                            val deviceId = driver.activeDeviceId ?: return@collect
-                            
-                            val activeTarget = activeTtsTarget
-                            val isWearableTarget = activeTarget is SpeechOutputTarget.Wearable && activeTarget.deviceId == deviceId
-                            if (activeTarget != null && (isWearableTarget || activeTarget is SpeechOutputTarget.Phone)) {
-                                Log.i("SPEECH_INPUT_ROUTE", "Barge-in: cancelling active TTS on device $deviceId")
-                                cancelSpeechOutput()
-                                delay(150)
-                            } else {
-                                val remaining = quietAfter - System.currentTimeMillis()
-                                if (remaining > 0L) {
-                                    delay(remaining)
-                                }
-                            }
-                            
-                            if (captureId == null) {
-                                val turn = SpeechInputTurn(UUID.randomUUID().toString(),
-                                    SpeechInputRoute.Wearable(deviceId, "HeyCyan"), ObservationSource.HeyCyanGlasses,
-                                    CaptureBoundary.EXTERNAL)
-                                if (engine.acquireInput(turn, source)) captureId = turn.captureId
-                            } else Log.i("SPEECH_INPUT_ROUTE", "rejected=existing_session")
-                        }
-                        is HeyCyanEvent.RawAudioFrame -> if (captureId != null) source.accept(event.payload)
-                        HeyCyanEvent.VoiceActivationEnded -> {
-                            val id = captureId ?: return@collect
-                            captureId = null
-                            source.finish()
-                            engine.finishExternalInput(id)
-                        }
-                        else -> Unit
+        if (worker?.isActive == true) return
+        worker = scope.launch(start = CoroutineStart.UNDISPATCHED) {
+            launch {
+                driver.state.collect { state ->
+                    if (state is com.halo.sdk.driver.DriverState.Disconnected || state is com.halo.sdk.driver.DriverState.Error) {
+                        mutex.withLock { abort("Wearable disconnected during capture") }
                     }
-                } catch (cancelled: CancellationException) { throw cancelled
-                } catch (error: Exception) {
-                    android.util.Log.e("WEARABLE_AUDIO_END", "reason=capture_failed", error)
-                    val id = captureId; captureId = null
-                    source.stop()
-                    if (id != null) engine.finishExternalInput(id)
                 }
             }
-        }
-        scope.launch {
-            driver.state.collect { state ->
-                if (state is com.halo.sdk.driver.DriverState.Disconnected || state is com.halo.sdk.driver.DriverState.Error) {
-                    val id = captureId; captureId = null
-                    if (id != null) { source.finish(); engine.finishExternalInput(id) }
+            try {
+                driver.heyCyanEvents.collect { event ->
+                    mutex.withLock {
+                        try {
+                            when (event) {
+                                HeyCyanEvent.VoiceActivationStarted -> {
+                                    val deviceId = driver.activeDeviceId ?: return@withLock
+                                    if (captureId != null) return@withLock
+                                    // Physical voice activation is explicit barge-in; do not block the packet consumer on TTS cooldowns.
+                                    cancelSpeechOutput()
+                                    val turn = SpeechInputTurn(UUID.randomUUID().toString(),
+                                        SpeechInputRoute.Wearable(deviceId, "HeyCyan"), ObservationSource.HeyCyanGlasses,
+                                        CaptureBoundary.EXTERNAL)
+                                    if (engine.acquireInput(turn, foregroundSource)) {
+                                        captureId = turn.captureId
+                                        watchdog = launch {
+                                            delay(90_000L)
+                                            mutex.withLock {
+                                                if (captureId == turn.captureId) {
+                                                    watchdog = null
+                                                    abort("Wearable capture timed out waiting for its end signal")
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                is HeyCyanEvent.RawAudioFrame -> if (captureId != null) source.accept(event.payload)
+                                HeyCyanEvent.VoiceActivationEnded -> {
+                                    val id = captureId ?: return@withLock
+                                    watchdog?.cancel(); watchdog = null
+                                    withTimeout(5_000L) {
+                                        source.finish()
+                                        engine.finishExternalInput(id)
+                                    }
+                                    captureId = null
+                                }
+                                else -> Unit
+                            }
+                        } catch (error: TimeoutCancellationException) {
+                            abort("Wearable audio did not finish in time")
+                        } catch (cancelled: CancellationException) { throw cancelled
+                        } catch (error: Exception) {
+                            Log.e("WEARABLE_AUDIO_END", "Capture failed", error)
+                            abort(error.message ?: "Wearable capture failed")
+                        }
+                    }
                 }
+            } finally {
+                withContext(NonCancellable) { mutex.withLock { abort("Wearable audio stopped") } }
             }
         }
     }
-    private fun outputEnded(target: SpeechOutputTarget) {
-        if (activeTtsTarget == target) {
-            activeTtsTarget = null
-            quietAfter = System.currentTimeMillis() + 750
+
+    private suspend fun abort(reason: String) {
+        val id = captureId ?: return
+        captureId = null
+        watchdog?.cancel(); watchdog = null
+        try { engine.cancelExternalInput(id) }
+        finally {
+            foregroundSource.stop()
+            events.publish(RecognitionFailed(id = id, reason = reason))
         }
     }
 }

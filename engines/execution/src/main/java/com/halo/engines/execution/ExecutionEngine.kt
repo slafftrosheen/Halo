@@ -1,5 +1,9 @@
 package com.halo.engines.execution
 
+import com.halo.runtime.cognition.agent.*
+import com.halo.cognition.language.InteractionId
+import kotlinx.coroutines.CancellationException
+import java.time.Instant
 import com.halo.engines.execution.service.ExecutionScheduler
 import com.halo.libraries.common.core.Identifier
 import com.halo.libraries.common.core.Version
@@ -42,7 +46,8 @@ import java.util.UUID
 class ExecutionEngine(
     private val scheduler: ExecutionScheduler,
     private val eventBus: EventBus,
-    private val blackboard: Blackboard
+    private val blackboard: Blackboard,
+    private val agentRunCoordinator: AgentRunCoordinator? = null,
 ) : Engine {
 
     override val metadata = EngineMetadata(
@@ -77,7 +82,7 @@ class ExecutionEngine(
         job = CoroutineScope(runtimeContext.runtime.scheduler.io).launch {
             eventBus.observe(PlanGenerated::class.java).collect { event ->
                 val plan = try {
-                    val planKnowledge = blackboard.latest(PlanKnowledge::class)
+                    val planKnowledge = blackboard.flow.value.firstOrNull { it.id.value == event.planId && it.payload is PlanKnowledge }
                     (planKnowledge?.payload as? PlanKnowledge)?.plan
                 } catch (error: Exception) {
                     runtimeContext.runtime.logger.error("execution", "Failed to resolve generated plan", error)
@@ -128,20 +133,53 @@ class ExecutionEngine(
         plan: ExecutionPlan,
         executionId: String = UUID.randomUUID().toString()
     ): Outcome {
+        val coordinator = agentRunCoordinator
+        val runId = plan.agentRunId?.let(::AgentRunId) ?: coordinator?.start(
+            AgentRequest(InteractionId(plan.interactionId ?: UUID.randomUUID().toString()), plan.userRequest ?: "Deterministic action",
+                speechOutputTarget = plan.speechOutputTarget, speechOutputFallback = plan.speechOutputFallback,
+                sourceCaptureId = plan.sourceCaptureId))?.also {
+                coordinator?.transition(it, AgentRunState.PLANNING)
+            }
+        if (runId != null && coordinator != null) {
+            coordinator.recordStep(AgentStep.PlanCreated(AgentStepId(UUID.randomUUID().toString()), runId,
+                Instant.now(), plan.id.toString(), "Execute ${plan.tasks.size} action(s)"))
+            coordinator.transition(runId, AgentRunState.EXECUTING)
+        }
         var finalOutcome: Outcome = Outcome.Success("Plan executed successfully")
 
         for (task in plan.tasks) {
             val result = try {
-                scheduler.executeTaskGraph(task)
+                scheduler.executeTaskGraph(task,
+                    beforeDispatch = { dispatched ->
+                        if (runId != null && coordinator != null) {
+                            val operationId = dispatched.id.toString()
+                            coordinator.recordStep(AgentStep.ToolRequested(AgentStepId(UUID.randomUUID().toString()), runId,
+                                Instant.now(), operationId, dispatched::class.java.simpleName, "{}"))
+                            check(coordinator.recordStep(AgentStep.ToolDispatched(AgentStepId(UUID.randomUUID().toString()), runId,
+                                Instant.now(), operationId, dispatched::class.java.simpleName, "${runId.value}:$operationId"))) {
+                                "Action already dispatched; refusing replay"
+                            }
+                        }
+                    },
+                    afterDispatch = { dispatched, outcome ->
+                        if (runId != null && coordinator != null) {
+                            val operationId = dispatched.id.toString()
+                            if (outcome is Outcome.Success) {
+                                coordinator.recordStep(AgentStep.ToolCompleted(AgentStepId(UUID.randomUUID().toString()), runId,
+                                    Instant.now(), operationId, dispatched::class.java.simpleName, outcome.message.orEmpty(), true))
+                            } else if (outcome !is Outcome.Partial) {
+                                coordinator.recordStep(AgentStep.ToolFailed(AgentStepId(UUID.randomUUID().toString()), runId,
+                                    Instant.now(), operationId, dispatched::class.java.simpleName, outcome.messageForTelemetry()))
+                            }
+                        }
+                    })
+            } catch (error: CancellationException) {
+                withContext(NonCancellable) { runId?.let { coordinator?.cancel(it, "Execution cancelled") } }
+                throw error
             } catch (error: Exception) {
-                context?.runtime?.logger?.error(
-                    "execution",
-                    "Task ${task::class.simpleName ?: "unknown"} threw during execution",
-                    error
-                )
-                Outcome.PermanentFailure("Unable to complete action.", error)
+                runId?.let { coordinator?.transition(it, AgentRunState.INTERRUPTED, "Execution stopped without completion evidence") }
+                throw error
             }
-
             val taskLabel = when (task) {
                 is com.halo.runtime.cognition.DeviceTask ->
                     "DeviceTask:${task.action}"
@@ -176,6 +214,16 @@ class ExecutionEngine(
             }
         }
 
+        if (runId != null && coordinator != null) {
+            coordinator.recordStep(AgentStep.ResponseProduced(AgentStepId(UUID.randomUUID().toString()), runId,
+                Instant.now(), executionId, finalOutcome.messageForTelemetry()))
+            when (finalOutcome) {
+                is Outcome.Success -> coordinator.complete(runId)
+                is Outcome.Partial -> coordinator.transition(runId, AgentRunState.INTERRUPTED, finalOutcome.messageForTelemetry())
+                is Outcome.Cancelled -> coordinator.cancel(runId, finalOutcome.messageForTelemetry())
+                else -> coordinator.fail(runId, finalOutcome.messageForTelemetry())
+            }
+        }
         return finalOutcome
     }
 

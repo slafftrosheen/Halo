@@ -1,22 +1,19 @@
 package com.halo.app.audio
 
 import android.content.Context
-import android.media.AudioAttributes
-import android.media.AudioDeviceCallback
-import android.media.AudioDeviceInfo
-import android.media.AudioFormat
-import android.media.AudioManager
-import android.media.AudioTrack
+import android.media.*
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
+import android.os.SystemClock
 import com.halo.providers.android.tts.AndroidTTSProvider
 import com.halo.sdk.provider.SpeechRequest
 import com.halo.sdk.provider.SpeechResult
 import com.halo.sdk.runtime.SpeechRouteEvidence
 import com.halo.sdk.runtime.SpeechOutputTarget
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.atomic.AtomicBoolean
 
 sealed interface RoutedPlaybackResult {
@@ -27,174 +24,152 @@ sealed interface RoutedPlaybackResult {
 }
 
 data class AuthoritativeSpeechRouteLease(
-    val target: SpeechOutputTarget.Wearable,
+    val target: SpeechOutputTarget,
     val endpointId: Int,
-    val endpointAddress: String,
+    val endpointAddress: String?,
     val acquiredAt: Long,
     val generation: Long,
 )
 
-/** Strict wearable playback: preferred-device requests are accepted only after routed-device proof. */
-class RoutedSpeechPlaybackProvider(
-    context: Context,
-    private val ttsProvider: AndroidTTSProvider,
-    private val audioAttributes: AudioAttributes
-) {
+/** Both phone and wearable output require actual AudioTrack route proof before unmuting. */
+class RoutedSpeechPlaybackProvider(context: Context, private val ttsProvider: AndroidTTSProvider,
+    private val audioAttributes: AudioAttributes) {
     private val audioManager = context.applicationContext.getSystemService(AudioManager::class.java)
-    @Volatile private var activeTrack: AudioTrack? = null
+    private val mutex = Mutex()
+    private val trackLock = Any()
+    private var activeTrack: AudioTrack? = null
+    private var activeStop: AtomicBoolean? = null
 
-    suspend fun synthesize(
-        request: SpeechRequest,
-        evidence: SpeechRouteEvidence,
-        onStarted: (() -> Unit)? = null,
-        outputTarget: SpeechOutputTarget.Wearable? = null
-    ): SpeechResult {
-        return when (val res = synthesizeRouted(request, evidence, onStarted, outputTarget)) {
-            is RoutedPlaybackResult.Completed -> SpeechResult(res.durationMs, true)
+    suspend fun synthesize(request: SpeechRequest, evidence: SpeechRouteEvidence,
+        onStarted: (() -> Unit)? = null, outputTarget: SpeechOutputTarget? = null): SpeechResult =
+        when (val result = synthesizeRouted(request, evidence, onStarted, outputTarget)) {
+            is RoutedPlaybackResult.Completed -> SpeechResult(result.durationMs, true)
             else -> SpeechResult(0, false)
         }
+
+    suspend fun synthesizeRouted(request: SpeechRequest, evidence: SpeechRouteEvidence,
+        onStarted: (() -> Unit)? = null, outputTarget: SpeechOutputTarget? = null,
+        generation: Long = 1L, acquireFocus: (() -> Boolean)? = null): RoutedPlaybackResult = withContext(Dispatchers.IO) {
+        mutex.withLock { play(request, evidence, onStarted, acquireFocus) }
     }
 
-    suspend fun synthesizeRouted(
-        request: SpeechRequest,
-        evidence: SpeechRouteEvidence,
-        onStarted: (() -> Unit)? = null,
-        outputTarget: SpeechOutputTarget.Wearable? = null,
-        generation: Long = 1L
-    ): RoutedPlaybackResult {
-        val startedAt = System.currentTimeMillis()
-        val pcm = ttsProvider.synthesizeToPcm(request) ?: return RoutedPlaybackResult.Failed("PCM synthesis failed")
-        val target = resolveTarget(evidence) ?: return RoutedPlaybackResult.Failed("Target device unresolvable")
-        val acquiredAt = System.currentTimeMillis()
-        val address = evidence.androidDeviceAddress ?: return RoutedPlaybackResult.Failed("Missing endpoint address")
-        val lease = AuthoritativeSpeechRouteLease(
-            target = outputTarget ?: SpeechOutputTarget.Wearable(address),
-            endpointId = target.id,
-            endpointAddress = address,
-            acquiredAt = acquiredAt,
-            generation = generation
-        )
-
+    private suspend fun play(request: SpeechRequest, evidence: SpeechRouteEvidence,
+        onStarted: (() -> Unit)?, acquireFocus: (() -> Boolean)?): RoutedPlaybackResult {
+        val startedAt = SystemClock.elapsedRealtime()
+        val pcm = ttsProvider.synthesizeToPcm(request) ?: return RoutedPlaybackResult.Failed("PCM synthesis failed or timed out")
+        currentCoroutineContext().ensureActive()
+        val target = resolveTarget(evidence) ?: return RoutedPlaybackResult.Failed("Selected audio device is unavailable")
         val channelMask = when (pcm.channelCount) {
             1 -> AudioFormat.CHANNEL_OUT_MONO
             2 -> AudioFormat.CHANNEL_OUT_STEREO
             else -> return RoutedPlaybackResult.Failed("Unsupported channel count")
         }
-        val format = AudioFormat.Builder()
-            .setSampleRate(pcm.sampleRate)
-            .setEncoding(pcm.audioFormat)
-            .setChannelMask(channelMask)
-            .build()
+        val bytesPerSample = when (pcm.audioFormat) {
+            AudioFormat.ENCODING_PCM_8BIT -> 1
+            AudioFormat.ENCODING_PCM_16BIT -> 2
+            AudioFormat.ENCODING_PCM_FLOAT -> 4
+            else -> return RoutedPlaybackResult.Failed("Unsupported PCM format")
+        }
+        val frameBytes = bytesPerSample * pcm.channelCount
         val minBuffer = AudioTrack.getMinBufferSize(pcm.sampleRate, channelMask, pcm.audioFormat)
-        if (minBuffer <= 0) return RoutedPlaybackResult.Failed("Invalid min buffer size")
-        val track = AudioTrack.Builder()
-            .setAudioAttributes(audioAttributes)
-            .setAudioFormat(format)
-            .setTransferMode(AudioTrack.MODE_STREAM)
-            .setBufferSizeInBytes(maxOf(minBuffer, 16 * 1024))
-            .build()
-        activeTrack = track
-
+        if (minBuffer <= 0) return RoutedPlaybackResult.Failed("Invalid audio buffer size")
+        val track = AudioTrack.Builder().setAudioAttributes(audioAttributes)
+            .setAudioFormat(AudioFormat.Builder().setSampleRate(pcm.sampleRate)
+                .setEncoding(pcm.audioFormat).setChannelMask(channelMask).build())
+            .setTransferMode(AudioTrack.MODE_STREAM).setBufferSizeInBytes(maxOf(minBuffer, 16 * 1024)).build()
+        val stopped = AtomicBoolean(false)
         val routeLost = AtomicBoolean(false)
-        val deviceCallback = object : AudioDeviceCallback() {
-            override fun onAudioDevicesRemoved(removedDevices: Array<out AudioDeviceInfo>?) {
-                if (removedDevices?.any { it.id == lease.endpointId } == true) {
-                    routeLost.set(true)
+        val verified = AtomicBoolean(false)
+        synchronized(trackLock) { activeTrack = track; activeStop = stopped }
+        val listener = AudioRouting.OnRoutingChangedListener { routing ->
+            if (verified.get() && !routeMatches(routing.routedDevice, evidence)) {
+                routeLost.set(true)
+                synchronized(trackLock) {
+                    if (activeTrack === track) { runCatching { track.setVolume(0f) }; runCatching { track.pause() } }
                 }
             }
         }
-
-        audioManager.registerAudioDeviceCallback(deviceCallback, null)
-
-        return try {
-            if (resolveTarget(evidence)?.id != lease.endpointId || !track.setPreferredDevice(target)) {
-                return RoutedPlaybackResult.Failed("Failed to set preferred device")
-            }
+        var listenerRegistered = false
+        try {
+            if (track.state != AudioTrack.STATE_INITIALIZED || !track.setPreferredDevice(target))
+                return RoutedPlaybackResult.Failed("Unable to select audio device")
+            track.addOnRoutingChangedListener(listener, Handler(Looper.getMainLooper()))
+            listenerRegistered = true
+            if (acquireFocus?.invoke() == false) return RoutedPlaybackResult.Failed("Android denied audio focus; open Halo and try again")
             track.setVolume(0f)
             track.play()
-            val bytesPerSample = when (pcm.audioFormat) {
-                AudioFormat.ENCODING_PCM_8BIT -> 1
-                AudioFormat.ENCODING_PCM_FLOAT -> 4
-                else -> 2
+            val silence = ByteArray((pcm.sampleRate / 50) * frameBytes).apply {
+                if (pcm.audioFormat == AudioFormat.ENCODING_PCM_8BIT) fill(128.toByte())
             }
-            val probeSilence = ByteArray((pcm.sampleRate * pcm.channelCount * bytesPerSample / 50).coerceAtLeast(1))
-            if (track.write(probeSilence, 0, probeSilence.size, AudioTrack.WRITE_BLOCKING) < 0) {
-                return RoutedPlaybackResult.Failed("Probe silence write failed")
-            }
-            if (!awaitVerifiedRoute(track, lease.endpointId, evidence)) {
-                return RoutedPlaybackResult.Failed("Route verification timeout")
-            }
-            track.setVolume(1f)
-            var started = false
-            var totalBytesWritten = probeSilence.size.toLong()
-            for (chunk in pcm.chunks) {
-                currentCoroutineContext().ensureActive()
-                if (routeLost.get() || !routeMatches(track.routedDevice, evidence)) {
-                    return RoutedPlaybackResult.RouteLost
-                }
+            suspend fun write(bytes: ByteArray) {
                 var offset = 0
-                while (offset < chunk.size) {
-                    val written = track.write(chunk, offset, chunk.size - offset, AudioTrack.WRITE_BLOCKING)
-                    if (written <= 0) return RoutedPlaybackResult.Failed("Track write failed")
-                    offset += written
-                    totalBytesWritten += written
-                    if (!started && track.playState == AudioTrack.PLAYSTATE_PLAYING &&
-                        routeMatches(track.routedDevice, evidence)) {
-                        started = true
-                        onStarted?.invoke()
-                    }
+                var lastProgress = SystemClock.elapsedRealtime()
+                while (offset < bytes.size) {
+                    currentCoroutineContext().ensureActive()
+                    check(!stopped.get()) { "Playback stopped" }
+                    check(!routeLost.get() && (!verified.get() || routeMatches(track.routedDevice, evidence))) { "Audio route lost" }
+                    val written = track.write(bytes, offset, bytes.size - offset, AudioTrack.WRITE_NON_BLOCKING)
+                    check(written >= 0) { "Audio write failed: $written" }
+                    if (written == 0) {
+                        check(SystemClock.elapsedRealtime() - lastProgress < 3_000L) { "Audio playback stalled" }
+                        delay(10)
+                    } else { offset += written; lastProgress = SystemClock.elapsedRealtime() }
                 }
             }
-            if (!started) return RoutedPlaybackResult.Failed("Playback failed to start")
-            val expectedFrames = totalBytesWritten / (bytesPerSample * pcm.channelCount)
-            while (track.playbackHeadPosition.toLong() < expectedFrames) {
+            write(silence)
+            val routeReady = withTimeoutOrNull(1_500L) {
+                while (!routeMatches(track.routedDevice, evidence)) { currentCoroutineContext().ensureActive(); delay(20) }
+                true
+            } == true
+            if (!routeReady || stopped.get()) return RoutedPlaybackResult.Failed("Audio route verification failed")
+            verified.set(true)
+            if (!routeMatches(track.routedDevice, evidence)) return RoutedPlaybackResult.RouteLost
+            track.setVolume(1f)
+            var total = silence.size.toLong()
+            var started = false
+            for (chunk in pcm.chunks) {
+                write(chunk)
+                total += chunk.size
+                if (!started) { started = true; onStarted?.invoke() }
+            }
+            val expectedFrames = total / frameBytes
+            val deadline = SystemClock.elapsedRealtime() + expectedFrames * 1000L / pcm.sampleRate + 3_000L
+            while ((track.playbackHeadPosition.toLong() and 0xffffffffL) < expectedFrames) {
                 currentCoroutineContext().ensureActive()
-                if (routeLost.get() || !routeMatches(track.routedDevice, evidence)) {
-                    return RoutedPlaybackResult.RouteLost
-                }
-                delay(10L)
+                if (stopped.get()) return RoutedPlaybackResult.Cancelled
+                if (routeLost.get() || !routeMatches(track.routedDevice, evidence)) return RoutedPlaybackResult.RouteLost
+                if (SystemClock.elapsedRealtime() >= deadline) return RoutedPlaybackResult.Failed("Playback completion timed out")
+                delay(10)
             }
-            RoutedPlaybackResult.Completed(System.currentTimeMillis() - startedAt, lease.endpointId)
-        } catch (_: CancellationException) {
-            RoutedPlaybackResult.Cancelled
-        } catch (e: Exception) {
-            RoutedPlaybackResult.Failed(e.message ?: "Playback error")
+            return RoutedPlaybackResult.Completed(SystemClock.elapsedRealtime() - startedAt, target.id)
+        } catch (cancelled: CancellationException) { throw cancelled
+        } catch (error: Exception) {
+            return when {
+                stopped.get() -> RoutedPlaybackResult.Cancelled
+                routeLost.get() -> RoutedPlaybackResult.RouteLost
+                else -> RoutedPlaybackResult.Failed(error.message ?: "Audio playback failed")
+            }
         } finally {
-            audioManager.unregisterAudioDeviceCallback(deviceCallback)
-            if (activeTrack === track) activeTrack = null
-            runCatching { track.pause() }
-            runCatching { track.flush() }
-            runCatching { track.stop() }
-            track.release()
+            if (listenerRegistered) runCatching { track.removeOnRoutingChangedListener(listener) }
+            synchronized(trackLock) {
+                if (activeTrack === track) { activeTrack = null; activeStop = null }
+                runCatching { track.pause() }; runCatching { track.flush() }; runCatching { track.release() }
+            }
         }
     }
 
-    fun stopCurrent() {
-        activeTrack?.let { track ->
-            runCatching { track.pause() }
-            runCatching { track.flush() }
-            runCatching { track.stop() }
-        }
+    fun stopCurrent() = synchronized(trackLock) {
+        activeStop?.set(true)
+        activeTrack?.let { track -> runCatching { track.setVolume(0f) }; runCatching { track.pause() }; runCatching { track.flush() } }
     }
-
-    private suspend fun awaitVerifiedRoute(track: AudioTrack, expectedDeviceId: Int, evidence: SpeechRouteEvidence): Boolean {
-        repeat(30) {
-            if (track.playState == AudioTrack.PLAYSTATE_PLAYING &&
-                track.routedDevice?.id == expectedDeviceId && routeMatches(track.routedDevice, evidence)) return true
-            delay(25L)
-        }
-        return false
-    }
-
-    private fun resolveTarget(evidence: SpeechRouteEvidence): AudioDeviceInfo? {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return null
-        return audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
-            .firstOrNull { routeMatches(it, evidence) }
-    }
-
+    private fun resolveTarget(evidence: SpeechRouteEvidence) = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
+        .firstOrNull { routeMatches(it, evidence) }
     private fun routeMatches(device: AudioDeviceInfo?, evidence: SpeechRouteEvidence): Boolean {
-        if (device == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return false
-        val expected = evidence.androidDeviceAddress ?: return false
-        return device.address.equals(expected, ignoreCase = true)
+        if (device == null || device.type != evidence.androidDeviceType) return false
+        if (evidence.androidDeviceType == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER)
+            return device.id == evidence.androidDeviceId
+        if (Build.VERSION.SDK_INT < 28) return false
+        val address = evidence.androidDeviceAddress?.takeIf { it.isNotBlank() } ?: return false
+        return device.address.equals(address, ignoreCase = true)
     }
 }

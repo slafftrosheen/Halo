@@ -1,1 +1,41 @@
-{"id":"halo.apps","name":"Apps & Navigation","description":"Open apps and navigation routes.","category":"NAVIGATION","risk":"EXTERNAL_SIDE_EFFECT","tools":["halo_open_app","halo_navigation","halo_browser","halo_search","halo_media"]}
+{
+  "id": "halo.apps",
+  "name": "Apps & Navigation",
+  "description": "Open apps and navigation routes.",
+  "category": "NAVIGATION",
+  "risk": "EXTERNAL_SIDE_EFFECT",
+  "tools": [
+    "halo_open_app",
+    "halo_navigation",
+    "halo_browser",
+    "halo_search",
+    "halo_media",
+    "halo_list_apps"
+  ],
+  "toolDefinitions": [
+    {
+      "toolId": "halo_open_app",
+      "risk": "EXTERNAL_SIDE_EFFECT"
+    },
+    {
+      "toolId": "halo_navigation",
+      "risk": "EXTERNAL_SIDE_EFFECT"
+    },
+    {
+      "toolId": "halo_browser",
+      "risk": "EXTERNAL_SIDE_EFFECT"
+    },
+    {
+      "toolId": "halo_search",
+      "risk": "EXTERNAL_SIDE_EFFECT"
+    },
+    {
+      "toolId": "halo_media",
+      "risk": "EXTERNAL_SIDE_EFFECT"
+    },
+    {
+      "toolId": "halo_list_apps",
+      "risk": "READ_ONLY"
+    }
+  ]
+}

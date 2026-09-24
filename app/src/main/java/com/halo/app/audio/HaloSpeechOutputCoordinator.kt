@@ -29,19 +29,14 @@ class HaloSpeechOutputCoordinator(
     private val routeController: SpeechOutputRouteController,
     private val ttsProvider: AndroidTTSProvider,
     private val routedSpeechPlaybackProvider: RoutedSpeechPlaybackProvider? = null,
-    private val nativeResourceCoordinator: NativeResourceCoordinator? = null
+    private val nativeResourceCoordinator: NativeResourceCoordinator? = null,
+    private val interactionRoutePolicy: com.halo.runtime.cognition.device.InteractionRoutePolicy = com.halo.runtime.cognition.device.DefaultInteractionRoutePolicy()
 ) {
     val session = HaloAudioSessionCoordinator()
-    private val audioManager = context.applicationContext.getSystemService(AudioManager::class.java)
-    private val focusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
-        .setAudioAttributes(speechAudioAttributes)
-        .setOnAudioFocusChangeListener { change ->
-            if (change == AudioManager.AUDIOFOCUS_LOSS || change == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
-                stop("Audio focus lost")
-            }
-        }
-        .build()
-    @Volatile private var focusOwner: String? = null
+    private val applicationContext = context.applicationContext
+    private val audioManager = applicationContext.getSystemService(AudioManager::class.java)
+    private val speechAttributes = speechAudioAttributes
+    private val playbackMutex = kotlinx.coroutines.sync.Mutex()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var eventJob: Job? = null
     @Volatile private var activeTransactionId: String? = null
@@ -50,7 +45,8 @@ class HaloSpeechOutputCoordinator(
     fun start() {
         if (eventJob?.isActive == true) return
 
-        eventJob = scope.launch {
+        eventJob = scope.launch(start = CoroutineStart.UNDISPATCHED) {
+            val cognitionCaptures = mutableMapOf<String, String>()
             eventBus.events().collect { event ->
                 when (event) {
                     is TtsRequested -> speak(event)
@@ -59,27 +55,49 @@ class HaloSpeechOutputCoordinator(
                         session.listening(event.source, event.captureId)
                     }
                     is SpeechRecognized -> event.input?.let { session.thinking(it.route, it.captureId) }
+                    is CognitiveRequestStarted -> (session.state.value as? HaloAudioSessionState.Thinking)?.let {
+                        cognitionCaptures[event.requestId] = it.captureId
+                    }
+                    is CognitiveCompleted -> cognitionCaptures.remove(event.requestId)?.let(session::finishInput)
+                    is CognitiveFailed -> cognitionCaptures.remove(event.requestId)?.let(session::finishInput)
+                    is SpeechRejected -> event.captureId?.let(session::finishInput)
+                    is com.halo.engines.speech.RecognitionFailed -> session.finishInput(event.id)
                 }
             }
         }
     }
 
     private fun speak(event: TtsRequested) {
-        if (event.text.isBlank()) return
-        val fallback = if (event.target is SpeechOutputTarget.Wearable) {
-            if (storage.getBoolean("wearable_phone_fallback", false)) SpeechOutputFallback.ALLOW_PHONE
-            else SpeechOutputFallback.DISALLOW_PHONE
-        } else event.fallback
+        if (event.text.isBlank()) {
+            scope.launch { eventBus.publish(TtsFailed(transactionId = event.transactionId, target = event.target, reason = "Speech text is empty")) }
+            return
+        }
+        val fallback = event.fallback
 
         activeJob?.cancel()
         activeTransactionId = event.transactionId
         session.preparing(event.target, event.transactionId)
 
-        activeJob = scope.launch {
+        activeJob = scope.launch(start = CoroutineStart.UNDISPATCHED) {
             var playbackTarget = event.target
             var startedEventJob: Job? = null
             val startedOnce = AtomicBoolean(false)
+            var locked = false
+            var focusGranted = false
+            var foregroundLease: HaloAudioForegroundService.Lease? = null
+            val focusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
+                .setAudioAttributes(speechAttributes)
+                .setWillPauseWhenDucked(true)
+                .setOnAudioFocusChangeListener { change ->
+                    if (change in setOf(AudioManager.AUDIOFOCUS_LOSS, AudioManager.AUDIOFOCUS_LOSS_TRANSIENT,
+                            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) && activeTransactionId == event.transactionId) {
+                        stop("Audio focus lost")
+                    }
+                }.build()
             try {
+                playbackMutex.lock()
+                locked = true
+                foregroundLease = HaloAudioForegroundService.acquire(applicationContext, HaloAudioForegroundService.Kind.PLAYBACK)
                 // 1. Prepare the requested route.
                 var routePreparation = routeController.prepareRoute(
                     SpeechRouteRequest(
@@ -97,7 +115,14 @@ class HaloSpeechOutputCoordinator(
                         is SpeechRoutePreparation.Ready -> error("Unreachable route state")
                     }
 
-                    if (fallback == SpeechOutputFallback.DISALLOW_PHONE) {
+                    val continuity = com.halo.runtime.cognition.device.InteractionContinuity(
+                        com.halo.cognition.language.InteractionId(event.transactionId),
+                        (event.target as? SpeechOutputTarget.Wearable)?.deviceId, "AudioInput", "AudioOutput",
+                        allowHandoff = fallback == SpeechOutputFallback.ALLOW_PHONE)
+                    val handoff = interactionRoutePolicy.evaluateHandoff(continuity, listOf(
+                        com.halo.runtime.cognition.device.RuntimeDevice("local_phone", "phone", "Phone",
+                            capabilities = setOf(com.halo.runtime.cognition.device.DeviceCapability.AudioOutput()))))
+                    if (handoff is com.halo.runtime.cognition.device.HandoffDecision.Unavailable) {
                         session.failed(event.transactionId, HaloAudioFailure.ROUTE_UNAVAILABLE)
                         Log.i(
                             "HaloAudio",
@@ -141,12 +166,6 @@ class HaloSpeechOutputCoordinator(
                         return@launch
                     }
                 }
-                if (audioManager.requestAudioFocus(focusRequest) != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-                    session.failed(event.transactionId, HaloAudioFailure.FOCUS_DENIED)
-                    eventBus.publish(TtsFailed(transactionId = event.transactionId, target = playbackTarget, reason = "AUDIO_FOCUS_DENIED"))
-                    return@launch
-                }
-                focusOwner = event.transactionId
                 // 2. Synthesize with onStarted callback to publish TtsStarted when audible playback actually begins
                 val request = SpeechRequest(text = event.text)
                 val onStarted: () -> Unit = {
@@ -167,18 +186,18 @@ class HaloSpeechOutputCoordinator(
                     }
                     Unit
                 }
-                val result = if (playbackTarget is SpeechOutputTarget.Wearable) {
-                    val evidence = (routePreparation as? SpeechRoutePreparation.Ready)?.evidence
-                    if (evidence == null || routedSpeechPlaybackProvider == null) {
-                        com.halo.sdk.provider.SpeechResult(0, false)
-                    } else {
-                        routedSpeechPlaybackProvider.synthesize(
-                            request, evidence, onStarted,
-                            playbackTarget as SpeechOutputTarget.Wearable
-                        )
-                    }
-                } else {
-                    ttsProvider.synthesize(request, onStarted)
+                val evidence = (routePreparation as? SpeechRoutePreparation.Ready)?.evidence
+                    ?: error("Speech route has no endpoint evidence")
+                val playback = routedSpeechPlaybackProvider ?: error("Routed speech playback is unavailable")
+                val result = when (val routed = playback.synthesizeRouted(request, evidence, onStarted, playbackTarget, acquireFocus = {
+                    focusGranted = activeTransactionId == event.transactionId &&
+                        audioManager.requestAudioFocus(focusRequest) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
+                    focusGranted
+                })) {
+                    is RoutedPlaybackResult.Completed -> com.halo.sdk.provider.SpeechResult(routed.durationMs, true)
+                    RoutedPlaybackResult.Cancelled -> throw CancellationException("Speech playback cancelled")
+                    RoutedPlaybackResult.RouteLost -> error("Speech audio route disconnected or changed")
+                    is RoutedPlaybackResult.Failed -> error(routed.reason)
                 }
 
                 // 3. Publish result
@@ -224,10 +243,8 @@ class HaloSpeechOutputCoordinator(
                     )
                 )
             } finally {
-                if (focusOwner == event.transactionId) {
-                    focusOwner = null
-                    audioManager.abandonAudioFocusRequest(focusRequest)
-                }
+                if (focusGranted) runCatching { audioManager.abandonAudioFocusRequest(focusRequest) }
+                try { foregroundLease?.release() } finally { if (locked) playbackMutex.unlock() }
                 if (activeTransactionId == event.transactionId) {
                     activeTransactionId = null
                 }
@@ -249,11 +266,10 @@ class HaloSpeechOutputCoordinator(
     fun shutdown() {
         eventJob?.cancel()
         eventJob = null
-        activeJob?.cancel()
-        activeJob = null
-        activeTransactionId = null
+        stop("Shutdown")
         scope.launch {
-            ttsProvider.close()
+            playbackMutex.lock()
+            try { ttsProvider.close() } finally { playbackMutex.unlock() }
         }
     }
 }

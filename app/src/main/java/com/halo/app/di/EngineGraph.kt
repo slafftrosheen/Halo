@@ -35,7 +35,9 @@ import com.halo.sdk.runtime.NativeResourceCoordinator
 class EngineGraph(
     private val applicationContext: Context,
     private val infra: InfrastructureGraph,
-    private val providerGraph: ProviderGraph
+    private val providerGraph: ProviderGraph,
+    private val agentRunCoordinator: com.halo.runtime.cognition.agent.AgentRunCoordinator? = null,
+    private val clarificationCoordinator: com.halo.runtime.cognition.clarification.ClarificationCoordinator? = null,
 ) {
     /** Shared arbitration boundary used by heavyweight native inference providers. */
     val nativeResourceCoordinator: NativeResourceCoordinator
@@ -64,7 +66,7 @@ class EngineGraph(
 
     val executionScheduler by lazy { ExecutionScheduler(capabilityRegistry) }
     val executionEngine by lazy {
-        ExecutionEngine(executionScheduler, infra.eventBus, infra.blackboard)
+        ExecutionEngine(executionScheduler, infra.eventBus, infra.blackboard, agentRunCoordinator)
     }
     val commandResponseProcess by lazy {
         CommandResponseProcess(
@@ -76,7 +78,7 @@ class EngineGraph(
     }
     val planningEngine by lazy { PlanningEngine(infra.eventBus, infra.blackboard) }
 
-    val interpretationEngine by lazy { InterpretationEngine(infra.blackboard, infra.eventBus) }
+    val interpretationEngine by lazy { InterpretationEngine(infra.blackboard, infra.eventBus, clarificationCoordinator = clarificationCoordinator, agentRunCoordinator = agentRunCoordinator) }
     val defaultReasoningStrategy by lazy { DefaultReasoningStrategy(goalManager) }
     val reasoningEngine by lazy {
         ReasoningEngine(

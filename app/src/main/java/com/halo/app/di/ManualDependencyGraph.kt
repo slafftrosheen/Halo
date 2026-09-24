@@ -19,8 +19,9 @@ import com.halo.app.data.workspace.RoomWorkspaceRepository
 import com.halo.app.data.workspace.SendIntentHandler
 import com.halo.app.di.tools.StorageStatusToolExecutor
 import com.halo.app.di.tools.WorkspaceToolExecutor
+import com.halo.app.models.FileModelCatalogCache
 import com.halo.app.models.HuggingFaceGgufCatalog
-import com.halo.app.models.SharedPreferencesModelCatalogCache
+
 import com.halo.app.notebook.NotebookUseCases
 import com.halo.app.notebook.WorkspaceUseCases
 import com.halo.app.ui.screens.activity.ActivityViewModel
@@ -69,7 +70,7 @@ object ManualDependencyGraph {
             )
         }
     }
-    val engineGraph by lazy { RuntimeStartupTrace.measure("graph.engines") { EngineGraph(applicationContext, infra, providerGraph) } }
+    val engineGraph by lazy { RuntimeStartupTrace.measure("graph.engines") { EngineGraph(applicationContext, infra, providerGraph, agentRunCoordinator, clarificationCoordinator) } }
     val observerGraph by lazy { RuntimeStartupTrace.measure("graph.observers") { ObserverGraph(applicationContext, infra, engineGraph) } }
     val appDatabase by lazy { RuntimeStartupTrace.measure("graph.database") { AppDatabase.create(applicationContext) } }
     val notebookRepository by lazy { RoomNotebookRepository(appDatabase.notebookDao()) }
@@ -147,23 +148,91 @@ object ManualDependencyGraph {
             )
         )
     }
-    val agentRunRepository by lazy { RoomAgentRunRepository(appDatabase) }
+    val attentionContextProvider by lazy { com.halo.app.attention.AndroidAttentionHost(applicationContext, eventBus, infra.scope) }
+    val attentionPolicyEngine by lazy { com.halo.runtime.cognition.attention.DefaultAttentionPolicyEngine() }
+    val attentionQueue by lazy { com.halo.runtime.cognition.attention.InMemoryAttentionQueue() }
+    val attentionDeliveryCoordinator by lazy {
+        com.halo.runtime.cognition.attention.DefaultAttentionDeliveryCoordinator(attentionQueue,
+            listOf(attentionContextProvider), attentionContextProvider::surfaceSilently)
+    }
+    val attentionController by lazy {
+        com.halo.runtime.cognition.attention.AttentionController(attentionContextProvider,
+            attentionPolicyEngine, attentionQueue, attentionDeliveryCoordinator, infra.scope)
+    }
+    val agentRunStore by lazy { RoomAgentRunRepository(appDatabase) }
+    val agentRunRepository get() = agentRunStore
+    val agentRunCoordinator by lazy { com.halo.runtime.cognition.agent.DefaultAgentRunCoordinator(agentRunStore, infra.scope) }
+    val clarificationCoordinator by lazy { com.halo.runtime.cognition.clarification.DefaultClarificationCoordinator() }
+    val devicePresenceRepository by lazy { com.halo.runtime.cognition.device.InMemoryDevicePresenceRepository() }
+    val devicePresenceBridge by lazy { com.halo.app.embodiment.DevicePresenceBridge(devicePresenceRepository, deviceRegistry, deviceSessionManager, infra.scope) }
+    val interactionRoutePolicy by lazy { com.halo.runtime.cognition.device.DefaultInteractionRoutePolicy() }
+    val notificationPolicies by lazy { com.halo.app.data.notification.NotificationPolicyManager(applicationContext) }
+    val notificationRepository by lazy { com.halo.app.data.notification.RoomNotificationRepository(appDatabase.notificationDao(), notificationPolicies, applicationContext.packageName) }
+    val notificationBridge by lazy { com.halo.app.notification.NotificationIngestionBridge(applicationContext, notificationRepository, infra.scope) }
+    val notificationDigestTool by lazy { com.halo.app.notification.NotificationDigestTool(notificationRepository, attentionController, notificationBridge::isAccessGranted) {
+        val prefs = applicationContext.getSharedPreferences("halo_digest_delivery", Context.MODE_PRIVATE)
+        when (prefs.getString("channel", "activity")) {
+            "android" -> com.halo.runtime.cognition.attention.DeliveryChannel.AndroidNotification
+            "wearable" -> prefs.getString("device", null)?.takeIf { it.isNotBlank() }?.let {
+                if (attentionContextProvider.snapshot().foregroundState != com.halo.runtime.cognition.attention.ForegroundState.HALO_FOREGROUND) startAndroidSpeaker()
+                com.halo.runtime.cognition.attention.DeliveryChannel.WearableSpeech(it)
+            }
+            else -> null
+        }
+    } }
+    // Same executor and registry contract, without initializing unrelated workspace/device tools in a worker.
+    val automationToolRegistry by lazy { com.halo.runtime.cognition.tools.ToolRegistry(listOf(notificationDigestTool)) }
+    val routineRepository by lazy { com.halo.app.data.routine.RoomRoutineRepository(appDatabase.routineDao()) }
+    val routineExecutor by lazy { com.halo.app.automation.RoutineExecutor(appDatabase, routineRepository,
+        agentRunCoordinator, agentRunStore, automationToolRegistry, condition = { condition ->
+            when (condition) {
+                is com.halo.runtime.cognition.routine.RoutineCondition.DeviceAvailable -> devicePresenceRepository.getPresence(condition.deviceId)?.state in
+                    setOf(com.halo.runtime.cognition.device.DevicePresenceState.CONNECTED, com.halo.runtime.cognition.device.DevicePresenceState.READY)
+                is com.halo.runtime.cognition.routine.RoutineCondition.NetworkAvailable -> {
+                    val manager = applicationContext.getSystemService(android.net.ConnectivityManager::class.java)
+                    val available = manager.getNetworkCapabilities(manager.activeNetwork)?.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED) == true
+                    available == condition.required
+                }
+                is com.halo.runtime.cognition.routine.RoutineCondition.ProviderAvailable -> aiProviderRouter.getAllProviders()
+                    .firstOrNull { it.id == condition.providerId }?.status?.value?.state == com.halo.sdk.provider.ProviderStatus.State.READY
+                else -> false
+            }
+        }, currentlyAllowed = { tool ->
+            tool == com.halo.app.notification.NotificationDigestTool.ID &&
+                storage.getBoolean("skill_enabled_halo.notifications", true) &&
+                (storage.getString("skill_approval_halo.notifications") ?: "ALWAYS_ALLOW") == "ALWAYS_ALLOW"
+        }) }
+    val routineScheduler by lazy { com.halo.app.automation.AndroidRoutineScheduler(applicationContext, routineRepository, routineExecutor::validate) }
+    val routinePresenceObserver by lazy { com.halo.app.automation.RoutinePresenceObserver(devicePresenceRepository, routineRepository, routineExecutor) }
+    val routinesViewModel by lazy { com.halo.app.ui.screens.settings.RoutinesViewModel(routineRepository, routineScheduler, routineExecutor) }
     val toolRegistry by lazy {
         com.halo.runtime.cognition.tools.ToolRegistry(
             listOf(
-                AndroidCapabilityTools(applicationContext, eventBus),
+                AndroidCapabilityTools(applicationContext, eventBus) {
+                    attentionContextProvider.snapshot().foregroundState == com.halo.runtime.cognition.attention.ForegroundState.HALO_FOREGROUND
+                },
                 CurrentTimeToolExecutor(),
+                notificationDigestTool,
                 StorageStatusToolExecutor(storageUsageRepository, storageAccessRepository),
+                com.halo.app.di.tools.FileToolExecutor(applicationContext, workspaceFileRepository, workspaceRepository),
                 WorkspaceToolExecutor(notebookRepository, workspaceRepository, workspaceContext),
                 com.halo.app.di.tools.MemoryToolExecutor(memoryRepository, memoryContextSource),
-                com.halo.app.di.tools.HostTools(applicationContext),
+                com.halo.app.di.tools.HostTools(applicationContext) {
+                    attentionContextProvider.snapshot().foregroundState == com.halo.runtime.cognition.attention.ForegroundState.HALO_FOREGROUND
+                },
             )
         )
     }
     val workspaceContext by lazy { WorkspaceContextStore(appDatabase, notebookRepository, storage) }
     val contextAssembler by lazy { com.halo.runtime.cognition.context.DefaultContextAssembler(conversationStore, blackboard, toolRegistry, workspaceContext, skillRegistry) }
+    val toolAuthorizationCoordinator by lazy {
+        com.halo.app.di.tools.InteractiveToolAuthorization {
+            attentionContextProvider.snapshot().foregroundState == com.halo.runtime.cognition.attention.ForegroundState.HALO_FOREGROUND
+        }
+    }
     val toolAuthorizer by lazy {
         com.halo.runtime.cognition.tools.PolicyToolAuthorizer(
+            coordinator = toolAuthorizationCoordinator,
             defaultPolicyProvider = skillRegistry::approvalPolicyForTool
         )
     }
@@ -176,6 +245,7 @@ object ManualDependencyGraph {
             toolRegistry = toolRegistry,
             toolAuthorizer = toolAuthorizer,
             skillRegistry = skillRegistry,
+            agentRunCoordinator = agentRunCoordinator,
             scope = infra.scope,
             blackboard = blackboard,
             defaultPolicyProvider = { storage.readRuntimeAiContextPolicy() }
@@ -274,7 +344,7 @@ object ManualDependencyGraph {
     val voiceSettingsViewModel by lazy {
         VoiceSettingsViewModel(providerGraph.speechModelInventory, speechLanguageSettingsRepository, providerGraph, storage)
     }
-    val activityViewModel by lazy { ActivityViewModel(runtimeSnapshotManager) }
+    val activityViewModel by lazy { ActivityViewModel(runtimeSnapshotManager, agentRunStore = agentRunStore) }
     val notebookViewModel by lazy { NotebookViewModel(workspaceUseCases, notebookUseCases) }
     val devicesViewModel by lazy {
         DevicesViewModel(
@@ -297,7 +367,7 @@ object ManualDependencyGraph {
             bluetoothEnabled = platformStateMonitor.bluetoothEnabled
         )
     }
-    val modelCatalogCache by lazy { SharedPreferencesModelCatalogCache(applicationContext) }
+    val modelCatalogCache by lazy { FileModelCatalogCache(applicationContext) }
     val modelCatalog by lazy { HuggingFaceGgufCatalog(applicationContext, modelCatalogCache) }
     val intelligenceViewModel by lazy { com.halo.app.ui.screens.settings.IntelligenceViewModel(
         runtimeSnapshotManager, aiProviderRouter, cognitiveSession, storage, modelDownloadManager, modelCatalog) }
@@ -356,7 +426,8 @@ object ManualDependencyGraph {
             routeController = speechOutputRouteController,
             ttsProvider = androidTtsProvider,
             routedSpeechPlaybackProvider = routedSpeechPlaybackProvider,
-            nativeResourceCoordinator = providerGraph.nativeResourceCoordinator
+            nativeResourceCoordinator = providerGraph.nativeResourceCoordinator,
+            interactionRoutePolicy = interactionRoutePolicy
         )
     }
     val haloSpeechOutputCoordinator: HaloSpeechOutputCoordinator get() = speechOutputCoordinatorDelegate.value

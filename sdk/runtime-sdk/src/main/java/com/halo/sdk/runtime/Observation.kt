@@ -36,7 +36,8 @@ data class Observation(
     val freshness: Freshness = Freshness.UNKNOWN,
     val confidence: Float = 1.0f,
     val timestamp: Long = System.currentTimeMillis(),
-    val metadata: Map<String, Any> = emptyMap()
+    val metadata: Map<String, Any> = emptyMap(),
+    val interactionId: String = UUID.randomUUID().toString()
 )
 
 data class ObservationCreated(

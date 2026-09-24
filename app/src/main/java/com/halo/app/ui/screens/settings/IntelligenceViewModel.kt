@@ -40,6 +40,7 @@ data class IntelligenceUiState(
     val localModels: List<CognitiveModel> = emptyList(),
     val catalogState: ModelCatalogState = ModelCatalogState.Idle,
     val downloadStates: Map<String, DownloadState> = emptyMap(),
+    val downloadErrors: Map<String, String> = emptyMap(),
     val activeLocalModelId: String? = null,
     val temperature: Float = 0.7f,
     val policy: AiContextPolicy = AiContextPolicy.CONSERVATIVE,
@@ -101,6 +102,9 @@ class IntelligenceViewModel(
         }
         viewModelScope.launch {
             modelDownloadManager?.downloadStates?.collect { _refreshTrigger.update { it + 1 } }
+        }
+        viewModelScope.launch {
+            modelDownloadManager?.downloadErrors?.collect { _refreshTrigger.update { it + 1 } }
         }
         viewModelScope.launch {
             modelCatalog?.state?.collect { _refreshTrigger.update { it + 1 } }
@@ -207,6 +211,7 @@ class IntelligenceViewModel(
             localModels = modelDownloadManager?.getAllModels() ?: emptyList(),
             catalogState = modelCatalog?.state?.value ?: ModelCatalogState.Idle,
             downloadStates = dlStates,
+            downloadErrors = modelDownloadManager?.downloadErrors?.value.orEmpty(),
             activeLocalModelId = activeLocalId ?: settings.llamacppModel,
             temperature = settings.temperature,
             policy = settings.policy,

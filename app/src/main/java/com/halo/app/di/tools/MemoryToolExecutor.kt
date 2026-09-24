@@ -33,7 +33,7 @@ class MemoryToolExecutor(
         ToolDefinition(
             id = "halo_propose_memory",
             name = "halo_propose_memory",
-            description = "Propose a memory candidate for user approval before saving.",
+            description = "Save a memory after the configured action approval. The saved fact appears in Notebook memories.",
             parameters = mapOf(
                 "type" to "object",
                 "properties" to mapOf(
@@ -48,6 +48,10 @@ class MemoryToolExecutor(
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
         fun reject(reason: String) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason)
 
+        val key = if (toolCall.functionName == "halo_search_memory") "query" else "content"
+        val value = toolCall.arguments[key] as? String ?: return reject("Expected $key text")
+        val maximum = if (key == "query") 500 else 1000
+        if (toolCall.arguments.keys != setOf(key) || value.length > maximum) return reject("Invalid arguments")
         return when (toolCall.functionName) {
             "halo_search_memory" -> {
                 val query = toolCall.arguments["query"]?.toString()?.trim().orEmpty()
@@ -58,12 +62,10 @@ class MemoryToolExecutor(
             "halo_propose_memory" -> {
                 val content = toolCall.arguments["content"]?.toString()?.trim().orEmpty()
                 if (content.isBlank()) return reject("Content is required")
+                if (content.length > 1000 || toolCall.arguments.keys != setOf("content")) return reject("Invalid memory arguments")
                 val candidate = MemoryCandidate(content = content, kind = MemoryKind.FACT, scope = MemoryScope.GLOBAL)
-                ToolExecutionResult.Success(
-                    toolCall.id,
-                    toolCall.functionName,
-                    "Proposed memory candidate for user confirmation: '${candidate.content}'"
-                )
+                val saved = memoryRepository.promoteCandidate(candidate)
+                ToolExecutionResult.Success(toolCall.id, toolCall.functionName, "Saved memory [${saved.id}]: ${saved.content}")
             }
             else -> reject("Unsupported memory tool: ${toolCall.functionName}")
         }

@@ -11,7 +11,8 @@ import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.*
 
 /** A closed set of reversible host actions, executed through existing capabilities. */
-class AndroidCapabilityTools(private val context: Context, private val events: EventBus) : ToolExecutor {
+class AndroidCapabilityTools(private val context: Context, private val events: EventBus,
+    private val isForeground: () -> Boolean = { true }) : ToolExecutor {
     private val device = AndroidDeviceCapability(context)
     private val apps = AndroidApplicationCapability(context)
     private val navigation = AndroidNavigationCapability(context)
@@ -19,6 +20,9 @@ class AndroidCapabilityTools(private val context: Context, private val events: E
     private val media = AndroidMediaCapability(context)
     private fun resolves(intent: Intent) = intent.resolveActivity(context.packageManager) != null
     override fun definitions(): List<ToolDefinition> = buildList {
+        add(ToolDefinition("halo_list_apps", "halo_list_apps", "Find launchable installed apps by name and return package IDs for halo_open_app.",
+            mapOf("type" to "object", "properties" to mapOf("query" to mapOf("type" to "string", "maxLength" to 100)),
+                "required" to listOf("query"), "additionalProperties" to false)))
         fun tool(name: String, description: String, key: String, values: List<String>? = null) {
             val property = mutableMapOf<String, Any>("type" to "string", "minLength" to 1, "maxLength" to 500)
             if (values != null) property["enum"] = values
@@ -37,11 +41,21 @@ class AndroidCapabilityTools(private val context: Context, private val events: E
             tool("halo_browser", "Open an HTTP or HTTPS URL. Receipt confirms dispatch only.", "url")
         if (resolves(Intent(Intent.ACTION_WEB_SEARCH)))
             tool("halo_search", "Open a web search in an installed app.", "query")
-        if ((context.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager).isMusicActive)
-            tool("halo_media", "Send play or pause to the active media session. Does not confirm playback.", "action", listOf("play", "pause"))
+        tool("halo_media", "Send play or pause to the active media session. Does not confirm playback.", "action", listOf("play", "pause"))
     }
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
         fun reject(reason: String) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason)
+        if (toolCall.functionName == "halo_list_apps") {
+            val query = toolCall.arguments["query"] as? String ?: return reject("Expected query")
+            if (query.length > 100 || toolCall.arguments.keys != setOf("query")) return reject("Invalid query")
+            val manager = context.packageManager
+            val matches = manager.queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), 0)
+                .map { it.loadLabel(manager).toString() to it.activityInfo.packageName }
+                .distinctBy { it.second }.filter { it.first.contains(query, true) || it.second.contains(query, true) }
+                .sortedBy { it.first }.take(20)
+            return ToolExecutionResult.Success(toolCall.id, toolCall.functionName,
+                matches.joinToString("\n") { "${it.first}: ${it.second}" }.ifEmpty { "No matching launchable apps" })
+        }
         val definition = definitions().firstOrNull { it.id == toolCall.functionName } ?: return reject("Capability or permission unavailable")
         val required = definition.parameters["required"] as List<*>
         val key = required.single() as String
@@ -51,6 +65,8 @@ class AndroidCapabilityTools(private val context: Context, private val events: E
         val properties = definition.parameters["properties"] as Map<*, *>
         val allowed = (properties[key] as Map<*, *>)["enum"] as? List<*>
         if (allowed != null && value !in allowed) return reject("Unsupported $key")
+        if (definition.id in setOf("halo_open_app", "halo_navigation", "halo_browser", "halo_search") && !isForeground())
+            return reject("Open Halo to launch another app")
         val (capability, task) = when (definition.id) {
             "halo_volume" -> device to DeviceTask(action = "volume_$value")
             "halo_flashlight" -> device to DeviceTask(action = "flashlight_$value")
@@ -83,7 +99,8 @@ class AndroidCapabilityTools(private val context: Context, private val events: E
             is Outcome.NeedsClarification -> result.prompt
         }
         events.publish(ActionReceipt(operationId = toolCall.id, category = "Actions", title = definition.id, stage = stage, detail = detail))
-        return if (result is Outcome.Success) ToolExecutionResult.Success(toolCall.id, definition.id, "$stage: $detail")
+        return if (result is Outcome.Success) ToolExecutionResult.Success(toolCall.id, definition.id, "$stage: $detail",
+            if (stage == "Completed") com.halo.runtime.cognition.agent.ActionTruth.CONFIRMED else com.halo.runtime.cognition.agent.ActionTruth.ACKNOWLEDGED)
             else ToolExecutionResult.Failed(toolCall.id, definition.id, detail)
     }
 }

@@ -1,0 +1,17 @@
+{
+  "id": "halo.notifications",
+  "name": "Notification digests",
+  "description": "Build bounded offline digests of notifications from explicitly permitted apps.",
+  "category": "AUTOMATION",
+  "risk": "READ_ONLY",
+  "tools": [
+    "halo_notification_digest"
+  ],
+  "requiredPermissions": [],
+  "toolDefinitions": [
+    {
+      "toolId": "halo_notification_digest",
+      "risk": "READ_ONLY"
+    }
+  ]
+}

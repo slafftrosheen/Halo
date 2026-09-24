@@ -1,7 +1,6 @@
 package com.halo.app.ui.state
 
 import com.halo.app.ui.glass.material.HaloRuntimeState
-import com.halo.sdk.runtime.RuntimeHealth
 import com.halo.sdk.runtime.RuntimeSnapshot
 import com.halo.sdk.runtime.SpeechSessionState
 import com.halo.sdk.runtime.embodiment.SessionState
@@ -29,15 +28,14 @@ fun presenceFromSpeech(speech: SpeechSessionState): HaloRuntimeState = when (spe
 
 /**
  * Presence for a whole snapshot: the speech pipeline drives the visible stage,
- * while an unhealthy runtime overrides it so a degraded Halo never presents as
- * merely idle.
+ * while engine health remains available separately as diagnostic information.
  */
 fun presenceFromSnapshot(snapshot: RuntimeSnapshot): HaloRuntimeState {
     val speech = presenceFromSpeech(snapshot.speech)
-    return if (snapshot.health.requiresAttention()) HaloRuntimeState.Recovering else speech
+    // Engine health is a diagnostic, not an active recovery operation. A latched
+    // provider failure must not hide a new capture or keep an idle microphone spinning.
+    return speech
 }
-
-private fun RuntimeHealth.requiresAttention(): Boolean = !healthy || degraded
 
 /**
  * Canonical mapping from SessionState to user-facing display text.

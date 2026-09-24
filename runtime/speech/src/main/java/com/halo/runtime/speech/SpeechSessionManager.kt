@@ -1,180 +1,101 @@
 package com.halo.runtime.speech
 
 import com.halo.sdk.runtime.*
+import com.halo.engines.speech.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.filterIsInstance
-import com.halo.engines.speech.ListeningStarted
-import com.halo.engines.speech.SpeechEnded
-import com.halo.engines.speech.RecognitionStarted
-import com.halo.engines.speech.RecognitionFinished
-import com.halo.engines.speech.HandoffStarted
-import com.halo.engines.speech.RecognitionFailed
 
-class SpeechSessionManager(
-    private val eventBus: EventBus,
-    private val commandBus: CommandBus,
-    private val scope: CoroutineScope
-) : SpeechStateObserver {
-    companion object {
-        const val POST_TTS_LISTEN_COOLDOWN_MS = 250L
-    }
-
-    private val _sessionState = MutableStateFlow<SpeechSessionState>(SpeechSessionState.Idle)
-    override val sessionState: StateFlow<SpeechSessionState> = _sessionState.asStateFlow()
-
+/** One ordered event consumer owns speech state; a failed turn never latches input closed. */
+class SpeechSessionManager(private val eventBus: EventBus, private val commandBus: CommandBus,
+    private val scope: CoroutineScope) : SpeechStateObserver {
+    companion object { const val POST_TTS_LISTEN_COOLDOWN_MS = 250L }
+    private val mutableState = MutableStateFlow<SpeechSessionState>(SpeechSessionState.Idle)
+    override val sessionState: StateFlow<SpeechSessionState> = mutableState.asStateFlow()
     private var workerJob: Job? = null
-    @Volatile private var outputActive = false
+    private var recoveryJob: Job? = null
+    private var captureId: String? = null
+    private var cognitiveRequestId: String? = null
+    @Volatile private var outputId: String? = null
     @Volatile private var lastTtsEndTime = 0L
-
-    fun isListeningAllowed(): Boolean {
-        if (outputActive) return false
-        if (System.currentTimeMillis() - lastTtsEndTime < POST_TTS_LISTEN_COOLDOWN_MS) return false
-        if (_sessionState.value == SpeechSessionState.Speaking) return false
-        return true
-    }
+    fun isListeningAllowed() = outputId == null &&
+        System.currentTimeMillis() - lastTtsEndTime >= POST_TTS_LISTEN_COOLDOWN_MS
 
     fun start() {
         if (workerJob?.isActive == true) return
-
-        workerJob = scope.launch {
-            launch { observeCommands() }
-            launch { observeRecognitionEvents() }
-            launch { observeTtsEvents() }
-        }
-    }
-
-    fun stop() {
-        workerJob?.cancel()
-        workerJob = null
-        outputActive = false
-        _sessionState.value = SpeechSessionState.Idle
-    }
-
-    private suspend fun observeCommands() {
-        coroutineScope {
-            launch {
-                commandBus.commands().filterIsInstance<StartListening>().collect {
-                    outputActive = false
-                    _sessionState.value = SpeechSessionState.Capturing
-                }
-            }
-            launch {
-                commandBus.commands().filterIsInstance<StopListening>().collect {
-                    if (_sessionState.value == SpeechSessionState.Capturing ||
-                        _sessionState.value == SpeechSessionState.Recognizing
-                    ) {
-                        _sessionState.value = SpeechSessionState.Idle
+        workerJob = scope.launch(start = CoroutineStart.UNDISPATCHED) {
+            launch(start = CoroutineStart.UNDISPATCHED) {
+                commandBus.commands().collect { command ->
+                    when (command) {
+                        is StopListening -> if (mutableState.value in setOf(SpeechSessionState.Capturing, SpeechSessionState.Recognizing, SpeechSessionState.Recovering)) {
+                            recoveryJob?.cancel()
+                            mutableState.value = SpeechSessionState.Idle
+                        }
+                        else -> Unit
                     }
                 }
             }
-        }
-    }
-
-    private suspend fun observeRecognitionEvents() {
-        coroutineScope {
-            launch {
-                eventBus.observe(ListeningStarted::class.java).collect {
-                    if (isListeningAllowed()) {
-                        _sessionState.value = SpeechSessionState.Capturing
+            eventBus.events().collect { event ->
+                when (event) {
+                    is ListeningStarted -> {
+                        recoveryJob?.cancel()
+                        outputId = null
+                        captureId = event.captureId
+                        cognitiveRequestId = null
+                        mutableState.value = SpeechSessionState.Capturing
                     }
-                }
-            }
-            launch {
-                eventBus.observe(SpeechEnded::class.java).collect {
-                    _sessionState.value = SpeechSessionState.Thinking
-                }
-            }
-            launch {
-                eventBus.observe(RecognitionStarted::class.java).collect {
-                    if (isListeningAllowed()) {
-                        _sessionState.value = SpeechSessionState.Recognizing
+                    is RecognitionStarted -> mutableState.value = SpeechSessionState.Recognizing
+                    is SpeechEnded -> if (mutableState.value == SpeechSessionState.Capturing) mutableState.value = SpeechSessionState.Recognizing
+                    is SpeechRecognized -> {
+                        captureId = event.input?.captureId ?: event.id
+                        mutableState.value = SpeechSessionState.Thinking
                     }
-                }
-            }
-            launch {
-                eventBus.observe(SpeechRecognized::class.java).collect {
-                    _sessionState.value = SpeechSessionState.Thinking
-                }
-            }
-            launch {
-                eventBus.observe(HandoffStarted::class.java).collect {
-                    _sessionState.value = SpeechSessionState.Handoff
-                }
-            }
-            launch {
-                eventBus.observe(RecognitionFinished::class.java).collect {
-                    // Maintained until TTS or completion.
-                }
-            }
-            launch {
-                eventBus.observe(RecognitionFailed::class.java).collect {
-                    _sessionState.value = SpeechSessionState.Recovering
-                    delay(500)
-                    _sessionState.value = SpeechSessionState.Idle
-                }
-            }
-            launch {
-                eventBus.observe(OutcomePublished::class.java).collect {
-                    if (_sessionState.value == SpeechSessionState.Thinking) {
-                        _sessionState.value = SpeechSessionState.Idle
+                    is CognitiveRequestStarted -> cognitiveRequestId = event.requestId
+                    is HandoffStarted -> mutableState.value = SpeechSessionState.Handoff
+                    is RecognitionFailed -> {
+                        mutableState.value = SpeechSessionState.Recovering
+                        recoveryJob?.cancel()
+                        recoveryJob = launch {
+                            delay(500)
+                            if (mutableState.value == SpeechSessionState.Recovering) mutableState.value = SpeechSessionState.Idle
+                        }
                     }
+                    is SpeechRejected -> if (event.captureId == null || event.captureId == captureId) finishThinking()
+                    is CognitiveFailed -> if (event.requestId == cognitiveRequestId) { cognitiveRequestId = null; finishThinking() }
+                    is CognitiveCompleted -> if (event.requestId == cognitiveRequestId) { cognitiveRequestId = null; finishThinking() }
+                    is OutcomePublished -> if (cognitiveRequestId == null) finishThinking()
+                    is TtsRequested -> outputId = event.transactionId
+                    is TtsStarted -> if (outputId == event.transactionId) mutableState.value = SpeechSessionState.Speaking
+                    is TtsCompleted -> finishOutput(event.transactionId, System.currentTimeMillis())
+                    is TtsFailed -> finishOutput(event.transactionId, System.currentTimeMillis())
+                    is TtsCancelled -> finishOutput(event.transactionId, 0L)
+                    else -> Unit
                 }
             }
         }
     }
-
-    private suspend fun observeTtsEvents() {
-        coroutineScope {
-            launch {
-                eventBus.observe(TtsStarted::class.java).collect {
-                    outputActive = true
-                    _sessionState.value = SpeechSessionState.Speaking
-                }
-            }
-            launch {
-                eventBus.observe(TtsCompleted::class.java).collect {
-                    finishOutput(
-                        endedAt = System.currentTimeMillis(),
-                        preserveInputState = true
-                    )
-                }
-            }
-            launch {
-                eventBus.observe(TtsCancelled::class.java).collect {
-                    // Cancellation is the intentional barge-in path. Do not add
-                    // a cooldown and never allow the late cancellation callback
-                    // to overwrite a new Capturing/Recognizing state.
-                    finishOutput(
-                        endedAt = 0L,
-                        preserveInputState = true
-                    )
-                }
-            }
-            launch {
-                eventBus.observe(TtsFailed::class.java).collect {
-                    finishOutput(
-                        endedAt = System.currentTimeMillis(),
-                        preserveInputState = true
-                    )
-                }
-            }
+    private fun finishThinking() {
+        if (mutableState.value in setOf(SpeechSessionState.Thinking, SpeechSessionState.Processing,
+                SpeechSessionState.Handoff, SpeechSessionState.Recovering)) {
+            recoveryJob?.cancel()
+            mutableState.value = SpeechSessionState.Idle
         }
     }
 
-    private fun finishOutput(endedAt: Long, preserveInputState: Boolean) {
-        outputActive = false
+    private fun finishOutput(id: String, endedAt: Long) {
+        if (outputId != id) return
+        outputId = null
         lastTtsEndTime = endedAt
-
-        val current = _sessionState.value
-        if (preserveInputState &&
-            (current == SpeechSessionState.Capturing || current == SpeechSessionState.Recognizing)
-        ) {
-            return
-        }
-
-        _sessionState.value = SpeechSessionState.Idle
+        if (mutableState.value !in setOf(SpeechSessionState.Capturing, SpeechSessionState.Recognizing)) mutableState.value = SpeechSessionState.Idle
+    }
+    fun stop() {
+        workerJob?.cancel(); workerJob = null
+        recoveryJob?.cancel(); recoveryJob = null
+        outputId = null
+        captureId = null
+        cognitiveRequestId = null
+        mutableState.value = SpeechSessionState.Idle
     }
 }

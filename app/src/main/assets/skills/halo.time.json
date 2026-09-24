@@ -1,0 +1,10 @@
+{
+  "id": "halo.time",
+  "name": "Date & time",
+  "description": "Read the current date, local time, and time zone.",
+  "category": "INFORMATION",
+  "risk": "READ_ONLY",
+  "tools": [
+    "halo_current_time"
+  ]
+}

@@ -102,6 +102,7 @@ open class HeyCyanGattClient(
             }
 
             if (status != BluetoothGatt.GATT_SUCCESS) {
+                val failureReason = if (status == 147) GattConnectionFailure.Timeout else GattConnectionFailure.Platform(status)
                 tracer.onGattStage(
                     attempt.id,
                     CaptureGattStage.CONNECT,
@@ -111,7 +112,7 @@ open class HeyCyanGattClient(
                 )
                 failGatt(
                     callbackGatt,
-                    RuntimeException("GATT connection error: status=$status attempt=${attempt.id}"),
+                    GattConnectionFailureException(failureReason, "GATT connection error: status=$status attempt=${attempt.id}"),
                     closeImmediately = true,
                     attempt = attempt
                 )
@@ -361,7 +362,7 @@ open class HeyCyanGattClient(
                 detail = "connectGatt returned null"
             )
             _state.value = DriverState.Error(
-                RuntimeException("Unable to create GATT connection attempt=${attempt.id}")
+                GattConnectionFailureException(GattConnectionFailure.DeviceNotFound, "Unable to create GATT connection attempt=${attempt.id}")
             )
             return
         }

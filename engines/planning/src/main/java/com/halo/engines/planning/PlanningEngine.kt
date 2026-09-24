@@ -92,7 +92,10 @@ class PlanningEngine(
                         responseDelivery = event.responseDelivery,
                         speechOutputTarget = event.speechOutputTarget,
                         speechOutputFallback = event.speechOutputFallback,
-                        sourceCaptureId = event.sourceCaptureId
+                        sourceCaptureId = event.sourceCaptureId,
+                        interactionId = event.interactionId,
+                        agentRunId = event.agentRunId,
+                        userRequest = event.userRequest
                     )
 
                     blackboard.publish(
@@ -141,7 +144,10 @@ class PlanningEngine(
         responseDelivery: ResponseDelivery = ResponseDelivery.VISUAL_ONLY,
         speechOutputTarget: SpeechOutputTarget = SpeechOutputTarget.Phone,
         speechOutputFallback: SpeechOutputFallback = SpeechOutputFallback.ALLOW_PHONE,
-        sourceCaptureId: String? = null
+        sourceCaptureId: String? = null,
+        interactionId: String? = null,
+        agentRunId: String? = null,
+        userRequest: String? = null
     ): ExecutionPlan {
         val task = createTask(goal)
 
@@ -151,7 +157,10 @@ class PlanningEngine(
             responseDelivery = responseDelivery,
             speechOutputTarget = speechOutputTarget,
             speechOutputFallback = speechOutputFallback,
-            sourceCaptureId = sourceCaptureId
+            sourceCaptureId = sourceCaptureId,
+            interactionId = interactionId,
+            agentRunId = agentRunId,
+            userRequest = userRequest
         )
     }
 

@@ -19,14 +19,14 @@ class DefaultInteractionRoutePolicyTest {
             currentOutputRoute = "AudioOutput",
             startedAt = Instant.now()
         )
-        val devices = listOf(RuntimeDevice("heycyan_123", "wearable", "Glasses", connected = true))
+        val devices = listOf(RuntimeDevice("heycyan_123", "wearable", "Glasses", connected = true, capabilities = setOf(DeviceCapability.AudioOutput())))
 
         val decision = policy.evaluateHandoff(continuity, devices)
         assertTrue(decision is HandoffDecision.Stay)
     }
 
     @Test
-    fun `evaluateHandoff requires handoff when origin device disconnects`() {
+    fun `evaluateHandoff rejects implicit phone handoff when origin disconnects`() {
         val continuity = InteractionContinuity(
             interactionId = InteractionId("txn_1"),
             originDeviceId = "heycyan_123",
@@ -38,8 +38,6 @@ class DefaultInteractionRoutePolicyTest {
         val devices = listOf(RuntimeDevice("heycyan_123", "wearable", "Glasses", connected = false))
 
         val decision = policy.evaluateHandoff(continuity, devices)
-        assertTrue(decision is HandoffDecision.Required)
-        assertEquals("local_phone", (decision as HandoffDecision.Required).targetDeviceId)
-        assertEquals(HandoffReason.ORIGIN_DISCONNECTED, decision.reason)
+        assertEquals(HandoffDecision.Unavailable(HandoffReason.ORIGIN_DISCONNECTED), decision)
     }
 }

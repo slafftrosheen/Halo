@@ -41,6 +41,7 @@ sealed interface SkillRequirement {
 
 sealed interface SkillAvailability {
     data object Available : SkillAvailability
+    data class PartiallyAvailable(val unavailableTools: Set<String>) : SkillAvailability
     data class MissingPermission(val permission: HostPermission) : SkillAvailability
     data class MissingDependency(val dependency: String) : SkillAvailability
     data object UnsupportedDevice : SkillAvailability

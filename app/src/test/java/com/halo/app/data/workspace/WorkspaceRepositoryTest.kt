@@ -20,6 +20,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import java.io.File
 
 @RunWith(RobolectricTestRunner::class)
 class WorkspaceRepositoryTest {
@@ -37,7 +38,7 @@ class WorkspaceRepositoryTest {
             .build()
         notebookRepo = RoomNotebookRepository(db.notebookDao())
         workspaceRepo = RoomWorkspaceRepository(db.notebookDao())
-        fileRepo = RoomWorkspaceFileRepository(context, db)
+        fileRepo = RoomWorkspaceFileRepository(context, db, File(context.filesDir, "owned"))
     }
 
     @After

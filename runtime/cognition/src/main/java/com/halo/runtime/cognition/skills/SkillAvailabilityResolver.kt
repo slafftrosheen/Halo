@@ -14,8 +14,10 @@ class SkillAvailabilityResolver(
             return SkillAvailability.MissingPermission(it)
         }
         registeredToolNames?.invoke()?.let { registered ->
-            skill.tools.firstOrNull { it !in registered }?.let {
-                return SkillAvailability.MissingDependency(it)
+            val missing = skill.tools - registered
+            if (missing.isNotEmpty()) {
+                return if (missing.size == skill.tools.size) SkillAvailability.MissingDependency(missing.joinToString())
+                else SkillAvailability.PartiallyAvailable(missing)
             }
         }
         return SkillAvailability.Available

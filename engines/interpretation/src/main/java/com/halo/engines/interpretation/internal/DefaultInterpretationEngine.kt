@@ -1,5 +1,14 @@
 package com.halo.engines.interpretation.internal
 
+import com.halo.cognition.language.*
+import com.halo.runtime.cognition.agent.*
+import com.halo.runtime.cognition.clarification.*
+import com.halo.sdk.runtime.AssistantResponsePublished
+import com.halo.sdk.runtime.TtsRequested
+import com.halo.sdk.runtime.SpeechOutputTarget
+import com.halo.sdk.runtime.SpeechOutputFallback
+import com.halo.sdk.runtime.ResponseDelivery
+import com.halo.sdk.runtime.defaultResponseDelivery
 import com.halo.engines.interpretation.InterpretationCreated
 import com.halo.engines.interpretation.InterpretationBuilt
 import com.halo.engines.interpretation.InterpretationPublished
@@ -36,6 +45,9 @@ import java.util.UUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -44,7 +56,9 @@ import kotlinx.datetime.Instant
 open class DefaultInterpretationEngine(
     private val pipeline: RulePipeline,
     private val blackboard: Blackboard,
-    private val eventBus: com.halo.sdk.runtime.EventBus
+    private val eventBus: com.halo.sdk.runtime.EventBus,
+    private val clarificationCoordinator: ClarificationCoordinator? = null,
+    private val agentRunCoordinator: AgentRunCoordinator? = null,
 ) : InterpretationEngine {
     override val metadata = EngineMetadata(
         id = Identifier("engine.interpretation.core"),
@@ -62,6 +76,9 @@ open class DefaultInterpretationEngine(
 
     private lateinit var context: EngineContext
     private var job: Job? = null
+    private val processMutex = Mutex()
+    private var clarificationExpiryJob: Job? = null
+    private var pendingInterpretation: com.halo.runtime.cognition.blackboard.Interpretation? = null
 
     override suspend fun initialize(context: EngineContext) {
         this.context = context
@@ -138,12 +155,20 @@ open class DefaultInterpretationEngine(
     override suspend fun stop() {
         job?.cancel()
         job = null
+        clarificationExpiryJob?.cancel()
+        processMutex.withLock {
+            clarificationCoordinator?.cancel("Interpretation stopped")
+            pendingInterpretation?.metadata?.get("agentRunId")?.let {
+                agentRunCoordinator?.cancel(AgentRunId(it), "Interpretation stopped")
+            }
+            pendingInterpretation = null
+        }
         _state.value = EngineState.Stopped
     }
 
     private suspend fun process(
         observation: Observation
-    ): ProcessedInterpretation {
+    ): ProcessedInterpretation = processMutex.withLock {
         val speechKnowledge = observation.asSpeechKnowledge()
         if (speechKnowledge != null) {
             blackboard.publish(speechKnowledge)
@@ -176,15 +201,96 @@ open class DefaultInterpretationEngine(
             speechRoute = speechRoute
         )
 
-        val interpretation = result.interpretation.copy(
+        var interpretation = result.interpretation.copy(
             origin = origin,
             metadata = result.interpretation.metadata + buildMap {
             put("observationId", observation.id.value)
+            put("interactionId", observation.metadata["interactionId"]?.toString() ?: observation.interactionId)
             put("inputSource", observation.origin?.source?.toString() ?: observation.source.name)
             observation.sourceDeviceId?.let { put("sourceDeviceId", it) }
             observation.metadata["captureId"]?.let { put("captureId", it.toString()) }
             observation.metadata["inputRoute"]?.let { put("inputRoute", it.toString()) }
         })
+        val coordinator = clarificationCoordinator
+        val prior = pendingInterpretation
+        if (coordinator != null && prior != null) {
+            val now = java.time.Instant.now()
+            val pending = coordinator.pending.value
+            if (pending == null || !now.isBefore(pending.expiresAt)) {
+                coordinator.cancel("Expired")
+                prior.metadata["agentRunId"]?.let { agentRunCoordinator?.cancel(AgentRunId(it), "Clarification expired") }
+                pendingInterpretation = null
+                clarificationExpiryJob?.cancel()
+            } else if (prior.origin?.sourceDeviceId == interpretation.origin?.sourceDeviceId &&
+                prior.origin?.source == interpretation.origin?.source && prior.origin?.speechRoute == interpretation.origin?.speechRoute) {
+                val reply = interpretation.transcript.trim().lowercase().trimEnd('.', '!', '?')
+                if (reply in setOf("cancel", "cancel it", "never mind", "nevermind")) {
+                    coordinator.cancel("User cancelled")
+                    prior.metadata["agentRunId"]?.let { agentRunCoordinator?.cancel(AgentRunId(it), "User cancelled") }
+                    pendingInterpretation = null
+                    clarificationExpiryJob?.cancel()
+                    interpretation = interpretation.copy(metadata = interpretation.metadata + ("clarificationOnly" to "true"))
+                    publishClarificationResponse(prior, "Cancelled.")
+                } else when (val resolution = coordinator.consume(interpretation.transcript, now)) {
+                    is ClarificationResolution.Resolved -> {
+                        interpretation = prior.copy(entities = resolution.entities,
+                            metadata = prior.metadata - "clarificationOnly")
+                        prior.metadata["agentRunId"]?.let { agentRunCoordinator?.transition(AgentRunId(it), AgentRunState.PLANNING) }
+                        pendingInterpretation = null
+                        clarificationExpiryJob?.cancel()
+                    }
+                    else -> Unit // Unrelated input continues normally and cannot fill the pending field.
+                }
+            }
+        }
+        if (coordinator != null && (interpretation.intent is SetAlarmIntent || interpretation.intent is ReminderIntent) &&
+            interpretation.metadata["clarificationOnly"] != "true") {
+            val reminderTime = interpretation.entities.filterIsInstance<ReminderEntity>().firstOrNull()?.temporalExpression
+            val unresolved = interpretation.entities.filterIsInstance<UnresolvedTimeEntity>().firstOrNull()
+                ?: if (interpretation.intent is ReminderIntent && reminderTime != null &&
+                    TemporalExpressionParser().parse(reminderTime) is TemporalParseResult.Incomplete)
+                    UnresolvedTimeEntity(reminderTime, TemporalField.AM_PM, 1f) else null
+            val needsTime = unresolved != null || (interpretation.intent is SetAlarmIntent &&
+                interpretation.entities.filterIsInstance<TimeEntity>().none { it.value is TemporalValue.TimeOfDay })
+            if (needsTime) {
+                pendingInterpretation?.metadata?.get("agentRunId")?.let {
+                    agentRunCoordinator?.cancel(AgentRunId(it), "Replaced by a new clarification")
+                }
+                val interactionId = InteractionId(interpretation.metadata.getValue("interactionId"))
+                val route = interpretation.origin?.speechRoute
+                val target = if (route is SpeechInputRoute.Wearable) SpeechOutputTarget.Wearable(route.deviceId, route.displayName) else SpeechOutputTarget.Phone
+                val runId = agentRunCoordinator?.start(AgentRequest(interactionId, interpretation.transcript, observation.origin,
+                    speechOutputTarget = target, sourceCaptureId = interpretation.origin?.captureId))
+                val now = java.time.Instant.now()
+                val expression = unresolved?.originalText.orEmpty()
+                val question = if (unresolved?.missingField == TemporalField.AM_PM)
+                    "$expression in the morning or evening?" else "What exact time should I use?"
+                runId?.let {
+                    agentRunCoordinator?.transition(it, AgentRunState.PLANNING)
+                    agentRunCoordinator?.recordStep(AgentStep.ClarificationRequested(AgentStepId(UUID.randomUUID().toString()), it, now, question, "time"))
+                    agentRunCoordinator?.transition(it, AgentRunState.WAITING_FOR_CLARIFICATION)
+                }
+                interpretation = interpretation.copy(metadata = interpretation.metadata + buildMap {
+                    put("clarificationOnly", "true")
+                    runId?.let { put("agentRunId", it.value) }
+                })
+                coordinator.request(PendingClarification(UUID.randomUUID().toString(), interactionId,
+                    interpretation.intent, "time", interpretation.entities, interpretation.transcript, now, now.plusSeconds(120)))
+                pendingInterpretation = interpretation
+                clarificationExpiryJob?.cancel()
+                if (this::context.isInitialized) clarificationExpiryJob = CoroutineScope(context.runtime.scheduler.io).launch {
+                    delay(120_000)
+                    processMutex.withLock {
+                        if (coordinator.pending.value?.interactionId == interactionId) {
+                            coordinator.cancel("Expired")
+                            pendingInterpretation = null
+                            runId?.let { agentRunCoordinator?.cancel(it, "Clarification expired") }
+                        }
+                    }
+                }
+                publishClarificationResponse(interpretation, question)
+            }
+        }
         val createdAt = Instant.fromEpochMilliseconds(observation.timestamp)
 
         blackboard.publish(
@@ -218,7 +324,23 @@ open class DefaultInterpretationEngine(
         blackboard.publish(knowledge)
 
         val updatedResult = result.copy(interpretation = interpretation)
-        return ProcessedInterpretation(updatedResult, knowledge)
+        return@withLock ProcessedInterpretation(updatedResult, knowledge)
+    }
+
+    private suspend fun publishClarificationResponse(
+        interpretation: com.halo.runtime.cognition.blackboard.Interpretation, text: String,
+    ) {
+        val id = interpretation.metadata.getValue("interactionId")
+        val delivery = interpretation.source.defaultResponseDelivery()
+        eventBus.publish(AssistantResponsePublished(text = text, delivery = delivery, transactionId = id))
+        if (delivery == ResponseDelivery.SPEECH_AND_VISUAL) {
+            val route = interpretation.origin?.speechRoute
+            val target = if (route is SpeechInputRoute.Wearable) SpeechOutputTarget.Wearable(route.deviceId, route.displayName)
+                else SpeechOutputTarget.Phone
+            eventBus.publish(TtsRequested(text = text, transactionId = id, target = target,
+                fallback = if (target is SpeechOutputTarget.Wearable) SpeechOutputFallback.DISALLOW_PHONE else SpeechOutputFallback.ALLOW_PHONE,
+                sourceCaptureId = interpretation.origin?.captureId))
+        }
     }
 
     private fun Observation.asKnowledge(): Knowledge = Knowledge(

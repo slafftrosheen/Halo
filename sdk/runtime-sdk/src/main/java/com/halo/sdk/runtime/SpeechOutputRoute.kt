@@ -37,7 +37,8 @@ data class SpeechRouteEvidence(
     val androidDeviceType: Int?,
     val androidDeviceName: String?,
     val androidDeviceAddress: String?,
-    val verifiedAtMs: Long = System.currentTimeMillis()
+    val verifiedAtMs: Long = System.currentTimeMillis(),
+    val androidDeviceId: Int? = null
 )
 
 sealed interface SpeechRoutePreparation {

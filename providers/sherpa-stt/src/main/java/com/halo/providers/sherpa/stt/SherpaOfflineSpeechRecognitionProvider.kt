@@ -21,6 +21,8 @@ import com.k2fsa.sherpa.onnx.OfflineWhisperModelConfig
 import java.io.File
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -61,9 +63,8 @@ class SherpaOfflineSpeechRecognitionProvider(
      * Never keep the speech transaction behind native teardown: the transcript
      * is already fully materialized by getResult().
      *
-     * Cleanup is deliberately single-owner and out-of-band. If one native
-     * delete gets stuck, subsequent stream objects are left to sherpa's own
-     * finalizer instead of growing an unbounded cleanup queue.
+     * Cleanup is single-owner and out-of-band. A new decode waits briefly for
+     * it to finish; it must never use the recognizer during native stream deletion.
      */
     private val streamCleanupBusy = AtomicBoolean(false)
     private val streamCleanupExecutor = Executors.newSingleThreadExecutor { runnable ->
@@ -87,6 +88,10 @@ class SherpaOfflineSpeechRecognitionProvider(
 
     override suspend fun recognize(audio: AudioBuffer): RecognitionResult = recognitionMutex.withLock {
         check(!closeRequested.get()) { "Recognizer is closed" }
+        check(withTimeoutOrNull(2_000L) {
+            while (streamCleanupBusy.get()) delay(25L)
+            true
+        } == true) { "Speech engine cleanup is still busy. Try again shortly; restart Halo if it persists." }
         require(audio.frames.isNotEmpty()) { "Cannot recognize an empty audio buffer" }
         check(isInstalled(modelDirectory)) { "Sherpa-ONNX model is not installed at ${modelDirectory.absolutePath}" }
         require(audio.frames.all { it.sampleRate == SAMPLE_RATE && it.channels == 1 }) {
@@ -183,6 +188,7 @@ class SherpaOfflineSpeechRecognitionProvider(
         if (streamCleanupBusy.get()) return false
         if (!recognitionMutex.tryLock()) return false
         return try {
+            if (streamCleanupBusy.get()) return false
             synchronized(recognizerLock) {
                 recognizer?.release()
                 recognizer = null
@@ -208,13 +214,7 @@ class SherpaOfflineSpeechRecognitionProvider(
     }
 
     private fun releaseStreamOutOfBand(stream: OfflineStream) {
-        if (!streamCleanupBusy.compareAndSet(false, true)) {
-            Log.w(
-                TAG,
-                "STREAM_RELEASE_DEFERRED cleanup already busy; native finalizer will own this stream"
-            )
-            return
-        }
+        check(streamCleanupBusy.compareAndSet(false, true)) { "A stream cleanup already owns the recognizer" }
 
         streamCleanupExecutor.execute {
             val cleanupStartedAt = SystemClock.elapsedRealtime()
@@ -237,11 +237,11 @@ class SherpaOfflineSpeechRecognitionProvider(
             } catch (error: Throwable) {
                 Log.e(TAG, "STREAM_RELEASE_FAILED", error)
             } finally {
-                streamCleanupBusy.set(false)
                 if (closeRequested.get()) {
                     synchronized(recognizerLock) { recognizer?.release(); recognizer = null }
                     nativeResourceCoordinator?.let { coordinator -> runBlocking { coordinator.unregister(this@SherpaOfflineSpeechRecognitionProvider) } }
                 }
+                streamCleanupBusy.set(false)
             }
         }
     }

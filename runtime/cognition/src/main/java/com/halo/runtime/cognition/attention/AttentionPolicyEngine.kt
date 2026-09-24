@@ -15,6 +15,13 @@ class DefaultAttentionPolicyEngine : AttentionPolicyEngine {
         context: AttentionContext,
         preferences: AttentionPreferences,
     ): AttentionDecision {
+        // Expiry check
+        if (request.expiresAt != null && !context.currentTime.isBefore(request.expiresAt)) {
+            return AttentionDecision.Suppress(
+                reason = AttentionDecisionReason.EXPIRED
+            )
+        }
+
         // Direct user requests bypass proactive interruption rules
         if (request.source is AttentionSource.DirectUserRequest) {
             return AttentionDecision.DeliverNow(
@@ -23,11 +30,18 @@ class DefaultAttentionPolicyEngine : AttentionPolicyEngine {
             )
         }
 
-        // Expiry check
-        if (request.expiresAt != null && context.currentTime.isAfter(request.expiresAt)) {
-            return AttentionDecision.Suppress(
-                reason = AttentionDecisionReason.EXPIRED
-            )
+        // Digests never speak implicitly and do not wait in a volatile queue by default.
+        if (request.source is AttentionSource.NotificationDigest) {
+            if (context.foregroundState == ForegroundState.HALO_FOREGROUND) {
+                return AttentionDecision.DeliverNow(DeliveryChannel.InApp, AttentionDecisionReason.FOREGROUND_SURFACE)
+            }
+            val selected = request.preferredDigestChannel
+            val quiet = context.userMode == HaloUserMode.SLEEP || context.userMode == HaloUserMode.QUIET ||
+                context.doNotDisturb == DoNotDisturbState.ACTIVE || context.activeSpeechSession
+            if (!quiet && (selected == DeliveryChannel.AndroidNotification || selected is DeliveryChannel.WearableSpeech)) {
+                return AttentionDecision.DeliverNow(requireNotNull(selected), AttentionDecisionReason.UNTRUSTED_CEILING_ENFORCED)
+            }
+            return AttentionDecision.SurfaceSilently(SilentSurface.ACTIVITY, AttentionDecisionReason.ROUTINE_SILENT_ACTIVITY)
         }
 
         // Sleep / DND check
@@ -37,6 +51,10 @@ class DefaultAttentionPolicyEngine : AttentionPolicyEngine {
                 until = AttentionReleaseCondition.DND_ENDED,
                 reason = AttentionDecisionReason.DND_ACTIVE
             )
+        }
+
+        if (context.activeInteraction || context.activeSpeechSession) {
+            return AttentionDecision.Queue(AttentionReleaseCondition.INTERACTION_ENDED, AttentionDecisionReason.SUPPRESSED_BY_POLICY)
         }
 
         // Halo in foreground

@@ -1,6 +1,16 @@
 package com.halo.providers.llamacpp
 
 import android.content.Context
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.pm.ServiceInfo
+import android.os.Build
+import androidx.work.ForegroundInfo
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.launch
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
@@ -39,37 +49,54 @@ class ModelDownloadWorker(context: Context, parameters: WorkerParameters) :
             return@withContext Result.success()
         }
         if (part.length() > expectedBytes) part.delete()
+        // A completed transfer may have been interrupted before rename. Never discard it on HTTP 416.
+        if (part.length() == expectedBytes && GgufMetadataReader.read(part)?.let {
+                BundledLlamaArchitectureSupport.supports(it.architecture) } == true) {
+            if (destination.exists() && !destination.delete()) return@withContext failure("Unable to replace the previous model file")
+            return@withContext if (part.renameTo(destination)) Result.success() else failure("Unable to finish model installation")
+        }
+        if (root.usableSpace < expectedBytes - part.length() + 32L * 1024 * 1024) {
+            return@withContext failure("Not enough free storage for this model")
+        }
+        try { setForeground(foregroundInfo(filename)) }
+        catch (e: CancellationException) { throw e }
+        catch (e: Exception) { return@withContext failure("Unable to start background download: ${e.message}") }
         val offset = part.length()
         val request = Request.Builder().url(url)
             .apply { if (offset > 0L) header("Range", "bytes=$offset-") }
             .build()
+        val call = client.newCall(request)
+        val cancellation = launch(start = CoroutineStart.UNDISPATCHED) {
+            try { awaitCancellation() } finally { call.cancel() }
+        }
         try {
-            client.newCall(request).execute().use { response ->
+            call.execute().use { response ->
                 if (response.code !in listOf(200, 206)) {
                     if (response.code == 416) part.delete()
-                    return@withContext if (response.code in 400..499 && response.code != 416)
-                        Result.failure() else Result.retry()
+                    return@withContext if (response.code == 429 || response.code >= 500 || response.code == 416)
+                        retryOrFail("Download server returned HTTP ${response.code}")
+                    else failure("Download rejected (HTTP ${response.code}). The model may be gated, private, or no longer available.")
                 }
                 if (response.header("Content-Type").orEmpty().contains("text/html", true)) {
                     part.delete()
-                    return@withContext Result.failure()
+                    return@withContext failure("Server returned a web page instead of a GGUF file")
                 }
                 val append = response.code == 206 && offset > 0L
                 if (response.code == 206) {
                     val range = response.header("Content-Range").orEmpty()
                     if (!range.startsWith("bytes $offset-")) {
                         part.delete()
-                        return@withContext Result.retry()
+                        return@withContext retryOrFail("Unable to complete the model transfer")
                     }
                 }
-                val body = response.body ?: return@withContext Result.retry()
+                val body = response.body ?: return@withContext retryOrFail("Unable to complete the model transfer")
                 val contentLength = body.contentLength()
                 val remaining = expectedBytes - if (append) offset else 0L
                 if (contentLength > 0L && contentLength != remaining) {
                     part.delete()
-                    return@withContext Result.failure()
+                    return@withContext failure("File size differs from catalog metadata; refresh the catalog")
                 }
-                var nextProgressAt = offset + 8L * 1024L * 1024L
+                var nextProgressAt = (if (append) offset else 0L) + 8L * 1024L * 1024L
                 body.byteStream().use { input ->
                     FileOutputStream(part, append).use { output ->
                         val buffer = ByteArray(256 * 1024)
@@ -77,6 +104,7 @@ class ModelDownloadWorker(context: Context, parameters: WorkerParameters) :
                             coroutineContext.ensureActive()
                             val count = input.read(buffer)
                             if (count < 0) break
+                            if (part.length() + count > expectedBytes) return@withContext failure("Download exceeds the advertised file size; refresh the model catalog")
                             output.write(buffer, 0, count)
                             if (part.length() >= nextProgressAt) {
                                 setProgress(workDataOf(KEY_PROGRESS to part.length()))
@@ -88,20 +116,33 @@ class ModelDownloadWorker(context: Context, parameters: WorkerParameters) :
                 }
             }
         } catch (error: IOException) {
-            return@withContext Result.retry()
-        }
-        if (part.length() != expectedBytes) return@withContext Result.retry()
+            coroutineContext.ensureActive()
+            return@withContext retryOrFail(error.message ?: "Download connection interrupted")
+        } finally { cancellation.cancel() }
+        if (part.length() != expectedBytes) return@withContext retryOrFail("Incomplete model transfer")
         val metadata = GgufMetadataReader.read(part)
         if (metadata == null || !BundledLlamaArchitectureSupport.supports(metadata.architecture)) {
             part.delete()
-            return@withContext Result.failure()
+            return@withContext failure("Invalid GGUF or architecture unsupported by this Halo build")
         }
         if (destination.exists()) destination.delete()
-        if (!part.renameTo(destination)) return@withContext Result.retry()
+        if (!part.renameTo(destination)) return@withContext retryOrFail("Unable to complete the model transfer")
         Result.success()
     }
 
+    private fun failure(message: String) = Result.failure(workDataOf(KEY_ERROR to message.take(1000)))
+    private fun retryOrFail(message: String) = if (runAttemptCount < 5) Result.retry() else failure(message)
+    private fun foregroundInfo(filename: String): ForegroundInfo {
+        val manager = applicationContext.getSystemService(NotificationManager::class.java)
+        manager.createNotificationChannel(NotificationChannel("halo_model_downloads", "Model downloads", NotificationManager.IMPORTANCE_LOW))
+        val notification = Notification.Builder(applicationContext, "halo_model_downloads")
+            .setSmallIcon(android.R.drawable.stat_sys_download).setContentTitle("Downloading local model")
+            .setContentText(filename).setOngoing(true).setProgress(0, 0, true).build()
+        return if (Build.VERSION.SDK_INT >= 29) ForegroundInfo(id.hashCode(), notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+            else ForegroundInfo(id.hashCode(), notification)
+    }
     companion object {
+        const val KEY_ERROR = "error"
         const val KEY_URL = "url"
         const val KEY_FILENAME = "filename"
         const val KEY_BYTES = "bytes"

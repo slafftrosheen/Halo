@@ -43,6 +43,14 @@ fun SkillsScreen(skillRegistry: SkillRegistry, onBack: () -> Unit) {
     val scope = rememberCoroutineScope()
     var selectedId by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(skillRegistry) { skillRegistry.refreshAvailability() }
+    val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
+    androidx.compose.runtime.DisposableEffect(lifecycle, skillRegistry) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) skillRegistry.refreshAvailability()
+        }
+        lifecycle.addObserver(observer)
+        onDispose { lifecycle.removeObserver(observer) }
+    }
     selectedId?.let { id ->
         skills.firstOrNull { it.id.value == id }?.let { skill ->
             var policy by remember(id) { mutableStateOf(skillRegistry.approvalPolicy(skill.id)) }
@@ -124,6 +132,7 @@ fun SkillsScreen(skillRegistry: SkillRegistry, onBack: () -> Unit) {
 
 private fun availabilityLabel(value: SkillAvailability): String = when (value) {
     SkillAvailability.Available -> "Available"
+    is SkillAvailability.PartiallyAvailable -> "Some actions unavailable: ${value.unavailableTools.joinToString()}"
     SkillAvailability.Disabled -> "Disabled"
     is SkillAvailability.MissingPermission -> "Needs ${value.permission.name.lowercase()} permission"
     is SkillAvailability.MissingDependency -> "Unavailable · ${value.dependency} is missing"

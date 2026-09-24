@@ -1,61 +1,61 @@
 package com.halo.app.notification
 
+import android.app.Notification
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import com.halo.app.data.notification.IncomingNotification
+import java.time.Instant
 
-data class HostNotification(
-    val key: String,
-    val packageName: String,
-    val appLabel: String?,
-    val title: String?,
-    val text: String?,
-    val postedAt: Long,
-    val category: String?
-)
-
+/** Framework boundary only. Application-owned bridge serializes writes to Room. */
 class HaloNotificationListenerService : NotificationListenerService() {
-
+    private val bridge get() = (application as NotificationBridgeOwner).notificationBridge
+    private var connected = false
+    override fun onListenerConnected() {
+        super.onListenerConnected()
+        connected = true
+        bridge.connected(activeNotifications.orEmpty().map(::incoming))
+    }
+    override fun onListenerDisconnected() {
+        connected = false
+        bridge.disconnected()
+        super.onListenerDisconnected()
+    }
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
-        if (sbn == null) return
-        val pkg = sbn.packageName.orEmpty()
-
-        // Privacy filter for sensitive applications
-        if (pkg.contains("pass") || pkg.contains("authenticator") || pkg.contains("1password") || pkg.contains("bitwarden")) {
-            return
+        if (connected && sbn != null) {
+            bridge.posted(incoming(sbn))
+            if (sbn.notification.flags and Notification.FLAG_GROUP_SUMMARY == 0) {
+                activeNotifications.orEmpty().filter {
+                    it.groupKey == sbn.groupKey && it.notification.flags and Notification.FLAG_GROUP_SUMMARY != 0
+                }.forEach { bridge.posted(incoming(it)) }
+            }
         }
-
-        val extras = sbn.notification.extras
-        val title = extras.getCharSequence("android.title")?.toString()
-        val text = extras.getCharSequence("android.text")?.toString()
-
-        val item = HostNotification(
-            key = sbn.key,
-            packageName = pkg,
-            appLabel = pkg.substringAfterLast('.'),
-            title = title,
-            text = text,
-            postedAt = sbn.postTime,
-            category = sbn.notification.category
-        )
-
-        val current = _recentNotifications.value.toMutableList()
-        current.removeAll { it.key == item.key }
-        current.add(0, item)
-        _recentNotifications.value = current.take(20)
     }
-
+    override fun onNotificationRankingUpdate(rankingMap: RankingMap?) {
+        if (connected) activeNotifications.orEmpty().forEach { bridge.posted(incoming(it)) }
+    }
+    override fun onDestroy() {
+        if (connected) bridge.disconnected()
+        connected = false
+        super.onDestroy()
+    }
     override fun onNotificationRemoved(sbn: StatusBarNotification?) {
-        if (sbn == null) return
-        val current = _recentNotifications.value.toMutableList()
-        current.removeAll { it.key == sbn.key }
-        _recentNotifications.value = current
+        if (connected && sbn != null) bridge.removed(sbn.key)
     }
-
-    companion object {
-        private val _recentNotifications = MutableStateFlow<List<HostNotification>>(emptyList())
-        val recentNotifications: StateFlow<List<HostNotification>> = _recentNotifications.asStateFlow()
+    private fun incoming(sbn: StatusBarNotification): IncomingNotification {
+        val n = sbn.notification
+        val ranking = Ranking()
+        val ranked = currentRanking.getRanking(sbn.key, ranking)
+        val override = if (ranked) ranking.lockscreenVisibilityOverride else (-1000)
+        return IncomingNotification(sbn.key, sbn.packageName,
+            runCatching { packageManager.getApplicationLabel(packageManager.getApplicationInfo(sbn.packageName, 0)).toString() }.getOrNull(),
+            n.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString(),
+            (n.extras.getCharSequence(Notification.EXTRA_BIG_TEXT) ?: n.extras.getCharSequence(Notification.EXTRA_TEXT))?.toString(),
+            n.category, Instant.ofEpochMilli(sbn.postTime),
+            n.visibility == Notification.VISIBILITY_PUBLIC &&
+                (override == (-1000) || override == Notification.VISIBILITY_PUBLIC),
+            n.flags and Notification.FLAG_FOREGROUND_SERVICE != 0,
+            n.flags and Notification.FLAG_GROUP_SUMMARY != 0 && activeNotifications.orEmpty().any {
+                it.key != sbn.key && it.groupKey == sbn.groupKey && it.notification.flags and Notification.FLAG_GROUP_SUMMARY == 0
+            })
     }
 }

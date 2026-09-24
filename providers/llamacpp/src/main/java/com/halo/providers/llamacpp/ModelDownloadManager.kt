@@ -16,6 +16,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -72,11 +75,14 @@ class ModelDownloadManager(
     private val downloadsLock = Any()
     private val activeDownloads = mutableMapOf<Long, String>()
     private val downloadJobs = mutableMapOf<Long, Job>()
-    private val workerJobs = mutableMapOf<String, Job>()
+    private val workerJobs = java.util.concurrent.ConcurrentHashMap<String, Job>()
     @Volatile private var closed = false
 
     private val _downloadStates = MutableStateFlow<Map<String, DownloadState>>(emptyMap())
     val downloadStates: StateFlow<Map<String, DownloadState>> = _downloadStates
+    private val _downloadErrors = MutableStateFlow<Map<String, String>>(emptyMap())
+    val downloadErrors: StateFlow<Map<String, String>> = _downloadErrors
+    private val enqueueMutex = Mutex()
 
     private val _activeModelId = MutableStateFlow<String?>(null)
     val activeModelId: StateFlow<String?> = _activeModelId
@@ -84,13 +90,11 @@ class ModelDownloadManager(
     private val _customModels = MutableStateFlow<List<CognitiveModel>>(emptyList())
     val customModels: StateFlow<List<CognitiveModel>> = _customModels
 
-    init {
-        scope.launch {
-            loadCustomModels()
-            refresh(ModelInventoryRefreshReason.STARTUP)
-            recoverPersistedDownloads()
-            recoverWorkerDownloads()
-        }
+    private val initialization = scope.launch {
+        loadCustomModels()
+        refresh(ModelInventoryRefreshReason.STARTUP)
+        recoverPersistedDownloads()
+        recoverWorkerDownloads()
     }
 
     fun getAllModels(): List<CognitiveModel> = AvailableModels + _customModels.value
@@ -192,6 +196,7 @@ class ModelDownloadManager(
     fun downloadModel(modelId: String) {
         if (closed) return
         scope.launch {
+            initialization.join()
             getAllModels().find { it.id == modelId }?.let { downloadUrl(it.id, it.name, it.downloadUrl) }
         }
     }
@@ -199,6 +204,7 @@ class ModelDownloadManager(
     fun downloadCustomUrl(url: String, name: String) {
         if (closed || url.isBlank()) return
         scope.launch {
+            initialization.join()
             val id = "custom_" + url.hashCode().toString().replace("-", "n")
             val modelName = name.ifBlank { url.substringAfterLast("/") }
             _customModels.value = _customModels.value.filter { it.id != id } +
@@ -210,55 +216,78 @@ class ModelDownloadManager(
 
     fun downloadCatalogModel(repoId: String, revision: String, filename: String,
                              bytes: Long, quantization: String) {
-        if (closed || !Regex("[0-9a-f]{40}").matches(revision) ||
-            !filename.endsWith(".gguf", true) || bytes <= 0L) return
-        val url = "https://huggingface.co/$repoId/resolve/$revision/" +
-            filename.split('/').joinToString("/") {
-                java.net.URLEncoder.encode(it, "UTF-8").replace("+", "%20")
-            }
         val id = catalogModelId(repoId, revision, filename)
-        scope.launch {
-            val model = CognitiveModel(id, repoId.substringAfterLast('/'), "Hugging Face GGUF",
-                url, ((bytes + 1024L * 1024L - 1) / (1024L * 1024L)).toInt(), true,
-                quantization = quantization)
-            _customModels.value = _customModels.value.filter { it.id != id } + model
-            saveCustomModels()
-            if (workerJobs[id]?.isActive == true) return@launch
-            val work = OneTimeWorkRequestBuilder<ModelDownloadWorker>()
-                .setInputData(workDataOf(
-                    ModelDownloadWorker.KEY_URL to url,
-                    ModelDownloadWorker.KEY_FILENAME to fileNameFor(model),
-                    ModelDownloadWorker.KEY_BYTES to bytes
-                ))
-                .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
-                .addTag("halo_model_$id")
-                .build()
-            WorkManager.getInstance(context).enqueueUniqueWork(
-                "halo_model_$id", ExistingWorkPolicy.REPLACE, work
-            )
-            setState(id, DownloadState.Downloading)
-            workerJobs[id] = scope.launch { monitorWorker(id) }
+        if (closed) return
+        if (!Regex("[0-9a-fA-F]{40}").matches(revision) || !filename.endsWith(".gguf", true) || bytes <= 0L) {
+            _downloadErrors.value = _downloadErrors.value + (id to "Model metadata is incomplete; refresh the catalog")
+            setState(id, DownloadState.Failed)
+            return
         }
+        setState(id, DownloadState.Downloading)
+        scope.launch {
+            try {
+                initialization.join()
+                enqueueMutex.withLock {
+                    val url = "https://huggingface.co/$repoId/resolve/$revision/" + filename.split('/').joinToString("/") {
+                        java.net.URLEncoder.encode(it, "UTF-8").replace("+", "%20")
+                    }
+                    val model = CognitiveModel(id, repoId.substringAfterLast('/'), "Hugging Face GGUF",
+                        url, ((bytes + 1024L * 1024L - 1) / (1024L * 1024L)).toInt(), true, quantization = quantization)
+                    _customModels.value = _customModels.value.filter { it.id != id } + model
+                    saveCustomModels()
+                    val manager = WorkManager.getInstance(context)
+                    val existing = manager.getWorkInfosForUniqueWork("halo_model_$id").get().firstOrNull { !it.state.isFinished }
+                    val workId = if (existing != null) existing.id else {
+                        val work = OneTimeWorkRequestBuilder<ModelDownloadWorker>()
+                            .setInputData(workDataOf(ModelDownloadWorker.KEY_URL to url,
+                                ModelDownloadWorker.KEY_FILENAME to fileNameFor(model), ModelDownloadWorker.KEY_BYTES to bytes))
+                            .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+                            .addTag("halo_model_$id").build()
+                        manager.enqueueUniqueWork("halo_model_$id", ExistingWorkPolicy.KEEP, work).result.get()
+                        work.id
+                    }
+                    check(prefs.edit().putString("worker_$id", workId.toString()).commit()) { "Could not persist download identity" }
+                    _downloadErrors.value = _downloadErrors.value - id
+                    startWorkerMonitor(id)
+                }
+            } catch (error: kotlinx.coroutines.CancellationException) { throw error }
+              catch (error: Exception) {
+                _downloadErrors.value = _downloadErrors.value + (id to (error.message ?: "Unable to enqueue model download"))
+                setState(id, DownloadState.Failed)
+            }
+        }
+    }
+
+    private fun workerInfo(modelId: String): WorkInfo? {
+        val manager = WorkManager.getInstance(context)
+        val saved = prefs.getString("worker_$modelId", null)?.let { runCatching { java.util.UUID.fromString(it) }.getOrNull() }
+        if (saved != null) return manager.getWorkInfoById(saved).get()
+        return manager.getWorkInfosForUniqueWork("halo_model_$modelId").get().firstOrNull { !it.state.isFinished }
     }
 
     private suspend fun recoverWorkerDownloads() {
         _customModels.value.filter { it.id.startsWith("hf_") }.forEach { model ->
-            val info = WorkManager.getInstance(context)
-                .getWorkInfosForUniqueWork("halo_model_${model.id}").get().lastOrNull()
+            val info = workerInfo(model.id)
             if (info?.state in listOf(WorkInfo.State.ENQUEUED, WorkInfo.State.RUNNING, WorkInfo.State.BLOCKED)) {
                 setState(model.id, DownloadState.Downloading)
                 if (workerJobs[model.id]?.isActive != true) {
-                    workerJobs[model.id] = scope.launch { monitorWorker(model.id) }
+                    startWorkerMonitor(model.id)
                 }
             }
         }
     }
 
+    private fun startWorkerMonitor(modelId: String) {
+        workerJobs.remove(modelId)?.cancel()
+        val job = scope.launch(start = CoroutineStart.LAZY) { monitorWorker(modelId) }
+        workerJobs[modelId] = job
+        job.start()
+    }
+
     private suspend fun monitorWorker(modelId: String) {
         try {
             while (!closed) {
-                val info = WorkManager.getInstance(context)
-                    .getWorkInfosForUniqueWork("halo_model_$modelId").get().lastOrNull()
+                val info = workerInfo(modelId)
                 when (info?.state) {
                     WorkInfo.State.SUCCEEDED -> {
                         refresh(ModelInventoryRefreshReason.DOWNLOAD_COMPLETED)
@@ -267,14 +296,25 @@ class ModelDownloadManager(
                         return
                     }
                     WorkInfo.State.FAILED, WorkInfo.State.CANCELLED -> {
+                        _downloadErrors.value = _downloadErrors.value + (modelId to
+                            (info.outputData.getString(ModelDownloadWorker.KEY_ERROR) ?: "Download stopped; tap Download to retry"))
+                        setState(modelId, DownloadState.Failed)
+                        return
+                    }
+                    null -> {
+                        _downloadErrors.value = _downloadErrors.value + (modelId to "Download work is missing; tap Download to retry")
                         setState(modelId, DownloadState.Failed)
                         return
                     }
                     else -> delay(1_000L)
                 }
             }
+        } catch (error: kotlinx.coroutines.CancellationException) { throw error }
+          catch (error: Exception) {
+            _downloadErrors.value = _downloadErrors.value + (modelId to (error.message ?: "Unable to read download status"))
+            setState(modelId, DownloadState.Failed)
         } finally {
-            workerJobs.remove(modelId)
+            currentCoroutineContext()[Job]?.let { workerJobs.remove(modelId, it) }
         }
     }
 
@@ -286,11 +326,24 @@ class ModelDownloadManager(
     }
 
     private fun downloadUrl(id: String, name: String, url: String) {
+        try {
+            _downloadErrors.update { it - id }
+            enqueuePlatformDownload(id, name, url)
+        } catch (error: Exception) {
+            _downloadErrors.update { it + (id to (error.message ?: "Unable to start model download")) }
+            setState(id, DownloadState.Failed)
+        }
+    }
+
+    private fun enqueuePlatformDownload(id: String, name: String, url: String) {
         if (closed) return
         synchronized(downloadsLock) {
             if (activeDownloads.values.any { it == id }) return
             val model = getAllModels().firstOrNull { it.id == id } ?: return
 
+            // Failed DownloadManager destinations must not poison every retry with ERROR_FILE_ALREADY_EXISTS.
+            val previous = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), fileNameFor(model))
+            if (previous.exists() && readUsableMetadata(previous) == null) previous.delete()
             val request = DownloadManager.Request(Uri.parse(url)).apply {
                 setTitle("Downloading $name")
                 setDescription("Halo on-device GGUF model download.")
@@ -381,6 +434,8 @@ class ModelDownloadManager(
                                 true
                             }
                             DownloadManager.STATUS_FAILED -> {
+                                val reason = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON))
+                                _downloadErrors.update { it + (modelId to "Android download failed (code $reason); tap Download to retry") }
                                 setState(modelId, DownloadState.Failed)
                                 true
                             }
@@ -403,7 +458,7 @@ class ModelDownloadManager(
 
     private fun setState(modelId: String, state: DownloadState) {
         if (closed) return
-        _downloadStates.value = _downloadStates.value.toMutableMap().apply { put(modelId, state) }
+        _downloadStates.update { it + (modelId to state) }
     }
 
     private fun finalizeDownloadedModel(modelId: String) {

@@ -33,7 +33,7 @@ data class IntentRecognized(override val id: String = UUID.randomUUID().toString
 data class AIResponseGenerated(override val id: String = UUID.randomUUID().toString(), override val timestamp: Long, val response: String) : HaloEvent
 
 // Cognitive Session Events
-data class CognitiveRequestStarted(override val id: String = UUID.randomUUID().toString(), val requestId: String, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
+data class CognitiveRequestStarted(override val id: String = UUID.randomUUID().toString(), val requestId: String, override val timestamp: Long = System.currentTimeMillis(), val interactionId: String? = null) : HaloEvent
 data class CognitiveReasoningStarted(override val id: String = UUID.randomUUID().toString(), val requestId: String, val providerId: String, val modelId: String?, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
 data class CognitiveTokenReceived(override val id: String = UUID.randomUUID().toString(), val requestId: String, val token: String, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
 data class CognitiveCompleted(override val id: String = UUID.randomUUID().toString(), val requestId: String, val response: String?, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent

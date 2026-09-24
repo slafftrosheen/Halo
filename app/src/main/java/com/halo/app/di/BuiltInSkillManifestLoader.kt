@@ -27,13 +27,22 @@ class BuiltInSkillManifestLoader(private val context: Context) {
                     category = SkillCategory.valueOf(json.getString("category")),
                     risk = SkillRisk.valueOf(json.getString("risk")),
                     tools = (0 until tools.length()).map { tools.getString(it) }.toSet(),
+                    toolDefinitions = json.optJSONArray("toolDefinitions")?.let { definitions ->
+                        (0 until definitions.length()).map { index ->
+                            val tool = definitions.getJSONObject(index)
+                            com.halo.sdk.runtime.skills.SkillToolDefinition(
+                                toolId = tool.getString("toolId"),
+                                risk = SkillRisk.valueOf(tool.getString("risk"))
+                            )
+                        }
+                    }.orEmpty(),
                     requiredPermissions = permissions?.let { values ->
                         (0 until values.length()).map { HostPermission.valueOf(values.getString(it)) }.toSet()
                     }.orEmpty(),
                     source = SkillSource.BUILT_IN
                 )
-            }.getOrNull()
+            }.onFailure { android.util.Log.e("HaloSkills", "Invalid built-in skill manifest: $file", it) }.getOrNull()
         }
-        return descriptors.ifEmpty { DefaultSkillRegistry.defaultBuiltInSkills() }
+        return (DefaultSkillRegistry.defaultBuiltInSkills() + descriptors).associateBy { it.id }.values.toList()
     }
 }

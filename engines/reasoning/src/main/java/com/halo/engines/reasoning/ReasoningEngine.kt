@@ -84,6 +84,8 @@ class ReasoningEngine(
                         val interpretation =
                             (knowledge.payload as InterpretationKnowledge).interpretation
 
+                        if (interpretation.metadata["clarificationOnly"] == "true") return@collect
+
                         if (interpretation.intent is ConversationIntent ||
                             interpretation.intent is QuestionIntent
                         ) {
@@ -127,7 +129,10 @@ class ReasoningEngine(
                                     responseDelivery = interpretation.source.defaultResponseDelivery(),
                                     speechOutputTarget = speechOutputTarget,
                                     speechOutputFallback = speechOutputFallback,
-                                    sourceCaptureId = interpretation.origin?.captureId
+                                    sourceCaptureId = interpretation.origin?.captureId,
+                                    interactionId = interpretation.metadata["interactionId"],
+                                    agentRunId = interpretation.metadata["agentRunId"],
+                                    userRequest = interpretation.transcript
                                 )
                             )
                             _health.value = EngineHealth.Healthy

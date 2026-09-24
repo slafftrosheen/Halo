@@ -49,16 +49,17 @@ class CurrentTimeToolExecutor(
     override fun definitions(): List<ToolDefinition> {
         return listOf(
             ToolDefinition(
-                id = "halo.current_time",
-                name = "halo.current_time",
+                id = "halo_current_time",
+                name = "halo_current_time",
                 description = "Returns the current system date and time.",
-                parameters = mapOf("type" to "object", "properties" to emptyMap<String, Any>())
+                parameters = mapOf("type" to "object", "properties" to emptyMap<String, Any>(), "additionalProperties" to false)
             )
         )
     }
 
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
-        val formatted = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date(clock()))
+        if (toolCall.arguments.isNotEmpty()) return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "No arguments expected")
+        val formatted = java.time.Instant.ofEpochMilli(clock()).atZone(java.time.ZoneId.systemDefault()).toString()
         return ToolExecutionResult.Success(
             toolCallId = toolCall.id,
             toolId = toolCall.functionName,

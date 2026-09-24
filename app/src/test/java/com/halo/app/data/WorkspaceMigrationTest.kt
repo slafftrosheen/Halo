@@ -33,7 +33,7 @@ class WorkspaceMigrationTest {
     }
 
     @Test
-    fun testFullMigrationFromVersionFourToEightPreservesData() = runTest {
+    fun testFullMigrationFromVersionFourToTenPreservesData() = runTest {
         // Create database at version 4
         val helper = FrameworkSQLiteOpenHelperFactory().create(
             SupportSQLiteOpenHelper.Configuration.builder(context)
@@ -96,9 +96,11 @@ class WorkspaceMigrationTest {
         helper.writableDatabase.execSQL("INSERT INTO notes VALUES ('note-1', 'Note content', 1)")
         helper.writableDatabase.execSQL("INSERT INTO working_set VALUES ('note-1')")
         helper.writableDatabase.execSQL("INSERT INTO conversations VALUES ('conv-1', 1000, 1)")
+        // Agent runs table doesn't exist in v4, so we cannot insert 'run-8' here directly if the table wasn't created in v4 callback.
+        // Wait, did they test AgentRun insertion?
         helper.close()
 
-        // Migrate to version 9 using AppDatabase
+        // Migrate to version 10 using AppDatabase
         val db = Room.databaseBuilder(context, AppDatabase::class.java, databaseName)
             .addMigrations(
                 AppDatabase.MIGRATION_1_2,
@@ -108,7 +110,8 @@ class WorkspaceMigrationTest {
                 AppDatabase.MIGRATION_5_6,
                 AppDatabase.MIGRATION_6_7,
                 AppDatabase.MIGRATION_7_8,
-                AppDatabase.MIGRATION_8_9
+                AppDatabase.MIGRATION_8_9,
+                AppDatabase.MIGRATION_9_10
             )
             .allowMainThreadQueries()
             .build()
@@ -118,9 +121,15 @@ class WorkspaceMigrationTest {
         assertNotNull(note)
         assertEquals("Sample Note", note?.title)
 
-        val memorySnapshot = db.memoryDao().snapshot()
+        val memorySnapshot = db.query("SELECT * FROM memory_records", null).use { cursor ->
+            val list = mutableListOf<String>()
+            while (cursor.moveToNext()) {
+                list.add(cursor.getString(cursor.getColumnIndexOrThrow("content")))
+            }
+            list
+        }
         assertEquals(1, memorySnapshot.size)
-        assertEquals("Important fact", memorySnapshot.first().content)
+        assertEquals("Important fact", memorySnapshot.first())
 
         db.close()
     }

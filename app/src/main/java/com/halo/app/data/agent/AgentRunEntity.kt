@@ -4,33 +4,6 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
-enum class AgentRunState {
-    CREATED,
-    PLANNING,
-
-    WAITING_FOR_CLARIFICATION,
-    WAITING_FOR_APPROVAL,
-    WAITING_FOR_CAPABILITY,
-
-    EXECUTING,
-    SUSPENDED,
-
-    COMPLETED,
-    FAILED,
-    CANCELLED,
-    INTERRUPTED,
-}
-
-enum class ActionTruth {
-    PROPOSED,
-    AUTHORIZED,
-    DISPATCHED,
-    ACKNOWLEDGED,
-    CONFIRMED,
-    UNKNOWN,
-    FAILED,
-}
-
 @Entity(tableName = "agent_runs")
 data class AgentRunEntity(
     @PrimaryKey val id: String,

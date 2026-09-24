@@ -116,6 +116,12 @@ class RawOpusAudioDecoder {
         } catch (error: Exception) {
             if (error is CancellationException && error !is TimeoutCancellationException) throw error
             fail("finish", error)
+            // EOF is mandatory even when the codec never acknowledges EOS.
+            // Otherwise the capture owner joins an open frame stream forever.
+            drainJob?.cancelAndJoin()
+            drainJob = null
+            output.close(IllegalStateException("Wearable audio decoder did not finish", error))
+            throw IllegalStateException("Wearable audio decoder did not finish", error)
         }
     }
 

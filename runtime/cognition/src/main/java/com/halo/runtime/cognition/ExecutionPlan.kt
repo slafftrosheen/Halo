@@ -13,5 +13,8 @@ data class ExecutionPlan(
     val responseDelivery: ResponseDelivery = ResponseDelivery.VISUAL_ONLY,
     val speechOutputTarget: SpeechOutputTarget = SpeechOutputTarget.Phone,
     val speechOutputFallback: SpeechOutputFallback = SpeechOutputFallback.ALLOW_PHONE,
-    val sourceCaptureId: String? = null
+    val sourceCaptureId: String? = null,
+    val interactionId: String? = null,
+    val agentRunId: String? = null,
+    val userRequest: String? = null
 )

@@ -29,7 +29,8 @@ enum class TargetRejectionReason {
     CAPABILITY_MISMATCH,
     MEMORY_PREFLIGHT_FAILED,
     NETWORK_UNAVAILABLE,
-    CONFIGURATION_MISSING
+    CONFIGURATION_MISSING,
+    POLICY_EXCLUDED
 }
 
 data class RejectedAiTarget(
@@ -51,6 +52,9 @@ data class AiRoutingDecision(
  * Interface for routing AI requests to the appropriate provider.
  */
 interface AiProviderRouter {
+    val lastRoutingDecision: StateFlow<AiRoutingDecision?>
+        get() = MutableStateFlow(null)
+
 
     val selectedProviderId: StateFlow<String?>
     val selectedModelId: StateFlow<String?>

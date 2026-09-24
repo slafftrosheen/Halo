@@ -91,6 +91,7 @@ data class AttentionRequest(
     val deduplicationKey: String? = null,
     val explanation: String = "",
     val createdAt: Instant = Instant.now(),
+    val preferredDigestChannel: DeliveryChannel? = null,
 )
 
 sealed interface DeliveryChannel {
@@ -161,6 +162,7 @@ data class DeliveryReceipt(
     val outcome: DeliveryOutcome,
     val channel: DeliveryChannel? = null,
     val deliveredAt: Instant? = null,
+    val reason: String? = null,
 )
 
 data class AttentionPreferences(

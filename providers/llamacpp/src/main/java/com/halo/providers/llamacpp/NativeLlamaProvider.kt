@@ -159,7 +159,7 @@ class NativeLlamaProvider(
                         "Native model load blocked: Android returned invalid memory information."
                 }
                 Log.e(TAG, message)
-                _status.value = ProviderStatus(ProviderStatus.State.ERROR, message)
+                _status.value = ProviderStatus(ProviderStatus.State.ERROR, message, rejectionReason = com.halo.sdk.provider.TargetRejectionReason.MEMORY_PREFLIGHT_FAILED)
                 nativeResourceCoordinator?.release(this@NativeLlamaProvider)
                 return@withLock false
             }
@@ -177,7 +177,7 @@ class NativeLlamaProvider(
             if (plan == null) {
                 val message = "Native model load blocked: no safe context size fits the current memory envelope. Close other apps or lower the llama.cpp context setting."
                 Log.e(TAG, message)
-                _status.value = ProviderStatus(ProviderStatus.State.ERROR, message)
+                _status.value = ProviderStatus(ProviderStatus.State.ERROR, message, rejectionReason = com.halo.sdk.provider.TargetRejectionReason.MEMORY_PREFLIGHT_FAILED)
                 nativeResourceCoordinator?.release(this@NativeLlamaProvider)
                 return@withLock false
             }

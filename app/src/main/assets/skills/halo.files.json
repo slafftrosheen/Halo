@@ -1,1 +1,26 @@
-{"id":"halo.files","name":"Files","description":"Search and read imported documents.","category":"WORKSPACE","risk":"READ_ONLY","tools":["halo_search_files","halo_get_file_metadata","halo_read_text_file"]}
+{
+  "id": "halo.files",
+  "name": "Files",
+  "description": "Search and read imported documents.",
+  "category": "WORKSPACE",
+  "risk": "READ_ONLY",
+  "tools": [
+    "halo_search_files",
+    "halo_get_file_metadata",
+    "halo_read_text_file"
+  ],
+  "toolDefinitions": [
+    {
+      "toolId": "halo_search_files",
+      "risk": "READ_ONLY"
+    },
+    {
+      "toolId": "halo_get_file_metadata",
+      "risk": "READ_ONLY"
+    },
+    {
+      "toolId": "halo_read_text_file",
+      "risk": "READ_ONLY"
+    }
+  ]
+}

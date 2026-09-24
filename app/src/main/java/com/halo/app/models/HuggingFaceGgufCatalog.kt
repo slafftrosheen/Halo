@@ -17,6 +17,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
 import java.io.IOException
 import java.net.URLEncoder
 import java.time.Instant
@@ -99,12 +100,14 @@ interface ModelCatalogCache {
     suspend fun setEtag(etag: String)
 }
 
-class SharedPreferencesModelCatalogCache(private val context: Context) : ModelCatalogCache {
-    private val prefs by lazy { context.getSharedPreferences("halo_gguf_catalog", Context.MODE_PRIVATE) }
+class FileModelCatalogCache(private val context: Context) : ModelCatalogCache {
+    private val cacheFile by lazy { File(context.cacheDir, "halo_gguf_catalog.json") }
+    private val etagFile by lazy { File(context.cacheDir, "halo_gguf_catalog_etag.txt") }
 
     override suspend fun read(): Pair<List<ModelCatalogEntry>, Long>? = withContext(Dispatchers.IO) {
         runCatching {
-            val raw = prefs.getString("entries", null) ?: return@withContext null
+            if (!cacheFile.exists()) return@withContext null
+            val raw = cacheFile.readText()
             val root = JSONObject(raw)
             val updatedAt = root.getLong("updatedAt")
             val array = root.getJSONArray("items")
@@ -137,16 +140,17 @@ class SharedPreferencesModelCatalogCache(private val context: Context) : ModelCa
                 .put("modified", model.lastModified?.toString()).put("license", model.license)
                 .put("file", entry.file.filename).put("bytes", entry.file.bytes))
         }
-        prefs.edit().putString("entries", JSONObject().put("updatedAt", updatedAt)
-            .put("items", items).toString()).apply()
+        cacheFile.writeText(JSONObject().put("updatedAt", updatedAt).put("items", items).toString())
     }
 
     override suspend fun getEtag(): String? = withContext(Dispatchers.IO) {
-        prefs.getString("etag", null)
+        runCatching { if (etagFile.exists()) etagFile.readText() else null }.getOrNull()
     }
 
-    override suspend fun setEtag(etag: String) = withContext(Dispatchers.IO) {
-        prefs.edit().putString("etag", etag).apply()
+    override suspend fun setEtag(etag: String) {
+        withContext(Dispatchers.IO) {
+            runCatching { etagFile.writeText(etag) }
+        }
     }
 
     private fun memorySnapshot(context: Context): LocalModelMemoryPlanner.MemorySnapshot {

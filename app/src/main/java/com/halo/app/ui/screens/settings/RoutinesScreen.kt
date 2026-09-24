@@ -115,7 +115,7 @@ private fun RoutineRow(
                 )
                 Spacer(Modifier.height(2.dp))
                 Text(
-                    text = triggerSummary(routine.trigger),
+                    text = triggerSummary(routine.trigger) + "\nNext: ${routine.nextRunAt ?: "Not scheduled"}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

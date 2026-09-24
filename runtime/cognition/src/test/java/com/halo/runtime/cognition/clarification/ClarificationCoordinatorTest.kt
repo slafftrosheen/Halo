@@ -64,4 +64,20 @@ class ClarificationCoordinatorTest {
         assertNull(resolution)
         assertNull(coordinator.pending.value)
     }
+    @Test fun `evening fills ambiguous hour retaining interaction and unrelated input stays pending`() = runBlocking {
+        val now = Instant.now()
+        val pending = PendingClarification("clarification", InteractionId("original"), SetAlarmIntent, "time",
+            listOf(com.halo.cognition.language.UnresolvedTimeEntity("8", com.halo.cognition.language.TemporalField.AM_PM, 1f)),
+            "Set an alarm for 8", now, now.plusSeconds(60))
+        coordinator.request(pending)
+        assertEquals(ClarificationResolution.Unresolved, coordinator.consume("weather tomorrow", now))
+        assertEquals(pending, coordinator.pending.value)
+        val result = coordinator.consume("Evening", now) as ClarificationResolution.Resolved
+        assertEquals(InteractionId("original"), result.interactionId)
+        assertEquals(LocalTime.of(20, 0), (result.entities.filterIsInstance<TimeEntity>().single().value as TemporalValue.TimeOfDay).time)
+        assertNull(coordinator.pending.value)
+        coordinator.request(pending)
+        coordinator.consume("cancel", now)
+        assertNull(coordinator.pending.value)
+    }
 }

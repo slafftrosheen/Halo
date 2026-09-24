@@ -191,7 +191,10 @@ class DefaultContextAssembler(
 
                     toolRegistry?.definitions()?.let { definitions ->
                         skillRegistry?.enabledTools(definitions) ?: definitions
-                    }.orEmpty()
+                    }.orEmpty().filter { tool ->
+                        policy.includeWorkspace || (tool.id !in com.halo.runtime.cognition.tools.WorkspaceToolAccess.readTools &&
+                            tool.name !in com.halo.runtime.cognition.tools.WorkspaceToolAccess.readTools)
+                    }
 
                 } else {
 

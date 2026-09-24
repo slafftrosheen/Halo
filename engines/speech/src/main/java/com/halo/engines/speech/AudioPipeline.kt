@@ -1,6 +1,5 @@
 package com.halo.engines.speech
 
-import com.halo.engines.speech.UnavailableSpeechRecognitionProvider
 import com.halo.sdk.provider.BufferedSpeechRecognitionProvider
 import com.halo.sdk.provider.LiveSpeechRecognitionProvider
 import com.halo.sdk.provider.RecognitionEvent
@@ -53,11 +52,7 @@ class AudioPipeline(
     suspend fun isRecognitionAvailable(): Boolean = sttProvider.health()
 
     suspend fun unavailableReason(): String =
-        if (sttProvider is UnavailableSpeechRecognitionProvider) {
-            sttProvider.healthDetails().message ?: "Local speech recognition is unavailable"
-        } else {
-            "Local speech recognition is unavailable"
-        }
+        sttProvider.healthDetails().message ?: "Local speech recognition is unavailable"
 
     @Volatile
     var wakeWordEnabled: Boolean = false
@@ -137,7 +132,7 @@ class AudioPipeline(
 
         val existingRecognition = bufferedRecognitionJob
         if (existingRecognition != null && !existingRecognition.isCompleted) {
-            existingRecognition.join()
+            // Recognition owns its coroutine; releasing an input source must not join blocking JNI.
             return
         }
 
@@ -151,7 +146,9 @@ class AudioPipeline(
         }
 
         if (buffer.duration() == 0L) {
+            val transactionId = activeSpeechTransactionId ?: UUID.randomUUID().toString()
             reset()
+            eventBus.publish(RecognitionFailed(id = transactionId, reason = "No audio captured"))
             return
         }
 
