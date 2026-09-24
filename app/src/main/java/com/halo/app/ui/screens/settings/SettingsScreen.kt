@@ -26,13 +26,18 @@ import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.SmartToy
 import androidx.compose.material.icons.filled.Storage
+import androidx.compose.material.icons.filled.PhoneAndroid
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -42,6 +47,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.halo.app.ui.theme.AppearanceMode
 import com.halo.app.ui.theme.HaloPastelBlue
 import com.halo.app.ui.theme.HaloPastelLilac
@@ -52,6 +61,22 @@ import com.halo.app.ui.design.HaloScreenHeader
 @Composable
 fun SettingsScreen(viewModel: SettingsViewModel) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val assistantRoleController = remember(context) {
+        com.halo.host.android.assistant.AndroidAssistantRoleController(context)
+    }
+    val assistantRoleState by assistantRoleController.state.collectAsState()
+    val assistantRoleLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { assistantRoleController.refresh() }
+    DisposableEffect(lifecycleOwner, assistantRoleController) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) assistantRoleController.refresh()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     Column(
         modifier = Modifier
@@ -99,6 +124,30 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             title = "Storage & Backup",
             subtitle = "Halo Brain and Vault",
             onClick = viewModel::openStorageBackup
+        )
+
+        Spacer(Modifier.height(18.dp))
+        Text(
+            text = "System Integration",
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.padding(vertical = 8.dp),
+        )
+        SettingsRow(
+            icon = Icons.Default.PhoneAndroid,
+            tint = HaloPastelBlue,
+            title = "Default Android Assistant",
+            subtitle = when (assistantRoleState) {
+                com.halo.host.android.assistant.AssistantRoleState.Active -> "Halo is your system assistant ✓"
+                com.halo.host.android.assistant.AssistantRoleState.Available -> "Use Halo from your phone's assistant gesture"
+                com.halo.host.android.assistant.AssistantRoleState.Unsupported -> "Not available on this device"
+            },
+            onClick = if (assistantRoleState is com.halo.host.android.assistant.AssistantRoleState.Available) {
+                {
+                    assistantRoleController.createRoleRequestIntent()?.let(assistantRoleLauncher::launch)
+                }
+            } else null,
         )
 
         SettingsRow(

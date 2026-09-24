@@ -24,7 +24,8 @@ class DefaultContextAssembler(
     private val blackboard: Blackboard,
     private val toolRegistry: ToolRegistry? = null,
     private val workspace: WorkspaceContextSource? = null,
-    private val skillRegistry: SkillRegistry? = null
+    private val skillRegistry: SkillRegistry? = null,
+    private val assistantContexts: AssistantContextRepository? = null,
 ) : ContextAssembler {
 
     companion object {
@@ -48,6 +49,12 @@ class DefaultContextAssembler(
     override suspend fun assemble(
         policy: AiContextPolicy,
         capabilities: Set<AiCapability>
+    ): ContextAssemblyResult = assemble(policy, capabilities, ContextAssemblyRequest())
+
+    override suspend fun assemble(
+        policy: AiContextPolicy,
+        capabilities: Set<AiCapability>,
+        request: ContextAssemblyRequest,
     ): ContextAssemblyResult {
 
         conversationStore.awaitReady()
@@ -239,12 +246,16 @@ class DefaultContextAssembler(
 
             } else {
 
-                val latestImage =
-                    observations
-                        .asReversed()
-                        .firstOrNull {
-                            it.payload is ImageObservationPayload
-                        }
+                val boundAssistantImage = request.interactionId?.let { assistantContexts?.imageFor(it) }
+                if (boundAssistantImage != null) {
+                    imageContext = boundAssistantImage
+                } else {
+
+                val imageCandidates = observations.asReversed().filter { it.payload is ImageObservationPayload }
+                val exactImage = request.interactionId?.let { interactionId ->
+                    imageCandidates.firstOrNull { it.interactionId == interactionId }
+                }
+                val latestImage = exactImage ?: if (request.allowGenericFallback) imageCandidates.firstOrNull() else null
 
                 if (latestImage == null) {
 
@@ -336,7 +347,26 @@ class DefaultContextAssembler(
                         }
                     }
                 }
+                }
             }
+        }
+
+        val screenSnapshot = request.interactionId?.let { assistantContexts?.screenFor(it) }
+        val screenContext = screenSnapshot?.let { snapshot ->
+            com.halo.sdk.provider.ScreenContext(
+                packageName = snapshot.packageName,
+                title = snapshot.title,
+                text = snapshot.nodes.asSequence()
+                    .flatMap { sequenceOf(it.text, it.contentDescription) }
+                    .filterNotNull()
+                    .distinct()
+                    .joinToString("\n")
+                    .take(14 * 1024),
+                uri = snapshot.webUri,
+                capturedAtMs = snapshot.capturedAtMs,
+                provenance = snapshot.provenance,
+                untrusted = true,
+            )
         }
 
         val context =
@@ -350,7 +380,8 @@ class DefaultContextAssembler(
                 memories =
                     memories,
                 availableTools =
-                    tools
+                    tools,
+                screenContext = screenContext,
             )
 
         return ContextAssemblyResult(

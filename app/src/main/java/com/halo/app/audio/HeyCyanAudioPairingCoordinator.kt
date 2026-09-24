@@ -18,6 +18,8 @@ import android.content.pm.PackageManager
 import android.os.Build
 import com.halo.host.android.audio.BluetoothAudioEndpoint
 import com.halo.host.android.audio.BluetoothAudioRouteMonitor
+import com.halo.app.audio.association.WearableAudioAssociation
+import com.halo.app.audio.association.WearableAudioAssociationRepository
 import com.halo.sdk.runtime.HaloDispatchers
 import com.halo.sdk.runtime.Storage
 import com.halo.sdk.runtime.productionHaloDispatchers
@@ -32,18 +34,8 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-
-data class WearableAudioAssociation(
-    val wearableDeviceId: String,
-    val associationId: Int?,
-    val bluetoothAddress: String?,
-    val deviceName: String?,
-    val bonded: Boolean,
-    val lastSeenAudioType: Int?
-)
 
 sealed interface HeyCyanAudioPairingState {
     data object Unknown : HeyCyanAudioPairingState
@@ -57,42 +49,6 @@ sealed interface HeyCyanAudioPairingState {
         val endpoint: BluetoothAudioEndpoint
     ) : HeyCyanAudioPairingState
     data class Failed(val message: String, val repairable: Boolean = true) : HeyCyanAudioPairingState
-}
-
-class WearableAudioAssociationRepository(
-    private val storage: Storage,
-    private val dispatchers: HaloDispatchers = productionHaloDispatchers()
-) {
-    suspend fun read(wearableDeviceId: String): WearableAudioAssociation? = withContext(dispatchers.io) {
-        val prefix = keyPrefix(wearableDeviceId)
-        val address = storage.getString(prefix + "address")
-        val associationId = storage.getInt(prefix + "association_id", NO_ASSOCIATION).takeUnless { it == NO_ASSOCIATION }
-        if (address == null && associationId == null) return@withContext null
-        WearableAudioAssociation(
-            wearableDeviceId = wearableDeviceId,
-            associationId = associationId,
-            bluetoothAddress = address,
-            deviceName = storage.getString(prefix + "name"),
-            bonded = storage.getBoolean(prefix + "bonded", false),
-            lastSeenAudioType = storage.getInt(prefix + "audio_type", NO_AUDIO_TYPE).takeUnless { it == NO_AUDIO_TYPE }
-        )
-    }
-
-    suspend fun write(value: WearableAudioAssociation) = withContext(dispatchers.io) {
-        val prefix = keyPrefix(value.wearableDeviceId)
-        storage.putInt(prefix + "association_id", value.associationId ?: NO_ASSOCIATION)
-        storage.putString(prefix + "address", value.bluetoothAddress)
-        storage.putString(prefix + "name", value.deviceName)
-        storage.putBoolean(prefix + "bonded", value.bonded)
-        storage.putInt(prefix + "audio_type", value.lastSeenAudioType ?: NO_AUDIO_TYPE)
-    }
-
-    private fun keyPrefix(id: String) = "heycyan_audio_${id.hashCode()}_"
-
-    private companion object {
-        const val NO_ASSOCIATION = -1
-        const val NO_AUDIO_TYPE = -1
-    }
 }
 
 /** Public-API association, bonding, persistence, and continuous audio-route observation. */
@@ -133,7 +89,13 @@ class HeyCyanAudioPairingCoordinator(
     }
 
     init {
-        appContext.registerReceiver(bondReceiver, IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED))
+        val filter = IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            appContext.registerReceiver(bondReceiver, filter, Context.RECEIVER_EXPORTED)
+        } else {
+            @Suppress("DEPRECATION")
+            appContext.registerReceiver(bondReceiver, filter)
+        }
         scope.launch {
             routeMonitor.routes.collectLatest { routes -> reconcileRoute(routes) }
         }

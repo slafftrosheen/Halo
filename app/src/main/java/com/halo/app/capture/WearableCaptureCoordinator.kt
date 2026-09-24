@@ -25,10 +25,11 @@ data class PendingCaptureOperation(
 )
 
 /** Existing verified transport composition. Receipt, rather than BLE write, establishes success. */
-class WearableCaptureCoordinator(private val context: Context, private val driver: RealHeyCyanDriver,
+class HeyCyanCaptureCoordinator(private val context: Context, private val driver: RealHeyCyanDriver,
     private val captures: LocalCaptureStore, private val events: EventBus, private val scope: CoroutineScope,
     private val preloadLocalModel: () -> Unit = {}) {
     private val mutex = Mutex()
+    private val hardwareThumbnailMutex = Mutex()
     private val _state = MutableStateFlow(WearableCaptureStatus())
     val state = _state.asStateFlow()
     private val imported = context.getSharedPreferences("received_wearable_media", Context.MODE_PRIVATE)
@@ -62,7 +63,7 @@ class WearableCaptureCoordinator(private val context: Context, private val drive
             driver.heyCyanEvents.collect { event ->
                 if (event == HeyCyanEvent.AiImageRecognition) {
                     // Photo-ready is the gate for the low-latency BLE path.
-                    if (!driver.thumbnailCaptureCoordinator.isAwaitingPhotoReady) scope.launch {
+                    if (!driver.thumbnailCaptureCoordinator.isAwaitingPhotoReady && !hardwareThumbnailMutex.isLocked) scope.launch {
                         receiveReadyAiThumbnail()
                     }
                 }
@@ -93,15 +94,24 @@ class WearableCaptureCoordinator(private val context: Context, private val drive
     }
 
     private suspend fun receiveReadyAiThumbnail() {
+        if (!hardwareThumbnailMutex.tryLock()) return
+        try {
         preloadLocalModel()
         val device = driver.activeDeviceId ?: return
         val operationId = UUID.randomUUID().toString()
         events.publish(ActionReceipt(operationId = operationId, category = "Vision", title = "AI thumbnail", stage = "DeviceReady", detail = "Glasses reported a fresh image", sourceDeviceId = device))
-        driver.thumbnailCaptureCoordinator.receivePhotoReadyThumbnail(quality = thumbnailQuality)
+        val firstAttempt = driver.thumbnailCaptureCoordinator.receivePhotoReadyThumbnail(quality = thumbnailQuality)
+        val result = if (firstAttempt.isFailure && driver.activeDeviceId == device) {
+            driver.thumbnailCaptureCoordinator.receivePhotoReadyThumbnail(quality = thumbnailQuality)
+        } else firstAttempt
+        result
             .onSuccess { thumbnail -> publishThumbnail(operationId, device, thumbnail) }
             .onFailure { error ->
                 events.publish(ActionReceipt(operationId = operationId, category = "Vision", title = "AI thumbnail", stage = "Failed", detail = error.message ?: "Thumbnail transfer failed", sourceDeviceId = device))
             }
+        } finally {
+            hardwareThumbnailMutex.unlock()
+        }
     }
 
     private suspend fun publishThumbnail(
@@ -109,6 +119,15 @@ class WearableCaptureCoordinator(private val context: Context, private val drive
         deviceId: String,
         thumbnail: HeyCyanCapturedThumbnail,
     ) {
+        val captureMetadata = mutableMapOf<String, Any>(
+            "captureKind" to "heycyan_ai_thumbnail",
+            "quality" to thumbnail.quality,
+            "photoReadyAtMs" to thumbnail.photoReadyAtMs,
+            "completionAtMs" to thumbnail.completedAtMs,
+            "captureOrigin" to if (thumbnail.commandAtMs == null) "hardware_trigger" else "software_request",
+        )
+        thumbnail.commandAtMs?.let { captureMetadata["commandAtMs"] = it }
+        thumbnail.firstChunkAtMs?.let { captureMetadata["firstChunkAtMs"] = it }
         events.publish(ActionReceipt(operationId = operationId, category = "Vision", title = "AI thumbnail", stage = "Validated", detail = "${thumbnail.width}×${thumbnail.height} · ${thumbnail.bytes.size} bytes", sourceDeviceId = deviceId))
         events.publish(
             ObservationUpdated(
@@ -120,12 +139,7 @@ class WearableCaptureCoordinator(private val context: Context, private val drive
                     sourceDeviceId = deviceId,
                     freshness = Freshness.FRESH,
                     timestamp = thumbnail.completedAtMs,
-                    metadata = mapOf(
-                        "captureKind" to "heycyan_ai_thumbnail",
-                        "quality" to thumbnail.quality,
-                        "commandAtMs" to thumbnail.commandAtMs,
-                        "photoReadyAtMs" to thumbnail.photoReadyAtMs,
-                    ),
+                    metadata = captureMetadata,
                 )
             )
         )

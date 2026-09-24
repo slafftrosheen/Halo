@@ -56,4 +56,15 @@ interface ContextAssembler {
         policy: AiContextPolicy,
         capabilities: Set<AiCapability>
     ): ContextAssemblyResult
+
+    suspend fun assemble(
+        policy: AiContextPolicy,
+        capabilities: Set<AiCapability>,
+        request: ContextAssemblyRequest,
+    ): ContextAssemblyResult = assemble(policy, capabilities)
 }
+
+data class ContextAssemblyRequest(
+    val interactionId: String? = null,
+    val allowGenericFallback: Boolean = true,
+)

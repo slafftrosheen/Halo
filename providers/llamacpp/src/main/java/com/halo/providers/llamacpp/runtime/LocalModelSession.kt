@@ -307,7 +307,6 @@ class LocalModelSession(
                 mode = current::class.simpleName,
             )
         }
-        if (!isLoaded()) return InferenceAdmission.Blocked("No local model is ready")
         val existing = benchmarkOwner.get()
         if (existing != null || !benchmarkOwner.compareAndSet(null, requestId)) {
             return InferenceAdmission.Busy(existing, "benchmark")

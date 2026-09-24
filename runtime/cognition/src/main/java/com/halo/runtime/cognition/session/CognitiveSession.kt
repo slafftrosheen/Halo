@@ -260,7 +260,14 @@ class CognitiveSession(
                 val targetPolicy = effectivePolicy.copy(includeWorkspace = effectivePolicy.includeWorkspace &&
                     (target.provider.isLocal || effectivePolicy.allowCloudWorkspace))
 
-                val assembly = contextAssembler.assemble(policy = targetPolicy, capabilities = capabilities)
+                val assembly = contextAssembler.assemble(
+                    policy = targetPolicy,
+                    capabilities = capabilities,
+                    request = com.halo.runtime.cognition.context.ContextAssemblyRequest(
+                        interactionId = interactionId.value,
+                        allowGenericFallback = false,
+                    ),
+                )
                 val context = assembly.context
                 val requestWithContext = bindAssembledContext(finalRequest, assembly, responseDelivery)
 

@@ -15,7 +15,7 @@ interface ICapabilityRegistry {
     fun capabilities(): List<Capability> = emptyList()
 }
 
-// CancellationToken stub
+/** Runtime-owned cooperative cancellation boundary for capability execution. */
 interface CancellationToken {
     val isCancelled: Boolean
     fun checkCancellation() {

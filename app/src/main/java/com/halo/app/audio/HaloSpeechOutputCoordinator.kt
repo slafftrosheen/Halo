@@ -84,6 +84,7 @@ class HaloSpeechOutputCoordinator(
             val startedOnce = AtomicBoolean(false)
             var locked = false
             var focusGranted = false
+            var outputLease: OutputLease? = null
             var foregroundLease: HaloAudioForegroundService.Lease? = null
             val focusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
                 .setAudioAttributes(speechAttributes)
@@ -97,6 +98,10 @@ class HaloSpeechOutputCoordinator(
             try {
                 playbackMutex.lock()
                 locked = true
+                outputLease = session.acquireOutput(
+                    interactionId = event.transactionId,
+                    deviceId = (event.target as? SpeechOutputTarget.Wearable)?.deviceId,
+                ).getOrThrow()
                 foregroundLease = HaloAudioForegroundService.acquire(applicationContext, HaloAudioForegroundService.Kind.PLAYBACK)
                 // 1. Prepare the requested route.
                 var routePreparation = routeController.prepareRoute(
@@ -244,7 +249,12 @@ class HaloSpeechOutputCoordinator(
                 )
             } finally {
                 if (focusGranted) runCatching { audioManager.abandonAudioFocusRequest(focusRequest) }
-                try { foregroundLease?.release() } finally { if (locked) playbackMutex.unlock() }
+                try {
+                    foregroundLease?.release()
+                } finally {
+                    outputLease?.release()
+                    if (locked) playbackMutex.unlock()
+                }
                 if (activeTransactionId == event.transactionId) {
                     activeTransactionId = null
                 }

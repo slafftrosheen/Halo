@@ -4,7 +4,6 @@ import android.util.Log
 import com.halo.app.ai.readRuntimeAiContextPolicy
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.halo.providers.android.assistant.AndroidAssistantProvider
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.RuntimeSnapshotSource
 import com.halo.sdk.runtime.NativeResourceSnapshot
@@ -44,7 +43,6 @@ data class IntelligenceUiState(
     val activeLocalModelId: String? = null,
     val temperature: Float = 0.7f,
     val policy: AiContextPolicy = AiContextPolicy.CONSERVATIVE,
-    val assistantPackage: String? = null,
     val routingPolicy: AiRoutingPolicy = AiRoutingPolicy.AUTOMATIC,
     val activeProviderIsLocal: Boolean? = null,
     val nativeResources: List<NativeResourceSnapshot> = emptyList()
@@ -64,7 +62,6 @@ private data class IntelligenceSettings(
 private data class ProviderSelection(
     val providerId: String?,
     val modelId: String?,
-    val assistantPackage: String?,
     val routingPolicy: AiRoutingPolicy,
     val diagnostics: List<AiProviderDiagnostic>
 )
@@ -83,8 +80,6 @@ class IntelligenceViewModel(
     private val _isRefreshing = MutableStateFlow(false)
     private val _testConnectionResult = MutableSharedFlow<Boolean>()
     val testConnectionResult: SharedFlow<Boolean> = _testConnectionResult.asSharedFlow()
-    private val _assistantPackage = MutableStateFlow<String?>(null)
-    val assistantPackage: StateFlow<String?> = _assistantPackage.asStateFlow()
     private val _settings = MutableStateFlow(IntelligenceSettings())
 
     init {
@@ -96,7 +91,6 @@ class IntelligenceViewModel(
                     runCatching { aiProviderRouter.diagnostics() }
                     syncStoredModelSelection(providerId)
                     refreshModelsFor(providerId)
-                    refreshAssistantInfo(providerId)
                 }
             }
         }
@@ -147,33 +141,21 @@ class IntelligenceViewModel(
         if (storedModelId != aiProviderRouter.selectedModelId.value) aiProviderRouter.selectModel(storedModelId)
     }
 
-    private suspend fun refreshAssistantInfo(providerId: String) {
-        if (providerId != ProviderIds.ANDROID_ASSISTANT) {
-            _assistantPackage.value = null
-            return
-        }
-        val provider = aiProviderRouter.getAllProviders().firstOrNull { it.id == providerId }
-        _assistantPackage.value = withContext(dispatchers.io) {
-            (provider as? AndroidAssistantProvider)?.assistantPackageName()
-        }
-    }
-
     val uiState: StateFlow<IntelligenceUiState> = combine(
         snapshotManager.snapshot,
         combine(
             aiProviderRouter.selectedProviderId,
             aiProviderRouter.selectedModelId,
-            _assistantPackage,
             aiProviderRouter.routingPolicy,
             aiProviderRouter.diagnosticsFlow
-        ) { pId, mId, pkg, routing, diagnostics ->
-            ProviderSelection(pId, mId, pkg, routing, diagnostics)
+        ) { pId, mId, routing, diagnostics ->
+            ProviderSelection(pId, mId, routing, diagnostics)
         },
         modelDownloadManager?.downloadStates ?: MutableStateFlow<Map<String, DownloadState>>(emptyMap()),
         combine(modelDownloadManager?.activeModelId ?: MutableStateFlow<String?>(null), _refreshTrigger) { activeId, _ -> activeId },
         _settings
     ) { snapshot, selection, dlStates, activeLocalId, settings ->
-        val (selectedProviderId, selectedModelId, assistantPkg) = selection
+        val (selectedProviderId, selectedModelId) = selection
         val allProviders = aiProviderRouter.getAllProviders()
         val activeProvider = allProviders.find { it.id == selectedProviderId }
         val snapshotProvider = snapshot.providers.find { it.id == selectedProviderId }
@@ -215,21 +197,12 @@ class IntelligenceViewModel(
             activeLocalModelId = activeLocalId ?: settings.llamacppModel,
             temperature = settings.temperature,
             policy = settings.policy,
-            assistantPackage = assistantPkg,
             routingPolicy = selection.routingPolicy,
             activeProviderIsLocal = activeProvider?.isLocal,
             nativeResources = snapshot.nativeResources
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), IntelligenceUiState())
 
-    fun handoffToAssistant(prompt: String? = null) {
-        val provider = aiProviderRouter.getAllProviders().firstOrNull { it.id == ProviderIds.ANDROID_ASSISTANT } as? AndroidAssistantProvider ?: return
-        viewModelScope.launch(dispatchers.io) {
-            runCatching { provider.handoff(prompt) }
-                .onFailure { error -> Log.w("IntelligenceViewModel", "Assistant handoff failed", error) }
-            _refreshTrigger.update { it + 1 }
-        }
-    }
     fun downloadModel(modelId: String) { modelDownloadManager?.downloadModel(modelId) }
     fun refreshCatalog() { viewModelScope.launch { modelCatalog?.refresh(force = true) } }
     fun downloadCatalogEntry(entry: ModelCatalogEntry) {
@@ -255,14 +228,10 @@ class IntelligenceViewModel(
 
     fun selectProvider(id: String) {
         if (aiProviderRouter.getAllProviders().none { it.id == id }) return
-        if (id == ProviderIds.ANDROID_ASSISTANT) {
-            handoffToAssistant()
-            return
-        }
         aiProviderRouter.selectProvider(id)
         _availableModels.value = emptyList()
         _refreshTrigger.update { it + 1 }
-        viewModelScope.launch { syncStoredModelSelection(id); refreshModelsFor(id); refreshAssistantInfo(id) }
+        viewModelScope.launch { syncStoredModelSelection(id); refreshModelsFor(id) }
     }
 
     fun selectModel(modelId: String?) {
@@ -298,7 +267,6 @@ class IntelligenceViewModel(
                 ProviderIds.OPENROUTER -> settings.openRouterModel.trim().ifBlank { null }
                 ProviderIds.OLLAMA -> settings.ollamaModel.trim().ifBlank { null }
                 ProviderIds.LLAMACPP -> modelDownloadManager?.activeModelId?.value
-                ProviderIds.ANDROID_ASSISTANT -> "android-assistant/handoff"
                 else -> null
             }
             if (storedModelId != null && models.any { it.id == storedModelId } && aiProviderRouter.selectedModelId.value != storedModelId) aiProviderRouter.selectModel(storedModelId)

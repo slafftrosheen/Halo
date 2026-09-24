@@ -124,7 +124,7 @@ fun IntelligenceScreen(
 
         Spacer(Modifier.height(20.dp))
 
-        val inferenceProviders = uiState.providers.filterNot { it.isHandoff }
+        val inferenceProviders = uiState.providers
         HaloWorkspaceSection(title = "Inference providers") {
             inferenceProviders.forEachIndexed { index, provider ->
                 HaloWorkspaceRow(
@@ -136,24 +136,6 @@ fun IntelligenceScreen(
                 )
                 if (index < inferenceProviders.lastIndex) {
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                }
-            }
-        }
-
-        val handoffProviders = uiState.providers.filter { it.isHandoff }
-        if (handoffProviders.isNotEmpty()) {
-            Spacer(Modifier.height(20.dp))
-            HaloWorkspaceSection(title = "External assistant") {
-                handoffProviders.forEachIndexed { index, provider ->
-                    HaloWorkspaceRow(
-                        title = provider.name,
-                        subtitle = "Handoff to Android's configured assistant · not Halo inference",
-                        trailingText = "Open",
-                        onClick = { viewModel.selectProvider(provider.id) }
-                    )
-                    if (index < handoffProviders.lastIndex) {
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                    }
                 }
             }
         }

@@ -120,8 +120,11 @@ class AudioPerceptionEngine(
     }
 
     private suspend fun startCapture() {
-        acquireInput(SpeechInputTurn(UUID.randomUUID().toString()), audioSource)
+        startCapture(SpeechInputTurn(UUID.randomUUID().toString()))
     }
+
+    /** Starts a correlated phone-input turn without creating a second microphone stack. */
+    suspend fun startCapture(turn: SpeechInputTurn): Boolean = acquireInput(turn, audioSource)
 
     /** The engine is the sole capture owner for every physical input. */
     suspend fun acquireInput(turn: SpeechInputTurn, source: AudioSource): Boolean = transactionMutex.withLock {

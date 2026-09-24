@@ -5,7 +5,6 @@ import com.halo.engines.speech.AlwaysWakeDetector
 import com.halo.engines.speech.UnavailableSpeechRecognitionProvider
 import com.halo.providers.llamacpp.ModelDownloadManager
 import com.halo.providers.llamacpp.NativeLlamaProvider
-import com.halo.providers.android.assistant.AndroidAssistantProvider
 import com.halo.providers.android.tts.AndroidTTSProvider
 import com.halo.providers.openrouter.OpenRouterProvider
 import com.halo.providers.llamacpp.OllamaProvider
@@ -84,8 +83,7 @@ class AndroidProviderFactory(
             aiProviders = listOfNotNull(
                 llamaProvider,
                 runCatching { OllamaProvider(storage) }.getOrNull(),
-                runCatching { OpenRouterProvider(storage) }.getOrNull(),
-                runCatching { AndroidAssistantProvider(context) }.getOrNull()
+                runCatching { OpenRouterProvider(storage) }.getOrNull()
             )
         )
     }

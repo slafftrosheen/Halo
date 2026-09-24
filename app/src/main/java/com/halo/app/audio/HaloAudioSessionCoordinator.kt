@@ -7,6 +7,47 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
+sealed interface AudioSessionLease {
+    val interactionId: String
+    val deviceId: String?
+    val acquiredAtMs: Long
+    fun release()
+}
+
+class InputLease internal constructor(
+    override val interactionId: String,
+    override val deviceId: String?,
+    override val acquiredAtMs: Long,
+    private val releaseAction: (InputLease) -> Unit
+) : AudioSessionLease {
+    @Volatile private var released = false
+    override fun release() {
+        if (!released) synchronized(this) {
+            if (!released) {
+                released = true
+                releaseAction(this)
+            }
+        }
+    }
+}
+
+class OutputLease internal constructor(
+    override val interactionId: String,
+    override val deviceId: String?,
+    override val acquiredAtMs: Long,
+    private val releaseAction: (OutputLease) -> Unit
+) : AudioSessionLease {
+    @Volatile private var released = false
+    override fun release() {
+        if (!released) synchronized(this) {
+            if (!released) {
+                released = true
+                releaseAction(this)
+            }
+        }
+    }
+}
+
 sealed interface HaloAudioSessionState {
     data object Idle : HaloAudioSessionState
     data class Listening(val source: SpeechInputRoute, val captureId: String) : HaloAudioSessionState
@@ -40,9 +81,33 @@ data class PlaybackGuardWindow(
 class HaloAudioSessionCoordinator {
     private val mutableState = MutableStateFlow<HaloAudioSessionState>(HaloAudioSessionState.Idle)
     val state: StateFlow<HaloAudioSessionState> = mutableState.asStateFlow()
+    private val ownershipLock = Any()
+    @Volatile private var inputOwner: InputLease? = null
+    @Volatile private var outputOwner: OutputLease? = null
 
     @Volatile var playbackGuard: PlaybackGuardWindow? = null
         private set
+
+    fun acquireInput(interactionId: String, deviceId: String?): Result<InputLease> = synchronized(ownershipLock) {
+        if (inputOwner != null || outputOwner != null) {
+            return@synchronized Result.failure(IllegalStateException("Audio input is already owned"))
+        }
+        Result.success(InputLease(interactionId, deviceId, System.currentTimeMillis(), ::releaseInput).also {
+            inputOwner = it
+        })
+    }
+
+    fun acquireOutput(interactionId: String, deviceId: String?): Result<OutputLease> = synchronized(ownershipLock) {
+        if (outputOwner != null || inputOwner != null) {
+            return@synchronized Result.failure(IllegalStateException("Audio output is already owned"))
+        }
+        Result.success(OutputLease(interactionId, deviceId, System.currentTimeMillis(), ::releaseOutput).also {
+            outputOwner = it
+        })
+    }
+
+    fun activeInputLease(): InputLease? = inputOwner
+    fun activeOutputLease(): OutputLease? = outputOwner
 
     fun listening(source: SpeechInputRoute, captureId: String) {
         mutableState.value = HaloAudioSessionState.Listening(source, captureId)
@@ -94,5 +159,13 @@ class HaloAudioSessionCoordinator {
         is HaloAudioSessionState.PreparingOutput -> current.transactionId
         is HaloAudioSessionState.Speaking -> current.transactionId
         else -> null
+    }
+
+    private fun releaseInput(lease: InputLease) = synchronized(ownershipLock) {
+        if (inputOwner === lease) inputOwner = null
+    }
+
+    private fun releaseOutput(lease: OutputLease) = synchronized(ownershipLock) {
+        if (outputOwner === lease) outputOwner = null
     }
 }

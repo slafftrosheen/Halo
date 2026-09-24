@@ -48,6 +48,34 @@ data class CaptureResult(
     val message: String? = null
 )
 
+@JvmInline
+value class VisualCaptureId(val value: String)
+
+enum class VisualCaptureOrigin { SOFTWARE_REQUEST, HARDWARE_TRIGGER }
+
+data class CapturedAsset(
+    val id: String,
+    val originDeviceId: String?,
+    val mimeType: String,
+    val capturedAtMs: Long,
+    val bytes: ByteArray? = null,
+    val uri: String? = null,
+    val width: Int? = null,
+    val height: Int? = null,
+    val metadata: Map<String, String> = emptyMap()
+)
+
+data class StillCaptureRequest(
+    val captureId: VisualCaptureId,
+    val origin: VisualCaptureOrigin = VisualCaptureOrigin.SOFTWARE_REQUEST,
+    val quality: Int? = null,
+    val metadata: Map<String, String> = emptyMap()
+)
+
+interface StillImageSource {
+    suspend fun captureStill(request: StillCaptureRequest): Result<CapturedAsset>
+}
+
 // ── Video ────────────────────────────────────────────────────────────
 
 interface VideoCapability {

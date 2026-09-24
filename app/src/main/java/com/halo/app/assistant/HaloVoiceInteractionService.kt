@@ -2,12 +2,5 @@ package com.halo.app.assistant
 
 import android.service.voice.VoiceInteractionService
 
-class HaloVoiceInteractionService : VoiceInteractionService() {
-    override fun onReady() {
-        super.onReady()
-    }
-
-    override fun onShutdown() {
-        super.onShutdown()
-    }
-}
+/** Lightweight process entry point; interaction work belongs to the session service. */
+class HaloVoiceInteractionService : VoiceInteractionService()

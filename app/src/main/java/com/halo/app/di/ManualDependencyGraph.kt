@@ -224,7 +224,10 @@ object ManualDependencyGraph {
         )
     }
     val workspaceContext by lazy { WorkspaceContextStore(appDatabase, notebookRepository, storage) }
-    val contextAssembler by lazy { com.halo.runtime.cognition.context.DefaultContextAssembler(conversationStore, blackboard, toolRegistry, workspaceContext, skillRegistry) }
+    val assistantContextRepository by lazy { com.halo.runtime.cognition.context.AssistantContextRepository() }
+    val contextAssembler by lazy { com.halo.runtime.cognition.context.DefaultContextAssembler(
+        conversationStore, blackboard, toolRegistry, workspaceContext, skillRegistry, assistantContextRepository
+    ) }
     val toolAuthorizationCoordinator by lazy {
         com.halo.app.di.tools.InteractiveToolAuthorization {
             attentionContextProvider.snapshot().foregroundState == com.halo.runtime.cognition.attention.ForegroundState.HALO_FOREGROUND
@@ -400,7 +403,7 @@ object ManualDependencyGraph {
     val speechOutputRouteController by lazy {
         SpeechOutputRouteController(
             applicationContext,
-            heyCyanDriver,
+            com.halo.app.audio.HeyCyanWearableAudioRouteAdapter(heyCyanDriver),
             bluetoothAudioRouteMonitor,
             heyCyanAudioPairingCoordinator
         )

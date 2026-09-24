@@ -23,7 +23,8 @@ import java.util.concurrent.atomic.AtomicLong
 data class HeyCyanCapturedThumbnail(
     val bytes: ByteArray,
     val quality: Int,
-    val commandAtMs: Long,
+    val commandAtMs: Long?,
+    val firstChunkAtMs: Long? = null,
     val photoReadyAtMs: Long,
     val completedAtMs: Long,
     val width: Int,
@@ -34,6 +35,7 @@ data class HeyCyanCapturedThumbnail(
         if (other !is HeyCyanCapturedThumbnail) return false
         if (quality != other.quality) return false
         if (commandAtMs != other.commandAtMs) return false
+        if (firstChunkAtMs != other.firstChunkAtMs) return false
         if (photoReadyAtMs != other.photoReadyAtMs) return false
         if (completedAtMs != other.completedAtMs) return false
         if (width != other.width) return false
@@ -46,6 +48,7 @@ data class HeyCyanCapturedThumbnail(
         var result = bytes.contentHashCode()
         result = 31 * result + quality
         result = 31 * result + commandAtMs.hashCode()
+        result = 31 * result + firstChunkAtMs.hashCode()
         result = 31 * result + photoReadyAtMs.hashCode()
         result = 31 * result + completedAtMs.hashCode()
         result = 31 * result + width
@@ -131,11 +134,13 @@ class HeyCyanThumbnailCaptureCoordinator(
         ) ?: return Result.failure(IllegalStateException("HeyCyan glasses are busy with a conflicting operation"))
         return try {
             if (settleDelayMs > 0) delay(settleDelayMs)
+            val firstChunkAtMs = System.currentTimeMillis()
             Result.success(buildCapturedThumbnail(
                 bytes = receiveThumbnailChunks(),
                 quality = quality,
-                commandAtMs = photoReadyAtMs,
+                commandAtMs = null,
                 photoReadyAtMs = photoReadyAtMs,
+                firstChunkAtMs = firstChunkAtMs,
             ))
         } catch (error: CancellationException) {
             throw error
@@ -177,6 +182,7 @@ class HeyCyanThumbnailCaptureCoordinator(
             }
 
             // 4. Chunk reception pipeline
+            val firstChunkAtMs = System.currentTimeMillis()
             val assembledBytes = receiveThumbnailChunks()
 
             // 5. Verify JPEG payload
@@ -185,6 +191,7 @@ class HeyCyanThumbnailCaptureCoordinator(
                 quality = quality,
                 commandAtMs = commandAtMs,
                 photoReadyAtMs = photoReadyTime,
+                firstChunkAtMs = firstChunkAtMs,
             )
         } finally {
             awaitingPhotoReady.set(false)
@@ -283,8 +290,9 @@ class HeyCyanThumbnailCaptureCoordinator(
     private fun buildCapturedThumbnail(
         bytes: ByteArray,
         quality: Int,
-        commandAtMs: Long,
+        commandAtMs: Long?,
         photoReadyAtMs: Long,
+        firstChunkAtMs: Long?,
     ): HeyCyanCapturedThumbnail {
         validateJpeg(bytes)
         val (width, height) = extractImageDimensions(bytes)
@@ -293,6 +301,7 @@ class HeyCyanThumbnailCaptureCoordinator(
             bytes = bytes,
             quality = quality,
             commandAtMs = commandAtMs,
+            firstChunkAtMs = firstChunkAtMs,
             photoReadyAtMs = photoReadyAtMs,
             completedAtMs = System.currentTimeMillis(),
             width = width,

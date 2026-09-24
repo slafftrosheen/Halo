@@ -195,6 +195,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        setIntent(intent)
         handleIncomingShareIntent(intent)
     }
 
@@ -204,9 +205,25 @@ class MainActivity : ComponentActivity() {
         if (action == Intent.ACTION_SEND || action == Intent.ACTION_SEND_MULTIPLE) {
             lifecycleScope.launch(Dispatchers.IO) {
                 try {
-                    ManualDependencyGraph.sendIntentHandler.handleIntent(intent)
+                    val imported = ManualDependencyGraph.sendIntentHandler.handleIntent(intent)
+                    withContext(Dispatchers.Main.immediate) {
+                        if (this@MainActivity.intent === intent) this@MainActivity.intent.action = null
+                        android.widget.Toast.makeText(
+                            this@MainActivity,
+                            if (imported > 0) "$imported item${if (imported == 1) "" else "s"} saved to Notebook"
+                            else "Nothing supported was shared",
+                            android.widget.Toast.LENGTH_SHORT,
+                        ).show()
+                    }
                 } catch (e: Exception) {
                     Log.e("MainActivity", "Error handling shared intent", e)
+                    withContext(Dispatchers.Main.immediate) {
+                        android.widget.Toast.makeText(
+                            this@MainActivity,
+                            "Halo couldn't import the shared content",
+                            android.widget.Toast.LENGTH_LONG,
+                        ).show()
+                    }
                 }
             }
         }

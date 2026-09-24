@@ -97,6 +97,7 @@ sealed interface ConnectionState {
 sealed interface ObservationSource {
     data object PhoneCamera : ObservationSource
     data object AndroidPhoneMic : ObservationSource
+    data object AndroidAssist : ObservationSource
     data object BluetoothHeadset : ObservationSource
     data object HeyCyanGlasses : ObservationSource
     data object Replay : ObservationSource

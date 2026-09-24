@@ -327,6 +327,12 @@ class OpenRouterProvider(
                 }
             })
         }
+        context.screenContext?.let { screen ->
+            messages.put(JSONObject().apply {
+                put("role", "user")
+                put("content", screen.asUntrustedPromptSection())
+            })
+        }
         request.text?.let { text ->
             val content: Any = if (request.image != null) {
                 JSONArray().apply {

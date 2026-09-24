@@ -35,8 +35,8 @@ data class BenchmarkResult(
         artifactFingerprint: String,
         deviceFingerprint: String = "${Build.MANUFACTURER}_${Build.MODEL}_API${Build.VERSION.SDK_INT}",
         threads: Int = 4,
-        appVersion: String = "1.0",
-        runtimeVersion: String = "0.4.0",
+        appVersion: String,
+        runtimeVersion: String,
         compatibilityEpoch: Int = 1,
     ): ModelPerformanceProfile = ModelPerformanceProfile(
         artifactId = artifactId,
@@ -77,6 +77,63 @@ class LocalModelBenchmarkRunner(
         contextSize: Int = 2048,
         prompt: String = BENCHMARK_PROMPT,
         maxTokens: Int = 64,
+    ): Result<BenchmarkResult> {
+        val benchmarkRequestId = UUID.randomUUID().toString()
+        when (val admission = session.tryBeginBenchmark(benchmarkRequestId)) {
+            InferenceAdmission.Granted -> Unit
+            is InferenceAdmission.Busy -> return Result.failure(
+                AiProviderException(
+                    type = AiErrorType.SESSION_CONFLICT,
+                    message = "Model is currently in use by ${admission.mode ?: "another session"}",
+                    details = AiFailureDetails(
+                        activeSessionId = admission.activeRequestId,
+                        activeMode = admission.mode,
+                        retryAfterMs = admission.retryAfterMs,
+                        recoverability = Recoverability.SESSION_CONFLICT,
+                    ),
+                )
+            )
+            is InferenceAdmission.Blocked -> return Result.failure(
+                AiProviderException(AiErrorType.MODEL_NOT_READY, admission.reason)
+            )
+        }
+
+        val previousModel = LoadedModelSnapshot.capture(session)
+        var benchmarkResult: Result<BenchmarkResult>? = null
+        var restoreFailure: Throwable? = null
+        try {
+            benchmarkResult = benchmarkReserved(
+                artifactId = artifactId,
+                modelPath = modelPath,
+                format = format,
+                backend = backend,
+                gpuLayers = gpuLayers,
+                contextSize = contextSize,
+                prompt = prompt,
+                maxTokens = maxTokens,
+                benchmarkRequestId = benchmarkRequestId,
+            )
+        } finally {
+            try {
+                restoreFailure = restorePreviousModel(previousModel)
+            } finally {
+                session.endBenchmark(benchmarkRequestId)
+            }
+        }
+        return restoreFailure?.let { Result.failure(it) }
+            ?: checkNotNull(benchmarkResult)
+    }
+
+    private suspend fun benchmarkReserved(
+        artifactId: String,
+        modelPath: String,
+        format: LocalModelFormat,
+        backend: LocalComputeBackend,
+        gpuLayers: Int,
+        contextSize: Int,
+        prompt: String,
+        maxTokens: Int,
+        benchmarkRequestId: String,
     ): Result<BenchmarkResult> {
         val loadStart = System.currentTimeMillis()
         val loadConfig = RuntimeLoadConfig(
@@ -131,27 +188,7 @@ class LocalModelBenchmarkRunner(
         )
 
         var firstTokenTimestamp: Long? = null
-        val tokenTimes = mutableListOf<Long>()
         val genStart = System.currentTimeMillis()
-        val benchmarkRequestId = UUID.randomUUID().toString()
-        when (val admission = session.tryBeginBenchmark(benchmarkRequestId)) {
-            InferenceAdmission.Granted -> Unit
-            is InferenceAdmission.Busy -> return Result.failure(
-                AiProviderException(
-                    type = AiErrorType.SESSION_CONFLICT,
-                    message = "Model is currently in use by ${admission.mode ?: "another session"}",
-                    details = AiFailureDetails(
-                        activeSessionId = admission.activeRequestId,
-                        activeMode = admission.mode,
-                        retryAfterMs = admission.retryAfterMs,
-                        recoverability = Recoverability.SESSION_CONFLICT,
-                    ),
-                )
-            )
-            is InferenceAdmission.Blocked -> return Result.failure(
-                AiProviderException(AiErrorType.MODEL_NOT_READY, admission.reason)
-            )
-        }
 
         return try {
             val genResult = session.generate(
@@ -159,7 +196,6 @@ class LocalModelBenchmarkRunner(
                 onToken = { _ ->
                     val now = System.currentTimeMillis()
                     if (firstTokenTimestamp == null) firstTokenTimestamp = now
-                    tokenTimes.add(now)
                 },
                 benchmarkRequestId = benchmarkRequestId,
             )
@@ -225,8 +261,40 @@ class LocalModelBenchmarkRunner(
         } catch (t: Throwable) {
             Log.e(TAG, "Benchmark failed on generation", t)
             Result.failure(t)
-        } finally {
-            session.endBenchmark(benchmarkRequestId)
+        }
+    }
+
+    private suspend fun restorePreviousModel(previous: LoadedModelSnapshot?): Throwable? {
+        val restoreResult = if (previous == null) {
+            session.unloadModel()
+        } else {
+            session.loadModel(
+                modelId = previous.modelId,
+                modelPath = previous.modelPath,
+                format = previous.format,
+                config = previous.config,
+            ).map { Unit }
+        }
+        restoreResult.exceptionOrNull()?.let { error ->
+            Log.e(TAG, "Unable to restore the model that was active before benchmarking", error)
+        }
+        return restoreResult.exceptionOrNull()
+    }
+
+    private data class LoadedModelSnapshot(
+        val modelId: String,
+        val modelPath: String,
+        val format: LocalModelFormat,
+        val config: RuntimeLoadConfig,
+    ) {
+        companion object {
+            fun capture(session: LocalModelSession): LoadedModelSnapshot? {
+                val modelId = session.loadedModelId ?: return null
+                val modelPath = session.loadedModelPath ?: return null
+                val format = session.activeFormat ?: return null
+                val config = session.activeConfig ?: return null
+                return LoadedModelSnapshot(modelId, modelPath, format, config)
+            }
         }
     }
 

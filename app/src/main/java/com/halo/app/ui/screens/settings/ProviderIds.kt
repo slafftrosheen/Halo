@@ -8,5 +8,4 @@ object ProviderIds {
     const val OPENROUTER = "openrouter"
     const val OLLAMA = "provider.ollama"
     const val LLAMACPP = "provider.llamacpp.native"
-    const val ANDROID_ASSISTANT = "android.system.assistant"
 }

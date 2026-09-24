@@ -3,11 +3,7 @@ package com.halo.app.audio
 import android.content.Context
 import android.media.AudioDeviceInfo
 import android.util.Log
-import com.halo.drivers.heycyan.RealHeyCyanDriver
-import com.halo.drivers.heycyan.protocol.HeyCyanCommand
-import com.halo.drivers.heycyan.protocol.HeyCyanConnectionState
 import com.halo.sdk.runtime.SpeechOutputTarget
-import com.halo.sdk.runtime.embodiment.heycyan.HeyCyanOperation
 
 import com.halo.host.android.audio.BluetoothAudioRouteMonitor
 import com.halo.host.android.audio.AndroidBluetoothAudioRouteMonitor
@@ -23,7 +19,7 @@ data class SpeechRouteRequest(
 
 class SpeechOutputRouteController(
     context: Context,
-    private val heyCyanDriver: RealHeyCyanDriver,
+    private val wearableRouteAdapter: WearableAudioRouteAdapter,
     private val routeMonitor: BluetoothAudioRouteMonitor = AndroidBluetoothAudioRouteMonitor(context),
     private val audioPairingCoordinator: HeyCyanAudioPairingCoordinator? = null
 ) {
@@ -36,10 +32,9 @@ class SpeechOutputRouteController(
             is SpeechOutputTarget.Phone -> {
                 Log.i("HaloAudio", "AUDIO_ROUTE_REQUEST transaction=${request.transactionId} target=Phone")
                 val previousDevice = lastGlassesDeviceId
-                val vendorCommandSent = if (previousDevice != null && heyCyanDriver.activeDeviceId == previousDevice &&
-                    heyCyanDriver.deviceState.value.connection == HeyCyanConnectionState.READY) {
+                val vendorCommandSent = if (previousDevice != null && wearableRouteAdapter.deviceId == previousDevice) {
                     try {
-                        heyCyanDriver.capabilityController.execute(HeyCyanOperation.RouteAudioToPhone).isSuccess
+                        wearableRouteAdapter.releaseOutputRoute().isSuccess
                     } catch (cancelled: CancellationException) {
                         throw cancelled
                     } catch (error: Exception) {
@@ -66,7 +61,7 @@ class SpeechOutputRouteController(
             is SpeechOutputTarget.Wearable -> {
                 Log.i("HaloAudio", "AUDIO_ROUTE_REQUEST transaction=${request.transactionId} target=Wearable device=${target.deviceId}")
                 
-                val activeDevice = heyCyanDriver.activeDeviceId
+                val activeDevice = wearableRouteAdapter.deviceId
                 if (activeDevice == null || activeDevice != target.deviceId) {
                     Log.i("HaloAudio", "AUDIO_ROUTE_FAILED target=wearable reason=WRONG_DEVICE")
                     return SpeechRoutePreparation.Unavailable(
@@ -75,22 +70,14 @@ class SpeechOutputRouteController(
                     )
                 }
 
-                if (heyCyanDriver.deviceState.value.connection != HeyCyanConnectionState.READY) {
-                    Log.i("HaloAudio", "AUDIO_ROUTE_FAILED target=wearable reason=DEVICE_DISCONNECTED")
-                    return SpeechRoutePreparation.Unavailable(
-                        target = target,
-                        reason = SpeechRouteFailureReason.DEVICE_DISCONNECTED
-                    )
-                }
-
                 // Restore persisted Classic-audio identity independently of Devices UI.
                 audioPairingCoordinator?.ensureRestored(target.deviceId)
 
-                // 1. Enable Classic Bluetooth on glasses
-                val btResult = heyCyanDriver.capabilityController.execute(HeyCyanOperation.EnableClassicBluetooth)
+                // 1. Let the device adapter prepare its transport.
+                val btResult = wearableRouteAdapter.prepareAudioTransport()
                 if (btResult.isFailure) {
-                    Log.w("HaloAudio", "HEYCYAN_CLASSIC_ENABLE device=${target.deviceId} result=failed")
-                    return SpeechRoutePreparation.Unavailable(target, SpeechRouteFailureReason.COMMAND_FAILED)
+                    Log.w("HaloAudio", "WEARABLE_AUDIO_PREPARE device=${target.deviceId} result=failed", btResult.exceptionOrNull())
+                    return SpeechRoutePreparation.Unavailable(target, SpeechRouteFailureReason.DEVICE_DISCONNECTED)
                 }
 
                 when (audioPairingCoordinator?.state?.value) {
@@ -107,7 +94,7 @@ class SpeechOutputRouteController(
                 Log.i("HaloAudio", "HEYCYAN_CLASSIC_ENABLE device=${target.deviceId} result=success")
 
                 // 2. Send RouteAudioToGlasses command
-                val routeResult = heyCyanDriver.capabilityController.execute(HeyCyanOperation.RouteAudioToGlasses)
+                val routeResult = wearableRouteAdapter.requestOutputRoute()
                 if (routeResult.isFailure) {
                     Log.i("HaloAudio", "HEYCYAN_VENDOR_ROUTE device=${target.deviceId} route=GLASSES result=failed")
                     return SpeechRoutePreparation.Unavailable(

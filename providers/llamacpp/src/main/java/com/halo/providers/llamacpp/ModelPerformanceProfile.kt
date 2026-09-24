@@ -37,7 +37,7 @@ data class ModelPerformanceProfile(
     val generationTokensPerSecond: Float,
     val peakEstimatedMemoryBytes: Long? = null,
     val testedAtEpochMs: Long = System.currentTimeMillis(),
-    val appVersion: String = "1.0",
+    val appVersion: String,
     val runtimeVersion: String,
     val compatibilityEpoch: Int,
     val stable: Boolean,

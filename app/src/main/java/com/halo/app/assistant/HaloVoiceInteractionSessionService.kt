@@ -6,6 +6,6 @@ import android.service.voice.VoiceInteractionSessionService
 
 class HaloVoiceInteractionSessionService : VoiceInteractionSessionService() {
     override fun onNewSession(args: Bundle?): VoiceInteractionSession {
-        return HaloVoiceInteractionSession(this)
+        return HaloVoiceInteractionSession(this, HaloAssistantRuntimeBridge())
     }
 }

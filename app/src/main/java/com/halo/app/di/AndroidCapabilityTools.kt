@@ -41,7 +41,7 @@ class AndroidCapabilityTools(private val context: Context, private val events: E
             tool("halo_browser", "Open an HTTP or HTTPS URL. Receipt confirms dispatch only.", "url")
         if (resolves(Intent(Intent.ACTION_WEB_SEARCH)))
             tool("halo_search", "Open a web search in an installed app.", "query")
-        tool("halo_media", "Send play or pause to the active media session. Does not confirm playback.", "action", listOf("play", "pause"))
+        tool("halo_media", "Send play, pause, next, or previous to the active media session. Dispatch does not confirm playback state.", "action", listOf("play", "pause", "next", "previous"))
     }
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
         fun reject(reason: String) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason)

@@ -100,7 +100,7 @@ class DevicesViewModel(
     private val heyCyanDriverProvider: () -> RealHeyCyanDriver?,
     val buddyBotHost: BuddyBotHost? = null,
     private val autoConnectCoordinator: DeviceAutoConnectCoordinator? = null,
-    private val captures: () -> com.halo.app.capture.WearableCaptureCoordinator? = { null },
+    private val captures: () -> com.halo.app.capture.HeyCyanCaptureCoordinator? = { null },
     private val audioPairingCoordinator: com.halo.app.audio.HeyCyanAudioPairingCoordinator? = null
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(DevicesUiState())

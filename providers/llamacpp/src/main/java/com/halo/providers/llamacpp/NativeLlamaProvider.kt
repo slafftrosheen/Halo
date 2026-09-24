@@ -291,6 +291,9 @@ class NativeLlamaProvider(
             context.conversation.forEach { message ->
                 appendChatMessage(message.role.name.lowercase(), message.content)
             }
+            context.screenContext?.let { screen ->
+                appendChatMessage("user", screen.asUntrustedPromptSection())
+            }
             appendChatMessage("user", request.text!!.trim())
             append("<|im_start|>assistant\n")
         }

@@ -116,7 +116,7 @@ class HeyCyanSession(
             return
         }
         val operation = mapIntentToOperation(intent) ?: run {
-            reportResult(intent.intentId, EmbodimentExecutionStatus.REJECTED, "UNSUPPORTED_INTENT: HeyCyan semantic mapping not implemented for ${intent.kind}")
+            reportResult(intent.intentId, EmbodimentExecutionStatus.REJECTED, "UNSUPPORTED_INTENT: ${intent.kind} is not supported by this device")
             return
         }
         if (pendingIntents.putIfAbsent(intent.intentId, System.currentTimeMillis()) != null) return

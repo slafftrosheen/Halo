@@ -89,7 +89,10 @@ class OllamaProvider(
     override suspend fun generate(request: AiRequest, context: AiContext): AiResponse {
         request.validateForTextGeneration()
         val model = request.modelId?.trim()?.ifBlank { null } ?: modelId
-        val messages = context.conversation.toMutableList().apply { add(AIMessage(Role.USER, request.text!!)) }
+        val messages = context.conversation.toMutableList().apply {
+            context.screenContext?.let { add(AIMessage(Role.USER, it.asUntrustedPromptSection())) }
+            add(AIMessage(Role.USER, request.text!!))
+        }
         val legacy = completeWithModel(AIRequestLegacy(AIConversation("runtime", messages)), model)
         return AiResponse(text = legacy.text, providerId = id, modelId = model)
     }
@@ -98,7 +101,10 @@ class OllamaProvider(
         request.validateForTextGeneration()
         emit(AiStreamEvent.Started)
         val model = request.modelId?.trim()?.ifBlank { null } ?: modelId
-        val messages = context.conversation.toMutableList().apply { add(AIMessage(Role.USER, request.text!!)) }
+        val messages = context.conversation.toMutableList().apply {
+            context.screenContext?.let { add(AIMessage(Role.USER, it.asUntrustedPromptSection())) }
+            add(AIMessage(Role.USER, request.text!!))
+        }
             .map(::toOllamaMessage)
         val endpoint = normalizedEndpointOrNull()
             ?: throw AiProviderException(AiErrorType.LOCAL_MODEL_UNAVAILABLE, "Ollama endpoint is not configured")
