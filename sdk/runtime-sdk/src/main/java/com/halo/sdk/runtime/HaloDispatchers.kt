@@ -12,5 +12,5 @@ data class HaloDispatchers(
 fun productionHaloDispatchers(): HaloDispatchers = HaloDispatchers(
     io = Dispatchers.IO,
     default = Dispatchers.Default,
-    main = Dispatchers.Main.immediate
+    main = runCatching { Dispatchers.Main.immediate }.getOrElse { Dispatchers.Default }
 )

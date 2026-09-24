@@ -103,7 +103,7 @@ class WhisperModelInstallAndProviderTest {
         assertTrue(SherpaSpeechModelCatalog.isInstalled(dir, spec))
 
         // Refresh provider
-        provider.refresh()
+        provider.refresh().join()
 
         // Provider availability/health update without recreating the wrapper.
         assertTrue(provider.availability.value)

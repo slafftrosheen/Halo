@@ -109,7 +109,8 @@ class HomeViewModelTest {
         val snapshot = createSnapshot(SpeechSessionState.Idle)
         val uiState = mapper.map(snapshot, CognitiveSessionState.Failed("Connection error"))
 
-        assertEquals(HaloRuntimeState.Recovering, uiState.runtimeState)
+        assertEquals(HaloRuntimeState.Idle, uiState.runtimeState)
+        assertEquals("Error: Connection error", uiState.contextualText)
         assertFalse(uiState.speechActive)
     }
 

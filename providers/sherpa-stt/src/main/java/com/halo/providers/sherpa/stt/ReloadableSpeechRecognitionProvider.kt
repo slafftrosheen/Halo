@@ -47,9 +47,7 @@ class ReloadableSpeechRecognitionProvider(
         refresh()
     }
 
-    fun refresh() {
-        cleanupScope.launch { refreshNow() }
-    }
+    fun refresh(): Job = cleanupScope.launch { refreshNow() }
 
     private suspend fun refreshNow() = lifecycle.withLock {
         val newDelegate: BufferedSpeechRecognitionProvider = if (SherpaOfflineSpeechRecognitionProvider.isInstalled(modelDirectory)) {
