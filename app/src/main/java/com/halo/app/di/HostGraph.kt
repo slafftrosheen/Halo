@@ -8,6 +8,7 @@ import com.halo.providers.sherpa.stt.SherpaSpeechModelCatalog
 import com.halo.sdk.host.WearableHost
 import com.halo.sdk.runtime.NativeMemoryPressure
 import java.io.File
+import kotlinx.coroutines.launch
 
 /**
  * Owns Android-host audio and speech input for the phone-first runtime.
@@ -90,22 +91,12 @@ class HostGraph(
                     ManualDependencyGraph.haloSpeechOutputCoordinator.stop("Barge-in")
                 },
                 prepareInference = {
-                    val inference = providerGraph.providers.inference as? NativeLlamaProvider
-                    val selectedProvider = storage.getString("active_ai_provider")
-                    val budget = providerGraph.nativeResourceCoordinator.budget.value
-                    val nativeSelected = inference != null &&
-                        (selectedProvider.isNullOrBlank() || selectedProvider == inference.id)
-                    if (
-                        nativeSelected &&
-                        budget.allowConcurrentHeavyweights &&
-                        budget.pressure == NativeMemoryPressure.NORMAL
-                    ) {
-                        inference?.loadModelIfNeeded()
-                    }
-                }
+                    providerGraph.preloadLocalModel()
+                },
             ).start()
             captureCoordinator = com.halo.app.capture.WearableCaptureCoordinator(context, driver,
-                ManualDependencyGraph.captures, infra.eventBus, infra.scope).also { it.start() }
+                ManualDependencyGraph.captures, infra.eventBus, infra.scope,
+                preloadLocalModel = { infra.scope.launch { providerGraph.preloadLocalModel() } }).also { it.start() }
         }
     }
 

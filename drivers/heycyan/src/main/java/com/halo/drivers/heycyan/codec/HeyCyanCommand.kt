@@ -47,10 +47,16 @@ object HeyCyanCommand {
         payload = HeyCyanWireFrameCodec.PAYLOAD_RECORD_STOP
     )
 
-    fun aiThumbnail(): ByteArray = HeyCyanWireFrameCodec.encode(
-        action = HeyCyanWireFrameCodec.ACTION_GLASSES_CONTROL,
-        payload = HeyCyanWireFrameCodec.PAYLOAD_AI_THUMBNAIL
-    )
+    fun aiThumbnail(quality: Int = 3): ByteArray {
+        require(quality in 0..5) {
+            "Invalid thumbnail quality: $quality. Documented vendor range is 0..5."
+        }
+        val q = quality.toByte()
+        return HeyCyanWireFrameCodec.encode(
+            action = HeyCyanWireFrameCodec.ACTION_GLASSES_CONTROL,
+            payload = byteArrayOf(0x02, 0x01, 0x06, q, q)
+        )
+    }
 
     /**
      * Constructs a WIFI_TRANSFER command wire frame.
@@ -59,6 +65,11 @@ object HeyCyanCommand {
     fun wifiTransferMode(): ByteArray = HeyCyanWireFrameCodec.encode(
         action = HeyCyanWireFrameCodec.ACTION_GLASSES_CONTROL,
         payload = HeyCyanWireFrameCodec.PAYLOAD_WIFI_TRANSFER
+    )
+
+    fun exitWifiTransferMode(): ByteArray = HeyCyanWireFrameCodec.encode(
+        action = HeyCyanWireFrameCodec.ACTION_GLASSES_CONTROL,
+        payload = HeyCyanWireFrameCodec.PAYLOAD_EXIT_WIFI_TRANSFER
     )
 
     /**

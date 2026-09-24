@@ -15,13 +15,27 @@ sealed interface HeyCyanTransferState {
 
     data object EnteringTransferMode : HeyCyanTransferState
 
+    data object WaitingForTransferSignal : HeyCyanTransferState
+
     data object WaitingForCredentials : HeyCyanTransferState
+
+    data object WaitingForDeviceIp : HeyCyanTransferState
 
     data class Paused(val reason: String) : HeyCyanTransferState
 
     data object ConnectingWifi : HeyCyanTransferState
 
+    data object DiscoveringP2p : HeyCyanTransferState
+
+    data object ConnectingP2p : HeyCyanTransferState
+
+    data object WaitingForAndroidNetwork : HeyCyanTransferState
+
+    data object NetworkAvailable : HeyCyanTransferState
+
     data object DiscoveringDevice : HeyCyanTransferState
+
+    data object ProbingDeviceHttp : HeyCyanTransferState
 
     data object FetchingManifest : HeyCyanTransferState
 
@@ -33,6 +47,8 @@ sealed interface HeyCyanTransferState {
         val media: HeyCyanMedia,
         val progress: MediaDownloadProgress,
     ) : HeyCyanTransferState
+
+    data object Restoring : HeyCyanTransferState
 
     data class Completed(
         val downloaded: Int,

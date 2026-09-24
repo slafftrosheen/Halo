@@ -75,12 +75,17 @@ class DefaultHeyCyanCommandExecutor(
                     payload = byteArrayOf(0x02, 0x01, 0x0C)
                 }
                 is HeyCyanCommand.AiThumbnail -> {
+                    val q = command.quality.toByte()
                     action = com.halo.drivers.heycyan.protocol.HeyCyanCommandCatalog.ACTION_GLASSES_CONTROL
-                    payload = byteArrayOf(0x02, 0x01, 0x06, 0x02, 0x02, 0x02)
+                    payload = byteArrayOf(0x02, 0x01, 0x06, q, q)
                 }
                 is HeyCyanCommand.EnterWifiTransferMode -> {
                     action = com.halo.drivers.heycyan.protocol.HeyCyanCommandCatalog.ACTION_GLASSES_CONTROL
                     payload = byteArrayOf(0x02, 0x01, 0x04, 0x01)
+                }
+                is HeyCyanCommand.ExitWifiTransferMode -> {
+                    action = com.halo.drivers.heycyan.protocol.HeyCyanCommandCatalog.ACTION_GLASSES_CONTROL
+                    payload = byteArrayOf(0x02, 0x01, 0x09)
                 }
                 is HeyCyanCommand.PrepareVoiceRouting -> {
                     action = com.halo.drivers.heycyan.protocol.HeyCyanCommandCatalog.ACTION_GLASSES_CONTROL

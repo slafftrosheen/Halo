@@ -53,24 +53,31 @@ class SpeechPerceptionBridge(
                 println("SPEECH_RESULT_ACCEPTED capture=${event.input?.captureId} confidence=${accepted.quality.confidence}")
 
                 val observationId = UUID.randomUUID().toString()
+                val interactionId = event.input?.captureId ?: event.id
+                val sourceDeviceId = (event.input?.route as? SpeechInputRoute.Wearable)?.deviceId
 
                 val observation = Observation(
                     id = ObservationId(observationId),
                     timestamp = event.timestamp,
                     modality = Modality.AUDIO,
                     source = Source.MICROPHONE,
-                    sourceDeviceId = (event.input?.route as? SpeechInputRoute.Wearable)?.deviceId,
-                    origin = ObservationOrigin(event.input?.source ?: com.halo.sdk.host.ObservationSource.AndroidPhoneMic),
+                    sourceDeviceId = sourceDeviceId,
+                    origin = ObservationOrigin(
+                        event.input?.source ?: com.halo.sdk.host.ObservationSource.AndroidPhoneMic,
+                        sourceDeviceId,
+                    ),
                     confidence = accepted.quality.confidence
                         ?: UNKNOWN_RECOGNITION_OBSERVATION_CONFIDENCE,
                     payload = SpeechRecognizedPayload(accepted.transcript, event.locale),
                     metadata = buildMap {
                         put("engine", "SpeechPerceptionBridge")
-                        put("captureId", event.input?.captureId ?: event.id)
+                        put("captureId", interactionId)
+                        put("interactionId", interactionId)
                         put("inputRoute", event.input?.route ?: SpeechInputRoute.Phone)
                         event.confidence?.let { put("recognitionConfidence", it) }
                         put("recognitionQuality", event.quality)
-                    }
+                    },
+                    interactionId = interactionId,
                 )
 
                 // Publish to EventBus for reactive observation

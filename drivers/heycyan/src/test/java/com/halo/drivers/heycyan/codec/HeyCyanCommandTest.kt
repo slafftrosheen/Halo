@@ -66,4 +66,34 @@ class HeyCyanCommandTest {
     fun `ai command throws for invalid thumbnail size out of range`() {
         HeyCyanCommand.ai(7)
     }
+
+    @Test
+    fun `aiThumbnail command default quality 3 encodes 5-byte payload`() {
+        val bytes = HeyCyanCommand.aiThumbnail()
+        val result = HeyCyanWireFrameCodec.decode(bytes)
+
+        assertTrue(result is WireFrameDecodeResult.Success)
+        val success = result as WireFrameDecodeResult.Success
+        assertEquals(HeyCyanWireFrameCodec.ACTION_GLASSES_CONTROL, success.action)
+        assertEquals(5, success.payloadLength)
+        assertArrayEquals(byteArrayOf(0x02, 0x01, 0x06, 0x03, 0x03), success.payload)
+        assertTrue(success.isValidCrc)
+    }
+
+    @Test
+    fun `aiThumbnail command with custom quality encodes correct bytes`() {
+        val bytes = HeyCyanCommand.aiThumbnail(quality = 5)
+        val result = HeyCyanWireFrameCodec.decode(bytes)
+
+        assertTrue(result is WireFrameDecodeResult.Success)
+        val success = result as WireFrameDecodeResult.Success
+        assertEquals(5, success.payloadLength)
+        assertArrayEquals(byteArrayOf(0x02, 0x01, 0x06, 0x05, 0x05), success.payload)
+        assertTrue(success.isValidCrc)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `aiThumbnail command throws for quality out of range`() {
+        HeyCyanCommand.aiThumbnail(quality = 6)
+    }
 }

@@ -30,7 +30,8 @@ data class AiRequest(
     val audio: ByteArray? = null,
     val video: ByteArray? = null,
     val mimeTypes: List<String> = emptyList(),
-    val modelId: String? = null
+    val modelId: String? = null,
+    val priority: InferencePriority = InferencePriority.NORMAL,
 )
 
 fun AiRequest.validateForTextGeneration() {
@@ -160,6 +161,7 @@ data class ProviderStatus(
     val message: String? = null,
     val readiness: ProviderReadiness = ProviderReadiness.Unconfigured,
     val rejectionReason: TargetRejectionReason? = null,
+    val cooldown: ProviderCooldown? = null,
 ) {
     enum class State {
         READY,

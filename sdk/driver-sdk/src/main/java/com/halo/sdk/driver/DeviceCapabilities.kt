@@ -34,17 +34,17 @@ data class DeviceCapabilities(
 
         /** HeyCyan smart glasses capabilities. */
         val HEYCYAN_GLASSES = DeviceCapabilities(
-            microphone = false,       // No live BLE mic (UNSUPPORTED_BY_DEVICE)
-            speaker = false,          // No speaker on glasses
+            microphone = true,        // Live microphone through the paired Bluetooth audio endpoint
+            speaker = true,           // Output through the paired Bluetooth audio endpoint
             buttons = true,           // Single/double/long press
             display = false,          // No display
             camera = true,            // Photo capture
             videoRecording = true,    // Video recording (start/stop)
             audioRecording = true,    // On-device audio recording
             mediaLibrary = true,      // Media inventory + sync
-            wirelessTransfer = true,  // WiFi hotspot transfer
-            aiPhoto = false,          // BLOCKED_BY_UNKNOWN_PROTOCOL
-            liveMicrophone = false    // UNSUPPORTED_BY_DEVICE
+            wirelessTransfer = true,  // Device-scoped Wi-Fi media transfer
+            aiPhoto = true,           // Firmware-generated JPEG thumbnail over BLE
+            liveMicrophone = true     // Shared speech-input pipeline through Bluetooth audio
         )
     }
 }

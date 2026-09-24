@@ -30,7 +30,9 @@ enum class TargetRejectionReason {
     MEMORY_PREFLIGHT_FAILED,
     NETWORK_UNAVAILABLE,
     CONFIGURATION_MISSING,
-    POLICY_EXCLUDED
+    POLICY_EXCLUDED,
+    PROVIDER_COOLDOWN,
+    RESOURCE_BUSY,
 }
 
 data class RejectedAiTarget(

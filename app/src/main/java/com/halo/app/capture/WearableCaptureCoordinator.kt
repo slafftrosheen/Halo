@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.halo.drivers.heycyan.RealHeyCyanDriver
 import com.halo.drivers.heycyan.protocol.HeyCyanEvent
+import com.halo.drivers.heycyan.thumbnail.HeyCyanCapturedThumbnail
 import com.halo.drivers.heycyan.wifi.*
 import com.halo.drivers.heycyan.media.repository.*
 import com.halo.drivers.heycyan.media.sync.*
@@ -25,7 +26,8 @@ data class PendingCaptureOperation(
 
 /** Existing verified transport composition. Receipt, rather than BLE write, establishes success. */
 class WearableCaptureCoordinator(private val context: Context, private val driver: RealHeyCyanDriver,
-    private val captures: LocalCaptureStore, private val events: EventBus, private val scope: CoroutineScope) {
+    private val captures: LocalCaptureStore, private val events: EventBus, private val scope: CoroutineScope,
+    private val preloadLocalModel: () -> Unit = {}) {
     private val mutex = Mutex()
     private val _state = MutableStateFlow(WearableCaptureStatus())
     val state = _state.asStateFlow()
@@ -49,17 +51,19 @@ class WearableCaptureCoordinator(private val context: Context, private val drive
                 ?.let(InetAddress::getByName)
     }
     private val pendingSync = MutableStateFlow(false)
+    private val thumbnailQuality: Int
+        get() = context.getSharedPreferences("heycyan_settings", Context.MODE_PRIVATE)
+            .getInt("ai_thumbnail_quality", 3)
+            .coerceIn(0, 5)
 
     fun start() {
         pendingSync.value = pendingCaptureOperation != null
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             driver.heyCyanEvents.collect { event ->
                 if (event == HeyCyanEvent.AiImageRecognition) {
-                    // Do not block BC59 event delivery while HTTP/media work runs.
-                    scope.launch {
-                        capture(requestPhoto = false)
-                        pendingSync.value = true
-                        sync()
+                    // Photo-ready is the gate for the low-latency BLE path.
+                    if (!driver.thumbnailCaptureCoordinator.isAwaitingPhotoReady) scope.launch {
+                        receiveReadyAiThumbnail()
                     }
                 }
             }
@@ -72,6 +76,60 @@ class WearableCaptureCoordinator(private val context: Context, private val drive
                 }
             }
         }
+    }
+
+    suspend fun captureAiThumbnail(quality: Int = thumbnailQuality): Result<HeyCyanCapturedThumbnail> {
+        preloadLocalModel()
+        val device = driver.activeDeviceId
+            ?: return Result.failure(IllegalStateException("No connected HeyCyan device"))
+        val operationId = UUID.randomUUID().toString()
+        events.publish(ActionReceipt(operationId = operationId, category = "Vision", title = "AI thumbnail", stage = "Requested", detail = "Capturing a fresh glasses thumbnail", sourceDeviceId = device))
+        val result = driver.thumbnailCaptureCoordinator.capture(quality)
+        result.onSuccess { thumbnail -> publishThumbnail(operationId, device, thumbnail) }
+            .onFailure { error ->
+                events.publish(ActionReceipt(operationId = operationId, category = "Vision", title = "AI thumbnail", stage = "Failed", detail = error.message ?: "Thumbnail capture failed", sourceDeviceId = device))
+            }
+        return result
+    }
+
+    private suspend fun receiveReadyAiThumbnail() {
+        preloadLocalModel()
+        val device = driver.activeDeviceId ?: return
+        val operationId = UUID.randomUUID().toString()
+        events.publish(ActionReceipt(operationId = operationId, category = "Vision", title = "AI thumbnail", stage = "DeviceReady", detail = "Glasses reported a fresh image", sourceDeviceId = device))
+        driver.thumbnailCaptureCoordinator.receivePhotoReadyThumbnail(quality = thumbnailQuality)
+            .onSuccess { thumbnail -> publishThumbnail(operationId, device, thumbnail) }
+            .onFailure { error ->
+                events.publish(ActionReceipt(operationId = operationId, category = "Vision", title = "AI thumbnail", stage = "Failed", detail = error.message ?: "Thumbnail transfer failed", sourceDeviceId = device))
+            }
+    }
+
+    private suspend fun publishThumbnail(
+        operationId: String,
+        deviceId: String,
+        thumbnail: HeyCyanCapturedThumbnail,
+    ) {
+        events.publish(ActionReceipt(operationId = operationId, category = "Vision", title = "AI thumbnail", stage = "Validated", detail = "${thumbnail.width}×${thumbnail.height} · ${thumbnail.bytes.size} bytes", sourceDeviceId = deviceId))
+        events.publish(
+            ObservationUpdated(
+                observation = Observation(
+                    modality = Modality.IMAGE,
+                    source = Source.CAMERA,
+                    payload = ImageObservationPayload(thumbnail.bytes),
+                    origin = ObservationOrigin(com.halo.sdk.host.ObservationSource.HeyCyanGlasses, deviceId),
+                    sourceDeviceId = deviceId,
+                    freshness = Freshness.FRESH,
+                    timestamp = thumbnail.completedAtMs,
+                    metadata = mapOf(
+                        "captureKind" to "heycyan_ai_thumbnail",
+                        "quality" to thumbnail.quality,
+                        "commandAtMs" to thumbnail.commandAtMs,
+                        "photoReadyAtMs" to thumbnail.photoReadyAtMs,
+                    ),
+                )
+            )
+        )
+        events.publish(ActionReceipt(operationId = operationId, category = "Vision", title = "AI thumbnail", stage = "Completed", detail = "Fresh image is ready for inference", sourceDeviceId = deviceId))
     }
     suspend fun capture(requestPhoto: Boolean = true) {
         if (!mutex.tryLock()) return
@@ -105,6 +163,7 @@ class WearableCaptureCoordinator(private val context: Context, private val drive
             ?.takeIf { it.deviceId == device }
             ?.operationId
             ?: UUID.randomUUID().toString()
+        var transfer: HeyCyanTransferCoordinator? = null
         try {
             requireNotNull(device) { "No connected HeyCyan device" }
             val credentialsProvider = DeviceStateWifiCredentialProvider(driver.deviceState)
@@ -112,15 +171,13 @@ class WearableCaptureCoordinator(private val context: Context, private val drive
             events.publish(ActionReceipt(operationId = id, category = "Vision", title = "Media synchronization", stage = "Pending", detail = "Awaiting transfer credentials", sourceDeviceId = device))
 
             var api: HeyCyanMediaApi? = null
-            val transfer = HeyCyanTransferCoordinator(driver.capabilityController, credentialsProvider, wifi,
+            val activeTransfer = HeyCyanTransferCoordinator(driver.capabilityController, credentialsProvider, wifi,
                 HeyCyanMediaApiFactory { address ->
-                    DefaultHeyCyanMediaApi(
-                        deviceIp = address,
-                        connectionFactory = connector::openHttpConnection,
-                    ).also { api = it }
-                })
-            transfer.synchronizeManifest(device).getOrElse { error ->
-                if (transfer.state.value is HeyCyanTransferState.WaitingForCredentials) {
+                    DefaultHeyCyanMediaApi(address, connectionFactory = connector::openConnection).also { api = it }
+                }, driver.resourceArbiter)
+            transfer = activeTransfer
+            activeTransfer.synchronizeManifest(device).getOrElse { error ->
+                if (activeTransfer.state.value is HeyCyanTransferState.WaitingForCredentials) {
                     pendingSync.value = true
                     _state.value = _state.value.copy(busy = false, message = "Awaiting transfer credentials")
                     return
@@ -161,7 +218,14 @@ class WearableCaptureCoordinator(private val context: Context, private val drive
             if (error is CancellationException) throw error
             _state.value = _state.value.copy(message = error.message ?: "Media transfer failed")
             events.publish(ActionReceipt(operationId = id, category = "Vision", title = "Media synchronization", stage = "Failed", detail = _state.value.message, sourceDeviceId = device))
-        } finally { withContext(NonCancellable) { wifi.disconnect() }; _state.value = _state.value.copy(busy = false); mutex.unlock() }
+        } finally {
+            withContext(NonCancellable) {
+                transfer?.closeSession()
+                wifi.disconnect()
+            }
+            _state.value = _state.value.copy(busy = false)
+            mutex.unlock()
+        }
     }
 
     private fun loadPendingCapture(): PendingCaptureOperation? {

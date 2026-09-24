@@ -60,6 +60,14 @@ class HeyCyanEventRouter(
                             0x02.toByte() -> return HeyCyanEvent.AiImageRecognition
                             0x03.toByte() -> return HeyCyanEvent.VoiceActivationStarted
                             0x04.toByte() -> return HeyCyanEvent.OtaProgress(decoded.payload.copyOfRange(1, decoded.payload.size))
+                            0x08.toByte() -> if (decoded.payload.size >= 5) {
+                                val ip = decoded.payload.copyOfRange(1, 5)
+                                    .joinToString(".") { (it.toInt() and 0xFF).toString() }
+                                return HeyCyanEvent.WifiDeviceIpReported(ip)
+                            }
+                            0x09.toByte() -> return HeyCyanEvent.WifiTransferError(
+                                decoded.payload.getOrNull(1)?.toInt()?.and(0xFF) ?: -1,
+                            )
                             // 0x05 BatteryUpdated is already decoded in responseDecoder, but if reported here we'd handle it.
                             0x0A.toByte() -> return HeyCyanEvent.VoiceActivationEnded
                             0x0C.toByte() -> return HeyCyanEvent.VoicePlaybackPause
@@ -84,13 +92,32 @@ class HeyCyanEventRouter(
         val decoded = responseDecoder.decode(payload)
         return when (decoded) {
             is HeyCyanResponse.Battery -> HeyCyanEvent.BatteryUpdated(decoded.level, decoded.charging)
+            is HeyCyanResponse.ClassBluetooth -> HeyCyanEvent.Unknown(characteristicUuid.toString(), payload.copyOf())
             is HeyCyanResponse.GlassControl.P2pIp -> HeyCyanEvent.WiFiIpReceived(decoded.ip)
-            is HeyCyanResponse.VoiceState -> {
+            is HeyCyanResponse.GlassControl.WorkType -> {
+                if (decoded.errorCode != 0) {
+                    HeyCyanEvent.WifiTransferError(decoded.errorCode)
+                } else {
+                    HeyCyanEvent.ModeChanged(decoded.glassWorkType)
+                }
+            }            is HeyCyanResponse.VoiceState -> {
                 if (decoded.payload.isNotEmpty()) {
                     when (decoded.payload[0]) {
                         0x02.toByte() -> HeyCyanEvent.AiImageRecognition
                         0x03.toByte() -> HeyCyanEvent.VoiceActivationStarted
                         0x04.toByte() -> HeyCyanEvent.OtaProgress(decoded.payload.copyOfRange(1, decoded.payload.size))
+                        0x08.toByte() -> {
+                            if (decoded.payload.size >= 5) {
+                                val ip = "${decoded.payload[1].toInt() and 0xFF}.${decoded.payload[2].toInt() and 0xFF}.${decoded.payload[3].toInt() and 0xFF}.${decoded.payload[4].toInt() and 0xFF}"
+                                HeyCyanEvent.WifiDeviceIpReported(ip)
+                            } else {
+                                HeyCyanEvent.Unknown(characteristicUuid.toString(), payload.copyOf())
+                            }
+                        }
+                        0x09.toByte() -> {
+                            val code = if (decoded.payload.size >= 2) decoded.payload[1].toInt() and 0xFF else -1
+                            HeyCyanEvent.WifiTransferError(code)
+                        }
                         0x0A.toByte() -> HeyCyanEvent.VoiceActivationEnded
                         0x0C.toByte() -> HeyCyanEvent.VoicePlaybackPause
                         0x0D.toByte() -> HeyCyanEvent.UnbindApp

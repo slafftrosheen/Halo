@@ -78,6 +78,22 @@ class HeyCyanDeviceStateReducer {
                     lastEventAtMillis = timestamp,
                 )
 
+            is HeyCyanEvent.WifiDeviceIpReported ->
+                state.copy(
+                    wifiIp = event.ip.takeIf(::isValidDeviceIpv4),
+                    lastEventAtMillis = timestamp,
+                )
+
+            is HeyCyanEvent.WifiTransferError ->
+                state.copy(
+                    lastWifiTransferError = WifiTransferErrorState(
+                        code = event.code,
+                        recoverability = event.recoverability,
+                        timestampMs = timestamp,
+                    ),
+                    lastEventAtMillis = timestamp,
+                )
+
             is HeyCyanEvent.MemoryInsufficient ->
                 state.copy(
                     healthState = DeviceHealthState.WARNING_MEMORY_INSUFFICIENT,
@@ -138,4 +154,12 @@ class HeyCyanDeviceStateReducer {
         }
     }
 
+    private fun isValidDeviceIpv4(value: String): Boolean {
+        val octets = value.split('.')
+        if (octets.size != 4) return false
+        return octets.all { part ->
+            part.isNotEmpty() && part.length <= 3 && part.all(Char::isDigit) &&
+                part.toIntOrNull() in 0..255
+        } && value != "0.0.0.0" && value != "255.255.255.255"
+    }
 }

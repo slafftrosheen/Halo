@@ -142,4 +142,63 @@ class HeyCyanTransferCoordinatorTest {
         assertFalse(str.contains("SuperSecretPassword123"))
         assertTrue(str.contains("<redacted>"))
     }
+
+    @Test
+    fun arbiterConflictFailsTransfer() = runTest {
+        val arbiter = com.halo.drivers.heycyan.arbiter.HeyCyanResourceArbiter()
+        // Hold conflicting resource: BLE_BULK_TRANSFER
+        val lease = arbiter.tryAcquire("ble", setOf(com.halo.drivers.heycyan.arbiter.HeyCyanResource.BLE_BULK_TRANSFER))
+        org.junit.Assert.assertNotNull(lease)
+
+        val coordinatorWithArbiter = HeyCyanTransferCoordinator(
+            commandController = controller,
+            credentialsProvider = credentialProvider,
+            wifiConnection = wifiConnection,
+            mediaApiFactory = HeyCyanMediaApiFactory { fakeApi },
+            resourceArbiter = arbiter,
+        )
+
+        val result = coordinatorWithArbiter.synchronizeManifest("device")
+        assertTrue(result.isFailure)
+        assertTrue(coordinatorWithArbiter.state.value is HeyCyanTransferState.Failed)
+        lease!!.release()
+    }
+
+    @Test
+    fun closeSessionSendsExitTransferModeCommand() = runTest {
+        val closeResult = coordinator.closeSession()
+        assertTrue(closeResult.isSuccess)
+        assertEquals(HeyCyanCommand.ExitWifiTransferMode, fakeExecutor.executedCommands.lastOrNull())
+        assertEquals(HeyCyanTransferState.Idle, coordinator.state.value)
+    }
+
+    @Test
+    fun downloadNormalizesOpusFile() = runTest {
+        stateStore.apply(
+            com.halo.drivers.heycyan.protocol.HeyCyanEvent.WiFiHotspotReady("TestSSID", "TestPass")
+        )
+        coordinator.synchronizeManifest("device")
+
+        // Create a temporary file containing 200 raw bytes (5x 40-byte raw Opus frames)
+        val tempFile = java.io.File.createTempFile("test_audio", ".opus")
+        try {
+            tempFile.writeBytes(ByteArray(200) { 0x42 })
+            val audioMedia = HeyCyanMedia.Audio(
+                id = "audio1.opus",
+                filename = "audio1.opus",
+                sizeBytes = 200L,
+                createdAt = 1000L,
+                durationMs = 5000L,
+            )
+
+            val downloadResult = coordinator.download(audioMedia, tempFile.absolutePath)
+            assertTrue(downloadResult.isSuccess)
+
+            // Verify file has been normalized to start with OggS
+            val updatedBytes = tempFile.readBytes()
+            assertTrue(com.halo.drivers.heycyan.media.HeyCyanOpusMediaNormalizer.isAlreadyOgg(updatedBytes))
+        } finally {
+            tempFile.delete()
+        }
+    }
 }

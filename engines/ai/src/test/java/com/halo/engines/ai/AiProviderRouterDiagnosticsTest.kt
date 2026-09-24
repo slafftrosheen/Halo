@@ -135,7 +135,10 @@ class AiProviderRouterDiagnosticsTest {
         assertEquals("The local AI model could not be loaded.", presenter.message(e2))
 
         val e3 = AiProviderException(AiErrorType.AUTHENTICATION_FAILED, "bad key")
-        assertEquals("Authentication failed. Check your API credentials.", presenter.message(e3))
+        assertEquals(
+            "OpenRouter rejected the saved API key. Open Intelligence to replace it.",
+            presenter.message(e3, providerLabel = "OpenRouter"),
+        )
 
         val e4 = AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY, "no vision")
         assertEquals("This AI provider cannot perform that type of request.", presenter.message(e4))

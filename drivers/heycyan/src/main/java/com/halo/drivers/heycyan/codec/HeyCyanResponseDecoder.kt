@@ -154,7 +154,30 @@ class HeyCyanResponseDecoder {
                 } else null
             }
             HeyCyanCommandCatalog.ACTION_DEVICE_DATA_REPORTING -> {
-                HeyCyanResponse.VoiceState(frame.copyOfRange(6, frame.size))
+                if (frame.size >= 7) {
+                    val subType = frame[6].toInt() and 0xFF
+                    when (subType) {
+                        0x08 -> {
+                            if (frame.size >= 11) {
+                                val ip = "${frame[7].toInt() and 0xFF}.${frame[8].toInt() and 0xFF}.${frame[9].toInt() and 0xFF}.${frame[10].toInt() and 0xFF}"
+                                HeyCyanResponse.GlassControl.P2pIp(ip)
+                            } else {
+                                HeyCyanResponse.VoiceState(frame.copyOfRange(6, frame.size))
+                            }
+                        }
+                        0x09 -> {
+                            val errorCode = if (frame.size >= 8) frame[7].toInt() and 0xFF else -1
+                            HeyCyanResponse.GlassControl.WorkType(
+                                glassWorkType = 0x07,
+                                errorCode = errorCode,
+                                workTypeIng = 0
+                            )
+                        }
+                        else -> HeyCyanResponse.VoiceState(frame.copyOfRange(6, frame.size))
+                    }
+                } else {
+                    HeyCyanResponse.VoiceState(frame.copyOfRange(6, frame.size))
+                }
             }
             else -> {
                 HeyCyanResponse.Unknown(action, frame.copyOfRange(6, frame.size))

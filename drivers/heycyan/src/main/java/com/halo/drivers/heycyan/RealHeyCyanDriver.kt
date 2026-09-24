@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -55,6 +56,15 @@ class RealHeyCyanDriver(
     private val tracer = captureRecorder?.let { CompositePacketTracer(LoggingPacketTracer(ConsoleLogger()), it) } ?: NoOpPacketTracer
     val scanner by lazy { HeyCyanBleScanner(context) }
     private val gattClient by lazy { HeyCyanGattClient(context, tracer) }
+    val resourceArbiter = com.halo.drivers.heycyan.arbiter.HeyCyanResourceArbiter()
+    val rawNotificationFrames: Flow<ByteArray>
+        get() = gattClient.incomingBytes.map { (_, payload) -> payload.copyOf() }
+    private val commandTransport by lazy {
+        HeyCyanGattCommandTransport(
+            gatt = gattClient,
+            commandCharacteristic = HeyCyanProtocolConstants.WRITE_CHARACTERISTIC,
+        )
+    }
     private val packetAnalyzer = if (diagnostics == HeyCyanDiagnosticsMode.FORENSIC) HeyCyanConsolePacketAnalyzer(ConsoleLogger()) else null
     private val eventRouter = HeyCyanEventRouter(HeyCyanResponseDecoder(), audioProbe = if (diagnostics == HeyCyanDiagnosticsMode.FORENSIC) ({ packet -> com.halo.drivers.heycyan.debug.HeyCyanAudioStreamProbe.onPacket(packet) }) else null)
     private val stateStore = com.halo.drivers.heycyan.protocol.HeyCyanDeviceStateStore()
@@ -68,7 +78,20 @@ class RealHeyCyanDriver(
     private var readJob: kotlinx.coroutines.Job? = null
     private val connectionMutex = Mutex()
     val capabilityController: HeyCyanCapabilityController by lazy {
-        HeyCyanCapabilityController(executor = DefaultHeyCyanCommandExecutor(transport = HeyCyanGattCommandTransport(gatt = gattClient, commandCharacteristic = HeyCyanProtocolConstants.WRITE_CHARACTERISTIC)), stateStore = stateStore)
+        HeyCyanCapabilityController(
+            executor = DefaultHeyCyanCommandExecutor(transport = commandTransport),
+            stateStore = stateStore,
+            resourceArbiter = resourceArbiter,
+            aiThumbnailCapture = { thumbnailCaptureCoordinator.capture().map { Unit } },
+        )
+    }
+    val thumbnailCaptureCoordinator by lazy {
+        com.halo.drivers.heycyan.thumbnail.HeyCyanThumbnailCaptureCoordinator(
+            commandTransport = commandTransport,
+            incomingEvents = heyCyanEvents,
+            incomingRawFrames = rawNotificationFrames,
+            resourceArbiter = resourceArbiter,
+        )
     }
     val capabilityProvider: CapabilityProvider by lazy { HeyCyanCapabilityProvider(capabilityController) }
     @Volatile private var connectedDeviceId: String? = null
@@ -134,7 +157,7 @@ class RealHeyCyanDriver(
     override suspend fun disconnect(): Unit = connectionMutex.withLock {
         Log.i("RealHeyCyanDriver", "Disconnecting...")
         readJob?.cancel(); readJob = null
-        try { gattClient.disconnect(); gattClient.awaitDisconnected() } catch (error: CancellationException) { throw error } catch (error: Throwable) { android.util.Log.w("RealHeyCyanDriver", "GATT disconnect failed", error) } finally { connectedDeviceId = null }
+        try { gattClient.disconnect(); gattClient.awaitDisconnected() } catch (error: CancellationException) { throw error } catch (error: Throwable) { android.util.Log.w("RealHeyCyanDriver", "GATT disconnect failed", error) } finally { connectedDeviceId = null; capabilityController.releaseLongRunningResources() }
         stateStore.updateConnection(com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.DISCONNECTED)
         runCatching { captureRecorder?.stop() }
         Unit

@@ -167,6 +167,16 @@ class DefaultAiProviderRouter(
                 try {
                     val status = provider.getStatus()
                     readinessReason = status.rejectionReason
+                    status.cooldown?.takeIf { it.isActive() }?.let { cooldown ->
+                        throw AiProviderException(
+                            type = cooldown.reason,
+                            message = status.message ?: "Provider is temporarily cooling down",
+                            details = AiFailureDetails(
+                                retryAfterMs = cooldown.remainingMs(),
+                                recoverability = Recoverability.RETRY_AFTER,
+                            ),
+                        )
+                    }
                     val ready = status.state == ProviderStatus.State.READY ||
                         status.readiness is ProviderReadiness.ConfiguredCold || status.readiness is ProviderReadiness.Ready
                     if (!ready) {

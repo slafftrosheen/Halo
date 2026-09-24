@@ -34,6 +34,7 @@ import com.halo.sdk.provider.AiRequest
 import com.halo.sdk.provider.AiResponse
 import com.halo.sdk.provider.AiStreamEvent
 import com.halo.sdk.provider.CognitiveSessionState
+import com.halo.sdk.provider.InferencePriority
 import com.halo.sdk.provider.Role
 import com.halo.sdk.provider.validateAgainst
 import com.halo.sdk.runtime.AssistantResponsePublished
@@ -45,6 +46,8 @@ import com.halo.sdk.runtime.CognitiveTokenReceived
 import com.halo.sdk.runtime.ContextAssembled
 import com.halo.sdk.runtime.ConversationTurnCompleted
 import com.halo.sdk.runtime.EventBus
+import com.halo.sdk.runtime.InteractionTurnChanged
+import com.halo.sdk.runtime.InteractionTurnState
 import com.halo.sdk.runtime.ResponseDelivery
 import com.halo.sdk.runtime.RuntimeFactResolved
 import com.halo.sdk.runtime.SpeechInputRoute
@@ -97,6 +100,7 @@ class CognitiveSession(
     private val _state = MutableStateFlow<CognitiveSessionState>(CognitiveSessionState.Idle)
     val state: StateFlow<CognitiveSessionState> = _state.asStateFlow()
     private var activeJob: Job? = null
+    @Volatile private var activeInteractionId: String? = null
 
     private val processedInterpretationIds = Collections.synchronizedSet(mutableSetOf<String>())
     private val observerScope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
@@ -137,7 +141,7 @@ class CognitiveSession(
                                 )
                             )
                             _state.value = CognitiveSessionState.Completed(AiResponse(text = fact.text, providerId = "local", modelId = "fact-resolver", finishReason = "stop"))
-                            eventBus.publish(CognitiveCompleted(requestId = requestId, response = fact.text))
+                            eventBus.publish(CognitiveCompleted(requestId = requestId, response = fact.text, interactionId = interactionIdStr))
                             eventBus.publish(
                                 AssistantResponsePublished(
                                     text = fact.text,
@@ -167,6 +171,7 @@ class CognitiveSession(
                                         target = outputTarget,
                                         fallback = fallbackPolicy,
                                         sourceCaptureId = interpretation.origin?.captureId,
+                                        interactionId = interactionIdStr,
                                         timestamp = System.currentTimeMillis()
                                     )
                                 )
@@ -197,7 +202,7 @@ class CognitiveSession(
                         "intent=${intent::class.simpleName} delivery=$responseDelivery -> SUBMITTING TO LLM"
                 )
                 submit(
-                    request = AiRequest(text = text),
+                    request = AiRequest(text = text, priority = InferencePriority.INTERACTIVE),
                     responseDelivery = responseDelivery,
                     origin = interpretation.origin,
                     metadata = interpretation.metadata
@@ -228,14 +233,21 @@ class CognitiveSession(
             SpeechOutputFallback.ALLOW_PHONE
         }
         val effectivePolicy = policy ?: defaultPolicyProvider()
+        val newInteractionId = metadata["interactionId"] ?: origin?.captureId ?: UUID.randomUUID().toString()
+        val interruptedInteractionId = activeInteractionId
         activeJob?.cancel()
+        activeInteractionId = newInteractionId
         activeJob = scope.launch {
-            val interactionId = InteractionId(metadata["interactionId"] ?: UUID.randomUUID().toString())
+            val interactionId = InteractionId(newInteractionId)
             val requestId = UUID.randomUUID().toString()
             var runId: AgentRunId? = null
             var resolvedProviderId: String? = null
             var resolvedModelId: String? = null
             try {
+                interruptedInteractionId?.takeIf { it != interactionId.value }?.let {
+                    eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Interrupted(it, interactionId.value)))
+                }
+                eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Preparing(interactionId.value)))
                 _state.value = CognitiveSessionState.PreparingContext
                 eventBus.publish(CognitiveRequestStarted(requestId = requestId, interactionId = interactionId.value))
 
@@ -268,7 +280,8 @@ class CognitiveSession(
                     CognitiveReasoningStarted(
                         requestId = requestId,
                         providerId = target.providerId,
-                        modelId = target.modelId
+                        modelId = target.modelId,
+                        interactionId = interactionId.value,
                     )
                 )
 
@@ -279,7 +292,8 @@ class CognitiveSession(
                         expectedModelId = target.modelId,
                         request = requestWithContext,
                         context = context,
-                        requestId = requestId
+                        requestId = requestId,
+                        interactionId = interactionId.value,
                     )
                 ) {
                     is AiExecutionOutcome.Response -> outcome.response
@@ -292,7 +306,7 @@ class CognitiveSession(
                                 finishReason = "handoff"
                             )
                         )
-                        eventBus.publish(CognitiveCompleted(requestId = requestId, response = ""))
+                        eventBus.publish(CognitiveCompleted(requestId = requestId, response = "", interactionId = interactionId.value))
                         return@launch
                     }
                 }
@@ -351,7 +365,7 @@ class CognitiveSession(
                     }
 
                     _state.value = CognitiveSessionState.Completed(response)
-                    eventBus.publish(CognitiveCompleted(requestId = requestId, response = response.text))
+                    eventBus.publish(CognitiveCompleted(requestId = requestId, response = response.text, interactionId = interactionId.value, metrics = response.metrics?.toRuntimeMetrics()))
                     eventBus.publish(
                         AssistantResponsePublished(
                             text = responseText,
@@ -367,18 +381,20 @@ class CognitiveSession(
                                 target = outputTarget,
                                 fallback = fallbackPolicy,
                                 sourceCaptureId = origin?.captureId,
+                                interactionId = interactionId.value,
                                 timestamp = System.currentTimeMillis()
                             )
                         )
                     }
                 } else {
                     _state.value = CognitiveSessionState.Completed(response)
-                    eventBus.publish(CognitiveCompleted(requestId = requestId, response = response.text))
+                    eventBus.publish(CognitiveCompleted(requestId = requestId, response = response.text, interactionId = interactionId.value, metrics = response.metrics?.toRuntimeMetrics()))
                 }
+                eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Completed(interactionId.value)))
             } catch (e: CancellationException) {
                 withContext(NonCancellable) {
                     runId?.let { agentRunCoordinator?.cancel(it, "Interaction cancelled") }
-                    eventBus.publish(CognitiveFailed(requestId = requestId, message = "Interaction cancelled"))
+                    eventBus.publish(CognitiveFailed(requestId = requestId, message = "Interaction cancelled", interactionId = interactionId.value))
                 }
                 if (activeJob === kotlinx.coroutines.currentCoroutineContext()[Job]) _state.value = CognitiveSessionState.Idle
                 throw e
@@ -397,8 +413,16 @@ class CognitiveSession(
                     message = message,
                     stage = "SESSION_EXECUTION",
                     type = e.javaClass.simpleName,
-                    userRecoverable = false
+                    userRecoverable = (e as? AiProviderException)?.details?.recoverability !in setOf(
+                        null,
+                        com.halo.sdk.provider.Recoverability.PERMANENT,
+                        com.halo.sdk.provider.Recoverability.UNKNOWN,
+                    ),
+                    interactionId = interactionId.value,
                 ))
+                eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Failed(interactionId.value, message)))
+            } finally {
+                if (activeInteractionId == interactionId.value) activeInteractionId = null
             }
         }
     }
@@ -424,7 +448,8 @@ class CognitiveSession(
         expectedModelId: String,
         request: AiRequest,
         context: AiContext,
-        requestId: String
+        requestId: String,
+        interactionId: String,
     ): AiExecutionOutcome {
         request.validateAgainst(capabilities)
         val response = if (capabilities.contains(AiCapability.STREAMING)) {
@@ -439,7 +464,7 @@ class CognitiveSession(
                         accumulatedText.append(event.text)
                         _state.value = CognitiveSessionState.Streaming(accumulatedText.toString())
                         eventBus.publish(
-                            CognitiveTokenReceived(requestId = requestId, token = event.text)
+                            CognitiveTokenReceived(requestId = requestId, token = event.text, interactionId = interactionId)
                         )
                     }
 
@@ -697,7 +722,8 @@ class CognitiveSession(
                     expectedModelId = target.modelId,
                     request = request.copy(modelId = target.modelId),
                     context = currentContext,
-                    requestId = roundRequestId
+                    requestId = roundRequestId,
+                    interactionId = interactionId.value,
                 )
             ) {
                 is AiExecutionOutcome.Response -> outcome.response
@@ -716,7 +742,21 @@ class CognitiveSession(
     private fun newStepId() = AgentStepId(UUID.randomUUID().toString())
 
     private fun mapErrorMessage(e: Exception): String {
-        if (e is AiProviderException) return e.message ?: "AI provider request failed"
+        if (e is AiProviderException) {
+            return when (e.type) {
+                AiErrorType.AUTHENTICATION_FAILED -> "Provider authentication needs attention. Check its credentials."
+                AiErrorType.RATE_LIMITED -> e.details.retryAfterMs?.let { retryAfter ->
+                    val seconds = ((retryAfter + 999L) / 1_000L).coerceAtLeast(1L)
+                    "Provider is rate limited. Try again in about $seconds seconds."
+                } ?: "Provider is rate limited. Retry shortly."
+                AiErrorType.SESSION_CONFLICT -> "The model is currently in use by another session."
+                AiErrorType.MODEL_NOT_SELECTED -> "Select and download a local model before using local intelligence."
+                AiErrorType.MODEL_NOT_FOUND, AiErrorType.LOCAL_MODEL_UNAVAILABLE -> "The selected local model is unavailable."
+                AiErrorType.NETWORK_UNAVAILABLE -> "The selected provider cannot be reached because the network is unavailable."
+                AiErrorType.TIMEOUT -> "The selected provider timed out."
+                else -> e.message ?: "AI provider request failed"
+            }
+        }
         val message = e.message.orEmpty()
         return when {
             message.contains("401", ignoreCase = true) -> "Invalid API key"

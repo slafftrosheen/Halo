@@ -10,8 +10,8 @@ object HeyCyanCapabilityCatalog {
     private val referenceEvidence = ProtocolEvidenceReference(
         source = "CyanBridge + HeyCyanSmartGlassesSDK",
         // NOTE: MemoMindPacketEncoder is the RFCOMM control-frame encoder (FA 00 ...),
-        // NOT the BLE GATT command encoder. BLE framing remains separately unresolved.
-        // Semantics and device mode values are sourced from both; transport framing is not.
+        // not the BLE GATT command encoder. BLE framing comes from the separately
+        // inspected vendor large-data and GATT implementations.
         locator = "MemoMindGattClient / HeyCyanSmartGlassesSDK device operations",
         kind = EvidenceKind.AUTHORITATIVE_SOURCE,
         confidence = ProtocolConfidence.HIGH,
@@ -52,15 +52,15 @@ object HeyCyanCapabilityCatalog {
             name = "Still photo capture",
             status = CapabilityStatus.IMPLEMENTED_WITH_LIMITATION,
             evidence = listOf(referenceEvidence),
-            reason = "Command mode 0x01 established; framing requires checksum verification",
+            reason = "Command and wire checksum are implemented; Halo hardware revalidation remains explicit",
         ),
 
         HeyCyanCapabilityDescriptor(
             id = "camera.ai_photo",
             name = "AI Photo",
-            status = CapabilityStatus.BLOCKED_BY_UNKNOWN_PROTOCOL,
+            status = CapabilityStatus.IMPLEMENTED_WITH_LIMITATION,
             evidence = listOf(referenceEvidence),
-            reason = "Trigger mode is known; complete AI image transfer protocol is unresolved",
+            reason = "Reference-confirmed Chat-AI capture and BLE thumbnail transfer; Halo hardware revalidation remains explicit",
         ),
 
         HeyCyanCapabilityDescriptor(
@@ -82,9 +82,9 @@ object HeyCyanCapabilityCatalog {
         HeyCyanCapabilityDescriptor(
             id = "audio.live_input",
             name = "Live microphone input",
-            status = CapabilityStatus.UNSUPPORTED_BY_DEVICE,
+            status = CapabilityStatus.IMPLEMENTED,
             evidence = listOf(referenceEvidence),
-            reason = "HeyCyan records audio locally; SDK/CyanBridge do not expose live BLE PCM",
+            reason = "Physically validated HeyCyan microphone stream",
         ),
 
         HeyCyanCapabilityDescriptor(
@@ -99,7 +99,7 @@ object HeyCyanCapabilityCatalog {
             name = "Media download via Wi-Fi Direct",
             status = CapabilityStatus.IMPLEMENTED_WITH_LIMITATION,
             evidence = listOf(referenceEvidence),
-            reason = "HTTP manifest sync documented in reference; stream handler in progress",
+            reason = "Network-scoped HTTP manifest and streaming downloads are implemented; transport availability remains device/platform dependent",
         ),
 
         HeyCyanCapabilityDescriptor(

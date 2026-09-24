@@ -12,10 +12,11 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
 import java.net.HttpURLConnection
 import java.net.URL
+import java.net.URLConnection
 import kotlin.coroutines.resume
 
 /**
- * Connects the Android device to the HeyCyan glasses WiFi hotspot.
+ * Connects Android to the credential-based HeyCyan Wi-Fi transfer network.
  *
  * Uses WifiNetworkSpecifier (API 29+) for targeted WiFi connection.
  * For API 26-28, falls back to WifiManager.addNetwork() (deprecated but functional).
@@ -25,7 +26,8 @@ import kotlin.coroutines.resume
  * - `GlassesWiFiHandler.m` uses NEHotspotConfiguration (iOS)
  * - Default password forced to "123456789" (glasses may return wrong password)
  *
- * The glasses expose a standard WiFi hotspot (not WiFi Direct P2P in most cases).
+ * This class is specifically the hotspot/specifier strategy. Wi-Fi Direct discovery
+ * is a distinct transport and must not be represented as a successful hotspot join.
  */
 class HeyCyanWifiConnector(
     private val context: Context,
@@ -184,4 +186,11 @@ class HeyCyanWifiConnector(
      * Returns the currently connected network, if any.
      */
     fun getActiveNetwork(): Network? = activeNetwork
+
+    /** Opens only this socket on the selected glasses network. */
+    fun openConnection(url: URL): URLConnection {
+        val network = activeNetwork
+            ?: throw IllegalStateException("HeyCyan transfer network is not available")
+        return network.openConnection(url)
+    }
 }

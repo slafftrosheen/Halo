@@ -19,11 +19,15 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.CancellationException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.TimeZone
 import java.util.concurrent.TimeUnit
 
 class OpenRouterProvider(
     private val storage: Storage,
-    private val client: OkHttpClient = defaultClient()
+    private val client: OkHttpClient = defaultClient(),
+    private val nowEpochMs: () -> Long = System::currentTimeMillis,
 ) : AiInferenceProvider {
 
     override val id: String = "openrouter"
@@ -35,10 +39,12 @@ class OpenRouterProvider(
 
     private val apiKey: String? get() = storage.getString("openrouter_api_key")
     private val selectedModelId: String get() = storage.getString("openrouter_model") ?: "openrouter/free"
-
+    @Volatile private var cooldown: ProviderCooldown? = null
     override suspend fun getStatus(): ProviderStatus = withContext(Dispatchers.IO) {
         val current = if (apiKey.isNullOrBlank()) {
             ProviderStatus.UNCONFIGURED
+        } else if (activeCooldown() != null) {
+            cooldownStatus(activeCooldown()!!)
         } else {
             statusFromLastErrorOrReady()
         }
@@ -47,6 +53,10 @@ class OpenRouterProvider(
     }
 
     override suspend fun testConnection(): Boolean = withContext(Dispatchers.IO) {
+        activeCooldown()?.let {
+            _status.value = cooldownStatus(it)
+            return@withContext false
+        }
         val key = apiKey ?: return@withContext false
         val request = Request.Builder()
             .url("https://openrouter.ai/api/v1/auth/key")
@@ -58,9 +68,10 @@ class OpenRouterProvider(
             client.newCall(request).execute().use { response ->
                 val ok = response.isSuccessful
                 _status.value = if (ok) {
+                    cooldown = null
                     ProviderStatus.READY
                 } else {
-                    providerStatus(httpError(response.code, response.body?.string()))
+                    providerStatus(httpError(response.code, response.body?.string(), response.header("Retry-After")))
                 }
                 ok
             }
@@ -83,7 +94,8 @@ class OpenRouterProvider(
     )
 
     override suspend fun generate(request: AiRequest, context: AiContext): AiResponse = withContext(Dispatchers.IO) {
-        val key = apiKey ?: throw AiProviderException(AiErrorType.AUTHENTICATION_FAILED, "OpenRouter API key not configured")
+        throwIfCoolingDown()
+        val key = apiKey ?: throw missingApiKey()
         val actualModel = resolveModel(request.modelId ?: selectedModelId)
         val body = buildRequestBody(request, context, actualModel, false).toString()
             .toRequestBody("application/json".toMediaType())
@@ -91,7 +103,7 @@ class OpenRouterProvider(
         try {
             client.newCall(httpRequest).execute().use { response ->
                 if (!response.isSuccessful) {
-                    throw httpError(response.code, response.body?.string())
+                    throw httpError(response.code, response.body?.string(), response.header("Retry-After"))
                 }
                 val responseJson = JSONObject(
                     response.body?.string()
@@ -110,6 +122,7 @@ class OpenRouterProvider(
                     responseJson.optString("model", actualModel)
                 )
                 _status.value = ProviderStatus.READY
+                cooldown = null
                 result
             }
         } catch (e: CancellationException) {
@@ -137,7 +150,8 @@ class OpenRouterProvider(
     }
 
     override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = flow {
-        val key = apiKey ?: throw AiProviderException(AiErrorType.AUTHENTICATION_FAILED, "OpenRouter API key not configured")
+        throwIfCoolingDown()
+        val key = apiKey ?: throw missingApiKey()
         emit(AiStreamEvent.Started)
         val actualModel = resolveModel(request.modelId ?: selectedModelId)
         val body = buildRequestBody(request, context, actualModel, true).toString()
@@ -145,7 +159,7 @@ class OpenRouterProvider(
         val httpRequest = buildChatRequest(key, body)
         try {
             client.newCall(httpRequest).execute().use { response ->
-                if (!response.isSuccessful) throw httpError(response.code, response.body?.string())
+                if (!response.isSuccessful) throw httpError(response.code, response.body?.string(), response.header("Retry-After"))
                 val source = response.body?.source() ?: throw AiProviderException(AiErrorType.INVALID_RESPONSE, "OpenRouter returned no response body")
                 val text = StringBuilder()
                 val tools = linkedMapOf<Int, StreamToolCall>()
@@ -182,6 +196,7 @@ class OpenRouterProvider(
                 }
 
                 _status.value = ProviderStatus.READY
+                cooldown = null
                 emit(
                     AiStreamEvent.Completed(
                         AiResponse(
@@ -221,6 +236,7 @@ class OpenRouterProvider(
     }.flowOn(Dispatchers.IO)
 
     override suspend fun listModels(): List<AiModel> = withContext(Dispatchers.IO) {
+        throwIfCoolingDown()
         val key = apiKey ?: return@withContext emptyList()
         val request = Request.Builder()
             .url("https://openrouter.ai/api/v1/models")
@@ -230,7 +246,7 @@ class OpenRouterProvider(
             .build()
         try {
             client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) throw httpError(response.code, response.body?.string())
+                if (!response.isSuccessful) throw httpError(response.code, response.body?.string(), response.header("Retry-After"))
                 val body = response.body?.string()
                     ?: throw AiProviderException(AiErrorType.INVALID_RESPONSE, "Empty response body from OpenRouter")
                 val data = JSONObject(body).getJSONArray("data")
@@ -252,6 +268,7 @@ class OpenRouterProvider(
                     }
                 }
                 _status.value = ProviderStatus.READY
+                cooldown = null
                 models
             }
         } catch (e: CancellationException) {
@@ -416,9 +433,17 @@ class OpenRouterProvider(
         emptyMap()
     }
 
-    private fun httpError(statusCode: Int, responseBody: String? = null): AiProviderException {
+    private fun httpError(
+        statusCode: Int,
+        responseBody: String? = null,
+        retryAfterHeader: String? = null,
+    ): AiProviderException {
         val normalizedBody = responseBody?.trim().orEmpty()
         val detail = parseProviderMessage(normalizedBody)
+        val providerCode = parseProviderCode(normalizedBody)
+        val retryAfterMs = if (statusCode == 429) {
+            parseRetryAfterMs(retryAfterHeader) ?: parseBodyRetryAfterMs(normalizedBody)
+        } else null
         val type = when (statusCode) {
             400 -> AiErrorType.INVALID_REQUEST
             401, 403 -> AiErrorType.AUTHENTICATION_FAILED
@@ -435,7 +460,20 @@ class OpenRouterProvider(
                 append("OpenRouter API error: ")
                 append(statusCode)
                 if (detail != null) append(" — ").append(detail)
-            }
+            },
+            details = AiFailureDetails(
+                retryAfterMs = retryAfterMs,
+                providerCode = providerCode,
+                httpStatus = statusCode,
+                recoverability = when {
+                    statusCode in setOf(401, 402, 403) -> Recoverability.USER_ACTION_REQUIRED
+                    statusCode == 429 && retryAfterMs != null -> Recoverability.RETRY_AFTER
+                    statusCode == 429 -> Recoverability.UNKNOWN
+                    statusCode in setOf(408, 409, 500, 502, 503, 504) -> Recoverability.RETRY_IMMEDIATELY
+                    statusCode in 400..499 -> Recoverability.PERMANENT
+                    else -> Recoverability.UNKNOWN
+                },
+            ),
         )
     }
 
@@ -447,8 +485,82 @@ class OpenRouterProvider(
         }
     }.getOrNull()
 
-    private fun providerStatus(error: AiProviderException): ProviderStatus =
-        ProviderStatus(ProviderStatus.State.ERROR, error.message ?: error.type.name)
+    private fun parseProviderCode(body: String): String? = runCatching {
+        JSONObject(body).optJSONObject("error")?.optString("code")?.takeIf { it.isNotBlank() }
+    }.getOrNull()
+
+    private fun parseBodyRetryAfterMs(body: String): Long? = runCatching {
+        val root = JSONObject(body)
+        val error = root.optJSONObject("error")
+        sequenceOf(root, error).filterNotNull().firstNotNullOfOrNull { json ->
+            when {
+                json.has("retry_after_ms") -> json.optLong("retry_after_ms").takeIf { it > 0L }
+                json.has("retry_after") -> (json.optDouble("retry_after") * 1_000.0).toLong().takeIf { it > 0L }
+                else -> null
+            }
+        }
+    }.getOrNull()
+
+    private fun parseRetryAfterMs(value: String?): Long? {
+        val normalized = value?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+        normalized.toDoubleOrNull()?.let { seconds ->
+            if (seconds >= 0.0) return (seconds * 1_000.0).toLong()
+        }
+        val date = runCatching {
+            SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US).apply {
+                isLenient = false
+                timeZone = TimeZone.getTimeZone("GMT")
+            }.parse(normalized)
+        }.getOrNull() ?: return null
+        return (date.time - nowEpochMs()).coerceAtLeast(0L)
+    }
+
+    private fun activeCooldown(): ProviderCooldown? {
+        val current = cooldown ?: return null
+        if (current.isActive(nowEpochMs())) return current
+        cooldown = null
+        return null
+    }
+
+    private fun missingApiKey() = AiProviderException(
+        type = AiErrorType.AUTHENTICATION_FAILED,
+        message = "OpenRouter API key not configured",
+        details = AiFailureDetails(recoverability = Recoverability.USER_ACTION_REQUIRED),
+    )
+
+    private fun throwIfCoolingDown() {
+        val current = activeCooldown() ?: return
+        val remaining = current.remainingMs(nowEpochMs())
+        throw AiProviderException(
+            type = current.reason,
+            message = "OpenRouter is rate limited. Try again in about ${((remaining + 999L) / 1_000L).coerceAtLeast(1L)} seconds.",
+            details = AiFailureDetails(
+                retryAfterMs = remaining,
+                recoverability = Recoverability.RETRY_AFTER,
+            ),
+        )
+    }
+
+    private fun providerStatus(error: AiProviderException): ProviderStatus {
+        if (error.type == AiErrorType.RATE_LIMITED) {
+            error.details.retryAfterMs?.takeIf { it > 0L }?.let { retryAfter ->
+                cooldown = ProviderCooldown(nowEpochMs() + retryAfter, AiErrorType.RATE_LIMITED)
+            }
+        }
+        return activeCooldown()?.let(::cooldownStatus)
+            ?: ProviderStatus(ProviderStatus.State.ERROR, error.message ?: error.type.name)
+    }
+
+    private fun cooldownStatus(value: ProviderCooldown): ProviderStatus {
+        val seconds = ((value.remainingMs(nowEpochMs()) + 999L) / 1_000L).coerceAtLeast(1L)
+        return ProviderStatus(
+            state = ProviderStatus.State.STANDBY,
+            message = "OpenRouter is rate limited. Try again in about $seconds seconds.",
+            readiness = ProviderReadiness.Failed("Provider cooldown"),
+            rejectionReason = TargetRejectionReason.PROVIDER_COOLDOWN,
+            cooldown = value,
+        )
+    }
 
     private fun statusFromLastErrorOrReady(): ProviderStatus =
         status.value.takeIf { it.state == ProviderStatus.State.ERROR } ?: ProviderStatus.READY

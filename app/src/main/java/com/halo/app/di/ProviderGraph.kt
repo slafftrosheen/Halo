@@ -12,7 +12,7 @@ import com.halo.sdk.runtime.NativeResourceCoordinator
  */
 class ProviderGraph(
     applicationContext: Context,
-    storage: com.halo.sdk.runtime.Storage
+    private val storage: com.halo.sdk.runtime.Storage
 ) {
 
     private val storageLayout by lazy { com.halo.app.storage.haloStorageLayout(applicationContext) }
@@ -50,5 +50,12 @@ class ProviderGraph(
     fun reloadSpeechProvider() {
         val reloadable = providers.speechRecognition as? ReloadableSpeechRecognitionProvider
         reloadable?.refresh()
+    }
+
+    suspend fun preloadLocalModel(): Boolean {
+        val provider = providers.inference as? com.halo.providers.llamacpp.NativeLlamaProvider
+            ?: return false
+        val selected = storage.getString("active_ai_provider") == provider.id
+        return provider.loadModelIfNeeded(providerSelected = selected)
     }
 }

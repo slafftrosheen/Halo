@@ -72,6 +72,8 @@ data class HeyCyanDeviceState(
      */
     val wifiIp: String? = null,
 
+    val lastWifiTransferError: WifiTransferErrorState? = null,
+
     val transports: com.halo.drivers.heycyan.transport.HeyCyanTransportSnapshot =
         com.halo.drivers.heycyan.transport.HeyCyanTransportSnapshot(),
 
@@ -116,6 +118,12 @@ data class MediaCounts(
 data class WiFiCredentials(
     val ssid: String,
     val password: String,
+)
+
+data class WifiTransferErrorState(
+    val code: Int,
+    val recoverability: WifiTransferRecoverability,
+    val timestampMs: Long,
 )
 
 /**

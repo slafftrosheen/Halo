@@ -26,14 +26,17 @@ This document outlines the test procedure for the 7-day hardware validation peri
 - **Morning Startup**: Power on glasses, open Halo app, confirm auto-connect and transition to `READY`.
 - **Speech Output Routing Invariant**: A voice turn initiated on a wearable returns speech to that wearable unless the user has explicitly enabled another fallback policy.
 - **Normal Usage**: Trigger photo capture, video recording start/stop, and audio recording.
-- **Provider Switching**: Toggle between Ollama, OpenRouter, and System Assistant.
+- **Provider Selection**: Exercise the real provider set — local `llama.cpp` (default), OpenRouter, and Ollama — and confirm the selected provider is the one that runs. Android Assistant is a *handoff* target, not an inference provider; it is not selectable as an AI fallback.
+- **Explicit Selection Is Sticky**: With a provider explicitly selected, force a failure (bad key, cooldown, unreachable endpoint) and confirm Halo still reports that provider as selected. No silent substitution is acceptable.
 - **Recharging Lifecycle**: Place glasses on charger, observe `BatteryUpdated` and `charging` state, remove from charger and verify live battery telemetry updates.
 - **Phone Lock/Unlock**: Lock phone for >30 minutes, unlock phone, verify BLE session auto-reconnect backoff and state recovery.
 
 ### 2. STRESS TESTING
 - **Repeated Reconnect**: Disconnect/connect 10 consecutive times.
 - **Rapid Photo Intent Execution**: Trigger Photo capture repeatedly while previous captures complete.
-- **Provider Outages**: Simulate provider loss (turn off Wi-Fi/Ollama), verify runtime fallback to System Assistant.
+- **Provider Outages**: Simulate provider loss (turn off Wi-Fi/Ollama or invalidate the API key). Verify Halo reports the failure truthfully, keeps the user's provider selected, and does **not** silently reroute to another provider or to Android Assistant. Provider failure is not authorization to change the privacy boundary.
+- **Rate-Limit Semantics**: Against a mock endpoint returning `429` with `Retry-After`, verify the reported wait matches the header, repeated attempts during the cooldown do not hammer the endpoint, and the provider recovers after the window without an app restart.
+- **AI Thumbnail Fast Path**: Trigger the glasses AI thumbnail capture 3–5 times and record `command -> ready`, `ready -> final byte`, dimensions and byte size. Report median/min/max; a single run is not a throughput measurement.
 - **Bluetooth Toggling**: Disable phone Bluetooth while `READY`, re-enable Bluetooth, verify bounded backoff reconnect without ghost session buildup.
 
 ### 3. FAILURE RECOVERY
@@ -47,6 +50,9 @@ This document outlines the test procedure for the 7-day hardware validation peri
 
 ### 5. UI & UX ACCESSIBILITY
 - **Screen Recreation**: Rotate screen, background app, return to foreground; confirm no duplicate coroutine collectors or UI state corruption.
+- **No Phone Fallback**: For a wearable-origin turn, confirm the answer is spoken from the glasses and the phone stays silent. If the wearable route cannot be proven, the visual answer remains and TTS fails or pends explicitly.
+- **False Barge-In / Echo**: While Halo is speaking, keep quiet and confirm no new turn starts, no photo is captured and no inference runs. Then activate the glasses' voice control mid-answer and confirm the old output stops before new capture begins and a new interaction id is created.
+- **Preload Latency**: Measure interaction start -> first token and interaction start -> first audible answer with and without early model preload. Record the numbers rather than assuming preload helps.
 - **Interactive Control Verification**: Ensure every button and card on `HeyCyanControlScreen`, `DevicesScreen`, and `IntelligenceScreen` provides functional feedback or explicit state indications.
 
 ---
@@ -57,7 +63,7 @@ This document outlines the test procedure for the 7-day hardware validation peri
 | :--- | :--- | :--- |
 | **P0 (Critical)** | Application crash, BLE stack lockup, data loss, safety regression | Immediate blocker fix before RC2 |
 | **P1 (High)** | Core workflow unusable (e.g. Photo capture fails permanently, auto-connect loops indefinitely) | Fix within 24 hours |
-| **P2 (Medium)** | Non-blocking feature failure, provider fallback delay, minor state sync lag | Schedule for targeted fix batch |
+| **P2 (Medium)** | Non-blocking feature failure, provider recovery delay, minor state sync lag | Schedule for targeted fix batch |
 | **P3 (Low)** | Cosmetic visual artifact, minor typography misalignment | Log to backlog |
 
 ---

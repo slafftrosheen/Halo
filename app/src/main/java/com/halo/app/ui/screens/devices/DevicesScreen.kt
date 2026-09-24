@@ -275,6 +275,9 @@ class DevicesViewModel(
         audioPairingCoordinator?.onConfirmationResult(resultCode, data)
     fun syncMedia() { viewModelScope.launch(Dispatchers.IO) { captures()?.sync() } }
     fun refreshMedia() { viewModelScope.launch { heyCyanDriverProvider()?.capabilityController?.execute(com.halo.sdk.runtime.embodiment.heycyan.HeyCyanOperation.GetMediaInventory) } }
+    fun captureAiThumbnail() {
+        viewModelScope.launch(Dispatchers.IO) { captures()?.captureAiThumbnail() }
+    }
     fun takePhoto(deviceId: String) {
         captures()?.let { capture -> viewModelScope.launch(Dispatchers.IO) { capture.capture() }; return }
 

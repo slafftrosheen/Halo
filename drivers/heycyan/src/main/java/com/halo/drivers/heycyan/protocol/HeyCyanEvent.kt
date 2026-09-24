@@ -78,6 +78,16 @@ sealed interface HeyCyanEvent {
         val ip: String
     ) : HeyCyanEvent
 
+    data class WifiDeviceIpReported(
+        val ip: String
+    ) : HeyCyanEvent
+
+    data class WifiTransferError(
+        val code: Int,
+        val recoverability: WifiTransferRecoverability =
+            if (code == 0xFF) WifiTransferRecoverability.RETRYABLE else WifiTransferRecoverability.UNKNOWN,
+    ) : HeyCyanEvent
+
     /**
      * Aproprietary HeyCyan frame that has been structurally decoded
      * but whose semantic meaning is still being established.
@@ -149,4 +159,10 @@ sealed interface HeyCyanEvent {
             return result
         }
     }
+}
+
+enum class WifiTransferRecoverability {
+    RETRYABLE,
+    FATAL,
+    UNKNOWN,
 }

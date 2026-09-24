@@ -13,6 +13,8 @@ import com.halo.app.data.memory.MemoryRecordDao
 import com.halo.app.data.memory.MemoryRecordEntity
 import com.halo.app.data.memory.MemoryRevisionEntity
 import com.halo.app.data.models.ModelArtifactEntity
+import com.halo.app.data.models.ModelRuntimeProfileDao
+import com.halo.app.data.models.ModelRuntimeProfileEntity
 import com.halo.app.data.notification.NotificationEntity
 import com.halo.app.data.notebook.NoteEntity
 import com.halo.app.data.notebook.NoteDraftEntity
@@ -49,9 +51,10 @@ import com.halo.app.data.notebook.NotebookDao
         NotificationEntity::class,
         RoutineEntity::class,
         RoutineRunEntity::class,
-        WorkspaceAssetEntity::class
+        WorkspaceAssetEntity::class,
+        ModelRuntimeProfileEntity::class
     ],
-    version = 10,
+    version = 11,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -66,6 +69,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun workspaceFileDao(): WorkspaceFileDao
     abstract fun brainSnapshotDao(): BrainSnapshotDao
     abstract fun backupRecordDao(): BackupRecordDao
+    abstract fun modelRuntimeProfileDao(): ModelRuntimeProfileDao
 
     companion object {
         val MIGRATION_1_2 = object : Migration(1, 2) {
@@ -439,9 +443,42 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS model_runtime_profiles (
+                        id TEXT NOT NULL PRIMARY KEY,
+                        artifactId TEXT NOT NULL,
+                        artifactFingerprint TEXT NOT NULL,
+                        deviceFingerprint TEXT NOT NULL,
+                        runtime TEXT NOT NULL,
+                        backend TEXT NOT NULL,
+                        contextSize INTEGER NOT NULL,
+                        threads INTEGER NOT NULL,
+                        gpuLayers INTEGER NOT NULL,
+                        loadMs INTEGER NOT NULL,
+                        ttftMs INTEGER NOT NULL,
+                        promptTokensPerSecond REAL NOT NULL,
+                        generationTokensPerSecond REAL NOT NULL,
+                        peakEstimatedMemoryBytes INTEGER,
+                        testedAtEpochMs INTEGER NOT NULL,
+                        appVersion TEXT NOT NULL,
+                        runtimeVersion TEXT NOT NULL,
+                        compatibilityEpoch INTEGER NOT NULL,
+                        isStable INTEGER NOT NULL,
+                        failureReason TEXT
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_model_runtime_profiles_artifactId_deviceFingerprint ON model_runtime_profiles(artifactId, deviceFingerprint)")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_model_runtime_profiles_profile_variant ON model_runtime_profiles(artifactId, artifactFingerprint, deviceFingerprint, runtime, backend, contextSize, threads, gpuLayers, runtimeVersion, compatibilityEpoch)")
+            }
+        }
+
         fun create(context: Context): AppDatabase =
             Room.databaseBuilder(context, AppDatabase::class.java, "halo.db")
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11)
                 .build()
     }
 }

@@ -22,7 +22,11 @@ sealed interface HeyCyanCommand {
     data object StopVideo : HeyCyanCommand
     data object StartRecording : HeyCyanCommand
     data object StopRecording : HeyCyanCommand
-    data object AiThumbnail : HeyCyanCommand
+    data class AiThumbnail(val quality: Int = 3) : HeyCyanCommand {
+        init {
+            require(quality in 0..5) { "AI thumbnail quality must be in 0..5" }
+        }
+    }
     data object PrepareVoiceRouting : HeyCyanCommand
     data object RouteAudioToGlasses : HeyCyanCommand
     data object RouteAudioToPhone : HeyCyanCommand
@@ -30,6 +34,7 @@ sealed interface HeyCyanCommand {
 
     // Network / Transfer
     data object EnterWifiTransferMode : HeyCyanCommand
+    data object ExitWifiTransferMode : HeyCyanCommand
     data class SetDateTime(val timestamp: Long = 0L) : HeyCyanCommand
 
     // Legacy/Fallback Mode Control (maintained for potential explicit state support)
@@ -53,8 +58,9 @@ fun HeyCyanOperation.toCommand(): HeyCyanCommand =
         HeyCyanOperation.RouteAudioToGlasses -> HeyCyanCommand.RouteAudioToGlasses
         HeyCyanOperation.RouteAudioToPhone -> HeyCyanCommand.RouteAudioToPhone
         HeyCyanOperation.EnableClassicBluetooth -> HeyCyanCommand.EnableClassicBluetooth
-        HeyCyanOperation.GenerateAIPhoto -> HeyCyanCommand.AiThumbnail
+        HeyCyanOperation.GenerateAIPhoto -> HeyCyanCommand.AiThumbnail()
         HeyCyanOperation.EnterWifiTransferMode -> HeyCyanCommand.EnterWifiTransferMode
+        HeyCyanOperation.ExitWifiTransferMode -> HeyCyanCommand.ExitWifiTransferMode
         HeyCyanOperation.SynchronizeMedia ->
             throw IllegalStateException(
                 "SynchronizeMedia is not a BLE command. " +

@@ -34,9 +34,28 @@ data class AIResponseGenerated(override val id: String = UUID.randomUUID().toStr
 
 // Cognitive Session Events
 data class CognitiveRequestStarted(override val id: String = UUID.randomUUID().toString(), val requestId: String, override val timestamp: Long = System.currentTimeMillis(), val interactionId: String? = null) : HaloEvent
-data class CognitiveReasoningStarted(override val id: String = UUID.randomUUID().toString(), val requestId: String, val providerId: String, val modelId: String?, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
-data class CognitiveTokenReceived(override val id: String = UUID.randomUUID().toString(), val requestId: String, val token: String, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
-data class CognitiveCompleted(override val id: String = UUID.randomUUID().toString(), val requestId: String, val response: String?, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
+data class CognitiveReasoningStarted(override val id: String = UUID.randomUUID().toString(), val requestId: String, val providerId: String, val modelId: String?, val interactionId: String? = null, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
+data class CognitiveTokenReceived(override val id: String = UUID.randomUUID().toString(), val requestId: String, val token: String, val interactionId: String? = null, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
+/**
+ * Provider-neutral generation timing carried on runtime events.
+ *
+ * This deliberately lives in runtime-sdk rather than reusing the provider-owned metrics type:
+ * provider-sdk depends on runtime-sdk, so referencing a provider type from an event here would
+ * invert the dependency and create a module cycle.
+ */
+data class CognitiveGenerationMetrics(
+    val startedAtMs: Long,
+    val firstTokenAtMs: Long? = null,
+    val completedAtMs: Long? = null,
+    val inputTokens: Int? = null,
+    val outputTokens: Int? = null,
+) {
+    /** Real time-to-first-token, not time-to-model-loaded. */
+    val timeToFirstTokenMs: Long? get() = firstTokenAtMs?.minus(startedAtMs)
+    val totalDurationMs: Long? get() = completedAtMs?.minus(startedAtMs)
+}
+
+data class CognitiveCompleted(override val id: String = UUID.randomUUID().toString(), val requestId: String, val response: String?, val interactionId: String? = null, val metrics: CognitiveGenerationMetrics? = null, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
 data class CognitiveFailed(
     override val id: String = UUID.randomUUID().toString(),
     val requestId: String,
@@ -46,6 +65,7 @@ data class CognitiveFailed(
     val providerId: String? = null,
     val modelId: String? = null,
     val userRecoverable: Boolean = false,
+    val interactionId: String? = null,
     override val timestamp: Long = System.currentTimeMillis()
 ) : HaloEvent
 
@@ -65,7 +85,8 @@ data class TtsRequested(
     val transactionId: String,
     val target: SpeechOutputTarget = SpeechOutputTarget.Phone,
     val fallback: SpeechOutputFallback = SpeechOutputFallback.ALLOW_PHONE,
-    val sourceCaptureId: String? = null
+    val sourceCaptureId: String? = null,
+    val interactionId: String? = null,
 ) : HaloEvent
 
 data class TtsStarted(
@@ -73,6 +94,7 @@ data class TtsStarted(
     val transactionId: String,
     val target: SpeechOutputTarget = SpeechOutputTarget.Phone,
     val textLength: Int = 0,
+    val interactionId: String? = null,
     override val timestamp: Long = System.currentTimeMillis()
 ) : HaloEvent
 
@@ -80,6 +102,7 @@ data class TtsCompleted(
     override val id: String = UUID.randomUUID().toString(),
     val transactionId: String,
     val target: SpeechOutputTarget = SpeechOutputTarget.Phone,
+    val interactionId: String? = null,
     override val timestamp: Long = System.currentTimeMillis()
 ) : HaloEvent
 
@@ -87,6 +110,7 @@ data class TtsCancelled(
     override val id: String = UUID.randomUUID().toString(),
     val transactionId: String,
     val target: SpeechOutputTarget = SpeechOutputTarget.Phone,
+    val interactionId: String? = null,
     override val timestamp: Long = System.currentTimeMillis()
 ) : HaloEvent
 
@@ -96,6 +120,7 @@ data class TtsFailed(
     val target: SpeechOutputTarget = SpeechOutputTarget.Phone,
     val reason: String,
     val message: String = reason,
+    val interactionId: String? = null,
     override val timestamp: Long = System.currentTimeMillis()
 ) : HaloEvent
 

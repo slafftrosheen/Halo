@@ -1,39 +1,25 @@
 package com.halo.drivers.heycyan.capability
 
 import com.halo.drivers.heycyan.CapabilityStatus
+import com.halo.drivers.heycyan.thumbnail.HeyCyanCapturedThumbnail
+import com.halo.drivers.heycyan.thumbnail.HeyCyanThumbnailCapture
 
 /**
- * AI Photo capability — explicitly BLOCKED_BY_UNKNOWN_PROTOCOL.
- *
- * Evidence:
- * - SDK `QCOperatorDeviceModeAIPhoto` (mode 0x06) exists
- * - CyanBridge Event 0x06 (AIImageChunk) partially documented
- * - Chunk reassembly protocol and image output format are NOT understood
- * - Cannot implement until live-capture validates the chunk format
- *
- * This capability is represented in the matrix but not functional.
+ * Fast, local-inference-oriented JPEG capture over the glasses BLE bulk channel.
  */
-class HeyCyanAIPhotoCapability {
+class HeyCyanAIPhotoCapability(
+    private val thumbnailCapture: HeyCyanThumbnailCapture,
+) {
 
-    val status: CapabilityStatus = CapabilityStatus.BLOCKED_BY_UNKNOWN_PROTOCOL
+    val status: CapabilityStatus = CapabilityStatus.IMPLEMENTED_WITH_LIMITATION
 
     val reason: String =
-        "AI Photo trigger command (mode 0x06) exists in the SDK but the " +
-            "chunk reassembly protocol and image output format are not fully " +
-            "understood from reference material. Requires live-capture analysis " +
-            "to implement. See SDK_API_PARITY.md §8."
+        "Returns the firmware-generated AI JPEG thumbnail over BLE; it is not the full-resolution media file."
 
-    /**
-     * Attempting to trigger AI Photo will always fail with a clear error.
-     */
-    suspend fun trigger(): Result<Unit> = Result.failure(
-        UnsupportedOperationException(
-            "AI Photo is ${status.name}: $reason"
-        )
-    )
+    /** Completes only after the JPEG payload has been reassembled and validated. */
+    suspend fun trigger(quality: Int = 3): Result<HeyCyanCapturedThumbnail> =
+        thumbnailCapture.capture(quality)
 
-    /**
-     * Returns false — this capability is not available.
-     */
-    val isAvailable: Boolean = false
+    /** Available on the constrained thumbnail path. */
+    val isAvailable: Boolean = true
 }

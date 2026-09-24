@@ -15,6 +15,8 @@ import kotlinx.coroutines.withContext
 import java.net.HttpURLConnection
 import java.net.InetAddress
 import java.net.URL
+import java.net.URLConnection
+import java.net.URLEncoder
 import java.security.MessageDigest
 
 /**
@@ -28,9 +30,6 @@ import java.security.MessageDigest
  * Evidence: CyanBridge `AlbumDownloader.kt`, iOS `GlassesWiFiHandler.m`,
  *            iOS `GlassesMediaDownloader.m`
  *
- * This class does NOT reference Android SDK, File, FileOutputStream, or Context.
- * The [destinationPath] string is resolved by the calling layer (host-android).
- *
  * Streaming pipeline for downloads:
  *   HTTP response InputStream
  *       ↓
@@ -42,7 +41,7 @@ import java.security.MessageDigest
  *       ↓
  *   Destination via progress callback + output accumulation
  *
- * Downloads are partial-resumable: Range header is sent if destFile already exists.
+ * Path-based downloads are staged in a `.part` file and atomically committed on success.
  */
 class DefaultHeyCyanMediaApi(
     private val deviceIp: InetAddress,
@@ -51,9 +50,7 @@ class DefaultHeyCyanMediaApi(
     private val connectTimeoutMillis: Int = 10_000,
     private val readTimeoutMillis: Int = 30_000,
     private val bufferSize: Int = 8 * 1024,
-    private val connectionFactory: (URL) -> HttpURLConnection = { url ->
-        url.openConnection() as HttpURLConnection
-    },
+    private val connectionFactory: (URL) -> URLConnection = URL::openConnection,
 ) : HeyCyanMediaApi {
 
     companion object {
@@ -62,6 +59,7 @@ class DefaultHeyCyanMediaApi(
 
         /** Source-established download path prefix: /files/ */
         private const val FILES_PATH = "/files/"
+        private const val VIDEO_READ_TIMEOUT_MILLIS = 120_000
 
         fun factoryFor(
             parser: HeyCyanMediaConfigParser = DefaultHeyCyanMediaConfigParser(),
@@ -84,7 +82,8 @@ class DefaultHeyCyanMediaApi(
         withContext(Dispatchers.IO) {
             runCatching {
                 val url = URL("$baseUrl$MANIFEST_PATH")
-                val conn = connectionFactory(url)
+                val conn = connectionFactory(url) as? HttpURLConnection
+                    ?: throw IllegalStateException("HeyCyan connection factory did not return HTTP")
                 conn.connectTimeout = connectTimeoutMillis
                 conn.readTimeout = readTimeoutMillis
                 conn.requestMethod = "GET"
@@ -115,14 +114,25 @@ class DefaultHeyCyanMediaApi(
         destinationPath: String,
         progress: (MediaDownloadProgress) -> Unit,
     ): Result<MediaDownloadResult> = withContext(Dispatchers.IO) {
+        val file = java.io.File(destinationPath)
+        val partial = java.io.File(file.parentFile, "${file.name}.part")
         runCatching {
-            val file = java.io.File(destinationPath)
             file.parentFile?.mkdirs()
-            java.io.FileOutputStream(file).use { outputStream ->
+            if (partial.exists()) partial.delete()
+            val result = java.io.FileOutputStream(partial).use { outputStream ->
                 downloadInternal(media, destinationPath, progress) { buffer, offset, len ->
                     outputStream.write(buffer, offset, len)
                 }.getOrThrow()
             }
+            if (file.exists() && !file.delete()) {
+                throw IllegalStateException("Unable to replace existing HeyCyan media destination")
+            }
+            if (!partial.renameTo(file)) {
+                throw IllegalStateException("Unable to commit completed HeyCyan media download")
+            }
+            result.copy(destination = MediaLocation(destinationPath))
+        }.onFailure {
+            partial.delete()
         }
     }
 
@@ -143,10 +153,17 @@ class DefaultHeyCyanMediaApi(
         writeBlock: suspend (ByteArray, Int, Int) -> Unit,
     ): Result<MediaDownloadResult> = runCatching {
         val filename = media.filename
-        val url = URL("$baseUrl$FILES_PATH$filename")
-        val conn = connectionFactory(url)
+        validateFilename(filename)
+        val encodedFilename = URLEncoder.encode(filename, Charsets.UTF_8.name()).replace("+", "%20")
+        val url = URL("$baseUrl$FILES_PATH$encodedFilename")
+        val conn = connectionFactory(url) as? HttpURLConnection
+            ?: throw IllegalStateException("HeyCyan connection factory did not return HTTP")
         conn.connectTimeout = connectTimeoutMillis
-        conn.readTimeout = readTimeoutMillis
+        conn.readTimeout = if (media is HeyCyanMedia.Video) {
+            maxOf(readTimeoutMillis, VIDEO_READ_TIMEOUT_MILLIS)
+        } else {
+            readTimeoutMillis
+        }
         conn.requestMethod = "GET"
 
         var bytesReceived = 0L
@@ -211,6 +228,15 @@ class DefaultHeyCyanMediaApi(
             throw e
         } finally {
             conn.disconnect()
+        }
+    }
+
+    private fun validateFilename(filename: String) {
+        require(filename.isNotBlank()) { "HeyCyan media filename is blank" }
+        require(filename.length <= 255) { "HeyCyan media filename is too long" }
+        require(filename != "." && filename != "..") { "Invalid HeyCyan media filename" }
+        require('/' !in filename && '\\' !in filename && '\u0000' !in filename) {
+            "HeyCyan media filename contains a path separator"
         }
     }
 

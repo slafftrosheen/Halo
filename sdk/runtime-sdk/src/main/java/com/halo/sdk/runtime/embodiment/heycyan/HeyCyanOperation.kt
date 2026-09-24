@@ -22,5 +22,6 @@ sealed interface HeyCyanOperation {
     data object EnableClassicBluetooth : HeyCyanOperation
     data object GenerateAIPhoto : HeyCyanOperation
     data object EnterWifiTransferMode : HeyCyanOperation
+    data object ExitWifiTransferMode : HeyCyanOperation
     data object SynchronizeMedia : HeyCyanOperation
 }

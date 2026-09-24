@@ -24,11 +24,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.halo.app.ui.theme.HaloPastelBlue
@@ -49,6 +53,13 @@ fun HeyCyanControlScreen(
     viewModel: DevicesViewModel,
     onBack: () -> Unit
 ) {
+    val context = LocalContext.current
+    val thumbnailPreferences = remember(context) {
+        context.getSharedPreferences("heycyan_settings", android.content.Context.MODE_PRIVATE)
+    }
+    var thumbnailQuality by remember {
+        mutableIntStateOf(thumbnailPreferences.getInt("ai_thumbnail_quality", 3).coerceIn(0, 5))
+    }
     val audioPairing by viewModel.audioPairingState.collectAsState()
     val audioAssociationLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartIntentSenderForResult()
@@ -225,6 +236,12 @@ fun HeyCyanControlScreen(
                     enabled = isReady,
                     primary = !audioRecording
                 )
+                HaloWorkspaceButton(
+                    text = "Capture AI thumbnail",
+                    onClick = viewModel::captureAiThumbnail,
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = isReady && !media.busy
+                )
             }
         }
 
@@ -325,7 +342,7 @@ fun HeyCyanControlScreen(
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             DeviceRow("Live audio input", "Shared local Whisper pipeline")
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            DeviceRow("AI photo", "Blocked by protocol")
+            DeviceRow("AI photo", "Available with BLE thumbnail limitation")
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             DeviceRow("Wi-Fi transfer", "Available with limitation")
         }
@@ -333,6 +350,38 @@ fun HeyCyanControlScreen(
         Spacer(Modifier.height(20.dp))
 
         HaloWorkspaceSection(title = "Preferences") {
+            Text(
+                text = "AI thumbnail detail",
+                style = MaterialTheme.typography.titleSmall,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                listOf("Fast" to 1, "Balanced" to 3, "Detailed" to 5).forEach { (label, quality) ->
+                    HaloWorkspaceButton(
+                        text = label,
+                        onClick = {
+                            thumbnailQuality = quality
+                            thumbnailPreferences.edit().putInt("ai_thumbnail_quality", quality).apply()
+                        },
+                        modifier = Modifier.weight(1f),
+                        primary = thumbnailQuality == quality
+                    )
+                }
+            }
+            Text(
+                text = "Fast uses level 1, Balanced level 3, and Detailed level 5. Balanced is the default.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
             HaloWorkspaceToggleRow(
                 title = "Auto-connect",
                 subtitle = "Reconnect when this saved device becomes available.",

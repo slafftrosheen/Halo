@@ -7,12 +7,8 @@ import java.net.InetAddress
  * Wi-Fi connection abstraction for HeyCyan transfer mode.
  *
  * This interface contains NO Android SDK references. The Android implementation
- * ([AndroidHeyCyanWifiConnection] in the host-android module) uses
- * ConnectivityManager / WifiNetworkSpecifier internally but they must not
- * leak through this interface.
- *
- * The existing [HeyCyanWifiConnector] wraps the Android platform APIs
- * and will be adapted behind this interface.
+ * Implementations may use a credential-based hotspot or Wi-Fi Direct, but Android
+ * network objects must not leak through this interface.
  *
  * Source evidence: CyanBridge `WifiP2pController.kt`, iOS `GlassesWiFiHandler.m`
  */
@@ -32,7 +28,7 @@ interface HeyCyanWifiConnection {
      */
     suspend fun connect(credentials: HeyCyanWifiCredentials): Result<Unit>
 
-    /** Disconnects from the hotspot and unbinds the process network. */
+    /** Disconnects from the transfer network. Implementations must not bind the whole process. */
     suspend fun disconnect()
 
     /**

@@ -1,0 +1,90 @@
+name: Android HIL (opt-in, self-hosted)
+
+# Hardware-in-the-loop. This workflow is manually triggered only and runs on a self-hosted runner
+# that physically has the lab phone and glasses attached.
+#
+# It is deliberately NOT wired to `pull_request`: ordinary CI must never wait for a glasses phone,
+# and no PR should be able to consume the lab hardware.
+#
+# Layer switches default to false. Enable only the layer the lab actually has attached.
+
+on:
+  workflow_dispatch:
+    inputs:
+      heycyan:
+        description: "Run the HeyCyan voice round trip (glasses attached)"
+        type: boolean
+        default: false
+      local_ai:
+        description: "Run local AI latency scenarios (phone only)"
+        type: boolean
+        default: false
+      collect_diagnostics:
+        description: "Collect safe diagnostics after the run"
+        type: boolean
+        default: true
+
+concurrency:
+  group: android-hil
+  cancel-in-progress: false
+
+jobs:
+  hil:
+    name: Hardware in the loop
+    runs-on: [ self-hosted, android-hil ]
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew tools/hil/*.sh tools/ci/*.sh
+
+      - name: Preflight
+        # Requires HALO_HIL_SERIAL in the runner environment; the scripts refuse to guess when more
+        # than one device is attached.
+        run: tools/hil/preflight.sh
+
+      - name: Install
+        run: tools/hil/install.sh
+
+      - name: Instrumentation on the lab device
+        run: tools/hil/run_instrumentation.sh
+
+      - name: Local AI latency (cold)
+        if: ${{ inputs.local_ai }}
+        env:
+          HALO_HIL_LOCAL_AI: "true"
+        run: tools/hil/run_local_ai.sh cold
+
+      - name: Local AI latency (preload)
+        if: ${{ inputs.local_ai }}
+        env:
+          HALO_HIL_LOCAL_AI: "true"
+        run: tools/hil/run_local_ai.sh preload
+
+      - name: HeyCyan round trip
+        # Requires a human at the device to press the glasses' voice button; the script prompts.
+        if: ${{ inputs.heycyan }}
+        env:
+          HALO_HIL_HEYCYAN: "true"
+        run: tools/hil/run_heycyan_roundtrip.sh
+
+      - name: Collect safe diagnostics
+        if: ${{ always() && inputs.collect_diagnostics }}
+        run: tools/hil/collect_diagnostics.sh
+
+      - name: Upload safe diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hil-diagnostics-safe
+          # Safe diagnostics only. build/hil/diagnostics-private is intentionally never uploaded.
+          path: build/hil/diagnostics-safe/
+          if-no-files-found: ignore

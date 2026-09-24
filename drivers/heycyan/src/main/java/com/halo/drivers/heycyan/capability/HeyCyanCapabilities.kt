@@ -53,8 +53,8 @@ object HeyCyanCapabilities {
     val liveAudio = HeyCyanCapability(
         id = HeyCyanCapabilityIds.AUDIO_LIVE_INPUT,
         name = "Live audio input",
-        status = HeyCyanCapabilityStatus.BLOCKED_BY_PROTOCOL,
-        description = "Observed BC59 audio stream; complete framing and trigger remain unresolved.",
+        status = HeyCyanCapabilityStatus.AVAILABLE_WITH_LIMITATION,
+        description = "Live microphone input over the physically validated HeyCyan voice stream.",
     )
 
     val speakerOutput = HeyCyanCapability(
@@ -67,8 +67,8 @@ object HeyCyanCapabilities {
     val aiPhoto = HeyCyanCapability(
         id = HeyCyanCapabilityIds.AI_PHOTO,
         name = "AI photo",
-        status = HeyCyanCapabilityStatus.BLOCKED_BY_PROTOCOL,
-        description = "AI photo mode is known, but complete image transfer framing is unresolved.",
+        status = HeyCyanCapabilityStatus.AVAILABLE_WITH_LIMITATION,
+        description = "Fresh AI thumbnail capture gated by photo-ready evidence and transferred over BLE.",
     )
 
     val wifiTransfer = HeyCyanCapability(
