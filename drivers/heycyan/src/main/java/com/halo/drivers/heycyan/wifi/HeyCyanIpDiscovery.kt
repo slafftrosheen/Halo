@@ -35,7 +35,10 @@ import java.net.URL
  */
 class HeyCyanIpDiscovery(
     private val perIpTimeoutMillis: Long = DEFAULT_PER_IP_TIMEOUT,
-    private val totalTimeoutMillis: Long = DEFAULT_TOTAL_TIMEOUT
+    private val totalTimeoutMillis: Long = DEFAULT_TOTAL_TIMEOUT,
+    private val connectionFactory: (URL) -> HttpURLConnection = { url ->
+        url.openConnection() as HttpURLConnection
+    },
 ) {
     companion object {
         private const val DEFAULT_PER_IP_TIMEOUT = 3_000L
@@ -104,7 +107,7 @@ class HeyCyanIpDiscovery(
             withTimeoutOrNull(perIpTimeoutMillis) {
                 try {
                     val url = URL("http://$ip$MANIFEST_PATH")
-                    val connection = url.openConnection() as HttpURLConnection
+                    val connection = connectionFactory(url)
                     connection.connectTimeout = perIpTimeoutMillis.toInt()
                     connection.readTimeout = perIpTimeoutMillis.toInt()
                     connection.requestMethod = "GET"

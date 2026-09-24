@@ -3,8 +3,10 @@ package com.halo.app.di
 import com.halo.drivers.heycyan.HeyCyanAudioOutput
 import com.halo.drivers.heycyan.HeyCyanHost
 import com.halo.drivers.heycyan.RealHeyCyanDriver
+import com.halo.providers.llamacpp.NativeLlamaProvider
 import com.halo.providers.sherpa.stt.SherpaSpeechModelCatalog
 import com.halo.sdk.host.WearableHost
+import com.halo.sdk.runtime.NativeMemoryPressure
 import java.io.File
 
 /**
@@ -86,6 +88,20 @@ class HostGraph(
                 cancelSpeechOutput = {
                     ManualDependencyGraph.cognitiveSession.cancel()
                     ManualDependencyGraph.haloSpeechOutputCoordinator.stop("Barge-in")
+                },
+                prepareInference = {
+                    val inference = providerGraph.providers.inference as? NativeLlamaProvider
+                    val selectedProvider = storage.getString("active_ai_provider")
+                    val budget = providerGraph.nativeResourceCoordinator.budget.value
+                    val nativeSelected = inference != null &&
+                        (selectedProvider.isNullOrBlank() || selectedProvider == inference.id)
+                    if (
+                        nativeSelected &&
+                        budget.allowConcurrentHeavyweights &&
+                        budget.pressure == NativeMemoryPressure.NORMAL
+                    ) {
+                        inference?.loadModelIfNeeded()
+                    }
                 }
             ).start()
             captureCoordinator = com.halo.app.capture.WearableCaptureCoordinator(context, driver,

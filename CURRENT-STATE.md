@@ -26,6 +26,14 @@ excludes the older microkernel/ProcessManager path from normal phone startup.
 | UI verification | Robolectric/Roborazzi dependencies; light/dark/1.30x-font snapshots; appearance, interaction, Bluetooth permission mapping, platform mic-state, provider projection, canonical pairing identity, auto-connect selection/migration and reloadable-STT tests | Golden images/tests have not been executed in this source-only pass; whole-screen/device-specific coverage is incomplete |
 | CI | Workflow declares lint/test/build/upload | Current success not established; detekt/ktlint configuration mismatch |
 
+Source-only follow-up on 2026-09-24: the HeyCyan transfer path now carries the BLE-decoded
+device IP into live device state, prefers that endpoint for media sync, and scopes transfer HTTP to
+the glasses Android `Network` instead of process-wide routing. Wearable voice activation can also
+start native llama.cpp model loading while capture is in progress, but only when native llama.cpp is
+the selected inference provider and the native-resource budget permits concurrent heavyweight
+models. Neither change is counted as hardware or latency acceptance until rerun on the physical
+glasses/phone pair.
+
 See [architecture](docs/04-architecture/ARCHITECTURE.md),
 [providers](docs/ai/AI_PROVIDER_ARCHITECTURE.md),
 [persistence](docs/04-architecture/DATABASE.md),

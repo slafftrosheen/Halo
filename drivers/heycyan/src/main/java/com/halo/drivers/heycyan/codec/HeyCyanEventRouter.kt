@@ -84,7 +84,7 @@ class HeyCyanEventRouter(
         val decoded = responseDecoder.decode(payload)
         return when (decoded) {
             is HeyCyanResponse.Battery -> HeyCyanEvent.BatteryUpdated(decoded.level, decoded.charging)
-            is HeyCyanResponse.ClassBluetooth -> HeyCyanEvent.WiFiIpReceived("") // Map as needed or remove
+            is HeyCyanResponse.GlassControl.P2pIp -> HeyCyanEvent.WiFiIpReceived(decoded.ip)
             is HeyCyanResponse.VoiceState -> {
                 if (decoded.payload.isNotEmpty()) {
                     when (decoded.payload[0]) {

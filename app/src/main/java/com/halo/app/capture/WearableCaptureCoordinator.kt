@@ -43,7 +43,10 @@ class WearableCaptureCoordinator(private val context: Context, private val drive
             } else { wifiState.value = WifiConnectionState.FAILED; Result.failure(IllegalStateException("Wi-Fi connection unavailable or permission denied")) }
         }
         override suspend fun disconnect() { connector.disconnect(); wifiState.value = WifiConnectionState.DISCONNECTED }
-        override suspend fun currentAddress(): InetAddress? = HeyCyanIpDiscovery().discover()?.let(InetAddress::getByName)
+        override suspend fun currentAddress(): InetAddress? =
+            HeyCyanIpDiscovery(connectionFactory = connector::openHttpConnection)
+                .discover(driver.deviceState.value.wifiIp)
+                ?.let(InetAddress::getByName)
     }
     private val pendingSync = MutableStateFlow(false)
 
@@ -110,7 +113,12 @@ class WearableCaptureCoordinator(private val context: Context, private val drive
 
             var api: HeyCyanMediaApi? = null
             val transfer = HeyCyanTransferCoordinator(driver.capabilityController, credentialsProvider, wifi,
-                HeyCyanMediaApiFactory { address -> DefaultHeyCyanMediaApi(address).also { api = it } })
+                HeyCyanMediaApiFactory { address ->
+                    DefaultHeyCyanMediaApi(
+                        deviceIp = address,
+                        connectionFactory = connector::openHttpConnection,
+                    ).also { api = it }
+                })
             transfer.synchronizeManifest(device).getOrElse { error ->
                 if (transfer.state.value is HeyCyanTransferState.WaitingForCredentials) {
                     pendingSync.value = true
@@ -120,7 +128,7 @@ class WearableCaptureCoordinator(private val context: Context, private val drive
                 throw error
             }
             _state.value = _state.value.copy(busy = true, message = "Transfer ready")
-            events.publish(ActionReceipt(operationId = id, category = "Vision", title = "Media synchronization", stage = "Transfer ready", detail = "Credentials acquired", sourceDeviceId = device))
+            events.publish(ActionReceipt(operationId = id, category = "Vision", title = "Media synchronization", stage = "Transfer ready", detail = "Glasses endpoint verified", sourceDeviceId = device))
             val activeApi = checkNotNull(api)
             val deviceKey = UUID.nameUUIDFromBytes(device.toByteArray()).toString()
             val repository = FileHeyCyanMediaRepository(File(context.filesDir, "captures/transfer/$deviceKey"))

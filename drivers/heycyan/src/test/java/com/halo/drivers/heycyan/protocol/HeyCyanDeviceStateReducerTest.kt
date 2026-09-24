@@ -146,6 +146,30 @@ class HeyCyanDeviceStateReducerTest {
     }
 
     @Test
+    fun wifiIpUpdatesState() {
+        val result = reducer.reduce(
+            HeyCyanDeviceState(),
+            HeyCyanEvent.WiFiIpReceived("192.168.49.207"),
+            timestamp = 7500L,
+        )
+
+        assertEquals("192.168.49.207", result.wifiIp)
+        assertEquals(7500L, result.lastEventAtMillis)
+    }
+
+    @Test
+    fun malformedWifiIpIsNotAccepted() {
+        val result = reducer.reduce(
+            HeyCyanDeviceState(),
+            HeyCyanEvent.WiFiIpReceived("not-an-ip"),
+            timestamp = 7600L,
+        )
+
+        assertNull(result.wifiIp)
+        assertEquals(7600L, result.lastEventAtMillis)
+    }
+
+    @Test
     fun unrelatedEventPreservesExistingState() {
         val initial = HeyCyanDeviceState(
             battery = BatteryState(level = 90, charging = false),

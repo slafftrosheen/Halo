@@ -69,6 +69,35 @@ class HeyCyanEventRouterTest {
     }
 
     @Test
+    fun `P2P IP response becomes device IP event`() {
+        val payload = byteArrayOf(
+            0xBC.toByte(),
+            0x41,
+            0x08,
+            0x00,
+            0x00,
+            0x00,
+            0x02,
+            0x03,
+            0x00,
+            0x00,
+            192.toByte(),
+            168.toByte(),
+            49,
+            207.toByte(),
+        )
+
+        val event = router.decode(
+            UUID.fromString("0000fed1-0000-1000-8000-00805f9b34fb"),
+            payload,
+        )
+
+        assertTrue(event is HeyCyanEvent.WiFiIpReceived)
+        event as HeyCyanEvent.WiFiIpReceived
+        assertEquals("192.168.49.207", event.ip)
+    }
+
+    @Test
     fun `unknown characteristics route to Unknown event`() {
         val payload = byteArrayOf(0xAB.toByte(), 0xCD.toByte(), 0xEF.toByte())
 

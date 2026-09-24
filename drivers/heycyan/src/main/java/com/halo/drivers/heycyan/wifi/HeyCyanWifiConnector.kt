@@ -10,6 +10,8 @@ import android.net.wifi.WifiNetworkSpecifier
 import android.os.Build
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
+import java.net.HttpURLConnection
+import java.net.URL
 import kotlin.coroutines.resume
 
 /**
@@ -82,9 +84,6 @@ class HeyCyanWifiConnector(
                     val callback = object : ConnectivityManager.NetworkCallback() {
                         override fun onAvailable(network: Network) {
                             activeNetwork = network
-                            // Bind this process to the glasses network so HTTP requests
-                            // go through the hotspot, not the default network
-                            connectivityManager.bindProcessToNetwork(network)
                             if (continuation.isActive) {
                                 continuation.resume(true)
                             }
@@ -99,7 +98,6 @@ class HeyCyanWifiConnector(
                         override fun onLost(network: Network) {
                             if (activeNetwork == network) {
                                 activeNetwork = null
-                                connectivityManager.bindProcessToNetwork(null)
                             }
                         }
                     }
@@ -154,6 +152,24 @@ class HeyCyanWifiConnector(
     }
 
     /**
+     * Opens an HTTP connection on the glasses network without changing process-wide routing.
+     *
+     * On API 29+ the Network returned for the WifiNetworkSpecifier owns the socket. This
+     * prevents unrelated Halo traffic (Ollama/OpenRouter/plugins) from being routed toward
+     * the glasses while media transfer is active.
+     */
+    fun openHttpConnection(url: URL): HttpURLConnection {
+        val connection = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val network = activeNetwork
+                ?: throw IllegalStateException("HeyCyan Wi-Fi network is not available")
+            network.openConnection(url)
+        } else {
+            url.openConnection()
+        }
+        return connection as HttpURLConnection
+    }
+
+    /**
      * Disconnects from the device WiFi hotspot.
      */
     fun disconnect() {
@@ -161,7 +177,6 @@ class HeyCyanWifiConnector(
             runCatching { connectivityManager.unregisterNetworkCallback(callback) }
         }
         networkCallback = null
-        connectivityManager.bindProcessToNetwork(null)
         activeNetwork = null
     }
 

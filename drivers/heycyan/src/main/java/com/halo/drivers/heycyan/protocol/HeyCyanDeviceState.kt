@@ -64,6 +64,14 @@ data class HeyCyanDeviceState(
 
     val wifiCredentials: WiFiCredentials? = null,
 
+    /**
+     * Latest device-reported HTTP transfer endpoint observed over the control channel.
+     *
+     * This is intentionally runtime-only state. It is not persisted and must not be
+     * confused with the Android Wi-Fi/P2P group-owner address, which may be the phone.
+     */
+    val wifiIp: String? = null,
+
     val transports: com.halo.drivers.heycyan.transport.HeyCyanTransportSnapshot =
         com.halo.drivers.heycyan.transport.HeyCyanTransportSnapshot(),
 

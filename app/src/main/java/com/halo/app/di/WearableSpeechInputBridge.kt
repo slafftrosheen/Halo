@@ -23,7 +23,8 @@ class WearableSpeechInputBridge(
     private val engine: AudioPerceptionEngine,
     private val events: EventBus,
     private val scope: CoroutineScope,
-    private val cancelSpeechOutput: () -> Unit
+    private val cancelSpeechOutput: () -> Unit,
+    private val prepareInference: suspend () -> Unit = {},
 ) {
     private val source = HeyCyanAudioSource(driver, externallyManaged = true)
     private val foregroundSource = ForegroundAudioSource(context, source, HaloAudioForegroundService.Kind.WEARABLE_INPUT)
@@ -52,6 +53,18 @@ class WearableSpeechInputBridge(
                                     if (captureId != null) return@withLock
                                     // Physical voice activation is explicit barge-in; do not block the packet consumer on TTS cooldowns.
                                     cancelSpeechOutput()
+                                    // Start expensive local-model initialization while the user is still speaking.
+                                    // This is deliberately fire-and-forget: microphone ownership and STT must never
+                                    // wait for model loading, and failures remain recoverable at normal inference time.
+                                    scope.launch(Dispatchers.IO) {
+                                        try {
+                                            prepareInference()
+                                        } catch (cancelled: CancellationException) {
+                                            throw cancelled
+                                        } catch (error: Throwable) {
+                                            Log.w("WEARABLE_AI_PRELOAD", "Inference preload skipped/failed", error)
+                                        }
+                                    }
                                     val turn = SpeechInputTurn(UUID.randomUUID().toString(),
                                         SpeechInputRoute.Wearable(deviceId, "HeyCyan"), ObservationSource.HeyCyanGlasses,
                                         CaptureBoundary.EXTERNAL)

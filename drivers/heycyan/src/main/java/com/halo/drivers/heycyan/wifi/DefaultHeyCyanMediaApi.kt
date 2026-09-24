@@ -51,6 +51,9 @@ class DefaultHeyCyanMediaApi(
     private val connectTimeoutMillis: Int = 10_000,
     private val readTimeoutMillis: Int = 30_000,
     private val bufferSize: Int = 8 * 1024,
+    private val connectionFactory: (URL) -> HttpURLConnection = { url ->
+        url.openConnection() as HttpURLConnection
+    },
 ) : HeyCyanMediaApi {
 
     companion object {
@@ -81,7 +84,7 @@ class DefaultHeyCyanMediaApi(
         withContext(Dispatchers.IO) {
             runCatching {
                 val url = URL("$baseUrl$MANIFEST_PATH")
-                val conn = url.openConnection() as HttpURLConnection
+                val conn = connectionFactory(url)
                 conn.connectTimeout = connectTimeoutMillis
                 conn.readTimeout = readTimeoutMillis
                 conn.requestMethod = "GET"
@@ -141,7 +144,7 @@ class DefaultHeyCyanMediaApi(
     ): Result<MediaDownloadResult> = runCatching {
         val filename = media.filename
         val url = URL("$baseUrl$FILES_PATH$filename")
-        val conn = url.openConnection() as HttpURLConnection
+        val conn = connectionFactory(url)
         conn.connectTimeout = connectTimeoutMillis
         conn.readTimeout = readTimeoutMillis
         conn.requestMethod = "GET"

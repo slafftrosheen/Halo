@@ -1,6 +1,6 @@
 # HeyCyan implementation status
 
-Status: CURRENT SOURCE MAP. Reviewed 2026-09-21.
+Status: CURRENT SOURCE MAP. Reviewed 2026-09-24.
 This describes code paths, not newly verified device behavior.
 
 ## Current sources
@@ -87,6 +87,20 @@ confirmation becomes `UNCONFIRMED`, not synthetic success and not transport fail
 transport methods in current source and return false. They are not the command path used by the
 reachable semantic controls above. Do not connect generic raw-send UI to those stubs without a
 separately verified protocol contract.
+
+## Wi-Fi media transfer source path
+
+The Android media path now preserves the device-reported transfer endpoint end to end:
+`HeyCyanResponse.GlassControl.P2pIp -> HeyCyanEvent.WiFiIpReceived -> HeyCyanDeviceState.wifiIp`.
+The transfer-side IP discovery probes that announced address first and keeps the historical candidate
+scan only as a fallback. It must not substitute an Android Wi-Fi/P2P group-owner address for the
+glasses endpoint.
+
+On API 29+, HeyCyan HTTP probes and `/files/media.config` / media downloads are opened through the
+specific `android.net.Network` obtained for the glasses connection. The transfer path no longer
+binds the entire Halo process to the glasses network, so unrelated provider/plugin traffic keeps its
+normal routing. This is a source-wiring statement; physical BLE -> Wi-Fi -> HTTP acceptance still
+requires a real-device rerun.
 
 ## Session and auto-connect composition
 
