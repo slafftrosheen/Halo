@@ -46,7 +46,9 @@ data class HomeUiState(
     val microphonePermissionGranted: Boolean = true,
     val presentedResponse: String? = null,
     val orb: com.halo.app.ui.presence.HaloOrbPresentation = com.halo.app.ui.presence.HaloOrbPresentation(),
-    val inputStatus: SpeechInputStatus = SpeechInputStatus()
+    val inputStatus: SpeechInputStatus = SpeechInputStatus(),
+    val runtimeTaskStatus: String? = null,
+    val runtimeWaitingCount: Int = 0,
 )
 
 class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
@@ -150,6 +152,7 @@ class HomeViewModel(
     private val microphonePermission: StateFlow<Boolean> = MutableStateFlow(true),
     private val networkRevision: StateFlow<Long> = MutableStateFlow(0L),
     private val speechInput: StateFlow<SpeechInputStatus> = MutableStateFlow(SpeechInputStatus()),
+    private val runtimeProjection: com.halo.app.ui.state.RuntimeUiProjection? = null,
     private val notebook: com.halo.app.data.notebook.NotebookRepository? = null,
     private val conversations: com.halo.app.data.RoomConversationStore? = null,
     private val database: com.halo.app.data.AppDatabase? = null,
@@ -171,7 +174,10 @@ class HomeViewModel(
         _presentedResponse,
         speechAvailability,
         microphonePermission,
-        speechInput
+        speechInput,
+        runtimeProjection?.taskSummary ?: MutableStateFlow(
+            com.halo.app.ui.state.RuntimeTaskSummary(0, 0)
+        ),
     ) { args ->
         @Suppress("UNCHECKED_CAST")
         val snapshot = args[0] as RuntimeSnapshot
@@ -183,20 +189,42 @@ class HomeViewModel(
         val speechReady = args[6] as Boolean
         val microphonePermissionGranted = args[7] as Boolean
         val input = args[8] as SpeechInputStatus
+        val taskSummary = args[9] as com.halo.app.ui.state.RuntimeTaskSummary
         val mapped = mapper.map(snapshot, sessionState, selectedProviderId, selectedModelId, diagnostics)
+        val durableStatus = taskSummary.statusText.takeIf {
+            sessionState == CognitiveSessionState.Idle &&
+                !mapped.speechActive &&
+                !mapped.speechProcessing
+        }
+        val contextualText = durableStatus ?: mapped.contextualText
+        val sourceLabel = when (val route = input.turn?.route) {
+            SpeechInputRoute.Phone, null -> "Built-in microphone"
+            is SpeechInputRoute.Device -> route.displayName
+                ?: when (route.kind) {
+                    AudioDeviceKind.WEARABLE -> "Wearable microphone"
+                    AudioDeviceKind.HEADSET -> "Headset microphone"
+                    AudioDeviceKind.EARBUDS -> "Earbuds microphone"
+                    AudioDeviceKind.USB_AUDIO -> "USB microphone"
+                    AudioDeviceKind.HOST_EXTERNAL -> "External microphone"
+                    AudioDeviceKind.UNKNOWN_EXTERNAL -> "External audio"
+                }
+        }
         mapped.copy(
+                contextualText = contextualText,
                 inputStatus = input,
                 orb = com.halo.app.ui.presence.HaloOrbPresentation(
                     phase = mapped.runtimeState,
-                    label = mapped.contextualText,
-                    source = (input.turn?.route as? SpeechInputRoute.Device)?.displayName ?: "Phone",
+                    label = contextualText,
+                    source = sourceLabel,
                     inputLevel = if (input.capturing) input.inputLevel else 0f,
                     failed = sessionState is CognitiveSessionState.Failed,
                     transition = (sessionState as? CognitiveSessionState.ExecutingTool)?.hashCode() ?: 0
                 ),
                 presentedResponse = presentedResponse,
                 speechReady = speechReady,
-                microphonePermissionGranted = microphonePermissionGranted
+                microphonePermissionGranted = microphonePermissionGranted,
+                runtimeTaskStatus = durableStatus,
+                runtimeWaitingCount = taskSummary.waitingCount,
             )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(0), HomeUiState())
 
