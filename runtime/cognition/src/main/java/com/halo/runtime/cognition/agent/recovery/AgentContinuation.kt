@@ -35,12 +35,13 @@ enum class AgentContinuationRole { USER, ASSISTANT, TOOL }
  */
 object AgentContinuationAssembler {
 
-    fun fromJournal(run: AgentRun): AgentContinuation {
+    fun fromJournal(run: AgentRun, excludeLastCompletedTurn: Boolean = false): AgentContinuation {
         val messages = mutableListOf<AgentContinuationMessage>()
         messages += AgentContinuationMessage(AgentContinuationRole.USER, run.request)
 
-        val turns = run.steps.filterIsInstance<AgentStep.ProviderTurnCompleted>()
+        val allTurns = run.steps.filterIsInstance<AgentStep.ProviderTurnCompleted>()
             .sortedBy { it.createdAt.toEpochMilli() }
+        val turns = if (excludeLastCompletedTurn && allTurns.isNotEmpty()) allTurns.dropLast(1) else allTurns
         for (turn in turns) {
             if (turn.assistantText.isNotBlank() || turn.toolCalls.isEmpty()) {
                 messages += AgentContinuationMessage(AgentContinuationRole.ASSISTANT, turn.assistantText)
@@ -53,18 +54,17 @@ object AgentContinuationAssembler {
                     toolName = call.toolName,
                     argumentsJson = call.argumentsJson,
                 )
-                outcomeFor(run, call.toolCallId)?.let { outcome ->
+                resultFor(run, call.toolCallId)?.let { result ->
                     messages += AgentContinuationMessage(
                         role = AgentContinuationRole.TOOL,
-                        text = outcome.output,
-                        toolCallId = outcome.toolCallId,
-                        toolName = outcome.toolId,
+                        text = result.text,
+                        toolCallId = call.toolCallId,
+                        toolName = result.toolId,
                     )
                 }
             }
         }
 
-        val lastTurn = turns.lastOrNull()
         val started = run.steps.filterIsInstance<AgentStep.ProviderTurnStarted>().lastOrNull()
         return AgentContinuation(
             messages = messages,
@@ -74,7 +74,28 @@ object AgentContinuationAssembler {
         )
     }
 
-    private fun outcomeFor(run: AgentRun, toolCallId: String): AgentStep.ToolOutcomeRecorded? =
-        run.steps.filterIsInstance<AgentStep.ToolOutcomeRecorded>()
-            .lastOrNull { it.toolCallId == toolCallId }
+    private data class DurableToolResult(val toolId: String, val text: String)
+
+    private fun resultFor(run: AgentRun, toolCallId: String): DurableToolResult? {
+        val step = run.steps.asReversed().firstOrNull { candidate ->
+            when (candidate) {
+                is AgentStep.ToolOutcomeRecorded -> candidate.toolCallId == toolCallId
+                is AgentStep.ToolRejected -> candidate.toolCallId == toolCallId
+                is AgentStep.ToolCompleted -> candidate.toolCallId == toolCallId
+                is AgentStep.ToolFailed -> candidate.toolCallId == toolCallId
+                else -> false
+            }
+        } ?: return null
+        return when (step) {
+            is AgentStep.ToolOutcomeRecorded -> DurableToolResult(step.toolId, step.output)
+            is AgentStep.ToolRejected -> DurableToolResult(step.toolId, step.modelResult)
+            is AgentStep.ToolCompleted -> DurableToolResult(step.toolId, step.resultSummary)
+            is AgentStep.ToolFailed -> DurableToolResult(
+                step.toolId,
+                "tool_result: status=failed reason_code=PERMANENT retryable=false\nreason: " +
+                    step.reason.replace('\n', ' ').take(512),
+            )
+            else -> null
+        }
+    }
 }

@@ -27,6 +27,12 @@ class LocalCaptureStore(private val context: Context, private val db: AppDatabas
 
     private fun uri(file: File) = FileProvider.getUriForFile(context, "${context.packageName}.captures", file)
 
+    suspend fun discardPendingCapture(file: File) = withContext(Dispatchers.IO) {
+        val capturesDir = File(context.filesDir, "captures/images").canonicalFile
+        val candidate = file.canonicalFile
+        if (candidate.path.startsWith(capturesDir.path + File.separator)) candidate.delete()
+    }
+
     suspend fun receive(file: File, deviceId: String? = null, captureId: String = file.nameWithoutExtension): String = withContext(Dispatchers.IO) {
         require(file.exists() && file.length() in 1..(32L * 1024 * 1024)) { "No complete image received, or image exceeds 32 MB" }
         val options = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }

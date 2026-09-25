@@ -67,7 +67,6 @@ import com.halo.app.ui.workspace.HaloWorkspaceButton
 import com.halo.app.ui.workspace.HaloWorkspaceCard
 import com.halo.sdk.provider.CognitiveSessionState
 import com.halo.sdk.provider.ProviderStatus
-import java.io.File
 
 @Composable
 fun HomeScreen(
@@ -80,8 +79,9 @@ fun HomeScreen(
     val captureMessage by viewModel.captureMessage.collectAsState()
     val scope = rememberCoroutineScope()
     val camera = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.TakePicture()) { received ->
-        pendingPhoto?.let { path -> if (received) viewModel.receiveCapture(java.io.File(path)) else java.io.File(path).delete() }
+        val path = pendingPhoto
         pendingPhoto = null
+        if (path != null) viewModel.handlePhoneCaptureResult(path, received)
     }
     fun launchCamera() {
         if (viewModel.captures == null) return
@@ -91,8 +91,9 @@ fun HomeScreen(
                 pendingPhoto = pending.file.absolutePath
                 camera.launch(pending.uri)
             } catch (error: Exception) {
-                pendingPhoto?.let { File(it).delete() }
+                val path = pendingPhoto
                 pendingPhoto = null
+                if (path != null) viewModel.discardPhoneCapture(path)
                 viewModel.captureMessage.value = "No camera app is available"
             }
         }

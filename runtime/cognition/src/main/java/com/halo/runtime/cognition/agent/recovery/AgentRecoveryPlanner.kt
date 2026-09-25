@@ -36,6 +36,9 @@ interface AgentRecoveryPlanner {
     fun explain(plan: RecoveryPlan): RecoveryExplanation
 }
 
+fun recoveryEvidenceStepId(run: AgentRun): String? =
+    run.steps.lastOrNull { it !is AgentStep.RecoveryClaimed }?.id?.value
+
 class DefaultAgentRecoveryPlanner : AgentRecoveryPlanner {
 
     override fun plan(
@@ -59,6 +62,9 @@ class DefaultAgentRecoveryPlanner : AgentRecoveryPlanner {
                 run.id, produced.text, "${run.id.value}:${produced.responseId}",
             ))
         }
+
+        // A committed response is complete even if a crash happened before the run row became terminal.
+        if (steps.any { it is AgentStep.ResponseCommitted }) return RecoveryPlan.NothingToDo
 
         // 3. Claimed tool without a definitive outcome is the critical case.
         unclaimedOutcomeInvocation(steps)?.let { invocation ->
@@ -95,7 +101,19 @@ class DefaultAgentRecoveryPlanner : AgentRecoveryPlanner {
             ))
         }
 
-        // 6. Provider response exists with tool calls.
+        // 6. A completed provider turn with no tool calls is already a final response.
+        // If process death happened before ResponseProduced, commit that exact response.
+        lastCompletedProviderTurn(steps)?.let { turn ->
+            if (turn.toolCalls.isEmpty()) {
+                return checkClaim(run, RecoveryPlan.CompleteFromRecordedResponse(
+                    run.id,
+                    turn.assistantText,
+                    "${run.id.value}:provider:${turn.turnId.value}",
+                ))
+            }
+        }
+
+        // 7. Provider response exists with tool calls.
         lastCompletedProviderTurn(steps)?.let { turn ->
             if (turn.toolCalls.isNotEmpty()) {
                 val callIds = turn.toolCalls.map { it.toolCallId }
@@ -115,7 +133,7 @@ class DefaultAgentRecoveryPlanner : AgentRecoveryPlanner {
             }
         }
 
-        // 7. Prepared invocation that was never claimed: no side effect is
+        // 8. Prepared invocation that was never claimed: no side effect is
         // possible, but authorization/resource admission may also not have
         // completed. Re-enter the normal provider/tool path so those gates run
         // again; never execute a merely prepared call directly.
@@ -124,7 +142,7 @@ class DefaultAgentRecoveryPlanner : AgentRecoveryPlanner {
             return checkClaim(run, RecoveryPlan.ContinueAfterToolResult(run.id, turnId, emptySet()))
         }
 
-        // 8. Anything else non-terminal without journal evidence is legacy/uncertain.
+        // 9. Anything else non-terminal without journal evidence is legacy/uncertain.
         return if (steps.none { it is AgentStep.RunPrepared }) {
             RecoveryPlan.UnsupportedLegacyState(run.id, "Run has no durable journal evidence.")
         } else {
@@ -133,12 +151,13 @@ class DefaultAgentRecoveryPlanner : AgentRecoveryPlanner {
     }
     
     private fun checkClaim(run: AgentRun, plan: RecoveryPlan): RecoveryPlan {
-        val lastClaim = run.steps.filterIsInstance<AgentStep.RecoveryClaimed>().lastOrNull()
-        if (lastClaim != null && lastClaim.planKind == plan::class.simpleName) {
-            // Already claimed this exact plan without journal advancing to completion. Prevent infinite loops.
-            return RecoveryPlan.UncertainExternalAction(run.id, null, "Repeated recovery claim without progress")
+        val evidenceStepId = recoveryEvidenceStepId(run)
+        val alreadyClaimed = run.steps.filterIsInstance<AgentStep.RecoveryClaimed>().any {
+            it.planKind == plan::class.simpleName && it.evidenceStepId == evidenceStepId
         }
-        return plan
+        return if (alreadyClaimed) {
+            RecoveryPlan.UncertainExternalAction(run.id, null, "Repeated recovery claim without journal progress")
+        } else plan
     }
 
     override fun explain(plan: RecoveryPlan): RecoveryExplanation = when (plan) {
@@ -186,7 +205,8 @@ class DefaultAgentRecoveryPlanner : AgentRecoveryPlanner {
     private fun unclaimedOutcomeInvocation(steps: List<AgentStep>): ToolInvocation? {
         val claims = steps.filterIsInstance<AgentStep.ToolExecutionClaimed>()
         val outcomes = steps.filterIsInstance<AgentStep.ToolOutcomeRecorded>().map { it.toolCallId }.toSet()
-        val definitiveFailures = steps.filterIsInstance<AgentStep.ToolFailed>().map { it.toolCallId }.toSet()
+        val definitiveFailures = steps.filterIsInstance<AgentStep.ToolFailed>().map { it.toolCallId }.toSet() +
+            steps.filterIsInstance<AgentStep.ToolRejected>().map { it.toolCallId }.toSet()
         val claimsWithoutOutcome = claims.filter { claim ->
             claim.toolCallId !in outcomes && claim.toolCallId !in definitiveFailures
         }
@@ -215,7 +235,8 @@ class DefaultAgentRecoveryPlanner : AgentRecoveryPlanner {
         val newStyleCalls = steps.filterIsInstance<AgentStep.ToolExecutionClaimed>().map { it.toolCallId }.toSet()
         val outcomes = steps.filterIsInstance<AgentStep.ToolOutcomeRecorded>().map { it.toolCallId }.toSet() +
             steps.filterIsInstance<AgentStep.ToolCompleted>().map { it.toolCallId }.toSet() +
-            steps.filterIsInstance<AgentStep.ToolFailed>().map { it.toolCallId }.toSet()
+            steps.filterIsInstance<AgentStep.ToolFailed>().map { it.toolCallId }.toSet() +
+            steps.filterIsInstance<AgentStep.ToolRejected>().map { it.toolCallId }.toSet()
         return steps.filterIsInstance<AgentStep.ToolDispatched>()
             .firstOrNull { dispatch ->
                 dispatch.toolCallId !in newStyleCalls && dispatch.toolCallId !in outcomes

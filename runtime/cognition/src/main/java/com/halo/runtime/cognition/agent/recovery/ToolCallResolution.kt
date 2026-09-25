@@ -1,6 +1,7 @@
 package com.halo.runtime.cognition.agent.recovery
 
-import com.halo.runtime.cognition.agent.AgentStep
+import com.halo.runtime.cognition.agent.*
+import com.halo.runtime.cognition.tools.ToolFailureKind
 
 enum class ToolCallResolution {
     PENDING,
@@ -13,45 +14,58 @@ enum class ToolCallResolution {
 }
 
 fun resolveToolCalls(toolCallIds: List<String>, steps: List<AgentStep>): Map<String, ToolCallResolution> {
-    val result = mutableMapOf<String, ToolCallResolution>()
-    
-    val inputs = steps.filterIsInstance<AgentStep.InputRequested>().map { it.requestId.value }.toSet()
-    val resolvedInputs = steps.filterIsInstance<AgentStep.InputResolved>().map { it.requestId.value }.toSet()
-    val claims = steps.filterIsInstance<AgentStep.ToolExecutionClaimed>().map { it.toolCallId }.toSet()
-    val outcomes = steps.filterIsInstance<AgentStep.ToolOutcomeRecorded>().associateBy { it.toolCallId }
-    val completions = steps.filterIsInstance<AgentStep.ToolCompleted>().map { it.toolCallId }.toSet()
-    val failures = steps.filterIsInstance<AgentStep.ToolFailed>().map { it.toolCallId }.toSet()
-
-    for (callId in toolCallIds) {
-        // If a ToolFailed is recorded, it's a rejection or terminal failure.
-        if (callId in failures) {
-            result[callId] = ToolCallResolution.REJECTED_TERMINAL
-            continue
+    val preparedByInvocation = steps.filterIsInstance<AgentStep.ToolInvocationPrepared>()
+        .associateBy { it.invocationId.value }
+    val resolvedInputIds = steps.filterIsInstance<AgentStep.InputResolved>()
+        .map { it.requestId.value }
+        .toSet()
+    val waitingCallIds = steps.filterIsInstance<AgentStep.InputRequested>()
+        .mapNotNull { requested ->
+            val approval = requested.input as? AgentInputRequest.Approval ?: return@mapNotNull null
+            if (requested.requestId.value in resolvedInputIds) return@mapNotNull null
+            preparedByInvocation[approval.invocationId.value]?.toolCallId
         }
-        
-        // If outcome is recorded, determine success or failure
-        val outcome = outcomes[callId]
-        if (outcome != null) {
-            result[callId] = if (outcome.success) ToolCallResolution.SUCCEEDED else ToolCallResolution.FAILED_TERMINAL
-            continue
-        }
-        if (callId in completions) {
-            result[callId] = ToolCallResolution.SUCCEEDED
-            continue
-        }
+        .toSet()
+    val claims = steps.filterIsInstance<AgentStep.ToolExecutionClaimed>()
+        .map { it.toolCallId }
+        .toSet()
 
-        // Check if waiting for user input
-        // Wait, how do we correlate an InputRequest with a specific tool call?
-        // AgentStep.InputRequested does not have a toolCallId. But we can assume if there's an unresolved input, the tool call is waiting.
-        // Actually, we can just say if there's any pending input, we'll hit that condition earlier in the planner.
-
-        if (callId in claims) {
-            result[callId] = ToolCallResolution.COMPLETION_UNKNOWN
-            continue
+    return toolCallIds.associateWith { callId ->
+        val latest = steps.asReversed().firstOrNull { step ->
+            when (step) {
+                is AgentStep.ToolRejected -> step.toolCallId == callId
+                is AgentStep.ToolOutcomeRecorded -> step.toolCallId == callId
+                is AgentStep.ToolCompleted -> step.toolCallId == callId
+                is AgentStep.ToolFailed -> step.toolCallId == callId
+                else -> false
+            }
         }
-
-        result[callId] = ToolCallResolution.PENDING
+        when (latest) {
+            is AgentStep.ToolRejected -> ToolCallResolution.REJECTED_TERMINAL
+            is AgentStep.ToolOutcomeRecorded -> when {
+                latest.success -> ToolCallResolution.SUCCEEDED
+                latest.actionTruth == ActionTruth.UNKNOWN -> ToolCallResolution.COMPLETION_UNKNOWN
+                latest.failureKind in RETRYABLE_FAILURES -> ToolCallResolution.FAILED_RETRYABLE
+                else -> ToolCallResolution.FAILED_TERMINAL
+            }
+            is AgentStep.ToolCompleted -> when {
+                latest.success -> ToolCallResolution.SUCCEEDED
+                latest.actionTruth == ActionTruth.UNKNOWN -> ToolCallResolution.COMPLETION_UNKNOWN
+                else -> ToolCallResolution.FAILED_TERMINAL
+            }
+            is AgentStep.ToolFailed -> ToolCallResolution.FAILED_TERMINAL
+            else -> when {
+                callId in waitingCallIds -> ToolCallResolution.WAITING_FOR_USER
+                callId in claims -> ToolCallResolution.COMPLETION_UNKNOWN
+                else -> ToolCallResolution.PENDING
+            }
+        }
     }
-
-    return result
 }
+
+private val RETRYABLE_FAILURES = setOf(
+    ToolFailureKind.TIMEOUT.name,
+    ToolFailureKind.RESOURCE_BUSY.name,
+    ToolFailureKind.RESOURCE_UNAVAILABLE.name,
+    ToolFailureKind.TRANSIENT.name,
+)

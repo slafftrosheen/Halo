@@ -315,15 +315,34 @@ class HomeViewModel(
     }
 
     val captureMessage = MutableStateFlow<String?>(null)
-    fun receiveCapture(file: java.io.File) { viewModelScope.launch {
+
+    fun handlePhoneCaptureResult(path: String, received: Boolean) {
+        viewModelScope.launch {
+            val store = captures ?: return@launch
+            val file = java.io.File(path)
+            if (!received) {
+                store.discardPendingCapture(file)
+                return@launch
+            }
+            receiveCaptureNow(store, file)
+        }
+    }
+
+    fun discardPhoneCapture(path: String) {
+        viewModelScope.launch { captures?.discardPendingCapture(java.io.File(path)) }
+    }
+
+    private suspend fun receiveCaptureNow(store: LocalCaptureStore, file: java.io.File) {
         try {
-            captures?.receive(file)
+            store.receive(file)
             val target = aiProviderRouter?.resolveExecutionTarget(AiRequest(text = ""))
             captureMessage.value = if (target?.providerCapabilities?.contains(AiCapability.IMAGE) == true)
                 "Saved to Inbox. Ask Halo about the image to use it in this turn."
-                else "Saved to Inbox. Vision is unavailable for the selected model."
-        } catch (error: Exception) { captureMessage.value = error.message ?: "Capture failed" }
-    } }
+            else "Saved to Inbox. Vision is unavailable for the selected model."
+        } catch (error: Exception) {
+            captureMessage.value = error.message ?: "Capture failed"
+        }
+    }
 
     fun createNote() { viewModelScope.launch {
         val note = notebook?.createNote() ?: return@launch
