@@ -414,6 +414,7 @@ object ManualDependencyGraph {
             agentRunStore = agentRunStore,
             toolResourceCoordinator = toolResourceCoordinator,
             toolExposurePlanner = toolExposurePlanner,
+            toolAvailabilityResolver = toolAvailabilityResolver,
         )
     }
 
