@@ -111,6 +111,7 @@ class CognitiveSession(
     private val agentRunStore: com.halo.runtime.cognition.agent.AgentRunStore? = null,
     private val toolResourceCoordinator: ToolResourceCoordinator? = null,
     private val toolExposurePlanner: ToolExposurePlanner? = null,
+    private val toolAvailabilityResolver: com.halo.runtime.cognition.tools.ToolAvailabilityResolver? = null,
 ) {
     private val _state = MutableStateFlow<CognitiveSessionState>(CognitiveSessionState.Idle)
     val state: StateFlow<CognitiveSessionState> = _state.asStateFlow()
@@ -977,6 +978,42 @@ class CognitiveSession(
                         it.name == toolCall.functionName || it.id == toolCall.functionName
                     } ?: true
                 } ?: false))
+                val descriptor = toolRegistry?.descriptor(toolCall.functionName)
+                val availability = if (!isDiscoveryCall && descriptor != null) {
+                    toolAvailabilityResolver?.checkAvailability(descriptor)
+                        ?: com.halo.runtime.cognition.tools.ToolAvailability.Available
+                } else {
+                    com.halo.runtime.cognition.tools.ToolAvailability.Available
+                }
+                val availabilityReason = when (availability) {
+                    com.halo.runtime.cognition.tools.ToolAvailability.Available -> null
+                    is com.halo.runtime.cognition.tools.ToolAvailability.Disabled -> availability.reason
+                    is com.halo.runtime.cognition.tools.ToolAvailability.MissingCapabilities ->
+                        "Missing capabilities: " + availability.missing.joinToString { it.value }
+                    is com.halo.runtime.cognition.tools.ToolAvailability.Degraded -> availability.reason
+                }
+
+                if (availabilityReason != null) {
+                    if (runId != null &&
+                        availability is com.halo.runtime.cognition.tools.ToolAvailability.MissingCapabilities
+                    ) {
+                        agentRunCoordinator?.transition(
+                            runId,
+                            AgentRunState.WAITING_FOR_CAPABILITY,
+                            availabilityReason,
+                        )
+                        return null
+                    }
+                    toolMessages.add(
+                        AIMessage(
+                            Role.TOOL,
+                            "Tool unavailable: $availabilityReason",
+                            toolCallId = toolCall.id,
+                        )
+                    )
+                    continue
+                }
+
                 val invalidArguments = toolRegistry?.validate(toolCall)
                 if (!policy.includeAvailableTools || toolRegistry == null || toolAuthorizer == null ||
                     !toolIsEnabled || invalidArguments != null) {
@@ -988,20 +1025,27 @@ class CognitiveSession(
                         invalidArguments != null -> invalidArguments.reason
                         else -> "Tool authorization service unavailable"
                     }
-                    runId?.let { agentRunCoordinator?.recordStep(AgentStep.ToolFailed(newStepId(), it, Instant.now(), toolCall.id, toolCall.functionName, reason)) }
+                    runId?.let {
+                        agentRunCoordinator?.recordStep(
+                            AgentStep.ToolFailed(
+                                newStepId(), it, Instant.now(),
+                                toolCall.id, toolCall.functionName, reason,
+                            )
+                        )
+                    }
                     eventBus.publish(
                         ToolCallRejected(
                             requestId = requestId,
                             toolCallId = toolCall.id,
                             toolId = toolCall.functionName,
-                            reason = reason
+                            reason = reason,
                         )
                     )
                     toolMessages.add(
                         AIMessage(
                             Role.TOOL,
                             "Tool execution rejected: $reason",
-                            toolCallId = toolCall.id
+                            toolCallId = toolCall.id,
                         )
                     )
                     continue
@@ -1009,14 +1053,7 @@ class CognitiveSession(
 
                 /*
                  * RUNTIME-019: durable authorization first. Interactive approval
-                 * no longer blocks this coroutine: the authorizer returns a durable
-                 * AgentInputRequest.Approval, the loop journals InputRequested,
-                 * moves the run to WAITING_FOR_APPROVAL and returns — the run is
-                 * resumable after process death. A journal-evidenced Approved
-                 * resolution for the SAME canonical arguments digest auto-reauthorizes
-                 * the re-emitted call (same digest = same action; a different
-                 * digest requires a fresh approval). The scoped legacy path only
-                 * remains for calls without a durable run context.
+                 * journals the request and suspends the run; UI never owns execution.
                  */
                 val previouslyApproved = runId != null &&
                     hasApprovedApproval(runId, toolCall.functionName, argumentsDigest)
@@ -1053,61 +1090,74 @@ class CognitiveSession(
                                 reason = "Waiting for your approval",
                             )
                         )
-                        // Durable suspension: the resolved approval resumes the run.
                         return null
                     }
                     else -> toolAuthorizer.authorize(toolCall, authorizationScopeId)
                 }
+
                 when (authorization) {
                     is ToolAuthorization.Rejected -> {
-                        runId?.let { agentRunCoordinator?.recordStep(AgentStep.ToolFailed(newStepId(), it, Instant.now(), toolCall.id, toolCall.functionName, authorization.reason)) }
+                        runId?.let {
+                            agentRunCoordinator?.recordStep(
+                                AgentStep.ToolFailed(
+                                    newStepId(), it, Instant.now(),
+                                    toolCall.id, toolCall.functionName, authorization.reason,
+                                )
+                            )
+                        }
                         eventBus.publish(
                             ToolCallRejected(
                                 requestId = requestId,
                                 toolCallId = toolCall.id,
                                 toolId = toolCall.functionName,
-                                reason = authorization.reason
+                                reason = authorization.reason,
                             )
                         )
                         toolMessages.add(
                             AIMessage(
                                 Role.TOOL,
                                 "Tool execution rejected: ${authorization.reason}",
-                                toolCallId = toolCall.id
+                                toolCallId = toolCall.id,
                             )
                         )
                         continue
                     }
 
-                    is ToolAuthorization.Authorized -> {
-                        eventBus.publish(
-                            ToolCallAuthorized(
-                                requestId = requestId,
-                                toolCallId = toolCall.id,
-                                toolId = toolCall.functionName
-                            )
+                    is ToolAuthorization.Authorized -> eventBus.publish(
+                        ToolCallAuthorized(
+                            requestId = requestId,
+                            toolCallId = toolCall.id,
+                            toolId = toolCall.functionName,
                         )
-                    }
+                    )
                 }
 
                 val authorized = authorization as ToolAuthorization.Authorized
-                if (runId != null) {
-                    /*
-                     * RUNTIME-018: the execution CLAIM is persisted before the executor
-                     * runs. It proves Halo took responsibility for this exact invocation
-                     * (via stable idempotency identity) — it does NOT prove any external
-                     * dispatch happened. The claim deduplicates on the idempotency key,
-                     * so a duplicate claim means a previous run already claimed it.
-                     */
-                    val claimed = agentRunCoordinator?.recordStep(
-                        AgentStep.ToolExecutionClaimed(newStepId(), runId, Instant.now(),
-                            invocationId, toolCall.id, toolCall.functionName, idempotencyKey, replaySafety.name)
-                    ) == true
-                    check(claimed) { "Tool execution already claimed; completion must be reconciled before retry" }
+
+                suspend fun executeClaimed(): ToolExecutionResult {
+                    if (runId != null) {
+                        /*
+                         * The durable execution claim is written only AFTER all
+                         * required resources have been granted and immediately
+                         * BEFORE the executor may cause side effects. A resource
+                         * wait therefore never masquerades as an uncertain action.
+                         */
+                        val claimed = agentRunCoordinator?.recordStep(
+                            AgentStep.ToolExecutionClaimed(
+                                newStepId(), runId, Instant.now(),
+                                invocationId, toolCall.id, toolCall.functionName,
+                                idempotencyKey, replaySafety.name,
+                            )
+                        ) == true
+                        check(claimed) {
+                            "Tool execution already claimed; completion must be reconciled before retry"
+                        }
+                    }
+                    return toolRegistry.executeAuthorized(authorized)
                 }
+
                 var leaseToRelease: ResourceLease? = null
                 val result = try {
-                    val descriptor = toolRegistry.descriptor(toolCall.functionName)
                     if (descriptor != null && toolResourceCoordinator != null) {
                         val holder = ResourceHolder(
                             id = invocationId.value,
@@ -1116,12 +1166,12 @@ class CognitiveSession(
                             toolInvocationId = invocationId.value,
                             kind = ResourceHolderKind.TOOL,
                         )
-                        val acq = toolResourceCoordinator.prepareAndAcquire(descriptor, holder, availableDevices = emptyList())
-                        when (acq) {
+                        when (val acquisition = toolResourceCoordinator.prepareAndAcquire(descriptor, holder)) {
                             is ToolResourceAcquisition.Granted -> {
-                                leaseToRelease = acq.lease
-                                toolRegistry.executeAuthorized(authorized)
+                                leaseToRelease = acquisition.lease
+                                executeClaimed()
                             }
+
                             is ToolResourceAcquisition.Blocked -> {
                                 if (runId != null) {
                                     agentRunCoordinator?.recordStep(
@@ -1131,35 +1181,52 @@ class CognitiveSession(
                                             createdAt = Instant.now(),
                                             invocationId = invocationId,
                                             toolId = toolCall.functionName,
-                                            resourceIds = acq.plan.resourcePlan.claims.map { it.key.resourceId.value },
-                                            endpointIds = acq.plan.resourcePlan.claims.map { it.key.endpointId.value },
-                                            blockingLeaseIds = (acq.acquireResult as? ResourceAcquireResult.Busy)
-                                                ?.conflicts?.map { it.heldLeaseId.value } ?: emptyList()
+                                            resourceIds = acquisition.plan.resourcePlan.claims.map {
+                                                it.key.resourceId.value
+                                            },
+                                            endpointIds = acquisition.plan.resourcePlan.claims.map {
+                                                it.key.endpointId.value
+                                            },
+                                            blockingLeaseIds = (acquisition.acquireResult as? ResourceAcquireResult.Busy)
+                                                ?.conflicts
+                                                ?.map { it.heldLeaseId.value }
+                                                .orEmpty(),
                                         )
                                     )
-                                    agentRunCoordinator?.transition(runId, AgentRunState.WAITING_FOR_RESOURCE, "Resource busy: ${acq.acquireResult}")
+                                    agentRunCoordinator?.transition(
+                                        runId,
+                                        AgentRunState.WAITING_FOR_RESOURCE,
+                                        "Required resource is currently busy",
+                                    )
+                                    return null
                                 }
                                 ToolExecutionResult.Failed(
                                     toolCallId = toolCall.id,
                                     toolId = toolCall.functionName,
-                                    message = "Resource busy for ${toolCall.functionName}",
+                                    message = "Required resource is currently busy",
                                     failureKind = ToolFailureKind.RESOURCE_BUSY,
                                 )
                             }
+
                             is ToolResourceAcquisition.CapabilityMissing -> {
                                 if (runId != null) {
-                                    agentRunCoordinator?.transition(runId, AgentRunState.WAITING_FOR_CAPABILITY, "Capability missing")
+                                    agentRunCoordinator?.transition(
+                                        runId,
+                                        AgentRunState.WAITING_FOR_CAPABILITY,
+                                        "Required device capability is unavailable",
+                                    )
+                                    return null
                                 }
                                 ToolExecutionResult.Failed(
                                     toolCallId = toolCall.id,
                                     toolId = toolCall.functionName,
-                                    message = "Capability missing for ${toolCall.functionName}",
+                                    message = "Required device capability is unavailable",
                                     failureKind = ToolFailureKind.RESOURCE_UNAVAILABLE,
                                 )
                             }
                         }
                     } else {
-                        toolRegistry.executeAuthorized(authorized)
+                        executeClaimed()
                     }
                 } finally {
                     leaseToRelease?.release()
