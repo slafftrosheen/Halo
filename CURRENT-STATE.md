@@ -102,6 +102,19 @@ chips, live active resource leases), and Settings → Runtime status screen (`Ru
 `AlertDialog` popups overlaying the assistant screen.
 IMPLEMENTED / UNVALIDATED: no test or hardware validation performed in this pass.
 
+RUNTIME-021 source addition (2026-09-25): Workload-aware provider routing and multimodal context fabric pass.
+Inverted `CognitiveSession` dependency ordering so workload planning (`AiWorkloadPlanner`) and typed context
+acquisition (`ContextAcquisitionCoordinator`) run BEFORE provider target resolution. `AiWorkloadSpec` declares
+required/optional capabilities (`TEXT`, `IMAGE`, `TOOLS`, `STREAMING`), minimum context window, and remote
+context allowance. `AiExecutionTarget` exposes `effectiveCapabilities` derived from provider capabilities,
+model capabilities, and Halo adapter support. `AiProviderRouter` validates execution targets against
+workload requirements before generation and respects routing policy (`EXPLICIT`, `LOCAL_ONLY`,
+`PREFERRED_WITH_FALLBACK`, `AUTOMATIC`). `ImageContext` carries provenance attributes (`assetId`, `interactionId`,
+`originDeviceId`, `source`, `trust`, `freshness`). `AiContextPolicy` enforces cloud context gates
+(`allowCloudImages`, `allowCloudScreenContext`, `allowCloudWorkspace`). Target provider/model remains
+immutable across tool execution rounds of a cognitive transaction.
+IMPLEMENTED / UNVALIDATED: no test or hardware validation performed in this pass.
+
 Additional recent source additions: The codebase now includes structured `AiFailureDetails`, provider retry/cooldown behavior, `LOCAL_ONLY` routing, unified error presentation, detailed interaction turn lifecycles, barge-in evidence tracking, observation freshness and supersession, explicit local-inference readiness/preload stages, latency tracing, HeyCyan arbitration and thumbnail decoding work, and significant `llama.cpp` runtime improvements. As with the rest of the file, these are present in code but not yet validated as physically accepted on real hardware.
 
 See [architecture](docs/04-architecture/ARCHITECTURE.md),

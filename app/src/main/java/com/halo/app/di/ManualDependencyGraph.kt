@@ -41,6 +41,7 @@ import kotlinx.coroutines.flow.StateFlow
 import com.halo.engines.memory.WorkingMemoryProcess
 import com.halo.providers.android.tts.AndroidTTSProvider
 import com.halo.runtime.cognition.context.AssistantContextRepository
+import com.halo.runtime.cognition.context.DefaultContextAcquisitionCoordinator
 import com.halo.runtime.cognition.device.DefaultDeviceCapabilityResolver
 import com.halo.runtime.cognition.device.DefaultResourcePlanner
 import com.halo.runtime.cognition.session.CognitiveSession
@@ -396,6 +397,12 @@ object ManualDependencyGraph {
             runtimeDeviceSource = runtimeDeviceCapabilityBridge,
         )
     }
+    val contextAcquisitionCoordinator by lazy {
+        DefaultContextAcquisitionCoordinator(
+            assistantContexts = assistantContextRepository,
+            workspaceContext = workspaceContext
+        )
+    }
     val cognitiveSession by lazy {
         CognitiveSession(
             eventBus = eventBus,
@@ -415,6 +422,7 @@ object ManualDependencyGraph {
             toolResourceCoordinator = toolResourceCoordinator,
             toolExposurePlanner = toolExposurePlanner,
             toolAvailabilityResolver = toolAvailabilityResolver,
+            contextAcquisitionCoordinator = contextAcquisitionCoordinator,
         )
     }
 

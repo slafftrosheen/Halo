@@ -13,7 +13,8 @@ import kotlinx.coroutines.flow.StateFlow
 data class AiExecutionTarget(
     val provider: AiInferenceProvider,
     val model: AiModel,
-    val providerCapabilities: Set<AiCapability>
+    val providerCapabilities: Set<AiCapability>,
+    val effectiveCapabilities: Set<AiCapability> = providerCapabilities,
 ) {
     val providerId: String
         get() = provider.id
@@ -27,6 +28,11 @@ enum class TargetRejectionReason {
     MODEL_NOT_INSTALLED,
     MODEL_NOT_ADVERTISED,
     CAPABILITY_MISMATCH,
+    INPUT_MODALITY_UNSUPPORTED,
+    TOOLS_UNSUPPORTED,
+    STREAMING_UNSUPPORTED,
+    CONTEXT_WINDOW_TOO_SMALL,
+    REMOTE_CONTEXT_FORBIDDEN,
     MEMORY_PREFLIGHT_FAILED,
     NETWORK_UNAVAILABLE,
     CONFIGURATION_MISSING,
@@ -57,7 +63,6 @@ interface AiProviderRouter {
     val lastRoutingDecision: StateFlow<AiRoutingDecision?>
         get() = MutableStateFlow(null)
 
-
     val selectedProviderId: StateFlow<String?>
     val selectedModelId: StateFlow<String?>
     val diagnosticsFlow: StateFlow<List<AiProviderDiagnostic>>
@@ -74,23 +79,19 @@ interface AiProviderRouter {
     fun getAllProviders(): List<AiProvider>
 
     /**
-     * Resolve the complete execution target for a request.
-     *
-     * Implementations must validate:
-     * - provider readiness
-     * - routing policy
-     * - provider capabilities
-     * - advertised model existence
-     * - model input capabilities
+     * Resolve the complete execution target for a request and workload spec.
      */
     suspend fun resolveExecutionTarget(
-        request: AiRequest
+        request: AiRequest,
+        workload: AiWorkloadSpec = AiWorkloadSpec(),
     ): AiExecutionTarget
+
+    suspend fun resolveExecutionTarget(
+        request: AiRequest
+    ): AiExecutionTarget = resolveExecutionTarget(request, AiWorkloadSpec())
 
     /**
      * Legacy provider-only resolution.
-     *
-     * Keep this temporarily for callers that only need provider selection.
      */
     suspend fun getEligibleProvider(
         request: AiRequest

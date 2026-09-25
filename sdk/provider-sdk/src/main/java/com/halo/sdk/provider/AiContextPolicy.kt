@@ -14,7 +14,9 @@ data class AiContextPolicy(
     val includeAudio: Boolean = false,
     val includeVideo: Boolean = false,
     val includeWorkspace: Boolean = true,
-    val allowCloudWorkspace: Boolean = false
+    val allowCloudWorkspace: Boolean = false,
+    val allowCloudScreenContext: Boolean = false,
+    val allowCloudImages: Boolean = false,
 ) {
     companion object {
         val CONSERVATIVE = AiContextPolicy(
@@ -22,7 +24,7 @@ data class AiContextPolicy(
             includeDeviceState = true,
             includeRecentEvents = false,
             includeMemories = false,
-            includeAvailableTools = true
+            includeAvailableTools = true,
         )
     }
 }

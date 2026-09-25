@@ -43,7 +43,8 @@ stabilization (compile/test/device/HIL) follows after the substrate exists.
    `WAITING_FOR_RESOURCE` state. Audio session + native compute bridged onto generic resource leases;
    `LeasedStillImageSource` + `LeasedWirelessTransferCapability` generic wrappers; `HeyCyanResourceArbiter`
    preserved inside driver. IMPLEMENTED / UNVALIDATED.
-5. **RUNTIME-021 — Provider workload/capability routing + multimodal context acquisition**
+5. ~~**RUNTIME-021 — Provider workload/capability routing + multimodal context fabric**~~ — LANDED (2026-09-25).
+   `AiWorkloadSpec` (`AiWorkloadKind`, `AiFeatureRequirement`), `AiExecutionTarget` with effective capability intersection, workload-aware `AiProviderRouter.resolveExecutionTarget`, deterministic `AiWorkloadPlanner`, `ContextAcquisitionCoordinator`, `ImageContext` provenance, `ContextBudget`, context token estimation, cloud context policy gates (`allowCloudImages`, `allowCloudScreenContext`), target-pinned tool execution loops. IMPLEMENTED / UNVALIDATED.
 6. **STABILIZATION** — compile/test/device/HIL; fix the integrated foundation together
 
 HeyCyan validation remains an essential engineering track, but it is not the entire roadmap. 

@@ -3,6 +3,7 @@ package com.halo.runtime.cognition.context
 import com.halo.sdk.provider.AiCapability
 import com.halo.sdk.provider.AiContext
 import com.halo.sdk.provider.AiContextPolicy
+import com.halo.sdk.runtime.VisualFreshness
 
 data class ContextOmission(
     val source: String,
@@ -18,7 +19,13 @@ data class ContextAssemblyResult(
 data class ImageContext(
     val imageBytes: ByteArray,
     val mimeType: String,
-    val timestampMs: Long
+    val timestampMs: Long,
+    val assetId: String? = null,
+    val interactionId: String? = null,
+    val originDeviceId: String? = null,
+    val source: ContextSource = ContextSource.CurrentRequest,
+    val trust: ContextTrust = ContextTrust.EXTERNAL_UNTRUSTED,
+    val freshness: VisualFreshness = VisualFreshness.RECENT_CAPTURE,
 ) {
 
     val sizeBytes: Int
@@ -30,6 +37,8 @@ data class ImageContext(
         if (!imageBytes.contentEquals(other.imageBytes)) return false
         if (mimeType != other.mimeType) return false
         if (timestampMs != other.timestampMs) return false
+        if (assetId != other.assetId) return false
+        if (interactionId != other.interactionId) return false
         return true
     }
 
@@ -37,6 +46,8 @@ data class ImageContext(
         var result = imageBytes.contentHashCode()
         result = 31 * result + mimeType.hashCode()
         result = 31 * result + timestampMs.hashCode()
+        result = 31 * result + (assetId?.hashCode() ?: 0)
+        result = 31 * result + (interactionId?.hashCode() ?: 0)
         return result
     }
 }
@@ -67,4 +78,7 @@ interface ContextAssembler {
 data class ContextAssemblyRequest(
     val interactionId: String? = null,
     val allowGenericFallback: Boolean = true,
+    val acquisition: ContextAcquisitionResult? = null,
+    val contextWindowTokens: Long? = null,
+    val requiredNeeds: List<ContextNeed> = emptyList(),
 )

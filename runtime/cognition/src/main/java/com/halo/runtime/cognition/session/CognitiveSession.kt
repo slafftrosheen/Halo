@@ -85,9 +85,16 @@ import kotlinx.coroutines.launch
 import com.halo.runtime.cognition.facts.RuntimeFactResolver
 import com.halo.runtime.cognition.facts.DefaultRuntimeFactResolver
 import com.halo.cognition.language.SystemFactIntent
+import com.halo.runtime.cognition.context.ContextAcquisitionCoordinator
+import com.halo.runtime.cognition.context.ContextQuery
 import com.halo.runtime.cognition.tools.ToolExposurePlanner
 import com.halo.runtime.cognition.tools.ToolResourceAcquisition
 import com.halo.runtime.cognition.tools.ToolResourceCoordinator
+import com.halo.runtime.cognition.workload.AiWorkloadPlanner
+import com.halo.runtime.cognition.workload.DefaultAiWorkloadPlanner
+import com.halo.runtime.cognition.workload.WorkloadPlanningRequest
+import com.halo.sdk.host.ObservationSource
+import com.halo.sdk.runtime.ObservationOrigin
 import com.halo.sdk.runtime.resource.ResourceAcquireResult
 import com.halo.sdk.runtime.resource.ResourceHolder
 import com.halo.sdk.runtime.resource.ResourceHolderKind
@@ -112,6 +119,8 @@ class CognitiveSession(
     private val toolResourceCoordinator: ToolResourceCoordinator? = null,
     private val toolExposurePlanner: ToolExposurePlanner? = null,
     private val toolAvailabilityResolver: com.halo.runtime.cognition.tools.ToolAvailabilityResolver? = null,
+    private val workloadPlanner: AiWorkloadPlanner = DefaultAiWorkloadPlanner(),
+    private val contextAcquisitionCoordinator: ContextAcquisitionCoordinator? = null,
 ) {
     private val _state = MutableStateFlow<CognitiveSessionState>(CognitiveSessionState.Idle)
     val state: StateFlow<CognitiveSessionState> = _state.asStateFlow()
@@ -627,14 +636,41 @@ class CognitiveSession(
                 _state.value = CognitiveSessionState.PreparingContext
                 eventBus.publish(CognitiveRequestStarted(requestId = requestId, interactionId = interactionId.value))
 
-                val target = providerRouter.resolveExecutionTarget(request)
+                val obsOrigin = when (val route = origin?.speechRoute) {
+                    is SpeechInputRoute.Device -> ObservationOrigin(ObservationSource.HeyCyanGlasses, route.deviceId)
+                    is SpeechInputRoute.Phone -> ObservationOrigin(ObservationSource.AndroidAssist, null)
+                    null -> null
+                }
+                val workloadPlan = workloadPlanner.plan(
+                    WorkloadPlanningRequest(
+                        request = request,
+                        interactionId = interactionId,
+                        origin = obsOrigin,
+                        metadata = metadata,
+                    )
+                )
+
+                val acqResult = contextAcquisitionCoordinator?.acquire(
+                    plan = workloadPlan.context,
+                    query = ContextQuery(
+                        interactionId = interactionId,
+                        text = request.text.orEmpty(),
+                        requestedCapabilities = workloadPlan.inference.requiredCapabilities,
+                    ),
+                )
+
+                val target = providerRouter.resolveExecutionTarget(request, workloadPlan.inference)
                 resolvedProviderId = target.providerId
                 resolvedModelId = target.modelId
                 val provider = target.provider
                 val finalRequest = request.copy(modelId = target.modelId)
-                val capabilities = target.providerCapabilities
-                val targetPolicy = effectivePolicy.copy(includeWorkspace = effectivePolicy.includeWorkspace &&
-                    (target.provider.isLocal || effectivePolicy.allowCloudWorkspace))
+                val capabilities = target.effectiveCapabilities
+                val targetPolicy = effectivePolicy.copy(
+                    includeWorkspace = effectivePolicy.includeWorkspace &&
+                        (target.provider.isLocal || effectivePolicy.allowCloudWorkspace),
+                    allowCloudScreenContext = effectivePolicy.allowCloudScreenContext || target.provider.isLocal,
+                    allowCloudImages = effectivePolicy.allowCloudImages || target.provider.isLocal,
+                )
 
                 val assembly = contextAssembler.assemble(
                     policy = targetPolicy,
@@ -642,8 +678,20 @@ class CognitiveSession(
                     request = com.halo.runtime.cognition.context.ContextAssemblyRequest(
                         interactionId = interactionId.value,
                         allowGenericFallback = false,
+                        acquisition = acqResult,
+                        contextWindowTokens = target.model.contextLength,
+                        requiredNeeds = workloadPlan.context.needs,
                     ),
                 )
+
+                if (acqResult?.unsatisfiedRequired?.isNotEmpty() == true) {
+                    val missingName = acqResult.unsatisfiedRequired.first().kind.name.lowercase().replace("_", " ")
+                    val errorMsg = "Required $missingName is currently unavailable"
+                    _state.value = CognitiveSessionState.Failed(errorMsg)
+                    eventBus.publish(CognitiveCompleted(requestId = requestId, response = errorMsg, interactionId = interactionId.value))
+                    return@launch
+                }
+
                 val context = assembly.context
                 val requestWithContext = bindAssembledContext(finalRequest, assembly, responseDelivery)
 
