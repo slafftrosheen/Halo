@@ -24,6 +24,8 @@ import kotlinx.coroutines.CoroutineStart
 import java.util.concurrent.atomic.AtomicBoolean
 
 import com.halo.sdk.runtime.resource.ResourceLeaseManager
+import com.halo.sdk.runtime.resource.ResourceYieldDecision
+import com.halo.sdk.runtime.resource.ResourceYieldHandler
 
 class HaloSpeechOutputCoordinator(
     context: Context,
@@ -110,6 +112,12 @@ class HaloSpeechOutputCoordinator(
                 outputLease = session.acquireOutput(
                     interactionId = event.transactionId,
                     deviceId = (event.target as? SpeechOutputTarget.Device)?.deviceId,
+                    ownerYieldHandler = ResourceYieldHandler {
+                        // Stop the real playback owner. The coroutine's finally
+                        // restores focus/route and only then releases the lease.
+                        stop("Yielding audio output to higher-priority input")
+                        ResourceYieldDecision.RELEASING
+                    },
                 ).getOrThrow()
                 foregroundLease = HaloAudioForegroundService.acquire(applicationContext, HaloAudioForegroundService.Kind.PLAYBACK)
                 // 1. Prepare the requested route.
