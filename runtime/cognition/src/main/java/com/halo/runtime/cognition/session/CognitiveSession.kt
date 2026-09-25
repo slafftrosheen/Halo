@@ -672,8 +672,30 @@ class CognitiveSession(
                     )
                 )
 
+                /*
+                 * RUNTIME-021: route from the PLANNED workload before touching
+                 * hardware. A visual workload already requires IMAGE here, even
+                 * though the request bytes may not exist yet.
+                 */
+                val target = providerRouter.resolveExecutionTarget(request, workloadPlan.inference)
+                resolvedProviderId = target.providerId
+                resolvedModelId = target.modelId
+                val provider = target.provider
+                val finalRequest = request.copy(modelId = target.modelId)
+                val capabilities = target.effectiveCapabilities
+
+                // Do not capture optional images for a target that cannot consume
+                // them. Required image needs cannot reach this point without IMAGE.
+                val targetContextPlan = workloadPlan.context.copy(
+                    needs = workloadPlan.context.needs.filterNot { need ->
+                        need.kind == com.halo.runtime.cognition.context.ContextKind.VISUAL_IMAGE &&
+                            need.requirement == com.halo.sdk.runtime.ContextRequirement.OPTIONAL &&
+                            AiCapability.IMAGE !in capabilities
+                    }
+                )
+
                 val acqResult = contextAcquisitionCoordinator?.acquire(
-                    plan = workloadPlan.context,
+                    plan = targetContextPlan,
                     query = ContextQuery(
                         interactionId = interactionId,
                         text = request.text.orEmpty(),
@@ -683,7 +705,7 @@ class CognitiveSession(
                     ),
                 ) ?: com.halo.runtime.cognition.context.ContextAcquisitionResult(
                     candidates = emptyList(),
-                    unsatisfiedRequired = workloadPlan.context.needs.filter {
+                    unsatisfiedRequired = targetContextPlan.needs.filter {
                         it.requirement == com.halo.sdk.runtime.ContextRequirement.REQUIRED
                     },
                 )
@@ -697,16 +719,6 @@ class CognitiveSession(
                     )
                 }
 
-                /*
-                 * RUNTIME-021: provider/model selection happens only after the
-                 * workload and required-context acquisition are known.
-                 */
-                val target = providerRouter.resolveExecutionTarget(request, workloadPlan.inference)
-                resolvedProviderId = target.providerId
-                resolvedModelId = target.modelId
-                val provider = target.provider
-                val finalRequest = request.copy(modelId = target.modelId)
-                val capabilities = target.effectiveCapabilities
                 val targetPolicy = effectivePolicy.copy(
                     includeWorkspace = effectivePolicy.includeWorkspace &&
                         (target.provider.isLocal || effectivePolicy.allowCloudWorkspace),
