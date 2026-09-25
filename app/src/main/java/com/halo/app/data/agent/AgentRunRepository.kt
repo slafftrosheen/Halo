@@ -136,6 +136,7 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
                     .put("modelId", step.modelId ?: "").put("requestIdentity", step.requestIdentity)
                     .put("exposedToolIds", JSONArray(step.exposedToolIds.toList()))
                     .put("requiredCapabilities", JSONArray(step.requiredCapabilities.toList()))
+                    .put("contextRequirements", JSONArray(step.contextRequirements.toList()))
                 "ProviderTurnStarted"
             }
             is AgentStep.ProviderTurnCompleted -> {
@@ -269,7 +270,8 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
                 runCatching { RunRecoveryPolicy.valueOf(p.getString("recoveryPolicy")) }.getOrDefault(RunRecoveryPolicy.USER_RESUME))
             "ProviderTurnStarted" -> AgentStep.ProviderTurnStarted(step, run, at,
                 ProviderTurnId(p.getString("turnId")), p.getString("providerId"), p.optString("modelId").ifBlank { null },
-                p.optString("requestIdentity"), stringSet(p, "exposedToolIds"), stringSet(p, "requiredCapabilities"))
+                p.optString("requestIdentity"), stringSet(p, "exposedToolIds"),
+                stringSet(p, "requiredCapabilities"), stringSet(p, "contextRequirements"))
             "ProviderTurnCompleted" -> {
                 val calls = mutableListOf<ProviderToolCallRecord>()
                 val array = p.optJSONArray("toolCalls") ?: JSONArray()
