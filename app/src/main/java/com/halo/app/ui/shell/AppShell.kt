@@ -246,7 +246,10 @@ fun AppShell(
                 composable("skills") {
                     SkillsScreen(
                         skillRegistry = ManualDependencyGraph.skillRegistry,
-                        onBack = { navController.popBackStack() }
+                        onBack = { navController.popBackStack() },
+                        toolRegistry = ManualDependencyGraph.toolRegistry,
+                        availabilityResolver = ManualDependencyGraph.toolAvailabilityResolver,
+                        capabilityCatalogue = ManualDependencyGraph.capabilityCatalogue,
                     )
                 }
 
