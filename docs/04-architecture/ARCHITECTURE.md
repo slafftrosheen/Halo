@@ -220,3 +220,28 @@ The post-agent review tightened the implementation boundary between capability, 
 - A prepared-but-unclaimed invocation never bypasses authorization during recovery; an already-claimed SAFE replay reacquires its required resources first.
 
 These changes are source implementation only and remain unvalidated until the dedicated stabilization pass.
+
+## RUNTIME-021 — workload routing and context fabric
+
+RUNTIME-021 separates four concerns that were previously coupled inside `CognitiveSession`:
+
+1. `AiWorkloadPlanner` describes required inference features and typed context needs.
+2. `AiProviderRouter` resolves a provider/model from those requirements using effective
+   adapter × model capabilities and the user's routing/privacy policy.
+3. `ContextAcquisitionCoordinator` gathers exact interaction/origin data and delegates active
+   visual capture to a portable host-provided `VisualContextSource`.
+4. `ContextAssembler` budgets and formats those acquired candidates for the pinned target.
+
+A visual request is therefore planned as IMAGE-required before image bytes exist. A text-only model
+cannot be selected and then "fixed" by dropping the image. Conversely, optional visual context does
+not force a vision model or unnecessary camera capture.
+
+Context identity is explicit. CURRENT_VIEW never falls back to a global latest image. Screen text,
+web content, imported documents and captured images remain untrusted content. Remote context sharing
+is controlled independently for workspace, screen and images.
+
+The provider/model target is pinned for the cognitive transaction and reused across tool rounds.
+Durable journal metadata records requirement identities only; private context bodies/bytes are not
+written to the agent journal.
+
+Source implementation is present but remains **UNVALIDATED** pending STABILIZATION.
