@@ -3,12 +3,25 @@ package com.halo.app.audio
 import com.halo.sdk.runtime.SpeechInputRoute
 import com.halo.sdk.runtime.SpeechOutputTarget
 import com.halo.sdk.runtime.SpeechRouteEvidence
-import com.halo.sdk.runtime.resource.*
-import com.halo.runtime.kernel.resource.DefaultResourceLeaseManager
+import com.halo.sdk.runtime.resource.HaloResourceIds
+import com.halo.sdk.runtime.resource.ResourceAccess
+import com.halo.sdk.runtime.resource.ResourceAcquireResult
+import com.halo.sdk.runtime.resource.ResourceClaim
+import com.halo.sdk.runtime.resource.ResourceEndpointId
+import com.halo.sdk.runtime.resource.ResourceHolder
+import com.halo.sdk.runtime.resource.ResourceHolderKind
+import com.halo.sdk.runtime.resource.ResourceKey
+import com.halo.sdk.runtime.resource.ResourceLease
+import com.halo.sdk.runtime.resource.ResourceLeaseManager
+import com.halo.sdk.runtime.resource.ResourceLeaseRequest
+import com.halo.sdk.runtime.resource.ResourcePreemptionPolicy
+import com.halo.sdk.runtime.resource.ResourcePriority
+import com.halo.sdk.runtime.resource.ResourceWaitPolicy
+import com.halo.sdk.runtime.resource.ResourceYieldDecision
+import com.halo.sdk.runtime.resource.ResourceYieldHandler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.runBlocking
 
 sealed interface AudioSessionLease {
     val interactionId: String
@@ -22,14 +35,15 @@ class InputLease internal constructor(
     override val deviceId: String?,
     override val acquiredAtMs: Long,
     private val underlyingLease: ResourceLease?,
-    private val releaseAction: (InputLease) -> Unit
+    private val releaseAction: (InputLease) -> Unit,
 ) : AudioSessionLease {
     @Volatile private var released = false
+
     override fun release() {
         if (!released) synchronized(this) {
             if (!released) {
                 released = true
-                underlyingLease?.let { runBlocking { it.release() } }
+                underlyingLease?.release()
                 releaseAction(this)
             }
         }
@@ -41,14 +55,15 @@ class OutputLease internal constructor(
     override val deviceId: String?,
     override val acquiredAtMs: Long,
     private val underlyingLease: ResourceLease?,
-    private val releaseAction: (OutputLease) -> Unit
+    private val releaseAction: (OutputLease) -> Unit,
 ) : AudioSessionLease {
     @Volatile private var released = false
+
     override fun release() {
         if (!released) synchronized(this) {
             if (!released) {
                 released = true
-                underlyingLease?.let { runBlocking { it.release() } }
+                underlyingLease?.release()
                 releaseAction(this)
             }
         }
@@ -70,7 +85,7 @@ data class SpeechRouteLease(
     val target: SpeechOutputTarget,
     val endpoint: SpeechRouteEvidence,
     val acquiredAt: Long,
-    val expiresAt: Long
+    val expiresAt: Long,
 ) {
     fun isValid(now: Long = System.currentTimeMillis()): Boolean = now in acquiredAt until expiresAt
 }
@@ -78,18 +93,18 @@ data class SpeechRouteLease(
 data class PlaybackGuardWindow(
     val startedAt: Long,
     val endedAt: Long?,
-    val target: SpeechOutputTarget
+    val target: SpeechOutputTarget,
 ) {
     fun contains(captureAt: Long, postRollMs: Long = 550L): Boolean =
         captureAt >= startedAt && captureAt <= (endedAt ?: captureAt) + postRollMs
 }
 
 /**
- * Session state shared by input, route preparation and output.
- * Uses [ResourceLeaseManager] for cross-runtime ownership arbitration.
+ * Audio interaction state plus leases from the one process-wide Runtime resource
+ * fabric. Platform route setup/evidence remains outside this coordinator.
  */
 class HaloAudioSessionCoordinator(
-    private val resourceLeaseManager: ResourceLeaseManager = DefaultResourceLeaseManager(),
+    private val resourceLeaseManager: ResourceLeaseManager,
 ) {
     private val mutableState = MutableStateFlow<HaloAudioSessionState>(HaloAudioSessionState.Idle)
     val state: StateFlow<HaloAudioSessionState> = mutableState.asStateFlow()
@@ -100,12 +115,17 @@ class HaloAudioSessionCoordinator(
     @Volatile var playbackGuard: PlaybackGuardWindow? = null
         private set
 
-    fun acquireInput(interactionId: String, deviceId: String?): Result<InputLease> {
+    /**
+     * Interactive input may cooperatively preempt lower-priority output. The
+     * ResourceLeaseManager calls the OUTPUT OWNER'S registered yield handler;
+     * input never supplies cleanup code for somebody else's lease.
+     */
+    suspend fun acquireInput(interactionId: String, deviceId: String?): Result<InputLease> {
         val endpoint = ResourceEndpointId(deviceId ?: "host:primary")
-        val req = ResourceLeaseRequest(
+        val request = ResourceLeaseRequest(
             requestId = "audio.input:$interactionId",
             holder = ResourceHolder(
-                id = interactionId,
+                id = "audio.input:$interactionId",
                 interactionId = interactionId,
                 kind = ResourceHolderKind.INTERACTION,
             ),
@@ -114,38 +134,32 @@ class HaloAudioSessionCoordinator(
                 ResourceClaim(ResourceKey(HaloResourceIds.AudioSession, endpoint), ResourceAccess.EXCLUSIVE),
             ),
             priority = ResourcePriority.INTERACTIVE_INPUT,
-            waitPolicy = ResourceWaitPolicy.FailFast,
+            waitPolicy = ResourceWaitPolicy.Wait(750L),
             preemption = ResourcePreemptionPolicy.COOPERATIVE,
         )
 
-        val yieldHandler = ResourceYieldHandler { _ ->
-            // Active output yields on input barge-in
-            outputOwner?.release()
-            ResourceYieldDecision.RELEASING
-        }
-
-        return when (val acq = resourceLeaseManager.tryAcquire(req, yieldHandler)) {
+        return when (val result = resourceLeaseManager.acquire(request)) {
             is ResourceAcquireResult.Granted -> {
                 val lease = InputLease(
                     interactionId = interactionId,
                     deviceId = deviceId,
-                    acquiredAtMs = System.currentTimeMillis(),
-                    underlyingLease = acq.lease,
+                    acquiredAtMs = result.lease.acquiredAtMs,
+                    underlyingLease = result.lease,
                     releaseAction = ::releaseInput,
                 )
                 inputOwner = lease
                 Result.success(lease)
             }
-            else -> Result.failure(IllegalStateException("Audio input resource busy: $acq"))
+            else -> Result.failure(IllegalStateException("Audio input resource busy: $result"))
         }
     }
 
-    fun acquireOutput(interactionId: String, deviceId: String?): Result<OutputLease> {
+    suspend fun acquireOutput(interactionId: String, deviceId: String?): Result<OutputLease> {
         val endpoint = ResourceEndpointId(deviceId ?: "host:primary")
-        val req = ResourceLeaseRequest(
+        val request = ResourceLeaseRequest(
             requestId = "audio.output:$interactionId",
             holder = ResourceHolder(
-                id = interactionId,
+                id = "audio.output:$interactionId",
                 interactionId = interactionId,
                 kind = ResourceHolderKind.INTERACTION,
             ),
@@ -158,19 +172,31 @@ class HaloAudioSessionCoordinator(
             preemption = ResourcePreemptionPolicy.COOPERATIVE,
         )
 
-        return when (val acq = resourceLeaseManager.tryAcquire(req)) {
+        val ownerYieldHandler = ResourceYieldHandler {
+            val current = outputOwner
+            if (current != null && current.interactionId == interactionId) {
+                // Actual playback owner observes the released wrapper and its
+                // normal stop path performs platform cleanup/route restoration.
+                current.release()
+                ResourceYieldDecision.RELEASING
+            } else {
+                ResourceYieldDecision.REFUSED
+            }
+        }
+
+        return when (val result = resourceLeaseManager.acquire(request, ownerYieldHandler)) {
             is ResourceAcquireResult.Granted -> {
                 val lease = OutputLease(
                     interactionId = interactionId,
                     deviceId = deviceId,
-                    acquiredAtMs = System.currentTimeMillis(),
-                    underlyingLease = acq.lease,
+                    acquiredAtMs = result.lease.acquiredAtMs,
+                    underlyingLease = result.lease,
                     releaseAction = ::releaseOutput,
                 )
                 outputOwner = lease
                 Result.success(lease)
             }
-            else -> Result.failure(IllegalStateException("Audio output resource busy: $acq"))
+            else -> Result.failure(IllegalStateException("Audio output resource busy: $result"))
         }
     }
 
@@ -202,9 +228,7 @@ class HaloAudioSessionCoordinator(
     }
 
     fun idle(transactionId: String? = null) {
-        if (transactionId != null) {
-            if (currentTransactionId() != transactionId) return
-        }
+        if (transactionId != null && currentTransactionId() != transactionId) return
         finishGuard()
         mutableState.value = HaloAudioSessionState.Idle
     }
