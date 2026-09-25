@@ -37,6 +37,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import com.halo.engines.memory.WorkingMemoryProcess
 import com.halo.providers.android.tts.AndroidTTSProvider
+import com.halo.runtime.cognition.context.AssistantContextRepository
 import com.halo.runtime.cognition.session.CognitiveSession
 import com.halo.runtime.cognition.skills.DefaultSkillRegistry
 import com.halo.runtime.cognition.tools.CurrentTimeToolExecutor
@@ -224,7 +225,12 @@ object ManualDependencyGraph {
         )
     }
     val workspaceContext by lazy { WorkspaceContextStore(appDatabase, notebookRepository, storage) }
-    val assistantContextRepository by lazy { com.halo.runtime.cognition.context.AssistantContextRepository() }
+    val assistantContextRepository by lazy {
+        AssistantContextRepository(
+            eventBus = eventBus,
+            scope = infra.scope,
+        )
+    }
     val contextAssembler by lazy { com.halo.runtime.cognition.context.DefaultContextAssembler(
         conversationStore, blackboard, toolRegistry, workspaceContext, skillRegistry, assistantContextRepository
     ) }
@@ -252,7 +258,8 @@ object ManualDependencyGraph {
             agentRunCoordinator = agentRunCoordinator,
             scope = infra.scope,
             blackboard = blackboard,
-            defaultPolicyProvider = { storage.readRuntimeAiContextPolicy() }
+            defaultPolicyProvider = { storage.readRuntimeAiContextPolicy() },
+            assistantContexts = assistantContextRepository,
         )
     }
 

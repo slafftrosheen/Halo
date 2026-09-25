@@ -75,7 +75,7 @@ class DefaultAgentRunCoordinator(
     override suspend fun transition(runId: AgentRunId, state: AgentRunState, reason: String?) = mutex.withLock {
         val run = requireNotNull(store.get(runId)) { "Unknown run ${runId.value}" }
         if (run.state == state) return@withLock
-        if (run.state.isTerminal) return@withLock
+        check(!run.state.isTerminal) { "Cannot transition terminal run ${run.id.value} from ${run.state} to $state" }
         val allowed = when (run.state) {
             AgentRunState.CREATED -> setOf(AgentRunState.PLANNING)
             AgentRunState.PLANNING -> setOf(AgentRunState.EXECUTING, AgentRunState.WAITING_FOR_CLARIFICATION, AgentRunState.WAITING_FOR_CAPABILITY)

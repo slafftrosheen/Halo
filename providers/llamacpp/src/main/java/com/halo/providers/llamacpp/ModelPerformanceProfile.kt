@@ -16,9 +16,9 @@ fun calculateVoiceSuitability(
     generationTokensPerSecond: Float,
     ttftMs: Long = loadMs,
 ): VoiceModelSuitability = when {
-    ttftMs <= 750 && generationTokensPerSecond >= 15f -> VoiceModelSuitability.EXCELLENT
-    ttftMs <= 1500 && generationTokensPerSecond >= 8f -> VoiceModelSuitability.GOOD
-    ttftMs <= 3000 && generationTokensPerSecond >= 4f -> VoiceModelSuitability.SLOW
+    ttftMs <= 1500 && generationTokensPerSecond >= 15f -> VoiceModelSuitability.EXCELLENT
+    ttftMs <= 3000 && generationTokensPerSecond >= 8f -> VoiceModelSuitability.GOOD
+    ttftMs <= 5000 && generationTokensPerSecond >= 4f -> VoiceModelSuitability.SLOW
     else -> VoiceModelSuitability.UNSUITABLE
 }
 

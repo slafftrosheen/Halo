@@ -64,17 +64,17 @@ class HeyCyanCapabilityControllerTest {
     }
 
     @Test
-    fun liveAudioIsBlockedUntilProtocolIsEstablished() {
+    fun liveAudioIsAvailableWithLimitation() {
         assertEquals(
-            HeyCyanCapabilityStatus.BLOCKED_BY_PROTOCOL,
+            HeyCyanCapabilityStatus.AVAILABLE_WITH_LIMITATION,
             HeyCyanCapabilities.liveAudio.status,
         )
     }
 
     @Test
-    fun aiPhotoIsExplicitlyBlockedByProtocol() {
+    fun aiPhotoIsAvailableWithLimitation() {
         assertEquals(
-            HeyCyanCapabilityStatus.BLOCKED_BY_PROTOCOL,
+            HeyCyanCapabilityStatus.AVAILABLE_WITH_LIMITATION,
             HeyCyanCapabilities.aiPhoto.status,
         )
     }
@@ -193,15 +193,11 @@ class HeyCyanCapabilityControllerTest {
     }
 
     @Test
-    fun `prepare voice routing is blocked by unresolved live audio protocol`() = runTest {
+    fun `prepare voice routing reaches the verified command path`() = runTest {
         val result = controller.execute(HeyCyanOperation.PrepareVoiceRouting)
 
-        assertTrue(result.isFailure)
-        val exception = result.exceptionOrNull()
-        assertTrue(exception is HeyCyanCapabilityException)
-        val failure = (exception as HeyCyanCapabilityException).failure
-        assertTrue(failure is HeyCyanOperationFailure.ProtocolNotEstablished)
-        assertTrue(executor.executedCommands.isEmpty())
+        assertTrue(result.isSuccess)
+        assertEquals(HeyCyanCommand.PrepareVoiceRouting, executor.executedCommands.single())
     }
 
     @Test

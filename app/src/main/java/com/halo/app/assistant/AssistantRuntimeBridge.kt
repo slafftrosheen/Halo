@@ -27,7 +27,8 @@ interface AssistantRuntimeBridge {
     suspend fun attachScreen(interactionId: String, snapshot: ScreenContextSnapshot)
     suspend fun attachScreenshot(interactionId: String, bitmap: Bitmap)
     suspend fun startListening(interactionId: String, inputDeviceId: Int?): Boolean
-    suspend fun end(interactionId: String, reason: String)
+    suspend fun hideAssistantSurface(interactionId: String)
+    suspend fun cancelAssistantInteraction(interactionId: String, reason: String)
 }
 
 class HaloAssistantRuntimeBridge : AssistantRuntimeBridge {
@@ -94,12 +95,16 @@ class HaloAssistantRuntimeBridge : AssistantRuntimeBridge {
             )
         }
 
-    override suspend fun end(interactionId: String, reason: String) {
+    override suspend fun hideAssistantSurface(interactionId: String) {
+        ManualDependencyGraph.eventBus.publish(AssistantInvocationEnded(interactionId, "hidden"))
+    }
+
+    override suspend fun cancelAssistantInteraction(interactionId: String, reason: String) {
         if (ManualDependencyGraph.audioPerceptionEngine.inputStatus.value.turn?.captureId == interactionId) {
             ManualDependencyGraph.commandBus.dispatch(StopListening)
         }
+        ManualDependencyGraph.cognitiveSession.cancel()
         ManualDependencyGraph.eventBus.publish(AssistantInvocationEnded(interactionId, reason))
-        ManualDependencyGraph.assistantContextRepository.clear(interactionId)
     }
 
     private fun Bitmap.limitLongestEdge(limit: Int): Bitmap {

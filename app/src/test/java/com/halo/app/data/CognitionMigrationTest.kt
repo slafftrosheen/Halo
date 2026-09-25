@@ -21,9 +21,9 @@ class CognitionMigrationTest {
         val file = listOf(File(relative), File("app/$relative")).first { it.exists() }
         return JSONObject(file.readText()).getJSONObject("database")
     }
-    private fun assertV10(db: SupportSQLiteDatabase) {
-        assertEquals(10, db.version)
-        val entities = schema(10).getJSONArray("entities")
+    private fun assertCurrentSchema(db: SupportSQLiteDatabase) {
+        assertEquals(11, db.version)
+        val entities = schema(11).getJSONArray("entities")
         for (index in 0 until entities.length()) {
             val entity = entities.getJSONObject(index)
             val name = entity.getString("tableName")
@@ -45,9 +45,9 @@ class CognitionMigrationTest {
             }
         }
     }
-    @Test fun freshTenMatchesExportedTablesAndIndexes() {
+    @Test fun freshDatabaseMatchesExportedTablesAndIndexes() {
         val db = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java).allowMainThreadQueries().build()
-        try { assertV10(db.openHelper.writableDatabase) } finally { db.close() }
+        try { assertCurrentSchema(db.openHelper.writableDatabase) } finally { db.close() }
     }
     @Test fun eightThroughNineToTenPreservesLegacyAgentSteps() = migrate(8)
     @Test fun exportedNineToTenPreservesExpandedAgentIdentity() = migrate(9)
@@ -91,10 +91,11 @@ class CognitionMigrationTest {
         helper.writableDatabase
         helper.close()
         val db = Room.databaseBuilder(context, AppDatabase::class.java, name)
-            .addMigrations(AppDatabase.MIGRATION_8_9, AppDatabase.MIGRATION_9_10).allowMainThreadQueries().build()
+            .addMigrations(AppDatabase.MIGRATION_8_9, AppDatabase.MIGRATION_9_10, AppDatabase.MIGRATION_10_11)
+            .allowMainThreadQueries().build()
         try {
             val sql = db.openHelper.writableDatabase // Room validates the entire migrated entity schema here.
-            assertV10(sql)
+            assertCurrentSchema(sql)
             for (table in listOf("workspace_objects", "notes", "memories", "conversations", "agent_runs", "agent_steps")) {
                 sql.query("SELECT COUNT(*) FROM `$table`").use { assertTrue(it.moveToFirst()); assertEquals(1, it.getInt(0)) }
             }

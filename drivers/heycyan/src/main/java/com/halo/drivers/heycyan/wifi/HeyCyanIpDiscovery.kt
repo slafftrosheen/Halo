@@ -1,6 +1,7 @@
 package com.halo.drivers.heycyan.wifi
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -36,6 +37,7 @@ import java.net.URL
 class HeyCyanIpDiscovery(
     private val perIpTimeoutMillis: Long = DEFAULT_PER_IP_TIMEOUT,
     private val totalTimeoutMillis: Long = DEFAULT_TOTAL_TIMEOUT,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     private val connectionFactory: (URL) -> HttpURLConnection = { url ->
         url.openConnection() as HttpURLConnection
     },
@@ -79,7 +81,7 @@ class HeyCyanIpDiscovery(
 
     private suspend fun discoverConcurrently(): String? = coroutineScope {
         val results = CANDIDATE_IPS.map { ip ->
-            async(Dispatchers.IO) {
+            async(ioDispatcher) {
                 if (testConnection(ip)) ip else null
             }
         }
@@ -103,7 +105,7 @@ class HeyCyanIpDiscovery(
      * (any 2xx status) confirms the device is at this IP.
      */
     private suspend fun testConnection(ip: String): Boolean {
-        return withContext(Dispatchers.IO) {
+        return withContext(ioDispatcher) {
             withTimeoutOrNull(perIpTimeoutMillis) {
                 try {
                     val url = URL("http://$ip$MANIFEST_PATH")

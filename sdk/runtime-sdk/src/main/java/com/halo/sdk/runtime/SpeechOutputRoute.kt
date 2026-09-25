@@ -3,9 +3,11 @@ package com.halo.sdk.runtime
 sealed interface SpeechOutputTarget {
     data object Phone : SpeechOutputTarget
 
-    data class Wearable(
-        val deviceId: String,
-        val displayName: String? = null
+    data class Device(
+        val deviceId: String?,
+        val platformEndpointId: Int?,
+        val displayName: String?,
+        val kind: AudioDeviceKind
     ) : SpeechOutputTarget
 }
 

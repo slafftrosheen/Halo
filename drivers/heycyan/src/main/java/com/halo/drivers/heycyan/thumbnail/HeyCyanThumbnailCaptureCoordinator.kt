@@ -93,6 +93,9 @@ class HeyCyanThumbnailCaptureCoordinator(
         const val DEFAULT_TRANSFER_TIMEOUT_MS = 14_000L
         const val DEFAULT_CHUNK_TIMEOUT_MS = 2_000L
         private const val MAX_CHUNK_RETRIES = 3
+        private val JPEG_START_OF_FRAME_MARKERS = setOf(
+            0xC0, 0xC1, 0xC2, 0xC3, 0xC5, 0xC6, 0xC7, 0xC9, 0xCA, 0xCB, 0xCD, 0xCE, 0xCF,
+        )
     }
 
     override suspend fun capture(quality: Int): Result<HeyCyanCapturedThumbnail> =
@@ -332,6 +335,36 @@ class HeyCyanThumbnailCaptureCoordinator(
         }.getOrNull()
         val width = options?.outWidth ?: -1
         val height = options?.outHeight ?: -1
-        return Pair(width, height)
+        return if (width > 0 && height > 0) Pair(width, height) else extractJpegFrameDimensions(bytes)
     }
+
+    /** Reads SOF dimensions without decoding pixels, which also keeps validation deterministic in JVM tests. */
+    private fun extractJpegFrameDimensions(bytes: ByteArray): Pair<Int, Int> {
+        var index = 2
+        while (index + 8 < bytes.size) {
+            if (bytes[index] != 0xFF.toByte()) {
+                index++
+                continue
+            }
+            val marker = bytes[index + 1].toInt() and 0xFF
+            if (marker in JPEG_START_OF_FRAME_MARKERS) {
+                val height = ((bytes[index + 5].toInt() and 0xFF) shl 8) or
+                    (bytes[index + 6].toInt() and 0xFF)
+                val width = ((bytes[index + 7].toInt() and 0xFF) shl 8) or
+                    (bytes[index + 8].toInt() and 0xFF)
+                return width to height
+            }
+            if (marker == 0xD8 || marker == 0xD9 || marker in 0xD0..0xD7) {
+                index += 2
+                continue
+            }
+            if (index + 3 >= bytes.size) break
+            val segmentLength = ((bytes[index + 2].toInt() and 0xFF) shl 8) or
+                (bytes[index + 3].toInt() and 0xFF)
+            if (segmentLength < 2) break
+            index += segmentLength + 2
+        }
+        return -1 to -1
+    }
+
 }

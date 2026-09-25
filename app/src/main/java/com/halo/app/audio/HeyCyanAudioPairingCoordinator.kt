@@ -1,6 +1,7 @@
 package com.halo.app.audio
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
@@ -72,6 +73,7 @@ class HeyCyanAudioPairingCoordinator(
     private val restoreMutex = Mutex()
 
     private val bondReceiver = object : BroadcastReceiver() {
+        @SuppressLint("MissingPermission")
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action != BluetoothDevice.ACTION_BOND_STATE_CHANGED) return
             val device = if (Build.VERSION.SDK_INT >= 33) {
@@ -80,6 +82,7 @@ class HeyCyanAudioPairingCoordinator(
                 @Suppress("DEPRECATION") intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
             } ?: return
             val current = association ?: return
+            if (!hasConnectPermission()) return
             if (!sameAddress(current.bluetoothAddress, device.address)) return
             when (device.bondState) {
                 BluetoothDevice.BOND_BONDED -> scope.launch { updateBonded(current, true) }
@@ -155,7 +158,9 @@ class HeyCyanAudioPairingCoordinator(
             }
 
             override fun onAssociationCreated(associationInfo: AssociationInfo) {
-                scope.launch { acceptAssociation(associationInfo) }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    scope.launch { acceptAssociation(associationInfo) }
+                }
             }
 
             override fun onFailure(error: CharSequence?) {
@@ -192,6 +197,8 @@ class HeyCyanAudioPairingCoordinator(
         return endpointMatches(saved, endpoint)
     }
 
+    @androidx.annotation.RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    @SuppressLint("MissingPermission")
     private suspend fun acceptAssociation(info: AssociationInfo) {
         val wearableId = activeWearableId ?: return
         val address = info.deviceMacAddress?.toString()
@@ -217,6 +224,7 @@ class HeyCyanAudioPairingCoordinator(
         }
     }
 
+    @SuppressLint("MissingPermission")
     private suspend fun acceptLegacyDevice(device: BluetoothDevice) {
         val wearableId = activeWearableId ?: return
         if (!hasConnectPermission()) {
@@ -262,6 +270,7 @@ class HeyCyanAudioPairingCoordinator(
         }
     }
 
+    @SuppressLint("MissingPermission")
     private fun associationStillExists(saved: WearableAudioAssociation): Boolean = when {
         Build.VERSION.SDK_INT >= 33 -> companionManager.myAssociations.any { it.id == saved.associationId }
         else -> {
@@ -273,6 +282,7 @@ class HeyCyanAudioPairingCoordinator(
     private fun endpointMatches(saved: WearableAudioAssociation, endpoint: BluetoothAudioEndpoint): Boolean =
         endpoint.connected && sameAddress(saved.bluetoothAddress, endpoint.address)
 
+    @SuppressLint("MissingPermission")
     private fun remoteDeviceOrNull(address: String): BluetoothDevice? =
         runCatching { bluetoothAdapter.getRemoteDevice(address) }.getOrNull()
 

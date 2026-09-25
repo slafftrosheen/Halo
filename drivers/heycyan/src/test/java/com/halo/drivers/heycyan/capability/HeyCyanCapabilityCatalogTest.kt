@@ -8,17 +8,17 @@ import org.junit.Test
 class HeyCyanCapabilityCatalogTest {
 
     @Test
-    fun liveAudioIsExplicitlyUnsupported() {
+    fun liveAudioReflectsPhysicalValidation() {
         val descriptor = HeyCyanCapabilityCatalog.find("audio.live_input")
         assertNotNull(descriptor)
-        assertEquals(CapabilityStatus.UNSUPPORTED_BY_DEVICE, descriptor?.status)
+        assertEquals(CapabilityStatus.IMPLEMENTED, descriptor?.status)
     }
 
     @Test
-    fun aiPhotoIsExplicitlyBlocked() {
+    fun aiPhotoIsAvailableWithHardwareRevalidation() {
         val descriptor = HeyCyanCapabilityCatalog.find("camera.ai_photo")
         assertNotNull(descriptor)
-        assertEquals(CapabilityStatus.BLOCKED_BY_UNKNOWN_PROTOCOL, descriptor?.status)
+        assertEquals(CapabilityStatus.IMPLEMENTED_WITH_LIMITATION, descriptor?.status)
     }
 
     @Test

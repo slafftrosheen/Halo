@@ -127,8 +127,8 @@ class AiProviderRouterTest {
         val handoff = HandoffMockProvider()
         val inference = MockProvider("p1", "P1")
         val router = DefaultAiProviderRouter(listOf(handoff, inference), storage)
-        router.setRoutingPolicy(AiRoutingPolicy.AUTOMATIC)
         router.selectProvider("handoff")
+        router.setRoutingPolicy(AiRoutingPolicy.AUTOMATIC)
         val response = router.execute(AiRequest(text = "Hello"), AiContext.EMPTY)
         assertEquals("p1", response.providerId)
         assertEquals(0, handoff.handoffCount)
@@ -170,8 +170,8 @@ class AiProviderRouterTest {
         val provider1 = MockProvider("p1", "P1")
         val provider2 = MockProvider("p2", "P2", initialStatus = ProviderStatus.UNAVAILABLE)
         val router = DefaultAiProviderRouter(listOf(provider1, provider2), storage)
-        router.setRoutingPolicy(AiRoutingPolicy.PREFERRED_WITH_FALLBACK)
         router.selectProvider("p2")
+        router.setRoutingPolicy(AiRoutingPolicy.PREFERRED_WITH_FALLBACK)
         val response = router.execute(AiRequest(text = "Hello"), AiContext.EMPTY)
         assertEquals("p1", response.providerId)
     }
@@ -182,8 +182,8 @@ class AiProviderRouterTest {
         val provider1 = MockProvider("p1", "Cloud", isLocal = false)
         val provider2 = MockProvider("p2", "Local", isLocal = true)
         val router = DefaultAiProviderRouter(listOf(provider1, provider2), storage)
-        router.setRoutingPolicy(AiRoutingPolicy.LOCAL_ONLY)
         router.selectProvider("p1")
+        router.setRoutingPolicy(AiRoutingPolicy.LOCAL_ONLY)
         val response = router.execute(AiRequest(text = "Hello"), AiContext.EMPTY)
         assertEquals("p2", response.providerId)
     }
@@ -210,8 +210,8 @@ class AiProviderRouterTest {
         val provider1 = MockProvider("p1", "P1", throwsException = true)
         val provider2 = MockProvider("p2", "P2")
         val router = DefaultAiProviderRouter(listOf(provider1, provider2), storage)
-        router.setRoutingPolicy(AiRoutingPolicy.PREFERRED_WITH_FALLBACK)
         router.selectProvider("p1")
+        router.setRoutingPolicy(AiRoutingPolicy.PREFERRED_WITH_FALLBACK)
         val response = router.execute(AiRequest(text = "Hello"), AiContext.EMPTY)
         assertEquals("p2", response.providerId)
     }
@@ -222,8 +222,8 @@ class AiProviderRouterTest {
         val provider1 = MockProvider("p1", "P1", throwsException = true, failureType = AiErrorType.GENERATION_FAILED)
         val provider2 = MockProvider("p2", "P2")
         val router = DefaultAiProviderRouter(listOf(provider1, provider2), storage)
-        router.setRoutingPolicy(AiRoutingPolicy.PREFERRED_WITH_FALLBACK)
         router.selectProvider("p1")
+        router.setRoutingPolicy(AiRoutingPolicy.PREFERRED_WITH_FALLBACK)
         val response = router.execute(AiRequest(text = "Hello"), AiContext.EMPTY)
         assertEquals("p2", response.providerId)
     }
@@ -275,32 +275,32 @@ class AiProviderRouterTest {
     }
 
     @Test
-    fun `legacy automatic policy is migrated to local-only`() = runTest {
+    fun `persisted automatic policy still prefers the default local provider`() = runTest {
         val storage = FakeStorage()
         storage.putString("ai_routing_policy", AiRoutingPolicy.AUTOMATIC.name)
         val cloud = MockProvider("cloud", "Cloud", isLocal = false)
         val local = MockProvider("local", "Local", isLocal = true)
         val router = DefaultAiProviderRouter(listOf(cloud, local), storage)
 
-        assertEquals(AiRoutingPolicy.LOCAL_ONLY, router.routingPolicy.value)
-        assertEquals(AiRoutingPolicy.LOCAL_ONLY.name, storage.getString("ai_routing_policy"))
+        assertEquals(AiRoutingPolicy.AUTOMATIC, router.routingPolicy.value)
         assertEquals("local", router.execute(AiRequest(text = "Hello"), AiContext.EMPTY).providerId)
         assertEquals(0, cloud.receivedRequests.size)
     }
 
     @Test
-    fun `automatic and preferred fallback requests cannot re-enable network routing`() = runTest {
+    fun `automatic and preferred fallback are available only when explicitly selected`() = runTest {
         val storage = FakeStorage()
         val cloud = MockProvider("cloud", "Cloud", isLocal = false)
         val local = MockProvider("local", "Local", isLocal = true)
         val router = DefaultAiProviderRouter(listOf(cloud, local), storage)
 
+        router.selectProvider("cloud")
         router.setRoutingPolicy(AiRoutingPolicy.AUTOMATIC)
-        assertEquals(AiRoutingPolicy.LOCAL_ONLY, router.routingPolicy.value)
+        assertEquals(AiRoutingPolicy.AUTOMATIC, router.routingPolicy.value)
         router.setRoutingPolicy(AiRoutingPolicy.PREFERRED_WITH_FALLBACK)
-        assertEquals(AiRoutingPolicy.LOCAL_ONLY, router.routingPolicy.value)
-        assertEquals("local", router.execute(AiRequest(text = "Hello"), AiContext.EMPTY).providerId)
-        assertEquals(0, cloud.receivedRequests.size)
+        assertEquals(AiRoutingPolicy.PREFERRED_WITH_FALLBACK, router.routingPolicy.value)
+        assertEquals("cloud", router.execute(AiRequest(text = "Hello"), AiContext.EMPTY).providerId)
+        assertEquals(1, cloud.receivedRequests.size)
     }
 
     @Test

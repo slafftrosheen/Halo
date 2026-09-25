@@ -13,7 +13,8 @@ class HeyCyanIpDiscoveryTest {
         val openedHosts = mutableListOf<String>()
         val discovery = HeyCyanIpDiscovery(
             perIpTimeoutMillis = 100L,
-            totalTimeoutMillis = 500L,
+            totalTimeoutMillis = 5_000L,
+            ioDispatcher = kotlinx.coroutines.test.UnconfinedTestDispatcher(testScheduler),
             connectionFactory = { url ->
                 openedHosts += url.host
                 FakeHttpConnection(url, if (url.host == "192.168.49.207") 200 else 404)

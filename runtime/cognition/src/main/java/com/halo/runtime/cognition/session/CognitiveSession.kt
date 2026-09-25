@@ -95,7 +95,8 @@ class CognitiveSession(
     private val defaultPolicyProvider: () -> AiContextPolicy = { AiContextPolicy.CONSERVATIVE },
     private val factResolver: RuntimeFactResolver = DefaultRuntimeFactResolver(),
     private val skillRegistry: SkillRegistry? = null,
-    private val agentRunCoordinator: AgentRunCoordinator? = null
+    private val agentRunCoordinator: AgentRunCoordinator? = null,
+    private val assistantContexts: com.halo.runtime.cognition.context.AssistantContextRepository? = null,
 ) {
     private val _state = MutableStateFlow<CognitiveSessionState>(CognitiveSessionState.Idle)
     val state: StateFlow<CognitiveSessionState> = _state.asStateFlow()
@@ -402,6 +403,7 @@ class CognitiveSession(
                 withContext(NonCancellable) {
                     runId?.let { agentRunCoordinator?.cancel(it, "Interaction cancelled") }
                     eventBus.publish(CognitiveFailed(requestId = requestId, message = "Interaction cancelled", interactionId = interactionId.value))
+                    eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Cancelled(interactionId.value, "Interaction cancelled")))
                 }
                 if (activeJob === kotlinx.coroutines.currentCoroutineContext()[Job]) _state.value = CognitiveSessionState.Idle
                 throw e

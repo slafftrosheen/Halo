@@ -2,9 +2,23 @@ package com.halo.sdk.runtime
 
 import com.halo.sdk.host.ObservationSource
 
+enum class AudioDeviceKind {
+    WEARABLE,
+    HEADSET,
+    EARBUDS,
+    USB_AUDIO,
+    HOST_EXTERNAL,
+    UNKNOWN_EXTERNAL
+}
+
 sealed interface SpeechInputRoute {
     data object Phone : SpeechInputRoute
-    data class Wearable(val deviceId: String, val displayName: String? = null) : SpeechInputRoute
+    data class Device(
+        val deviceId: String?,
+        val platformEndpointId: Int?,
+        val displayName: String?,
+        val kind: AudioDeviceKind
+    ) : SpeechInputRoute
 }
 
 enum class CaptureBoundary { VOICE_ACTIVITY, EXTERNAL }

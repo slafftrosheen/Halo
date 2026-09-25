@@ -80,13 +80,9 @@ class DefaultAiProviderRouter(
 
         val rawPolicy = storage.getString("ai_routing_policy")
         val restoredPolicy = rawPolicy?.let {
-            val parsed = runCatching { enumValueOf<AiRoutingPolicy>(it) }.getOrDefault(AiRoutingPolicy.LOCAL_ONLY)
-            if (parsed == AiRoutingPolicy.AUTOMATIC) AiRoutingPolicy.LOCAL_ONLY else parsed
+            runCatching { enumValueOf<AiRoutingPolicy>(it) }.getOrDefault(AiRoutingPolicy.LOCAL_ONLY)
         } ?: AiRoutingPolicy.LOCAL_ONLY
         _routingPolicy.value = restoredPolicy
-        if (rawPolicy == "AUTOMATIC") {
-            storage.putString("ai_routing_policy", restoredPolicy.name)
-        }
 
         _selectedProviderId.value = restoredProvider
         if (restoredProvider != null) {
@@ -104,13 +100,8 @@ class DefaultAiProviderRouter(
     override fun stop() = Unit
 
     fun setRoutingPolicy(policy: AiRoutingPolicy) {
-        val effective = if (policy == AiRoutingPolicy.AUTOMATIC || policy == AiRoutingPolicy.PREFERRED_WITH_FALLBACK) {
-            AiRoutingPolicy.LOCAL_ONLY
-        } else {
-            policy
-        }
-        _routingPolicy.value = effective
-        storage.putString("ai_routing_policy", effective.name)
+        _routingPolicy.value = policy
+        storage.putString("ai_routing_policy", policy.name)
     }
 
     override fun selectProvider(id: String) {
@@ -118,8 +109,6 @@ class DefaultAiProviderRouter(
             val providerChanged = _selectedProviderId.value != id
             _selectedProviderId.value = id
             storage.putString("active_ai_provider", id)
-            // Choosing a provider is an explicit routing decision. Keeping LOCAL_ONLY here
-            // made a selected OpenRouter provider impossible to use, even with valid credentials.
             setRoutingPolicy(AiRoutingPolicy.EXPLICIT)
             if (providerChanged) restoreStoredModel(id)
             updateDiagnosticsSelection()
@@ -151,10 +140,15 @@ class DefaultAiProviderRouter(
         val rejected = mutableListOf<RejectedAiTarget>()
         var resolved: AiExecutionTarget? = null
         try {
-            if (policy == AiRoutingPolicy.EXPLICIT && selected !is AiInferenceProvider) {
+            if (policy == AiRoutingPolicy.EXPLICIT &&
+                (selected !is AiInferenceProvider || selected is AiHandoffProvider)
+            ) {
                 rejected += RejectedAiTarget(selectedId ?: "unconfigured", selectedModel,
                     if (selected is AiHandoffProvider) TargetRejectionReason.CAPABILITY_MISMATCH else TargetRejectionReason.CONFIGURATION_MISSING)
-                throw AiProviderException(AiErrorType.PROVIDER_UNAVAILABLE, "Selected target cannot execute inference")
+                throw AiProviderException(
+                    if (selected is AiHandoffProvider) AiErrorType.UNSUPPORTED_CAPABILITY else AiErrorType.PROVIDER_UNAVAILABLE,
+                    "Selected target cannot execute inference",
+                )
             }
             val candidates = if (policy == AiRoutingPolicy.EXPLICIT) listOfNotNull(selected as? AiInferenceProvider)
                 else inferenceProviders.sortedBy { if (it.id == selectedId) 0 else 1 }
@@ -184,7 +178,7 @@ class DefaultAiProviderRouter(
                             ProviderStatus.State.UNCONFIGURED -> AiErrorType.AUTHENTICATION_FAILED
                             ProviderStatus.State.MODEL_MISSING -> AiErrorType.LOCAL_MODEL_UNAVAILABLE
                             ProviderStatus.State.OFFLINE -> AiErrorType.NETWORK_UNAVAILABLE
-                            else -> AiErrorType.MODEL_NOT_READY
+                            else -> AiErrorType.PROVIDER_UNAVAILABLE
                         }
                         throw AiProviderException(type, "Provider is not ready")
                     }

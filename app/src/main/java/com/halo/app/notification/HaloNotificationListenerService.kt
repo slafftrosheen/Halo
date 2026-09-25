@@ -1,6 +1,7 @@
 package com.halo.app.notification
 
 import android.app.Notification
+import android.os.Build
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import com.halo.app.data.notification.IncomingNotification
@@ -45,17 +46,25 @@ class HaloNotificationListenerService : NotificationListenerService() {
         val n = sbn.notification
         val ranking = Ranking()
         val ranked = currentRanking.getRanking(sbn.key, ranking)
-        val override = if (ranked) ranking.lockscreenVisibilityOverride else (-1000)
+        val override = if (ranked && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            ranking.lockscreenVisibilityOverride
+        } else {
+            VISIBILITY_OVERRIDE_UNAVAILABLE
+        }
         return IncomingNotification(sbn.key, sbn.packageName,
             runCatching { packageManager.getApplicationLabel(packageManager.getApplicationInfo(sbn.packageName, 0)).toString() }.getOrNull(),
             n.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString(),
             (n.extras.getCharSequence(Notification.EXTRA_BIG_TEXT) ?: n.extras.getCharSequence(Notification.EXTRA_TEXT))?.toString(),
             n.category, Instant.ofEpochMilli(sbn.postTime),
             n.visibility == Notification.VISIBILITY_PUBLIC &&
-                (override == (-1000) || override == Notification.VISIBILITY_PUBLIC),
+                (override == VISIBILITY_OVERRIDE_UNAVAILABLE || override == Notification.VISIBILITY_PUBLIC),
             n.flags and Notification.FLAG_FOREGROUND_SERVICE != 0,
             n.flags and Notification.FLAG_GROUP_SUMMARY != 0 && activeNotifications.orEmpty().any {
                 it.key != sbn.key && it.groupKey == sbn.groupKey && it.notification.flags and Notification.FLAG_GROUP_SUMMARY == 0
             })
+    }
+
+    private companion object {
+        const val VISIBILITY_OVERRIDE_UNAVAILABLE = -1000
     }
 }

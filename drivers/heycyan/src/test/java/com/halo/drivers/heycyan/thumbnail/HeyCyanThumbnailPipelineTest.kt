@@ -101,7 +101,13 @@ class HeyCyanThumbnailPipelineTest {
         val syntheticJpeg = ByteArrayOutputStream().apply {
             write(0xFF)
             write(0xD8)
-            write(ByteArray(1022) { 0x42 })
+            write(byteArrayOf(
+                0xFF.toByte(), 0xC0.toByte(), 0x00, 0x0B, 0x08,
+                0x00, 0x10, // height = 16
+                0x00, 0x20, // width = 32
+                0x01, 0x01, 0x11, 0x00,
+            ))
+            write(ByteArray(1_009) { 0x42 })
             write(0xFF)
             write(0xD9)
         }.toByteArray()

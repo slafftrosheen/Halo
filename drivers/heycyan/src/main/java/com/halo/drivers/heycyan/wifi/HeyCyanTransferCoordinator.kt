@@ -188,7 +188,7 @@ class HeyCyanTransferCoordinator(
         activeLease?.release()
         activeLease = null
         activeApi = null
-        _state.value = if (result.isSuccess) HeyCyanTransferState.Completed(downloaded = 0) else {
+        _state.value = if (result.isSuccess) HeyCyanTransferState.Idle else {
             HeyCyanTransferState.Failed("Failed to restore HeyCyan after transfer", result.exceptionOrNull())
         }
         return result

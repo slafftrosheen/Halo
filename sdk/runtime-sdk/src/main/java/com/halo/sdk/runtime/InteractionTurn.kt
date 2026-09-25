@@ -10,6 +10,7 @@ sealed interface InteractionTurnState {
     data class Generating(override val interactionId: String, val requestId: String) : InteractionTurnState
     data class Speaking(override val interactionId: String, val outputId: String) : InteractionTurnState
     data class Interrupted(override val interactionId: String, val byInteractionId: String?) : InteractionTurnState
+    data class Cancelled(override val interactionId: String, val reason: String) : InteractionTurnState
     data class Completed(override val interactionId: String) : InteractionTurnState
     data class Failed(override val interactionId: String, val reason: String) : InteractionTurnState
 }

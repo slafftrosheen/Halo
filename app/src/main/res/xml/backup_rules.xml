@@ -3,7 +3,4 @@
     <include domain="database" path="halo.db" />
     <include domain="file" path="datastore/" />
     <include domain="sharedpref" path="halo_appearance.xml" />
-    <exclude domain="file" path="workspace/owned/" />
-    <exclude domain="file" path="workspace/artifacts/" />
-    <exclude domain="file" path="captures/" />
 </full-backup-content>

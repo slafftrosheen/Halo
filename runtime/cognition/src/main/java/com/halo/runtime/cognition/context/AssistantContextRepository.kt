@@ -1,12 +1,38 @@
 package com.halo.runtime.cognition.context
 
+import com.halo.sdk.runtime.EventBus
+import com.halo.sdk.runtime.InteractionTurnChanged
+import com.halo.sdk.runtime.InteractionTurnState
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import com.halo.sdk.runtime.ScreenContextSnapshot
 import java.util.concurrent.ConcurrentHashMap
 
 /** Process-local, transient assistant context. Nothing here is persisted as memory. */
-class AssistantContextRepository {
+class AssistantContextRepository(
+    private val nowMs: () -> Long = System::currentTimeMillis,
+    private val ttlMs: Long = DEFAULT_TTL_MS,
+    eventBus: EventBus? = null,
+    scope: CoroutineScope? = null,
+) {
     private val screens = ConcurrentHashMap<String, ScreenContextSnapshot>()
     private val images = ConcurrentHashMap<String, ImageContext>()
+
+    init {
+        if (eventBus != null && scope != null) {
+            scope.launch {
+                eventBus.observe(InteractionTurnChanged::class.java).collect { event ->
+                    when (val state = event.state) {
+                        is InteractionTurnState.Completed -> clear(state.interactionId)
+                        is InteractionTurnState.Failed -> clear(state.interactionId)
+                        is InteractionTurnState.Cancelled -> clear(state.interactionId)
+                        is InteractionTurnState.Interrupted -> clear(state.interactionId)
+                        else -> {}
+                    }
+                }
+            }
+        }
+    }
 
     fun put(interactionId: String, snapshot: ScreenContextSnapshot) {
         screens[interactionId] = snapshot
@@ -14,7 +40,7 @@ class AssistantContextRepository {
     }
 
     fun screenFor(interactionId: String): ScreenContextSnapshot? =
-        screens[interactionId]?.takeIf { System.currentTimeMillis() - it.capturedAtMs <= MAX_AGE_MS }
+        screens[interactionId]?.takeIf { nowMs() - it.capturedAtMs <= ttlMs }
 
     fun putImage(interactionId: String, image: ImageContext) {
         images[interactionId] = image
@@ -22,7 +48,7 @@ class AssistantContextRepository {
     }
 
     fun imageFor(interactionId: String): ImageContext? =
-        images[interactionId]?.takeIf { System.currentTimeMillis() - it.timestampMs <= MAX_AGE_MS }
+        images[interactionId]?.takeIf { nowMs() - it.timestampMs <= ttlMs }
 
     fun clear(interactionId: String) {
         screens.remove(interactionId)
@@ -30,10 +56,10 @@ class AssistantContextRepository {
     }
 
     private fun evictExpired() {
-        val cutoff = System.currentTimeMillis() - MAX_AGE_MS
+        val cutoff = nowMs() - ttlMs
         screens.entries.removeIf { it.value.capturedAtMs < cutoff }
         images.entries.removeIf { it.value.timestampMs < cutoff }
     }
 
-    private companion object { const val MAX_AGE_MS = 60_000L }
+    private companion object { const val DEFAULT_TTL_MS = 60_000L }
 }
