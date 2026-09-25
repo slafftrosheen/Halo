@@ -1,7 +1,26 @@
 package com.halo.runtime.cognition.tools
 
-import com.halo.runtime.cognition.device.*
-import com.halo.sdk.runtime.resource.*
+import com.halo.runtime.cognition.device.CapabilityAffinity
+import com.halo.runtime.cognition.device.CapabilityRequirement
+import com.halo.runtime.cognition.device.CapabilityResolution
+import com.halo.runtime.cognition.device.DeviceCapabilityResolver
+import com.halo.runtime.cognition.device.ResourcePlan
+import com.halo.runtime.cognition.device.ResourcePlanner
+import com.halo.runtime.cognition.device.RuntimeDevice
+import com.halo.runtime.cognition.device.RuntimeDeviceSource
+import com.halo.sdk.runtime.resource.ResourceAcquireResult
+import com.halo.sdk.runtime.resource.ResourceClaim
+import com.halo.sdk.runtime.resource.ResourceEndpointId
+import com.halo.sdk.runtime.resource.ResourceHolder
+import com.halo.sdk.runtime.resource.ResourceKey
+import com.halo.sdk.runtime.resource.ResourceLease
+import com.halo.sdk.runtime.resource.ResourceLeaseId
+import com.halo.sdk.runtime.resource.ResourceLeaseManager
+import com.halo.sdk.runtime.resource.ResourceLeaseRequest
+import com.halo.sdk.runtime.resource.ResourcePreemptionPolicy
+import com.halo.sdk.runtime.resource.ResourcePriority
+import com.halo.sdk.runtime.resource.ResourceWaitPolicy
+import com.halo.sdk.runtime.resource.ResourceYieldHandler
 import java.util.UUID
 
 data class ToolResourcePlan(
@@ -27,6 +46,11 @@ sealed interface ToolResourceAcquisition {
     ) : ToolResourceAcquisition
 }
 
+/**
+ * Joins endpoint-bearing device capability selection to generic Runtime resource
+ * ownership. Host/workspace/provider capability availability is handled by
+ * ToolAvailabilityResolver and never faked as a connected RuntimeDevice.
+ */
 class ToolResourceCoordinator(
     private val capabilityResolver: DeviceCapabilityResolver,
     private val resourcePlanner: ResourcePlanner,
@@ -39,41 +63,54 @@ class ToolResourceCoordinator(
         holder: ResourceHolder,
         availableDevices: List<RuntimeDevice> = emptyList(),
         waitPolicy: ResourceWaitPolicy = ResourceWaitPolicy.FailFast,
-        yieldHandler: ResourceYieldHandler? = null,
+        ownerYieldHandler: ResourceYieldHandler? = null,
     ): ToolResourceAcquisition {
         val devicesToUse = availableDevices.ifEmpty { runtimeDeviceSource?.devices?.value.orEmpty() }
 
-        // 1. Device capability requirements from descriptor
-        val deviceCapRequirements = descriptor.requirements
+        // Only device.* capability requirements need a connected endpoint.
+        // host.*, workspace.*, runtime.* and provider.* are semantic admission
+        // requirements already checked by ToolAvailabilityResolver.
+        val deviceRequirements = descriptor.requirements
             .filterIsInstance<ToolRequirement.Capability>()
-            .map { toolCap ->
+            .filter { it.id.value.startsWith("device.") }
+            .map { requirement ->
                 CapabilityRequirement(
-                    capabilityKind = toolCap.id.value,
+                    capabilityKind = requirement.id.value,
                     affinity = CapabilityAffinity.ANY,
                     allowFallback = true,
                 )
             }
 
-        // 2. Resolve endpoint device capabilities
-        val resolutions = deviceCapRequirements.map { req ->
-            capabilityResolver.resolve(req, devicesToUse)
+        val resolutions = deviceRequirements.map { requirement ->
+            capabilityResolver.resolve(requirement, devicesToUse)
         }
 
-        val missing = resolutions.filter { it.selectedDevice == null && !it.requirement.capabilityKind.startsWith("host.") && !it.requirement.capabilityKind.startsWith("workspace.") }
+        val missing = resolutions.filter { it.selectedDevice == null }
         if (missing.isNotEmpty()) {
             return ToolResourceAcquisition.CapabilityMissing(missing.map { it.requirement })
         }
 
-        // 3. Plan resources: combine explicit descriptor resource requirements + device cap resources
         val basePlan = resourcePlanner.plan(resolutions)
-        val explicitClaims = descriptor.resources.map { req ->
+
+        // Static resource declarations default to the selected device endpoint
+        // when one exists, otherwise the primary host. Dynamic capability-bound
+        // resources already carry their exact endpoint through ResourcePlanner.
+        val selectedEndpoint = basePlan.endpointBindings.values.firstOrNull()
+        val explicitClaims = descriptor.resources.map { requirement ->
+            val endpoint = when (requirement.affinity) {
+                CapabilityAffinity.HOST -> ResourceEndpointId("host:primary")
+                CapabilityAffinity.ORIGIN,
+                CapabilityAffinity.SPECIFIC_OWNER,
+                CapabilityAffinity.ANY -> selectedEndpoint ?: ResourceEndpointId("host:primary")
+            }
             ResourceClaim(
-                key = ResourceKey(req.resourceId, ResourceEndpointId("host:primary")),
-                access = req.access,
+                key = ResourceKey(requirement.resourceId, endpoint),
+                access = requirement.access,
             )
         }
-        val allClaims = basePlan.claims + explicitClaims
 
+        val allClaims = basePlan.claims + explicitClaims
+        val resourcePlan = basePlan.copy(claims = allClaims)
         val leaseRequest = ResourceLeaseRequest(
             requestId = "tool:${holder.toolInvocationId ?: holder.id}",
             holder = holder,
@@ -83,30 +120,29 @@ class ToolResourceCoordinator(
             preemption = ResourcePreemptionPolicy.COOPERATIVE,
         )
 
-        val toolPlan = ToolResourcePlan(
+        val plan = ToolResourcePlan(
             descriptor = descriptor,
             capabilityResolutions = resolutions,
-            resourcePlan = basePlan.copy(claims = allClaims),
+            resourcePlan = resourcePlan,
             leaseRequest = leaseRequest,
         )
 
         if (allClaims.isEmpty()) {
-            val emptyLease = NoOpResourceLease(leaseRequest)
-            return ToolResourceAcquisition.Granted(emptyLease, toolPlan)
+            return ToolResourceAcquisition.Granted(NoOpResourceLease(leaseRequest), plan)
         }
 
-        return when (val acquireResult = resourceLeaseManager.acquire(leaseRequest, yieldHandler)) {
-            is ResourceAcquireResult.Granted -> ToolResourceAcquisition.Granted(acquireResult.lease, toolPlan)
-            else -> ToolResourceAcquisition.Blocked(toolPlan, acquireResult)
+        return when (val result = resourceLeaseManager.acquire(leaseRequest, ownerYieldHandler)) {
+            is ResourceAcquireResult.Granted -> ToolResourceAcquisition.Granted(result.lease, plan)
+            else -> ToolResourceAcquisition.Blocked(plan, result)
         }
     }
 
     private class NoOpResourceLease(
-        override val request: ResourceLeaseRequest
+        override val request: ResourceLeaseRequest,
     ) : ResourceLease {
         override val leaseId: ResourceLeaseId = ResourceLeaseId("noop:${UUID.randomUUID()}")
         override val acquiredAtMs: Long = System.currentTimeMillis()
         override val isReleased: Boolean = true
-        override suspend fun release() {}
+        override fun release() = Unit
     }
 }
