@@ -84,7 +84,13 @@ class DefaultAiWorkloadPlanner : AiWorkloadPlanner {
             "this icon",
         )
 
+        val asksScreenVisual = isAssistantOrigin && (
+            (text.contains("icon") || text.contains("button")) &&
+                (text.contains("look") || text.contains("describe") || text.contains("see"))
+            )
+
         val asksVisual = hasExplicitImage || visualPhrases.any(text::contains) ||
+            asksScreenVisual ||
             (isGlassesOrigin && text in setOf("what is this", "what's this", "what is that", "what's that"))
 
         val asksScreen = isAssistantOrigin && screenPhrases.any(text::contains)
@@ -120,9 +126,9 @@ class DefaultAiWorkloadPlanner : AiWorkloadPlanner {
                     visualFreshness = VisualFreshness.CURRENT_VIEW,
                 )
             }
-        } else if (asksScreen && text.contains("icon")) {
-            // Screen structure is sufficient to answer many UI questions, but a
-            // screenshot can enrich the answer when policy and model allow it.
+        } else if (asksScreen && (text.contains("icon") || text.contains("button"))) {
+            // Non-appearance questions can use structured screen context alone;
+            // a screenshot is optional enrichment when the target can consume it.
             needs += ContextNeed(
                 kind = ContextKind.VISUAL_IMAGE,
                 requirement = ContextRequirement.OPTIONAL,
