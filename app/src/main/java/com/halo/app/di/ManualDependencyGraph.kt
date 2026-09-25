@@ -462,6 +462,7 @@ object ManualDependencyGraph {
                 microphonePermission = platformStateMonitor.microphonePermissionGranted,
                 networkRevision = platformStateMonitor.networkRevision,
                 speechInput = audioPerceptionEngine.inputStatus,
+                runtimeProjection = runtimeUiProjection,
                 notebook = notebookRepository, conversations = conversationStore, database = appDatabase, workspace = workspaceContext, captures = captures
             )
         }
