@@ -7,41 +7,48 @@ interface ResourceLease {
     val request: ResourceLeaseRequest
     val acquiredAtMs: Long
     val isReleased: Boolean
-    suspend fun release()
+
+    /**
+     * Releases Runtime ownership only. Physical/platform cleanup must finish
+     * before the owner calls this method.
+     */
+    fun release()
 }
 
 interface ResourceLeaseManager {
 
     val snapshotState: StateFlow<ResourceLeaseSnapshot>
 
+    /**
+     * [ownerYieldHandler] belongs to the lease being requested. If the lease is
+     * later blocking a higher-priority request, the manager may ask THIS owner
+     * to yield. The requester never supplies cleanup logic for another owner.
+     */
     fun tryAcquire(
         request: ResourceLeaseRequest,
-        yieldHandler: ResourceYieldHandler? = null,
+        ownerYieldHandler: ResourceYieldHandler? = null,
     ): ResourceAcquireResult
 
     suspend fun acquire(
         request: ResourceLeaseRequest,
-        yieldHandler: ResourceYieldHandler? = null,
+        ownerYieldHandler: ResourceYieldHandler? = null,
     ): ResourceAcquireResult
 
     fun snapshot(): ResourceLeaseSnapshot
 
-    suspend fun release(
-        leaseId: ResourceLeaseId
-    )
+    fun release(leaseId: ResourceLeaseId)
 }
 
 suspend fun <T> ResourceLeaseManager.withLease(
     request: ResourceLeaseRequest,
-    yieldHandler: ResourceYieldHandler? = null,
+    ownerYieldHandler: ResourceYieldHandler? = null,
     block: suspend (ResourceLease) -> T,
 ): ResourceExecutionResult<T> {
-    return when (val acquireResult = acquire(request, yieldHandler)) {
+    return when (val acquireResult = acquire(request, ownerYieldHandler)) {
         is ResourceAcquireResult.Granted -> {
             val lease = acquireResult.lease
             try {
-                val value = block(lease)
-                ResourceExecutionResult.Success(value, lease)
+                ResourceExecutionResult.Success(block(lease), lease)
             } catch (t: Throwable) {
                 ResourceExecutionResult.Error(t)
             } finally {
