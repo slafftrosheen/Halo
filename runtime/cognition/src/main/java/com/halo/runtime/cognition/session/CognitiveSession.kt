@@ -473,9 +473,21 @@ class CognitiveSession(
         _state.value = CognitiveSessionState.Completed(
             AiResponse(text = responseText, providerId = "recovery", modelId = null, finishReason = "stop")
         )
-        eventBus.publish(ConversationTurnCompleted(turn.id, turn.userText, turn.assistantText))
+        eventBus.publish(
+            ConversationTurnCompleted(
+                turnId = turn.id,
+                userText = turn.userText,
+                assistantText = turn.assistantText,
+            )
+        )
         eventBus.publish(CognitiveCompleted(requestId = requestId, response = responseText, interactionId = interactionId.value))
-        eventBus.publish(AssistantResponsePublished(responseText, responseDelivery, requestId))
+        eventBus.publish(
+            AssistantResponsePublished(
+                text = responseText,
+                delivery = responseDelivery,
+                transactionId = requestId,
+            )
+        )
         if (responseDelivery == ResponseDelivery.SPEECH_AND_VISUAL) {
             eventBus.publish(
                 TtsRequested(

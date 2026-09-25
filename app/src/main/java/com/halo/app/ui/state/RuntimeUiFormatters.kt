@@ -75,6 +75,7 @@ object RuntimeUiFormatters {
         is AgentStep.ToolDispatched, is AgentStep.ToolExecutionClaimed -> "Action started"
         is AgentStep.ResourceBlocked -> "Waiting for resource"
         is AgentStep.ToolOutcomeRecorded, is AgentStep.ToolCompleted -> "Action completed"
+        is AgentStep.ToolRejected -> "Action rejected"
         is AgentStep.ToolFailed -> "Action failed"
         is AgentStep.ResponseProduced -> "Response produced"
         is AgentStep.RunPrepared -> "Run initialized"

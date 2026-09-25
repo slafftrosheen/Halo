@@ -255,6 +255,7 @@ class ActivityViewModel(
                 is AgentStep.ToolExecutionClaimed -> step.toolCallId
                 is AgentStep.ToolCompleted -> step.toolCallId
                 is AgentStep.ToolOutcomeRecorded -> step.toolCallId
+                is AgentStep.ToolRejected -> step.toolCallId
                 is AgentStep.ToolFailed -> step.toolCallId
                 is AgentStep.ResponseProduced -> step.responseId
                 else -> null
@@ -304,11 +305,18 @@ private fun AgentRun.toStory(): ActivityStory {
             is AgentStep.ProviderTurnCompleted -> step.assistantText.ifBlank { "Provider turn completed" }
             is AgentStep.InputRequested -> "Awaiting user input"
             is AgentStep.InputResolved -> "User input resolved (${step.resolution})"
+            is AgentStep.ToolRejected -> "${step.toolId}: rejected (${step.reasonCode.name.lowercase()})"
             is AgentStep.ToolFailed -> "${step.toolId}: ${step.reason}"
             is AgentStep.ToolCompleted -> "${step.toolId}: ${step.resultSummary}"
             else -> step::class.simpleName ?: "Step"
         }
-        ActivityStep(step.id.value, title, message, failed = step is AgentStep.ToolFailed || (step is AgentStep.ToolOutcomeRecorded && !step.success))
+        ActivityStep(
+            step.id.value,
+            title,
+            message,
+            failed = step is AgentStep.ToolFailed || step is AgentStep.ToolRejected ||
+                (step is AgentStep.ToolOutcomeRecorded && !step.success),
+        )
     }
 
     return ActivityStory("agent:${id.value}", interactionId.value, ActivityKind.HALO, request, summaryText, createdAt, status, activitySteps)

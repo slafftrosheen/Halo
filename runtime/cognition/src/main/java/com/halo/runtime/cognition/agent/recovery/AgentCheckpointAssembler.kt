@@ -47,7 +47,8 @@ class AgentCheckpointAssembler {
         val prepared = steps.filterIsInstance<AgentStep.ToolInvocationPrepared>()
         val outcomes = steps.filterIsInstance<AgentStep.ToolOutcomeRecorded>()
         val resolvedOutcomes = outcomes.map { it.toolCallId }.toSet() +
-            steps.filterIsInstance<AgentStep.ToolFailed>().map { it.toolCallId }.toSet()
+            steps.filterIsInstance<AgentStep.ToolFailed>().map { it.toolCallId }.toSet() +
+            steps.filterIsInstance<AgentStep.ToolRejected>().map { it.toolCallId }.toSet()
 
         val pendingInvocation = prepared
             .filter { preparedStep -> claimed.none { it.toolCallId == preparedStep.toolCallId } }
