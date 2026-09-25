@@ -1,6 +1,7 @@
 package com.halo.runtime.cognition.context
 
 import com.halo.cognition.language.InteractionId
+import com.halo.sdk.runtime.ContextRequirement
 import com.halo.sdk.runtime.VisualFreshness
 
 enum class ContextKind {
@@ -16,12 +17,6 @@ enum class ContextAffinity {
     ORIGIN_DEVICE,
     EXPLICIT_REFERENCE,
     ANY_RECENT,
-}
-
-enum class ContextRequirement {
-    REQUIRED,
-    OPTIONAL,
-    NONE,
 }
 
 data class ContextNeed(
@@ -41,3 +36,18 @@ data class ContextAcquisitionResult(
     val omitted: List<OmittedContextCandidate> = emptyList(),
     val unsatisfiedRequired: List<ContextNeed> = emptyList(),
 )
+
+/**
+ * Portable request for a host-provided current visual capture. Runtime cognition
+ * never sees Android/HeyCyan driver types.
+ */
+data class VisualContextCaptureRequest(
+    val interactionId: InteractionId,
+    val originDeviceId: String,
+    val freshness: VisualFreshness,
+)
+
+/** Host composition resolves the concrete StillImageSource/device implementation. */
+fun interface VisualContextSource {
+    suspend fun capture(request: VisualContextCaptureRequest): Result<ImageContext>
+}
