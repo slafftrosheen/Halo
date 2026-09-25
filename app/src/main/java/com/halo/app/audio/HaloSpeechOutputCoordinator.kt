@@ -17,7 +17,6 @@ import android.media.AudioFocusRequest
 import android.media.AudioManager
 import com.halo.runtime.cognition.device.DefaultInteractionRoutePolicy
 import com.halo.runtime.cognition.device.InteractionRoutePolicy
-import com.halo.runtime.kernel.resource.DefaultResourceLeaseManager
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
@@ -38,7 +37,11 @@ class HaloSpeechOutputCoordinator(
     private val interactionRoutePolicy: InteractionRoutePolicy = DefaultInteractionRoutePolicy(),
     resourceLeaseManager: ResourceLeaseManager? = null,
 ) {
-    val session = HaloAudioSessionCoordinator(resourceLeaseManager ?: DefaultResourceLeaseManager())
+    val session = HaloAudioSessionCoordinator(
+        requireNotNull(resourceLeaseManager) {
+            "HaloSpeechOutputCoordinator requires the process-wide ResourceLeaseManager"
+        }
+    )
     private val applicationContext = context.applicationContext
     private val audioManager = applicationContext.getSystemService(AudioManager::class.java)
     private val speechAttributes = speechAudioAttributes
