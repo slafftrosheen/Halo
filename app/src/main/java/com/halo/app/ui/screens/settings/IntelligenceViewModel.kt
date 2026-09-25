@@ -329,9 +329,37 @@ class IntelligenceViewModel(
     }
     fun setTemperature(temp: Float) { val n = temp.coerceIn(0f, 2f); updateSettings { it.copy(temperature = n) }; persist { storage.putInt("ai_temperature", (n * 100).toInt()) }; _refreshTrigger.update { it + 1 } }
 
-    fun updatePolicy(conversation: Boolean? = null, deviceState: Boolean? = null, recentEvents: Boolean? = null, memories: Boolean? = null, tools: Boolean? = null, location: Boolean? = null, images: Boolean? = null, audio: Boolean? = null, video: Boolean? = null) {
+    fun updatePolicy(
+        conversation: Boolean? = null,
+        deviceState: Boolean? = null,
+        recentEvents: Boolean? = null,
+        memories: Boolean? = null,
+        tools: Boolean? = null,
+        location: Boolean? = null,
+        images: Boolean? = null,
+        audio: Boolean? = null,
+        video: Boolean? = null,
+        workspace: Boolean? = null,
+        cloudWorkspace: Boolean? = null,
+        cloudScreen: Boolean? = null,
+        cloudImages: Boolean? = null,
+    ) {
         val current = _settings.value.policy
-        val updated = current.copy(includeConversation = conversation ?: current.includeConversation, includeDeviceState = deviceState ?: current.includeDeviceState, includeRecentEvents = recentEvents ?: current.includeRecentEvents, includeMemories = memories ?: current.includeMemories, includeAvailableTools = tools ?: current.includeAvailableTools, includeLocation = location ?: current.includeLocation, includeImages = images ?: current.includeImages, includeAudio = audio ?: current.includeAudio, includeVideo = video ?: current.includeVideo)
+        val updated = current.copy(
+            includeConversation = conversation ?: current.includeConversation,
+            includeDeviceState = deviceState ?: current.includeDeviceState,
+            includeRecentEvents = recentEvents ?: current.includeRecentEvents,
+            includeMemories = memories ?: current.includeMemories,
+            includeAvailableTools = tools ?: current.includeAvailableTools,
+            includeLocation = location ?: current.includeLocation,
+            includeImages = images ?: current.includeImages,
+            includeAudio = audio ?: current.includeAudio,
+            includeVideo = video ?: current.includeVideo,
+            includeWorkspace = workspace ?: current.includeWorkspace,
+            allowCloudWorkspace = cloudWorkspace ?: current.allowCloudWorkspace,
+            allowCloudScreenContext = cloudScreen ?: current.allowCloudScreenContext,
+            allowCloudImages = cloudImages ?: current.allowCloudImages,
+        )
         updateSettings { it.copy(policy = updated) }
         persist {
             conversation?.let { storage.putBoolean("policy_conversation", it) }
@@ -343,9 +371,19 @@ class IntelligenceViewModel(
             images?.let { storage.putBoolean("policy_images", it) }
             audio?.let { storage.putBoolean("policy_audio", it) }
             video?.let { storage.putBoolean("policy_video", it) }
+            workspace?.let { storage.putBoolean("policy_workspace", it) }
+            cloudWorkspace?.let { storage.putBoolean("policy_cloud_workspace", it) }
+            cloudScreen?.let { storage.putBoolean("policy_cloud_screen_context", it) }
+            cloudImages?.let { storage.putBoolean("policy_cloud_images", it) }
         }
         _refreshTrigger.update { it + 1 }
     }
+
+    fun setImagesEnabled(enabled: Boolean) = updatePolicy(images = enabled)
+    fun setWorkspaceEnabled(enabled: Boolean) = updatePolicy(workspace = enabled)
+    fun setCloudWorkspaceEnabled(enabled: Boolean) = updatePolicy(cloudWorkspace = enabled)
+    fun setCloudScreenEnabled(enabled: Boolean) = updatePolicy(cloudScreen = enabled)
+    fun setCloudImagesEnabled(enabled: Boolean) = updatePolicy(cloudImages = enabled)
     private inline fun updateSettings(transform: (IntelligenceSettings) -> IntelligenceSettings) { _settings.update(transform) }
     private fun persist(write: () -> Unit) {
         viewModelScope.launch(dispatchers.io) { write() }

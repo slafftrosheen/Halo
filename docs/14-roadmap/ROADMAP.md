@@ -43,9 +43,9 @@ stabilization (compile/test/device/HIL) follows after the substrate exists.
    `WAITING_FOR_RESOURCE` state. Audio session + native compute bridged onto generic resource leases;
    `LeasedStillImageSource` + `LeasedWirelessTransferCapability` generic wrappers; `HeyCyanResourceArbiter`
    preserved inside driver. IMPLEMENTED / UNVALIDATED.
-5. ~~**RUNTIME-021 — Provider workload/capability routing + multimodal context fabric**~~ — LANDED (2026-09-25).
-   `AiWorkloadSpec` (`AiWorkloadKind`, `AiFeatureRequirement`), `AiExecutionTarget` with effective capability intersection, workload-aware `AiProviderRouter.resolveExecutionTarget`, deterministic `AiWorkloadPlanner`, `ContextAcquisitionCoordinator`, `ImageContext` provenance, `ContextBudget`, context token estimation, cloud context policy gates (`allowCloudImages`, `allowCloudScreenContext`), target-pinned tool execution loops. IMPLEMENTED / UNVALIDATED.
-6. **STABILIZATION** — compile/test/device/HIL; fix the integrated foundation together
+5. ~~**RUNTIME-021 — Provider workload/capability routing + multimodal context fabric**~~ — LANDED + REVIEW-CORRECTED (2026-09-25).
+   `AiWorkloadSpec` (`AiWorkloadKind`, `AiFeatureRequirement`), provider/model effective-capability intersection, workload-aware `AiProviderRouter.resolveExecutionTarget`, deterministic `AiWorkloadPlanner`, exact-origin `ContextAcquisitionCoordinator`, portable `VisualContextSource`, `ImageContext` provenance/freshness, approximate `ContextBudget`/`ContextTokenEstimator`, persisted cloud workspace/screen/image policy gates, model-level Ollama/OpenRouter capability truth, and target-pinned tool rounds. Required CURRENT_VIEW context never falls back to a random recent image; transient requirements recover as `MissingContext`. IMPLEMENTED / UNVALIDATED.
+6. **STABILIZATION** — compile first, then contract/tests, phone-only HIL, HeyCyan HIL, lifecycle/UI correction and burn-in
 
 HeyCyan validation remains an essential engineering track, but it is not the entire roadmap. 
 All future batches must adhere to the product contract and interaction-origin continuity rules established in the [Vision](../01-vision/VISION.md).

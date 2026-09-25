@@ -60,7 +60,17 @@ class HaloAssistantRuntimeBridge(private val context: Context) : AssistantRuntim
             val capturedAtMs = System.currentTimeMillis()
             ManualDependencyGraph.assistantContextRepository.putImage(
                 interactionId,
-                com.halo.runtime.cognition.context.ImageContext(bytes, "image/jpeg", capturedAtMs),
+                com.halo.runtime.cognition.context.ImageContext(
+                    imageBytes = bytes,
+                    mimeType = "image/jpeg",
+                    timestampMs = capturedAtMs,
+                    assetId = "assist:$interactionId:$capturedAtMs",
+                    interactionId = interactionId,
+                    originDeviceId = "host:primary",
+                    source = com.halo.runtime.cognition.context.ContextSource.AssistantScreenshot,
+                    trust = com.halo.runtime.cognition.context.ContextTrust.EXTERNAL_UNTRUSTED,
+                    freshness = com.halo.sdk.runtime.VisualFreshness.CURRENT_VIEW,
+                ),
             )
             ManualDependencyGraph.eventBus.publish(
                 ObservationUpdated(

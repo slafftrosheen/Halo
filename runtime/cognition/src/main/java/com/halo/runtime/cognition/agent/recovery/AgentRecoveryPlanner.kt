@@ -77,8 +77,18 @@ class DefaultAgentRecoveryPlanner : AgentRecoveryPlanner {
             )
         }
 
-        // 5. Provider turn started but never completed: inference is repeatable.
+        // 5. Provider turn started but never completed. Provider inference is
+        // repeatable only when its required context is durable. CURRENT_VIEW
+        // screen/camera context is process-local/transient and must be reacquired.
         openProviderTurn(steps)?.let { turn ->
+            val transientRequirement = turn.contextRequirements.firstOrNull { requirement ->
+                requirement.contains("CURRENT_VIEW") ||
+                    requirement.contains("REQUEST_BYTES") ||
+                    requirement.startsWith("SCREEN_TEXT:")
+            }
+            if (transientRequirement != null) {
+                return RecoveryPlan.MissingContext(run.id, transientRequirement)
+            }
             return RecoveryPlan.RetryProviderTurn(
                 run.id, turn.turnId, turn.providerId, turn.modelId, turn.exposedToolIds,
             )

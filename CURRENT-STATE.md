@@ -149,3 +149,36 @@ executed directly.
 Home, Skills and Devices now consume the same durable task/capability/resource projections already
 used by Activity and Settings → Runtime. This remains **IMPLEMENTED / UNVALIDATED**; no test or
 hardware acceptance is claimed by this correction pass.
+
+### RUNTIME-021 review correction — 2026-09-25
+
+The post-agent review corrected the initial RUNTIME-021 skeleton into one coherent execution path.
+
+- Workload planning now carries the active context-sharing policy before provider selection. Required
+  screen/workspace/image context can forbid remote inference without provider-name heuristics.
+- Provider routing resolves from the planned workload before optional hardware capture. Required
+  visual workloads therefore reject text-only models before a camera is touched; optional images are
+  not captured for a target that cannot consume them.
+- `AiExecutionTarget.effectiveCapabilities` is the provider/adapter × model intersection. Explicit
+  targets stay explicit; AUTOMATIC/PREFERRED routing may choose another compatible model/target.
+- Context acquisition now preserves exact interaction/origin provenance and can request a fresh
+  origin-device still image through a portable `VisualContextSource`. Android host composition maps
+  connected HeyCyan to `HeyCyanStillImageSource` behind the generic Runtime camera lease while the
+  driver arbiter remains authoritative below it.
+- Acquired screen/image/reference candidates are now authoritative input to
+  `DefaultContextAssembler`; the assembler no longer performs a second unrelated "latest image"
+  search for RUNTIME-021 turns. CURRENT_VIEW freshness remains 10 seconds, RECENT_CAPTURE 60 seconds,
+  and explicit REFERENCE context is not age-expired.
+- Context budgeting is explicitly approximate (`ContextTokenEstimator` / `ContextBudget`) and
+  prioritizes required current context and explicit references ahead of older conversation history.
+- Cloud workspace/screen/image gates are persisted and exposed in Intelligence UI. Unimplemented
+  Android background still capture is no longer advertised as an available host capability.
+- Ollama now inspects model metadata through `/api/show`, advertises model vision only from returned
+  capability metadata, serializes image chat input, and deliberately keeps tools disabled until Halo's
+  Ollama adapter implements the complete tool-call/result round trip.
+- Durable provider-turn metadata records workload-required AI capabilities and metadata-only context
+  requirements. Recovery classifies CURRENT_VIEW/screen/request-bound image context as
+  `MissingContext` rather than silently substituting unrelated recent data.
+
+This remains **IMPLEMENTED / UNVALIDATED**. The coding phase did not claim compile-suite, provider,
+phone, HeyCyan, latency, battery or HIL acceptance; those move to STABILIZATION.

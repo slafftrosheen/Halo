@@ -397,10 +397,19 @@ object ManualDependencyGraph {
             runtimeDeviceSource = runtimeDeviceCapabilityBridge,
         )
     }
+    val visualContextSource by lazy {
+        com.halo.app.capture.RuntimeVisualContextSource(
+            deviceRegistry = deviceRegistry,
+            heyCyanDriverProvider = { heyCyanDriver },
+            resourceLeaseManager = infra.resourceLeaseManager,
+        )
+    }
     val contextAcquisitionCoordinator by lazy {
         DefaultContextAcquisitionCoordinator(
             assistantContexts = assistantContextRepository,
-            workspaceContext = workspaceContext
+            workspaceContext = workspaceContext,
+            blackboard = blackboard,
+            visualContextSource = visualContextSource,
         )
     }
     val cognitiveSession by lazy {

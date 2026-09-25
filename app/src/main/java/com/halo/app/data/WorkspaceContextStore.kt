@@ -50,23 +50,34 @@ class WorkspaceContextStore(private val database: AppDatabase, private val notes
     suspend fun forget(id: Int) = database.memoryDao().deleteMemoryById(id)
     override suspend fun content(includeMemories: Boolean): List<String> {
         val selected = database.workspaceContextDao().selectedIds().take(20).mapNotNull { id ->
-            val item = database.notebookDao().getWorkspaceObject(id) ?: return@mapNotNull null
-            if (item.lifecycle != "ACTIVE") return@mapNotNull null
-            val text = when (item.type) {
-                "NOTE" -> notes.getNote(id)?.body
-                "MEMORY" -> database.memoryRecordDao().getRecord(id)?.content
-                "FILE" -> database.workspaceFileDao().getFile(id)?.let {
-                    "${it.displayName} (${it.mimeType})"
-                }
-                "CONVERSATION" -> database.conversationDao().turns(id).takeLast(3)
-                    .joinToString("\n") { "User: ${it.userText}\nHalo: ${it.assistantText}" }
-                else -> item.title
-            }?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
-            "Working set ${item.type.lowercase()}: ${text.take(8_000)}"
+            resolveContent(id)?.let { (type, text) ->
+                "Working set ${type.lowercase()}: ${text.take(8_000)}"
+            }
         }
         val memories = if (includeMemories && useMemories.value) {
             database.memoryDao().snapshot().map { "Remembered: ${it.content}" }
         } else emptyList()
         return selected + memories
+    }
+
+    override suspend fun contentFor(objectId: String): String? =
+        resolveContent(objectId)?.let { (type, text) ->
+            "Explicit ${type.lowercase()} reference: ${text.take(8_000)}"
+        }
+
+    private suspend fun resolveContent(id: String): Pair<String, String>? {
+        val item = database.notebookDao().getWorkspaceObject(id) ?: return null
+        if (item.lifecycle != "ACTIVE") return null
+        val text = when (item.type) {
+            "NOTE" -> notes.getNote(id)?.body
+            "MEMORY" -> database.memoryRecordDao().getRecord(id)?.content
+            "FILE" -> database.workspaceFileDao().getFile(id)?.let {
+                "${it.displayName} (${it.mimeType})"
+            }
+            "CONVERSATION" -> database.conversationDao().turns(id).takeLast(3)
+                .joinToString("\n") { "User: ${it.userText}\nHalo: ${it.assistantText}" }
+            else -> item.title
+        }?.takeIf { it.isNotBlank() } ?: return null
+        return item.type to text
     }
 }

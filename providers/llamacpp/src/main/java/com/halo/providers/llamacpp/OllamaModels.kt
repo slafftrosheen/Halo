@@ -31,7 +31,9 @@ data class OllamaChatRequest(
 @JsonClass(generateAdapter = true)
 data class OllamaChatMessage(
     val role: String,
-    val content: String
+    val content: String,
+    /** Base64 image payloads accepted by Ollama chat for vision-capable models. */
+    val images: List<String>? = null,
 )
 
 @JsonClass(generateAdapter = true)

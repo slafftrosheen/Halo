@@ -636,40 +636,94 @@ class CognitiveSession(
                 _state.value = CognitiveSessionState.PreparingContext
                 eventBus.publish(CognitiveRequestStarted(requestId = requestId, interactionId = interactionId.value))
 
-                val obsOrigin = when (val route = origin?.speechRoute) {
-                    is SpeechInputRoute.Device -> ObservationOrigin(ObservationSource.HeyCyanGlasses, route.deviceId)
-                    is SpeechInputRoute.Phone -> ObservationOrigin(ObservationSource.AndroidAssist, null)
-                    null -> null
+                val boundScreen = assistantContexts?.screenFor(interactionId.value) != null
+                val boundAssistantImage = assistantContexts?.imageFor(interactionId.value) != null
+                val inputSourceHint = metadata["inputSource"].orEmpty()
+
+                val observationSource = when {
+                    boundScreen || boundAssistantImage -> ObservationSource.AndroidAssist
+                    inputSourceHint.contains("HeyCyan", ignoreCase = true) -> ObservationSource.HeyCyanGlasses
+                    inputSourceHint.contains("AndroidAssist", ignoreCase = true) -> ObservationSource.AndroidAssist
+                    inputSourceHint.contains("Bluetooth", ignoreCase = true) -> ObservationSource.BluetoothHeadset
+                    origin?.speechRoute is SpeechInputRoute.Phone -> ObservationSource.AndroidPhoneMic
+                    origin?.speechRoute is SpeechInputRoute.Device -> ObservationSource.Debug
+                    else -> null
                 }
+                val originDeviceId = when (val route = origin?.speechRoute) {
+                    is SpeechInputRoute.Device -> route.deviceId
+                    else -> origin?.sourceDeviceId ?: metadata["sourceDeviceId"]
+                }
+                val obsOrigin = observationSource?.let {
+                    ObservationOrigin(it, originDeviceId)
+                }
+
+                val planningMetadata = metadata + mapOf(
+                    "hasScreenContext" to boundScreen.toString(),
+                    "hasAssistantImage" to boundAssistantImage.toString(),
+                )
+
                 val workloadPlan = workloadPlanner.plan(
                     WorkloadPlanningRequest(
                         request = request,
                         interactionId = interactionId,
                         origin = obsOrigin,
-                        metadata = metadata,
+                        metadata = planningMetadata,
+                        contextPolicy = effectivePolicy,
                     )
                 )
 
-                val acqResult = contextAcquisitionCoordinator?.acquire(
-                    plan = workloadPlan.context,
-                    query = ContextQuery(
-                        interactionId = interactionId,
-                        text = request.text.orEmpty(),
-                        requestedCapabilities = workloadPlan.inference.requiredCapabilities,
-                    ),
-                )
-
+                /*
+                 * RUNTIME-021: route from the PLANNED workload before touching
+                 * hardware. A visual workload already requires IMAGE here, even
+                 * though the request bytes may not exist yet.
+                 */
                 val target = providerRouter.resolveExecutionTarget(request, workloadPlan.inference)
                 resolvedProviderId = target.providerId
                 resolvedModelId = target.modelId
                 val provider = target.provider
                 val finalRequest = request.copy(modelId = target.modelId)
                 val capabilities = target.effectiveCapabilities
+
+                // Do not capture optional images for a target that cannot consume
+                // them. Required image needs cannot reach this point without IMAGE.
+                val targetContextPlan = workloadPlan.context.copy(
+                    needs = workloadPlan.context.needs.filterNot { need ->
+                        need.kind == com.halo.runtime.cognition.context.ContextKind.VISUAL_IMAGE &&
+                            need.requirement == com.halo.sdk.runtime.ContextRequirement.OPTIONAL &&
+                            AiCapability.IMAGE !in capabilities
+                    }
+                )
+
+                val acqResult = contextAcquisitionCoordinator?.acquire(
+                    plan = targetContextPlan,
+                    query = ContextQuery(
+                        interactionId = interactionId,
+                        text = request.text.orEmpty(),
+                        requestedCapabilities = workloadPlan.inference.requiredCapabilities,
+                        activeWorkspaceObjectId = metadata["workspaceObjectId"],
+                        origin = obsOrigin,
+                    ),
+                ) ?: com.halo.runtime.cognition.context.ContextAcquisitionResult(
+                    candidates = emptyList(),
+                    unsatisfiedRequired = targetContextPlan.needs.filter {
+                        it.requirement == com.halo.sdk.runtime.ContextRequirement.REQUIRED
+                    },
+                )
+
+                if (acqResult.unsatisfiedRequired.isNotEmpty()) {
+                    val missingName = acqResult.unsatisfiedRequired.first().kind.name
+                        .lowercase().replace("_", " ")
+                    throw AiProviderException(
+                        AiErrorType.INVALID_REQUEST,
+                        "Required $missingName is currently unavailable"
+                    )
+                }
+
                 val targetPolicy = effectivePolicy.copy(
                     includeWorkspace = effectivePolicy.includeWorkspace &&
                         (target.provider.isLocal || effectivePolicy.allowCloudWorkspace),
-                    allowCloudScreenContext = effectivePolicy.allowCloudScreenContext || target.provider.isLocal,
-                    allowCloudImages = effectivePolicy.allowCloudImages || target.provider.isLocal,
+                    includeImages = effectivePolicy.includeImages &&
+                        (target.provider.isLocal || effectivePolicy.allowCloudImages),
                 )
 
                 val assembly = contextAssembler.assemble(
@@ -681,15 +735,17 @@ class CognitiveSession(
                         acquisition = acqResult,
                         contextWindowTokens = target.model.contextLength,
                         requiredNeeds = workloadPlan.context.needs,
+                        targetIsLocal = target.provider.isLocal,
                     ),
                 )
 
-                if (acqResult?.unsatisfiedRequired?.isNotEmpty() == true) {
-                    val missingName = acqResult.unsatisfiedRequired.first().kind.name.lowercase().replace("_", " ")
-                    val errorMsg = "Required $missingName is currently unavailable"
-                    _state.value = CognitiveSessionState.Failed(errorMsg)
-                    eventBus.publish(CognitiveCompleted(requestId = requestId, response = errorMsg, interactionId = interactionId.value))
-                    return@launch
+                if (assembly.unsatisfiedRequired.isNotEmpty()) {
+                    val missingName = assembly.unsatisfiedRequired.first().kind.name
+                        .lowercase().replace("_", " ")
+                    throw AiProviderException(
+                        AiErrorType.INVALID_REQUEST,
+                        "Required $missingName cannot be supplied to the resolved model"
+                    )
                 }
 
                 val context = assembly.context
@@ -717,13 +773,34 @@ class CognitiveSession(
                 )
 
                 /*
-                 * RUNTIME-018: when a run owns this turn, the provider turn is
-                 * journaled BEFORE inference so recovery can distinguish "started but
-                 * never completed" from "completed". No provider internals persist.
+                 * Durable metadata records what this workload REQUIRED, not every
+                 * feature the selected provider happens to support. Context
+                 * contents themselves are never journaled.
                  */
                 val durableRunId = pendingRunId ?: runId
                 if (durableRunId != null) {
                     val turnId = com.halo.runtime.cognition.agent.ProviderTurnId("$durableRunId:$requestId")
+                    val requiredAiCapabilities = buildSet {
+                        addAll(workloadPlan.inference.requiredCapabilities.map { it.name })
+                        if (workloadPlan.inference.tools == com.halo.sdk.provider.AiFeatureRequirement.REQUIRED) {
+                            add(AiCapability.TOOLS.name)
+                        }
+                        if (workloadPlan.inference.streaming == com.halo.sdk.provider.AiFeatureRequirement.REQUIRED) {
+                            add(AiCapability.STREAMING.name)
+                        }
+                    }
+                    val contextRequirements = buildSet {
+                        workloadPlan.context.needs
+                            .filter { it.requirement == com.halo.sdk.runtime.ContextRequirement.REQUIRED }
+                            .forEach { need ->
+                                add(
+                                    "${need.kind.name}:" +
+                                        (need.visualFreshness?.name ?: need.affinity.name)
+                                )
+                            }
+                        if (request.image != null) add("VISUAL_IMAGE:REQUEST_BYTES")
+                    }
+
                     agentRunCoordinator?.recordStep(
                         AgentStep.ProviderTurnStarted(
                             newStepId(), durableRunId, Instant.now(),
@@ -733,7 +810,8 @@ class CognitiveSession(
                             requestIdentity = ToolArgumentCanonicalizer.sha256Hex(
                                 (request.text ?: "") + ":" + (request.image?.contentHashCode() ?: 0)),
                             exposedToolIds = context.availableTools.map { it.name }.toSet(),
-                            requiredCapabilities = capabilities.map { it.name }.toSet(),
+                            requiredCapabilities = requiredAiCapabilities,
+                            contextRequirements = contextRequirements,
                         )
                     )
                     journaledTurnId = turnId
