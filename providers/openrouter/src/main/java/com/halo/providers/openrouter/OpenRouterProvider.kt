@@ -344,7 +344,7 @@ class OpenRouterProvider(
                 put("content", screen.asUntrustedPromptSection())
             })
         }
-        request.text?.let { text ->
+        request.text?.takeIf { request.appendTextAsUserMessage }?.let { text ->
             val content: Any = if (request.image != null) {
                 JSONArray().apply {
                     put(JSONObject().apply { put("type", "text"); put("text", text) })

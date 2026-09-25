@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -39,6 +40,7 @@ fun NotificationSettingsScreen(viewModel: RoutinesViewModel, onBack: () -> Unit)
     val deliverySettings by graph.digestDeliverySettings.state.collectAsState()
     val deliveryChannel = deliverySettings.channel
     val wearableId = deliverySettings.wearableId
+    var wearableDraft by rememberSaveable(wearableId) { mutableStateOf(wearableId) }
     val recent by graph.notificationRepository.observeRecent().collectAsState(initial = emptyList())
     var policyError by remember { mutableStateOf<String?>(null) }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
@@ -86,12 +88,15 @@ fun NotificationSettingsScreen(viewModel: RoutinesViewModel, onBack: () -> Unit)
                     scope.launch { graph.digestDeliverySettings.setChannel(key) }
                 }) { Text(if (deliveryChannel == key) "Selected: $title" else title) }
             }
-            OutlinedTextField(wearableId, {
-                    scope.launch { graph.digestDeliverySettings.setWearableId(it) }
-                }, label = { Text("Wearable device ID for explicit speech") })
-            TextButton(enabled = wearableId.isNotBlank(), onClick = {
+            OutlinedTextField(
+                value = wearableDraft,
+                onValueChange = { wearableDraft = it },
+                label = { Text("Wearable device ID for explicit speech") },
+            )
+            TextButton(enabled = wearableDraft.isNotBlank(), onClick = {
                 scope.launch {
-                    graph.digestDeliverySettings.setWearableId(wearableId.trim())
+                    val normalized = wearableDraft.trim()
+                    graph.digestDeliverySettings.setWearableId(normalized)
                     graph.digestDeliverySettings.setChannel("wearable")
                 }
             }) { Text(if (deliveryChannel == "wearable") "Wearable speech enabled" else "Enable wearable speech for digests") }

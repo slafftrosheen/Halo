@@ -226,7 +226,7 @@ object ManualDependencyGraph {
     val notificationPolicies by lazy { com.halo.app.data.notification.NotificationPolicyManager(applicationContext) }
     val notificationRepository by lazy { com.halo.app.data.notification.RoomNotificationRepository(appDatabase.notificationDao(), notificationPolicies, applicationContext.packageName) }
     val notificationBridge by lazy { com.halo.app.notification.NotificationIngestionBridge(applicationContext, notificationRepository, infra.scope) }
-    val digestDeliverySettings by lazy { SharedPreferencesDigestDeliverySettingsRepository(applicationContext) }
+    val digestDeliverySettings by lazy { SharedPreferencesDigestDeliverySettingsRepository(applicationContext, infra.scope) }
     val notificationDigestTool by lazy {
         NotificationDigestTool(notificationRepository, attentionController, notificationBridge::isAccessGranted) {
             val settings = digestDeliverySettings.state.value

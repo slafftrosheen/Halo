@@ -98,6 +98,50 @@ interface AiProviderRouter {
         request: AiRequest
     ): AiExecutionTarget = resolveExecutionTarget(request, AiWorkloadSpec())
 
+    /** Exact target resolution for durable recovery; never falls back or mutates selection. */
+    suspend fun resolvePinnedExecutionTarget(
+        request: AiRequest,
+        workload: AiWorkloadSpec,
+        providerId: String,
+        modelId: String,
+    ): AiExecutionTarget {
+        val provider = getAllProviders().firstOrNull { it.id == providerId } as? AiInferenceProvider
+            ?: throw AiProviderException(AiErrorType.PROVIDER_UNAVAILABLE, "Durable provider $providerId is no longer available")
+        if (!workload.allowRemote && !provider.isLocal) {
+            throw AiProviderException(
+                AiErrorType.UNSUPPORTED_CAPABILITY,
+                "Durable remote provider is no longer permitted for this workload",
+                AiFailureDetails(recoverability = Recoverability.USER_ACTION_REQUIRED),
+            )
+        }
+        val status = provider.getStatus()
+        status.cooldown?.takeIf { it.isActive() }?.let { cooldown ->
+            throw AiProviderException(
+                cooldown.reason,
+                status.message ?: "Durable provider is temporarily cooling down",
+                AiFailureDetails(retryAfterMs = cooldown.remainingMs(), recoverability = Recoverability.RETRY_AFTER),
+            )
+        }
+        val ready = status.state == ProviderStatus.State.READY ||
+            status.readiness is ProviderReadiness.ConfiguredCold || status.readiness is ProviderReadiness.Ready
+        if (!ready) throw AiProviderException(AiErrorType.PROVIDER_UNAVAILABLE, "Durable provider $providerId is not ready")
+        val providerCapabilities = provider.getCapabilities()
+        val model = provider.listModels().firstOrNull { it.id == modelId }
+            ?: throw AiProviderException(AiErrorType.MODEL_NOT_FOUND, "Durable model $modelId is no longer advertised by $providerId")
+        val effectiveCapabilities = providerCapabilities.intersect(
+            model.inputCapabilities +
+                (if (model.supportsTools && AiCapability.TOOLS in providerCapabilities) setOf(AiCapability.TOOLS) else emptySet()) +
+                (if (model.supportsStreaming && AiCapability.STREAMING in providerCapabilities) setOf(AiCapability.STREAMING) else emptySet())
+        )
+        request.validateAgainst(effectiveCapabilities)
+        if (workload.requiredCapabilities.any { it !in effectiveCapabilities } ||
+            (workload.tools == AiFeatureRequirement.REQUIRED && AiCapability.TOOLS !in effectiveCapabilities) ||
+            (workload.streaming == AiFeatureRequirement.REQUIRED && AiCapability.STREAMING !in effectiveCapabilities) ||
+            (workload.minimumContextTokens > 0 && (model.contextLength == null || model.contextLength < workload.minimumContextTokens))
+        ) throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY, "Durable target $providerId/$modelId no longer satisfies the workload")
+        return AiExecutionTarget(provider, model, providerCapabilities, effectiveCapabilities)
+    }
+
     /**
      * Legacy provider-only resolution.
      */

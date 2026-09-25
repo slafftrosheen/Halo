@@ -318,13 +318,15 @@ class OllamaProvider(
                 content = it.asUntrustedPromptSection(),
             )
         }
-        messages += OllamaChatMessage(
-            role = "user",
-            content = requireNotNull(request.text),
-            images = request.image?.let { image ->
-                listOf(Base64.encodeToString(image, Base64.NO_WRAP))
-            },
-        )
+        if (request.appendTextAsUserMessage) {
+            messages += OllamaChatMessage(
+                role = "user",
+                content = requireNotNull(request.text),
+                images = request.image?.let { image ->
+                    listOf(Base64.encodeToString(image, Base64.NO_WRAP))
+                },
+            )
+        }
         return messages
     }
 
