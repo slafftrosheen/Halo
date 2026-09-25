@@ -14,7 +14,15 @@ data class AiExecutionTarget(
     val provider: AiInferenceProvider,
     val model: AiModel,
     val providerCapabilities: Set<AiCapability>,
-    val effectiveCapabilities: Set<AiCapability> = providerCapabilities,
+    val effectiveCapabilities: Set<AiCapability> = providerCapabilities.intersect(
+        model.inputCapabilities +
+            (if (model.supportsTools && AiCapability.TOOLS in providerCapabilities) {
+                setOf(AiCapability.TOOLS)
+            } else emptySet()) +
+            (if (model.supportsStreaming && AiCapability.STREAMING in providerCapabilities) {
+                setOf(AiCapability.STREAMING)
+            } else emptySet())
+    ),
 ) {
     val providerId: String
         get() = provider.id
