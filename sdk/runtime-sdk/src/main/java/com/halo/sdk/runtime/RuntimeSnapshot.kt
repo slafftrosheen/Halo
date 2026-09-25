@@ -3,6 +3,7 @@ package com.halo.sdk.runtime
 import java.time.Duration
 import java.time.Instant
 import com.halo.sdk.host.DeviceContext
+import com.halo.sdk.runtime.resource.ResourceLeaseSnapshot
 
 data class RuntimeHealth(
     val healthy: Boolean,
@@ -25,7 +26,9 @@ data class RuntimeSnapshot(
     val deviceContext: DeviceContext = DeviceContext(),
     val traces: List<ObservationTrace> = emptyList(),
     /** Native heavyweight residency, eviction and contention diagnostics. */
-    val nativeResources: List<NativeResourceSnapshot> = emptyList()
+    val nativeResources: List<NativeResourceSnapshot> = emptyList(),
+    /** Generic runtime resource leases and wait queue diagnostics. */
+    val resourceLeases: ResourceLeaseSnapshot? = null
 )
 
 data class StageMetrics(

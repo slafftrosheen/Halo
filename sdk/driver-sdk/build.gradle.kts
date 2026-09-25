@@ -6,4 +6,5 @@ plugins {
 dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(project(":libraries:common"))
+    api(project(":sdk:runtime-sdk"))
 }

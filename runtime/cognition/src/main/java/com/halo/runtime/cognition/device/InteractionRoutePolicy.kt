@@ -16,8 +16,15 @@ sealed interface HandoffDecision {
     data class Required(val targetDeviceId: String, val reason: HandoffReason) : HandoffDecision
 }
 
-data class InteractionInputRoute(val deviceId: String?, val capabilityKind: String)
-data class InteractionOutputRoute(val deviceId: String?, val capabilityKind: String)
+data class InteractionInputRoute(
+    val deviceId: String?,
+    val capabilityKind: String = "audio.input",
+)
+
+data class InteractionOutputRoute(
+    val deviceId: String?,
+    val capabilityKind: String = "audio.output",
+)
 
 interface InteractionRoutePolicy {
     fun resolveInput(interactionId: InteractionId, originDeviceId: String?): InteractionInputRoute
@@ -25,27 +32,66 @@ interface InteractionRoutePolicy {
     fun evaluateHandoff(continuity: InteractionContinuity, availableDevices: List<RuntimeDevice>): HandoffDecision
 }
 
-class DefaultInteractionRoutePolicy : InteractionRoutePolicy {
+class DefaultInteractionRoutePolicy(
+    private val resolver: DeviceCapabilityResolver = DefaultDeviceCapabilityResolver(),
+) : InteractionRoutePolicy {
+
     override fun resolveInput(interactionId: InteractionId, originDeviceId: String?): InteractionInputRoute {
-        return InteractionInputRoute(originDeviceId, "AudioInput")
+        val req = CapabilityRequirement(
+            capabilityKind = "audio.input",
+            originDeviceId = originDeviceId,
+            affinity = CapabilityAffinity.ORIGIN,
+            allowFallback = true,
+        )
+        val res = resolver.resolve(req, emptyList())
+        return InteractionInputRoute(res.selectedDevice?.id ?: originDeviceId, "audio.input")
     }
 
     override fun resolveOutput(interactionId: InteractionId, originDeviceId: String?): InteractionOutputRoute {
-        return InteractionOutputRoute(originDeviceId, "AudioOutput")
+        val req = CapabilityRequirement(
+            capabilityKind = "audio.output",
+            originDeviceId = originDeviceId,
+            affinity = CapabilityAffinity.ORIGIN,
+            allowFallback = true,
+        )
+        val res = resolver.resolve(req, emptyList())
+        return InteractionOutputRoute(res.selectedDevice?.id ?: originDeviceId, "audio.output")
     }
 
-    override fun evaluateHandoff(continuity: InteractionContinuity, availableDevices: List<RuntimeDevice>): HandoffDecision {
-        val currentDevice = continuity.originDeviceId
-            ?.let { id -> availableDevices.firstOrNull { it.id == id } }
+    override fun evaluateHandoff(
+        continuity: InteractionContinuity,
+        availableDevices: List<RuntimeDevice>,
+    ): HandoffDecision {
+        val currentDeviceId = continuity.originDeviceId
+        val originReq = CapabilityRequirement(
+            capabilityKind = "audio.output",
+            originDeviceId = currentDeviceId,
+            affinity = CapabilityAffinity.ORIGIN,
+            allowFallback = false,
+        )
+        val originRes = resolver.resolve(originReq, availableDevices)
 
-        if (currentDevice?.connected == true && currentDevice.capabilities.any { it is DeviceCapability.AudioOutput }) {
+        if (originRes.selectedDevice?.connected == true) {
             return HandoffDecision.Stay
         }
 
-        val reason = if (currentDevice?.connected == true) HandoffReason.CAPABILITY_UNAVAILABLE else HandoffReason.ORIGIN_DISCONNECTED
+        val reason = if (availableDevices.any { it.id == currentDeviceId && it.connected }) {
+            HandoffReason.CAPABILITY_UNAVAILABLE
+        } else {
+            HandoffReason.ORIGIN_DISCONNECTED
+        }
+
         if (!continuity.allowHandoff) return HandoffDecision.Unavailable(reason)
-        val target = availableDevices.firstOrNull { it.connected && it.capabilities.any { cap -> cap is DeviceCapability.AudioOutput } }
-            ?: return HandoffDecision.Unavailable(reason)
-        return HandoffDecision.Required(target.id, HandoffReason.EXPLICIT_USER_REQUEST)
+
+        val fallbackReq = CapabilityRequirement(
+            capabilityKind = "audio.output",
+            originDeviceId = currentDeviceId,
+            affinity = CapabilityAffinity.ANY,
+            allowFallback = true,
+        )
+        val fallbackRes = resolver.resolve(fallbackReq, availableDevices)
+        val targetDevice = fallbackRes.selectedDevice ?: return HandoffDecision.Unavailable(reason)
+
+        return HandoffDecision.Required(targetDevice.id, HandoffReason.EXPLICIT_USER_REQUEST)
     }
 }

@@ -1,10 +1,12 @@
 package com.halo.app.di
 
 import android.content.Context
+import com.halo.app.storage.haloStorageLayout
 import com.halo.providers.llamacpp.ModelDownloadManager
 import com.halo.providers.sherpa.stt.ReloadableSpeechRecognitionProvider
 import com.halo.providers.sherpa.stt.DefaultSpeechModelInventoryRepository
 import com.halo.sdk.runtime.NativeResourceCoordinator
+import com.halo.sdk.runtime.Storage
 
 /**
  * Owns provider construction. Android-aware (needs Context for provider instantiation).
@@ -12,12 +14,13 @@ import com.halo.sdk.runtime.NativeResourceCoordinator
  */
 class ProviderGraph(
     applicationContext: Context,
-    private val storage: com.halo.sdk.runtime.Storage
+    private val storage: Storage,
+    private val infra: InfrastructureGraph? = null,
 ) {
 
-    private val storageLayout by lazy { com.halo.app.storage.haloStorageLayout(applicationContext) }
+    private val storageLayout by lazy { haloStorageLayout(applicationContext) }
     val modelDownloadManager by lazy { ModelDownloadManager(applicationContext, modelRoot = storageLayout.models) }
-    val nativeResourceCoordinator by lazy { NativeResourceCoordinator() }
+    val nativeResourceCoordinator by lazy { NativeResourceCoordinator(infra?.resourceLeaseManager) }
     val speechModelInventory by lazy {
         DefaultSpeechModelInventoryRepository(
             speechRoot = { storageLayout.speechModels }

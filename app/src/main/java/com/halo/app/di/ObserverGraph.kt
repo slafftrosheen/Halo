@@ -41,7 +41,8 @@ class ObserverGraph(
         DefaultSnapshotAssembler(
             healthEvaluator,
             java.time.Clock.systemUTC(),
-            engineGraph.nativeResourceCoordinator
+            engineGraph.nativeResourceCoordinator,
+            infra.resourceLeaseManager
         )
     }
 

@@ -1,5 +1,6 @@
 package com.halo.runtime.observer
 
+import com.halo.runtime.cognition.blackboard.Knowledge
 import com.halo.sdk.runtime.BlackboardSnapshot
 import com.halo.sdk.runtime.EngineSnapshot
 import com.halo.sdk.runtime.EngineState
@@ -11,14 +12,16 @@ import com.halo.sdk.runtime.RuntimeSnapshot
 import com.halo.sdk.runtime.RuntimeState
 import com.halo.sdk.runtime.SpeechSessionState
 import com.halo.sdk.runtime.TimelineEvent
+import com.halo.sdk.runtime.resource.ResourceLeaseManager
 import java.time.Instant
 import kotlinx.datetime.toJavaInstant
+import java.time.Clock
 
 interface SnapshotAssembler {
     fun assemble(
         speechState: SpeechSessionState,
         engines: List<EngineSnapshot>,
-        facts: List<com.halo.runtime.cognition.blackboard.Knowledge>,
+        facts: List<Knowledge>,
         timeline: List<TimelineEvent>,
         traces: List<ObservationTrace>,
         providers: List<ProviderSnapshot>,
@@ -28,13 +31,14 @@ interface SnapshotAssembler {
 
 class DefaultSnapshotAssembler(
     private val healthEvaluator: RuntimeHealthEvaluator,
-    private val clock: java.time.Clock,
-    private val nativeResourceCoordinator: NativeResourceCoordinator? = null
+    private val clock: Clock,
+    private val nativeResourceCoordinator: NativeResourceCoordinator? = null,
+    private val resourceLeaseManager: ResourceLeaseManager? = null,
 ) : SnapshotAssembler {
     override fun assemble(
         speechState: SpeechSessionState,
         engines: List<EngineSnapshot>,
-        facts: List<com.halo.runtime.cognition.blackboard.Knowledge>,
+        facts: List<Knowledge>,
         timeline: List<TimelineEvent>,
         traces: List<ObservationTrace>,
         providers: List<ProviderSnapshot>,
@@ -79,7 +83,8 @@ class DefaultSnapshotAssembler(
                 }
             ),
             traces = traces,
-            nativeResources = nativeResourceCoordinator?.snapshot?.value ?: emptyList()
+            nativeResources = nativeResourceCoordinator?.snapshot?.value ?: emptyList(),
+            resourceLeases = resourceLeaseManager?.snapshot()
         )
     }
 }

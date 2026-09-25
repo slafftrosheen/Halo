@@ -37,4 +37,10 @@ Runtime-level questions are capability questions. A device exposes what it can d
 
 The architecture must support all of these without reshaping the Runtime.
 
+### Resource Ownership Invariant (RUNTIME-020)
+
+No subsystem may assume access to a scarce cross-runtime resource merely because it has a capability reference. Capability resolution must precede resource acquisition, and successful resource acquisition must precede use.
+
+Device-driver safety and protocol arbitration (`HeyCyanResourceArbiter`, `SafetySupervisor`) remain authoritative below the generic Runtime lease layer.
+
 > **HeyCyan is reference hardware, not an architectural category.**
