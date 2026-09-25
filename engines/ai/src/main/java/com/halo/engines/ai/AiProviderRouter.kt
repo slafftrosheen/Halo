@@ -185,7 +185,17 @@ class DefaultAiProviderRouter(
                         }
                         throw AiProviderException(type, "Provider is not ready")
                     }
-                    resolved = resolveTargetForProvider(provider, request.copy(modelId = request.modelId ?: selectedModel.takeIf { provider.id == selectedId }), workload, allowSelectedModelFallback = true)
+                    val explicitModelId = request.modelId
+                        ?: selectedModel.takeIf {
+                            policy == AiRoutingPolicy.EXPLICIT && provider.id == selectedId
+                        }
+                    resolved = resolveTargetForProvider(
+                        provider = provider,
+                        request = request.copy(modelId = explicitModelId),
+                        workload = workload,
+                        preferredModelId = selectedModel.takeIf { provider.id == selectedId },
+                        allowPreferredModelFallback = policy != AiRoutingPolicy.EXPLICIT,
+                    )
                     return resolved
                 } catch (cancelled: CancellationException) {
                     throw cancelled
@@ -270,47 +280,103 @@ class DefaultAiProviderRouter(
         provider: AiInferenceProvider,
         request: AiRequest,
         workload: AiWorkloadSpec,
-        allowSelectedModelFallback: Boolean,
+        preferredModelId: String? = null,
+        allowPreferredModelFallback: Boolean = true,
     ): AiExecutionTarget {
         val providerCapabilities = provider.getCapabilities()
         request.validateAgainst(providerCapabilities)
         val models = provider.listModels()
-        if (models.isEmpty()) throw AiProviderException(AiErrorType.MODEL_UNAVAILABLE, "Provider ${provider.id} did not advertise any models")
+        if (models.isEmpty()) {
+            throw AiProviderException(
+                AiErrorType.MODEL_UNAVAILABLE,
+                "Provider ${provider.id} did not advertise any models"
+            )
+        }
 
         val candidateModel = request.modelId?.let { explicitId ->
-            models.firstOrNull { it.id == explicitId } ?: throw AiProviderException(AiErrorType.MODEL_NOT_FOUND, "Model $explicitId is not advertised by provider ${provider.id}")
-        } ?: (if (!allowSelectedModelFallback) _selectedModelId.value else null)?.let { selectedId ->
-            models.firstOrNull { it.id == selectedId }
-        } ?: models.firstOrNull { supportsModelWorkload(it, request, workload, providerCapabilities) }
-        ?: throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY, "Provider ${provider.id} has no advertised model compatible with workload ${workload.kind}")
+            val explicit = models.firstOrNull { it.id == explicitId }
+                ?: throw AiProviderException(
+                    AiErrorType.MODEL_NOT_FOUND,
+                    "Model $explicitId is not advertised by provider ${provider.id}"
+                )
+            validateModelWorkload(explicit, request, workload, providerCapabilities)
+            explicit
+        } ?: preferredModelId?.let { preferredId ->
+            val preferred = models.firstOrNull { it.id == preferredId }
+            when {
+                preferred == null && !allowPreferredModelFallback ->
+                    throw AiProviderException(
+                        AiErrorType.MODEL_NOT_FOUND,
+                        "Selected model $preferredId is not advertised by provider ${provider.id}"
+                    )
+                preferred != null && supportsModelWorkload(preferred, request, workload, providerCapabilities) ->
+                    preferred
+                preferred != null && !allowPreferredModelFallback -> {
+                    validateModelWorkload(preferred, request, workload, providerCapabilities)
+                    preferred
+                }
+                else -> null
+            }
+        } ?: models.firstOrNull {
+            supportsModelWorkload(it, request, workload, providerCapabilities)
+        } ?: throw AiProviderException(
+            AiErrorType.UNSUPPORTED_CAPABILITY,
+            "Provider ${provider.id} has no advertised model compatible with workload ${workload.kind}"
+        )
 
         validateModelWorkload(candidateModel, request, workload, providerCapabilities)
 
+        return AiExecutionTarget(
+            provider = provider,
+            model = candidateModel,
+            providerCapabilities = providerCapabilities,
+        )
+    }
+
+    private fun supportsModelWorkload(
+        model: AiModel,
+        request: AiRequest,
+        workload: AiWorkloadSpec,
+        providerCapabilities: Set<AiCapability>,
+    ): Boolean {
         val effectiveCaps = providerCapabilities.intersect(
-            candidateModel.inputCapabilities +
-                (if (candidateModel.supportsTools && AiCapability.TOOLS in providerCapabilities) setOf(AiCapability.TOOLS) else emptySet()) +
-                (if (candidateModel.supportsStreaming && AiCapability.STREAMING in providerCapabilities) setOf(AiCapability.STREAMING) else emptySet())
+            model.inputCapabilities +
+                (if (model.supportsTools && AiCapability.TOOLS in providerCapabilities) {
+                    setOf(AiCapability.TOOLS)
+                } else emptySet()) +
+                (if (model.supportsStreaming && AiCapability.STREAMING in providerCapabilities) {
+                    setOf(AiCapability.STREAMING)
+                } else emptySet())
         )
 
-        return AiExecutionTarget(provider, candidateModel, providerCapabilities, effectiveCaps)
+        if (workload.requiredCapabilities.any { it !in effectiveCaps }) return false
+        if (workload.tools == AiFeatureRequirement.REQUIRED &&
+            AiCapability.TOOLS !in effectiveCaps
+        ) return false
+        if (workload.streaming == AiFeatureRequirement.REQUIRED &&
+            AiCapability.STREAMING !in effectiveCaps
+        ) return false
+        if (workload.minimumContextTokens > 0 &&
+            (model.contextLength == null || model.contextLength < workload.minimumContextTokens)
+        ) return false
+
+        return (request.text.isNullOrBlank() || AiCapability.TEXT in effectiveCaps) &&
+            (request.image == null || AiCapability.IMAGE in effectiveCaps) &&
+            (request.audio == null || AiCapability.AUDIO in effectiveCaps) &&
+            (request.video == null || AiCapability.VIDEO in effectiveCaps)
     }
 
-    private fun supportsModelWorkload(model: AiModel, request: AiRequest, workload: AiWorkloadSpec, providerCapabilities: Set<AiCapability>): Boolean {
-        val caps = model.inputCapabilities
-        val requiredCaps = workload.requiredCapabilities
-        if (requiredCaps.any { it !in caps || it !in providerCapabilities }) return false
-        if (workload.tools == AiFeatureRequirement.REQUIRED && (!model.supportsTools || AiCapability.TOOLS !in providerCapabilities)) return false
-        if (workload.streaming == AiFeatureRequirement.REQUIRED && (!model.supportsStreaming || AiCapability.STREAMING !in providerCapabilities)) return false
-        if (workload.minimumContextTokens > 0 && model.contextLength != null && model.contextLength < workload.minimumContextTokens) return false
-        return (request.text.isNullOrBlank() || AiCapability.TEXT in caps) &&
-            (request.image == null || (AiCapability.IMAGE in caps && AiCapability.IMAGE in providerCapabilities)) &&
-            (request.audio == null || (AiCapability.AUDIO in caps && AiCapability.AUDIO in providerCapabilities)) &&
-            (request.video == null || (AiCapability.VIDEO in caps && AiCapability.VIDEO in providerCapabilities))
-    }
-
-    private fun validateModelWorkload(model: AiModel, request: AiRequest, workload: AiWorkloadSpec, providerCapabilities: Set<AiCapability>) {
+    private fun validateModelWorkload(
+        model: AiModel,
+        request: AiRequest,
+        workload: AiWorkloadSpec,
+        providerCapabilities: Set<AiCapability>,
+    ) {
         if (!supportsModelWorkload(model, request, workload, providerCapabilities)) {
-            throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY, "Model ${model.id} does not support workload ${workload.kind}")
+            throw AiProviderException(
+                AiErrorType.UNSUPPORTED_CAPABILITY,
+                "Model ${model.id} does not support workload ${workload.kind}"
+            )
         }
     }
 
@@ -322,7 +388,13 @@ class DefaultAiProviderRouter(
             val status = runCatching { provider.getStatus() }.getOrNull()
             val isReady = status?.state == ProviderStatus.State.READY || status?.readiness is ProviderReadiness.ConfiguredCold || status?.readiness is ProviderReadiness.Ready
             if (!isReady) continue
-            val target = runCatching { resolveTargetForProvider(provider, request, workload, allowSelectedModelFallback = true) }.getOrNull()
+            val target = runCatching { resolveTargetForProvider(
+                    provider = provider,
+                    request = request,
+                    workload = workload,
+                    preferredModelId = null,
+                    allowPreferredModelFallback = true,
+                ) }.getOrNull()
             if (target != null) {
                 _lastRoutingDecision.value = _lastRoutingDecision.value?.copy(resolvedProviderId = target.providerId, resolvedModelId = target.modelId)
                 return target
