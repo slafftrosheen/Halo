@@ -85,6 +85,7 @@ class MainActivity : ComponentActivity() {
             runCatching {
                 ManualDependencyGraph.platformStateMonitor.refreshBluetoothState()
                 ManualDependencyGraph.pairingViewModel.refreshPrerequisites()
+                ManualDependencyGraph.runtimeDeviceCapabilityBridge.updateDeviceCapabilities()
             }.onFailure { error ->
                 android.util.Log.w("MainActivity", "Could not refresh Bluetooth state", error)
             }
