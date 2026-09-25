@@ -26,6 +26,7 @@ class DefaultContextAssembler(
     private val workspace: WorkspaceContextSource? = null,
     private val skillRegistry: SkillRegistry? = null,
     private val assistantContexts: AssistantContextRepository? = null,
+    private val discoveryProvider: (() -> com.halo.runtime.cognition.tools.ToolDiscoveryService?)? = null,
 ) : ContextAssembler {
 
     companion object {
@@ -201,6 +202,20 @@ class DefaultContextAssembler(
                     }.orEmpty().filter { tool ->
                         policy.includeWorkspace || (tool.id !in com.halo.runtime.cognition.tools.WorkspaceToolAccess.readTools &&
                             tool.name !in com.halo.runtime.cognition.tools.WorkspaceToolAccess.readTools)
+                    }.let { enabled ->
+                        /*
+                         * RUNTIME-017 bounded exposure: when discovery is recommended the
+                         * model receives only the discovery meta-tool plus a compact
+                         * catalogue summary; expansion happens per turn via the meta-tool.
+                         */
+                        val discovery = discoveryProvider?.invoke()
+                        if (discovery != null && discovery.discoveryRecommended()) {
+                            enabled.filter { tool ->
+                                tool.name == com.halo.runtime.cognition.tools.ToolDiscoveryService.DISCOVER_TOOL
+                            } + listOf(discovery.catalogueSummaryDefinition())
+                        } else {
+                            enabled
+                        }
                     }
 
                 } else {

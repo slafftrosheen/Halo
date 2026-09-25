@@ -17,6 +17,7 @@ enum class AgentRunState {
     WAITING_FOR_CLARIFICATION,
     WAITING_FOR_APPROVAL,
     WAITING_FOR_CAPABILITY,
+    WAITING_FOR_RESOURCE,
 
     EXECUTING,
     SUSPENDED,
@@ -54,79 +55,3 @@ data class AgentRun(
     val speechOutputFallback: com.halo.sdk.runtime.SpeechOutputFallback = com.halo.sdk.runtime.SpeechOutputFallback.DISALLOW_PHONE,
     val sourceCaptureId: String? = null,
 )
-
-sealed interface AgentStep {
-    val id: AgentStepId
-    val runId: AgentRunId
-    val createdAt: Instant
-
-    data class PlanCreated(
-        override val id: AgentStepId,
-        override val runId: AgentRunId,
-        override val createdAt: Instant,
-        val planId: String,
-        val summary: String
-    ) : AgentStep
-
-    data class ClarificationRequested(
-        override val id: AgentStepId,
-        override val runId: AgentRunId,
-        override val createdAt: Instant,
-        val question: String,
-        val field: String
-    ) : AgentStep
-
-    data class ApprovalRequested(
-        override val id: AgentStepId,
-        override val runId: AgentRunId,
-        override val createdAt: Instant,
-        val action: String,
-        val risk: String
-    ) : AgentStep
-
-    data class ToolRequested(
-        override val id: AgentStepId,
-        override val runId: AgentRunId,
-        override val createdAt: Instant,
-        val toolCallId: String,
-        val toolId: String,
-        val argumentsJson: String
-    ) : AgentStep
-
-    data class ToolDispatched(
-        override val id: AgentStepId,
-        override val runId: AgentRunId,
-        override val createdAt: Instant,
-        val toolCallId: String,
-        val toolId: String,
-        val idempotencyKey: String?
-    ) : AgentStep
-
-    data class ToolCompleted(
-        override val id: AgentStepId,
-        override val runId: AgentRunId,
-        override val createdAt: Instant,
-        val toolCallId: String,
-        val toolId: String,
-        val resultSummary: String,
-        val success: Boolean,
-        val actionTruth: ActionTruth = if (success) ActionTruth.CONFIRMED else ActionTruth.FAILED,
-    ) : AgentStep
-
-    data class ToolFailed(
-        override val id: AgentStepId,
-        override val runId: AgentRunId,
-        override val createdAt: Instant,
-        val toolCallId: String,
-        val toolId: String,
-        val reason: String
-    ) : AgentStep
-
-    data class ResponseProduced(
-        override val id: AgentStepId,
-        override val runId: AgentRunId,
-        override val createdAt: Instant,
-        val responseId: String,
-        val text: String
-    ) : AgentStep
-}

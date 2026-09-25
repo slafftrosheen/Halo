@@ -2,6 +2,7 @@ package com.halo.host.android.assistant
 
 import android.app.assist.AssistContent
 import android.app.assist.AssistStructure
+import android.net.Uri
 import android.text.InputType
 import android.view.View
 import com.halo.sdk.runtime.RectValue
@@ -39,7 +40,7 @@ class ScreenContextExtractor(
             packageName = packageName,
             activityName = activityName,
             title = title,
-            webUri = content?.webUri?.toString()?.take(maxTextChars),
+            webUri = sanitizeUri(content?.webUri?.toString())?.take(maxTextChars),
             nodes = nodes,
             capturedAtMs = System.currentTimeMillis(),
         )
@@ -85,6 +86,30 @@ class ScreenContextExtractor(
             remaining = visit(node.getChildAt(index), output, seen, remaining, absoluteLeft, absoluteTop)
         }
         return remaining
+    }
+
+    private fun sanitizeUri(uriString: String?): String? {
+        if (uriString == null) return null
+        return try {
+            val uri = Uri.parse(uriString)
+            if (uri.isOpaque || uri.query.isNullOrBlank()) return uriString
+            
+            val builder = uri.buildUpon().clearQuery()
+            val sensitiveKeys = setOf("token", "access_token", "auth", "key", "code", "session", "password")
+            
+            for (key in uri.queryParameterNames) {
+                if (key.lowercase() in sensitiveKeys) {
+                    builder.appendQueryParameter(key, "[REDACTED]")
+                } else {
+                    for (value in uri.getQueryParameters(key)) {
+                        builder.appendQueryParameter(key, value)
+                    }
+                }
+            }
+            builder.build().toString()
+        } catch (_: Exception) {
+            uriString
+        }
     }
 
     private fun sanitize(value: CharSequence?, limit: Int): String? = value?.toString()

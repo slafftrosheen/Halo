@@ -109,15 +109,17 @@ class ReasoningEngine(
                             )
 
                             val speechOutputTarget = when (val route = interpretation.origin?.speechRoute) {
-                                is SpeechInputRoute.Wearable -> SpeechOutputTarget.Wearable(
+                                is SpeechInputRoute.Device -> SpeechOutputTarget.Device(
                                     deviceId = route.deviceId,
-                                    displayName = route.displayName
+                                    platformEndpointId = route.platformEndpointId,
+                                    displayName = route.displayName,
+                                    kind = route.kind
                                 )
                                 SpeechInputRoute.Phone,
                                 null -> SpeechOutputTarget.Phone
                             }
                             val speechOutputFallback =
-                                if (speechOutputTarget is SpeechOutputTarget.Wearable) {
+                                if (speechOutputTarget is SpeechOutputTarget.Device) {
                                     SpeechOutputFallback.DISALLOW_PHONE
                                 } else {
                                     SpeechOutputFallback.ALLOW_PHONE

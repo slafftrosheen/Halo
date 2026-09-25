@@ -19,6 +19,7 @@ sealed interface ToolExecutionResult {
         val toolCallId: String,
         val toolId: String,
         val message: String,
-        val completionUnknown: Boolean = false
+        val completionUnknown: Boolean = false,
+        val failureKind: ToolFailureKind = ToolFailureKind.UNKNOWN,
     ) : ToolExecutionResult
 }

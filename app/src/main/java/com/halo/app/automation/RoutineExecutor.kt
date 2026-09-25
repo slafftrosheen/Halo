@@ -46,10 +46,11 @@ class RoutineExecutor(private val db: AppDatabase, private val repository: RoomR
         return ToolCall(id, action.toolId, mapOf("window_minutes" to value.toLong().coerceIn(15, 1440)))
     }
     suspend fun execute(id: RoutineId, occurrence: Instant, manual: Boolean = false): String? {
-        coordinator.reconcileInterruptedRuns()
+        coordinator.prepareOutstandingRunsForRecovery()
         val identity = "routine:${id.value}:${occurrence.toEpochMilli()}"
         val runId = AgentRunId(identity)
-        // The run and occurrence claim commit together. A crashed/duplicate claim is never resumed.
+        // The run and occurrence claim commit together. A crashed/duplicate claim is never resumed:
+        // routine runs carry RunRecoveryPolicy.NO_RESUME (RUNTIME-018).
         val routine = db.withTransaction {
             if (repository.dao.run(identity) != null) return@withTransaction null
             val r = repository.get(id) ?: return@withTransaction null
@@ -57,6 +58,8 @@ class RoutineExecutor(private val db: AppDatabase, private val repository: RoomR
             val now = Instant.now()
             store.create(AgentRun(runId, InteractionId(identity), r.name, AgentRunState.CREATED,
                 createdAt = now, updatedAt = now, startedAt = now))
+            store.appendStep(AgentStep.RunPrepared(AgentStepId("$identity:prepared"), runId, now,
+                AgentRunKind.ROUTINE, RunRecoveryPolicy.NO_RESUME))
             check(repository.dao.insertRun(RoutineRunEntity(identity, id.value, runId.value, occurrence.toEpochMilli(), "RUNNING")) != -1L)
             repository.dao.lastRun(id.value, occurrence.toEpochMilli())
             r
@@ -93,9 +96,12 @@ class RoutineExecutor(private val db: AppDatabase, private val repository: RoomR
                 val key = "$identity:action:$index"
                 val call = call(action, key)
                 coordinator.recordStep(AgentStep.ToolRequested(AgentStepId("$key:request"), runId, Instant.now(), key, action.toolId, action.argumentsJson))
-                // Persist dispatch BEFORE executing; COG-010 globally deduplicates this key.
-                if (!coordinator.recordStep(AgentStep.ToolDispatched(AgentStepId("$key:dispatch"), runId, Instant.now(), key, action.toolId, key))) {
-                    finish(RoutineRunState.INTERRUPTED, "Dispatch already recorded; completion unknown"); return "Interrupted"
+                // RUNTIME-018: persist the execution CLAIM before executing (dedup key unchanged;
+                // a duplicate claim means a previous attempt already claimed this occurrence).
+                if (!coordinator.recordStep(AgentStep.ToolExecutionClaimed(AgentStepId("$key:claim"), runId, Instant.now(),
+                        ToolInvocationId("$key:invocation"), key, action.toolId, key,
+                        com.halo.runtime.cognition.tools.ReplaySafety.NEVER_REPLAY.name))) {
+                    finish(RoutineRunState.INTERRUPTED, "Execution already claimed; completion unknown"); return "Interrupted"
                 }
                 when (val result = registry.executeAuthorized(ToolAuthorization.Authorized(call))) {
                     is ToolExecutionResult.Success -> {

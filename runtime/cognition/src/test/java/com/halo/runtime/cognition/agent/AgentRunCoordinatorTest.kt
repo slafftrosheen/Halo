@@ -14,7 +14,13 @@ class AgentRunCoordinatorTest {
         override suspend fun get(runId: AgentRunId) = rows.value.find { it.id == runId }
         override suspend fun create(run: AgentRun) { rows.value += run }
         override suspend fun update(run: AgentRun) { rows.value = rows.value.map { if (it.id == run.id) run else it } }
-        override suspend fun interruptedRuns() = rows.value.filterNot { it.state.isTerminal }
+        override suspend fun nonTerminalRuns() = rows.value.filterNot { it.state.isTerminal }
+        override suspend fun claimResume(runId: AgentRunId, expectedState: AgentRunState): Boolean {
+            val run = rows.value.find { it.id == runId } ?: return false
+            if (run.state != expectedState) return false
+            update(run.copy(state = AgentRunState.EXECUTING))
+            return true
+        }
         override suspend fun appendStep(step: AgentStep): Boolean {
             val run = requireNotNull(get(step.runId))
             if (run.steps.any { it.id == step.id || (step is AgentStep.ToolDispatched &&

@@ -1,7 +1,12 @@
 package com.halo.runtime.cognition.tools
 
+import com.halo.cognition.language.InteractionId
+import com.halo.runtime.cognition.agent.AgentInputRequest
+import com.halo.runtime.cognition.agent.AgentInputRequestId
+import com.halo.runtime.cognition.agent.AgentRunId
 import com.halo.sdk.provider.ToolCall
 import com.halo.sdk.runtime.skills.SkillRisk
+import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 
 enum class ToolApprovalPolicy {
@@ -21,12 +26,41 @@ data class ToolActionPreview(
 
 interface ToolAuthorizationCoordinator {
     suspend fun authorizeRequest(toolCall: ToolCall, preview: ToolActionPreview): ToolAuthorization
+
+    /** RUNTIME-019: notification hook when the Runtime journals a durable approval request. */
+    suspend fun onDurableApprovalRequest(request: AgentInputRequest.Approval) {}
 }
 
+/**
+ * RUNTIME-018: authorization outcome that can outlive the process. When a
+ * coordinator reports [AuthorizationDecision.NeedsUserInput], the caller persists
+ * a durable [AgentInputRequest.Approval], moves the run to
+ * WAITING_FOR_APPROVAL and stops cleanly instead of holding a live coroutine.
+ */
+sealed interface AuthorizationDecision {
+    data class Authorized(val toolCall: ToolCall) : AuthorizationDecision
+    data class Rejected(val toolCall: ToolCall, val reason: String) : AuthorizationDecision
+    data class NeedsUserInput(
+        val toolCall: ToolCall,
+        val request: AgentInputRequest.Approval,
+    ) : AuthorizationDecision
+}
+
+/**
+ * RUNTIME-017: risk classification comes from the registry's [ToolDescriptor]
+ * metadata, not from tool-name string patterns. The skill policy layer may still
+ * override (deny / always-allow) per user preference; the descriptor provides the
+ * physical truth about what the tool can affect.
+ *
+ * RUNTIME-018: [authorizeDurable] returns without blocking; a required approval
+ * comes back as a durable [AgentInputRequest.Approval] whose id, digest and
+ * replay policy belong to the journal, not to a live coroutine.
+ */
 class PolicyToolAuthorizer(
     private val coordinator: ToolAuthorizationCoordinator? = null,
     private val defaultPolicyProvider: (String) -> ToolApprovalPolicy = { ToolApprovalPolicy.ASK_EVERY_TIME },
-    private val authorizationGroupProvider: (String) -> String = { it }
+    private val authorizationGroupProvider: (String) -> String = { it },
+    private val descriptorProvider: (String) -> ToolDescriptor? = { null },
 ) : ToolAuthorizer {
 
     private val scopedGrants = ConcurrentHashMap<String, MutableSet<String>>()
@@ -40,6 +74,80 @@ class PolicyToolAuthorizer(
         scopedGrants.remove(scopeId)
     }
 
+    /**
+     * Durable authorization evaluation. Never waits for a user; when interactive
+     * approval is required it returns [AuthorizationDecision.NeedsUserInput] with
+     * a stable request identity and the exact arguments digest.
+     */
+    suspend fun authorizeDurable(
+        toolCall: ToolCall,
+        runId: AgentRunId,
+        interactionId: InteractionId,
+        invocationId: com.halo.runtime.cognition.agent.ToolInvocationId,
+        argumentsDigest: String,
+        newRequestId: () -> String,
+    ): AuthorizationDecision {
+        val toolName = toolCall.functionName
+        val policy = defaultPolicyProvider(toolName)
+
+        if (policy == ToolApprovalPolicy.DENY) {
+            return AuthorizationDecision.Rejected(toolCall, "Tool execution denied by user policy")
+        }
+
+        val security = descriptorProvider(toolName)?.security
+        val destructive = (security?.risk ?: ToolRiskClass.SENSITIVE) == ToolRiskClass.DESTRUCTIVE
+        val risk = security?.risk.toSkillRisk()
+
+        if (policy == ToolApprovalPolicy.ALWAYS_ALLOW && !destructive) {
+            return AuthorizationDecision.Authorized(toolCall)
+        }
+
+        if (security?.confirmation == ConfirmationPolicy.NONE &&
+            policy != ToolApprovalPolicy.ASK_EVERY_TIME
+        ) {
+            return AuthorizationDecision.Authorized(toolCall)
+        }
+
+        // Durable model: interactive approval becomes a journal request. The
+        // scoped (in-memory) grant path remains only for the legacy authorize().
+        val request = AgentInputRequest.Approval(
+            id = AgentInputRequestId(newRequestId()),
+            runId = runId,
+            createdAt = Instant.now(),
+            invocationId = invocationId,
+            toolId = ToolId(toolName),
+            action = buildApprovalAction(toolCall),
+            detail = buildApprovalDetail(toolCall),
+            risk = risk.name,
+            argumentsDigest = argumentsDigest,
+        )
+        coordinator?.onDurableApprovalRequest(request)
+        return AuthorizationDecision.NeedsUserInput(toolCall, request)
+    }
+
+    /**
+     * RUNTIME-019: safe approval copy from [ToolPresentation] metadata. No raw
+     * argument maps, no secrets — sensitive arguments are never interpolated.
+     */
+    private fun buildApprovalAction(toolCall: ToolCall): String {
+        val presentation = descriptorProvider(toolCall.functionName)?.presentation
+        return presentation?.title ?: "Confirm ${toolCall.functionName}"
+    }
+
+    private fun buildApprovalDetail(toolCall: ToolCall): String? {
+        val descriptor = descriptorProvider(toolCall.functionName) ?: return null
+        val presentation = descriptor.presentation ?: return null
+        val parts = mutableListOf<String>()
+        presentation.actionVerb?.let { parts.add(it) }
+        presentation.targetArgument?.let { key ->
+            toolCall.arguments[key]?.takeIf { it != null }?.let { value ->
+                val isSensitive = key in presentation.sensitiveArguments
+                parts.add(if (isSensitive) key else value.toString().take(160))
+            }
+        }
+        return if (parts.isEmpty()) null else parts.joinToString(separator = " ")
+    }
+
     private suspend fun authorizeInternal(toolCall: ToolCall, scopeId: String?): ToolAuthorization {
         val toolName = toolCall.functionName
         val policy = defaultPolicyProvider(toolName)
@@ -48,14 +156,22 @@ class PolicyToolAuthorizer(
             return ToolAuthorization.Rejected(toolCall, "Tool execution denied by user policy")
         }
 
-        val risk = mapRisk(toolName)
+        val security = descriptorProvider(toolName)?.security
+        val destructive = (security?.risk ?: ToolRiskClass.SENSITIVE) == ToolRiskClass.DESTRUCTIVE
+        val risk = security?.risk.toSkillRisk()
 
-        if (policy == ToolApprovalPolicy.ALWAYS_ALLOW && risk != SkillRisk.DESTRUCTIVE) {
+        if (policy == ToolApprovalPolicy.ALWAYS_ALLOW && !destructive) {
+            return ToolAuthorization.Authorized(toolCall)
+        }
+
+        if (security?.confirmation == ConfirmationPolicy.NONE &&
+            policy != ToolApprovalPolicy.ASK_EVERY_TIME
+        ) {
             return ToolAuthorization.Authorized(toolCall)
         }
 
         val group = authorizationGroupProvider(toolName)
-        if (risk != SkillRisk.DESTRUCTIVE && scopeId != null &&
+        if (!destructive && scopeId != null &&
             scopedGrants[scopeId]?.contains(group) == true) {
             return ToolAuthorization.Authorized(toolCall)
         }
@@ -65,7 +181,7 @@ class PolicyToolAuthorizer(
         if (coordinator != null) {
             return coordinator.authorizeRequest(toolCall, preview).also { authorization ->
                 if (authorization is ToolAuthorization.Authorized &&
-                    risk != SkillRisk.DESTRUCTIVE && scopeId != null) {
+                    !destructive && scopeId != null) {
                     scopedGrants.computeIfAbsent(scopeId) { ConcurrentHashMap.newKeySet() }.add(group)
                 }
             }
@@ -74,45 +190,34 @@ class PolicyToolAuthorizer(
         return ToolAuthorization.Rejected(toolCall, "Interactive confirmation required for $toolName")
     }
 
-    private fun mapRisk(toolName: String): SkillRisk = when {
-        toolName.startsWith("halo_search_") || toolName.startsWith("halo_get") ||
-            toolName.startsWith("halo_list") || toolName == "halo_storage_status" || toolName == "halo_notification_digest" || toolName == "halo.current_time" || toolName == "halo_current_time" || toolName == "halo_read_text_file" -> SkillRisk.READ_ONLY
-        toolName == "halo_volume" || toolName == "halo_flashlight" ||
-            toolName == "halo_media" || toolName == "halo_add_to_working_set" ||
-            toolName == "halo_remove_from_working_set" -> SkillRisk.REVERSIBLE
-        toolName == "halo_propose_memory" -> SkillRisk.REVERSIBLE
-        toolName == "halo_create_note" || toolName == "halo_remember_text" || toolName == "halo_create_reminder" -> SkillRisk.REVERSIBLE
-        toolName == "halo_open_app" || toolName == "halo_navigation" ||
-            toolName == "halo_browser" || toolName == "halo_search" || toolName == "halo_share_text" ||
-            toolName == "halo_open_settings" || toolName == "halo_prepare_contact" -> SkillRisk.EXTERNAL_SIDE_EFFECT
-        else -> SkillRisk.SENSITIVE
-    }
-
+    /**
+     * RUNTIME-019: preview copy derives from [ToolPresentation] metadata on the
+     * descriptor. The tool-name switch is gone; unknown tools get a neutral
+     * generic title, never a raw dump of arguments.
+     */
     private fun generatePreview(toolCall: ToolCall, risk: SkillRisk): ToolActionPreview {
-        val name = toolCall.functionName
-        val args = toolCall.arguments
-        val target = args.values.firstOrNull()?.toString()
-
-        val (title, description) = when (name) {
-            "halo_create_note" -> "Create note" to "Create a local note in Notebook: ${target ?: "Untitled"}"
-            "halo_open_app" -> "Open app" to "Launch application package: $target"
-            "halo_navigation" -> "Open navigation" to "Open route to destination: $target"
-            "halo_browser" -> "Open browser" to "Navigate to web address: $target"
-            "halo_flashlight" -> "Flashlight" to "Turn flashlight $target"
-            "halo_volume" -> "Adjust volume" to "Change volume $target"
-            "halo_create_reminder" -> "Create reminder" to "${args["message"]} at ${args["at"]} (${args["precision"] ?: "FLEXIBLE"})"
-            "halo_propose_memory" -> "Save memory" to "Remember: ${args["content"]}"
-            "halo_share_text" -> "Share text" to "Open the share sheet with: ${args["text"]}"
-            "halo_prepare_contact" -> "Prepare contact" to "Open contact draft: ${args["name"]}, ${args["phone"] ?: ""}, ${args["email"] ?: ""}"
-            else -> "Execute $name" to "Perform action: $args"
-        }
-
+        val presentation = descriptorProvider(toolCall.functionName)?.presentation
         return ToolActionPreview(
-            title = title,
-            description = description,
-            toolName = name,
+            title = presentation?.title ?: "Confirm action",
+            description = buildApprovalDetail(toolCall)
+                ?: presentation?.actionVerb
+                ?: "Halo wants to use ${toolCall.functionName}",
+            toolName = toolCall.functionName,
             risk = risk,
-            target = target
+            target = presentation?.targetArgument?.let { key ->
+                toolCall.arguments[key]?.toString()?.take(160)
+                    ?.takeIf { key !in presentation.sensitiveArguments }
+            },
         )
     }
+}
+
+/** Maps runtime risk classes onto the skill-layer risk vocabulary used by previews. */
+fun ToolRiskClass?.toSkillRisk(): SkillRisk = when (this) {
+    ToolRiskClass.READ_ONLY -> SkillRisk.READ_ONLY
+    ToolRiskClass.REVERSIBLE -> SkillRisk.REVERSIBLE
+    ToolRiskClass.EXTERNAL_SIDE_EFFECT -> SkillRisk.EXTERNAL_SIDE_EFFECT
+    ToolRiskClass.SENSITIVE -> SkillRisk.SENSITIVE
+    ToolRiskClass.DESTRUCTIVE -> SkillRisk.DESTRUCTIVE
+    null -> SkillRisk.SENSITIVE
 }

@@ -189,7 +189,7 @@ class HomeViewModel(
                 orb = com.halo.app.ui.presence.HaloOrbPresentation(
                     phase = mapped.runtimeState,
                     label = mapped.contextualText,
-                    source = (input.turn?.route as? SpeechInputRoute.Wearable)?.displayName ?: "Phone",
+                    source = (input.turn?.route as? SpeechInputRoute.Device)?.displayName ?: "Phone",
                     inputLevel = if (input.capturing) input.inputLevel else 0f,
                     failed = sessionState is CognitiveSessionState.Failed,
                     transition = (sessionState as? CognitiveSessionState.ExecutingTool)?.hashCode() ?: 0

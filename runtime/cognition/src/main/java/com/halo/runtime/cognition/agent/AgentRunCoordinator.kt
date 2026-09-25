@@ -1,6 +1,12 @@
 package com.halo.runtime.cognition.agent
 
 import com.halo.cognition.language.InteractionId
+import com.halo.runtime.cognition.agent.recovery.AgentCheckpoint
+import com.halo.runtime.cognition.agent.recovery.AgentCheckpointAssembler
+import com.halo.runtime.cognition.agent.recovery.AgentRecoveryPlanner
+import com.halo.runtime.cognition.agent.recovery.CapabilitySnapshot
+import com.halo.runtime.cognition.agent.recovery.DefaultAgentRecoveryPlanner
+import com.halo.runtime.cognition.agent.recovery.RecoveryPlan
 import com.halo.sdk.runtime.ObservationOrigin
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
@@ -18,7 +24,15 @@ data class AgentRequest(
     val speechOutputTarget: com.halo.sdk.runtime.SpeechOutputTarget? = null,
     val speechOutputFallback: com.halo.sdk.runtime.SpeechOutputFallback = com.halo.sdk.runtime.SpeechOutputFallback.DISALLOW_PHONE,
     val sourceCaptureId: String? = null,
+    val kind: AgentRunKind = AgentRunKind.INTERACTIVE,
 )
+
+/** Outcome of startup recovery classification for one run. */
+sealed interface RecoveryClassification {
+    data class Recoverable(val plan: RecoveryPlan) : RecoveryClassification
+    data class WaitingInput(val plan: RecoveryPlan) : RecoveryClassification
+    data class Unrecoverable(val reason: String) : RecoveryClassification
+}
 
 interface AgentRunCoordinator {
     val activeRuns: StateFlow<List<AgentRun>>
@@ -29,7 +43,32 @@ interface AgentRunCoordinator {
     suspend fun complete(runId: AgentRunId) = transition(runId, AgentRunState.COMPLETED)
     suspend fun fail(runId: AgentRunId, reason: String) = transition(runId, AgentRunState.FAILED, reason)
     suspend fun cancel(runId: AgentRunId, reason: String) = transition(runId, AgentRunState.CANCELLED, reason)
-    suspend fun reconcileInterruptedRuns()
+
+    /**
+     * RUNTIME-018: classify every non-terminal run using the recovery planner.
+     * Startup must classify, never surprise-execute: runs become SUSPENDED /
+     * WAITING_* states; the caller (UI, session.resume) decides whether to resume.
+     * Terminalizing happens only for genuinely unrecoverable runs.
+     *
+     * Runs carrying [RunRecoveryPolicy.NO_RESUME] (routines) keep their
+     * conservative behavior: they are never offered as resumable.
+     */
+    suspend fun prepareOutstandingRunsForRecovery(
+        capabilities: CapabilitySnapshot = CapabilitySnapshot(),
+    ): Map<AgentRunId, RecoveryClassification>
+
+    /**
+     * Atomic resume claim; false when another surface already resumed the run.
+     */
+    suspend fun claimResume(runId: AgentRunId, expectedState: AgentRunState): Boolean
+
+    suspend fun checkpoint(runId: AgentRunId): AgentCheckpoint?
+
+    /** @deprecated Conservative interim design replaced by recovery classification. */
+    @Deprecated("Replaced by prepareOutstandingRunsForRecovery", ReplaceWith("prepareOutstandingRunsForRecovery()"))
+    suspend fun reconcileInterruptedRuns() {
+        prepareOutstandingRunsForRecovery()
+    }
 }
 
 class DefaultAgentRunCoordinator(
@@ -37,32 +76,115 @@ class DefaultAgentRunCoordinator(
     scope: CoroutineScope,
     private val clock: Clock = Clock.systemUTC(),
     private val newId: () -> String = { UUID.randomUUID().toString() },
+    private val checkpointAssembler: AgentCheckpointAssembler = AgentCheckpointAssembler(),
+    private val recoveryPlanner: AgentRecoveryPlanner = DefaultAgentRecoveryPlanner(),
 ) : AgentRunCoordinator {
     private val mutex = Mutex()
-    private var reconciled = false
+    private var classified = false
     override val activeRuns = store.observeRuns().map { runs -> runs.filterNot { it.state.isTerminal } }
         .stateIn(scope, SharingStarted.Eagerly, emptyList())
 
-    private suspend fun reconcile() {
-        if (reconciled) return
-        store.interruptedRuns().forEach { run ->
-            val now = Instant.now(clock)
-            store.update(run.copy(state = AgentRunState.INTERRUPTED, updatedAt = now, completedAt = now,
-                failureReason = if (run.hasUnknownAction) "External action completion is unknown; it will not be replayed."
-                else "Execution interrupted by process restart."))
+    override suspend fun prepareOutstandingRunsForRecovery(
+        capabilities: CapabilitySnapshot,
+    ): Map<AgentRunId, RecoveryClassification> = mutex.withLock {
+        val classifications = mutableMapOf<AgentRunId, RecoveryClassification>()
+        for (run in store.nonTerminalRuns()) {
+            // Routine executions keep their conservative no-resume semantics.
+            val isNoResume = run.steps.filterIsInstance<AgentStep.RunPrepared>().any {
+                it.recoveryPolicy == RunRecoveryPolicy.NO_RESUME
+            } || run.interactionId.value.startsWith("routine:")
+            if (isNoResume) {
+                val now = Instant.now(clock)
+                store.update(run.copy(state = AgentRunState.INTERRUPTED, updatedAt = now,
+                    completedAt = now,
+                    failureReason = run.failureReason ?: "Unattended routine run is never resumed automatically."))
+                classifications[run.id] = RecoveryClassification.Unrecoverable("NO_RESUME recovery policy")
+                continue
+            }
+            val plan = recoveryPlanner.plan(run, catalog = null, capabilities = capabilities)
+            val classification = when (plan) {
+                is RecoveryPlan.NothingToDo -> RecoveryClassification.Unrecoverable("Terminal run")
+                is RecoveryPlan.AwaitingInput -> {
+                    val waiting = when (plan.request) {
+                        is AgentInputRequest.Approval -> AgentRunState.WAITING_FOR_APPROVAL
+                        is AgentInputRequest.Clarification -> AgentRunState.WAITING_FOR_CLARIFICATION
+                    }
+                    moveSafely(run, waiting)
+                    RecoveryClassification.WaitingInput(plan)
+                }
+                is RecoveryPlan.RetryProviderTurn,
+                is RecoveryPlan.ContinueAfterToolResult,
+                is RecoveryPlan.RetryTool,
+                is RecoveryPlan.CompleteFromRecordedResponse,
+                is RecoveryPlan.ReconcileTool,
+                is RecoveryPlan.MissingContext,
+                is RecoveryPlan.MissingCapability -> {
+                    val target = when (plan) {
+                        is RecoveryPlan.MissingCapability -> AgentRunState.WAITING_FOR_CAPABILITY
+                        is RecoveryPlan.MissingContext -> AgentRunState.WAITING_FOR_CAPABILITY
+                        else -> AgentRunState.SUSPENDED
+                    }
+                    moveSafely(run, target)
+                    RecoveryClassification.Recoverable(plan)
+                }
+                is RecoveryPlan.UncertainExternalAction -> {
+                    if (run.state != AgentRunState.INTERRUPTED) {
+                        // Unrecoverable/uncertain: conservative terminalization with truthful reason.
+                        val now = Instant.now(clock)
+                        store.update(run.copy(state = AgentRunState.INTERRUPTED, updatedAt = now, completedAt = now,
+                            failureReason = "External action completion is unknown; it will not be replayed."))
+                    }
+                    RecoveryClassification.Unrecoverable("External action outcome unknown")
+                }
+                is RecoveryPlan.UnsupportedLegacyState -> {
+                    if (run.state != AgentRunState.INTERRUPTED) {
+                        val now = Instant.now(clock)
+                        store.update(run.copy(state = AgentRunState.INTERRUPTED, updatedAt = now, completedAt = now,
+                            failureReason = plan.reason))
+                    }
+                    RecoveryClassification.Unrecoverable(plan.reason)
+                }
+            }
+            classifications[run.id] = classification
         }
-        reconciled = true
+        classified = true
+        classifications
     }
 
-    override suspend fun reconcileInterruptedRuns() = mutex.withLock { reconcile() }
+    private suspend fun moveSafely(run: AgentRun, target: AgentRunState) {
+        if (run.state == target || run.state.isTerminal) return
+        val now = Instant.now(clock)
+        runCatching { store.update(run.copy(state = target, updatedAt = now)) }
+    }
+
+    /**
+     * @deprecated Old startup behavior terminalized every non-terminal run.
+     * Kept only as a fallback for callers that have not migrated; it now
+     * delegates to recovery classification.
+     */
+    @Deprecated("Replaced by prepareOutstandingRunsForRecovery", ReplaceWith("prepareOutstandingRunsForRecovery()"))
+    override suspend fun reconcileInterruptedRuns() {
+        prepareOutstandingRunsForRecovery()
+    }
+
+    override suspend fun claimResume(runId: AgentRunId, expectedState: AgentRunState): Boolean =
+        store.claimResume(runId, expectedState)
+
+    override suspend fun checkpoint(runId: AgentRunId): AgentCheckpoint? =
+        store.get(runId)?.let { checkpointAssembler.assemble(it) }
 
     override suspend fun start(request: AgentRequest): AgentRunId = mutex.withLock {
-        reconcile()
         val id = AgentRunId(newId())
         val now = Instant.now(clock)
+        val recoveryPolicy = when (request.kind) {
+            AgentRunKind.INTERACTIVE, AgentRunKind.SYSTEM -> RunRecoveryPolicy.USER_RESUME
+            AgentRunKind.ROUTINE -> RunRecoveryPolicy.NO_RESUME
+        }
         store.create(AgentRun(id, request.interactionId, request.text, AgentRunState.CREATED,
             request.origin, now, now, startedAt = now, speechOutputTarget = request.speechOutputTarget,
             speechOutputFallback = request.speechOutputFallback, sourceCaptureId = request.sourceCaptureId))
+        store.appendStep(AgentStep.RunPrepared(AgentStepId("$id:prepared"), id, now,
+            request.kind, recoveryPolicy))
         id
     }
 
@@ -78,10 +200,10 @@ class DefaultAgentRunCoordinator(
         check(!run.state.isTerminal) { "Cannot transition terminal run ${run.id.value} from ${run.state} to $state" }
         val allowed = when (run.state) {
             AgentRunState.CREATED -> setOf(AgentRunState.PLANNING)
-            AgentRunState.PLANNING -> setOf(AgentRunState.EXECUTING, AgentRunState.WAITING_FOR_CLARIFICATION, AgentRunState.WAITING_FOR_CAPABILITY)
-            AgentRunState.EXECUTING -> setOf(AgentRunState.COMPLETED, AgentRunState.WAITING_FOR_APPROVAL, AgentRunState.WAITING_FOR_CAPABILITY, AgentRunState.SUSPENDED)
+            AgentRunState.PLANNING -> setOf(AgentRunState.EXECUTING, AgentRunState.WAITING_FOR_CLARIFICATION, AgentRunState.WAITING_FOR_CAPABILITY, AgentRunState.WAITING_FOR_RESOURCE)
+            AgentRunState.EXECUTING -> setOf(AgentRunState.COMPLETED, AgentRunState.WAITING_FOR_APPROVAL, AgentRunState.WAITING_FOR_CAPABILITY, AgentRunState.WAITING_FOR_RESOURCE, AgentRunState.SUSPENDED)
             AgentRunState.WAITING_FOR_CLARIFICATION -> setOf(AgentRunState.PLANNING, AgentRunState.EXECUTING)
-            AgentRunState.WAITING_FOR_APPROVAL, AgentRunState.WAITING_FOR_CAPABILITY, AgentRunState.SUSPENDED -> setOf(AgentRunState.EXECUTING)
+            AgentRunState.WAITING_FOR_APPROVAL, AgentRunState.WAITING_FOR_CAPABILITY, AgentRunState.WAITING_FOR_RESOURCE, AgentRunState.SUSPENDED -> setOf(AgentRunState.EXECUTING)
             else -> emptySet()
         } + setOf(AgentRunState.CANCELLED, AgentRunState.FAILED, AgentRunState.INTERRUPTED)
         require(state in allowed) { "Invalid transition ${run.state} -> $state" }

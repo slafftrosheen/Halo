@@ -250,7 +250,9 @@ class ActivityViewModel(
                 is AgentStep.PlanCreated -> step.planId
                 is AgentStep.ToolRequested -> step.toolCallId
                 is AgentStep.ToolDispatched -> step.toolCallId
+                is AgentStep.ToolExecutionClaimed -> step.toolCallId
                 is AgentStep.ToolCompleted -> step.toolCallId
+                is AgentStep.ToolOutcomeRecorded -> step.toolCallId
                 is AgentStep.ToolFailed -> step.toolCallId
                 is AgentStep.ResponseProduced -> step.responseId
                 else -> null
@@ -276,8 +278,16 @@ private fun AgentRun.toStory(): ActivityStory {
         state == AgentRunState.COMPLETED -> ActivityStatus.SUCCESS
         else -> ActivityStatus.PENDING
     }
+    /* RUNTIME-019: semantic pending-task state for waiting runs (spec #69). */
+    val pendingInput = steps.filterIsInstance<AgentStep.InputRequested>()
+        .lastOrNull { requested -> steps.none { it is AgentStep.InputResolved && it.requestId == requested.requestId } }?.input
+    val waitingLabel = when (pendingInput) {
+        is com.halo.runtime.cognition.agent.AgentInputRequest.Approval -> "Waiting for your approval"
+        is com.halo.runtime.cognition.agent.AgentInputRequest.Clarification -> "Waiting for your answer: " + pendingInput.question
+        null -> null
+    }
     return ActivityStory("agent:${id.value}", interactionId.value, ActivityKind.HALO, request,
-        listOfNotNull(state.name, "UNKNOWN external completion".takeIf { hasUnknownAction }, failureReason).joinToString(" · "),
+        listOfNotNull(waitingLabel ?: state.name, "UNKNOWN external completion".takeIf { hasUnknownAction }, failureReason).joinToString(" ï¿½ "),
         createdAt, status, steps.map { step ->
             val message = when (step) {
                 is AgentStep.PlanCreated -> step.summary
@@ -285,6 +295,19 @@ private fun AgentRun.toStory(): ActivityStory {
                 is AgentStep.ApprovalRequested -> step.action
                 is AgentStep.ToolRequested -> step.toolId
                 is AgentStep.ToolDispatched -> "${step.toolId}: dispatched"
+                is AgentStep.ToolInvocationPrepared -> "${step.toolId}: prepared"
+                is AgentStep.ToolExecutionClaimed -> "${step.toolId}: execution claimed"
+                is AgentStep.ToolOutcomeRecorded -> step.output
+                is AgentStep.InputRequested -> when (val input = step.input) {
+                    is com.halo.runtime.cognition.agent.AgentInputRequest.Approval -> input.action
+                    is com.halo.runtime.cognition.agent.AgentInputRequest.Clarification -> input.question
+                }
+                is AgentStep.InputResolved -> "Input resolved: ${step.resolution}"
+                is AgentStep.ProviderTurnStarted -> "Provider turn started"
+                is AgentStep.ProviderTurnCompleted -> step.assistantText.ifBlank { "Provider turn completed" }
+                is AgentStep.ContinuationPrepared -> "Continuation prepared"
+                is AgentStep.ResponseCommitted -> "Response committed"
+                is AgentStep.RunPrepared -> "Run prepared (${step.kind.name.lowercase()})"
                 is AgentStep.ToolCompleted -> step.resultSummary
                 is AgentStep.ToolFailed -> step.reason
                 is AgentStep.ResponseProduced -> step.text

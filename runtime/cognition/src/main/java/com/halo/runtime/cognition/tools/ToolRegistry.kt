@@ -11,22 +11,51 @@ import kotlinx.coroutines.withTimeout
  *
  * ToolRegistry performs registration/lookup/validation.
  * Authorization remains a separate concern.
+ *
+ * RUNTIME-017: the registry also owns the [ToolDescriptor] catalogue. Registration
+ * accepts descriptors directly or bridges bare executors with explicit descriptors
+ * supplied by the host composition root. The registry is immutable after construction;
+ * discovery never mutates it.
  */
 class ToolRegistry(
-    private val executors: List<ToolExecutor>
+    private val executors: List<ToolExecutor>,
+    descriptors: List<ToolDescriptor> = emptyList(),
 ) {
+
+    private val executorByTool: Map<String, ToolExecutor> = buildMap {
+        for (executor in executors) {
+            for (definition in executor.definitions()) {
+                putIfAbsent(definition.name, executor)
+                putIfAbsent(definition.id, executor)
+            }
+        }
+    }
+
+    private val descriptorByTool: Map<String, ToolDescriptor> = buildMap {
+        for (descriptor in descriptors) {
+            putIfAbsent(descriptor.name, descriptor)
+            putIfAbsent(descriptor.id.value, descriptor)
+        }
+    }
+
+    /** All registered descriptors. Bare tools receive a conservative fallback descriptor. */
+    fun descriptors(): List<ToolDescriptor> =
+        definitions().map { definition -> descriptorByTool[definition.name] ?: fallbackDescriptor(definition) }
+
+    fun descriptor(toolName: String): ToolDescriptor? {
+        val definition = definitions().firstOrNull { it.name == toolName || it.id == toolName }
+            ?: return null
+        return descriptorByTool[toolName] ?: fallbackDescriptor(definition)
+    }
 
     fun definitions(): List<ToolDefinition> =
         executors.flatMap { it.definitions() }
 
     fun contains(
         toolId: String
-    ): Boolean =
-        executors.any { executor ->
-            executor.definitions().any { definition ->
-                definition.name == toolId || definition.id == toolId
-            }
-        }
+    ): Boolean = executorByTool.containsKey(toolId)
+
+    fun executorFor(toolName: String): ToolExecutor? = executorByTool[toolName]
 
     /**
      * Validate a tool call without executing it.
@@ -64,6 +93,15 @@ class ToolRegistry(
 
         val definition = definitions().firstOrNull { it.id == toolCall.functionName || it.name == toolCall.functionName }
             ?: return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Tool is no longer available")
+        val descriptor = descriptorByTool[toolCall.functionName]
+        descriptor?.dependencies?.firstOrNull { dependency -> !executorByTool.containsKey(dependency.value) }
+            ?.let { unmet ->
+                return ToolExecutionResult.Rejected(
+                    toolCallId = toolCall.id,
+                    toolId = toolCall.functionName,
+                    reason = "Tool dependency not registered: ${unmet.value}"
+                )
+            }
         val schemaError = validateSchema(toolCall.arguments, definition.parameters, "arguments")
         return schemaError?.let { ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, it) }
     }
@@ -112,6 +150,14 @@ class ToolRegistry(
         return null
     }
 
+    private fun effectiveExecutionPolicy(toolName: String): ToolExecutionPolicy {
+        val declared = descriptor(toolName)?.execution ?: ToolExecutionPolicy()
+        return declared.copy(
+            timeoutMs = declared.timeoutMs.coerceIn(1L, ToolExecutionPolicy.HARD_CEILING_TIMEOUT_MS),
+            maxOutputChars = declared.maxOutputChars.coerceIn(1, ToolExecutionLimits.MAX_TOOL_OUTPUT_CHARS),
+        )
+    }
+
     /**
      * Execute only after authorization has already been granted.
      *
@@ -129,12 +175,7 @@ class ToolRegistry(
             return validation
         }
 
-        val executor = executors.firstOrNull { candidate ->
-            candidate.definitions().any { definition ->
-                definition.name == toolCall.functionName ||
-                    definition.id == toolCall.functionName
-            }
-        }
+        val executor = executorFor(toolCall.functionName)
 
         if (executor == null) {
             return ToolExecutionResult.Rejected(
@@ -144,8 +185,10 @@ class ToolRegistry(
             )
         }
 
+        val executionPolicy = effectiveExecutionPolicy(toolCall.functionName)
+
         return try {
-            withTimeout(ToolExecutionLimits.MAX_TOOL_EXECUTION_TIMEOUT_MS) {
+            withTimeout(executionPolicy.timeoutMs) {
                 executor.execute(toolCall)
             }
         } catch (e: TimeoutCancellationException) {
@@ -153,7 +196,8 @@ class ToolRegistry(
                 toolCallId = toolCall.id,
                 toolId = toolCall.functionName,
                 message = "Tool execution timed out; completion unknown",
-                completionUnknown = true
+                completionUnknown = true,
+                failureKind = ToolFailureKind.TIMEOUT,
             )
         } catch (e: CancellationException) {
             throw e
@@ -162,10 +206,22 @@ class ToolRegistry(
                 toolCallId = toolCall.id,
                 toolId = toolCall.functionName,
                 message = "Tool executor threw; completion unknown",
-                completionUnknown = true
+                completionUnknown = true,
+                failureKind = ToolFailureKind.UNKNOWN,
             )
         }
     }
+
+    private fun fallbackDescriptor(definition: ToolDefinition): ToolDescriptor = ToolDescriptor(
+        id = ToolId(definition.id),
+        definition = definition,
+        category = ToolCategory.SYSTEM,
+        security = ToolSecurityPolicy(
+            risk = ToolRiskClass.SENSITIVE,
+            confirmation = ConfirmationPolicy.USER_POLICY,
+            replaySafety = ReplaySafety.NEVER_REPLAY,
+        ),
+    )
 
     private fun validateArgumentValue(value: Any?, depth: Int): String? {
         if (depth > ToolExecutionLimits.MAX_TOOL_ARGUMENT_DEPTH) {

@@ -153,11 +153,21 @@ class ExecutionEngine(
                     beforeDispatch = { dispatched ->
                         if (runId != null && coordinator != null) {
                             val operationId = dispatched.id.toString()
+                            val invocationId = com.halo.runtime.cognition.agent.ToolInvocationId(UUID.randomUUID().toString())
+                            val argumentsDigest = com.halo.runtime.cognition.agent.ToolArgumentCanonicalizer
+                                .digest(dispatched.toString())
                             coordinator.recordStep(AgentStep.ToolRequested(AgentStepId(UUID.randomUUID().toString()), runId,
                                 Instant.now(), operationId, dispatched::class.java.simpleName, "{}"))
-                            check(coordinator.recordStep(AgentStep.ToolDispatched(AgentStepId(UUID.randomUUID().toString()), runId,
-                                Instant.now(), operationId, dispatched::class.java.simpleName, "${runId.value}:$operationId"))) {
-                                "Action already dispatched; refusing replay"
+                            coordinator.recordStep(AgentStep.ToolInvocationPrepared(AgentStepId(UUID.randomUUID().toString()), runId,
+                                Instant.now(), invocationId, operationId, dispatched::class.java.simpleName,
+                                "{}", argumentsDigest, "${runId.value}:$operationId", 1,
+                                com.halo.runtime.cognition.tools.ReplaySafety.NEVER_REPLAY.name))
+                            // RUNTIME-018: claim before dispatch. Does not prove the external
+                            // action occurred; it proves Halo owns this exact invocation.
+                            check(coordinator.recordStep(AgentStep.ToolExecutionClaimed(AgentStepId(UUID.randomUUID().toString()), runId,
+                                Instant.now(), invocationId, operationId, dispatched::class.java.simpleName,
+                                "${runId.value}:$operationId", com.halo.runtime.cognition.tools.ReplaySafety.NEVER_REPLAY.name))) {
+                                "Action already claimed; refusing replay"
                             }
                         }
                     },

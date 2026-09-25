@@ -1,0 +1,257 @@
+package com.halo.runtime.cognition.agent
+
+import com.halo.cognition.language.InteractionId
+import java.time.Instant
+
+/**
+ * RUNTIME-018: execution class and recovery policy of an agent run.
+ * Portable concepts; origin details (phone/glasses/routine name) stay separate.
+ */
+enum class AgentRunKind {
+    INTERACTIVE,
+    ROUTINE,
+    SYSTEM,
+}
+
+enum class RunRecoveryPolicy {
+    /** Recovery waits for the user to resume; startup never auto-executes. */
+    USER_RESUME,
+
+    /** Automatic continuation permitted for provably safe (read-only) work. Not enabled by default. */
+    SAFE_AUTOMATIC,
+
+    /** Unattended executions are never resumed (current routine semantics). */
+    NO_RESUME,
+}
+
+/** Run metadata beyond the run row; persisted in the versioned run metadata envelope. */
+data class AgentRunMetadata(
+    val kind: AgentRunKind = AgentRunKind.INTERACTIVE,
+    val recoveryPolicy: RunRecoveryPolicy = when (kind) {
+        AgentRunKind.INTERACTIVE, AgentRunKind.SYSTEM -> RunRecoveryPolicy.USER_RESUME
+        AgentRunKind.ROUTINE -> RunRecoveryPolicy.NO_RESUME
+    },
+    val providerId: String? = null,
+    val modelId: String? = null,
+    val contextRequirements: Set<String> = emptySet(),
+)
+
+/**
+ * RUNTIME-018 durable execution journal.
+ *
+ * The journal is append-only evidence. New variants record what was intended,
+ * what definitely happened, and what remains unknown:
+ *
+ * - [ProviderTurnStarted]  provider request journaled before inference.
+ * - [ProviderTurnCompleted] provider-neutral response persisted before any
+ *   tool execution or answer publication.
+ * - [ToolInvocationPrepared] intended invocation with canonical arguments,
+ *   digest and replay policy, persisted before authorization finishes.
+ * - [ToolExecutionClaimed] Halo durably claimed responsibility for this exact
+ *   invocation; persisted BEFORE the executor runs. Replaces the misleading
+ *   "dispatched" claim; legacy `ToolDispatched` decodes as a claim.
+ * - [ToolOutcomeRecorded] exact model-facing result persisted before the result
+ *   is given back to the provider.
+ * - [InputRequested]/[InputResolved] durable approval/clarification waiting.
+ * - [ResponseCommitted] conversation commit completed.
+ */
+sealed interface AgentStep {
+    val id: AgentStepId
+    val runId: AgentRunId
+    val createdAt: Instant
+
+    // ---- historical variants (unchanged shape) -----------------------------
+
+    data class PlanCreated(
+        override val id: AgentStepId,
+        override val runId: AgentRunId,
+        override val createdAt: Instant,
+        val planId: String,
+        val summary: String
+    ) : AgentStep
+
+    data class ClarificationRequested(
+        override val id: AgentStepId,
+        override val runId: AgentRunId,
+        override val createdAt: Instant,
+        val question: String,
+        val field: String
+    ) : AgentStep
+
+    data class ApprovalRequested(
+        override val id: AgentStepId,
+        override val runId: AgentRunId,
+        override val createdAt: Instant,
+        val action: String,
+        val risk: String
+    ) : AgentStep
+
+    data class ToolRequested(
+        override val id: AgentStepId,
+        override val runId: AgentRunId,
+        override val createdAt: Instant,
+        val toolCallId: String,
+        val toolId: String,
+        val argumentsJson: String
+    ) : AgentStep
+
+    /** Legacy dispatch record; interpreted conservatively as an execution claim. */
+    data class ToolDispatched(
+        override val id: AgentStepId,
+        override val runId: AgentRunId,
+        override val createdAt: Instant,
+        val toolCallId: String,
+        val toolId: String,
+        val idempotencyKey: String?
+    ) : AgentStep
+
+    data class ToolCompleted(
+        override val id: AgentStepId,
+        override val runId: AgentRunId,
+        override val createdAt: Instant,
+        val toolCallId: String,
+        val toolId: String,
+        val resultSummary: String,
+        val success: Boolean,
+        val actionTruth: ActionTruth = if (success) ActionTruth.CONFIRMED else ActionTruth.FAILED,
+    ) : AgentStep
+
+    data class ToolFailed(
+        override val id: AgentStepId,
+        override val runId: AgentRunId,
+        override val createdAt: Instant,
+        val toolCallId: String,
+        val toolId: String,
+        val reason: String
+    ) : AgentStep
+
+    data class ResponseProduced(
+        override val id: AgentStepId,
+        override val runId: AgentRunId,
+        override val createdAt: Instant,
+        val responseId: String,
+        val text: String
+    ) : AgentStep
+
+    // ---- RUNTIME-018 durable journal variants ------------------------------
+
+    data class RunPrepared(
+        override val id: AgentStepId,
+        override val runId: AgentRunId,
+        override val createdAt: Instant,
+        val kind: AgentRunKind,
+        val recoveryPolicy: RunRecoveryPolicy,
+    ) : AgentStep
+
+    data class ProviderTurnStarted(
+        override val id: AgentStepId,
+        override val runId: AgentRunId,
+        override val createdAt: Instant,
+        val turnId: ProviderTurnId,
+        val providerId: String,
+        val modelId: String?,
+        val requestIdentity: String,
+        val exposedToolIds: Set<String>,
+        val requiredCapabilities: Set<String>,
+    ) : AgentStep
+
+    data class ProviderTurnCompleted(
+        override val id: AgentStepId,
+        override val runId: AgentRunId,
+        override val createdAt: Instant,
+        val turnId: ProviderTurnId,
+        val assistantText: String,
+        val toolCalls: List<ProviderToolCallRecord>,
+        val finishReason: String,
+    ) : AgentStep
+
+    data class ToolInvocationPrepared(
+        override val id: AgentStepId,
+        override val runId: AgentRunId,
+        override val createdAt: Instant,
+        val invocationId: ToolInvocationId,
+        val toolCallId: String,
+        val toolId: String,
+        val argumentsJson: String,
+        val argumentsDigest: String,
+        val idempotencyKey: String,
+        val descriptorVersion: Int,
+        val replaySafety: String,
+    ) : AgentStep
+
+    /** Persisted before the executor runs. No proof of external dispatch. */
+    data class ToolExecutionClaimed(
+        override val id: AgentStepId,
+        override val runId: AgentRunId,
+        override val createdAt: Instant,
+        val invocationId: ToolInvocationId,
+        val toolCallId: String,
+        val toolId: String,
+        val idempotencyKey: String,
+        val replaySafety: String,
+    ) : AgentStep
+
+    data class ResourceBlocked(
+        override val id: AgentStepId,
+        override val runId: AgentRunId,
+        override val createdAt: Instant,
+        val invocationId: ToolInvocationId,
+        val toolId: String,
+        val resourceIds: List<String>,
+        val endpointIds: List<String>,
+        val blockingLeaseIds: List<String>,
+    ) : AgentStep
+
+    data class ToolOutcomeRecorded(
+        override val id: AgentStepId,
+        override val runId: AgentRunId,
+        override val createdAt: Instant,
+        val invocationId: ToolInvocationId,
+        val toolCallId: String,
+        val toolId: String,
+        val success: Boolean,
+        val output: String,
+        val actionTruth: ActionTruth,
+        val failureKind: String?,
+    ) : AgentStep
+
+    data class InputRequested(
+        override val id: AgentStepId,
+        override val runId: AgentRunId,
+        override val createdAt: Instant,
+        val requestId: AgentInputRequestId,
+        val input: AgentInputRequest,
+    ) : AgentStep
+
+    data class InputResolved(
+        override val id: AgentStepId,
+        override val runId: AgentRunId,
+        override val createdAt: Instant,
+        val requestId: AgentInputRequestId,
+        val resolution: String,
+    ) : AgentStep
+
+    data class ContinuationPrepared(
+        override val id: AgentStepId,
+        override val runId: AgentRunId,
+        override val createdAt: Instant,
+        val turnId: ProviderTurnId,
+        val messageCount: Int,
+        val exposedToolIds: Set<String>,
+    ) : AgentStep
+
+    data class ResponseCommitted(
+        override val id: AgentStepId,
+        override val runId: AgentRunId,
+        override val createdAt: Instant,
+        val commitId: String,
+        val interactionId: String,
+    ) : AgentStep
+}
+
+/** Provider-neutral record of one model tool call. */
+data class ProviderToolCallRecord(
+    val toolCallId: String,
+    val toolName: String,
+    val argumentsJson: String,
+)

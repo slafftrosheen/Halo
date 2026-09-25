@@ -15,6 +15,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.androidx.media3.session)
     implementation(libs.androidx.media3.common)
+    api(project(":sdk:driver-sdk"))
     implementation(project(":sdk:runtime-sdk"))
     implementation(project(":sdk:host-sdk"))
     implementation(project(":engines:speech"))

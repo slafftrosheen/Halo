@@ -1,44 +1,48 @@
 package com.halo.app.di.tools
 
+import com.halo.runtime.cognition.agent.*
 import com.halo.runtime.cognition.tools.*
 import com.halo.sdk.provider.ToolCall
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withTimeoutOrNull
 import java.util.UUID
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
-data class PendingToolApproval(val id: String, val preview: ToolActionPreview)
-
-/** One visible approval at a time, bound to this exact call and cancelled with its turn. */
+/**
+ * RUNTIME-019: the ephemeral approval UI state is GONE. No CompletableDeferred,
+ * no global pending decision, no 120-second timer. The Runtime journals a
+ * durable [AgentInputRequest.Approval]; [com.halo.runtime.cognition.interaction]
+ * projects it into surfaces and resolves it atomically through
+ * [com.halo.runtime.cognition.interaction.InteractionResponseHandler].
+ *
+ * This class now only (a) keeps a reference map of durable requests for
+ * diagnostics/Activity and (b) conservatively rejects legacy non-durable
+ * authorize calls that arrive without a durable run context.
+ */
 class InteractiveToolAuthorization(private val isForeground: () -> Boolean) : ToolAuthorizationCoordinator {
-    private val mutex = Mutex()
-    private val mutablePending = MutableStateFlow<PendingToolApproval?>(null)
-    val pending = mutablePending.asStateFlow()
-    private data class Decision(val request: PendingToolApproval, val answer: CompletableDeferred<Boolean>)
-    private val active = java.util.concurrent.atomic.AtomicReference<Decision?>(null)
 
-    fun respond(id: String, approved: Boolean) {
-        val decision = active.get() ?: return
-        if (decision.request.id == id) decision.answer.complete(approved && isForeground())
+    /** Unresolved durable approvals by request id (source of truth: the journal). */
+    private val durablePending = MutableStateFlow<Map<String, AgentInputRequest.Approval>>(emptyMap())
+    val durablePendingApprovals: StateFlow<Map<String, AgentInputRequest.Approval>> = durablePending.asStateFlow()
+
+    fun newRequestId(): String = UUID.randomUUID().toString()
+
+    /** RUNTIME-019 hook: the Runtime journals the request; we only record it. */
+    override suspend fun onDurableApprovalRequest(request: AgentInputRequest.Approval) {
+        durablePending.value = durablePending.value + (request.id.value to request)
     }
 
-    override suspend fun authorizeRequest(toolCall: ToolCall, preview: ToolActionPreview): ToolAuthorization = mutex.withLock {
-        if (!isForeground()) return@withLock ToolAuthorization.Rejected(toolCall, "Open Halo to approve this action")
-        val decision = CompletableDeferred<Boolean>()
-        val request = PendingToolApproval(UUID.randomUUID().toString(), preview)
-        active.set(Decision(request, decision))
-        mutablePending.value = request
-        try {
-            if (withTimeoutOrNull(120_000L) { decision.await() } == true && isForeground()) {
-                ToolAuthorization.Authorized(toolCall)
-            } else ToolAuthorization.Rejected(toolCall, "Action was declined or approval expired")
-        } finally {
-            mutablePending.value = null
-            active.set(null)
-            decision.cancel()
-        }
+    /** Called after the response handler resolved the durable request. */
+    fun clearDurableRequest(requestId: String) {
+        durablePending.value = durablePending.value - requestId
+    }
+
+    /**
+     * Legacy direct-coordinator path (calls that arrive without a durable run
+     * context). Kept foreground-gated and conservative.
+     */
+    override suspend fun authorizeRequest(toolCall: ToolCall, preview: ToolActionPreview): ToolAuthorization {
+        if (!isForeground()) return ToolAuthorization.Rejected(toolCall, "Open Halo to approve this action")
+        return ToolAuthorization.Rejected(toolCall, "Interactive confirmation required for ${toolCall.functionName}")
     }
 }

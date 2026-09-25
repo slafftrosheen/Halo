@@ -54,7 +54,7 @@ class SpeechPerceptionBridge(
 
                 val observationId = UUID.randomUUID().toString()
                 val interactionId = event.input?.captureId ?: event.id
-                val sourceDeviceId = (event.input?.route as? SpeechInputRoute.Wearable)?.deviceId
+                val sourceDeviceId = (event.input?.route as? SpeechInputRoute.Device)?.deviceId
 
                 val observation = Observation(
                     id = ObservationId(observationId),

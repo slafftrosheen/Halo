@@ -15,11 +15,16 @@ import android.content.Context
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
+import com.halo.runtime.cognition.device.DefaultInteractionRoutePolicy
+import com.halo.runtime.cognition.device.InteractionRoutePolicy
+import com.halo.runtime.kernel.resource.DefaultResourceLeaseManager
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.CoroutineStart
 import java.util.concurrent.atomic.AtomicBoolean
+
+import com.halo.sdk.runtime.resource.ResourceLeaseManager
 
 class HaloSpeechOutputCoordinator(
     context: Context,
@@ -30,9 +35,10 @@ class HaloSpeechOutputCoordinator(
     private val ttsProvider: AndroidTTSProvider,
     private val routedSpeechPlaybackProvider: RoutedSpeechPlaybackProvider? = null,
     private val nativeResourceCoordinator: NativeResourceCoordinator? = null,
-    private val interactionRoutePolicy: com.halo.runtime.cognition.device.InteractionRoutePolicy = com.halo.runtime.cognition.device.DefaultInteractionRoutePolicy()
+    private val interactionRoutePolicy: InteractionRoutePolicy = DefaultInteractionRoutePolicy(),
+    resourceLeaseManager: ResourceLeaseManager? = null,
 ) {
-    val session = HaloAudioSessionCoordinator()
+    val session = HaloAudioSessionCoordinator(resourceLeaseManager ?: DefaultResourceLeaseManager())
     private val applicationContext = context.applicationContext
     private val audioManager = applicationContext.getSystemService(AudioManager::class.java)
     private val speechAttributes = speechAudioAttributes
@@ -100,7 +106,7 @@ class HaloSpeechOutputCoordinator(
                 locked = true
                 outputLease = session.acquireOutput(
                     interactionId = event.transactionId,
-                    deviceId = (event.target as? SpeechOutputTarget.Wearable)?.deviceId,
+                    deviceId = (event.target as? SpeechOutputTarget.Device)?.deviceId,
                 ).getOrThrow()
                 foregroundLease = HaloAudioForegroundService.acquire(applicationContext, HaloAudioForegroundService.Kind.PLAYBACK)
                 // 1. Prepare the requested route.
@@ -122,7 +128,7 @@ class HaloSpeechOutputCoordinator(
 
                     val continuity = com.halo.runtime.cognition.device.InteractionContinuity(
                         com.halo.cognition.language.InteractionId(event.transactionId),
-                        (event.target as? SpeechOutputTarget.Wearable)?.deviceId, "AudioInput", "AudioOutput",
+                        (event.target as? SpeechOutputTarget.Device)?.deviceId, "AudioInput", "AudioOutput",
                         allowHandoff = fallback == SpeechOutputFallback.ALLOW_PHONE)
                     val handoff = interactionRoutePolicy.evaluateHandoff(continuity, listOf(
                         com.halo.runtime.cognition.device.RuntimeDevice("local_phone", "phone", "Phone",

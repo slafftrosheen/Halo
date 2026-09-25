@@ -74,11 +74,9 @@ class DefaultSkillRegistry(
 
     override fun approvalPolicy(id: SkillId): ToolApprovalPolicy {
         val skill = get(id) ?: return ToolApprovalPolicy.DENY
-        val default = if (skill.risk == SkillRisk.READ_ONLY) ToolApprovalPolicy.ALWAYS_ALLOW
-            else ToolApprovalPolicy.ASK_EVERY_TIME
         return storage.getString("skill_approval_${id.value}")?.let {
             runCatching { ToolApprovalPolicy.valueOf(it) }.getOrNull()
-        } ?: default
+        } ?: defaultApprovalPolicy(skill.risk)
     }
 
     override fun approvalPolicyForTool(toolName: String): ToolApprovalPolicy {
@@ -92,13 +90,9 @@ class DefaultSkillRegistry(
             else -> return ToolApprovalPolicy.DENY
         }
 
-        val toolRisk = skill.toolDefinitions.firstOrNull { it.toolId == toolName }?.risk ?: skill.risk
-        val default = if (toolRisk == SkillRisk.READ_ONLY) ToolApprovalPolicy.ALWAYS_ALLOW
-            else ToolApprovalPolicy.ASK_EVERY_TIME
-
         return storage.getString("skill_approval_${skill.id.value}")?.let {
             runCatching { ToolApprovalPolicy.valueOf(it) }.getOrNull()
-        } ?: default
+        } ?: defaultApprovalPolicy(skill.risk)
     }
 
     override fun authorizationGroupForTool(toolName: String): String =
@@ -110,12 +104,21 @@ class DefaultSkillRegistry(
         _skills.value = _skills.value.toList()
     }
 
+    private fun defaultApprovalPolicy(risk: SkillRisk): ToolApprovalPolicy =
+        if (risk == SkillRisk.READ_ONLY) ToolApprovalPolicy.ALWAYS_ALLOW else ToolApprovalPolicy.ASK_EVERY_TIME
+
     companion object {
         fun defaultBuiltInSkills(): List<SkillDescriptor> = listOf(
             SkillDescriptor(id = SkillId("halo.time"), name = "Date & time", description = "Read local time and time zone.",
                 category = SkillCategory.INFORMATION, tools = setOf("halo_current_time")),
             SkillDescriptor(id = SkillId("halo.storage"), name = "Storage status", description = "Read available storage.",
                 category = SkillCategory.INFORMATION, tools = setOf("halo_storage_status")),
+            SkillDescriptor(
+                id = SkillId("halo.discovery"), name = "Tool discovery",
+                description = "Let the assistant look up additional tool schemas when needed.",
+                category = SkillCategory.INFORMATION,
+                tools = setOf("halo_discover_tools"), risk = SkillRisk.READ_ONLY, source = SkillSource.BUILT_IN
+            ),
             SkillDescriptor(
                 id = SkillId("halo.notifications"), name = "Notification digests",
                 description = "Build private offline notification digests.", category = SkillCategory.AUTOMATION,
@@ -175,13 +178,6 @@ class DefaultSkillRegistry(
                 risk = SkillRisk.REVERSIBLE,
                 source = SkillSource.BUILT_IN
             )
-        ).map { skill ->
-            skill.copy(toolDefinitions = skill.tools.map { name ->
-                com.halo.sdk.runtime.skills.SkillToolDefinition(name,
-                    if (name.startsWith("halo_search_") && name != "halo_search" ||
-                        name.startsWith("halo_get_") || name.startsWith("halo_read_") || name.startsWith("halo_list_"))
-                        SkillRisk.READ_ONLY else skill.risk)
-            })
-        }
+        )
     }
 }

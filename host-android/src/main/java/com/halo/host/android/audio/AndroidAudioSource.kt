@@ -33,7 +33,10 @@ import kotlinx.coroutines.withContext
  * Sherpa-ONNX Android microphone examples and avoids rapid stop/release/new
  * AudioRecord races on Android audio HALs.
  */
-class AndroidAudioSource(context: Context? = null) : AudioSource {
+class AndroidAudioSource(
+    private val context: Context? = null,
+    private val expectedDeviceIdProvider: () -> Int? = { null }
+) : AudioSource {
     private val audioManager = context?.applicationContext?.getSystemService(AudioManager::class.java)
     private val _state = MutableStateFlow(AudioSourceState.IDLE)
     override val state: StateFlow<AudioSourceState> = _state.asStateFlow()
@@ -94,18 +97,24 @@ class AndroidAudioSource(context: Context? = null) : AudioSource {
 
                 try {
                     audioManager?.let { manager ->
-                        val microphone = manager.getDevices(AudioManager.GET_DEVICES_INPUTS)
-                            .firstOrNull { it.type == AudioDeviceInfo.TYPE_BUILTIN_MIC }
-                            ?: error("Phone microphone is unavailable")
-                        check(recorder.setPreferredDevice(microphone)) { "Unable to select the phone microphone" }
+                        val expectedId = expectedDeviceIdProvider()
+                        val preferred = manager.getDevices(AudioManager.GET_DEVICES_INPUTS)
+                            .firstOrNull { if (expectedId != null) it.id == expectedId else it.type == AudioDeviceInfo.TYPE_BUILTIN_MIC }
+                            ?: error("Requested microphone is unavailable")
+                        check(recorder.setPreferredDevice(preferred)) { "Unable to select the requested microphone" }
                     }
                     recorder.startRecording()
                     check(recorder.recordingState == AudioRecord.RECORDSTATE_RECORDING) {
                         "AudioRecord failed to start recording"
                     }
+                    
+                    // The actual route verification (e.g. confirming it's not silently falling back
+                    // to the built-in mic when a Bluetooth headset was requested) must be performed
+                    // by the caller or routing coordinator checking the routedDevice if needed.
+                    
                     isRecording = true
                     _state.value = AudioSourceState.ACTIVE
-                    Log.i("HaloAudio", "MIC_START")
+                    Log.i("HaloAudio", "MIC_START routedDevice=${recorder.routedDevice?.type}")
                 } catch (exception: Exception) {
                     // A failed platform recorder is unusable. Retire it before a later start.
                     isRecording = false
@@ -175,8 +184,14 @@ class AndroidAudioSource(context: Context? = null) : AudioSource {
 
                 when {
                     read > 0 -> {
-                        if (audioManager != null && recorder.routedDevice?.type != AudioDeviceInfo.TYPE_BUILTIN_MIC) {
-                            throw IllegalStateException("Phone microphone route changed; start listening again")
+                        val expectedId = expectedDeviceIdProvider()
+                        val actualDevice = recorder.routedDevice
+                        if (audioManager != null) {
+                            if (expectedId != null && actualDevice?.id != expectedId) {
+                                throw IllegalStateException("Requested communication microphone route changed")
+                            } else if (expectedId == null && actualDevice?.type != AudioDeviceInfo.TYPE_BUILTIN_MIC) {
+                                throw IllegalStateException("Phone microphone route changed; start listening again")
+                            }
                         }
                         emit(
                             AudioFrame(

@@ -107,7 +107,13 @@ class HaloApplication :
             }
         }
         ManualDependencyGraph.devicePresenceBridge
-        resourceScope.launch { ManualDependencyGraph.agentRunCoordinator.reconcileInterruptedRuns() }
+        // RUNTIME-018: startup classifies outstanding runs; it never auto-executes
+        // consequential work. Recoverable runs become SUSPENDED/WAITING_* and are
+        // surfaced as resumable; only genuinely uncertain runs are terminalized.
+        resourceScope.launch {
+            runCatching { ManualDependencyGraph.agentRunCoordinator.prepareOutstandingRunsForRecovery() }
+                .onFailure { Log.w("HaloApplication", "Agent recovery classification failed", it) }
+        }
 
         storageBootstrap = resourceScope.async {
             val startedAt = android.os.SystemClock.elapsedRealtime()
@@ -151,7 +157,7 @@ class HaloApplication :
 
         automationBootstrap = resourceScope.async {
             storageBootstrap.await()
-            ManualDependencyGraph.agentRunCoordinator.reconcileInterruptedRuns()
+            ManualDependencyGraph.agentRunCoordinator.prepareOutstandingRunsForRecovery()
             ManualDependencyGraph.routineRepository.dao.interruptUnfinished()
             ManualDependencyGraph.notificationRepository.reconcilePolicies()
             com.halo.host.android.reminder.ReminderRecordStore(this@HaloApplication).reconcile()

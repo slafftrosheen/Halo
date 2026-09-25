@@ -9,7 +9,7 @@ class HaloVoiceInteractionSessionService : VoiceInteractionSessionService() {
     override fun onNewSession(args: Bundle?): VoiceInteractionSession {
         return HaloVoiceInteractionSession(
             this,
-            HaloAssistantRuntimeBridge(),
+            HaloAssistantRuntimeBridge(this),
             applicationScope = ManualDependencyGraph.infra.scope,
         )
     }

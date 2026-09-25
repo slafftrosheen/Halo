@@ -26,7 +26,24 @@ interface AgentRunDao {
     suspend fun get(id: String): AgentRunWithSteps?
     @Transaction
     @Query("SELECT * FROM agent_runs WHERE state NOT IN ('COMPLETED', 'FAILED', 'CANCELLED', 'INTERRUPTED')")
+    suspend fun nonTerminalRuns(): List<AgentRunWithSteps>
+    @Transaction
+    @Query("SELECT * FROM agent_runs WHERE state NOT IN ('COMPLETED', 'FAILED', 'CANCELLED', 'INTERRUPTED')")
     suspend fun interruptedRuns(): List<AgentRunWithSteps>
     @Query("SELECT * FROM agent_steps WHERE runId = :runId ORDER BY ordinal ASC, createdAt ASC")
     fun observeStepsForRun(runId: String): Flow<List<AgentStepEntity>>
+
+    /** RUNTIME-018: atomic resume claim. Exactly one caller wins. */
+    @Query(
+        "UPDATE agent_runs SET state = 'EXECUTING', updatedAt = :now " +
+            "WHERE id = :id AND state = :expectedState"
+    )
+    suspend fun claimResume(id: String, expectedState: String, now: Long): Int
+
+    /** RUNTIME-019: locate the latest journaled input request by request id. */
+    @Query(
+        "SELECT runId FROM agent_steps WHERE type = 'InputRequested' " +
+            "AND payloadJson LIKE :requestIdPattern ORDER BY ordinal DESC LIMIT 1"
+    )
+    suspend fun latestInputRequestedRunId(requestIdPattern: String): String?
 }

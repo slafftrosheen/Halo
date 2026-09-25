@@ -17,6 +17,7 @@ import com.halo.app.data.notebook.RoomNotebookRepository
 import com.halo.app.data.workspace.RoomWorkspaceFileRepository
 import com.halo.app.data.workspace.RoomWorkspaceRepository
 import com.halo.app.data.workspace.SendIntentHandler
+import com.halo.app.di.tools.HostTools
 import com.halo.app.di.tools.StorageStatusToolExecutor
 import com.halo.app.di.tools.WorkspaceToolExecutor
 import com.halo.app.models.FileModelCatalogCache
@@ -38,9 +39,12 @@ import kotlinx.coroutines.flow.StateFlow
 import com.halo.engines.memory.WorkingMemoryProcess
 import com.halo.providers.android.tts.AndroidTTSProvider
 import com.halo.runtime.cognition.context.AssistantContextRepository
+import com.halo.runtime.cognition.device.DefaultDeviceCapabilityResolver
+import com.halo.runtime.cognition.device.DefaultResourcePlanner
 import com.halo.runtime.cognition.session.CognitiveSession
 import com.halo.runtime.cognition.skills.DefaultSkillRegistry
 import com.halo.runtime.cognition.tools.CurrentTimeToolExecutor
+import com.halo.runtime.cognition.tools.ToolResourceCoordinator
 import com.halo.runtime.kernel.HaloMicrokernel
 
 /** Thin façade that wires sub-graphs together. This is the sole composition root. */
@@ -56,7 +60,7 @@ object ManualDependencyGraph {
     val secretStore by lazy { com.halo.app.security.AndroidKeystoreSecretStore(storageLayout) }
     private val preferenceStorage by lazy { com.halo.host.android.AndroidStorage(applicationContext) }
     val storage by lazy { RuntimeStartupTrace.measure("graph.storage") { com.halo.app.security.SecretBackedStorage(preferenceStorage, secretStore) } }
-    val providerGraph by lazy { RuntimeStartupTrace.measure("graph.providers") { ProviderGraph(applicationContext, storage) } }
+    val providerGraph by lazy { RuntimeStartupTrace.measure("graph.providers") { ProviderGraph(applicationContext, storage, infra) } }
     val deviceRegistry by lazy { com.halo.sdk.runtime.embodiment.PersistentDeviceRegistry(storage) }
     val deviceSessionManager by lazy { com.halo.sdk.runtime.embodiment.DeviceSessionManager(deviceRegistry) }
     val platformStateMonitor by lazy { AndroidPlatformStateMonitor(applicationContext) }
@@ -71,7 +75,7 @@ object ManualDependencyGraph {
             )
         }
     }
-    val engineGraph by lazy { RuntimeStartupTrace.measure("graph.engines") { EngineGraph(applicationContext, infra, providerGraph, agentRunCoordinator, clarificationCoordinator) } }
+    val engineGraph by lazy { RuntimeStartupTrace.measure("graph.engines") { EngineGraph(applicationContext, infra, providerGraph, agentRunCoordinator, clarificationCoordinator, agentRunStore) } }
     val observerGraph by lazy { RuntimeStartupTrace.measure("graph.observers") { ObserverGraph(applicationContext, infra, engineGraph) } }
     val appDatabase by lazy { RuntimeStartupTrace.measure("graph.database") { AppDatabase.create(applicationContext) } }
     val notebookRepository by lazy { RoomNotebookRepository(appDatabase.notebookDao()) }
@@ -162,8 +166,50 @@ object ManualDependencyGraph {
     }
     val agentRunStore by lazy { RoomAgentRunRepository(appDatabase) }
     val agentRunRepository get() = agentRunStore
-    val agentRunCoordinator by lazy { com.halo.runtime.cognition.agent.DefaultAgentRunCoordinator(agentRunStore, infra.scope) }
+    val agentRunCoordinator by lazy {
+        com.halo.runtime.cognition.agent.DefaultAgentRunCoordinator(
+            agentRunStore, infra.scope,
+            checkpointAssembler = com.halo.runtime.cognition.agent.recovery.AgentCheckpointAssembler(),
+            recoveryPlanner = com.halo.runtime.cognition.agent.recovery.DefaultAgentRecoveryPlanner(),
+        )
+    }
     val clarificationCoordinator by lazy { com.halo.runtime.cognition.clarification.DefaultClarificationCoordinator() }
+
+    /*
+     * RUNTIME-019: portable interaction surfaces. The store is an in-memory
+     * projection; the durable journal stays the only source of truth. The
+     * coordinator derives surfaces from run state, the response handler
+     * resolves them atomically, and resumption delegates to the session.
+     */
+    val interactionSurfaceStore: com.halo.runtime.cognition.interaction.InteractionSurfaceStore by lazy {
+        com.halo.runtime.cognition.interaction.InMemoryInteractionSurfaceStore()
+    }
+    val interactionSurfaceCoordinator: com.halo.runtime.cognition.interaction.InteractionSurfaceCoordinator by lazy {
+        com.halo.runtime.cognition.interaction.DefaultInteractionSurfaceCoordinator(
+            agentRunStore = agentRunStore,
+            surfaceStore = interactionSurfaceStore,
+            surfaceFactory = com.halo.runtime.cognition.interaction.DefaultInteractionSurfaceFactory(),
+            scope = infra.scope,
+        )
+    }
+    val runResumptionCoordinator: com.halo.runtime.cognition.interaction.RunResumptionCoordinator by lazy {
+        com.halo.runtime.cognition.interaction.DefaultRunResumptionCoordinator(
+            agentRunStore = agentRunStore,
+            resume = { runId -> cognitiveSession.resume(runId) },
+        )
+    }
+    val interactionResponseHandler: com.halo.runtime.cognition.interaction.InteractionResponseHandler by lazy {
+        com.halo.runtime.cognition.interaction.DefaultInteractionResponseHandler(
+            surfaceStore = interactionSurfaceStore,
+            runStore = agentRunStore,
+            resumeRun = { runId -> runResumptionCoordinator.requestResume(runId) },
+            cancelRun = { runId ->
+                agentRunCoordinator.cancel(runId, "Cancelled from interaction surface")
+                true
+            },
+            coordinator = interactionSurfaceCoordinator,
+        )
+    }
     val devicePresenceRepository by lazy { com.halo.runtime.cognition.device.InMemoryDevicePresenceRepository() }
     val devicePresenceBridge by lazy { com.halo.app.embodiment.DevicePresenceBridge(devicePresenceRepository, deviceRegistry, deviceSessionManager, infra.scope) }
     val interactionRoutePolicy by lazy { com.halo.runtime.cognition.device.DefaultInteractionRoutePolicy() }
@@ -206,21 +252,63 @@ object ManualDependencyGraph {
     val routineScheduler by lazy { com.halo.app.automation.AndroidRoutineScheduler(applicationContext, routineRepository, routineExecutor::validate) }
     val routinePresenceObserver by lazy { com.halo.app.automation.RoutinePresenceObserver(devicePresenceRepository, routineRepository, routineExecutor) }
     val routinesViewModel by lazy { com.halo.app.ui.screens.settings.RoutinesViewModel(routineRepository, routineScheduler, routineExecutor) }
+    /** RUNTIME-017: portable semantic capability catalogue, advertised by host/driver adapters. */
+    val capabilityCatalogue by lazy {
+        com.halo.runtime.cognition.tools.CapabilityCatalogue().also { catalogue ->
+            hostGraph.capabilityPublisher.publishInto(catalogue)
+        }
+    }
+
+    val toolDiscovery: com.halo.runtime.cognition.tools.ToolDiscoveryService by lazy {
+        com.halo.runtime.cognition.tools.ToolDiscoveryService(toolRegistry, capabilityCatalogue)
+    }
+
+    val toolDiscoveryExecutor by lazy {
+        com.halo.runtime.cognition.tools.ToolDiscoveryExecutor(toolDiscovery)
+    }
+
     val toolRegistry by lazy {
+        val foreground = {
+            attentionContextProvider.snapshot().foregroundState == com.halo.runtime.cognition.attention.ForegroundState.HALO_FOREGROUND
+        }
+        val currentTimeExecutor = CurrentTimeToolExecutor()
+        val notificationExecutor = notificationDigestTool
+        val storageExecutor = StorageStatusToolExecutor(storageUsageRepository, storageAccessRepository)
+        val fileExecutor = com.halo.app.di.tools.FileToolExecutor(applicationContext, workspaceFileRepository, workspaceRepository)
+        val workspaceExecutor = WorkspaceToolExecutor(notebookRepository, workspaceRepository, workspaceContext, assistantContextRepository)
+        val memoryExecutor = com.halo.app.di.tools.MemoryToolExecutor(memoryRepository, memoryContextSource)
+        val hostExecutor = com.halo.app.di.tools.HostTools(applicationContext, foreground)
         com.halo.runtime.cognition.tools.ToolRegistry(
             listOf(
-                AndroidCapabilityTools(applicationContext, eventBus) {
-                    attentionContextProvider.snapshot().foregroundState == com.halo.runtime.cognition.attention.ForegroundState.HALO_FOREGROUND
-                },
-                CurrentTimeToolExecutor(),
-                notificationDigestTool,
-                StorageStatusToolExecutor(storageUsageRepository, storageAccessRepository),
-                com.halo.app.di.tools.FileToolExecutor(applicationContext, workspaceFileRepository, workspaceRepository),
-                WorkspaceToolExecutor(notebookRepository, workspaceRepository, workspaceContext),
-                com.halo.app.di.tools.MemoryToolExecutor(memoryRepository, memoryContextSource),
-                com.halo.app.di.tools.HostTools(applicationContext) {
-                    attentionContextProvider.snapshot().foregroundState == com.halo.runtime.cognition.attention.ForegroundState.HALO_FOREGROUND
-                },
+                currentTimeExecutor,
+                notificationExecutor,
+                storageExecutor,
+                fileExecutor,
+                workspaceExecutor,
+                memoryExecutor,
+                hostExecutor,
+                // Discovery meta-tool is internal: it expands schemas without widening authorization.
+                toolDiscoveryExecutor,
+            ),
+            descriptors = com.halo.app.di.tools.DescriptorCatalog.buildDescriptors(
+                com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.CURRENT_TIME to currentTimeExecutor,
+                com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.NOTIFICATION_DIGEST to notificationExecutor,
+                com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.STORAGE_STATUS to storageExecutor,
+                com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.FILE to fileExecutor,
+                com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.WORKSPACE to workspaceExecutor,
+                com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.MEMORY to memoryExecutor,
+                com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.NAVIGATION to hostExecutor,
+                com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.SYSTEM to hostExecutor,
+                com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.APPLICATION to hostExecutor,
+                com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.DEVICE to hostExecutor,
+                com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.ALARM to hostExecutor,
+                com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.COMMUNICATION to hostExecutor,
+                com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.MEDIA to hostExecutor,
+                com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.ACCESSIBILITY to hostExecutor,
+            ) + listOf(
+                com.halo.app.di.tools.HaloToolDescriptors.discoveryMeta(
+                    com.halo.runtime.cognition.tools.ToolDiscoveryService.discoveryToolDefinition()
+                ),
             )
         )
     }
@@ -232,18 +320,35 @@ object ManualDependencyGraph {
         )
     }
     val contextAssembler by lazy { com.halo.runtime.cognition.context.DefaultContextAssembler(
-        conversationStore, blackboard, toolRegistry, workspaceContext, skillRegistry, assistantContextRepository
+        conversationStore, blackboard, toolRegistry, workspaceContext, skillRegistry, assistantContextRepository,
+        discoveryProvider = { toolDiscovery },
     ) }
     val toolAuthorizationCoordinator by lazy {
         com.halo.app.di.tools.InteractiveToolAuthorization {
             attentionContextProvider.snapshot().foregroundState == com.halo.runtime.cognition.attention.ForegroundState.HALO_FOREGROUND
         }
     }
+
+    /** RUNTIME-018: durable approval resolution from the UI sheet. */
     val toolAuthorizer by lazy {
         com.halo.runtime.cognition.tools.PolicyToolAuthorizer(
             coordinator = toolAuthorizationCoordinator,
             defaultPolicyProvider = skillRegistry::approvalPolicyForTool,
-            authorizationGroupProvider = skillRegistry::authorizationGroupForTool
+            authorizationGroupProvider = skillRegistry::authorizationGroupForTool,
+            descriptorProvider = { toolName -> toolRegistry.descriptor(toolName) }
+        )
+    }
+    val deviceCapabilityResolver by lazy {
+        DefaultDeviceCapabilityResolver()
+    }
+    val resourcePlanner by lazy {
+        DefaultResourcePlanner()
+    }
+    val toolResourceCoordinator by lazy {
+        ToolResourceCoordinator(
+            capabilityResolver = deviceCapabilityResolver,
+            resourcePlanner = resourcePlanner,
+            resourceLeaseManager = infra.resourceLeaseManager,
         )
     }
     val cognitiveSession by lazy {
@@ -260,6 +365,9 @@ object ManualDependencyGraph {
             blackboard = blackboard,
             defaultPolicyProvider = { storage.readRuntimeAiContextPolicy() },
             assistantContexts = assistantContextRepository,
+            toolDiscovery = toolDiscovery,
+            agentRunStore = agentRunStore,
+            toolResourceCoordinator = toolResourceCoordinator,
         )
     }
 
@@ -438,7 +546,8 @@ object ManualDependencyGraph {
             ttsProvider = androidTtsProvider,
             routedSpeechPlaybackProvider = routedSpeechPlaybackProvider,
             nativeResourceCoordinator = providerGraph.nativeResourceCoordinator,
-            interactionRoutePolicy = interactionRoutePolicy
+            interactionRoutePolicy = interactionRoutePolicy,
+            resourceLeaseManager = infra.resourceLeaseManager,
         )
     }
     val haloSpeechOutputCoordinator: HaloSpeechOutputCoordinator get() = speechOutputCoordinatorDelegate.value

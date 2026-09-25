@@ -11,6 +11,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -80,9 +81,22 @@ class HaloVoiceInteractionSession(
 
         setContent {
             HaloTheme {
+                /*
+                 * RUNTIME-019: the overlay observes the shared interaction
+                 * projection and can render the active input surface inline;
+                 * the same surface stays pending if the overlay is hidden.
+                 */
+                val interactionViewModel: com.halo.app.interaction.InteractionSurfaceViewModel =
+                    androidx.lifecycle.viewmodel.compose.viewModel(
+                        factory = com.halo.app.interaction.InteractionSurfaceViewModelFactory(),
+                    )
+                val interactionState2 by interactionViewModel.state.collectAsState()
                 AssistantSurface(
                     interactionState = interactionState,
                     screenContextAttached = screenContextAttached,
+                    interactionSurface = interactionState2.primary
+                        ?.takeIf { it.presentation.requiresForegroundAttention.not() },
+                    onInteractionRespond = interactionViewModel::respond,
                     onStopClicked = {
                         val stopped = active
                         active = null

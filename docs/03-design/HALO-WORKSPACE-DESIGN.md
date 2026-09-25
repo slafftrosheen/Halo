@@ -122,6 +122,20 @@ At narrow widths keep readable labels and 48dp controls. At larger widths use me
 list/detail layouts rather than stretching phone cards. Support keyboard, insets, TalkBack,
 200% font scale, static reduced motion and both themes.
 
+## Interaction surfaces are Runtime-owned semantics (RUNTIME-019, 2026-09-25)
+
+Since this reference was written, human interaction became a Runtime protocol rather than a set
+of screens. Approvals, clarifications, choices, temporal and file requests, progress and results
+arrive as semantic `InteractionSurface`s from `runtime/cognition/.../interaction/` — kinds like
+CONFIRMATION or CHOICE, never DIALOG or SHEET. Android decides whether a confirmation is a
+bottom sheet, a dialog, an assistant-overlay card or a spoken question through the existing TTS
+path. The renderer (`app/.../interaction/InteractionSurfaceRenderer`) branches only on the
+content vocabulary and reuses HaloTheme/Halo glyphs; it contains no business logic and no
+per-tool naming. Dismissing a presentation never cancels the underlying request — the full app
+re-presents it; risk is expressed as neutral human copy (never raw enum names); result cards
+carry journal `ActionTruth`, so UNKNOWN stays visibly unknown. The ephemeral approval sheet is
+retired; the visual language below still governs how these semantic surfaces look.
+
 ## Redesign acceptance
 
 - [ ] Component/state gallery matches the reference's hierarchy and mood in both themes.

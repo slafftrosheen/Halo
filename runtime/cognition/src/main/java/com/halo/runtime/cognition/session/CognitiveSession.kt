@@ -2,6 +2,8 @@ package com.halo.runtime.cognition.session
 
 import com.halo.runtime.cognition.agent.*
 import com.halo.cognition.language.InteractionId
+import com.halo.sdk.provider.ToolCall
+import com.halo.runtime.cognition.tools.ToolId
 import java.time.Instant
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
@@ -18,6 +20,7 @@ import com.halo.runtime.cognition.tools.ToolAuthorization
 import com.halo.runtime.cognition.tools.ToolAuthorizer
 import com.halo.runtime.cognition.tools.ToolExecutionLimits
 import com.halo.runtime.cognition.tools.ToolExecutionResult
+import com.halo.runtime.cognition.tools.ToolFailureKind
 import com.halo.runtime.cognition.tools.ToolRegistry
 import com.halo.runtime.cognition.skills.SkillRegistry
 import com.halo.runtime.provider.response.AiResponseValidator
@@ -82,6 +85,12 @@ import kotlinx.coroutines.launch
 import com.halo.runtime.cognition.facts.RuntimeFactResolver
 import com.halo.runtime.cognition.facts.DefaultRuntimeFactResolver
 import com.halo.cognition.language.SystemFactIntent
+import com.halo.runtime.cognition.tools.ToolResourceAcquisition
+import com.halo.runtime.cognition.tools.ToolResourceCoordinator
+import com.halo.sdk.runtime.resource.ResourceAcquireResult
+import com.halo.sdk.runtime.resource.ResourceHolder
+import com.halo.sdk.runtime.resource.ResourceHolderKind
+import com.halo.sdk.runtime.resource.ResourceLease
 
 class CognitiveSession(
     private val eventBus: EventBus,
@@ -97,6 +106,9 @@ class CognitiveSession(
     private val skillRegistry: SkillRegistry? = null,
     private val agentRunCoordinator: AgentRunCoordinator? = null,
     private val assistantContexts: com.halo.runtime.cognition.context.AssistantContextRepository? = null,
+    private val toolDiscovery: com.halo.runtime.cognition.tools.ToolDiscoveryService? = null,
+    private val agentRunStore: com.halo.runtime.cognition.agent.AgentRunStore? = null,
+    private val toolResourceCoordinator: ToolResourceCoordinator? = null,
 ) {
     private val _state = MutableStateFlow<CognitiveSessionState>(CognitiveSessionState.Idle)
     val state: StateFlow<CognitiveSessionState> = _state.asStateFlow()
@@ -105,6 +117,277 @@ class CognitiveSession(
 
     private val processedInterpretationIds = Collections.synchronizedSet(mutableSetOf<String>())
     private val observerScope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
+
+    /**
+     * RUNTIME-018: durable resume entry point. Uses the same provider router,
+     * tool registry, authorizer and context machinery as [submit]; never a
+     * parallel execution path.
+     *
+     * Flow: load run -> assemble checkpoint -> recovery planner -> atomic resume
+     * claim -> execute the appropriate continuation. Startup never calls this
+     * implicitly: resumption is always explicit (user or host policy).
+     */
+    fun resume(runId: AgentRunId, responseDelivery: ResponseDelivery = ResponseDelivery.VISUAL_ONLY) {
+        activeJob?.cancel()
+        activeJob = scope.launch {
+            val run = loadRun(runId) ?: return@launch
+            if (run.state.isTerminal) return@launch
+            val interactionId = InteractionId(run.interactionId.value)
+            val requestId = UUID.randomUUID().toString()
+            try {
+                val checkpoint = recovery.checkpointAssembler.assemble(run)
+                val plan = recovery.recoveryPlanner.plan(
+                    run,
+                    catalog = toolRegistry,
+                    capabilities = com.halo.runtime.cognition.agent.recovery.CapabilitySnapshot(),
+                )
+
+                // Conservative default: NO_RESUME runs are never auto-resumed here.
+                val runPrepared = run.steps.filterIsInstance<AgentStep.RunPrepared>().firstOrNull()
+                if (runPrepared?.recoveryPolicy == RunRecoveryPolicy.NO_RESUME) {
+                    return@launch
+                }
+
+                // Atomic claim: exactly one surface may resume this run. A
+                // lost claim is benign — another surface already resumed it —
+                // and must never fail the run.
+                val expected = when (run.state) {
+                    AgentRunState.WAITING_FOR_APPROVAL -> AgentRunState.WAITING_FOR_APPROVAL
+                    AgentRunState.WAITING_FOR_CLARIFICATION -> AgentRunState.WAITING_FOR_CLARIFICATION
+                    AgentRunState.WAITING_FOR_CAPABILITY -> AgentRunState.WAITING_FOR_CAPABILITY
+                    AgentRunState.WAITING_FOR_RESOURCE -> AgentRunState.WAITING_FOR_RESOURCE
+                    else -> AgentRunState.SUSPENDED
+                }
+                val claimed = agentRunCoordinator?.claimResume(runId, expected) == true
+                if (!claimed) return@launch
+
+                eventBus.publish(
+                    com.halo.runtime.cognition.agent.recovery.AgentRecoveryStarted(
+                        runId = runId.value, interactionId = run.interactionId.value,
+                        recoveryKind = plan::class.simpleName ?: "Unknown"
+                    )
+                )
+                agentRunCoordinator?.transition(runId, AgentRunState.EXECUTING)
+
+                when (plan) {
+                    is com.halo.runtime.cognition.agent.recovery.RecoveryPlan.CompleteFromRecordedResponse ->
+                        commitFinalResponse(runId, interactionId, requestId, plan.responseText, responseDelivery)
+
+                    is com.halo.runtime.cognition.agent.recovery.RecoveryPlan.RetryProviderTurn ->
+                        resumeProviderTurn(runId, interactionId, responseDelivery)
+
+                    is com.halo.runtime.cognition.agent.recovery.RecoveryPlan.ContinueAfterToolResult ->
+                        resumeProviderTurn(runId, interactionId, responseDelivery)
+
+                    is com.halo.runtime.cognition.agent.recovery.RecoveryPlan.RetryTool ->
+                        resumeToolInvocation(runId, interactionId, requestId, plan.invocation, plan.useOriginalIdempotencyKey, responseDelivery)
+
+                    is com.halo.runtime.cognition.agent.recovery.RecoveryPlan.ReconcileTool ->
+                        reconcileToolInvocation(runId, plan.invocation)
+
+                    is com.halo.runtime.cognition.agent.recovery.RecoveryPlan.AwaitingInput -> {
+                        // Request remains pending; nothing auto-executes.
+                        eventBus.publish(
+                            com.halo.runtime.cognition.agent.recovery.AgentRecoveryWaitingForInput(
+                                runId = runId.value, interactionId = run.interactionId.value,
+                                inputRequestId = plan.request.id.value,
+                                inputKind = plan.request::class.simpleName ?: "Input"
+                            )
+                        )
+                    }
+
+                    is com.halo.runtime.cognition.agent.recovery.RecoveryPlan.MissingCapability,
+                    is com.halo.runtime.cognition.agent.recovery.RecoveryPlan.MissingContext -> {
+                        agentRunCoordinator?.transition(runId, AgentRunState.WAITING_FOR_CAPABILITY, "Missing capability or context")
+                        eventBus.publish(
+                            com.halo.runtime.cognition.agent.recovery.AgentRecoveryBlocked(
+                                runId = runId.value, interactionId = run.interactionId.value,
+                                reason = "Capability or context unavailable"
+                            )
+                        )
+                    }
+
+                    is com.halo.runtime.cognition.agent.recovery.RecoveryPlan.UncertainExternalAction,
+                    is com.halo.runtime.cognition.agent.recovery.RecoveryPlan.UnsupportedLegacyState,
+                    com.halo.runtime.cognition.agent.recovery.RecoveryPlan.NothingToDo -> {
+                        agentRunCoordinator?.transition(runId, AgentRunState.INTERRUPTED, "Recovery cannot continue safely")
+                    }
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                println("[HALO-RESUME-FAIL] runId=${runId.value} type=${e.javaClass.simpleName} message=${e.message}")
+                runId.let { agentRunCoordinator?.fail(it, e.message ?: "Recovery failed") }
+                _state.value = CognitiveSessionState.Failed(mapErrorMessage(e))
+            }
+        }
+    }
+
+    private suspend fun loadRun(runId: AgentRunId): AgentRun? = agentRunStore?.get(runId)
+
+    private suspend fun continuationRequestText(runId: AgentRunId): String? {
+        val run = agentRunStore?.get(runId) ?: return null
+        val continuation = com.halo.runtime.cognition.agent.recovery.AgentContinuationAssembler.fromJournal(run)
+        return continuation.messages.lastOrNull {
+            it.role == com.halo.runtime.cognition.agent.recovery.AgentContinuationRole.USER
+        }?.text
+    }
+
+    private fun continuationRequestTextBlocking(runId: AgentRunId): String? =
+        kotlinx.coroutines.runBlocking { continuationRequestText(runId) }
+
+    private val recovery: RecoveryComponents by lazy {
+        RecoveryComponents(
+            checkpointAssembler = com.halo.runtime.cognition.agent.recovery.AgentCheckpointAssembler(),
+            recoveryPlanner = com.halo.runtime.cognition.agent.recovery.DefaultAgentRecoveryPlanner(),
+        )
+    }
+
+    private inner class RecoveryComponents(
+        val checkpointAssembler: com.halo.runtime.cognition.agent.recovery.AgentCheckpointAssembler,
+        val recoveryPlanner: com.halo.runtime.cognition.agent.recovery.AgentRecoveryPlanner,
+    )
+
+    private fun resumeProviderTurn(
+        runId: AgentRunId,
+        interactionId: InteractionId,
+        responseDelivery: ResponseDelivery,
+    ) {
+        // Continuation reconstructs the model transcript from the journal; the
+        // provider target recorded on the interrupted turn is preferred at routing
+        // time via run metadata (never silently rerouted across providers).
+        val text = runCatching { continuationRequestTextBlocking(runId) }.getOrNull().orEmpty()
+        if (text.isBlank()) {
+            scope.launch {
+                agentRunCoordinator?.transition(runId, AgentRunState.INTERRUPTED, "Continuation request text unavailable")
+            }
+            return
+        }
+        // Re-enter the normal submit path, but journal against the ORIGINAL run id.                    pendingRunIdForResume = runId
+        submit(
+            request = AiRequest(text = text, priority = InferencePriority.INTERACTIVE),
+            responseDelivery = responseDelivery,
+            metadata = mapOf("interactionId" to interactionId.value, "resumedRunId" to runId.value),
+        )
+        pendingRunIdForResume = null
+    }
+
+    private fun resumeToolInvocation(
+        runId: AgentRunId,
+        interactionId: InteractionId,
+        requestId: String,
+        invocation: com.halo.runtime.cognition.agent.ToolInvocation,
+        useOriginalIdempotencyKey: Boolean,
+        responseDelivery: ResponseDelivery,
+    ) {
+        scope.launch {
+            val key = if (useOriginalIdempotencyKey) invocation.idempotencyKey
+            else com.halo.runtime.cognition.agent.ToolInvocation.idempotencyKey(
+                runId, invocation.toolCallId, invocation.toolId, invocation.argumentsDigest)
+            agentRunCoordinator?.recordStep(
+                AgentStep.ToolExecutionClaimed(AgentStepId(UUID.randomUUID().toString()), runId, Instant.now(),
+                    invocation.invocationId, invocation.toolCallId, invocation.toolId.value, key,
+                    invocation.replaySafety.name)
+            )
+            val arguments: Map<String, Any> = runCatching {
+                ToolArgumentCanonicalizer.parseToArgumentsMap(invocation.argumentsJson)
+            }.getOrElse { emptyMap() }.filterValues { it != null }.mapValues { it.value!! }
+            val call = com.halo.sdk.provider.ToolCall(invocation.toolCallId, invocation.toolId.value, arguments)
+            val result = toolRegistry?.executeAuthorized(ToolAuthorization.Authorized(call))
+            recordToolOutcome(runId, invocation, result)
+            // Outcome is journaled; provider continuation follows the normal submit path.
+            resumeProviderTurn(runId, interactionId, responseDelivery)
+        }
+    }
+
+    private fun reconcileToolInvocation(
+        runId: AgentRunId,
+        invocation: com.halo.runtime.cognition.agent.ToolInvocation,
+    ) {
+        scope.launch {
+            val executor = toolRegistry?.executorFor(invocation.toolId.value)
+            val reconciliation = (executor as? com.halo.runtime.cognition.tools.RecoverableToolExecutor)
+                ?.reconcile(invocation)
+                ?: com.halo.runtime.cognition.tools.ToolReconciliation.Unknown("Tool does not support reconciliation")
+            when (reconciliation) {
+                is com.halo.runtime.cognition.tools.ToolReconciliation.Completed -> {
+                    recordToolOutcome(runId, invocation, reconciliation.result)
+                    // Outcome journaled; continue the conversation.
+                    resumeProviderTurn(runId, InteractionId(invocation.interactionId.value), ResponseDelivery.VISUAL_ONLY)
+                }
+                is com.halo.runtime.cognition.tools.ToolReconciliation.NotExecuted ->
+                    // Verified never executed: the pending invocation can be safely retried.
+                    resumeToolInvocation(runId, InteractionId(invocation.interactionId.value),
+                        invocation.toolCallId, invocation, useOriginalIdempotencyKey = true,
+                        responseDelivery = ResponseDelivery.VISUAL_ONLY)
+                is com.halo.runtime.cognition.tools.ToolReconciliation.StillRunning,
+                is com.halo.runtime.cognition.tools.ToolReconciliation.Unknown ->
+                    agentRunCoordinator?.transition(runId, AgentRunState.INTERRUPTED,
+                        (reconciliation as? com.halo.runtime.cognition.tools.ToolReconciliation.Unknown)?.reason
+                            ?: "Tool is still running externally")
+            }
+        }
+    }
+
+    private suspend fun recordToolOutcome(
+        runId: AgentRunId,
+        invocation: com.halo.runtime.cognition.agent.ToolInvocation,
+        result: ToolExecutionResult?,
+    ) {
+        when (result) {
+            is ToolExecutionResult.Success -> agentRunCoordinator?.recordStep(
+                AgentStep.ToolOutcomeRecorded(AgentStepId(UUID.randomUUID().toString()), runId, Instant.now(),
+                    invocation.invocationId, invocation.toolCallId, invocation.toolId.value, true,
+                    result.output, result.actionTruth, null))
+            is ToolExecutionResult.Rejected -> agentRunCoordinator?.recordStep(
+                AgentStep.ToolFailed(AgentStepId(UUID.randomUUID().toString()), runId, Instant.now(),
+                    invocation.toolCallId, invocation.toolId.value, result.reason))
+            is ToolExecutionResult.Failed -> if (!result.completionUnknown) agentRunCoordinator?.recordStep(
+                AgentStep.ToolFailed(AgentStepId(UUID.randomUUID().toString()), runId, Instant.now(),
+                    invocation.toolCallId, invocation.toolId.value, result.message))
+            null -> Unit
+        }
+    }
+
+    private suspend fun commitFinalResponse(
+        runId: AgentRunId,
+        interactionId: InteractionId,
+        requestId: String,
+        responseText: String,
+        responseDelivery: ResponseDelivery,
+    ) {
+        val run = agentRunStore?.get(runId)
+        val commitId = "${runId.value}:$requestId"
+        conversationStore.appendIfAbsent(commitId, run?.request.orEmpty(), responseText,
+            mapOf("interactionId" to interactionId.value, "requestId" to requestId))
+        agentRunCoordinator?.recordStep(
+            AgentStep.ResponseCommitted(AgentStepId(UUID.randomUUID().toString()), runId, Instant.now(),
+                commitId, interactionId.value))
+        _state.value = CognitiveSessionState.Completed(AiResponse(text = responseText, providerId = "recovery", modelId = null, finishReason = "stop"))
+        eventBus.publish(CognitiveCompleted(requestId = requestId, response = responseText, interactionId = interactionId.value))
+        eventBus.publish(
+            com.halo.runtime.cognition.agent.recovery.AgentRecoveryCompleted(
+                runId = runId.value, interactionId = interactionId.value, recoveryKind = "CompleteFromRecordedResponse"
+            )
+        )
+    }
+
+    @Volatile private var activeRequestText: String? = null
+
+    /**
+     * RUNTIME-018: set by [resume] before reusing the normal submit path so the
+     * resumed turn journals against the ORIGINAL durable run id.
+     */
+    @Volatile private var pendingRunIdForResume: AgentRunId? = null
+    @Volatile private var pendingRunId: AgentRunId? = null
+
+    /**
+     * RUNTIME-019: the durable input request the active turn suspended on, if
+     * any. Cleared when the turn ends; the journal remains authoritative.
+     */
+    @Volatile var pendingRunIdInput: AgentInputRequest? = null
+        private set
+    @Volatile private var journaledTurnId: com.halo.runtime.cognition.agent.ProviderTurnId? = null
 
     init {
         observerScope.launch {
@@ -152,15 +435,17 @@ class CognitiveSession(
                             )
                             if (responseDelivery == ResponseDelivery.SPEECH_AND_VISUAL) {
                                 val outputTarget = when (val route = interpretation.origin?.speechRoute) {
-                                    is SpeechInputRoute.Wearable ->
-                                        SpeechOutputTarget.Wearable(
+                                    is SpeechInputRoute.Device ->
+                                        SpeechOutputTarget.Device(
                                             deviceId = route.deviceId,
-                                            displayName = route.displayName
+                                            platformEndpointId = route.platformEndpointId,
+                                            displayName = route.displayName,
+                                            kind = route.kind
                                         )
                                     SpeechInputRoute.Phone -> SpeechOutputTarget.Phone
                                     null -> SpeechOutputTarget.Phone
                                 }
-                                val fallbackPolicy = if (outputTarget is SpeechOutputTarget.Wearable) {
+                                val fallbackPolicy = if (outputTarget is SpeechOutputTarget.Device) {
                                     SpeechOutputFallback.DISALLOW_PHONE
                                 } else {
                                     SpeechOutputFallback.ALLOW_PHONE
@@ -220,15 +505,17 @@ class CognitiveSession(
         metadata: Map<String, String> = emptyMap()
     ) {
         val outputTarget = when (val route = origin?.speechRoute) {
-            is SpeechInputRoute.Wearable ->
-                SpeechOutputTarget.Wearable(
+            is SpeechInputRoute.Device ->
+                SpeechOutputTarget.Device(
                     deviceId = route.deviceId,
-                    displayName = route.displayName
+                    platformEndpointId = route.platformEndpointId,
+                    displayName = route.displayName,
+                    kind = route.kind
                 )
             SpeechInputRoute.Phone -> SpeechOutputTarget.Phone
             null -> SpeechOutputTarget.Phone
         }
-        val fallbackPolicy = if (outputTarget is SpeechOutputTarget.Wearable) {
+        val fallbackPolicy = if (outputTarget is SpeechOutputTarget.Device) {
             SpeechOutputFallback.DISALLOW_PHONE
         } else {
             SpeechOutputFallback.ALLOW_PHONE
@@ -238,6 +525,8 @@ class CognitiveSession(
         val interruptedInteractionId = activeInteractionId
         activeJob?.cancel()
         activeInteractionId = newInteractionId
+        activeRequestText = request.text
+        pendingRunId = pendingRunIdForResume
         activeJob = scope.launch {
             val interactionId = InteractionId(newInteractionId)
             val requestId = UUID.randomUUID().toString()
@@ -293,6 +582,29 @@ class CognitiveSession(
                     )
                 )
 
+                /*
+                 * RUNTIME-018: when a run owns this turn, the provider turn is
+                 * journaled BEFORE inference so recovery can distinguish "started but
+                 * never completed" from "completed". No provider internals persist.
+                 */
+                val durableRunId = pendingRunId ?: runId
+                if (durableRunId != null) {
+                    val turnId = com.halo.runtime.cognition.agent.ProviderTurnId("$durableRunId:$requestId")
+                    agentRunCoordinator?.recordStep(
+                        AgentStep.ProviderTurnStarted(
+                            newStepId(), durableRunId, Instant.now(),
+                            turnId = turnId,
+                            providerId = target.providerId,
+                            modelId = target.modelId,
+                            requestIdentity = ToolArgumentCanonicalizer.sha256Hex(
+                                (request.text ?: "") + ":" + (request.image?.contentHashCode() ?: 0)),
+                            exposedToolIds = context.availableTools.map { it.name }.toSet(),
+                            requiredCapabilities = capabilities.map { it.name }.toSet(),
+                        )
+                    )
+                    journaledTurnId = turnId
+                }
+
                 var response = when (
                     val outcome = executeProviderRequest(
                         provider = provider,
@@ -322,7 +634,7 @@ class CognitiveSession(
                 if (response.toolCalls.isNotEmpty()) {
                     runId = agentRunCoordinator?.start(AgentRequest(interactionId, request.text ?: "", origin?.let {
                         com.halo.sdk.runtime.ObservationOrigin(
-                            if (it.speechRoute is SpeechInputRoute.Wearable) com.halo.sdk.host.ObservationSource.HeyCyanGlasses
+                            if (it.speechRoute is SpeechInputRoute.Device) com.halo.sdk.host.ObservationSource.HeyCyanGlasses
                             else com.halo.sdk.host.ObservationSource.AndroidPhoneMic, it.sourceDeviceId)
                     }, speechOutputTarget = outputTarget, speechOutputFallback = fallbackPolicy, sourceCaptureId = origin?.captureId))
                     runId?.let {
@@ -330,7 +642,31 @@ class CognitiveSession(
                         agentRunCoordinator?.recordStep(AgentStep.PlanCreated(newStepId(), it, Instant.now(), requestId, "Execute requested tools"))
                         agentRunCoordinator?.transition(it, AgentRunState.EXECUTING)
                     }
-                    response = executeToolLoop(
+                    /*
+                     * RUNTIME-018: persist the completed provider response BEFORE any
+                     * tool executes or the answer publishes. This is the recovery
+                     * point if the process dies one line later.
+                     */
+                    runId?.let { rid ->
+                        agentRunCoordinator?.recordStep(
+                            AgentStep.ProviderTurnCompleted(
+                                newStepId(), rid, Instant.now(),
+                                turnId = journaledTurnId
+                                    ?: com.halo.runtime.cognition.agent.ProviderTurnId("$rid:$requestId"),
+                                assistantText = response.text,
+                                toolCalls = response.toolCalls.map { call ->
+                                    val canonical = ToolArgumentCanonicalizer.canonicalize(call.arguments)
+                                    com.halo.runtime.cognition.agent.ProviderToolCallRecord(
+                                        toolCallId = call.id,
+                                        toolName = call.functionName,
+                                        argumentsJson = canonical,
+                                    )
+                                },
+                                finishReason = response.finishReason.orEmpty(),
+                            )
+                        )
+                    }
+                    val loopResult = executeToolLoop(
                         runId = runId,
                         interactionId = interactionId,
                         requestId = requestId,
@@ -342,6 +678,16 @@ class CognitiveSession(
                         capabilities = capabilities,
                         policy = targetPolicy
                     )
+                    if (loopResult == null) {
+                        /*
+                         * RUNTIME-019: the run suspended awaiting durable user
+                         * input (journal holds InputRequested, state is
+                         * WAITING_FOR_APPROVAL). Resolution resumes it; no
+                         * completion bookkeeping happens on this turn.
+                         */
+                        return@launch
+                    }
+                    response = loopResult
                 }
 
                 response = AiResponseValidator.validate(
@@ -358,11 +704,22 @@ class CognitiveSession(
                 val userText = finalRequest.text?.trim().orEmpty()
                 if (responseText.isNotBlank()) {
                     if (userText.isNotBlank()) {
-                        val turn = conversationStore.append(
+                        /*
+                         * RUNTIME-018: idempotent commit. Process death can land after
+                         * the response is recorded but before/after the conversation
+                         * write; a resumed task must not duplicate the turn.
+                         */
+                        val commitId = "${runId?.value ?: "n Run"}:$requestId"
+                        val turn = conversationStore.appendIfAbsent(
+                            commitId = commitId,
                             userText = userText,
                             assistantText = responseText,
                             metadata = metadata + mapOf("interactionId" to interactionId.value, "requestId" to requestId, "provider" to target.providerId, "model" to (target.modelId ?: ""))
                         )
+                        runId?.let { rid ->
+                            agentRunCoordinator?.recordStep(
+                                AgentStep.ResponseCommitted(newStepId(), rid, Instant.now(), commitId, interactionId.value))
+                        }
                         eventBus.publish(
                             ConversationTurnCompleted(
                                 turnId = turn.id,
@@ -432,6 +789,9 @@ class CognitiveSession(
                 eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Failed(interactionId.value, message)))
             } finally {
                 if (activeInteractionId == interactionId.value) activeInteractionId = null
+                pendingRunId = null
+                pendingRunIdInput = null
+                journaledTurnId = null
             }
         }
     }
@@ -520,7 +880,7 @@ class CognitiveSession(
         provider: AiInferenceProvider,
         capabilities: Set<AiCapability>,
         policy: AiContextPolicy
-    ): AiResponse {
+    ): AiResponse? {
         val authorizationScopeId = interactionId.value
         try {
         var response = initialResponse
@@ -528,6 +888,7 @@ class CognitiveSession(
         var round = 0
         var totalToolCalls = 0
         var hasUnconfirmedAction = false
+        val executedCallFingerprints = mutableMapOf<String, Int>()
 
         while (response.toolCalls.isNotEmpty()) {
             round++
@@ -557,8 +918,38 @@ class CognitiveSession(
                         "Maximum total tool calls (${ToolExecutionLimits.MAX_TOTAL_TOOL_CALLS}) exceeded"
                     )
                 }
+
+                val currentSnapshotHash = assistantContexts?.screenFor(interactionId.value)?.hashCode() ?: 0
+                val fingerprint = "$currentSnapshotHash:${toolCall.functionName}:${toolCall.arguments}"
+                val count = (executedCallFingerprints[fingerprint] ?: 0) + 1
+                executedCallFingerprints[fingerprint] = count
+                if (count > 2) {
+                    throw AiProviderException(
+                        AiErrorType.GENERATION_FAILED,
+                        "Loop detected: repeating identical action '${toolCall.functionName}' without UI state change. Clarification required."
+                    )
+                }
+                /*
+                 * RUNTIME-018: canonical argument persistence. "{}" placeholders are
+                 * gone: the invocation record carries the exact canonical arguments
+                 * and digest used for identity, approval matching and recovery.
+                 */
+                val canonicalArguments = ToolArgumentCanonicalizer.canonicalize(toolCall.arguments)
+                val argumentsDigest = ToolArgumentCanonicalizer.digest(canonicalArguments)
+                val invocationId = ToolInvocationId(UUID.randomUUID().toString())
+                val idempotencyKey = ToolInvocation.idempotencyKey(
+                    runId ?: AgentRunId("ephemeral"), toolCall.id, com.halo.runtime.cognition.tools.ToolId(toolCall.functionName), argumentsDigest)
+                val replaySafety = toolRegistry?.descriptor(toolCall.functionName)?.security?.replaySafety
+                    ?: com.halo.runtime.cognition.tools.ReplaySafety.NEVER_REPLAY
+                val descriptorVersion = 1
                 runId?.let {
-                    agentRunCoordinator?.recordStep(AgentStep.ToolRequested(newStepId(), it, Instant.now(), toolCall.id, toolCall.functionName, "{}"))
+                    agentRunCoordinator?.recordStep(
+                        AgentStep.ToolInvocationPrepared(
+                            newStepId(), it, Instant.now(), invocationId, toolCall.id, toolCall.functionName,
+                            canonicalArguments, argumentsDigest, idempotencyKey, descriptorVersion,
+                            replaySafety.name,
+                        )
+                    )
                 }
                 eventBus.publish(
                     ToolCallRequested(
@@ -570,11 +961,19 @@ class CognitiveSession(
 
                 val workspaceReadAllowed = toolCall.functionName !in com.halo.runtime.cognition.tools.WorkspaceToolAccess.readTools ||
                     policy.includeWorkspace
-                val toolIsEnabled = workspaceReadAllowed && (toolRegistry?.let { registry ->
+
+                /*
+                 * RUNTIME-017: discovery only changes schema exposure, never the
+                 * authorization surface. Expanded tools still pass the same skill/
+                 * policy gates as directly-exposed tools; the registry is not mutated.
+                 */
+                val isDiscoveryCall = toolCall.functionName ==
+                    com.halo.runtime.cognition.tools.ToolDiscoveryService.DISCOVER_TOOL
+                val toolIsEnabled = workspaceReadAllowed && (isDiscoveryCall || (toolRegistry?.let { registry ->
                     skillRegistry?.enabledTools(registry.definitions())?.any {
                         it.name == toolCall.functionName || it.id == toolCall.functionName
                     } ?: true
-                } ?: false)
+                } ?: false))
                 val invalidArguments = toolRegistry?.validate(toolCall)
                 if (!policy.includeAvailableTools || toolRegistry == null || toolAuthorizer == null ||
                     !toolIsEnabled || invalidArguments != null) {
@@ -605,7 +1004,57 @@ class CognitiveSession(
                     continue
                 }
 
-                val authorization = toolAuthorizer.authorize(toolCall, authorizationScopeId)
+                /*
+                 * RUNTIME-019: durable authorization first. Interactive approval
+                 * no longer blocks this coroutine: the authorizer returns a durable
+                 * AgentInputRequest.Approval, the loop journals InputRequested,
+                 * moves the run to WAITING_FOR_APPROVAL and returns — the run is
+                 * resumable after process death. A journal-evidenced Approved
+                 * resolution for the SAME canonical arguments digest auto-reauthorizes
+                 * the re-emitted call (same digest = same action; a different
+                 * digest requires a fresh approval). The scoped legacy path only
+                 * remains for calls without a durable run context.
+                 */
+                val previouslyApproved = runId != null &&
+                    hasApprovedApproval(runId, toolCall.functionName, argumentsDigest)
+                val durableDecision = if (runId != null && !previouslyApproved) {
+                    (toolAuthorizer as? com.halo.runtime.cognition.tools.PolicyToolAuthorizer)?.authorizeDurable(
+                        toolCall = toolCall,
+                        runId = runId,
+                        interactionId = interactionId,
+                        invocationId = invocationId,
+                        argumentsDigest = argumentsDigest,
+                    ) { UUID.randomUUID().toString() }
+                } else {
+                    null
+                }
+                val authorization = when {
+                    previouslyApproved -> ToolAuthorization.Authorized(toolCall)
+                    durableDecision is com.halo.runtime.cognition.tools.AuthorizationDecision.Authorized ->
+                        ToolAuthorization.Authorized(toolCall)
+                    durableDecision is com.halo.runtime.cognition.tools.AuthorizationDecision.Rejected ->
+                        ToolAuthorization.Rejected(toolCall, durableDecision.reason)
+                    durableDecision is com.halo.runtime.cognition.tools.AuthorizationDecision.NeedsUserInput -> {
+                        val request = durableDecision.request
+                        val waitingRunId = runId ?: return null
+                        agentRunCoordinator?.recordStep(
+                            AgentStep.InputRequested(newStepId(), waitingRunId, Instant.now(), request.id, request)
+                        )
+                        agentRunCoordinator?.transition(waitingRunId, AgentRunState.WAITING_FOR_APPROVAL)
+                        pendingRunIdInput = request
+                        eventBus.publish(
+                            ToolCallRejected(
+                                requestId = requestId,
+                                toolCallId = toolCall.id,
+                                toolId = toolCall.functionName,
+                                reason = "Waiting for your approval",
+                            )
+                        )
+                        // Durable suspension: the resolved approval resumes the run.
+                        return null
+                    }
+                    else -> toolAuthorizer.authorize(toolCall, authorizationScopeId)
+                }
                 when (authorization) {
                     is ToolAuthorization.Rejected -> {
                         runId?.let { agentRunCoordinator?.recordStep(AgentStep.ToolFailed(newStepId(), it, Instant.now(), toolCall.id, toolCall.functionName, authorization.reason)) }
@@ -640,14 +1089,91 @@ class CognitiveSession(
 
                 val authorized = authorization as ToolAuthorization.Authorized
                 if (runId != null) {
-                    val claimed = agentRunCoordinator?.recordStep(AgentStep.ToolDispatched(newStepId(), runId,
-                        Instant.now(), toolCall.id, toolCall.functionName, "${interactionId.value}:${toolCall.id}")) == true
-                    check(claimed) { "Tool dispatch already recorded; completion must be reconciled before retry" }
+                    /*
+                     * RUNTIME-018: the execution CLAIM is persisted before the executor
+                     * runs. It proves Halo took responsibility for this exact invocation
+                     * (via stable idempotency identity) — it does NOT prove any external
+                     * dispatch happened. The claim deduplicates on the idempotency key,
+                     * so a duplicate claim means a previous run already claimed it.
+                     */
+                    val claimed = agentRunCoordinator?.recordStep(
+                        AgentStep.ToolExecutionClaimed(newStepId(), runId, Instant.now(),
+                            invocationId, toolCall.id, toolCall.functionName, idempotencyKey, replaySafety.name)
+                    ) == true
+                    check(claimed) { "Tool execution already claimed; completion must be reconciled before retry" }
                 }
-                when (val result = toolRegistry.executeAuthorized(authorized)) {
+                var leaseToRelease: ResourceLease? = null
+                val result = try {
+                    val descriptor = toolRegistry.descriptor(toolCall.functionName)
+                    if (descriptor != null && toolResourceCoordinator != null) {
+                        val holder = ResourceHolder(
+                            id = invocationId.value,
+                            interactionId = interactionId.value,
+                            runId = runId?.value,
+                            toolInvocationId = invocationId.value,
+                            kind = ResourceHolderKind.TOOL,
+                        )
+                        val acq = toolResourceCoordinator.prepareAndAcquire(descriptor, holder, availableDevices = emptyList())
+                        when (acq) {
+                            is ToolResourceAcquisition.Granted -> {
+                                leaseToRelease = acq.lease
+                                toolRegistry.executeAuthorized(authorized)
+                            }
+                            is ToolResourceAcquisition.Blocked -> {
+                                if (runId != null) {
+                                    agentRunCoordinator?.recordStep(
+                                        AgentStep.ResourceBlocked(
+                                            id = newStepId(),
+                                            runId = runId,
+                                            createdAt = Instant.now(),
+                                            invocationId = invocationId,
+                                            toolId = toolCall.functionName,
+                                            resourceIds = acq.plan.resourcePlan.claims.map { it.key.resourceId.value },
+                                            endpointIds = acq.plan.resourcePlan.claims.map { it.key.endpointId.value },
+                                            blockingLeaseIds = (acq.acquireResult as? ResourceAcquireResult.Busy)
+                                                ?.conflicts?.map { it.heldLeaseId.value } ?: emptyList()
+                                        )
+                                    )
+                                    agentRunCoordinator?.transition(runId, AgentRunState.WAITING_FOR_RESOURCE, "Resource busy: ${acq.acquireResult}")
+                                }
+                                ToolExecutionResult.Failed(
+                                    toolCallId = toolCall.id,
+                                    toolId = toolCall.functionName,
+                                    message = "Resource busy for ${toolCall.functionName}",
+                                    failureKind = ToolFailureKind.RESOURCE_BUSY,
+                                )
+                            }
+                            is ToolResourceAcquisition.CapabilityMissing -> {
+                                if (runId != null) {
+                                    agentRunCoordinator?.transition(runId, AgentRunState.WAITING_FOR_CAPABILITY, "Capability missing")
+                                }
+                                ToolExecutionResult.Failed(
+                                    toolCallId = toolCall.id,
+                                    toolId = toolCall.functionName,
+                                    message = "Capability missing for ${toolCall.functionName}",
+                                    failureKind = ToolFailureKind.RESOURCE_UNAVAILABLE,
+                                )
+                            }
+                        }
+                    } else {
+                        toolRegistry.executeAuthorized(authorized)
+                    }
+                } finally {
+                    leaseToRelease?.release()
+                }
+
+                when (result) {
                     is ToolExecutionResult.Success -> {
                         hasUnconfirmedAction = hasUnconfirmedAction || result.actionTruth != ActionTruth.CONFIRMED
-                        runId?.let { agentRunCoordinator?.recordStep(AgentStep.ToolCompleted(newStepId(), it, Instant.now(), toolCall.id, toolCall.functionName, result.output.take(ToolExecutionLimits.MAX_TOOL_OUTPUT_CHARS), true, result.actionTruth)) }
+                        runId?.let {
+                            /* Persist the outcome BEFORE the result reaches the provider. */
+                            agentRunCoordinator?.recordStep(
+                                AgentStep.ToolOutcomeRecorded(newStepId(), it, Instant.now(), invocationId,
+                                    toolCall.id, toolCall.functionName, true,
+                                    result.output.take(ToolExecutionLimits.MAX_TOOL_OUTPUT_CHARS),
+                                    result.actionTruth, null)
+                            )
+                        }
                         eventBus.publish(
                             ToolCallCompleted(
                                 requestId = requestId,
@@ -666,7 +1192,12 @@ class CognitiveSession(
                     }
 
                     is ToolExecutionResult.Rejected -> {
-                        runId?.let { agentRunCoordinator?.recordStep(AgentStep.ToolFailed(newStepId(), it, Instant.now(), toolCall.id, toolCall.functionName, result.reason)) }
+                        runId?.let {
+                            agentRunCoordinator?.recordStep(
+                                AgentStep.ToolOutcomeRecorded(newStepId(), it, Instant.now(), invocationId,
+                                    toolCall.id, toolCall.functionName, false, result.reason,
+                                    ActionTruth.FAILED, ToolFailureKind.VALIDATION.name))
+                        }
                         eventBus.publish(
                             ToolCallRejected(
                                 requestId = requestId,
@@ -686,7 +1217,12 @@ class CognitiveSession(
 
                     is ToolExecutionResult.Failed -> {
                         hasUnconfirmedAction = hasUnconfirmedAction || result.completionUnknown
-                        if (!result.completionUnknown) runId?.let { agentRunCoordinator?.recordStep(AgentStep.ToolFailed(newStepId(), it, Instant.now(), toolCall.id, toolCall.functionName, result.message)) }
+                        if (!result.completionUnknown) runId?.let {
+                            agentRunCoordinator?.recordStep(
+                                AgentStep.ToolOutcomeRecorded(newStepId(), it, Instant.now(), invocationId,
+                                    toolCall.id, toolCall.functionName, false, result.message,
+                                    ActionTruth.FAILED, result.failureKind.name))
+                        }
                         eventBus.publish(
                             ToolCallCompleted(
                                 requestId = requestId,
@@ -749,6 +1285,42 @@ class CognitiveSession(
     }
 
     private fun newStepId() = AgentStepId(UUID.randomUUID().toString())
+
+    /**
+     * RUNTIME-019: true when the journal holds an approval request for exactly
+     * this tool + canonical arguments digest that was resolved Approved (and
+     * not later superseded by a newer unresolved request). Evidence only —
+     * never model prose — so re-emitted identical calls do not re-prompt.
+     */
+    private suspend fun hasApprovedApproval(
+        runId: AgentRunId,
+        toolName: String,
+        argumentsDigest: String,
+    ): Boolean {
+        val run = agentRunStore?.get(runId) ?: return false
+        var pendingMatch: String? = null
+        var approved = false
+        for (step in run.steps) {
+            when (step) {
+                is AgentStep.InputRequested -> {
+                    val approval = step.input as? AgentInputRequest.Approval
+                    if (approval != null &&
+                        approval.toolId.value == toolName &&
+                        approval.argumentsDigest == argumentsDigest
+                    ) {
+                        pendingMatch = step.requestId.value
+                        approved = false
+                    }
+                }
+                is AgentStep.InputResolved -> if (step.requestId.value == pendingMatch) {
+                    approved = step.resolution == "Approved"
+                    pendingMatch = null
+                }
+                else -> Unit
+            }
+        }
+        return approved
+    }
 
     private fun mapErrorMessage(e: Exception): String {
         if (e is AiProviderException) {

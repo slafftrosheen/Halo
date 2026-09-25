@@ -59,6 +59,7 @@ open class DefaultInterpretationEngine(
     private val eventBus: com.halo.sdk.runtime.EventBus,
     private val clarificationCoordinator: ClarificationCoordinator? = null,
     private val agentRunCoordinator: AgentRunCoordinator? = null,
+    private val agentRunStore: com.halo.runtime.cognition.agent.AgentRunStore? = null,
 ) : InterpretationEngine {
     override val metadata = EngineMetadata(
         id = Identifier("engine.interpretation.core"),
@@ -218,7 +219,11 @@ open class DefaultInterpretationEngine(
             val pending = coordinator.pending.value
             if (pending == null || !now.isBefore(pending.expiresAt)) {
                 coordinator.cancel("Expired")
-                prior.metadata["agentRunId"]?.let { agentRunCoordinator?.cancel(AgentRunId(it), "Clarification expired") }
+                prior.metadata["agentRunId"]?.let { rid ->
+                    val runId = AgentRunId(rid)
+                    journalClarificationResolved(runId, "Expired")
+                    agentRunCoordinator?.cancel(runId, "Clarification expired")
+                }
                 pendingInterpretation = null
                 clarificationExpiryJob?.cancel()
             } else if (prior.origin?.sourceDeviceId == interpretation.origin?.sourceDeviceId &&
@@ -226,7 +231,11 @@ open class DefaultInterpretationEngine(
                 val reply = interpretation.transcript.trim().lowercase().trimEnd('.', '!', '?')
                 if (reply in setOf("cancel", "cancel it", "never mind", "nevermind")) {
                     coordinator.cancel("User cancelled")
-                    prior.metadata["agentRunId"]?.let { agentRunCoordinator?.cancel(AgentRunId(it), "User cancelled") }
+                    prior.metadata["agentRunId"]?.let { rid ->
+                        val runId = AgentRunId(rid)
+                        journalClarificationResolved(runId, "Cancelled")
+                        agentRunCoordinator?.cancel(runId, "User cancelled")
+                    }
                     pendingInterpretation = null
                     clarificationExpiryJob?.cancel()
                     interpretation = interpretation.copy(metadata = interpretation.metadata + ("clarificationOnly" to "true"))
@@ -235,7 +244,13 @@ open class DefaultInterpretationEngine(
                     is ClarificationResolution.Resolved -> {
                         interpretation = prior.copy(entities = resolution.entities,
                             metadata = prior.metadata - "clarificationOnly")
-                        prior.metadata["agentRunId"]?.let { agentRunCoordinator?.transition(AgentRunId(it), AgentRunState.PLANNING) }
+                        prior.metadata["agentRunId"]?.let { rid ->
+                            val runId = AgentRunId(rid)
+                            journalClarificationResolved(runId, resolution.entities.lastOrNull()?.let { entity ->
+                                (entity as? com.halo.cognition.language.TimeEntity)?.expression
+                            } ?: interpretation.transcript.trim())
+                            agentRunCoordinator?.transition(runId, AgentRunState.PLANNING)
+                        }
                         pendingInterpretation = null
                         clarificationExpiryJob?.cancel()
                     }
@@ -258,7 +273,7 @@ open class DefaultInterpretationEngine(
                 }
                 val interactionId = InteractionId(interpretation.metadata.getValue("interactionId"))
                 val route = interpretation.origin?.speechRoute
-                val target = if (route is SpeechInputRoute.Wearable) SpeechOutputTarget.Wearable(route.deviceId, route.displayName) else SpeechOutputTarget.Phone
+                val target = if (route is SpeechInputRoute.Device) SpeechOutputTarget.Device(route.deviceId, route.platformEndpointId, route.displayName, route.kind) else SpeechOutputTarget.Phone
                 val runId = agentRunCoordinator?.start(AgentRequest(interactionId, interpretation.transcript, observation.origin,
                     speechOutputTarget = target, sourceCaptureId = interpretation.origin?.captureId))
                 val now = java.time.Instant.now()
@@ -266,8 +281,28 @@ open class DefaultInterpretationEngine(
                 val question = if (unresolved?.missingField == TemporalField.AM_PM)
                     "$expression in the morning or evening?" else "What exact time should I use?"
                 runId?.let {
+                    /*
+                     * RUNTIME-019: clarification state lives in the durable journal
+                     * (AgentInputRequest.Clarification), not only in memory. The
+                     * in-memory coordinator keeps the temporal interpretation, but
+                     * process death now leaves the request pending and recoverable.
+                     */
                     agentRunCoordinator?.transition(it, AgentRunState.PLANNING)
-                    agentRunCoordinator?.recordStep(AgentStep.ClarificationRequested(AgentStepId(UUID.randomUUID().toString()), it, now, question, "time"))
+                    val durableRequest = AgentInputRequest.Clarification(
+                        id = AgentInputRequestId(UUID.randomUUID().toString()),
+                        runId = it,
+                        createdAt = now,
+                        expiresAt = now.plusSeconds(120),
+                        question = question,
+                        field = "time",
+                        expected = com.halo.runtime.cognition.agent.ExpectedInput.Text(singleLine = true),
+                    )
+                    agentRunCoordinator?.recordStep(
+                        AgentStep.InputRequested(
+                            AgentStepId(UUID.randomUUID().toString()), it, now,
+                            durableRequest.id, durableRequest,
+                        )
+                    )
                     agentRunCoordinator?.transition(it, AgentRunState.WAITING_FOR_CLARIFICATION)
                 }
                 interpretation = interpretation.copy(metadata = interpretation.metadata + buildMap {
@@ -284,7 +319,10 @@ open class DefaultInterpretationEngine(
                         if (coordinator.pending.value?.interactionId == interactionId) {
                             coordinator.cancel("Expired")
                             pendingInterpretation = null
-                            runId?.let { agentRunCoordinator?.cancel(it, "Clarification expired") }
+                            runId?.let { rid ->
+                                journalClarificationResolved(rid, "Expired")
+                                agentRunCoordinator?.cancel(rid, "Clarification expired")
+                            }
                         }
                     }
                 }
@@ -327,6 +365,28 @@ open class DefaultInterpretationEngine(
         return@withLock ProcessedInterpretation(updatedResult, knowledge)
     }
 
+    /**
+     * RUNTIME-019: journal the clarification answer/cancellation/expiry so the
+     * durable request is never left pending without evidence. Best-effort: a
+     * journaling failure must not break interpretation flow.
+     */
+    private suspend fun journalClarificationResolved(runId: AgentRunId, resolution: String) {
+        runCatching {
+            val run = agentRunStore?.get(runId) ?: return
+            val requested = run.steps.filterIsInstance<AgentStep.InputRequested>()
+                .lastOrNull { it.input is AgentInputRequest.Clarification } ?: return
+            val resolvedAlready = run.steps.filterIsInstance<AgentStep.InputResolved>()
+                .any { it.requestId == requested.requestId }
+            if (resolvedAlready) return
+            agentRunCoordinator?.recordStep(
+                AgentStep.InputResolved(
+                    AgentStepId(UUID.randomUUID().toString()), runId,
+                    java.time.Instant.now(), requested.requestId, resolution,
+                )
+            )
+        }
+    }
+
     private suspend fun publishClarificationResponse(
         interpretation: com.halo.runtime.cognition.blackboard.Interpretation, text: String,
     ) {
@@ -335,10 +395,10 @@ open class DefaultInterpretationEngine(
         eventBus.publish(AssistantResponsePublished(text = text, delivery = delivery, transactionId = id))
         if (delivery == ResponseDelivery.SPEECH_AND_VISUAL) {
             val route = interpretation.origin?.speechRoute
-            val target = if (route is SpeechInputRoute.Wearable) SpeechOutputTarget.Wearable(route.deviceId, route.displayName)
+            val target = if (route is SpeechInputRoute.Device) SpeechOutputTarget.Device(route.deviceId, route.platformEndpointId, route.displayName, route.kind)
                 else SpeechOutputTarget.Phone
             eventBus.publish(TtsRequested(text = text, transactionId = id, target = target,
-                fallback = if (target is SpeechOutputTarget.Wearable) SpeechOutputFallback.DISALLOW_PHONE else SpeechOutputFallback.ALLOW_PHONE,
+                fallback = if (target is SpeechOutputTarget.Device) SpeechOutputFallback.DISALLOW_PHONE else SpeechOutputFallback.ALLOW_PHONE,
                 sourceCaptureId = interpretation.origin?.captureId))
         }
     }

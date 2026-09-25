@@ -17,6 +17,7 @@ import com.halo.runtime.cognition.blackboard.KnowledgeId
 import com.halo.runtime.cognition.blackboard.KnowledgeSource
 import com.halo.runtime.cognition.blackboard.PlanKnowledge
 import com.halo.sdk.runtime.AssistantResponsePublished
+import com.halo.sdk.runtime.AudioDeviceKind
 import com.halo.sdk.runtime.EventBus
 import com.halo.sdk.runtime.ExecutionFinished
 import com.halo.sdk.runtime.HaloEvent
@@ -109,9 +110,11 @@ class CommandResponseProcessTest {
         process.start()
         runCurrent()
 
-        val wearableTarget = SpeechOutputTarget.Wearable(
+        val wearableTarget = SpeechOutputTarget.Device(
             deviceId = "AA:BB:CC:DD:EE:FF",
-            displayName = "HeyCyan"
+            platformEndpointId = null,
+            displayName = "HeyCyan",
+            kind = AudioDeviceKind.WEARABLE
         )
         val (plan, task) = createPlan(
             delivery = ResponseDelivery.SPEECH_AND_VISUAL,

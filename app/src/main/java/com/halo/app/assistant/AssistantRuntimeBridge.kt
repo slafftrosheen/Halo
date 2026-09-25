@@ -17,6 +17,8 @@ import com.halo.sdk.runtime.ScreenContextSnapshot
 import com.halo.sdk.runtime.Source
 import com.halo.sdk.runtime.SpeechInputRoute
 import com.halo.sdk.runtime.SpeechInputTurn
+import android.content.Context
+import com.halo.app.audio.AndroidInvocationAudioResolver
 import com.halo.sdk.runtime.StopListening
 import java.io.ByteArrayOutputStream
 import kotlinx.coroutines.Dispatchers
@@ -31,7 +33,9 @@ interface AssistantRuntimeBridge {
     suspend fun cancelAssistantInteraction(interactionId: String, reason: String)
 }
 
-class HaloAssistantRuntimeBridge : AssistantRuntimeBridge {
+class HaloAssistantRuntimeBridge(private val context: Context) : AssistantRuntimeBridge {
+    private val audioResolver = AndroidInvocationAudioResolver(context)
+
     override suspend fun begin(invocation: HostInvocation) {
         withContext(Dispatchers.IO) { ManualDependencyGraph.runtime.start() }
         ManualDependencyGraph.eventBus.publish(AssistantInvocationStarted(invocation))
@@ -86,13 +90,16 @@ class HaloAssistantRuntimeBridge : AssistantRuntimeBridge {
 
     override suspend fun startListening(interactionId: String, inputDeviceId: Int?): Boolean =
         withContext(Dispatchers.IO) {
+            val route = audioResolver.resolve(inputDeviceId)
+            ManualDependencyGraph.hostGraph.androidInteractionAudioManager.prepareInteractionRoute(interactionId, route)
             ManualDependencyGraph.audioPerceptionEngine.startCapture(
                 SpeechInputTurn(
                     captureId = interactionId,
-                    route = SpeechInputRoute.Phone,
-                    source = ObservationSource.AndroidPhoneMic,
+                    route = route,
+                    source = if (route is SpeechInputRoute.Phone) ObservationSource.AndroidPhoneMic else ObservationSource.BluetoothHeadset,
                 )
             )
+            true
         }
 
     override suspend fun hideAssistantSurface(interactionId: String) {

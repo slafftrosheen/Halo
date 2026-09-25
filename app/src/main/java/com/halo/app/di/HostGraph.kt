@@ -1,10 +1,15 @@
 package com.halo.app.di
 
+import android.media.AudioManager
 import com.halo.drivers.heycyan.HeyCyanAudioOutput
 import com.halo.drivers.heycyan.HeyCyanHost
 import com.halo.drivers.heycyan.RealHeyCyanDriver
 import com.halo.providers.llamacpp.NativeLlamaProvider
 import com.halo.providers.sherpa.stt.SherpaSpeechModelCatalog
+import com.halo.app.audio.AndroidInteractionAudioManager
+import com.halo.app.audio.ForegroundAudioSource
+import com.halo.host.android.audio.AndroidAudioSource
+import com.halo.host.android.audio.AndroidCommunicationAudioRouter
 import com.halo.sdk.host.WearableHost
 import com.halo.sdk.runtime.NativeMemoryPressure
 import java.io.File
@@ -58,10 +63,22 @@ class HostGraph(
         )
     }
 
+    val androidCommunicationAudioRouter by lazy {
+        AndroidCommunicationAudioRouter(context.getSystemService(AudioManager::class.java))
+    }
+
+    val androidInteractionAudioManager by lazy {
+        AndroidInteractionAudioManager(
+            audioRouter = androidCommunicationAudioRouter,
+            eventBus = infra.eventBus,
+            scope = infra.scope
+        )
+    }
+
     val audioPerceptionEngine by lazy {
         com.halo.engines.speech.AudioPerceptionEngine(
-            audioSource = com.halo.app.audio.ForegroundAudioSource(context,
-                com.halo.host.android.audio.AndroidAudioSource(context),
+            audioSource = ForegroundAudioSource(context,
+                AndroidAudioSource(context) { androidInteractionAudioManager.expectedInputDeviceId },
                 com.halo.app.audio.HaloAudioForegroundService.Kind.PHONE_INPUT),
             preprocessor = com.halo.engines.speech.DefaultAudioPreprocessor(),
             audioPipeline = audioPipeline,
@@ -112,5 +129,14 @@ class HostGraph(
 
     val wearableHost: WearableHost by lazy {
         heyCyanHost
+    }
+
+    /**
+     * RUNTIME-017: this host advertises its semantic capabilities through the
+     * portable catalogue. Android mechanics (intents, permissions) stay inside
+     * the publisher adapter.
+     */
+    val capabilityPublisher: com.halo.app.di.AndroidCapabilityPublisher by lazy {
+        AndroidCapabilityPublisher(context)
     }
 }

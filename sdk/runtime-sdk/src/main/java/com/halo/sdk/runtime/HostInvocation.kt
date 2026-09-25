@@ -23,7 +23,16 @@ data class ScreenContextNode(
     val clickable: Boolean,
     val editable: Boolean,
     val bounds: RectValue?,
+    val scrollable: Boolean = false,
+    val checkable: Boolean = false,
+    val checked: Boolean = false,
+    val selected: Boolean = false,
+    val focused: Boolean = false,
+    val enabled: Boolean = true,
 )
+
+typealias UiSemanticNode = ScreenContextNode
+typealias UiSemanticSnapshot = ScreenContextSnapshot
 
 data class ScreenContextSnapshot(
     val packageName: String?,

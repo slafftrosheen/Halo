@@ -16,6 +16,7 @@ import com.halo.sdk.runtime.RuntimeClock
 import com.halo.sdk.runtime.RuntimePowerMode
 import com.halo.sdk.runtime.RuntimeMetricsSink
 import com.halo.sdk.runtime.SystemRuntimeClock
+import com.halo.runtime.kernel.resource.DefaultResourceLeaseManager
 
 /**
  * Owns all cross-cutting infrastructure: buses, logger, scheduler, scope.
@@ -43,6 +44,7 @@ class InfrastructureGraph {
     val cognitiveBus by lazy { com.halo.runtime.kernel.bus.DefaultCognitiveBus() }
     val executionBus by lazy { com.halo.runtime.kernel.bus.DefaultExecutionBus() }
     val blackboard by lazy { com.halo.runtime.cognition.blackboard.DefaultBlackboard() }
+    val resourceLeaseManager by lazy { DefaultResourceLeaseManager() }
 
     val cognitiveTrace by lazy {
         CognitiveTrace(scope, perceptionBus, cognitiveBus, executionBus).apply { start() }

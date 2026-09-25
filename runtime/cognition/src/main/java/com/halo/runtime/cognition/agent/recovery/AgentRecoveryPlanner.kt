@@ -1,0 +1,228 @@
+package com.halo.runtime.cognition.agent.recovery
+
+import com.halo.cognition.language.InteractionId
+import com.halo.runtime.cognition.agent.*
+import com.halo.runtime.cognition.tools.ToolId
+
+/**
+ * RUNTIME-018 deterministic recovery planner.
+ *
+ * Reads the durable execution journal of a run and produces a [RecoveryPlan].
+ * It never executes anything, never calls providers, and contains no host
+ * heuristics: given the same run, descriptors and capability snapshot, the plan
+ * is identical.
+ *
+ * Core truth table (see docs):
+ *
+ * | Evidence                                   | Plan                          |
+ * |--------------------------------------------|-------------------------------|
+ * | Provider started, no response              | RetryProviderTurn             |
+ * | Tool prepared, not claimed                 | ContinueAfterToolResult       |
+ * | SAFE tool claimed, no result               | RetryTool                     |
+ * | Idempotent tool claimed, no result         | RetryTool (original key)      |
+ * | Reconcile-required tool claimed, no result | ReconcileTool                 |
+ * | Never-replay tool claimed, no result       | UncertainExternalAction       |
+ * | Tool outcome recorded, provider follow-up? | ContinueAfterToolResult       |
+ * | Final response recorded, not committed     | CompleteFromRecordedResponse  |
+ * | Input requested, unresolved                | AwaitingInput                 |
+ */
+interface AgentRecoveryPlanner {
+    fun plan(
+        run: AgentRun,
+        catalog: com.halo.runtime.cognition.tools.ToolRegistry?,
+        capabilities: CapabilitySnapshot,
+    ): RecoveryPlan
+
+    fun explain(plan: RecoveryPlan): RecoveryExplanation
+}
+
+class DefaultAgentRecoveryPlanner : AgentRecoveryPlanner {
+
+    override fun plan(
+        run: AgentRun,
+        catalog: com.halo.runtime.cognition.tools.ToolRegistry?,
+        capabilities: CapabilitySnapshot,
+    ): RecoveryPlan {
+        if (run.state.isTerminal) return RecoveryPlan.NothingToDo
+
+        val steps = run.steps
+
+        // 1. Unresolved durable input wins: the run was waiting for a human.
+        lastPendingInput(steps)?.let { request ->
+            return RecoveryPlan.AwaitingInput(run.id, request)
+        }
+
+        // 2. Final response recorded but never committed -> idempotent commit.
+        val produced = steps.filterIsInstance<AgentStep.ResponseProduced>().lastOrNull()
+        if (produced != null && steps.none { it is AgentStep.ResponseCommitted }) {
+            return RecoveryPlan.CompleteFromRecordedResponse(
+                run.id, produced.text, "${run.id.value}:${produced.responseId}",
+            )
+        }
+
+        // 3. Claimed tool without a definitive outcome is the critical case.
+        unclaimedOutcomeInvocation(steps)?.let { invocation ->
+            return when (invocation.replaySafety) {
+                com.halo.runtime.cognition.tools.ReplaySafety.SAFE -> RecoveryPlan.RetryTool(run.id, invocation, useOriginalIdempotencyKey = true)
+                com.halo.runtime.cognition.tools.ReplaySafety.IDEMPOTENT_WITH_KEY -> RecoveryPlan.RetryTool(run.id, invocation, useOriginalIdempotencyKey = true)
+                com.halo.runtime.cognition.tools.ReplaySafety.RECONCILE_BEFORE_RETRY -> RecoveryPlan.ReconcileTool(run.id, invocation)
+                com.halo.runtime.cognition.tools.ReplaySafety.NEVER_REPLAY -> RecoveryPlan.UncertainExternalAction(run.id, invocation, invocation.toolId.value)
+            }
+        }
+
+        // 4. Legacy claim (old ToolDispatched) without outcome: never infer safety.
+        legacyClaimWithoutOutcome(steps)?.let { toolId ->
+            return RecoveryPlan.UnsupportedLegacyState(
+                run.id, "Claimed tool $toolId lacks persisted replay policy; cannot infer safe recovery.",
+            )
+        }
+
+        // 5. Provider turn started but never completed: inference is repeatable.
+        openProviderTurn(steps)?.let { turn ->
+            return RecoveryPlan.RetryProviderTurn(
+                run.id, turn.turnId, turn.providerId, turn.modelId, turn.exposedToolIds,
+            )
+        }
+
+        // 6. Provider response exists with tool calls not yet prepared -> continue.
+        lastCompletedProviderTurn(steps)?.let { turn ->
+            if (turn.toolCalls.isNotEmpty()) {
+                return RecoveryPlan.ContinueAfterToolResult(run.id, turn.turnId, emptySet())
+            }
+        }
+
+        // 7. Prepared invocation that was never claimed: no side effect possible.
+        preparedButUnclaimed(steps)?.let { invocation ->
+            return RecoveryPlan.ContinueAfterToolResult(run.id, null, emptySet()).let {
+                RecoveryPlan.RetryTool(run.id, invocation, useOriginalIdempotencyKey = true)
+            }
+        }
+
+        // 8. Anything else non-terminal without journal evidence is legacy/uncertain.
+        return if (steps.none { it is AgentStep.RunPrepared }) {
+            RecoveryPlan.UnsupportedLegacyState(run.id, "Run has no durable journal evidence.")
+        } else {
+            RecoveryPlan.UncertainExternalAction(run.id, null, null)
+        }
+    }
+
+    override fun explain(plan: RecoveryPlan): RecoveryExplanation = when (plan) {
+        is RecoveryPlan.NothingToDo ->
+            RecoveryExplanation("Run is already terminal.", null, safeToResume = false, requiresUserInput = false)
+        is RecoveryPlan.AwaitingInput ->
+            RecoveryExplanation("Waiting for user input recorded before shutdown.", null, safeToResume = true, requiresUserInput = true)
+        is RecoveryPlan.RetryProviderTurn ->
+            RecoveryExplanation("Provider turn never completed; it can be re-run.", null, safeToResume = true, requiresUserInput = false)
+        is RecoveryPlan.ContinueAfterToolResult ->
+            RecoveryExplanation("Tool results are journaled; continue the conversation.", null, safeToResume = true, requiresUserInput = false)
+        is RecoveryPlan.RetryTool ->
+            RecoveryExplanation("Claimed tool is safe to re-execute under its persisted replay policy.", null, safeToResume = true, requiresUserInput = false)
+        is RecoveryPlan.ReconcileTool ->
+            RecoveryExplanation("External state must be checked before any retry.", "Reconciliation required", safeToResume = false, requiresUserInput = false)
+        is RecoveryPlan.CompleteFromRecordedResponse ->
+            RecoveryExplanation("Final response was recorded; only the conversation commit remains.", null, safeToResume = true, requiresUserInput = false)
+        is RecoveryPlan.MissingContext ->
+            RecoveryExplanation("Transient context is gone; it must be reacquired.", "Missing context: ${plan.requirement}", safeToResume = false, requiresUserInput = true)
+        is RecoveryPlan.MissingCapability ->
+            RecoveryExplanation("A required capability is unavailable.", "Missing capability: ${plan.capability}", safeToResume = false, requiresUserInput = false)
+        is RecoveryPlan.UncertainExternalAction ->
+            RecoveryExplanation("An external action's completion is unknown; it will not be replayed.", "Outcome unknown", safeToResume = false, requiresUserInput = true)
+        is RecoveryPlan.UnsupportedLegacyState ->
+            RecoveryExplanation("Historical run lacks durable recovery metadata.", plan.reason, safeToResume = false, requiresUserInput = false)
+    }
+
+    // ---- journal helpers ----------------------------------------------------
+
+    private fun lastPendingInput(steps: List<AgentStep>): AgentInputRequest? {
+        val requested = mutableMapOf<String, AgentInputRequest>()
+        val resolved = mutableSetOf<String>()
+        for (step in steps) {
+            when (step) {
+                is AgentStep.InputRequested -> requested[step.requestId.value] = step.input
+                is AgentStep.InputResolved -> resolved.add(step.requestId.value)
+                else -> Unit
+            }
+        }
+        return (requested.keys - resolved)
+            .maxByOrNull { requested.getValue(it).createdAt.toEpochMilli() }
+            ?.let { requested.getValue(it) }
+    }
+
+    private fun unclaimedOutcomeInvocation(steps: List<AgentStep>): ToolInvocation? {
+        val claims = steps.filterIsInstance<AgentStep.ToolExecutionClaimed>()
+        val outcomes = steps.filterIsInstance<AgentStep.ToolOutcomeRecorded>().map { it.toolCallId }.toSet()
+        val definitiveFailures = steps.filterIsInstance<AgentStep.ToolFailed>().map { it.toolCallId }.toSet()
+        val claimsWithoutOutcome = claims.filter { claim ->
+            claim.toolCallId !in outcomes && claim.toolCallId !in definitiveFailures
+        }
+        if (claimsWithoutOutcome.isEmpty()) return null
+        val claim = claimsWithoutOutcome.first()
+        val prepared = steps.filterIsInstance<AgentStep.ToolInvocationPrepared>()
+            .firstOrNull { it.toolCallId == claim.toolCallId } ?: return null
+        return ToolInvocation(
+            invocationId = prepared.invocationId,
+            runId = prepared.runId,
+            interactionId = InteractionId(""),
+            toolCallId = prepared.toolCallId,
+            toolId = ToolId(prepared.toolId),
+            argumentsJson = prepared.argumentsJson,
+            argumentsDigest = prepared.argumentsDigest,
+            idempotencyKey = prepared.idempotencyKey,
+            descriptorVersion = prepared.descriptorVersion,
+            replaySafety = runCatching {
+                com.halo.runtime.cognition.tools.ReplaySafety.valueOf(prepared.replaySafety)
+            }.getOrDefault(com.halo.runtime.cognition.tools.ReplaySafety.NEVER_REPLAY),
+            createdAt = prepared.createdAt,
+        )
+    }
+
+    private fun legacyClaimWithoutOutcome(steps: List<AgentStep>): String? {
+        val newStyleCalls = steps.filterIsInstance<AgentStep.ToolExecutionClaimed>().map { it.toolCallId }.toSet()
+        val outcomes = steps.filterIsInstance<AgentStep.ToolOutcomeRecorded>().map { it.toolCallId }.toSet() +
+            steps.filterIsInstance<AgentStep.ToolCompleted>().map { it.toolCallId }.toSet() +
+            steps.filterIsInstance<AgentStep.ToolFailed>().map { it.toolCallId }.toSet()
+        return steps.filterIsInstance<AgentStep.ToolDispatched>()
+            .firstOrNull { dispatch ->
+                dispatch.toolCallId !in newStyleCalls && dispatch.toolCallId !in outcomes
+            }?.toolId
+    }
+
+    private fun openProviderTurn(steps: List<AgentStep>): AgentStep.ProviderTurnStarted? {
+        val started = mutableMapOf<String, AgentStep.ProviderTurnStarted>()
+        val completed = mutableSetOf<String>()
+        for (step in steps) {
+            when (step) {
+                is AgentStep.ProviderTurnStarted -> started[step.turnId.value] = step
+                is AgentStep.ProviderTurnCompleted -> completed.add(step.turnId.value)
+                else -> Unit
+            }
+        }
+        return (started.keys - completed).maxByOrNull { started.getValue(it).createdAt.toEpochMilli() }
+            ?.let { started.getValue(it) }
+    }
+
+    private fun lastCompletedProviderTurn(steps: List<AgentStep>): AgentStep.ProviderTurnCompleted? =
+        steps.filterIsInstance<AgentStep.ProviderTurnCompleted>().lastOrNull()
+
+    private fun preparedButUnclaimed(steps: List<AgentStep>): ToolInvocation? {
+        val claimed = steps.filterIsInstance<AgentStep.ToolExecutionClaimed>().map { it.toolCallId }.toSet()
+        val claimedLegacy = steps.filterIsInstance<AgentStep.ToolDispatched>().map { it.toolCallId }.toSet()
+        val prepared = steps.filterIsInstance<AgentStep.ToolInvocationPrepared>()
+            .firstOrNull { it.toolCallId !in claimed && it.toolCallId !in claimedLegacy } ?: return null
+        return ToolInvocation(
+            invocationId = prepared.invocationId,
+            runId = prepared.runId,
+            interactionId = InteractionId(""),
+            toolCallId = prepared.toolCallId,
+            toolId = ToolId(prepared.toolId),
+            argumentsJson = prepared.argumentsJson,
+            argumentsDigest = prepared.argumentsDigest,
+            idempotencyKey = prepared.idempotencyKey,
+            descriptorVersion = prepared.descriptorVersion,
+            replaySafety = runCatching {
+                com.halo.runtime.cognition.tools.ReplaySafety.valueOf(prepared.replaySafety)
+            }.getOrDefault(com.halo.runtime.cognition.tools.ReplaySafety.NEVER_REPLAY),
+            createdAt = prepared.createdAt,
+        )
+    }
+}

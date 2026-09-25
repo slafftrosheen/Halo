@@ -7,6 +7,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.halo.app.interaction.InteractionSurfaceRenderer
+import com.halo.app.interaction.SurfaceRenderMode
+import com.halo.runtime.cognition.interaction.InteractionResponse
+import com.halo.runtime.cognition.interaction.InteractionSurface
 import com.halo.sdk.runtime.InteractionTurnState
 
 @Composable
@@ -15,6 +19,8 @@ fun AssistantSurface(
     screenContextAttached: Boolean,
     onStopClicked: () -> Unit,
     onOpenHaloClicked: () -> Unit,
+    interactionSurface: InteractionSurface? = null,
+    onInteractionRespond: (InteractionResponse) -> Unit = {},
 ) {
     val statusText = when (interactionState) {
         is InteractionTurnState.Listening -> "Listening…"
@@ -59,6 +65,20 @@ fun AssistantSurface(
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
+            /*
+             * RUNTIME-019: the assistant overlay renders the SAME semantic
+             * surface as the main app, in COMPACT mode. No separate approval
+             * UI. Hiding this overlay never resolves the durable request
+             * (spec #35) — the full app still shows it.
+             */
+            interactionSurface?.let { surface ->
+                Spacer(modifier = Modifier.height(12.dp))
+                InteractionSurfaceRenderer(
+                    surface = surface,
+                    onRespond = onInteractionRespond,
+                    mode = SurfaceRenderMode.COMPACT,
+                )
+            }
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = contextText,

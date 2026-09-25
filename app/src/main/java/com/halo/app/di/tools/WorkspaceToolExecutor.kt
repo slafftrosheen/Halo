@@ -4,16 +4,21 @@ import com.halo.app.data.WorkspaceContextStore
 import com.halo.app.data.notebook.NotebookRepository
 import com.halo.app.data.notebook.WorkspaceObjectId
 import com.halo.app.data.workspace.WorkspaceRepository
+import com.halo.runtime.cognition.context.AssistantContextRepository
 import com.halo.runtime.cognition.tools.ToolExecutionResult
 import com.halo.runtime.cognition.tools.ToolExecutor
 import com.halo.sdk.provider.ToolCall
 import com.halo.sdk.provider.ToolDefinition
+import com.halo.sdk.runtime.study.StudySession
+import com.halo.sdk.runtime.study.TutorStage
 import kotlinx.coroutines.flow.first
+import java.util.UUID
 
 class WorkspaceToolExecutor(
     private val notebookRepository: NotebookRepository,
     private val workspaceRepository: WorkspaceRepository,
-    private val workspaceContextStore: WorkspaceContextStore
+    private val workspaceContextStore: WorkspaceContextStore,
+    private val assistantContextRepository: AssistantContextRepository? = null
 ) : ToolExecutor {
 
     override fun definitions(): List<ToolDefinition> = listOf(
@@ -43,6 +48,19 @@ class WorkspaceToolExecutor(
                     "query" to mapOf("type" to "string", "maxLength" to 500)
                 ),
                 "required" to listOf("query"),
+                "additionalProperties" to false
+            )
+        ),
+        ToolDefinition(
+            id = "halo_study_with_halo",
+            name = "halo_study_with_halo",
+            description = "Start a study/tutoring session for a given note or workspace object.",
+            parameters = mapOf(
+                "type" to "object",
+                "properties" to mapOf(
+                    "objectId" to mapOf("type" to "string", "description" to "ID of the workspace object or note")
+                ),
+                "required" to listOf("objectId"),
                 "additionalProperties" to false
             )
         ),
@@ -107,6 +125,28 @@ class WorkspaceToolExecutor(
                 val notes = notebookRepository.observeNotes(query = query).first().take(5)
                 val summary = notes.joinToString("\n") { "- [${it.id}] ${it.title}" }.ifEmpty { "No matching notes found." }
                 ToolExecutionResult.Success(toolCall.id, toolCall.functionName, summary)
+            }
+            "halo_save_screen_to_notebook" -> {
+                val interactionId = toolCall.arguments["interactionId"]?.toString()?.trim().orEmpty()
+                if (interactionId.isBlank()) return reject("interactionId is required")
+                val screen = assistantContextRepository?.screenFor(interactionId) ?: return reject("No screen context available for interaction $interactionId")
+                val content = "App: ${screen.packageName}\nActivity: ${screen.activityName}\nTitle: ${screen.title}\nWeb URI: ${screen.webUri}\nNodes:\n" +
+                    screen.nodes.take(20).joinToString("\n") { "- ${it.text ?: it.contentDescription}" }
+                val note = notebookRepository.createNote(content)
+                ToolExecutionResult.Success(toolCall.id, toolCall.functionName, "Saved screen to notebook as note ${note.id}")
+            }
+            "halo_study_with_halo" -> {
+                val objectId = toolCall.arguments["objectId"]?.toString()?.trim().orEmpty()
+                if (objectId.isBlank()) return reject("objectId is required")
+                val session = StudySession(
+                    id = UUID.randomUUID().toString(),
+                    assignmentLanguage = null,
+                    explanationLanguage = null,
+                    sourceObjectIds = listOf(objectId),
+                    interactionId = null,
+                    tutorStage = TutorStage.ASK
+                )
+                ToolExecutionResult.Success(toolCall.id, toolCall.functionName, "Started study session ${session.id} for object $objectId in ASK stage.")
             }
             "halo_add_to_working_set" -> {
                 val objectId = toolCall.arguments["objectId"]?.toString()?.trim().orEmpty()

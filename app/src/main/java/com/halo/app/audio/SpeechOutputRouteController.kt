@@ -7,6 +7,7 @@ import com.halo.sdk.runtime.SpeechOutputTarget
 
 import com.halo.host.android.audio.BluetoothAudioRouteMonitor
 import com.halo.host.android.audio.AndroidBluetoothAudioRouteMonitor
+import com.halo.host.android.audio.BluetoothAudioEndpointType
 import com.halo.sdk.runtime.*
 import kotlinx.coroutines.CancellationException
 
@@ -58,11 +59,29 @@ class SpeechOutputRouteController(
                     )
                 )
             }
-            is SpeechOutputTarget.Wearable -> {
-                Log.i("HaloAudio", "AUDIO_ROUTE_REQUEST transaction=${request.transactionId} target=Wearable device=${target.deviceId}")
+            is SpeechOutputTarget.Device -> {
+                Log.i("HaloAudio", "AUDIO_ROUTE_REQUEST transaction=${request.transactionId} target=Device device=${target.deviceId} kind=${target.kind}")
+
+                if (target.kind != AudioDeviceKind.WEARABLE) {
+                    return SpeechRoutePreparation.Ready(
+                        target,
+                        SpeechRouteEvidence(
+                            vendorRouteCommandSent = false,
+                            androidDeviceType = null,
+                            androidDeviceName = null,
+                            androidDeviceAddress = null,
+                            androidDeviceId = target.platformEndpointId
+                        )
+                    )
+                }
+                
+                val targetDeviceId = target.deviceId ?: return SpeechRoutePreparation.Unavailable(
+                    target = target,
+                    reason = SpeechRouteFailureReason.WRONG_DEVICE
+                )
                 
                 val activeDevice = wearableRouteAdapter.deviceId
-                if (activeDevice == null || activeDevice != target.deviceId) {
+                if (activeDevice == null || activeDevice != targetDeviceId) {
                     Log.i("HaloAudio", "AUDIO_ROUTE_FAILED target=wearable reason=WRONG_DEVICE")
                     return SpeechRoutePreparation.Unavailable(
                         target = target,
@@ -71,12 +90,12 @@ class SpeechOutputRouteController(
                 }
 
                 // Restore persisted Classic-audio identity independently of Devices UI.
-                audioPairingCoordinator?.ensureRestored(target.deviceId)
+                audioPairingCoordinator?.ensureRestored(targetDeviceId)
 
                 // 1. Let the device adapter prepare its transport.
                 val btResult = wearableRouteAdapter.prepareAudioTransport()
                 if (btResult.isFailure) {
-                    Log.w("HaloAudio", "WEARABLE_AUDIO_PREPARE device=${target.deviceId} result=failed", btResult.exceptionOrNull())
+                    Log.w("HaloAudio", "WEARABLE_AUDIO_PREPARE device=${targetDeviceId} result=failed", btResult.exceptionOrNull())
                     return SpeechRoutePreparation.Unavailable(target, SpeechRouteFailureReason.DEVICE_DISCONNECTED)
                 }
 
@@ -91,24 +110,24 @@ class SpeechOutputRouteController(
                     )
                     else -> Unit
                 }
-                Log.i("HaloAudio", "HEYCYAN_CLASSIC_ENABLE device=${target.deviceId} result=success")
+                Log.i("HaloAudio", "HEYCYAN_CLASSIC_ENABLE device=${targetDeviceId} result=success")
 
                 // 2. Send RouteAudioToGlasses command
                 val routeResult = wearableRouteAdapter.requestOutputRoute()
                 if (routeResult.isFailure) {
-                    Log.i("HaloAudio", "HEYCYAN_VENDOR_ROUTE device=${target.deviceId} route=GLASSES result=failed")
+                    Log.i("HaloAudio", "HEYCYAN_VENDOR_ROUTE device=${targetDeviceId} route=GLASSES result=failed")
                     return SpeechRoutePreparation.Unavailable(
                         target = target,
                         reason = SpeechRouteFailureReason.COMMAND_FAILED
                     )
                 }
-                Log.i("HaloAudio", "HEYCYAN_VENDOR_ROUTE device=${target.deviceId} route=GLASSES result=success")
-                lastGlassesDeviceId = target.deviceId
+                Log.i("HaloAudio", "HEYCYAN_VENDOR_ROUTE device=${targetDeviceId} route=GLASSES result=success")
+                lastGlassesDeviceId = targetDeviceId
 
                 // 3. Await/verify Android Bluetooth audio endpoint
                 val endpoint = routeMonitor.awaitEndpoint(
-                    predicate = { ep -> ep.type != com.halo.host.android.audio.BluetoothAudioEndpointType.SCO &&
-                        audioPairingCoordinator?.matchesEndpoint(target.deviceId, ep) == true },
+                    predicate = { ep -> ep.type != BluetoothAudioEndpointType.SCO &&
+                        audioPairingCoordinator?.matchesEndpoint(targetDeviceId, ep) == true },
                     timeoutMs = 2_000L
                 )
 

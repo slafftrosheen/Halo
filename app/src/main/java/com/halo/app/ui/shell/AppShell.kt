@@ -20,6 +20,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.launch
+
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -77,14 +79,23 @@ fun AppShell(
     val navController = rememberNavController()
     val homeViewModel = ManualDependencyGraph.homeViewModel
     val shellScope = rememberCoroutineScope()
-    val approvals = ManualDependencyGraph.toolAuthorizationCoordinator
-    val pendingApproval by approvals.pending.collectAsState()
-    pendingApproval?.let { pending ->
-        com.halo.app.ui.screens.settings.ToolApprovalSheet(
-            preview = pending.preview,
-            onApprove = { approvals.respond(pending.id, true) },
-            onDeny = { approvals.respond(pending.id, false) },
-            onDismiss = { approvals.respond(pending.id, false) }
+
+    /*
+     * RUNTIME-019: the global interaction renderer lives OUTSIDE screen
+     * navigation, so a pending durable request stays resolvable from any tab
+     * (spec #68). The ViewModel owns presentation state; composables never
+     * read the dependency graph directly (spec #83). Dismiss only hides the
+     * surface — the durable request remains pending (spec #65).
+     */
+    val interactionViewModel: com.halo.app.interaction.InteractionSurfaceViewModel =
+        androidx.lifecycle.viewmodel.compose.viewModel(
+            factory = com.halo.app.interaction.InteractionSurfaceViewModelFactory(),
+        )
+    val interactionState by interactionViewModel.state.collectAsState()
+    interactionState.primary?.let { surface ->
+        com.halo.app.interaction.InteractionSurfaceRenderer(
+            surface = surface,
+            onRespond = interactionViewModel::respond,
         )
     }
 

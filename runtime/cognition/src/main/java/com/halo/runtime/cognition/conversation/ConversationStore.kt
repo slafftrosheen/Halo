@@ -24,6 +24,21 @@ interface ConversationStore {
         metadata: Map<String, String> = emptyMap()
     ): ConversationTurn
 
+    /**
+     * RUNTIME-018 idempotent conversation commit.
+     *
+     * A resumed task must not create duplicate conversation turns: stores
+     * deduplicate on [commitId] (runId/responseId) and return the existing turn
+     * when the commit was already recorded. Default delegates to [append] for
+     * stores without durable deduplication (documented limitation).
+     */
+    suspend fun appendIfAbsent(
+        commitId: String,
+        userText: String,
+        assistantText: String,
+        metadata: Map<String, String> = emptyMap()
+    ): ConversationTurn = append(userText, assistantText, metadata)
+
     suspend fun clear()
 
     fun recentMessages(

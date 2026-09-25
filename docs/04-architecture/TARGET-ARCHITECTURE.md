@@ -55,4 +55,148 @@ The following concepts represent our target abstractions:
 - **HostCapability**: Abstractions over OS-level features (e.g., dialer, alarms).
 - **WearableCapability**: Abstractions over hardware features (e.g., WearSensor, DisplayTarget).
 
-These are targets for future batches, not currently implemented contracts.
+Implemented in RUNTIME-017 (source-verified, not yet hardware-validated): the portable tool
+fabric — `ToolDescriptor` metadata separate from provider-facing `ToolDefinition`, semantic
+categories, descriptor-driven risk/confirmation/replay policies, per-tool execution policy,
+`ToolRetryRules` non-replay guarantees, `CapabilityCatalogue`/`CapabilityPublisher` semantic
+capability advertisement (Android adapter first), and bounded `ToolDiscoveryService` per-turn
+exposure via the `halo_discover_tools` meta-tool.
+
+Implemented in RUNTIME-018 (IMPLEMENTED / UNVALIDATED): durable execution. An agent run is a
+durable execution whose exact state survives process death:
+
+```text
+User Interaction
+       │
+       ▼
+CognitiveSession  (submit / resume — one execution path)
+       │
+       ▼
+Agent Run
+       │
+       ▼
+Durable Execution Journal (append-only AgentStep evidence)
+       │
+ ┌─────┼─────────────────┐
+ │     │                 │
+ ▼     ▼                 ▼
+Provider Turn        Tool Invocation
+(ProviderTurnStarted/   │
+ ProviderTurnCompleted) Execution Claim
+                        │ (ToolExecutionClaimed)
+                        │
+                  Tool Outcome
+                  (ToolOutcomeRecorded)
+       │
+       ▼
+Recovery Planner (deterministic, journal-only)
+       │
+ ┌─────┼───────────┬────────────┐
+ │     │           │            │
+resume wait input reconcile   uncertain
+```
+
+> Process death is an execution state transition, not an instruction to repeat the
+> user's request.
+
+Recovery truth table (core engineering rule):
+
+| Durable evidence                          | Recovery                        |
+| ----------------------------------------- | ------------------------------- |
+| Provider started, no response             | retry provider turn             |
+| Tool prepared, not claimed                | safe to continue                |
+| SAFE tool claimed, no result              | may retry                       |
+| Idempotent tool claimed                   | retry same identity             |
+| Reconcile-required tool claimed           | reconcile first                 |
+| Never-replay tool claimed                 | uncertain, user action required |
+| Tool result exists, no provider follow-up | continue provider               |
+| Approval pending                          | restore pending approval        |
+| Required transient context missing        | request context again           |
+| Final response recorded, not committed    | commit idempotently             |
+
+Implemented in RUNTIME-019 (IMPLEMENTED / UNVALIDATED): portable interaction surfaces. Human
+interaction is a Runtime-owned semantic protocol, independent of any host UI:
+
+```text
+                   HALO RUNTIME
+
+             Durable Agent Execution
+                      │
+               AgentInputRequest
+                      │
+                      ▼
+             Interaction Surface
+              (renderable projection)
+                      │
+          ┌───────────┼────────────┐
+          │           │            │
+       Android      Desktop      Wearable
+       Compose       future       future
+          │           │            │
+          └───────────┼────────────┘
+                      │
+              InteractionResponse
+                      │
+                      ▼
+      resolveInputIfPending (atomic CAS)
+                      │
+                      ▼
+             CognitiveSession.resume()
+```
+
+The Runtime owns what is asked, why, the legal responses, the run binding and expiry; hosts own
+look, placement and input collection. Surface kinds are semantics (CONFIRMATION, CHOICE,
+TEXT_INPUT, TEMPORAL_INPUT, FILE_SELECTION, PROGRESS, RESULT, ERROR) — never DIALOG/SHEET.
+Surfaces are the projection; the journal stays the only durable truth, and projections are
+rebuilt after process death. Dismiss ≠ deny; cancel-input ≠ cancel-run; first valid resolution
+wins atomically; result truth (`ActionTruth`) comes from the journal, and UNKNOWN stays visibly
+unknown. Android Compose is the first renderer; voice reuses the existing speech runtime with
+origin-device affinity; a future Linux/Windows/AR host implements the same response contract
+without touching cognition.
+
+Implemented in RUNTIME-020 (IMPLEMENTED / UNVALIDATED): Resource Fabric, Capability Affinity, and Multi-Device Arbitration.
+
+```text
+                           HALO RUNTIME
+
+                  Capability Requirement
+                           │
+                           ▼
+                    Capability Resolver
+                           │
+                   selected provider
+                    + selected owner
+                           │
+                           ▼
+                    Resource Planner
+                           │
+             ┌─────────────┼─────────────┐
+             │             │             │
+          audio          camera       compute
+          input          sensor        heavy
+             │             │             │
+             └─────────────┼─────────────┘
+                           ▼
+                  ResourceLeaseManager
+                           │
+                atomic ownership decision
+                           │
+                     ResourceLease
+                           │
+                           ▼
+                   capability executes
+                           │
+                           ▼
+                      lease released
+
+
+HOST / DRIVER INTERNAL ARBITRATION REMAINS BELOW THIS:
+
+Android audio routing
+HeyCyanResourceArbiter
+llama.cpp model lifecycle
+Bluetooth transport
+...
+```
+
+The core rule: A capability answers *who can do something*. A resource lease answers *who is allowed to use the scarce underlying thing right now*. Resource ownership is managed centrally by `ResourceLeaseManager` (`sdk/runtime-sdk/.../resource/`), `DeviceCapabilityResolver`, `ResourcePlanner`, and `ToolResourceCoordinator`. Subsystems (`HaloAudioSessionCoordinator`, `NativeResourceCoordinator`, leased driver capabilities) bridge onto generic resource leases, while physical driver arbitration (`HeyCyanResourceArbiter`) remains below Runtime.

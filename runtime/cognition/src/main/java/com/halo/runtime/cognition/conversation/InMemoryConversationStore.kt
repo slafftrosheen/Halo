@@ -37,6 +37,19 @@ class InMemoryConversationStore : ConversationStore {
         }
     }
 
+    /** RUNTIME-018: deduplicates resumed-task commits on the commitId metadata key. */
+    override suspend fun appendIfAbsent(
+        commitId: String,
+        userText: String,
+        assistantText: String,
+        metadata: Map<String, String>,
+    ): ConversationTurn {
+        mutex.withLock {
+            _turns.value.lastOrNull { it.metadata["commitId"] == commitId }?.let { return it }
+        }
+        return append(userText, assistantText, metadata + mapOf("commitId" to commitId))
+    }
+
     override fun recentMessages(
         maxTurns: Int
     ): List<AIMessage> {

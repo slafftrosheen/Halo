@@ -290,6 +290,9 @@ class MainActivity : ComponentActivity() {
 
                 runtime.start()
                 ManualDependencyGraph.deviceAutoConnectCoordinator.start()
+                // RUNTIME-019: (re)build surface projections from durable state.
+                ManualDependencyGraph.interactionSurfaceCoordinator.start()
+                ManualDependencyGraph.interactionSurfaceCoordinator.rebuild()
                 withContext(Dispatchers.Main.immediate) {
                     runtimeReady = true
                     if (!fullyDrawnReported) {

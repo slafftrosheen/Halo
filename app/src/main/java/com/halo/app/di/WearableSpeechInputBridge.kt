@@ -66,7 +66,7 @@ class WearableSpeechInputBridge(
                                         }
                                     }
                                     val turn = SpeechInputTurn(UUID.randomUUID().toString(),
-                                        SpeechInputRoute.Wearable(deviceId, "HeyCyan"), ObservationSource.HeyCyanGlasses,
+                                        SpeechInputRoute.Device(deviceId, null, "HeyCyan", AudioDeviceKind.WEARABLE), ObservationSource.HeyCyanGlasses,
                                         CaptureBoundary.EXTERNAL)
                                     if (engine.acquireInput(turn, foregroundSource)) {
                                         captureId = turn.captureId

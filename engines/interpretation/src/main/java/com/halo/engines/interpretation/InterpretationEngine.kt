@@ -5,6 +5,7 @@ class InterpretationEngine(
     eventBus: com.halo.sdk.runtime.EventBus,
     clarificationCoordinator: com.halo.runtime.cognition.clarification.ClarificationCoordinator? = null,
     agentRunCoordinator: com.halo.runtime.cognition.agent.AgentRunCoordinator? = null,
+    agentRunStore: com.halo.runtime.cognition.agent.AgentRunStore? = null,
     workingMemory: com.halo.runtime.cognition.workingmemory.WorkingMemory =
         com.halo.runtime.cognition.workingmemory.DefaultWorkingMemory(blackboard),
     pipeline: com.halo.engines.interpretation.internal.RulePipeline =
@@ -21,5 +22,6 @@ class InterpretationEngine(
     blackboard = blackboard,
     eventBus = eventBus,
     clarificationCoordinator = clarificationCoordinator,
-    agentRunCoordinator = agentRunCoordinator
+    agentRunCoordinator = agentRunCoordinator,
+    agentRunStore = agentRunStore
 )

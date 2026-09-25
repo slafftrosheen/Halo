@@ -83,7 +83,7 @@ class AndroidAttentionHost(
             }
             DeliveryChannel.PhoneSpeech, is DeliveryChannel.WearableSpeech -> coroutineScope {
                 val transaction = "attention:${request.id.value}"
-                val target = if (channel is DeliveryChannel.WearableSpeech) SpeechOutputTarget.Wearable(channel.deviceId, "Wearable") else SpeechOutputTarget.Phone
+                val target = if (channel is DeliveryChannel.WearableSpeech) SpeechOutputTarget.Device(channel.deviceId, null, "Wearable", AudioDeviceKind.WEARABLE) else SpeechOutputTarget.Phone
                 val result = async(start = CoroutineStart.UNDISPATCHED) {
                     withTimeoutOrNull(60_000) {
                         eventBus.events().first { event ->

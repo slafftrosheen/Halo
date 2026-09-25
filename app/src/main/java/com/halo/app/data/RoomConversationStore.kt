@@ -96,6 +96,24 @@ class RoomConversationStore(private val db: AppDatabase, scope: CoroutineScope) 
             dao.insert(row); reload(); row.domain()
         }
     }
+
+    /** RUNTIME-018: stable commit identity deduplicates resumed-task commits. */
+    override suspend fun appendIfAbsent(
+        commitId: String,
+        userText: String,
+        assistantText: String,
+        metadata: Map<String, String>,
+    ): ConversationTurn {
+        awaitReady()
+        mutex.withLock {
+            val existing = dao.turns(conversationId).firstOrNull { persisted ->
+                runCatching { JSONObject(persisted.metadata).optString("commitId") }.getOrNull() == commitId
+            }
+            if (existing != null) return existing.domain()
+        }
+        val turn = append(userText, assistantText, metadata + mapOf("commitId" to commitId))
+        return turn
+    }
     override suspend fun clear() { awaitReady(); mutex.withLock { dao.clear(conversationId); reload() } }
     suspend fun newConversation() {
         awaitReady(); mutex.withLock {
