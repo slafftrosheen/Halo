@@ -887,7 +887,7 @@ class CognitiveSession(
         try {
         var response = initialResponse
         var currentContext = initialContext
-        var currentExposure = toolExposurePlanner?.initialExposure()
+        var currentExposure = toolExposurePlanner?.fromDefinitions(initialContext.availableTools)
         var round = 0
         var totalToolCalls = 0
         var hasUnconfirmedAction = false
