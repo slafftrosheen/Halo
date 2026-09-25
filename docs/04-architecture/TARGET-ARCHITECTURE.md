@@ -200,3 +200,35 @@ Bluetooth transport
 ```
 
 The core rule: A capability answers *who can do something*. A resource lease answers *who is allowed to use the scarce underlying thing right now*. Resource ownership is managed centrally by `ResourceLeaseManager` (`sdk/runtime-sdk/.../resource/`), `DeviceCapabilityResolver`, `ResourcePlanner`, and `ToolResourceCoordinator`. Subsystems (`HaloAudioSessionCoordinator`, `NativeResourceCoordinator`, leased driver capabilities) bridge onto generic resource leases, while physical driver arbitration (`HeyCyanResourceArbiter`) remains below Runtime.
+
+## RUNTIME-021 multimodal execution order
+
+The implemented target order is:
+
+```text
+interaction + origin + policy
+          │
+          ▼
+    workload plan
+(required AI + context)
+          │
+          ▼
+ compatible target
+(provider/model capability truth)
+          │
+          ▼
+ context acquisition
+(exact interaction/origin; active capture only if needed)
+          │
+          ▼
+ target-aware budget/assembly
+          │
+          ▼
+ pinned provider turn
+          │
+          ▼
+ bounded tool rounds on same target
+```
+
+The dependency rule is the important part: provider selection is based on the workload that will be
+executed, not only on modalities already present in the initial `AiRequest`.
