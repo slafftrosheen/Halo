@@ -54,6 +54,9 @@ class MainActivity : ComponentActivity() {
     ) {
         lifecycleScope.launch(Dispatchers.IO) {
             ManualDependencyGraph.platformStateMonitor.refreshMicrophonePermission()
+            ManualDependencyGraph.hostGraph.capabilityPublisher.refreshInto(
+                ManualDependencyGraph.capabilityCatalogue
+            )
             RuntimeStartupTrace.mark(
                 "permissions.microphone.result granted=" +
                     ManualDependencyGraph.platformStateMonitor.microphonePermissionGranted.value
@@ -68,6 +71,7 @@ class MainActivity : ComponentActivity() {
             runCatching {
                 ManualDependencyGraph.platformStateMonitor.refreshBluetoothState()
                 ManualDependencyGraph.pairingViewModel.refreshPrerequisites()
+                ManualDependencyGraph.runtimeDeviceCapabilityBridge.updateDeviceCapabilities()
             }.onFailure { error ->
                 android.util.Log.w("MainActivity", "Could not refresh pairing permissions", error)
             }
@@ -320,6 +324,10 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         lifecycleScope.launch(Dispatchers.IO) {
             ManualDependencyGraph.platformStateMonitor.refreshMicrophonePermission()
+            ManualDependencyGraph.hostGraph.capabilityPublisher.refreshInto(
+                ManualDependencyGraph.capabilityCatalogue
+            )
+            ManualDependencyGraph.runtimeDeviceCapabilityBridge.updateDeviceCapabilities()
         }
         startUiGraphBootstrap()
         startRuntimeLoop()
