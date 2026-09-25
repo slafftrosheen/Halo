@@ -55,19 +55,20 @@ class DefaultAgentRecoveryPlanner : AgentRecoveryPlanner {
         // 2. Final response recorded but never committed -> idempotent commit.
         val produced = steps.filterIsInstance<AgentStep.ResponseProduced>().lastOrNull()
         if (produced != null && steps.none { it is AgentStep.ResponseCommitted }) {
-            return RecoveryPlan.CompleteFromRecordedResponse(
+            return checkClaim(run, RecoveryPlan.CompleteFromRecordedResponse(
                 run.id, produced.text, "${run.id.value}:${produced.responseId}",
-            )
+            ))
         }
 
         // 3. Claimed tool without a definitive outcome is the critical case.
         unclaimedOutcomeInvocation(steps)?.let { invocation ->
-            return when (invocation.replaySafety) {
+            val plan = when (invocation.replaySafety) {
                 com.halo.runtime.cognition.tools.ReplaySafety.SAFE -> RecoveryPlan.RetryTool(run.id, invocation, useOriginalIdempotencyKey = true)
                 com.halo.runtime.cognition.tools.ReplaySafety.IDEMPOTENT_WITH_KEY -> RecoveryPlan.RetryTool(run.id, invocation, useOriginalIdempotencyKey = true)
                 com.halo.runtime.cognition.tools.ReplaySafety.RECONCILE_BEFORE_RETRY -> RecoveryPlan.ReconcileTool(run.id, invocation)
                 com.halo.runtime.cognition.tools.ReplaySafety.NEVER_REPLAY -> RecoveryPlan.UncertainExternalAction(run.id, invocation, invocation.toolId.value)
             }
+            return checkClaim(run, plan)
         }
 
         // 4. Legacy claim (old ToolDispatched) without outcome: never infer safety.
@@ -87,17 +88,30 @@ class DefaultAgentRecoveryPlanner : AgentRecoveryPlanner {
                     requirement.startsWith("SCREEN_TEXT:")
             }
             if (transientRequirement != null) {
-                return RecoveryPlan.MissingContext(run.id, transientRequirement)
+                return checkClaim(run, RecoveryPlan.MissingContext(run.id, transientRequirement))
             }
-            return RecoveryPlan.RetryProviderTurn(
+            return checkClaim(run, RecoveryPlan.RetryProviderTurn(
                 run.id, turn.turnId, turn.providerId, turn.modelId, turn.exposedToolIds,
-            )
+            ))
         }
 
-        // 6. Provider response exists with tool calls not yet prepared -> continue.
+        // 6. Provider response exists with tool calls.
         lastCompletedProviderTurn(steps)?.let { turn ->
             if (turn.toolCalls.isNotEmpty()) {
-                return RecoveryPlan.ContinueAfterToolResult(run.id, turn.turnId, emptySet())
+                val callIds = turn.toolCalls.map { it.toolCallId }
+                val resolutions = resolveToolCalls(callIds, steps)
+                
+                // If any call is still PENDING, we continue to process them.
+                if (resolutions.values.any { it == ToolCallResolution.PENDING }) {
+                    return checkClaim(run, RecoveryPlan.ContinueAfterToolResult(run.id, turn.turnId, emptySet()))
+                }
+                
+                if (steps.any { it is AgentStep.ResponseProduced || it is AgentStep.ResponseCommitted }) {
+                    // Final response already exists.
+                    return RecoveryPlan.NothingToDo
+                }
+
+                return checkClaim(run, RecoveryPlan.ContinueAfterToolResult(run.id, turn.turnId, emptySet()))
             }
         }
 
@@ -107,7 +121,7 @@ class DefaultAgentRecoveryPlanner : AgentRecoveryPlanner {
         // again; never execute a merely prepared call directly.
         preparedButUnclaimed(steps)?.let {
             val turnId = lastCompletedProviderTurn(steps)?.turnId
-            return RecoveryPlan.ContinueAfterToolResult(run.id, turnId, emptySet())
+            return checkClaim(run, RecoveryPlan.ContinueAfterToolResult(run.id, turnId, emptySet()))
         }
 
         // 8. Anything else non-terminal without journal evidence is legacy/uncertain.
@@ -116,6 +130,15 @@ class DefaultAgentRecoveryPlanner : AgentRecoveryPlanner {
         } else {
             RecoveryPlan.UncertainExternalAction(run.id, null, null)
         }
+    }
+    
+    private fun checkClaim(run: AgentRun, plan: RecoveryPlan): RecoveryPlan {
+        val lastClaim = run.steps.filterIsInstance<AgentStep.RecoveryClaimed>().lastOrNull()
+        if (lastClaim != null && lastClaim.planKind == plan::class.simpleName) {
+            // Already claimed this exact plan without journal advancing to completion. Prevent infinite loops.
+            return RecoveryPlan.UncertainExternalAction(run.id, null, "Repeated recovery claim without progress")
+        }
+        return plan
     }
 
     override fun explain(plan: RecoveryPlan): RecoveryExplanation = when (plan) {

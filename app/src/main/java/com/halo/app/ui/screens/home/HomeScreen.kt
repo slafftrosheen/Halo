@@ -37,6 +37,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -46,6 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -65,6 +67,7 @@ import com.halo.app.ui.workspace.HaloWorkspaceButton
 import com.halo.app.ui.workspace.HaloWorkspaceCard
 import com.halo.sdk.provider.CognitiveSessionState
 import com.halo.sdk.provider.ProviderStatus
+import java.io.File
 
 @Composable
 fun HomeScreen(
@@ -75,14 +78,24 @@ fun HomeScreen(
     val context = androidx.compose.ui.platform.LocalContext.current
     var pendingPhoto by rememberSaveable { mutableStateOf<String?>(null) }
     val captureMessage by viewModel.captureMessage.collectAsState()
+    val scope = rememberCoroutineScope()
     val camera = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.TakePicture()) { received ->
         pendingPhoto?.let { path -> if (received) viewModel.receiveCapture(java.io.File(path)) else java.io.File(path).delete() }
         pendingPhoto = null
     }
     fun launchCamera() {
-        val store = viewModel.captures ?: return
-        val file = store.newFile(); pendingPhoto = file.absolutePath
-        try { camera.launch(store.uri(file)) } catch (error: Exception) { file.delete(); pendingPhoto = null; viewModel.captureMessage.value = "No camera app is available" }
+        if (viewModel.captures == null) return
+        scope.launch {
+            try {
+                val pending = viewModel.preparePhoneCapture() ?: return@launch
+                pendingPhoto = pending.file.absolutePath
+                camera.launch(pending.uri)
+            } catch (error: Exception) {
+                pendingPhoto?.let { File(it).delete() }
+                pendingPhoto = null
+                viewModel.captureMessage.value = "No camera app is available"
+            }
+        }
     }
     val cameraPermission = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) launchCamera() else viewModel.captureMessage.value = "Camera permission was not granted"

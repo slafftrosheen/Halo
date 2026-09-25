@@ -21,7 +21,7 @@ failure runs cleanup. This is source behavior, not proof of every failure scenar
 ## Execution paths
 
 - Engine/EventBus/Blackboard is the app's declared production command pipeline.
-- CognitiveSession handles provider conversations, streaming, bounded tool rounds and results.
+- CognitiveSession handles provider conversations, streaming, bounded tool rounds and results. Provider streams must be considered failed if disconnected before an explicit [DONE] or finish_reason signal, ensuring incomplete replies aren't committed.
 - The app ToolRegistry contains echo and current-time executors. Android capability registration
   is separate and does not automatically expose model tools.
 - The older HaloMicrokernel/ProcessManager path remains for compatibility/tooling and is

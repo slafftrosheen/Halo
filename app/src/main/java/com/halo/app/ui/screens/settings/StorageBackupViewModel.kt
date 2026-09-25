@@ -18,6 +18,8 @@ import java.util.UUID
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 
 data class StorageBackupUiState(
     val access: StorageAccessState = StorageAccessState(),
@@ -181,7 +183,13 @@ class StorageBackupViewModel(
         operation.value = operation.value.copy(busy = true, message = null, progress = null)
         viewModelScope.launch {
             try {
-                val message = try { block() } catch (error: CancellationException) { throw error } catch (error: Throwable) { error.message ?: "Operation failed" }
+                val message = try {
+                    withContext(Dispatchers.IO) { block() }
+                } catch (error: CancellationException) {
+                    throw error
+                } catch (error: Throwable) {
+                    error.message ?: "Operation failed"
+                }
                 operation.value = operation.value.copy(message = message)
             } finally {
                 operation.value = operation.value.copy(busy = false, progress = null)

@@ -36,6 +36,19 @@ data class AgentRunMetadata(
     val contextRequirements: Set<String> = emptySet(),
 )
 
+enum class ToolRejectionCode {
+    TOOLS_DISABLED,
+    TOOL_UNKNOWN,
+    TOOL_DISABLED,
+    INVALID_ARGUMENTS,
+    USER_REJECTED,
+    AUTHORIZATION_DENIED,
+    PRIVATE_CONTEXT_BLOCKED,
+    CAPABILITY_UNAVAILABLE,
+    RESOURCE_UNAVAILABLE,
+    INTERACTION_CANCELLED,
+}
+
 /**
  * RUNTIME-018 durable execution journal.
  *
@@ -251,6 +264,13 @@ sealed interface AgentStep {
         override val createdAt: Instant,
         val commitId: String,
         val interactionId: String,
+    ) : AgentStep
+
+    data class RecoveryClaimed(
+        override val id: AgentStepId,
+        override val runId: AgentRunId,
+        override val createdAt: Instant,
+        val planKind: String,
     ) : AgentStep
 }
 

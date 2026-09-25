@@ -207,6 +207,10 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
                 payload.put("commitId", step.commitId).put("interactionId", step.interactionId)
                 "ResponseCommitted"
             }
+            is AgentStep.RecoveryClaimed -> {
+                payload.put("planKind", step.planKind)
+                "RecoveryClaimed"
+            }
         }
         return payload to type
     }
@@ -331,6 +335,7 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
                 ProviderTurnId(p.getString("turnId")), p.optInt("messageCount"), stringSet(p, "exposedToolIds"))
             "ResponseCommitted" -> AgentStep.ResponseCommitted(step, run, at,
                 p.getString("commitId"), p.getString("interactionId"))
+            "RecoveryClaimed" -> AgentStep.RecoveryClaimed(step, run, at, p.optString("planKind"))
             // Legacy reasoning is deliberately not exposed as public execution evidence.
             else -> AgentStep.ToolFailed(step, run, at, id, "legacy", "Unsupported historical step: $type")
         }

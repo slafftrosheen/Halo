@@ -43,6 +43,18 @@ capabilities through `AndroidCapabilityPublisher`; no new runtime tool layer imp
 Present in code only; not exercised by tests or hardware in this pass.
 
 RUNTIME-019 source addition (2026-09-25): portable interaction surfaces landed in
+`runtime/cognition/.../interaction/`. Handlers now implement `InteractionSurfaceHandler` (Speech,
+Routine, Notebook, Intent).
+
+RUNTIME-021 source addition (2026-09-25): capabilities logic enhanced for routing decisions.
+Introduced `AiWorkloadSpec`, context assemblies, `VisualContextSource`, and explicit policy
+gates to evaluate local vs. cloud sharing and transient capability needs.
+
+STABILIZATION-001 source addition (2026-09-25): recovery planner semantics heavily revised to rely
+on explicit outcome evidence (e.g. `ToolCallResolution`) and journal `RecoveryClaimed` steps. Tool rejections
+now follow a stable reason-code path, flowing back into the active turn instead of spawning
+new generic interactions. `AiInferenceProvider` streams enforce absolute `[DONE]` bounds. Fixed
+Android synchronous-IO (shared preferences, `DocumentFile`, content-resolvers) occurring on Main.
 `runtime/cognition/.../interaction/` — `InteractionSurface`/`InteractionContent`/`InteractionResponse`
 (Runtime-owned semantic contracts with no Android imports), `InteractionSurfaceValidator` with hard
 content limits, `InteractionSurfaceStore` (in-memory projection; the journal stays the only durable

@@ -3,6 +3,7 @@ package com.halo.app.ui.screens.home
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.halo.app.capture.LocalCaptureStore
 import com.halo.app.ui.glass.material.HaloRuntimeState
 import com.halo.app.ui.state.presenceFromSpeech
 import com.halo.engines.speech.SpeechRecognizedPayload
@@ -293,6 +294,10 @@ class HomeViewModel(
                 Log.e("HomeViewModel", "Text submission failed", it)
             }
         }
+    }
+
+    suspend fun preparePhoneCapture(): LocalCaptureStore.PendingCapture? {
+        return captures?.preparePhoneCapture()
     }
 
     fun refreshProviderDiagnostics() {

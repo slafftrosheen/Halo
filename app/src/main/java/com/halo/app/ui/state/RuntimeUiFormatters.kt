@@ -85,6 +85,7 @@ object RuntimeUiFormatters {
         is AgentStep.InputResolved -> "Input received"
         is AgentStep.ContinuationPrepared -> "Resuming turn"
         is AgentStep.ResponseCommitted -> "Response saved"
+        is AgentStep.RecoveryClaimed -> "Recovering"
     }
 
     fun formatRiskClass(risk: ToolRiskClass): String = when (risk) {

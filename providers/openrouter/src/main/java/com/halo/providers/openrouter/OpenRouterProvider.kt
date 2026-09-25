@@ -165,12 +165,16 @@ class OpenRouterProvider(
                 val tools = linkedMapOf<Int, StreamToolCall>()
                 var finish: String? = null
 
+                var streamFinishedCleanly = false
                 while (!source.exhausted()) {
                     val line = source.readUtf8Line() ?: break
                     if (!line.startsWith("data: ")) continue
                     val data = line.substring(6)
-                    if (data == "[DONE]") break
-                    val choices = JSONObject(data).optJSONArray("choices") ?: continue
+                    if (data == "[DONE]") {
+                        streamFinishedCleanly = true
+                        break
+                    }
+                    val choices = runCatching { JSONObject(data) }.getOrNull()?.optJSONArray("choices") ?: continue
                     if (choices.length() == 0) continue
                     val choice = choices.getJSONObject(0)
                     val delta = choice.optJSONObject("delta") ?: continue
@@ -193,6 +197,13 @@ class OpenRouterProvider(
                             emit(AiStreamEvent.ToolCallDelta(index, fn?.optString("name"), fn?.optString("arguments")))
                         }
                     }
+                }
+                
+                if (!streamFinishedCleanly && finish == null) {
+                    throw AiProviderException(
+                        AiErrorType.NETWORK_ERROR,
+                        "OpenRouter stream ended prematurely without [DONE] or finish_reason"
+                    )
                 }
 
                 _status.value = ProviderStatus.READY

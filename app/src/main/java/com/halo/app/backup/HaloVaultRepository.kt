@@ -106,7 +106,7 @@ class AndroidHaloVaultRepository(
         records.delete(id)
     }
 
-    override suspend fun validate() {
+    override suspend fun validate() = withContext(Dispatchers.IO) {
         access.validatePersistedAccess()
         _status.value = when (access.state.value.backupLocation) {
             BackupLocationState.NotConfigured -> VaultStatus.NotConfigured

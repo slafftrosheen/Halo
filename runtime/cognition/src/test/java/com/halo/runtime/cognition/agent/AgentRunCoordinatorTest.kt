@@ -8,7 +8,7 @@ import org.junit.Test
 import java.time.Instant
 
 class AgentRunCoordinatorTest {
-    private ddclass Store : AgentRunStore {
+    private class Store : AgentRunStore {
         val rows = MutableStateFlow<List<AgentRun>>(emptyList())
         override fun observeRuns() = rows
         override suspend fun get(runId: AgentRunId) = rows.value.find { it.id == runId }

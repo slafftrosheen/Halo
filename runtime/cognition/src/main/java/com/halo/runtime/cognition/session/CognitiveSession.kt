@@ -173,12 +173,18 @@ class CognitiveSession(
                 val claimed = agentRunCoordinator?.claimResume(runId, expected) == true
                 if (!claimed) return@launch
 
+                println("[HALO-DIAGNOSTIC] event=AGENT_RECOVERY_STARTED run=${runId.value} plan=${plan::class.simpleName}")
                 eventBus.publish(
                     com.halo.runtime.cognition.agent.recovery.AgentRecoveryStarted(
                         runId = runId.value, interactionId = run.interactionId.value,
                         recoveryKind = plan::class.simpleName ?: "Unknown"
                     )
                 )
+                
+                agentRunCoordinator?.recordStep(AgentStep.RecoveryClaimed(
+                    newStepId(), runId, Instant.now(), plan::class.simpleName ?: "Unknown"
+                ))
+                
                 agentRunCoordinator?.transition(runId, AgentRunState.EXECUTING)
 
                 when (plan) {
@@ -275,13 +281,11 @@ class CognitiveSession(
             }
             return
         }
-        // Re-enter the normal submit path, but journal against the ORIGINAL run id.                    pendingRunIdForResume = runId
         submit(
             request = AiRequest(text = text, priority = InferencePriority.INTERACTIVE),
             responseDelivery = responseDelivery,
             metadata = mapOf("interactionId" to interactionId.value, "resumedRunId" to runId.value),
         )
-        pendingRunIdForResume = null
     }
 
     private fun resumeToolInvocation(
@@ -469,11 +473,6 @@ class CognitiveSession(
 
     @Volatile private var activeRequestText: String? = null
 
-    /**
-     * RUNTIME-018: set by [resume] before reusing the normal submit path so the
-     * resumed turn journals against the ORIGINAL durable run id.
-     */
-    @Volatile private var pendingRunIdForResume: AgentRunId? = null
     @Volatile private var pendingRunId: AgentRunId? = null
 
     /**
@@ -617,22 +616,27 @@ class CognitiveSession(
         }
         val effectivePolicy = policy ?: defaultPolicyProvider()
         val newInteractionId = metadata["interactionId"] ?: origin?.captureId ?: UUID.randomUUID().toString()
+        val resumedRunIdStr = metadata["resumedRunId"]
+        val resumedRunId = if (resumedRunIdStr != null) AgentRunId(resumedRunIdStr) else null
         val interruptedInteractionId = activeInteractionId
         activeJob?.cancel()
         activeInteractionId = newInteractionId
         activeRequestText = request.text
-        pendingRunId = pendingRunIdForResume
+        pendingRunId = resumedRunId
         activeJob = scope.launch {
             val interactionId = InteractionId(newInteractionId)
             val requestId = UUID.randomUUID().toString()
             var runId: AgentRunId? = null
             var resolvedProviderId: String? = null
             var resolvedModelId: String? = null
+            val isResume = resumedRunId != null
             try {
-                interruptedInteractionId?.takeIf { it != interactionId.value }?.let {
-                    eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Interrupted(it, interactionId.value)))
+                if (!isResume) {
+                    interruptedInteractionId?.takeIf { it != interactionId.value }?.let {
+                        eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Interrupted(it, interactionId.value)))
+                    }
+                    eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Preparing(interactionId.value)))
                 }
-                eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Preparing(interactionId.value)))
                 _state.value = CognitiveSessionState.PreparingContext
                 eventBus.publish(CognitiveRequestStarted(requestId = requestId, interactionId = interactionId.value))
 
@@ -815,6 +819,7 @@ class CognitiveSession(
                         )
                     )
                     journaledTurnId = turnId
+                    println("[HALO-DIAGNOSTIC] event=PROVIDER_TURN_STARTED run=${durableRunId.value} turn=${turnId.value} provider=${target.providerId}")
                 }
 
                 var response = when (
@@ -967,12 +972,12 @@ class CognitiveSession(
                     _state.value = CognitiveSessionState.Completed(response)
                     eventBus.publish(CognitiveCompleted(requestId = requestId, response = response.text, interactionId = interactionId.value, metrics = response.metrics?.toRuntimeMetrics()))
                 }
-                eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Completed(interactionId.value)))
+                if (!isResume) eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Completed(interactionId.value)))
             } catch (e: CancellationException) {
                 withContext(NonCancellable) {
                     runId?.let { agentRunCoordinator?.cancel(it, "Interaction cancelled") }
                     eventBus.publish(CognitiveFailed(requestId = requestId, message = "Interaction cancelled", interactionId = interactionId.value))
-                    eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Cancelled(interactionId.value, "Interaction cancelled")))
+                    if (!isResume) eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Cancelled(interactionId.value, "Interaction cancelled")))
                 }
                 if (activeJob === kotlinx.coroutines.currentCoroutineContext()[Job]) _state.value = CognitiveSessionState.Idle
                 throw e
@@ -998,7 +1003,7 @@ class CognitiveSession(
                     ),
                     interactionId = interactionId.value,
                 ))
-                eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Failed(interactionId.value, message)))
+                if (!isResume) eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Failed(interactionId.value, message)))
             } finally {
                 if (activeInteractionId == interactionId.value) activeInteractionId = null
                 pendingRunId = null
@@ -1098,6 +1103,15 @@ class CognitiveSession(
         var response = initialResponse
         var currentContext = initialContext
         var currentExposure = toolExposurePlanner?.fromDefinitions(initialContext.availableTools)
+        if (runId != null && toolExposurePlanner != null) {
+            agentRunCoordinator?.checkpoint(runId)?.exposedToolIds?.takeIf { it.isNotEmpty() }?.let { ids ->
+                val newExposure = toolExposurePlanner.expand(toolExposurePlanner.initialExposure(), ids.toList())
+                currentExposure = newExposure
+                currentContext = currentContext.copy(
+                    availableTools = toolExposurePlanner.effectiveDefinitions(newExposure, toolDiscovery?.catalogueSummary().orEmpty())
+                )
+            }
+        }
         var round = 0
         var totalToolCalls = 0
         var hasUnconfirmedAction = false
@@ -1242,6 +1256,7 @@ class CognitiveSession(
                             )
                         )
                     }
+                    println("[HALO-DIAGNOSTIC] event=TOOL_CALL_REJECTED run=${runId?.value ?: "ephemeral"} interaction=${interactionId.value} tool=${toolCall.functionName} reason=\"$reason\"")
                     eventBus.publish(
                         ToolCallRejected(
                             requestId = requestId,
@@ -1314,6 +1329,7 @@ class CognitiveSession(
                                 )
                             )
                         }
+                        println("[HALO-DIAGNOSTIC] event=TOOL_CALL_REJECTED run=${runId?.value ?: "ephemeral"} interaction=${interactionId.value} tool=${toolCall.functionName} reason=\"${authorization.reason}\"")
                         eventBus.publish(
                             ToolCallRejected(
                                 requestId = requestId,
@@ -1487,6 +1503,7 @@ class CognitiveSession(
                                     toolCall.id, toolCall.functionName, false, result.reason,
                                     ActionTruth.FAILED, ToolFailureKind.VALIDATION.name))
                         }
+                        println("[HALO-DIAGNOSTIC] event=TOOL_CALL_REJECTED run=${runId?.value ?: "ephemeral"} interaction=${interactionId.value} tool=${toolCall.functionName} reason=\"${result.reason}\"")
                         eventBus.publish(
                             ToolCallRejected(
                                 requestId = requestId,

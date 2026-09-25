@@ -247,6 +247,7 @@ class OllamaProvider(
 
                 val source = response.body?.source()
                     ?: throw AiProviderException(AiErrorType.INVALID_RESPONSE, "Empty body")
+                var streamFinishedCleanly = false
                 while (!source.exhausted()) {
                     currentCoroutineContext().ensureActive()
                     val line = source.readUtf8Line() ?: break
@@ -257,8 +258,18 @@ class OllamaProvider(
                             output.append(token)
                             emit(AiStreamEvent.Token(token))
                         }
-                        if (parsed.done) return@use
+                        if (parsed.done) {
+                            streamFinishedCleanly = true
+                            break
+                        }
                     }
+                }
+                
+                if (!streamFinishedCleanly) {
+                    throw AiProviderException(
+                        AiErrorType.NETWORK_ERROR,
+                        "Ollama stream ended prematurely without 'done' signal"
+                    )
                 }
             }
 

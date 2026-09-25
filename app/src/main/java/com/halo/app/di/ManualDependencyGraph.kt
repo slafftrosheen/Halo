@@ -14,6 +14,7 @@ import com.halo.app.data.agent.RoomAgentRunRepository
 import com.halo.app.data.memory.BoundedMemoryContextSource
 import com.halo.app.data.memory.RoomMemoryRepository
 import com.halo.app.data.notebook.RoomNotebookRepository
+import com.halo.app.data.settings.SharedPreferencesDigestDeliverySettingsRepository
 import com.halo.app.data.workspace.RoomWorkspaceFileRepository
 import com.halo.app.data.workspace.RoomWorkspaceRepository
 import com.halo.app.data.workspace.SendIntentHandler
@@ -26,6 +27,7 @@ import com.halo.app.models.HuggingFaceGgufCatalog
 
 import com.halo.app.notebook.NotebookUseCases
 import com.halo.app.notebook.WorkspaceUseCases
+import com.halo.app.notification.NotificationDigestTool
 import com.halo.app.ui.screens.activity.ActivityViewModel
 import com.halo.app.ui.screens.devices.DevicesViewModel
 import com.halo.app.ui.screens.discovery.PairingViewModel
@@ -40,6 +42,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import com.halo.engines.memory.WorkingMemoryProcess
 import com.halo.providers.android.tts.AndroidTTSProvider
+import com.halo.runtime.cognition.attention.DeliveryChannel
 import com.halo.runtime.cognition.context.AssistantContextRepository
 import com.halo.runtime.cognition.context.DefaultContextAcquisitionCoordinator
 import com.halo.runtime.cognition.device.DefaultDeviceCapabilityResolver
@@ -223,17 +226,20 @@ object ManualDependencyGraph {
     val notificationPolicies by lazy { com.halo.app.data.notification.NotificationPolicyManager(applicationContext) }
     val notificationRepository by lazy { com.halo.app.data.notification.RoomNotificationRepository(appDatabase.notificationDao(), notificationPolicies, applicationContext.packageName) }
     val notificationBridge by lazy { com.halo.app.notification.NotificationIngestionBridge(applicationContext, notificationRepository, infra.scope) }
-    val notificationDigestTool by lazy { com.halo.app.notification.NotificationDigestTool(notificationRepository, attentionController, notificationBridge::isAccessGranted) {
-        val prefs = applicationContext.getSharedPreferences("halo_digest_delivery", Context.MODE_PRIVATE)
-        when (prefs.getString("channel", "activity")) {
-            "android" -> com.halo.runtime.cognition.attention.DeliveryChannel.AndroidNotification
-            "wearable" -> prefs.getString("device", null)?.takeIf { it.isNotBlank() }?.let {
-                if (attentionContextProvider.snapshot().foregroundState != com.halo.runtime.cognition.attention.ForegroundState.HALO_FOREGROUND) startAndroidSpeaker()
-                com.halo.runtime.cognition.attention.DeliveryChannel.WearableSpeech(it)
+    val digestDeliverySettings by lazy { SharedPreferencesDigestDeliverySettingsRepository(applicationContext) }
+    val notificationDigestTool by lazy {
+        NotificationDigestTool(notificationRepository, attentionController, notificationBridge::isAccessGranted) {
+            val settings = digestDeliverySettings.state.value
+            when (settings.channel) {
+                "android" -> DeliveryChannel.AndroidNotification
+                "wearable" -> settings.wearableId.takeIf { it.isNotBlank() }?.let {
+                    if (attentionContextProvider.snapshot().foregroundState != com.halo.runtime.cognition.attention.ForegroundState.HALO_FOREGROUND) startAndroidSpeaker()
+                    com.halo.runtime.cognition.attention.DeliveryChannel.WearableSpeech(it)
+                }
+                else -> null
             }
-            else -> null
         }
-    } }
+    }
     // Same executor and registry contract, without initializing unrelated workspace/device tools in a worker.
     val automationToolRegistry by lazy { com.halo.runtime.cognition.tools.ToolRegistry(listOf(notificationDigestTool)) }
     val routineRepository by lazy { com.halo.app.data.routine.RoomRoutineRepository(appDatabase.routineDao()) }

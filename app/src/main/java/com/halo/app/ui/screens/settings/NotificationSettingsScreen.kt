@@ -36,9 +36,9 @@ fun NotificationSettingsScreen(viewModel: RoutinesViewModel, onBack: () -> Unit)
     var exact by remember { mutableStateOf("Checking") }
     var reminders by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
     var apps by remember { mutableStateOf<List<Pair<String, String>>>(emptyList()) }
-    val deliveryPrefs = remember { context.getSharedPreferences("halo_digest_delivery", android.content.Context.MODE_PRIVATE) }
-    var deliveryChannel by remember { mutableStateOf(deliveryPrefs.getString("channel", "activity") ?: "activity") }
-    var wearableId by remember { mutableStateOf(deliveryPrefs.getString("device", "") ?: "") }
+    val deliverySettings by graph.digestDeliverySettings.state.collectAsState()
+    val deliveryChannel = deliverySettings.channel
+    val wearableId = deliverySettings.wearableId
     val recent by graph.notificationRepository.observeRecent().collectAsState(initial = emptyList())
     var policyError by remember { mutableStateOf<String?>(null) }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
@@ -81,16 +81,19 @@ fun NotificationSettingsScreen(viewModel: RoutinesViewModel, onBack: () -> Unit)
             TextButton(onClick = { ExactAlarmAccessController(context).openSettings() }) { Text("Manage exact alarm access") }
             reminders.forEach { (id, status) -> Text("Reminder ${id.substringBefore('|')}: $status") }
             Text("Background digest delivery", style = MaterialTheme.typography.titleMedium)
-            listOf("activity" to "Activity (quiet)", "android" to "Android notification").forEach { (key, title) ->
+            listOf("activity" to "Android intent", "android" to "Android notification").forEach { (key, title) ->
                 TextButton(onClick = {
-                    deliveryChannel = key
-                    deliveryPrefs.edit().putString("channel", key).apply()
+                    scope.launch { graph.digestDeliverySettings.setChannel(key) }
                 }) { Text(if (deliveryChannel == key) "Selected: $title" else title) }
             }
-            OutlinedTextField(wearableId, { wearableId = it }, label = { Text("Wearable device ID for explicit speech") })
+            OutlinedTextField(wearableId, {
+                    scope.launch { graph.digestDeliverySettings.setWearableId(it) }
+                }, label = { Text("Wearable device ID for explicit speech") })
             TextButton(enabled = wearableId.isNotBlank(), onClick = {
-                deliveryPrefs.edit().putString("device", wearableId.trim()).putString("channel", "wearable").apply()
-                deliveryChannel = "wearable"
+                scope.launch {
+                    graph.digestDeliverySettings.setWearableId(wearableId.trim())
+                    graph.digestDeliverySettings.setChannel("wearable")
+                }
             }) { Text(if (deliveryChannel == "wearable") "Wearable speech enabled" else "Enable wearable speech for digests") }
             Text("Wearable speech never falls back to the phone. Quiet mode and Do Not Disturb use Activity.")
             TextButton(onClick = viewModel::summarizeNow) { Text("Summarize now") }
