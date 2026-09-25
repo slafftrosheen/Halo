@@ -18,3 +18,12 @@ class ConservativeContextTokenEstimator : ContextTokenEstimator {
         return ((text.length + 2) / 3).coerceAtLeast(1)
     }
 }
+
+
+data class ContextBudget(
+    val totalEstimatedTokens: Int,
+    val reservedOutputTokens: Int,
+    val reservedToolTokens: Int,
+    val reservedFramingTokens: Int,
+    val availableContextTokens: Int,
+)
