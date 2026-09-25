@@ -11,6 +11,7 @@ import com.halo.sdk.provider.AiModel
 import com.halo.sdk.provider.AiRequest
 import com.halo.sdk.provider.AiResponse
 import com.halo.sdk.provider.AiProviderRouter
+import com.halo.sdk.provider.AiWorkloadSpec
 import com.halo.sdk.provider.AiStreamEvent
 import com.halo.sdk.provider.ProviderStatus
 import com.halo.sdk.runtime.CognitiveRequestStarted
@@ -145,7 +146,7 @@ class CognitiveSessionSpeechSerializationTest {
         override fun getAllProviders() = listOf(provider)
         override suspend fun getEligibleProvider(request: AiRequest) = provider
 
-        override suspend fun resolveExecutionTarget(request: AiRequest): AiExecutionTarget {
+        override suspend fun resolveExecutionTarget(request: AiRequest, workload: AiWorkloadSpec): AiExecutionTarget {
             val model = AiModel(
                 id = "test-model",
                 displayName = "Test Model",

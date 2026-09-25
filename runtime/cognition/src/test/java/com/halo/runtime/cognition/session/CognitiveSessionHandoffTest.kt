@@ -17,6 +17,7 @@ import com.halo.sdk.provider.AiStreamEvent
 import com.halo.sdk.provider.AiErrorType
 import com.halo.sdk.provider.AiProviderRouter
 import com.halo.sdk.provider.AiExecutionTarget
+import com.halo.sdk.provider.AiWorkloadSpec
 import com.halo.sdk.provider.ProviderStatus
 import com.halo.sdk.runtime.EventBus
 import com.halo.sdk.runtime.HaloEvent
@@ -95,7 +96,7 @@ class CognitiveSessionHandoffTest {
             override fun selectModel(modelId: String?) { }
             override fun getAllProviders() = listOf(provider)
             override suspend fun getEligibleProvider(request: AiRequest) = provider
-            override suspend fun resolveExecutionTarget(request: AiRequest) = AiExecutionTarget(
+            override suspend fun resolveExecutionTarget(request: AiRequest, workload: AiWorkloadSpec) = AiExecutionTarget(
                 provider,
                 provider.listModels().first(),
                 setOf(AiCapability.TEXT)
@@ -139,7 +140,7 @@ class CognitiveSessionHandoffTest {
             override fun getAllProviders() = listOf(provider)
             override suspend fun getEligibleProvider(request: AiRequest): AiProvider =
                 throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY, "handoff only")
-            override suspend fun resolveExecutionTarget(request: AiRequest): AiExecutionTarget =
+            override suspend fun resolveExecutionTarget(request: AiRequest, workload: AiWorkloadSpec): AiExecutionTarget =
                 throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY, "handoff only")
             override suspend fun execute(request: AiRequest, context: AiContext): AiResponse =
                 throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY, "handoff only")

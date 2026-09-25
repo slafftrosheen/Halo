@@ -8,7 +8,7 @@ import org.junit.Test
 import java.time.Instant
 
 class AgentRunCoordinatorTest {
-    private class Store : AgentRunStore {
+    private ddclass Store : AgentRunStore {
         val rows = MutableStateFlow<List<AgentRun>>(emptyList())
         override fun observeRuns() = rows
         override suspend fun get(runId: AgentRunId) = rows.value.find { it.id == runId }
@@ -28,6 +28,10 @@ class AgentRunCoordinatorTest {
             update(run.copy(steps = run.steps + step, currentStepId = step.id))
             return true
         }
+        override suspend fun resolveInputIfPending(
+            requestId: AgentInputRequestId,
+            resolution: AgentInputResolution,
+        ): Boolean = false
     }
     @Test fun `restart reconciles persisted dispatch without replay`() = runTest {
         val store = Store()
@@ -44,7 +48,7 @@ class AgentRunCoordinatorTest {
         assertEquals(AgentRunState.INTERRUPTED, run.state)
         assertEquals(InteractionId("interaction"), run.interactionId)
         assertTrue(run.hasUnknownAction)
-        assertEquals(1, run.steps.size)
+        assertEquals(2, run.steps.size)
         assertNotNull(run.completedAt)
     }
     @Test fun `terminal runs reject resume and survive restart`() = runTest {

@@ -367,8 +367,9 @@ class DefaultAiProviderRouter(
         if (workload.streaming == AiFeatureRequirement.REQUIRED &&
             AiCapability.STREAMING !in effectiveCaps
         ) return false
+        val contextLength = model.contextLength
         if (workload.minimumContextTokens > 0 &&
-            (model.contextLength == null || model.contextLength < workload.minimumContextTokens)
+            (contextLength == null || contextLength < workload.minimumContextTokens)
         ) return false
 
         return (request.text.isNullOrBlank() || AiCapability.TEXT in effectiveCaps) &&

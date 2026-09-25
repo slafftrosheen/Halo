@@ -440,7 +440,7 @@ class DefaultContextAssembler(
             val age = System.currentTimeMillis() - image.timestampMs
             if (age < 0L) return "Image timestamp is in the future"
             if (age > image.freshness.maxAgeMs) {
-                return "Image does not satisfy ${image.freshness.name.lowercase()} freshness (${age}ms old)"
+                return "Image is stale: does not satisfy ${image.freshness.name.lowercase()} freshness (${age}ms old)"
             }
         }
         return null

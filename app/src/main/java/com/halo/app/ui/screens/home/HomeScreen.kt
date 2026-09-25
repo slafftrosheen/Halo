@@ -142,10 +142,11 @@ fun HomeScreen(
         textInput = ""
     }
 
+    val runtimeTaskStatus = uiState.runtimeTaskStatus
     val presenceLabel = when {
         isSpeechProcessing -> "Transcribing"
-        uiState.runtimeTaskStatus != null &&
-            !isListening && !isSpeaking && !isActiveSession -> uiState.runtimeTaskStatus
+        runtimeTaskStatus != null &&
+            !isListening && !isSpeaking && !isActiveSession -> runtimeTaskStatus
         else -> when (uiState.runtimeState) {
             HaloRuntimeState.Idle -> "Ready"
             HaloRuntimeState.Listening, HaloRuntimeState.Wakeword -> "Listening"

@@ -160,14 +160,14 @@ class DefaultDeviceCapabilityResolver : DeviceCapabilityResolver {
     private fun canonicalCapabilityId(raw: String): String = when (
         raw.trim().lowercase().replace('_', '.')
     ) {
-        "audio.input" -> "device.audio.input"
-        "audio.output" -> "device.audio.output"
-        "camera.sensor", "camera.still", "camera.photo" -> "device.camera.still"
-        "display.output" -> "device.display.output"
-        "media.capture" -> "device.media.capture"
-        "media.transfer" -> "device.media.transfer"
-        "mobility.drive" -> "device.mobility"
-        "manipulator.motion" -> "device.manipulator"
+        "audio.input", "audioinput" -> "device.audio.input"
+        "audio.output", "audiooutput" -> "device.audio.output"
+        "camera.sensor", "camera.still", "camera.photo", "camera" -> "device.camera.still"
+        "display.output", "display" -> "device.display.output"
+        "media.capture", "mediacapture" -> "device.media.capture"
+        "media.transfer", "mediatransfer" -> "device.media.transfer"
+        "mobility.drive", "mobility" -> "device.mobility"
+        "manipulator.motion", "manipulator" -> "device.manipulator"
         else -> raw.trim().lowercase().replace('_', '.')
     }
 }

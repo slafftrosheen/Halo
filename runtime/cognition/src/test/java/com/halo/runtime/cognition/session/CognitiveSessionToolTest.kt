@@ -76,7 +76,7 @@ class CognitiveSessionToolTest {
         override fun selectModel(modelId: String?) {}
         override fun getAllProviders() = listOf(provider)
         override suspend fun getEligibleProvider(request: AiRequest) = provider
-        override suspend fun resolveExecutionTarget(request: AiRequest): AiExecutionTarget {
+        override suspend fun resolveExecutionTarget(request: AiRequest, workload: AiWorkloadSpec): AiExecutionTarget {
             val model = AiModel(
                 id = request.modelId ?: selectedModelId.value ?: "test-model",
                 displayName = "Test Model",

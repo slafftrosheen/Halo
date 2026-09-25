@@ -43,8 +43,8 @@ class DefaultAiWorkloadPlanner : AiWorkloadPlanner {
         val text = request.request.text.orEmpty().trim().lowercase()
         val hasExplicitImage = request.request.image != null
 
-        val hasBoundScreen = request.metadata["hasScreenContext"].toBooleanStrictOrNull() == true
-        val hasBoundAssistantImage = request.metadata["hasAssistantImage"].toBooleanStrictOrNull() == true
+        val hasBoundScreen = request.metadata["hasScreenContext"]?.toBooleanStrictOrNull() == true
+        val hasBoundAssistantImage = request.metadata["hasAssistantImage"]?.toBooleanStrictOrNull() == true
         val invocationSource = request.metadata["invocationSource"].orEmpty()
 
         val isGlassesOrigin =

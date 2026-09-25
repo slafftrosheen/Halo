@@ -160,7 +160,7 @@ class ExecutionEngine(
                                 Instant.now(), operationId, dispatched::class.java.simpleName, "{}"))
                             coordinator.recordStep(AgentStep.ToolInvocationPrepared(AgentStepId(UUID.randomUUID().toString()), runId,
                                 Instant.now(), invocationId, operationId, dispatched::class.java.simpleName,
-                                "{}", argumentsDigest, "${runId.value}:$operationId", 1,
+                                "{}", argumentsDigest, "${runId.value}:$operationId:prep", 1,
                                 com.halo.runtime.cognition.tools.ReplaySafety.NEVER_REPLAY.name))
                             // RUNTIME-018: claim before dispatch. Does not prove the external
                             // action occurred; it proves Halo owns this exact invocation.

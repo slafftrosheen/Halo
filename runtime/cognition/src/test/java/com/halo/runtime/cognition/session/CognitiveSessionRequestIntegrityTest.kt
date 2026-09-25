@@ -83,7 +83,7 @@ class CognitiveSessionRequestIntegrityTest {
             val cur = selectedId.value
             return if (cur == primaryProvider.id) primaryProvider else secondaryProvider
         }
-        override suspend fun resolveExecutionTarget(request: AiRequest): AiExecutionTarget {
+        override suspend fun resolveExecutionTarget(request: AiRequest, workload: AiWorkloadSpec): AiExecutionTarget {
             val provider = getEligibleProvider(request)
             val model = AiModel(
                 id = request.modelId ?: selectedModelId.value ?: "model-alpha",
@@ -165,7 +165,7 @@ class CognitiveSessionRequestIntegrityTest {
             override fun selectModel(modelId: String?) {}
             override fun getAllProviders() = listOf(provider)
             override suspend fun getEligibleProvider(request: AiRequest) = provider
-            override suspend fun resolveExecutionTarget(request: AiRequest): AiExecutionTarget {
+            override suspend fun resolveExecutionTarget(request: AiRequest, workload: AiWorkloadSpec): AiExecutionTarget {
                 val targetModel = AiModel(
                     id = "target-model-id",
                     displayName = "Target Model",
