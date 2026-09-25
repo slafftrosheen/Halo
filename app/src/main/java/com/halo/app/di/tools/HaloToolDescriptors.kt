@@ -265,12 +265,12 @@ object HaloToolDescriptors {
         ACCESSIBILITY,
     }
 
-    /** Discovery meta-tool descriptor. INTERNAL: it never widens authorization. */
+    /** Discovery meta-tool is always part of bounded bootstrap exposure. */
     fun discoveryMeta(definition: ToolDefinition) = descriptor(
         id = definition.id,
         definition = definition,
         category = ToolCategory.SYSTEM,
         security = readOnly(definition.id),
-        visibility = ToolVisibility.INTERNAL,
+        visibility = ToolVisibility.BOOTSTRAP,
     )
 }

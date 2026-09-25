@@ -4,13 +4,16 @@ import com.halo.sdk.provider.ToolCall
 import com.halo.sdk.provider.ToolDefinition
 
 class ToolDiscoveryExecutor(
-    private val discovery: ToolDiscoveryService,
+    private val discoveryProvider: () -> ToolDiscoveryService,
 ) : ToolExecutor {
+
+    constructor(discovery: ToolDiscoveryService) : this({ discovery })
 
     override fun definitions(): List<ToolDefinition> =
         listOf(ToolDiscoveryService.discoveryToolDefinition())
 
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
+        val discovery = discoveryProvider()
         val requested = toolCall.arguments["toolIds"]?.let { value ->
             when (value) {
                 is List<*> -> value.filterIsInstance<String>()

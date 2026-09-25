@@ -21,6 +21,24 @@ class ToolExposurePlanner(
         )
     }
 
+    fun fromDefinitions(definitions: List<ToolDefinition>): ToolExposureSet {
+        val exposed = definitions.mapNotNull { definition ->
+            registry.descriptor(definition.name)?.id
+                ?: registry.descriptor(definition.id)?.id
+        }.toSet()
+
+        val bootstrap = registry.descriptors()
+            .filter { it.visibility == ToolVisibility.BOOTSTRAP }
+            .filter { availabilityResolver?.isAvailable(it) != false }
+            .map { it.id }
+            .toSet()
+
+        return ToolExposureSet(
+            bootstrap = bootstrap,
+            pinned = exposed - bootstrap,
+        )
+    }
+
     fun expand(current: ToolExposureSet, requestedIds: List<String>): ToolExposureSet {
         val newDiscovered = mutableSetOf<ToolId>()
         for (raw in requestedIds) {

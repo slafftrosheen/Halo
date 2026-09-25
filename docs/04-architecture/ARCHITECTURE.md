@@ -207,3 +207,16 @@ and platform independence are not demonstrated repository-wide properties.
 See [UI](../11-ui/UI-ARCHITECTURE.md), [storage](DATABASE.md),
 [providers](../08-providers/ARCHITECTURE.md) and [security](../12-security/THREAT_MODEL.md).
 Portability beyond Android remains direction, not verified production host support.
+
+## RUNTIME-020.1 integration correction
+
+The post-agent review tightened the implementation boundary between capability, resource and execution:
+
+- Capability catalogue snapshots retain every scoped capability instance; two devices exposing the same semantic capability remain distinct candidates.
+- Device capability IDs are semantic (`device.audio.input`, `device.camera.still`, `device.mobility`); scarce resources remain separate (`audio.input`, `camera.sensor`, `mobility.drive`).
+- Device resolution uses exact canonical IDs and explicit affinity. Host/workspace capabilities are admitted through `ToolAvailabilityResolver`, not faked as physical devices.
+- `ToolExecutionClaimed` is appended only after capability/resource admission and immediately before executor side effects.
+- `DefaultResourceLeaseManager` stores the yield callback of the lease owner, invokes it outside the state lock, and releases Runtime ownership synchronously only after the owner has performed platform/driver cleanup.
+- A prepared-but-unclaimed invocation never bypasses authorization during recovery; an already-claimed SAFE replay reacquires its required resources first.
+
+These changes are source implementation only and remain unvalidated until the dedicated stabilization pass.

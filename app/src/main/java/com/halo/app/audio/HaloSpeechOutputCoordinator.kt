@@ -17,7 +17,6 @@ import android.media.AudioFocusRequest
 import android.media.AudioManager
 import com.halo.runtime.cognition.device.DefaultInteractionRoutePolicy
 import com.halo.runtime.cognition.device.InteractionRoutePolicy
-import com.halo.runtime.kernel.resource.DefaultResourceLeaseManager
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
@@ -25,6 +24,8 @@ import kotlinx.coroutines.CoroutineStart
 import java.util.concurrent.atomic.AtomicBoolean
 
 import com.halo.sdk.runtime.resource.ResourceLeaseManager
+import com.halo.sdk.runtime.resource.ResourceYieldDecision
+import com.halo.sdk.runtime.resource.ResourceYieldHandler
 
 class HaloSpeechOutputCoordinator(
     context: Context,
@@ -38,7 +39,11 @@ class HaloSpeechOutputCoordinator(
     private val interactionRoutePolicy: InteractionRoutePolicy = DefaultInteractionRoutePolicy(),
     resourceLeaseManager: ResourceLeaseManager? = null,
 ) {
-    val session = HaloAudioSessionCoordinator(resourceLeaseManager ?: DefaultResourceLeaseManager())
+    val session = HaloAudioSessionCoordinator(
+        requireNotNull(resourceLeaseManager) {
+            "HaloSpeechOutputCoordinator requires the process-wide ResourceLeaseManager"
+        }
+    )
     private val applicationContext = context.applicationContext
     private val audioManager = applicationContext.getSystemService(AudioManager::class.java)
     private val speechAttributes = speechAudioAttributes
@@ -107,6 +112,12 @@ class HaloSpeechOutputCoordinator(
                 outputLease = session.acquireOutput(
                     interactionId = event.transactionId,
                     deviceId = (event.target as? SpeechOutputTarget.Device)?.deviceId,
+                    ownerYieldHandler = ResourceYieldHandler {
+                        // Stop the real playback owner. The coroutine's finally
+                        // restores focus/route and only then releases the lease.
+                        stop("Yielding audio output to higher-priority input")
+                        ResourceYieldDecision.RELEASING
+                    },
                 ).getOrThrow()
                 foregroundLease = HaloAudioForegroundService.acquire(applicationContext, HaloAudioForegroundService.Kind.PLAYBACK)
                 // 1. Prepare the requested route.

@@ -90,8 +90,20 @@ class CapabilityCatalogue(initial: Collection<Capability> = emptyList()) : Capab
     val capabilities: List<CapabilityInstance>
         get() = _snapshot.value.capabilities
 
+    fun instances(id: CapabilityId): List<CapabilityInstance> =
+        _snapshot.value.capabilities.filter { it.id == id }
+
     fun capability(id: CapabilityId): CapabilityInstance? =
-        _snapshot.value.capabilities.firstOrNull { it.id == id }
+        instances(id)
+            .sortedWith(
+                compareBy<CapabilityInstance>(
+                    { if (it.availability == CapabilityAvailability.AVAILABLE) 0 else 1 },
+                    { it.sourceKind.ordinal },
+                    { it.ownerId.orEmpty() },
+                    { it.endpointId.orEmpty() },
+                )
+            )
+            .firstOrNull()
 
     fun capabilitiesIn(category: ToolCategory): List<CapabilityInstance> =
         _snapshot.value.capabilities.filter { it.category == category }
@@ -140,8 +152,21 @@ class CapabilityCatalogue(initial: Collection<Capability> = emptyList()) : Capab
 
     private fun updateSnapshotLocked() {
         revision++
-        val all = scopeMap.values.flatMap { it.values }
-            .distinctBy { it.id }
+        // Keep every scoped capability instance. Multiple devices may expose the
+        // same semantic capability id and must remain independently selectable.
+        val all = scopeMap.entries
+            .flatMap { (scope, values) ->
+                values.values.map { instance -> scope to instance }
+            }
+            .sortedWith(
+                compareBy<Pair<String, CapabilityInstance>>(
+                    { it.second.id.value },
+                    { it.second.ownerId.orEmpty() },
+                    { it.second.endpointId.orEmpty() },
+                    { it.first },
+                )
+            )
+            .map { it.second }
         _snapshot.value = CapabilityCatalogueSnapshot(all, revision)
     }
 }

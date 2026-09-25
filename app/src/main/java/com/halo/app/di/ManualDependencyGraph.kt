@@ -306,7 +306,9 @@ object ManualDependencyGraph {
     }
 
     val toolDiscoveryExecutor by lazy {
-        com.halo.runtime.cognition.tools.ToolDiscoveryExecutor(toolDiscovery)
+        // Resolve the discovery service only when the meta-tool actually executes.
+        // Eager resolution here creates toolRegistry -> executor -> discovery -> toolRegistry recursion.
+        com.halo.runtime.cognition.tools.ToolDiscoveryExecutor { toolDiscovery }
     }
 
     val toolRegistry by lazy {
@@ -412,6 +414,7 @@ object ManualDependencyGraph {
             agentRunStore = agentRunStore,
             toolResourceCoordinator = toolResourceCoordinator,
             toolExposurePlanner = toolExposurePlanner,
+            toolAvailabilityResolver = toolAvailabilityResolver,
         )
     }
 
@@ -459,6 +462,7 @@ object ManualDependencyGraph {
                 microphonePermission = platformStateMonitor.microphonePermissionGranted,
                 networkRevision = platformStateMonitor.networkRevision,
                 speechInput = audioPerceptionEngine.inputStatus,
+                runtimeProjection = runtimeUiProjection,
                 notebook = notebookRepository, conversations = conversationStore, database = appDatabase, workspace = workspaceContext, captures = captures
             )
         }
@@ -519,7 +523,9 @@ object ManualDependencyGraph {
             buddyBotHost = buddyBotHost,
             autoConnectCoordinator = deviceAutoConnectCoordinator,
             captures = { hostGraph.captureCoordinator },
-            audioPairingCoordinator = heyCyanAudioPairingCoordinator
+            audioPairingCoordinator = heyCyanAudioPairingCoordinator,
+            capabilityCatalogue = capabilityCatalogue,
+            resourceLeaseManager = infra.resourceLeaseManager,
         )
     }
     val pairingViewModel by lazy {

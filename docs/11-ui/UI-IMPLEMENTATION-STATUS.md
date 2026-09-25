@@ -179,3 +179,22 @@ The Android recovery model is now process-owned where appropriate rather than sc
 Physical acceptance is defined in
 [REAL_DEVICE_BURN_IN.md](../04-architecture/REAL_DEVICE_BURN_IN.md). Source wiring does not establish
 radio/OEM behavior, reconnect timing, command completion or hardware reliability.
+
+## Runtime fabric UI convergence — 2026-09-25
+
+The RUNTIME-020.1 correction makes the new Runtime substrate visible through normal product surfaces:
+
+- Home combines cognitive/speech state with durable AgentRun waiting state, so a suspended approval,
+  clarification, capability or resource wait no longer appears as simply "Ready". Audio-source copy
+  uses route metadata rather than treating every non-device input as a generic "Phone".
+- Activity remains the durable execution/history surface and uses semantic step/action-truth copy.
+- Skills resolves each action through the live `ToolDescriptor` + `ToolAvailabilityResolver` +
+  capability catalogue rather than only showing raw tool IDs or a skill-level availability flag.
+- Devices shows a "This host" capability summary plus per-device semantic capability/resource
+  projections while keeping vendor-specific controls on detail screens.
+- Settings → Runtime remains the compact status surface for tasks, capabilities and resource leases.
+- Assistant compact interaction surfaces remain projections of the same durable
+  `InteractionSurface` requests; sensitive compact text input is masked consistently.
+
+This is source wiring only; visual, accessibility and physical-device acceptance is deferred to the
+planned stabilization phase.

@@ -210,9 +210,11 @@ class DefaultContextAssembler(
                          */
                         val discovery = discoveryProvider?.invoke()
                         if (discovery != null && discovery.discoveryRecommended()) {
-                            enabled.filter { tool ->
-                                tool.name == com.halo.runtime.cognition.tools.ToolDiscoveryService.DISCOVER_TOOL
-                            } + listOf(discovery.catalogueSummaryDefinition())
+                            listOf(
+                                com.halo.runtime.cognition.tools.ToolDiscoveryService.discoveryToolDefinition(
+                                    discovery.catalogueSummary()
+                                )
+                            )
                         } else {
                             enabled
                         }
