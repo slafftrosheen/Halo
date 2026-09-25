@@ -198,3 +198,14 @@ The RUNTIME-020.1 correction makes the new Runtime substrate visible through nor
 
 This is source wiring only; visual, accessibility and physical-device acceptance is deferred to the
 planned stabilization phase.
+
+## RUNTIME-021 context and model truth — 2026-09-25
+
+Intelligence now exposes factual model metadata (Text/Vision/Audio/Video/Tools/Streaming/context
+window where advertised) rather than provider-wide capability assumptions. Runtime policy exposes
+visual/workspace inclusion separately from explicit remote-sharing gates for workspace references,
+current screen context and images. All remote-sharing gates default off.
+
+These UI controls permit context use; they do not enable cloud routing by themselves. The selected
+routing policy remains authoritative. This is source wiring only and has not yet received visual,
+accessibility or physical-device acceptance.
