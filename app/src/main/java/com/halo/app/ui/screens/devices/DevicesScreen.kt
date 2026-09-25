@@ -87,10 +87,16 @@ data class GenericDeviceUiState(
     val healthStateText: String = "Healthy",
     val healthWarning: String? = null,
     val wearStateText: String = "Unknown",
-    val volumeText: String = "Normal"
+    val volumeText: String = "Normal",
+    val capabilityLabels: List<String> = emptyList(),
+    val activeResourceLabels: List<String> = emptyList(),
 )
 
-data class DevicesUiState(val devices: List<GenericDeviceUiState> = emptyList())
+data class DevicesUiState(
+    val devices: List<GenericDeviceUiState> = emptyList(),
+    val hostCapabilities: List<String> = emptyList(),
+    val hostActiveResources: List<String> = emptyList(),
+)
 
 class DevicesViewModel(
     val deviceRegistry: com.halo.sdk.runtime.embodiment.DeviceRegistry,
@@ -101,7 +107,9 @@ class DevicesViewModel(
     val buddyBotHost: BuddyBotHost? = null,
     private val autoConnectCoordinator: DeviceAutoConnectCoordinator? = null,
     private val captures: () -> com.halo.app.capture.HeyCyanCaptureCoordinator? = { null },
-    private val audioPairingCoordinator: com.halo.app.audio.HeyCyanAudioPairingCoordinator? = null
+    private val audioPairingCoordinator: com.halo.app.audio.HeyCyanAudioPairingCoordinator? = null,
+    private val capabilityCatalogue: com.halo.runtime.cognition.tools.CapabilityCatalogueSource? = null,
+    private val resourceLeaseManager: com.halo.sdk.runtime.resource.ResourceLeaseManager? = null,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(DevicesUiState())
     val uiState: StateFlow<DevicesUiState> = _uiState.asStateFlow()
@@ -129,15 +137,32 @@ class DevicesViewModel(
                 Pair(heyCyan, buddy)
             }
 
+            val fabricFlow = combine(
+                capabilityCatalogue?.snapshot ?: MutableStateFlow(
+                    com.halo.runtime.cognition.tools.CapabilityCatalogueSnapshot(emptyList(), 0L)
+                ),
+                resourceLeaseManager?.snapshotState ?: MutableStateFlow(
+                    com.halo.sdk.runtime.resource.ResourceLeaseSnapshot(emptyList(), emptyList())
+                ),
+            ) { capabilities, resources -> capabilities to resources }
+
+            val uiInputs = combine(
+                _photoStates,
+                _registryRevision,
+                fabricFlow,
+            ) { photoStates, revision, fabric ->
+                Triple(photoStates, revision, fabric)
+            }
+
             combine(
                 sessionManager.activeSessions,
                 sessionManager.stateRevision,
                 deviceDriversFlow,
-                _photoStates,
-                _registryRevision
-            ) { activeSessions, _, (driverState, buddyBotTelemetry), photoStates, _ ->
+                uiInputs,
+            ) { activeSessions, _, (driverState, buddyBotTelemetry), (photoStates, _, fabric) ->
+                val (capabilitySnapshot, resourceSnapshot) = fabric
                 val now = System.currentTimeMillis()
-                deviceRegistry.getSavedDevices().map { record ->
+                val devices = deviceRegistry.getSavedDevices().map { record ->
                     val isRobot = record.descriptor.kind == com.halo.sdk.runtime.embodiment.DeviceKind.BUDDYBOT
                     val session = activeSessions.find { it.identity.deviceId == record.identity.deviceId }
                     val sessionState = session?.state?.value
@@ -205,11 +230,46 @@ class DevicesViewModel(
                         healthStateText = healthStateText,
                         healthWarning = healthWarning,
                         wearStateText = if (isRobot) "Active" else driverState.wearState.name,
-                        volumeText = driverState.volumeState?.let { "Music ${it.musicCurrent}, Call ${it.callCurrent}" } ?: "Normal"
+                        volumeText = driverState.volumeState?.let { "Music ${it.musicCurrent}, Call ${it.callCurrent}" } ?: "Normal",
+                        capabilityLabels = capabilitySnapshot.capabilities
+                            .filter {
+                                it.ownerId == record.identity.deviceId &&
+                                    it.availability == com.halo.runtime.cognition.tools.CapabilityAvailability.AVAILABLE
+                            }
+                            .map { com.halo.app.ui.state.RuntimeUiFormatters.formatCapability(it.id) }
+                            .distinct()
+                            .sorted(),
+                        activeResourceLabels = resourceSnapshot.active
+                            .flatMap { lease -> lease.claims }
+                            .filter { it.key.endpointId.value == record.identity.deviceId }
+                            .map { com.halo.app.ui.state.RuntimeUiFormatters.formatResource(it.key.resourceId) }
+                            .distinct()
+                            .sorted(),
                     )
                 }
-            }.collect { devices ->
-                _uiState.value = DevicesUiState(devices)
+
+                val hostCapabilities = capabilitySnapshot.capabilities
+                    .filter {
+                        it.ownerId == "host:primary" &&
+                            it.availability == com.halo.runtime.cognition.tools.CapabilityAvailability.AVAILABLE
+                    }
+                    .map { com.halo.app.ui.state.RuntimeUiFormatters.formatCapability(it.id) }
+                    .distinct()
+                    .sorted()
+                val hostResources = resourceSnapshot.active
+                    .flatMap { lease -> lease.claims }
+                    .filter { it.key.endpointId.value == "host:primary" }
+                    .map { com.halo.app.ui.state.RuntimeUiFormatters.formatResource(it.key.resourceId) }
+                    .distinct()
+                    .sorted()
+
+                DevicesUiState(
+                    devices = devices,
+                    hostCapabilities = hostCapabilities,
+                    hostActiveResources = hostResources,
+                )
+            }.collect { state ->
+                _uiState.value = state
             }
         }
 
@@ -398,6 +458,40 @@ fun DevicesScreen(viewModel: DevicesViewModel) {
 
         Spacer(Modifier.height(28.dp))
 
+        androidx.compose.material3.Surface(
+            shape = RoundedCornerShape(18.dp),
+            color = androidx.compose.material3.MaterialTheme.colorScheme.surface,
+            border = androidx.compose.foundation.BorderStroke(
+                1.dp,
+                androidx.compose.material3.MaterialTheme.colorScheme.outlineVariant,
+            ),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Column(Modifier.padding(16.dp)) {
+                Text(
+                    "This host",
+                    style = androidx.compose.material3.MaterialTheme.typography.titleSmall,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                )
+                Text(
+                    "Android phone · " +
+                        (uiState.hostCapabilities.take(6).joinToString(" · ").ifBlank { "Capabilities unavailable" }),
+                    style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+                    color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                if (uiState.hostActiveResources.isNotEmpty()) {
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        "In use · ${uiState.hostActiveResources.joinToString(" · ")}",
+                        style = androidx.compose.material3.MaterialTheme.typography.labelSmall,
+                        color = androidx.compose.material3.MaterialTheme.colorScheme.primary,
+                    )
+                }
+            }
+        }
+
+        Spacer(Modifier.height(18.dp))
+
         if (uiState.devices.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -528,6 +622,23 @@ private fun DeviceCard(
                 DeviceMeta("Battery", device.battery)
                 DeviceMeta("Seen", device.lastSeen)
                 DeviceMeta("Auto", if (device.autoConnect) "On" else "Off")
+            }
+
+            if (device.capabilityLabels.isNotEmpty()) {
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    text = device.capabilityLabels.take(6).joinToString(" · "),
+                    fontSize = 12.sp,
+                    color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            if (device.activeResourceLabels.isNotEmpty()) {
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = "In use · ${device.activeResourceLabels.joinToString(" · ")}",
+                    fontSize = 12.sp,
+                    color = androidx.compose.material3.MaterialTheme.colorScheme.primary,
+                )
             }
 
             if (device.healthWarning != null) {
