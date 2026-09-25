@@ -64,3 +64,25 @@ Examples:
 
 Capability selection never replaces device-driver safety. HeyCyan protocol arbitration and BuddyBot
 SafetySupervisor remain authoritative below Runtime resource ownership.
+
+## Multimodal context source boundary
+
+RUNTIME-021 adds a portable visual-context boundary. Cognition requests a current image for an
+origin device; Android host composition resolves the concrete `StillImageSource`.
+
+For HeyCyan the source path is:
+
+```text
+ContextNeed(VISUAL_IMAGE, ORIGIN_DEVICE)
+        → VisualContextSource
+        → HeyCyanStillImageSource
+        → LeasedStillImageSource
+        → Runtime camera.sensor/camera.capture lease
+        → HeyCyan thumbnail coordinator
+        → HeyCyanResourceArbiter
+```
+
+This keeps vendor protocol types outside Runtime cognition. A fresh image already associated with
+the interaction/origin is reused before issuing another software capture. Android phone-camera still
+capture is intentionally advertised unavailable until a real controlled CameraX source is wired;
+assistant screenshots are screen context, not the physical host camera.
