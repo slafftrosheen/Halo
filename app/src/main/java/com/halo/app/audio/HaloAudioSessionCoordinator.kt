@@ -154,7 +154,11 @@ class HaloAudioSessionCoordinator(
         }
     }
 
-    suspend fun acquireOutput(interactionId: String, deviceId: String?): Result<OutputLease> {
+    suspend fun acquireOutput(
+        interactionId: String,
+        deviceId: String?,
+        ownerYieldHandler: ResourceYieldHandler? = null,
+    ): Result<OutputLease> {
         val endpoint = ResourceEndpointId(deviceId ?: "host:primary")
         val request = ResourceLeaseRequest(
             requestId = "audio.output:$interactionId",
