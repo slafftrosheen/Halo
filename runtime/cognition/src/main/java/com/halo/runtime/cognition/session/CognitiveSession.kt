@@ -430,9 +430,20 @@ class CognitiveSession(
                 AgentStep.ToolOutcomeRecorded(AgentStepId(UUID.randomUUID().toString()), runId, Instant.now(),
                     invocation.invocationId, invocation.toolCallId, invocation.toolId.value, true,
                     result.output, result.actionTruth, null))
-            is ToolExecutionResult.Rejected -> agentRunCoordinator?.recordStep(
-                AgentStep.ToolFailed(AgentStepId(UUID.randomUUID().toString()), runId, Instant.now(),
-                    invocation.toolCallId, invocation.toolId.value, result.reason))
+            is ToolExecutionResult.Rejected -> {
+                val rejection = toolRejection(
+                    ToolRejectionCode.INVALID_ARGUMENTS, result.reason,
+                    retryable = false, requiresUserAction = false,
+                )
+                agentRunCoordinator?.recordStep(
+                    AgentStep.ToolRejected(
+                        AgentStepId(UUID.randomUUID().toString()), runId, Instant.now(),
+                        invocation.toolCallId, invocation.toolId.value, rejection.code,
+                        rejection.reason, rejection.retryable, rejection.requiresUserAction,
+                        rejection.modelResult,
+                    )
+                )
+            }
             is ToolExecutionResult.Failed -> if (!result.completionUnknown) agentRunCoordinator?.recordStep(
                 AgentStep.ToolFailed(AgentStepId(UUID.randomUUID().toString()), runId, Instant.now(),
                     invocation.toolCallId, invocation.toolId.value, result.message))
@@ -931,7 +942,9 @@ class CognitiveSession(
                         initialResponse = response,
                         provider = provider,
                         capabilities = capabilities,
-                        policy = targetPolicy
+                        policy = targetPolicy,
+                        requiredAiCapabilities = workloadPlan.inference.requiredCapabilities.map { it.name }.toSet(),
+                        contextRequirements = contextRequirementsFor(workloadPlan, request),
                     )
                     if (loopResult == null) {
                         /*
@@ -1141,23 +1154,22 @@ class CognitiveSession(
         initialResponse: AiResponse,
         provider: AiInferenceProvider,
         capabilities: Set<AiCapability>,
-        policy: AiContextPolicy
+        policy: AiContextPolicy,
+        requiredAiCapabilities: Set<String>,
+        contextRequirements: Set<String>,
     ): AiResponse? {
         val authorizationScopeId = interactionId.value
         try {
         var response = initialResponse
         var currentContext = initialContext
         var currentExposure = toolExposurePlanner?.fromDefinitions(initialContext.availableTools)
-        if (runId != null && toolExposurePlanner != null) {
-            agentRunCoordinator?.checkpoint(runId)?.exposedToolIds?.takeIf { it.isNotEmpty() }?.let { ids ->
-                val newExposure = toolExposurePlanner.expand(toolExposurePlanner.initialExposure(), ids.toList())
-                currentExposure = newExposure
-                currentContext = currentContext.copy(
-                    availableTools = toolExposurePlanner.effectiveDefinitions(newExposure, toolDiscovery?.catalogueSummary().orEmpty())
-                )
-            }
+        val inlineUserInContext = request.appendTextAsUserMessage && request.image == null && request.audio == null && request.video == null
+        if (inlineUserInContext && !request.text.isNullOrBlank()) {
+            currentContext = currentContext.copy(
+                conversation = currentContext.conversation + AIMessage(Role.USER, request.text)
+            )
         }
-        var round = 0
+        var round = 0        var round = 0
         var totalToolCalls = 0
         var hasUnconfirmedAction = false
         val executedCallFingerprints = mutableMapOf<String, Int>()
@@ -1190,6 +1202,20 @@ class CognitiveSession(
                         "Maximum total tool calls (${ToolExecutionLimits.MAX_TOTAL_TOOL_CALLS}) exceeded"
                     )
                 }
+                val durableRun = runId?.let { agentRunStore?.get(it) }
+                durableToolResult(durableRun, toolCall.id)?.let { resultText ->
+                    toolMessages.add(AIMessage(Role.TOOL, resultText, toolCallId = toolCall.id))
+                    continue
+                }
+                if (durableRun?.steps?.any {
+                        it is AgentStep.ToolExecutionClaimed && it.toolCallId == toolCall.id
+                    } == true
+                ) {
+                    throw AiProviderException(
+                        AiErrorType.INVALID_RESPONSE,
+                        "Claimed tool has no durable outcome; recovery planner must reconcile it before continuation"
+                    )
+                }
 
                 val currentSnapshotHash = assistantContexts?.screenFor(interactionId.value)?.hashCode() ?: 0
                 val fingerprint = "$currentSnapshotHash:${toolCall.functionName}:${toolCall.arguments}"
@@ -1208,13 +1234,22 @@ class CognitiveSession(
                  */
                 val canonicalArguments = ToolArgumentCanonicalizer.canonicalize(toolCall.arguments)
                 val argumentsDigest = ToolArgumentCanonicalizer.digest(canonicalArguments)
-                val invocationId = ToolInvocationId(UUID.randomUUID().toString())
-                val idempotencyKey = ToolInvocation.idempotencyKey(
-                    runId ?: AgentRunId("ephemeral"), toolCall.id, com.halo.runtime.cognition.tools.ToolId(toolCall.functionName), argumentsDigest)
-                val replaySafety = toolRegistry?.descriptor(toolCall.functionName)?.security?.replaySafety
+                val existingPrepared = runId?.let { rid ->
+                    agentRunStore?.get(rid)?.steps
+                        ?.filterIsInstance<AgentStep.ToolInvocationPrepared>()
+                        ?.lastOrNull { it.toolCallId == toolCall.id && it.argumentsDigest == argumentsDigest }
+                }
+                val invocationId = existingPrepared?.invocationId ?: ToolInvocationId(UUID.randomUUID().toString())
+                val idempotencyKey = existingPrepared?.idempotencyKey ?: ToolInvocation.idempotencyKey(
+                    runId ?: AgentRunId("ephemeral"), toolCall.id,
+                    com.halo.runtime.cognition.tools.ToolId(toolCall.functionName), argumentsDigest
+                )
+                val replaySafety = existingPrepared?.replaySafety?.let {
+                    runCatching { com.halo.runtime.cognition.tools.ReplaySafety.valueOf(it) }.getOrNull()
+                } ?: toolRegistry?.descriptor(toolCall.functionName)?.security?.replaySafety
                     ?: com.halo.runtime.cognition.tools.ReplaySafety.NEVER_REPLAY
-                val descriptorVersion = 1
-                runId?.let {
+                val descriptorVersion = existingPrepared?.descriptorVersion ?: 1
+                if (existingPrepared == null) runId?.let {
                     agentRunCoordinator?.recordStep(
                         AgentStep.ToolInvocationPrepared(
                             newStepId(), it, Instant.now(), invocationId, toolCall.id, toolCall.functionName,
@@ -1285,38 +1320,16 @@ class CognitiveSession(
                 val invalidArguments = toolRegistry?.validate(toolCall)
                 if (!policy.includeAvailableTools || toolRegistry == null || toolAuthorizer == null ||
                     !toolIsEnabled || invalidArguments != null) {
-                    val reason = when {
-                        !policy.includeAvailableTools -> "Tools disabled by runtime policy"
-                        toolRegistry == null -> "Tool registry unavailable"
-                        !workspaceReadAllowed -> "Private workspace access is disabled for this provider"
-                        !toolIsEnabled -> "Skill unavailable or disabled"
-                        invalidArguments != null -> invalidArguments.reason
-                        else -> "Tool authorization service unavailable"
+                    val rejection = when {
+                        !policy.includeAvailableTools -> toolRejection(ToolRejectionCode.TOOLS_DISABLED, "Tools disabled by runtime policy", false, true)
+                        toolRegistry == null -> toolRejection(ToolRejectionCode.TOOL_REGISTRY_UNAVAILABLE, "Tool registry unavailable", false, false)
+                        !workspaceReadAllowed -> toolRejection(ToolRejectionCode.PRIVATE_CONTEXT_BLOCKED, "Private workspace access is disabled for this provider", false, true)
+                        !toolIsEnabled -> toolRejection(ToolRejectionCode.TOOL_DISABLED, "Skill unavailable or disabled", false, true)
+                        invalidArguments != null -> toolRejection(ToolRejectionCode.INVALID_ARGUMENTS, invalidArguments.reason, false, false)
+                        else -> toolRejection(ToolRejectionCode.AUTHORIZATION_DENIED, "Tool authorization service unavailable", false, true)
                     }
-                    runId?.let {
-                        agentRunCoordinator?.recordStep(
-                            AgentStep.ToolFailed(
-                                newStepId(), it, Instant.now(),
-                                toolCall.id, toolCall.functionName, reason,
-                            )
-                        )
-                    }
-                    println("[HALO-DIAGNOSTIC] event=TOOL_CALL_REJECTED run=${runId?.value ?: "ephemeral"} interaction=${interactionId.value} tool=${toolCall.functionName} reason=\"$reason\"")
-                    eventBus.publish(
-                        ToolCallRejected(
-                            requestId = requestId,
-                            toolCallId = toolCall.id,
-                            toolId = toolCall.functionName,
-                            reason = reason,
-                        )
-                    )
-                    toolMessages.add(
-                        AIMessage(
-                            Role.TOOL,
-                            "Tool execution rejected: $reason",
-                            toolCallId = toolCall.id,
-                        )
-                    )
+                    persistAndPublishToolRejection(runId, interactionId, requestId, toolCall, rejection)
+                    toolMessages.add(AIMessage(Role.TOOL, rejection.modelResult, toolCallId = toolCall.id))
                     continue
                 }
 
@@ -1324,8 +1337,27 @@ class CognitiveSession(
                  * RUNTIME-019: durable authorization first. Interactive approval
                  * journals the request and suspends the run; UI never owns execution.
                  */
-                val previouslyApproved = runId != null &&
-                    hasApprovedApproval(runId, toolCall.functionName, argumentsDigest)
+                val approvalEvidence = runId?.let {
+                    resolvedApprovalEvidence(it, toolCall.functionName, argumentsDigest)
+                }
+                if (approvalEvidence != null && approvalEvidence != DurableApprovalEvidence.APPROVED) {
+                    val rejection = when (approvalEvidence) {
+                        DurableApprovalEvidence.DENIED -> toolRejection(
+                            ToolRejectionCode.USER_REJECTED, "User denied tool approval", false, false
+                        )
+                        DurableApprovalEvidence.CANCELLED -> toolRejection(
+                            ToolRejectionCode.INTERACTION_CANCELLED, "Tool approval was cancelled", false, false
+                        )
+                        DurableApprovalEvidence.EXPIRED -> toolRejection(
+                            ToolRejectionCode.INTERACTION_CANCELLED, "Tool approval expired", false, true
+                        )
+                        DurableApprovalEvidence.APPROVED -> error("handled above")
+                    }
+                    persistAndPublishToolRejection(runId, interactionId, requestId, toolCall, rejection)
+                    toolMessages.add(AIMessage(Role.TOOL, rejection.modelResult, toolCallId = toolCall.id))
+                    continue
+                }
+                val previouslyApproved = approvalEvidence == DurableApprovalEvidence.APPROVED
                 val durableDecision = if (runId != null && !previouslyApproved) {
                     (toolAuthorizer as? com.halo.runtime.cognition.tools.PolicyToolAuthorizer)?.authorizeDurable(
                         toolCall = toolCall,
@@ -1351,14 +1383,6 @@ class CognitiveSession(
                         )
                         agentRunCoordinator?.transition(waitingRunId, AgentRunState.WAITING_FOR_APPROVAL)
                         pendingRunIdInput = request
-                        eventBus.publish(
-                            ToolCallRejected(
-                                requestId = requestId,
-                                toolCallId = toolCall.id,
-                                toolId = toolCall.functionName,
-                                reason = "Waiting for your approval",
-                            )
-                        )
                         return null
                     }
                     else -> toolAuthorizer.authorize(toolCall, authorizationScopeId)
@@ -1366,30 +1390,14 @@ class CognitiveSession(
 
                 when (authorization) {
                     is ToolAuthorization.Rejected -> {
-                        runId?.let {
-                            agentRunCoordinator?.recordStep(
-                                AgentStep.ToolFailed(
-                                    newStepId(), it, Instant.now(),
-                                    toolCall.id, toolCall.functionName, authorization.reason,
-                                )
-                            )
-                        }
-                        println("[HALO-DIAGNOSTIC] event=TOOL_CALL_REJECTED run=${runId?.value ?: "ephemeral"} interaction=${interactionId.value} tool=${toolCall.functionName} reason=\"${authorization.reason}\"")
-                        eventBus.publish(
-                            ToolCallRejected(
-                                requestId = requestId,
-                                toolCallId = toolCall.id,
-                                toolId = toolCall.functionName,
-                                reason = authorization.reason,
-                            )
+                        val rejection = toolRejection(
+                            ToolRejectionCode.AUTHORIZATION_DENIED,
+                            authorization.reason,
+                            retryable = false,
+                            requiresUserAction = true,
                         )
-                        toolMessages.add(
-                            AIMessage(
-                                Role.TOOL,
-                                "Tool execution rejected: ${authorization.reason}",
-                                toolCallId = toolCall.id,
-                            )
-                        )
+                        persistAndPublishToolRejection(runId, interactionId, requestId, toolCall, rejection)
+                        toolMessages.add(AIMessage(Role.TOOL, rejection.modelResult, toolCallId = toolCall.id))
                         continue
                     }
 
@@ -1542,28 +1550,14 @@ class CognitiveSession(
                     }
 
                     is ToolExecutionResult.Rejected -> {
-                        runId?.let {
-                            agentRunCoordinator?.recordStep(
-                                AgentStep.ToolOutcomeRecorded(newStepId(), it, Instant.now(), invocationId,
-                                    toolCall.id, toolCall.functionName, false, result.reason,
-                                    ActionTruth.FAILED, ToolFailureKind.VALIDATION.name))
-                        }
-                        println("[HALO-DIAGNOSTIC] event=TOOL_CALL_REJECTED run=${runId?.value ?: "ephemeral"} interaction=${interactionId.value} tool=${toolCall.functionName} reason=\"${result.reason}\"")
-                        eventBus.publish(
-                            ToolCallRejected(
-                                requestId = requestId,
-                                toolCallId = toolCall.id,
-                                toolId = toolCall.functionName,
-                                reason = result.reason
-                            )
+                        val rejection = toolRejection(
+                            ToolRejectionCode.INVALID_ARGUMENTS,
+                            result.reason,
+                            retryable = false,
+                            requiresUserAction = false,
                         )
-                        toolMessages.add(
-                            AIMessage(
-                                Role.TOOL,
-                                "Tool execution rejected: ${result.reason}",
-                                toolCallId = toolCall.id
-                            )
-                        )
+                        persistAndPublishToolRejection(runId, interactionId, requestId, toolCall, rejection)
+                        toolMessages.add(AIMessage(Role.TOOL, rejection.modelResult, toolCallId = toolCall.id))
                     }
 
                     is ToolExecutionResult.Failed -> {
@@ -1611,12 +1605,29 @@ class CognitiveSession(
 
             val roundRequestId = UUID.randomUUID().toString()
             eventBus.publish(CognitiveRequestStarted(requestId = roundRequestId, interactionId = interactionId.value))
+            val roundTurnId = runId?.let { rid ->
+                com.halo.runtime.cognition.agent.ProviderTurnId("$rid:$roundRequestId").also { turnId ->
+                    agentRunCoordinator?.recordStep(
+                        AgentStep.ProviderTurnStarted(
+                            newStepId(), rid, Instant.now(), turnId,
+                            target.providerId, target.modelId,
+                            ToolArgumentCanonicalizer.sha256Hex((request.text ?: "") + ":tool-round:$round"),
+                            currentContext.availableTools.map { it.name }.toSet(),
+                            requiredAiCapabilities,
+                            contextRequirements,
+                        )
+                    )
+                }
+            }
             response = when (
                 val outcome = executeProviderRequest(
                     provider = provider,
                     capabilities = capabilities,
                     expectedModelId = target.modelId,
-                    request = request.copy(modelId = target.modelId),
+                    request = request.copy(
+                        modelId = target.modelId,
+                        appendTextAsUserMessage = if (inlineUserInContext) false else request.appendTextAsUserMessage,
+                    ),
                     context = currentContext,
                     requestId = roundRequestId,
                     interactionId = interactionId.value,
@@ -1628,6 +1639,21 @@ class CognitiveSession(
                     "Assistant handoff cannot occur during a tool execution transaction"
                 )
             }
+            if (runId != null && roundTurnId != null) {
+                agentRunCoordinator?.recordStep(
+                    AgentStep.ProviderTurnCompleted(
+                        newStepId(), runId, Instant.now(), roundTurnId,
+                        response.text,
+                        response.toolCalls.map { call ->
+                            com.halo.runtime.cognition.agent.ProviderToolCallRecord(
+                                call.id, call.functionName,
+                                ToolArgumentCanonicalizer.canonicalize(call.arguments),
+                            )
+                        },
+                        response.finishReason.orEmpty(),
+                    )
+                )
+            }
         }
         return if (hasUnconfirmedAction) response.copy(text = "The action was dispatched, but I could not confirm its completion. I will not repeat it automatically.") else response
         } finally {
@@ -1637,40 +1663,122 @@ class CognitiveSession(
 
     private fun newStepId() = AgentStepId(UUID.randomUUID().toString())
 
-    /**
-     * RUNTIME-019: true when the journal holds an approval request for exactly
-     * this tool + canonical arguments digest that was resolved Approved (and
-     * not later superseded by a newer unresolved request). Evidence only —
-     * never model prose — so re-emitted identical calls do not re-prompt.
-     */
-    private suspend fun hasApprovedApproval(
+    private enum class DurableApprovalEvidence { APPROVED, DENIED, CANCELLED, EXPIRED }
+
+    private suspend fun resolvedApprovalEvidence(
         runId: AgentRunId,
         toolName: String,
         argumentsDigest: String,
-    ): Boolean {
-        val run = agentRunStore?.get(runId) ?: return false
-        var pendingMatch: String? = null
-        var approved = false
+    ): DurableApprovalEvidence? {
+        val run = agentRunStore?.get(runId) ?: return null
+        var matchingRequestId: String? = null
+        var evidence: DurableApprovalEvidence? = null
         for (step in run.steps) {
             when (step) {
                 is AgentStep.InputRequested -> {
                     val approval = step.input as? AgentInputRequest.Approval
-                    if (approval != null &&
-                        approval.toolId.value == toolName &&
-                        approval.argumentsDigest == argumentsDigest
-                    ) {
-                        pendingMatch = step.requestId.value
-                        approved = false
+                    if (approval != null && approval.toolId.value == toolName && approval.argumentsDigest == argumentsDigest) {
+                        matchingRequestId = step.requestId.value
+                        evidence = null
                     }
                 }
-                is AgentStep.InputResolved -> if (step.requestId.value == pendingMatch) {
-                    approved = step.resolution == "Approved"
-                    pendingMatch = null
+                is AgentStep.InputResolved -> if (step.requestId.value == matchingRequestId) {
+                    evidence = when (step.resolution) {
+                        "Approved" -> DurableApprovalEvidence.APPROVED
+                        "Denied" -> DurableApprovalEvidence.DENIED
+                        "Cancelled" -> DurableApprovalEvidence.CANCELLED
+                        AgentInputResolutions.EXPIRED -> DurableApprovalEvidence.EXPIRED
+                        else -> null
+                    }
+                    matchingRequestId = null
                 }
                 else -> Unit
             }
         }
-        return approved
+        return evidence
+    }
+
+    private data class RuntimeToolRejection(
+        val code: ToolRejectionCode,
+        val reason: String,
+        val retryable: Boolean,
+        val requiresUserAction: Boolean,
+        val modelResult: String,
+    )
+
+    private fun toolRejection(
+        code: ToolRejectionCode,
+        reason: String,
+        retryable: Boolean,
+        requiresUserAction: Boolean,
+    ): RuntimeToolRejection {
+        val boundedReason = reason.replace('\n', ' ').trim().take(512).ifBlank { code.name }
+        val modelResult = buildString {
+            append("tool_result: status=rejected reason_code=").append(code.name)
+            append(" retryable=").append(retryable)
+            append(" requires_user_action=").append(requiresUserAction)
+            append('\n').append("reason: ").append(boundedReason)
+        }
+        return RuntimeToolRejection(code, boundedReason, retryable, requiresUserAction, modelResult)
+    }
+
+    private suspend fun persistAndPublishToolRejection(
+        runId: AgentRunId?,
+        interactionId: InteractionId,
+        requestId: String,
+        toolCall: ToolCall,
+        rejection: RuntimeToolRejection,
+    ) {
+        runId?.let { rid ->
+            val alreadyRecorded = agentRunStore?.get(rid)?.steps?.any {
+                it is AgentStep.ToolRejected && it.toolCallId == toolCall.id
+            } == true
+            if (!alreadyRecorded) {
+                agentRunCoordinator?.recordStep(
+                    AgentStep.ToolRejected(
+                        newStepId(), rid, Instant.now(), toolCall.id, toolCall.functionName,
+                        rejection.code, rejection.reason, rejection.retryable,
+                        rejection.requiresUserAction, rejection.modelResult,
+                    )
+                )
+            }
+        }
+        println(
+            "[HALO-DIAGNOSTIC] event=TOOL_CALL_REJECTED run=${runId?.value ?: "ephemeral"} " +
+                "interaction=${interactionId.value} tool=${toolCall.functionName} reason_code=${rejection.code.name} " +
+                "retryable=${rejection.retryable} requires_user_action=${rejection.requiresUserAction}"
+        )
+        eventBus.publish(
+            ToolCallRejected(
+                requestId = requestId,
+                toolCallId = toolCall.id,
+                toolId = toolCall.functionName,
+                reason = rejection.reason,
+                reasonCode = rejection.code.name,
+                retryable = rejection.retryable,
+                requiresUserAction = rejection.requiresUserAction,
+            )
+        )
+    }
+
+    private fun durableToolResult(run: AgentRun?, toolCallId: String): String? {
+        val step = run?.steps?.asReversed()?.firstOrNull { candidate ->
+            when (candidate) {
+                is AgentStep.ToolOutcomeRecorded -> candidate.toolCallId == toolCallId
+                is AgentStep.ToolRejected -> candidate.toolCallId == toolCallId
+                is AgentStep.ToolCompleted -> candidate.toolCallId == toolCallId
+                is AgentStep.ToolFailed -> candidate.toolCallId == toolCallId
+                else -> false
+            }
+        } ?: return null
+        return when (step) {
+            is AgentStep.ToolOutcomeRecorded -> step.output
+            is AgentStep.ToolRejected -> step.modelResult
+            is AgentStep.ToolCompleted -> step.resultSummary
+            is AgentStep.ToolFailed -> "tool_result: status=failed reason_code=PERMANENT retryable=false\nreason: " +
+                step.reason.replace('\n', ' ').take(512)
+            else -> null
+        }
     }
 
     private fun continuationMessageToAiMessage(
