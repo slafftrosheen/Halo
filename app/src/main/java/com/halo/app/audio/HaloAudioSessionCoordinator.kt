@@ -176,18 +176,6 @@ class HaloAudioSessionCoordinator(
             preemption = ResourcePreemptionPolicy.COOPERATIVE,
         )
 
-        val ownerYieldHandler = ResourceYieldHandler {
-            val current = outputOwner
-            if (current != null && current.interactionId == interactionId) {
-                // Actual playback owner observes the released wrapper and its
-                // normal stop path performs platform cleanup/route restoration.
-                current.release()
-                ResourceYieldDecision.RELEASING
-            } else {
-                ResourceYieldDecision.REFUSED
-            }
-        }
-
         return when (val result = resourceLeaseManager.acquire(request, ownerYieldHandler)) {
             is ResourceAcquireResult.Granted -> {
                 val lease = OutputLease(
