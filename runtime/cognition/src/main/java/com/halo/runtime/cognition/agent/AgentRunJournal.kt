@@ -153,6 +153,11 @@ sealed interface AgentStep {
         val requestIdentity: String,
         val exposedToolIds: Set<String>,
         val requiredCapabilities: Set<String>,
+        /**
+         * Metadata-only requirements such as "VISUAL_IMAGE:CURRENT_VIEW".
+         * Never persist captured screen/image contents in the execution journal.
+         */
+        val contextRequirements: Set<String> = emptySet(),
     ) : AgentStep
 
     data class ProviderTurnCompleted(
