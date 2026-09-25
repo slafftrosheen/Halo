@@ -36,6 +36,8 @@ import com.halo.app.ui.workspace.HaloWorkspaceHeader
 import com.halo.app.ui.workspace.HaloWorkspaceRow
 import com.halo.app.ui.workspace.HaloWorkspaceSection
 import com.halo.providers.llamacpp.DownloadState
+import com.halo.sdk.provider.AiCapability
+import com.halo.sdk.provider.AiModel
 import com.halo.sdk.provider.ProviderStatus
 
 @Composable
@@ -223,7 +225,7 @@ fun IntelligenceScreen(
                 uiState.availableModels.forEachIndexed { index, model ->
                     HaloWorkspaceRow(
                         title = model.displayName,
-                        subtitle = model.contextLength?.let { "${it / 1000}k context" },
+                        subtitle = modelCapabilitySummary(model),
                         trailingText = if (model.id == uiState.activeModelId) "Active" else null,
                         selected = model.id == uiState.activeModelId,
                         onClick = { viewModel.selectModel(model.id) }
@@ -334,6 +336,46 @@ fun IntelligenceScreen(
                 uiState.policy.includeAvailableTools,
                 viewModel::setToolsEnabled
             )
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            PolicySwitchRow(
+                "Visual context",
+                uiState.policy.includeImages,
+                viewModel::setImagesEnabled
+            )
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            PolicySwitchRow(
+                "Workspace context",
+                uiState.policy.includeWorkspace,
+                viewModel::setWorkspaceEnabled
+            )
+        }
+
+        Spacer(Modifier.height(20.dp))
+
+        HaloWorkspaceSection(title = "Remote context sharing") {
+            Text(
+                text = "These switches only permit required context to leave this device when a remote inference provider is selected. They never enable cloud routing on their own.",
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            PolicySwitchRow(
+                "Workspace references",
+                uiState.policy.allowCloudWorkspace,
+                viewModel::setCloudWorkspaceEnabled
+            )
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            PolicySwitchRow(
+                "Current screen",
+                uiState.policy.allowCloudScreenContext,
+                viewModel::setCloudScreenEnabled
+            )
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            PolicySwitchRow(
+                "Images",
+                uiState.policy.allowCloudImages,
+                viewModel::setCloudImagesEnabled
+            )
         }
 
         Spacer(Modifier.height(32.dp))
@@ -370,4 +412,20 @@ private fun PolicySwitchRow(
             onCheckedChange = onCheckedChange
         )
     }
+}
+
+
+private fun modelCapabilitySummary(model: AiModel): String {
+    val badges = buildList {
+        if (AiCapability.TEXT in model.inputCapabilities) add("Text")
+        if (AiCapability.IMAGE in model.inputCapabilities) add("Vision")
+        if (AiCapability.AUDIO in model.inputCapabilities) add("Audio")
+        if (AiCapability.VIDEO in model.inputCapabilities) add("Video")
+        if (model.supportsTools) add("Tools")
+        if (model.supportsStreaming) add("Streaming")
+        model.contextLength?.let { length ->
+            add(if (length >= 1_000L) "${length / 1_000}k context" else "$length context")
+        }
+    }
+    return badges.joinToString(" · ").ifBlank { "Capabilities not advertised" }
 }
