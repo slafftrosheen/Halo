@@ -17,7 +17,7 @@ import com.halo.runtime.cognition.tools.ToolId
  * | Evidence                                   | Plan                          |
  * |--------------------------------------------|-------------------------------|
  * | Provider started, no response              | RetryProviderTurn             |
- * | Tool prepared, not claimed                 | ContinueAfterToolResult       |
+ * | Tool prepared, not claimed                 | Continue normal provider path |
  * | SAFE tool claimed, no result               | RetryTool                     |
  * | Idempotent tool claimed, no result         | RetryTool (original key)      |
  * | Reconcile-required tool claimed, no result | ReconcileTool                 |
@@ -91,11 +91,13 @@ class DefaultAgentRecoveryPlanner : AgentRecoveryPlanner {
             }
         }
 
-        // 7. Prepared invocation that was never claimed: no side effect possible.
-        preparedButUnclaimed(steps)?.let { invocation ->
-            return RecoveryPlan.ContinueAfterToolResult(run.id, null, emptySet()).let {
-                RecoveryPlan.RetryTool(run.id, invocation, useOriginalIdempotencyKey = true)
-            }
+        // 7. Prepared invocation that was never claimed: no side effect is
+        // possible, but authorization/resource admission may also not have
+        // completed. Re-enter the normal provider/tool path so those gates run
+        // again; never execute a merely prepared call directly.
+        preparedButUnclaimed(steps)?.let {
+            val turnId = lastCompletedProviderTurn(steps)?.turnId
+            return RecoveryPlan.ContinueAfterToolResult(run.id, turnId, emptySet())
         }
 
         // 8. Anything else non-terminal without journal evidence is legacy/uncertain.
