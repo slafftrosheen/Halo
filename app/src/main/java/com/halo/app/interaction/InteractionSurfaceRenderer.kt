@@ -270,6 +270,11 @@ private fun HaloTextInputSurface(
                     onValueChange = { value = it },
                     placeholder = { content.placeholder?.let { Text(it) } },
                     singleLine = content.constraints.singleLine,
+                    visualTransformation = if (content.constraints.sensitive) {
+                        PasswordVisualTransformation()
+                    } else {
+                        VisualTransformation.None
+                    },
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
