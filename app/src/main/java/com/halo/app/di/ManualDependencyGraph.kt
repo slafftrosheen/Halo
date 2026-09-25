@@ -306,7 +306,9 @@ object ManualDependencyGraph {
     }
 
     val toolDiscoveryExecutor by lazy {
-        com.halo.runtime.cognition.tools.ToolDiscoveryExecutor(toolDiscovery)
+        // Resolve the discovery service only when the meta-tool actually executes.
+        // Eager resolution here creates toolRegistry -> executor -> discovery -> toolRegistry recursion.
+        com.halo.runtime.cognition.tools.ToolDiscoveryExecutor { toolDiscovery }
     }
 
     val toolRegistry by lazy {
