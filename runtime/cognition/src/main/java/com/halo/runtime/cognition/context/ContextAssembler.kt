@@ -13,7 +13,8 @@ data class ContextOmission(
 data class ContextAssemblyResult(
     val context: AiContext,
     val omissions: List<ContextOmission> = emptyList(),
-    val image: ImageContext? = null
+    val image: ImageContext? = null,
+    val unsatisfiedRequired: List<ContextNeed> = emptyList(),
 )
 
 data class ImageContext(
@@ -34,12 +35,15 @@ data class ImageContext(
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is ImageContext) return false
-        if (!imageBytes.contentEquals(other.imageBytes)) return false
-        if (mimeType != other.mimeType) return false
-        if (timestampMs != other.timestampMs) return false
-        if (assetId != other.assetId) return false
-        if (interactionId != other.interactionId) return false
-        return true
+        return imageBytes.contentEquals(other.imageBytes) &&
+            mimeType == other.mimeType &&
+            timestampMs == other.timestampMs &&
+            assetId == other.assetId &&
+            interactionId == other.interactionId &&
+            originDeviceId == other.originDeviceId &&
+            source == other.source &&
+            trust == other.trust &&
+            freshness == other.freshness
     }
 
     override fun hashCode(): Int {
@@ -48,6 +52,10 @@ data class ImageContext(
         result = 31 * result + timestampMs.hashCode()
         result = 31 * result + (assetId?.hashCode() ?: 0)
         result = 31 * result + (interactionId?.hashCode() ?: 0)
+        result = 31 * result + (originDeviceId?.hashCode() ?: 0)
+        result = 31 * result + source.hashCode()
+        result = 31 * result + trust.hashCode()
+        result = 31 * result + freshness.hashCode()
         return result
     }
 }
@@ -81,4 +89,5 @@ data class ContextAssemblyRequest(
     val acquisition: ContextAcquisitionResult? = null,
     val contextWindowTokens: Long? = null,
     val requiredNeeds: List<ContextNeed> = emptyList(),
+    val targetIsLocal: Boolean = true,
 )
