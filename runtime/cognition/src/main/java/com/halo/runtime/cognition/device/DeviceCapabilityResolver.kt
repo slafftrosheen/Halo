@@ -1,5 +1,10 @@
 package com.halo.runtime.cognition.device
 
+/**
+ * Portable device capabilities. These are semantic abilities, not scarce
+ * resource identities. Resource mapping happens later through
+ * CapabilityResourceBinding / ResourcePlanner.
+ */
 sealed interface DeviceCapability {
     data class AudioInput(val sampleRates: List<Int> = listOf(16000)) : DeviceCapability
     data class AudioOutput(val sampleRates: List<Int> = listOf(16000)) : DeviceCapability
@@ -16,17 +21,17 @@ sealed interface DeviceCapability {
 
 val DeviceCapability.kind: String
     get() = when (this) {
-        is DeviceCapability.AudioInput -> "audio.input"
-        is DeviceCapability.AudioOutput -> "audio.output"
-        is DeviceCapability.Camera -> "camera.sensor"
-        is DeviceCapability.Display -> "display.output"
-        is DeviceCapability.ButtonInput -> "input.button"
-        is DeviceCapability.TouchInput -> "input.touch"
-        is DeviceCapability.MediaCapture -> "media.capture"
-        is DeviceCapability.MediaTransfer -> "media.transfer"
-        is DeviceCapability.Mobility -> "mobility.drive"
-        is DeviceCapability.Manipulator -> "manipulator.motion"
-        is DeviceCapability.Sensor -> "sensor.${this.kind}"
+        is DeviceCapability.AudioInput -> "device.audio.input"
+        is DeviceCapability.AudioOutput -> "device.audio.output"
+        is DeviceCapability.Camera -> "device.camera.still"
+        is DeviceCapability.Display -> "device.display.output"
+        is DeviceCapability.ButtonInput -> "device.input.button"
+        is DeviceCapability.TouchInput -> "device.input.touch"
+        is DeviceCapability.MediaCapture -> "device.media.capture"
+        is DeviceCapability.MediaTransfer -> "device.media.transfer"
+        is DeviceCapability.Mobility -> "device.mobility"
+        is DeviceCapability.Manipulator -> "device.manipulator"
+        is DeviceCapability.Sensor -> "device.sensor.${this.kind.trim().lowercase().replace(' ', '.')}"
     }
 
 enum class CapabilityAffinity {
@@ -76,76 +81,93 @@ class DefaultDeviceCapabilityResolver : DeviceCapabilityResolver {
             return CapabilityResolution(requirement, null, null, false)
         }
 
-        val targetKind = requirement.capabilityKind.lowercase().replace("_", ".")
+        val targetKind = canonicalCapabilityId(requirement.capabilityKind)
 
-        // 1. SPECIFIC_OWNER affinity
+        fun capabilityOn(device: RuntimeDevice): DeviceCapability? =
+            device.capabilities.firstOrNull { canonicalCapabilityId(it.kind) == targetKind }
+
         if (requirement.affinity == CapabilityAffinity.SPECIFIC_OWNER) {
             val targetId = requirement.preferredDeviceId ?: requirement.originDeviceId
-            val specificDevice = connectedDevices.firstOrNull { it.id == targetId }
-            val cap = specificDevice?.capabilities?.firstOrNull { matchesKind(it, targetKind) }
-            if (cap != null) {
-                return CapabilityResolution(requirement, specificDevice, cap, matchedPreferred = true)
+            val specific = connectedDevices.firstOrNull { it.id == targetId }
+            val capability = specific?.let(::capabilityOn)
+            if (capability != null) {
+                return CapabilityResolution(requirement, specific, capability, matchedPreferred = true)
             }
-            if (!requirement.allowFallback) {
-                return CapabilityResolution(requirement, null, null, false)
-            }
+            if (!requirement.allowFallback) return CapabilityResolution(requirement, null, null)
         }
 
-        // 2. ORIGIN affinity
         if (requirement.affinity == CapabilityAffinity.ORIGIN && requirement.originDeviceId != null) {
-            val originDevice = connectedDevices.firstOrNull { it.id == requirement.originDeviceId }
-            val cap = originDevice?.capabilities?.firstOrNull { matchesKind(it, targetKind) }
-            if (cap != null) {
-                return CapabilityResolution(requirement, originDevice, cap, matchedPreferred = true)
+            val origin = connectedDevices.firstOrNull { it.id == requirement.originDeviceId }
+            val capability = origin?.let(::capabilityOn)
+            if (capability != null) {
+                return CapabilityResolution(requirement, origin, capability, matchedPreferred = true)
             }
-            if (!requirement.allowFallback) {
-                return CapabilityResolution(requirement, null, null, false)
+            if (!requirement.allowFallback) return CapabilityResolution(requirement, null, null)
+        }
+
+        if (requirement.affinity == CapabilityAffinity.HOST) {
+            val host = connectedDevices
+                .filter(::isHost)
+                .sortedBy { it.id }
+                .firstOrNull { capabilityOn(it) != null }
+            if (host != null) {
+                return CapabilityResolution(requirement, host, capabilityOn(host), matchedPreferred = true)
+            }
+            if (!requirement.allowFallback) return CapabilityResolution(requirement, null, null)
+        }
+
+        requirement.preferredDeviceId?.let { preferredId ->
+            val preferred = connectedDevices.firstOrNull { it.id == preferredId }
+            val capability = preferred?.let(::capabilityOn)
+            if (capability != null) {
+                return CapabilityResolution(requirement, preferred, capability, matchedPreferred = true)
             }
         }
 
-        // 3. Preferred device check
-        if (requirement.preferredDeviceId != null) {
-            val preferred = connectedDevices.firstOrNull { it.id == requirement.preferredDeviceId }
-            val cap = preferred?.capabilities?.firstOrNull { matchesKind(it, targetKind) }
-            if (cap != null) {
-                return CapabilityResolution(requirement, preferred, cap, matchedPreferred = true)
-            }
-        }
-
-        // 4. Stable fallback ordering
-        val candidates = connectedDevices
-            .mapNotNull { device ->
-                val cap = device.capabilities.firstOrNull { matchesKind(it, targetKind) }
-                if (cap != null) Pair(device, cap) else null
-            }
+        val selected = connectedDevices
+            .mapNotNull { device -> capabilityOn(device)?.let { capability -> device to capability } }
             .sortedWith(
-                compareBy(
+                compareBy<Pair<RuntimeDevice, DeviceCapability>>(
                     { (device, _) -> if (device.id == requirement.originDeviceId) 0 else 1 },
                     { (device, _) -> if (device.id == requirement.preferredDeviceId) 0 else 1 },
-                    { (device, _) -> if (device.kind.equals("host", ignoreCase = true)) 0 else 1 },
-                    { (device, _) -> device.displayName },
-                    { (device, _) -> device.id }
+                    { (device, _) -> if (isHost(device)) 0 else 1 },
+                    { (device, _) -> device.displayName.lowercase() },
+                    { (device, _) -> device.id },
                 )
             )
+            .firstOrNull()
 
-        val selected = candidates.firstOrNull()
-        if (selected != null) {
-            return CapabilityResolution(
+        return if (selected != null) {
+            CapabilityResolution(
                 requirement = requirement,
                 selectedDevice = selected.first,
                 capability = selected.second,
-                matchedPreferred = selected.first.id == requirement.preferredDeviceId || selected.first.id == requirement.originDeviceId,
+                matchedPreferred = selected.first.id == requirement.preferredDeviceId ||
+                    selected.first.id == requirement.originDeviceId,
             )
+        } else {
+            CapabilityResolution(requirement, null, null)
         }
-
-        return CapabilityResolution(requirement, null, null, false)
     }
 
-    private fun matchesKind(capability: DeviceCapability, targetKind: String): Boolean {
-        val capKind = capability.kind.lowercase()
-        return capKind == targetKind ||
-            capKind.contains(targetKind) ||
-            targetKind.contains(capKind) ||
-            capKind.replace(".", "") == targetKind.replace(".", "")
+    private fun isHost(device: RuntimeDevice): Boolean =
+        device.id == "host:primary" || device.kind.equals("host", ignoreCase = true)
+
+    /**
+     * Temporary compatibility aliases for pre-RUNTIME-020.1 resource-shaped
+     * capability ids. Matching after normalization is exact.
+     */
+    private fun canonicalCapabilityId(raw: String): String = when (
+        raw.trim().lowercase().replace('_', '.')
+    ) {
+        "audio.input" -> "device.audio.input"
+        "audio.output" -> "device.audio.output"
+        "camera.sensor", "camera.still", "camera.photo" -> "device.camera.still"
+        "display.output" -> "device.display.output"
+        "media.capture" -> "device.media.capture"
+        "media.transfer" -> "device.media.transfer"
+        "mobility.drive" -> "device.mobility"
+        "manipulator.motion" -> "device.manipulator"
+        else -> raw.trim().lowercase().replace('_', '.')
     }
 }
