@@ -83,6 +83,7 @@ class DefaultAgentRecoveryPlanner : AgentRecoveryPlanner {
         openProviderTurn(steps)?.let { turn ->
             val transientRequirement = turn.contextRequirements.firstOrNull { requirement ->
                 requirement.contains("CURRENT_VIEW") ||
+                    requirement.contains("REQUEST_BYTES") ||
                     requirement.startsWith("SCREEN_TEXT:")
             }
             if (transientRequirement != null) {
