@@ -85,6 +85,7 @@ import kotlinx.coroutines.launch
 import com.halo.runtime.cognition.facts.RuntimeFactResolver
 import com.halo.runtime.cognition.facts.DefaultRuntimeFactResolver
 import com.halo.cognition.language.SystemFactIntent
+import com.halo.runtime.cognition.tools.ToolExposurePlanner
 import com.halo.runtime.cognition.tools.ToolResourceAcquisition
 import com.halo.runtime.cognition.tools.ToolResourceCoordinator
 import com.halo.sdk.runtime.resource.ResourceAcquireResult
@@ -109,6 +110,7 @@ class CognitiveSession(
     private val toolDiscovery: com.halo.runtime.cognition.tools.ToolDiscoveryService? = null,
     private val agentRunStore: com.halo.runtime.cognition.agent.AgentRunStore? = null,
     private val toolResourceCoordinator: ToolResourceCoordinator? = null,
+    private val toolExposurePlanner: ToolExposurePlanner? = null,
 ) {
     private val _state = MutableStateFlow<CognitiveSessionState>(CognitiveSessionState.Idle)
     val state: StateFlow<CognitiveSessionState> = _state.asStateFlow()
@@ -885,6 +887,7 @@ class CognitiveSession(
         try {
         var response = initialResponse
         var currentContext = initialContext
+        var currentExposure = toolExposurePlanner?.initialExposure()
         var round = 0
         var totalToolCalls = 0
         var hasUnconfirmedAction = false
@@ -1189,6 +1192,16 @@ class CognitiveSession(
                                 toolCallId = toolCall.id
                             )
                         )
+                        if (isDiscoveryCall && toolExposurePlanner != null) {
+                            val rawList = toolCall.arguments["toolIds"] as? List<*>
+                            val requestedToolIds = rawList?.filterIsInstance<String>() ?: emptyList()
+                            val activeExp = currentExposure ?: toolExposurePlanner.initialExposure()
+                            val newExposure = toolExposurePlanner.expand(activeExp, requestedToolIds)
+                            currentExposure = newExposure
+                            currentContext = currentContext.copy(
+                                availableTools = toolExposurePlanner.effectiveDefinitions(newExposure, toolDiscovery?.catalogueSummary().orEmpty())
+                            )
+                        }
                     }
 
                     is ToolExecutionResult.Rejected -> {

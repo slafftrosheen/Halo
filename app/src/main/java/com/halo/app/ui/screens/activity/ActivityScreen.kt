@@ -33,6 +33,7 @@ import androidx.lifecycle.viewModelScope
 import com.halo.app.ui.design.HaloScreenHeader
 import com.halo.app.ui.presence.HaloSignalGlyph
 import com.halo.app.ui.presence.HaloSignalKind
+import com.halo.app.ui.state.RuntimeUiFormatters
 import com.halo.sdk.runtime.RuntimeSnapshotSource
 import com.halo.sdk.runtime.TimelineEvent
 import java.time.format.DateTimeFormatter
@@ -45,6 +46,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import com.halo.runtime.cognition.agent.*
+import com.halo.sdk.runtime.resource.ResourceId
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 
@@ -278,7 +280,6 @@ private fun AgentRun.toStory(): ActivityStory {
         state == AgentRunState.COMPLETED -> ActivityStatus.SUCCESS
         else -> ActivityStatus.PENDING
     }
-    /* RUNTIME-019: semantic pending-task state for waiting runs (spec #69). */
     val pendingInput = steps.filterIsInstance<AgentStep.InputRequested>()
         .lastOrNull { requested -> steps.none { it is AgentStep.InputResolved && it.requestId == requested.requestId } }?.input
     val waitingLabel = when (pendingInput) {
@@ -286,35 +287,31 @@ private fun AgentRun.toStory(): ActivityStory {
         is com.halo.runtime.cognition.agent.AgentInputRequest.Clarification -> "Waiting for your answer: " + pendingInput.question
         null -> null
     }
-    return ActivityStory("agent:${id.value}", interactionId.value, ActivityKind.HALO, request,
-        listOfNotNull(waitingLabel ?: state.name, "UNKNOWN external completion".takeIf { hasUnknownAction }, failureReason).joinToString(" � "),
-        createdAt, status, steps.map { step ->
-            val message = when (step) {
-                is AgentStep.PlanCreated -> step.summary
-                is AgentStep.ClarificationRequested -> step.question
-                is AgentStep.ApprovalRequested -> step.action
-                is AgentStep.ToolRequested -> step.toolId
-                is AgentStep.ToolDispatched -> "${step.toolId}: dispatched"
-                is AgentStep.ToolInvocationPrepared -> "${step.toolId}: prepared"
-                is AgentStep.ToolExecutionClaimed -> "${step.toolId}: execution claimed"
-                is AgentStep.ToolOutcomeRecorded -> step.output
-                is AgentStep.InputRequested -> when (val input = step.input) {
-                    is com.halo.runtime.cognition.agent.AgentInputRequest.Approval -> input.action
-                    is com.halo.runtime.cognition.agent.AgentInputRequest.Clarification -> input.question
-                }
-                is AgentStep.InputResolved -> "Input resolved: ${step.resolution}"
-                is AgentStep.ProviderTurnStarted -> "Provider turn started"
-                is AgentStep.ProviderTurnCompleted -> step.assistantText.ifBlank { "Provider turn completed" }
-                is AgentStep.ContinuationPrepared -> "Continuation prepared"
-                is AgentStep.ResponseCommitted -> "Response committed"
-                is AgentStep.RunPrepared -> "Run prepared (${step.kind.name.lowercase()})"
-                is AgentStep.ToolCompleted -> step.resultSummary
-                is AgentStep.ToolFailed -> step.reason
-                is AgentStep.ResponseProduced -> step.text
-            }
-            ActivityStep("agent-step:${step.id.value}", step::class.java.simpleName, message,
-                step is AgentStep.ToolFailed || (step is AgentStep.ToolCompleted && !step.success))
-        })
+    val formattedState = RuntimeUiFormatters.formatRunState(state)
+    val summaryText = listOfNotNull(waitingLabel ?: formattedState, "Outcome unknown".takeIf { hasUnknownAction }, failureReason)
+        .filter { it.isNotBlank() }
+        .joinToString(" · ")
+
+    val activitySteps = steps.map { step ->
+        val title = RuntimeUiFormatters.formatStepTitle(step)
+        val message = when (step) {
+            is AgentStep.ToolExecutionClaimed -> "${step.toolId}: action started"
+            is AgentStep.ToolOutcomeRecorded -> "${step.toolId}: ${if (step.success) "completed" else "failed"} (${step.actionTruth.name.lowercase()})"
+            is AgentStep.ResourceBlocked -> "${step.toolId}: waiting for ${step.resourceIds.joinToString { RuntimeUiFormatters.formatResource(
+                ResourceId(it)
+            ) }}"
+            is AgentStep.ProviderTurnStarted -> "Provider turn started (${step.providerId})"
+            is AgentStep.ProviderTurnCompleted -> step.assistantText.ifBlank { "Provider turn completed" }
+            is AgentStep.InputRequested -> "Awaiting user input"
+            is AgentStep.InputResolved -> "User input resolved (${step.resolution})"
+            is AgentStep.ToolFailed -> "${step.toolId}: ${step.reason}"
+            is AgentStep.ToolCompleted -> "${step.toolId}: ${step.resultSummary}"
+            else -> step::class.simpleName ?: "Step"
+        }
+        ActivityStep(step.id.value, title, message, failed = step is AgentStep.ToolFailed || (step is AgentStep.ToolOutcomeRecorded && !step.success))
+    }
+
+    return ActivityStory("agent:${id.value}", interactionId.value, ActivityKind.HALO, request, summaryText, createdAt, status, activitySteps)
 }
 
 private val activityTimeFormatter = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())

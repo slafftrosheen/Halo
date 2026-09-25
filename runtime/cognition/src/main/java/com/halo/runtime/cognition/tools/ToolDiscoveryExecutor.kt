@@ -1,21 +1,13 @@
 package com.halo.runtime.cognition.tools
 
 import com.halo.sdk.provider.ToolCall
+import com.halo.sdk.provider.ToolDefinition
 
-/**
- * RUNTIME-017: executor for the discovery meta-tool.
- *
- * The model calls halo_discover_tools with tool ids; it receives the full schemas
- * for those tools as its tool-result text. This expands exposure for the current
- * interaction without mutating the global [ToolRegistry] or bypassing any
- * authorization gate: the expanded tools still go through skill/policy checks when
- * they are actually invoked.
- */
 class ToolDiscoveryExecutor(
     private val discovery: ToolDiscoveryService,
 ) : ToolExecutor {
 
-    override fun definitions(): List<com.halo.sdk.provider.ToolDefinition> =
+    override fun definitions(): List<ToolDefinition> =
         listOf(ToolDiscoveryService.discoveryToolDefinition())
 
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
@@ -31,27 +23,17 @@ class ToolDiscoveryExecutor(
             return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Expected at least one toolId")
         }
 
-        val schemas = discovery.expand(requested.filter { it != ToolDiscoveryService.DISCOVER_TOOL })
-        val unknown = requested.filter { candidate ->
-            discovery.expand(listOf(candidate)).none { it.name == candidate }
-        }
+        val expanded = discovery.expand(requested.filter { it != ToolDiscoveryService.DISCOVER_TOOL })
+        val availableNames = expanded.map { it.name }.toSet()
 
-        val body = schemas.joinToString("\n\n") { definition ->
-            buildString {
-                append("TOOL ").append(definition.name).append(": ").append(definition.description).append('\n')
-                append("parameters: ").append(definition.parameters.toString())
-            }
-        }
-        val message = buildString {
-            if (body.isEmpty()) {
-                append("No matching tools.")
-            } else {
-                append(body)
-            }
-            if (unknown.isNotEmpty()) {
-                append("\nUnrecognized or unavailable ids: ").append(unknown.joinToString())
-            }
-        }
-        return ToolExecutionResult.Success(toolCall.id, toolCall.functionName, message)
+        val availableList = requested.filter { it in availableNames }
+        val unavailableList = requested.filter { it !in availableNames }
+
+        val availableJson = availableList.joinToString(prefix = "[", postfix = "]") { "\"$it\"" }
+        val unavailableJson = unavailableList.joinToString(prefix = "[", postfix = "]") { "\"$it\"" }
+
+        val jsonResult = "{\"available\": $availableJson, \"unavailable\": $unavailableJson}"
+
+        return ToolExecutionResult.Success(toolCall.id, toolCall.functionName, jsonResult)
     }
 }

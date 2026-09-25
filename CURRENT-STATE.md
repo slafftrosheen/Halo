@@ -81,15 +81,26 @@ RUNTIME-020 source addition (2026-09-25): portable resource lease fabric landed 
 `runtime/kernel/.../resource/DefaultResourceLeaseManager` (atomic claim bundle acquisition,
 shared/exclusive collision matrix per `ResourceKey`, cooperative yield requests invoked outside
 manager lock, wait loop with coroutine cancellation safety, idempotent release, StateFlow
-snapshotting). Capabilities resolve into resource plans via `DeviceCapabilityResolver` (typed
-matching, explicit `CapabilityAffinity`, candidate ordering), `CapabilityResourceBinding`, and
-`ResourcePlanner`. Scoped resource leases are acquired centrally around tool execution via
-`ToolResourceCoordinator` and `CognitiveSession`, with resource blockage journaled as
-`AgentStep.ResourceBlocked` and run state transitioned to `WAITING_FOR_RESOURCE` (distinct from
-`WAITING_FOR_CAPABILITY`). `HaloAudioSessionCoordinator` and `NativeResourceCoordinator` bridge
-onto the generic resource manager. `LeasedStillImageSource` and `LeasedWirelessTransferCapability`
-provide device-neutral leased wrappers. `HeyCyanResourceArbiter` remains inside the driver.
-IMPLEMENTED / UNVALIDATED: no test, compile, or hardware validation in this pass.
+snapshotting).
+
+RUNTIME-020.1 source addition (2026-09-25): Runtime fabric integration and UI convergence pass.
+Discovered tool expansion converts `halo_discover_tools` calls into real callable provider schemas for
+subsequent turn execution (`ToolExposureSet` + `ToolExposurePlanner`), removing fake
+`halo_tool_catalogue` pseudo-tools and persisting exposure across recovery. `CapabilityCatalogue`
+exposes a live, observable `StateFlow<CapabilityCatalogueSnapshot>` with typed `CapabilityInstance`s.
+`AndroidCapabilityPublisher` refreshes host capabilities dynamically into `"host:primary"`.
+`RuntimeDeviceCapabilityBridge` connects saved/active devices into `CapabilityCatalogue` and implements
+`RuntimeDeviceSource` for live resource resolution in `ToolResourceCoordinator`. `ToolAvailabilityResolver`
+checks skill policies and capability availability before tool discovery and execution. `ToolDescriptor`
+declares explicit `ResourceRequirement`s. Resource arbitration in `DefaultResourceLeaseManager` uses
+owner-registered cooperative yield handlers; lease releases are non-blocking. Centralized UI formatting
+(`RuntimeUiFormatters`, `RuntimeUiProjection`) powers Home (durable waiting states, real route names),
+Activity (semantic step titles, resource blockage, human action truth), Skills (live capability
+availability, tool presentation titles, risk copy), Devices (generic host section, runtime capability
+chips, live active resource leases), and Settings → Runtime status screen (`RuntimeScreen`).
+`InteractionSurfaceRenderer` renders `COMPACT` mode inline cards inside `AssistantSurface` without
+`AlertDialog` popups overlaying the assistant screen.
+IMPLEMENTED / UNVALIDATED: no test or hardware validation performed in this pass.
 
 Additional recent source additions: The codebase now includes structured `AiFailureDetails`, provider retry/cooldown behavior, `LOCAL_ONLY` routing, unified error presentation, detailed interaction turn lifecycles, barge-in evidence tracking, observation freshness and supersession, explicit local-inference readiness/preload stages, latency tracing, HeyCyan arbitration and thumbnail decoding work, and significant `llama.cpp` runtime improvements. As with the rest of the file, these are present in code but not yet validated as physically accepted on real hardware.
 

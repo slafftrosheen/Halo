@@ -20,6 +20,7 @@ import com.halo.app.data.workspace.SendIntentHandler
 import com.halo.app.di.tools.HostTools
 import com.halo.app.di.tools.StorageStatusToolExecutor
 import com.halo.app.di.tools.WorkspaceToolExecutor
+import com.halo.app.embodiment.RuntimeDeviceCapabilityBridge
 import com.halo.app.models.FileModelCatalogCache
 import com.halo.app.models.HuggingFaceGgufCatalog
 
@@ -32,6 +33,7 @@ import com.halo.app.ui.screens.home.HomeViewModel
 import com.halo.app.ui.screens.notebook.NotebookViewModel
 import com.halo.app.ui.screens.settings.SettingsViewModel
 import com.halo.app.ui.screens.settings.VoiceSettingsViewModel
+import com.halo.app.ui.state.RuntimeUiProjection
 import com.halo.app.ui.theme.AppearancePreferences
 import com.halo.providers.sherpa.stt.ReloadableSpeechRecognitionProvider
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,7 +45,11 @@ import com.halo.runtime.cognition.device.DefaultDeviceCapabilityResolver
 import com.halo.runtime.cognition.device.DefaultResourcePlanner
 import com.halo.runtime.cognition.session.CognitiveSession
 import com.halo.runtime.cognition.skills.DefaultSkillRegistry
+import com.halo.runtime.cognition.tools.CapabilityCatalogue
 import com.halo.runtime.cognition.tools.CurrentTimeToolExecutor
+import com.halo.runtime.cognition.tools.ToolAvailabilityResolver
+import com.halo.runtime.cognition.tools.ToolDiscoveryService
+import com.halo.runtime.cognition.tools.ToolExposurePlanner
 import com.halo.runtime.cognition.tools.ToolResourceCoordinator
 import com.halo.runtime.kernel.HaloMicrokernel
 
@@ -252,15 +258,51 @@ object ManualDependencyGraph {
     val routineScheduler by lazy { com.halo.app.automation.AndroidRoutineScheduler(applicationContext, routineRepository, routineExecutor::validate) }
     val routinePresenceObserver by lazy { com.halo.app.automation.RoutinePresenceObserver(devicePresenceRepository, routineRepository, routineExecutor) }
     val routinesViewModel by lazy { com.halo.app.ui.screens.settings.RoutinesViewModel(routineRepository, routineScheduler, routineExecutor) }
-    /** RUNTIME-017: portable semantic capability catalogue, advertised by host/driver adapters. */
+    /** RUNTIME-017 / RUNTIME-020.1: portable semantic capability catalogue. */
     val capabilityCatalogue by lazy {
-        com.halo.runtime.cognition.tools.CapabilityCatalogue().also { catalogue ->
+        CapabilityCatalogue().also { catalogue ->
             hostGraph.capabilityPublisher.publishInto(catalogue)
         }
     }
 
-    val toolDiscovery: com.halo.runtime.cognition.tools.ToolDiscoveryService by lazy {
-        com.halo.runtime.cognition.tools.ToolDiscoveryService(toolRegistry, capabilityCatalogue)
+    val runtimeDeviceCapabilityBridge by lazy {
+        RuntimeDeviceCapabilityBridge(
+            registry = deviceRegistry,
+            sessions = deviceSessionManager,
+            catalogue = capabilityCatalogue,
+            scope = infra.scope
+        )
+    }
+
+    val toolAvailabilityResolver by lazy {
+        ToolAvailabilityResolver(
+            registry = toolRegistry,
+            skillRegistry = skillRegistry,
+            catalogueSource = capabilityCatalogue
+        )
+    }
+
+    val toolExposurePlanner by lazy {
+        ToolExposurePlanner(
+            registry = toolRegistry,
+            availabilityResolver = toolAvailabilityResolver
+        )
+    }
+
+    val runtimeUiProjection by lazy {
+        RuntimeUiProjection(
+            runStore = agentRunStore,
+            resourceLeaseManager = infra.resourceLeaseManager,
+            catalogueSource = capabilityCatalogue,
+            scope = infra.scope
+        )
+    }
+
+    val toolDiscovery: ToolDiscoveryService by lazy {
+        ToolDiscoveryService(
+            registry = toolRegistry,
+            availabilityResolver = toolAvailabilityResolver
+        )
     }
 
     val toolDiscoveryExecutor by lazy {
@@ -349,6 +391,7 @@ object ManualDependencyGraph {
             capabilityResolver = deviceCapabilityResolver,
             resourcePlanner = resourcePlanner,
             resourceLeaseManager = infra.resourceLeaseManager,
+            runtimeDeviceSource = runtimeDeviceCapabilityBridge,
         )
     }
     val cognitiveSession by lazy {
@@ -368,6 +411,7 @@ object ManualDependencyGraph {
             toolDiscovery = toolDiscovery,
             agentRunStore = agentRunStore,
             toolResourceCoordinator = toolResourceCoordinator,
+            toolExposurePlanner = toolExposurePlanner,
         )
     }
 

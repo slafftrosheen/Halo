@@ -52,6 +52,7 @@ import com.halo.app.ui.screens.notebook.NotebookNavigation
 import com.halo.app.ui.screens.notebook.NotebookScreen
 import com.halo.app.ui.screens.notebook.WorkspaceObjectDetailScreen
 import com.halo.app.ui.screens.settings.IntelligenceScreen
+import com.halo.app.ui.screens.settings.RuntimeScreen
 import com.halo.app.ui.screens.settings.SettingsScreen
 import com.halo.app.ui.screens.settings.SkillsScreen
 import com.halo.app.ui.screens.settings.VoiceSettingsScreen
@@ -245,6 +246,14 @@ fun AppShell(
                 composable("skills") {
                     SkillsScreen(
                         skillRegistry = ManualDependencyGraph.skillRegistry,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+
+                composable("runtime_status") {
+                    RuntimeScreen(
+                        projection = ManualDependencyGraph.runtimeUiProjection,
+                        catalogueSource = ManualDependencyGraph.capabilityCatalogue,
                         onBack = { navController.popBackStack() }
                     )
                 }

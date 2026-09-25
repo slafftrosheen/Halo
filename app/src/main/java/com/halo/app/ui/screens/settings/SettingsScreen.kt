@@ -158,6 +158,14 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             onClick = viewModel::openAutomation
         )
 
+        SettingsRow(
+            icon = Icons.Default.Info,
+            tint = HaloPastelBlue,
+            title = "Runtime Status",
+            subtitle = "Tasks, capabilities & resources",
+            onClick = viewModel::openRuntimeStatus
+        )
+
         Spacer(Modifier.height(18.dp))
 
         Row(

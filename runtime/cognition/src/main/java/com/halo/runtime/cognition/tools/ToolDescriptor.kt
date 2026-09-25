@@ -1,6 +1,9 @@
 package com.halo.runtime.cognition.tools
 
+import com.halo.runtime.cognition.device.CapabilityAffinity
 import com.halo.sdk.provider.ToolDefinition
+import com.halo.sdk.runtime.resource.ResourceAccess
+import com.halo.sdk.runtime.resource.ResourceId
 
 /**
  * RUNTIME-017 portable tool fabric.
@@ -38,7 +41,10 @@ enum class ToolCategory {
 
 /** Whether the tool participates in discovery and default exposure. */
 enum class ToolVisibility {
-    /** Ordinary discovery candidate. */
+    /** Included in default bootstrap prompt exposure. */
+    BOOTSTRAP,
+
+    /** Ordinary discovery candidate via halo_discover_tools. */
     DISCOVERABLE,
 
     /** Never listed to models; callable only by explicit runtime wiring. */
@@ -193,6 +199,12 @@ data class ToolPresentation(
     val sensitiveArguments: Set<String> = emptySet(),
 )
 
+data class ResourceRequirement(
+    val resourceId: ResourceId,
+    val access: ResourceAccess = ResourceAccess.EXCLUSIVE,
+    val affinity: CapabilityAffinity = CapabilityAffinity.ANY,
+)
+
 data class ToolDescriptor(
     val id: ToolId,
     val definition: ToolDefinition,
@@ -202,6 +214,7 @@ data class ToolDescriptor(
     val visibility: ToolVisibility = ToolVisibility.DISCOVERABLE,
     val dependencies: Set<ToolId> = emptySet(),
     val requirements: Set<ToolRequirement> = emptySet(),
+    val resources: Set<ResourceRequirement> = emptySet(),
     val security: ToolSecurityPolicy = ToolSecurityPolicy.READ_ONLY,
     val execution: ToolExecutionPolicy = ToolExecutionPolicy(),
     val presentation: ToolPresentation? = null,

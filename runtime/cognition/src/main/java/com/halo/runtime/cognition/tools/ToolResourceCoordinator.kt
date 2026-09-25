@@ -31,16 +31,20 @@ class ToolResourceCoordinator(
     private val capabilityResolver: DeviceCapabilityResolver,
     private val resourcePlanner: ResourcePlanner,
     private val resourceLeaseManager: ResourceLeaseManager,
+    private val runtimeDeviceSource: RuntimeDeviceSource? = null,
 ) {
 
     suspend fun prepareAndAcquire(
         descriptor: ToolDescriptor,
         holder: ResourceHolder,
-        availableDevices: List<RuntimeDevice>,
+        availableDevices: List<RuntimeDevice> = emptyList(),
         waitPolicy: ResourceWaitPolicy = ResourceWaitPolicy.FailFast,
         yieldHandler: ResourceYieldHandler? = null,
     ): ToolResourceAcquisition {
-        val capRequirements = descriptor.requirements
+        val devicesToUse = availableDevices.ifEmpty { runtimeDeviceSource?.devices?.value.orEmpty() }
+
+        // 1. Device capability requirements from descriptor
+        val deviceCapRequirements = descriptor.requirements
             .filterIsInstance<ToolRequirement.Capability>()
             .map { toolCap ->
                 CapabilityRequirement(
@@ -50,28 +54,30 @@ class ToolResourceCoordinator(
                 )
             }
 
-        val inferredKind = inferCapabilityKindForTool(descriptor.name)
-        val allCapRequirements = if (inferredKind != null && capRequirements.none { it.capabilityKind == inferredKind }) {
-            capRequirements + CapabilityRequirement(capabilityKind = inferredKind, affinity = CapabilityAffinity.ANY)
-        } else {
-            capRequirements
+        // 2. Resolve endpoint device capabilities
+        val resolutions = deviceCapRequirements.map { req ->
+            capabilityResolver.resolve(req, devicesToUse)
         }
 
-        val resolutions = allCapRequirements.map { req ->
-            capabilityResolver.resolve(req, availableDevices)
-        }
-
-        val missing = resolutions.filter { it.selectedDevice == null }
+        val missing = resolutions.filter { it.selectedDevice == null && !it.requirement.capabilityKind.startsWith("host.") && !it.requirement.capabilityKind.startsWith("workspace.") }
         if (missing.isNotEmpty()) {
             return ToolResourceAcquisition.CapabilityMissing(missing.map { it.requirement })
         }
 
-        val resourcePlan = resourcePlanner.plan(resolutions)
+        // 3. Plan resources: combine explicit descriptor resource requirements + device cap resources
+        val basePlan = resourcePlanner.plan(resolutions)
+        val explicitClaims = descriptor.resources.map { req ->
+            ResourceClaim(
+                key = ResourceKey(req.resourceId, ResourceEndpointId("host:primary")),
+                access = req.access,
+            )
+        }
+        val allClaims = basePlan.claims + explicitClaims
 
         val leaseRequest = ResourceLeaseRequest(
             requestId = "tool:${holder.toolInvocationId ?: holder.id}",
             holder = holder,
-            claims = resourcePlan.claims,
+            claims = allClaims,
             priority = ResourcePriority.INTERACTIVE,
             waitPolicy = waitPolicy,
             preemption = ResourcePreemptionPolicy.COOPERATIVE,
@@ -80,11 +86,11 @@ class ToolResourceCoordinator(
         val toolPlan = ToolResourcePlan(
             descriptor = descriptor,
             capabilityResolutions = resolutions,
-            resourcePlan = resourcePlan,
+            resourcePlan = basePlan.copy(claims = allClaims),
             leaseRequest = leaseRequest,
         )
 
-        if (resourcePlan.claims.isEmpty()) {
+        if (allClaims.isEmpty()) {
             val emptyLease = NoOpResourceLease(leaseRequest)
             return ToolResourceAcquisition.Granted(emptyLease, toolPlan)
         }
@@ -92,17 +98,6 @@ class ToolResourceCoordinator(
         return when (val acquireResult = resourceLeaseManager.acquire(leaseRequest, yieldHandler)) {
             is ResourceAcquireResult.Granted -> ToolResourceAcquisition.Granted(acquireResult.lease, toolPlan)
             else -> ToolResourceAcquisition.Blocked(toolPlan, acquireResult)
-        }
-    }
-
-    private fun inferCapabilityKindForTool(toolName: String): String? {
-        val lower = toolName.lowercase()
-        return when {
-            lower.contains("capture") || lower.contains("photo") || lower.contains("camera") -> "camera.sensor"
-            lower.contains("audio_input") || lower.contains("microphone") -> "audio.input"
-            lower.contains("speech_output") || lower.contains("tts") -> "audio.output"
-            lower.contains("media_transfer") || lower.contains("sync_media") -> "media.transfer"
-            else -> null
         }
     }
 

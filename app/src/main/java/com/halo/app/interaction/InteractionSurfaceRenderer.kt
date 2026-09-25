@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -26,15 +27,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.halo.app.ui.presence.HaloSignalGlyph
 import com.halo.app.ui.presence.HaloSignalKind
+import com.halo.runtime.cognition.agent.TemporalInputMode
 import com.halo.runtime.cognition.interaction.InteractionAction
 import com.halo.runtime.cognition.interaction.InteractionActionSemantic
 import com.halo.runtime.cognition.interaction.InteractionContent
 import com.halo.runtime.cognition.interaction.InteractionResponse
 import com.halo.runtime.cognition.interaction.InteractionRiskLevel
 import com.halo.runtime.cognition.interaction.InteractionSurface
+import com.halo.runtime.cognition.interaction.TemporalInputValue
 
 /**
  * Host presentation hint — Android UI layer concept, deliberately NOT part of
@@ -71,7 +75,7 @@ fun InteractionSurfaceRenderer(
     }
 }
 
-/** Human-readable risk copy; never raw enum names (spec #86). */
+/** Human-readable risk copy; never raw enum names. */
 private fun riskCopy(risk: InteractionRiskLevel): String = when (risk) {
     InteractionRiskLevel.READ_ONLY -> "This only reads information."
     InteractionRiskLevel.REVERSIBLE -> "You can undo this afterwards."
@@ -87,6 +91,35 @@ private fun HaloConfirmationSurface(
     onRespond: (InteractionResponse) -> Unit,
     mode: SurfaceRenderMode,
 ) {
+    if (mode == SurfaceRenderMode.COMPACT) {
+        Card(
+            modifier = Modifier.fillMaxWidth().padding(4.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        ) {
+            Column(modifier = Modifier.padding(12.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    HaloSignalGlyph(kind = HaloSignalKind.ACTION, size = 20.dp)
+                    Spacer(Modifier.padding(start = 8.dp))
+                    Text(content.subject, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleMedium)
+                }
+                content.detail?.let {
+                    Spacer(Modifier.height(4.dp))
+                    Text(it, style = MaterialTheme.typography.bodySmall)
+                }
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = { onRespond(InteractionResponse.Denied(surface.id)) }) {
+                        Text(actionLabel(surface, InteractionActionSemantic.DENY) ?: "Deny")
+                    }
+                    Spacer(Modifier.padding(start = 8.dp))
+                    TextButton(onClick = { onRespond(InteractionResponse.Confirmed(surface.id)) }) {
+                        Text(actionLabel(surface, InteractionActionSemantic.CONFIRM) ?: "Approve")
+                    }
+                }
+            }
+        }
+        return
+    }
+
     AlertDialog(
         onDismissRequest = { onRespond(InteractionResponse.Dismissed(surface.id)) },
         title = {
@@ -130,6 +163,46 @@ private fun HaloChoiceSurface(
     mode: SurfaceRenderMode,
 ) {
     var selected by remember(surface.id) { mutableStateOf(setOf<String>()) }
+
+    if (mode == SurfaceRenderMode.COMPACT) {
+        Card(
+            modifier = Modifier.fillMaxWidth().padding(4.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        ) {
+            Column(modifier = Modifier.padding(12.dp)) {
+                Text(content.prompt, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.height(8.dp))
+                content.options.take(4).forEach { option ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)
+                    ) {
+                        Checkbox(
+                            checked = option.id in selected,
+                            onCheckedChange = { checked ->
+                                selected = if (content.allowMultiple) {
+                                    if (checked) selected + option.id else selected - option.id
+                                } else {
+                                    setOf(option.id)
+                                }
+                            }
+                        )
+                        Text(option.label, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = { onRespond(InteractionResponse.Cancelled(surface.id)) }) { Text("Cancel") }
+                    Spacer(Modifier.padding(start = 8.dp))
+                    TextButton(
+                        onClick = { onRespond(InteractionResponse.ChoiceSelected(surface.id, selected)) },
+                        enabled = selected.isNotEmpty()
+                    ) { Text(actionLabel(surface, InteractionActionSemantic.SUBMIT) ?: "Done") }
+                }
+            }
+        }
+        return
+    }
+
     AlertDialog(
         onDismissRequest = { onRespond(InteractionResponse.Dismissed(surface.id)) },
         title = { Text(content.prompt, fontWeight = FontWeight.SemiBold) },
@@ -142,7 +215,7 @@ private fun HaloChoiceSurface(
                             .fillMaxWidth()
                             .padding(vertical = 4.dp),
                     ) {
-                        androidx.compose.material3.Checkbox(
+                        Checkbox(
                             checked = option.id in selected,
                             onCheckedChange = { checked ->
                                 selected = if (content.allowMultiple) {
@@ -183,6 +256,35 @@ private fun HaloTextInputSurface(
     mode: SurfaceRenderMode,
 ) {
     var value by remember(surface.id) { mutableStateOf(content.initialValue.orEmpty()) }
+
+    if (mode == SurfaceRenderMode.COMPACT) {
+        Card(
+            modifier = Modifier.fillMaxWidth().padding(4.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        ) {
+            Column(modifier = Modifier.padding(12.dp)) {
+                Text(content.prompt, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = value,
+                    onValueChange = { value = it },
+                    placeholder = { content.placeholder?.let { Text(it) } },
+                    singleLine = content.constraints.singleLine,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = { onRespond(InteractionResponse.Cancelled(surface.id)) }) { Text("Cancel") }
+                    Spacer(Modifier.padding(start = 8.dp))
+                    TextButton(
+                        onClick = { onRespond(InteractionResponse.TextSubmitted(surface.id, value)) },
+                        enabled = value.length >= content.constraints.minLength
+                    ) { Text(actionLabel(surface, InteractionActionSemantic.SUBMIT) ?: "Submit") }
+                }
+            }
+        }
+        return
+    }
+
     AlertDialog(
         onDismissRequest = { onRespond(InteractionResponse.Dismissed(surface.id)) },
         title = { Text(content.prompt, fontWeight = FontWeight.SemiBold) },
@@ -195,7 +297,7 @@ private fun HaloTextInputSurface(
                 visualTransformation = if (content.constraints.sensitive) {
                     PasswordVisualTransformation()
                 } else {
-                    androidx.compose.ui.text.input.VisualTransformation.None
+                    VisualTransformation.None
                 },
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -220,6 +322,38 @@ private fun HaloTemporalSurface(
     mode: SurfaceRenderMode,
 ) {
     var value by remember(surface.id) { mutableStateOf(content.initial?.let { initialText(it) }.orEmpty()) }
+
+    if (mode == SurfaceRenderMode.COMPACT) {
+        Card(
+            modifier = Modifier.fillMaxWidth().padding(4.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        ) {
+            Column(modifier = Modifier.padding(12.dp)) {
+                Text(content.prompt, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = value,
+                    onValueChange = { value = it },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = { onRespond(InteractionResponse.Cancelled(surface.id)) }) { Text("Cancel") }
+                    Spacer(Modifier.padding(start = 8.dp))
+                    TextButton(
+                        onClick = {
+                            parseTemporal(value, content.mode)?.let {
+                                onRespond(InteractionResponse.TemporalSubmitted(surface.id, it))
+                            }
+                        },
+                        enabled = parseTemporal(value, content.mode) != null
+                    ) { Text(actionLabel(surface, InteractionActionSemantic.SUBMIT) ?: "Set") }
+                }
+            }
+        }
+        return
+    }
+
     AlertDialog(
         onDismissRequest = { onRespond(InteractionResponse.Dismissed(surface.id)) },
         title = { Text(content.prompt, fontWeight = FontWeight.SemiBold) },
@@ -231,9 +365,9 @@ private fun HaloTemporalSurface(
                     label = {
                         Text(
                             when (content.mode) {
-                                com.halo.runtime.cognition.agent.TemporalInputMode.DATE -> "Date (YYYY-MM-DD)"
-                                com.halo.runtime.cognition.agent.TemporalInputMode.TIME -> "Time (HH:MM)"
-                                com.halo.runtime.cognition.agent.TemporalInputMode.DATE_TIME -> "Date & time"
+                                TemporalInputMode.DATE -> "Date (YYYY-MM-DD)"
+                                TemporalInputMode.TIME -> "Time (HH:MM)"
+                                TemporalInputMode.DATE_TIME -> "Date & time"
                             }
                         )
                     },
@@ -264,10 +398,6 @@ private fun HaloTemporalSurface(
     )
 }
 
-/**
- * Host file-selection entry: launches the native picker through the adapter
- * (spec #58) instead of rendering its own browser.
- */
 @Composable
 private fun HaloFileSelectionSurface(
     surface: InteractionSurface,
@@ -282,6 +412,26 @@ private fun HaloFileSelectionSurface(
             onRespond(InteractionResponse.FilesSelected(surface.id, references))
         },
     )
+
+    if (mode == SurfaceRenderMode.COMPACT) {
+        Card(
+            modifier = Modifier.fillMaxWidth().padding(4.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        ) {
+            Column(modifier = Modifier.padding(12.dp)) {
+                Text(content.prompt, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.height(4.dp))
+                Text("Open Halo app to select files.", style = MaterialTheme.typography.bodySmall)
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = { onRespond(InteractionResponse.Dismissed(surface.id)) }) { Text("Later") }
+                    Spacer(Modifier.padding(start = 8.dp))
+                    TextButton(onClick = { picker() }) { Text("Choose") }
+                }
+            }
+        }
+        return
+    }
+
     AlertDialog(
         onDismissRequest = { onRespond(InteractionResponse.Dismissed(surface.id)) },
         title = { Text(content.prompt, fontWeight = FontWeight.SemiBold) },
@@ -305,24 +455,17 @@ private fun HaloProgressSurface(
     content: InteractionContent.Progress,
     onRespond: (InteractionResponse) -> Unit,
     mode: SurfaceRenderMode,
-    modifier: Modifier = Modifier,
 ) {
-    Surface(
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        modifier = modifier.fillMaxWidth(),
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(12.dp),
     ) {
         Column(Modifier.padding(16.dp)) {
-            Text(content.label, fontWeight = FontWeight.SemiBold)
-            content.detail?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+            Text(content.phase.name, style = MaterialTheme.typography.labelSmall)
+            Spacer(Modifier.height(4.dp))
+            Text(content.label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
             Spacer(Modifier.height(8.dp))
-            content.progress?.let {
-                LinearProgressIndicator(progress = { it }, modifier = Modifier.fillMaxWidth())
-            } ?: LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-            if (content.cancellable) {
-                Spacer(Modifier.height(8.dp))
-                TextButton(onClick = { onRespond(InteractionResponse.Cancelled(surface.id)) }) { Text("Stop") }
-            }
+            LinearProgressIndicator(Modifier.fillMaxWidth())
         }
     }
 }
@@ -333,26 +476,16 @@ private fun HaloResultSurface(
     content: InteractionContent.Result,
     onRespond: (InteractionResponse) -> Unit,
     mode: SurfaceRenderMode,
-    modifier: Modifier = Modifier,
 ) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        modifier = modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(12.dp),
     ) {
         Column(Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                HaloSignalGlyph(kind = HaloSignalKind.ACTION, size = 20.dp)
-                Spacer(Modifier.padding(start = 8.dp))
-                Text(content.headline, fontWeight = FontWeight.SemiBold)
-            }
-            content.detail?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
-            content.truth?.let { truth ->
+            Text(content.headline, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+            content.detail?.let {
                 Spacer(Modifier.height(4.dp))
-                Text(
-                    text = truthCopy(truth),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Text(it, style = MaterialTheme.typography.bodySmall)
             }
         }
     }
@@ -364,57 +497,44 @@ private fun HaloErrorSurface(
     content: InteractionContent.Error,
     onRespond: (InteractionResponse) -> Unit,
     mode: SurfaceRenderMode,
-    modifier: Modifier = Modifier,
 ) {
-    Surface(
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.errorContainer,
-        modifier = modifier.fillMaxWidth(),
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+        shape = RoundedCornerShape(12.dp),
     ) {
         Column(Modifier.padding(16.dp)) {
-            Text(content.headline, fontWeight = FontWeight.SemiBold)
+            Text(content.headline, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(4.dp))
             Text(content.detail, style = MaterialTheme.typography.bodySmall)
         }
     }
 }
 
-/** Neutral action-truth copy; UNKNOWN stays visibly unknown (spec #46). */
-private fun truthCopy(truth: com.halo.runtime.cognition.agent.ActionTruth): String = when (truth) {
-    com.halo.runtime.cognition.agent.ActionTruth.PROPOSED -> "Proposed — not yet executed"
-    com.halo.runtime.cognition.agent.ActionTruth.AUTHORIZED -> "Approved — not yet dispatched"
-    com.halo.runtime.cognition.agent.ActionTruth.DISPATCHED -> "Sent to the device or service"
-    com.halo.runtime.cognition.agent.ActionTruth.ACKNOWLEDGED -> "Acknowledged by the device or service"
-    com.halo.runtime.cognition.agent.ActionTruth.CONFIRMED -> "Confirmed complete"
-    com.halo.runtime.cognition.agent.ActionTruth.UNKNOWN -> "Outcome unknown — Halo will not repeat it automatically"
-    com.halo.runtime.cognition.agent.ActionTruth.FAILED -> "The action failed"
-}
-
 private fun actionLabel(surface: InteractionSurface, semantic: InteractionActionSemantic): String? =
     surface.actions.firstOrNull { it.semantic == semantic }?.label
 
-private fun initialText(value: com.halo.runtime.cognition.interaction.TemporalInputValue): String = when (value) {
-    is com.halo.runtime.cognition.interaction.TemporalInputValue.InstantValue -> value.instant.toString()
-    is com.halo.runtime.cognition.interaction.TemporalInputValue.LocalDateValue -> value.date.toString()
-    is com.halo.runtime.cognition.interaction.TemporalInputValue.LocalTimeValue -> value.time.toString()
-    is com.halo.runtime.cognition.interaction.TemporalInputValue.DateTimeValue -> "${value.date}T${value.time}"
+private fun initialText(initial: TemporalInputValue): String = when (initial) {
+    is TemporalInputValue.LocalDateValue -> initial.date.toString()
+    is TemporalInputValue.LocalTimeValue -> initial.time.toString()
+    is TemporalInputValue.DateTimeValue -> "${initial.date} ${initial.time}"
+    is TemporalInputValue.InstantValue -> initial.instant.toString()
 }
 
-/** Minimal host-side parse; semantic value still validated by Runtime. */
-private fun parseTemporal(text: String, mode: com.halo.runtime.cognition.agent.TemporalInputMode): com.halo.runtime.cognition.interaction.TemporalInputValue? {
-    val trimmed = text.trim()
+private fun parseTemporal(
+    input: String,
+    mode: TemporalInputMode
+): com.halo.runtime.cognition.interaction.TemporalInputValue? {
+    val trimmed = input.trim()
+    if (trimmed.isBlank()) return null
     return runCatching {
         when (mode) {
-            com.halo.runtime.cognition.agent.TemporalInputMode.DATE ->
-                com.halo.runtime.cognition.interaction.TemporalInputValue.LocalDateValue(
-                    java.time.LocalDate.parse(trimmed))
-            com.halo.runtime.cognition.agent.TemporalInputMode.TIME ->
-                com.halo.runtime.cognition.interaction.TemporalInputValue.LocalTimeValue(
-                    java.time.LocalTime.parse(trimmed))
-            com.halo.runtime.cognition.agent.TemporalInputMode.DATE_TIME -> {
-                val parts = trimmed.split('T', ' ', limit = 2)
-                com.halo.runtime.cognition.interaction.TemporalInputValue.DateTimeValue(
-                    java.time.LocalDate.parse(parts[0]), java.time.LocalTime.parse(parts[1]))
-            }
+            TemporalInputMode.DATE ->
+                com.halo.runtime.cognition.interaction.TemporalInputValue.LocalDateValue(java.time.LocalDate.parse(trimmed))
+            TemporalInputMode.TIME ->
+                com.halo.runtime.cognition.interaction.TemporalInputValue.LocalTimeValue(java.time.LocalTime.parse(trimmed))
+            TemporalInputMode.DATE_TIME ->
+                com.halo.runtime.cognition.interaction.TemporalInputValue.InstantValue(java.time.Instant.parse(trimmed))
         }
     }.getOrNull()
 }

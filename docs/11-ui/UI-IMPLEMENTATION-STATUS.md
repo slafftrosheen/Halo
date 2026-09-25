@@ -18,6 +18,7 @@ Route/source presence is not interaction, visual or accessibility acceptance.
 | voice_settings | VoiceSettingsScreen |
 | permissions | PermissionsScreen |
 | discovery | PairingScreen |
+| runtime_status | RuntimeScreen |
 
 Notebook now has a persistent NB-01 notes route with quick creation, local lexical search,
 Inbox/archive/trash views and an autosaving plain-text/Markdown editor with recovery drafts.
