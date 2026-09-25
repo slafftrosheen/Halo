@@ -284,21 +284,104 @@ class CognitiveSession(
         responseDelivery: ResponseDelivery,
     ) {
         scope.launch {
-            val key = if (useOriginalIdempotencyKey) invocation.idempotencyKey
-            else com.halo.runtime.cognition.agent.ToolInvocation.idempotencyKey(
-                runId, invocation.toolCallId, invocation.toolId, invocation.argumentsDigest)
-            agentRunCoordinator?.recordStep(
-                AgentStep.ToolExecutionClaimed(AgentStepId(UUID.randomUUID().toString()), runId, Instant.now(),
-                    invocation.invocationId, invocation.toolCallId, invocation.toolId.value, key,
-                    invocation.replaySafety.name)
-            )
             val arguments: Map<String, Any> = runCatching {
                 ToolArgumentCanonicalizer.parseToArgumentsMap(invocation.argumentsJson)
-            }.getOrElse { emptyMap() }.filterValues { it != null }.mapValues { it.value!! }
-            val call = com.halo.sdk.provider.ToolCall(invocation.toolCallId, invocation.toolId.value, arguments)
-            val result = toolRegistry?.executeAuthorized(ToolAuthorization.Authorized(call))
+            }.getOrElse { emptyMap() }
+                .filterValues { it != null }
+                .mapValues { it.value!! }
+
+            val call = com.halo.sdk.provider.ToolCall(
+                invocation.toolCallId,
+                invocation.toolId.value,
+                arguments,
+            )
+            val descriptor = toolRegistry?.descriptor(invocation.toolId.value)
+
+            if (descriptor != null) {
+                when (val availability = toolAvailabilityResolver?.checkAvailability(descriptor)) {
+                    is com.halo.runtime.cognition.tools.ToolAvailability.MissingCapabilities -> {
+                        agentRunCoordinator?.transition(
+                            runId,
+                            AgentRunState.WAITING_FOR_CAPABILITY,
+                            "Missing capabilities: " + availability.missing.joinToString { it.value },
+                        )
+                        return@launch
+                    }
+                    is com.halo.runtime.cognition.tools.ToolAvailability.Disabled,
+                    is com.halo.runtime.cognition.tools.ToolAvailability.Degraded -> {
+                        agentRunCoordinator?.transition(
+                            runId,
+                            AgentRunState.INTERRUPTED,
+                            "Tool is no longer available for safe recovery",
+                        )
+                        return@launch
+                    }
+                    else -> Unit
+                }
+            }
+
+            var lease: ResourceLease? = null
+            val result = try {
+                if (descriptor != null && toolResourceCoordinator != null) {
+                    val holder = ResourceHolder(
+                        id = invocation.invocationId.value,
+                        interactionId = interactionId.value,
+                        runId = runId.value,
+                        toolInvocationId = invocation.invocationId.value,
+                        kind = ResourceHolderKind.TOOL,
+                    )
+                    when (val acquisition = toolResourceCoordinator.prepareAndAcquire(descriptor, holder)) {
+                        is ToolResourceAcquisition.Granted -> {
+                            lease = acquisition.lease
+                            // This invocation is already durably claimed. Replaying it is
+                            // permitted only because the RecoveryPlanner selected RetryTool
+                            // from the persisted replay policy.
+                            toolRegistry.executeAuthorized(ToolAuthorization.Authorized(call))
+                        }
+
+                        is ToolResourceAcquisition.Blocked -> {
+                            agentRunCoordinator?.recordStep(
+                                AgentStep.ResourceBlocked(
+                                    id = newStepId(),
+                                    runId = runId,
+                                    createdAt = Instant.now(),
+                                    invocationId = invocation.invocationId,
+                                    toolId = invocation.toolId.value,
+                                    resourceIds = acquisition.plan.resourcePlan.claims.map {
+                                        it.key.resourceId.value
+                                    },
+                                    endpointIds = acquisition.plan.resourcePlan.claims.map {
+                                        it.key.endpointId.value
+                                    },
+                                    blockingLeaseIds = (acquisition.acquireResult as? ResourceAcquireResult.Busy)
+                                        ?.conflicts?.map { it.heldLeaseId.value }.orEmpty(),
+                                )
+                            )
+                            agentRunCoordinator?.transition(
+                                runId,
+                                AgentRunState.WAITING_FOR_RESOURCE,
+                                "Required resource is currently busy",
+                            )
+                            return@launch
+                        }
+
+                        is ToolResourceAcquisition.CapabilityMissing -> {
+                            agentRunCoordinator?.transition(
+                                runId,
+                                AgentRunState.WAITING_FOR_CAPABILITY,
+                                "Required device capability is unavailable",
+                            )
+                            return@launch
+                        }
+                    }
+                } else {
+                    toolRegistry?.executeAuthorized(ToolAuthorization.Authorized(call))
+                }
+            } finally {
+                lease?.release()
+            }
+
             recordToolOutcome(runId, invocation, result)
-            // Outcome is journaled; provider continuation follows the normal submit path.
             resumeProviderTurn(runId, interactionId, responseDelivery)
         }
     }
