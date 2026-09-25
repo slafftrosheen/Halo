@@ -168,6 +168,9 @@ data class ToolCallRejected(
     val toolCallId: String,
     val toolId: String,
     val reason: String,
+    val reasonCode: String? = null,
+    val retryable: Boolean? = null,
+    val requiresUserAction: Boolean? = null,
     override val timestamp: Long = System.currentTimeMillis()
 ) : HaloEvent
 

@@ -19,7 +19,7 @@ import java.util.UUID
 /**
  * RUNTIME-018: Room adapter for the durable execution journal.
  *
- * New journal step types use step schemaVersion 4. Historical versions (<=3)
+ * New journal step types use step schemaVersion 5. Historical versions (<=4)
  * decode unchanged; unknown newer versions decode as conservative legacy
  * evidence without inventing fields. `ToolDispatched` decodes as the legacy
  * claim it always was.
@@ -34,6 +34,18 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
 
     override suspend fun claimResume(runId: AgentRunId, expectedState: AgentRunState): Boolean =
         dao.claimResume(runId.value, expectedState.name, System.currentTimeMillis()) == 1
+
+    override suspend fun claimRecovery(
+        runId: AgentRunId,
+        expectedState: AgentRunState,
+        claim: AgentStep.RecoveryClaimed,
+    ): Boolean = db.withTransaction {
+        if (dao.claimResume(runId.value, expectedState.name, System.currentTimeMillis()) != 1) {
+            return@withTransaction false
+        }
+        check(appendStep(claim)) { "Recovery claim fingerprint already exists" }
+        true
+    }
 
     /**
      * RUNTIME-019: atomic first-wins input resolution. A single Room
@@ -88,26 +100,28 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
     override suspend fun appendStep(step: AgentStep): Boolean = db.withTransaction {
         val row = requireNotNull(dao.get(step.runId.value)) { "Run does not exist" }
         check(!row.toDomain().state.isTerminal) { "Run is terminal" }
+        val (payload, type) = payloadFor(step)
         val key = when (step) {
             is AgentStep.ToolDispatched -> step.idempotencyKey
             is AgentStep.ToolExecutionClaimed -> step.idempotencyKey
             is AgentStep.ToolInvocationPrepared -> step.idempotencyKey
             else -> null
         }
-        if (row.steps.any { it.id == step.id.value } || (key != null && dao.countDispatchKey(key) > 0)) {
+        if (row.steps.any { it.id == step.id.value } ||
+            (key != null && dao.countIdempotencyKeyForType(key, type) > 0)
+        ) {
             return@withTransaction false
         }
-        val (payload, type) = payloadFor(step)
         val truth = when (step) {
             is AgentStep.ToolDispatched -> ActionTruth.DISPATCHED
             is AgentStep.ToolExecutionClaimed -> ActionTruth.AUTHORIZED
             is AgentStep.ToolOutcomeRecorded -> step.actionTruth
             is AgentStep.ToolCompleted -> step.actionTruth
-            is AgentStep.ToolFailed -> ActionTruth.FAILED
+            is AgentStep.ToolFailed, is AgentStep.ToolRejected -> ActionTruth.FAILED
             else -> ActionTruth.PROPOSED
         }
         val completedAt = step.createdAt.toEpochMilli().takeIf {
-            step is AgentStep.ToolCompleted || step is AgentStep.ToolFailed ||
+            step is AgentStep.ToolCompleted || step is AgentStep.ToolFailed || step is AgentStep.ToolRejected ||
                 step is AgentStep.ToolOutcomeRecorded || step is AgentStep.ResponseProduced ||
                 step is AgentStep.ProviderTurnCompleted || step is AgentStep.ResponseCommitted
         }
@@ -176,6 +190,13 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
                     .put("actionTruth", step.actionTruth.name).put("failureKind", step.failureKind ?: "")
                 "ToolOutcomeRecorded"
             }
+            is AgentStep.ToolRejected -> {
+                payload.put("toolCallId", step.toolCallId).put("toolId", step.toolId)
+                    .put("reasonCode", step.reasonCode.name).put("reason", step.reason)
+                    .put("retryable", step.retryable).put("requiresUserAction", step.requiresUserAction)
+                    .put("modelResult", step.modelResult)
+                "ToolRejected"
+            }
             is AgentStep.InputRequested -> {
                 val input = when (val req = step.input) {
                     is AgentInputRequest.Approval -> JSONObject().put("inputType", "APPROVAL")
@@ -208,7 +229,7 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
                 "ResponseCommitted"
             }
             is AgentStep.RecoveryClaimed -> {
-                payload.put("planKind", step.planKind)
+                payload.put("planKind", step.planKind).put("evidenceStepId", step.evidenceStepId ?: "")
                 "RecoveryClaimed"
             }
         }
@@ -307,6 +328,12 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
                 ToolInvocationId(p.getString("invocationId")), call, tool, p.getBoolean("success"),
                 p.optString("output"), runCatching { ActionTruth.valueOf(p.getString("actionTruth")) }.getOrDefault(ActionTruth.UNKNOWN),
                 p.optString("failureKind").ifBlank { null })
+            "ToolRejected" -> AgentStep.ToolRejected(
+                step, run, at, call, tool,
+                runCatching { ToolRejectionCode.valueOf(p.optString("reasonCode")) }
+                    .getOrDefault(ToolRejectionCode.AUTHORIZATION_DENIED),
+                p.optString("reason"), p.optBoolean("retryable", false),
+                p.optBoolean("requiresUserAction", false), p.optString("modelResult"))
             "InputRequested" -> {
                 val input = p.getJSONObject("input")
                 val requestId = AgentInputRequestId(p.getString("requestId"))
@@ -335,7 +362,8 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
                 ProviderTurnId(p.getString("turnId")), p.optInt("messageCount"), stringSet(p, "exposedToolIds"))
             "ResponseCommitted" -> AgentStep.ResponseCommitted(step, run, at,
                 p.getString("commitId"), p.getString("interactionId"))
-            "RecoveryClaimed" -> AgentStep.RecoveryClaimed(step, run, at, p.optString("planKind"))
+            "RecoveryClaimed" -> AgentStep.RecoveryClaimed(
+                step, run, at, p.optString("planKind"), p.optString("evidenceStepId").ifBlank { null })
             // Legacy reasoning is deliberately not exposed as public execution evidence.
             else -> AgentStep.ToolFailed(step, run, at, id, "legacy", "Unsupported historical step: $type")
         }
@@ -410,6 +438,6 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
     }
 
     private companion object {
-        const val STEP_SCHEMA_VERSION = 4
+        const val STEP_SCHEMA_VERSION = 5
     }
 }

@@ -39,6 +39,7 @@ data class AgentRunMetadata(
 enum class ToolRejectionCode {
     TOOLS_DISABLED,
     TOOL_UNKNOWN,
+    TOOL_REGISTRY_UNAVAILABLE,
     TOOL_DISABLED,
     INVALID_ARGUMENTS,
     USER_REJECTED,
@@ -233,6 +234,19 @@ sealed interface AgentStep {
         val failureKind: String?,
     ) : AgentStep
 
+    data class ToolRejected(
+        override val id: AgentStepId,
+        override val runId: AgentRunId,
+        override val createdAt: Instant,
+        val toolCallId: String,
+        val toolId: String,
+        val reasonCode: ToolRejectionCode,
+        val reason: String,
+        val retryable: Boolean,
+        val requiresUserAction: Boolean,
+        val modelResult: String,
+    ) : AgentStep
+
     data class InputRequested(
         override val id: AgentStepId,
         override val runId: AgentRunId,
@@ -271,6 +285,7 @@ sealed interface AgentStep {
         override val runId: AgentRunId,
         override val createdAt: Instant,
         val planKind: String,
+        val evidenceStepId: String?,
     ) : AgentStep
 }
 

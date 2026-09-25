@@ -16,6 +16,8 @@ interface AgentRunDao {
     suspend fun updateRun(entity: AgentRunEntity): Int
     @Query("SELECT COUNT(*) FROM agent_steps WHERE idempotencyKey = :key")
     suspend fun countDispatchKey(key: String): Int
+    @Query("SELECT COUNT(*) FROM agent_steps WHERE idempotencyKey = :key AND type = :type")
+    suspend fun countIdempotencyKeyForType(key: String, type: String): Int
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertStep(entity: AgentStepEntity)
     @Transaction

@@ -26,6 +26,16 @@ interface AgentRunStore {
      */
     suspend fun claimResume(runId: AgentRunId, expectedState: AgentRunState): Boolean
 
+    /** Claim + durable recovery fingerprint. Durable hosts should override atomically. */
+    suspend fun claimRecovery(
+        runId: AgentRunId,
+        expectedState: AgentRunState,
+        claim: AgentStep.RecoveryClaimed,
+    ): Boolean {
+        if (!claimResume(runId, expectedState)) return false
+        return appendStep(claim)
+    }
+
     /**
      * RUNTIME-019: atomic input resolution (first valid resolution wins).
      * Appends exactly one `InputResolved` step when — and only when — the
@@ -53,7 +63,8 @@ val AgentRun.hasUnknownAction: Boolean
                     step.actionTruth in setOf(ActionTruth.CONFIRMED, ActionTruth.FAILED)) ||
                     (step is AgentStep.ToolOutcomeRecorded && step.toolCallId == callId &&
                         step.actionTruth != ActionTruth.UNKNOWN) ||
-                    (step is AgentStep.ToolFailed && step.toolCallId == callId)
+                    (step is AgentStep.ToolFailed && step.toolCallId == callId) ||
+                    (step is AgentStep.ToolRejected && step.toolCallId == callId)
             }
         }
     }

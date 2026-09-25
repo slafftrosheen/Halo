@@ -61,6 +61,11 @@ interface AgentRunCoordinator {
      * Atomic resume claim; false when another surface already resumed the run.
      */
     suspend fun claimResume(runId: AgentRunId, expectedState: AgentRunState): Boolean
+    suspend fun claimRecovery(
+        runId: AgentRunId,
+        expectedState: AgentRunState,
+        claim: AgentStep.RecoveryClaimed,
+    ): Boolean
 
     suspend fun checkpoint(runId: AgentRunId): AgentCheckpoint?
 
@@ -103,7 +108,19 @@ class DefaultAgentRunCoordinator(
             }
             val plan = recoveryPlanner.plan(run, catalog = null, capabilities = capabilities)
             val classification = when (plan) {
-                is RecoveryPlan.NothingToDo -> RecoveryClassification.Unrecoverable("Terminal run")
+                is RecoveryPlan.NothingToDo -> {
+                    val committed = run.steps.any { it is AgentStep.ResponseCommitted }
+                    val now = Instant.now(clock)
+                    store.update(run.copy(
+                        state = if (committed) AgentRunState.COMPLETED else AgentRunState.INTERRUPTED,
+                        updatedAt = now,
+                        completedAt = now,
+                        failureReason = if (committed) null else "Run has no recoverable unfinished work.",
+                    ))
+                    RecoveryClassification.Unrecoverable(
+                        if (committed) "Run response was already committed" else "No recoverable unfinished work"
+                    )
+                }
                 is RecoveryPlan.AwaitingInput -> {
                     val waiting = when (plan.request) {
                         is AgentInputRequest.Approval -> AgentRunState.WAITING_FOR_APPROVAL
@@ -170,6 +187,12 @@ class DefaultAgentRunCoordinator(
     override suspend fun claimResume(runId: AgentRunId, expectedState: AgentRunState): Boolean =
         store.claimResume(runId, expectedState)
 
+    override suspend fun claimRecovery(
+        runId: AgentRunId,
+        expectedState: AgentRunState,
+        claim: AgentStep.RecoveryClaimed,
+    ): Boolean = store.claimRecovery(runId, expectedState, claim)
+
     override suspend fun checkpoint(runId: AgentRunId): AgentCheckpoint? =
         store.get(runId)?.let { checkpointAssembler.assemble(it) }
 
@@ -208,10 +231,25 @@ class DefaultAgentRunCoordinator(
         } + setOf(AgentRunState.CANCELLED, AgentRunState.FAILED, AgentRunState.INTERRUPTED)
         require(state in allowed) { "Invalid transition ${run.state} -> $state" }
         val now = Instant.now(clock)
+        val claimedCallIds = run.steps.mapNotNull { step ->
+            when (step) {
+                is AgentStep.ToolDispatched -> step.toolCallId
+                is AgentStep.ToolExecutionClaimed -> step.toolCallId
+                else -> null
+            }
+        }.toSet()
+        val claimedFailure = run.steps.any { step ->
+            when (step) {
+                is AgentStep.ToolFailed -> step.toolCallId in claimedCallIds
+                is AgentStep.ToolCompleted -> !step.success && step.toolCallId in claimedCallIds
+                is AgentStep.ToolOutcomeRecorded -> !step.success && step.toolCallId in claimedCallIds
+                else -> false
+            }
+        }
         val finalState = when {
             state == AgentRunState.FAILED && run.hasUnknownAction -> AgentRunState.INTERRUPTED
             state == AgentRunState.COMPLETED && run.hasUnknownAction -> AgentRunState.INTERRUPTED
-            state == AgentRunState.COMPLETED && run.steps.any { it is AgentStep.ToolFailed || (it is AgentStep.ToolCompleted && !it.success) } -> AgentRunState.FAILED
+            state == AgentRunState.COMPLETED && claimedFailure -> AgentRunState.FAILED
             else -> state
         }
         val finalReason = reason ?: when (finalState) {
