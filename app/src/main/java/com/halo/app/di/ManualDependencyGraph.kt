@@ -523,7 +523,9 @@ object ManualDependencyGraph {
             buddyBotHost = buddyBotHost,
             autoConnectCoordinator = deviceAutoConnectCoordinator,
             captures = { hostGraph.captureCoordinator },
-            audioPairingCoordinator = heyCyanAudioPairingCoordinator
+            audioPairingCoordinator = heyCyanAudioPairingCoordinator,
+            capabilityCatalogue = capabilityCatalogue,
+            resourceLeaseManager = infra.resourceLeaseManager,
         )
     }
     val pairingViewModel by lazy {
