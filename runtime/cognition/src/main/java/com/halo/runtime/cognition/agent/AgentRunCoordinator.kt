@@ -65,7 +65,10 @@ interface AgentRunCoordinator {
         runId: AgentRunId,
         expectedState: AgentRunState,
         claim: AgentStep.RecoveryClaimed,
-    ): Boolean
+    ): Boolean {
+        if (!claimResume(runId, expectedState)) return false
+        return recordStep(claim)
+    }
 
     suspend fun checkpoint(runId: AgentRunId): AgentCheckpoint?
 

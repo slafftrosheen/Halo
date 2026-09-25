@@ -112,9 +112,37 @@ class RoutineExecutor(private val db: AppDatabase, private val repository: RoomR
                     }
                     else -> {
                         val unknown = result is ToolExecutionResult.Failed && result.completionUnknown
-                        val reason = when (result) { is ToolExecutionResult.Failed -> result.message; is ToolExecutionResult.Rejected -> result.reason; else -> "Failed" }
-                        if (!unknown) coordinator.recordStep(AgentStep.ToolFailed(AgentStepId("$key:result"), runId, Instant.now(), key, action.toolId, reason))
-                        finish(if (unknown) RoutineRunState.INTERRUPTED else if (completed > 0) RoutineRunState.PARTIAL else if (result is ToolExecutionResult.Rejected) RoutineRunState.BLOCKED else RoutineRunState.FAILED, reason)
+                        val reason = when (result) {
+                            is ToolExecutionResult.Failed -> result.message
+                            is ToolExecutionResult.Rejected -> result.reason
+                            else -> "Failed"
+                        }
+                        if (!unknown) {
+                            if (result is ToolExecutionResult.Rejected) {
+                                val bounded = reason.replace('\n', ' ').take(512)
+                                coordinator.recordStep(
+                                    AgentStep.ToolRejected(
+                                        AgentStepId("$key:result"), runId, Instant.now(), key, action.toolId,
+                                        ToolRejectionCode.INVALID_ARGUMENTS, bounded,
+                                        retryable = false, requiresUserAction = false,
+                                        modelResult = "tool_result: status=rejected reason_code=INVALID_ARGUMENTS retryable=false requires_user_action=false\nreason: $bounded",
+                                    )
+                                )
+                            } else {
+                                coordinator.recordStep(
+                                    AgentStep.ToolFailed(
+                                        AgentStepId("$key:result"), runId, Instant.now(), key, action.toolId, reason
+                                    )
+                                )
+                            }
+                        }
+                        finish(
+                            if (unknown) RoutineRunState.INTERRUPTED
+                            else if (completed > 0) RoutineRunState.PARTIAL
+                            else if (result is ToolExecutionResult.Rejected) RoutineRunState.BLOCKED
+                            else RoutineRunState.FAILED,
+                            reason,
+                        )
                         return reason
                     }
                 }
