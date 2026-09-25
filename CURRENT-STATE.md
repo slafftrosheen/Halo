@@ -113,3 +113,26 @@ See [architecture](docs/04-architecture/ARCHITECTURE.md),
 
 Read [release readiness](docs/13-engineering/README.md) separately. Code presence is not measured
 latency, power consumption, passing tests or physical acceptance.
+
+
+### RUNTIME-020.1 review correction — 2026-09-25
+
+A direct post-agent review corrected several integration gaps before merge: the obsolete
+`catalogueSummaryDefinition()` call was removed; the discovery service/registry lazy cycle was
+broken; per-turn exposure now preserves schemas already supplied to the provider; capability
+catalogue snapshots preserve multiple owners for the same semantic capability; device capability
+IDs are distinct from resource IDs and are matched exactly after narrow legacy normalization;
+connected HeyCyan/BuddyBot sessions publish semantic `device.*` capabilities; host/device
+capability state is refreshed on foreground and permission/radio changes.
+
+Resource arbitration now uses one process-wide ownership universe with one state lock, no
+same-run/same-interaction exclusivity bypass, owner-registered cooperative yield handlers and
+non-suspending lease release. Tool execution records `ToolExecutionClaimed` only after required
+capabilities/resources are admitted, so a `WAITING_FOR_RESOURCE` run does not falsely imply an
+external side effect. Recovery reacquires resources before replaying an already-claimed SAFE tool;
+a merely prepared/unclaimed tool re-enters the normal provider/authorization path instead of being
+executed directly.
+
+Home, Skills and Devices now consume the same durable task/capability/resource projections already
+used by Activity and Settings → Runtime. This remains **IMPLEMENTED / UNVALIDATED**; no test or
+hardware acceptance is claimed by this correction pass.
