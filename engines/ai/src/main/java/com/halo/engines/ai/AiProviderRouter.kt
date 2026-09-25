@@ -157,7 +157,18 @@ class DefaultAiProviderRouter(
                     continue
                 }
                 if (!workload.allowRemote && !provider.isLocal) {
-                    rejected += RejectedAiTarget(provider.id, null, TargetRejectionReason.REMOTE_CONTEXT_FORBIDDEN)
+                    rejected += RejectedAiTarget(
+                        provider.id,
+                        selectedModel.takeIf { provider.id == selectedId },
+                        TargetRejectionReason.REMOTE_CONTEXT_FORBIDDEN
+                    )
+                    if (policy == AiRoutingPolicy.EXPLICIT) {
+                        throw AiProviderException(
+                            AiErrorType.UNSUPPORTED_CAPABILITY,
+                            "Required context is not permitted to be sent to the selected remote provider",
+                            AiFailureDetails(recoverability = Recoverability.USER_ACTION_REQUIRED),
+                        )
+                    }
                     continue
                 }
                 var readinessReason: TargetRejectionReason? = null
