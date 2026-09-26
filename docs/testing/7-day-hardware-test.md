@@ -26,7 +26,7 @@ This document outlines the test procedure for the 7-day hardware validation peri
 - **Morning Startup**: Power on glasses, open Halo app, confirm auto-connect and transition to `READY`.
 - **Speech Output Routing Invariant**: A voice turn initiated on a wearable returns speech to that wearable unless the user has explicitly enabled another fallback policy.
 - **Normal Usage**: Trigger photo capture, video recording start/stop, and audio recording.
-- **Provider Selection**: Exercise the real provider set — local `llama.cpp` (default), OpenRouter, and Ollama — and confirm the selected provider is the one that runs. Android Assistant is a *handoff* target, not an inference provider; it is not selectable as an AI fallback.
+- **Provider Selection**: Exercise the real provider set — Native Local (LiteRT-LM recommended; GGUF/llama.cpp compatibility), OpenRouter, and Ollama — and confirm the selected provider is the one that runs. Android Assistant is a *handoff* target, not an inference provider; it is not selectable as an AI fallback.
 - **Explicit Selection Is Sticky**: With a provider explicitly selected, force a failure (bad key, cooldown, unreachable endpoint) and confirm Halo still reports that provider as selected. No silent substitution is acceptable.
 - **Recharging Lifecycle**: Place glasses on charger, observe `BatteryUpdated` and `charging` state, remove from charger and verify live battery telemetry updates.
 - **Phone Lock/Unlock**: Lock phone for >30 minutes, unlock phone, verify BLE session auto-reconnect backoff and state recovery.
