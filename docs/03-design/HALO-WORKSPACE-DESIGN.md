@@ -34,20 +34,16 @@ the dark companion uses soft charcoal rather than pure black, with the same hier
 Both schemes are implemented. A persisted System/Light/Dark selector is available in Settings, with System
 as the default mode.
 
-## Presence: evolve the orb into a spatial cell cluster
+## Presence: Halo Signal Face (RUNTIME/UI-024)
 
-The hero is a living asymmetric arrangement of rounded spatial cells with a larger central
-volume, pastel satellites and detached pixel markers. The Compose HaloPresence implementation
-morphs spread, vertical posture, rotation and core scale from HaloRuntimeState without a
-permanent idle loop. It retains the pixel identity while moving beyond the old polygon orb.
+RUNTIME/UI-024 supersedes the earlier spatial cell cluster.
 
-This is a Compose rendering target, not a requirement for a 3D engine. Begin with layered
-Canvas geometry and cached paths. Prototype optional depth/refraction only after measuring
-rendering cost. Do not replace the hero with a permanently spinning loading indicator.
+Presence is a circular semantic display (`HaloSignalFace`):
+- **Outer Halo**: A restrained ring carrying state color and input/output activity levels.
+- **Inner Display**: A quiet graphite OLED display holding a large, crisp pixel pictogram (`HaloGlyph`).
 
-The subsequent [Notebook blueprint](../02-product/NOTEBOOK-WORKSPACE-BLUEPRINT.md)
-explicitly rejects mechanical rings and radial gauges. Interpret the earlier halo request
-as optional soft depth/light around the cell cluster. Do not add a dominant circular gauge.
+This gives immediate glanceable meaning without abstract blobs or spinning gauges.
+The same `HaloSignalFace` and `HaloGlyph` vocabulary is used across Home, Android Assistant, compact navigation, widgets, and physical embodiments.
 
 | Runtime/input condition | Proposed cell/halo behavior |
 |---|---|

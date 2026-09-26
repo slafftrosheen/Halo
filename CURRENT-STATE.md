@@ -55,6 +55,14 @@ on explicit outcome evidence (e.g. `ToolCallResolution`) and journal `RecoveryCl
 now follow a stable reason-code path, flowing back into the active turn instead of spawning
 new generic interactions. `AiInferenceProvider` streams enforce absolute `[DONE]` bounds. Fixed
 Android synchronous-IO (shared preferences, `DocumentFile`, content-resolvers) occurring on Main.
+
+RUNTIME-022 source addition (2026-09-26): extracted cognitive turn execution kernel from `CognitiveSession` into `turn/` package (`CognitiveTurnRequest`, `PreparedCognitiveTurn`, `ActiveTurnCoordinator`, `ProviderTurnExecutor`, `ToolTurnExecutor`, `CognitiveTurnPreparer`, `CognitiveResponseCommitter`, `DefaultAgentRecoveryExecutor`). `CognitiveSession` is reduced to a public façade.
+
+RUNTIME-023 source addition (2026-09-26): Android Assistant role enrollment upgraded to verify active `VoiceInteractionService` identity alongside `RoleManager`. Local model catalog supports multi-file GGUF artifacts (base model + `mmproj` projector). Native `LlamaCppRuntime` supports projector loading and multimodal image prediction. Prompts format and parse `<halo_tool_call>` envelopes for prompt-mediated local tool execution.
+
+RUNTIME/UI-024 source addition (2026-09-26): Consolidated presence visuals onto `HaloSignalFace` (outer semantic state halo + inner graphite OLED pixel display). Introduced unified grid-based `HaloGlyph` vector pixel pictogram system (`HaloGlyph`, `HaloGlyphs`, `HaloGlyphRenderer`, `HaloIcon`). Replaced old `HaloOrb`, `HaloStateOrb`, and spatial-cell renderers. Migrated primary navigation, Settings categories, Devices, and launcher icon onto the unified glyph identity. Supersedes 2026-09-18 spatial-cell direction.
+new generic interactions. `AiInferenceProvider` streams enforce absolute `[DONE]` bounds. Fixed
+Android synchronous-IO (shared preferences, `DocumentFile`, content-resolvers) occurring on Main.
 `runtime/cognition/.../interaction/` — `InteractionSurface`/`InteractionContent`/`InteractionResponse`
 (Runtime-owned semantic contracts with no Android imports), `InteractionSurfaceValidator` with hard
 content limits, `InteractionSurfaceStore` (in-memory projection; the journal stays the only durable

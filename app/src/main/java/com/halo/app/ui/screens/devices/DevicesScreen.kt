@@ -52,9 +52,12 @@ import com.halo.app.ui.glass.components.HaloGlassLazyPage
 import com.halo.app.ui.glass.components.HaloGlassSection
 import com.halo.app.ui.glass.material.HaloGlassColors
 import com.halo.app.ui.glass.material.HaloTypography
+import com.halo.app.ui.icons.HaloGlyph
+import com.halo.app.ui.icons.HaloIcon
 import com.halo.app.ui.state.toDisplayText
 import com.halo.drivers.heycyan.RealHeyCyanDriver
 import com.halo.drivers.heycyan.protocol.HeyCyanDeviceState
+import com.halo.sdk.runtime.embodiment.DeviceKind
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -575,9 +578,16 @@ private fun DeviceCard(
                     color = androidx.compose.material3.MaterialTheme.colorScheme.surfaceVariant,
                     modifier = Modifier.size(48.dp)
                 ) {
-                    com.halo.app.ui.presence.HaloWorkspaceMark(
-                        if (device.kind == com.halo.sdk.runtime.embodiment.DeviceKind.BUDDYBOT) "robot" else "glasses",
-                        modifier = Modifier.padding(10.dp))
+                    val glyph = when (device.kind) {
+                        DeviceKind.HEYCYAN_GLASSES -> HaloGlyph.GLASSES
+                        DeviceKind.BUDDYBOT -> HaloGlyph.ROBOT
+                        else -> HaloGlyph.DEVICE
+                    }
+                    HaloIcon(
+                        glyph = glyph,
+                        contentDescription = device.name,
+                        modifier = Modifier.padding(10.dp)
+                    )
                 }
 
                 Spacer(Modifier.width(14.dp))

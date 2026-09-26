@@ -1,15 +1,18 @@
 package com.halo.app.ui.state
 
 import com.halo.app.ui.glass.material.HaloRuntimeState
+import com.halo.app.ui.icons.HaloGlyph
+import com.halo.app.ui.presence.HaloSignalPresentation
+import com.halo.app.ui.presence.HaloSignalState
 import com.halo.sdk.runtime.RuntimeSnapshot
 import com.halo.sdk.runtime.SpeechSessionState
 import com.halo.sdk.runtime.embodiment.SessionState
 
 /**
- * The single canonical projection from runtime state to the presence the orb renders.
+ * The single canonical projection from runtime state to the presence the Signal Face renders.
  *
  * Presence is derived, never chosen by the UI. A screen must not hold its own
- * presence enum or mutate one on tap: if the runtime is not listening, the orb
+ * presence enum or mutate one on tap: if the runtime is not listening, the face
  * must not claim that it is.
  */
 fun presenceFromSpeech(speech: SpeechSessionState): HaloRuntimeState = when (speech) {
@@ -26,21 +29,124 @@ fun presenceFromSpeech(speech: SpeechSessionState): HaloRuntimeState = when (spe
     is SpeechSessionState.Error -> HaloRuntimeState.Recovering
 }
 
-/**
- * Presence for a whole snapshot: the speech pipeline drives the visible stage,
- * while engine health remains available separately as diagnostic information.
- */
 fun presenceFromSnapshot(snapshot: RuntimeSnapshot): HaloRuntimeState {
     val speech = presenceFromSpeech(snapshot.speech)
-    // Engine health is a diagnostic, not an active recovery operation. A latched
-    // provider failure must not hide a new capture or keep an idle microphone spinning.
     return speech
 }
 
-/**
- * Canonical mapping from SessionState to user-facing display text.
- * Used by HomeViewModel and DevicesViewModel to show connection status.
- */
+fun HaloRuntimeState.toSignalPresentation(
+    detail: String? = null,
+    progress: Float? = null,
+    activityLevel: Float = 0f,
+    reducedMotion: Boolean = false
+): HaloSignalPresentation = when (this) {
+    HaloRuntimeState.Idle -> HaloSignalPresentation(
+        state = HaloSignalState.IDLE,
+        glyph = HaloGlyph.HALO,
+        label = "Ready",
+        detail = detail,
+        progress = progress,
+        activityLevel = activityLevel,
+        reducedMotion = reducedMotion
+    )
+    HaloRuntimeState.Listening, HaloRuntimeState.Wakeword -> HaloSignalPresentation(
+        state = HaloSignalState.LISTENING,
+        glyph = HaloGlyph.LISTEN,
+        label = "Listening",
+        detail = detail,
+        progress = progress,
+        activityLevel = activityLevel,
+        reducedMotion = reducedMotion
+    )
+    HaloRuntimeState.Capturing -> HaloSignalPresentation(
+        state = HaloSignalState.CAPTURING,
+        glyph = HaloGlyph.CAMERA,
+        label = "Capturing",
+        detail = detail,
+        progress = progress,
+        activityLevel = activityLevel,
+        reducedMotion = reducedMotion
+    )
+    HaloRuntimeState.Recognizing -> HaloSignalPresentation(
+        state = HaloSignalState.THINKING,
+        glyph = HaloGlyph.LISTEN,
+        label = "Recognizing",
+        detail = detail,
+        progress = progress,
+        activityLevel = activityLevel,
+        reducedMotion = reducedMotion
+    )
+    HaloRuntimeState.Reasoning -> HaloSignalPresentation(
+        state = HaloSignalState.THINKING,
+        glyph = HaloGlyph.THINK,
+        label = "Thinking",
+        detail = detail,
+        progress = progress,
+        activityLevel = activityLevel,
+        reducedMotion = reducedMotion
+    )
+    HaloRuntimeState.Planning -> HaloSignalPresentation(
+        state = HaloSignalState.THINKING,
+        glyph = HaloGlyph.ACTION,
+        label = "Planning",
+        detail = detail,
+        progress = progress,
+        activityLevel = activityLevel,
+        reducedMotion = reducedMotion
+    )
+    HaloRuntimeState.Executing -> HaloSignalPresentation(
+        state = HaloSignalState.ACTING,
+        glyph = HaloGlyph.TOOL,
+        label = "Working",
+        detail = detail,
+        progress = progress,
+        activityLevel = activityLevel,
+        reducedMotion = reducedMotion
+    )
+    HaloRuntimeState.Speaking -> HaloSignalPresentation(
+        state = HaloSignalState.SPEAKING,
+        glyph = HaloGlyph.SPEAK,
+        label = "Speaking",
+        detail = detail,
+        progress = progress,
+        activityLevel = activityLevel,
+        reducedMotion = reducedMotion
+    )
+    HaloRuntimeState.Recovering -> HaloSignalPresentation(
+        state = HaloSignalState.WARNING,
+        glyph = HaloGlyph.WARNING,
+        label = "Recovering",
+        detail = detail,
+        progress = progress,
+        activityLevel = activityLevel,
+        reducedMotion = reducedMotion
+    )
+    HaloRuntimeState.Stopped -> HaloSignalPresentation(
+        state = HaloSignalState.STOPPED,
+        glyph = HaloGlyph.STOP,
+        label = "Stopped",
+        detail = detail,
+        progress = progress,
+        activityLevel = activityLevel,
+        reducedMotion = reducedMotion
+    )
+}
+
+fun RuntimeSnapshot.toSignalPresentation(
+    detail: String? = null,
+    progress: Float? = null,
+    activityLevel: Float = 0f,
+    reducedMotion: Boolean = false
+): HaloSignalPresentation {
+    val state = presenceFromSnapshot(this)
+    return state.toSignalPresentation(
+        detail = detail,
+        progress = progress,
+        activityLevel = activityLevel,
+        reducedMotion = reducedMotion
+    )
+}
+
 fun SessionState.toDisplayText(): String = when (this) {
     SessionState.SAVED -> "Saved"
     SessionState.DISCOVERED -> "Discovered"

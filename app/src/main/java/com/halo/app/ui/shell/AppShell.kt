@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Book
@@ -38,6 +39,7 @@ import com.halo.app.ui.glass.components.HaloNavigation
 import com.halo.app.ui.glass.components.NavigationItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.rememberCoroutineScope
+import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.screens.activity.ActivityScreen
 import com.halo.app.ui.screens.devices.BuddyBotControlScreen
 import com.halo.app.ui.screens.devices.DevicesScreen
@@ -61,12 +63,12 @@ import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-sealed class Screen(val route: String, val title: String, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
-    data object Home : Screen("home", "Home", Icons.Default.Home)
-    data object Activity : Screen("activity", "Activity", Icons.Default.Timer)
-    data object Notebook : Screen("notebook", "Notebook", Icons.Default.Book)
-    data object Devices : Screen("devices", "Devices", Icons.Default.Devices)
-    data object Settings : Screen("settings", "Settings", Icons.Default.Settings)
+sealed class Screen(val route: String, val title: String, val glyph: HaloGlyph) {
+    data object Home : Screen("home", "Home", HaloGlyph.HOME)
+    data object Activity : Screen("activity", "Activity", HaloGlyph.ACTIVITY)
+    data object Notebook : Screen("notebook", "Notebook", HaloGlyph.NOTE)
+    data object Devices : Screen("devices", "Devices", HaloGlyph.DEVICE)
+    data object Settings : Screen("settings", "Settings", HaloGlyph.SETTINGS)
 }
 
 val bottomNavItems = listOf(Screen.Home, Screen.Activity, Screen.Notebook, Screen.Devices, Screen.Settings)
@@ -120,7 +122,7 @@ fun AppShell(
             if (!expandedNavigation) {
                 HaloNavigation(
                     navController = navController,
-                    items = bottomNavItems.map { NavigationItem(it.route, it.title, it.icon) }
+                    items = bottomNavItems.map { NavigationItem(it.route, it.title, it.glyph) }
                 )
             }
         },
@@ -133,7 +135,7 @@ fun AppShell(
                         NavigationRailItem(
                             selected = backStackEntry?.destination?.route == item.route,
                             onClick = { navigateSafely(item.route) },
-                            icon = { Icon(item.icon, contentDescription = item.title) },
+                            icon = { com.halo.app.ui.icons.HaloIcon(item.glyph, contentDescription = item.title, modifier = Modifier.size(24.dp)) },
                             label = { Text(item.title) }
                         )
                     }

@@ -57,6 +57,8 @@ import com.halo.app.ui.theme.HaloPastelLilac
 import com.halo.app.ui.theme.HaloPastelMint
 import com.halo.app.ui.theme.HaloPastelYellow
 import com.halo.app.ui.design.HaloScreenHeader
+import com.halo.app.ui.icons.HaloGlyph
+import com.halo.app.ui.icons.HaloIcon
 
 @Composable
 fun SettingsScreen(viewModel: SettingsViewModel) {
@@ -91,35 +93,35 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
         Spacer(Modifier.height(28.dp))
 
         SettingsRow(
-            icon = Icons.Default.SmartToy,
+            glyph = HaloGlyph.MODEL,
             tint = HaloPastelBlue,
             title = "Intelligence",
             subtitle = "Models & providers · ${uiState.provider}",
             onClick = viewModel::openIntelligence
         )
         SettingsRow(
-            icon = Icons.Default.SmartToy,
+            glyph = com.halo.app.ui.icons.HaloGlyph.TOOL,
             tint = HaloPastelLilac,
             title = "Skills",
             subtitle = "Actions Halo can use",
             onClick = viewModel::openSkills
         )
         SettingsRow(
-            icon = Icons.Default.Mic,
+            glyph = HaloGlyph.LISTEN,
             tint = HaloPastelLilac,
             title = "Voice",
             subtitle = "Speech and audio · ${uiState.voiceStatus}",
             onClick = viewModel::openVoice
         )
         SettingsRow(
-            icon = Icons.Default.Security,
+            glyph = HaloGlyph.SECURITY,
             tint = HaloPastelYellow,
             title = "Permissions",
             subtitle = "Device and data access",
             onClick = viewModel::openPermissions
         )
         SettingsRow(
-            icon = Icons.Default.Storage,
+            glyph = HaloGlyph.STORAGE,
             tint = HaloPastelMint,
             title = "Storage & Backup",
             subtitle = "Halo Brain and Vault",
@@ -135,7 +137,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             modifier = Modifier.padding(vertical = 8.dp),
         )
         SettingsRow(
-            icon = Icons.Default.PhoneAndroid,
+            glyph = HaloGlyph.PHONE,
             tint = HaloPastelBlue,
             title = "Default Android Assistant",
             subtitle = when (assistantRoleState) {
@@ -151,7 +153,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
         )
 
         SettingsRow(
-            icon = Icons.Default.SmartToy,
+            glyph = com.halo.app.ui.icons.HaloGlyph.AUTOMATION,
             tint = HaloPastelMint,
             title = "Automation",
             subtitle = "Routines & notification digests",
@@ -159,7 +161,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
         )
 
         SettingsRow(
-            icon = Icons.Default.Info,
+            glyph = com.halo.app.ui.icons.HaloGlyph.ACTIVITY,
             tint = HaloPastelBlue,
             title = "Runtime Status",
             subtitle = "Tasks, capabilities & resources",
@@ -239,7 +241,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
         Spacer(Modifier.height(18.dp))
 
         SettingsRow(
-            icon = Icons.Default.Info,
+            glyph = HaloGlyph.HALO,
             tint = HaloPastelBlue,
             title = "About",
             subtitle = "Version ${uiState.version}"
@@ -251,7 +253,8 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
 
 @Composable
 private fun SettingsRow(
-    icon: ImageVector,
+    glyph: HaloGlyph? = null,
+    icon: ImageVector? = null,
     tint: Color,
     title: String,
     subtitle: String,
@@ -273,12 +276,21 @@ private fun SettingsRow(
             .padding(vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(20.dp)
-        )
+        if (glyph != null) {
+            HaloIcon(
+                glyph = glyph,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        } else if (icon != null) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(20.dp)
+            )
+        }
         Spacer(Modifier.size(18.dp))
 
         Column(modifier = Modifier.weight(1f)) {

@@ -42,6 +42,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import com.halo.engines.memory.WorkingMemoryProcess
 import com.halo.providers.android.tts.AndroidTTSProvider
+import com.halo.runtime.cognition.agent.recovery.AgentCheckpointAssembler
+import com.halo.runtime.cognition.agent.recovery.DefaultAgentRecoveryPlanner
 import com.halo.runtime.cognition.attention.DeliveryChannel
 import com.halo.runtime.cognition.context.AssistantContextRepository
 import com.halo.runtime.cognition.context.DefaultContextAcquisitionCoordinator
@@ -55,6 +57,14 @@ import com.halo.runtime.cognition.tools.ToolAvailabilityResolver
 import com.halo.runtime.cognition.tools.ToolDiscoveryService
 import com.halo.runtime.cognition.tools.ToolExposurePlanner
 import com.halo.runtime.cognition.tools.ToolResourceCoordinator
+import com.halo.runtime.cognition.turn.CognitiveTurnExecutor
+import com.halo.runtime.cognition.turn.DefaultActiveTurnCoordinator
+import com.halo.runtime.cognition.turn.DefaultAgentRecoveryExecutor
+import com.halo.runtime.cognition.turn.DefaultCognitiveResponseCommitter
+import com.halo.runtime.cognition.turn.DefaultCognitiveTurnPreparer
+import com.halo.runtime.cognition.turn.DefaultProviderTurnExecutor
+import com.halo.runtime.cognition.turn.DefaultToolTurnExecutor
+import com.halo.runtime.cognition.workload.DefaultAiWorkloadPlanner
 import com.halo.runtime.kernel.HaloMicrokernel
 
 /** Thin façade that wires sub-graphs together. This is the sole composition root. */
@@ -418,26 +428,68 @@ object ManualDependencyGraph {
             visualContextSource = visualContextSource,
         )
     }
+    val activeTurnCoordinator by lazy {
+        DefaultActiveTurnCoordinator(eventBus)
+    }
+    val providerTurnExecutor by lazy {
+        DefaultProviderTurnExecutor(eventBus)
+    }
+    val toolTurnExecutor by lazy {
+        DefaultToolTurnExecutor(
+            toolRegistry = toolRegistry,
+            toolAuthorizer = toolAuthorizer,
+            toolResourceCoordinator = toolResourceCoordinator,
+            agentRunCoordinator = agentRunCoordinator,
+            agentRunStore = agentRunStore,
+            eventBus = eventBus,
+        )
+    }
+    val cognitiveTurnPreparer by lazy {
+        com.halo.runtime.cognition.turn.DefaultCognitiveTurnPreparer(
+            workloadPlanner = DefaultAiWorkloadPlanner(),
+            providerRouter = aiProviderRouter,
+            contextAcquisitionCoordinator = contextAcquisitionCoordinator,
+            contextAssembler = contextAssembler,
+            agentRunStore = agentRunStore,
+        )
+    }
+    val cognitiveResponseCommitter by lazy {
+        DefaultCognitiveResponseCommitter(
+            conversationStore = conversationStore,
+            agentRunCoordinator = agentRunCoordinator,
+            eventBus = eventBus,
+        )
+    }
+    val cognitiveTurnExecutor by lazy {
+        com.halo.runtime.cognition.turn.CognitiveTurnExecutor(
+            preparer = cognitiveTurnPreparer,
+            providerExecutor = providerTurnExecutor,
+            toolExecutor = toolTurnExecutor,
+            agentRunCoordinator = agentRunCoordinator,
+            agentRunStore = agentRunStore,
+            eventBus = eventBus,
+        )
+    }
+    val agentRecoveryExecutor by lazy {
+        com.halo.runtime.cognition.turn.DefaultAgentRecoveryExecutor(
+            agentRunStore = agentRunStore,
+            agentRunCoordinator = agentRunCoordinator,
+            toolRegistry = toolRegistry,
+            eventBus = eventBus,
+            recoveryPlanner = DefaultAgentRecoveryPlanner(),
+        )
+    }
     val cognitiveSession by lazy {
         CognitiveSession(
             eventBus = eventBus,
-            providerRouter = aiProviderRouter,
             conversationStore = conversationStore,
-            contextAssembler = contextAssembler,
-            toolRegistry = toolRegistry,
-            toolAuthorizer = toolAuthorizer,
-            skillRegistry = skillRegistry,
-            agentRunCoordinator = agentRunCoordinator,
             scope = infra.scope,
             blackboard = blackboard,
             defaultPolicyProvider = { storage.readRuntimeAiContextPolicy() },
-            assistantContexts = assistantContextRepository,
-            toolDiscovery = toolDiscovery,
-            agentRunStore = agentRunStore,
-            toolResourceCoordinator = toolResourceCoordinator,
-            toolExposurePlanner = toolExposurePlanner,
-            toolAvailabilityResolver = toolAvailabilityResolver,
-            contextAcquisitionCoordinator = contextAcquisitionCoordinator,
+            activeTurnCoordinator = activeTurnCoordinator,
+            agentRecoveryExecutor = agentRecoveryExecutor,
+            turnExecutor = cognitiveTurnExecutor,
+            responseCommitter = cognitiveResponseCommitter,
         )
     }
 

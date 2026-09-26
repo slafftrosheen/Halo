@@ -26,15 +26,15 @@ document or old completion table should be treated as evidence.
 See [next phase](docs/14-roadmap/NEXT-PHASE-2027.md). External inspiration remains a
 proposal until implemented and validated.
 
-## Visual direction — user mockup, 2026-09-18
+## Visual direction — Halo Signal Face, 2026-09-26
 
-Use the [user mockup and design guide](docs/03-design/HALO-WORKSPACE-DESIGN.md):
-airy light and charcoal dark themes, a presence made of translucent spatial cells,
-pastel category surfaces, and Home/Activity/Notebook/Devices/Settings navigation.
-Retain the pixel identity; any halo is soft depth/light, not a mechanical ring or gauge.
-This supersedes
-dark-only/four-tab design targets. It is planned design, not current app behavior.
-Clear actions, state honesty, accessibility and measured performance remain targets.
+RUNTIME/UI-024 supersedes the 2026-09-18 spatial-cell presence direction.
+
+Halo Presence is a circular semantic display:
+- Outer Halo: Communicates state and activity through restrained colour, luminance and semantic motion.
+- Inner Pixel Display: Communicates meaning through a large, immediately recognizable monochrome pictogram.
+
+The visual language intentionally avoids anthropomorphic AI eyes, abstract morphing blobs, particle clouds, and decorative radial gauges. The same signal-face vocabulary is designed to scale across Android, wearables, widgets, and physical embodiments.
 
 Home, Activity, Notebook, Devices and Settings are current primary destinations. Notebook has
 an initial NB-01 persistent notes flow; its memory, Working Set, files, conversations and Canvas

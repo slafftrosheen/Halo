@@ -142,6 +142,7 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
             is AgentStep.ToolDispatched -> { payload.put("toolCallId", step.toolCallId).put("toolId", step.toolId); "ToolDispatched" }
             is AgentStep.ToolCompleted -> { payload.put("toolCallId", step.toolCallId).put("toolId", step.toolId).put("resultSummary", step.resultSummary).put("success", step.success).put("actionTruth", step.actionTruth.name); "ToolCompleted" }
             is AgentStep.ToolFailed -> { payload.put("toolCallId", step.toolCallId).put("toolId", step.toolId).put("reason", step.reason); "ToolFailed" }
+            is AgentStep.ToolRejected -> { payload.put("toolCallId", step.toolCallId).put("toolId", step.toolId).put("reasonCode", step.reasonCode.name).put("reason", step.reason).put("retryable", step.retryable).put("requiresUserAction", step.requiresUserAction).put("modelResult", step.modelResult); "ToolRejected" }
             is AgentStep.ResponseProduced -> { payload.put("responseId", step.responseId).put("text", step.text); "ResponseProduced" }
 
             is AgentStep.RunPrepared -> { payload.put("kind", step.kind.name).put("recoveryPolicy", step.recoveryPolicy.name); "RunPrepared" }
@@ -189,13 +190,6 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
                     .put("toolId", step.toolId).put("success", step.success).put("output", step.output)
                     .put("actionTruth", step.actionTruth.name).put("failureKind", step.failureKind ?: "")
                 "ToolOutcomeRecorded"
-            }
-            is AgentStep.ToolRejected -> {
-                payload.put("toolCallId", step.toolCallId).put("toolId", step.toolId)
-                    .put("reasonCode", step.reasonCode.name).put("reason", step.reason)
-                    .put("retryable", step.retryable).put("requiresUserAction", step.requiresUserAction)
-                    .put("modelResult", step.modelResult)
-                "ToolRejected"
             }
             is AgentStep.InputRequested -> {
                 val input = when (val req = step.input) {
@@ -328,8 +322,7 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
                 ToolInvocationId(p.getString("invocationId")), call, tool, p.getBoolean("success"),
                 p.optString("output"), runCatching { ActionTruth.valueOf(p.getString("actionTruth")) }.getOrDefault(ActionTruth.UNKNOWN),
                 p.optString("failureKind").ifBlank { null })
-            "ToolRejected" -> AgentStep.ToolRejected(
-                step, run, at, call, tool,
+            "ToolRejected" -> AgentStep.ToolRejected(step, run, at, call, tool,
                 runCatching { ToolRejectionCode.valueOf(p.optString("reasonCode")) }
                     .getOrDefault(ToolRejectionCode.AUTHORIZATION_DENIED),
                 p.optString("reason"), p.optBoolean("retryable", false),

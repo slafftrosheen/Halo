@@ -54,12 +54,14 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.halo.app.ui.glass.components.HaloMarkdownText
 import com.halo.app.ui.glass.material.HaloRuntimeState
-import com.halo.app.ui.presence.HaloOrb
+import com.halo.app.ui.presence.HaloSignalFace
+import com.halo.app.ui.state.toSignalPresentation
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
+import com.halo.app.ui.presence.HaloSignalFace
 import com.halo.app.ui.theme.HaloPastelBlue
 import com.halo.app.ui.theme.HaloWarning
 import com.halo.app.ui.theme.rememberReducedMotion
@@ -207,39 +209,19 @@ fun HomeScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(168.dp),
+                .height(180.dp),
             contentAlignment = Alignment.Center
         ) {
-            HaloOrb(
-                presentation = uiState.orb.copy(reducedMotion = reducedMotion),
-                size = 140.dp
+            val signalPresentation = uiState.runtimeState.toSignalPresentation(
+                detail = uiState.contextualText,
+                activityLevel = uiState.orb.inputLevel,
+                reducedMotion = reducedMotion
             )
-            Surface(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .size(52.dp),
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                onClick = ::togglePresence,
-                enabled = !isSpeechProcessing
-            ) {
-                Icon(
-                    imageVector = if (isListening || isActiveSession) Icons.Default.Stop else Icons.Default.Mic,
-                    contentDescription = when {
-                        !uiState.microphonePermissionGranted -> "Grant microphone access"
-                        !uiState.speechReady -> "Set up voice input"
-                        isListening || isActiveSession -> "Stop"
-                        else -> "Talk to Halo"
-                    },
-                    tint = if (isListening || isActiveSession) {
-                        MaterialTheme.colorScheme.error
-                    } else {
-                        MaterialTheme.colorScheme.secondary
-                    },
-                    modifier = Modifier.padding(14.dp)
-                )
-            }
+            HaloSignalFace(
+                presentation = signalPresentation,
+                size = 160.dp,
+                onClick = ::togglePresence
+            )
         }
 
         Spacer(Modifier.height(18.dp))

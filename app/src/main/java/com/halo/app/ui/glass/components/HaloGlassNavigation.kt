@@ -29,11 +29,13 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.halo.app.ui.icons.HaloGlyph
+import com.halo.app.ui.icons.HaloIcon
 
 data class NavigationItem(
     val route: String,
     val label: String,
-    val icon: ImageVector
+    val glyph: HaloGlyph
 )
 
 /**
@@ -123,9 +125,12 @@ fun HaloNavigation(
                     Spacer(Modifier.height(7.dp))
                 }
 
-                if (item.route == "home") com.halo.app.ui.presence.HaloOrb(
-                    com.halo.app.ui.presence.HaloOrbPresentation(), size = 28.dp)
-                else com.halo.app.ui.presence.HaloWorkspaceMark(item.route)
+                HaloIcon(
+                    glyph = item.glyph,
+                    contentDescription = item.label,
+                    modifier = Modifier.size(24.dp),
+                    tint = tint
+                )
                 Spacer(Modifier.height(2.dp))
                 Text(
                     text = item.label,

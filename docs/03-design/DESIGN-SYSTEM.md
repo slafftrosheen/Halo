@@ -8,26 +8,30 @@ This document describes the 2026–27 visual language for the Halo ecosystem. (F
 
 - Airy, bright default theme
 - Charcoal dark counterpart
-- Spatial translucent cell identity
+- Halo Signal Face circular presence (outer state halo + inner graphite OLED display)
+- Unified grid-based HaloGlyph pixel pictogram vocabulary
 - Pastel semantic surfaces
 - Quiet depth
-- Subtle glow
 - Clean typography
 - High information clarity
 - Soft geometry
 - Strong whitespace
-- 2026–27 mobile interaction conventions
+
+### Halo Signal Face Doctrine
+
+**Halo Presence** is a circular semantic display:
+- **Outer Halo**: Communicates state and activity through restrained colour, luminance, and motion.
+- **Inner Display**: Communicates meaning through a clear, monochrome pixel pictogram (`HaloGlyph`).
+
+RUNTIME/UI-024 supersedes the 2026-09-18 spatial-cell direction.
 
 ### Rejected Concepts
 
-We explicitly reject the following constraints from previous generations:
-- No blue / No purple / No gradients
-- Almost monochrome only
-- Professional lab equipment aesthetic
-- Robotic eye/orb or mechanical halo ring
-- Radial system gauges as the core identity
-
-**Halo Presence** is a living status, input, and output surface, not merely decoration. 
+We explicitly reject the following concepts:
+- Anthropomorphic AI eyes or cartoon faces
+- Abstract morphing blobs or particle clouds
+- Decorative sci-fi radar or radial dashboard gauges
+- Arbitrary non-semantic idle animations
 
 Dark mode is the exact same design language rendered under different luminance; it is not a separate skin.
 
