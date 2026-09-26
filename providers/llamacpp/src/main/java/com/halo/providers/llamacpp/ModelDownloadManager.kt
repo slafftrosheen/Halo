@@ -24,6 +24,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import com.halo.sdk.provider.LocalModelFormat
 import com.halo.sdk.runtime.HaloDispatchers
 import com.halo.sdk.runtime.productionHaloDispatchers
 import java.io.File
@@ -43,17 +44,31 @@ data class CognitiveModel(
     val tier: LocalModelTier = LocalModelTier.STANDARD,
     val parameterCount: String? = null,
     val quantization: String? = null,
-    val expectedContextLength: Int? = null
+    val expectedContextLength: Int? = null,
+    val format: LocalModelFormat = LocalModelFormat.GGUF,
+    val supportsVision: Boolean = false,
 )
 
 enum class LocalModelTier { FAST, STANDARD, QUALITY }
 
 val AvailableModels = listOf(
-    CognitiveModel("qwen1.5-0.5b", "Qwen 1.5 (0.5B) Chat", "Legacy tiny compatibility model.", "https://huggingface.co/Qwen/Qwen1.5-0.5B-Chat-GGUF/resolve/main/qwen1_5-0_5b-chat-q4_k_m.gguf", 398, tier = LocalModelTier.FAST, parameterCount = "0.5B", quantization = "Q4_K_M", expectedContextLength = 32_768),
-    CognitiveModel("qwen3-0.6b-q4", "Qwen3 0.6B", "Modern tiny-device candidate; selectable but not the default until Android binding validation is complete.", "https://huggingface.co/ggml-org/Qwen3-0.6B-GGUF/resolve/main/Qwen3-0.6B-Q4_K_M.gguf", 522, tier = LocalModelTier.FAST, parameterCount = "0.6B", quantization = "Q4_K_M", expectedContextLength = 40_960),
-    CognitiveModel("qwen3-1.7b-q4", "Qwen3 1.7B", "Higher-quality local tier for devices with sufficient memory.", "https://huggingface.co/ggml-org/Qwen3-1.7B-GGUF/resolve/main/Qwen3-1.7B-Q4_K_M.gguf", 1280, tier = LocalModelTier.QUALITY, parameterCount = "1.7B", quantization = "Q4_K_M", expectedContextLength = 40_960),
-    CognitiveModel("phi3-mini", "Phi-3 Mini (3.8B) Instruct", "Microsoft's capable reasoning model.", "https://huggingface.co/microsoft/Phi-3-mini-4k-instruct-gguf/resolve/main/Phi-3-mini-4k-instruct-q4.gguf", 2390, tier = LocalModelTier.QUALITY, parameterCount = "3.8B", quantization = "Q4"),
-    CognitiveModel("llama3-8b", "Llama 3 (8B) Instruct", "Large local tier; requires substantial memory.", "https://huggingface.co/QuantFactory/Meta-Llama-3-8B-Instruct-GGUF/resolve/main/Meta-Llama-3-8B-Instruct.Q4_K_M.gguf", 4920, tier = LocalModelTier.QUALITY, parameterCount = "8B", quantization = "Q4_K_M")
+    CognitiveModel(
+        id = "qwen3-0.6b-litert",
+        name = "Qwen3 0.6B · LiteRT",
+        description = "Recommended Android local model. Google LiteRT-LM runtime with GPU→CPU fallback; open download.",
+        downloadUrl = "https://huggingface.co/litert-community/Qwen3-0.6B/resolve/main/Qwen3-0.6B.litertlm",
+        sizeMb = 586,
+        tier = LocalModelTier.FAST,
+        parameterCount = "0.6B",
+        quantization = "dynamic INT8",
+        expectedContextLength = 4_096,
+        format = LocalModelFormat.LITERT_LM,
+    ),
+    CognitiveModel("qwen1.5-0.5b", "Qwen 1.5 (0.5B) Chat · GGUF", "Compatibility GGUF model for the llama.cpp runtime.", "https://huggingface.co/Qwen/Qwen1.5-0.5B-Chat-GGUF/resolve/main/qwen1_5-0_5b-chat-q4_k_m.gguf", 398, tier = LocalModelTier.FAST, parameterCount = "0.5B", quantization = "Q4_K_M", expectedContextLength = 32_768),
+    CognitiveModel("qwen3-0.6b-q4", "Qwen3 0.6B · GGUF", "Power-user GGUF variant. Uses the third-party llama.cpp Android wrapper.", "https://huggingface.co/ggml-org/Qwen3-0.6B-GGUF/resolve/main/Qwen3-0.6B-Q4_K_M.gguf", 522, tier = LocalModelTier.FAST, parameterCount = "0.6B", quantization = "Q4_K_M", expectedContextLength = 40_960),
+    CognitiveModel("qwen3-1.7b-q4", "Qwen3 1.7B · GGUF", "Higher-quality GGUF tier for devices with sufficient memory.", "https://huggingface.co/ggml-org/Qwen3-1.7B-GGUF/resolve/main/Qwen3-1.7B-Q4_K_M.gguf", 1280, tier = LocalModelTier.QUALITY, parameterCount = "1.7B", quantization = "Q4_K_M", expectedContextLength = 40_960),
+    CognitiveModel("phi3-mini", "Phi-3 Mini (3.8B) · GGUF", "Compatibility GGUF model; requires substantial Android RAM.", "https://huggingface.co/microsoft/Phi-3-mini-4k-instruct-gguf/resolve/main/Phi-3-mini-4k-instruct-q4.gguf", 2390, tier = LocalModelTier.QUALITY, parameterCount = "3.8B", quantization = "Q4"),
+    CognitiveModel("llama3-8b", "Llama 3 (8B) · GGUF", "Large expert GGUF tier; requires substantial memory.", "https://huggingface.co/QuantFactory/Meta-Llama-3-8B-Instruct-GGUF/resolve/main/Meta-Llama-3-8B-Instruct.Q4_K_M.gguf", 4920, tier = LocalModelTier.QUALITY, parameterCount = "8B", quantization = "Q4_K_M")
 )
 
 enum class DownloadState { NotDownloaded, Downloading, Downloaded, Failed }
@@ -102,18 +117,39 @@ class ModelDownloadManager(
     /** Cached snapshot access only. This method never touches the filesystem. */
     fun getModelFile(modelId: String): File? = resolvedFiles.value[modelId]
 
-    private fun findModelFile(modelId: String): Pair<File, GgufModelMetadata>? {
-        val model = getAllModels().find { it.id == modelId }
+    private fun findModelFile(modelId: String): Pair<File, GgufModelMetadata?>? {
+        val model = getAllModels().find { it.id == modelId } ?: return null
         val candidates = resolveModelDirectories().flatMap { directory ->
-            listOfNotNull(model?.let { File(directory, fileNameFor(it)) },
-                model?.downloadUrl?.substringAfterLast("/")?.let { File(directory, it) })
-        }
+            listOf(
+                File(directory, fileNameFor(model)),
+                File(directory, model.downloadUrl.substringAfterLast("/").substringBefore("?")),
+            )
+        }.distinctBy { it.absolutePath }
+
         return candidates.firstNotNullOfOrNull { file ->
-            val metadata = readUsableMetadata(file) ?: return@firstNotNullOfOrNull null
-            val role = GgufArtifactClassifier.classifyLocalFile(file)
-            if (role != GgufArtifactRole.BASE_MODEL) return@firstNotNullOfOrNull null
-            file to metadata
+            when (model.format) {
+                LocalModelFormat.LITERT_LM -> {
+                    if (isUsableLiteRtArtifact(file)) file to null else null
+                }
+                LocalModelFormat.GGUF -> {
+                    val metadata = readUsableMetadata(file) ?: return@firstNotNullOfOrNull null
+                    val role = GgufArtifactClassifier.classifyLocalFile(file)
+                    if (role != GgufArtifactRole.BASE_MODEL) null else file to metadata
+                }
+            }
         }
+    }
+
+    private fun isUsableLiteRtArtifact(file: File): Boolean =
+        file.isFile &&
+            file.length() >= MIN_LITERT_MODEL_BYTES &&
+            file.extension.equals("litertlm", ignoreCase = true)
+
+    private fun isUsableDownloadedFile(model: CognitiveModel, file: File): Boolean = when (model.format) {
+        LocalModelFormat.LITERT_LM -> isUsableLiteRtArtifact(file)
+        LocalModelFormat.GGUF ->
+            readUsableMetadata(file) != null &&
+                GgufArtifactClassifier.classifyLocalFile(file) == GgufArtifactRole.BASE_MODEL
     }
 
     /** Called only from the repository's IO-confined inventory scan. */
@@ -156,6 +192,7 @@ class ModelDownloadManager(
                             path = file.absolutePath,
                             bytes = file.length(),
                             modifiedAt = file.lastModified(),
+                            format = model.format,
                             ggufMetadata = metadata,
                             valid = true
                         )
@@ -208,8 +245,21 @@ class ModelDownloadManager(
             initialization.join()
             val id = "custom_" + url.hashCode().toString().replace("-", "n")
             val modelName = name.ifBlank { url.substringAfterLast("/") }
+            val format = if (url.substringBefore('?').endsWith(".litertlm", ignoreCase = true)) {
+                LocalModelFormat.LITERT_LM
+            } else {
+                LocalModelFormat.GGUF
+            }
             _customModels.value = _customModels.value.filter { it.id != id } +
-                CognitiveModel(id, modelName, "Custom GGUF Model from Hugging Face", url, 0, true)
+                CognitiveModel(
+                    id = id,
+                    name = modelName,
+                    description = if (format == LocalModelFormat.LITERT_LM) "Custom LiteRT-LM model" else "Custom GGUF model",
+                    downloadUrl = url,
+                    sizeMb = 0,
+                    isCustom = true,
+                    format = format,
+                )
             saveCustomModels()
             downloadUrl(id, modelName, url)
         }
@@ -344,10 +394,10 @@ class ModelDownloadManager(
 
             // Failed DownloadManager destinations must not poison every retry with ERROR_FILE_ALREADY_EXISTS.
             val previous = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), fileNameFor(model))
-            if (previous.exists() && readUsableMetadata(previous) == null) previous.delete()
+            if (previous.exists() && !isUsableDownloadedFile(model, previous)) previous.delete()
             val request = DownloadManager.Request(Uri.parse(url)).apply {
                 setTitle("Downloading $name")
-                setDescription("Halo on-device GGUF model download.")
+                setDescription("Halo on-device local model download.")
                 setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                 setDestinationInExternalFilesDir(context, Environment.DIRECTORY_DOWNLOADS, fileNameFor(model))
                 setAllowedOverMetered(true)
@@ -518,7 +568,8 @@ class ModelDownloadManager(
             _customModels.value.forEach { model ->
                 put(JSONObject().put("id", model.id).put("name", model.name)
                     .put("description", model.description).put("url", model.downloadUrl)
-                    .put("sizeMb", model.sizeMb).put("quantization", model.quantization))
+                    .put("sizeMb", model.sizeMb).put("quantization", model.quantization)
+                    .put("format", model.format.name))
             }
         }
         prefs.edit().putString("custom_models_json", json.toString()).apply()
@@ -540,6 +591,7 @@ class ModelDownloadManager(
 
     private companion object {
         private const val DOWNLOAD_PREF_PREFIX = "active_download_"
+        private const val MIN_LITERT_MODEL_BYTES = 16L * 1024L * 1024L
     }
 
     private data class InventoryResult(
