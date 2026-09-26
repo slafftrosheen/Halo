@@ -106,7 +106,8 @@ class LocalModelPreloadCoordinator(
 
             Log.i(TAG, "Triggering proactive model preload for $activeModelId (reason=$reason)")
             val loadConfig = RuntimeLoadConfig(
-                contextSize = storage.getInt("llamacpp_context", 4096),
+                contextSize = storage.getInt("llamacpp_context", LlamaCppRuntime.MAX_MOBILE_CONTEXT_SIZE)
+                    .coerceIn(LlamaCppRuntime.MIN_MOBILE_CONTEXT_SIZE, LlamaCppRuntime.MAX_MOBILE_CONTEXT_SIZE),
                 computeBackend = LocalComputeBackend.AUTO,
             )
 
