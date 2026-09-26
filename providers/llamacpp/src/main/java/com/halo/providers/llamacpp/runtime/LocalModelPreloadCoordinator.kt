@@ -104,17 +104,26 @@ class LocalModelPreloadCoordinator(
                 return@withLock false
             }
 
-            Log.i(TAG, "Triggering proactive model preload for $activeModelId (reason=$reason)")
+            val model = downloadManager.getAllModels().firstOrNull { it.id == activeModelId }
+            val format = model?.format ?: when {
+                file.extension.equals("litertlm", ignoreCase = true) -> LocalModelFormat.LITERT_LM
+                else -> LocalModelFormat.GGUF
+            }
+            Log.i(TAG, "Triggering proactive model preload for $activeModelId format=$format (reason=$reason)")
             val loadConfig = RuntimeLoadConfig(
-                contextSize = storage.getInt("llamacpp_context", 4096),
+                contextSize = minOf(
+                    storage.getInt("llamacpp_context", 4096),
+                    model?.expectedContextLength ?: 4096,
+                ).coerceAtLeast(512),
                 computeBackend = LocalComputeBackend.AUTO,
+                visionEnabled = model?.supportsVision == true,
             )
 
             try {
                 val result = localModelSession.loadModel(
                     modelId = activeModelId,
                     modelPath = file.absolutePath,
-                    format = LocalModelFormat.GGUF,
+                    format = format,
                     config = loadConfig,
                 )
                 result.isSuccess
