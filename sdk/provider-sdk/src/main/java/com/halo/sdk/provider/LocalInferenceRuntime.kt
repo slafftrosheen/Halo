@@ -80,6 +80,8 @@ data class RuntimeLoadConfig(
     val cpuThreads: Int = 4,
     val speculativeDecoding: Boolean? = null,
     val mmprojPath: String? = null,
+    /** LiteRT-LM initializes its vision executor only for models that actually need it. */
+    val visionEnabled: Boolean = false,
 )
 
 data class RuntimeLoadResult(
@@ -91,6 +93,8 @@ data class RuntimeLoadResult(
 
 data class RuntimeGenerationConfig(
     val prompt: String,
+    /** Structured history for runtimes with a native conversation API. GGUF runtimes may ignore it. */
+    val messages: List<AIMessage> = emptyList(),
     val temperature: Double = 0.7,
     val topP: Double = 0.9,
     val topK: Int = 40,
@@ -103,6 +107,7 @@ data class RuntimeGenerationConfig(
         if (this === other) return true
         if (other !is RuntimeGenerationConfig) return false
         if (prompt != other.prompt) return false
+        if (messages != other.messages) return false
         if (temperature != other.temperature) return false
         if (topP != other.topP) return false
         if (topK != other.topK) return false
@@ -118,6 +123,7 @@ data class RuntimeGenerationConfig(
 
     override fun hashCode(): Int {
         var result = prompt.hashCode()
+        result = 31 * result + messages.hashCode()
         result = 31 * result + temperature.hashCode()
         result = 31 * result + topP.hashCode()
         result = 31 * result + topK
