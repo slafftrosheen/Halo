@@ -12,6 +12,7 @@ import com.halo.runtime.cognition.session.CognitiveSession
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import com.halo.providers.llamacpp.ModelDownloadManager
+import com.halo.providers.llamacpp.runtime.LlamaCppRuntime
 import com.halo.providers.llamacpp.CognitiveModel
 import com.halo.providers.llamacpp.DownloadState
 import com.halo.app.models.ModelCatalogEntry
@@ -117,7 +118,8 @@ class IntelligenceViewModel(
                 ollamaEndpoint = storage.getString("ollama_endpoint") ?: "",
                 ollamaModel = storage.getString("ollama_model") ?: "llama3",
                 llamacppModel = storage.getString("llamacpp_model") ?: "qwen1.5-0.5b",
-                llamacppContext = storage.getInt("llamacpp_context", 4096),
+                llamacppContext = storage.getInt("llamacpp_context", LlamaCppRuntime.MAX_MOBILE_CONTEXT_SIZE)
+                    .coerceIn(LlamaCppRuntime.MIN_MOBILE_CONTEXT_SIZE, LlamaCppRuntime.MAX_MOBILE_CONTEXT_SIZE),
                 temperature = storage.getInt("ai_temperature", 70) / 100f,
                 policy = storage.readRuntimeAiContextPolicy()
             )
@@ -323,7 +325,7 @@ class IntelligenceViewModel(
     }
     fun setOllamaModel(model: String) { val n = model.trim(); if (n.isBlank()) return; updateSettings { it.copy(ollamaModel = n) }; persist { storage.putString("ollama_model", n) }; if (aiProviderRouter.selectedProviderId.value == ProviderIds.OLLAMA) aiProviderRouter.selectModel(n); _refreshTrigger.update { it + 1 } }
     fun setLlamacppModel(model: String) { val n = model.trim(); if (n.isBlank() || modelDownloadManager?.getAllModels()?.any { it.id == n } != true) return; updateSettings { it.copy(llamacppModel = n) }; persist { storage.putString("llamacpp_model", n) }; if (aiProviderRouter.selectedProviderId.value == ProviderIds.LLAMACPP) { modelDownloadManager?.setActiveModel(n); aiProviderRouter.selectModel(n) }; _refreshTrigger.update { it + 1 } }
-    fun setLlamacppContext(size: Int) { val n = size.coerceAtLeast(1); updateSettings { it.copy(llamacppContext = n) }; persist { storage.putInt("llamacpp_context", n) }; _refreshTrigger.update { it + 1 } }
+    fun setLlamacppContext(size: Int) { val n = size.coerceIn(LlamaCppRuntime.MIN_MOBILE_CONTEXT_SIZE, LlamaCppRuntime.MAX_MOBILE_CONTEXT_SIZE); updateSettings { it.copy(llamacppContext = n) }; persist { storage.putInt("llamacpp_context", n) }; _refreshTrigger.update { it + 1 } }
     fun setToolsEnabled(enabled: Boolean) {
         updatePolicy(tools = enabled)
     }
