@@ -188,12 +188,15 @@ class LocalModelSession(
         config: RuntimeLoadConfig = RuntimeLoadConfig(),
     ): Result<RuntimeLoadResult> = lifecycleMutex.withLock lifecycleLock@{
         generationMutex.withLock generationLock@{
-        if (isLoaded() && loadedModelId == modelId && activeFormat == format && activeConfig == config) {
+        if (isLoaded() && loadedModelId == modelId && activeFormat == format) {
+            // The native runtime may have downshifted context after an allocation
+            // failure. Reuse the proven resident context instead of retrying the
+            // larger requested value on every turn.
             return@generationLock Result.success(
                 RuntimeLoadResult(
                     activeBackend = activeBackend ?: LocalComputeBackend.CPU,
                     activeGpuLayers = activeGpuLayers,
-                    effectiveContextSize = config.contextSize,
+                    effectiveContextSize = activeConfig?.contextSize ?: config.contextSize,
                     fallbackReason = fallbackReason,
                 )
             )
@@ -213,7 +216,7 @@ class LocalModelSession(
                 loadedModelId = modelId
                 loadedModelPath = modelPath
                 activeFormat = format
-                activeConfig = config
+                activeConfig = config.copy(contextSize = loadResult.effectiveContextSize)
                 activeBackend = loadResult.activeBackend
                 activeGpuLayers = loadResult.activeGpuLayers
                 fallbackReason = loadResult.fallbackReason
