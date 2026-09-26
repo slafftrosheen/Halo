@@ -120,7 +120,7 @@ class SystemCheckViewModel(
                     name = "Local AI Model",
                     glyph = HaloGlyph.MODEL,
                     status = if (selectedModel != null) CheckStatus.READY else CheckStatus.NOT_CONFIGURED,
-                    reason = if (selectedModel != null) "Selected: $selectedModel" else "No local GGUF model selected"
+                    reason = if (selectedModel != null) "Selected: $selectedModel" else "No Native Local model selected"
                 )
             )
 
