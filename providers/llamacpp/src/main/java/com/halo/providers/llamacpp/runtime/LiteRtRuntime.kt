@@ -342,7 +342,9 @@ class LiteRtRuntime(
         Role.ASSISTANT -> Message.model(message.content)
         Role.USER -> Message.user(message.content)
         Role.TOOL -> Message.user("Tool result: ${message.content}")
-        Role.SYSTEM -> Message.system(message.content)
+        // System messages are removed into ConversationConfig.systemInstruction above.
+        // Keep this branch defensive without relying on a separate Message.system factory.
+        Role.SYSTEM -> Message.user(message.content)
     }
 
     private fun inferenceCacheDir(): File =
