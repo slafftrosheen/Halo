@@ -514,7 +514,7 @@ class ModelDownloadManager(
 
     private fun finalizeDownloadedModel(modelId: String) {
         // DownloadManager writes directly to the app-specific model directory.
-        // The inventory scan validates GGUF before exposing it to the native provider.
+        // The inventory scan validates the selected runtime format before exposing it to the native provider.
         modelDirectories = null
     }
 
@@ -541,9 +541,18 @@ class ModelDownloadManager(
             _customModels.value = (0 until array.length()).mapNotNull { index ->
                 val row = array.optJSONObject(index) ?: return@mapNotNull null
                 runCatching {
-                    CognitiveModel(row.getString("id"), row.getString("name"),
-                        row.optString("description"), row.getString("url"), row.optInt("sizeMb"),
-                        true, quantization = row.optString("quantization").takeIf { it.isNotBlank() && it != "null" })
+                    CognitiveModel(
+                        id = row.getString("id"),
+                        name = row.getString("name"),
+                        description = row.optString("description"),
+                        downloadUrl = row.getString("url"),
+                        sizeMb = row.optInt("sizeMb"),
+                        isCustom = true,
+                        quantization = row.optString("quantization").takeIf { it.isNotBlank() && it != "null" },
+                        format = row.optString("format").takeIf { it.isNotBlank() }?.let {
+                            runCatching { LocalModelFormat.valueOf(it) }.getOrNull()
+                        } ?: LocalModelFormat.GGUF,
+                    )
                 }.getOrNull()
             }
         } else if (json.isNotBlank()) {
@@ -556,7 +565,12 @@ class ModelDownloadManager(
                     description = parts[2],
                     downloadUrl = parts[3],
                     sizeMb = parts[4].toIntOrNull() ?: 0,
-                    isCustom = true
+                    isCustom = true,
+                    format = if (parts[3].substringBefore('?').endsWith(".litertlm", ignoreCase = true)) {
+                        LocalModelFormat.LITERT_LM
+                    } else {
+                        LocalModelFormat.GGUF
+                    }
                 )
             }
             saveCustomModels()
