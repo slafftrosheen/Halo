@@ -3,6 +3,7 @@ package com.halo.providers.llamacpp
 import android.content.Context
 import android.util.Log
 import com.halo.providers.llamacpp.runtime.LocalModelSession
+import com.halo.providers.llamacpp.runtime.LlamaCppRuntime
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.NativeResourceCoordinator
 import com.halo.sdk.runtime.NativeResourceKind
