@@ -551,7 +551,11 @@ class ModelDownloadManager(
                         quantization = row.optString("quantization").takeIf { it.isNotBlank() && it != "null" },
                         format = row.optString("format").takeIf { it.isNotBlank() }?.let {
                             runCatching { LocalModelFormat.valueOf(it) }.getOrNull()
-                        } ?: LocalModelFormat.GGUF,
+                        } ?: if (row.getString("url").substringBefore('?').endsWith(".litertlm", ignoreCase = true)) {
+                            LocalModelFormat.LITERT_LM
+                        } else {
+                            LocalModelFormat.GGUF
+                        },
                     )
                 }.getOrNull()
             }
