@@ -332,12 +332,12 @@ class LiteRtRuntime(
             Log.i(TAG, "LiteRT-LM engine initialized backend=$backendKind model=${file.name}")
             candidate
         } catch (c: CancellationException) {
-            if (candidate.isInitialized()) runCatching { candidate.close() }
+            runCatching { candidate.close() }
             throw c
         } catch (t: Throwable) {
-            if (candidate.isInitialized()) runCatching { candidate.close() }
+            runCatching { candidate.close() }
             Log.w(TAG, "LiteRT-LM engine initialization failed backend=$backendKind model=${file.name}", t)
-            null
+            throw t
         }
     }
 
