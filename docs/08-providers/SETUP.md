@@ -4,23 +4,31 @@ Status: CURRENT SOURCE MAP. Reviewed 2026-09-24.
 
 This page describes setup implemented by the current Android host.
 
-## Native llama.cpp — default
+## Native Local — default
 
 Provider ID: `provider.llamacpp.native`
 
-This is Halo's clean-install/default inference provider. It runs GGUF models directly on the phone
-and requires no Ollama server, API key or cloud account.
+The provider ID is intentionally unchanged for settings/recovery compatibility, but it no longer means every local model is forced through one native engine.
+
+Halo now supports two on-device runtime formats:
+
+- **LiteRT-LM (`.litertlm`) — recommended Android path.** Uses Google LiteRT-LM 0.17.1, structured conversation history, a persistent inference cache, GPU initialization with CPU fallback, and no Ollama/API key/cloud account.
+- **GGUF (`.gguf`) — compatibility / power-user path.** Uses the existing llama.cpp Android wrapper. GGUF artifact classification still filters projectors, imatrix/MTP auxiliaries and split shards before selection.
+
+For the first phone acceptance run:
 
 1. Open **Settings -> Intelligence**.
-2. Keep/select **llama.cpp (native)**.
-3. Open **Browse models for this phone**.
-4. Download a compatible GGUF model bundle (base model + matching `mmproj` vision projector if multimodal).
-5. Choose **Use model** / **Select**.
-6. Use **System Check** or **Check connection** to force a real native load check.
+2. Keep/select **Native Local (LiteRT / GGUF)**.
+3. Download **Qwen3 0.6B · LiteRT** from the built-in list.
+4. Select it.
+5. Open **System Check** and run the local text probe.
+6. Record whether LiteRT initialized on GPU or fell back to CPU.
 
-Catalog downloads are revision-pinned and classified via `GgufArtifactClassifier`. Auxiliary files (imatrix, MTP shards) are automatically filtered out from model selection choices. Multi-file bundles store a `manifest.json` manifest. Native llama.cpp remains the authoritative compatibility check when the model is loaded.
+The curated Qwen3 artifact is the public LiteRT Community `Qwen3-0.6B.litertlm` model. Gemma LiteRT artifacts may require accepting the Gemma license on Hugging Face first, so Halo does not make a gated Gemma URL the zero-config download.
 
-The runtime can reduce context size when Android memory headroom is insufficient.
+The current GGUF browser/import path remains available. A valid GGUF file may still be rejected by its native wrapper at load time; that no longer blocks Halo's default Android local-AI path.
+
+The runtime may reduce context size when Android memory headroom is insufficient. LiteRT cache data is stored under app `filesDir/litertlm_cache` rather than Android's disposable cache directory.
 
 ## Ollama — optional local-network server
 
@@ -86,7 +94,7 @@ with phone fallback disabled must never leak to the phone speaker.
 
 ## Routing rules
 
-- Clean install -> native llama.cpp.
+- Clean install -> Native Local provider; curated Android recommendation -> LiteRT-LM.
 - Persisted explicit user provider selection wins after restart.
 - Default routing policy -> local-only.
 - Explicit provider selection -> explicit routing.
@@ -95,7 +103,7 @@ with phone fallback disabled must never leak to the phone speaker.
 
 ## Troubleshooting
 
-**No model selected:** download and explicitly select a GGUF.
+**No model selected:** download and explicitly select a local model. For Android acceptance, start with Qwen3 0.6B · LiteRT.
 
 **Download used to fail with “GGUF is missing general.architecture metadata”:** that was an overly
 strict Halo download gate. Complete readable GGUF files are now retained; native llama.cpp decides
@@ -107,4 +115,4 @@ pulled on the Ollama host.
 **OpenRouter unconfigured:** save a valid key, refresh models, select a model/router, then Check connection.
 
 **Android assistant unavailable:** configure the system assistant in Android settings; normal Halo
-llama.cpp inference does not depend on it.
+Native Local inference does not depend on it.
