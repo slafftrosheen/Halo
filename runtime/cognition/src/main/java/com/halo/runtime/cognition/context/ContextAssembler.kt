@@ -4,6 +4,7 @@ import com.halo.sdk.provider.AiCapability
 import com.halo.sdk.provider.AiContext
 import com.halo.sdk.provider.AiContextPolicy
 import com.halo.sdk.runtime.VisualFreshness
+import com.halo.sdk.runtime.skills.SkillId
 
 data class ContextOmission(
     val source: String,
@@ -90,4 +91,8 @@ data class ContextAssemblyRequest(
     val contextWindowTokens: Long? = null,
     val requiredNeeds: List<ContextNeed> = emptyList(),
     val targetIsLocal: Boolean = true,
+    val userText: String = "",
+    val queryText: String = "",
+    val mode: CognitiveOperatingMode = CognitiveOperatingMode.AUTO,
+    val activatedSkillIds: Set<SkillId> = emptySet(),
 )

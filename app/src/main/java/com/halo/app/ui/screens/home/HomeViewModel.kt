@@ -7,6 +7,7 @@ import com.halo.app.capture.LocalCaptureStore
 import com.halo.app.ui.glass.material.HaloRuntimeState
 import com.halo.app.ui.state.presenceFromSpeech
 import com.halo.engines.speech.SpeechRecognizedPayload
+import com.halo.runtime.cognition.context.CognitiveOperatingMode
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.*
 import com.halo.runtime.cognition.session.CognitiveSession
@@ -165,6 +166,7 @@ class HomeViewModel(
     private val _listeningRequested = MutableStateFlow(false)
     val listeningRequested: StateFlow<Boolean> = _listeningRequested.asStateFlow()
     private val _presentedResponse = MutableStateFlow<String?>(null)
+    val selectedMode = MutableStateFlow(CognitiveOperatingMode.AUTO)
 
     val uiState: StateFlow<HomeUiState> = combine(
         snapshotManager.snapshot,
@@ -286,7 +288,7 @@ class HomeViewModel(
                                 transcript = normalized,
                                 language = Locale.getDefault().toLanguageTag()
                             ),
-                            metadata = mapOf("input" to "keyboard")
+                            metadata = mapOf("input" to "keyboard", "mode" to selectedMode.value.name)
                         )
                     )
                 )

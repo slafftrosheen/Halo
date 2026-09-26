@@ -2,6 +2,8 @@ package com.halo.app.models
 
 import android.app.ActivityManager
 import android.content.Context
+import com.halo.providers.llamacpp.GgufArtifactClassifier
+import com.halo.providers.llamacpp.GgufArtifactRole
 import com.halo.providers.llamacpp.LocalModelMemoryPlanner
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.CancellationException
@@ -200,22 +202,34 @@ class HuggingFaceGgufCatalog(
         }
         mutableState.value = ModelCatalogState.Refreshing
         try {
-            val url = "https://huggingface.co/api/models?filter=gguf&pipeline_tag=text-generation" +
-                "&sort=trendingScore&direction=-1&limit=100&expand=sha&expand=siblings"
-            val request = Request.Builder().url(url)
-                .header("Accept", "application/json")
-                .apply { if (cached != null) cache.getEtag()?.let { header("If-None-Match", it) } }
-                .build()
-            val response = client.newCall(request).execute()
-            val listing = response.use {
-                if (it.code == 304 && cached != null) {
-                    mutableState.value = ModelCatalogState.Ready(cached.first, cached.second)
-                    return@withContext
+            val tagsToFetch = listOf("text-generation", "image-text-to-text")
+            val listing = JSONArray()
+            val seenIds = mutableSetOf<String>()
+            for (tag in tagsToFetch) {
+                val url = "https://huggingface.co/api/models?filter=gguf&pipeline_tag=$tag" +
+                    "&sort=trendingScore&direction=-1&limit=50&expand=sha&expand=siblings"
+                val request = Request.Builder().url(url)
+                    .header("Accept", "application/json")
+                    .apply { if (cached != null) cache.getEtag()?.let { header("If-None-Match", it) } }
+                    .build()
+                runCatching {
+                    client.newCall(request).execute().use { resp ->
+                        if (resp.isSuccessful) {
+                            resp.header("ETag")?.let { etag -> cache.setEtag(etag) }
+                            val bodyStr = resp.body?.string()
+                            if (!bodyStr.isNullOrBlank()) {
+                                val arr = JSONArray(bodyStr)
+                                for (i in 0 until arr.length()) {
+                                    val obj = arr.optJSONObject(i) ?: continue
+                                    val id = obj.optString("id")
+                                    if (id.isNotBlank() && seenIds.add(id)) {
+                                        listing.put(obj)
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
-                if (!it.isSuccessful) throw IOException("Hub returned HTTP ${it.code}")
-                val body = it.body?.string() ?: throw IOException("Empty Hub response")
-                it.header("ETag")?.let { etag -> cache.setEtag(etag) }
-                JSONArray(body)
             }
             val semaphore = Semaphore(5)
             val models = coroutineScope {
@@ -282,12 +296,9 @@ class HuggingFaceGgufCatalog(
             val sibling = siblings.optJSONObject(index) ?: return@mapNotNull null
             val filename = sibling.optString("rfilename")
             val bytes = sibling.optLong("size", -1L)
-            if (!filename.endsWith(".gguf", true) || bytes <= 0L ||
-                filename.contains("mmproj", true) || filename.contains("vision", true) ||
-                filename.contains("projector", true) ||
-                Regex("-\\d{5}-of-\\d{5}\\.gguf$", RegexOption.IGNORE_CASE).containsMatchIn(filename)) {
-                return@mapNotNull null
-            }
+            if (!filename.endsWith(".gguf", true) || bytes <= 0L) return@mapNotNull null
+            val role = GgufArtifactClassifier.classifyFilename(filename)
+            if (role != GgufArtifactRole.BASE_MODEL) return@mapNotNull null
             RemoteGgufFile(filename, bytes, parseQuantization(filename))
         }
         if (files.isEmpty()) return null

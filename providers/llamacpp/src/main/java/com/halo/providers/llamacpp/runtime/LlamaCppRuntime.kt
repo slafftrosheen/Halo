@@ -26,10 +26,11 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import org.nehuatl.llamacpp.LlamaHelper
 import java.io.File
+import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 
 class LlamaCppRuntime(
@@ -63,6 +64,9 @@ class LlamaCppRuntime(
             val file = File(modelPath)
             require(file.exists() && file.isFile) { "Model file does not exist: $modelPath" }
 
+            // Always safely unload any previous engine FIRST before instantiating new helper
+            unloadInternal()
+
             val events = MutableSharedFlow<LlamaHelper.LLMEvent>(extraBufferCapacity = 64)
             val loadDeferred = CompletableDeferred<String?>()
             val helper = LlamaHelper(context.contentResolver, scope, events)
@@ -73,8 +77,14 @@ class LlamaCppRuntime(
                     }
                 }
             }
+
+            val mmprojUri = config.mmprojPath?.let { path ->
+                val projFile = File(path)
+                if (projFile.isFile && projFile.exists()) Uri.fromFile(projFile).toString() else null
+            }
+
             try {
-                helper.load(Uri.fromFile(file).toString(), config.contextSize, null) {
+                helper.load(Uri.fromFile(file).toString(), config.contextSize, mmprojUri) {
                     loadDeferred.complete(null)
                 }
                 val loadOutcome = withTimeoutOrNull(LOAD_TIMEOUT_MS) { loadDeferred.await() }
@@ -89,7 +99,6 @@ class LlamaCppRuntime(
                 collector.cancel()
             }
 
-            unloadInternal()
             engine = helper
             engineEvents = events
             _loadedModelId = modelId
@@ -132,6 +141,8 @@ class LlamaCppRuntime(
         var tokenCount = 0
         val textBuilder = StringBuilder()
 
+        var stagedImageFile: File? = null
+
         val eventChannel = Channel<LlamaHelper.LLMEvent>(Channel.UNLIMITED)
         val collector = scope.launch(start = CoroutineStart.UNDISPATCHED) {
             currentEvents.collect { eventChannel.send(it) }
@@ -141,7 +152,14 @@ class LlamaCppRuntime(
             currentEvents.subscriptionCount.first { it > 0 }
             currentCoroutineContext().ensureActive()
 
-            currentEngine.predict(config.prompt, null, true)
+            val imageUri = config.imageBytes?.let { bytes ->
+                val file = File(context.cacheDir, "halo_staged_img_${UUID.randomUUID()}.jpg")
+                file.writeBytes(bytes)
+                stagedImageFile = file
+                Uri.fromFile(file).toString()
+            }
+
+            currentEngine.predict(config.prompt, imageUri, true)
 
             withTimeout(GENERATION_TIMEOUT_MS) {
                 for (event in eventChannel) {
@@ -202,6 +220,7 @@ class LlamaCppRuntime(
         } finally {
             collector.cancel()
             eventChannel.close()
+            stagedImageFile?.delete()
         }
     }
 

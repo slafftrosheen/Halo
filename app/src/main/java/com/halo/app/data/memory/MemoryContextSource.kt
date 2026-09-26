@@ -1,5 +1,7 @@
 package com.halo.app.data.memory
 
+import com.halo.runtime.cognition.context.MemoryContextItem
+import com.halo.runtime.cognition.context.MemoryRecallQuery
 import kotlinx.coroutines.flow.first
 
 data class MemoryQuery(
@@ -23,7 +25,22 @@ interface MemoryContextSource {
 
 class BoundedMemoryContextSource(
     private val memoryRepository: MemoryRepository
-) : MemoryContextSource {
+) : MemoryContextSource, com.halo.runtime.cognition.context.MemoryContextSource {
+
+    override suspend fun recall(query: MemoryRecallQuery): List<MemoryContextItem> {
+        val appQuery = MemoryQuery(query = query.text)
+        val candidates = retrieve(appQuery, query.limit)
+        return candidates.map { c ->
+            MemoryContextItem(
+                id = c.id,
+                content = c.content,
+                kind = c.kind.name,
+                scope = c.scope.name,
+                relevance = c.relevance,
+                provenance = c.provenanceSummary
+            )
+        }
+    }
 
     override suspend fun retrieve(query: MemoryQuery, limit: Int): List<MemoryContextCandidate> {
         val memories = memoryRepository.observeMemories().first()

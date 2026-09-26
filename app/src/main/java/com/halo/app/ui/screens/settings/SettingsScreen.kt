@@ -59,6 +59,7 @@ import com.halo.app.ui.theme.HaloPastelYellow
 import com.halo.app.ui.design.HaloScreenHeader
 import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.icons.HaloIcon
+import com.halo.host.android.assistant.AssistantRoleState
 
 @Composable
 fun SettingsScreen(viewModel: SettingsViewModel) {
@@ -141,15 +142,15 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             tint = HaloPastelBlue,
             title = "Default Android Assistant",
             subtitle = when (assistantRoleState) {
-                com.halo.host.android.assistant.AssistantRoleState.Active -> "Halo is your system assistant ✓"
-                com.halo.host.android.assistant.AssistantRoleState.Available -> "Use Halo from your phone's assistant gesture"
-                com.halo.host.android.assistant.AssistantRoleState.Unsupported -> "Not available on this device"
+                AssistantRoleState.Active -> "Halo is your system assistant ✓ (Tap to manage)"
+                AssistantRoleState.Available -> "Use Halo from your phone's assistant gesture"
+                AssistantRoleState.Unsupported -> "Not available on this device"
             },
-            onClick = if (assistantRoleState is com.halo.host.android.assistant.AssistantRoleState.Available) {
-                {
-                    assistantRoleController.createRoleRequestIntent()?.let(assistantRoleLauncher::launch)
+            onClick = {
+                assistantRoleController.launchEnrollment { intent ->
+                    assistantRoleLauncher.launch(intent)
                 }
-            } else null,
+            },
         )
 
         SettingsRow(

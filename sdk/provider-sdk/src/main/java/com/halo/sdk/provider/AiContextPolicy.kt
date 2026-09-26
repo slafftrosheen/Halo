@@ -17,6 +17,7 @@ data class AiContextPolicy(
     val allowCloudWorkspace: Boolean = false,
     val allowCloudScreenContext: Boolean = false,
     val allowCloudImages: Boolean = false,
+    val allowCloudMemories: Boolean = false,
 ) {
     companion object {
         val CONSERVATIVE = AiContextPolicy(

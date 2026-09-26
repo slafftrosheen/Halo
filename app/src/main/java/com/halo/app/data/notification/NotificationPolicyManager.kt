@@ -3,8 +3,10 @@ package com.halo.app.data.notification
 import android.content.Context
 import android.content.SharedPreferences
 
-class NotificationPolicyManager(context: Context) {
-    private val prefs: SharedPreferences = context.getSharedPreferences("halo_notification_policies", Context.MODE_PRIVATE)
+class NotificationPolicyManager(private val context: Context) {
+    private val prefs: SharedPreferences by lazy {
+        context.getSharedPreferences("halo_notification_policies", Context.MODE_PRIVATE)
+    }
 
     fun policyForApp(packageName: String): NotificationAccessPolicy {
         val saved = prefs.getString("policy_$packageName", null)

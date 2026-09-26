@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -61,12 +62,15 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
+import com.halo.app.ui.icons.HaloGlyph
+import com.halo.app.ui.icons.HaloIcon
 import com.halo.app.ui.presence.HaloSignalFace
 import com.halo.app.ui.theme.HaloPastelBlue
 import com.halo.app.ui.theme.HaloWarning
 import com.halo.app.ui.theme.rememberReducedMotion
 import com.halo.app.ui.workspace.HaloWorkspaceButton
 import com.halo.app.ui.workspace.HaloWorkspaceCard
+import com.halo.runtime.cognition.context.CognitiveOperatingMode
 import com.halo.sdk.provider.CognitiveSessionState
 import com.halo.sdk.provider.ProviderStatus
 
@@ -303,7 +307,58 @@ fun HomeScreen(
             }
         }
 
-        Spacer(Modifier.height(30.dp))
+        val currentMode by viewModel.selectedMode.collectAsState()
+        var modeMenuExpanded by remember { mutableStateOf(false) }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
+        ) {
+            Box {
+                Surface(
+                    onClick = { modeMenuExpanded = true },
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val glyph = when (currentMode) {
+                            CognitiveOperatingMode.AUTO -> HaloGlyph.HALO
+                            CognitiveOperatingMode.ASK -> HaloGlyph.QUESTION
+                            CognitiveOperatingMode.PLAN -> HaloGlyph.ACTIVITY
+                            CognitiveOperatingMode.AGENT -> HaloGlyph.TOOL
+                        }
+                        HaloIcon(glyph = glyph, contentDescription = currentMode.name, modifier = Modifier.size(14.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            text = "${currentMode.name.lowercase().replaceFirstChar { it.uppercase() }} ▾",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                DropdownMenu(
+                    expanded = modeMenuExpanded,
+                    onDismissRequest = { modeMenuExpanded = false }
+                ) {
+                    CognitiveOperatingMode.values().forEach { mode ->
+                        DropdownMenuItem(
+                            text = { Text(mode.name.lowercase().replaceFirstChar { it.uppercase() }) },
+                            onClick = {
+                                viewModel.selectedMode.value = mode
+                                modeMenuExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(Modifier.height(8.dp))
 
         HaloComposer(
             value = textInput,

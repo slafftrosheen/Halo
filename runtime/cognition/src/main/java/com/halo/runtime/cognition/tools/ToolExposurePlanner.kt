@@ -39,7 +39,12 @@ class ToolExposurePlanner(
         )
     }
 
-    fun expand(current: ToolExposureSet, requestedIds: List<String>): ToolExposureSet {
+    fun expand(
+        current: ToolExposureSet,
+        requestedIds: List<String>,
+        gate: ToolExposureGate? = null,
+        exposureContext: ToolExposureContext = ToolExposureContext(),
+    ): ToolExposureSet {
         val newDiscovered = mutableSetOf<ToolId>()
         for (raw in requestedIds) {
             val id = raw.trim()
@@ -47,7 +52,9 @@ class ToolExposurePlanner(
             val descriptor = registry.descriptor(id) ?: continue
             if (descriptor.visibility == ToolVisibility.DISCOVERABLE) {
                 if (availabilityResolver?.isAvailable(descriptor) != false) {
-                    newDiscovered.add(descriptor.id)
+                    if (gate == null || gate.evaluate(descriptor, exposureContext) is ToolExposureDecision.Allow) {
+                        newDiscovered.add(descriptor.id)
+                    }
                 }
             }
         }

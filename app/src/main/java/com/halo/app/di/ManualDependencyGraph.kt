@@ -28,6 +28,7 @@ import com.halo.app.models.HuggingFaceGgufCatalog
 import com.halo.app.notebook.NotebookUseCases
 import com.halo.app.notebook.WorkspaceUseCases
 import com.halo.app.notification.NotificationDigestTool
+import com.halo.app.storage.haloStorageLayout
 import com.halo.app.ui.screens.activity.ActivityViewModel
 import com.halo.app.ui.screens.devices.DevicesViewModel
 import com.halo.app.ui.screens.discovery.PairingViewModel
@@ -46,13 +47,18 @@ import com.halo.runtime.cognition.agent.recovery.AgentCheckpointAssembler
 import com.halo.runtime.cognition.agent.recovery.DefaultAgentRecoveryPlanner
 import com.halo.runtime.cognition.attention.DeliveryChannel
 import com.halo.runtime.cognition.context.AssistantContextRepository
+import com.halo.runtime.cognition.context.CognitiveContextPlanner
 import com.halo.runtime.cognition.context.DefaultContextAcquisitionCoordinator
+import com.halo.runtime.cognition.context.DefaultContextAssembler
+import com.halo.runtime.cognition.context.InMemoryCognitiveModeRepository
 import com.halo.runtime.cognition.device.DefaultDeviceCapabilityResolver
 import com.halo.runtime.cognition.device.DefaultResourcePlanner
 import com.halo.runtime.cognition.session.CognitiveSession
+import com.halo.runtime.cognition.skills.BundledSkillInstructionSource
 import com.halo.runtime.cognition.skills.DefaultSkillRegistry
 import com.halo.runtime.cognition.tools.CapabilityCatalogue
 import com.halo.runtime.cognition.tools.CurrentTimeToolExecutor
+import com.halo.runtime.cognition.tools.DefaultToolExposureGate
 import com.halo.runtime.cognition.tools.ToolAvailabilityResolver
 import com.halo.runtime.cognition.tools.ToolDiscoveryService
 import com.halo.runtime.cognition.tools.ToolExposurePlanner
@@ -76,7 +82,7 @@ object ManualDependencyGraph {
     }
 
     val infra by lazy { RuntimeStartupTrace.measure("graph.infra") { InfrastructureGraph() } }
-    val storageLayout by lazy { com.halo.app.storage.haloStorageLayout(applicationContext).also { it.ensureDirectories() } }
+    val storageLayout by lazy { haloStorageLayout(applicationContext) }
     val secretStore by lazy { com.halo.app.security.AndroidKeystoreSecretStore(storageLayout) }
     private val preferenceStorage by lazy { com.halo.host.android.AndroidStorage(applicationContext) }
     val storage by lazy { RuntimeStartupTrace.measure("graph.storage") { com.halo.app.security.SecretBackedStorage(preferenceStorage, secretStore) } }
@@ -380,10 +386,19 @@ object ManualDependencyGraph {
             scope = infra.scope,
         )
     }
-    val contextAssembler by lazy { com.halo.runtime.cognition.context.DefaultContextAssembler(
-        conversationStore, blackboard, toolRegistry, workspaceContext, skillRegistry, assistantContextRepository,
-        discoveryProvider = { toolDiscovery },
-    ) }
+    val toolExposureGate by lazy { DefaultToolExposureGate(skillRegistry) }
+    val skillInstructionSource by lazy { BundledSkillInstructionSource() }
+    val cognitiveContextPlanner by lazy { CognitiveContextPlanner() }
+    val cognitiveModeRepository by lazy { InMemoryCognitiveModeRepository() }
+
+    val contextAssembler by lazy {
+        DefaultContextAssembler(
+            conversationStore, blackboard, toolRegistry, workspaceContext, skillRegistry, assistantContextRepository,
+            discoveryProvider = { toolDiscovery },
+            memoryContextSource = memoryContextSource,
+            toolExposureGate = toolExposureGate,
+        )
+    }
     val toolAuthorizationCoordinator by lazy {
         com.halo.app.di.tools.InteractiveToolAuthorization {
             attentionContextProvider.snapshot().foregroundState == com.halo.runtime.cognition.attention.ForegroundState.HALO_FOREGROUND

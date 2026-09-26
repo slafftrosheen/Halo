@@ -7,9 +7,27 @@ import android.content.Intent
 import android.os.Build
 import android.provider.Settings
 import android.service.voice.VoiceInteractionService
+import android.util.Log
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+
+enum class AssistantEnrollmentPath {
+    ROLE_REQUEST,
+    DEFAULT_APPS_SETTINGS,
+    VOICE_INPUT_SETTINGS,
+    GENERAL_SETTINGS,
+}
+
+data class AssistantEnrollmentCandidate(
+    val path: AssistantEnrollmentPath,
+    val intent: Intent,
+)
+
+sealed interface AssistantEnrollmentLaunchResult {
+    data class Launched(val path: AssistantEnrollmentPath) : AssistantEnrollmentLaunchResult
+    data class Failed(val reason: String) : AssistantEnrollmentLaunchResult
+}
 
 sealed interface AssistantEnrollmentState {
     data object Active : AssistantEnrollmentState
@@ -36,6 +54,8 @@ interface AssistantRoleController {
     fun refresh()
     fun createRoleRequestIntent(): Intent?
     fun resolveEnrollmentAction(): AssistantEnrollmentAction
+    fun enrollmentCandidates(): List<AssistantEnrollmentCandidate>
+    fun launchEnrollment(launcher: (Intent) -> Unit): AssistantEnrollmentLaunchResult
 }
 
 class AndroidAssistantRoleController(
@@ -65,36 +85,71 @@ class AndroidAssistantRoleController(
             return
         }
 
-        val manager = roleManager
-        val isRoleAvailable = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
-            manager != null && manager.isRoleAvailable(RoleManager.ROLE_ASSISTANT)
-
-        if (isRoleAvailable) {
-            val roleIntent = manager.createRequestRoleIntent(RoleManager.ROLE_ASSISTANT)
-            if (canResolve(roleIntent)) {
-                mutableEnrollmentState.value = AssistantEnrollmentState.RoleRequestAvailable
-                @Suppress("DEPRECATION")
-                mutableLegacyState.value = AssistantRoleState.Available
-                return
-            }
-        }
-
-        val voiceSettingsIntent = Intent(Settings.ACTION_VOICE_INPUT_SETTINGS)
-        if (canResolve(voiceSettingsIntent)) {
-            mutableEnrollmentState.value = AssistantEnrollmentState.SystemSettingsRequired
+        val candidates = enrollmentCandidates()
+        if (candidates.any { it.path == AssistantEnrollmentPath.ROLE_REQUEST }) {
+            mutableEnrollmentState.value = AssistantEnrollmentState.RoleRequestAvailable
+            @Suppress("DEPRECATION")
             mutableLegacyState.value = AssistantRoleState.Available
             return
         }
 
-        val manageAppsIntent = Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
-        if (canResolve(manageAppsIntent)) {
+        if (candidates.isNotEmpty()) {
             mutableEnrollmentState.value = AssistantEnrollmentState.SystemSettingsRequired
+            @Suppress("DEPRECATION")
             mutableLegacyState.value = AssistantRoleState.Available
             return
         }
 
         mutableEnrollmentState.value = AssistantEnrollmentState.Unavailable("Device settings for default assistant are not accessible on this device.")
+        @Suppress("DEPRECATION")
         mutableLegacyState.value = AssistantRoleState.Unsupported
+    }
+
+    override fun enrollmentCandidates(): List<AssistantEnrollmentCandidate> {
+        val list = mutableListOf<AssistantEnrollmentCandidate>()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && roleManager != null && roleManager.isRoleAvailable(RoleManager.ROLE_ASSISTANT)) {
+            val roleIntent = roleManager.createRequestRoleIntent(RoleManager.ROLE_ASSISTANT)
+            if (roleIntent != null && canResolve(roleIntent)) {
+                list.add(AssistantEnrollmentCandidate(AssistantEnrollmentPath.ROLE_REQUEST, roleIntent))
+            }
+        }
+
+        val manageAppsIntent = Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
+        if (canResolve(manageAppsIntent)) {
+            list.add(AssistantEnrollmentCandidate(AssistantEnrollmentPath.DEFAULT_APPS_SETTINGS, manageAppsIntent))
+        }
+
+        val voiceSettingsIntent = Intent(Settings.ACTION_VOICE_INPUT_SETTINGS)
+        if (canResolve(voiceSettingsIntent)) {
+            list.add(AssistantEnrollmentCandidate(AssistantEnrollmentPath.VOICE_INPUT_SETTINGS, voiceSettingsIntent))
+        }
+
+        val generalSettingsIntent = Intent(Settings.ACTION_SETTINGS)
+        if (canResolve(generalSettingsIntent)) {
+            list.add(AssistantEnrollmentCandidate(AssistantEnrollmentPath.GENERAL_SETTINGS, generalSettingsIntent))
+        }
+
+        return list
+    }
+
+    override fun launchEnrollment(launcher: (Intent) -> Unit): AssistantEnrollmentLaunchResult {
+        val candidates = enrollmentCandidates()
+        if (candidates.isEmpty()) {
+            Log.e("HaloAssistant", "HALO_ASSISTANT_ENROLLMENT_FAILED reason=no_resolvable_candidate")
+            return AssistantEnrollmentLaunchResult.Failed("No assistant settings activity found on device")
+        }
+
+        val first = candidates.first()
+        return try {
+            Log.i("HaloAssistant", "HALO_ASSISTANT_ENROLLMENT_TAP path=${first.path}")
+            launcher(first.intent)
+            Log.i("HaloAssistant", "HALO_ASSISTANT_ENROLLMENT_LAUNCHED path=${first.path}")
+            AssistantEnrollmentLaunchResult.Launched(first.path)
+        } catch (e: Exception) {
+            Log.e("HaloAssistant", "HALO_ASSISTANT_ENROLLMENT_FAILED path=${first.path} error=${e.message}")
+            AssistantEnrollmentLaunchResult.Failed(e.message ?: "Launch failed")
+        }
     }
 
     override fun createRoleRequestIntent(): Intent? {
@@ -103,25 +158,12 @@ class AndroidAssistantRoleController(
     }
 
     override fun resolveEnrollmentAction(): AssistantEnrollmentAction {
-        val manager = roleManager
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && manager != null && manager.isRoleAvailable(RoleManager.ROLE_ASSISTANT)) {
-            val roleIntent = manager.createRequestRoleIntent(RoleManager.ROLE_ASSISTANT)
-            if (roleIntent != null && canResolve(roleIntent)) {
-                return AssistantEnrollmentAction.Launch(roleIntent)
-            }
+        val candidate = enrollmentCandidates().firstOrNull()
+        return if (candidate != null) {
+            AssistantEnrollmentAction.Launch(candidate.intent)
+        } else {
+            AssistantEnrollmentAction.Unavailable("Unable to open Android assistant settings")
         }
-
-        val voiceSettingsIntent = Intent(Settings.ACTION_VOICE_INPUT_SETTINGS)
-        if (canResolve(voiceSettingsIntent)) {
-            return AssistantEnrollmentAction.Launch(voiceSettingsIntent)
-        }
-
-        val manageAppsIntent = Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
-        if (canResolve(manageAppsIntent)) {
-            return AssistantEnrollmentAction.Launch(manageAppsIntent)
-        }
-
-        return AssistantEnrollmentAction.Unavailable("Unable to open Android assistant settings")
     }
 
     private fun canResolve(intent: Intent): Boolean {

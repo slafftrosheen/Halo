@@ -11,7 +11,7 @@ This document describes the step-by-step physical phone verification sequence fo
    - Launch app and verify Home screen loads with `HaloSignalFace` in `Ready` state.
 
 2. **System Check — Core Probe**:
-   - Navigate to `Settings` -> `Runtime Status` -> `System Check`.
+   - Navigate to `Settings` -> `Runtime Status` -> `System Check`
    - Click `Run Safe Checks`.
    - Verify `Core Runtime` status is `PASSED`.
 

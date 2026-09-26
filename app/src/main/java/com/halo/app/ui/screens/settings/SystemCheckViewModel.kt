@@ -2,6 +2,7 @@ package com.halo.app.ui.screens.settings
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.MediaPlayer
 import android.media.MediaRecorder
@@ -137,6 +138,11 @@ class SystemCheckViewModel(
             _uiState.value = _uiState.value.copy(items = list)
             generateSummaryReport()
         }
+    }
+
+    fun launchAssistantEnrollment(launcher: (Intent) -> Unit) {
+        assistantRoleController.launchEnrollment(launcher)
+        refreshChecks()
     }
 
     fun testMicrophone() {

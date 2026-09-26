@@ -8,3 +8,10 @@ import java.util.UUID
 interface Memory {
     val id: UUID
 }
+
+data class SimpleMemory(
+    override val id: UUID = UUID.randomUUID(),
+    val content: String,
+    val kind: String = "fact",
+    val scope: String = "global"
+) : Memory

@@ -18,6 +18,7 @@ interface SkillRegistry {
     fun get(id: SkillId): SkillDescriptor?
     fun enabledTools(allTools: List<ToolDefinition>): List<ToolDefinition>
     suspend fun setEnabled(id: SkillId, enabled: Boolean)
+    fun skillIdForTool(toolName: String): SkillId? = null
     fun refreshAvailability() {}
     fun approvalPolicy(id: SkillId): ToolApprovalPolicy = ToolApprovalPolicy.ASK_EVERY_TIME
     fun approvalPolicyForTool(toolName: String): ToolApprovalPolicy = ToolApprovalPolicy.ASK_EVERY_TIME
@@ -56,6 +57,12 @@ class DefaultSkillRegistry(
         return allTools.filter { tool ->
             tool.name in enabledToolNames || tool.id in enabledToolNames
         }
+    }
+
+    override fun skillIdForTool(toolName: String): SkillId? {
+        return _skills.value.firstOrNull { skill ->
+            toolName in skill.tools
+        }?.id
     }
 
     override suspend fun setEnabled(id: SkillId, enabled: Boolean) {

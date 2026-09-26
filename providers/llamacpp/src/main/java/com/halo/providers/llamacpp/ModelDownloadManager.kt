@@ -110,6 +110,8 @@ class ModelDownloadManager(
         }
         return candidates.firstNotNullOfOrNull { file ->
             val metadata = readUsableMetadata(file) ?: return@firstNotNullOfOrNull null
+            val role = GgufArtifactClassifier.classifyLocalFile(file)
+            if (role != GgufArtifactRole.BASE_MODEL) return@firstNotNullOfOrNull null
             file to metadata
         }
     }

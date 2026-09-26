@@ -79,6 +79,7 @@ data class RuntimeLoadConfig(
     val gpuLayers: Int = 0,
     val cpuThreads: Int = 4,
     val speculativeDecoding: Boolean? = null,
+    val mmprojPath: String? = null,
 )
 
 data class RuntimeLoadResult(

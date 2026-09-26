@@ -7,8 +7,10 @@ import com.halo.sdk.runtime.Storage
 /**
  * Android implementation of [Storage] using [SharedPreferences].
  */
-class AndroidStorage(context: Context, name: String = "halo_storage") : Storage {
-    private val prefs: SharedPreferences = context.getSharedPreferences(name, Context.MODE_PRIVATE)
+class AndroidStorage(private val context: Context, private val name: String = "halo_storage") : Storage {
+    private val prefs: SharedPreferences by lazy {
+        context.getSharedPreferences(name, Context.MODE_PRIVATE)
+    }
 
     override fun getString(key: String, defaultValue: String?): String? {
         return prefs.getString(key, defaultValue)

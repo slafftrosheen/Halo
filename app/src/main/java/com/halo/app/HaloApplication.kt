@@ -120,6 +120,7 @@ class HaloApplication :
             RuntimeStartupTrace.mark("application.storageBootstrap.begin", startedAt)
             try {
                 val layout = haloStorageLayout(this@HaloApplication)
+                layout.ensureDirectories()
                 LocalAssetStorageMigration(this@HaloApplication, layout).migrate()
                 SecretMigration(
                     this@HaloApplication,

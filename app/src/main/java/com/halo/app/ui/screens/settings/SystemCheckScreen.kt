@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -83,24 +85,31 @@ fun SystemCheckScreen(
 
         Spacer(Modifier.height(20.dp))
 
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            items(uiState.items, key = { it.id }) { item ->
-                SystemCheckCard(
-                    item = item,
-                    onAction = {
-                        when (item.id) {
-                            "mic" -> viewModel.testMicrophone()
-                            "local_ai" -> viewModel.testTextInference()
-                            "audio" -> viewModel.testAudioOutput()
-                            else -> viewModel.refreshChecks()
-                        }
+    val assistantLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        viewModel.refreshChecks()
+    }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        items(uiState.items, key = { it.id }) { item ->
+            SystemCheckCard(
+                item = item,
+                onAction = {
+                    when (item.id) {
+                        "assistant" -> viewModel.launchAssistantEnrollment { intent -> assistantLauncher.launch(intent) }
+                        "mic" -> viewModel.testMicrophone()
+                        "local_ai" -> viewModel.testTextInference()
+                        "audio" -> viewModel.testAudioOutput()
+                        else -> viewModel.refreshChecks()
                     }
-                )
-            }
+                }
+            )
         }
+    }
     }
 }
 

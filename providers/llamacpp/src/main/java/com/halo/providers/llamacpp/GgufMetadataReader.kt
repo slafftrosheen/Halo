@@ -66,8 +66,11 @@ internal object GgufMetadataReader {
                 }
 
                 architecture?.let { prefix ->
+                    val preferredBlockCount = pending["$prefix.block_count"].asPositiveInt()
+                    if (preferredBlockCount != null && blockCount == null) {
+                        blockCount = preferredBlockCount
+                    }
                     contextLength = pending["$prefix.context_length"].asPositiveInt()
-                    blockCount = pending["$prefix.block_count"].asPositiveInt()
                     embeddingLength = pending["$prefix.embedding_length"].asPositiveInt()
                     attentionHeadCount = pending["$prefix.attention.head_count"].asPositiveInt()
                     attentionHeadCountKv = pending["$prefix.attention.head_count_kv"].asPositiveInt()

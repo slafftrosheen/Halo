@@ -14,14 +14,11 @@ and requires no Ollama server, API key or cloud account.
 1. Open **Settings -> Intelligence**.
 2. Keep/select **llama.cpp (native)**.
 3. Open **Browse models for this phone**.
-4. Download a compatible single-file `.gguf`.
+4. Download a compatible GGUF model bundle (base model + matching `mmproj` vision projector if multimodal).
 5. Choose **Use model** / **Select**.
-6. Use **Check connection** to force a real native load check.
+6. Use **System Check** or **Check connection** to force a real native load check.
 
-Catalog downloads are revision-pinned. Download completion is validated by advertised byte count and
-a readable GGUF container. Halo's lightweight metadata projection is advisory: inability to project
-`general.architecture` no longer deletes an otherwise complete download. Native llama.cpp remains
-the authoritative compatibility check when the model is loaded.
+Catalog downloads are revision-pinned and classified via `GgufArtifactClassifier`. Auxiliary files (imatrix, MTP shards) are automatically filtered out from model selection choices. Multi-file bundles store a `manifest.json` manifest. Native llama.cpp remains the authoritative compatibility check when the model is loaded.
 
 The runtime can reduce context size when Android memory headroom is insufficient.
 
