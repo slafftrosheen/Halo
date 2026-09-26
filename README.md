@@ -10,7 +10,7 @@ Halo feels like one intelligence that follows the user across their operating sy
 
 - **Android** is our first host, not the architecture itself. Future hosts could include Linux and Windows through equivalent native adapters.
 - **HeyCyan** is our first deeply tested wearable driver. Wearables are first-class interaction devices, but Halo is not tied to any individual hardware family. 
-- **llama.cpp** is the default local inference path, but AI providers are replaceable reasoning backends, not the runtime itself.
+- **Native Local** is the default local inference provider. Curated Android models run through Google LiteRT-LM; GGUF/llama.cpp remains an expert/import compatibility path. Providers are replaceable reasoning backends, not the runtime itself.
 
 None of these individual technologies define Halo. Core functionality remains useful without a mandatory cloud account, companion application, or subscription.
 
