@@ -47,6 +47,7 @@ googleServices = "4.5.0"
 credentials = "1.5.0"
 googleid = "1.1.1"
 media3 = "1.11.1"
+litertLm = "0.16.1"
 benchmark = "1.5.0"
 uiautomator = "2.3.0"
 baselineprofile = "1.5.0"
@@ -120,6 +121,7 @@ androidx-media3-common = { group = "androidx.media3", name = "media3-common", ve
 androidx-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version.ref = "benchmark" }
 androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version = "1.4.1" }
 androidx-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiautomator" }
+litertlm-android = { group = "com.google.ai.edge.litertlm", name = "litertlm-android", version.ref = "litertLm" }
 
 
 [plugins]

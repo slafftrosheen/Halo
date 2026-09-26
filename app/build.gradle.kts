@@ -148,6 +148,8 @@ dependencies {
   testImplementation(libs.junit)
   testImplementation(libs.kotlinx.coroutines.test)
   testImplementation(libs.robolectric)
+  testImplementation(project(":providers:litert"))
+  testImplementation(project(":providers:ollama"))
   testImplementation(libs.roborazzi)
   testImplementation(libs.roborazzi.compose)
   testImplementation(libs.roborazzi.junit.rule)
@@ -209,7 +211,8 @@ dependencies {
 }
 dependencies {
     implementation(project(":runtime:cognition"))
-    implementation(project(":providers:llamacpp"))
+    implementation(project(":providers:litert"))
+    implementation(project(":providers:ollama"))
     implementation(project(":providers:sherpa-stt"))
     implementation(project(":providers:android-tts"))
     implementation(project(":providers:android-assistant"))

@@ -39,11 +39,11 @@ val unitCoreProjects = listOf(
 )
 
 /** Local on-device inference providers: the layer that must survive without glasses. */
-val unitLocalAiProjects = listOf(":providers:llamacpp", ":providers:openrouter")
+val unitLocalAiProjects = listOf(":providers:litert", ":providers:openrouter")
 
 /** Remaining Android library modules with unit tests. */
 val unitAndroidLibProjects = listOf(
-    ":host-android", ":providers:sherpa-stt", ":providers:android-tts", ":providers:android-assistant",
+    ":host-android", ":providers:sherpa-stt", ":providers:android-tts", ":providers:android-assistant", ":providers:ollama"
 )
 
 tasks.register("haloUnitCore") {

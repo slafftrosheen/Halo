@@ -4,7 +4,6 @@ import android.media.AudioManager
 import com.halo.drivers.heycyan.HeyCyanAudioOutput
 import com.halo.drivers.heycyan.HeyCyanHost
 import com.halo.drivers.heycyan.RealHeyCyanDriver
-import com.halo.providers.llamacpp.NativeLlamaProvider
 import com.halo.providers.sherpa.stt.SherpaSpeechModelCatalog
 import com.halo.app.audio.AndroidInteractionAudioManager
 import com.halo.app.audio.ForegroundAudioSource

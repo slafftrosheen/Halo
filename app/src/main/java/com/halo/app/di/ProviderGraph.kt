@@ -2,7 +2,8 @@ package com.halo.app.di
 
 import android.content.Context
 import com.halo.app.storage.haloStorageLayout
-import com.halo.providers.llamacpp.ModelDownloadManager
+import com.halo.providers.litert.LiteRtLocalProvider
+import com.halo.providers.litert.models.LiteRtModelManager
 import com.halo.providers.sherpa.stt.ReloadableSpeechRecognitionProvider
 import com.halo.providers.sherpa.stt.DefaultSpeechModelInventoryRepository
 import com.halo.sdk.runtime.NativeResourceCoordinator
@@ -19,7 +20,7 @@ class ProviderGraph(
 ) {
 
     private val storageLayout by lazy { haloStorageLayout(applicationContext) }
-    val modelDownloadManager by lazy { ModelDownloadManager(applicationContext, modelRoot = storageLayout.models) }
+    val modelManager by lazy { LiteRtModelManager(applicationContext, modelRoot = storageLayout.models) }
     val nativeResourceCoordinator by lazy { NativeResourceCoordinator(infra?.resourceLeaseManager) }
     val speechModelInventory by lazy {
         DefaultSpeechModelInventoryRepository(
@@ -30,7 +31,7 @@ class ProviderGraph(
     private val providerFactory by lazy {
         AndroidProviderFactory(
             applicationContext,
-            modelDownloadManager,
+            modelManager,
             storage,
             nativeResourceCoordinator
         )
@@ -56,9 +57,8 @@ class ProviderGraph(
     }
 
     suspend fun preloadLocalModel(): Boolean {
-        val provider = providers.inference as? com.halo.providers.llamacpp.NativeLlamaProvider
+        val provider = providers.inference as? LiteRtLocalProvider
             ?: return false
-        val selected = storage.getString("active_ai_provider") == provider.id
-        return provider.loadModelIfNeeded(providerSelected = selected)
+        return provider.loadModelIfNeeded()
     }
 }

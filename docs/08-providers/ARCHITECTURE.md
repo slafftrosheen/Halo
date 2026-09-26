@@ -8,9 +8,9 @@ Halo's provider architecture explicitly distinguishes between different classes 
 
 ### 1. Inference Providers
 These are reasoning backends that process conversational turns and tool invocations. They are replaceable, and no single provider is "the brain" of Halo.
-- **Native llama.cpp**: Default local inference path. Supports GGUF base models + matching `mmproj` vision projectors (`RuntimeLoadConfig.mmprojPath`), multimodal image input (`RuntimeGenerationConfig.imageBytes`), and prompt-mediated tool calling (`<halo_tool_call>`). GGUF files are classified via `GgufArtifactClassifier` (`BASE_MODEL`, `MULTIMODAL_PROJECTOR`, `IMATRIX`, `MTP_AUXILIARY`, `SPLIT_MODEL_SHARD`) to ensure only runnable base models are selected.
-- **Ollama**: Optional LAN HTTP inference server. Supports text and streaming.
-- **OpenRouter**: Optional remote/cloud inference.
+- **On-device LiteRT-LM**: Default local inference path (`provider.litert.local`). Runs packaged `.litertlm` models directly on GPU/CPU via Google's LiteRT-LM engine.
+- **Ollama**: Optional LAN HTTP inference server (`provider.ollama`).
+- **OpenRouter**: Optional remote/cloud inference (`openrouter`).
 
 ### 2. Speech Providers
 - **Sherpa / Whisper**: Local speech-to-text (STT).

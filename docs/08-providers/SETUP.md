@@ -4,23 +4,21 @@ Status: CURRENT SOURCE MAP. Reviewed 2026-09-24.
 
 This page describes setup implemented by the current Android host.
 
-## Native llama.cpp — default
+## On-device LiteRT-LM — default
 
-Provider ID: `provider.llamacpp.native`
+Provider ID: `provider.litert.local`
 
-This is Halo's clean-install/default inference provider. It runs GGUF models directly on the phone
-and requires no Ollama server, API key or cloud account.
+This is Halo's clean-install/default inference provider. It runs `.litertlm` models directly on the phone
+using LiteRT-LM (GPU or CPU) and requires no server, API key or cloud account.
 
 1. Open **Settings -> Intelligence**.
-2. Keep/select **llama.cpp (native)**.
+2. Keep/select **On-device (LiteRT)**.
 3. Open **Browse models for this phone**.
-4. Download a compatible GGUF model bundle (base model + matching `mmproj` vision projector if multimodal).
-5. Choose **Use model** / **Select**.
-6. Use **System Check** or **Check connection** to force a real native load check.
+4. Download or import a compatible `.litertlm` model (such as Gemma 3 1B IT or Qwen 3 0.6B).
+5. Choose **Select**.
+6. Use **System Check** or **Check connection** to verify native load.
 
-Catalog downloads are revision-pinned and classified via `GgufArtifactClassifier`. Auxiliary files (imatrix, MTP shards) are automatically filtered out from model selection choices. Multi-file bundles store a `manifest.json` manifest. Native llama.cpp remains the authoritative compatibility check when the model is loaded.
-
-The runtime can reduce context size when Android memory headroom is insufficient.
+Legacy `.gguf` files remain on disk for user cleanup via Intelligence settings but are no longer loaded.
 
 ## Ollama — optional local-network server
 

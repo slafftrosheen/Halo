@@ -22,8 +22,6 @@ import com.halo.app.di.tools.HostTools
 import com.halo.app.di.tools.StorageStatusToolExecutor
 import com.halo.app.di.tools.WorkspaceToolExecutor
 import com.halo.app.embodiment.RuntimeDeviceCapabilityBridge
-import com.halo.app.models.FileModelCatalogCache
-import com.halo.app.models.HuggingFaceGgufCatalog
 
 import com.halo.app.notebook.NotebookUseCases
 import com.halo.app.notebook.WorkspaceUseCases
@@ -34,6 +32,7 @@ import com.halo.app.ui.screens.devices.DevicesViewModel
 import com.halo.app.ui.screens.discovery.PairingViewModel
 import com.halo.app.ui.screens.home.HomeViewModel
 import com.halo.app.ui.screens.notebook.NotebookViewModel
+import com.halo.app.ui.screens.settings.IntelligenceViewModel
 import com.halo.app.ui.screens.settings.SettingsViewModel
 import com.halo.app.ui.screens.settings.VoiceSettingsViewModel
 import com.halo.app.ui.state.RuntimeUiProjection
@@ -128,7 +127,7 @@ object ManualDependencyGraph {
     val blackboard get() = infra.blackboard
     val cognitiveTrace get() = infra.cognitiveTrace
 
-    val modelDownloadManager get() = providerGraph.modelDownloadManager
+    val modelManager get() = providerGraph.modelManager
     val providers get() = providerGraph.providers
     val speechRecognitionAvailability: StateFlow<Boolean> by lazy {
         (providers.speechRecognition as? ReloadableSpeechRecognitionProvider)?.availability
@@ -586,7 +585,7 @@ object ManualDependencyGraph {
             canClearModels = {
                 com.halo.sdk.runtime.NativeResourceKind.HEAVY_LLM !in providerGraph.nativeResourceCoordinator.activeKinds()
             },
-            onModelsCleared = { modelDownloadManager.invalidate("model downloads cleared") },
+            onModelsCleared = { modelManager.invalidate("model downloads cleared") },
             onAppearanceRestored = {
                 appearancePreferences.reloadFromDisk()
             },
@@ -626,10 +625,10 @@ object ManualDependencyGraph {
             bluetoothEnabled = platformStateMonitor.bluetoothEnabled
         )
     }
-    val modelCatalogCache by lazy { FileModelCatalogCache(applicationContext) }
-    val modelCatalog by lazy { HuggingFaceGgufCatalog(applicationContext, modelCatalogCache) }
-    val intelligenceViewModel by lazy { com.halo.app.ui.screens.settings.IntelligenceViewModel(
-        runtimeSnapshotManager, aiProviderRouter, cognitiveSession, storage, modelDownloadManager, modelCatalog) }
+    val intelligenceViewModel by lazy {
+        IntelligenceViewModel(
+            runtimeSnapshotManager, aiProviderRouter, cognitiveSession, storage, modelManager)
+    }
 
     val runtimeSnapshotManager get() = observerGraph.runtimeSnapshotManager
 

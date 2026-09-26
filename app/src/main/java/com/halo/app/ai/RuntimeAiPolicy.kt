@@ -25,6 +25,22 @@ fun Storage.readRuntimeAiContextPolicy(): AiContextPolicy = AiContextPolicy(
     allowCloudImages = getBoolean(KEY_CLOUD_IMAGES, false)
 )
 
+fun Storage.writeRuntimeAiContextPolicy(policy: AiContextPolicy) {
+    putBoolean(KEY_CONVERSATION, policy.includeConversation)
+    putBoolean(KEY_DEVICE_STATE, policy.includeDeviceState)
+    putBoolean(KEY_RECENT_EVENTS, policy.includeRecentEvents)
+    putBoolean(KEY_MEMORIES, policy.includeMemories)
+    putBoolean(KEY_TOOLS, policy.includeAvailableTools)
+    putBoolean(KEY_LOCATION, policy.includeLocation)
+    putBoolean(KEY_IMAGES, policy.includeImages)
+    putBoolean(KEY_AUDIO, policy.includeAudio)
+    putBoolean(KEY_VIDEO, policy.includeVideo)
+    putBoolean(KEY_WORKSPACE, policy.includeWorkspace)
+    putBoolean(KEY_CLOUD_WORKSPACE, policy.allowCloudWorkspace)
+    putBoolean(KEY_CLOUD_SCREEN, policy.allowCloudScreenContext)
+    putBoolean(KEY_CLOUD_IMAGES, policy.allowCloudImages)
+}
+
 const val KEY_CONVERSATION = "policy_conversation"
 const val KEY_DEVICE_STATE = "policy_device_state"
 const val KEY_RECENT_EVENTS = "policy_recent_events"

@@ -14,8 +14,6 @@ import androidx.lifecycle.viewModelScope
 import com.halo.app.ui.icons.HaloGlyph
 import com.halo.host.android.assistant.AndroidAssistantRoleController
 import com.halo.host.android.assistant.AssistantEnrollmentState
-import com.halo.providers.llamacpp.LocalModelDiagnosticSnapshot
-import com.halo.providers.llamacpp.NativeLlamaProvider
 import com.halo.sdk.provider.AiCapability
 import com.halo.sdk.provider.AiContext
 import com.halo.sdk.provider.AiInferenceProvider
@@ -120,7 +118,7 @@ class SystemCheckViewModel(
                     name = "Local AI Model",
                     glyph = HaloGlyph.MODEL,
                     status = if (selectedModel != null) CheckStatus.READY else CheckStatus.NOT_CONFIGURED,
-                    reason = if (selectedModel != null) "Selected: $selectedModel" else "No local GGUF model selected"
+                    reason = if (selectedModel != null) "Selected: $selectedModel" else "No local LiteRT model selected"
                 )
             )
 

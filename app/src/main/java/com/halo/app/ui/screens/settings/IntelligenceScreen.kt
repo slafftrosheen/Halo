@@ -35,7 +35,7 @@ import com.halo.app.ui.workspace.HaloWorkspaceCard
 import com.halo.app.ui.workspace.HaloWorkspaceHeader
 import com.halo.app.ui.workspace.HaloWorkspaceRow
 import com.halo.app.ui.workspace.HaloWorkspaceSection
-import com.halo.providers.llamacpp.DownloadState
+import com.halo.providers.litert.models.LocalModelDescriptor
 import com.halo.sdk.provider.AiCapability
 import com.halo.sdk.provider.AiModel
 import com.halo.sdk.provider.ProviderStatus
@@ -189,7 +189,7 @@ fun IntelligenceScreen(
                             placeholder = { Text("http://192.168.1.10:11434") }
                         )
                         Text(
-                            text = "Optional local-network server. Native llama.cpp is Halo's default and does not require Ollama. Use the reachable HTTP endpoint for the Ollama host.",
+                            text = "Optional local-network server. On-device LiteRT is Halo's default and does not require Ollama. Use the reachable HTTP endpoint for the Ollama host.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -248,7 +248,7 @@ fun IntelligenceScreen(
             )
         }
 
-        if (uiState.activeProviderId == ProviderIds.LLAMACPP || uiState.localModels.isNotEmpty()) {
+        if (uiState.activeProviderId == ProviderIds.LITERT || uiState.localModels.isNotEmpty()) {
             Spacer(Modifier.height(20.dp))
 
             Text(
@@ -267,11 +267,8 @@ fun IntelligenceScreen(
             Spacer(Modifier.height(12.dp))
 
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                uiState.localModels.filter {
-                    uiState.downloadStates[it.id] == DownloadState.Downloaded
-                }.forEach { model ->
-                    val downloadState = uiState.downloadStates[model.id] ?: DownloadState.NotDownloaded
-                    val isActive = model.id == uiState.activeLocalModelId
+                uiState.localModels.forEach { model ->
+                    val isActive = model.id == uiState.activeModelId
 
                     HaloWorkspaceCard(accent = if (isActive) HaloPastelMint else null) {
                         Row(
@@ -280,49 +277,31 @@ fun IntelligenceScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = model.name,
+                                text = model.displayName,
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = "${model.sizeMb} MB",
+                                text = "%.1f GB".format(model.bytes / 1_000_000_000.0),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                         Text(
-                            text = model.description,
+                            text = "Context window: ${model.contextWindowTokens} tokens",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Spacer(Modifier.height(4.dp))
 
-                        when (downloadState) {
-                            DownloadState.Downloaded -> {
-                                HaloWorkspaceButton(
-                                    text = if (isActive) "Active" else "Select",
-                                    onClick = { if (!isActive) viewModel.setActiveLocalModel(model.id) },
-                                    enabled = !isActive,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    primary = !isActive
-                                )
-                            }
-                            DownloadState.Downloading -> {
-                                Text(
-                                    text = "Downloading…",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.secondary
-                                )
-                            }
-                            else -> {
-                                HaloWorkspaceButton(
-                                    text = "Download (${model.sizeMb} MB)",
-                                    onClick = { viewModel.downloadModel(model.id) },
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                            }
-                        }
+                        HaloWorkspaceButton(
+                            text = if (isActive) "Active" else "Select",
+                            onClick = { if (!isActive) viewModel.selectModel(model.id) },
+                            enabled = !isActive,
+                            modifier = Modifier.fillMaxWidth(),
+                            primary = !isActive
+                        )
                     }
                 }
             }
@@ -383,7 +362,7 @@ fun IntelligenceScreen(
 }
 
 private fun providerSetupSummary(providerId: String): String = when (providerId) {
-    ProviderIds.LLAMACPP -> "Default · on-device GGUF · no server or API key"
+    ProviderIds.LITERT -> "Default · on-device LiteRT · no server or API key"
     ProviderIds.OLLAMA -> "Optional local-network server · endpoint required"
     ProviderIds.OPENROUTER -> "Optional cloud inference · API key required"
     else -> "Optional inference provider"

@@ -332,7 +332,6 @@ fun AppShell(
                 }
                 composable("ai_settings") {
                     val viewModel = ManualDependencyGraph.intelligenceViewModel
-                    LaunchedEffect(viewModel) { viewModel.navigationEvents.collectLatest(::navigateSafely) }
                     IntelligenceScreen(viewModel, { navController.popBackStack() },
                         onBrowseModels = { navigateSafely("model_browser") })
                 }

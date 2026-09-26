@@ -3,11 +3,29 @@ package com.halo.app.di
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.halo.engines.speech.UnavailableSpeechRecognitionProvider
-import com.halo.providers.llamacpp.ModelDownloadManager
+import com.halo.providers.litert.models.LiteRtModelManager
 import com.halo.providers.sherpa.stt.ReloadableSpeechRecognitionProvider
+import com.halo.sdk.host.AudioBuffer
+import com.halo.sdk.host.AudioFrame
+import com.halo.sdk.provider.AiCapability
+import com.halo.sdk.provider.AiContext
 import com.halo.sdk.provider.AiInferenceProvider
+import com.halo.sdk.provider.AiModel
+import com.halo.sdk.provider.AiRequest
+import com.halo.sdk.provider.AiResponse
+import com.halo.sdk.provider.AiStreamEvent
+import com.halo.sdk.provider.BufferedSpeechRecognitionProvider
+import com.halo.sdk.provider.ProviderStatus
+import com.halo.sdk.provider.RecognitionResult
+import com.halo.sdk.provider.SpeechRequest
+import com.halo.sdk.provider.SpeechResult
+import com.halo.sdk.provider.SpeechSynthesisProvider
+import com.halo.sdk.provider.WakeWordDetector
+import com.halo.sdk.provider.WakeWordResult
 import com.halo.sdk.runtime.NativeResourceCoordinator
 import com.halo.sdk.runtime.Storage
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
@@ -35,7 +53,7 @@ class AndroidProviderFactoryTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         return AndroidProviderFactory(
             context = context,
-            modelDownloadManager = ModelDownloadManager(context),
+            modelManager = LiteRtModelManager(context),
             storage = FakeStorage(),
             nativeResourceCoordinator = NativeResourceCoordinator()
         )
@@ -81,39 +99,39 @@ class AndroidProviderFactoryTest {
             override val id: String = "test-inference"
             override val displayName: String = "Test inference"
             override val isLocal: Boolean = true
-            override val status = kotlinx.coroutines.flow.MutableStateFlow(com.halo.sdk.provider.ProviderStatus.READY)
-            override suspend fun getCapabilities() = setOf(com.halo.sdk.provider.AiCapability.TEXT)
+            override val status = MutableStateFlow(ProviderStatus.READY)
+            override suspend fun getCapabilities() = setOf(AiCapability.TEXT)
             override suspend fun generate(
-                request: com.halo.sdk.provider.AiRequest,
-                context: com.halo.sdk.provider.AiContext
-            ) = com.halo.sdk.provider.AiResponse(
+                request: AiRequest,
+                context: AiContext
+            ) = AiResponse(
                 text = request.text.orEmpty(),
                 providerId = id,
                 modelId = request.modelId
             )
             override fun stream(
-                request: com.halo.sdk.provider.AiRequest,
-                context: com.halo.sdk.provider.AiContext
-            ) = kotlinx.coroutines.flow.emptyFlow<com.halo.sdk.provider.AiStreamEvent>()
-            override suspend fun listModels() = emptyList<com.halo.sdk.provider.AiModel>()
+                request: AiRequest,
+                context: AiContext
+            ) = emptyFlow<AiStreamEvent>()
+            override suspend fun listModels() = emptyList<AiModel>()
         }
 
         val providers = Providers(
             inference = inference,
-            speechRecognition = object : com.halo.sdk.provider.BufferedSpeechRecognitionProvider {
-                override suspend fun recognize(audio: com.halo.sdk.host.AudioBuffer) =
-                    com.halo.sdk.provider.RecognitionResult("", "en", 0f)
+            speechRecognition = object : BufferedSpeechRecognitionProvider {
+                override suspend fun recognize(audio: AudioBuffer) =
+                    RecognitionResult("", "en", 0f)
                 override suspend fun health() = true
             },
-            speechSynthesis = object : com.halo.sdk.provider.SpeechSynthesisProvider {
-                override suspend fun synthesize(request: com.halo.sdk.provider.SpeechRequest) =
-                    com.halo.sdk.provider.SpeechResult(0, true)
-                override fun stream(text: String) = kotlinx.coroutines.flow.emptyFlow<com.halo.sdk.host.AudioFrame>()
+            speechSynthesis = object : SpeechSynthesisProvider {
+                override suspend fun synthesize(request: SpeechRequest) =
+                    SpeechResult(0, true)
+                override fun stream(text: String) = emptyFlow<AudioFrame>()
                 override suspend fun health() = true
             },
-            wakeWord = object : com.halo.sdk.provider.WakeWordDetector {
-                override fun process(frame: com.halo.sdk.host.AudioFrame) =
-                    com.halo.sdk.provider.WakeWordResult(detected = false)
+            wakeWord = object : WakeWordDetector {
+                override fun process(frame: AudioFrame) =
+                    WakeWordResult(detected = false)
                 override suspend fun health() = true
             }
         )
@@ -128,39 +146,39 @@ class AndroidProviderFactoryTest {
             override val id: String = "typed-inference"
             override val displayName: String = "Typed inference"
             override val isLocal: Boolean = true
-            override val status = kotlinx.coroutines.flow.MutableStateFlow(com.halo.sdk.provider.ProviderStatus.READY)
-            override suspend fun getCapabilities() = setOf(com.halo.sdk.provider.AiCapability.TEXT)
+            override val status = MutableStateFlow(ProviderStatus.READY)
+            override suspend fun getCapabilities() = setOf(AiCapability.TEXT)
             override suspend fun generate(
-                request: com.halo.sdk.provider.AiRequest,
-                context: com.halo.sdk.provider.AiContext
-            ) = com.halo.sdk.provider.AiResponse(
+                request: AiRequest,
+                context: AiContext
+            ) = AiResponse(
                 text = request.text.orEmpty(),
                 providerId = id,
                 modelId = request.modelId
             )
             override fun stream(
-                request: com.halo.sdk.provider.AiRequest,
-                context: com.halo.sdk.provider.AiContext
-            ) = kotlinx.coroutines.flow.emptyFlow<com.halo.sdk.provider.AiStreamEvent>()
-            override suspend fun listModels() = emptyList<com.halo.sdk.provider.AiModel>()
+                request: AiRequest,
+                context: AiContext
+            ) = emptyFlow<AiStreamEvent>()
+            override suspend fun listModels() = emptyList<AiModel>()
         }
 
         val providers = Providers(
             inference = inference,
-            speechRecognition = object : com.halo.sdk.provider.BufferedSpeechRecognitionProvider {
-                override suspend fun recognize(audio: com.halo.sdk.host.AudioBuffer) =
-                    com.halo.sdk.provider.RecognitionResult("", "en", 0f)
+            speechRecognition = object : BufferedSpeechRecognitionProvider {
+                override suspend fun recognize(audio: AudioBuffer) =
+                    RecognitionResult("", "en", 0f)
                 override suspend fun health() = true
             },
-            speechSynthesis = object : com.halo.sdk.provider.SpeechSynthesisProvider {
-                override suspend fun synthesize(request: com.halo.sdk.provider.SpeechRequest) =
-                    com.halo.sdk.provider.SpeechResult(0, true)
-                override fun stream(text: String) = kotlinx.coroutines.flow.emptyFlow<com.halo.sdk.host.AudioFrame>()
+            speechSynthesis = object : SpeechSynthesisProvider {
+                override suspend fun synthesize(request: SpeechRequest) =
+                    SpeechResult(0, true)
+                override fun stream(text: String) = emptyFlow<AudioFrame>()
                 override suspend fun health() = true
             },
-            wakeWord = object : com.halo.sdk.provider.WakeWordDetector {
-                override fun process(frame: com.halo.sdk.host.AudioFrame) =
-                    com.halo.sdk.provider.WakeWordResult(detected = false)
+            wakeWord = object : WakeWordDetector {
+                override fun process(frame: AudioFrame) =
+                    WakeWordResult(detected = false)
                 override suspend fun health() = true
             },
             aiProviders = emptyList()

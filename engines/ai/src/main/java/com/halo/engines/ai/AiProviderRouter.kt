@@ -64,7 +64,12 @@ class DefaultAiProviderRouter(
     }
 
     private fun restoreStoredRoutingState() {
-        val storedProvider = storage.getString("active_ai_provider")
+        var rawStoredProvider = storage.getString("active_ai_provider")
+        if (rawStoredProvider == "provider.llamacpp.native") {
+            rawStoredProvider = "provider.litert.local"
+            storage.putString("active_ai_provider", "provider.litert.local")
+        }
+        val storedProvider = rawStoredProvider
             ?.takeIf { id -> inferenceProviders.any { it.id == id } }
         val designatedDefault = defaultInferenceProviderId
             ?.let { id -> inferenceProviders.firstOrNull { it.id == id } }
@@ -236,7 +241,7 @@ class DefaultAiProviderRouter(
         val modelId = when (providerId) {
             "openrouter" -> storage.getString("openrouter_model")
             "provider.ollama" -> storage.getString("ollama_model")
-            "provider.llamacpp.native" -> storage.getString("llamacpp_model")
+            "provider.litert.local", "provider.llamacpp.native" -> storage.getString("litert_model")
             else -> storage.getString("ai_model_$providerId")
         }?.trim()?.ifBlank { null }
         _selectedModelId.value = modelId
@@ -247,7 +252,7 @@ class DefaultAiProviderRouter(
         when (providerId) {
             "openrouter" -> storage.putString("openrouter_model", modelId)
             "provider.ollama" -> storage.putString("ollama_model", modelId)
-            "provider.llamacpp.native" -> storage.putString("llamacpp_model", modelId)
+            "provider.litert.local", "provider.llamacpp.native" -> storage.putString("litert_model", modelId)
             else -> storage.putString("ai_model_$providerId", modelId)
         }
     }

@@ -1,42 +1,38 @@
 package com.halo.app.di
 
 import android.content.Context
+import com.halo.app.storage.haloStorageLayout
 import com.halo.engines.speech.AlwaysWakeDetector
-import com.halo.engines.speech.UnavailableSpeechRecognitionProvider
-import com.halo.providers.llamacpp.ModelDownloadManager
-import com.halo.providers.llamacpp.NativeLlamaProvider
 import com.halo.providers.android.tts.AndroidTTSProvider
+import com.halo.providers.litert.LiteRtLocalProvider
+import com.halo.providers.litert.models.LiteRtModelManager
+import com.halo.providers.ollama.OllamaProvider
 import com.halo.providers.openrouter.OpenRouterProvider
-import com.halo.providers.llamacpp.OllamaProvider
 import com.halo.providers.sherpa.stt.ReloadableSpeechRecognitionProvider
 import com.halo.providers.sherpa.stt.SherpaKeywordSpotterWakeWordDetector
-import com.halo.providers.sherpa.stt.SherpaOfflineSpeechRecognitionProvider
 import com.halo.providers.sherpa.stt.SherpaSpeechModelCatalog
 import com.halo.sdk.provider.SpeechRecognitionProvider
 import com.halo.sdk.runtime.NativeResourceCoordinator
+import com.halo.sdk.runtime.Storage
 import java.io.File
 import java.util.Locale
 
 class AndroidProviderFactory(
     private val context: Context,
-    private val modelDownloadManager: ModelDownloadManager,
-    private val storage: com.halo.sdk.runtime.Storage,
+    private val modelManager: LiteRtModelManager,
+    private val storage: Storage,
     private val nativeResourceCoordinator: NativeResourceCoordinator
 ) : ProviderFactory {
 
     override fun createProviders(): Providers {
-        val llamaProvider = NativeLlamaProvider(
+        val localProvider = LiteRtLocalProvider(
             context = context,
-            downloadManager = modelDownloadManager,
+            inventoryRepository = modelManager,
             storage = storage,
             nativeResourceCoordinator = nativeResourceCoordinator
         )
 
-        // Voice remains local-first. If the approved offline model is absent,
-        // expose an explicit unavailable provider instead of silently falling
-        // back to Android SpeechRecognizer, which can invoke an OEM/system
-        // recognition service and take microphone ownership outside Halo's path.
-        val speechRoot = com.halo.app.storage.haloStorageLayout(context).speechModels
+        val speechRoot = haloStorageLayout(context).speechModels
         val sherpaModelDirectory = File(speechRoot, SherpaSpeechModelCatalog.WHISPER_TINY_DIRECTORY)
         val speechRecognition: SpeechRecognitionProvider = ReloadableSpeechRecognitionProvider(
             modelDirectory = sherpaModelDirectory,
@@ -67,21 +63,16 @@ class AndroidProviderFactory(
                 keywordsFile = sherpaKwsKeywords
             )
         }.getOrElse {
-            // Never activate upstream demo keywords implicitly. Until a Halo-owned
-            // keyword file is explicitly installed, retain the compatibility
-            // pass-through detector and explicit listening controls.
             AlwaysWakeDetector()
         }
 
         return Providers(
-            inference = llamaProvider,
+            inference = localProvider,
             speechRecognition = speechRecognition,
             speechSynthesis = AndroidTTSProvider(context),
             wakeWord = wakeWord,
-            // Native llama.cpp is Halo's zero-server/default inference path.
-            // Optional network/cloud providers follow it; Android Assistant is handoff-only.
             aiProviders = listOfNotNull(
-                llamaProvider,
+                localProvider,
                 runCatching { OllamaProvider(storage) }.getOrNull(),
                 runCatching { OpenRouterProvider(storage) }.getOrNull()
             )
