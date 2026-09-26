@@ -189,7 +189,7 @@ fun IntelligenceScreen(
                             placeholder = { Text("http://192.168.1.10:11434") }
                         )
                         Text(
-                            text = "Optional local-network server. Native llama.cpp is Halo's default and does not require Ollama. Use the reachable HTTP endpoint for the Ollama host.",
+                            text = "Optional local-network server. Halo's Native Local provider runs on-device and does not require Ollama. Curated Android models use LiteRT-LM; GGUF remains available as a compatibility path.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
