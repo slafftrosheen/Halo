@@ -181,7 +181,7 @@ class NativeLlamaProvider(
                                 totalFractionLimit,
                                 (memorySnapshot.totalBytes - reserveBytes).coerceAtLeast(0L)
                             ) / BYTES_PER_MB
-                            "Model $activeId is ${modelMb}MB but this device has ${totalMb}MB RAM; native loading is limited to ${maxMb}MB with ${reserveBytes / BYTES_PER_MB}MB reserved headroom. Select a smaller GGUF model."
+                            "Model $activeId is ${modelMb}MB but this device has ${totalMb}MB RAM; native loading is limited to ${maxMb}MB with ${reserveBytes / BYTES_PER_MB}MB reserved headroom. Select a smaller local model."
                         }
                         ModelMemoryAdmission.Reason.AVAILABLE_MEMORY_LIMIT -> {
                             val reserveBytes = ModelMemoryAdmission.reserveBytesFor(modelBytes)
@@ -211,7 +211,7 @@ class NativeLlamaProvider(
                     modelProfile
                 )
                 if (plan == null) {
-                    val message = "Native model load blocked: no safe context size fits the current memory envelope. Close other apps or lower the llama.cpp context setting."
+                    val message = "Native model load blocked: no safe context size fits the current memory envelope. Close other apps or lower the local context setting."
                     Log.e(TAG, message)
                     _status.value = ProviderStatus(ProviderStatus.State.ERROR, message, rejectionReason = TargetRejectionReason.MEMORY_PREFLIGHT_FAILED)
                     nativeResourceCoordinator?.release(this@NativeLlamaProvider)
@@ -338,11 +338,11 @@ class NativeLlamaProvider(
 
     private suspend fun requireSelectedModel(request: AiRequest): String {
         val activeModelId = downloadManager.activeModelId.value
-            ?: throw AiProviderException(AiErrorType.MODEL_NOT_SELECTED, "No local llama.cpp model is selected")
+            ?: throw AiProviderException(AiErrorType.MODEL_NOT_SELECTED, "No Native Local model is selected")
         if (request.modelId != null && request.modelId != activeModelId) {
             throw AiProviderException(
                 AiErrorType.MODEL_NOT_FOUND,
-                "Selected llama.cpp model '${request.modelId}' is not the active local model '$activeModelId'"
+                "Selected Native Local model '${request.modelId}' is not the active local model '$activeModelId'"
             )
         }
         return activeModelId
@@ -359,9 +359,9 @@ class NativeLlamaProvider(
             val startedAt = System.currentTimeMillis()
             val prompt = buildPrompt(request, context)
             check(nativeResourceCoordinator?.acquire(this) ?: true) {
-                "Local llama.cpp generation deferred: another heavyweight native model is busy"
+                "Native Local generation deferred: another heavyweight native model is busy"
             }
-            nativeResourceCoordinator?.mark(this, NativeResourceState.IN_USE, "llama.cpp generation")
+            nativeResourceCoordinator?.mark(this, NativeResourceState.IN_USE, "native local generation")
             var firstTokenAtMs = 0L
             return try {
                     val config = RuntimeGenerationConfig(
@@ -399,7 +399,7 @@ class NativeLlamaProvider(
                 throw AiProviderException(AiErrorType.GENERATION_FAILED, "Native llama.cpp generation failed", error)
             } finally {
                 if (modelSession.isLoaded()) {
-                    nativeResourceCoordinator?.mark(this, NativeResourceState.RESIDENT, "llama.cpp generation idle")
+                    nativeResourceCoordinator?.mark(this, NativeResourceState.RESIDENT, "native local generation idle")
                 }
             }
         } finally {
@@ -421,9 +421,9 @@ class NativeLlamaProvider(
                 throw readinessFailure()
             }
             check(nativeResourceCoordinator?.acquire(this@NativeLlamaProvider) ?: true) {
-                "Local llama.cpp generation deferred: another heavyweight native model is busy"
+                "Native Local generation deferred: another heavyweight native model is busy"
             }
-            nativeResourceCoordinator?.mark(this@NativeLlamaProvider, NativeResourceState.IN_USE, "llama.cpp streaming generation")
+            nativeResourceCoordinator?.mark(this@NativeLlamaProvider, NativeResourceState.IN_USE, "native local streaming generation")
             try {
                     val config = RuntimeGenerationConfig(
                         prompt = buildPrompt(request, context),
@@ -442,11 +442,11 @@ class NativeLlamaProvider(
                     }
             } finally {
                 if (modelSession.isLoaded()) {
-                    nativeResourceCoordinator?.mark(this@NativeLlamaProvider, NativeResourceState.RESIDENT, "llama.cpp streaming generation idle")
+                    nativeResourceCoordinator?.mark(this@NativeLlamaProvider, NativeResourceState.RESIDENT, "native local streaming generation idle")
                 }
             }
             val text = output.toString().trim()
-            if (text.isBlank()) throw AiProviderException(AiErrorType.EMPTY_RESPONSE, "llama.cpp produced no response text")
+            if (text.isBlank()) throw AiProviderException(AiErrorType.EMPTY_RESPONSE, "Native Local produced no response text")
             emit(
                 AiStreamEvent.Completed(
                     AiResponse(
@@ -476,9 +476,9 @@ class NativeLlamaProvider(
         inferenceReservations.incrementAndGet()
         try {
             check(nativeResourceCoordinator?.acquire(this@NativeLlamaProvider) ?: true) {
-                "Local llama.cpp generation deferred: another heavyweight native model is busy"
+                "Native Local generation deferred: another heavyweight native model is busy"
             }
-            nativeResourceCoordinator?.mark(this@NativeLlamaProvider, NativeResourceState.IN_USE, "llama.cpp direct streaming generation")
+            nativeResourceCoordinator?.mark(this@NativeLlamaProvider, NativeResourceState.IN_USE, "native local direct streaming generation")
             try {
                     val config = RuntimeGenerationConfig(prompt = prompt)
                     val result = modelSession.generate(config) { token ->
@@ -487,7 +487,7 @@ class NativeLlamaProvider(
                     if (result.isFailure) throw result.exceptionOrNull() ?: IllegalStateException("Generation failed")
             } finally {
                 if (modelSession.isLoaded()) {
-                    nativeResourceCoordinator?.mark(this@NativeLlamaProvider, NativeResourceState.RESIDENT, "llama.cpp direct streaming idle")
+                    nativeResourceCoordinator?.mark(this@NativeLlamaProvider, NativeResourceState.RESIDENT, "native local direct streaming idle")
                 }
             }
         } finally {
