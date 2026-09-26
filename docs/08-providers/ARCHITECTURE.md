@@ -8,7 +8,7 @@ Halo's provider architecture explicitly distinguishes between different classes 
 
 ### 1. Inference Providers
 These are reasoning backends that process conversational turns and tool invocations. They are replaceable, and no single provider is "the brain" of Halo.
-- **Native llama.cpp**: Default local inference path. Supports GGUF base models + matching `mmproj` vision projectors (`RuntimeLoadConfig.mmprojPath`), multimodal image input (`RuntimeGenerationConfig.imageBytes`), and prompt-mediated tool calling (`<halo_tool_call>`). GGUF files are classified via `GgufArtifactClassifier` (`BASE_MODEL`, `MULTIMODAL_PROJECTOR`, `IMATRIX`, `MTP_AUXILIARY`, `SPLIT_MODEL_SHARD`) to ensure only runnable base models are selected.
+- **Native Local** (stable provider ID `provider.llamacpp.native`): Default zero-server local inference provider with two runtime adapters. Curated Android `.litertlm` artifacts use Google LiteRT-LM; imported/advanced `.gguf` artifacts use the llama.cpp wrapper. `LocalModelSession` owns residency and selects `LITERT_LM` vs `GGUF` from the model descriptor. LiteRT prefers GPU and falls back to CPU; GGUF retains base/projector classification and `mmproj` support.
 - **Ollama**: Optional LAN HTTP inference server. Supports text and streaming.
 - **OpenRouter**: Optional remote/cloud inference.
 
@@ -23,15 +23,14 @@ These are reasoning backends that process conversational turns and tool invocati
 
 `CognitiveSession` performs bounded tool rounds, authorization, and result feedback. 
 
-Tool capabilities remain provider/model-specific. Native llama.cpp currently explicitly advertises `supportsTools = false`. We do not advertise universal local tool support until a reliable capability bridge exists.
+Tool capabilities remain provider/model-specific. Native Local currently explicitly advertises `supportsTools = false`. We do not advertise universal local tool support until a reliable capability bridge exists.
 
 ## RUNTIME-021 workload-aware routing
 
 Routing uses the intersection of provider/adapter capability and the selected model's advertised
 capability. Provider-wide IMAGE/TOOLS support does not make every model compatible.
 
-- Native llama.cpp remains conservative: TEXT + STREAMING only unless the local adapter actually
-  implements more.
+- Native Local remains conservative: TEXT + STREAMING by default; model-specific image capability is exposed only when its selected runtime/model descriptor supports it. Local tool support remains disabled until the complete tool-call/result bridge is validated.
 - Ollama remains optional local/LAN inference. Halo queries `/api/show` metadata for model
   capabilities and context length. Vision is advertised only when the model metadata reports it and
   the Halo adapter can serialize image chat input. Tool support remains false even if Ollama reports
