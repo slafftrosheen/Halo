@@ -17,7 +17,8 @@ dependencies {
     implementation(project(":libraries:common"))
     implementation(project(":sdk:provider-sdk"))
     
-    // LlamaCpp Native
+    // Native local runtimes. LiteRT-LM is the curated Android path; GGUF remains an expert/import fallback.
+    implementation("com.google.ai.edge.litertlm:litertlm-android:0.17.1")
     implementation("io.github.ljcamargo:llamacpp-kotlin:0.4.0")
     
     // HTTP & JSON for Ollama Provider
