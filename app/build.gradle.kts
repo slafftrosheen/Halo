@@ -73,6 +73,13 @@ android {
     arg("room.schemaLocation", "$projectDir/schemas")
   }
   testOptions { unitTests { isIncludeAndroidResources = true } }
+  packaging {
+    jniLibs {
+      // LiteRT-LM and the optional GGUF compatibility runtime both bring native C++ code.
+      // Package one shared runtime instead of failing APK merge on duplicate libc++_shared.so.
+      pickFirsts += "**/libc++_shared.so"
+    }
+  }
 }
 
 // Configure the Secrets Gradle Plugin to use .env and .env.example files
