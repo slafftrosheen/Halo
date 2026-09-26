@@ -1,5 +1,6 @@
 package com.halo.providers.llamacpp
 
+import com.halo.sdk.provider.LocalModelFormat
 import kotlinx.coroutines.flow.StateFlow
 
 enum class ModelInventoryRefreshReason { STARTUP, USER_REQUEST, DOWNLOAD_COMPLETED, INVALIDATED }
@@ -12,6 +13,7 @@ data class LocalModelDescriptor(
     val path: String,
     val bytes: Long,
     val modifiedAt: Long,
+    val format: LocalModelFormat = LocalModelFormat.GGUF,
     val ggufMetadata: GgufModelMetadata?,
     val valid: Boolean
 )
