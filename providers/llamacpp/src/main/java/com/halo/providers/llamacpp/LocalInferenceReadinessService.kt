@@ -34,7 +34,10 @@ class LocalInferenceReadinessService(
         if (modelId != null && !selectedModelExists && downloadState != DownloadState.Downloading) {
             blockers += ReadinessBlocker.MODEL_FILE_MISSING
         }
-        val formatSupported = file?.extension?.equals("gguf", ignoreCase = true) == true
+        val formatSupported = file?.extension?.let { extension ->
+            extension.equals("gguf", ignoreCase = true) ||
+                extension.equals("litertlm", ignoreCase = true)
+        } == true
         if (selectedModelExists && !formatSupported) blockers += ReadinessBlocker.MODEL_UNSUPPORTED
 
         val memory = AndroidMemorySnapshot.read(context)
