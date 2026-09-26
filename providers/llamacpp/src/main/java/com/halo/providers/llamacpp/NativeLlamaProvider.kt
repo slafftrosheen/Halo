@@ -40,7 +40,9 @@ class NativeLlamaProvider(
     override val status: StateFlow<ProviderStatus> = _status.asStateFlow()
 
     private val systemPrompt: String get() = storage.getString("ai_system_prompt") ?: "You are Halo, a helpful AI."
-    private val contextSize: Int get() = storage.getInt("llamacpp_context", 4096)
+    private val contextSize: Int
+        get() = storage.getInt("llamacpp_context", LlamaCppRuntime.MAX_MOBILE_CONTEXT_SIZE)
+            .coerceIn(LlamaCppRuntime.MIN_MOBILE_CONTEXT_SIZE, LlamaCppRuntime.MAX_MOBILE_CONTEXT_SIZE)
     override val id: String = "provider.llamacpp.native"
     override val displayName: String = "llama.cpp (native)"
     override val isLocal: Boolean = true
@@ -495,7 +497,12 @@ class NativeLlamaProvider(
                     displayName = model.name,
                     providerId = id,
                     inputCapabilities = setOf(AiCapability.TEXT),
-                    contextLength = metadata?.contextLength?.toLong() ?: 4096L,
+                    // Advertise the context Halo can actually allocate on Android,
+                    // not the model's (often much larger) training context.
+                    contextLength = minOf(
+                        metadata?.contextLength?.toLong() ?: LlamaCppRuntime.MAX_MOBILE_CONTEXT_SIZE.toLong(),
+                        LlamaCppRuntime.MAX_MOBILE_CONTEXT_SIZE.toLong(),
+                    ),
                     supportsStreaming = true,
                     supportsTools = false
                 )
