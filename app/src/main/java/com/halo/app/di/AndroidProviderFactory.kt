@@ -78,7 +78,8 @@ class AndroidProviderFactory(
             speechRecognition = speechRecognition,
             speechSynthesis = AndroidTTSProvider(context),
             wakeWord = wakeWord,
-            // Native llama.cpp is Halo's zero-server/default inference path.
+            // Native Local is Halo's zero-server/default inference provider. Curated Android models use
+            // LiteRT-LM; GGUF/llama.cpp remains an expert/import compatibility path.
             // Optional network/cloud providers follow it; Android Assistant is handoff-only.
             aiProviders = listOfNotNull(
                 llamaProvider,
