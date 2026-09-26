@@ -25,12 +25,9 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -238,20 +235,20 @@ class LiteRtRuntime(
                 Message.user(outgoingText)
             }
 
-            conversation.sendMessageAsync(
-                outgoing,
-                maxOutputToken = config.maxTokens.takeIf { it > 0 },
-            ).collect { chunk ->
-                currentCoroutineContext().ensureActive()
-                val delta = chunk.contents.contents
-                    .filterIsInstance<Content.Text>()
-                    .joinToString(separator = "") { it.text }
-                if (delta.isNotEmpty()) {
-                    if (firstTokenAt == null) firstTokenAt = System.currentTimeMillis()
-                    outputChunks++
-                    output.append(delta)
-                    onToken(delta)
-                }
+            val response = withContext(Dispatchers.Default) {
+                conversation.sendMessage(
+                    outgoing,
+                    maxOutputToken = config.maxTokens.takeIf { it > 0 },
+                )
+            }
+            val generated = response.contents.contents
+                .filterIsInstance<Content.Text>()
+                .joinToString(separator = "") { it.text }
+            if (generated.isNotEmpty()) {
+                firstTokenAt = System.currentTimeMillis()
+                outputChunks = 1
+                output.append(generated)
+                onToken(generated)
             }
 
             val completedAt = System.currentTimeMillis()
