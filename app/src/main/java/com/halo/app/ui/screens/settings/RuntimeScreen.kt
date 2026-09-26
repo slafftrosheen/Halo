@@ -21,6 +21,7 @@ fun RuntimeScreen(
     projection: RuntimeUiProjection,
     catalogueSource: CapabilityCatalogueSource?,
     onBack: () -> Unit,
+    onOpenSystemCheck: (() -> Unit)? = null,
 ) {
     val taskSummary by projection.taskSummary.collectAsState()
     val resourceSummary by projection.resourceSummary.collectAsState()
@@ -52,7 +53,21 @@ fun RuntimeScreen(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text("System Overview", style = MaterialTheme.typography.titleMedium)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("System Overview", style = MaterialTheme.typography.titleMedium)
+                            if (onOpenSystemCheck != null) {
+                                Button(
+                                    onClick = onOpenSystemCheck,
+                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                                ) {
+                                    Text("System Check")
+                                }
+                            }
+                        }
                         Spacer(modifier = Modifier.height(8.dp))
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Text("Active Tasks: ${taskSummary.activeCount}")

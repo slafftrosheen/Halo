@@ -21,6 +21,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import kotlinx.coroutines.launch
 
 import androidx.compose.runtime.collectAsState
@@ -39,6 +40,7 @@ import com.halo.app.ui.glass.components.HaloNavigation
 import com.halo.app.ui.glass.components.NavigationItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
 import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.screens.activity.ActivityScreen
 import com.halo.app.ui.screens.devices.BuddyBotControlScreen
@@ -59,6 +61,8 @@ import com.halo.app.ui.screens.settings.SettingsScreen
 import com.halo.app.ui.screens.settings.SkillsScreen
 import com.halo.app.ui.screens.settings.VoiceSettingsScreen
 import com.halo.app.ui.screens.settings.StorageBackupScreen
+import com.halo.app.ui.screens.settings.SystemCheckScreen
+import com.halo.app.ui.screens.settings.SystemCheckViewModel
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -259,6 +263,22 @@ fun AppShell(
                     RuntimeScreen(
                         projection = ManualDependencyGraph.runtimeUiProjection,
                         catalogueSource = ManualDependencyGraph.capabilityCatalogue,
+                        onBack = { navController.popBackStack() },
+                        onOpenSystemCheck = { navigateSafely("system_check") }
+                    )
+                }
+
+                composable("system_check") {
+                    val context = LocalContext.current
+                    val viewModel = remember(context) {
+                        SystemCheckViewModel(
+                            appContext = context.applicationContext,
+                            eventBus = ManualDependencyGraph.eventBus,
+                            providerRouter = ManualDependencyGraph.aiProviderRouter
+                        )
+                    }
+                    SystemCheckScreen(
+                        viewModel = viewModel,
                         onBack = { navController.popBackStack() }
                     )
                 }

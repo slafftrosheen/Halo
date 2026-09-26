@@ -32,11 +32,9 @@ Console, Protocol Lab and Runtime Inspector are not registered destinations.
 HeyCyanDiscoveryScreen exists separately; the discovery route above uses PairingScreen.
 A probe/diagnostic class, label or old screen is not a reachable page.
 
-Halo Presence now uses an asymmetric rounded-cell renderer keyed to real HaloRuntimeState transitions.
-It intentionally avoids mechanical rings, radial gauges, faces and permanent idle animation. Activity,
-Notebook and primary navigation reuse compact cell-signal marks. Measured audio/output envelope input is
-not wired yet. Presence observes Android's animator-duration scale and makes state transitions immediate
-when platform animations are disabled.
+Halo Presence uses the canonical `HaloSignalFace` renderer (outer semantic state halo + inner graphite OLED pixel display). Activity, Notebook, Settings, Devices, and primary navigation reuse the unified grid-based `HaloGlyph` pixel pictogram system (`HaloIcon`).
+
+System Check is reachable at `runtime/system-check` (via Settings -> Runtime Status -> System Check) providing diagnostic hardware, local model, microphone, audio route, and tool approval probes.
 
 Acceptance still needs action/back behavior, empty/loading/offline/denied/error/stale states,
 large text, TalkBack, reduced motion, recreation, frame timing and physical workflow checks.
