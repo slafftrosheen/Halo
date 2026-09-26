@@ -42,11 +42,20 @@ class NativeLlamaProvider(
     private val systemPrompt: String get() = storage.getString("ai_system_prompt") ?: "You are Halo, a helpful AI."
     private val contextSize: Int get() = storage.getInt("llamacpp_context", 4096)
     override val id: String = "provider.llamacpp.native"
-    override val displayName: String = "llama.cpp (native)"
+    override val displayName: String = "Native Local (LiteRT / GGUF)"
     override val isLocal: Boolean = true
     override val nativeResourceKind: NativeResourceKind = NativeResourceKind.HEAVY_LLM
 
-    override suspend fun getCapabilities(): Set<AiCapability> = setOf(AiCapability.TEXT, AiCapability.STREAMING)
+    override suspend fun getCapabilities(): Set<AiCapability> = buildSet {
+        add(AiCapability.TEXT)
+        add(AiCapability.STREAMING)
+        val active = downloadManager.activeModelId.value
+            ?.let { id -> downloadManager.getAllModels().firstOrNull { it.id == id } }
+        if (active?.supportsVision == true) {
+            add(AiCapability.IMAGE)
+            add(AiCapability.MULTIMODAL)
+        }
+    }
 
     override suspend fun getStatus(): ProviderStatus {
         val activeId = downloadManager.activeModelId.value
@@ -125,14 +134,19 @@ class NativeLlamaProvider(
                     _status.value = ProviderStatus(ProviderStatus.State.UNAVAILABLE, "Model file not found: $activeId")
                     return@withLock false
                 }
+                val selectedModel = downloadManager.getAllModels().firstOrNull { it.id == activeId }
+                val selectedFormat = selectedModel?.format ?: when {
+                    file.extension.equals("litertlm", ignoreCase = true) -> LocalModelFormat.LITERT_LM
+                    else -> LocalModelFormat.GGUF
+                }
 
                 if (nativeResourceCoordinator?.acquire(this@NativeLlamaProvider) == false) {
-                    val message = "Native llama.cpp load deferred: another heavyweight native model is busy"
+                    val message = "Native local model load deferred: another heavyweight native model is busy"
                     Log.w(TAG, message)
                     _status.value = ProviderStatus(ProviderStatus.State.ERROR, message)
                     return@withLock false
                 }
-                nativeResourceCoordinator?.mark(this@NativeLlamaProvider, NativeResourceState.LOADING, "loading llama.cpp model $activeId")
+                nativeResourceCoordinator?.mark(this@NativeLlamaProvider, NativeResourceState.LOADING, "loading local $selectedFormat model $activeId")
 
                 val modelBytes = file.length()
                 val androidMemory = AndroidMemorySnapshot.read(context)
@@ -141,7 +155,7 @@ class NativeLlamaProvider(
                     androidMemory.availableBytes,
                     androidMemory.lowMemory
                 )
-                val ggufMetadata = GgufMetadataReader.read(file)
+                val ggufMetadata = if (selectedFormat == LocalModelFormat.GGUF) GgufMetadataReader.read(file) else null
                 val modelProfile = ggufMetadata?.let {
                     LocalModelMemoryPlanner.ModelProfile(
                         it.blockCount,
@@ -182,6 +196,10 @@ class NativeLlamaProvider(
                     return@withLock false
                 }
 
+                val requestedContextSize = minOf(
+                    contextSize,
+                    selectedModel?.expectedContextLength ?: contextSize,
+                ).coerceAtLeast(512)
                 val plan = LocalModelMemoryPlanner.choose(
                     modelBytes,
                     LocalModelMemoryPlanner.MemorySnapshot(
@@ -189,7 +207,7 @@ class NativeLlamaProvider(
                         memorySnapshot.availableBytes,
                         memorySnapshot.lowMemory
                     ),
-                    LocalModelMemoryPlanner.defaultCandidates(contextSize, 0, false),
+                    LocalModelMemoryPlanner.defaultCandidates(requestedContextSize, 0, false),
                     modelProfile
                 )
                 if (plan == null) {
@@ -201,10 +219,10 @@ class NativeLlamaProvider(
                 }
 
                 val effectiveContextSize = plan.candidate.contextSize
-                if (effectiveContextSize != contextSize) {
+                if (effectiveContextSize != requestedContextSize) {
                     Log.w(
                         TAG,
-                        "Reducing llama.cpp context from requested=$contextSize to planned=$effectiveContextSize " +
+                        "Reducing local context from requested=$requestedContextSize to planned=$effectiveContextSize " +
                             "modelBytes=$modelBytes estimatedBytes=${plan.estimatedBytes} remainingBytes=${plan.remainingBytes}"
                     )
                 }
@@ -214,16 +232,17 @@ class NativeLlamaProvider(
                     val loadConfig = RuntimeLoadConfig(
                         contextSize = effectiveContextSize,
                         computeBackend = LocalComputeBackend.AUTO,
+                        visionEnabled = selectedModel?.supportsVision == true,
                     )
                     val result = modelSession.loadModel(
                         modelId = activeId,
                         modelPath = file.absolutePath,
-                        format = LocalModelFormat.GGUF,
+                        format = selectedFormat,
                         config = loadConfig
                     )
 
                     if (result.isSuccess) {
-                        nativeResourceCoordinator?.mark(this@NativeLlamaProvider, NativeResourceState.RESIDENT, "llama.cpp model resident: $activeId")
+                        nativeResourceCoordinator?.mark(this@NativeLlamaProvider, NativeResourceState.RESIDENT, "local $selectedFormat model resident: $activeId")
                         _status.value = ProviderStatus(
                             ProviderStatus.State.READY,
                             runtimeStatusMessage(),
@@ -260,7 +279,8 @@ class NativeLlamaProvider(
         val backend = modelSession.activeBackend?.name ?: "UNKNOWN"
         val context = modelSession.activeConfig?.contextSize ?: contextSize
         val layers = modelSession.activeGpuLayers
-        val active = "Runtime: $backend · Context: $context · GPU layers: $layers"
+        val format = modelSession.activeFormat?.name ?: "UNKNOWN"
+        val active = "Runtime: $format/$backend · Context: $context · GPU layers: $layers"
         return modelSession.fallbackReason?.let { "$active · Requested Auto; $it" } ?: active
     }
 
@@ -296,6 +316,17 @@ class NativeLlamaProvider(
             }
             if (request.appendTextAsUserMessage) appendChatMessage("user", request.text!!.trim())
             append("<|im_start|>assistant\n")
+        }
+    }
+
+    private fun buildRuntimeMessages(request: AiRequest, context: AiContext): List<AIMessage> = buildList {
+        add(AIMessage(Role.SYSTEM, systemPrompt))
+        addAll(context.conversation)
+        context.screenContext?.let { screen ->
+            add(AIMessage(Role.USER, screen.asUntrustedPromptSection()))
+        }
+        if (request.appendTextAsUserMessage && !request.text.isNullOrBlank()) {
+            add(AIMessage(Role.USER, request.text.trim()))
         }
     }
 
@@ -335,6 +366,7 @@ class NativeLlamaProvider(
             return try {
                     val config = RuntimeGenerationConfig(
                         prompt = prompt,
+                        messages = buildRuntimeMessages(request, context),
                         priority = request.priority,
                         imageBytes = request.image,
                     )
@@ -395,6 +427,7 @@ class NativeLlamaProvider(
             try {
                     val config = RuntimeGenerationConfig(
                         prompt = buildPrompt(request, context),
+                        messages = buildRuntimeMessages(request, context),
                         priority = request.priority,
                         imageBytes = request.image,
                     )
@@ -489,13 +522,25 @@ class NativeLlamaProvider(
         return downloaded
             .sortedWith(compareByDescending<CognitiveModel> { it.id == activeId }.thenBy { it.name })
             .map { model ->
-                val metadata = downloadManager.resolveModel(model.id)?.ggufMetadata
+                val descriptor = downloadManager.resolveModel(model.id)
+                val metadata = descriptor?.ggufMetadata
+                val capabilities = buildSet {
+                    add(AiCapability.TEXT)
+                    if (model.supportsVision) {
+                        add(AiCapability.IMAGE)
+                        add(AiCapability.MULTIMODAL)
+                    }
+                }
                 AiModel(
                     id = model.id,
                     displayName = model.name,
                     providerId = id,
-                    inputCapabilities = setOf(AiCapability.TEXT),
-                    contextLength = metadata?.contextLength?.toLong() ?: 4096L,
+                    inputCapabilities = capabilities,
+                    contextLength = (
+                        model.expectedContextLength
+                            ?: metadata?.contextLength
+                            ?: 4096
+                        ).toLong(),
                     supportsStreaming = true,
                     supportsTools = false
                 )
