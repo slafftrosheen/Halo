@@ -143,9 +143,9 @@ class LlamaCppRuntime(
                 }
             }
 
-            val helper = loadedHelper
-                ?: throw lastFailure
-                ?: IllegalStateException("llama.cpp failed to initialize model")
+            val helper = loadedHelper ?: run {
+                throw (lastFailure ?: IllegalStateException("llama.cpp failed to initialize model"))
+            }
 
             engine = helper
             engineEvents = loadedEvents
