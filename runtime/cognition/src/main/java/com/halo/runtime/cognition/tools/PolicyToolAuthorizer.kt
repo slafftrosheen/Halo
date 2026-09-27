@@ -98,7 +98,9 @@ class PolicyToolAuthorizer(
         val destructive = (security?.risk ?: ToolRiskClass.SENSITIVE) == ToolRiskClass.DESTRUCTIVE
         val risk = security?.risk.toSkillRisk()
 
-        if (policy == ToolApprovalPolicy.ALWAYS_ALLOW && !destructive) {
+        if (policy == ToolApprovalPolicy.ALWAYS_ALLOW && !destructive &&
+            security?.confirmation != ConfirmationPolicy.ALWAYS
+        ) {
             return AuthorizationDecision.Authorized(toolCall)
         }
 
@@ -160,7 +162,9 @@ class PolicyToolAuthorizer(
         val destructive = (security?.risk ?: ToolRiskClass.SENSITIVE) == ToolRiskClass.DESTRUCTIVE
         val risk = security?.risk.toSkillRisk()
 
-        if (policy == ToolApprovalPolicy.ALWAYS_ALLOW && !destructive) {
+        if (policy == ToolApprovalPolicy.ALWAYS_ALLOW && !destructive &&
+            security?.confirmation != ConfirmationPolicy.ALWAYS
+        ) {
             return ToolAuthorization.Authorized(toolCall)
         }
 

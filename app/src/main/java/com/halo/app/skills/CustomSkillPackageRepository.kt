@@ -1,0 +1,117 @@
+package com.halo.app.skills
+
+import android.content.Context
+import com.halo.runtime.cognition.skills.SkillInstruction
+import com.halo.runtime.cognition.skills.SkillInstructionSource
+import com.halo.sdk.runtime.skills.*
+import java.io.File
+import java.security.MessageDigest
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+
+data class ParsedSkillPackage(
+    val descriptor: SkillDescriptor,
+    val instruction: SkillInstruction,
+)
+
+data class SkillPackageIssue(val sourceId: String, val message: String)
+
+/** Strict, dependency-free parser for bounded SKILL.md packages. */
+object SkillMarkdownPackageParser {
+    const val MAX_INSTRUCTION_CHARS = 16_000
+
+    fun parse(sourceId: String, bytes: ByteArray, nowMs: Long = System.currentTimeMillis()): ParsedSkillPackage {
+        require(bytes.size <= SkillManifestPolicy.MAX_MANIFEST_BYTES) { "Skill package exceeds size limit" }
+        val text = bytes.toString(Charsets.UTF_8).replace("\r\n", "\n")
+        require(text.startsWith("---\n")) { "Skill package must start with frontmatter" }
+        val end = text.indexOf("\n---\n", startIndex = 4)
+        require(end > 4) { "Skill package frontmatter is not closed" }
+        val fields = parseFrontmatter(text.substring(4, end))
+        val body = text.substring(end + 5).trim()
+        require(body.isNotBlank()) { "Skill instructions are empty" }
+        require(body.length <= MAX_INSTRUCTION_CHARS) { "Skill instructions exceed $MAX_INSTRUCTION_CHARS characters" }
+
+        val tools = csv(fields.required("tools"))
+        val permissions = csv(fields["permissions"].orEmpty()).map { HostPermission.valueOf(it.uppercase()) }.toSet()
+        val risk = SkillRisk.valueOf(fields.required("risk").uppercase())
+        val descriptor = SkillDescriptor(
+            id = SkillId(fields.required("id")),
+            name = fields.required("name"),
+            description = fields.required("description"),
+            category = SkillCategory.valueOf(fields.required("category").uppercase()),
+            schemaVersion = fields["schemaVersion"]?.toIntOrNull() ?: SkillManifestPolicy.CURRENT_SCHEMA_VERSION,
+            // Imported packages never self-enable. Enablement is a separate user decision.
+            enabled = false,
+            tools = tools,
+            toolDefinitions = tools.map { SkillToolDefinition(it, risk) },
+            requiredPermissions = permissions,
+            risk = risk,
+            source = SkillSource.CUSTOM,
+            provenance = SkillProvenance(sourceId, bytes.sha256(), nowMs),
+        )
+        val errors = SkillManifestPolicy.validate(descriptor)
+        require(errors.isEmpty()) { errors.joinToString("; ") }
+        return ParsedSkillPackage(
+            descriptor,
+            SkillInstruction(descriptor.id, body, descriptor.provenance?.contentSha256),
+        )
+    }
+
+    private fun parseFrontmatter(value: String): Map<String, String> = buildMap {
+        value.lineSequence().forEachIndexed { index, line ->
+            if (line.isBlank() || line.trimStart().startsWith("#")) return@forEachIndexed
+            val separator = line.indexOf(':')
+            require(separator > 0) { "Invalid frontmatter line ${index + 1}" }
+            val key = line.substring(0, separator).trim()
+            require(key in ALLOWED_FIELDS) { "Unknown frontmatter field: $key" }
+            require(key !in this) { "Duplicate frontmatter field: $key" }
+            put(key, line.substring(separator + 1).trim().removeSurrounding("\""))
+        }
+    }
+
+    private fun csv(value: String): Set<String> = value.removePrefix("[").removeSuffix("]")
+        .split(',').map { it.trim().removeSurrounding("\"") }.filter { it.isNotEmpty() }.toSet()
+
+    private fun Map<String, String>.required(key: String): String =
+        get(key)?.takeIf { it.isNotBlank() } ?: error("Missing frontmatter field: $key")
+
+    private fun ByteArray.sha256(): String = MessageDigest.getInstance("SHA-256")
+        .digest(this).joinToString("") { "%02x".format(it.toInt() and 0xff) }
+
+    private val ALLOWED_FIELDS = setOf(
+        "id", "name", "description", "category", "risk", "tools", "permissions", "schemaVersion", "enabled"
+    )
+}
+
+/** Local custom packages are inert by default and become available only after validation. */
+class CustomSkillPackageRepository(context: Context) : SkillInstructionSource {
+    private val directory = File(context.filesDir, "skills")
+    @Volatile private var packages: Map<SkillId, ParsedSkillPackage> = emptyMap()
+    private val _issues = MutableStateFlow<List<SkillPackageIssue>>(emptyList())
+    val issues: StateFlow<List<SkillPackageIssue>> = _issues.asStateFlow()
+
+    fun refresh(): List<SkillDescriptor> {
+        if (!directory.exists()) directory.mkdirs()
+        val issues = mutableListOf<SkillPackageIssue>()
+        packages = directory.listFiles { file -> file.isFile && file.extension.equals("md", true) }
+            .orEmpty().sortedBy { it.name }.mapNotNull { file ->
+                runCatching { SkillMarkdownPackageParser.parse("file:${file.name}", file.readBytes()) }
+                    .onFailure { issues += SkillPackageIssue(file.name, it.message ?: "Invalid skill package") }
+                    .getOrNull()
+            }.associateBy { it.descriptor.id }
+        _issues.value = issues
+        return packages.values.map { it.descriptor }
+    }
+
+    fun importPackage(fileName: String, bytes: ByteArray): ParsedSkillPackage {
+        val parsed = SkillMarkdownPackageParser.parse("import:$fileName", bytes)
+        if (!directory.exists()) check(directory.mkdirs()) { "Could not create skill directory" }
+        val target = File(directory, parsed.descriptor.id.value + ".md")
+        target.writeBytes(bytes)
+        refresh()
+        return parsed
+    }
+
+    override suspend fun load(skillId: SkillId): SkillInstruction? = packages[skillId]?.instruction
+}

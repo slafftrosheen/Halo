@@ -6,7 +6,8 @@ sealed interface ToolExecutionResult {
         val toolCallId: String,
         val toolId: String,
         val output: String,
-        val actionTruth: com.halo.runtime.cognition.agent.ActionTruth = com.halo.runtime.cognition.agent.ActionTruth.CONFIRMED
+        val actionTruth: com.halo.runtime.cognition.agent.ActionTruth = com.halo.runtime.cognition.agent.ActionTruth.CONFIRMED,
+        val outputMetadata: ToolOutputMetadata? = null,
     ) : ToolExecutionResult
 
     data class Rejected(
@@ -21,5 +22,14 @@ sealed interface ToolExecutionResult {
         val message: String,
         val completionUnknown: Boolean = false,
         val failureKind: ToolFailureKind = ToolFailureKind.UNKNOWN,
+        val code: String = failureKind.name,
+        val hint: String? = null,
+        val payload: String? = null,
     ) : ToolExecutionResult
 }
+
+data class ToolOutputMetadata(
+    val truncated: Boolean,
+    val originalChars: Int,
+    val originalUtf8Bytes: Int,
+)

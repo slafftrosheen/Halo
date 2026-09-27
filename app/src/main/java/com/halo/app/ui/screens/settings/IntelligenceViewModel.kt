@@ -17,6 +17,10 @@ import com.halo.sdk.runtime.RuntimeSnapshotSource
 import com.halo.sdk.runtime.Storage
 import com.halo.sdk.runtime.productionHaloDispatchers
 import com.halo.runtime.cognition.session.CognitiveSession
+import com.halo.runtime.observer.InferenceAggregate
+import com.halo.runtime.observer.InferenceLedger
+import com.halo.runtime.observer.ToolAggregate
+import com.halo.engines.ai.catalog.DefaultAiModelCatalogRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -27,8 +31,11 @@ data class IntelligenceUiState(
     val activeProviderStatus: ProviderStatus = ProviderStatus.UNAVAILABLE,
     val capabilities: Set<AiCapability> = emptySet(),
     val activeModelId: String? = null,
+    val lastResolvedModelId: String? = null,
     val providers: List<AiProviderUiState> = emptyList(),
     val availableModels: List<AiModel> = emptyList(),
+    val catalogEntries: List<AiModelCatalogEntry> = emptyList(),
+    val catalogErrors: Map<String, String> = emptyMap(),
     val isRefreshingModels: Boolean = false,
     val openRouterKey: String = "",
     val openRouterModel: String = "openrouter/free",
@@ -48,6 +55,16 @@ data class IntelligenceUiState(
     val nativeResources: List<NativeResourceSnapshot> = emptyList(),
     val legacyGgufCount: Int = 0,
     val legacyGgufBytes: Long = 0L,
+    val inferenceRequests: Long = 0L,
+    val inferenceInputTokens: Long = 0L,
+    val inferenceOutputTokens: Long = 0L,
+    val inferenceFailures: Long = 0L,
+    val inferenceAverageDurationMs: Long? = null,
+    val routerResolutions: Long = 0L,
+    val toolOutcomes: Long = 0L,
+    val toolFailures: Long = 0L,
+    val toolUnknownOutcomes: Long = 0L,
+    val toolAverageDurationMs: Long? = null,
 )
 
 private data class IntelligenceSettings(
@@ -65,7 +82,15 @@ private data class ProviderSelection(
     val providerId: String?,
     val modelId: String?,
     val routingPolicy: AiRoutingPolicy,
-    val diagnostics: List<AiProviderDiagnostic>
+    val diagnostics: List<AiProviderDiagnostic>,
+    val catalog: AiModelCatalogState,
+)
+
+private data class IntelligencePresentationInputs(
+    val settings: IntelligenceSettings,
+    val lastResolvedModelId: String?,
+    val inference: InferenceAggregate,
+    val tools: ToolAggregate,
 )
 
 class IntelligenceViewModel(
@@ -74,14 +99,19 @@ class IntelligenceViewModel(
     private val cognitiveSession: CognitiveSession,
     private val storage: Storage,
     private val modelManager: LiteRtModelManager? = null,
-    private val dispatchers: HaloDispatchers = productionHaloDispatchers()
+    private val dispatchers: HaloDispatchers = productionHaloDispatchers(),
+    private val inferenceLedger: InferenceLedger? = null,
 ) : ViewModel() {
+    private val catalogRepository = DefaultAiModelCatalogRepository(
+        aiProviderRouter.getAllProviders().filterIsInstance<AiInferenceProvider>()
+    )
     private val _refreshTrigger = MutableStateFlow(0)
     private val _availableModels = MutableStateFlow<List<AiModel>>(emptyList())
     private val _isRefreshing = MutableStateFlow(false)
     private val _testConnectionResult = MutableSharedFlow<Boolean>()
     val testConnectionResult: SharedFlow<Boolean> = _testConnectionResult.asSharedFlow()
     private val _settings = MutableStateFlow(IntelligenceSettings())
+    private val _lastResolvedModelId = MutableStateFlow<String?>(null)
 
     init {
         viewModelScope.launch { loadSettings() }
@@ -96,6 +126,13 @@ class IntelligenceViewModel(
         }
         viewModelScope.launch {
             modelManager?.downloadStates?.collect { _refreshTrigger.update { it + 1 } }
+        }
+        viewModelScope.launch {
+            cognitiveSession.state.collect { state ->
+                if (state is CognitiveSessionState.Completed) {
+                    _lastResolvedModelId.value = state.response.resolvedModelId
+                }
+            }
         }
     }
 
@@ -134,14 +171,26 @@ class IntelligenceViewModel(
             aiProviderRouter.selectedProviderId,
             aiProviderRouter.selectedModelId,
             aiProviderRouter.routingPolicy,
-            aiProviderRouter.diagnosticsFlow
-        ) { pId, mId, routing, diagnostics ->
-            ProviderSelection(pId, mId, routing, diagnostics)
+            aiProviderRouter.diagnosticsFlow,
+            catalogRepository.state
+        ) { pId, mId, routing, diagnostics, catalog ->
+            ProviderSelection(pId, mId, routing, diagnostics, catalog)
         },
         modelManager?.downloadStates ?: MutableStateFlow<Map<String, DownloadState>>(emptyMap()),
         modelManager?.legacyGgufFiles ?: MutableStateFlow(emptyList()),
-        _settings
-    ) { snapshot, selection, dlStates, ggufs, settings ->
+        combine(
+            _settings,
+            _lastResolvedModelId,
+            inferenceLedger?.aggregate ?: MutableStateFlow(InferenceAggregate()),
+            inferenceLedger?.toolAggregate ?: MutableStateFlow(ToolAggregate()),
+        ) { settings, resolved, inference, tools ->
+            IntelligencePresentationInputs(settings, resolved, inference, tools)
+        }
+    ) { snapshot, selection, dlStates, ggufs, presentation ->
+        val settings = presentation.settings
+        val lastResolvedModelId = presentation.lastResolvedModelId
+        val inference = presentation.inference
+        val tools = presentation.tools
         val (selectedProviderId, selectedModelId) = selection
         val allProviders = aiProviderRouter.getAllProviders()
         val activeProvider = allProviders.find { it.id == selectedProviderId }
@@ -150,6 +199,37 @@ class IntelligenceViewModel(
         } ?: ProviderStatus.UNAVAILABLE
 
         val localModels = (modelManager?.inventoryState?.value as? com.halo.providers.litert.models.LocalModelInventoryState.Ready)?.models.orEmpty()
+        val installedIds = localModels.mapTo(hashSetOf()) { it.id }
+        val downloadableEntries = modelManager?.getAllCatalogModels().orEmpty()
+            .filterNot { it.id in installedIds }
+            .map { downloadable ->
+                AiModelCatalogEntry(
+                    model = AiModel(
+                        id = downloadable.id,
+                        displayName = downloadable.displayName,
+                        providerId = ProviderIds.LITERT,
+                        inputCapabilities = buildSet {
+                            add(AiCapability.TEXT)
+                            if (downloadable.supportsVision) add(AiCapability.IMAGE)
+                        },
+                        contextLength = downloadable.contextWindowTokens.toLong(),
+                        supportsStreaming = true,
+                        supportsTools = downloadable.supportsTools,
+                    ),
+                    runtime = AiModelRuntimeMetadata(
+                        ref = AiModelRef(ProviderIds.LITERT, downloadable.id),
+                        location = AiExecutionLocation.ON_DEVICE,
+                        installed = false,
+                        resident = false,
+                        requiresNetwork = false,
+                        requiresCredential = false,
+                        costClass = AiCostClass.LOCAL,
+                    ),
+                    source = ModelCatalogueSource.LOCAL_DOWNLOADABLE,
+                )
+            }
+        val catalogEntries = (selection.catalog.models + downloadableEntries)
+            .distinctBy { it.runtime.ref }
 
         IntelligenceUiState(
             activeProviderId = selectedProviderId ?: "",
@@ -157,6 +237,7 @@ class IntelligenceViewModel(
             activeProviderStatus = activeProviderStatus,
             capabilities = activeProvider?.getCapabilities() ?: emptySet(),
             activeModelId = selectedModelId,
+            lastResolvedModelId = lastResolvedModelId,
             providers = allProviders.map { p ->
                 val status = runCatching { p.getStatus() }.getOrDefault(ProviderStatus.UNAVAILABLE)
                 val caps = runCatching { p.getCapabilities() }.getOrDefault(emptySet())
@@ -168,8 +249,10 @@ class IntelligenceViewModel(
                     capabilities = caps
                 )
             },
-            availableModels = _availableModels.value,
-            isRefreshingModels = _isRefreshing.value,
+            availableModels = catalogEntries.map { it.model },
+            catalogEntries = catalogEntries,
+            catalogErrors = selection.catalog.providerErrors,
+            isRefreshingModels = selection.catalog.refreshingProviders.isNotEmpty(),
             openRouterKey = settings.openRouterKey,
             openRouterModel = settings.openRouterModel,
             ollamaEndpoint = settings.ollamaEndpoint,
@@ -185,7 +268,21 @@ class IntelligenceViewModel(
             activeProviderIsLocal = activeProvider?.isLocal,
             nativeResources = snapshot.nativeResources,
             legacyGgufCount = ggufs.size,
-            legacyGgufBytes = ggufs.sumOf { it.length() }
+            legacyGgufBytes = ggufs.sumOf { it.length() },
+            inferenceRequests = inference.requests,
+            inferenceInputTokens = inference.inputTokens,
+            inferenceOutputTokens = inference.outputTokens,
+            inferenceFailures = inference.failures,
+            inferenceAverageDurationMs = inference.totalDurationMs
+                .takeIf { inference.requests > 0 }
+                ?.div(inference.requests),
+            routerResolutions = inference.routerResolutions.values.sum(),
+            toolOutcomes = tools.outcomes,
+            toolFailures = tools.failures,
+            toolUnknownOutcomes = tools.unknownOutcomes,
+            toolAverageDurationMs = tools.totalDurationMs
+                .takeIf { tools.outcomes > 0 }
+                ?.div(tools.outcomes),
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), IntelligenceUiState())
 
@@ -211,6 +308,24 @@ class IntelligenceViewModel(
             }
         }
         aiProviderRouter.selectModel(modelId)
+    }
+
+    fun selectTarget(ref: AiModelRef) {
+        when (ref.providerId) {
+            ProviderIds.LITERT, ProviderIds.LLAMACPP -> updateSettings { it.copy(litertModel = ref.modelId) }
+            ProviderIds.OLLAMA -> updateSettings { it.copy(ollamaModel = ref.modelId) }
+            ProviderIds.OPENROUTER -> updateSettings { it.copy(openRouterModel = ref.modelId) }
+        }
+        aiProviderRouter.selectTarget(ref)
+    }
+
+    fun activateCatalogEntry(entry: AiModelCatalogEntry) {
+        if (entry.source == ModelCatalogueSource.LOCAL_DOWNLOADABLE) {
+            modelManager?.getAllCatalogModels()?.firstOrNull { it.id == entry.model.id }
+                ?.let(::downloadCatalogModel)
+            return
+        }
+        selectTarget(entry.runtime.ref)
     }
 
     fun testConnection() {
@@ -300,9 +415,7 @@ class IntelligenceViewModel(
     private fun refreshModelsFor(providerId: String) {
         viewModelScope.launch {
             _isRefreshing.value = true
-            val provider = aiProviderRouter.getAllProviders().find { it.id == providerId } as? AiInferenceProvider
-            val models = runCatching { provider?.listModels() }.getOrNull().orEmpty()
-            _availableModels.value = models
+            catalogRepository.refresh()
             _isRefreshing.value = false
         }
     }

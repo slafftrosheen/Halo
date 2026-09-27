@@ -1,0 +1,27 @@
+{
+  "id": "halo.phone",
+  "schemaVersion": 2,
+  "name": "Phone Use",
+  "description": "Read and operate supported Android screens through bounded semantic accessibility tools.",
+  "category": "DEVICE",
+  "risk": "EXTERNAL_SIDE_EFFECT",
+  "requiredPermissions": ["ACCESSIBILITY"],
+  "tools": [
+    "halo_read_screen",
+    "halo_ui_click",
+    "halo_ui_scroll",
+    "halo_ui_set_text",
+    "halo_ui_global_action",
+    "halo_list_apps",
+    "halo_open_app"
+  ],
+  "toolDefinitions": [
+    { "toolId": "halo_read_screen", "risk": "READ_ONLY" },
+    { "toolId": "halo_ui_click", "risk": "EXTERNAL_SIDE_EFFECT" },
+    { "toolId": "halo_ui_scroll", "risk": "EXTERNAL_SIDE_EFFECT" },
+    { "toolId": "halo_ui_set_text", "risk": "SENSITIVE" },
+    { "toolId": "halo_ui_global_action", "risk": "EXTERNAL_SIDE_EFFECT" },
+    { "toolId": "halo_list_apps", "risk": "READ_ONLY" },
+    { "toolId": "halo_open_app", "risk": "EXTERNAL_SIDE_EFFECT" }
+  ]
+}

@@ -84,7 +84,57 @@ data class AiExecutionMetadata(
     val completedAtMs: Long?,
     val success: Boolean,
     val finishReason: String?,
-    val errorType: AiErrorType? = null
+    val errorType: AiErrorType? = null,
+    val requestedModelId: String? = modelId,
+    val resolvedModelId: String? = modelId,
+)
+
+data class AiModelRef(
+    val providerId: String,
+    val modelId: String,
+)
+
+enum class AiExecutionLocation { ON_DEVICE, LOCAL_NETWORK, REMOTE }
+enum class AiCostClass { FREE, PAID, LOCAL, UNKNOWN }
+enum class AiModelKind { CONCRETE, ROUTER }
+enum class ModelCatalogueSource {
+    LOCAL_INSTALLED, LOCAL_DOWNLOADABLE, REMOTE_LIVE, REMOTE_CACHED, LAN_LIVE
+}
+enum class AiWireProtocol {
+    OPENAI_CHAT_COMPLETIONS, OPENAI_RESPONSES, ANTHROPIC_MESSAGES, OLLAMA, LITERT_NATIVE
+}
+
+data class AiModelRuntimeMetadata(
+    val ref: AiModelRef,
+    val location: AiExecutionLocation,
+    val installed: Boolean?,
+    val resident: Boolean?,
+    val requiresNetwork: Boolean,
+    val requiresCredential: Boolean,
+    val costClass: AiCostClass = AiCostClass.UNKNOWN,
+    /** Transport detail for diagnostics/adapters; cognition must not branch on it. */
+    val wireProtocol: AiWireProtocol? = null,
+)
+
+data class AiModelCatalogEntry(
+    val model: AiModel,
+    val runtime: AiModelRuntimeMetadata,
+    val kind: AiModelKind = AiModelKind.CONCRETE,
+    val source: ModelCatalogueSource,
+)
+
+data class AiModelCatalogState(
+    val models: List<AiModelCatalogEntry> = emptyList(),
+    val refreshingProviders: Set<String> = emptySet(),
+    val providerErrors: Map<String, String> = emptyMap(),
+    val refreshedAtMs: Long? = null,
+)
+
+data class AiExecutionTargetSnapshot(
+    val providerId: String,
+    val requestedModelId: String,
+    val resolvedModelId: String? = null,
+    val executionLocation: AiExecutionLocation,
 )
 
 data class AiProviderDiagnostic(
@@ -111,7 +161,9 @@ data class AiResponse(
     val finishReason: String? = null,
     val providerId: String,
     val modelId: String? = null,
-    val metrics: AiGenerationMetrics? = null
+    val metrics: AiGenerationMetrics? = null,
+    val requestedModelId: String? = modelId,
+    val resolvedModelId: String? = modelId,
 )
 
 sealed interface AiStreamEvent {

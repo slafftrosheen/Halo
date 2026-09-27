@@ -84,6 +84,9 @@ interface AiProviderRouter {
 
     fun selectModel(modelId: String?)
 
+    /** Atomically changes provider and model so observers never see a mixed target. */
+    fun selectTarget(ref: AiModelRef)
+
     fun getAllProviders(): List<AiProvider>
 
     /**

@@ -12,6 +12,7 @@ enum class HostActionReceipt {
     VALIDATED,
     DISPATCHED,
     CONFIRMED,
+    UNKNOWN,
     FAILED,
     CANCELLED;
 
@@ -20,6 +21,7 @@ enum class HostActionReceipt {
         VALIDATED -> ActionTruth.AUTHORIZED
         DISPATCHED -> ActionTruth.DISPATCHED
         CONFIRMED -> ActionTruth.CONFIRMED
+        UNKNOWN -> ActionTruth.UNKNOWN
         FAILED -> ActionTruth.FAILED
         CANCELLED -> ActionTruth.FAILED
     }

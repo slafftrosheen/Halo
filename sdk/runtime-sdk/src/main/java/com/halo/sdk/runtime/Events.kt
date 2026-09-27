@@ -56,6 +56,17 @@ data class CognitiveGenerationMetrics(
 }
 
 data class CognitiveCompleted(override val id: String = UUID.randomUUID().toString(), val requestId: String, val response: String?, val interactionId: String? = null, val metrics: CognitiveGenerationMetrics? = null, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
+/** Privacy-safe inference evidence: never contains prompt or response content. */
+data class InferenceObserved(
+    override val id: String = UUID.randomUUID().toString(),
+    val requestId: String,
+    val providerId: String,
+    val requestedModelId: String?,
+    val resolvedModelId: String?,
+    val success: Boolean,
+    val metrics: CognitiveGenerationMetrics? = null,
+    override val timestamp: Long = System.currentTimeMillis(),
+) : HaloEvent
 data class CognitiveFailed(
     override val id: String = UUID.randomUUID().toString(),
     val requestId: String,
@@ -159,6 +170,9 @@ data class ToolCallCompleted(
     val toolCallId: String,
     val toolId: String,
     val success: Boolean,
+    val failureCode: String? = null,
+    val actionTruth: String? = null,
+    val durationMs: Long? = null,
     override val timestamp: Long = System.currentTimeMillis()
 ) : HaloEvent
 

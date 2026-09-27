@@ -46,6 +46,7 @@ class DefaultContextAssembler(
     private val tokenEstimator: ContextTokenEstimator = ConservativeContextTokenEstimator(),
     private val memoryContextSource: MemoryContextSource? = null,
     private val toolExposureGate: ToolExposureGate = DefaultToolExposureGate(skillRegistry),
+    private val conversationPolicyRepository: ConversationContextPolicyRepository? = null,
 ) : ContextAssembler {
 
     companion object {
@@ -66,11 +67,13 @@ class DefaultContextAssembler(
     ): ContextAssemblyResult = assemble(policy, capabilities, ContextAssemblyRequest())
 
     override suspend fun assemble(
-        policy: AiContextPolicy,
+        basePolicy: AiContextPolicy,
         capabilities: Set<AiCapability>,
         request: ContextAssemblyRequest,
     ): ContextAssemblyResult {
         conversationStore.awaitReady()
+        val conversationId = request.conversationId ?: conversationStore.activeConversationId()
+        val policy = conversationId?.let { conversationPolicyRepository?.get(it)?.applyTo(basePolicy) } ?: basePolicy
 
         val omissions = mutableListOf<ContextOmission>()
         val unsatisfied = request.acquisition?.unsatisfiedRequired.orEmpty().toMutableList()

@@ -20,12 +20,16 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.halo.app.ui.design.HaloScreenHeader
 import com.halo.app.ui.design.HaloSpacing
 import com.halo.app.ui.theme.HaloPastelBlue
@@ -48,6 +52,14 @@ fun AndroidAssistantScreen(
 
     LaunchedEffect(Unit) {
         roleController.refresh()
+    }
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    DisposableEffect(lifecycle, roleController) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) roleController.refresh()
+        }
+        lifecycle.addObserver(observer)
+        onDispose { lifecycle.removeObserver(observer) }
     }
 
     Column(
@@ -89,10 +101,15 @@ fun AndroidAssistantScreen(
         ) {
             Button(
                 onClick = { roleController.launchEnrollment { launcher.launch(it) } },
+                enabled = state !is AssistantIntegrationState.Active && state !is AssistantIntegrationState.NotEligible,
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Set as Assistant")
+                Text(when (state) {
+                    is AssistantIntegrationState.Active -> "Assistant active"
+                    is AssistantIntegrationState.RoleHeldNotActive -> "Repair activation"
+                    else -> "Set as Assistant"
+                })
             }
 
             OutlinedButton(

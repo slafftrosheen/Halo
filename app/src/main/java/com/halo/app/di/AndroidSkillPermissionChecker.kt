@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import com.halo.sdk.runtime.skills.HostPermission
+import com.halo.host.android.accessibility.HaloAccessibilityService
 
 class AndroidSkillPermissionChecker(private val context: Context) {
     fun granted(permission: HostPermission): Boolean {
@@ -17,6 +18,7 @@ class AndroidSkillPermissionChecker(private val context: Context) {
             HostPermission.BLUETOOTH ->
                 if (Build.VERSION.SDK_INT >= 31) Manifest.permission.BLUETOOTH_CONNECT else return true
             HostPermission.FILES -> return true // SAF grants access per selected document.
+            HostPermission.ACCESSIBILITY -> return HaloAccessibilityService.isEnabled
         }
         return context.checkSelfPermission(androidPermission) == PackageManager.PERMISSION_GRANTED
     }

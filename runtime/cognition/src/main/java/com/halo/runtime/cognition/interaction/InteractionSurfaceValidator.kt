@@ -20,6 +20,9 @@ object InteractionSurfaceValidator {
     const val MAX_TEXT_INPUT_CHARS = 8_000
     const val MAX_FOLLOW_UPS = 6
     const val MAX_ACTIONS = 8
+    const val MAX_SUPPLEMENTS = 8
+    const val MAX_SUPPLEMENT_LABEL_CHARS = 80
+    const val MAX_SUPPLEMENT_VALUE_CHARS = 500
 
     sealed interface Result {
         data object Valid : Result
@@ -37,6 +40,28 @@ object InteractionSurfaceValidator {
 
         surface.title?.let { if (it.length > MAX_TITLE_CHARS) reasons += "title exceeds $MAX_TITLE_CHARS characters" }
         surface.message?.let { if (it.length > MAX_MESSAGE_CHARS) reasons += "message exceeds $MAX_MESSAGE_CHARS characters" }
+
+        if (surface.supplements.size > MAX_SUPPLEMENTS) reasons += "too many supplements (max $MAX_SUPPLEMENTS)"
+        surface.supplements.forEach { supplement ->
+            when (supplement) {
+                is InteractionSupplement.Fact -> {
+                    if (supplement.label.isBlank() || supplement.label.length > MAX_SUPPLEMENT_LABEL_CHARS) {
+                        reasons += "supplement fact label must contain 1-$MAX_SUPPLEMENT_LABEL_CHARS characters"
+                    }
+                    if (supplement.value.length > MAX_SUPPLEMENT_VALUE_CHARS) reasons += "supplement fact value is too long"
+                }
+                is InteractionSupplement.Status -> {
+                    if (supplement.label.isBlank() || supplement.label.length > MAX_SUPPLEMENT_LABEL_CHARS) {
+                        reasons += "supplement status label must contain 1-$MAX_SUPPLEMENT_LABEL_CHARS characters"
+                    }
+                }
+                is InteractionSupplement.Notice -> {
+                    if (supplement.text.isBlank() || supplement.text.length > MAX_SUPPLEMENT_VALUE_CHARS) {
+                        reasons += "supplement notice must contain 1-$MAX_SUPPLEMENT_VALUE_CHARS characters"
+                    }
+                }
+            }
+        }
 
         if (surface.actions.size > MAX_ACTIONS) reasons += "too many actions (max $MAX_ACTIONS)"
         val actionIds = surface.actions.map { it.id.value }

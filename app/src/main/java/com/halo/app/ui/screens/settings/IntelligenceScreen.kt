@@ -11,7 +11,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
@@ -38,6 +40,10 @@ import com.halo.app.ui.workspace.HaloWorkspaceSection
 import com.halo.providers.litert.models.LocalModelDescriptor
 import com.halo.sdk.provider.AiCapability
 import com.halo.sdk.provider.AiModel
+import com.halo.sdk.provider.AiExecutionLocation
+import com.halo.sdk.provider.AiModelCatalogEntry
+import com.halo.sdk.provider.AiModelKind
+import com.halo.sdk.provider.ModelCatalogueSource
 import com.halo.sdk.provider.ProviderStatus
 
 @Composable
@@ -53,6 +59,8 @@ fun IntelligenceScreen(
     var ollamaEndpointDraft by rememberSaveable(uiState.activeProviderId) {
         mutableStateOf(uiState.ollamaEndpoint)
     }
+    var modelSearch by rememberSaveable { mutableStateOf("") }
+    var modelFilter by rememberSaveable { mutableStateOf(ModelHubFilter.ALL) }
 
     Column(
         modifier = Modifier
@@ -63,7 +71,7 @@ fun IntelligenceScreen(
     ) {
         HaloWorkspaceHeader(
             title = "Intelligence",
-            subtitle = "Provider, model and runtime policy.",
+            subtitle = "Choose a model; Halo handles where and how it runs.",
             onBack = onBack
         )
 
@@ -85,13 +93,16 @@ fun IntelligenceScreen(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = uiState.activeProviderName,
+                        text = uiState.catalogEntries.firstOrNull {
+                            it.runtime.ref.providerId == uiState.activeProviderId &&
+                                it.runtime.ref.modelId == uiState.activeModelId
+                        }?.model?.displayName ?: uiState.activeModelId ?: "No model selected",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = uiState.activeModelId?.ifBlank { null } ?: "No model selected",
+                        text = activeTargetSummary(uiState),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -126,8 +137,33 @@ fun IntelligenceScreen(
 
         Spacer(Modifier.height(20.dp))
 
+        HaloWorkspaceSection(
+            title = "Inference activity",
+            trailingText = "${uiState.inferenceRequests} requests",
+        ) {
+            HaloWorkspaceRow(
+                title = "Tokens",
+                subtitle = "Input ${uiState.inferenceInputTokens} · output ${uiState.inferenceOutputTokens}",
+                trailingText = uiState.inferenceAverageDurationMs?.let { "${it} ms avg" },
+            )
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            HaloWorkspaceRow(
+                title = "Outcomes",
+                subtitle = "${uiState.inferenceFailures} failures · ${uiState.routerResolutions} router resolutions",
+            )
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            HaloWorkspaceRow(
+                title = "Tool outcomes",
+                subtitle = "${uiState.toolFailures} failures · ${uiState.toolUnknownOutcomes} completion unknown",
+                trailingText = uiState.toolAverageDurationMs?.let { "${it} ms avg" }
+                    ?: "${uiState.toolOutcomes} total",
+            )
+        }
+
+        Spacer(Modifier.height(20.dp))
+
         val inferenceProviders = uiState.providers
-        HaloWorkspaceSection(title = "Inference providers") {
+        HaloWorkspaceSection(title = "Providers & access") {
             inferenceProviders.forEachIndexed { index, provider ->
                 HaloWorkspaceRow(
                     title = provider.name,
@@ -208,32 +244,65 @@ fun IntelligenceScreen(
 
         HaloWorkspaceSection(
             title = "Models",
-            trailingText = if (uiState.isRefreshingModels) "Refreshing" else "${uiState.availableModels.size}"
+            trailingText = if (uiState.isRefreshingModels) "Refreshing" else "${uiState.catalogEntries.size}"
         ) {
-            if (uiState.availableModels.isEmpty()) {
+            OutlinedTextField(
+                value = modelSearch,
+                onValueChange = { modelSearch = it },
+                modifier = Modifier.fillMaxWidth().padding(12.dp),
+                singleLine = true,
+                label = { Text("Search local, LAN and cloud models") }
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                ModelHubFilter.entries.forEach { filter ->
+                    FilterChip(
+                        selected = modelFilter == filter,
+                        onClick = { modelFilter = filter },
+                        label = { Text(filter.label) }
+                    )
+                }
+            }
+            val visibleModels = uiState.catalogEntries.filter { entry ->
+                entry.matches(modelSearch, modelFilter)
+            }
+            if (visibleModels.isEmpty()) {
                 Text(
                     text = if (uiState.isRefreshingModels) {
-                        "Loading models from ${uiState.activeProviderName}…"
+                        "Loading model catalog…"
                     } else {
-                        "No models advertised by ${uiState.activeProviderName}."
+                        "No models match this search and filter."
                     },
                     modifier = Modifier.padding(16.dp),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             } else {
-                uiState.availableModels.forEachIndexed { index, model ->
+                visibleModels.forEachIndexed { index, entry ->
+                    val model = entry.model
+                    val active = entry.runtime.ref.providerId == uiState.activeProviderId && model.id == uiState.activeModelId
                     HaloWorkspaceRow(
                         title = model.displayName,
-                        subtitle = modelCapabilitySummary(model),
-                        trailingText = if (model.id == uiState.activeModelId) "Active" else null,
-                        selected = model.id == uiState.activeModelId,
-                        onClick = { viewModel.selectModel(model.id) }
+                        subtitle = modelEntrySummary(entry),
+                        trailingText = if (active) "Active" else if (entry.source == ModelCatalogueSource.REMOTE_CACHED) "Cached" else null,
+                        selected = active,
+                        onClick = { viewModel.activateCatalogEntry(entry) }
                     )
-                    if (index < uiState.availableModels.lastIndex) {
+                    if (index < visibleModels.lastIndex) {
                         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     }
                 }
+            }
+
+            uiState.catalogErrors.values.firstOrNull()?.let { error ->
+                Text(
+                    text = "Some providers could not refresh: $error",
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
             }
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -407,4 +476,49 @@ private fun modelCapabilitySummary(model: AiModel): String {
         }
     }
     return badges.joinToString(" · ").ifBlank { "Capabilities not advertised" }
+}
+
+private enum class ModelHubFilter(val label: String) {
+    ALL("All"), ON_DEVICE("On device"), FREE("Free"), VISION("Vision"), TOOLS("Tools"), LARGE_CONTEXT("Large context")
+}
+
+private fun AiModelCatalogEntry.matches(query: String, filter: ModelHubFilter): Boolean {
+    val normalized = query.trim()
+    if (normalized.isNotEmpty() &&
+        !model.displayName.contains(normalized, ignoreCase = true) &&
+        !model.id.contains(normalized, ignoreCase = true)
+    ) return false
+    return when (filter) {
+        ModelHubFilter.ALL -> true
+        ModelHubFilter.ON_DEVICE -> runtime.location == AiExecutionLocation.ON_DEVICE
+        ModelHubFilter.FREE -> model.isFree
+        ModelHubFilter.VISION -> AiCapability.IMAGE in model.inputCapabilities
+        ModelHubFilter.TOOLS -> model.supportsTools
+        ModelHubFilter.LARGE_CONTEXT -> (model.contextLength ?: 0L) >= 100_000L
+    }
+}
+
+private fun modelEntrySummary(entry: AiModelCatalogEntry): String = buildList {
+    add(when (entry.runtime.location) {
+        AiExecutionLocation.ON_DEVICE -> "On device"
+        AiExecutionLocation.LOCAL_NETWORK -> "Local network"
+        AiExecutionLocation.REMOTE -> "Cloud · OpenRouter"
+    })
+    if (entry.kind == AiModelKind.ROUTER) add("Dynamic router")
+    if (entry.source == ModelCatalogueSource.LOCAL_DOWNLOADABLE) add("Download")
+    if (entry.runtime.installed == true) add("Installed")
+    if (entry.model.isFree) add("Free")
+    if (entry.model.supportsTools) add("Tools")
+    if (AiCapability.IMAGE in entry.model.inputCapabilities) add("Vision")
+    entry.model.contextLength?.let { add(if (it >= 1_000) "${it / 1_000}k context" else "$it context") }
+}.joinToString(" · ")
+
+private fun activeTargetSummary(state: IntelligenceUiState): String {
+    val entry = state.catalogEntries.firstOrNull {
+        it.runtime.ref.providerId == state.activeProviderId && it.runtime.ref.modelId == state.activeModelId
+    }
+    val base = entry?.let(::modelEntrySummary) ?: "${state.activeProviderName} · target unavailable"
+    val resolved = state.lastResolvedModelId
+        ?.takeIf { entry?.kind == AiModelKind.ROUTER && it != state.activeModelId }
+    return if (resolved == null) base else "$base\nResolved last turn · $resolved"
 }

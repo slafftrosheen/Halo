@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,12 +30,15 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.halo.app.ui.design.HaloScreenHeader
 import com.halo.app.ui.design.HaloSpacing
+import com.halo.app.skills.ParsedSkillPackage
+import com.halo.app.skills.SkillMarkdownPackageParser
 import com.halo.runtime.cognition.skills.SkillRegistry
 import com.halo.runtime.cognition.tools.CapabilityCatalogueSnapshot
 import com.halo.runtime.cognition.tools.CapabilityCatalogueSource
@@ -47,6 +52,7 @@ import com.halo.sdk.runtime.skills.SkillAvailability
 import com.halo.sdk.runtime.skills.SkillDescriptor
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
+import java.io.ByteArrayOutputStream
 
 /**
  * Skills is now a projection of the Runtime tool/capability fabric rather than
@@ -59,6 +65,7 @@ fun SkillsScreen(
     toolRegistry: ToolRegistry? = null,
     availabilityResolver: ToolAvailabilityResolver? = null,
     capabilityCatalogue: CapabilityCatalogueSource? = null,
+    onInstallCustomSkill: ((String, ByteArray) -> Result<Unit>)? = null,
 ) {
     val skills by skillRegistry.skills.collectAsState()
     // Recompose whenever live host/device capability availability changes.
@@ -69,7 +76,21 @@ fun SkillsScreen(
     capabilitySnapshot.revision // explicit observation; availabilityResolver reads the same source.
 
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     var selectedId by remember { mutableStateOf<String?>(null) }
+    var pendingImport by remember { mutableStateOf<PendingSkillImport?>(null) }
+    var importError by remember { mutableStateOf<String?>(null) }
+    val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            runCatching {
+                val name = uri.lastPathSegment?.substringAfterLast('/') ?: "SKILL.md"
+                val bytes = context.contentResolver.openInputStream(uri)?.use(::readBoundedSkillPackage)
+                    ?: error("Could not read selected skill package")
+                PendingSkillImport(name, bytes, SkillMarkdownPackageParser.parse("review:$name", bytes))
+            }.onSuccess { pendingImport = it }
+                .onFailure { importError = it.message ?: "Invalid skill package" }
+        }
+    }
 
     LaunchedEffect(skillRegistry) { skillRegistry.refreshAvailability() }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
@@ -95,6 +116,14 @@ fun SkillsScreen(
                         Text(skill.description)
                         Text("Status · ${skillRuntimeAvailability(skill, descriptors, availabilityResolver)}")
                         Text("Access · ${skill.requiredPermissions.joinToString().ifBlank { "No special permission" }}")
+                        Text("Source · ${skill.source.name.lowercase().replace('_', ' ')} · schema ${skill.schemaVersion}")
+                        skill.provenance?.let { provenance ->
+                            Text(
+                                "Package · ${provenance.sourceId} · ${provenance.contentSha256.take(12)}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
 
                         if (descriptors.isNotEmpty()) {
                             Text(
@@ -179,9 +208,52 @@ fun SkillsScreen(
         }
     }
 
+    pendingImport?.let { pending ->
+        val skill = pending.parsed.descriptor
+        AlertDialog(
+            onDismissRequest = { pendingImport = null },
+            title = { Text("Install ${skill.name}?") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(HaloSpacing.sm)) {
+                    Text(skill.description)
+                    Text("Source · Custom · schema ${skill.schemaVersion}")
+                    Text("Risk · ${skill.risk.name.lowercase().replace('_', ' ')}")
+                    Text("Actions · ${skill.tools.joinToString()}")
+                    Text("Permissions · ${skill.requiredPermissions.joinToString().ifBlank { "None" }}")
+                    Text("The skill installs disabled. You can review its actions before enabling it.")
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    val result = onInstallCustomSkill?.invoke(pending.fileName, pending.bytes)
+                        ?: Result.failure(IllegalStateException("Custom skill installation is unavailable"))
+                    pendingImport = null
+                    if (result.isFailure) importError = result.exceptionOrNull()?.message ?: "Could not install skill"
+                }) { Text("Install") }
+            },
+            dismissButton = { TextButton(onClick = { pendingImport = null }) { Text("Cancel") } },
+        )
+    }
+
+    importError?.let { message ->
+        AlertDialog(
+            onDismissRequest = { importError = null },
+            title = { Text("Skill package not installed") },
+            text = { Text(message) },
+            confirmButton = { TextButton(onClick = { importError = null }) { Text("OK") } },
+        )
+    }
+
     Column(Modifier.fillMaxSize().padding(horizontal = HaloSpacing.screen)) {
         HaloScreenHeader("Skills", "Actions Halo can use", navigation = onBack)
         LazyColumn(verticalArrangement = Arrangement.spacedBy(HaloSpacing.xs)) {
+            if (onInstallCustomSkill != null) {
+                item(key = "import-skill") {
+                    TextButton(onClick = { importLauncher.launch(arrayOf("text/markdown", "text/plain")) }) {
+                        Text("Import SKILL.md")
+                    }
+                }
+            }
             skills.groupBy { it.category }.forEach { (category, entries) ->
                 item(key = category.name) {
                     Text(
@@ -230,6 +302,26 @@ fun SkillsScreen(
     }
 }
 
+private data class PendingSkillImport(
+    val fileName: String,
+    val bytes: ByteArray,
+    val parsed: ParsedSkillPackage,
+)
+
+private fun readBoundedSkillPackage(input: java.io.InputStream): ByteArray {
+    val output = ByteArrayOutputStream()
+    val buffer = ByteArray(8 * 1024)
+    while (true) {
+        val count = input.read(buffer)
+        if (count < 0) break
+        if (output.size() + count > com.halo.sdk.runtime.skills.SkillManifestPolicy.MAX_MANIFEST_BYTES) {
+            error("Skill package exceeds ${com.halo.sdk.runtime.skills.SkillManifestPolicy.MAX_MANIFEST_BYTES} bytes")
+        }
+        output.write(buffer, 0, count)
+    }
+    return output.toByteArray()
+}
+
 private fun skillRuntimeAvailability(
     skill: SkillDescriptor,
     descriptors: List<ToolDescriptor>,
@@ -274,6 +366,8 @@ private fun capabilityLabel(id: String): String = when (id) {
     "host.audio.output", "device.audio.output" -> "audio output"
     "device.media.transfer" -> "a connected media-transfer device"
     "device.mobility" -> "a connected mobility device"
+    "host.screen.observe" -> "screen observation access"
+    "host.screen.control" -> "screen control access"
     else -> id.substringAfterLast('.').replace('_', ' ')
 }
 

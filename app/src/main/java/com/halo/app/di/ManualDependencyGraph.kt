@@ -55,6 +55,7 @@ import com.halo.runtime.cognition.device.DefaultDeviceCapabilityResolver
 import com.halo.runtime.cognition.device.DefaultResourcePlanner
 import com.halo.runtime.cognition.session.CognitiveSession
 import com.halo.runtime.cognition.skills.BundledSkillInstructionSource
+import com.halo.runtime.cognition.skills.CompositeSkillInstructionSource
 import com.halo.runtime.cognition.skills.DefaultSkillRegistry
 import com.halo.runtime.cognition.tools.CapabilityCatalogue
 import com.halo.runtime.cognition.tools.CurrentTimeToolExecutor
@@ -112,6 +113,7 @@ object ManualDependencyGraph {
     /** One runtime instance per Android process; Activities are only views over it. */
     val runtime by lazy {
         RuntimeStartupTrace.measure("graph.runtime") {
+            inferenceLedger // Start content-free inference observation with the process runtime.
             HaloRuntime(ManualDependencyGraph)
         }
     }
@@ -167,11 +169,12 @@ object ManualDependencyGraph {
     }
     val memoryRepository by lazy { RoomMemoryRepository(appDatabase) }
     val memoryContextSource by lazy { BoundedMemoryContextSource(memoryRepository) }
+    val customSkillPackages by lazy { com.halo.app.skills.CustomSkillPackageRepository(applicationContext) }
     val skillRegistry by lazy {
         val permissions = AndroidSkillPermissionChecker(applicationContext)
         DefaultSkillRegistry(
             storage,
-            initialBuiltIns = BuiltInSkillManifestLoader(applicationContext).load(),
+            initialBuiltIns = BuiltInSkillManifestLoader(applicationContext).load() + customSkillPackages.refresh(),
             availabilityResolver = com.halo.runtime.cognition.skills.SkillAvailabilityResolver(
                 permissionGranted = permissions::granted,
                 registeredToolNames = {
@@ -179,6 +182,13 @@ object ManualDependencyGraph {
                 }
             )
         )
+    }
+    fun refreshCustomSkills() {
+        skillRegistry.replaceCustomSkills(customSkillPackages.refresh())
+    }
+    fun installCustomSkillPackage(fileName: String, bytes: ByteArray): Result<Unit> = runCatching {
+        customSkillPackages.importPackage(fileName, bytes)
+        refreshCustomSkills()
     }
     val attentionContextProvider by lazy { com.halo.app.attention.AndroidAttentionHost(applicationContext, eventBus, infra.scope) }
     val attentionPolicyEngine by lazy { com.halo.runtime.cognition.attention.DefaultAttentionPolicyEngine() }
@@ -388,8 +398,12 @@ object ManualDependencyGraph {
         )
     }
     val toolExposureGate by lazy { DefaultToolExposureGate(skillRegistry) }
-    val skillInstructionSource by lazy { BundledSkillInstructionSource() }
+    val skillInstructionSource by lazy {
+        CompositeSkillInstructionSource(listOf(BundledSkillInstructionSource(), customSkillPackages))
+    }
+    val inferenceLedger by lazy { com.halo.runtime.observer.InferenceLedger(eventBus, infra.scope) }
     val cognitiveContextPlanner by lazy { CognitiveContextPlanner() }
+    val conversationContextPolicies by lazy { com.halo.app.data.StorageConversationContextPolicyRepository(storage) }
     val cognitiveModeRepository by lazy { InMemoryCognitiveModeRepository() }
 
     val contextAssembler by lazy {
@@ -398,6 +412,7 @@ object ManualDependencyGraph {
             discoveryProvider = { toolDiscovery },
             memoryContextSource = memoryContextSource,
             toolExposureGate = toolExposureGate,
+            conversationPolicyRepository = conversationContextPolicies,
         )
     }
     val toolAuthorizationCoordinator by lazy {
@@ -629,7 +644,13 @@ object ManualDependencyGraph {
     }
     val intelligenceViewModel by lazy {
         IntelligenceViewModel(
-            runtimeSnapshotManager, aiProviderRouter, cognitiveSession, storage, modelManager)
+            snapshotManager = runtimeSnapshotManager,
+            aiProviderRouter = aiProviderRouter,
+            cognitiveSession = cognitiveSession,
+            storage = storage,
+            modelManager = modelManager,
+            inferenceLedger = inferenceLedger,
+        )
     }
 
     val runtimeSnapshotManager get() = observerGraph.runtimeSnapshotManager

@@ -38,6 +38,7 @@ import com.halo.runtime.cognition.interaction.InteractionContent
 import com.halo.runtime.cognition.interaction.InteractionResponse
 import com.halo.runtime.cognition.interaction.InteractionRiskLevel
 import com.halo.runtime.cognition.interaction.InteractionSurface
+import com.halo.runtime.cognition.interaction.InteractionSupplement
 import com.halo.runtime.cognition.interaction.TemporalInputValue
 
 /**
@@ -85,6 +86,25 @@ private fun riskCopy(risk: InteractionRiskLevel): String = when (risk) {
 }
 
 @Composable
+private fun InteractionSupplements(surface: InteractionSurface) {
+    if (surface.supplements.isEmpty()) return
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        surface.supplements.forEach { supplement ->
+            val copy = when (supplement) {
+                is InteractionSupplement.Fact -> "${supplement.label} · ${supplement.value}"
+                is InteractionSupplement.Status ->
+                    "${supplement.label} · ${supplement.state.name.lowercase().replace('_', ' ')}"
+                is InteractionSupplement.Notice -> supplement.text
+            }
+            Text(copy, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+@Composable
 private fun HaloConfirmationSurface(
     surface: InteractionSurface,
     content: InteractionContent.Confirmation,
@@ -97,6 +117,7 @@ private fun HaloConfirmationSurface(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
         ) {
             Column(modifier = Modifier.padding(12.dp)) {
+                InteractionSupplements(surface)
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     HaloSignalGlyph(kind = HaloSignalKind.ACTION, size = 20.dp)
                     Spacer(Modifier.padding(start = 8.dp))
@@ -131,6 +152,7 @@ private fun HaloConfirmationSurface(
         },
         text = {
             Column {
+                InteractionSupplements(surface)
                 content.detail?.let { Text(it) }
                 content.risk?.let { risk ->
                     Spacer(Modifier.height(8.dp))
@@ -170,6 +192,7 @@ private fun HaloChoiceSurface(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
         ) {
             Column(modifier = Modifier.padding(12.dp)) {
+                InteractionSupplements(surface)
                 Text(content.prompt, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(8.dp))
                 content.options.take(4).forEach { option ->
@@ -208,6 +231,7 @@ private fun HaloChoiceSurface(
         title = { Text(content.prompt, fontWeight = FontWeight.SemiBold) },
         text = {
             Column {
+                InteractionSupplements(surface)
                 content.options.forEach { option ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -263,6 +287,7 @@ private fun HaloTextInputSurface(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
         ) {
             Column(modifier = Modifier.padding(12.dp)) {
+                InteractionSupplements(surface)
                 Text(content.prompt, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(8.dp))
                 OutlinedTextField(
@@ -294,18 +319,21 @@ private fun HaloTextInputSurface(
         onDismissRequest = { onRespond(InteractionResponse.Dismissed(surface.id)) },
         title = { Text(content.prompt, fontWeight = FontWeight.SemiBold) },
         text = {
-            OutlinedTextField(
-                value = value,
-                onValueChange = { value = it },
-                placeholder = { content.placeholder?.let { Text(it) } },
-                singleLine = content.constraints.singleLine,
-                visualTransformation = if (content.constraints.sensitive) {
-                    PasswordVisualTransformation()
-                } else {
-                    VisualTransformation.None
-                },
-                modifier = Modifier.fillMaxWidth(),
-            )
+            Column {
+                InteractionSupplements(surface)
+                OutlinedTextField(
+                    value = value,
+                    onValueChange = { value = it },
+                    placeholder = { content.placeholder?.let { Text(it) } },
+                    singleLine = content.constraints.singleLine,
+                    visualTransformation = if (content.constraints.sensitive) {
+                        PasswordVisualTransformation()
+                    } else {
+                        VisualTransformation.None
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         },
         confirmButton = {
             TextButton(
@@ -334,6 +362,7 @@ private fun HaloTemporalSurface(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
         ) {
             Column(modifier = Modifier.padding(12.dp)) {
+                InteractionSupplements(surface)
                 Text(content.prompt, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(8.dp))
                 OutlinedTextField(
@@ -364,6 +393,7 @@ private fun HaloTemporalSurface(
         title = { Text(content.prompt, fontWeight = FontWeight.SemiBold) },
         text = {
             Column {
+                InteractionSupplements(surface)
                 OutlinedTextField(
                     value = value,
                     onValueChange = { value = it },
@@ -424,6 +454,7 @@ private fun HaloFileSelectionSurface(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
         ) {
             Column(modifier = Modifier.padding(12.dp)) {
+                InteractionSupplements(surface)
                 Text(content.prompt, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(4.dp))
                 Text("Open Halo app to select files.", style = MaterialTheme.typography.bodySmall)
@@ -441,7 +472,10 @@ private fun HaloFileSelectionSurface(
         onDismissRequest = { onRespond(InteractionResponse.Dismissed(surface.id)) },
         title = { Text(content.prompt, fontWeight = FontWeight.SemiBold) },
         text = {
-            Text("Halo will open the system file picker.")
+            Column {
+                InteractionSupplements(surface)
+                Text("Halo will open the system file picker.")
+            }
         },
         confirmButton = {
             TextButton(onClick = { picker() }) {
@@ -466,6 +500,7 @@ private fun HaloProgressSurface(
         shape = RoundedCornerShape(12.dp),
     ) {
         Column(Modifier.padding(16.dp)) {
+            InteractionSupplements(surface)
             Text(content.phase.name, style = MaterialTheme.typography.labelSmall)
             Spacer(Modifier.height(4.dp))
             Text(content.label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
@@ -487,6 +522,7 @@ private fun HaloResultSurface(
         shape = RoundedCornerShape(12.dp),
     ) {
         Column(Modifier.padding(16.dp)) {
+            InteractionSupplements(surface)
             Text(content.headline, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
             content.detail?.let {
                 Spacer(Modifier.height(4.dp))
@@ -509,6 +545,7 @@ private fun HaloErrorSurface(
         shape = RoundedCornerShape(12.dp),
     ) {
         Column(Modifier.padding(16.dp)) {
+            InteractionSupplements(surface)
             Text(content.headline, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(4.dp))
             Text(content.detail, style = MaterialTheme.typography.bodySmall)

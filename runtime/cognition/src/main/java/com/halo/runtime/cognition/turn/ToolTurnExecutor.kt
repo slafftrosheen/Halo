@@ -358,6 +358,7 @@ class DefaultToolTurnExecutor(
                 }
             }
 
+            val toolStartedAtMs = System.currentTimeMillis()
             val result = try {
                 if (runId != null) {
                     val claimed = agentRunCoordinator?.recordStep(
@@ -382,24 +383,27 @@ class DefaultToolTurnExecutor(
 
             when (result) {
                 is ToolExecutionResult.Success -> {
+                    val modelResult = result.output
                     runId?.let {
                         agentRunCoordinator?.recordStep(
                             AgentStep.ToolOutcomeRecorded(newStepId(), it, Instant.now(), invocationId,
-                                toolCall.id, toolCall.functionName, true, result.output,
-                                ActionTruth.AUTHORIZED, null))
+                                toolCall.id, toolCall.functionName, true, modelResult,
+                                result.actionTruth, null))
                     }
                     eventBus.publish(
                         ToolCallCompleted(
                             requestId = requestId,
                             toolCallId = toolCall.id,
                             toolId = toolCall.functionName,
-                            success = true
+                            success = true,
+                            actionTruth = result.actionTruth.name,
+                            durationMs = (System.currentTimeMillis() - toolStartedAtMs).coerceAtLeast(0L),
                         )
                     )
                     toolMessages.add(
                         AIMessage(
                             Role.TOOL,
-                            result.output,
+                            modelResult,
                             toolCallId = toolCall.id
                         )
                     )
@@ -412,24 +416,36 @@ class DefaultToolTurnExecutor(
 
                 is ToolExecutionResult.Failed -> {
                     hasUnconfirmedAction = hasUnconfirmedAction || result.completionUnknown
-                    if (!result.completionUnknown) runId?.let {
+                    val truth = if (result.completionUnknown) ActionTruth.UNKNOWN else ActionTruth.FAILED
+                    val modelResult = com.halo.runtime.cognition.tools.ToolResultBudgeter.budgetText(buildString {
+                        append("tool_result: status=failed reason_code=").append(result.code)
+                        append(" retryable=").append(result.failureKind == ToolFailureKind.TRANSIENT)
+                        append(" completion_unknown=").append(result.completionUnknown)
+                        append("\nreason: ").append(result.message.replace('\n', ' ').take(512))
+                        result.hint?.let { append("\nhint: ").append(it.replace('\n', ' ').take(512)) }
+                        result.payload?.let { append("\npayload:\n").append(it) }
+                    }, com.halo.runtime.cognition.tools.ToolExecutionLimits.MAX_TOOL_OUTPUT_CHARS)
+                    runId?.let {
                         agentRunCoordinator?.recordStep(
                             AgentStep.ToolOutcomeRecorded(newStepId(), it, Instant.now(), invocationId,
-                                toolCall.id, toolCall.functionName, false, result.message,
-                                ActionTruth.FAILED, result.failureKind.name))
+                                toolCall.id, toolCall.functionName, false, modelResult,
+                                truth, result.code))
                     }
                     eventBus.publish(
                         ToolCallCompleted(
                             requestId = requestId,
                             toolCallId = toolCall.id,
                             toolId = toolCall.functionName,
-                            success = false
+                            success = false,
+                            failureCode = result.code,
+                            actionTruth = truth.name,
+                            durationMs = (System.currentTimeMillis() - toolStartedAtMs).coerceAtLeast(0L),
                         )
                     )
                     toolMessages.add(
                         AIMessage(
                             Role.TOOL,
-                            "Tool execution failed: ${result.message}",
+                            modelResult,
                             toolCallId = toolCall.id
                         )
                     )

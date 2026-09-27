@@ -207,24 +207,42 @@ object HaloToolDescriptors {
     }
 
     fun accessibility(definition: ToolDefinition) = when (definition.name) {
+        "halo_read_screen" -> descriptor(definition.name, definition, ToolCategory.PERCEPTION,
+            readOnly(definition.name), keywords = setOf("screen", "read", "observe", "accessibility"),
+            requirements = setOf(ToolRequirement.Capability(CapabilityId("host.screen.observe"))))
         "halo_ui_click" -> descriptor(definition.name, definition, ToolCategory.HOST_CONTROL,
             ToolSecurityPolicy(
                 risk = ToolRiskClass.EXTERNAL_SIDE_EFFECT,
                 confirmation = ConfirmationPolicy.ALWAYS,
                 replaySafety = ReplaySafety.NEVER_REPLAY,
-            ), keywords = setOf("click", "tap", "ui"))
+            ), keywords = setOf("click", "tap", "ui"),
+            requirements = setOf(ToolRequirement.Capability(CapabilityId("host.screen.control"))))
         "halo_ui_scroll" -> descriptor(definition.name, definition, ToolCategory.HOST_CONTROL,
             ToolSecurityPolicy(
                 risk = ToolRiskClass.EXTERNAL_SIDE_EFFECT,
                 confirmation = ConfirmationPolicy.ALWAYS,
                 replaySafety = ReplaySafety.NEVER_REPLAY,
-            ), keywords = setOf("scroll", "ui"))
+            ), keywords = setOf("scroll", "ui"),
+            requirements = setOf(ToolRequirement.Capability(CapabilityId("host.screen.control"))))
+        "halo_ui_set_text" -> descriptor(definition.name, definition, ToolCategory.HOST_CONTROL,
+            ToolSecurityPolicy(
+                risk = ToolRiskClass.SENSITIVE,
+                confirmation = ConfirmationPolicy.ALWAYS,
+                replaySafety = ReplaySafety.NEVER_REPLAY,
+            ), keywords = setOf("type", "text", "input", "ui"),
+            requirements = setOf(ToolRequirement.Capability(CapabilityId("host.screen.control"))),
+            presentation = ToolPresentation(
+                title = "Enter text on screen",
+                actionVerb = "Enter text",
+                sensitiveArguments = setOf("text"),
+            ))
         "halo_ui_global_action" -> descriptor(definition.name, definition, ToolCategory.HOST_CONTROL,
             ToolSecurityPolicy(
                 risk = ToolRiskClass.EXTERNAL_SIDE_EFFECT,
                 confirmation = ConfirmationPolicy.ALWAYS,
                 replaySafety = ReplaySafety.NEVER_REPLAY,
-            ), keywords = setOf("back", "home", "global"))
+            ), keywords = setOf("back", "home", "global"),
+            requirements = setOf(ToolRequirement.Capability(CapabilityId("host.screen.control"))))
         else -> descriptor(definition.name, definition, ToolCategory.HOST_CONTROL, external())
     }
 

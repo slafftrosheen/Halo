@@ -15,6 +15,10 @@ data class HostInvocation(
 
 data class RectValue(val left: Int, val top: Int, val right: Int, val bottom: Int)
 
+enum class UiSemanticType {
+    TEXT, BUTTON, INPUT, CHECKBOX, SWITCH, IMAGE, LIST, LIST_ITEM, SCROLL_CONTAINER, LINK, CONTAINER, UNKNOWN
+}
+
 data class ScreenContextNode(
     val text: String?,
     val contentDescription: String?,
@@ -29,6 +33,12 @@ data class ScreenContextNode(
     val selected: Boolean = false,
     val focused: Boolean = false,
     val enabled: Boolean = true,
+    /** Opaque, snapshot-scoped reference. Models must not invent or parse it. */
+    val token: String? = null,
+    val semanticType: UiSemanticType = UiSemanticType.UNKNOWN,
+    val depth: Int = 0,
+    /** True when content was intentionally withheld from model-visible context. */
+    val sensitive: Boolean = false,
 )
 
 typealias UiSemanticNode = ScreenContextNode
@@ -43,6 +53,12 @@ data class ScreenContextSnapshot(
     val capturedAtMs: Long,
     val provenance: String = "ANDROID_ASSIST",
     val trust: ContextTrust = ContextTrust.UNTRUSTED_CONTENT,
+    val screenWidth: Int? = null,
+    val screenHeight: Int? = null,
+    val truncated: Boolean = false,
+    val truncationReason: String? = null,
+    /** Correlates opaque node tokens with exactly one observation generation. */
+    val snapshotId: String = UUID.randomUUID().toString(),
 )
 
 enum class ContextTrust { TRUSTED_RUNTIME, UNTRUSTED_CONTENT }

@@ -48,6 +48,7 @@ import com.halo.sdk.runtime.CognitiveRequestStarted
 import com.halo.sdk.runtime.EventBus
 import com.halo.sdk.runtime.InteractionTurnChanged
 import com.halo.sdk.runtime.InteractionTurnState
+import com.halo.sdk.runtime.InferenceObserved
 import com.halo.sdk.runtime.ObservationOrigin
 import com.halo.sdk.runtime.ResponseDelivery
 import com.halo.sdk.runtime.RuntimeFactResolved
@@ -314,6 +315,13 @@ class CognitiveSession(
                         Recoverability.UNKNOWN,
                     ),
                     interactionId = interactionId.value,
+                ))
+                eventBus.publish(InferenceObserved(
+                    requestId = requestId,
+                    providerId = "unknown",
+                    requestedModelId = null,
+                    resolvedModelId = null,
+                    success = false,
                 ))
                 if (resumedRunId == null) eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Failed(interactionId.value, message)))
             } finally {

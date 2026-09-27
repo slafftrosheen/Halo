@@ -17,6 +17,7 @@ interface ConversationStore {
     val turns: StateFlow<List<ConversationTurn>>
 
     suspend fun awaitReady() {}
+    fun activeConversationId(): String? = turns.value.lastOrNull()?.conversationId?.ifBlank { null }
 
     suspend fun append(
         userText: String,

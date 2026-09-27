@@ -85,6 +85,7 @@ interface ContextAssembler {
 }
 
 data class ContextAssemblyRequest(
+    val conversationId: String? = null,
     val interactionId: String? = null,
     val allowGenericFallback: Boolean = true,
     val acquisition: ContextAcquisitionResult? = null,

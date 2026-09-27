@@ -20,6 +20,7 @@ interface SkillRegistry {
     suspend fun setEnabled(id: SkillId, enabled: Boolean)
     fun skillIdForTool(toolName: String): SkillId? = null
     fun refreshAvailability() {}
+    fun replaceCustomSkills(skills: List<SkillDescriptor>) {}
     fun approvalPolicy(id: SkillId): ToolApprovalPolicy = ToolApprovalPolicy.ASK_EVERY_TIME
     fun approvalPolicyForTool(toolName: String): ToolApprovalPolicy = ToolApprovalPolicy.ASK_EVERY_TIME
     fun authorizationGroupForTool(toolName: String): String = toolName
@@ -79,6 +80,21 @@ class DefaultSkillRegistry(
         if (refreshed != current) _skills.value = refreshed
     }
 
+    override fun replaceCustomSkills(skills: List<SkillDescriptor>) {
+        val custom = skills
+            .filter { it.source == SkillSource.CUSTOM }
+            .distinctBy { it.id }
+            .map { skill ->
+                val savedEnabled = storage.getBoolean("skill_enabled_${skill.id.value}", skill.enabled)
+                skill.copy(
+                    enabled = savedEnabled,
+                    availability = availabilityResolver.resolve(skill.copy(enabled = savedEnabled)),
+                )
+            }
+        _skills.value = (_skills.value.filterNot { it.source == SkillSource.CUSTOM } + custom)
+            .sortedWith(compareBy<SkillDescriptor> { it.category.name }.thenBy { it.name.lowercase() })
+    }
+
     override fun approvalPolicy(id: SkillId): ToolApprovalPolicy {
         val skill = get(id) ?: return ToolApprovalPolicy.DENY
         return storage.getString("skill_approval_${id.value}")?.let {
@@ -99,7 +115,9 @@ class DefaultSkillRegistry(
 
         return storage.getString("skill_approval_${skill.id.value}")?.let {
             runCatching { ToolApprovalPolicy.valueOf(it) }.getOrNull()
-        } ?: defaultApprovalPolicy(skill.risk)
+        } ?: defaultApprovalPolicy(
+            skill.toolDefinitions.firstOrNull { it.toolId == toolName }?.risk ?: skill.risk
+        )
     }
 
     override fun authorizationGroupForTool(toolName: String): String =

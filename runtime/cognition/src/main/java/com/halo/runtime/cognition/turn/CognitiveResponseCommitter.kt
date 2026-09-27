@@ -62,6 +62,8 @@ class DefaultCognitiveResponseCommitter(
                 metadata = mapOf(
                     "providerId" to response.providerId,
                     "modelId" to (response.modelId ?: ""),
+                    "requestedModelId" to (response.requestedModelId ?: response.modelId ?: ""),
+                    "resolvedModelId" to (response.resolvedModelId ?: response.modelId ?: ""),
                     "interactionId" to interactionId.value,
                     "sourceCaptureId" to (commit.sourceCaptureId ?: "")
                 )
@@ -105,6 +107,18 @@ class DefaultCognitiveResponseCommitter(
                         outputTokens = it.outputTokens,
                     )
                 }
+            )
+        )
+        eventBus.publish(
+            com.halo.sdk.runtime.InferenceObserved(
+                requestId = requestId,
+                providerId = response.providerId,
+                requestedModelId = response.requestedModelId,
+                resolvedModelId = response.resolvedModelId,
+                success = true,
+                metrics = response.metrics?.let {
+                    CognitiveGenerationMetrics(it.startedAtMs, it.firstTokenAtMs, it.completedAtMs, it.inputTokens, it.outputTokens)
+                },
             )
         )
         

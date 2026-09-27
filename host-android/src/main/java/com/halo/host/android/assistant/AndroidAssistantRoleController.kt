@@ -16,6 +16,7 @@ enum class AssistantEnrollmentPath {
     ROLE_REQUEST,
     DEFAULT_APPS_SETTINGS,
     VOICE_INPUT_SETTINGS,
+    ASSIST_GESTURE_SETTINGS,
     GENERAL_SETTINGS,
 }
 
@@ -116,11 +117,20 @@ class AndroidAssistantRoleController(
 
     override fun enrollmentCandidates(): List<AssistantEnrollmentCandidate> {
         val list = mutableListOf<AssistantEnrollmentCandidate>()
+        val snapshot = inspector.inspect()
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && roleManager != null && roleManager.isRoleAvailable(RoleManager.ROLE_ASSISTANT)) {
+        if (!snapshot.roleHeld && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && roleManager != null && roleManager.isRoleAvailable(RoleManager.ROLE_ASSISTANT)) {
             val roleIntent = roleManager.createRequestRoleIntent(RoleManager.ROLE_ASSISTANT)
-            if (roleIntent != null && canResolve(roleIntent)) {
+            // RoleManager owns this contract; OEM role activities are not always returned by resolveActivity().
+            if (roleIntent != null) {
                 list.add(AssistantEnrollmentCandidate(AssistantEnrollmentPath.ROLE_REQUEST, roleIntent))
+            }
+        }
+
+        if (snapshot.roleHeld && !snapshot.activeVoiceInteractionService) {
+            val voiceSettingsIntent = Intent(Settings.ACTION_VOICE_INPUT_SETTINGS)
+            if (canResolve(voiceSettingsIntent)) {
+                list.add(AssistantEnrollmentCandidate(AssistantEnrollmentPath.VOICE_INPUT_SETTINGS, voiceSettingsIntent))
             }
         }
 
@@ -130,8 +140,14 @@ class AndroidAssistantRoleController(
         }
 
         val voiceSettingsIntent = Intent(Settings.ACTION_VOICE_INPUT_SETTINGS)
-        if (canResolve(voiceSettingsIntent)) {
+        if (list.none { it.path == AssistantEnrollmentPath.VOICE_INPUT_SETTINGS } && canResolve(voiceSettingsIntent)) {
             list.add(AssistantEnrollmentCandidate(AssistantEnrollmentPath.VOICE_INPUT_SETTINGS, voiceSettingsIntent))
+        }
+
+        // Public settings action exists across Android releases but is not exposed as a Settings constant.
+        val gestureSettingsIntent = Intent("android.settings.ASSIST_GESTURE_SETTINGS")
+        if (canResolve(gestureSettingsIntent)) {
+            list.add(AssistantEnrollmentCandidate(AssistantEnrollmentPath.ASSIST_GESTURE_SETTINGS, gestureSettingsIntent))
         }
 
         val generalSettingsIntent = Intent(Settings.ACTION_SETTINGS)
@@ -162,8 +178,7 @@ class AndroidAssistantRoleController(
     }
 
     override fun createRoleRequestIntent(): Intent? {
-        val action = resolveEnrollmentAction()
-        return (action as? AssistantEnrollmentAction.Launch)?.intent
+        return enrollmentCandidates().firstOrNull { it.path == AssistantEnrollmentPath.ROLE_REQUEST }?.intent
     }
 
     override fun resolveEnrollmentAction(): AssistantEnrollmentAction {

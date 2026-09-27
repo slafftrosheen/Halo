@@ -23,6 +23,17 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
 import java.util.concurrent.TimeUnit
+import java.math.BigDecimal
+
+data class OpenRouterModelMetadata(
+    val modelId: String,
+    val description: String?,
+    val promptPrice: BigDecimal?,
+    val completionPrice: BigDecimal?,
+    val supportedParameters: Set<String>,
+    val inputModalities: Set<String>,
+    val routingModel: Boolean = false,
+)
 
 class OpenRouterProvider(
     private val storage: Storage,
@@ -40,6 +51,8 @@ class OpenRouterProvider(
     private val apiKey: String? get() = storage.getString("openrouter_api_key")
     private val selectedModelId: String get() = storage.getString("openrouter_model") ?: "openrouter/free"
     @Volatile private var cooldown: ProviderCooldown? = null
+    @Volatile var modelMetadata: Map<String, OpenRouterModelMetadata> = emptyMap()
+        private set
     override suspend fun getStatus(): ProviderStatus = withContext(Dispatchers.IO) {
         val current = if (apiKey.isNullOrBlank()) {
             ProviderStatus.UNCONFIGURED
@@ -114,12 +127,15 @@ class OpenRouterProvider(
                 if (choices.length() == 0) throw AiProviderException(AiErrorType.INVALID_RESPONSE, "OpenRouter returned no choices")
                 val first = choices.getJSONObject(0)
                 val message = first.getJSONObject("message")
+                val resolvedModel = responseJson.optString("model", actualModel)
                 val result = AiResponse(
-                    message.optString("content"),
-                    parseToolCalls(message.optJSONArray("tool_calls")),
-                    first.optString("finish_reason"),
-                    id,
-                    responseJson.optString("model", actualModel)
+                    text = message.optString("content"),
+                    toolCalls = parseToolCalls(message.optJSONArray("tool_calls")),
+                    finishReason = first.optString("finish_reason"),
+                    providerId = id,
+                    modelId = actualModel,
+                    requestedModelId = actualModel,
+                    resolvedModelId = resolvedModel,
                 )
                 _status.value = ProviderStatus.READY
                 cooldown = null
@@ -164,6 +180,7 @@ class OpenRouterProvider(
                 val text = StringBuilder()
                 val tools = linkedMapOf<Int, StreamToolCall>()
                 var finish: String? = null
+                var resolvedModel: String? = null
 
                 var streamFinishedCleanly = false
                 while (!source.exhausted()) {
@@ -174,7 +191,9 @@ class OpenRouterProvider(
                         streamFinishedCleanly = true
                         break
                     }
-                    val choices = runCatching { JSONObject(data) }.getOrNull()?.optJSONArray("choices") ?: continue
+                    val event = runCatching { JSONObject(data) }.getOrNull() ?: continue
+                    event.optString("model").takeIf { it.isNotBlank() }?.let { resolvedModel = it }
+                    val choices = event.optJSONArray("choices") ?: continue
                     if (choices.length() == 0) continue
                     val choice = choices.getJSONObject(0)
                     val delta = choice.optJSONObject("delta") ?: continue
@@ -217,7 +236,9 @@ class OpenRouterProvider(
                             } },
                             finishReason = finish,
                             providerId = id,
-                            modelId = actualModel
+                            modelId = actualModel,
+                            requestedModelId = actualModel,
+                            resolvedModelId = resolvedModel ?: actualModel,
                         )
                     )
                 )
@@ -248,7 +269,7 @@ class OpenRouterProvider(
 
     override suspend fun listModels(): List<AiModel> = withContext(Dispatchers.IO) {
         throwIfCoolingDown()
-        val key = apiKey ?: return@withContext emptyList()
+        val key = apiKey ?: return@withContext readCachedModels()
         val request = Request.Builder()
             .url("https://openrouter.ai/api/v1/models")
             .header("Authorization", "Bearer $key")
@@ -261,23 +282,9 @@ class OpenRouterProvider(
                 val body = response.body?.string()
                     ?: throw AiProviderException(AiErrorType.INVALID_RESPONSE, "Empty response body from OpenRouter")
                 val data = JSONObject(body).getJSONArray("data")
-                val models = buildList {
-                    for (i in 0 until data.length()) {
-                        val item = data.getJSONObject(i)
-                        add(
-                            AiModel(
-                                id = item.getString("id"),
-                                displayName = item.optString("name", item.getString("id")),
-                                providerId = id,
-                                inputCapabilities = mapCapabilities(item),
-                                contextLength = item.optLong("context_length").takeIf { it > 0L },
-                                supportsStreaming = supportsParameter(item, "stream"),
-                                supportsTools = supportsParameter(item, "tools"),
-                                isFree = isFreeModel(item)
-                            )
-                        )
-                    }
-                }
+                val models = parseModelCatalog(data)
+                storage.putString(MODEL_CATALOG_CACHE_KEY, body)
+                storage.putString(MODEL_CATALOG_REFRESHED_AT_KEY, nowEpochMs().toString())
                 _status.value = ProviderStatus.READY
                 cooldown = null
                 models
@@ -286,25 +293,88 @@ class OpenRouterProvider(
             throw e
         } catch (e: AiProviderException) {
             _status.value = providerStatus(e)
-            throw e
+            cachedModelsOrThrow(e)
         } catch (e: SocketTimeoutException) {
             val failure = AiProviderException(AiErrorType.TIMEOUT, "OpenRouter model discovery timed out", e)
             _status.value = providerStatus(failure)
-            throw failure
+            cachedModelsOrThrow(failure)
         } catch (e: UnknownHostException) {
             val failure = AiProviderException(AiErrorType.NETWORK_UNAVAILABLE, "OpenRouter model discovery: network unavailable", e)
             _status.value = providerStatus(failure)
-            throw failure
+            cachedModelsOrThrow(failure)
         } catch (e: org.json.JSONException) {
             val failure = AiProviderException(AiErrorType.INVALID_RESPONSE, "OpenRouter returned invalid model metadata", e)
             _status.value = providerStatus(failure)
-            throw failure
+            cachedModelsOrThrow(failure)
         } catch (e: Exception) {
             val failure = AiProviderException(AiErrorType.NETWORK_ERROR, "OpenRouter model discovery failed: ${e.message ?: e::class.simpleName}", e)
             _status.value = providerStatus(failure)
-            throw failure
+            cachedModelsOrThrow(failure)
         }
     }
+
+    private fun parseModelCatalog(data: JSONArray): List<AiModel> {
+        val metadata = linkedMapOf<String, OpenRouterModelMetadata>()
+        val models = buildList {
+            for (i in 0 until data.length()) {
+                val item = data.getJSONObject(i)
+                val modelId = item.getString("id")
+                val parameters = jsonStringArray(item, "supported_parameters")
+                val modalities = item.optJSONObject("architecture")
+                    ?.let { jsonStringArray(it, "input_modalities") }.orEmpty()
+                val pricing = item.optJSONObject("pricing")
+                metadata[modelId] = OpenRouterModelMetadata(
+                    modelId = modelId,
+                    description = item.optString("description").takeIf { it.isNotBlank() },
+                    promptPrice = pricing?.optString("prompt")?.toBigDecimalOrNull(),
+                    completionPrice = pricing?.optString("completion")?.toBigDecimalOrNull(),
+                    supportedParameters = parameters,
+                    inputModalities = modalities,
+                )
+                add(AiModel(
+                    id = modelId,
+                    displayName = item.optString("name", modelId),
+                    providerId = id,
+                    inputCapabilities = mapCapabilities(item),
+                    contextLength = item.optLong("context_length").takeIf { it > 0L },
+                    supportsStreaming = "stream" in parameters,
+                    supportsTools = "tools" in parameters,
+                    isFree = isFreeModel(item),
+                ))
+            }
+        }.toMutableList()
+        if (models.none { it.id == FREE_ROUTER_ID }) {
+            models.add(0, AiModel(
+                id = FREE_ROUTER_ID,
+                displayName = "OpenRouter Free",
+                providerId = id,
+                inputCapabilities = setOf(AiCapability.TEXT, AiCapability.IMAGE),
+                contextLength = null,
+                supportsStreaming = true,
+                supportsTools = true,
+                isFree = true,
+            ))
+        }
+        metadata[FREE_ROUTER_ID] = OpenRouterModelMetadata(
+            modelId = FREE_ROUTER_ID,
+            description = "Free cloud router; the concrete model may vary by request.",
+            promptPrice = BigDecimal.ZERO,
+            completionPrice = BigDecimal.ZERO,
+            supportedParameters = setOf("stream", "tools"),
+            inputModalities = setOf("text", "image"),
+            routingModel = true,
+        )
+        modelMetadata = metadata
+        return models
+    }
+
+    private fun readCachedModels(): List<AiModel> = runCatching {
+        val body = storage.getString(MODEL_CATALOG_CACHE_KEY) ?: return@runCatching emptyList()
+        parseModelCatalog(JSONObject(body).getJSONArray("data"))
+    }.getOrDefault(emptyList())
+
+    private fun cachedModelsOrThrow(error: AiProviderException): List<AiModel> =
+        readCachedModels().takeIf { it.isNotEmpty() } ?: throw error
 
     private suspend fun resolveModel(modelId: String): String {
         // Legacy shorthand maps to the same router used by the current UI/default.
@@ -364,7 +434,6 @@ class OpenRouterProvider(
             put("messages", messages)
             put("stream", stream)
             if (context.availableTools.isNotEmpty()) {
-                put("parallel_tool_calls", false)
                 put("tools", JSONArray().apply {
                     context.availableTools.forEach { tool ->
                         put(JSONObject().apply {
@@ -583,6 +652,9 @@ class OpenRouterProvider(
         status.value.takeIf { it.state == ProviderStatus.State.ERROR } ?: ProviderStatus.READY
 
     private companion object {
+        const val FREE_ROUTER_ID = "openrouter/free"
+        const val MODEL_CATALOG_CACHE_KEY = "openrouter_model_catalog_v1"
+        const val MODEL_CATALOG_REFRESHED_AT_KEY = "openrouter_model_catalog_refreshed_at_ms"
         fun defaultClient(): OkHttpClient =
             OkHttpClient.Builder()
                 .connectTimeout(12, TimeUnit.SECONDS)

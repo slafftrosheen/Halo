@@ -39,7 +39,7 @@ value class InteractionActionId(val value: String) {
  * schema version they do not understand must fall back to a generic
  * "unsupported interaction" state instead of guessing.
  */
-const val CURRENT_SURFACE_SCHEMA_VERSION: Int = 1
+const val CURRENT_SURFACE_SCHEMA_VERSION: Int = 2
 
 /** Semantic kind of an interaction. Never a host presentation concept. */
 enum class InteractionSurfaceKind {
@@ -104,6 +104,21 @@ data class InteractionRiskPresentation(
     /** Optional plain-language consequence sentence; no enum names. */
     val summary: String? = null,
 )
+
+/**
+ * Small, read-only semantic additions a producer may attach to a known
+ * surface. This deliberately is not a component tree: layout, styling and
+ * executable behavior remain owned by the host and actions remain in the
+ * closed [InteractionActionSemantic] protocol.
+ */
+sealed interface InteractionSupplement {
+    data class Fact(val label: String, val value: String) : InteractionSupplement
+    data class Status(val label: String, val state: InteractionStatusState) : InteractionSupplement
+    data class Notice(val text: String, val tone: InteractionNoticeTone = InteractionNoticeTone.NEUTRAL) : InteractionSupplement
+}
+
+enum class InteractionStatusState { PENDING, ACTIVE, SUCCEEDED, FAILED, UNKNOWN }
+enum class InteractionNoticeTone { NEUTRAL, INFORMATION, CAUTION }
 
 /** How urgently the host should present a surface. */
 enum class InteractionUrgency {
@@ -192,6 +207,7 @@ data class InteractionSurface(
     val expiresAt: Instant?,
     val schemaVersion: Int = CURRENT_SURFACE_SCHEMA_VERSION,
     val provenance: InteractionSurfaceProvenance,
+    val supplements: List<InteractionSupplement> = emptyList(),
 ) {
     /** Speech metadata for voice-first hosts, when the producer supplied one. */
     val speech: InteractionSpeechPresentation?

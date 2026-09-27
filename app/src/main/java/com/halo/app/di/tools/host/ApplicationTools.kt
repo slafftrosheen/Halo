@@ -3,6 +3,7 @@ package com.halo.app.di.tools.host
 import android.content.Context
 import android.content.Intent
 import com.halo.host.android.capability.AndroidApplicationCapability
+import com.halo.host.android.resolver.AndroidApplicationResolver
 import com.halo.runtime.cognition.ApplicationTask
 import com.halo.runtime.cognition.tools.ToolExecutionResult
 import com.halo.runtime.cognition.tools.ToolExecutor
@@ -13,7 +14,8 @@ class ApplicationTools(
     private val context: Context,
     private val isForeground: () -> Boolean
 ) : ToolExecutor {
-    private val apps = AndroidApplicationCapability(context)
+    private val resolver = AndroidApplicationResolver(context)
+    private val apps = AndroidApplicationCapability(context, resolver)
 
     override fun definitions(): List<ToolDefinition> = buildList {
         add(ToolDefinition("halo_list_apps", "halo_list_apps", "Find launchable installed apps by name and return package IDs for halo_open_app.",
@@ -33,13 +35,11 @@ class ApplicationTools(
         if (toolCall.functionName == "halo_list_apps") {
             val query = toolCall.arguments["query"] as? String ?: return reject("Expected query")
             if (query.length > 100 || toolCall.arguments.keys != setOf("query")) return reject("Invalid query")
-            val manager = context.packageManager
-            val matches = manager.queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), 0)
-                .map { it.loadLabel(manager).toString() to it.activityInfo.packageName }
-                .distinctBy { it.second }.filter { it.first.contains(query, ignoreCase = true) || it.second.contains(query, ignoreCase = true) }
-                .sortedBy { it.first }.take(20)
+            val matches = resolver.search(query)
             return ToolExecutionResult.Success(toolCall.id, toolCall.functionName,
-                matches.joinToString("\n") { "${it.first}: ${it.second}" }.ifEmpty { "No matching launchable apps" })
+                matches.joinToString("\n") {
+                    "label=${it.app.label}; package=${it.app.packageName}; match=${it.quality.name.lowercase()}; system=${it.app.systemApp}"
+                }.ifEmpty { "No matching launchable apps" })
         }
         
         if (toolCall.functionName == "halo_open_app") {

@@ -7,6 +7,8 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.AlarmClock
 import androidx.core.app.NotificationManagerCompat
+import com.halo.host.android.accessibility.HaloAccessibilityService
+import com.halo.host.android.assistant.AssistantEligibilityInspector
 import com.halo.runtime.cognition.tools.*
 
 /**
@@ -36,6 +38,7 @@ class AndroidCapabilityPublisher(
         val canNavigate = intentResolves(pm, Intent(Intent.ACTION_VIEW, Uri.parse("geo:0,0?q=place")))
         val canDial = intentResolves(pm, Intent(Intent.ACTION_DIAL))
         val canSetAlarm = intentResolves(pm, Intent(AlarmClock.ACTION_SET_ALARM))
+        val assistant = AssistantEligibilityInspector(context).inspect()
 
         return listOf(
             capability("host.application.launch", "Launch applications",
@@ -73,6 +76,15 @@ class AndroidCapabilityPublisher(
                 "Host still capture is not exposed until a working CameraX StillImageSource is wired.",
                 ToolCategory.PERCEPTION,
                 false),
+            capability("host.screen.observe", "Read active screen",
+                "Read a bounded, redacted semantic accessibility snapshot of the active Android screen.",
+                ToolCategory.PERCEPTION, HaloAccessibilityService.isEnabled),
+            capability("host.screen.control", "Control active screen",
+                "Perform confirmed accessibility actions on the active Android screen.",
+                ToolCategory.HOST_CONTROL, HaloAccessibilityService.isEnabled),
+            capability("host.assistant.native", "Android default assistant",
+                "Receive Android assist gestures and voice-interaction sessions as the selected system assistant.",
+                ToolCategory.HOST_CONTROL, assistant.activeVoiceInteractionService),
             capability("workspace.read", "Read workspace",
                 "Read user-curated notes and documents in the Halo workspace.", ToolCategory.WORKSPACE, true),
             capability("workspace.write", "Write workspace",

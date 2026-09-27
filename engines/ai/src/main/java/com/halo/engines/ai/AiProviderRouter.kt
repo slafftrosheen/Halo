@@ -123,6 +123,19 @@ class DefaultAiProviderRouter(
         scope.launch { refreshDiagnostics() }
     }
 
+    @Synchronized
+    override fun selectTarget(ref: AiModelRef) {
+        if (inferenceProviders.none { it.id == ref.providerId }) return
+        _selectedProviderId.value = ref.providerId
+        _selectedModelId.value = ref.modelId
+        storage.putString("active_ai_provider", ref.providerId)
+        storage.putString("active_ai_model", ref.modelId)
+        persistProviderModel(ref.providerId, ref.modelId)
+        setRoutingPolicy(AiRoutingPolicy.EXPLICIT)
+        updateDiagnosticsSelection()
+        scope.launch { refreshDiagnostics() }
+    }
+
     override fun getAllProviders(): List<AiProvider> = allProviders
     override suspend fun diagnostics(): List<AiProviderDiagnostic> = refreshDiagnostics()
     override suspend fun getEligibleProvider(request: AiRequest): AiProvider = resolveExecutionTarget(request).provider

@@ -187,7 +187,7 @@ class ToolRegistry(
 
         val executionPolicy = effectiveExecutionPolicy(toolCall.functionName)
 
-        return try {
+        val result = try {
             withTimeout(executionPolicy.timeoutMs) {
                 executor.execute(toolCall)
             }
@@ -210,6 +210,7 @@ class ToolRegistry(
                 failureKind = ToolFailureKind.UNKNOWN,
             )
         }
+        return ToolResultBudgeter.budgetResult(result, executionPolicy.maxOutputChars)
     }
 
     private fun fallbackDescriptor(definition: ToolDefinition): ToolDescriptor = ToolDescriptor(

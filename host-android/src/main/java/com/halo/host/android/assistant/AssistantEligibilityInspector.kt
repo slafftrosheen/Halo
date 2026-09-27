@@ -42,6 +42,9 @@ class AssistantEligibilityInspector(
         }
 
         val serviceMetadataPresent = selfServiceInfo?.metaData?.containsKey("android.voice_interaction") == true
+        if (selfServiceInfo != null && !serviceMetadataPresent) {
+            problems.add("Voice interaction service metadata 'android.voice_interaction' is missing")
+        }
 
         val sessionServiceInfo = runCatching {
             pm.getServiceInfo(sessionServiceComponent, 0)
@@ -49,6 +52,11 @@ class AssistantEligibilityInspector(
 
         val sessionServiceDeclared = sessionServiceInfo != null
         val sessionServiceClassValid = sessionServiceDeclared && sessionServiceInfo?.permission == "android.permission.BIND_VOICE_INTERACTION"
+        if (!sessionServiceDeclared) {
+            problems.add("HaloVoiceInteractionSessionService is not declared")
+        } else if (!sessionServiceClassValid) {
+            problems.add("Voice interaction session service must require android.permission.BIND_VOICE_INTERACTION")
+        }
 
         val activeVoiceInteractionService = runCatching {
             VoiceInteractionService.isActiveService(context, voiceServiceComponent)
@@ -84,12 +92,20 @@ class AssistantEligibilityInspector(
     }
 
     fun evaluateState(snapshot: AssistantEligibilitySnapshot): AssistantIntegrationState {
-        if (!snapshot.voiceInteractionServiceDeclared || !snapshot.bindPermissionCorrect) {
-            return AssistantIntegrationState.NotEligible(snapshot)
-        }
-
+        // Android's active-service truth is authoritative even if an OEM omits query metadata.
         if (snapshot.activeVoiceInteractionService) {
             return AssistantIntegrationState.Active(snapshot)
+        }
+
+        if (
+            !snapshot.voiceInteractionServiceDeclared ||
+            !snapshot.voiceInteractionServiceDiscoverable ||
+            !snapshot.bindPermissionCorrect ||
+            !snapshot.serviceMetadataPresent ||
+            !snapshot.sessionServiceDeclared ||
+            !snapshot.sessionServiceClassValid
+        ) {
+            return AssistantIntegrationState.NotEligible(snapshot)
         }
 
         if (snapshot.roleHeld) {

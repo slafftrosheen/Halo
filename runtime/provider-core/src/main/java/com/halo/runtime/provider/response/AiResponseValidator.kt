@@ -41,13 +41,19 @@ object AiResponseValidator {
             )
         }
 
-        if (response.modelId != null && response.modelId != expectedModelId) {
+        val requestedModelId = response.requestedModelId ?: response.modelId
+        if (requestedModelId != null && requestedModelId != expectedModelId) {
             throw AiProviderException(
                 AiErrorType.INVALID_RESPONSE,
-                "Model identity mismatch: expected=$expectedModelId, actual=${response.modelId}"
+                "Model identity mismatch: expected=$expectedModelId, actual=$requestedModelId"
             )
         }
 
-        return response.copy(providerId = provider.id, modelId = expectedModelId)
+        return response.copy(
+            providerId = provider.id,
+            modelId = expectedModelId,
+            requestedModelId = expectedModelId,
+            resolvedModelId = response.resolvedModelId ?: expectedModelId,
+        )
     }
 }

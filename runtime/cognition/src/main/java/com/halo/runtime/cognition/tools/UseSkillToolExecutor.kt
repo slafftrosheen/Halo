@@ -41,6 +41,8 @@ class UseSkillToolExecutor(
 
         val output = buildString {
             append("Loaded operational guidance for skill ").append(skillId.value).append(":\n")
+            append("skillSchemaVersion=").append(descriptor?.schemaVersion ?: "unknown")
+            append(" skillRevision=").append(instruction.revision ?: "bundled").append('\n')
             append(instruction.body.take(2000))
             if (toolsExposed.isNotEmpty()) {
                 append("\nAvailable tools for this skill: ").append(toolsExposed.joinToString(", "))

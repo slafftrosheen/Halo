@@ -257,6 +257,7 @@ fun AppShell(
                         toolRegistry = ManualDependencyGraph.toolRegistry,
                         availabilityResolver = ManualDependencyGraph.toolAvailabilityResolver,
                         capabilityCatalogue = ManualDependencyGraph.capabilityCatalogue,
+                        onInstallCustomSkill = ManualDependencyGraph::installCustomSkillPackage,
                     )
                 }
 
