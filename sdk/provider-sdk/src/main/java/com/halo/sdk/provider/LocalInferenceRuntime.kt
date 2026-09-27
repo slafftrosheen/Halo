@@ -91,6 +91,7 @@ data class RuntimeLoadResult(
 
 data class RuntimeGenerationConfig(
     val prompt: String,
+    val systemInstruction: String? = null,
     val temperature: Double = 0.7,
     val topP: Double = 0.9,
     val topK: Int = 40,

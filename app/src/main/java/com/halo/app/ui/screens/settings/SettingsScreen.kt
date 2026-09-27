@@ -64,22 +64,6 @@ import com.halo.host.android.assistant.AssistantRoleState
 @Composable
 fun SettingsScreen(viewModel: SettingsViewModel) {
     val uiState by viewModel.uiState.collectAsState()
-    val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
-    val assistantRoleController = remember(context) {
-        com.halo.host.android.assistant.AndroidAssistantRoleController(context)
-    }
-    val assistantRoleState by assistantRoleController.state.collectAsState()
-    val assistantRoleLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { assistantRoleController.refresh() }
-    DisposableEffect(lifecycleOwner, assistantRoleController) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) assistantRoleController.refresh()
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-    }
 
     Column(
         modifier = Modifier
@@ -141,16 +125,8 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             glyph = HaloGlyph.PHONE,
             tint = HaloPastelBlue,
             title = "Default Android Assistant",
-            subtitle = when (assistantRoleState) {
-                AssistantRoleState.Active -> "Halo is your system assistant ✓ (Tap to manage)"
-                AssistantRoleState.Available -> "Use Halo from your phone's assistant gesture"
-                AssistantRoleState.Unsupported -> "Not available on this device"
-            },
-            onClick = {
-                assistantRoleController.launchEnrollment { intent ->
-                    assistantRoleLauncher.launch(intent)
-                }
-            },
+            subtitle = "System interactor & gesture integration",
+            onClick = viewModel::openAndroidAssistant,
         )
 
         SettingsRow(

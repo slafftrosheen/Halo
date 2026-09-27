@@ -41,6 +41,7 @@ import com.halo.providers.sherpa.stt.ReloadableSpeechRecognitionProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import com.halo.engines.memory.WorkingMemoryProcess
+import com.halo.host.android.assistant.AndroidAssistantRoleController
 import com.halo.providers.android.tts.AndroidTTSProvider
 import com.halo.runtime.cognition.agent.recovery.AgentCheckpointAssembler
 import com.halo.runtime.cognition.agent.recovery.DefaultAgentRecoveryPlanner
@@ -128,6 +129,7 @@ object ManualDependencyGraph {
     val cognitiveTrace get() = infra.cognitiveTrace
 
     val modelManager get() = providerGraph.modelManager
+    val assistantRoleController by lazy { AndroidAssistantRoleController(applicationContext) }
     val providers get() = providerGraph.providers
     val speechRecognitionAvailability: StateFlow<Boolean> by lazy {
         (providers.speechRecognition as? ReloadableSpeechRecognitionProvider)?.availability

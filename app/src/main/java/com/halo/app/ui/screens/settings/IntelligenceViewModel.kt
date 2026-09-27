@@ -1,5 +1,6 @@
 package com.halo.app.ui.screens.settings
 
+import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -262,6 +263,20 @@ class IntelligenceViewModel(
 
     fun setCloudImagesEnabled(enabled: Boolean) {
         updatePolicy { it.copy(allowCloudImages = enabled) }
+    }
+
+    fun importModelUri(uri: Uri, displayName: String = "Imported Model") {
+        viewModelScope.launch {
+            modelManager?.importModelFromUri(uri, displayName)
+            _refreshTrigger.update { it + 1 }
+        }
+    }
+
+    fun deleteModel(modelId: String) {
+        viewModelScope.launch {
+            modelManager?.deleteModel(modelId)
+            _refreshTrigger.update { it + 1 }
+        }
     }
 
     fun deleteLegacyGgufFiles() {

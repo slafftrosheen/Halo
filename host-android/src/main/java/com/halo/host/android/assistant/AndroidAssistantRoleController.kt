@@ -51,6 +51,7 @@ sealed interface AssistantRoleState {
 interface AssistantRoleController {
     val state: StateFlow<AssistantRoleState>
     val enrollmentState: StateFlow<AssistantEnrollmentState>
+    val integrationState: StateFlow<AssistantIntegrationState>
     fun refresh()
     fun createRoleRequestIntent(): Intent?
     fun resolveEnrollmentAction(): AssistantEnrollmentAction
@@ -63,6 +64,7 @@ class AndroidAssistantRoleController(
     private val serviceComponent: ComponentName = ComponentName(context, "com.halo.app.assistant.HaloVoiceInteractionService")
 ) : AssistantRoleController {
     private val appContext = context.applicationContext
+    private val inspector = AssistantEligibilityInspector(appContext, voiceServiceComponent = serviceComponent)
     private val roleManager = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
         appContext.getSystemService(RoleManager::class.java)
     } else null
@@ -73,10 +75,17 @@ class AndroidAssistantRoleController(
     private val mutableEnrollmentState = MutableStateFlow<AssistantEnrollmentState>(AssistantEnrollmentState.SystemSettingsRequired)
     override val enrollmentState: StateFlow<AssistantEnrollmentState> = mutableEnrollmentState.asStateFlow()
 
+    private val _integrationState = MutableStateFlow<AssistantIntegrationState>(AssistantIntegrationState.Checking)
+    override val integrationState: StateFlow<AssistantIntegrationState> = _integrationState.asStateFlow()
+
     init { refresh() }
 
     override fun refresh() {
-        val isActive = VoiceInteractionService.isActiveService(appContext, serviceComponent)
+        val snapshot = inspector.inspect()
+        val nextState = inspector.evaluateState(snapshot)
+        _integrationState.value = nextState
+
+        val isActive = snapshot.activeVoiceInteractionService
 
         if (isActive) {
             mutableEnrollmentState.value = AssistantEnrollmentState.Active

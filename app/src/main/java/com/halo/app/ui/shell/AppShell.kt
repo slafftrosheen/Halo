@@ -55,6 +55,7 @@ import com.halo.app.ui.screens.notebook.NoteEditorViewModel
 import com.halo.app.ui.screens.notebook.NotebookNavigation
 import com.halo.app.ui.screens.notebook.NotebookScreen
 import com.halo.app.ui.screens.notebook.WorkspaceObjectDetailScreen
+import com.halo.app.ui.screens.settings.AndroidAssistantScreen
 import com.halo.app.ui.screens.settings.IntelligenceScreen
 import com.halo.app.ui.screens.settings.RuntimeScreen
 import com.halo.app.ui.screens.settings.SettingsScreen
@@ -338,6 +339,12 @@ fun AppShell(
                 composable("model_browser") {
                     com.halo.app.ui.screens.settings.ModelBrowserScreen(
                         ManualDependencyGraph.intelligenceViewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable("android_assistant") {
+                    AndroidAssistantScreen(
+                        ManualDependencyGraph.assistantRoleController,
                         onBack = { navController.popBackStack() }
                     )
                 }

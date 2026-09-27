@@ -69,4 +69,5 @@ class SettingsViewModel(
     fun openPermissions() { _navigationEvents.tryEmit("permissions") }
     fun openStorageBackup() { _navigationEvents.tryEmit("storage_backup") }
     fun openRuntimeStatus() { _navigationEvents.tryEmit("runtime_status") }
+    fun openAndroidAssistant() { _navigationEvents.tryEmit("android_assistant") }
 }

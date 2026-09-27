@@ -41,6 +41,7 @@ import java.util.UUID
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
@@ -54,6 +55,7 @@ class HaloVoiceInteractionSession(
     
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var active: ActiveInvocation? = null
+    private var interactionObserverJob: Job? = null
 
     private var interactionState by mutableStateOf<InteractionTurnState?>(null)
     private var screenContextAttached by mutableStateOf(false)
@@ -143,7 +145,8 @@ class HaloVoiceInteractionSession(
         screenContextAttached = false
         
         // Listen to state changes for this interaction
-        ManualDependencyGraph.eventBus.observe(InteractionTurnChanged::class.java)
+        interactionObserverJob?.cancel()
+        interactionObserverJob = ManualDependencyGraph.eventBus.observe(InteractionTurnChanged::class.java)
             .onEach { event ->
                 if (event.state.interactionId == current.invocation.interactionId) {
                     interactionState = event.state
@@ -201,6 +204,8 @@ class HaloVoiceInteractionSession(
     }
 
     override fun onHide() {
+        interactionObserverJob?.cancel()
+        interactionObserverJob = null
         val ending = active
         active = null
         if (ending != null) scope.launch { runtimeBridge.hideAssistantSurface(ending.invocation.interactionId) }
@@ -210,6 +215,8 @@ class HaloVoiceInteractionSession(
     }
 
     override fun onDestroy() {
+        interactionObserverJob?.cancel()
+        interactionObserverJob = null
         active?.let { ending ->
             applicationScope.launch {
                 runtimeBridge.hideAssistantSurface(ending.invocation.interactionId)

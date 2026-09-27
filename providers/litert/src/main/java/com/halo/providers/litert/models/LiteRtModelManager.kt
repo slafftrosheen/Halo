@@ -1,6 +1,7 @@
 package com.halo.providers.litert.models
 
 import android.content.Context
+import android.net.Uri
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -12,6 +13,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.security.MessageDigest
 
 sealed interface DownloadState {
     data object NotDownloaded : DownloadState
@@ -52,25 +54,31 @@ class LiteRtModelManager(
             withContext(Dispatchers.IO) {
                 if (!modelRoot.exists()) modelRoot.mkdirs()
 
-                // Find legacy GGUF files for optional user cleanup
+                // 1. Scan legacy GGUF files for user cleanup
                 val ggufs = modelRoot.listFiles { f -> f.isFile && f.name.endsWith(".gguf", ignoreCase = true) }?.toList().orEmpty()
                 _legacyGgufFiles.value = ggufs
 
-                // Scan for valid LiteRT models (.litertlm)
-                val litertFiles = modelRoot.listFiles { f -> f.isFile && f.name.endsWith(".litertlm", ignoreCase = true) && f.length() > 0L }?.toList().orEmpty()
+                // 2. Scan valid LiteRT models (.litertlm, ignoring .part)
+                val litertFiles = modelRoot.listFiles { f ->
+                    f.isFile && f.name.endsWith(".litertlm", ignoreCase = true) && !f.name.endsWith(".part", ignoreCase = true) && f.length() > 0L
+                }?.toList().orEmpty()
 
                 val descriptors = litertFiles.map { file ->
-                    val catalogMatch = LiteRtModelCatalog.BUILT_IN_MODELS.firstOrNull { it.id == file.nameWithoutExtension || file.name.startsWith(it.id) }
+                    val modelId = file.nameWithoutExtension
+                    val sidecarFile = File(modelRoot, "$modelId.halo-model.json")
+                    val sidecar = if (sidecarFile.exists()) InstalledLiteRtModelMetadata.fromJson(sidecarFile.readText()) else null
+                    val catalogMatch = LiteRtModelCatalog.BUILT_IN_MODELS.firstOrNull { it.id == modelId || file.name.startsWith(it.id) }
+
                     LocalModelDescriptor(
-                        id = catalogMatch?.id ?: file.nameWithoutExtension,
-                        displayName = catalogMatch?.displayName ?: file.nameWithoutExtension.replace('_', ' ').replace('-', ' '),
+                        id = catalogMatch?.id ?: sidecar?.id ?: modelId,
+                        displayName = catalogMatch?.displayName ?: sidecar?.displayName ?: modelId.replace('_', ' ').replace('-', ' '),
                         path = file.absolutePath,
                         bytes = file.length(),
                         modifiedAt = file.lastModified(),
-                        sha256 = catalogMatch?.sha256,
-                        contextWindowTokens = catalogMatch?.contextWindowTokens ?: 4096,
-                        supportsVision = catalogMatch?.supportsVision ?: false,
-                        supportsTools = catalogMatch?.supportsTools ?: false,
+                        sha256 = catalogMatch?.sha256 ?: sidecar?.sha256,
+                        contextWindowTokens = catalogMatch?.contextWindowTokens ?: sidecar?.contextWindowTokens ?: 4096,
+                        supportsVision = catalogMatch?.supportsVision ?: sidecar?.supportsVision ?: false,
+                        supportsTools = catalogMatch?.supportsTools ?: sidecar?.supportsTools ?: false,
                         valid = true
                     )
                 }
@@ -89,6 +97,72 @@ class LiteRtModelManager(
     override suspend fun resolveModel(modelId: String): LocalModelDescriptor? {
         val ready = inventoryState.value as? LocalModelInventoryState.Ready
         return ready?.models?.firstOrNull { it.id == modelId }
+    }
+
+    suspend fun importModelFromUri(uri: Uri, displayName: String): Result<LocalModelDescriptor> = withContext(Dispatchers.IO) {
+        runCatching {
+            val contentResolver = context.contentResolver
+            val tempFile = File(modelRoot, "import_${System.currentTimeMillis()}.part")
+            val digest = MessageDigest.getInstance("SHA-256")
+
+            contentResolver.openInputStream(uri)?.use { input ->
+                tempFile.outputStream().use { output ->
+                    val buffer = ByteArray(64 * 1024)
+                    var bytesRead: Int
+                    while (input.read(buffer).also { bytesRead = it } != -1) {
+                        digest.update(buffer, 0, bytesRead)
+                        output.write(buffer, 0, bytesRead)
+                    }
+                }
+            } ?: throw IllegalStateException("Unable to open URI input stream")
+
+            if (tempFile.length() == 0L) {
+                tempFile.delete()
+                throw IllegalStateException("Imported file was empty")
+            }
+
+            val sha256 = digest.digest().joinToString("") { "%02x".format(it) }
+            val modelId = displayName.lowercase().replace(Regex("[^a-z0-9_]"), "_").trim('_')
+            val finalFile = File(modelRoot, "$modelId.litertlm")
+
+            if (tempFile.renameTo(finalFile)) {
+                val metadata = InstalledLiteRtModelMetadata(
+                    id = modelId,
+                    displayName = displayName,
+                    sourceUrl = null,
+                    sha256 = sha256,
+                    bytes = finalFile.length(),
+                )
+                File(modelRoot, "$modelId.halo-model.json").writeText(metadata.toJson())
+                refresh(ModelInventoryRefreshReason.DOWNLOAD_COMPLETED)
+                resolveModel(modelId) ?: throw IllegalStateException("Model import failed to register")
+            } else {
+                tempFile.delete()
+                throw IllegalStateException("Failed to rename temporary import file")
+            }
+        }
+    }
+
+    suspend fun deleteModel(modelId: String): Boolean = withContext(Dispatchers.IO) {
+        val descriptor = resolveModel(modelId) ?: return@withContext false
+        val modelFile = File(descriptor.path)
+        val sidecarFile = File(modelRoot, "$modelId.halo-model.json")
+        val cacheFolder = File(context.filesDir, "litertlm_cache")
+
+        var deleted = false
+        if (modelFile.exists()) {
+            deleted = modelFile.delete()
+        }
+        if (sidecarFile.exists()) sidecarFile.delete()
+
+        if (cacheFolder.exists()) {
+            cacheFolder.listFiles { f -> f.isDirectory && f.name.contains(modelId) }?.forEach {
+                it.deleteRecursively()
+            }
+        }
+
+        refresh(ModelInventoryRefreshReason.INVALIDATED)
+        deleted
     }
 
     suspend fun deleteLegacyGgufFiles(): Long = withContext(Dispatchers.IO) {

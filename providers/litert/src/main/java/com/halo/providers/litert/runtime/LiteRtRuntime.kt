@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.google.ai.edge.litertlm.Backend
 import com.google.ai.edge.litertlm.Conversation
+import com.google.ai.edge.litertlm.ConversationConfig
 import com.google.ai.edge.litertlm.Engine
 import com.google.ai.edge.litertlm.EngineConfig
 import com.google.ai.edge.litertlm.Message
@@ -17,13 +18,33 @@ import com.halo.sdk.provider.RuntimeLoadConfig
 import com.halo.sdk.provider.RuntimeLoadResult
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
+
+data class EngineLoadOutcome(
+    val engine: Engine,
+    val requestedBackend: LocalComputeBackend,
+    val effectiveBackend: LocalComputeBackend,
+    val fallbackReason: String?,
+)
+
+data class LiteRtRuntimeSnapshot(
+    val modelId: String?,
+    val state: LocalModelSessionState,
+    val requestedBackend: LocalComputeBackend?,
+    val effectiveBackend: LocalComputeBackend?,
+    val contextTokens: Int?,
+    val fallbackReason: String?,
+    val activeRequestId: String?,
+    val cachePath: String?,
+)
 
 class LiteRtRuntime(
     private val context: Context,
@@ -40,68 +61,125 @@ class LiteRtRuntime(
 
     private var engine: Engine? = null
     private var activeConversation: Conversation? = null
-    private var activeBackend: LocalComputeBackend = LocalComputeBackend.AUTO
+    private var requestedBackend: LocalComputeBackend = LocalComputeBackend.AUTO
+    private var effectiveBackend: LocalComputeBackend = LocalComputeBackend.AUTO
+    private var effectiveContextSize: Int = 4096
+    private var lastFallbackReason: String? = null
+    private var activeCachePath: String? = null
+    private var activeRequestId: String? = null
 
     private val stateMutex = Mutex()
     private val inferenceMutex = Mutex()
+    private val loadMutex = Mutex()
     private val cancelRequested = AtomicBoolean(false)
 
     override fun isLoaded(): Boolean = engine != null && _state.value != LocalModelSessionState.UNLOADING
+
+    fun snapshot(): LiteRtRuntimeSnapshot = LiteRtRuntimeSnapshot(
+        modelId = _loadedModelId,
+        state = _state.value,
+        requestedBackend = requestedBackend,
+        effectiveBackend = effectiveBackend,
+        contextTokens = effectiveContextSize,
+        fallbackReason = lastFallbackReason,
+        activeRequestId = activeRequestId,
+        cachePath = activeCachePath
+    )
+
+    private suspend fun createAndInitializeEngine(
+        modelPath: String,
+        backend: LocalComputeBackend,
+        contextSize: Int,
+        cacheDir: File
+    ): Result<Engine> = withContext(Dispatchers.Default) {
+        val litertBackend = when (backend) {
+            LocalComputeBackend.GPU -> Backend.GPU()
+            LocalComputeBackend.CPU -> Backend.CPU()
+            LocalComputeBackend.AUTO -> Backend.GPU()
+        }
+
+        val engineConfig = EngineConfig(
+            modelPath = modelPath,
+            backend = litertBackend,
+            maxNumTokens = contextSize,
+            cacheDir = cacheDir.absolutePath,
+        )
+
+        runCatching {
+            val created = Engine(engineConfig)
+            created.initialize()
+            created
+        }
+    }
+
+    private suspend fun resolveEngine(
+        file: File,
+        modelId: String,
+        config: RuntimeLoadConfig
+    ): EngineLoadOutcome {
+        val modelCacheDir = File(context.filesDir, "litertlm_cache/${modelId.replace('/', '_')}-${file.length()}-${file.lastModified()}")
+        if (!modelCacheDir.exists()) modelCacheDir.mkdirs()
+
+        val reqBackend = config.computeBackend
+
+        when (reqBackend) {
+            LocalComputeBackend.CPU -> {
+                val engine = createAndInitializeEngine(file.absolutePath, LocalComputeBackend.CPU, config.contextSize, modelCacheDir).getOrThrow()
+                return EngineLoadOutcome(engine, LocalComputeBackend.CPU, LocalComputeBackend.CPU, null)
+            }
+            LocalComputeBackend.GPU -> {
+                val engine = createAndInitializeEngine(file.absolutePath, LocalComputeBackend.GPU, config.contextSize, modelCacheDir).getOrThrow()
+                return EngineLoadOutcome(engine, LocalComputeBackend.GPU, LocalComputeBackend.GPU, null)
+            }
+            LocalComputeBackend.AUTO -> {
+                val gpuResult = createAndInitializeEngine(file.absolutePath, LocalComputeBackend.GPU, config.contextSize, modelCacheDir)
+                if (gpuResult.isSuccess) {
+                    return EngineLoadOutcome(gpuResult.getOrThrow(), LocalComputeBackend.AUTO, LocalComputeBackend.GPU, null)
+                }
+
+                val fallbackMsg = "GPU engine initialization failed (${gpuResult.exceptionOrNull()?.message}); fell back to CPU"
+                Log.w(TAG, fallbackMsg)
+
+                val cpuEngine = createAndInitializeEngine(file.absolutePath, LocalComputeBackend.CPU, config.contextSize, modelCacheDir).getOrThrow()
+                return EngineLoadOutcome(cpuEngine, LocalComputeBackend.AUTO, LocalComputeBackend.CPU, fallbackMsg)
+            }
+        }
+    }
 
     override suspend fun loadModel(
         modelId: String,
         modelPath: String,
         config: RuntimeLoadConfig,
-    ): Result<RuntimeLoadResult> = stateMutex.withLock {
+    ): Result<RuntimeLoadResult> = loadMutex.withLock {
         _state.value = LocalModelSessionState.LOADING
         try {
             val file = File(modelPath)
             require(file.exists() && file.isFile) { "Model file does not exist: $modelPath" }
 
-            unloadInternal()
+            val outcome = resolveEngine(file, modelId, config)
 
-            val modelCacheDir = File(context.filesDir, "litertlm_cache/${modelId.replace('/', '_')}-${file.length()}-${file.lastModified()}")
-            if (!modelCacheDir.exists()) modelCacheDir.mkdirs()
-
-            var usedBackend = LocalComputeBackend.GPU
-            var fallbackReason: String? = null
-
-            val engineConfigGpu = EngineConfig(
-                modelPath = file.absolutePath,
-                backend = Backend.GPU(),
-                maxNumTokens = config.contextSize,
-                cacheDir = modelCacheDir.absolutePath,
-            )
-
-            var createdEngine: Engine? = runCatching { Engine(engineConfigGpu) }.getOrNull()
-
-            if (createdEngine == null && config.computeBackend != LocalComputeBackend.GPU) {
-                usedBackend = LocalComputeBackend.CPU
-                fallbackReason = "GPU backend initialization failed; fell back to CPU"
-                val engineConfigCpu = EngineConfig(
-                    modelPath = file.absolutePath,
-                    backend = Backend.CPU(),
-                    maxNumTokens = config.contextSize,
-                    cacheDir = modelCacheDir.absolutePath,
-                )
-                createdEngine = runCatching { Engine(engineConfigCpu) }.getOrNull()
+            var oldEngineToClose: Engine? = null
+            stateMutex.withLock {
+                oldEngineToClose = engine
+                unloadInternal()
+                engine = outcome.engine
+                requestedBackend = outcome.requestedBackend
+                effectiveBackend = outcome.effectiveBackend
+                effectiveContextSize = config.contextSize
+                lastFallbackReason = outcome.fallbackReason
+                activeCachePath = file.absolutePath
+                _loadedModelId = modelId
+                _state.value = LocalModelSessionState.IDLE
             }
 
-            if (createdEngine == null) {
-                throw IllegalStateException("Failed to initialize LiteRT-LM engine on both GPU and CPU")
-            }
-
-            engine = createdEngine
-            activeBackend = usedBackend
-            _loadedModelId = modelId
-            _state.value = LocalModelSessionState.IDLE
+            oldEngineToClose?.let { runCatching { it.close() } }
 
             Result.success(
                 RuntimeLoadResult(
-                    activeBackend = usedBackend,
-                    activeGpuLayers = if (usedBackend == LocalComputeBackend.GPU) 1 else 0,
+                    activeBackend = outcome.effectiveBackend,
+                    activeGpuLayers = if (outcome.effectiveBackend == LocalComputeBackend.GPU) 1 else 0,
                     effectiveContextSize = config.contextSize,
-                    fallbackReason = fallbackReason,
+                    fallbackReason = outcome.fallbackReason,
                 )
             )
         } catch (e: CancellationException) {
@@ -117,7 +195,8 @@ class LiteRtRuntime(
         config: RuntimeGenerationConfig,
         onToken: suspend (String) -> Unit,
     ): Result<RuntimeGenerationResult> = inferenceMutex.withLock {
-        val currentEngine = engine ?: return Result.failure(IllegalStateException("No LiteRT engine currently loaded"))
+        val currentEngine = stateMutex.withLock { engine }
+            ?: return Result.failure(IllegalStateException("No LiteRT engine currently loaded"))
 
         _state.value = LocalModelSessionState.INFERRING
         cancelRequested.set(false)
@@ -128,12 +207,13 @@ class LiteRtRuntime(
         val textBuilder = StringBuilder()
 
         try {
-            val handleField = Engine::class.java.getDeclaredField("handle").apply { isAccessible = true }
-            val enginePtr = (handleField.get(currentEngine) as? Long)
-                ?: throw IllegalStateException("Engine handle is null or closed")
+            val convConfig = ConversationConfig(
+                systemInstruction = config.systemInstruction?.let { com.google.ai.edge.litertlm.Contents.of(it) },
+                automaticToolCalling = false,
+            )
 
-            val conversation = Conversation(enginePtr)
-            activeConversation = conversation
+            val conversation = currentEngine.createConversation(convConfig)
+            stateMutex.withLock { activeConversation = conversation }
 
             val messageFlow = conversation.sendMessageAsync(Message.user(config.prompt))
 
@@ -165,27 +245,36 @@ class LiteRtRuntime(
                 )
             )
         } catch (e: CancellationException) {
-            activeConversation?.cancelProcess()
+            stateMutex.withLock { activeConversation?.cancelProcess() }
             _state.value = LocalModelSessionState.IDLE
             throw e
         } catch (e: Throwable) {
             _state.value = LocalModelSessionState.ERROR
             Result.failure(e)
         } finally {
-            runCatching { activeConversation?.close() }
-            activeConversation = null
+            stateMutex.withLock {
+                runCatching { activeConversation?.close() }
+                activeConversation = null
+            }
         }
     }
 
     override suspend fun cancelGeneration() {
         cancelRequested.set(true)
-        runCatching { activeConversation?.cancelProcess() }
+        stateMutex.withLock {
+            runCatching { activeConversation?.cancelProcess() }
+        }
     }
 
-    override suspend fun unloadModel(): Result<Unit> = stateMutex.withLock {
+    override suspend fun unloadModel(): Result<Unit> = loadMutex.withLock {
         _state.value = LocalModelSessionState.UNLOADING
-        unloadInternal()
-        _state.value = LocalModelSessionState.IDLE
+        var engineToClose: Engine? = null
+        stateMutex.withLock {
+            engineToClose = engine
+            unloadInternal()
+            _state.value = LocalModelSessionState.IDLE
+        }
+        engineToClose?.let { runCatching { it.close() } }
         Result.success(Unit)
     }
 
@@ -193,7 +282,6 @@ class LiteRtRuntime(
         runCatching { activeConversation?.cancelProcess() }
         runCatching { activeConversation?.close() }
         activeConversation = null
-        runCatching { engine?.close() }
         engine = null
         _loadedModelId = null
     }

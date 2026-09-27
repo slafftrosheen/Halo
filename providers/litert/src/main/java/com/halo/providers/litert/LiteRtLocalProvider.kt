@@ -2,8 +2,11 @@ package com.halo.providers.litert
 
 import android.content.Context
 import android.util.Log
+import com.halo.providers.litert.models.LocalModelDescriptor
 import com.halo.providers.litert.models.LocalModelInventoryRepository
 import com.halo.providers.litert.models.LocalModelInventoryState
+import com.halo.providers.litert.runtime.HaloLiteRtToolSchemaAdapter
+import com.halo.providers.litert.runtime.LiteRtConversationMapper
 import com.halo.providers.litert.runtime.LocalModelSession
 import com.halo.sdk.provider.AiCapability
 import com.halo.sdk.provider.AiContext
@@ -15,11 +18,11 @@ import com.halo.sdk.provider.AiRequest
 import com.halo.sdk.provider.AiResponse
 import com.halo.sdk.provider.AiStreamEvent
 import com.halo.sdk.provider.LocalComputeBackend
+import com.halo.sdk.provider.LocalModelActivityState
 import com.halo.sdk.provider.ProviderReadiness
 import com.halo.sdk.provider.ProviderStatus
 import com.halo.sdk.provider.RuntimeGenerationConfig
 import com.halo.sdk.provider.RuntimeLoadConfig
-import com.halo.sdk.provider.asUntrustedPromptSection
 import com.halo.sdk.provider.validateAgainst
 import com.halo.sdk.provider.validateForTextGeneration
 import com.halo.sdk.runtime.NativeResourceCoordinator
@@ -53,9 +56,19 @@ class LiteRtLocalProvider(
     override val nativeResourceKind: NativeResourceKind = NativeResourceKind.HEAVY_LLM
 
     override suspend fun releaseIfIdle(): Boolean {
-        return if (modelSession.isLoaded()) {
-            modelSession.unloadModel().isSuccess
-        } else false
+        if (!modelSession.isLoaded()) return true
+        val currentActivity = modelSession.activity.value
+        if (currentActivity is LocalModelActivityState.Generating ||
+            currentActivity is LocalModelActivityState.Loading ||
+            currentActivity is LocalModelActivityState.Benchmarking
+        ) {
+            return false
+        }
+        val unloaded = modelSession.unloadModel().isSuccess
+        if (unloaded) {
+            nativeResourceCoordinator?.release(this)
+        }
+        return unloaded
     }
 
     private val _status = MutableStateFlow(ProviderStatus.UNAVAILABLE)
@@ -97,7 +110,11 @@ class LiteRtLocalProvider(
             return@withContext status
         }
 
-        val status = ProviderStatus(ProviderStatus.State.READY, "Model '$modelId' installed and ready to load")
+        val status = ProviderStatus(
+            ProviderStatus.State.READY,
+            "Model '$modelId' installed and ready to load",
+            ProviderReadiness.ConfiguredCold
+        )
         _status.value = status
         status
     }
@@ -121,7 +138,13 @@ class LiteRtLocalProvider(
 
         if (modelSession.isLoaded() && modelSession.loadedModelId == modelId) return true
 
+        check(nativeResourceCoordinator?.acquire(this) ?: true) {
+            "Local inference resource is busy"
+        }
+
+        nativeResourceCoordinator?.mark(this, NativeResourceState.LOADING, "Loading LiteRT model: $modelId")
         _status.value = ProviderStatus(ProviderStatus.State.LOADING, "Loading $modelId...")
+
         return try {
             val loadConfig = RuntimeLoadConfig(
                 contextSize = descriptor.contextWindowTokens,
@@ -134,7 +157,7 @@ class LiteRtLocalProvider(
             )
             if (result.isSuccess) {
                 nativeResourceCoordinator?.mark(this, NativeResourceState.RESIDENT, "LiteRT resident: $modelId")
-                _status.value = ProviderStatus(ProviderStatus.State.READY, "Loaded $modelId")
+                _status.value = ProviderStatus(ProviderStatus.State.READY, "Loaded $modelId", ProviderReadiness.Ready)
                 true
             } else {
                 _status.value = ProviderStatus(ProviderStatus.State.ERROR, "Failed to load $modelId")
@@ -175,19 +198,31 @@ class LiteRtLocalProvider(
             throw AiProviderException(AiErrorType.LOCAL_MODEL_UNAVAILABLE, "Failed to load LiteRT model")
         }
 
-        val prompt = formatPrompt(request, context)
-        val genConfig = RuntimeGenerationConfig(prompt = prompt)
+        nativeResourceCoordinator?.mark(this@LiteRtLocalProvider, NativeResourceState.IN_USE, "Inferring")
 
-        val result = modelSession.generate(genConfig).getOrElse { err ->
-            throw AiProviderException(AiErrorType.GENERATION_FAILED, "LiteRT generation failed: ${err.message}", err)
-        }
-
-        AiResponse(
-            text = result.text,
-            providerId = id,
-            modelId = modelSession.loadedModelId ?: "litert",
-            finishReason = "stop"
+        val mapped = LiteRtConversationMapper.map(request, context)
+        val genConfig = RuntimeGenerationConfig(
+            prompt = mapped.outgoingMessage?.content ?: request.text ?: "",
+            systemInstruction = mapped.systemInstruction
         )
+
+        return@withContext try {
+            val result = modelSession.generate(genConfig).getOrElse { err ->
+                throw AiProviderException(AiErrorType.GENERATION_FAILED, "LiteRT generation failed: ${err.message}", err)
+            }
+
+            val parsedCalls = HaloLiteRtToolSchemaAdapter.parseToolCallsFromResponseText(result.text, request.modelId ?: "litert")
+
+            AiResponse(
+                text = result.text,
+                providerId = id,
+                modelId = modelSession.loadedModelId ?: "litert",
+                finishReason = if (parsedCalls.isNotEmpty()) "tool_calls" else "stop",
+                toolCalls = parsedCalls
+            )
+        } finally {
+            nativeResourceCoordinator?.mark(this@LiteRtLocalProvider, NativeResourceState.RESIDENT, "Resident")
+        }
     }
 
     override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = flow {
@@ -200,43 +235,39 @@ class LiteRtLocalProvider(
             return@flow
         }
 
-        val prompt = formatPrompt(request, context)
-        val genConfig = RuntimeGenerationConfig(prompt = prompt)
+        nativeResourceCoordinator?.mark(this@LiteRtLocalProvider, NativeResourceState.IN_USE, "Inferring")
 
-        val result = modelSession.generate(genConfig) { token ->
-            emit(AiStreamEvent.Token(token))
-        }
+        val mapped = LiteRtConversationMapper.map(request, context)
+        val genConfig = RuntimeGenerationConfig(
+            prompt = mapped.outgoingMessage?.content ?: request.text ?: "",
+            systemInstruction = mapped.systemInstruction
+        )
 
-        result.onSuccess { gen ->
-            emit(
-                AiStreamEvent.Completed(
-                    AiResponse(
-                        text = gen.text,
-                        providerId = id,
-                        modelId = modelSession.loadedModelId ?: "litert",
-                        finishReason = "stop"
+        try {
+            val result = modelSession.generate(genConfig) { token ->
+                emit(AiStreamEvent.Token(token))
+            }
+
+            result.onSuccess { gen ->
+                val parsedCalls = HaloLiteRtToolSchemaAdapter.parseToolCallsFromResponseText(gen.text, request.modelId ?: "litert")
+                emit(
+                    AiStreamEvent.Completed(
+                        AiResponse(
+                            text = gen.text,
+                            providerId = id,
+                            modelId = modelSession.loadedModelId ?: "litert",
+                            finishReason = if (parsedCalls.isNotEmpty()) "tool_calls" else "stop",
+                            toolCalls = parsedCalls
+                        )
                     )
                 )
-            )
-        }.onFailure { err ->
-            emit(AiStreamEvent.Failed(AiProviderException(AiErrorType.GENERATION_FAILED, err.message ?: "Stream failed", err)))
+            }.onFailure { err ->
+                emit(AiStreamEvent.Failed(AiProviderException(AiErrorType.GENERATION_FAILED, err.message ?: "Stream failed", err)))
+            }
+        } finally {
+            nativeResourceCoordinator?.mark(this@LiteRtLocalProvider, NativeResourceState.RESIDENT, "Resident")
         }
     }.flowOn(Dispatchers.IO)
-
-    private fun formatPrompt(request: AiRequest, context: AiContext): String {
-        return buildString {
-            context.conversation.forEach { msg ->
-                append(msg.role.name).append(": ").append(msg.content).append("\n")
-            }
-            context.screenContext?.let {
-                append(it.asUntrustedPromptSection()).append("\n")
-            }
-            if (request.appendTextAsUserMessage && !request.text.isNullOrBlank()) {
-                append("USER: ").append(request.text).append("\n")
-            }
-            append("ASSISTANT: ")
-        }
-    }
 
     object ProviderIds {
         const val LITERT = "provider.litert.local"
