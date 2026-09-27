@@ -27,6 +27,7 @@ import kotlinx.coroutines.launch
 enum class SaveStatus { LOADING, SAVED, SAVING, ERROR, MISSING }
 
 data class NoteEditorUiState(
+    val title: String = "",
     val body: String = "",
     val lifecycle: WorkspaceLifecycle = WorkspaceLifecycle.ACTIVE,
     val status: SaveStatus = SaveStatus.LOADING,
@@ -69,13 +70,21 @@ class NoteEditorViewModel(
                 } else {
                     note.body
                 }
-                document?.ensureDocument(noteId, committedBody)
+                
                 val draft = useCases.getDraft(noteId)
                 val recoveredBody = draft
                     ?.takeIf { it.updatedAt >= note.updatedAt && it.body != committedBody }
                     ?.body
+                
+                if (recoveredBody != null) {
+                    document?.replaceFromText(noteId, recoveredBody)
+                } else {
+                    document?.ensureDocument(noteId, committedBody)
+                }
+
                 if (recoveredBody == null) {
                     mutableUiState.value.copy(
+                        title = note.title,
                         body = committedBody,
                         lifecycle = note.lifecycle,
                         status = SaveStatus.SAVED,
@@ -83,6 +92,7 @@ class NoteEditorViewModel(
                 } else {
                     scheduleCommit(recoveredBody)
                     mutableUiState.value.copy(
+                        title = note.title,
                         body = recoveredBody,
                         lifecycle = note.lifecycle,
                         status = SaveStatus.SAVING,
@@ -183,29 +193,13 @@ class NoteEditorViewModel(
     fun moveBlock(blockId: String, direction: Int) {
         val repository = document ?: return
         viewModelScope.launch {
-            if (repository.move(noteId, blockId, direction)) {
-                val current = mutableUiState.value.blocks.toMutableList()
-                val from = current.indexOfFirst { it.id == blockId }
-                val to = from + direction
-                if (from >= 0 && to in current.indices) {
-                    val moved = current.removeAt(from)
-                    current.add(to, moved)
-                    updateBody(current.serialize())
-                }
-            }
+            repository.move(noteId, blockId, direction)
         }
     }
 
     fun updateBody(body: String) {
         val current = mutableUiState.value
         if (current.status == SaveStatus.MISSING || body == current.body) return
-        viewModelScope.launch {
-            document?.ensureDocument(noteId, body)
-            val firstBlock = document?.observe(noteId)?.first()?.firstOrNull()
-            if (firstBlock != null) {
-                document.updateText(noteId, firstBlock.id, body)
-            }
-        }
         mutableUiState.value = current.copy(body = body, status = SaveStatus.SAVING)
         draftJob?.cancel()
         draftJob = viewModelScope.launch { useCases.saveDraft(noteId, body) }
@@ -261,14 +255,12 @@ class NoteEditorViewModel(
 
     fun applyPreviewReplace() {
         val preview = mutableUiState.value.transformPreview ?: return
-        updateBody(preview)
-        mutableUiState.value = mutableUiState.value.copy(transformPreview = null)
-    }
-
-    fun applyPreviewInsertBelow() {
-        val preview = mutableUiState.value.transformPreview ?: return
-        val current = mutableUiState.value.body
-        updateBody("$current\n\n$preview")
+        viewModelScope.launch {
+            val blocks = document?.observe(noteId)?.first().orEmpty()
+            document?.addBlock(noteId, blocks.size - 1, NoteBlockType.PARAGRAPH)?.let { blockId ->
+                document.updateText(noteId, blockId, preview)
+            }
+        }
         mutableUiState.value = mutableUiState.value.copy(transformPreview = null)
     }
 

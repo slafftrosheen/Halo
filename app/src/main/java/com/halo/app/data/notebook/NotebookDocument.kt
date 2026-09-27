@@ -9,9 +9,11 @@ import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Transaction
+import com.halo.app.data.AppDatabase
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import androidx.room.withTransaction
 
 enum class NoteBlockType { PARAGRAPH, HEADING, CHECKLIST, QUOTE, CODE }
 
@@ -97,10 +99,20 @@ interface NotebookDocumentDao {
         resequence(noteId, orderedIds)
         return true
     }
+    @Query("DELETE FROM note_blocks WHERE noteId = :noteId")
+    suspend fun deleteAllBlocks(noteId: String)
+
+    @Transaction
+    suspend fun replaceDocument(noteId: String, newBlocks: List<NoteBlockEntity>) {
+        deleteAllBlocks(noteId)
+        newBlocks.forEach { insert(it) }
+    }
 }
 
 class NotebookDocumentRepository(
     private val dao: NotebookDocumentDao,
+    private val notebookDao: NotebookDao,
+    private val database: AppDatabase,
     private val now: () -> Long = System::currentTimeMillis,
     private val newId: () -> String = { UUID.randomUUID().toString() },
 ) {
@@ -129,48 +141,95 @@ class NotebookDocumentRepository(
         )
     }
 
-    suspend fun addBlock(noteId: String, afterPosition: Int, type: NoteBlockType): String {
-        val rows = dao.getBlocks(noteId)
-        val id = newId()
-        val insertAt = (afterPosition + 1).coerceIn(0, rows.size)
-        val timestamp = now()
-        val block = NoteBlockEntity(
-                id = id, noteId = noteId, position = rows.size,
-                type = type.name, text = "", checked = false,
-                createdAtEpochMs = timestamp, updatedAtEpochMs = timestamp,
-            )
-        val ids = rows.map(NoteBlockEntity::id).toMutableList().apply { add(insertAt, id) }
-        dao.insertAndResequence(block, ids)
-        return id
+    private suspend fun updateBodyProjection(noteId: String) {
+        val blocks = dao.getBlocks(noteId).map {
+            NoteBlock(it.id, it.position, runCatching { NoteBlockType.valueOf(it.type) }.getOrDefault(NoteBlockType.PARAGRAPH), it.text, it.checked)
+        }
+        val text = NotebookDocumentCodec.serialize(blocks)
+        notebookDao.updateNoteBody(noteId, text)
     }
 
-    suspend fun updateText(noteId: String, blockId: String, text: String): Boolean =
-        dao.updateText(noteId, blockId, text, now()) == 1
+    suspend fun addBlock(noteId: String, afterPosition: Int, type: NoteBlockType): String {
+        return database.withTransaction {
+            val rows = dao.getBlocks(noteId)
+            val id = newId()
+            val insertAt = (afterPosition + 1).coerceIn(0, rows.size)
+            val timestamp = now()
+            val block = NoteBlockEntity(
+                    id = id, noteId = noteId, position = rows.size,
+                    type = type.name, text = "", checked = false,
+                    createdAtEpochMs = timestamp, updatedAtEpochMs = timestamp,
+                )
+            val ids = rows.map(NoteBlockEntity::id).toMutableList().apply { add(insertAt, id) }
+            dao.insertAndResequence(block, ids)
+            updateBodyProjection(noteId)
+            id
+        }
+    }
 
-    suspend fun updateType(noteId: String, blockId: String, type: NoteBlockType): Boolean =
-        dao.updateType(noteId, blockId, type.name, now()) == 1
+    suspend fun updateText(noteId: String, blockId: String, text: String): Boolean {
+        return database.withTransaction {
+            val updated = dao.updateText(noteId, blockId, text, now()) == 1
+            if (updated) updateBodyProjection(noteId)
+            updated
+        }
+    }
 
-    suspend fun updateChecked(noteId: String, blockId: String, checked: Boolean): Boolean =
-        dao.updateChecked(noteId, blockId, checked, now()) == 1
+    suspend fun updateType(noteId: String, blockId: String, type: NoteBlockType): Boolean {
+        return database.withTransaction {
+            val updated = dao.updateType(noteId, blockId, type.name, now()) == 1
+            if (updated) updateBodyProjection(noteId)
+            updated
+        }
+    }
+
+    suspend fun updateChecked(noteId: String, blockId: String, checked: Boolean): Boolean {
+        return database.withTransaction {
+            val updated = dao.updateChecked(noteId, blockId, checked, now()) == 1
+            if (updated) updateBodyProjection(noteId)
+            updated
+        }
+    }
 
     suspend fun deleteBlock(noteId: String, blockId: String): Boolean {
-        val rows = dao.getBlocks(noteId)
-        if (rows.size <= 1) return false
-        return dao.deleteAndResequence(
-            noteId,
-            blockId,
-            rows.filterNot { it.id == blockId }.map(NoteBlockEntity::id),
-        )
+        return database.withTransaction {
+            val rows = dao.getBlocks(noteId)
+            if (rows.size <= 1) return@withTransaction false
+            val deleted = dao.deleteAndResequence(
+                noteId,
+                blockId,
+                rows.filterNot { it.id == blockId }.map(NoteBlockEntity::id),
+            )
+            if (deleted) updateBodyProjection(noteId)
+            deleted
+        }
     }
 
     suspend fun move(noteId: String, blockId: String, direction: Int): Boolean {
-        val ids = dao.getBlocks(noteId).map(NoteBlockEntity::id).toMutableList()
-        val from = ids.indexOf(blockId)
-        val to = from + direction
-        if (from < 0 || to !in ids.indices) return false
-        val moved = ids.removeAt(from)
-        ids.add(to, moved)
-        dao.resequence(noteId, ids)
-        return true
+        return database.withTransaction {
+            val ids = dao.getBlocks(noteId).map(NoteBlockEntity::id).toMutableList()
+            val from = ids.indexOf(blockId)
+            val to = from + direction
+            if (from < 0 || to !in ids.indices) return@withTransaction false
+            val moved = ids.removeAt(from)
+            ids.add(to, moved)
+            dao.resequence(noteId, ids)
+            updateBodyProjection(noteId)
+            true
+        }
+    }
+
+    suspend fun replaceFromText(noteId: String, text: String) {
+        database.withTransaction {
+            val timestamp = now()
+            val newBlock = NoteBlockEntity(
+                id = newId(), noteId = noteId, position = 0,
+                type = NoteBlockType.PARAGRAPH.name, text = text,
+                checked = false, createdAtEpochMs = timestamp, updatedAtEpochMs = timestamp,
+            )
+            dao.replaceDocument(noteId, listOf(newBlock))
+            updateBodyProjection(noteId)
+        }
     }
 }
+

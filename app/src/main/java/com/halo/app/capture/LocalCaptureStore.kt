@@ -47,7 +47,7 @@ class LocalCaptureStore(private val context: Context, private val db: AppDatabas
             else File(capturesDir, "${UUID.randomUUID()}.jpg").also { file.copyTo(it, overwrite = false) }
         val source = if (deviceId == null) "Phone camera" else "HeyCyan"
         val note = db.withTransaction {
-            val note = notebook.createNote("Capture — $source\n\nCapture: $captureId", WorkspaceSource.DEVICE_CAPTURE)
+            val note = notebook.createNote("", WorkspaceSource.DEVICE_CAPTURE, title = "Capture — $source")
             val timestamp = System.currentTimeMillis()
             val assetId = UUID.randomUUID().toString()
             db.workspaceAssetDao().insertAsset(

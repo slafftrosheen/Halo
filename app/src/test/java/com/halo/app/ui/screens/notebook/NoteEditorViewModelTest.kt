@@ -109,8 +109,10 @@ class NoteEditorViewModelTest {
 
         override suspend fun getDraft(id: String): NoteDraft? = draft
 
-        override suspend fun createNote(body: String, source: WorkspaceSource): NotebookNote =
+        override suspend fun createNote(body: String, source: WorkspaceSource, title: String?): NotebookNote =
             error("Not used")
+
+        override suspend fun renameNote(id: String, title: String): Boolean = false
 
         override suspend fun saveDraft(id: String, body: String) {
             draft = NoteDraft(id, body, (note?.updatedAt ?: 0) + 1)

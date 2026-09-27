@@ -13,6 +13,7 @@ import com.halo.app.data.WorkspaceContextStore
 import com.halo.app.data.agent.RoomAgentRunRepository
 import com.halo.app.data.memory.BoundedMemoryContextSource
 import com.halo.app.data.memory.RoomMemoryRepository
+import com.halo.app.data.notebook.NotebookDocumentRepository
 import com.halo.app.data.notebook.RoomNotebookRepository
 import com.halo.app.data.settings.SharedPreferencesDigestDeliverySettingsRepository
 import com.halo.app.data.workspace.RoomWorkspaceFileRepository
@@ -111,7 +112,7 @@ object ManualDependencyGraph {
         com.halo.app.data.workspace.NotebookAssetRepository(applicationContext, appDatabase)
     }
     val notebookDocumentRepository by lazy {
-        com.halo.app.data.notebook.NotebookDocumentRepository(appDatabase.notebookDocumentDao())
+        NotebookDocumentRepository(appDatabase.notebookDocumentDao(), appDatabase.notebookDao(), appDatabase)
     }
     val notebookOrganizationRepository by lazy {
         com.halo.app.data.notebook.NotebookOrganizationRepository(appDatabase.notebookOrganizationDao())

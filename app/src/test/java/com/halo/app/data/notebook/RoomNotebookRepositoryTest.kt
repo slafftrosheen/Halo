@@ -56,6 +56,7 @@ class RoomNotebookRepositoryTest {
         assertEquals(1, repository.observeNotes("100%").first().size)
         assertTrue(repository.observeNotes("not present").first().isEmpty())
 
+        assertTrue(repository.renameNote(note.id, "New title"))
         assertTrue(repository.saveNote(note.id, "New title\nChanged body"))
         val saved = requireNotNull(repository.getNote(note.id))
         assertEquals("New title", saved.title)

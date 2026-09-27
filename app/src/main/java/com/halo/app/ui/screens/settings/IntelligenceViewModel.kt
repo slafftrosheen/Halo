@@ -385,9 +385,9 @@ class IntelligenceViewModel(
         _refreshTrigger.update { it + 1 }
     }
 
-    fun importModelUri(uri: Uri, displayName: String = "Imported Model") {
+    fun importModelUri(uri: Uri) {
         viewModelScope.launch {
-            modelManager?.importModelFromUri(uri, displayName)
+            modelManager?.importModelFromUri(uri)
             _refreshTrigger.update { it + 1 }
         }
     }

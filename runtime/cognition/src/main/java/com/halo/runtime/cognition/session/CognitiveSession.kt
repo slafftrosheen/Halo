@@ -459,18 +459,20 @@ class CognitiveSession(
                 AiErrorType.SESSION_CONFLICT -> "The model is currently in use by another session."
                 AiErrorType.MODEL_NOT_SELECTED -> "Select and download a local model before using local intelligence."
                 AiErrorType.MODEL_NOT_FOUND, AiErrorType.LOCAL_MODEL_UNAVAILABLE -> "The selected local model is unavailable."
-                AiErrorType.NETWORK_UNAVAILABLE -> "The selected provider cannot be reached because the network is unavailable."
-                AiErrorType.TIMEOUT -> "The selected provider timed out."
-                else -> e.message ?: "AI provider request failed"
+                AiErrorType.NETWORK_UNAVAILABLE, AiErrorType.NETWORK_ERROR -> "The AI provider could not be reached."
+                AiErrorType.TIMEOUT -> "The AI provider did not respond in time."
+                AiErrorType.GENERATION_FAILED -> "The AI failed to generate a response."
+                AiErrorType.INVALID_RESPONSE -> "The AI provider returned an invalid response."
+                else -> e.message ?: "An unexpected intelligence error occurred."
             }
         }
         val message = e.message.orEmpty()
         return when {
-            message.contains("401", ignoreCase = true) -> "Invalid API key"
-            message.contains("403", ignoreCase = true) -> "Access denied"
-            message.contains("429", ignoreCase = true) -> "Provider rate limit exceeded"
-            message.contains("Unable to resolve host", ignoreCase = true) -> "Cannot reach provider"
-            else -> "Intelligence provider failed: ${e.localizedMessage ?: "Unknown error"}"
+            message.contains("401", ignoreCase = true) -> "Invalid API key."
+            message.contains("403", ignoreCase = true) -> "Access denied."
+            message.contains("429", ignoreCase = true) -> "Provider rate limit exceeded."
+            message.contains("Unable to resolve host", ignoreCase = true) -> "Cannot reach provider."
+            else -> "An unexpected intelligence error occurred."
         }
     }
 

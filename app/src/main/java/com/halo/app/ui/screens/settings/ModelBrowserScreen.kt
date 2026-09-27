@@ -46,7 +46,7 @@ fun ModelBrowserScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit) {
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
         if (uri != null) {
-            viewModel.importModelUri(uri, "Imported Model")
+            viewModel.importModelUri(uri)
         }
     }
 

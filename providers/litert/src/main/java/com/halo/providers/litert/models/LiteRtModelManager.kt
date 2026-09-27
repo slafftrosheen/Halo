@@ -2,6 +2,7 @@ package com.halo.providers.litert.models
 
 import android.content.Context
 import android.net.Uri
+import android.provider.OpenableColumns
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -110,9 +111,20 @@ class LiteRtModelManager(
         return ready?.models?.firstOrNull { it.id == modelId }
     }
 
-    suspend fun importModelFromUri(uri: Uri, displayName: String): Result<LocalModelDescriptor> = withContext(Dispatchers.IO) {
+    suspend fun importModelFromUri(uri: Uri): Result<LocalModelDescriptor> = withContext(Dispatchers.IO) {
         runCatching {
             val contentResolver = context.contentResolver
+            
+            var filename = "imported_model"
+            contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    filename = cursor.getString(0) ?: filename
+                }
+            }
+            if (!filename.endsWith(".litertlm", ignoreCase = true)) {
+                throw IllegalStateException("Imported model must be a .litertlm file")
+            }
+
             val tempFile = File(modelRoot, "import_${System.currentTimeMillis()}.part")
             val digest = MessageDigest.getInstance("SHA-256")
 
@@ -133,13 +145,19 @@ class LiteRtModelManager(
             }
 
             val sha256 = digest.digest().joinToString("") { "%02x".format(it) }
-            val modelId = displayName.lowercase().replace(Regex("[^a-z0-9_]"), "_").trim('_')
+            val cleanName = filename.substringBeforeLast(".litertlm")
+            val modelId = "${cleanName.lowercase().replace(Regex("[^a-z0-9_]"), "_").trim('_')}_${sha256.take(8)}"
             val finalFile = File(modelRoot, "$modelId.litertlm")
+            
+            if (finalFile.exists()) {
+                tempFile.delete()
+                return@runCatching resolveModel(modelId) ?: throw IllegalStateException("Model already exists but couldn't be resolved")
+            }
 
             if (tempFile.renameTo(finalFile)) {
                 val metadata = InstalledLiteRtModelMetadata(
                     id = modelId,
-                    displayName = displayName,
+                    displayName = cleanName.replace('_', ' ').replace('-', ' '),
                     sourceUrl = null,
                     sha256 = sha256,
                     bytes = finalFile.length(),

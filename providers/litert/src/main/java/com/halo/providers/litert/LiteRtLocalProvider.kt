@@ -30,11 +30,13 @@ import com.halo.sdk.runtime.NativeResourceKind
 import com.halo.sdk.runtime.NativeResourceOwner
 import com.halo.sdk.runtime.NativeResourceState
 import com.halo.sdk.runtime.Storage
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.sync.Mutex
@@ -236,14 +238,14 @@ class LiteRtLocalProvider(
         }
     }
 
-    override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = flow {
+    override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = channelFlow {
         request.validateForTextGeneration()
         request.validateAgainst(getCapabilities())
-        emit(AiStreamEvent.Started)
+        send(AiStreamEvent.Started)
 
         if (!loadModelIfNeeded()) {
-            emit(AiStreamEvent.Failed(AiProviderException(AiErrorType.LOCAL_MODEL_UNAVAILABLE, "Failed to load LiteRT model")))
-            return@flow
+            send(AiStreamEvent.Failed(AiProviderException(AiErrorType.LOCAL_MODEL_UNAVAILABLE, "Failed to load LiteRT model")))
+            return@channelFlow
         }
 
         nativeResourceCoordinator?.mark(this@LiteRtLocalProvider, NativeResourceState.IN_USE, "Inferring")
@@ -270,11 +272,11 @@ class LiteRtLocalProvider(
 
         try {
             val result = modelSession.generate(genConfig) { token ->
-                emit(AiStreamEvent.Token(token))
+                send(AiStreamEvent.Token(token))
             }
 
             result.onSuccess { gen ->
-                emit(
+                send(
                     AiStreamEvent.Completed(
                         AiResponse(
                             text = gen.text,
@@ -286,8 +288,14 @@ class LiteRtLocalProvider(
                     )
                 )
             }.onFailure { err ->
-                emit(AiStreamEvent.Failed(AiProviderException(AiErrorType.GENERATION_FAILED, err.message ?: "Stream failed", err)))
+                send(AiStreamEvent.Failed(AiProviderException(AiErrorType.GENERATION_FAILED, err.message ?: "Stream failed", err)))
             }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: AiProviderException) {
+            send(AiStreamEvent.Failed(error))
+        } catch (error: Throwable) {
+            send(AiStreamEvent.Failed(AiProviderException(AiErrorType.GENERATION_FAILED, "LiteRT generation failed", error)))
         } finally {
             nativeResourceCoordinator?.mark(this@LiteRtLocalProvider, NativeResourceState.RESIDENT, "Resident")
         }

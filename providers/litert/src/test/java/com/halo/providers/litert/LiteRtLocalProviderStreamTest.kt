@@ -1,0 +1,115 @@
+package com.halo.providers.litert
+
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
+import com.halo.providers.litert.models.LocalModelInventoryRepository
+import com.halo.providers.litert.models.LocalModelDescriptor
+import com.halo.providers.litert.models.LocalModelInventoryState
+import com.halo.providers.litert.models.ModelInventoryRefreshReason
+import com.halo.providers.litert.runtime.LocalModelSession
+import com.halo.sdk.provider.AiContext
+import com.halo.sdk.provider.AiRequest
+import com.halo.sdk.provider.AiStreamEvent
+import com.halo.sdk.provider.LocalInferenceRuntime
+import com.halo.sdk.provider.LocalModelFormat
+import com.halo.sdk.provider.RuntimeGenerationConfig
+import com.halo.sdk.provider.RuntimeGenerationResult
+import com.halo.sdk.provider.RuntimeLoadConfig
+import com.halo.sdk.provider.RuntimeLoadResult
+import com.halo.sdk.provider.LocalModelSessionState
+import com.halo.sdk.provider.LocalComputeBackend
+import com.halo.sdk.runtime.Storage
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import kotlinx.coroutines.delay
+
+@RunWith(RobolectricTestRunner::class)
+class LiteRtLocalProviderStreamTest {
+
+    private class FakeRuntime : LocalInferenceRuntime {
+        override val format = LocalModelFormat.LITERT_LM
+        override val state = MutableStateFlow(LocalModelSessionState.IDLE)
+        override val loadedModelId: String? = "test_model"
+
+        override fun isLoaded(): Boolean = true
+
+        override suspend fun loadModel(modelId: String, modelPath: String, config: RuntimeLoadConfig): Result<RuntimeLoadResult> {
+            return Result.success(RuntimeLoadResult(LocalComputeBackend.CPU, 0, config.contextSize, null))
+        }
+
+        override suspend fun generate(config: RuntimeGenerationConfig, onToken: suspend (String) -> Unit): Result<RuntimeGenerationResult> {
+            state.value = LocalModelSessionState.INFERRING
+            delay(10)
+            onToken("Hello")
+            delay(10)
+            onToken(" world")
+            state.value = LocalModelSessionState.IDLE
+            return Result.success(RuntimeGenerationResult("Hello world", emptyList(), 2, 10, 100.0, 20L))
+        }
+
+        override suspend fun cancelGeneration() {
+            state.value = LocalModelSessionState.IDLE
+        }
+
+        override suspend fun unloadModel(): Result<Unit> {
+            return Result.success(Unit)
+        }
+    }
+
+    private class FakeInventory : LocalModelInventoryRepository {
+        override val inventoryState = MutableStateFlow(
+            LocalModelInventoryState.Ready(
+                listOf(LocalModelDescriptor("test_model", "Test", "path", 100L, 0L, "hash", 4096, false, false, true)),
+                0L
+            )
+        )
+        override suspend fun refresh(reason: ModelInventoryRefreshReason) {}
+        override suspend fun resolveModel(modelId: String): LocalModelDescriptor? {
+            return (inventoryState.value as LocalModelInventoryState.Ready).models.firstOrNull { it.id == modelId }
+        }
+        override fun invalidate(reason: String) {}
+    }
+
+    private class FakeStorage : Storage {
+        override fun getString(key: String, defaultValue: String?): String? = if (key == "litert_model") "test_model" else defaultValue
+        override fun putString(key: String, value: String?) {}
+        override fun getInt(key: String, defaultValue: Int): Int = defaultValue
+        override fun putInt(key: String, value: Int) {}
+        override fun getBoolean(key: String, defaultValue: Boolean): Boolean = defaultValue
+        override fun putBoolean(key: String, value: Boolean) {}
+        override fun remove(key: String) {}
+        override fun clear() {}
+    }
+
+    @Test
+    fun `stream events are emitted from channelFlow without flow invariant violations`() = runTest {
+        val runtime = FakeRuntime()
+        val session = LocalModelSession({ runtime }, backgroundScope)
+        
+        val provider = LiteRtLocalProvider(
+            context = androidx.test.core.app.ApplicationProvider.getApplicationContext(),
+            inventoryRepository = FakeInventory(),
+            storage = FakeStorage(),
+            nativeResourceCoordinator = null,
+            modelSession = session
+        )
+
+        val request = AiRequest(text = "test")
+        val events = provider.stream(request, AiContext.EMPTY).toList()
+
+        assertEquals(4, events.size)
+        assertTrue(events[0] is AiStreamEvent.Started)
+        assertTrue(events[1] is AiStreamEvent.Token && (events[1] as AiStreamEvent.Token).text == "Hello")
+        assertTrue(events[2] is AiStreamEvent.Token && (events[2] as AiStreamEvent.Token).text == " world")
+        assertTrue(events[3] is AiStreamEvent.Completed)
+        assertEquals("Hello world", (events[3] as AiStreamEvent.Completed).response.text)
+    }
+}

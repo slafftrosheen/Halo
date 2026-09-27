@@ -241,10 +241,7 @@ fun NoteEditorScreen(viewModel: NoteEditorViewModel, onBack: () -> Unit) {
                         Spacer(Modifier.height(8.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             TextButton(onClick = viewModel::applyPreviewReplace) {
-                                Text("Replace")
-                            }
-                            TextButton(onClick = viewModel::applyPreviewInsertBelow) {
-                                Text("Insert below")
+                                Text("Add as paragraph")
                             }
                             TextButton(onClick = viewModel::discardPreview) {
                                 Text("Discard")
