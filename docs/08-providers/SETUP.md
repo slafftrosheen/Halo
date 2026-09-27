@@ -84,7 +84,7 @@ with phone fallback disabled must never leak to the phone speaker.
 
 ## Routing rules
 
-- Clean install -> native llama.cpp.
+- Clean install -> on-device LiteRT-LM.
 - Persisted explicit user provider selection wins after restart.
 - Default routing policy -> local-only.
 - Explicit provider selection -> explicit routing.
@@ -93,16 +93,13 @@ with phone fallback disabled must never leak to the phone speaker.
 
 ## Troubleshooting
 
-**No model selected:** download and explicitly select a GGUF.
+**No model selected:** download or import a `.litertlm` model in Model Browser.
 
-**Download used to fail with “GGUF is missing general.architecture metadata”:** that was an overly
-strict Halo download gate. Complete readable GGUF files are now retained; native llama.cpp decides
-actual load compatibility.
+**Legacy GGUF files present:** GGUF files are no longer loaded by the LiteRT runtime. Use Intelligence Settings -> "Delete legacy GGUF files" to clean them up.
 
 **Ollama offline:** verify host process, host IP/port, endpoint scheme and that the selected model is
 pulled on the Ollama host.
 
 **OpenRouter unconfigured:** save a valid key, refresh models, select a model/router, then Check connection.
 
-**Android assistant unavailable:** configure the system assistant in Android settings; normal Halo
-llama.cpp inference does not depend on it.
+**Android assistant unavailable:** configure Halo as the default assistant in Settings -> Android Assistant.

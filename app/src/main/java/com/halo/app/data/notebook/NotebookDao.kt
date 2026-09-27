@@ -5,7 +5,9 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import com.halo.app.data.workspace.WorkspaceAssetEntity
 import kotlinx.coroutines.flow.Flow
+import java.io.File
 
 @Dao
 interface NotebookDao {
@@ -140,8 +142,27 @@ interface NotebookDao {
     @Query("UPDATE workspace_objects SET inInbox = :inInbox, updatedAt = :updatedAt WHERE id = :id")
     suspend fun setInbox(id: String, inInbox: Boolean, updatedAt: Long): Int
 
+    @Query("SELECT * FROM workspace_assets WHERE objectId = :id")
+    suspend fun getAssetsForObject(id: String): List<WorkspaceAssetEntity>
+
+    @Query("DELETE FROM workspace_assets WHERE objectId = :id")
+    suspend fun deleteAssetsForObject(id: String): Int
+
     @Query("DELETE FROM workspace_objects WHERE id = :id AND lifecycle = 'TRASHED'")
     suspend fun permanentlyDeleteTrashed(id: String): Int
+
+    @Transaction
+    suspend fun purgePermanently(id: String): Boolean {
+        val assets = getAssetsForObject(id)
+        val rows = permanentlyDeleteTrashed(id)
+        if (rows > 0) {
+            deleteAssetsForObject(id)
+            assets.filter { it.storageType == "MANAGED_FILE" }.forEach { asset ->
+                File(asset.pathOrUri).takeIf { it.exists() }?.delete()
+            }
+        }
+        return rows > 0
+    }
 }
 
 data class WorkspaceSearchRow(

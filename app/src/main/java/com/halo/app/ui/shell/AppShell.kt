@@ -41,6 +41,7 @@ import com.halo.app.ui.glass.components.NavigationItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
+import com.halo.app.data.notebook.WorkspaceObjectType
 import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.screens.activity.ActivityScreen
 import com.halo.app.ui.screens.devices.BuddyBotControlScreen
@@ -168,6 +169,7 @@ fun AppShell(
                                 com.halo.app.data.notebook.WorkspaceObjectType.NOTE -> "notebook/note/$id"
                                 com.halo.app.data.notebook.WorkspaceObjectType.CONVERSATION -> "notebook/conversation/$id"
                                 com.halo.app.data.notebook.WorkspaceObjectType.MEMORY -> "notebook/memory/$id"
+                                WorkspaceObjectType.CANVAS -> "notebook/canvas/$id"
                                 com.halo.app.data.notebook.WorkspaceObjectType.FILE,
                                 com.halo.app.data.notebook.WorkspaceObjectType.MEDIA,
                                 com.halo.app.data.notebook.WorkspaceObjectType.ARTIFACT -> "notebook/file/$id"

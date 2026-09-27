@@ -186,6 +186,7 @@ class NotebookViewModel(
             } else {
                 NotebookNavigation.OpenFile(id)
             }
+            WorkspaceObjectType.CANVAS -> NotebookNavigation.OpenCanvas(id)
             WorkspaceObjectType.FILE, WorkspaceObjectType.MEDIA -> NotebookNavigation.OpenFile(id)
             WorkspaceObjectType.MEMORY -> NotebookNavigation.OpenMemory(id)
         })

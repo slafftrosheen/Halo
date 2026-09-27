@@ -7,10 +7,12 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.room.withTransaction
 import com.halo.app.data.AppDatabase
+import com.halo.app.storage.haloStorageLayout
 import java.util.UUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
+import java.io.File
 
 class NotebookAssetRepository(
     private val context: Context,
@@ -41,6 +43,30 @@ class NotebookAssetRepository(
             resolver.takePersistableUriPermission(uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
             true
         }.getOrDefault(false)
+
+        val timestamp = now()
+        val assetId = newId()
+        val attachmentId = newId()
+
+        val (finalStorageType, finalPathOrUri, finalPermission) = if (!permissionPersisted && uri.scheme == "content") {
+            val managedDir = haloStorageLayout(context).managedWorkspaceFiles
+            if (!managedDir.exists()) managedDir.mkdirs()
+            val file = File(managedDir, "asset_${timestamp}_$assetId.bin")
+            val copied = runCatching {
+                resolver.openInputStream(uri)?.use { input ->
+                    file.outputStream().use { output -> input.copyTo(output) }
+                }
+                file.length() > 0L
+            }.getOrDefault(false)
+            if (copied) {
+                Triple("MANAGED_FILE", file.absolutePath, true)
+            } else {
+                Triple("EXTERNAL_URI", uri.toString(), false)
+            }
+        } else {
+            Triple("EXTERNAL_URI", uri.toString(), permissionPersisted)
+        }
+
         val metadata = resolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE), null, null, null)
             ?.use { cursor ->
                 if (!cursor.moveToFirst()) null else {
@@ -60,9 +86,6 @@ class NotebookAssetRepository(
             }
         } else null
         val mimeType = bounds?.outMimeType ?: declaredMime
-        val timestamp = now()
-        val assetId = newId()
-        val attachmentId = newId()
 
         database.withTransaction {
             database.workspaceAssetDao().insertAsset(
@@ -71,9 +94,9 @@ class NotebookAssetRepository(
                     objectId = noteId,
                     type = if (mimeType.startsWith("image/")) "IMAGE" else "FILE",
                     mimeType = mimeType,
-                    storageType = "EXTERNAL_URI",
-                    pathOrUri = uri.toString(),
-                    permissionPersisted = permissionPersisted,
+                    storageType = finalStorageType,
+                    pathOrUri = finalPathOrUri,
+                    permissionPersisted = finalPermission,
                     displayName = metadata?.first,
                     bytes = metadata?.second,
                     width = bounds?.outWidth?.takeIf { it > 0 },
@@ -96,8 +119,8 @@ class NotebookAssetRepository(
         NoteAttachment(
             id = attachmentId, noteId = noteId, assetId = assetId, position = 0,
             caption = null, type = if (mimeType.startsWith("image/")) "IMAGE" else "FILE",
-            mimeType = mimeType, storageType = "EXTERNAL_URI", pathOrUri = uri.toString(),
-            permissionPersisted = permissionPersisted, displayName = metadata?.first,
+            mimeType = mimeType, storageType = finalStorageType, pathOrUri = finalPathOrUri,
+            permissionPersisted = finalPermission, displayName = metadata?.first,
             bytes = metadata?.second, width = bounds?.outWidth?.takeIf { it > 0 },
             height = bounds?.outHeight?.takeIf { it > 0 }, durationMs = null,
         )

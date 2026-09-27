@@ -165,16 +165,21 @@ class AndroidAssistantRoleController(
             return AssistantEnrollmentLaunchResult.Failed("No assistant settings activity found on device")
         }
 
-        val first = candidates.first()
-        return try {
-            Log.i("HaloAssistant", "HALO_ASSISTANT_ENROLLMENT_TAP path=${first.path}")
-            launcher(first.intent)
-            Log.i("HaloAssistant", "HALO_ASSISTANT_ENROLLMENT_LAUNCHED path=${first.path}")
-            AssistantEnrollmentLaunchResult.Launched(first.path)
-        } catch (e: Exception) {
-            Log.e("HaloAssistant", "HALO_ASSISTANT_ENROLLMENT_FAILED path=${first.path} error=${e.message}")
-            AssistantEnrollmentLaunchResult.Failed(e.message ?: "Launch failed")
+        var lastError: Exception? = null
+        for (candidate in candidates) {
+            try {
+                Log.i("HaloAssistant", "HALO_ASSISTANT_ENROLLMENT_TAP path=${candidate.path}")
+                launcher(candidate.intent)
+                Log.i("HaloAssistant", "HALO_ASSISTANT_ENROLLMENT_LAUNCHED path=${candidate.path}")
+                return AssistantEnrollmentLaunchResult.Launched(candidate.path)
+            } catch (e: Exception) {
+                Log.w("HaloAssistant", "HALO_ASSISTANT_ENROLLMENT_CANDIDATE_FAILED path=${candidate.path} error=${e.message}")
+                lastError = e
+            }
         }
+
+        Log.e("HaloAssistant", "HALO_ASSISTANT_ENROLLMENT_FAILED all_candidates_failed error=${lastError?.message}")
+        return AssistantEnrollmentLaunchResult.Failed(lastError?.message ?: "All launch candidates failed")
     }
 
     override fun createRoleRequestIntent(): Intent? {

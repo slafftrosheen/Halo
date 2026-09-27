@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 enum class SaveStatus { LOADING, SAVED, SAVING, ERROR, MISSING }
@@ -198,6 +199,13 @@ class NoteEditorViewModel(
     fun updateBody(body: String) {
         val current = mutableUiState.value
         if (current.status == SaveStatus.MISSING || body == current.body) return
+        viewModelScope.launch {
+            document?.ensureDocument(noteId, body)
+            val firstBlock = document?.observe(noteId)?.first()?.firstOrNull()
+            if (firstBlock != null) {
+                document.updateText(noteId, firstBlock.id, body)
+            }
+        }
         mutableUiState.value = current.copy(body = body, status = SaveStatus.SAVING)
         draftJob?.cancel()
         draftJob = viewModelScope.launch { useCases.saveDraft(noteId, body) }

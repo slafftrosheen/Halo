@@ -173,12 +173,18 @@ class LiteRtRuntime(
             val file = File(modelPath)
             require(file.exists() && file.isFile) { "Model file does not exist: $modelPath" }
 
+            // Safely unload/close old engine on inferenceMutex FIRST before initializing new Engine to avoid dual-model OOM
+            inferenceMutex.withLock {
+                stateMutex.withLock {
+                    val old = engine
+                    unloadInternal()
+                    old?.let { runCatching { it.close() } }
+                }
+            }
+
             val outcome = resolveEngine(file, modelId, config)
 
-            var oldEngineToClose: Engine? = null
             stateMutex.withLock {
-                oldEngineToClose = engine
-                unloadInternal()
                 engine = outcome.engine
                 requestedBackend = outcome.requestedBackend
                 effectiveBackend = outcome.effectiveBackend
@@ -188,8 +194,6 @@ class LiteRtRuntime(
                 _loadedModelId = modelId
                 _state.value = LocalModelSessionState.IDLE
             }
-
-            oldEngineToClose?.let { runCatching { it.close() } }
 
             Result.success(
                 RuntimeLoadResult(
@@ -266,7 +270,8 @@ class LiteRtRuntime(
                 }
                 if (chunk.isNotEmpty()) {
                     if (firstTokenTime == null) firstTokenTime = System.currentTimeMillis()
-                    tokenCount++
+                    val estimatedTokens = (chunk.length / 3.8).toInt().coerceAtLeast(1)
+                    tokenCount += estimatedTokens
                     textBuilder.append(chunk)
                     onToken(chunk)
                 }
@@ -314,13 +319,14 @@ class LiteRtRuntime(
 
     override suspend fun unloadModel(): Result<Unit> = loadMutex.withLock {
         _state.value = LocalModelSessionState.UNLOADING
-        var engineToClose: Engine? = null
-        stateMutex.withLock {
-            engineToClose = engine
-            unloadInternal()
-            _state.value = LocalModelSessionState.IDLE
+        inferenceMutex.withLock {
+            stateMutex.withLock {
+                val old = engine
+                unloadInternal()
+                old?.let { runCatching { it.close() } }
+                _state.value = LocalModelSessionState.IDLE
+            }
         }
-        engineToClose?.let { runCatching { it.close() } }
         Result.success(Unit)
     }
 

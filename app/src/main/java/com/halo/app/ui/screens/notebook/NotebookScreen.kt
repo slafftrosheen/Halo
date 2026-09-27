@@ -279,7 +279,7 @@ private fun WorkspaceObjectRow(
 }
 
 private fun signalKind(type: WorkspaceObjectType): HaloSignalKind = when (type) {
-    WorkspaceObjectType.NOTE -> HaloSignalKind.NOTE
+    WorkspaceObjectType.NOTE, WorkspaceObjectType.CANVAS -> HaloSignalKind.NOTE
     WorkspaceObjectType.FILE, WorkspaceObjectType.MEDIA -> HaloSignalKind.FILE
     WorkspaceObjectType.CONVERSATION, WorkspaceObjectType.ARTIFACT -> HaloSignalKind.ACTION
     WorkspaceObjectType.MEMORY -> HaloSignalKind.MEMORY

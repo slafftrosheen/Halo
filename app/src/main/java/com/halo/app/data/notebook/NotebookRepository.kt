@@ -78,7 +78,7 @@ class RoomNotebookRepository(
         dao.setInbox(id, false, now()) == 1
 
     override suspend fun permanentlyDelete(id: String): Boolean =
-        dao.permanentlyDeleteTrashed(id) == 1
+        dao.purgePermanently(id)
 
     private fun String.toLikePattern(): String {
         if (isBlank()) return ""

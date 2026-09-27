@@ -14,7 +14,8 @@ enum class WorkspaceObjectType {
     CONVERSATION,
     MEMORY,
     MEDIA,
-    ARTIFACT
+    ARTIFACT,
+    CANVAS
 }
 
 enum class WorkspaceObjectSource {
