@@ -43,6 +43,7 @@ class LocalModelBenchmarkRunner(
             val loadConfig = RuntimeLoadConfig(
                 contextSize = descriptor.contextWindowTokens,
                 computeBackend = LocalComputeBackend.AUTO,
+                useModelDefaultContext = descriptor.useModelDefaultContext,
             )
 
             val loadResult = session.loadModel(

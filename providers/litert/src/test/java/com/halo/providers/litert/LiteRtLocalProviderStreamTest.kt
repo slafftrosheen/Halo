@@ -5,6 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.halo.providers.litert.models.LocalModelInventoryRepository
 import com.halo.providers.litert.models.LocalModelDescriptor
 import com.halo.providers.litert.models.LocalModelInventoryState
+import com.halo.providers.litert.models.LocalModelValidation
 import com.halo.providers.litert.models.ModelInventoryRefreshReason
 import com.halo.providers.litert.runtime.LocalModelSession
 import com.halo.sdk.provider.AiContext
@@ -67,7 +68,20 @@ class LiteRtLocalProviderStreamTest {
     private class FakeInventory : LocalModelInventoryRepository {
         override val inventoryState = MutableStateFlow(
             LocalModelInventoryState.Ready(
-                listOf(LocalModelDescriptor("test_model", "Test", "path", 100L, 0L, "hash", 4096, false, false, true)),
+                listOf(
+                    LocalModelDescriptor(
+                        id = "test_model",
+                        displayName = "Test",
+                        path = "path",
+                        bytes = 100L,
+                        modifiedAt = 0L,
+                        sha256 = "hash",
+                        contextWindowTokens = 4096,
+                        supportsVision = false,
+                        supportsTools = false,
+                        validation = LocalModelValidation.VERIFIED_ARTIFACT,
+                    )
+                ),
                 0L
             )
         )

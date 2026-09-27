@@ -26,6 +26,7 @@ class LocalModelPreloadCoordinator(
         val config = RuntimeLoadConfig(
             contextSize = descriptor.contextWindowTokens,
             computeBackend = LocalComputeBackend.AUTO,
+            useModelDefaultContext = descriptor.useModelDefaultContext,
         )
 
         val result = session.loadModel(

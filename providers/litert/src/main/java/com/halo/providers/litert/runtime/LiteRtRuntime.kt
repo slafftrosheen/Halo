@@ -1,6 +1,7 @@
 package com.halo.providers.litert.runtime
 
 import android.content.Context
+import android.os.Build
 import android.util.Log
 import com.google.ai.edge.litertlm.Backend
 import com.google.ai.edge.litertlm.Conversation
@@ -39,6 +40,21 @@ import java.security.MessageDigest
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.UUID
 
+/** Stage at which a LiteRT load failed, so callers never have to guess from a message. */
+enum class ModelLoadStage { ABI, ARTIFACT, ENGINE_INIT, CONVERSATION, GENERATION }
+
+/**
+ * Preserves the *first* failure (usually the GPU attempt) alongside the final one (usually the CPU
+ * fallback). Without both, a failed on-device load is impossible to diagnose from the field.
+ */
+class LiteRtModelLoadException(
+    val stage: ModelLoadStage,
+    val requestedBackend: LocalComputeBackend,
+    val effectiveCause: Throwable,
+    val primaryCause: Throwable? = null,
+    message: String,
+) : Exception(message, effectiveCause)
+
 data class EngineLoadOutcome(
     val engine: Engine,
     val cacheDir: File,
@@ -75,7 +91,9 @@ class LiteRtRuntime(
     private var activeConversation: Conversation? = null
     private var requestedBackend: LocalComputeBackend = LocalComputeBackend.AUTO
     private var effectiveBackend: LocalComputeBackend = LocalComputeBackend.AUTO
-    private var effectiveContextSize: Int = 4096
+
+    /** Null means "the engine is using the model's own default context window". */
+    private var effectiveContextTokens: Int? = null
     private var lastFallbackReason: String? = null
     private var activeCachePath: String? = null
     private var activeRequestId: String? = null
@@ -92,18 +110,38 @@ class LiteRtRuntime(
         state = _state.value,
         requestedBackend = requestedBackend,
         effectiveBackend = effectiveBackend,
-        contextTokens = effectiveContextSize,
+        contextTokens = effectiveContextTokens,
         fallbackReason = lastFallbackReason,
         activeRequestId = activeRequestId,
-        cachePath = activeCachePath
+        cachePath = activeCachePath,
     )
 
-    private suspend fun createAndInitializeEngine(
+    /**
+     * LiteRT Android local inference only ships arm64-v8a native libraries. Entering
+     * `Engine.initialize()` on an unsupported ABI produces an opaque native abort instead of a
+     * diagnosable failure, so it is rejected here.
+     */
+    private fun abiBlocker(): String? {
+        val abis = Build.SUPPORTED_ABIS?.toList().orEmpty()
+        return if (abis.any { it.equals(SUPPORTED_ABI, ignoreCase = true) }) {
+            null
+        } else {
+            "This device does not support arm64-v8a native inference (SUPPORTED_ABIS=${abis.joinToString(",")})"
+        }
+    }
+
+    private fun backendName(backend: LocalComputeBackend): String = when (backend) {
+        LocalComputeBackend.GPU -> "GPU"
+        LocalComputeBackend.CPU -> "CPU"
+        LocalComputeBackend.AUTO -> "AUTO"
+    }
+
+    private fun createAndInitializeEngine(
         modelPath: String,
         backend: LocalComputeBackend,
-        contextSize: Int,
-        cacheDir: File
-    ): Result<Engine> = withContext(Dispatchers.Default) {
+        contextTokens: Int?,
+        cacheDir: File,
+    ): Result<Engine> {
         val litertBackend = when (backend) {
             LocalComputeBackend.GPU -> Backend.GPU()
             LocalComputeBackend.CPU -> Backend.CPU()
@@ -113,12 +151,13 @@ class LiteRtRuntime(
         val engineConfig = EngineConfig(
             modelPath = modelPath,
             backend = litertBackend,
-            maxNumTokens = contextSize,
+            // null => the native engine applies the model's own default context window.
+            maxNumTokens = contextTokens,
             cacheDir = cacheDir.absolutePath,
         )
 
         var created: Engine? = null
-        try {
+        return try {
             created = Engine(engineConfig)
             created.initialize()
             Result.success(created)
@@ -128,37 +167,115 @@ class LiteRtRuntime(
         }
     }
 
-    private suspend fun resolveEngine(
+    private fun bounded(error: Throwable?): String = error?.let {
+        "${it::class.java.simpleName}: ${it.message?.lineSequence()?.firstOrNull()?.take(300)}"
+    } ?: "unknown"
+
+    private fun resolveEngine(
         file: File,
         modelId: String,
-        config: RuntimeLoadConfig
+        config: RuntimeLoadConfig,
     ): EngineLoadOutcome {
         val artifactFingerprint = sha256(file)
-        val modelCacheDir = File(context.filesDir, "litertlm_cache/${modelId.replace('/', '_')}-$artifactFingerprint")
-        if (!modelCacheDir.exists()) modelCacheDir.mkdirs()
+        val modelCacheRoot = File(
+            context.filesDir,
+            "litertlm_cache/${modelId.replace('/', '_')}-$artifactFingerprint",
+        )
+        // A failed GPU initialization must never leave state that influences the CPU fallback.
+        val gpuCacheDir = File(modelCacheRoot, "gpu").also { if (!it.exists()) it.mkdirs() }
+        val cpuCacheDir = File(modelCacheRoot, "cpu").also { if (!it.exists()) it.mkdirs() }
+        val contextTokens = if (config.useModelDefaultContext) null else config.contextSize
 
-        val reqBackend = config.computeBackend
-
-        when (reqBackend) {
+        when (config.computeBackend) {
             LocalComputeBackend.CPU -> {
-                val engine = createAndInitializeEngine(file.absolutePath, LocalComputeBackend.CPU, config.contextSize, modelCacheDir).getOrThrow()
-                return EngineLoadOutcome(engine, modelCacheDir, LocalComputeBackend.CPU, LocalComputeBackend.CPU, null)
+                val engine = createAndInitializeEngine(file.absolutePath, LocalComputeBackend.CPU, contextTokens, cpuCacheDir)
+                    .getOrElse { error ->
+                        Log.e(
+                            TAG,
+                            "$EVENT_LOAD_FAILED model=$modelId backend=CPU stage=ENGINE_INIT type=${error::class.java.simpleName} " +
+                                "message=${bounded(error)} sha=$artifactFingerprint bytes=${file.length()} " +
+                                "context=${contextTokens ?: "model-default"}",
+                            error,
+                        )
+                        throw LiteRtModelLoadException(
+                            stage = ModelLoadStage.ENGINE_INIT,
+                            requestedBackend = LocalComputeBackend.CPU,
+                            effectiveCause = error,
+                            message = "CPU engine initialization failed (${bounded(error)})",
+                        )
+                    }
+                return EngineLoadOutcome(engine, cpuCacheDir, LocalComputeBackend.CPU, LocalComputeBackend.CPU, null)
             }
             LocalComputeBackend.GPU -> {
-                val engine = createAndInitializeEngine(file.absolutePath, LocalComputeBackend.GPU, config.contextSize, modelCacheDir).getOrThrow()
-                return EngineLoadOutcome(engine, modelCacheDir, LocalComputeBackend.GPU, LocalComputeBackend.GPU, null)
+                val engine = createAndInitializeEngine(file.absolutePath, LocalComputeBackend.GPU, contextTokens, gpuCacheDir)
+                    .getOrElse { error ->
+                        Log.e(
+                            TAG,
+                            "$EVENT_LOAD_FAILED model=$modelId backend=GPU stage=ENGINE_INIT type=${error::class.java.simpleName} " +
+                                "message=${bounded(error)} sha=$artifactFingerprint bytes=${file.length()} " +
+                                "context=${contextTokens ?: "model-default"}",
+                            error,
+                        )
+                        throw LiteRtModelLoadException(
+                            stage = ModelLoadStage.ENGINE_INIT,
+                            requestedBackend = LocalComputeBackend.GPU,
+                            effectiveCause = error,
+                            message = "GPU engine initialization failed (${bounded(error)})",
+                        )
+                    }
+                return EngineLoadOutcome(engine, gpuCacheDir, LocalComputeBackend.GPU, LocalComputeBackend.GPU, null)
             }
             LocalComputeBackend.AUTO -> {
-                val gpuResult = createAndInitializeEngine(file.absolutePath, LocalComputeBackend.GPU, config.contextSize, modelCacheDir)
+                val gpuResult = createAndInitializeEngine(file.absolutePath, LocalComputeBackend.GPU, contextTokens, gpuCacheDir)
                 if (gpuResult.isSuccess) {
-                    return EngineLoadOutcome(gpuResult.getOrThrow(), modelCacheDir, LocalComputeBackend.AUTO, LocalComputeBackend.GPU, null)
+                    return EngineLoadOutcome(
+                        gpuResult.getOrThrow(),
+                        gpuCacheDir,
+                        LocalComputeBackend.AUTO,
+                        LocalComputeBackend.GPU,
+                        null,
+                    )
                 }
 
-                val fallbackMsg = "GPU engine initialization failed (${gpuResult.exceptionOrNull()?.message}); fell back to CPU"
-                Log.w(TAG, fallbackMsg)
+                val gpuError = gpuResult.exceptionOrNull()
+                val gpuReason = "GPU failed: ${bounded(gpuError)}"
+                Log.w(
+                    TAG,
+                    "$EVENT_GPU_FAILED model=$modelId type=${gpuError?.let { it::class.java.simpleName }} " +
+                        "message=${bounded(gpuError)} sha=$artifactFingerprint bytes=${file.length()} " +
+                        "context=${contextTokens ?: "model-default"}",
+                    gpuError,
+                )
 
-                val cpuEngine = createAndInitializeEngine(file.absolutePath, LocalComputeBackend.CPU, config.contextSize, modelCacheDir).getOrThrow()
-                return EngineLoadOutcome(cpuEngine, modelCacheDir, LocalComputeBackend.AUTO, LocalComputeBackend.CPU, fallbackMsg)
+                // Failed GPU engine is already closed by createAndInitializeEngine; the CPU attempt
+                // runs in its own cache directory.
+                val cpuResult = createAndInitializeEngine(file.absolutePath, LocalComputeBackend.CPU, contextTokens, cpuCacheDir)
+                if (cpuResult.isFailure) {
+                    val cpuError = cpuResult.exceptionOrNull()!!
+                    Log.e(
+                        TAG,
+                        "$EVENT_LOAD_FAILED model=$modelId backend=AUTO stage=ENGINE_INIT gpu=$gpuReason cpu=${bounded(cpuError)}",
+                        cpuError,
+                    )
+                    throw LiteRtModelLoadException(
+                        stage = ModelLoadStage.ENGINE_INIT,
+                        requestedBackend = LocalComputeBackend.AUTO,
+                        effectiveCause = cpuError,
+                        primaryCause = gpuError,
+                        message = "GPU and CPU engine initialization both failed. " +
+                            "GPU: ${bounded(gpuError)}. CPU: ${bounded(cpuError)}.",
+                    )
+                }
+
+                val cpuEngine = cpuResult.getOrThrow()
+                Log.i(TAG, "$EVENT_CPU_FALLBACK model=$modelId reason=$gpuReason")
+                return EngineLoadOutcome(
+                    cpuEngine,
+                    cpuCacheDir,
+                    LocalComputeBackend.AUTO,
+                    LocalComputeBackend.CPU,
+                    gpuReason,
+                )
             }
         }
     }
@@ -173,7 +290,25 @@ class LiteRtRuntime(
             val file = File(modelPath)
             require(file.exists() && file.isFile) { "Model file does not exist: $modelPath" }
 
-            // Safely unload/close old engine on inferenceMutex FIRST before initializing new Engine to avoid dual-model OOM
+            val abiIssue = abiBlocker()
+            if (abiIssue != null) {
+                Log.e(TAG, "$EVENT_LOAD_FAILED model=$modelId stage=ABI message=$abiIssue")
+                throw LiteRtModelLoadException(
+                    stage = ModelLoadStage.ABI,
+                    requestedBackend = config.computeBackend,
+                    effectiveCause = UnsupportedOperationException(abiIssue),
+                    message = abiIssue,
+                )
+            }
+
+            val contextTokens = if (config.useModelDefaultContext) null else config.contextSize
+            Log.i(
+                TAG,
+                "$EVENT_LOAD_START model=$modelId backend=${backendName(config.computeBackend)} " +
+                    "bytes=${file.length()} context=${contextTokens ?: "model-default"} path=$modelPath",
+            )
+
+            // Close any previous engine before allocating a new one to avoid dual-model OOM.
             inferenceMutex.withLock {
                 stateMutex.withLock {
                     val old = engine
@@ -182,18 +317,24 @@ class LiteRtRuntime(
                 }
             }
 
-            val outcome = resolveEngine(file, modelId, config)
+            val outcome = withContext(Dispatchers.Default) { resolveEngine(file, modelId, config) }
 
             stateMutex.withLock {
                 engine = outcome.engine
                 requestedBackend = outcome.requestedBackend
                 effectiveBackend = outcome.effectiveBackend
-                effectiveContextSize = config.contextSize
+                effectiveContextTokens = contextTokens
                 lastFallbackReason = outcome.fallbackReason
                 activeCachePath = outcome.cacheDir.absolutePath
                 _loadedModelId = modelId
                 _state.value = LocalModelSessionState.IDLE
             }
+
+            Log.i(
+                TAG,
+                "$EVENT_LOAD_READY model=$modelId requested=${backendName(outcome.requestedBackend)} " +
+                    "effective=${backendName(outcome.effectiveBackend)} fallback=${outcome.fallbackReason != null}",
+            )
 
             Result.success(
                 RuntimeLoadResult(
@@ -244,6 +385,12 @@ class LiteRtRuntime(
                 maxOutputToken = config.maxTokens.takeIf { it > 0 },
             )
 
+            Log.i(
+                TAG,
+                "$EVENT_GENERATION_START model=$_loadedModelId backend=${backendName(effectiveBackend)} " +
+                    "tools=${config.availableTools.size} maxTokens=${config.maxTokens}",
+            )
+
             val conversation = currentEngine.createConversation(convConfig)
             stateMutex.withLock { activeConversation = conversation }
 
@@ -269,7 +416,13 @@ class LiteRtRuntime(
                     }
                 }
                 if (chunk.isNotEmpty()) {
-                    if (firstTokenTime == null) firstTokenTime = System.currentTimeMillis()
+                    if (firstTokenTime == null) {
+                        firstTokenTime = System.currentTimeMillis()
+                        Log.i(
+                            TAG,
+                            "$EVENT_FIRST_TOKEN model=$_loadedModelId ttftMs=${firstTokenTime!! - startTime}",
+                        )
+                    }
                     val estimatedTokens = (chunk.length / 3.8).toInt().coerceAtLeast(1)
                     tokenCount += estimatedTokens
                     textBuilder.append(chunk)
@@ -283,6 +436,12 @@ class LiteRtRuntime(
             val tokensPerSec = (tokenCount.toDouble() / (durationMs.toDouble() / 1000.0))
 
             _state.value = LocalModelSessionState.IDLE
+
+            Log.i(
+                TAG,
+                "$EVENT_GENERATION_COMPLETE model=$_loadedModelId durationMs=$durationMs " +
+                    "ttftMs=$ttft chars=${textBuilder.length} toolCalls=${nativeToolCalls.size}",
+            )
 
             Result.success(
                 RuntimeGenerationResult(
@@ -299,6 +458,11 @@ class LiteRtRuntime(
             _state.value = LocalModelSessionState.IDLE
             throw e
         } catch (e: Throwable) {
+            Log.e(
+                TAG,
+                "$EVENT_GENERATION_FAILED model=$_loadedModelId type=${e::class.java.simpleName} message=${bounded(e)}",
+                e,
+            )
             _state.value = LocalModelSessionState.ERROR
             Result.failure(e)
         } finally {
@@ -336,6 +500,7 @@ class LiteRtRuntime(
         activeConversation = null
         engine = null
         _loadedModelId = null
+        effectiveContextTokens = null
     }
 
     private fun toLiteRtHistory(config: RuntimeGenerationConfig): List<Message> {
@@ -376,5 +541,16 @@ class LiteRtRuntime(
 
     companion object {
         private const val TAG = "LiteRtRuntime"
+        private const val SUPPORTED_ABI = "arm64-v8a"
+
+        const val EVENT_LOAD_START = "HALO_LITERT_LOAD_START"
+        const val EVENT_LOAD_READY = "HALO_LITERT_LOAD_READY"
+        const val EVENT_LOAD_FAILED = "HALO_LITERT_LOAD_FAILED"
+        const val EVENT_GPU_FAILED = "HALO_LITERT_GPU_FAILED"
+        const val EVENT_CPU_FALLBACK = "HALO_LITERT_CPU_FALLBACK"
+        const val EVENT_GENERATION_START = "HALO_LITERT_GENERATION_START"
+        const val EVENT_FIRST_TOKEN = "HALO_LITERT_FIRST_TOKEN"
+        const val EVENT_GENERATION_COMPLETE = "HALO_LITERT_GENERATION_COMPLETE"
+        const val EVENT_GENERATION_FAILED = "HALO_LITERT_GENERATION_FAILED"
     }
 }

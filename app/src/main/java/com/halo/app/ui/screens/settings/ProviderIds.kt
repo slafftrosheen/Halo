@@ -7,7 +7,10 @@ package com.halo.app.ui.screens.settings
 object ProviderIds {
     const val OPENROUTER = "openrouter"
     const val OLLAMA = "provider.ollama"
+
+    /**
+     * The only on-device provider ID. llama.cpp was retired; migration of a persisted
+     * `provider.llamacpp.native` selection is handled once by the router, not by UI code.
+     */
     const val LITERT = "provider.litert.local"
-    @Deprecated("Migrated to LITERT")
-    const val LLAMACPP = "provider.litert.local"
 }

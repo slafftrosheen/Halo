@@ -80,6 +80,12 @@ data class RuntimeLoadConfig(
     val cpuThreads: Int = 4,
     val speculativeDecoding: Boolean? = null,
     val mmprojPath: String? = null,
+    /**
+     * When true, [contextSize] is advisory only and the runtime must ask the native engine for its
+     * own default context window. Required for artifacts whose real context is unknown (imports):
+     * forcing a guessed value can make an otherwise valid model fail engine initialization.
+     */
+    val useModelDefaultContext: Boolean = false,
 )
 
 data class RuntimeLoadResult(

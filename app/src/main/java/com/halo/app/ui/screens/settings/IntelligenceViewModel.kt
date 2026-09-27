@@ -6,10 +6,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.halo.app.ai.readRuntimeAiContextPolicy
 import com.halo.app.ai.writeRuntimeAiContextPolicy
+import com.halo.providers.litert.LiteRtLoadDiagnostics
+import com.halo.providers.litert.LiteRtLocalProvider
 import com.halo.providers.litert.models.LiteRtModelManager
 import com.halo.providers.litert.models.DownloadState
 import com.halo.providers.litert.models.LiteRtCatalogModel
 import com.halo.providers.litert.models.LocalModelDescriptor
+import com.halo.providers.litert.models.ModelVerificationResult
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.HaloDispatchers
 import com.halo.sdk.runtime.NativeResourceSnapshot
@@ -48,6 +51,9 @@ data class IntelligenceUiState(
     val downloadStates: Map<String, DownloadState> = emptyMap(),
     val downloadErrors: Map<String, String> = emptyMap(),
     val activeLocalModelId: String? = null,
+    val verifications: Map<String, ModelVerificationResult> = emptyMap(),
+    val verifyingModelId: String? = null,
+    val litertLoadDiagnostics: LiteRtLoadDiagnostics? = null,
     val temperature: Float = 0.7f,
     val policy: AiContextPolicy = AiContextPolicy.CONSERVATIVE,
     val routingPolicy: AiRoutingPolicy = AiRoutingPolicy.AUTOMATIC,
@@ -86,11 +92,18 @@ private data class ProviderSelection(
     val catalog: AiModelCatalogState,
 )
 
+private data class LocalVerificationInputs(
+    val results: Map<String, ModelVerificationResult> = emptyMap(),
+    val verifyingModelId: String? = null,
+    val diagnostics: LiteRtLoadDiagnostics? = null,
+)
+
 private data class IntelligencePresentationInputs(
     val settings: IntelligenceSettings,
     val lastResolvedModelId: String?,
     val inference: InferenceAggregate,
     val tools: ToolAggregate,
+    val verification: LocalVerificationInputs = LocalVerificationInputs(),
 )
 
 class IntelligenceViewModel(
@@ -112,6 +125,20 @@ class IntelligenceViewModel(
     val testConnectionResult: SharedFlow<Boolean> = _testConnectionResult.asSharedFlow()
     private val _settings = MutableStateFlow(IntelligenceSettings())
     private val _lastResolvedModelId = MutableStateFlow<String?>(null)
+    private val _verifications = MutableStateFlow<Map<String, ModelVerificationResult>>(emptyMap())
+    private val _verifyingModelId = MutableStateFlow<String?>(null)
+
+    /** The on-device provider owns load failures and the qualification probe. */
+    private val localProvider: LiteRtLocalProvider?
+        get() = aiProviderRouter.getAllProviders().filterIsInstance<LiteRtLocalProvider>().firstOrNull()
+
+    private val localVerificationInputs: Flow<LocalVerificationInputs> = combine(
+        _verifications,
+        _verifyingModelId,
+        localProvider?.loadDiagnostics ?: MutableStateFlow<LiteRtLoadDiagnostics?>(null),
+    ) { results, verifying, diagnostics ->
+        LocalVerificationInputs(results, verifying, diagnostics)
+    }
 
     init {
         viewModelScope.launch { loadSettings() }
@@ -154,13 +181,18 @@ class IntelligenceViewModel(
         }
     }
 
+    /**
+     * The router owns provider/model persistence, so the restore path reads storage directly
+     * instead of a second in-memory copy of the same selection.
+     */
     private suspend fun syncStoredModelSelection(providerId: String) {
-        val settings = _settings.value
-        val storedModelId = when (providerId) {
-            ProviderIds.OPENROUTER -> settings.openRouterModel.trim().ifBlank { "openrouter/free" }
-            ProviderIds.OLLAMA -> settings.ollamaModel.trim().ifBlank { null }
-            ProviderIds.LITERT, ProviderIds.LLAMACPP -> settings.litertModel.trim().ifBlank { null }
-            else -> null
+        val storedModelId = withContext(dispatchers.io) {
+            when (providerId) {
+                ProviderIds.OPENROUTER -> storage.getString("openrouter_model")?.trim()?.ifBlank { null } ?: "openrouter/free"
+                ProviderIds.OLLAMA -> storage.getString("ollama_model")?.trim()?.ifBlank { null }
+                ProviderIds.LITERT -> storage.getString("litert_model")?.trim()?.ifBlank { null }
+                else -> null
+            }
         }
         if (storedModelId != aiProviderRouter.selectedModelId.value) aiProviderRouter.selectModel(storedModelId)
     }
@@ -183,14 +215,16 @@ class IntelligenceViewModel(
             _lastResolvedModelId,
             inferenceLedger?.aggregate ?: MutableStateFlow(InferenceAggregate()),
             inferenceLedger?.toolAggregate ?: MutableStateFlow(ToolAggregate()),
-        ) { settings, resolved, inference, tools ->
-            IntelligencePresentationInputs(settings, resolved, inference, tools)
+            localVerificationInputs,
+        ) { settings, resolved, inference, tools, verification ->
+            IntelligencePresentationInputs(settings, resolved, inference, tools, verification)
         }
     ) { snapshot, selection, dlStates, ggufs, presentation ->
         val settings = presentation.settings
         val lastResolvedModelId = presentation.lastResolvedModelId
         val inference = presentation.inference
         val tools = presentation.tools
+        val verification = presentation.verification
         val (selectedProviderId, selectedModelId) = selection
         val allProviders = aiProviderRouter.getAllProviders()
         val activeProvider = allProviders.find { it.id == selectedProviderId }
@@ -262,6 +296,9 @@ class IntelligenceViewModel(
             localModels = localModels,
             catalogModels = modelManager?.getAllCatalogModels().orEmpty(),
             downloadStates = dlStates,
+            verifications = verification.results,
+            verifyingModelId = verification.verifyingModelId,
+            litertLoadDiagnostics = verification.diagnostics,
             temperature = settings.temperature,
             policy = settings.policy,
             routingPolicy = selection.routingPolicy,
@@ -291,32 +328,57 @@ class IntelligenceViewModel(
         viewModelScope.launch { syncStoredModelSelection(providerId) }
     }
 
+    /**
+     * Selects a model for the *currently selected* provider. Persistence stays in the router:
+     * [selectTarget] is the single writer for `active_ai_provider` / `active_ai_model` and the
+     * per-provider model key.
+     */
     fun selectModel(modelId: String) {
         val providerId = aiProviderRouter.selectedProviderId.value ?: return
         when (providerId) {
-            ProviderIds.LITERT, ProviderIds.LLAMACPP -> {
-                updateSettings { it.copy(litertModel = modelId) }
-                persist { storage.putString("litert_model", modelId) }
-            }
-            ProviderIds.OLLAMA -> {
-                updateSettings { it.copy(ollamaModel = modelId) }
-                persist { storage.putString("ollama_model", modelId) }
-            }
-            ProviderIds.OPENROUTER -> {
-                updateSettings { it.copy(openRouterModel = modelId) }
-                persist { storage.putString("openrouter_model", modelId) }
-            }
+            ProviderIds.LITERT -> selectLocalModel(modelId)
+            ProviderIds.OLLAMA -> selectTarget(AiModelRef(ProviderIds.OLLAMA, modelId))
+            ProviderIds.OPENROUTER -> selectTarget(AiModelRef(ProviderIds.OPENROUTER, modelId))
         }
-        aiProviderRouter.selectModel(modelId)
+    }
+
+    /**
+     * Atomically selects the on-device LiteRT provider *and* the local model, independent of
+     * whatever provider happened to be selected before. The LiteRT-only Model Browser must use
+     * this instead of [selectModel], which would otherwise bind a LiteRT model ID to OpenRouter
+     * or Ollama.
+     */
+    fun selectLocalModel(modelId: String) {
+        updateSettings { it.copy(litertModel = modelId) }
+        aiProviderRouter.selectTarget(AiModelRef(ProviderIds.LITERT, modelId))
     }
 
     fun selectTarget(ref: AiModelRef) {
         when (ref.providerId) {
-            ProviderIds.LITERT, ProviderIds.LLAMACPP -> updateSettings { it.copy(litertModel = ref.modelId) }
+            ProviderIds.LITERT -> updateSettings { it.copy(litertModel = ref.modelId) }
             ProviderIds.OLLAMA -> updateSettings { it.copy(ollamaModel = ref.modelId) }
             ProviderIds.OPENROUTER -> updateSettings { it.copy(openRouterModel = ref.modelId) }
         }
         aiProviderRouter.selectTarget(ref)
+    }
+
+    /** Runs the explicit qualification probe. Never triggered automatically on app launch. */
+    fun verifyModel(modelId: String) {
+        val provider = localProvider ?: return
+        if (_verifyingModelId.value != null) return
+        _verifyingModelId.value = modelId
+        viewModelScope.launch {
+            try {
+                val result = withContext(dispatchers.io) { provider.verifyModel(modelId) }
+                _verifications.value = _verifications.value + (modelId to result)
+            } finally {
+                _verifyingModelId.value = null
+            }
+        }
+    }
+
+    fun cancelDownload(modelId: String) {
+        modelManager?.cancelDownload(modelId)
     }
 
     fun activateCatalogEntry(entry: AiModelCatalogEntry) {
@@ -381,6 +443,12 @@ class IntelligenceViewModel(
     }
 
     fun downloadCatalogModel(model: LiteRtCatalogModel) {
+        localProvider?.let { provider ->
+            if (provider.modelSession.loadedModelId == model.id) {
+                // Re-downloading a resident model must not leave the engine pinned to stale bytes.
+                viewModelScope.launch(dispatchers.io) { provider.modelSession.unloadModel() }
+            }
+        }
         modelManager?.downloadCatalogModel(model)
         _refreshTrigger.update { it + 1 }
     }
@@ -395,6 +463,7 @@ class IntelligenceViewModel(
     fun deleteModel(modelId: String) {
         viewModelScope.launch {
             modelManager?.deleteModel(modelId)
+            _verifications.value = _verifications.value - modelId
             _refreshTrigger.update { it + 1 }
         }
     }

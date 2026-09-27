@@ -5,7 +5,11 @@ import android.util.Log
 import com.halo.providers.litert.models.LocalModelDescriptor
 import com.halo.providers.litert.models.LocalModelInventoryRepository
 import com.halo.providers.litert.models.LocalModelInventoryState
+import com.halo.providers.litert.models.LocalModelValidation
+import com.halo.providers.litert.models.ModelVerificationResult
+import com.halo.providers.litert.models.ModelVerificationStage
 import com.halo.providers.litert.runtime.LiteRtConversationMapper
+import com.halo.providers.litert.runtime.LiteRtModelLoadException
 import com.halo.providers.litert.runtime.LocalModelSession
 import com.halo.sdk.provider.AiCapability
 import com.halo.sdk.provider.AiContext
@@ -37,11 +41,39 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
+
+/**
+ * Bounded technical diagnostics for the last failed local load. Surfaced through System Check /
+ * Activity so a native failure is never reduced to "Failed to load <model>".
+ */
+data class LiteRtLoadDiagnostics(
+    val modelId: String,
+    val displayName: String,
+    val artifactSha256: String?,
+    val bytes: Long,
+    val requestedBackend: LocalComputeBackend,
+    val effectiveBackend: LocalComputeBackend?,
+    val contextTokens: Int?,
+    val stage: String,
+    val exceptionClass: String,
+    val exceptionMessage: String?,
+    val recordedAtMs: Long = System.currentTimeMillis(),
+) {
+    fun technicalSummary(): String = buildString {
+        append("stage=$stage model=$modelId backend=$requestedBackend")
+        effectiveBackend?.let { append(" effective=$it") }
+        append(" bytes=$bytes")
+        append(" sha256=${artifactSha256 ?: "unknown"}")
+        append(" context=${contextTokens ?: "model-default"}")
+        append(" type=$exceptionClass")
+        exceptionMessage?.let { append(" message=${it.take(300)}") }
+    }
+}
 
 class LiteRtLocalProvider(
     private val context: Context,
@@ -75,6 +107,9 @@ class LiteRtLocalProvider(
     private val _status = MutableStateFlow(ProviderStatus.UNAVAILABLE)
     override val status: StateFlow<ProviderStatus> = _status.asStateFlow()
 
+    private val _loadDiagnostics = MutableStateFlow<LiteRtLoadDiagnostics?>(null)
+    val loadDiagnostics: StateFlow<LiteRtLoadDiagnostics?> = _loadDiagnostics.asStateFlow()
+
     private val loadMutex = Mutex()
 
     private val configuredModelId: String?
@@ -94,8 +129,19 @@ class LiteRtLocalProvider(
         }
 
         val descriptor = inventoryRepository.resolveModel(modelId)
-        if (descriptor == null || !descriptor.valid) {
-            val status = ProviderStatus(ProviderStatus.State.MODEL_MISSING, "Model '$modelId' is not installed")
+        if (descriptor == null) {
+            val status = ProviderStatus(
+                ProviderStatus.State.MODEL_MISSING,
+                "Model '$modelId' is not installed",
+            )
+            _status.value = status
+            return@withContext status
+        }
+        if (!descriptor.valid) {
+            val status = ProviderStatus(
+                ProviderStatus.State.ERROR,
+                "${descriptor.displayName} is ${describeValidation(descriptor.validation)} — re-download it",
+            )
             _status.value = status
             return@withContext status
         }
@@ -120,6 +166,13 @@ class LiteRtLocalProvider(
         status
     }
 
+    private fun describeValidation(validation: LocalModelValidation): String = when (validation) {
+        LocalModelValidation.VERIFIED_ARTIFACT -> "verified"
+        LocalModelValidation.UNVERIFIED -> "unverified"
+        LocalModelValidation.CORRUPT -> "damaged or stale"
+        LocalModelValidation.INCOMPATIBLE -> "not usable"
+    }
+
     override suspend fun getCapabilities(): Set<AiCapability> {
         val modelId = configuredModelId ?: return emptySet()
         val descriptor = inventoryRepository.resolveModel(modelId)?.takeIf { it.valid } ?: return emptySet()
@@ -134,42 +187,96 @@ class LiteRtLocalProvider(
     override suspend fun testConnection(): Boolean = loadModelIfNeeded()
 
     suspend fun loadModelIfNeeded(): Boolean = loadMutex.withLock {
-        val modelId = configuredModelId ?: return false
-        val descriptor = inventoryRepository.resolveModel(modelId) ?: return false
+        val modelId = configuredModelId ?: return@withLock false
+        val descriptor = inventoryRepository.resolveModel(modelId) ?: return@withLock false
+        loadLocked(descriptor)
+    }
 
-        if (modelSession.isLoaded() && modelSession.loadedModelId == modelId) return true
+    private suspend fun loadLocked(descriptor: LocalModelDescriptor): Boolean {
+        if (modelSession.isLoaded() && modelSession.loadedModelId == descriptor.id) return true
 
         check(nativeResourceCoordinator?.acquire(this) ?: true) {
             "Local inference resource is busy"
         }
 
-        nativeResourceCoordinator?.mark(this, NativeResourceState.LOADING, "Loading LiteRT model: $modelId")
-        _status.value = ProviderStatus(ProviderStatus.State.LOADING, "Loading $modelId...")
+        nativeResourceCoordinator?.mark(this, NativeResourceState.LOADING, "Loading LiteRT model: ${descriptor.id}")
+        _status.value = ProviderStatus(ProviderStatus.State.LOADING, "Loading ${descriptor.displayName}...")
 
-        return try {
-            val loadConfig = RuntimeLoadConfig(
-                contextSize = descriptor.contextWindowTokens,
-                computeBackend = LocalComputeBackend.AUTO,
-            )
-            val result = modelSession.loadModel(
+        val loadConfig = RuntimeLoadConfig(
+            contextSize = descriptor.contextWindowTokens,
+            computeBackend = LocalComputeBackend.AUTO,
+            useModelDefaultContext = descriptor.useModelDefaultContext,
+        )
+
+        val result = try {
+            modelSession.loadModel(
                 modelId = descriptor.id,
                 modelPath = descriptor.path,
-                config = loadConfig
+                config = loadConfig,
             )
-            if (result.isSuccess) {
-                nativeResourceCoordinator?.mark(this, NativeResourceState.RESIDENT, "LiteRT resident: $modelId")
-                _status.value = ProviderStatus(ProviderStatus.State.READY, "Loaded $modelId", ProviderReadiness.Ready)
-                true
-            } else {
-                _status.value = ProviderStatus(ProviderStatus.State.ERROR, "Failed to load $modelId")
-                nativeResourceCoordinator?.release(this)
-                false
-            }
-        } catch (e: Exception) {
-            _status.value = ProviderStatus(ProviderStatus.State.ERROR, "Load error: ${e.message}")
-            nativeResourceCoordinator?.release(this)
-            false
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Throwable) {
+            Result.failure(error)
         }
+
+        if (result.isSuccess) {
+            _loadDiagnostics.value = null
+            nativeResourceCoordinator?.mark(this, NativeResourceState.RESIDENT, "LiteRT resident: ${descriptor.id}")
+            val backend = modelSession.activeBackend ?: LocalComputeBackend.AUTO
+            _status.value = ProviderStatus(
+                ProviderStatus.State.READY,
+                if (modelSession.fallbackReason != null) {
+                    "Loaded ${descriptor.displayName} on $backend (fallback)"
+                } else {
+                    "Loaded ${descriptor.displayName} on $backend"
+                },
+                ProviderReadiness.Ready,
+            )
+            return true
+        }
+
+        val failure = result.exceptionOrNull()
+        _loadDiagnostics.value = buildDiagnostics(descriptor, loadConfig, failure)
+        // The native cause is preserved in diagnostics; the UI only ever sees a user-safe message.
+        _status.value = ProviderStatus(
+            ProviderStatus.State.ERROR,
+            "${descriptor.displayName} could not be loaded.",
+        )
+        nativeResourceCoordinator?.release(this)
+        return false
+    }
+
+    private fun buildDiagnostics(
+        descriptor: LocalModelDescriptor,
+        loadConfig: RuntimeLoadConfig,
+        failure: Throwable?,
+    ): LiteRtLoadDiagnostics {
+        val loadException = failure as? LiteRtModelLoadException
+        val diagnostics = LiteRtLoadDiagnostics(
+            modelId = descriptor.id,
+            displayName = descriptor.displayName,
+            artifactSha256 = descriptor.sha256,
+            bytes = descriptor.bytes,
+            requestedBackend = loadException?.requestedBackend ?: loadConfig.computeBackend,
+            effectiveBackend = modelSession.activeBackend,
+            contextTokens = if (loadConfig.useModelDefaultContext) null else loadConfig.contextSize,
+            stage = (loadException?.stage ?: com.halo.providers.litert.runtime.ModelLoadStage.ENGINE_INIT).name,
+            exceptionClass = failure?.let { it::class.java.simpleName } ?: "UnknownError",
+            exceptionMessage = failure?.message,
+        )
+        Log.e(
+            "HALO_LITERT_LOAD_FAILED",
+            "model=${diagnostics.modelId} sha=${diagnostics.artifactSha256 ?: "unknown"} " +
+                "bytes=${diagnostics.bytes} backend=${diagnostics.requestedBackend} " +
+                "context=${diagnostics.contextTokens ?: "model-default"} " +
+                "type=${diagnostics.exceptionClass} message=${diagnostics.exceptionMessage?.take(300)}",
+            failure,
+        )
+        loadException?.primaryCause?.let {
+            Log.e("HALO_LITERT_LOAD_FAILED", "primaryCause=${it::class.java.simpleName}: ${it.message?.take(300)}", it)
+        }
+        return diagnostics
     }
 
     override suspend fun listModels(): List<AiModel> = withContext(Dispatchers.IO) {
@@ -191,12 +298,113 @@ class LiteRtLocalProvider(
         }
     }
 
+    /**
+     * Qualification probe: resolves the artifact, loads the engine, creates a conversation and
+     * proves a non-empty completion. Never run on app launch — only on explicit user request.
+     */
+    suspend fun verifyModel(modelId: String): ModelVerificationResult = withContext(Dispatchers.IO) {
+        val descriptor = inventoryRepository.resolveModel(modelId)
+            ?: return@withContext ModelVerificationResult.Failed(
+                modelId,
+                ModelVerificationStage.DOWNLOAD,
+                "Model is not installed.",
+            )
+        if (!descriptor.valid) {
+            return@withContext ModelVerificationResult.Failed(
+                modelId,
+                ModelVerificationStage.INTEGRITY,
+                descriptor.validationDetail ?: "Model file failed integrity verification.",
+            )
+        }
+
+        val loadStart = System.currentTimeMillis()
+        val loaded = loadMutex.withLock { loadLocked(descriptor) }
+        if (!loaded) {
+            val diagnostics = _loadDiagnostics.value
+            return@withContext ModelVerificationResult.Failed(
+                modelId,
+                if (diagnostics?.stage == "ABI") ModelVerificationStage.ENGINE_INIT else ModelVerificationStage.ENGINE_INIT,
+                "${descriptor.displayName} could not be loaded.",
+                diagnostics?.technicalSummary(),
+            )
+        }
+        val loadMs = System.currentTimeMillis() - loadStart
+        val backend = modelSession.activeBackend ?: LocalComputeBackend.AUTO
+
+        val generation = withTimeoutOrNull(VERIFY_TIMEOUT_MS) {
+            modelSession.generate(
+                RuntimeGenerationConfig(
+                    prompt = VERIFY_PROMPT,
+                    maxTokens = VERIFY_MAX_TOKENS,
+                    temperature = 0.0,
+                    priority = com.halo.sdk.provider.InferencePriority.INTERACTIVE,
+                    availableTools = emptyList(),
+                )
+            )
+        }
+
+        if (generation == null) {
+            return@withContext ModelVerificationResult.Failed(
+                modelId,
+                ModelVerificationStage.GENERATION,
+                "Timed out while waiting for a response from the model.",
+            )
+        }
+
+        val result = generation.getOrElse { error ->
+            return@withContext ModelVerificationResult.Failed(
+                modelId,
+                if (error is LiteRtModelLoadException) ModelVerificationStage.ENGINE_INIT else ModelVerificationStage.GENERATION,
+                "The model loaded but could not generate a response.",
+                "${error::class.java.simpleName}: ${error.message?.take(300)}",
+            )
+        }
+
+        val text = result.text.trim()
+        if (text.isEmpty()) {
+            return@withContext ModelVerificationResult.Failed(
+                modelId,
+                ModelVerificationStage.GENERATION,
+                "The model produced an empty response.",
+            )
+        }
+
+        Log.i(
+            "HALO_LITERT_VERIFY",
+            "HALO_LITERT_VERIFY_OK model=$modelId backend=$backend loadMs=$loadMs ttftMs=${result.timeToFirstTokenMs}",
+        )
+        ModelVerificationResult.Verified(
+            modelId = modelId,
+            backend = backend,
+            loadMs = loadMs,
+            ttftMs = result.timeToFirstTokenMs,
+            sampleText = text.take(80),
+        )
+    }
+
+    /**
+     * Tools are only ever exposed for models that declare tool support. Qwen 3 0.6B Dynamic INT4
+     * does not, so no tool schema may reach its conversation.
+     */
+    private suspend fun toolsFor(descriptor: LocalModelDescriptor?, requested: List<com.halo.sdk.provider.ToolDefinition>) =
+        if (descriptor?.supportsTools == true) requested else emptyList()
+
+    private suspend fun toolDefinitionsFor(requestContext: AiContext): List<com.halo.sdk.provider.ToolDefinition> {
+        val modelId = modelSession.loadedModelId ?: configuredModelId
+        val descriptor = modelId?.let { inventoryRepository.resolveModel(it) }
+        return toolsFor(descriptor, requestContext.availableTools)
+    }
+
     override suspend fun generate(request: AiRequest, context: AiContext): AiResponse = withContext(Dispatchers.IO) {
         request.validateForTextGeneration()
         request.validateAgainst(getCapabilities())
 
         if (!loadModelIfNeeded()) {
-            throw AiProviderException(AiErrorType.LOCAL_MODEL_UNAVAILABLE, "Failed to load LiteRT model")
+            throw AiProviderException(
+                AiErrorType.LOCAL_MODEL_UNAVAILABLE,
+                _loadDiagnostics.value?.let { "${it.displayName} could not be loaded: ${it.stage}" }
+                    ?: "Failed to load LiteRT model",
+            )
         }
 
         nativeResourceCoordinator?.mark(this@LiteRtLocalProvider, NativeResourceState.IN_USE, "Inferring")
@@ -206,19 +414,8 @@ class LiteRtLocalProvider(
             prompt = mapped.outgoingMessage?.content ?: request.text ?: "",
             systemInstruction = mapped.systemInstruction,
             imageBytes = request.image,
-            initialMessages = mapped.initialMessages.map { message ->
-                RuntimeConversationMessage(
-                    role = when (message.role) {
-                        "model" -> com.halo.sdk.provider.Role.ASSISTANT
-                        "tool" -> com.halo.sdk.provider.Role.TOOL
-                        else -> com.halo.sdk.provider.Role.USER
-                    },
-                    content = message.content,
-                    toolCalls = message.toolCalls,
-                    toolCallId = message.toolCallId,
-                )
-            },
-            availableTools = context.availableTools,
+            initialMessages = mapped.initialMessages.map { message -> message.toRuntimeMessage() },
+            availableTools = toolDefinitionsFor(context),
         )
 
         return@withContext try {
@@ -244,7 +441,16 @@ class LiteRtLocalProvider(
         send(AiStreamEvent.Started)
 
         if (!loadModelIfNeeded()) {
-            send(AiStreamEvent.Failed(AiProviderException(AiErrorType.LOCAL_MODEL_UNAVAILABLE, "Failed to load LiteRT model")))
+            val diagnostics = _loadDiagnostics.value
+            send(
+                AiStreamEvent.Failed(
+                    AiProviderException(
+                        AiErrorType.LOCAL_MODEL_UNAVAILABLE,
+                        diagnostics?.let { "${it.displayName} could not be loaded." }
+                            ?: "Failed to load LiteRT model",
+                    )
+                )
+            )
             return@channelFlow
         }
 
@@ -255,19 +461,8 @@ class LiteRtLocalProvider(
             prompt = mapped.outgoingMessage?.content ?: request.text ?: "",
             systemInstruction = mapped.systemInstruction,
             imageBytes = request.image,
-            initialMessages = mapped.initialMessages.map { message ->
-                RuntimeConversationMessage(
-                    role = when (message.role) {
-                        "model" -> com.halo.sdk.provider.Role.ASSISTANT
-                        "tool" -> com.halo.sdk.provider.Role.TOOL
-                        else -> com.halo.sdk.provider.Role.USER
-                    },
-                    content = message.content,
-                    toolCalls = message.toolCalls,
-                    toolCallId = message.toolCallId,
-                )
-            },
-            availableTools = context.availableTools,
+            initialMessages = mapped.initialMessages.map { message -> message.toRuntimeMessage() },
+            availableTools = toolDefinitionsFor(context),
         )
 
         try {
@@ -301,7 +496,25 @@ class LiteRtLocalProvider(
         }
     }.flowOn(Dispatchers.IO)
 
+    private fun com.halo.providers.litert.runtime.LiteRtMappedMessage.toRuntimeMessage() =
+        RuntimeConversationMessage(
+            role = when (role) {
+                "model" -> com.halo.sdk.provider.Role.ASSISTANT
+                "tool" -> com.halo.sdk.provider.Role.TOOL
+                else -> com.halo.sdk.provider.Role.USER
+            },
+            content = content,
+            toolCalls = toolCalls,
+            toolCallId = toolCallId,
+        )
+
     object ProviderIds {
         const val LITERT = "provider.litert.local"
+    }
+
+    companion object {
+        const val VERIFY_PROMPT = "Reply with OK."
+        const val VERIFY_MAX_TOKENS = 8
+        const val VERIFY_TIMEOUT_MS = 120_000L
     }
 }

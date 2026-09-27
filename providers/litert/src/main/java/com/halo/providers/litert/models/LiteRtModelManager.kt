@@ -3,8 +3,11 @@ package com.halo.providers.litert.models
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
+import android.util.Log
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,22 +17,26 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.net.HttpURLConnection
-import java.net.URL
+import java.io.IOException
+import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import java.security.MessageDigest
+import java.util.concurrent.ConcurrentHashMap
 
-sealed interface DownloadState {
-    data object NotDownloaded : DownloadState
-    data class Downloading(val progress: Float, val bytesDownloaded: Long, val totalBytes: Long) : DownloadState
-    data object Downloaded : DownloadState
-    data class Failed(val reason: String) : DownloadState
-}
-
+/**
+ * Owns the on-disk LiteRT model directory: acquisition, verification, inventory and deletion.
+ *
+ * Invariant: a model is only reported as installed after the physical file on disk has been
+ * re-resolved through the inventory and found to match its pinned fingerprint. "The download
+ * finished" is never treated as proof that a model is ready.
+ */
 class LiteRtModelManager(
     private val context: Context,
     private val modelRoot: File = File(context.noBackupFilesDir, "models"),
+    private val downloader: LiteRtModelDownloader = OkHttpLiteRtModelDownloader(),
+    /** Pinned artifacts this manager treats as authoritative. Injectable for tests. */
+    private val catalog: List<LiteRtCatalogModel> = LiteRtModelCatalog.BUILT_IN_MODELS,
 ) : LocalModelInventoryRepository {
 
     @Volatile
@@ -41,6 +48,12 @@ class LiteRtModelManager(
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val inventoryMutex = Mutex()
+    private val downloadLock = Any()
+    private val downloadJobs = mutableMapOf<String, Job>()
+
+    /** path|length|modified -> physical SHA-256. Avoids rehashing an unchanged 330 MB artifact. */
+    private val physicalFingerprints = ConcurrentHashMap<String, String>()
+
     private val _inventoryState = MutableStateFlow<LocalModelInventoryState>(LocalModelInventoryState.Loading)
     override val inventoryState: StateFlow<LocalModelInventoryState> = _inventoryState.asStateFlow()
 
@@ -51,9 +64,7 @@ class LiteRtModelManager(
     val legacyGgufFiles: StateFlow<List<File>> = _legacyGgufFiles.asStateFlow()
 
     init {
-        scope.launch {
-            refresh(ModelInventoryRefreshReason.STARTUP)
-        }
+        scope.launch { refresh(ModelInventoryRefreshReason.STARTUP) }
     }
 
     override fun invalidate(reason: String) {
@@ -63,58 +74,206 @@ class LiteRtModelManager(
     override suspend fun refresh(reason: ModelInventoryRefreshReason) = inventoryMutex.withLock {
         _inventoryState.value = LocalModelInventoryState.Loading
         runCatching {
-            withContext(Dispatchers.IO) {
-                if (!modelRoot.exists()) modelRoot.mkdirs()
-
-                // 1. Scan legacy GGUF files for user cleanup
-                val ggufs = modelRoot.listFiles { f -> f.isFile && f.name.endsWith(".gguf", ignoreCase = true) }?.toList().orEmpty()
-                _legacyGgufFiles.value = ggufs
-
-                // 2. Scan valid LiteRT models (.litertlm, ignoring .part)
-                val litertFiles = modelRoot.listFiles { f ->
-                    f.isFile && f.name.endsWith(".litertlm", ignoreCase = true) && !f.name.endsWith(".part", ignoreCase = true) && f.length() > 0L
-                }?.toList().orEmpty()
-
-                val descriptors = litertFiles.map { file ->
-                    val modelId = file.nameWithoutExtension
-                    val sidecarFile = File(modelRoot, "$modelId.halo-model.json")
-                    val sidecar = if (sidecarFile.exists()) InstalledLiteRtModelMetadata.fromJson(sidecarFile.readText()) else null
-                    val catalogMatch = LiteRtModelCatalog.BUILT_IN_MODELS.firstOrNull { it.id == modelId || file.name.startsWith(it.id) }
-
-                    LocalModelDescriptor(
-                        id = catalogMatch?.id ?: sidecar?.id ?: modelId,
-                        displayName = catalogMatch?.displayName ?: sidecar?.displayName ?: modelId.replace('_', ' ').replace('-', ' '),
-                        path = file.absolutePath,
-                        bytes = file.length(),
-                        modifiedAt = file.lastModified(),
-                        sha256 = catalogMatch?.sha256 ?: sidecar?.sha256,
-                        contextWindowTokens = catalogMatch?.contextWindowTokens ?: sidecar?.contextWindowTokens ?: 4096,
-                        supportsVision = catalogMatch?.supportsVision ?: sidecar?.supportsVision ?: false,
-                        supportsTools = catalogMatch?.supportsTools ?: sidecar?.supportsTools ?: false,
-                        valid = true
-                    )
-                }
-                descriptors
-            }
+            withContext(Dispatchers.IO) { scanModelRoot() }
         }.onSuccess { descriptors ->
-            val states = descriptors.associate { it.id to DownloadState.Downloaded }
-            _downloadStates.value = _downloadStates.value + states
             _inventoryState.value = LocalModelInventoryState.Ready(descriptors, System.currentTimeMillis())
-        }.onFailure { err ->
-            _inventoryState.value = LocalModelInventoryState.Failed(err.message ?: "Model inventory scan failed")
+            reconcileDownloadStates(descriptors)
+            Log.i(TAG, "$EVENT_INVENTORY reason=$reason models=${descriptors.size} verified=${descriptors.count { it.verified }}")
+        }.onFailure { error ->
+            Log.e(TAG, "HALO_LITERT_INVENTORY_FAILED reason=$reason", error)
+            _inventoryState.value = LocalModelInventoryState.Failed(error.message ?: "Model inventory scan failed")
         }
         Unit
     }
 
+    /**
+     * Resolves a descriptor without ever reporting MODEL_MISSING because the inventory happened to
+     * still be loading at startup. Never called while holding [inventoryMutex].
+     */
     override suspend fun resolveModel(modelId: String): LocalModelDescriptor? {
-        val ready = inventoryState.value as? LocalModelInventoryState.Ready
-        return ready?.models?.firstOrNull { it.id == modelId }
+        var state = inventoryState.value
+        if (state !is LocalModelInventoryState.Ready) {
+            refresh(ModelInventoryRefreshReason.USER_REQUEST)
+            state = inventoryState.value
+        }
+        return (state as? LocalModelInventoryState.Ready)?.models?.firstOrNull { it.id == modelId }
     }
+
+    // ---------------------------------------------------------------------------------------
+    // Download
+    // ---------------------------------------------------------------------------------------
+
+    fun downloadCatalogModel(model: LiteRtCatalogModel) {
+        synchronized(downloadLock) {
+            if (downloadJobs[model.id]?.isActive == true) {
+                Log.i(TAG, "$EVENT_FAILED id=${model.id} reason=ALREADY_DOWNLOADING")
+                return
+            }
+            downloadJobs[model.id] = scope.launch {
+                try {
+                    runDownload(model)
+                } finally {
+                    synchronized(downloadLock) { downloadJobs.remove(model.id) }
+                }
+            }
+        }
+    }
+
+    fun isDownloading(modelId: String): Boolean = downloadJobs[modelId]?.isActive == true
+
+    /** Cancels an in-flight download. Never touches an existing verified artifact. */
+    fun cancelDownload(modelId: String) {
+        val job = synchronized(downloadLock) { downloadJobs[modelId] }
+        job?.cancel(CancellationException("Model download cancelled by user"))
+    }
+
+    private suspend fun runDownload(model: LiteRtCatalogModel) {
+        val partFile = File(modelRoot, "${model.id}.litertlm.part")
+        val finalFile = File(modelRoot, "${model.id}.litertlm")
+        val sidecarFile = File(modelRoot, "${model.id}.halo-model.json")
+        val sidecarPart = File(modelRoot, "${model.id}.halo-model.json.part")
+
+        try {
+            // 1. model directory
+            if (!modelRoot.exists() && !modelRoot.mkdirs()) {
+                throw IOException("Unable to create model directory ${modelRoot.absolutePath}")
+            }
+            // 2. stale .part for THIS model only
+            if (partFile.exists() && !partFile.delete()) {
+                throw IOException("Unable to remove stale partial download for ${model.id}")
+            }
+            if (sidecarPart.exists()) sidecarPart.delete()
+
+            setDownloadState(model.id, DownloadState.Downloading(0L, model.expectedBytes, 0f))
+
+            var lastLoggedBytes = 0L
+            // 3-6. stream, fsync/close, verify byte count, verify SHA (inside the downloader)
+            val result = downloader.download(model, partFile) { progress ->
+                if (progress.downloadedBytes - lastLoggedBytes >= PROGRESS_LOG_INTERVAL_BYTES) {
+                    lastLoggedBytes = progress.downloadedBytes
+                    Log.i(
+                        TAG,
+                        "$EVENT_PROGRESS id=${model.id} bytes=${progress.downloadedBytes} total=${progress.totalBytes}",
+                    )
+                }
+                setDownloadState(
+                    model.id,
+                    DownloadState.Downloading(progress.downloadedBytes, progress.totalBytes, progress.progress),
+                )
+            }
+
+            when (result) {
+                is DownloadResult.Failure -> {
+                    partFile.delete()
+                    Log.e(TAG, "$EVENT_FAILED id=${model.id} kind=${result.kind} detail=${result.technicalMessage}")
+                    setDownloadState(
+                        model.id,
+                        if (result.kind == ModelDownloadFailure.CANCELLED) {
+                            DownloadState.NotInstalled
+                        } else {
+                            DownloadState.Failed(result.kind, result.userMessage, result.technicalMessage)
+                        },
+                    )
+                }
+                is DownloadResult.Success -> installVerifiedArtifact(
+                    model = model,
+                    verifiedFile = result.file,
+                    finalFile = finalFile,
+                    sidecarFile = sidecarFile,
+                    sidecarPart = sidecarPart,
+                )
+            }
+        } catch (cancelled: CancellationException) {
+            partFile.delete()
+            setDownloadState(model.id, DownloadState.NotInstalled)
+            Log.i(TAG, "$EVENT_FAILED id=${model.id} kind=CANCELLED")
+            throw cancelled
+        } catch (error: Throwable) {
+            partFile.delete()
+            Log.e(TAG, "$EVENT_FAILED id=${model.id} kind=IO_FAILURE", error)
+            setDownloadState(
+                model.id,
+                DownloadState.Failed(
+                    ModelDownloadFailure.IO_FAILURE,
+                    "The model could not be saved to this device.",
+                    "${error::class.java.simpleName}: ${error.message}",
+                ),
+            )
+        }
+    }
+
+    private suspend fun installVerifiedArtifact(
+        model: LiteRtCatalogModel,
+        verifiedFile: File,
+        finalFile: File,
+        sidecarFile: File,
+        sidecarPart: File,
+    ) {
+        setDownloadState(model.id, DownloadState.Verifying(verifiedFile.length(), model.expectedBytes))
+        Log.i(TAG, "$EVENT_VERIFY id=${model.id} bytes=${verifiedFile.length()} sha256=${model.sha256}")
+
+        // 7. sidecar staged as .json.part
+        val metadata = InstalledLiteRtModelMetadata(
+            id = model.id,
+            displayName = model.displayName,
+            sourceUrl = model.downloadUrl,
+            sha256 = model.sha256,
+            bytes = model.expectedBytes,
+            contextWindowTokens = model.contextWindowTokens,
+            contextKnown = true,
+            supportsVision = model.supportsVision,
+            supportsTools = model.supportsTools,
+        )
+        sidecarPart.writeText(metadata.toJson())
+
+        // 8-9. move model, then sidecar, into their final paths
+        moveIntoPlace(verifiedFile, finalFile)
+        moveIntoPlace(sidecarPart, sidecarFile)
+        physicalFingerprints.remove(fingerprintKey(finalFile))
+
+        // 10. refresh inventory
+        refresh(ModelInventoryRefreshReason.DOWNLOAD_COMPLETED)
+
+        // 11. the inventory must resolve the exact model as usable
+        val installed = resolveModel(model.id)
+        if (installed == null || !installed.valid) {
+            Log.e(
+                TAG,
+                "$EVENT_FAILED id=${model.id} reason=NOT_RESOLVED_AFTER_INSTALL " +
+                    "resolved=${installed?.id} validation=${installed?.validation}",
+            )
+            setDownloadState(
+                model.id,
+                DownloadState.Failed(
+                    ModelDownloadFailure.HASH_MISMATCH,
+                    OkHttpLiteRtModelDownloader.INTEGRITY_USER_MESSAGE,
+                    "Inventory did not resolve ${model.id} as valid after install " +
+                        "(validation=${installed?.validation?.name ?: "missing"})",
+                ),
+            )
+            return
+        }
+
+        // 12. only now is the model actually installed
+        setDownloadState(model.id, DownloadState.Installed)
+        Log.i(
+            TAG,
+            "$EVENT_INSTALLED id=${model.id} bytes=${finalFile.length()} sha256=${installed.sha256} " +
+                "validation=${installed.validation}",
+        )
+    }
+
+    // ---------------------------------------------------------------------------------------
+    // Import (SAF)
+    // ---------------------------------------------------------------------------------------
 
     suspend fun importModelFromUri(uri: Uri): Result<LocalModelDescriptor> = withContext(Dispatchers.IO) {
         runCatching {
             val contentResolver = context.contentResolver
-            
+            if (!modelRoot.exists() && !modelRoot.mkdirs()) {
+                throw IOException("Unable to create model directory ${modelRoot.absolutePath}")
+            }
+
             var filename = "imported_model"
             contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
                 if (cursor.moveToFirst()) {
@@ -122,140 +281,80 @@ class LiteRtModelManager(
                 }
             }
             if (!filename.endsWith(".litertlm", ignoreCase = true)) {
-                throw IllegalStateException("Imported model must be a .litertlm file")
+                throw IllegalArgumentException("Imported model must be a .litertlm file")
             }
 
-            val tempFile = File(modelRoot, "import_${System.currentTimeMillis()}.part")
+            val tempFile = File(modelRoot, "import_${System.currentTimeMillis()}.litertlm.part")
             val digest = MessageDigest.getInstance("SHA-256")
-
-            contentResolver.openInputStream(uri)?.use { input ->
-                tempFile.outputStream().use { output ->
-                    val buffer = ByteArray(64 * 1024)
-                    var bytesRead: Int
-                    while (input.read(buffer).also { bytesRead = it } != -1) {
-                        digest.update(buffer, 0, bytesRead)
-                        output.write(buffer, 0, bytesRead)
+            try {
+                contentResolver.openInputStream(uri)?.use { input ->
+                    tempFile.outputStream().use { output ->
+                        val buffer = ByteArray(128 * 1024)
+                        while (true) {
+                            val read = input.read(buffer)
+                            if (read < 0) break
+                            digest.update(buffer, 0, read)
+                            output.write(buffer, 0, read)
+                        }
+                        output.flush()
+                        output.fd.sync()
                     }
-                }
-            } ?: throw IllegalStateException("Unable to open URI input stream")
-
-            if (tempFile.length() == 0L) {
+                } ?: throw IOException("Unable to open URI input stream")
+            } catch (error: Throwable) {
                 tempFile.delete()
-                throw IllegalStateException("Imported file was empty")
+                throw error
             }
 
+            val bytes = tempFile.length()
+            if (bytes == 0L) {
+                tempFile.delete()
+                throw IllegalArgumentException("Imported file was empty")
+            }
             val sha256 = digest.digest().joinToString("") { "%02x".format(it) }
+
+            // 16. a byte-identical known artifact is canonicalized instead of duplicated.
+            val catalogMatch = catalog.firstOrNull { it.sha256.equals(sha256, ignoreCase = true) }
             val cleanName = filename.substringBeforeLast(".litertlm")
-            val modelId = "${cleanName.lowercase().replace(Regex("[^a-z0-9_]"), "_").trim('_')}_${sha256.take(8)}"
+            val modelId = catalogMatch?.id ?: fingerprintModelId(cleanName, sha256)
             val finalFile = File(modelRoot, "$modelId.litertlm")
-            
+
             if (finalFile.exists()) {
                 tempFile.delete()
-                return@runCatching resolveModel(modelId) ?: throw IllegalStateException("Model already exists but couldn't be resolved")
+                // 14. refresh first: the duplicate physically exists, so resolve must see it.
+                refresh(ModelInventoryRefreshReason.USER_REQUEST)
+                return@runCatching resolveModel(modelId)?.takeIf { it.valid }
+                    ?: throw IllegalStateException(
+                        "A file for '$modelId' already exists but is not usable " +
+                            "(${resolveModel(modelId)?.validation})"
+                    )
             }
 
-            if (tempFile.renameTo(finalFile)) {
-                val metadata = InstalledLiteRtModelMetadata(
-                    id = modelId,
-                    displayName = cleanName.replace('_', ' ').replace('-', ' '),
-                    sourceUrl = null,
-                    sha256 = sha256,
-                    bytes = finalFile.length(),
-                )
-                File(modelRoot, "$modelId.halo-model.json").writeText(metadata.toJson())
-                refresh(ModelInventoryRefreshReason.DOWNLOAD_COMPLETED)
-                resolveModel(modelId) ?: throw IllegalStateException("Model import failed to register")
-            } else {
-                tempFile.delete()
-                throw IllegalStateException("Failed to rename temporary import file")
-            }
+            moveIntoPlace(tempFile, finalFile)
+            physicalFingerprints.remove(fingerprintKey(finalFile))
+
+            val metadata = InstalledLiteRtModelMetadata(
+                id = modelId,
+                displayName = catalogMatch?.displayName ?: cleanName.replace('_', ' ').replace('-', ' '),
+                sourceUrl = catalogMatch?.downloadUrl,
+                sha256 = sha256,
+                bytes = finalFile.length(),
+                // 15. unknown metadata: let LiteRT-LM use the model's own default context.
+                contextWindowTokens = catalogMatch?.contextWindowTokens ?: InstalledLiteRtModelMetadata.UNKNOWN_CONTEXT_TOKENS,
+                contextKnown = catalogMatch != null,
+                supportsVision = catalogMatch?.supportsVision ?: false,
+                supportsTools = catalogMatch?.supportsTools ?: false,
+            )
+            File(modelRoot, "$modelId.halo-model.json").writeText(metadata.toJson())
+
+            refresh(ModelInventoryRefreshReason.DOWNLOAD_COMPLETED)
+            resolveModel(modelId)?.takeIf { it.valid }
+                ?: throw IllegalStateException("Model import failed to register")
         }
     }
 
-    fun downloadCatalogModel(model: LiteRtCatalogModel) {
-        scope.launch {
-            _downloadStates.value = _downloadStates.value + (model.id to DownloadState.Downloading(0f, 0L, model.expectedBytes ?: 0L))
-            val tempFile = File(modelRoot, "${model.id}.part")
-            runCatching {
-                val finalFile = File(modelRoot, "${model.id}.litertlm")
-                if (!modelRoot.exists() && !modelRoot.mkdirs()) {
-                    throw IllegalStateException("Unable to create model directory")
-                }
-                if (tempFile.exists() && !tempFile.delete()) {
-                    throw IllegalStateException("Unable to remove stale partial download")
-                }
-                val url = URL(model.downloadUrl)
-                val conn = url.openConnection() as HttpURLConnection
-                conn.connectTimeout = 15000
-                conn.readTimeout = 30000
-                conn.instanceFollowRedirects = true
-                try {
-                    conn.connect()
-                    if (conn.responseCode !in 200..299) {
-                        throw IllegalStateException("Model download failed with HTTP ${conn.responseCode}")
-                    }
-
-                    val responseBytes = conn.contentLengthLong.takeIf { it >= 0 }
-                    val expectedBytes = model.expectedBytes
-                    if (expectedBytes != null && responseBytes != null && responseBytes != expectedBytes) {
-                        throw IllegalStateException("Model size header mismatch: expected $expectedBytes bytes, received $responseBytes")
-                    }
-                    val progressTotal = expectedBytes ?: responseBytes ?: 1L
-                    val digest = MessageDigest.getInstance("SHA-256")
-
-                    conn.inputStream.use { input ->
-                        tempFile.outputStream().use { output ->
-                            val buffer = ByteArray(64 * 1024)
-                            var bytesRead: Int
-                            var downloaded = 0L
-                            while (input.read(buffer).also { bytesRead = it } != -1) {
-                                digest.update(buffer, 0, bytesRead)
-                                output.write(buffer, 0, bytesRead)
-                                downloaded += bytesRead
-                                val progress = (downloaded.toFloat() / progressTotal.toFloat()).coerceIn(0f, 1f)
-                                _downloadStates.value = _downloadStates.value + (model.id to DownloadState.Downloading(progress, downloaded, progressTotal))
-                            }
-                        }
-                    }
-
-                    if (tempFile.length() == 0L) throw IllegalStateException("Downloaded file was empty")
-                    if (expectedBytes != null && tempFile.length() != expectedBytes) {
-                        throw IllegalStateException("Model size mismatch: expected $expectedBytes bytes, received ${tempFile.length()}")
-                    }
-
-                    val calculatedSha = digest.digest().joinToString("") { "%02x".format(it) }
-                    if (!calculatedSha.equals(model.sha256, ignoreCase = true)) {
-                        throw IllegalStateException("Model SHA-256 mismatch")
-                    }
-
-                    Files.move(
-                        tempFile.toPath(),
-                        finalFile.toPath(),
-                        StandardCopyOption.ATOMIC_MOVE,
-                        StandardCopyOption.REPLACE_EXISTING,
-                    )
-                    val metadata = InstalledLiteRtModelMetadata(
-                        id = model.id,
-                        displayName = model.displayName,
-                        sourceUrl = model.downloadUrl,
-                        sha256 = model.sha256.lowercase(),
-                        bytes = finalFile.length(),
-                        contextWindowTokens = model.contextWindowTokens,
-                        supportsVision = model.supportsVision,
-                        supportsTools = model.supportsTools
-                    )
-                    File(modelRoot, "${model.id}.halo-model.json").writeText(metadata.toJson())
-                    _downloadStates.value = _downloadStates.value + (model.id to DownloadState.Downloaded)
-                    refresh(ModelInventoryRefreshReason.DOWNLOAD_COMPLETED)
-                } finally {
-                    conn.disconnect()
-                }
-            }.onFailure { err ->
-                if (tempFile.exists()) tempFile.delete()
-                _downloadStates.value = _downloadStates.value + (model.id to DownloadState.Failed(err.message ?: "Download failed"))
-            }
-        }
-    }
+    // ---------------------------------------------------------------------------------------
+    // Deletion
+    // ---------------------------------------------------------------------------------------
 
     suspend fun deleteModel(modelId: String): Boolean = withContext(Dispatchers.IO) {
         if (residentModelIdProvider() == modelId) return@withContext false
@@ -265,10 +364,11 @@ class LiteRtModelManager(
         val cacheFolder = File(context.filesDir, "litertlm_cache")
 
         var deleted = false
-        if (modelFile.exists()) {
-            deleted = modelFile.delete()
-        }
+        if (modelFile.exists()) deleted = modelFile.delete()
         if (sidecarFile.exists()) sidecarFile.delete()
+        File(modelRoot, "$modelId.litertlm.part").delete()
+        File(modelRoot, "$modelId.halo-model.json.part").delete()
+        physicalFingerprints.remove(fingerprintKey(modelFile))
 
         if (cacheFolder.exists()) {
             val cachePrefix = "${modelId.replace('/', '_')}-"
@@ -293,5 +393,269 @@ class LiteRtModelManager(
         deletedBytes
     }
 
-    fun getAllCatalogModels(): List<LiteRtCatalogModel> = LiteRtModelCatalog.BUILT_IN_MODELS
+    fun getAllCatalogModels(): List<LiteRtCatalogModel> = catalog
+
+    // ---------------------------------------------------------------------------------------
+    // Inventory scan
+    // ---------------------------------------------------------------------------------------
+
+    private fun scanModelRoot(): List<LocalModelDescriptor> {
+        if (!modelRoot.exists()) modelRoot.mkdirs()
+
+        _legacyGgufFiles.value = modelRoot
+            .listFiles { f -> f.isFile && f.name.endsWith(".gguf", ignoreCase = true) }
+            ?.toList()
+            .orEmpty()
+
+        val candidates = modelRoot
+            .listFiles { f -> f.isFile && f.name.endsWith(".litertlm", ignoreCase = true) }
+            ?.sortedBy { it.name }
+            .orEmpty()
+
+        val descriptors = mutableListOf<LocalModelDescriptor>()
+        for (candidate in candidates) {
+            val physical = physicalFingerprint(candidate)
+            val catalogBySha = catalog.firstOrNull { it.sha256.equals(physical.sha256, ignoreCase = true) }
+            val catalogById = catalog.firstOrNull { it.id == candidate.nameWithoutExtension }
+            val catalogMatch = catalogById ?: catalogBySha
+
+            // A byte-identical copy of a pinned artifact is canonicalized to the catalog id so an
+            // import never produces a second, duplicate copy of the same 330 MB file.
+            var located: File = candidate
+            if (catalogBySha != null && candidate.name != "${catalogBySha.id}.litertlm") {
+                val canonical = File(modelRoot, "${catalogBySha.id}.litertlm")
+                if (canonical.exists()) {
+                    descriptors += duplicateDescriptor(candidate, physical, catalogBySha)
+                    continue
+                }
+                Log.w(TAG, "HALO_LITERT_INVENTORY_CANONICALIZED from=${candidate.name} to=${canonical.name}")
+                located = try {
+                    moveIntoPlace(candidate, canonical)
+                    canonical
+                } catch (error: Throwable) {
+                    Log.e(TAG, "HALO_LITERT_INVENTORY_CANONICALIZE_FAILED from=${candidate.name}", error)
+                    candidate
+                }
+            }
+
+            descriptors += describe(located, physical, catalogMatch)
+        }
+        return descriptors
+    }
+
+    private fun duplicateDescriptor(
+        file: File,
+        physical: PhysicalFingerprint,
+        catalog: LiteRtCatalogModel,
+    ): LocalModelDescriptor = LocalModelDescriptor(
+        id = file.nameWithoutExtension,
+        displayName = file.nameWithoutExtension.replace('_', ' ').replace('-', ' '),
+        path = file.absolutePath,
+        bytes = physical.bytes,
+        modifiedAt = file.lastModified(),
+        sha256 = physical.sha256,
+        contextWindowTokens = catalog.contextWindowTokens,
+        supportsVision = catalog.supportsVision,
+        supportsTools = catalog.supportsTools,
+        validation = LocalModelValidation.INCOMPATIBLE,
+        validationDetail = "Duplicate copy of ${catalog.displayName}. Delete one copy.",
+    )
+
+    private fun describe(
+        file: File,
+        physical: PhysicalFingerprint,
+        catalogMatch: LiteRtCatalogModel?,
+    ): LocalModelDescriptor {
+        val sidecarFile = File(modelRoot, "${file.nameWithoutExtension}.halo-model.json")
+        val sidecar = if (sidecarFile.exists()) {
+            runCatching { InstalledLiteRtModelMetadata.fromJson(sidecarFile.readText()) }.getOrNull()
+        } else {
+            null
+        }
+
+        if (catalogMatch != null) {
+            val bytesOk = physical.bytes == catalogMatch.expectedBytes
+            val shaOk = physical.sha256.equals(catalogMatch.sha256, ignoreCase = true)
+            val validation = if (bytesOk && shaOk) {
+                LocalModelValidation.VERIFIED_ARTIFACT
+            } else {
+                LocalModelValidation.CORRUPT
+            }
+            val detail = if (validation == LocalModelValidation.CORRUPT) {
+                "Installed file does not match the pinned ${catalogMatch.displayName} artifact. " +
+                    "Expected ${catalogMatch.expectedBytes} bytes / ${catalogMatch.sha256.take(12)}…, " +
+                    "found ${physical.bytes} bytes / ${physical.sha256.take(12)}…."
+            } else {
+                null
+            }
+            if (validation == LocalModelValidation.CORRUPT) {
+                Log.w(
+                    TAG,
+                    "HALO_LITERT_INVENTORY_STALE id=${catalogMatch.id} bytes=${physical.bytes} " +
+                        "sha256=${physical.sha256} expectedBytes=${catalogMatch.expectedBytes} " +
+                        "expectedSha256=${catalogMatch.sha256}",
+                )
+            }
+            return LocalModelDescriptor(
+                id = catalogMatch.id,
+                displayName = catalogMatch.displayName,
+                path = file.absolutePath,
+                bytes = physical.bytes,
+                modifiedAt = file.lastModified(),
+                sha256 = physical.sha256,
+                contextWindowTokens = catalogMatch.contextWindowTokens,
+                supportsVision = catalogMatch.supportsVision,
+                supportsTools = catalogMatch.supportsTools,
+                validation = validation,
+                useModelDefaultContext = false,
+                validationDetail = detail,
+            )
+        }
+
+        // Not a pinned artifact: an arbitrary user import.
+        if (physical.bytes == 0L) {
+            return LocalModelDescriptor(
+                id = file.nameWithoutExtension,
+                displayName = file.nameWithoutExtension,
+                path = file.absolutePath,
+                bytes = 0L,
+                modifiedAt = file.lastModified(),
+                sha256 = physical.sha256,
+                contextWindowTokens = DEFAULT_CONTEXT_FOR_DISPLAY,
+                supportsVision = false,
+                supportsTools = false,
+                validation = LocalModelValidation.INCOMPATIBLE,
+                useModelDefaultContext = true,
+                validationDetail = "The imported file is empty.",
+            )
+        }
+
+        val sidecarDisagrees = sidecar != null &&
+            (sidecar.bytes != physical.bytes || !sidecar.sha256.equals(physical.sha256, ignoreCase = true))
+
+        val contextKnown = sidecar?.contextKnown ?: false
+        val declaredContext = sidecar?.contextWindowTokens?.takeIf { it > 0 } ?: DEFAULT_CONTEXT_FOR_DISPLAY
+
+        return LocalModelDescriptor(
+            id = file.nameWithoutExtension,
+            displayName = sidecar?.displayName
+                ?: file.nameWithoutExtension.replace('_', ' ').replace('-', ' '),
+            path = file.absolutePath,
+            bytes = physical.bytes,
+            modifiedAt = file.lastModified(),
+            sha256 = physical.sha256,
+            contextWindowTokens = declaredContext,
+            supportsVision = sidecar?.supportsVision ?: false,
+            supportsTools = sidecar?.supportsTools ?: false,
+            validation = if (sidecarDisagrees) LocalModelValidation.CORRUPT else LocalModelValidation.UNVERIFIED,
+            useModelDefaultContext = !contextKnown,
+            validationDetail = if (sidecarDisagrees) {
+                "The file no longer matches its recorded fingerprint " +
+                    "(recorded ${sidecar?.bytes} bytes / ${sidecar?.sha256?.take(12)}…, " +
+                    "found ${physical.bytes} bytes / ${physical.sha256.take(12)}…)."
+            } else {
+                "Imported model — not verified against a pinned artifact."
+            },
+        )
+    }
+
+    private fun reconcileDownloadStates(descriptors: List<LocalModelDescriptor>) {
+        val next = _downloadStates.value.toMutableMap()
+        descriptors.forEach { descriptor ->
+            val existing = next[descriptor.id]
+            if (existing is DownloadState.Downloading || existing is DownloadState.Verifying) return@forEach
+            next[descriptor.id] = when (descriptor.validation) {
+                LocalModelValidation.VERIFIED_ARTIFACT -> DownloadState.Installed
+                LocalModelValidation.CORRUPT, LocalModelValidation.INCOMPATIBLE -> DownloadState.Failed(
+                    ModelDownloadFailure.HASH_MISMATCH,
+                    CORRUPT_USER_MESSAGE,
+                    descriptor.validationDetail,
+                )
+                LocalModelValidation.UNVERIFIED -> DownloadState.NotInstalled
+            }
+        }
+        // Drop bookkeeping for models that are no longer on disk; keep failures so the user sees them.
+        next.keys.toList().forEach { id ->
+            if (descriptors.none { it.id == id } && next[id] == DownloadState.Installed) next.remove(id)
+        }
+        _downloadStates.value = next
+    }
+
+    private fun setDownloadState(modelId: String, state: DownloadState) {
+        _downloadStates.value = _downloadStates.value + (modelId to state)
+    }
+
+    // ---------------------------------------------------------------------------------------
+    // Helpers
+    // ---------------------------------------------------------------------------------------
+
+    private data class PhysicalFingerprint(val bytes: Long, val sha256: String)
+
+    private fun fingerprintKey(file: File): String = "${file.absolutePath}|${file.length()}|${file.lastModified()}"
+
+    private fun physicalFingerprint(file: File): PhysicalFingerprint {
+        val key = fingerprintKey(file)
+        val cached = physicalFingerprints[key]
+        if (cached != null) return PhysicalFingerprint(file.length(), cached)
+
+        val digest = MessageDigest.getInstance("SHA-256")
+        var bytes = 0L
+        file.inputStream().use { input ->
+            val buffer = ByteArray(128 * 1024)
+            while (true) {
+                val read = input.read(buffer)
+                if (read < 0) break
+                digest.update(buffer, 0, read)
+                bytes += read
+            }
+        }
+        val sha = digest.digest().joinToString("") { "%02x".format(it) }
+        if (bytes > 0L) {
+            physicalFingerprints[key] = sha
+        }
+        return PhysicalFingerprint(bytes, sha)
+    }
+
+    /**
+     * Same-directory move. `ATOMIC_MOVE` is not guaranteed on every Android filesystem, so a
+     * plain replace-copy move is used as a fallback. Source and target always share [modelRoot].
+     */
+    private fun moveIntoPlace(source: File, target: File) {
+        val sourcePath = source.toPath()
+        val targetPath = target.toPath()
+        try {
+            Files.move(
+                sourcePath,
+                targetPath,
+                StandardCopyOption.ATOMIC_MOVE,
+                StandardCopyOption.REPLACE_EXISTING,
+            )
+        } catch (atomicUnsupported: AtomicMoveNotSupportedException) {
+            Log.w(TAG, "HALO_LITERT_MOVE_ATOMIC_UNSUPPORTED from=${source.name} to=${target.name}")
+            Files.move(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING)
+        } catch (unsupported: UnsupportedOperationException) {
+            Log.w(TAG, "HALO_LITERT_MOVE_ATOMIC_UNSUPPORTED from=${source.name} to=${target.name}")
+            Files.move(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING)
+        }
+    }
+
+    private fun fingerprintModelId(cleanName: String, sha256: String): String {
+        val slug = cleanName.lowercase().replace(Regex("[^a-z0-9_]"), "_").trim('_')
+        val prefix = slug.ifBlank { "imported_model" }
+        return "${prefix}_${sha256.take(8)}"
+    }
+
+    companion object {
+        private const val TAG = "LiteRtModelManager"
+        private const val PROGRESS_LOG_INTERVAL_BYTES = 8L * 1024L * 1024L
+        private const val DEFAULT_CONTEXT_FOR_DISPLAY = 4096
+
+        const val EVENT_INVENTORY = "HALO_LITERT_INVENTORY"
+        const val EVENT_PROGRESS = OkHttpLiteRtModelDownloader.EVENT_PROGRESS
+        const val EVENT_VERIFY = "HALO_LITERT_DOWNLOAD_VERIFY"
+        const val EVENT_INSTALLED = "HALO_LITERT_DOWNLOAD_INSTALLED"
+        const val EVENT_FAILED = "HALO_LITERT_DOWNLOAD_FAILED"
+
+        const val CORRUPT_USER_MESSAGE = "Model file is damaged or stale — re-download it."
+    }
 }

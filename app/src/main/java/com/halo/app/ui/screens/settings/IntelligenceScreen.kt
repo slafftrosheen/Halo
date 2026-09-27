@@ -38,6 +38,7 @@ import com.halo.app.ui.workspace.HaloWorkspaceHeader
 import com.halo.app.ui.workspace.HaloWorkspaceRow
 import com.halo.app.ui.workspace.HaloWorkspaceSection
 import com.halo.providers.litert.models.LocalModelDescriptor
+import com.halo.providers.litert.models.LocalModelValidation
 import com.halo.sdk.provider.AiCapability
 import com.halo.sdk.provider.AiModel
 import com.halo.sdk.provider.AiExecutionLocation
@@ -337,7 +338,7 @@ fun IntelligenceScreen(
 
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 uiState.localModels.forEach { model ->
-                    val isActive = model.id == uiState.activeModelId
+                    val isActive = model.verified && model.id == uiState.activeModelId
 
                     HaloWorkspaceCard(accent = if (isActive) HaloPastelMint else null) {
                         Row(
@@ -358,18 +359,35 @@ fun IntelligenceScreen(
                             )
                         }
                         Text(
-                            text = "Context window: ${model.contextWindowTokens} tokens",
+                            text = when {
+                                model.validation == LocalModelValidation.VERIFIED_ARTIFACT ->
+                                    "Verified artifact · ${model.contextWindowTokens} context"
+                                model.validation == LocalModelValidation.UNVERIFIED ->
+                                    "Imported · unverified · model default context"
+                                else -> "${model.validation} — re-download or delete"
+                            },
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = if (model.valid) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.error
                         )
+                        model.validationDetail?.takeIf { !model.valid }?.let { detail ->
+                            Text(
+                                text = detail,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
                         Spacer(Modifier.height(4.dp))
 
                         HaloWorkspaceButton(
-                            text = if (isActive) "Active" else "Select",
-                            onClick = { if (!isActive) viewModel.selectModel(model.id) },
-                            enabled = !isActive,
+                            text = when {
+                                isActive -> "Active"
+                                model.valid -> "Select"
+                                else -> "Damaged — re-download"
+                            },
+                            onClick = { if (!isActive && model.valid) viewModel.selectLocalModel(model.id) },
+                            enabled = !isActive && model.valid,
                             modifier = Modifier.fillMaxWidth(),
-                            primary = !isActive
+                            primary = !isActive && model.valid
                         )
                     }
                 }

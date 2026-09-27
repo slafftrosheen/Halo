@@ -64,10 +64,12 @@ class DefaultAiProviderRouter(
     }
 
     private fun restoreStoredRoutingState() {
+        // Migration boundary: the retired llama.cpp provider ID is read once and rewritten to LiteRT.
+        // No new code may treat it as a live selectable provider.
         var rawStoredProvider = storage.getString("active_ai_provider")
-        if (rawStoredProvider == "provider.llamacpp.native") {
-            rawStoredProvider = "provider.litert.local"
-            storage.putString("active_ai_provider", "provider.litert.local")
+        if (rawStoredProvider == LEGACY_LLAMACPP_PROVIDER_ID) {
+            rawStoredProvider = LITERT_PROVIDER_ID
+            storage.putString("active_ai_provider", LITERT_PROVIDER_ID)
         }
         val storedProvider = rawStoredProvider
             ?.takeIf { id -> inferenceProviders.any { it.id == id } }
@@ -254,7 +256,7 @@ class DefaultAiProviderRouter(
         val modelId = when (providerId) {
             "openrouter" -> storage.getString("openrouter_model")
             "provider.ollama" -> storage.getString("ollama_model")
-            "provider.litert.local", "provider.llamacpp.native" -> storage.getString("litert_model")
+            LITERT_PROVIDER_ID -> storage.getString("litert_model")
             else -> storage.getString("ai_model_$providerId")
         }?.trim()?.ifBlank { null }
         _selectedModelId.value = modelId
@@ -265,7 +267,7 @@ class DefaultAiProviderRouter(
         when (providerId) {
             "openrouter" -> storage.putString("openrouter_model", modelId)
             "provider.ollama" -> storage.putString("ollama_model", modelId)
-            "provider.litert.local", "provider.llamacpp.native" -> storage.putString("litert_model", modelId)
+            LITERT_PROVIDER_ID -> storage.putString("litert_model", modelId)
             else -> storage.putString("ai_model_$providerId", modelId)
         }
     }
@@ -482,5 +484,13 @@ class DefaultAiProviderRouter(
             }
             throw e
         }
+    }
+
+    companion object {
+        /** Live on-device provider. The only local provider ID new code may reference. */
+        const val LITERT_PROVIDER_ID = "provider.litert.local"
+
+        /** Retired llama.cpp provider ID. Kept for reading (and rewriting) persisted config only. */
+        const val LEGACY_LLAMACPP_PROVIDER_ID = "provider.llamacpp.native"
     }
 }

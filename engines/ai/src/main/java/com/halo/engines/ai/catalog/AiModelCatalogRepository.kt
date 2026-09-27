@@ -1,5 +1,6 @@
 package com.halo.engines.ai.catalog
 
+import com.halo.engines.ai.DefaultAiProviderRouter
 import com.halo.sdk.provider.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
@@ -51,7 +52,7 @@ class DefaultAiModelCatalogRepository(
 
     private fun AiModel.toEntry(provider: AiInferenceProvider, status: ProviderStatus): AiModelCatalogEntry {
         val location = when (provider.id) {
-            "provider.litert.local", "provider.llamacpp.native" -> AiExecutionLocation.ON_DEVICE
+            DefaultAiProviderRouter.LITERT_PROVIDER_ID -> AiExecutionLocation.ON_DEVICE
             "provider.ollama" -> AiExecutionLocation.LOCAL_NETWORK
             else -> AiExecutionLocation.REMOTE
         }
@@ -77,7 +78,7 @@ class DefaultAiModelCatalogRepository(
                     else -> AiCostClass.UNKNOWN
                 },
                 wireProtocol = when (provider.id) {
-                    "provider.litert.local", "provider.llamacpp.native" -> AiWireProtocol.LITERT_NATIVE
+                    DefaultAiProviderRouter.LITERT_PROVIDER_ID -> AiWireProtocol.LITERT_NATIVE
                     "provider.ollama" -> AiWireProtocol.OLLAMA
                     "openrouter" -> AiWireProtocol.OPENAI_CHAT_COMPLETIONS
                     else -> null

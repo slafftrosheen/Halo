@@ -1,6 +1,6 @@
 # Provider setup
 
-Status: CURRENT SOURCE MAP. Reviewed 2026-09-24.
+Status: CURRENT SOURCE MAP. Reviewed 2026-09-27 (LiteRT model acquisition + verified inference path).
 
 This page describes setup implemented by the current Android host.
 
@@ -11,14 +11,67 @@ Provider ID: `provider.litert.local`
 This is Halo's clean-install/default inference provider. It runs `.litertlm` models directly on the phone
 using LiteRT-LM (GPU or CPU) and requires no server, API key or cloud account.
 
+Runtime: **LiteRT-LM 0.17.1** (`com.google.ai.edge.litertlm:litertlm-android:0.17.1`).
+
+### Built-in downloadable models
+
+Halo currently ships **exactly one** zero-configuration downloadable artifact:
+
+| Field | Value |
+| --- | --- |
+| id | `qwen3-0.6b-dynamic-int4` |
+| Name | Qwen 3 0.6B Dynamic INT4 |
+| Source | `litert-community/Qwen3-0.6B` (official LiteRT Community repository) |
+| Revision | `a3c5d805ae362dff7f580bc25f2dfb9a5a7eaa76` (immutable) |
+| File | `Qwen3-0.6B_dynamic_wi4b32_afp32.litertlm` |
+| Bytes | `344671744` |
+| SHA-256 | `03e7da1eb1108b50dffaa9bb52cc7bcbad2eb0c66ca990267f480c1e545d2856` |
+| Context | 4096 tokens |
+| Capabilities | Text only (no vision, no tools) |
+| Minimum runtime | LiteRT-LM 0.17.1 |
+
+The download URL is derived from `repoId` + `revision` + `filename`; `main`, `latest` and other mutable
+refs are never used. Integrity is checked on the streamed bytes, never on the HTTP `Content-Length`
+header (which may be absent or wrong behind a CDN redirect).
+
+**Gemma is withheld.** The real upstream (`litert-community/Gemma3-1B-IT`) is gated by Gemma terms and
+Halo has no Hugging Face authentication or gated-license acceptance flow, so it is not a valid
+zero-config built-in. Halo will not use a mirror to bypass licensing or authentication; Gemma can
+return later through a proper gated-source flow.
+
+### Setup
+
 1. Open **Settings -> Intelligence**.
 2. Keep/select **On-device (LiteRT)**.
 3. Open **Browse models for this phone**.
-4. Download or import a compatible `.litertlm` model (such as Gemma 3 1B IT or Qwen 3 0.6B).
-5. Choose **Select**.
-6. Use **System Check** or **Check connection** to verify native load.
+4. Press **Download** on *Qwen 3 0.6B Dynamic INT4* and wait for **Verifying file** to finish.
+5. Press **Verify** to qualify the artifact (loads the engine, then generates a bounded probe).
+6. Press **Select** — this atomically sets **On-device (LiteRT)** + the Qwen model.
+
+### Model states and what they mean
+
+- **installed** != **verified**: a file that finished downloading is only *installed*. Only a completed
+  qualification run reports **Verified on GPU/CPU**.
+- **selected** != **resident**: selecting a model does not load it into memory.
+- **resident** != **generation-proven**: a loaded engine is not proof that generation works.
+- Only a catalog artifact whose physical bytes **and** SHA-256 match the pinned entry is offered as
+  **Select**-able. Anything else renders as **Corrupt/stale — re-download**.
+- A model imported through SAF is **UNVERIFIED** until it is qualified. A byte-identical import of the
+  pinned Qwen artifact is canonicalized to `qwen3-0.6b-dynamic-int4` instead of creating a duplicate copy.
+- An imported model with unknown metadata uses the model's own default context window; Halo does not
+  force a guessed 4096 tokens.
 
 Legacy `.gguf` files remain on disk for user cleanup via Intelligence settings but are no longer loaded.
+
+### Troubleshooting
+
+- **"could not be loaded"** — open **Details** on the model card for bounded technical diagnostics
+  (stage, backend, bytes, SHA, context, exception type/message). Pair it with logcat
+  (`HALO_LITERT_LOAD_FAILED`, `HALO_LITERT_GPU_FAILED`, `HALO_LITERT_CPU_FALLBACK`, `HALO_LITERT_LOAD_READY`).
+- **Corrupt/stale after upgrading** — older builds installed artifacts with fabricated fingerprints.
+  Press **Re-download**.
+- **No arm64-v8a** — LiteRT local inference requires the `arm64-v8a` ABI; the app fails early with a
+  diagnostic instead of entering native initialization.
 
 ## Ollama — optional local-network server
 
