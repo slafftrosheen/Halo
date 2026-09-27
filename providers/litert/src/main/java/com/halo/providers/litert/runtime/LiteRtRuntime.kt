@@ -19,6 +19,7 @@ import com.halo.sdk.provider.LocalComputeBackend
 import com.halo.sdk.provider.LocalInferenceRuntime
 import com.halo.sdk.provider.LocalModelFormat
 import com.halo.sdk.provider.LocalModelSessionState
+import com.halo.sdk.provider.LocalRuntimeBackendReporting
 import com.halo.sdk.provider.RuntimeGenerationConfig
 import com.halo.sdk.provider.RuntimeGenerationResult
 import com.halo.sdk.provider.RuntimeLoadConfig
@@ -28,6 +29,7 @@ import com.halo.sdk.provider.ToolCall
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -57,6 +59,8 @@ class LiteRtModelLoadException(
 
 data class EngineLoadOutcome(
     val engine: Engine,
+    /** Model-scoped cache root; the per-accelerator subdirectory lives inside it. */
+    val cacheRoot: File,
     val cacheDir: File,
     val requestedBackend: LocalComputeBackend,
     val effectiveBackend: LocalComputeBackend,
@@ -74,10 +78,16 @@ data class LiteRtRuntimeSnapshot(
     val cachePath: String?,
 )
 
+/** Outcome of one generation attempt. A pre-first-token GPU failure may be retried on CPU. */
+private sealed interface GenerationAttempt {
+    data class Finished(val result: Result<RuntimeGenerationResult>) : GenerationAttempt
+    data class RetryableGpuFailure(val cause: Throwable) : GenerationAttempt
+}
+
 class LiteRtRuntime(
     private val context: Context,
     private val scope: CoroutineScope,
-) : LocalInferenceRuntime {
+) : LocalInferenceRuntime, LocalRuntimeBackendReporting {
 
     override val format: LocalModelFormat = LocalModelFormat.LITERT_LM
 
@@ -96,6 +106,18 @@ class LiteRtRuntime(
     private var effectiveContextTokens: Int? = null
     private var lastFallbackReason: String? = null
     private var activeCachePath: String? = null
+
+    /** Everything needed to rebuild this exact model on another accelerator. */
+    private var activeModelPath: String? = null
+    private var activeCacheRootPath: String? = null
+    private var activeLoadConfig: RuntimeLoadConfig? = null
+
+    /**
+     * Some devices (notably emulators and older GPUs) report a successful GPU `initialize()` and
+     * only fail on the first inference. One late rebuild on CPU is allowed per residency.
+     */
+    private var cpuFallbackConsumed = false
+
     private var activeRequestId: String? = null
 
     private val stateMutex = Mutex()
@@ -104,6 +126,13 @@ class LiteRtRuntime(
     private val cancelRequested = AtomicBoolean(false)
 
     override fun isLoaded(): Boolean = engine != null && _state.value != LocalModelSessionState.UNLOADING
+
+    /** Reported accelerator; never claims a backend while nothing is resident. */
+    override val activeBackend: LocalComputeBackend?
+        get() = if (isLoaded()) effectiveBackend else null
+
+    override val backendFallbackReason: String?
+        get() = lastFallbackReason
 
     fun snapshot(): LiteRtRuntimeSnapshot = LiteRtRuntimeSnapshot(
         modelId = _loadedModelId,
@@ -153,6 +182,7 @@ class LiteRtRuntime(
             backend = litertBackend,
             // null => the native engine applies the model's own default context window.
             maxNumTokens = contextTokens,
+            // Inference compile/weight caches live under filesDir: the OS may purge cacheDir.
             cacheDir = cacheDir.absolutePath,
         )
 
@@ -164,6 +194,17 @@ class LiteRtRuntime(
         } catch (error: Throwable) {
             created?.let { runCatching { it.close() } }
             Result.failure(error)
+        }
+    }
+
+    /**
+     * Releasing weights takes seconds. Running it inside a cancelled coroutine can abort the native
+     * close and leak the engine, so teardown is non-cancellable and off the caller's thread.
+     */
+    private suspend fun closeEngineQuietly(target: Engine?) {
+        if (target == null) return
+        withContext(NonCancellable + Dispatchers.Default) {
+            if (target.isInitialized()) runCatching { target.close() }
         }
     }
 
@@ -182,8 +223,8 @@ class LiteRtRuntime(
             "litertlm_cache/${modelId.replace('/', '_')}-$artifactFingerprint",
         )
         // A failed GPU initialization must never leave state that influences the CPU fallback.
-        val gpuCacheDir = File(modelCacheRoot, "gpu").also { if (!it.exists()) it.mkdirs() }
-        val cpuCacheDir = File(modelCacheRoot, "cpu").also { if (!it.exists()) it.mkdirs() }
+        val gpuCacheDir = File(modelCacheRoot, GPU_CACHE_SUBDIR).also { if (!it.exists()) it.mkdirs() }
+        val cpuCacheDir = File(modelCacheRoot, CPU_CACHE_SUBDIR).also { if (!it.exists()) it.mkdirs() }
         val contextTokens = if (config.useModelDefaultContext) null else config.contextSize
 
         when (config.computeBackend) {
@@ -204,7 +245,7 @@ class LiteRtRuntime(
                             message = "CPU engine initialization failed (${bounded(error)})",
                         )
                     }
-                return EngineLoadOutcome(engine, cpuCacheDir, LocalComputeBackend.CPU, LocalComputeBackend.CPU, null)
+                return EngineLoadOutcome(engine, modelCacheRoot, cpuCacheDir, LocalComputeBackend.CPU, LocalComputeBackend.CPU, null)
             }
             LocalComputeBackend.GPU -> {
                 val engine = createAndInitializeEngine(file.absolutePath, LocalComputeBackend.GPU, contextTokens, gpuCacheDir)
@@ -223,13 +264,14 @@ class LiteRtRuntime(
                             message = "GPU engine initialization failed (${bounded(error)})",
                         )
                     }
-                return EngineLoadOutcome(engine, gpuCacheDir, LocalComputeBackend.GPU, LocalComputeBackend.GPU, null)
+                return EngineLoadOutcome(engine, modelCacheRoot, gpuCacheDir, LocalComputeBackend.GPU, LocalComputeBackend.GPU, null)
             }
             LocalComputeBackend.AUTO -> {
                 val gpuResult = createAndInitializeEngine(file.absolutePath, LocalComputeBackend.GPU, contextTokens, gpuCacheDir)
                 if (gpuResult.isSuccess) {
                     return EngineLoadOutcome(
                         gpuResult.getOrThrow(),
+                        modelCacheRoot,
                         gpuCacheDir,
                         LocalComputeBackend.AUTO,
                         LocalComputeBackend.GPU,
@@ -241,7 +283,7 @@ class LiteRtRuntime(
                 val gpuReason = "GPU failed: ${bounded(gpuError)}"
                 Log.w(
                     TAG,
-                    "$EVENT_GPU_FAILED model=$modelId type=${gpuError?.let { it::class.java.simpleName }} " +
+                    "$EVENT_GPU_FAILED model=$modelId phase=INIT type=${gpuError?.let { it::class.java.simpleName }} " +
                         "message=${bounded(gpuError)} sha=$artifactFingerprint bytes=${file.length()} " +
                         "context=${contextTokens ?: "model-default"}",
                     gpuError,
@@ -268,9 +310,10 @@ class LiteRtRuntime(
                 }
 
                 val cpuEngine = cpuResult.getOrThrow()
-                Log.i(TAG, "$EVENT_CPU_FALLBACK model=$modelId reason=$gpuReason")
+                Log.i(TAG, "$EVENT_CPU_FALLBACK model=$modelId phase=INIT reason=$gpuReason")
                 return EngineLoadOutcome(
                     cpuEngine,
+                    modelCacheRoot,
                     cpuCacheDir,
                     LocalComputeBackend.AUTO,
                     LocalComputeBackend.CPU,
@@ -309,13 +352,14 @@ class LiteRtRuntime(
             )
 
             // Close any previous engine before allocating a new one to avoid dual-model OOM.
-            inferenceMutex.withLock {
+            val replacedEngine = inferenceMutex.withLock {
                 stateMutex.withLock {
                     val old = engine
                     unloadInternal()
-                    old?.let { runCatching { it.close() } }
+                    old
                 }
             }
+            closeEngineQuietly(replacedEngine)
 
             val outcome = withContext(Dispatchers.Default) { resolveEngine(file, modelId, config) }
 
@@ -326,6 +370,10 @@ class LiteRtRuntime(
                 effectiveContextTokens = contextTokens
                 lastFallbackReason = outcome.fallbackReason
                 activeCachePath = outcome.cacheDir.absolutePath
+                activeCacheRootPath = outcome.cacheRoot.absolutePath
+                activeModelPath = file.absolutePath
+                activeLoadConfig = config
+                cpuFallbackConsumed = false
                 _loadedModelId = modelId
                 _state.value = LocalModelSessionState.IDLE
             }
@@ -356,9 +404,114 @@ class LiteRtRuntime(
     override suspend fun generate(
         config: RuntimeGenerationConfig,
         onToken: suspend (String) -> Unit,
-    ): Result<RuntimeGenerationResult> = inferenceMutex.withLock {
+    ): Result<RuntimeGenerationResult> {
+        when (val attempt = generateAttempt(config, onToken)) {
+            is GenerationAttempt.Finished -> return attempt.result
+            is GenerationAttempt.RetryableGpuFailure -> {
+                val reason = "GPU failed before first token: ${bounded(attempt.cause)}"
+                Log.w(
+                    TAG,
+                    "$EVENT_GPU_FAILED model=$_loadedModelId phase=GENERATION type=${attempt.cause::class.java.simpleName} " +
+                        "message=${bounded(attempt.cause)}",
+                    attempt.cause,
+                )
+                if (!rebuildResidentEngineOnCpu(reason)) {
+                    return Result.failure(
+                        LiteRtModelLoadException(
+                            stage = ModelLoadStage.GENERATION,
+                            requestedBackend = LocalComputeBackend.AUTO,
+                            effectiveCause = attempt.cause,
+                            message = "$reason; no CPU fallback engine could be installed",
+                        )
+                    )
+                }
+                Log.i(TAG, "$EVENT_CPU_FALLBACK model=$_loadedModelId phase=GENERATION retrying once on CPU")
+                return when (val retry = generateAttempt(config, onToken)) {
+                    is GenerationAttempt.Finished -> retry.result
+                    is GenerationAttempt.RetryableGpuFailure -> Result.failure(
+                        LiteRtModelLoadException(
+                            stage = ModelLoadStage.GENERATION,
+                            requestedBackend = LocalComputeBackend.AUTO,
+                            effectiveCause = retry.cause,
+                            message = "GPU generation failed outside the retry window (${bounded(retry.cause)})",
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    /**
+     * Rebuilds the resident engine on the CPU in place, keeping the same model id so the session
+     * stays valid. Runs under [loadMutex] and *without* [inferenceMutex], which matches the lock
+     * order used by [loadModel].
+     */
+    private suspend fun rebuildResidentEngineOnCpu(reason: String): Boolean {
+        val modelId = stateMutex.withLock { _loadedModelId } ?: return false
+        val modelPath = activeModelPath ?: return false
+        val cacheRoot = activeCacheRootPath?.let(::File)
+            ?: File(context.filesDir, "litertlm_cache/${modelId.replace('/', '_')}").also { it.mkdirs() }
+        val cpuCacheDir = File(cacheRoot, CPU_CACHE_SUBDIR).also { if (!it.exists()) it.mkdirs() }
+        val contextTokens = activeLoadConfig?.let { if (it.useModelDefaultContext) null else it.contextSize }
+            ?: effectiveContextTokens
+
+        return loadMutex.withLock {
+            val previous = stateMutex.withLock { engine }
+            val cpuEngine = createAndInitializeEngine(modelPath, LocalComputeBackend.CPU, contextTokens, cpuCacheDir)
+                .getOrElse { error ->
+                    Log.e(
+                        TAG,
+                        "$EVENT_LOAD_FAILED model=$modelId backend=CPU phase=GENERATION_FALLBACK " +
+                            "type=${error::class.java.simpleName} message=${bounded(error)}",
+                        error,
+                    )
+                    return@withLock false
+                }
+
+            val swapped = stateMutex.withLock {
+                if (engine !== previous) {
+                    // A concurrent load already replaced the engine; keep the newer one.
+                    false
+                } else {
+                    engine = cpuEngine
+                    requestedBackend = LocalComputeBackend.AUTO
+                    effectiveBackend = LocalComputeBackend.CPU
+                    effectiveContextTokens = contextTokens
+                    lastFallbackReason = reason
+                    activeCachePath = cpuCacheDir.absolutePath
+                    cpuFallbackConsumed = true
+                    _state.value = LocalModelSessionState.IDLE
+                    true
+                }
+            }
+            // Both closes happen outside the state lock.
+            if (swapped) {
+                closeEngineQuietly(previous)
+                Log.i(
+                    TAG,
+                    "$EVENT_LOAD_READY model=$modelId requested=AUTO effective=CPU fallback=true reason=$reason",
+                )
+            } else {
+                closeEngineQuietly(cpuEngine)
+                Log.w(TAG, "$EVENT_CPU_FALLBACK model=$modelId phase=GENERATION abandoned=resident-engine-changed")
+            }
+            swapped
+        }
+    }
+
+    private suspend fun generateAttempt(
+        config: RuntimeGenerationConfig,
+        onToken: suspend (String) -> Unit,
+    ): GenerationAttempt = inferenceMutex.withLock {
         val currentEngine = stateMutex.withLock { engine }
-            ?: return Result.failure(IllegalStateException("No LiteRT engine currently loaded"))
+            ?: return@withLock GenerationAttempt.Finished(
+                Result.failure(IllegalStateException("No LiteRT engine currently loaded"))
+            )
+
+        val engineBackendAtStart = stateMutex.withLock { effectiveBackend }
+        val retryableOnGpu = requestedBackend == LocalComputeBackend.AUTO &&
+            engineBackendAtStart == LocalComputeBackend.GPU &&
+            !cpuFallbackConsumed
 
         _state.value = LocalModelSessionState.INFERRING
         cancelRequested.set(false)
@@ -387,7 +540,7 @@ class LiteRtRuntime(
 
             Log.i(
                 TAG,
-                "$EVENT_GENERATION_START model=$_loadedModelId backend=${backendName(effectiveBackend)} " +
+                "$EVENT_GENERATION_START model=$_loadedModelId backend=${backendName(engineBackendAtStart)} " +
                     "tools=${config.availableTools.size} maxTokens=${config.maxTokens}",
             )
 
@@ -435,6 +588,16 @@ class LiteRtRuntime(
             val ttft = firstTokenTime?.let { it - startTime } ?: durationMs
             val tokensPerSec = (tokenCount.toDouble() / (durationMs.toDouble() / 1000.0))
 
+            if (cancelRequested.get()) {
+                // cancelProcess() can end the stream without raising: never report a cancelled
+                // turn as a completed response.
+                Log.w(TAG, "$EVENT_GENERATION_FAILED model=$_loadedModelId reason=CANCELLED chars=${textBuilder.length}")
+                _state.value = LocalModelSessionState.IDLE
+                return@withLock GenerationAttempt.Finished(
+                    Result.failure(IllegalStateException("LiteRT generation was cancelled"))
+                )
+            }
+
             _state.value = LocalModelSessionState.IDLE
 
             Log.i(
@@ -443,14 +606,16 @@ class LiteRtRuntime(
                     "ttftMs=$ttft chars=${textBuilder.length} toolCalls=${nativeToolCalls.size}",
             )
 
-            Result.success(
-                RuntimeGenerationResult(
-                    text = textBuilder.toString(),
-                    toolCalls = nativeToolCalls.values.toList(),
-                    tokenCount = tokenCount,
-                    timeToFirstTokenMs = ttft,
-                    tokensPerSecond = tokensPerSec,
-                    durationMs = durationMs,
+            GenerationAttempt.Finished(
+                Result.success(
+                    RuntimeGenerationResult(
+                        text = textBuilder.toString(),
+                        toolCalls = nativeToolCalls.values.toList(),
+                        tokenCount = tokenCount,
+                        timeToFirstTokenMs = ttft,
+                        tokensPerSecond = tokensPerSec,
+                        durationMs = durationMs,
+                    )
                 )
             )
         } catch (e: CancellationException) {
@@ -460,11 +625,17 @@ class LiteRtRuntime(
         } catch (e: Throwable) {
             Log.e(
                 TAG,
-                "$EVENT_GENERATION_FAILED model=$_loadedModelId type=${e::class.java.simpleName} message=${bounded(e)}",
+                "$EVENT_GENERATION_FAILED model=$_loadedModelId backend=${backendName(engineBackendAtStart)} " +
+                    "type=${e::class.java.simpleName} message=${bounded(e)}",
                 e,
             )
-            _state.value = LocalModelSessionState.ERROR
-            Result.failure(e)
+            if (retryableOnGpu && textBuilder.isEmpty() && !cancelRequested.get()) {
+                _state.value = LocalModelSessionState.IDLE
+                GenerationAttempt.RetryableGpuFailure(e)
+            } else {
+                _state.value = LocalModelSessionState.ERROR
+                GenerationAttempt.Finished(Result.failure(e))
+            }
         } finally {
             stateMutex.withLock {
                 runCatching { activeConversation?.close() }
@@ -483,14 +654,15 @@ class LiteRtRuntime(
 
     override suspend fun unloadModel(): Result<Unit> = loadMutex.withLock {
         _state.value = LocalModelSessionState.UNLOADING
-        inferenceMutex.withLock {
+        val replacedEngine = inferenceMutex.withLock {
             stateMutex.withLock {
                 val old = engine
                 unloadInternal()
-                old?.let { runCatching { it.close() } }
                 _state.value = LocalModelSessionState.IDLE
+                old
             }
         }
+        closeEngineQuietly(replacedEngine)
         Result.success(Unit)
     }
 
@@ -501,6 +673,10 @@ class LiteRtRuntime(
         engine = null
         _loadedModelId = null
         effectiveContextTokens = null
+        activeModelPath = null
+        activeCacheRootPath = null
+        activeLoadConfig = null
+        cpuFallbackConsumed = false
     }
 
     private fun toLiteRtHistory(config: RuntimeGenerationConfig): List<Message> {
@@ -542,6 +718,8 @@ class LiteRtRuntime(
     companion object {
         private const val TAG = "LiteRtRuntime"
         private const val SUPPORTED_ABI = "arm64-v8a"
+        private const val GPU_CACHE_SUBDIR = "gpu"
+        private const val CPU_CACHE_SUBDIR = "cpu"
 
         const val EVENT_LOAD_START = "HALO_LITERT_LOAD_START"
         const val EVENT_LOAD_READY = "HALO_LITERT_LOAD_READY"

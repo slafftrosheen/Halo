@@ -9,6 +9,7 @@ import com.halo.sdk.provider.LocalInferenceRuntime
 import com.halo.sdk.provider.LocalModelActivityState
 import com.halo.sdk.provider.LocalModelFormat
 import com.halo.sdk.provider.LocalModelSessionState
+import com.halo.sdk.provider.LocalRuntimeBackendReporting
 import com.halo.sdk.provider.RuntimeGenerationConfig
 import com.halo.sdk.provider.RuntimeGenerationResult
 import com.halo.sdk.provider.RuntimeLoadConfig
@@ -171,6 +172,9 @@ class LocalModelSession(
                 item.deferred.complete(Result.failure(t))
             } finally {
                 currentGenerationId.compareAndSet(genId, 0L)
+                // A runtime may switch accelerators after load (late GPU failure -> CPU rebuild),
+                // so residency facts are re-read instead of trusting the value captured at load.
+                syncBackendFromRuntime()
                 _state.value = if (activeRuntime?.isLoaded() == true) LocalModelSessionState.IDLE else LocalModelSessionState.ERROR
                 _activity.value = benchmarkOwner.get()?.let(LocalModelActivityState::Benchmarking)
                     ?: loadedModelId?.let(LocalModelActivityState::Ready)
@@ -314,6 +318,17 @@ class LocalModelSession(
         if (benchmarkOwner.compareAndSet(requestId, null)) {
             _activity.value = loadedModelId?.let(LocalModelActivityState::Ready) ?: LocalModelActivityState.Idle
         }
+    }
+
+    /** Keeps [activeBackend] / [fallbackReason] truthful when the runtime changes accelerator. */
+    private fun syncBackendFromRuntime() {
+        val reporting = activeRuntime as? LocalRuntimeBackendReporting ?: return
+        val observed = reporting.activeBackend ?: return
+        val observedReason = reporting.backendFallbackReason
+        if (observed == activeBackend && observedReason == fallbackReason) return
+        activeBackend = observed
+        fallbackReason = observedReason
+        Log.i(TAG, "Local model backend updated: $observed fallback=${observedReason?.take(120)}")
     }
 
     suspend fun cancelGeneration() {

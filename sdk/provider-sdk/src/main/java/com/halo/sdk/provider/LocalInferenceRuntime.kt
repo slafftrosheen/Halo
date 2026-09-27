@@ -159,8 +159,22 @@ data class RuntimeGenerationResult(
 )
 
 /**
+ * Optional runtime capability: a runtime whose effective accelerator can change *after* a load
+ * succeeded. Some devices only discover an unusable GPU at first inference, so the runtime may
+ * rebuild itself on the CPU. Hosts use this to keep their reported backend and fallback reason
+ * truthful instead of repeating the value captured at load time.
+ */
+interface LocalRuntimeBackendReporting {
+    /** Accelerator actually in use, or null when nothing is resident. */
+    val activeBackend: LocalComputeBackend?
+
+    /** Bounded reason the requested accelerator was not used, when a fallback occurred. */
+    val backendFallbackReason: String?
+}
+
+/**
  * Universal runtime abstraction for local on-device machine learning inference.
- * Implemented by concrete GGUF/llama.cpp and LiteRT runtime adapters.
+ * Implemented by the LiteRT runtime adapter.
  */
 interface LocalInferenceRuntime {
     val format: LocalModelFormat
