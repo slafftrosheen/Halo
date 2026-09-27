@@ -72,7 +72,7 @@ private data class IntelligenceSettings(
     val openRouterModel: String = "openrouter/free",
     val ollamaEndpoint: String = "",
     val ollamaModel: String = "llama3",
-    val litertModel: String = "gemma-3-1b-it-int4",
+    val litertModel: String = "",
     val litertContext: Int = 4096,
     val temperature: Float = 0.7f,
     val policy: AiContextPolicy = AiContextPolicy.CONSERVATIVE
@@ -146,7 +146,7 @@ class IntelligenceViewModel(
                 openRouterModel = openRouterModel,
                 ollamaEndpoint = storage.getString("ollama_endpoint") ?: "",
                 ollamaModel = storage.getString("ollama_model") ?: "llama3",
-                litertModel = storage.getString("litert_model") ?: "gemma-3-1b-it-int4",
+                litertModel = storage.getString("litert_model")?.trim().orEmpty(),
                 litertContext = storage.getInt("litert_context", 4096),
                 temperature = storage.getInt("ai_temperature", 70) / 100f,
                 policy = storage.readRuntimeAiContextPolicy()

@@ -1,10 +1,14 @@
 package com.halo.sdk.provider
 
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.Types
+
 /**
  * Assembles incremental [AiStreamEvent.ToolCallDelta] events into complete [ToolCall]s.
  */
 class StreamingToolCallAssembler {
     private class InProgressCall(
+        var id: String? = null,
         var name: String = "",
         val argumentsBuilder: StringBuilder = StringBuilder()
     )
@@ -13,20 +17,25 @@ class StreamingToolCallAssembler {
 
     fun appendDelta(delta: AiStreamEvent.ToolCallDelta) {
         val call = callsByIndex.getOrPut(delta.index) { InProgressCall() }
+        delta.id?.takeIf { it.isNotBlank() }?.let { call.id = it }
         delta.name?.let { call.name = it }
         delta.argumentsDelta?.let { call.argumentsBuilder.append(it) }
     }
 
     fun assemble(requestId: String = "stream"): List<ToolCall> {
         if (callsByIndex.isEmpty()) return emptyList()
-        return callsByIndex.entries.sortedBy { it.key }.mapIndexed { ordinal, entry ->
+        return callsByIndex.entries.sortedBy { it.key }.map { entry ->
             val call = entry.value
+            val callId = call.id?.takeIf { it.isNotBlank() }
+                ?: throw StreamToolCallException(entry.key, "missing provider tool-call id")
+            val functionName = call.name.takeIf { it.isNotBlank() }
+                ?: throw StreamToolCallException(entry.key, "missing function name")
             val rawArgs = call.argumentsBuilder.toString().trim()
-            val argsMap = parseSimpleJsonMap(rawArgs)
+            val argsMap = parseJsonMap(entry.key, rawArgs)
 
             ToolCall(
-                id = "$requestId:assembled:${ordinal + 1}",
-                functionName = call.name,
+                id = callId,
+                functionName = functionName,
                 arguments = argsMap
             )
         }
@@ -36,23 +45,29 @@ class StreamingToolCallAssembler {
         callsByIndex.clear()
     }
 
-    private fun parseSimpleJsonMap(raw: String): Map<String, Any> {
-        if (raw.isBlank() || !raw.startsWith("{") || !raw.endsWith("}")) return emptyMap()
-        val map = mutableMapOf<String, Any>()
-        val kvPairRegex = Regex("\"([^\"]+)\"\\s*:\\s*(\"[^\"]*\"|true|false|null|\\d+(?:\\.\\d+)?)")
-        kvPairRegex.findAll(raw).forEach { match ->
-            val key = match.groupValues[1]
-            val valueStr = match.groupValues[2]
-            val value: Any = when {
-                valueStr == "true" -> true
-                valueStr == "false" -> false
-                valueStr == "null" -> ""
-                valueStr.startsWith("\"") -> valueStr.removeSurrounding("\"")
-                valueStr.contains(".") -> valueStr.toDoubleOrNull() ?: valueStr
-                else -> valueStr.toLongOrNull() ?: valueStr
-            }
-            map[key] = value
+    private fun parseJsonMap(index: Int, raw: String): Map<String, Any> {
+        if (raw.isBlank()) return emptyMap()
+        return try {
+            argumentsAdapter.fromJson(raw)
+                ?: throw StreamToolCallException(index, "arguments decoded to null")
+        } catch (error: StreamToolCallException) {
+            throw error
+        } catch (error: Exception) {
+            throw StreamToolCallException(index, "arguments are not a complete JSON object", error)
         }
-        return map
+    }
+
+    fun hasDeltas(): Boolean = callsByIndex.isNotEmpty()
+
+    companion object {
+        private val argumentsAdapter = Moshi.Builder().build().adapter<Map<String, Any>>(
+            Types.newParameterizedType(Map::class.java, String::class.java, Any::class.java)
+        )
     }
 }
+
+class StreamToolCallException(
+    val toolCallIndex: Int,
+    detail: String,
+    cause: Throwable? = null,
+) : IllegalArgumentException("Invalid streamed tool call at index $toolCallIndex: $detail", cause)

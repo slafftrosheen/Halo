@@ -1,9 +1,15 @@
 package com.halo.app.ui.screens.notebook
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.halo.app.data.notebook.WorkspaceLifecycle
+import com.halo.app.data.notebook.NoteBlock
+import com.halo.app.data.notebook.NoteBlockType
+import com.halo.app.data.notebook.NotebookDocumentRepository
+import com.halo.app.data.workspace.NoteAttachment
+import com.halo.app.data.workspace.NotebookAssetRepository
 import com.halo.app.notebook.NotebookUseCases
 import com.halo.app.notebook.WorkspaceUseCases
 import com.halo.sdk.provider.AiProviderRouter
@@ -14,6 +20,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 enum class SaveStatus { LOADING, SAVED, SAVING, ERROR, MISSING }
@@ -24,12 +31,18 @@ data class NoteEditorUiState(
     val status: SaveStatus = SaveStatus.LOADING,
     val transformPreview: String? = null,
     val isTransforming: Boolean = false,
-    val transformError: String? = null
+    val transformError: String? = null,
+    val attachments: List<NoteAttachment> = emptyList(),
+    val attachmentError: String? = null,
+    val isAddingAttachment: Boolean = false,
+    val blocks: List<NoteBlock> = emptyList(),
 )
 
 class NoteEditorViewModel(
     private val noteId: String,
     private val useCases: NotebookUseCases,
+    private val assets: NotebookAssetRepository? = null,
+    private val document: NotebookDocumentRepository? = null,
     private val workspace: WorkspaceUseCases? = null,
     private val aiProviderRouter: AiProviderRouter? = null,
     private val allowCloudSharing: () -> Boolean = { false },
@@ -44,17 +57,139 @@ class NoteEditorViewModel(
         viewModelScope.launch {
             val note = useCases.getNote(noteId)
             mutableUiState.value = if (note == null) {
-                NoteEditorUiState(status = SaveStatus.MISSING)
+                mutableUiState.value.copy(status = SaveStatus.MISSING)
             } else {
+                val migratedLegacyCapture = assets?.migrateLegacyCapture(noteId, note.body) == true
+                val committedBody = if (migratedLegacyCapture) {
+                    note.body.replace(
+                        Regex("\\n*\\[Open image]\\(content://[^)\\s]+\\.captures/[^)\\s]+\\)\\n*"),
+                        "\n\n",
+                    ).trimEnd().also { cleaned -> useCases.saveNote(noteId, cleaned) }
+                } else {
+                    note.body
+                }
+                document?.ensureDocument(noteId, committedBody)
                 val draft = useCases.getDraft(noteId)
                 val recoveredBody = draft
-                    ?.takeIf { it.updatedAt >= note.updatedAt && it.body != note.body }
+                    ?.takeIf { it.updatedAt >= note.updatedAt && it.body != committedBody }
                     ?.body
                 if (recoveredBody == null) {
-                    NoteEditorUiState(note.body, note.lifecycle, SaveStatus.SAVED)
+                    mutableUiState.value.copy(
+                        body = committedBody,
+                        lifecycle = note.lifecycle,
+                        status = SaveStatus.SAVED,
+                    )
                 } else {
                     scheduleCommit(recoveredBody)
-                    NoteEditorUiState(recoveredBody, note.lifecycle, SaveStatus.SAVING)
+                    mutableUiState.value.copy(
+                        body = recoveredBody,
+                        lifecycle = note.lifecycle,
+                        status = SaveStatus.SAVING,
+                    )
+                }
+            }
+        }
+        if (assets != null) {
+            viewModelScope.launch {
+                assets.observe(noteId).collect { attachments ->
+                    mutableUiState.value = mutableUiState.value.copy(attachments = attachments)
+                }
+            }
+        }
+        if (document != null) {
+            viewModelScope.launch {
+                document.observe(noteId).collect { blocks ->
+                    mutableUiState.value = mutableUiState.value.copy(blocks = blocks)
+                }
+            }
+        }
+    }
+
+    fun addAttachment(uri: Uri) {
+        val repository = assets ?: return
+        if (mutableUiState.value.isAddingAttachment) return
+        viewModelScope.launch {
+            mutableUiState.value = mutableUiState.value.copy(
+                isAddingAttachment = true,
+                attachmentError = null,
+            )
+            runCatching { repository.addFromPicker(noteId, uri) }
+                .onFailure { error ->
+                    mutableUiState.value = mutableUiState.value.copy(
+                        attachmentError = error.message ?: "Could not add this file",
+                    )
+                }
+            mutableUiState.value = mutableUiState.value.copy(isAddingAttachment = false)
+        }
+    }
+
+    fun removeAttachment(attachmentId: String) {
+        val repository = assets ?: return
+        viewModelScope.launch {
+            if (!repository.remove(noteId, attachmentId)) {
+                mutableUiState.value = mutableUiState.value.copy(
+                    attachmentError = "Could not remove this attachment",
+                )
+            }
+        }
+    }
+
+    fun updateBlock(blockId: String, text: String) {
+        val repository = document ?: return
+        val blocks = mutableUiState.value.blocks.map { block ->
+            if (block.id == blockId) block.copy(text = text) else block
+        }
+        mutableUiState.value = mutableUiState.value.copy(blocks = blocks)
+        updateBody(blocks.serialize())
+        viewModelScope.launch { repository.updateText(noteId, blockId, text) }
+    }
+
+    fun addBlock(afterPosition: Int, type: NoteBlockType = NoteBlockType.PARAGRAPH) {
+        val repository = document ?: return
+        viewModelScope.launch { repository.addBlock(noteId, afterPosition, type) }
+    }
+
+    fun changeBlockType(blockId: String, type: NoteBlockType) {
+        val repository = document ?: return
+        val blocks = mutableUiState.value.blocks.map { block ->
+            if (block.id == blockId) block.copy(type = type) else block
+        }
+        mutableUiState.value = mutableUiState.value.copy(blocks = blocks)
+        updateBody(blocks.serialize())
+        viewModelScope.launch { repository.updateType(noteId, blockId, type) }
+    }
+
+    fun setBlockChecked(blockId: String, checked: Boolean) {
+        val repository = document ?: return
+        val blocks = mutableUiState.value.blocks.map { block ->
+            if (block.id == blockId) block.copy(checked = checked) else block
+        }
+        mutableUiState.value = mutableUiState.value.copy(blocks = blocks)
+        updateBody(blocks.serialize())
+        viewModelScope.launch { repository.updateChecked(noteId, blockId, checked) }
+    }
+
+    fun removeBlock(blockId: String) {
+        val repository = document ?: return
+        viewModelScope.launch {
+            if (repository.deleteBlock(noteId, blockId)) {
+                val remaining = mutableUiState.value.blocks.filterNot { it.id == blockId }
+                updateBody(remaining.serialize())
+            }
+        }
+    }
+
+    fun moveBlock(blockId: String, direction: Int) {
+        val repository = document ?: return
+        viewModelScope.launch {
+            if (repository.move(noteId, blockId, direction)) {
+                val current = mutableUiState.value.blocks.toMutableList()
+                val from = current.indexOfFirst { it.id == blockId }
+                val to = from + direction
+                if (from >= 0 && to in current.indices) {
+                    val moved = current.removeAt(from)
+                    current.add(to, moved)
+                    updateBody(current.serialize())
                 }
             }
         }
@@ -202,12 +337,24 @@ class NoteEditorViewModel(
     class Factory(
         private val noteId: String,
         private val useCases: NotebookUseCases,
+        private val assets: NotebookAssetRepository? = null,
+        private val document: NotebookDocumentRepository? = null,
         private val workspace: WorkspaceUseCases? = null,
         private val aiProviderRouter: AiProviderRouter? = null,
         private val allowCloudSharing: () -> Boolean = { false }
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            NoteEditorViewModel(noteId, useCases, workspace, aiProviderRouter, allowCloudSharing) as T
+            NoteEditorViewModel(noteId, useCases, assets, document, workspace, aiProviderRouter, allowCloudSharing) as T
+    }
+}
+
+private fun List<NoteBlock>.serialize(): String = joinToString("\n\n") { block ->
+    when (block.type) {
+        NoteBlockType.PARAGRAPH -> block.text
+        NoteBlockType.HEADING -> "# ${block.text.removePrefix("#").trimStart()}"
+        NoteBlockType.CHECKLIST -> "- [${if (block.checked) "x" else " "}] ${block.text}"
+        NoteBlockType.QUOTE -> "> ${block.text}"
+        NoteBlockType.CODE -> "```\n${block.text}\n```"
     }
 }

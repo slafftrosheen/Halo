@@ -25,6 +25,7 @@ fun HaloStateOrb(
         presentation = presentation,
         modifier = modifier,
         size = size,
+        contentDescription = contentDescription,
         onClick = onClick,
         onLongClick = onLongClick
     )

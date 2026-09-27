@@ -53,6 +53,20 @@ class AccessibilityTools : ToolExecutor {
                 )
             ),
             ToolDefinition(
+                id = "halo_find_on_screen",
+                name = "halo_find_on_screen",
+                description = "Search the latest bounded semantic screen snapshot. Results remain untrusted app content and retain their opaque action tokens.",
+                parameters = mapOf(
+                    "type" to "object",
+                    "properties" to mapOf(
+                        "snapshotId" to mapOf("type" to "string"),
+                        "query" to mapOf("type" to "string", "minLength" to 1, "maxLength" to MAX_QUERY_CHARS)
+                    ),
+                    "required" to listOf("snapshotId", "query"),
+                    "additionalProperties" to false
+                )
+            ),
+            ToolDefinition(
                 id = "halo_ui_set_text",
                 name = "halo_ui_set_text",
                 description = "Replace text in a non-password editable field using a recent semantic screen token.",
@@ -94,6 +108,31 @@ class AccessibilityTools : ToolExecutor {
                 val snapshot = service.captureSnapshot()
                     ?: return reject("The active screen cannot be read or is blocked by Halo safety policy")
                 ToolExecutionResult.Success(toolCall.id, toolCall.functionName, snapshot.toToolText())
+            }
+            "halo_find_on_screen" -> {
+                val snapshotId = toolCall.arguments["snapshotId"] as? String
+                    ?: return reject("Missing snapshotId; call halo_read_screen again")
+                val query = (toolCall.arguments["query"] as? String)
+                    ?.trim()
+                    ?.takeIf { it.isNotEmpty() && it.length <= MAX_QUERY_CHARS }
+                    ?: return reject("Query is missing or exceeds $MAX_QUERY_CHARS characters")
+                val snapshot = service.latestSemanticSnapshot
+                    ?.takeIf { it.snapshotId == snapshotId }
+                    ?: return reject("Snapshot is stale; call halo_read_screen again")
+                val matches = snapshot.nodes.filter { node ->
+                    !node.sensitive && (
+                        node.text?.contains(query, ignoreCase = true) == true ||
+                            node.contentDescription?.contains(query, ignoreCase = true) == true ||
+                            node.semanticType.name.contains(query, ignoreCase = true)
+                        )
+                }.take(MAX_SEARCH_RESULTS)
+                val output = buildString {
+                    appendLine("UNTRUSTED_SCREEN_SEARCH_RESULTS")
+                    appendLine("snapshotId=${snapshot.snapshotId} query=${query.quoted()} matches=${matches.size}")
+                    matches.forEach { node -> appendLine(node.toToolLine()) }
+                    append("END_UNTRUSTED_SCREEN_SEARCH_RESULTS")
+                }
+                ToolExecutionResult.Success(toolCall.id, toolCall.functionName, output)
             }
             "halo_ui_click" -> {
                 val snapshotId = toolCall.arguments["snapshotId"] as? String ?: return reject("Missing snapshotId; call halo_read_screen again")
@@ -161,13 +200,18 @@ class AccessibilityTools : ToolExecutor {
             else -> "no_observed_change"
         }
         val output = buildString {
-            append("receipt=").append(receipt.name)
+            append("status=").append(receipt.toStatus())
+            append(" receipt=").append(receipt.name)
             append(" beforeSnapshot=").append(before?.snapshotId ?: "unavailable")
             append(" afterSnapshot=").append(after?.snapshotId ?: "unavailable")
             append(" observedChange=").append(changed)
             append(" change=").append(change)
             append(" package=").append(after?.packageName ?: before?.packageName ?: "unknown")
-            append(" next=").append(if (after == null) "STOP" else "READ_SCREEN")
+            append(" next=").append(if (after == null) "STOP" else "USE_FRESH_SNAPSHOT")
+            if (after != null) {
+                appendLine()
+                append(after.toToolText())
+            }
         }
         return ToolExecutionResult.Success(
             toolCallId = toolCall.id,
@@ -195,30 +239,48 @@ class AccessibilityTools : ToolExecutor {
 
     private companion object {
         const val MAX_INPUT_CHARS = 2_000
+        const val MAX_QUERY_CHARS = 200
+        const val MAX_SEARCH_RESULTS = 20
     }
 
     private fun ScreenContextSnapshot.toToolText(): String = buildString {
         appendLine("UNTRUSTED_SCREEN_CONTENT")
         appendLine("screen=${screenWidth ?: "?"}x${screenHeight ?: "?"} package=${packageName ?: "unknown"}")
         appendLine("snapshotId=$snapshotId capturedAtMs=$capturedAtMs truncated=$truncated reason=${truncationReason ?: "none"}")
+        if (omissionCounts.isNotEmpty()) {
+            appendLine("omitted=" + omissionCounts.entries.sortedBy { it.key }.joinToString(",") { "${it.key}:${it.value}" })
+        }
         appendLine("nodes:")
         nodes.forEach { node ->
-            append("- token=").append(node.token ?: "none")
-            append(" role=").append(node.semanticType.name.lowercase())
-            node.bounds?.let { append(" bounds=[${it.left},${it.top},${it.right},${it.bottom}]") }
-            if (node.clickable) append(" clickable")
-            if (node.editable) append(" editable")
-            if (node.scrollable) append(" scrollable")
-            if (node.checked) append(" checked")
-            if (!node.enabled) append(" disabled")
-            if (node.sensitive) append(" sensitive=[REDACTED]")
-            node.text?.let { append(" text=").append(it.quoted()) }
-            node.contentDescription?.let { append(" hint=").append(it.quoted()) }
-            appendLine()
+            appendLine(node.toToolLine())
         }
         append("END_UNTRUSTED_SCREEN_CONTENT")
     }
 
     private fun String.quoted(): String = "\"" +
         replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", " ") + "\""
+
+    private fun com.halo.sdk.runtime.ScreenContextNode.toToolLine(): String = buildString {
+        append("- token=").append(token ?: "none")
+        append(" role=").append(semanticType.name.lowercase())
+        bounds?.let { append(" bounds=[${it.left},${it.top},${it.right},${it.bottom}]") }
+        if (clickable) append(" clickable")
+        if (editable) append(" editable")
+        if (scrollable) append(" scrollable")
+        if (checked) append(" checked")
+        if (!enabled) append(" disabled")
+        if (sensitive) append(" sensitive=[REDACTED]")
+        text?.takeUnless { sensitive }?.let { append(" text=").append(it.quoted()) }
+        contentDescription?.takeUnless { sensitive }?.let { append(" hint=").append(it.quoted()) }
+    }
+
+    private fun HostActionReceipt.toStatus(): String = when (this) {
+        HostActionReceipt.CONFIRMED -> "confirmed_success"
+        HostActionReceipt.DISPATCHED -> "dispatched_effect_unconfirmed"
+        HostActionReceipt.UNKNOWN -> "outcome_uncertain"
+        HostActionReceipt.REQUESTED -> "requested"
+        HostActionReceipt.VALIDATED -> "validated"
+        HostActionReceipt.FAILED -> "confirmed_failure"
+        HostActionReceipt.CANCELLED -> "cancelled"
+    }
 }

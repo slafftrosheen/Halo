@@ -13,6 +13,7 @@ data class HaloSignalPalette(
     val halo: Color,
     val haloSecondary: Color,
     val display: Color,
+    val displayHighlight: Color,
     val glyph: Color,
 ) {
     companion object {
@@ -47,13 +48,15 @@ data class HaloSignalPalette(
                 HaloSignalState.STOPPED -> Color(0xFF48484A)
             }
 
-            val displayColor = if (isDark) Color(0xFF141519) else Color(0xFF1C1D22)
+            val displayColor = if (isDark) Color(0xFF111519) else Color(0xFF20242A)
+            val displayHighlight = if (isDark) Color(0xFF273038) else Color(0xFF343B44)
             val glyphColor = if (isDark) Color(0xFFF2F2F7) else Color(0xFFFAFAFC)
 
             return HaloSignalPalette(
                 halo = haloColor,
                 haloSecondary = haloSecondaryColor,
                 display = displayColor,
+                displayHighlight = displayHighlight,
                 glyph = glyphColor,
             )
         }

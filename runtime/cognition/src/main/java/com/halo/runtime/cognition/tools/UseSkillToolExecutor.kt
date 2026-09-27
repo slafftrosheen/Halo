@@ -5,6 +5,7 @@ import com.halo.runtime.cognition.skills.SkillRegistry
 import com.halo.sdk.provider.ToolCall
 import com.halo.sdk.provider.ToolDefinition
 import com.halo.sdk.runtime.skills.SkillId
+import com.halo.sdk.runtime.skills.SkillAvailability
 
 class UseSkillToolExecutor(
     private val instructionSource: SkillInstructionSource,
@@ -20,7 +21,8 @@ class UseSkillToolExecutor(
                 parameters = mapOf(
                     "type" to "object",
                     "properties" to mapOf(
-                        "skillId" to mapOf("type" to "string", "description" to "The skill ID to load (e.g. halo.notebook)")
+                        "skillId" to mapOf("type" to "string", "description" to "The skill ID to load (e.g. halo.notebook)"),
+                        "offset" to mapOf("type" to "integer", "minimum" to 0, "description" to "Character offset for continuing a long skill instruction")
                     ),
                     "required" to listOf("skillId")
                 )
@@ -33,22 +35,47 @@ class UseSkillToolExecutor(
             ?: return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Missing 'skillId' argument")
 
         val skillId = SkillId(rawSkillId)
+        val descriptor = skillRegistry?.get(skillId)
+        if (descriptor != null && !descriptor.enabled) {
+            return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Skill $rawSkillId is disabled")
+        }
+        if (descriptor != null && descriptor.availability !is SkillAvailability.Available &&
+            descriptor.availability !is SkillAvailability.PartiallyAvailable) {
+            return ToolExecutionResult.Rejected(
+                toolCall.id,
+                toolCall.functionName,
+                "Skill $rawSkillId is unavailable: ${descriptor.availability::class.simpleName}",
+            )
+        }
         val instruction = instructionSource.load(skillId)
             ?: return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Skill instructions not found for $rawSkillId")
 
-        val descriptor = skillRegistry?.get(skillId)
         val toolsExposed = descriptor?.tools ?: emptyList()
+        val offset = (toolCall.arguments["offset"] as? Number)?.toInt()?.coerceAtLeast(0) ?: 0
+        if (offset >= instruction.body.length && instruction.body.isNotEmpty()) {
+            return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Offset is beyond the skill instruction")
+        }
+        val end = (offset + INSTRUCTION_CHUNK_CHARS).coerceAtMost(instruction.body.length)
+        val hasMore = end < instruction.body.length
 
         val output = buildString {
             append("Loaded operational guidance for skill ").append(skillId.value).append(":\n")
             append("skillSchemaVersion=").append(descriptor?.schemaVersion ?: "unknown")
-            append(" skillRevision=").append(instruction.revision ?: "bundled").append('\n')
-            append(instruction.body.take(2000))
+            append(" skillRevision=").append(instruction.revision ?: "bundled")
+            append(" offset=").append(offset).append(" end=").append(end)
+            append(" totalChars=").append(instruction.body.length)
+            append(" hasMore=").append(hasMore).append('\n')
+            append(instruction.body.substring(offset, end))
+            if (hasMore) append("\nContinue with halo_use_skill skillId=").append(skillId.value).append(" offset=").append(end)
             if (toolsExposed.isNotEmpty()) {
                 append("\nAvailable tools for this skill: ").append(toolsExposed.joinToString(", "))
             }
         }
 
         return ToolExecutionResult.Success(toolCall.id, toolCall.functionName, output)
+    }
+
+    private companion object {
+        const val INSTRUCTION_CHUNK_CHARS = 6_000
     }
 }

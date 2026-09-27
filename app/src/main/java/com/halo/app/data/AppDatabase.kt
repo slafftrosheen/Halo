@@ -18,10 +18,22 @@ import com.halo.app.data.models.ModelRuntimeProfileEntity
 import com.halo.app.data.notification.NotificationEntity
 import com.halo.app.data.notebook.NoteEntity
 import com.halo.app.data.notebook.NoteDraftEntity
+import com.halo.app.data.notebook.NoteBlockEntity
+import com.halo.app.data.notebook.NotebookDocumentDao
+import com.halo.app.data.notebook.NotebookCollectionEntity
+import com.halo.app.data.notebook.NotebookCollectionMemberEntity
+import com.halo.app.data.notebook.NotebookFavoriteEntity
+import com.halo.app.data.notebook.NotebookOrganizationDao
+import com.halo.app.data.notebook.CanvasDocumentEntity
+import com.halo.app.data.notebook.CanvasNodeEntity
+import com.halo.app.data.notebook.CanvasEdgeEntity
+import com.halo.app.data.notebook.NotebookCanvasDao
 import com.halo.app.data.notebook.WorkspaceObjectEntity
 import com.halo.app.data.routine.RoutineEntity
 import com.halo.app.data.routine.RoutineRunEntity
 import com.halo.app.data.workspace.WorkspaceAssetEntity
+import com.halo.app.data.workspace.NoteAttachmentEntity
+import com.halo.app.data.workspace.WorkspaceAssetDao
 import com.halo.app.data.workspace.WorkspaceFileDao
 import com.halo.app.data.workspace.WorkspaceFileEntity
 import com.halo.app.data.workspace.WorkspaceRelationEntity
@@ -36,6 +48,13 @@ import com.halo.app.data.notebook.NotebookDao
         WorkspaceObjectEntity::class,
         NoteEntity::class,
         NoteDraftEntity::class,
+        NoteBlockEntity::class,
+        NotebookCollectionEntity::class,
+        NotebookCollectionMemberEntity::class,
+        NotebookFavoriteEntity::class,
+        CanvasDocumentEntity::class,
+        CanvasNodeEntity::class,
+        CanvasEdgeEntity::class,
         PersistedTurn::class,
         PersistedConversation::class,
         WorkingSetEntry::class,
@@ -52,9 +71,10 @@ import com.halo.app.data.notebook.NotebookDao
         RoutineEntity::class,
         RoutineRunEntity::class,
         WorkspaceAssetEntity::class,
+        NoteAttachmentEntity::class,
         ModelRuntimeProfileEntity::class
     ],
-    version = 11,
+    version = 15,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -66,7 +86,11 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun memoryDao(): MemoryDao
     abstract fun memoryRecordDao(): MemoryRecordDao
     abstract fun notebookDao(): NotebookDao
+    abstract fun notebookDocumentDao(): NotebookDocumentDao
+    abstract fun notebookOrganizationDao(): NotebookOrganizationDao
+    abstract fun notebookCanvasDao(): NotebookCanvasDao
     abstract fun workspaceFileDao(): WorkspaceFileDao
+    abstract fun workspaceAssetDao(): WorkspaceAssetDao
     abstract fun brainSnapshotDao(): BrainSnapshotDao
     abstract fun backupRecordDao(): BackupRecordDao
     abstract fun modelRuntimeProfileDao(): ModelRuntimeProfileDao
@@ -476,9 +500,155 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_11_12 = object : Migration(11, 12) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS note_attachments (
+                        id TEXT NOT NULL PRIMARY KEY,
+                        noteId TEXT NOT NULL,
+                        assetId TEXT NOT NULL,
+                        position INTEGER NOT NULL,
+                        caption TEXT,
+                        createdAtEpochMs INTEGER NOT NULL,
+                        FOREIGN KEY(noteId) REFERENCES notes(objectId)
+                            ON UPDATE NO ACTION ON DELETE CASCADE,
+                        FOREIGN KEY(assetId) REFERENCES workspace_assets(id)
+                            ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_note_attachments_noteId ON note_attachments(noteId)")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_note_attachments_assetId ON note_attachments(assetId)")
+            }
+        }
+
+        val MIGRATION_12_13 = object : Migration(12, 13) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS note_blocks (
+                        id TEXT NOT NULL PRIMARY KEY,
+                        noteId TEXT NOT NULL,
+                        position INTEGER NOT NULL,
+                        type TEXT NOT NULL,
+                        text TEXT NOT NULL,
+                        checked INTEGER NOT NULL,
+                        createdAtEpochMs INTEGER NOT NULL,
+                        updatedAtEpochMs INTEGER NOT NULL,
+                        FOREIGN KEY(noteId) REFERENCES notes(objectId)
+                            ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_note_blocks_noteId ON note_blocks(noteId)")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_note_blocks_noteId_position ON note_blocks(noteId, position)")
+            }
+        }
+
+        val MIGRATION_13_14 = object : Migration(13, 14) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS notebook_collections (
+                        id TEXT NOT NULL PRIMARY KEY,
+                        name TEXT NOT NULL,
+                        sortOrder INTEGER NOT NULL,
+                        createdAtEpochMs INTEGER NOT NULL,
+                        updatedAtEpochMs INTEGER NOT NULL
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_notebook_collections_name ON notebook_collections(name)")
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS notebook_collection_members (
+                        collectionId TEXT NOT NULL,
+                        objectId TEXT NOT NULL,
+                        addedAtEpochMs INTEGER NOT NULL,
+                        PRIMARY KEY(collectionId, objectId),
+                        FOREIGN KEY(collectionId) REFERENCES notebook_collections(id)
+                            ON UPDATE NO ACTION ON DELETE CASCADE,
+                        FOREIGN KEY(objectId) REFERENCES workspace_objects(id)
+                            ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_notebook_collection_members_collectionId ON notebook_collection_members(collectionId)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_notebook_collection_members_objectId ON notebook_collection_members(objectId)")
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS notebook_favorites (
+                        objectId TEXT NOT NULL PRIMARY KEY,
+                        addedAtEpochMs INTEGER NOT NULL,
+                        FOREIGN KEY(objectId) REFERENCES workspace_objects(id)
+                            ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+            }
+        }
+
+        val MIGRATION_14_15 = object : Migration(14, 15) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS canvas_documents (
+                        objectId TEXT NOT NULL PRIMARY KEY,
+                        viewportX REAL NOT NULL,
+                        viewportY REAL NOT NULL,
+                        viewportScale REAL NOT NULL,
+                        revision INTEGER NOT NULL,
+                        FOREIGN KEY(objectId) REFERENCES workspace_objects(id)
+                            ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS canvas_nodes (
+                        id TEXT NOT NULL PRIMARY KEY,
+                        canvasId TEXT NOT NULL,
+                        type TEXT NOT NULL,
+                        refObjectId TEXT,
+                        text TEXT NOT NULL,
+                        x REAL NOT NULL,
+                        y REAL NOT NULL,
+                        width REAL NOT NULL,
+                        height REAL NOT NULL,
+                        zIndex INTEGER NOT NULL,
+                        createdAtEpochMs INTEGER NOT NULL,
+                        updatedAtEpochMs INTEGER NOT NULL,
+                        FOREIGN KEY(canvasId) REFERENCES canvas_documents(objectId)
+                            ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_canvas_nodes_canvasId ON canvas_nodes(canvasId)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_canvas_nodes_refObjectId ON canvas_nodes(refObjectId)")
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS canvas_edges (
+                        id TEXT NOT NULL PRIMARY KEY,
+                        canvasId TEXT NOT NULL,
+                        fromNodeId TEXT NOT NULL,
+                        toNodeId TEXT NOT NULL,
+                        label TEXT,
+                        createdAtEpochMs INTEGER NOT NULL,
+                        FOREIGN KEY(canvasId) REFERENCES canvas_documents(objectId)
+                            ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_canvas_edges_canvasId ON canvas_edges(canvasId)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_canvas_edges_fromNodeId ON canvas_edges(fromNodeId)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_canvas_edges_toNodeId ON canvas_edges(toNodeId)")
+            }
+        }
+
         fun create(context: Context): AppDatabase =
             Room.databaseBuilder(context, AppDatabase::class.java, "halo.db")
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15)
                 .build()
     }
 }

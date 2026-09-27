@@ -15,6 +15,8 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 import java.security.MessageDigest
 
 sealed interface DownloadState {
@@ -28,6 +30,13 @@ class LiteRtModelManager(
     private val context: Context,
     private val modelRoot: File = File(context.noBackupFilesDir, "models"),
 ) : LocalModelInventoryRepository {
+
+    @Volatile
+    private var residentModelIdProvider: () -> String? = { null }
+
+    fun observeResidentModel(provider: () -> String?) {
+        residentModelIdProvider = provider
+    }
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val inventoryMutex = Mutex()
@@ -148,46 +157,70 @@ class LiteRtModelManager(
     fun downloadCatalogModel(model: LiteRtCatalogModel) {
         scope.launch {
             _downloadStates.value = _downloadStates.value + (model.id to DownloadState.Downloading(0f, 0L, model.expectedBytes ?: 0L))
+            val tempFile = File(modelRoot, "${model.id}.part")
             runCatching {
-                val tempFile = File(modelRoot, "${model.id}.part")
                 val finalFile = File(modelRoot, "${model.id}.litertlm")
+                if (!modelRoot.exists() && !modelRoot.mkdirs()) {
+                    throw IllegalStateException("Unable to create model directory")
+                }
+                if (tempFile.exists() && !tempFile.delete()) {
+                    throw IllegalStateException("Unable to remove stale partial download")
+                }
                 val url = URL(model.downloadUrl)
                 val conn = url.openConnection() as HttpURLConnection
                 conn.connectTimeout = 15000
                 conn.readTimeout = 30000
-                conn.connect()
+                conn.instanceFollowRedirects = true
+                try {
+                    conn.connect()
+                    if (conn.responseCode !in 200..299) {
+                        throw IllegalStateException("Model download failed with HTTP ${conn.responseCode}")
+                    }
 
-                val totalBytes = conn.contentLengthLong.takeIf { it > 0 } ?: (model.expectedBytes ?: 1L)
-                val digest = MessageDigest.getInstance("SHA-256")
+                    val responseBytes = conn.contentLengthLong.takeIf { it >= 0 }
+                    val expectedBytes = model.expectedBytes
+                    if (expectedBytes != null && responseBytes != null && responseBytes != expectedBytes) {
+                        throw IllegalStateException("Model size header mismatch: expected $expectedBytes bytes, received $responseBytes")
+                    }
+                    val progressTotal = expectedBytes ?: responseBytes ?: 1L
+                    val digest = MessageDigest.getInstance("SHA-256")
 
-                conn.inputStream.use { input ->
-                    tempFile.outputStream().use { output ->
-                        val buffer = ByteArray(64 * 1024)
-                        var bytesRead: Int
-                        var downloaded = 0L
-                        while (input.read(buffer).also { bytesRead = it } != -1) {
-                            digest.update(buffer, 0, bytesRead)
-                            output.write(buffer, 0, bytesRead)
-                            downloaded += bytesRead
-                            val progress = (downloaded.toFloat() / totalBytes.toFloat()).coerceIn(0f, 1f)
-                            _downloadStates.value = _downloadStates.value + (model.id to DownloadState.Downloading(progress, downloaded, totalBytes))
+                    conn.inputStream.use { input ->
+                        tempFile.outputStream().use { output ->
+                            val buffer = ByteArray(64 * 1024)
+                            var bytesRead: Int
+                            var downloaded = 0L
+                            while (input.read(buffer).also { bytesRead = it } != -1) {
+                                digest.update(buffer, 0, bytesRead)
+                                output.write(buffer, 0, bytesRead)
+                                downloaded += bytesRead
+                                val progress = (downloaded.toFloat() / progressTotal.toFloat()).coerceIn(0f, 1f)
+                                _downloadStates.value = _downloadStates.value + (model.id to DownloadState.Downloading(progress, downloaded, progressTotal))
+                            }
                         }
                     }
-                }
 
-                if (tempFile.length() == 0L) {
-                    tempFile.delete()
-                    throw IllegalStateException("Downloaded file was empty")
-                }
+                    if (tempFile.length() == 0L) throw IllegalStateException("Downloaded file was empty")
+                    if (expectedBytes != null && tempFile.length() != expectedBytes) {
+                        throw IllegalStateException("Model size mismatch: expected $expectedBytes bytes, received ${tempFile.length()}")
+                    }
 
-                val calculatedSha = digest.digest().joinToString("") { "%02x".format(it) }
+                    val calculatedSha = digest.digest().joinToString("") { "%02x".format(it) }
+                    if (!calculatedSha.equals(model.sha256, ignoreCase = true)) {
+                        throw IllegalStateException("Model SHA-256 mismatch")
+                    }
 
-                if (tempFile.renameTo(finalFile)) {
+                    Files.move(
+                        tempFile.toPath(),
+                        finalFile.toPath(),
+                        StandardCopyOption.ATOMIC_MOVE,
+                        StandardCopyOption.REPLACE_EXISTING,
+                    )
                     val metadata = InstalledLiteRtModelMetadata(
                         id = model.id,
                         displayName = model.displayName,
                         sourceUrl = model.downloadUrl,
-                        sha256 = calculatedSha,
+                        sha256 = model.sha256.lowercase(),
                         bytes = finalFile.length(),
                         contextWindowTokens = model.contextWindowTokens,
                         supportsVision = model.supportsVision,
@@ -196,17 +229,18 @@ class LiteRtModelManager(
                     File(modelRoot, "${model.id}.halo-model.json").writeText(metadata.toJson())
                     _downloadStates.value = _downloadStates.value + (model.id to DownloadState.Downloaded)
                     refresh(ModelInventoryRefreshReason.DOWNLOAD_COMPLETED)
-                } else {
-                    tempFile.delete()
-                    throw IllegalStateException("Failed to rename downloaded model file")
+                } finally {
+                    conn.disconnect()
                 }
             }.onFailure { err ->
+                if (tempFile.exists()) tempFile.delete()
                 _downloadStates.value = _downloadStates.value + (model.id to DownloadState.Failed(err.message ?: "Download failed"))
             }
         }
     }
 
     suspend fun deleteModel(modelId: String): Boolean = withContext(Dispatchers.IO) {
+        if (residentModelIdProvider() == modelId) return@withContext false
         val descriptor = resolveModel(modelId) ?: return@withContext false
         val modelFile = File(descriptor.path)
         val sidecarFile = File(modelRoot, "$modelId.halo-model.json")
@@ -219,7 +253,8 @@ class LiteRtModelManager(
         if (sidecarFile.exists()) sidecarFile.delete()
 
         if (cacheFolder.exists()) {
-            cacheFolder.listFiles { f -> f.isDirectory && f.name.contains(modelId) }?.forEach {
+            val cachePrefix = "${modelId.replace('/', '_')}-"
+            cacheFolder.listFiles { f -> f.isDirectory && f.name.startsWith(cachePrefix) }?.forEach {
                 it.deleteRecursively()
             }
         }

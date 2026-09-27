@@ -169,7 +169,13 @@ data class AiResponse(
 sealed interface AiStreamEvent {
     data object Started : AiStreamEvent
     data class Token(val text: String) : AiStreamEvent
-    data class ToolCallDelta(val index: Int, val name: String? = null, val argumentsDelta: String? = null) : AiStreamEvent
+    data class ToolCallDelta(
+        val index: Int,
+        val name: String? = null,
+        val argumentsDelta: String? = null,
+        /** Provider-issued identity. It must not be synthesized before execution. */
+        val id: String? = null,
+    ) : AiStreamEvent
     data class Completed(val response: AiResponse) : AiStreamEvent
     data class Failed(val error: Throwable) : AiStreamEvent
 }

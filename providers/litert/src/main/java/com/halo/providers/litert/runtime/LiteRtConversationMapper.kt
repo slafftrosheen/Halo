@@ -3,11 +3,14 @@ package com.halo.providers.litert.runtime
 import com.halo.sdk.provider.AiContext
 import com.halo.sdk.provider.AiRequest
 import com.halo.sdk.provider.Role
+import com.halo.sdk.provider.ToolCall
 import com.halo.sdk.provider.asUntrustedPromptSection
 
 data class LiteRtMappedMessage(
     val role: String,
     val content: String,
+    val toolCalls: List<ToolCall> = emptyList(),
+    val toolCallId: String? = null,
 )
 
 data class LiteRtConversationInput(
@@ -35,10 +38,10 @@ object LiteRtConversationMapper {
                     initialMessages.add(LiteRtMappedMessage("user", msg.content))
                 }
                 Role.ASSISTANT -> {
-                    initialMessages.add(LiteRtMappedMessage("model", msg.content))
+                    initialMessages.add(LiteRtMappedMessage("model", msg.content, msg.toolCalls, msg.toolCallId))
                 }
                 Role.TOOL -> {
-                    initialMessages.add(LiteRtMappedMessage("user", "[Tool Result]: ${msg.content}"))
+                    initialMessages.add(LiteRtMappedMessage("tool", msg.content, toolCallId = msg.toolCallId))
                 }
             }
         }

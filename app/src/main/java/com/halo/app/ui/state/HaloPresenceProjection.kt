@@ -7,6 +7,7 @@ import com.halo.app.ui.presence.HaloSignalState
 import com.halo.sdk.runtime.RuntimeSnapshot
 import com.halo.sdk.runtime.SpeechSessionState
 import com.halo.sdk.runtime.embodiment.SessionState
+import com.halo.sdk.provider.CognitiveSessionState
 
 /**
  * The single canonical projection from runtime state to the presence the Signal Face renders.
@@ -144,6 +145,38 @@ fun RuntimeSnapshot.toSignalPresentation(
         progress = progress,
         activityLevel = activityLevel,
         reducedMotion = reducedMotion
+    )
+}
+
+/**
+ * Overlays the cognitive turn on the broader speech/runtime presence. This keeps
+ * provider streaming, tool execution, completion and failure visible even when
+ * the speech state has already returned to idle.
+ */
+fun CognitiveSessionState.toSignalPresentation(
+    fallback: HaloRuntimeState,
+    detail: String? = null,
+    activityLevel: Float = 0f,
+    reducedMotion: Boolean = false,
+): HaloSignalPresentation = when (this) {
+    CognitiveSessionState.Idle -> fallback.toSignalPresentation(detail, activityLevel = activityLevel, reducedMotion = reducedMotion)
+    CognitiveSessionState.PreparingContext -> HaloSignalPresentation(
+        HaloSignalState.WAITING, HaloGlyph.SEE, "Preparing", detail, activityLevel = activityLevel, reducedMotion = reducedMotion,
+    )
+    is CognitiveSessionState.Reasoning -> HaloSignalPresentation(
+        HaloSignalState.THINKING, HaloGlyph.THINK, "Thinking", detail ?: modelId, activityLevel = activityLevel, reducedMotion = reducedMotion,
+    )
+    is CognitiveSessionState.ExecutingTool -> HaloSignalPresentation(
+        HaloSignalState.ACTING, HaloGlyph.TOOL, "Working", detail ?: toolId, activityLevel = activityLevel, reducedMotion = reducedMotion,
+    )
+    is CognitiveSessionState.Streaming -> HaloSignalPresentation(
+        HaloSignalState.SPEAKING, HaloGlyph.SPEAK, "Responding", detail, activityLevel = activityLevel, reducedMotion = reducedMotion,
+    )
+    is CognitiveSessionState.Completed -> HaloSignalPresentation(
+        HaloSignalState.SUCCESS, HaloGlyph.SUCCESS, "Complete", detail, progress = 1f, activityLevel = activityLevel, reducedMotion = reducedMotion,
+    )
+    is CognitiveSessionState.Failed -> HaloSignalPresentation(
+        HaloSignalState.ERROR, HaloGlyph.ERROR, "Needs attention", detail ?: message, activityLevel = activityLevel, reducedMotion = reducedMotion,
     )
 }
 

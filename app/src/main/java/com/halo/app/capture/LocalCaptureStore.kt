@@ -6,6 +6,8 @@ import androidx.core.content.FileProvider
 import androidx.room.withTransaction
 import com.halo.app.data.*
 import com.halo.app.data.notebook.*
+import com.halo.app.data.workspace.NoteAttachmentEntity
+import com.halo.app.data.workspace.WorkspaceAssetEntity
 import com.halo.sdk.host.ObservationSource
 import com.halo.sdk.runtime.*
 import kotlinx.coroutines.Dispatchers
@@ -45,13 +47,42 @@ class LocalCaptureStore(private val context: Context, private val db: AppDatabas
             else File(capturesDir, "${UUID.randomUUID()}.jpg").also { file.copyTo(it, overwrite = false) }
         val source = if (deviceId == null) "Phone camera" else "HeyCyan"
         val note = db.withTransaction {
-            val note = notebook.createNote("Capture � $source\n\n[Open image](${uri(local)})\n\nCapture: $captureId", WorkspaceSource.DEVICE_CAPTURE)
+            val note = notebook.createNote("Capture — $source\n\nCapture: $captureId", WorkspaceSource.DEVICE_CAPTURE)
+            val timestamp = System.currentTimeMillis()
+            val assetId = UUID.randomUUID().toString()
+            db.workspaceAssetDao().insertAsset(
+                WorkspaceAssetEntity(
+                    id = assetId,
+                    objectId = note.id,
+                    type = "IMAGE",
+                    mimeType = mime,
+                    storageType = "APP_OWNED",
+                    pathOrUri = uri(local).toString(),
+                    permissionPersisted = true,
+                    displayName = local.name,
+                    bytes = local.length(),
+                    width = options.outWidth,
+                    height = options.outHeight,
+                    durationMs = null,
+                    createdAtEpochMs = timestamp,
+                )
+            )
+            db.workspaceAssetDao().insertAttachment(
+                NoteAttachmentEntity(
+                    id = UUID.randomUUID().toString(),
+                    noteId = note.id,
+                    assetId = assetId,
+                    position = 0,
+                    caption = source,
+                    createdAtEpochMs = timestamp,
+                )
+            )
             db.workspaceContextDao().provenance(ObjectProvenance(note.id, deviceId ?: "phone", captureId,
                 org.json.JSONObject(mapOf("mimeType" to mime, "localPath" to local.absolutePath, "captureId" to captureId)).toString()))
             note
         }
         events.publish(ActionReceipt(operationId = captureId, category = "Vision", title = "Image received", stage = "Completed",
-            detail = "$source � $mime � saved in Notebook Inbox", sourceDeviceId = deviceId, objectId = note.id))
+            detail = "$source · $mime · saved in Notebook Inbox", sourceDeviceId = deviceId, objectId = note.id))
         // Oversize captures remain local even when they cannot fit model context.
         if (local.length() <= 8L * 1024 * 1024) events.publish(ObservationCreated(observation = Observation(
             modality = Modality.IMAGE, source = Source.CAMERA,

@@ -1,5 +1,6 @@
 package com.halo.providers.litert.tools
 
+import com.google.ai.edge.litertlm.OpenApiTool
 import com.halo.sdk.provider.ToolDefinition
 
 /**
@@ -11,12 +12,12 @@ import com.halo.sdk.provider.ToolDefinition
  */
 class HaloOpenApiTool(
     val definition: ToolDefinition,
-) {
-    fun getToolDescriptionJsonString(): String {
+) : OpenApiTool {
+    override fun getToolDescriptionJsonString(): String {
         return LiteRtToolSchemaAdapter.formatToolDefinitionToJsonSchema(definition)
     }
 
-    fun execute(paramsJsonString: String): String {
+    override fun execute(paramsJsonString: String): String {
         error(
             "Halo tools must never execute inside LiteRT. " +
             "automaticToolCalling must remain false."

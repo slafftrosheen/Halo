@@ -57,6 +57,8 @@ data class ScreenContextSnapshot(
     val screenHeight: Int? = null,
     val truncated: Boolean = false,
     val truncationReason: String? = null,
+    /** Content-free counts explaining which nodes were omitted from the projection. */
+    val omissionCounts: Map<String, Int> = emptyMap(),
     /** Correlates opaque node tokens with exactly one observation generation. */
     val snapshotId: String = UUID.randomUUID().toString(),
 )

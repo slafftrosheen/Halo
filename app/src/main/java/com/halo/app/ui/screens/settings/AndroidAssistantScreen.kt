@@ -23,6 +23,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -35,6 +38,7 @@ import com.halo.app.ui.design.HaloSpacing
 import com.halo.app.ui.theme.HaloPastelBlue
 import com.halo.app.ui.theme.HaloPastelMint
 import com.halo.host.android.assistant.AssistantIntegrationState
+import com.halo.host.android.assistant.AssistantEnrollmentLaunchResult
 import com.halo.host.android.assistant.AssistantRoleController
 
 @Composable
@@ -43,6 +47,7 @@ fun AndroidAssistantScreen(
     onBack: () -> Unit
 ) {
     val state by roleController.integrationState.collectAsState()
+    var enrollmentError by remember { mutableStateOf<String?>(null) }
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -100,7 +105,12 @@ fun AndroidAssistantScreen(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Button(
-                onClick = { roleController.launchEnrollment { launcher.launch(it) } },
+                onClick = {
+                    enrollmentError = when (val result = roleController.launchEnrollment { launcher.launch(it) }) {
+                        is AssistantEnrollmentLaunchResult.Launched -> null
+                        is AssistantEnrollmentLaunchResult.Failed -> result.reason
+                    }
+                },
                 enabled = state !is AssistantIntegrationState.Active && state !is AssistantIntegrationState.NotEligible,
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(12.dp)
@@ -119,6 +129,11 @@ fun AndroidAssistantScreen(
             ) {
                 Text("Re-inspect")
             }
+        }
+
+        enrollmentError?.let { error ->
+            Spacer(Modifier.height(12.dp))
+            Text(error, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
         }
 
         Spacer(Modifier.height(24.dp))

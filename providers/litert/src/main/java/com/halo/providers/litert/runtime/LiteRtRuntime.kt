@@ -5,9 +5,15 @@ import android.util.Log
 import com.google.ai.edge.litertlm.Backend
 import com.google.ai.edge.litertlm.Conversation
 import com.google.ai.edge.litertlm.ConversationConfig
+import com.google.ai.edge.litertlm.Content
+import com.google.ai.edge.litertlm.Contents
 import com.google.ai.edge.litertlm.Engine
 import com.google.ai.edge.litertlm.EngineConfig
 import com.google.ai.edge.litertlm.Message
+import com.google.ai.edge.litertlm.SamplerConfig
+import com.google.ai.edge.litertlm.ToolCall as LiteRtToolCall
+import com.google.ai.edge.litertlm.tool
+import com.halo.providers.litert.tools.HaloOpenApiTool
 import com.halo.sdk.provider.LocalComputeBackend
 import com.halo.sdk.provider.LocalInferenceRuntime
 import com.halo.sdk.provider.LocalModelFormat
@@ -16,6 +22,8 @@ import com.halo.sdk.provider.RuntimeGenerationConfig
 import com.halo.sdk.provider.RuntimeGenerationResult
 import com.halo.sdk.provider.RuntimeLoadConfig
 import com.halo.sdk.provider.RuntimeLoadResult
+import com.halo.sdk.provider.Role
+import com.halo.sdk.provider.ToolCall
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -26,10 +34,14 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.FileInputStream
+import java.security.MessageDigest
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.UUID
 
 data class EngineLoadOutcome(
     val engine: Engine,
+    val cacheDir: File,
     val requestedBackend: LocalComputeBackend,
     val effectiveBackend: LocalComputeBackend,
     val fallbackReason: String?,
@@ -105,10 +117,14 @@ class LiteRtRuntime(
             cacheDir = cacheDir.absolutePath,
         )
 
-        runCatching {
-            val created = Engine(engineConfig)
+        var created: Engine? = null
+        try {
+            created = Engine(engineConfig)
             created.initialize()
-            created
+            Result.success(created)
+        } catch (error: Throwable) {
+            created?.let { runCatching { it.close() } }
+            Result.failure(error)
         }
     }
 
@@ -117,7 +133,8 @@ class LiteRtRuntime(
         modelId: String,
         config: RuntimeLoadConfig
     ): EngineLoadOutcome {
-        val modelCacheDir = File(context.filesDir, "litertlm_cache/${modelId.replace('/', '_')}-${file.length()}-${file.lastModified()}")
+        val artifactFingerprint = sha256(file)
+        val modelCacheDir = File(context.filesDir, "litertlm_cache/${modelId.replace('/', '_')}-$artifactFingerprint")
         if (!modelCacheDir.exists()) modelCacheDir.mkdirs()
 
         val reqBackend = config.computeBackend
@@ -125,23 +142,23 @@ class LiteRtRuntime(
         when (reqBackend) {
             LocalComputeBackend.CPU -> {
                 val engine = createAndInitializeEngine(file.absolutePath, LocalComputeBackend.CPU, config.contextSize, modelCacheDir).getOrThrow()
-                return EngineLoadOutcome(engine, LocalComputeBackend.CPU, LocalComputeBackend.CPU, null)
+                return EngineLoadOutcome(engine, modelCacheDir, LocalComputeBackend.CPU, LocalComputeBackend.CPU, null)
             }
             LocalComputeBackend.GPU -> {
                 val engine = createAndInitializeEngine(file.absolutePath, LocalComputeBackend.GPU, config.contextSize, modelCacheDir).getOrThrow()
-                return EngineLoadOutcome(engine, LocalComputeBackend.GPU, LocalComputeBackend.GPU, null)
+                return EngineLoadOutcome(engine, modelCacheDir, LocalComputeBackend.GPU, LocalComputeBackend.GPU, null)
             }
             LocalComputeBackend.AUTO -> {
                 val gpuResult = createAndInitializeEngine(file.absolutePath, LocalComputeBackend.GPU, config.contextSize, modelCacheDir)
                 if (gpuResult.isSuccess) {
-                    return EngineLoadOutcome(gpuResult.getOrThrow(), LocalComputeBackend.AUTO, LocalComputeBackend.GPU, null)
+                    return EngineLoadOutcome(gpuResult.getOrThrow(), modelCacheDir, LocalComputeBackend.AUTO, LocalComputeBackend.GPU, null)
                 }
 
                 val fallbackMsg = "GPU engine initialization failed (${gpuResult.exceptionOrNull()?.message}); fell back to CPU"
                 Log.w(TAG, fallbackMsg)
 
                 val cpuEngine = createAndInitializeEngine(file.absolutePath, LocalComputeBackend.CPU, config.contextSize, modelCacheDir).getOrThrow()
-                return EngineLoadOutcome(cpuEngine, LocalComputeBackend.AUTO, LocalComputeBackend.CPU, fallbackMsg)
+                return EngineLoadOutcome(cpuEngine, modelCacheDir, LocalComputeBackend.AUTO, LocalComputeBackend.CPU, fallbackMsg)
             }
         }
     }
@@ -167,7 +184,7 @@ class LiteRtRuntime(
                 effectiveBackend = outcome.effectiveBackend
                 effectiveContextSize = config.contextSize
                 lastFallbackReason = outcome.fallbackReason
-                activeCachePath = file.absolutePath
+                activeCachePath = outcome.cacheDir.absolutePath
                 _loadedModelId = modelId
                 _state.value = LocalModelSessionState.IDLE
             }
@@ -200,26 +217,53 @@ class LiteRtRuntime(
 
         _state.value = LocalModelSessionState.INFERRING
         cancelRequested.set(false)
+        val requestId = UUID.randomUUID().toString()
+        stateMutex.withLock { activeRequestId = requestId }
 
         val startTime = System.currentTimeMillis()
         var firstTokenTime: Long? = null
         var tokenCount = 0
         val textBuilder = StringBuilder()
+        val nativeToolCalls = linkedMapOf<String, ToolCall>()
 
         try {
             val convConfig = ConversationConfig(
-                systemInstruction = config.systemInstruction?.let { com.google.ai.edge.litertlm.Contents.of(it) },
+                systemInstruction = config.systemInstruction?.let(Contents::of),
+                initialMessages = toLiteRtHistory(config),
+                tools = config.availableTools.map { tool(HaloOpenApiTool(it)) },
+                samplerConfig = SamplerConfig(
+                    topK = config.topK,
+                    topP = config.topP,
+                    temperature = config.temperature,
+                ),
                 automaticToolCalling = false,
+                maxOutputToken = config.maxTokens.takeIf { it > 0 },
             )
 
             val conversation = currentEngine.createConversation(convConfig)
             stateMutex.withLock { activeConversation = conversation }
 
-            val messageFlow = conversation.sendMessageAsync(Message.user(config.prompt))
+            val outgoingContents = buildList<Content> {
+                if (config.prompt.isNotEmpty()) add(Content.Text(config.prompt))
+                config.imageBytes?.let { add(Content.ImageBytes(it)) }
+            }.let(Contents::of)
+            val messageFlow = conversation.sendMessageAsync(Message.user(outgoingContents))
 
             messageFlow.collect { message ->
                 if (cancelRequested.get()) return@collect
-                val chunk = message.toString()
+                val chunk = message.contents.contents
+                    .filterIsInstance<Content.Text>()
+                    .joinToString("") { it.text }
+                message.toolCalls.forEach { call ->
+                    val key = "${call.name}:${call.arguments}"
+                    if (key !in nativeToolCalls) {
+                        nativeToolCalls[key] = ToolCall(
+                            id = "litert:${activeRequestId ?: startTime}:${nativeToolCalls.size + 1}",
+                            functionName = call.name,
+                            arguments = call.arguments.filterValues { it != null } as Map<String, Any>,
+                        )
+                    }
+                }
                 if (chunk.isNotEmpty()) {
                     if (firstTokenTime == null) firstTokenTime = System.currentTimeMillis()
                     tokenCount++
@@ -238,6 +282,7 @@ class LiteRtRuntime(
             Result.success(
                 RuntimeGenerationResult(
                     text = textBuilder.toString(),
+                    toolCalls = nativeToolCalls.values.toList(),
                     tokenCount = tokenCount,
                     timeToFirstTokenMs = ttft,
                     tokensPerSecond = tokensPerSec,
@@ -255,6 +300,7 @@ class LiteRtRuntime(
             stateMutex.withLock {
                 runCatching { activeConversation?.close() }
                 activeConversation = null
+                if (activeRequestId == requestId) activeRequestId = null
             }
         }
     }
@@ -284,6 +330,42 @@ class LiteRtRuntime(
         activeConversation = null
         engine = null
         _loadedModelId = null
+    }
+
+    private fun toLiteRtHistory(config: RuntimeGenerationConfig): List<Message> {
+        val functionByCallId = buildMap {
+            config.initialMessages.forEach { message ->
+                message.toolCalls.forEach { call -> put(call.id, call.functionName) }
+            }
+        }
+        return config.initialMessages.map { message ->
+            when (message.role) {
+                Role.ASSISTANT -> Message.model(
+                    Contents.of(message.content),
+                    message.toolCalls.map { LiteRtToolCall(it.functionName, it.arguments) },
+                    emptyMap(),
+                )
+                Role.TOOL -> {
+                    val name = message.toolCallId?.let(functionByCallId::get) ?: "halo_tool"
+                    Message.tool(Contents.of(Content.ToolResponse(name, message.content)))
+                }
+                Role.SYSTEM -> Message.system(message.content)
+                Role.USER -> Message.user(message.content)
+            }
+        }
+    }
+
+    private fun sha256(file: File): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        FileInputStream(file).use { input ->
+            val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+            while (true) {
+                val count = input.read(buffer)
+                if (count < 0) break
+                digest.update(buffer, 0, count)
+            }
+        }
+        return digest.digest().joinToString("") { "%02x".format(it) }
     }
 
     companion object {

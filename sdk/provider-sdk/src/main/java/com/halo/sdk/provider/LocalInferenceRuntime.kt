@@ -89,6 +89,13 @@ data class RuntimeLoadResult(
     val fallbackReason: String? = null,
 )
 
+data class RuntimeConversationMessage(
+    val role: Role,
+    val content: String,
+    val toolCalls: List<ToolCall> = emptyList(),
+    val toolCallId: String? = null,
+)
+
 data class RuntimeGenerationConfig(
     val prompt: String,
     val systemInstruction: String? = null,
@@ -99,6 +106,8 @@ data class RuntimeGenerationConfig(
     val maxTokens: Int = 512,
     val priority: InferencePriority = InferencePriority.NORMAL,
     val imageBytes: ByteArray? = null,
+    val initialMessages: List<RuntimeConversationMessage> = emptyList(),
+    val availableTools: List<ToolDefinition> = emptyList(),
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -110,6 +119,8 @@ data class RuntimeGenerationConfig(
         if (repeatPenalty != other.repeatPenalty) return false
         if (maxTokens != other.maxTokens) return false
         if (priority != other.priority) return false
+        if (initialMessages != other.initialMessages) return false
+        if (availableTools != other.availableTools) return false
         if (imageBytes != null) {
             if (other.imageBytes == null) return false
             if (!imageBytes.contentEquals(other.imageBytes)) return false
@@ -125,6 +136,8 @@ data class RuntimeGenerationConfig(
         result = 31 * result + repeatPenalty.hashCode()
         result = 31 * result + maxTokens
         result = 31 * result + priority.hashCode()
+        result = 31 * result + initialMessages.hashCode()
+        result = 31 * result + availableTools.hashCode()
         result = 31 * result + (imageBytes?.contentHashCode() ?: 0)
         return result
     }
@@ -132,6 +145,7 @@ data class RuntimeGenerationConfig(
 
 data class RuntimeGenerationResult(
     val text: String,
+    val toolCalls: List<ToolCall> = emptyList(),
     val tokenCount: Int,
     val timeToFirstTokenMs: Long = 0L,
     val tokensPerSecond: Double = 0.0,

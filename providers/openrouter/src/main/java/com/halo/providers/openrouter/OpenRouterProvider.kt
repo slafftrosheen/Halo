@@ -208,12 +208,16 @@ class OpenRouterProvider(
                             val tc = calls.getJSONObject(i)
                             val fn = tc.optJSONObject("function")
                             val index = tc.optInt("index", i)
-                            val assembled = tools.getOrPut(index) {
-                                StreamToolCall(tc.optString("id").ifBlank { "tool-$index" })
-                            }
+                            val assembled = tools.getOrPut(index) { StreamToolCall() }
+                            tc.optString("id").takeIf { it.isNotBlank() }?.let { assembled.id = it }
                             fn?.optString("name")?.takeIf { it.isNotBlank() }?.let { assembled.name = it }
                             fn?.optString("arguments")?.let { assembled.arguments.append(it) }
-                            emit(AiStreamEvent.ToolCallDelta(index, fn?.optString("name"), fn?.optString("arguments")))
+                            emit(AiStreamEvent.ToolCallDelta(
+                                index = index,
+                                name = fn?.optString("name"),
+                                argumentsDelta = fn?.optString("arguments"),
+                                id = tc.optString("id").takeIf { it.isNotBlank() },
+                            ))
                         }
                     }
                 }
@@ -231,9 +235,13 @@ class OpenRouterProvider(
                     AiStreamEvent.Completed(
                         AiResponse(
                             text = text.toString(),
-                            toolCalls = tools.values.mapNotNull { it.name?.let { name ->
-                                ToolCall(it.id, name, parseArguments(it.arguments.toString()))
-                            } },
+                            toolCalls = tools.entries.map { (index, call) ->
+                                val callId = call.id?.takeIf { it.isNotBlank() }
+                                    ?: throw AiProviderException(AiErrorType.INVALID_RESPONSE, "OpenRouter tool call $index has no id")
+                                val name = call.name?.takeIf { it.isNotBlank() }
+                                    ?: throw AiProviderException(AiErrorType.INVALID_RESPONSE, "OpenRouter tool call $index has no function name")
+                                ToolCall(callId, name, parseArguments(call.arguments.toString()))
+                            },
                             finishReason = finish,
                             providerId = id,
                             modelId = actualModel,
@@ -515,8 +523,8 @@ class OpenRouterProvider(
                 put(key, obj.get(key))
             }
         }
-    } catch (_: Exception) {
-        emptyMap()
+    } catch (error: Exception) {
+        throw AiProviderException(AiErrorType.INVALID_RESPONSE, "OpenRouter returned invalid tool arguments", error)
     }
 
     private fun httpError(
@@ -664,7 +672,8 @@ class OpenRouterProvider(
                 .build()
     }
 
-    private class StreamToolCall(val id: String) {
+    private class StreamToolCall {
+        var id: String? = null
         var name: String? = null
         val arguments = StringBuilder()
     }

@@ -50,6 +50,8 @@ import com.halo.app.ui.screens.discovery.PairingScreen
 import com.halo.app.ui.screens.home.HomeScreen
 import com.halo.app.ui.screens.notebook.ConversationDetailScreen
 import com.halo.app.ui.screens.notebook.ConversationsListScreen
+import com.halo.app.ui.screens.notebook.CanvasEditorScreen
+import com.halo.app.ui.screens.notebook.CanvasEditorViewModel
 import com.halo.app.ui.screens.notebook.NoteEditorScreen
 import com.halo.app.ui.screens.notebook.NoteEditorViewModel
 import com.halo.app.ui.screens.notebook.NotebookNavigation
@@ -185,6 +187,7 @@ fun AppShell(
                                 is NotebookNavigation.OpenConversation -> navigateSafely("notebook/conversation/${event.id}")
                                 is NotebookNavigation.OpenFile -> navigateSafely("notebook/file/${event.id}")
                                 is NotebookNavigation.OpenMemory -> navigateSafely("notebook/memory/${event.id}")
+                                is NotebookNavigation.OpenCanvas -> navigateSafely("notebook/canvas/${event.id}")
                             }
                         }
                     }
@@ -203,12 +206,33 @@ fun AppShell(
                             key = "note-editor-$noteId",
                             factory = NoteEditorViewModel.Factory(
                                 noteId, ManualDependencyGraph.notebookUseCases,
+                                ManualDependencyGraph.notebookAssetRepository,
+                                ManualDependencyGraph.notebookDocumentRepository,
                                 ManualDependencyGraph.workspaceUseCases,
                                 ManualDependencyGraph.aiProviderRouter,
                                 { ManualDependencyGraph.workspaceContext.cloudSharing.value }
                             )
                         )
                         NoteEditorScreen(editorViewModel) { navController.popBackStack() }
+                    }
+                }
+
+                composable(
+                    "notebook/canvas/{canvasId}",
+                    arguments = listOf(navArgument("canvasId") { type = NavType.StringType })
+                ) { entry ->
+                    val canvasId = entry.arguments?.getString("canvasId")
+                    if (canvasId == null) {
+                        LaunchedEffect(Unit) { navController.popBackStack() }
+                    } else {
+                        val canvasViewModel: CanvasEditorViewModel = viewModel(
+                            key = "canvas-editor-$canvasId",
+                            factory = CanvasEditorViewModel.Factory(
+                                canvasId,
+                                ManualDependencyGraph.notebookCanvasRepository,
+                            ),
+                        )
+                        CanvasEditorScreen(canvasViewModel) { navController.popBackStack() }
                     }
                 }
 

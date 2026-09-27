@@ -20,29 +20,37 @@ fun HaloGlyphRenderer(
         val gridWidth = 16
         val gridHeight = 16
         val cellSize = min(size.width, size.height) / gridWidth
-        val cellPadding = cellSize * 0.10f
-        val actualCellSize = cellSize - cellPadding
-        val cornerRadius = CornerRadius(actualCellSize * 0.25f)
+        val overlap = cellSize * 0.06f
+        val barHeight = cellSize * 0.78f
+        val cornerRadius = CornerRadius(barHeight * 0.42f)
 
         val offsetX = (size.width - (cellSize * gridWidth)) / 2f
         val offsetY = (size.height - (cellSize * gridHeight)) / 2f
 
+        // Merge adjacent pixels into continuous bars. The original 16x16 artwork
+        // remains the source of truth, but connected silhouettes render cleanly at
+        // compact sizes and avoid the "beaded" appearance of individual cells.
         for (y in 0 until gridHeight) {
             val row = pixelData.getOrNull(y) ?: continue
-            for (x in 0 until gridWidth) {
-                val char = row.getOrNull(x) ?: continue
-                if (char != '.' && char != ' ') {
-                    drawRoundRect(
-                        color = tint,
-                        topLeft = Offset(
-                            offsetX + x * cellSize + cellPadding / 2f,
-                            offsetY + y * cellSize + cellPadding / 2f
-                        ),
-                        size = Size(actualCellSize, actualCellSize),
-                        cornerRadius = cornerRadius
-                    )
-                }
+            var x = 0
+            while (x < gridWidth) {
+                while (x < gridWidth && row.getOrNull(x).isEmptyPixel()) x++
+                if (x >= gridWidth) break
+                val start = x
+                while (x < gridWidth && !row.getOrNull(x).isEmptyPixel()) x++
+                val cells = x - start
+                drawRoundRect(
+                    color = tint,
+                    topLeft = Offset(
+                        offsetX + start * cellSize - overlap,
+                        offsetY + y * cellSize + (cellSize - barHeight) / 2f,
+                    ),
+                    size = Size(cells * cellSize + overlap * 2f, barHeight),
+                    cornerRadius = cornerRadius,
+                )
             }
         }
     }
 }
+
+private fun Char?.isEmptyPixel(): Boolean = this == null || this == '.' || this == ' '

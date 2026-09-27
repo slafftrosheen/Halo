@@ -6,9 +6,13 @@ import com.halo.sdk.provider.AiContext
 import com.halo.sdk.provider.AiErrorType
 import com.halo.sdk.provider.AiExecutionTarget
 import com.halo.sdk.provider.AiProviderException
+import com.halo.sdk.provider.AiFailureDetails
+import com.halo.sdk.provider.Recoverability
 import com.halo.sdk.provider.AiRequest
 import com.halo.sdk.provider.AiResponse
 import com.halo.sdk.provider.AiStreamEvent
+import com.halo.sdk.provider.StreamingToolCallAssembler
+import com.halo.sdk.provider.StreamToolCallException
 import com.halo.sdk.runtime.CognitiveTokenReceived
 import com.halo.sdk.runtime.EventBus
 import com.halo.runtime.provider.response.AiResponseValidator
@@ -16,6 +20,9 @@ import com.halo.sdk.provider.validateAgainst
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.produceIn
+import kotlinx.coroutines.withTimeoutOrNull
 
 sealed interface ProviderTurnResult {
     data class Response(
@@ -46,6 +53,7 @@ class DefaultProviderTurnExecutor(
     private val _streamingText = MutableStateFlow<String?>(null)
     override val streamingText = _streamingText.asStateFlow()
 
+    @OptIn(kotlinx.coroutines.FlowPreview::class)
     override suspend fun execute(
         target: AiExecutionTarget,
         request: AiRequest,
@@ -60,29 +68,58 @@ class DefaultProviderTurnExecutor(
         val response = if (target.providerCapabilities.contains(AiCapability.STREAMING)) {
             var completedResponse: AiResponse? = null
             val accumulatedText = StringBuilder()
+            val toolCalls = StreamingToolCallAssembler()
             _streamingText.value = ""
-            provider.stream(request, context).collect { event ->
-                when (event) {
-                    is AiStreamEvent.Started ->
-                        _streamingText.value = ""
+            try {
+                coroutineScope {
+                    val events = provider.stream(request, context).produceIn(this)
+                    var receivedAnyEvent = false
+                    while (true) {
+                        val timeoutMs = if (receivedAnyEvent) INTER_EVENT_TIMEOUT_MS else FIRST_EVENT_TIMEOUT_MS
+                        val next = withTimeoutOrNull(timeoutMs) { events.receiveCatching() }
+                            ?: throw streamTimeout(accumulatedText.isNotEmpty(), toolCalls.hasDeltas(), timeoutMs)
+                        next.exceptionOrNull()?.let { throw it }
+                        if (next.isClosed) break
+                        receivedAnyEvent = true
+                        val event = next.getOrThrow()
+                        when (event) {
+                            is AiStreamEvent.Started ->
+                                _streamingText.value = ""
 
-                    is AiStreamEvent.Token -> {
-                        accumulatedText.append(event.text)
-                        _streamingText.value = accumulatedText.toString()
-                        eventBus.publish(
-                            CognitiveTokenReceived(requestId = requestId, token = event.text, interactionId = interactionId.value)
-                        )
+                            is AiStreamEvent.Token -> {
+                                accumulatedText.append(event.text)
+                                _streamingText.value = accumulatedText.toString()
+                                eventBus.publish(
+                                    CognitiveTokenReceived(requestId = requestId, token = event.text, interactionId = interactionId.value)
+                                )
+                            }
+
+                            is AiStreamEvent.Completed -> completedResponse = event.response
+                            is AiStreamEvent.Failed -> throw event.error
+                            is AiStreamEvent.ToolCallDelta -> toolCalls.appendDelta(event)
+                        }
                     }
-
-                    is AiStreamEvent.Completed -> completedResponse = event.response
-                    is AiStreamEvent.Failed -> throw event.error
-                    is AiStreamEvent.ToolCallDelta -> Unit
+                    events.cancel()
                 }
+            } finally {
+                _streamingText.value = null
             }
-            _streamingText.value = null
-            completedResponse ?: throw AiProviderException(
+            val completed = completedResponse ?: throw AiProviderException(
                 AiErrorType.INVALID_RESPONSE,
                 "Provider stream ended without Completed event"
+            )
+            val assembledCalls = try {
+                toolCalls.assemble(requestId)
+            } catch (error: StreamToolCallException) {
+                throw AiProviderException(AiErrorType.INVALID_RESPONSE, error.message ?: "Invalid streamed tool call", error)
+            }
+            val effectiveCalls = if (completed.toolCalls.isNotEmpty()) completed.toolCalls else assembledCalls
+            if (completed.finishReason.equals("tool_calls", ignoreCase = true) && effectiveCalls.isEmpty()) {
+                throw AiProviderException(AiErrorType.INVALID_RESPONSE, "Provider finished with tool_calls but supplied no complete tool call")
+            }
+            if (assembledCalls.isEmpty() || completed.toolCalls.isNotEmpty()) completed else completed.copy(
+                toolCalls = assembledCalls,
+                finishReason = "tool_calls"
             )
         } else {
             provider.generate(request, context)
@@ -105,5 +142,26 @@ class DefaultProviderTurnExecutor(
         } else {
             ProviderTurnResult.Response(validated)
         }
+    }
+
+    private fun streamTimeout(partialTextVisible: Boolean, toolCallStarted: Boolean, timeoutMs: Long): AiProviderException {
+        val externallyVisible = partialTextVisible || toolCallStarted
+        return AiProviderException(
+            type = AiErrorType.TIMEOUT,
+            message = if (externallyVisible) {
+                "Provider stream became idle after partial output; automatic retry is unsafe"
+            } else {
+                "Provider stream produced no progress for $timeoutMs ms"
+            },
+            details = AiFailureDetails(
+                providerCode = if (externallyVisible) "STREAM_IDLE_AFTER_OUTPUT" else "STREAM_IDLE_BEFORE_OUTPUT",
+                recoverability = if (externallyVisible) Recoverability.PERMANENT else Recoverability.RETRY_IMMEDIATELY,
+            ),
+        )
+    }
+
+    private companion object {
+        const val FIRST_EVENT_TIMEOUT_MS = 30_000L
+        const val INTER_EVENT_TIMEOUT_MS = 120_000L
     }
 }

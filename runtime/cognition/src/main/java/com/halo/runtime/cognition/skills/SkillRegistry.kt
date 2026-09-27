@@ -186,6 +186,31 @@ class DefaultSkillRegistry(
                 source = SkillSource.BUILT_IN
             ),
             SkillDescriptor(
+                id = SkillId("halo.phone"),
+                name = "Phone control",
+                description = "Observe and operate supported Android screens using snapshot-scoped semantic controls.",
+                category = SkillCategory.DEVICE,
+                tools = setOf(
+                    "halo_read_screen",
+                    "halo_find_on_screen",
+                    "halo_ui_click",
+                    "halo_ui_scroll",
+                    "halo_ui_set_text",
+                    "halo_ui_global_action",
+                ),
+                toolDefinitions = listOf(
+                    com.halo.sdk.runtime.skills.SkillToolDefinition("halo_read_screen", SkillRisk.READ_ONLY),
+                    com.halo.sdk.runtime.skills.SkillToolDefinition("halo_find_on_screen", SkillRisk.READ_ONLY),
+                    com.halo.sdk.runtime.skills.SkillToolDefinition("halo_ui_click", SkillRisk.EXTERNAL_SIDE_EFFECT),
+                    com.halo.sdk.runtime.skills.SkillToolDefinition("halo_ui_scroll", SkillRisk.EXTERNAL_SIDE_EFFECT),
+                    com.halo.sdk.runtime.skills.SkillToolDefinition("halo_ui_set_text", SkillRisk.SENSITIVE),
+                    com.halo.sdk.runtime.skills.SkillToolDefinition("halo_ui_global_action", SkillRisk.EXTERNAL_SIDE_EFFECT),
+                ),
+                requiredPermissions = setOf(com.halo.sdk.runtime.skills.HostPermission.ACCESSIBILITY),
+                risk = SkillRisk.SENSITIVE,
+                source = SkillSource.BUILT_IN,
+            ),
+            SkillDescriptor(
                 id = SkillId("halo.apps"),
                 name = "Apps & Navigation",
                 description = "Open launchable apps and navigation routes in installed maps.",

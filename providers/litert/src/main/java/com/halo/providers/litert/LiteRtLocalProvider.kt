@@ -7,7 +7,6 @@ import com.halo.providers.litert.models.LocalModelInventoryRepository
 import com.halo.providers.litert.models.LocalModelInventoryState
 import com.halo.providers.litert.runtime.LiteRtConversationMapper
 import com.halo.providers.litert.runtime.LocalModelSession
-import com.halo.providers.litert.tools.LiteRtToolSchemaAdapter
 import com.halo.sdk.provider.AiCapability
 import com.halo.sdk.provider.AiContext
 import com.halo.sdk.provider.AiErrorType
@@ -22,6 +21,7 @@ import com.halo.sdk.provider.LocalModelActivityState
 import com.halo.sdk.provider.ProviderReadiness
 import com.halo.sdk.provider.ProviderStatus
 import com.halo.sdk.provider.RuntimeGenerationConfig
+import com.halo.sdk.provider.RuntimeConversationMessage
 import com.halo.sdk.provider.RuntimeLoadConfig
 import com.halo.sdk.provider.validateAgainst
 import com.halo.sdk.provider.validateForTextGeneration
@@ -65,9 +65,8 @@ class LiteRtLocalProvider(
             return false
         }
         val unloaded = modelSession.unloadModel().isSuccess
-        if (unloaded) {
-            nativeResourceCoordinator?.release(this)
-        }
+        // The coordinator owns lease bookkeeping. releaseIfIdle() is invoked while it
+        // arbitrates an owner, so re-entering coordinator.release() here can deadlock.
         return unloaded
     }
 
@@ -120,8 +119,8 @@ class LiteRtLocalProvider(
     }
 
     override suspend fun getCapabilities(): Set<AiCapability> {
-        val modelId = configuredModelId ?: return setOf(AiCapability.TEXT, AiCapability.STREAMING)
-        val descriptor = inventoryRepository.resolveModel(modelId) ?: return setOf(AiCapability.TEXT, AiCapability.STREAMING)
+        val modelId = configuredModelId ?: return emptySet()
+        val descriptor = inventoryRepository.resolveModel(modelId)?.takeIf { it.valid } ?: return emptySet()
         return buildSet {
             add(AiCapability.TEXT)
             add(AiCapability.STREAMING)
@@ -203,7 +202,21 @@ class LiteRtLocalProvider(
         val mapped = LiteRtConversationMapper.map(request, context)
         val genConfig = RuntimeGenerationConfig(
             prompt = mapped.outgoingMessage?.content ?: request.text ?: "",
-            systemInstruction = mapped.systemInstruction
+            systemInstruction = mapped.systemInstruction,
+            imageBytes = request.image,
+            initialMessages = mapped.initialMessages.map { message ->
+                RuntimeConversationMessage(
+                    role = when (message.role) {
+                        "model" -> com.halo.sdk.provider.Role.ASSISTANT
+                        "tool" -> com.halo.sdk.provider.Role.TOOL
+                        else -> com.halo.sdk.provider.Role.USER
+                    },
+                    content = message.content,
+                    toolCalls = message.toolCalls,
+                    toolCallId = message.toolCallId,
+                )
+            },
+            availableTools = context.availableTools,
         )
 
         return@withContext try {
@@ -211,14 +224,12 @@ class LiteRtLocalProvider(
                 throw AiProviderException(AiErrorType.GENERATION_FAILED, "LiteRT generation failed: ${err.message}", err)
             }
 
-            val parsedCalls = LiteRtToolSchemaAdapter.parseToolCallsFromResponseText(result.text, request.modelId ?: "litert")
-
             AiResponse(
                 text = result.text,
                 providerId = id,
                 modelId = modelSession.loadedModelId ?: "litert",
-                finishReason = if (parsedCalls.isNotEmpty()) "tool_calls" else "stop",
-                toolCalls = parsedCalls
+                finishReason = if (result.toolCalls.isNotEmpty()) "tool_calls" else "stop",
+                toolCalls = result.toolCalls
             )
         } finally {
             nativeResourceCoordinator?.mark(this@LiteRtLocalProvider, NativeResourceState.RESIDENT, "Resident")
@@ -240,7 +251,21 @@ class LiteRtLocalProvider(
         val mapped = LiteRtConversationMapper.map(request, context)
         val genConfig = RuntimeGenerationConfig(
             prompt = mapped.outgoingMessage?.content ?: request.text ?: "",
-            systemInstruction = mapped.systemInstruction
+            systemInstruction = mapped.systemInstruction,
+            imageBytes = request.image,
+            initialMessages = mapped.initialMessages.map { message ->
+                RuntimeConversationMessage(
+                    role = when (message.role) {
+                        "model" -> com.halo.sdk.provider.Role.ASSISTANT
+                        "tool" -> com.halo.sdk.provider.Role.TOOL
+                        else -> com.halo.sdk.provider.Role.USER
+                    },
+                    content = message.content,
+                    toolCalls = message.toolCalls,
+                    toolCallId = message.toolCallId,
+                )
+            },
+            availableTools = context.availableTools,
         )
 
         try {
@@ -249,15 +274,14 @@ class LiteRtLocalProvider(
             }
 
             result.onSuccess { gen ->
-                val parsedCalls = LiteRtToolSchemaAdapter.parseToolCallsFromResponseText(gen.text, request.modelId ?: "litert")
                 emit(
                     AiStreamEvent.Completed(
                         AiResponse(
                             text = gen.text,
                             providerId = id,
                             modelId = modelSession.loadedModelId ?: "litert",
-                            finishReason = if (parsedCalls.isNotEmpty()) "tool_calls" else "stop",
-                            toolCalls = parsedCalls
+                            finishReason = if (gen.toolCalls.isNotEmpty()) "tool_calls" else "stop",
+                            toolCalls = gen.toolCalls
                         )
                     )
                 )

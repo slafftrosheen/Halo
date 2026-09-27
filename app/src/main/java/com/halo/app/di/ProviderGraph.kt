@@ -40,7 +40,12 @@ class ProviderGraph(
     private var _providers: Providers? = null
 
     val providers: Providers
-        get() = _providers ?: providerFactory.createProviders().also { _providers = it }
+        get() = _providers ?: providerFactory.createProviders().also { created ->
+            (created.inference as? LiteRtLocalProvider)?.let { provider ->
+                modelManager.observeResidentModel { provider.modelSession.loadedModelId }
+            }
+            _providers = created
+        }
 
     /**
      * Replace providers for testing. Must be called before any lazy access.

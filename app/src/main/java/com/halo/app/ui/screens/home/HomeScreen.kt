@@ -56,6 +56,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.halo.app.ui.glass.components.HaloMarkdownText
 import com.halo.app.ui.glass.material.HaloRuntimeState
 import com.halo.app.ui.presence.HaloSignalFace
+import com.halo.app.ui.presence.HaloSignalState
 import com.halo.app.ui.state.toSignalPresentation
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.DropdownMenu
@@ -64,9 +65,6 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.icons.HaloIcon
-import com.halo.app.ui.presence.HaloSignalFace
-import com.halo.app.ui.theme.HaloPastelBlue
-import com.halo.app.ui.theme.HaloWarning
 import com.halo.app.ui.theme.rememberReducedMotion
 import com.halo.app.ui.workspace.HaloWorkspaceButton
 import com.halo.app.ui.workspace.HaloWorkspaceCard
@@ -216,11 +214,32 @@ fun HomeScreen(
                 .height(180.dp),
             contentAlignment = Alignment.Center
         ) {
-            val signalPresentation = uiState.runtimeState.toSignalPresentation(
+            val basePresentation = uiState.sessionState.toSignalPresentation(
+                fallback = uiState.runtimeState,
                 detail = uiState.contextualText,
                 activityLevel = uiState.orb.inputLevel,
                 reducedMotion = reducedMotion
             )
+            val waitingForUserOrResource = runtimeTaskStatus?.let { status ->
+                status.contains("waiting", ignoreCase = true) ||
+                    status.contains("approval", ignoreCase = true) ||
+                    status.contains("resource", ignoreCase = true) ||
+                    status.contains("capability", ignoreCase = true)
+            } == true
+            val signalPresentation = when {
+                waitingForUserOrResource -> basePresentation.copy(
+                    state = HaloSignalState.WAITING,
+                    glyph = HaloGlyph.APPROVAL,
+                    label = "Waiting",
+                    detail = runtimeTaskStatus,
+                )
+                providerNeedsAttention && uiState.sessionState == CognitiveSessionState.Idle -> basePresentation.copy(
+                    state = HaloSignalState.OFFLINE,
+                    glyph = HaloGlyph.OFFLINE,
+                    label = "Setup needed",
+                )
+                else -> basePresentation
+            }
             HaloSignalFace(
                 presentation = signalPresentation,
                 size = 160.dp,
@@ -272,37 +291,60 @@ fun HomeScreen(
         captureMessage?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
         uiState.inputStatus.rejection?.let { Text(it.replace('_', ' '), style = MaterialTheme.typography.bodySmall) }
         AnimatedVisibility(visible = responseText.isNotBlank()) {
-            Column(
+            Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 30.dp)
+                    .padding(top = 24.dp),
+                shape = RoundedCornerShape(24.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.34f),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.72f)),
+                tonalElevation = 1.dp,
             ) {
-                Text(
-                    text = "Halo",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.secondary
-                )
-                Spacer(Modifier.height(8.dp))
-                if (!isActiveSession) Row {
-                    TextButton(onClick = { clipboard.setText(AnnotatedString(responseText)) }) { Text("Copy") }
-                    TextButton(onClick = { viewModel.saveResponse(responseText) }) { Text("Save to Notebook") }
-                }
-                HaloMarkdownText(
-                    markdown = responseText,
-                    textColor = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                if (
-                    uiState.sessionState is CognitiveSessionState.Streaming ||
-                    uiState.sessionState is CognitiveSessionState.Completed
-                ) {
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        text = "via ${uiState.activeProvider}",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            HaloIcon(
+                                glyph = HaloGlyph.HALO,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                                tint = MaterialTheme.colorScheme.secondary,
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = "Halo",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                        }
+                        if (
+                            uiState.sessionState is CognitiveSessionState.Streaming ||
+                            uiState.sessionState is CognitiveSessionState.Completed
+                        ) {
+                            Text(
+                                text = uiState.activeProvider,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(14.dp))
+                    HaloMarkdownText(
+                        markdown = responseText,
+                        textColor = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.fillMaxWidth(),
                     )
+                    if (!isActiveSession) {
+                        Spacer(Modifier.height(10.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            TextButton(onClick = { clipboard.setText(AnnotatedString(responseText)) }) { Text("Copy") }
+                            TextButton(onClick = { viewModel.saveResponse(responseText) }) { Text("Save") }
+                        }
+                    }
                 }
             }
         }
@@ -400,7 +442,9 @@ private fun HaloComposer(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
         color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        tonalElevation = 3.dp,
+        shadowElevation = 2.dp,
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),

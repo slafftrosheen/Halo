@@ -26,25 +26,37 @@ class AccessibilitySnapshotFormatter(
         snapshotId: String = UUID.randomUUID().toString(),
     ): ScreenContextSnapshot {
         val nodes = mutableListOf<ScreenContextNode>()
+        val omissions = linkedMapOf<String, Int>()
         var chars = 0
         var reason: String? = null
 
+        fun omitted(kind: String) {
+            omissions[kind] = (omissions[kind] ?: 0) + 1
+        }
+
         fun visit(node: AccessibilityNodeInfo, depth: Int, path: String) {
             if (reason != null) return
-            if (nodes.size >= maxNodes) { reason = "max_nodes"; return }
-            if (chars >= maxTotalChars) { reason = "max_text"; return }
-            if (depth > maxDepth) { reason = "max_depth"; return }
+            if (nodes.size >= maxNodes) { omitted("max_nodes"); reason = "max_nodes"; return }
+            if (chars >= maxTotalChars) { omitted("max_text"); reason = "max_text"; return }
+            if (depth > maxDepth) { omitted("max_depth"); reason = "max_depth"; return }
 
             val sensitive = node.isPassword
             val text = if (sensitive) null else normalize(node.text?.toString())
             val hint = if (sensitive) null else normalize(node.contentDescription?.toString())
             val viewId = normalize(node.viewIdResourceName)?.take(200)
             val role = semanticType(node)
-            val useful = text != null || hint != null || viewId != null || node.isClickable ||
+            val interactive = node.isClickable || node.isEditable || node.isScrollable || node.isCheckable
+            val useful = text != null || hint != null || viewId != null || interactive ||
                 node.isEditable || node.isScrollable || node.isCheckable || sensitive
+            val rect = Rect().also(node::getBoundsInScreen)
+            val outsideScreen = rect.right <= 0 || rect.bottom <= 0 || rect.left >= screenWidth || rect.top >= screenHeight
+            val zeroArea = rect.width() <= 0 || rect.height() <= 0
 
-            if (useful) {
-                val rect = Rect().also(node::getBoundsInScreen)
+            if (outsideScreen && !interactive) {
+                omitted("off_screen")
+            } else if (zeroArea && !interactive) {
+                omitted("zero_area")
+            } else if (useful) {
                 val remaining = (maxTotalChars - chars).coerceAtLeast(0)
                 val safeText = text?.take(minOf(maxNodeChars, remaining))
                 chars += safeText?.length ?: 0
@@ -69,6 +81,8 @@ class AccessibilitySnapshotFormatter(
                     depth = depth,
                     sensitive = sensitive,
                 )
+            } else if (node.childCount == 0) {
+                omitted("empty_leaf")
             }
 
             for (index in 0 until node.childCount) {
@@ -96,6 +110,7 @@ class AccessibilitySnapshotFormatter(
             screenHeight = screenHeight,
             truncated = reason != null,
             truncationReason = reason,
+            omissionCounts = omissions.toMap(),
             snapshotId = snapshotId,
         )
     }

@@ -210,6 +210,9 @@ object HaloToolDescriptors {
         "halo_read_screen" -> descriptor(definition.name, definition, ToolCategory.PERCEPTION,
             readOnly(definition.name), keywords = setOf("screen", "read", "observe", "accessibility"),
             requirements = setOf(ToolRequirement.Capability(CapabilityId("host.screen.observe"))))
+        "halo_find_on_screen" -> descriptor(definition.name, definition, ToolCategory.PERCEPTION,
+            readOnly(definition.name), keywords = setOf("screen", "find", "search", "accessibility"),
+            requirements = setOf(ToolRequirement.Capability(CapabilityId("host.screen.observe"))))
         "halo_ui_click" -> descriptor(definition.name, definition, ToolCategory.HOST_CONTROL,
             ToolSecurityPolicy(
                 risk = ToolRiskClass.EXTERNAL_SIDE_EFFECT,

@@ -83,7 +83,7 @@ class DefaultAiModelCatalogRepository(
                     else -> null
                 },
             ),
-            kind = if (id == "openrouter/free" || id.startsWith("@preset/") || id.contains("auto", ignoreCase = true)) AiModelKind.ROUTER else AiModelKind.CONCRETE,
+            kind = if (id == "openrouter/free" || id.startsWith("@preset/")) AiModelKind.ROUTER else AiModelKind.CONCRETE,
             source = source,
         )
     }

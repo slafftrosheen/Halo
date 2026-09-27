@@ -34,6 +34,7 @@ object SkillMarkdownPackageParser {
 
         val tools = csv(fields.required("tools"))
         val permissions = csv(fields["permissions"].orEmpty()).map { HostPermission.valueOf(it.uppercase()) }.toSet()
+        val requirements = parseRequirements(fields["requirements"].orEmpty())
         val risk = SkillRisk.valueOf(fields.required("risk").uppercase())
         val descriptor = SkillDescriptor(
             id = SkillId(fields.required("id")),
@@ -45,7 +46,8 @@ object SkillMarkdownPackageParser {
             enabled = false,
             tools = tools,
             toolDefinitions = tools.map { SkillToolDefinition(it, risk) },
-            requiredPermissions = permissions,
+            requiredPermissions = permissions + requirements.filterIsInstance<SkillRequirement.Permission>().map { it.permission },
+            requirements = requirements,
             risk = risk,
             source = SkillSource.CUSTOM,
             provenance = SkillProvenance(sourceId, bytes.sha256(), nowMs),
@@ -73,6 +75,26 @@ object SkillMarkdownPackageParser {
     private fun csv(value: String): Set<String> = value.removePrefix("[").removeSuffix("]")
         .split(',').map { it.trim().removeSurrounding("\"") }.filter { it.isNotEmpty() }.toSet()
 
+    private fun parseRequirements(value: String): List<SkillRequirement> = csv(value).map { entry ->
+        val separator = entry.indexOf(':')
+        require(separator > 0 && separator < entry.lastIndex) { "Invalid skill requirement: $entry" }
+        val kind = entry.substring(0, separator).trim().lowercase()
+        val argument = entry.substring(separator + 1).trim()
+        require(argument.length <= MAX_REQUIREMENT_CHARS) { "Skill requirement is too long" }
+        when (kind) {
+            "permission" -> SkillRequirement.Permission(HostPermission.valueOf(argument.uppercase()))
+            "tool" -> SkillRequirement.ToolRegistered(argument)
+            "provider" -> SkillRequirement.ProviderCapability(argument)
+            "runtime" -> SkillRequirement.RuntimeFeature(argument)
+            "minsdk" -> SkillRequirement.MinSdk(argument.toIntOrNull()?.takeIf { it > 0 }
+                ?: error("Invalid minimum SDK requirement"))
+            "device" -> SkillRequirement.DeviceConnected(argument)
+            else -> error("Unknown skill requirement type: $kind")
+        }
+    }.also {
+        require(it.size <= MAX_REQUIREMENTS) { "Skill package declares too many requirements" }
+    }
+
     private fun Map<String, String>.required(key: String): String =
         get(key)?.takeIf { it.isNotBlank() } ?: error("Missing frontmatter field: $key")
 
@@ -80,8 +102,11 @@ object SkillMarkdownPackageParser {
         .digest(this).joinToString("") { "%02x".format(it.toInt() and 0xff) }
 
     private val ALLOWED_FIELDS = setOf(
-        "id", "name", "description", "category", "risk", "tools", "permissions", "schemaVersion", "enabled"
+        "id", "name", "description", "category", "risk", "tools", "permissions", "requirements", "schemaVersion", "enabled"
     )
+
+    private const val MAX_REQUIREMENTS = 24
+    private const val MAX_REQUIREMENT_CHARS = 160
 }
 
 /** Local custom packages are inert by default and become available only after validation. */

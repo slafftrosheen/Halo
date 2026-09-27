@@ -107,6 +107,20 @@ object ManualDependencyGraph {
     val appDatabase by lazy { RuntimeStartupTrace.measure("graph.database") { AppDatabase.create(applicationContext) } }
     val notebookRepository by lazy { RoomNotebookRepository(appDatabase.notebookDao()) }
     val notebookUseCases by lazy { NotebookUseCases(notebookRepository) }
+    val notebookAssetRepository by lazy {
+        com.halo.app.data.workspace.NotebookAssetRepository(applicationContext, appDatabase)
+    }
+    val notebookDocumentRepository by lazy {
+        com.halo.app.data.notebook.NotebookDocumentRepository(appDatabase.notebookDocumentDao())
+    }
+    val notebookOrganizationRepository by lazy {
+        com.halo.app.data.notebook.NotebookOrganizationRepository(appDatabase.notebookOrganizationDao())
+    }
+    val notebookCanvasRepository by lazy {
+        com.halo.app.data.notebook.NotebookCanvasRepository(
+            appDatabase, appDatabase.notebookCanvasDao(), appDatabase.notebookDao()
+        )
+    }
     val captures by lazy { com.halo.app.capture.LocalCaptureStore(applicationContext, appDatabase, notebookRepository, eventBus) }
     val appearancePreferences by lazy { AppearancePreferences(applicationContext) }
 
@@ -179,7 +193,14 @@ object ManualDependencyGraph {
                 permissionGranted = permissions::granted,
                 registeredToolNames = {
                     toolRegistry.definitions().flatMap { listOf(it.id, it.name) }.toSet()
-                }
+                },
+                requirementSatisfied = { requirement ->
+                    when (requirement) {
+                        is com.halo.sdk.runtime.skills.SkillRequirement.MinSdk ->
+                            android.os.Build.VERSION.SDK_INT >= requirement.api
+                        else -> null
+                    }
+                },
             )
         )
     }
@@ -618,7 +639,11 @@ object ManualDependencyGraph {
         VoiceSettingsViewModel(providerGraph.speechModelInventory, speechLanguageSettingsRepository, providerGraph, storage)
     }
     val activityViewModel by lazy { ActivityViewModel(runtimeSnapshotManager, agentRunStore = agentRunStore) }
-    val notebookViewModel by lazy { NotebookViewModel(workspaceUseCases, notebookUseCases) }
+    val notebookViewModel by lazy {
+        NotebookViewModel(
+            workspaceUseCases, notebookUseCases, notebookOrganizationRepository, notebookCanvasRepository
+        )
+    }
     val devicesViewModel by lazy {
         DevicesViewModel(
             deviceRegistry = deviceRegistry,
