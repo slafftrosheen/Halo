@@ -48,7 +48,8 @@
             <option value="$PROJECT_DIR$/providers" />
             <option value="$PROJECT_DIR$/providers/android-assistant" />
             <option value="$PROJECT_DIR$/providers/android-tts" />
-            <option value="$PROJECT_DIR$/providers/llamacpp" />
+            <option value="$PROJECT_DIR$/providers/litert" />
+            <option value="$PROJECT_DIR$/providers/ollama" />
             <option value="$PROJECT_DIR$/providers/openrouter" />
             <option value="$PROJECT_DIR$/providers/sherpa-stt" />
             <option value="$PROJECT_DIR$/runtime" />

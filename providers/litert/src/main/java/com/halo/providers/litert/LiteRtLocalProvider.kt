@@ -5,9 +5,9 @@ import android.util.Log
 import com.halo.providers.litert.models.LocalModelDescriptor
 import com.halo.providers.litert.models.LocalModelInventoryRepository
 import com.halo.providers.litert.models.LocalModelInventoryState
-import com.halo.providers.litert.runtime.HaloLiteRtToolSchemaAdapter
 import com.halo.providers.litert.runtime.LiteRtConversationMapper
 import com.halo.providers.litert.runtime.LocalModelSession
+import com.halo.providers.litert.tools.LiteRtToolSchemaAdapter
 import com.halo.sdk.provider.AiCapability
 import com.halo.sdk.provider.AiContext
 import com.halo.sdk.provider.AiErrorType
@@ -211,7 +211,7 @@ class LiteRtLocalProvider(
                 throw AiProviderException(AiErrorType.GENERATION_FAILED, "LiteRT generation failed: ${err.message}", err)
             }
 
-            val parsedCalls = HaloLiteRtToolSchemaAdapter.parseToolCallsFromResponseText(result.text, request.modelId ?: "litert")
+            val parsedCalls = LiteRtToolSchemaAdapter.parseToolCallsFromResponseText(result.text, request.modelId ?: "litert")
 
             AiResponse(
                 text = result.text,
@@ -249,7 +249,7 @@ class LiteRtLocalProvider(
             }
 
             result.onSuccess { gen ->
-                val parsedCalls = HaloLiteRtToolSchemaAdapter.parseToolCallsFromResponseText(gen.text, request.modelId ?: "litert")
+                val parsedCalls = LiteRtToolSchemaAdapter.parseToolCallsFromResponseText(gen.text, request.modelId ?: "litert")
                 emit(
                     AiStreamEvent.Completed(
                         AiResponse(

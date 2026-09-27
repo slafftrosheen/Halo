@@ -265,6 +265,11 @@ class IntelligenceViewModel(
         updatePolicy { it.copy(allowCloudImages = enabled) }
     }
 
+    fun downloadCatalogModel(model: LiteRtCatalogModel) {
+        modelManager?.downloadCatalogModel(model)
+        _refreshTrigger.update { it + 1 }
+    }
+
     fun importModelUri(uri: Uri, displayName: String = "Imported Model") {
         viewModelScope.launch {
             modelManager?.importModelFromUri(uri, displayName)

@@ -13,6 +13,8 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.net.HttpURLConnection
+import java.net.URL
 import java.security.MessageDigest
 
 sealed interface DownloadState {
@@ -139,6 +141,67 @@ class LiteRtModelManager(
             } else {
                 tempFile.delete()
                 throw IllegalStateException("Failed to rename temporary import file")
+            }
+        }
+    }
+
+    fun downloadCatalogModel(model: LiteRtCatalogModel) {
+        scope.launch {
+            _downloadStates.value = _downloadStates.value + (model.id to DownloadState.Downloading(0f, 0L, model.expectedBytes ?: 0L))
+            runCatching {
+                val tempFile = File(modelRoot, "${model.id}.part")
+                val finalFile = File(modelRoot, "${model.id}.litertlm")
+                val url = URL(model.downloadUrl)
+                val conn = url.openConnection() as HttpURLConnection
+                conn.connectTimeout = 15000
+                conn.readTimeout = 30000
+                conn.connect()
+
+                val totalBytes = conn.contentLengthLong.takeIf { it > 0 } ?: (model.expectedBytes ?: 1L)
+                val digest = MessageDigest.getInstance("SHA-256")
+
+                conn.inputStream.use { input ->
+                    tempFile.outputStream().use { output ->
+                        val buffer = ByteArray(64 * 1024)
+                        var bytesRead: Int
+                        var downloaded = 0L
+                        while (input.read(buffer).also { bytesRead = it } != -1) {
+                            digest.update(buffer, 0, bytesRead)
+                            output.write(buffer, 0, bytesRead)
+                            downloaded += bytesRead
+                            val progress = (downloaded.toFloat() / totalBytes.toFloat()).coerceIn(0f, 1f)
+                            _downloadStates.value = _downloadStates.value + (model.id to DownloadState.Downloading(progress, downloaded, totalBytes))
+                        }
+                    }
+                }
+
+                if (tempFile.length() == 0L) {
+                    tempFile.delete()
+                    throw IllegalStateException("Downloaded file was empty")
+                }
+
+                val calculatedSha = digest.digest().joinToString("") { "%02x".format(it) }
+
+                if (tempFile.renameTo(finalFile)) {
+                    val metadata = InstalledLiteRtModelMetadata(
+                        id = model.id,
+                        displayName = model.displayName,
+                        sourceUrl = model.downloadUrl,
+                        sha256 = calculatedSha,
+                        bytes = finalFile.length(),
+                        contextWindowTokens = model.contextWindowTokens,
+                        supportsVision = model.supportsVision,
+                        supportsTools = model.supportsTools
+                    )
+                    File(modelRoot, "${model.id}.halo-model.json").writeText(metadata.toJson())
+                    _downloadStates.value = _downloadStates.value + (model.id to DownloadState.Downloaded)
+                    refresh(ModelInventoryRefreshReason.DOWNLOAD_COMPLETED)
+                } else {
+                    tempFile.delete()
+                    throw IllegalStateException("Failed to rename downloaded model file")
+                }
+            }.onFailure { err ->
+                _downloadStates.value = _downloadStates.value + (model.id to DownloadState.Failed(err.message ?: "Download failed"))
             }
         }
     }
