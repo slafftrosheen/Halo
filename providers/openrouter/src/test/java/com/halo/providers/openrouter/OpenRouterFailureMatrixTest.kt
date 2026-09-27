@@ -246,6 +246,40 @@ class OpenRouterFailureMatrixTest {
     }
 
     @Test
+    fun `a 400 context overflow is classified as context too large, not a malformed request`() {
+        enqueueError(
+            400,
+            """{"error":{"message":"This model's maximum context length is 4096 tokens","code":"context_length_exceeded"}}""",
+        )
+
+        val error = generate(provider())
+
+        assertEquals(AiErrorType.CONTEXT_TOO_LARGE, error.type)
+        assertEquals(Recoverability.PERMANENT, error.details.recoverability)
+        assertEquals("context_length_exceeded", error.details.providerCode)
+        assertEquals(400, error.details.httpStatus)
+    }
+
+    @Test
+    fun `context overflow is recognized from provider prose when no code is sent`() {
+        enqueueError(400, """{"error":{"message":"Input validation error: prompt is too long"}}""")
+
+        val error = generate(provider())
+
+        assertEquals(AiErrorType.CONTEXT_TOO_LARGE, error.type)
+        assertEquals(Recoverability.PERMANENT, error.details.recoverability)
+    }
+
+    @Test
+    fun `an unrelated 400 that merely mentions tokens stays a malformed request`() {
+        enqueueError(400, """{"error":{"message":"unknown field: tokens_per_second"}}""")
+
+        val error = generate(provider())
+
+        assertEquals(AiErrorType.INVALID_REQUEST, error.type)
+    }
+
+    @Test
     fun `400 is permanent and does not invite a blind retry`() {
         enqueueError(400, """{"error":{"message":"bad payload"}}""")
 

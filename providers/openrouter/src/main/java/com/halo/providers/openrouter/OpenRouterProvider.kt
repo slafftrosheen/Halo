@@ -539,7 +539,7 @@ class OpenRouterProvider(
             parseRetryAfterMs(retryAfterHeader) ?: parseBodyRetryAfterMs(normalizedBody)
         } else null
         val type = when (statusCode) {
-            400 -> AiErrorType.INVALID_REQUEST
+            400 -> if (ContextOverflow.matches(providerCode, detail)) AiErrorType.CONTEXT_TOO_LARGE else AiErrorType.INVALID_REQUEST
             401, 403 -> AiErrorType.AUTHENTICATION_FAILED
             402 -> AiErrorType.AUTHENTICATION_FAILED
             408 -> AiErrorType.TIMEOUT

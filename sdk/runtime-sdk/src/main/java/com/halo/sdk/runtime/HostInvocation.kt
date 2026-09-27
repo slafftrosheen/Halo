@@ -16,8 +16,22 @@ data class HostInvocation(
 data class RectValue(val left: Int, val top: Int, val right: Int, val bottom: Int)
 
 enum class UiSemanticType {
-    TEXT, BUTTON, INPUT, CHECKBOX, SWITCH, IMAGE, LIST, LIST_ITEM, SCROLL_CONTAINER, LINK, CONTAINER, UNKNOWN
+    TEXT, BUTTON, INPUT, CHECKBOX, SWITCH, TAB, CHIP, TOOLBAR, DIALOG,
+    IMAGE, LIST, LIST_ITEM, SCROLL_CONTAINER, LINK, CONTAINER, UNKNOWN
 }
+
+/**
+ * Where a node sits on the screen, as a third of the display rather than pixel geometry.
+ * Pixel bounds are evidence for Halo; a third is what a model can actually reason about.
+ */
+enum class UiScreenRegion { TOP_LEFT, TOP, TOP_RIGHT, LEFT, CENTER, RIGHT, BOTTOM_LEFT, BOTTOM, BOTTOM_RIGHT }
+
+/**
+ * Whether a captured projection carries anything a model can reason about.
+ * A tree that yields no labelled or interactive node is unreadable in practice
+ * (a blank screen, or a non-native surface such as a canvas or WebView).
+ */
+enum class UiInspectability { INSPECTABLE, EMPTY_OR_ROOT_ONLY, NO_SEMANTIC_CONTENT }
 
 data class ScreenContextNode(
     val text: String?,
@@ -39,6 +53,15 @@ data class ScreenContextNode(
     val depth: Int = 0,
     /** True when content was intentionally withheld from model-visible context. */
     val sensitive: Boolean = false,
+    /** Coarse on-screen position; null when the node has no usable bounds or the display size is unknown. */
+    val region: UiScreenRegion? = null,
+    /**
+     * Descendants of this node that were pruned as off-screen and only counted.
+     * Bounded, redacted previews of the first few live in [hiddenChildPreviews],
+     * so a model can decide to scroll instead of assuming the list ended.
+     */
+    val hiddenChildCount: Int = 0,
+    val hiddenChildPreviews: List<String> = emptyList(),
 )
 
 typealias UiSemanticNode = ScreenContextNode
@@ -61,6 +84,8 @@ data class ScreenContextSnapshot(
     val omissionCounts: Map<String, Int> = emptyMap(),
     /** Correlates opaque node tokens with exactly one observation generation. */
     val snapshotId: String = UUID.randomUUID().toString(),
+    /** Whether this projection is worth acting on at all; see [UiInspectability]. */
+    val inspectability: UiInspectability = UiInspectability.INSPECTABLE,
 )
 
 enum class ContextTrust { TRUSTED_RUNTIME, UNTRUSTED_CONTENT }

@@ -1,5 +1,12 @@
 # Notebook delivery and reconciliation
 
+> 2026-09-28 reconciliation: the NB-01-only inventory and “unimplemented” statements below are
+> historical. Current source wires blocks, attachments, Working Set, file/memory and Canvas
+> routes beyond that baseline, without establishing full acceptance. Use the
+> [source-backed mining review](../engineering/NOTEBOOK-STUDY-MINING.md) and
+> [next editor/Study delivery plan](../rfc/0002-notebook-editor-and-study.md) before implementing
+> another foundation. The original NB slices below remain scope history, not current capability truth.
+
 Status: NB-01 IMPLEMENTED IN SOURCE / ACCEPTANCE IN PROGRESS. Updated 2026-09-18.
 
 The [user blueprint](NOTEBOOK-WORKSPACE-BLUEPRINT.md) defines Notebook as the persistent

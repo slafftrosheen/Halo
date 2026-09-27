@@ -1,6 +1,6 @@
 # Phone Acceptance & System Check Test Script
 
-Status: EXECUTABLE TEST SCRIPT. Updated 2026-09-26.
+Status: EXECUTABLE TEST SCRIPT. Updated 2026-09-28.
 
 This document describes the step-by-step physical phone verification sequence for Halo.
 
@@ -54,3 +54,25 @@ This document describes the step-by-step physical phone verification sequence fo
     - Place app in background while turn is active.
     - Kill process via `adb shell am force-stop com.halo.app`.
     - Relaunch app: verify `AgentRecoveryPlanner` reconciles interrupted runs cleanly without unexpected side effects.
+
+11. **Phone Observation & Screen Control (accessibility)**:
+    - Enable Halo's accessibility service, then ask for `halo_read_screen`.
+    - Verify the output is delimited by `UNTRUSTED_SCREEN_CONTENT` / `END_UNTRUSTED_SCREEN_CONTENT` and that
+      every node line carries `token=`, `role=` and `region=` (`top-left`, `center`, …). Raw `bounds=` must only
+      appear if the display size could not be read.
+    - Verify `role=list_item` for rows inside a list while a `button` inside a row still reports `role=button`,
+      and verify no line reports an inert empty wrapper: those are collapsed and counted under
+      `omitted=collapsed_container`.
+    - Scroll a long list (Settings, a message thread) and read again: if rows were pruned off-screen, the
+      scrollable node must carry `hidden=` with up to three `hiddenPreview=` entries.
+    - Verify a password field shows `sensitive=[REDACTED]` and never its text or hint.
+    - Act on the screen and verify the receipt line reports `status=confirmed_success`,
+      `dispatched_effect_unconfirmed` or `outcome_uncertain` rather than a bare success, and that a token from a
+      superseded snapshot is rejected instead of replayed.
+    - Open a blocked package (Play Store, a banking or password-manager app) and verify the failure is
+      `PACKAGE_BLOCKED_BY_POLICY` with the block reason, not a generic read error.
+    - On a non-native surface (Flutter, Unity, canvas or a WebView that exposes nothing), verify `halo_read_screen`
+      answers `status=unreadable_surface next=REPORT_TO_USER` and that Halo tells the user the screen cannot be
+      read instead of retrying or acting on a guess.
+    - Deny the action consent when prompted and verify nothing is dispatched; verify dismissing the prompt is not
+      treated as approval.

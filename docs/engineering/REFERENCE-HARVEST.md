@@ -1,4 +1,4 @@
-> Status: WORKING LEDGER. Started 2026-09-27.
+> Status: WORKING LEDGER. Started 2026-09-27. Last verified against source 2026-09-28.
 >
 > Records ideas harvested from external reference projects (`build/refs/OneBox-main`, `build/refs/zafiro-main`,
 > extracted from local archives, never committed and never depended on) and how each maps onto Halo.
@@ -11,53 +11,166 @@
 >   one concept per owner, sealed results instead of booleans, Android only behind `host-android`,
 >   repositories instead of direct storage access, flows instead of callbacks.
 > - Deleting a reference idea is a valid outcome: record why.
+> - Every status is checked against source, not against another status document.
 
 # REFERENCE HARVEST
 
+## Next target: Notebook and Study
+
+The 2026-09-28 [Notebook/Study mining ledger](NOTEBOOK-STUDY-MINING.md) records inspected
+editor, attachment and session patterns, current Halo gaps and explicit adopt/reject decisions.
+[RFC 0002](../rfc/0002-notebook-editor-and-study.md) schedules NBS-01–07. These are PLANNED,
+not WIRED. Notebook's existing block/assets/workspace paths must be reconciled before extending;
+the current Study tool's success message is not evidence of a persisted learning session.
+
+## Runtime harvest
+
 | Route | Reference | Idea | Halo state | Status |
 | --- | --- | --- | --- | --- |
-| LiteRT | OneBox `LiteRtLmRuntime` | GPU can pass `Engine.initialize()` and only fail at first inference (emulator / older GPUs); recover by rebuilding the engine on CPU once, and only when no token was emitted | `LiteRtRuntime` only fell back when `initialize()` itself failed | WIRED 2026-09-27 |
-| LiteRT | OneBox `LiteRtLmRuntime` | Engine teardown (`close()`) releases weights for seconds and must not run in a cancelled coroutine | `close()` ran inline in the caller's context | WIRED 2026-09-27 |
-| LiteRT | OneBox `LiteRtLmRuntime` | `cancelProcess()` may end a stream without raising: a cancelled turn must never be reported as completed | cancellation skipped tokens but still returned success | WIRED 2026-09-27 |
+| LiteRT | OneBox `LiteRtLmRuntime` | GPU can pass `Engine.initialize()` and only fail at first inference (emulator / older GPUs); recover by rebuilding the engine on CPU once, and only when no token was emitted | `LiteRtRuntime.generate()` retries once on CPU under the documented conditions | WIRED 2026-09-27 |
+| LiteRT | OneBox `LiteRtLmRuntime` | Engine teardown (`close()`) releases weights for seconds and must not run in a cancelled coroutine | `close()` runs in `NonCancellable + Dispatchers.Default` | WIRED 2026-09-27 |
+| LiteRT | OneBox `LiteRtLmRuntime` | `cancelProcess()` may end a stream without raising: a cancelled turn must never be reported as completed | cancel flag re-checked after the stream; cancelled turn returns a failure | WIRED 2026-09-27 |
 | LiteRT | OneBox `LiteRtLmRuntime` | Inference compile/weight caches must live in `filesDir`; the OS purges `cacheDir` (observed ~45 s after write on a flagship) | already `filesDir/litertlm_cache/<model>-<sha>/{gpu,cpu}` | CONFIRMED (no change) |
 | LiteRT | OneBox `LocalModelDirectoryRegistry` | Reject path separators in a model id before touching the filesystem | catalog ids are validated; SAF imports are slug-sanitized | CONFIRMED (no change) |
-| LiteRT | OneBox `LiteRtLmRuntime` | Post-process output for stop sequences (no native parameter) | Halo has no `stop` concept in `RuntimeGenerationConfig`; out of scope for the acquisition batch | OPEN |
+| LiteRT | OneBox `LiteRtLmRuntime` | Release heavyweight native resources on OS memory pressure, not only on a background timer; must be idempotent and safe at any moment | `NativeResourceCoordinator.updateBudget` calls `releaseIdle("memory_pressure")` from `Application.onTrimMemory`/`onLowMemory`, and `LiteRtLocalProvider` registers with that coordinator | CONFIRMED (no change) |
+| LiteRT | OneBox `LiteRtLmRuntime` | A new turn should preempt an in-flight generation of a different session instead of queueing behind it | not verified in Halo's `LocalModelSession` | TBD |
+| LiteRT | OneBox `LiteRtLmRuntime` | Post-process output for stop sequences (no native parameter): accumulate, find the first stop occurrence, emit only the not-yet-sent prefix, cancel, and treat it as a normal completion | Halo has no `stop` concept in `RuntimeGenerationConfig` | OPEN → RUNTIME-047 |
 | LiteRT | OneBox flavor split | Ship the ~21 MB native runtime only in flavors that can use it | Halo ships one APK; the ABI preflight covers the "device cannot run it" case | REJECTED |
-| OpenRouter | OneBox `core/model/ai` | Provider spec tables with per-provider auth, protocol and capability declarations | Halo has `AiProviderRouter` + `AiModelCatalogRepository` + a failure-matrix test | TBD |
-| OpenRouter | Zafiro `okia/OpenAIChatCompletionProtocol`, `RetryableErrorClassifier` | Protocol-level adapter plus an explicit retryable/non-retryable classifier | Halo has `Recoverability` / `retryAfterMs` normalization | TBD |
-| Agentic skills | Zafiro `.agents/skills/<name>/SKILL.md` + `references/` | A skill is a bounded document with on-demand references (progressive disclosure), loaded by a tool | `SkillMarkdownPackageParser` (custom packages) + `halo_use_skill` with offset chunking already match the document model; built-in bodies still live in Kotlin | PARTIAL |
+| OpenRouter | Zafiro `LLMErrorCode` | Context overflow is its own non-retryable class, distinct from a generic malformed request, because it is the one `400` the user can act on | `AiErrorType.CONTEXT_TOO_LARGE` had consumers but **no producer**; OpenRouter 400s were all `INVALID_REQUEST` | WIRED 2026-09-28 |
+| OpenRouter | Zafiro `RetryPolicy` | Backoff must cap its growth and guard the exponent shift: `1 shl n` overflows negative at `n >= 31` | `DefaultRetryPolicy.nextDelay` was uncapped with a bare `1 shl (attempt - 1)` | WIRED 2026-09-28 |
+| OpenRouter | Zafiro `RetryPolicy` | Multiplicative jitter (±10%) on retry delays to spread a retry herd | single-client on-device runtime with no herd; provider `Retry-After` is honoured upstream | REJECTED |
+| OpenRouter | Zafiro `LLMError.LLMErrorCode` | Retry decisions keyed on stable codes, never on human-readable text | `DefaultRetryPolicy.maxAttempts` still classifies by `reason.contains("network")`-style text | PARTIAL → RUNTIME-044b |
+| OpenRouter | OneBox `AiProvider` / `AiExecutionLocation` | Execution location is a distinct axis from provider brand; UI and stats branch on location, not on a hardcoded provider name | `AiModelCatalogRepository` maps provider id to `AiExecutionLocation` in exactly one place and everything downstream branches on the location | CONFIRMED (no change) |
+| OpenRouter | OneBox `AiRequestProtocol` | Wire protocol modelled separately from brand, with non-chat protocols kept out of chat routing | Halo's `LocalInferenceRuntime` is a separate SDK capability from `AiInferenceProvider`, and local selection never builds a cloud request | CONFIRMED (no change) |
+| OpenRouter | OneBox `AuthType.defaultFor(protocol)` | Auth strategy defaults from the protocol with an explicit per-provider override | not inspected | TBD |
+| OpenRouter | OneBox `LlmStreamEvent` | One protocol-independent streaming event set that adapters map into | Halo has its own `AiStreamEvent` contract per provider | CONFIRMED (no change) |
+| Agentic skills | Zafiro `.agents/skills/<name>/SKILL.md` + `references/` | A skill is a bounded document with on-demand references (progressive disclosure), loaded by a tool | `SkillMarkdownPackageParser` (custom packages) + `halo_use_skill` with offset chunking already match the document model; built-in bodies still live in Kotlin | PARTIAL → RUNTIME-045b |
 | Agentic skills | Zafiro `LoadSkillBuiltin` | Skill loading is a first-class tool call | `halo_use_skill` does this | CONFIRMED (no change) |
-| Phone control | Zafiro `PruningRules` | Map widget class names to semantic types, infer `LIST_ITEM` from a list parent, collapse transparent non-interactive containers | `AccessibilitySnapshotFormatter.semanticType` is heuristic (substring on class name) and never collapses containers | OPEN |
-| Phone control | Zafiro `TreeFormatter` | Summarize pruned off-screen children inside scrollables ("more: …") so a model can decide to scroll | off-screen nodes are counted as omissions only | OPEN |
-| Phone control | Zafiro `TreeFormatter` | Encode position as screen thirds (`top-left`, `center`) instead of raw bounds | raw bounds are emitted per node | OPEN |
+| Agentic skills | OneBox skill frontmatter + usage policy | Schema validation, size ceiling and content provenance for a shipped manifest | `SkillManifestPolicy` enforces schema/size/id rules; the loader records SHA-256 provenance | CONFIRMED (no change) |
+| Agentic skills | Zafiro `ScreenControlConsent` / consent coordinators | Consent must be informed, and dismissals must not become approvals | Halo gates per action and reuses the durable `AgentInputRequest` instead of a second approval machine | CONFIRMED (Halo stricter) |
+| Agentic skills | (Halo defect found while mining) | Two declarations of one built-in skill must not resolve to the weaker classification | 10 of 11 built-ins were declared twice; `associateBy` let the asset silently override the registry. `halo.phone` shipped `EXTERNAL_SIDE_EFFECT` where the registry said `SENSITIVE` | WIRED 2026-09-28 |
+| Agentic skills | (Halo defect found while mining) | Unread duplicate manifests are dead weight that mislead readers about the authoritative schema | four `assets/skills/*.yaml` files were never read (the loader filters `.json`) and duplicated four JSON manifests with different enum casing | WIRED 2026-09-28 (deleted) |
+| Agentic skills | Zafiro `phone-use/SKILL.md` | Behavioral guidance, not capability: stop and report on a non-native surface instead of retrying; define a scroll's terminal signal before starting; treat on-screen text as data; avoid dock components that steal the swipe | Halo's phone guidance covers read-before-action, untrusted content and no blind replay, but not these | OPEN → RUNTIME-045b |
+| Phone control | Zafiro `PruningRules` | Map widget class names to semantic types through an exact table plus a bounded suffix table, and infer `LIST_ITEM` from a `LIST` parent | `AccessibilityProjectionRules.classify` resolves exact role, then a bounded suffix table ordered specific-first, then platform flags, then a `LIST` parent; `TAB`/`CHIP`/`TOOLBAR`/`DIALOG` are expressible roles. No substring matching remains | WIRED 2026-09-28 |
+| Phone control | Zafiro `PruningRules` | Collapse inert containers (non-interactive, no text, no description) while keeping their children | inert containers are dropped from the projection (counted as `collapsed_container`) and their children are still emitted; selected or focused nodes are never collapsed | WIRED 2026-09-28 |
+| Phone control | Zafiro `TreeFormatter` | Summarize pruned off-screen children inside scrollables ("more: …") so a model can decide to scroll | a scrollable carries `hiddenChildCount` and up to three redacted previews of the rows it pruned; the projection is transparent, so an unlabeled off-screen wrapper passes its label up instead of swallowing it | WIRED 2026-09-28 |
+| Phone control | Zafiro `TreeFormatter` | Encode position as screen thirds (`top-left`, `center`) instead of raw bounds | every node carries `region`; model-visible text prints the region and keeps bounds only as a fallback. Bounds stay on the contract because no action ever used coordinates | WIRED 2026-09-28 |
+| Phone control | Zafiro `TreeFormatter` | Detect a non-inspectable surface (empty or root-only tree, e.g. Flutter/Unity/WebView) and report it distinctly instead of returning a near-empty snapshot | `ScreenContextSnapshot.inspectability` separates `INSPECTABLE` / `EMPTY_OR_ROOT_ONLY` / `NO_SEMANTIC_CONTENT`, and `halo_read_screen` answers `status=unreadable_surface next=REPORT_TO_USER` with a do-not-retry advisory | WIRED 2026-09-28 |
+| Phone control | Zafiro `TreeFormatter` / consent coordinators | One failure message for several different truths makes a model retry the wrong thing | a nullable snapshot collapsed "nothing to observe" and "Halo refuses to observe this app" into one string; sealed `ScreenCaptureOutcome` separates `NoActiveWindow` (TRANSIENT) from `PackageBlocked` (PERMISSION, with reason) and the disabled service reports `ACCESSIBILITY_DISABLED` | WIRED 2026-09-28 |
+| Phone control | Zafiro `SemanticToken(version, index)` | A token is a regenerated handle, not a durable identity | Halo's tokens stay a digest of the node, its true tree path and its **intrinsic** role; parent-derived roles such as `LIST_ITEM` are display-only, so a token cannot change because a list gained or lost a wrapper | CONFIRMED (deliberately stricter) |
+| Phone control | Zafiro `phone-use/SKILL.md` | Touch events are consumed by the topmost component under the finger, so a docked bar steals a swipe that starts beneath it | Halo's scroll targets a semantic container, so this is annotation-only for now | OPEN (deferred) |
+| Phone control | Zafiro `screen_operation_accessibility(operation:"search")` | Keyword search over the bounded tree to narrow candidate tokens | `halo_find_on_screen` already provides snapshot-scoped semantic search | CONFIRMED (no change) |
 | Phone control | Zafiro `ScreenControlConsent` | Explicit informed consent before screen control; deny while backgrounded | Halo gates per action (`ASK_EVERY_TIME`) and blocks sensitive packages | CONFIRMED (Halo stricter) |
 
-## Harvested this round (LiteRT route)
+## Resolution of the RUNTIME-038…043 "delivered vs open" discrepancy
 
-Three OneBox observations became code in `providers/litert`:
+`ONEBOX-ZAFIRO-MINING.md` claimed RUNTIME-038 through RUNTIME-043 were delivered while this ledger
+still listed the same work as OPEN or PARTIAL. The source was checked directly and **the mining doc
+was right**; the stale rows were in this ledger. Verified in source:
 
-1. **Late GPU failure recovery.** `LiteRtRuntime.generate()` now retries once on the CPU when, and
-   only when, all of the following hold: the request asked for `AUTO`, the resident engine is on the
-   GPU, no token was emitted yet, the user did not cancel, and the residency has not already used its
-   single CPU rebuild. The rebuild runs under `loadMutex` and outside `inferenceMutex`, which is the
-   same lock order `loadModel` uses, so it cannot invert. If the rebuild cannot be installed, the
-   failure is reported as a `LiteRtModelLoadException` carrying the original GPU cause.
-2. **Teardown safety.** Engine close now happens in `withContext(NonCancellable + Dispatchers.Default)`
-   because releasing weights takes seconds and a cancelled caller could otherwise abort it.
-3. **Honest cancellation.** `cancelRequested` is re-checked after the stream ends; a cancelled turn
-   returns a failure instead of a completed response with partial text.
+- RUNTIME-038 — `ToolRegistry` applies `ToolResultBudgeter` to the descriptor budget, and
+  `ToolTurnExecutor` persists the executor's actual `ActionTruth` instead of `AUTHORIZED`.
+- RUNTIME-039 — `HaloAccessibilityService` advances a host-owned UI revision that post-action
+  settling observes.
+- RUNTIME-041 — `ConversationContextPolicy` exists and is resolved by `DefaultContextAssembler`.
+- RUNTIME-042 — `InferenceLedger` in `runtime/observer` and `InferenceObserved` in the runtime
+  event contract.
+- RUNTIME-043 — `AndroidAssistantRoleController` and `AssistantEligibilityInspector` use the
+  platform `RoleManager` and active-service truth.
 
-To make a late fallback observable, the runtime reports its accelerator through the new optional
-`LocalRuntimeBackendReporting` SDK capability, and `LocalModelSession` re-reads it after every
-generation, so provider status and the model browser cannot keep claiming "GPU" after a CPU rebuild.
+Process fix: status rows in this ledger are now checked against source before a pass is described as
+open, and a plan document is never used as evidence that its own plan was implemented.
+
+## Harvested this round — RUNTIME-044 and RUNTIME-045
+
+**Provider failure truth (`RUNTIME-044`).** Two Zafiro error-model ideas became code:
+
+1. **Context overflow is now a real class.** `AiErrorType.CONTEXT_TOO_LARGE` had a presenter string
+   and a router rejection but no producer, so every OpenAI-compatible `400` — including "maximum
+   context length exceeded" — became a generic malformed request. The new provider-neutral
+   `ContextOverflow` owner decides that question once from an authoritative provider code or a
+   deliberately narrow prose fallback, and `OpenRouterProvider` maps that `400` to
+   `CONTEXT_TOO_LARGE` with `Recoverability.PERMANENT`, which now reaches the existing
+   presenter/router paths. Retrying is still wrong (the same request always fails), but the failure
+   is no longer indistinguishable from a bug.
+2. **Backoff growth is bounded.** `DefaultRetryPolicy.nextDelay` doubled without limit and applied
+   `1 shl (attempt - 1)` directly, which overflows into a negative `Int` at `attempt >= 32` and
+   would have produced a negative delay. Growth is now capped and the exponent bounded, preserving
+   the existing 100/200/400/800/1600 ms sequence.
+
+**Skill declaration ownership (`RUNTIME-045`).** A real shipping defect: ten of eleven built-in
+skills were declared both in the Runtime registry and as a shipped asset manifest, and the loader
+resolved the duplicate map last-wins, so the asset always won. For `halo.phone` the asset declared
+`EXTERNAL_SIDE_EFFECT` while the registry declared `SENSITIVE`, meaning Halo silently shipped the
+*weaker* classification of its highest-risk capability. `halo.reminders` showed the inverse, so the
+fix cannot simply prefer one document: `BuiltInSkillMerge` keeps the strictest declared risk at skill
+and per-tool level and unions tools and permissions, so neither document can weaken or silently drop
+the other's requirements. The `halo.phone` manifest was also corrected to declare `SENSITIVE`
+truthfully, and the four unread `assets/skills/*.yaml` files were deleted.
+
+## Harvested this round — RUNTIME-046
+
+Phone observation was the weak link on the phone route: the projection was one loose substring
+chain over widget class names that never consulted the parent, it spent budget on nodes that carried
+nothing, and it said nothing about what a scrollable had hidden. What changed:
+
+- **Roles are a table, not a guess.** `AccessibilityProjectionRules` resolves an exact class name
+  first, then a *bounded* suffix table ordered so the specific match wins (`ToggleButton` before
+  `Button`, `AutoCompleteTextView` before `TextView`), then falls back to platform flags, then asks
+  whether the parent is a `LIST`. `TAB`, `CHIP`, `TOOLBAR` and `DIALOG` became expressible roles. A
+  name that merely contains a role word is no longer classified as it, and list rows are no longer
+  anonymous containers.
+- **Nothing is emitted that teaches a model nothing.** Inert containers are collapsed and their
+  children kept, so a wrapper costs no node and no line.
+- **A scrollable says what it hid.** The rows a scrollable had to prune are counted and previewed on
+  the scrollable node itself (bounded, redacted), so a model can choose to scroll instead of
+  assuming the list ended. The pruner is transparent: an off-screen unlabeled wrapper promotes the
+  labelled row inside it rather than consuming the item.
+- **Position is a third, not a rectangle.** `region=top-left` replaced `bounds=[...]` in model-visible
+  text; bounds remain on the contract as evidence, and nothing in the action path ever used them.
+- **An unreadable screen says so.** `inspectability` distinguishes content from an empty or root-only
+  tree and from a surface that exposes nothing labelled or interactive, and `halo_read_screen`
+  answers with `status=unreadable_surface next=REPORT_TO_USER` plus a do-not-retry advisory.
+- **Capture failure is not one message.** Sealed `ScreenCaptureOutcome` carries the difference
+  between nothing to observe, an app Halo refuses to observe (with the reason) and a captured screen.
+
+What did **not** change: node/depth/character budgets, redaction, untrusted-content framing, opaque
+snapshot-scoped tokens, settled snapshots, receipts and the per-action consent model. The only
+contract edits are additive fields on the existing screen types, and the token digest deliberately
+excludes parent-derived roles so a token cannot be invalidated by a wrapper appearing above it.
+
+Also recorded: the pure rules object gained JVM tests that **have never been executed** (this pass ran
+neither builds nor tests). They describe intent until run once.
 
 ## Next candidates (not started)
 
-- Phone control: transparent-container collapse, parent-aware semantic types, `more:` summaries inside
-  scrollables, and thirds-based position encoding. Target: a smaller, better screen for a local 0.6B
-  model, without changing Halo's token/consent/redaction model.
-- Agentic skills: move built-in instruction bodies out of Kotlin into the existing manifest document
-  channel, resolve the duplicated `halo.phone` declaration (Kotlin says `SENSITIVE`, the asset says
-  `EXTERNAL_SIDE_EFFECT`, and the asset silently wins), and delete the unread `assets/skills/*.yaml`.
-- OpenRouter: compare provider spec/retry classification against Halo's current normalization before
-  deciding whether anything is missing at all.
+- `RUNTIME-044b`: `DefaultRetryPolicy.maxAttempts` classifies retries by substring-matching
+  human-readable reason text, which contradicts RUNTIME-038's own rule that retry decisions use
+  structured failure kinds. Needs a typed kind on `Outcome.RetryableFailure` and migration of the
+  producers, not a rewrite of the lookup alone.
+- `RUNTIME-045b`: move built-in instruction bodies out of the Kotlin map into the existing manifest
+  document channel so a manifest-declared skill can carry its own bounded guidance, then fold in the
+  Zafiro `phone-use` behavioral rules. Requires a bounded `instructions` field and a contract change
+  across `SkillDescriptor` → registry → instruction source.
+- `RUNTIME-047`: bounded stop-sequence support for local generation.
+- Ollama still classifies failures coarsely without reading HTTP status, so it cannot use the new
+  `ContextOverflow` owner yet.
+
+## Rejected, and why
+
+- **Zafiro root/Shizuku/Xposed shell control** — optional privileged adapter only; the default phone
+  path stays accessibility-based.
+- **Zafiro Python/terminal tools** — no sandbox and no product requirement; a hidden file path would
+  create a second data-access route.
+- **Zafiro fuzzy `launch_app`** — `halo_open_app` requiring an exact validated package id is safer;
+  only discovery is improvable.
+- **OneBox durable tool-call task tables** — Halo's append-only AgentStep journal stays execution
+  truth.
+- **OneBox A2UI renderer registry as execution truth** — interaction surfaces remain bounded,
+  read-only supplements to Halo's closed semantic action protocol.
+- **Zafiro full-output file export for large tool results** — would create a second data-access
+  route; Halo bounds the payload instead.
+- **Zafiro retry jitter** — no retry herd on a single-client device, and `Retry-After` is already
+  honoured upstream.
+- **Coordinate tapping, long-press and gestures** — remain unexposed until risk semantics and a
+  concrete product need exist.

@@ -1,6 +1,10 @@
 # OneBox and Zafiro pattern mining
 
-Status: ACTIVE IMPLEMENTATION NOTES. Updated 2026-09-27.
+Next product focus (2026-09-28): [Notebook and Study mining](NOTEBOOK-STUDY-MINING.md), with
+[RFC 0002](../rfc/0002-notebook-editor-and-study.md) as the plan-first delivery sequence.
+This supersedes the runtime-only next-pass priority below, without completing or deleting its backlog.
+
+Status: ACTIVE IMPLEMENTATION NOTES. Updated 2026-09-28.
 
 These archives are design references, not dependencies:
 
@@ -15,7 +19,7 @@ runtime or move Android APIs into Runtime modules.
 
 | Reference pattern | Halo decision | Halo owner |
 |---|---|---|
-| Zafiro bounded accessibility tree, semantic roles and opaque node indices | Adapt with snapshot-scoped opaque tokens, redaction and explicit truncation | `host-android` |
+| Zafiro bounded accessibility tree, semantic roles and opaque node indices | Adapt with snapshot-scoped opaque tokens, redaction, explicit truncation and a compacted projection (resolved roles, collapsed inert containers, off-screen summaries, third-based regions) | `host-android` |
 | Zafiro read-after-action cadence | Adopt in verified action batch; an action receipt alone is not success | Runtime tool execution + Android host |
 | Zafiro foreground/background consent coordinators | Reuse Halo's durable `AgentInputRequest`; do not add another approval state machine | `runtime/cognition` |
 | Zafiro phone-use skill | Adapt as behavioral guidance after semantic actions exist | future skill repository |
@@ -343,3 +347,168 @@ implementation pass should still perform source-level contract and boundary chec
 - `host.assistant.native` publishes actual active-service capability truth to Runtime.
 
 Validation constraint remains unchanged: no tests or builds were run for this batch.
+
+## Mining and implementation record — RUNTIME-044 through RUNTIME-046
+
+Status: IMPLEMENTED IN SOURCE. No build or test run in this pass; verification was source-level review
+of each contract boundary, plus one correction of this document's own history (see the discrepancy
+note below).
+
+### Document correction
+
+The implementation record for RUNTIME-038 through RUNTIME-043 above was verified directly against
+source in this pass and is accurate. `docs/engineering/REFERENCE-HARVEST.md` had been reporting the
+same work as OPEN or PARTIAL; those rows were stale and have been corrected. This document is not
+evidence that its own plan was implemented, and neither is the harvest ledger.
+
+### RUNTIME-044 — provider failure truth
+
+Problem found during source comparison:
+
+- `AiErrorType.CONTEXT_TOO_LARGE` had consumers (`AiErrorPresenter`, `AiProviderRouter` mapping it to
+  `TargetRejectionReason.MEMORY_PREFLIGHT_FAILED`) but no producer anywhere in `providers/`.
+- Every OpenAI-compatible context-overflow response is an ordinary `400`, so it was reported as
+  `INVALID_REQUEST` / `PERMANENT` and became indistinguishable from a malformed request.
+- `DefaultRetryPolicy.nextDelay` grew without bound and applied `1 shl (attempt - 1)` directly;
+  the shift overflows into a negative `Int` at `attempt >= 32`, and a long chain would have waited
+  hours per attempt.
+
+Implemented:
+
+1. New `sdk/provider-sdk` owner `ContextOverflow` decides, once, whether a provider code or message
+   means "request exceeded the model's context window": an authoritative machine-code set first, then
+   a deliberately narrow prose phrase set so unrelated `400`s cannot be mislabelled. Providers map
+   their own wire response through it instead of each inventing string checks.
+2. `OpenRouterProvider` maps a `400` recognized by that owner to `AiErrorType.CONTEXT_TOO_LARGE` and
+   keeps `Recoverability.PERMANENT`: the failure is actionable (compact context or choose a
+   larger-context model) but replaying the identical request is still wrong.
+3. `DefaultRetryPolicy.nextDelay` bounds the exponent and caps a single wait at 30 s. The existing
+   100/200/400/800/1600 ms sequence is unchanged, so the recorded backoff contract still holds.
+4. `OpenRouterFailureMatrixTest` gains three cases: classification from a provider code,
+   classification from prose when no code is sent, and a negative case proving an unrelated `400`
+   that merely mentions tokens stays `INVALID_REQUEST`.
+
+Acceptance boundary:
+
+- A context overflow is never reported as a malformed request, and never as retryable.
+- The classifier is the only place that decides this, and it is provider-neutral.
+- No backoff delay is ever negative or unbounded.
+
+Deliberately rejected from the same reference: multiplicative retry jitter. Halo is a single-client
+on-device runtime with no retry herd to spread, and provider-supplied `Retry-After` is already
+honoured upstream.
+
+Remaining and explicitly not done: `DefaultRetryPolicy.maxAttempts` still classifies by
+substring-matching human-readable reason text, which contradicts RUNTIME-038's rule that retry
+decisions use structured failure kinds. That needs a typed kind on `Outcome.RetryableFailure` plus
+migration of the producers, so it is recorded as RUNTIME-044b rather than half-done here.
+
+### RUNTIME-045 — built-in skill declaration ownership
+
+Problem found during source comparison — a real shipping defect, not a style issue:
+
+- Ten of eleven built-in skills are declared twice: in `DefaultSkillRegistry.defaultBuiltInSkills()`
+  and as a shipped `assets/skills/*.json` manifest.
+- `BuiltInSkillManifestLoader` merged them with `(defaults + manifests).associateBy { it.id }`, which
+  is last-wins, so the asset always won.
+- For `halo.phone` the asset declared `EXTERNAL_SIDE_EFFECT` while the registry declared `SENSITIVE`.
+  The weaker classification of Halo's highest-risk capability is what actually shipped.
+- `halo.reminders` showed the inverse (asset stricter than registry), which rules out simply
+  preferring either document.
+- Four `assets/skills/*.yaml` files were unread (the loader filters `.json`) and duplicated four JSON
+  manifests in a different casing, misrepresenting the authoritative schema.
+
+Implemented:
+
+1. New `BuiltInSkillMerge` owner resolves duplicate ids by keeping the strictest declared risk at
+   both skill and per-tool level (`SkillRisk` declares its constants in ascending severity, so
+   ordinal order is severity order) and unions tools and required permissions. Neither document can
+   weaken the other or silently drop a requirement, and a registry-declared approval default is
+   preserved for tools the manifest also declares.
+2. `halo.phone.json` now declares `SENSITIVE`, agreeing with the registry instead of understating it.
+3. The four unread `*.yaml` assets were deleted.
+
+Acceptance boundary:
+
+- No manifest can ship a weaker effective risk than the registry declares for the same skill id.
+- `halo.phone` is `SENSITIVE` through both declarations.
+- Every built-in skill has exactly one authoritative document, and unread duplicates do not exist.
+
+### RUNTIME-046 — compacted phone observation (delivered in source)
+
+Halo was ahead of the reference on consent, redaction, opaque snapshot-scoped tokens, receipts and
+settled snapshots, but the projection itself was thin: `AccessibilitySnapshotFormatter` was a loose
+substring chain over class names that never consulted the parent node, it emitted raw bounds for
+every node, and it neither collapsed containers nor said anything about what a scrollable had
+hidden. All five planned items are now in source.
+
+1. **Roles are resolved, not guessed.** `AccessibilityProjectionRules.classify` is a pure object
+   with no Android dependency: platform editability first, then an exact class table, then a
+   *bounded* suffix table ordered specific-first (`ToggleButton` before `Button`,
+   `AutoCompleteTextView` before `TextView`), then scroll/check/click flags, and finally the parent.
+   A `LIST` parent makes an unclassified child a `LIST_ITEM` instead of an anonymous container, and
+   `TAB`, `CHIP`, `TOOLBAR` and `DIALOG` are now expressible roles.
+2. **Inert containers collapse.** A non-interactive node with no text, description or view id that
+   is neither selected nor focused emits nothing (counted as `collapsed_container`) while its
+   children are still emitted, so a wrapper costs no node and no line.
+3. **A scrollable reports what it hid.** Pruned off-screen rows are counted and previewed (bounded
+   to three redacted previews) on the scrollable node itself. The pruner is *transparent*: an
+   off-screen unlabeled wrapper promotes the labelled row inside it rather than consuming the item,
+   which is the common recycler case.
+4. **Position is a third.** `region=top-left` replaced `bounds=[...]` in model-visible text. Bounds
+   stay on the contract as evidence and as the fallback when the display size is unknown; no action
+   path ever used coordinates.
+5. **An unreadable screen says so.** `ScreenContextSnapshot.inspectability` distinguishes a
+   projection with content from an empty or root-only tree and from a surface exposing nothing
+   labelled or interactive, and `halo_read_screen` answers `status=unreadable_surface
+   next=REPORT_TO_USER` with an explicit do-not-retry advisory instead of presenting a blank screen.
+
+One item beyond the plan, because the same comparison exposed it: failure reporting. A nullable
+snapshot collapsed "nothing to observe" and "Halo refuses to observe this app" into a single string,
+which invites a model to retry the one thing it must never retry. Sealed `ScreenCaptureOutcome` now
+separates `Captured`, `NoActiveWindow` (transient) and `PackageBlocked` (permanent, carrying
+`AccessibilitySafetyPolicy.blockReason`), and a disabled service reports `ACCESSIBILITY_DISABLED`.
+
+Token stability was decided deliberately, not inherited: the digest covers the node, its true tree
+path and its *intrinsic* role only. Parent-derived roles such as `LIST_ITEM` are display information,
+so a token cannot change merely because a list gained or lost a wrapper.
+
+Unchanged by this work: node/depth/character budgets, redaction, untrusted-content framing, opaque
+snapshot-scoped tokens, settled snapshots, receipts, and the per-action consent model. The only
+contract edits are additive fields with defaults on the existing screen types.
+
+Acceptance boundary:
+
+- No class name is classified by substring containment; every role comes from an exact match, a
+  whole-name suffix or a platform flag.
+- A row inside a list is a `LIST_ITEM`, and a labelled control inside a list keeps its own role.
+- A model never receives one line per inert wrapper.
+- A scrollable that pruned rows tells the model how many and previews up to three of them.
+- No model-visible text contains raw pixel coordinates.
+- A screen with nothing readable is reported as such and never as an empty screen.
+- "Try again", "never on this app" and "there is nothing to read" are three different answers.
+
+Not verified: no build and no test was run for this pass, and the JVM tests added for the new pure
+rules object have never been executed.
+
+### RUNTIME-047 — local stop sequences (planned, not started)
+
+OneBox's runtime post-processes output because the native API has no stop parameter: accumulate the
+stream, find the first occurrence of any stop string, emit only the not-yet-emitted prefix, cancel the
+native process, and report normal completion. Halo's generation contract has no stop concept, so this
+needs a bounded `stopSequences` field on the local generation configuration plus the same streaming
+truncation, with cancellation still winning over a stop hit.
+
+### Implementation order for the next pass
+
+1. RUNTIME-047 first: it is the last open LiteRT row and is contained to the local provider.
+2. RUNTIME-045b next: it changes the skill document contract across modules.
+3. RUNTIME-044b last: it touches every producer of `Outcome.RetryableFailure`.
+
+RUNTIME-046 was first in the previous order and is now delivered; before building on it, run the
+knowledge it depends on rather than trusting this record. A build (and ideally the new
+`AccessibilityProjectionRulesTest`) is the cheapest way to retire that debt, and the physical-phone
+checklist in `docs/13-engineering/PHONE-ACCEPTANCE.md` is what turns the projection into a verified
+answer rather than a plausible one.
+
+No tests or builds are part of this pass either, following the current task constraint.

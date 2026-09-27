@@ -44,26 +44,36 @@ class HaloAccessibilityService : AccessibilityService() {
         super.onDestroy()
     }
 
-    fun captureSnapshot(): ScreenContextSnapshot? {
-        val root = rootInActiveWindow ?: return null
+    /**
+     * Observes the active screen and reports *why* when it cannot.
+     * This is the entry point callers that must react differently to "nothing to observe" and
+     * "Halo refuses to observe this app" should use; [captureSnapshot] stays for callers that
+     * only need a baseline and treat every miss the same.
+     */
+    fun captureSnapshotOutcome(): ScreenCaptureOutcome {
+        val root = rootInActiveWindow ?: return ScreenCaptureOutcome.NoActiveWindow
         val packageName = root.packageName?.toString()
 
-        if (AccessibilitySafetyPolicy.isPackageBlocked(packageName)) {
+        val blockReason = AccessibilitySafetyPolicy.blockReason(packageName)
+        if (blockReason != null) {
             root.recycle()
-            return null
+            return ScreenCaptureOutcome.PackageBlocked(packageName, blockReason)
         }
 
         val metrics = resources.displayMetrics
         return try {
-            snapshotFormatter.format(root, packageName, metrics.widthPixels, metrics.heightPixels).also {
-                latestSemanticSnapshotId = it.snapshotId
-                latestSemanticSnapshotAtMs = it.capturedAtMs
-                latestSemanticSnapshot = it
-            }
+            val snapshot = snapshotFormatter.format(root, packageName, metrics.widthPixels, metrics.heightPixels)
+            latestSemanticSnapshotId = snapshot.snapshotId
+            latestSemanticSnapshotAtMs = snapshot.capturedAtMs
+            latestSemanticSnapshot = snapshot
+            ScreenCaptureOutcome.Captured(snapshot)
         } finally {
             root.recycle()
         }
     }
+
+    fun captureSnapshot(): ScreenContextSnapshot? =
+        (captureSnapshotOutcome() as? ScreenCaptureOutcome.Captured)?.snapshot
 
     internal fun markActionDispatched() {
         uiRevision.incrementAndGet()

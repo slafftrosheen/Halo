@@ -1,5 +1,10 @@
 # Halo Execution Roadmap
 
+Next user-directed product target (2026-09-28): **Notebook editor + Study companion**.
+Follow [RFC 0002, NBS-01–07](../rfc/0002-notebook-editor-and-study.md) and its
+[reference/source review](../engineering/NOTEBOOK-STUDY-MINING.md). This is a plan-first
+priority update; previous runtime work and validation debt remain recorded below.
+
 Status: EXECUTING. Updated 2026-09-25.
 
 See [NEXT-PHASE-2027.md](NEXT-PHASE-2027.md) for proposed batches and detailed acceptance criteria.
@@ -68,6 +73,8 @@ stabilization (compile/test/device/HIL) follows after the substrate exists.
    **Truth rules:** installed != verified; selected != resident; resident != generation-proven. Only `VERIFIED_ARTIFACT` may render as ready to select, and `verifyModel()` (load -> conversation -> "Reply with OK." with <= 8 output tokens -> non-empty text) is the only thing that can promote a model to "Verified on GPU/CPU". Arbitrary SAF imports stay `UNVERIFIED` until qualified. Remaining work: physical-phone acceptance checklist (clean install -> download -> verify -> select -> ask "hello" -> restart) and gated-source Gemma support with a real license flow.
 15. **LITERT-HARDEN-002 — Late GPU failure recovery + honest lifecycle** — SOURCE COMPLETE / **UNCOMPILED AT COMMIT TIME / PHONE ACCEPTANCE NOT RUN** (2026-09-27). Harvested from an external LiteRT reference implementation recorded in `docs/engineering/REFERENCE-HARVEST.md`.
    A device may pass `Engine.initialize()` on the GPU and only fail at first inference. `LiteRtRuntime.generate()` now rebuilds once on the CPU when the request asked for `AUTO`, the engine is on the GPU, no token was emitted, the turn was not cancelled, and the residency has not already used its rebuild; the rebuild takes `loadMutex` outside `inferenceMutex` (the same order `loadModel` uses) and reports the original GPU cause if it cannot be installed. Engine close runs in `NonCancellable + Dispatchers.Default` because weight release takes seconds. A cancelled turn returns a failure instead of a completed response. New optional SDK capability `LocalRuntimeBackendReporting` keeps `activeBackend` / `fallbackReason` truthful after a late switch. Open follow-ups for the other routes are listed in the harvest ledger.
+
+16. **RUNTIME-044 / RUNTIME-045 — Provider failure truth + built-in skill declaration ownership** — SOURCE COMPLETE / **NO BUILD OR TEST RUN** (2026-09-28). Harvested from the local reference archives in `build/refs` (never committed, never a dependency). `ContextOverflow` is the single owner of the "request exceeded the model context window" judgement: OpenRouter now reports it as `AiErrorType.CONTEXT_TOO_LARGE` with `Recoverability.PERMANENT` instead of a generic malformed request, making the existing presenter/router paths reachable. `DefaultRetryPolicy.nextDelay` caps growth at 30 s and bounds the exponent, removing a negative-delay overflow at `attempt >= 32`. `BuiltInSkillMerge` resolves the duplicate built-in skill declarations (ten of eleven were declared twice) by keeping the strictest risk at skill and per-tool level and unioning tools/permissions, fixing `halo.phone` shipping `EXTERNAL_SIDE_EFFECT` where the registry said `SENSITIVE`; the `halo.phone` manifest was corrected and four unread `*.yaml` duplicates were deleted. Open follow-ups: RUNTIME-044b (structured retry kinds), RUNTIME-045b (skill instruction document channel), RUNTIME-046 (compacted phone observation) and RUNTIME-047 (local stop sequences).
 
 HeyCyan validation remains an essential engineering track, but it is not the entire roadmap. 
 All future batches must adhere to the product contract and interaction-origin continuity rules established in the [Vision](../01-vision/VISION.md).

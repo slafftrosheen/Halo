@@ -2,11 +2,15 @@ package com.halo.app.di.tools.host
 
 import com.halo.host.android.accessibility.AccessibilityActions
 import com.halo.host.android.accessibility.HaloAccessibilityService
+import com.halo.host.android.accessibility.ScreenCaptureOutcome
 import com.halo.runtime.cognition.tools.ToolExecutionResult
 import com.halo.runtime.cognition.tools.ToolExecutor
+import com.halo.runtime.cognition.tools.ToolFailureKind
 import com.halo.sdk.provider.ToolCall
 import com.halo.sdk.provider.ToolDefinition
 import com.halo.sdk.runtime.ScreenContextSnapshot
+import com.halo.sdk.runtime.UiInspectability
+import com.halo.sdk.runtime.UiScreenRegion
 import com.halo.runtime.cognition.agent.ActionTruth
 
 class AccessibilityTools : ToolExecutor {
@@ -100,14 +104,44 @@ class AccessibilityTools : ToolExecutor {
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
         fun reject(reason: String) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason)
 
-        val service = HaloAccessibilityService.instance ?: return reject("Accessibility Service is not enabled by user")
+        val service = HaloAccessibilityService.instance ?: return failure(
+            toolCall = toolCall,
+            code = "ACCESSIBILITY_DISABLED",
+            message = "Halo's accessibility service is not enabled, so the screen cannot be observed",
+            kind = ToolFailureKind.PERMISSION,
+            hint = "Ask the user to enable Halo's accessibility service in Android settings.",
+        )
         val actions = AccessibilityActions(service)
 
         return when (toolCall.functionName) {
-            "halo_read_screen" -> {
-                val snapshot = service.captureSnapshot()
-                    ?: return reject("The active screen cannot be read or is blocked by Halo safety policy")
-                ToolExecutionResult.Success(toolCall.id, toolCall.functionName, snapshot.toToolText())
+            "halo_read_screen" -> when (val outcome = service.captureSnapshotOutcome()) {
+                is ScreenCaptureOutcome.Captured -> {
+                    val snapshot = outcome.snapshot
+                    val readable = snapshot.inspectability == UiInspectability.INSPECTABLE
+                    val advisory = if (readable) {
+                        "status=ok next=USE_TOKENS\n"
+                    } else {
+                        "status=unreadable_surface next=REPORT_TO_USER\n" +
+                            "note: this screen exposes no semantic content Halo can read. It may be empty, or a " +
+                            "non-native surface such as a canvas or WebView. Do not retry halo_read_screen and do " +
+                            "not act on guesses; tell the user this screen cannot be read.\n"
+                    }
+                    ToolExecutionResult.Success(toolCall.id, toolCall.functionName, advisory + snapshot.toToolText())
+                }
+                ScreenCaptureOutcome.NoActiveWindow -> failure(
+                    toolCall = toolCall,
+                    code = "NO_ACTIVE_WINDOW",
+                    message = "No window is currently focused, so there is no screen to read",
+                    kind = ToolFailureKind.TRANSIENT,
+                    hint = "Wait a moment and call halo_read_screen once more.",
+                )
+                is ScreenCaptureOutcome.PackageBlocked -> failure(
+                    toolCall = toolCall,
+                    code = "PACKAGE_BLOCKED_BY_POLICY",
+                    message = "${outcome.packageName ?: "The foreground app"} is not readable by Halo policy (${outcome.reason.name.lowercase()})",
+                    kind = ToolFailureKind.PERMISSION,
+                    hint = "Do not retry. Tell the user Halo does not read this app.",
+                )
             }
             "halo_find_on_screen" -> {
                 val snapshotId = toolCall.arguments["snapshotId"] as? String
@@ -221,19 +255,40 @@ class AccessibilityTools : ToolExecutor {
         )
     }
 
-    private fun actionFailure(toolCall: ToolCall, code: String, message: String) = ToolExecutionResult.Failed(
+    private fun actionFailure(toolCall: ToolCall, code: String, message: String) = failure(
+        toolCall = toolCall,
+        code = code,
+        message = message,
+        kind = ToolFailureKind.UNAVAILABLE,
+        hint = "Call halo_read_screen and choose a token from the fresh snapshot.",
+    )
+
+    private fun failure(
+        toolCall: ToolCall,
+        code: String,
+        message: String,
+        kind: ToolFailureKind,
+        hint: String,
+    ) = ToolExecutionResult.Failed(
         toolCallId = toolCall.id,
         toolId = toolCall.functionName,
         message = message,
-        failureKind = com.halo.runtime.cognition.tools.ToolFailureKind.UNAVAILABLE,
+        failureKind = kind,
         code = code,
-        hint = "Call halo_read_screen and choose a token from the fresh snapshot.",
+        hint = hint,
     )
 
     private fun ScreenContextSnapshot.semanticFingerprint(): Int = buildList {
         add(packageName.orEmpty())
         nodes.forEach { node ->
-            add(listOf(node.semanticType, node.text, node.contentDescription, node.bounds, node.checked, node.selected, node.focused).joinToString("|"))
+            add(
+                listOf(
+                    node.semanticType, node.text, node.contentDescription, node.bounds,
+                    node.checked, node.selected, node.focused,
+                    // Content hidden below the fold of a scrollable is part of what changed.
+                    node.hiddenChildCount, node.hiddenChildPreviews,
+                ).joinToString("|"),
+            )
         }
     }.joinToString("\n").hashCode()
 
@@ -246,7 +301,10 @@ class AccessibilityTools : ToolExecutor {
     private fun ScreenContextSnapshot.toToolText(): String = buildString {
         appendLine("UNTRUSTED_SCREEN_CONTENT")
         appendLine("screen=${screenWidth ?: "?"}x${screenHeight ?: "?"} package=${packageName ?: "unknown"}")
-        appendLine("snapshotId=$snapshotId capturedAtMs=$capturedAtMs truncated=$truncated reason=${truncationReason ?: "none"}")
+        appendLine(
+            "snapshotId=$snapshotId capturedAtMs=$capturedAtMs truncated=$truncated" +
+                " reason=${truncationReason ?: "none"} inspectability=${inspectability.name.lowercase()}",
+        )
         if (omissionCounts.isNotEmpty()) {
             appendLine("omitted=" + omissionCounts.entries.sortedBy { it.key }.joinToString(",") { "${it.key}:${it.value}" })
         }
@@ -263,7 +321,13 @@ class AccessibilityTools : ToolExecutor {
     private fun com.halo.sdk.runtime.ScreenContextNode.toToolLine(): String = buildString {
         append("- token=").append(token ?: "none")
         append(" role=").append(semanticType.name.lowercase())
-        bounds?.let { append(" bounds=[${it.left},${it.top},${it.right},${it.bottom}]") }
+        // A region is what a model can act on; raw pixel bounds are kept only as a fallback.
+        val nodeRegion = region
+        if (nodeRegion != null) {
+            append(" region=").append(nodeRegion.token())
+        } else {
+            bounds?.let { append(" bounds=[${it.left},${it.top},${it.right},${it.bottom}]") }
+        }
         if (clickable) append(" clickable")
         if (editable) append(" editable")
         if (scrollable) append(" scrollable")
@@ -272,7 +336,14 @@ class AccessibilityTools : ToolExecutor {
         if (sensitive) append(" sensitive=[REDACTED]")
         text?.takeUnless { sensitive }?.let { append(" text=").append(it.quoted()) }
         contentDescription?.takeUnless { sensitive }?.let { append(" hint=").append(it.quoted()) }
+        // Tells a model the list continues without spending a node per hidden row.
+        if (hiddenChildCount > 0) append(" hidden=").append(hiddenChildCount)
+        if (hiddenChildPreviews.isNotEmpty()) {
+            append(" hiddenPreview=").append(hiddenChildPreviews.joinToString("|").quoted())
+        }
     }
+
+    private fun UiScreenRegion.token(): String = name.lowercase().replace('_', '-')
 
     private fun HostActionReceipt.toStatus(): String = when (this) {
         HostActionReceipt.CONFIRMED -> "confirmed_success"

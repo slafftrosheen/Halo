@@ -19,6 +19,8 @@ and old reports do not establish that something works.
 - [UI route inventory](11-ui/UI-IMPLEMENTATION-STATUS.md)
 - [User redesign guide](03-design/HALO-WORKSPACE-DESIGN.md)
 - [Notebook blueprint](02-product/NOTEBOOK-WORKSPACE-BLUEPRINT.md) and [delivery plan](02-product/NOTEBOOK-DELIVERY.md) — proposed, not current storage/UI
+- [Notebook editor and Study plan](rfc/0002-notebook-editor-and-study.md) — next product target;
+  [reference mining and source reconciliation](engineering/NOTEBOOK-STUDY-MINING.md), reviewed 2026-09-28
 
 ## Interpretation rules
 

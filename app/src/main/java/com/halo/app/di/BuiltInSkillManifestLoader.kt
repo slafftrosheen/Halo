@@ -55,7 +55,13 @@ class BuiltInSkillManifestLoader(private val context: Context) {
                 descriptor
             }.onFailure { android.util.Log.e("HaloSkills", "Invalid built-in skill manifest: $file", it) }.getOrNull()
         }
-        return (DefaultSkillRegistry.defaultBuiltInSkills() + descriptors).associateBy { it.id }.values.toList()
+        // Duplicate ids are resolved by BuiltInSkillMerge, which keeps the strictest declared risk
+        // and unions tools/permissions. A plain associateBy here let a manifest override the
+        // registry with a weaker classification for the same skill.
+        return BuiltInSkillMerge.merge(
+            defaults = DefaultSkillRegistry.defaultBuiltInSkills(),
+            manifests = descriptors,
+        )
     }
 
     private fun ByteArray.sha256(): String = MessageDigest.getInstance("SHA-256")

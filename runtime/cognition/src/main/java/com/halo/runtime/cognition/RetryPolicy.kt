@@ -43,8 +43,24 @@ class DefaultRetryPolicy(
     }
 
     override fun nextDelay(attempt: Int, outcome: Outcome): Duration {
-        // True exponential backoff: 100ms, 200ms, 400ms, 800ms, 1600ms...
-        val delayMs = 100L * (1 shl (attempt - 1).coerceAtLeast(0))
+        // True exponential backoff: 100ms, 200ms, 400ms, 800ms, 1600ms... capped at MAX_DELAY_MS.
+        // The exponent is bounded before the shift is applied: `1 shl n` overflows into a negative
+        // Int at n >= 31, which would otherwise turn a long retry chain into a negative delay.
+        // Growth is also capped, so a high attempt count waits a fixed maximum instead of doubling
+        // into hours. Deliberately not jittered: this is a single-client on-device runtime, so there
+        // is no retry herd to spread, and provider-supplied Retry-After is honoured upstream.
+        val exponent = (attempt - 1).coerceIn(0, MAX_BACKOFF_SHIFT)
+        val delayMs = (BASE_DELAY_MS * (1L shl exponent)).coerceAtMost(MAX_DELAY_MS)
         return delayMs.milliseconds
+    }
+
+    private companion object {
+        const val BASE_DELAY_MS = 100L
+
+        /** Longest single wait; backoff stops growing here rather than doubling without limit. */
+        const val MAX_DELAY_MS = 30_000L
+
+        /** Highest exponent we will apply, keeping `1L shl exponent` far from overflow. */
+        const val MAX_BACKOFF_SHIFT = 20
     }
 }

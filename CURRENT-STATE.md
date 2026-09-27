@@ -212,3 +212,71 @@ The post-agent review corrected the initial RUNTIME-021 skeleton into one cohere
 
 This remains **IMPLEMENTED / UNVALIDATED**. The coding phase did not claim compile-suite, provider,
 phone, HeyCyan, latency, battery or HIL acceptance; those move to STABILIZATION.
+
+### RUNTIME-044 / RUNTIME-045 — provider failure truth + skill declaration ownership — 2026-09-28
+
+**IMPLEMENTED / UNVALIDATED** (no build or test was run in this pass; verification was source-level).
+Harvested from the local reference archives recorded in
+[docs/engineering/REFERENCE-HARVEST.md](docs/engineering/REFERENCE-HARVEST.md).
+
+- `AiErrorType.CONTEXT_TOO_LARGE` had a presenter string and a router rejection but **no producer**, so
+every OpenAI-compatible context-overflow response was reported as a generic malformed request. The new
+provider-neutral `ContextOverflow` owner now decides that classification from an authoritative provider
+code or a narrow prose fallback, and OpenRouter maps a recognized `400` to `CONTEXT_TOO_LARGE` with
+`Recoverability.PERMANENT`. The failure is actionable (compact context or pick a larger-context model)
+while replaying the identical request stays wrong.
+- `DefaultRetryPolicy.nextDelay` doubled without bound and applied `1 shl (attempt - 1)` directly, which
+overflowed into a negative `Int` from `attempt >= 32`. Growth is now capped at 30 s with a bounded
+exponent; the recorded 100/200/400/800/1600 ms sequence is unchanged.
+- Ten of eleven built-in skills were declared twice (Runtime registry + shipped asset manifest) and the
+loader resolved duplicates last-wins, so the asset always won. For `halo.phone` the asset declared
+`EXTERNAL_SIDE_EFFECT` while the registry declared `SENSITIVE`, meaning Halo shipped the **weaker**
+classification of its highest-risk capability. New `BuiltInSkillMerge` keeps the strictest declared risk
+at skill and per-tool level and unions tools/permissions, so neither document can weaken the other.
+`halo.phone.json` was corrected to `SENSITIVE` and four unread `assets/skills/*.yaml` duplicates were
+deleted.
+- Correction: the RUNTIME-038…043 "delivered" record was verified against source and is accurate; the
+stale OPEN/PARTIAL rows in the harvest ledger were the wrong side of that discrepancy.
+
+Remaining open on these routes: RUNTIME-044b (structured retry kinds instead of reason-text matching),
+RUNTIME-045b (skill instruction document channel), RUNTIME-047 (local stop sequences).
+
+### RUNTIME-046 — compacted phone observation — 2026-09-28
+
+**IMPLEMENTED / UNVALIDATED** (no build or test was run in this pass; verification was source-level).
+
+Halo's screen projection was the thin part of the phone route: one loose substring chain over widget
+class names that never consulted the parent, raw pixel bounds on every node, no container collapse and
+no account of what a scrollable had hidden. Unchanged and still inherited from the earlier work:
+per-action consent, redaction, opaque snapshot-scoped tokens, settled snapshots, receipts, blocked
+packages and the untrusted-content framing.
+
+- Roles come from `AccessibilityProjectionRules`, a pure object with an exact class table, then a
+bounded suffix table (specific-first: `ToggleButton` before `Button`, `AutoCompleteTextView` before
+`TextView`), then platform flags. `TAB`, `CHIP`, `TOOLBAR` and `DIALOG` are now expressible roles. A
+name that merely *contains* a role word no longer claims it, and a row whose parent is a `LIST` is a
+`LIST_ITEM` instead of an anonymous container.
+- Inert containers (non-interactive, no text, no description, not selected or focused) are collapsed
+while their children are still emitted, and are counted as `collapsed_container`. They were nodes a
+model could learn nothing from that still consumed budget.
+- A scrollable's pruned off-screen rows are summarized on the scrollable node itself
+(`hiddenChildCount` + up to three redacted previews) instead of only being counted globally, so a
+model can decide to scroll rather than assume the list ended. Projection is transparent: an off-screen
+recycler wrapper promoted away its label, so descendants of a dropped unlabeled node still count.
+- Each node carries a `region` (screen thirds: `top-left`, `center`, `bottom-right`) in place of raw
+bounds in model-visible text. Bounds remain on the contract as evidence and as the fallback when the
+display size is unknown; no action ever used coordinates.
+- `ScreenContextSnapshot.inspectability` distinguishes a projection with content from an empty or
+root-only tree and from a tree that exposes no labelled or interactive node at all. `halo_read_screen`
+now returns `status=unreadable_surface next=REPORT_TO_USER` with a do-not-retry advisory instead of
+presenting a blank screen as an empty one.
+- Capture failures are no longer one message. New sealed `ScreenCaptureOutcome` separates
+`NoActiveWindow` (transient, retry once), `PackageBlocked` (permanent, with the block reason from
+`AccessibilitySafetyPolicy.blockReason`) and `Captured`, and the disabled service reports
+`ACCESSIBILITY_DISABLED`. Previously "cannot be read" and "blocked by policy" were the same string.
+- Tokens remain derived from the node, its true tree path and its *intrinsic* role only: parent-derived
+roles are display information, so a token cannot change because a list gained or lost a wrapper.
+
+Composition is unchanged: node/depth/character budgets, redaction and the per-action consent model.
+UNCOMPILED AND UNTESTED AT COMMIT TIME — a build and the physical-phone checklist are still required
+before this is called verified; the rule tests added for the new object have never been executed.

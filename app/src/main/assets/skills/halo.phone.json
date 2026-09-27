@@ -4,7 +4,7 @@
   "name": "Phone Use",
   "description": "Read and operate supported Android screens through bounded semantic accessibility tools.",
   "category": "DEVICE",
-  "risk": "EXTERNAL_SIDE_EFFECT",
+  "risk": "SENSITIVE",
   "requiredPermissions": ["ACCESSIBILITY"],
   "tools": [
     "halo_read_screen",
