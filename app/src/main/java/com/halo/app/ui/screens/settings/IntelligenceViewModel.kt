@@ -8,12 +8,18 @@ import com.halo.app.ai.readRuntimeAiContextPolicy
 import com.halo.app.ai.writeRuntimeAiContextPolicy
 import com.halo.providers.litert.LiteRtLoadDiagnostics
 import com.halo.providers.litert.LiteRtLocalProvider
+import com.halo.providers.litert.LiteRtToolProbeResult
 import com.halo.providers.litert.models.LiteRtModelManager
 import com.halo.providers.litert.models.LiteRtAcquisitionDiagnostics
 import com.halo.providers.litert.models.DownloadState
 import com.halo.providers.litert.models.LiteRtCatalogModel
+import com.halo.providers.litert.models.LiteRtModelFailureRecord
+import com.halo.providers.litert.models.LiteRtStoragePreflightResult
 import com.halo.providers.litert.models.LocalModelDescriptor
 import com.halo.providers.litert.models.ModelVerificationResult
+import com.halo.providers.litert.runtime.LocalModelBenchmarkResult
+import com.halo.providers.litert.runtime.LocalModelMatrixRow
+import com.halo.providers.litert.runtime.LocalModelSmokeTestResult
 import com.halo.providers.gemini.GeminiAuthenticationMode
 import com.halo.providers.gemini.GeminiProvider
 import com.halo.sdk.provider.*
@@ -65,6 +71,20 @@ data class IntelligenceUiState(
     val verifications: Map<String, ModelVerificationResult> = emptyMap(),
     val generationProvenIds: Set<String> = emptySet(),
     val verifyingModelId: String? = null,
+    // Development matrix surface: per-model developer backend, health memory and runner results.
+    val developerBackends: Map<String, LocalComputeBackend> = emptyMap(),
+    val requestedBackends: Map<String, LocalComputeBackend> = emptyMap(),
+    val modelFailureRecords: Map<String, LiteRtModelFailureRecord> = emptyMap(),
+    val smokeTests: Map<String, LocalModelSmokeTestResult> = emptyMap(),
+    val benchmarkResults: Map<String, LocalModelBenchmarkResult> = emptyMap(),
+    val toolProbes: Map<String, LiteRtToolProbeResult> = emptyMap(),
+    val matrixRows: List<LocalModelMatrixRow> = emptyList(),
+    val runningMatrix: Boolean = false,
+    val busyModelId: String? = null,
+    /** Currently resident (loaded) model, if any. Resident != selected. */
+    val residentModelId: String? = null,
+    val residentBackend: LocalComputeBackend? = null,
+    val residentContextTokens: Int? = null,
     val litertLoadDiagnostics: LiteRtLoadDiagnostics? = null,
     val litertAcquisitionDiagnostics: LiteRtAcquisitionDiagnostics? = null,
     val temperature: Float = 0.7f,
@@ -117,6 +137,18 @@ private data class LocalVerificationInputs(
     val verifyingModelId: String? = null,
     val diagnostics: LiteRtLoadDiagnostics? = null,
     val acquisitionDiagnostics: LiteRtAcquisitionDiagnostics? = null,
+    val modelMemory: Map<String, LiteRtModelFailureRecord> = emptyMap(),
+)
+
+/** Development-only UI inputs, kept in one flow so the main combine stays within arity limits. */
+private data class LocalDevInputs(
+    val developerBackends: Map<String, LocalComputeBackend> = emptyMap(),
+    val smokeTests: Map<String, LocalModelSmokeTestResult> = emptyMap(),
+    val benchmarkResults: Map<String, LocalModelBenchmarkResult> = emptyMap(),
+    val toolProbes: Map<String, LiteRtToolProbeResult> = emptyMap(),
+    val matrixRows: List<LocalModelMatrixRow> = emptyList(),
+    val runningMatrix: Boolean = false,
+    val busyModelId: String? = null,
 )
 
 private data class IntelligencePresentationInputs(
@@ -155,13 +187,16 @@ class IntelligenceViewModel(
     private val geminiProvider: GeminiProvider?
         get() = aiProviderRouter.getAllProviders().filterIsInstance<GeminiProvider>().firstOrNull()
 
+    private val devInputs = MutableStateFlow(LocalDevInputs())
+
     private val localVerificationInputs: Flow<LocalVerificationInputs> = combine(
         _verifications,
         _verifyingModelId,
         localProvider?.loadDiagnostics ?: MutableStateFlow<LiteRtLoadDiagnostics?>(null),
         modelManager?.acquisitionDiagnostics ?: MutableStateFlow<LiteRtAcquisitionDiagnostics?>(null),
-    ) { results, verifying, diagnostics, acquisitionDiagnostics ->
-        LocalVerificationInputs(results, verifying, diagnostics, acquisitionDiagnostics)
+        localProvider?.modelMemory ?: MutableStateFlow<Map<String, LiteRtModelFailureRecord>>(emptyMap()),
+    ) { results, verifying, diagnostics, acquisitionDiagnostics, modelMemory ->
+        LocalVerificationInputs(results, verifying, diagnostics, acquisitionDiagnostics, modelMemory)
     }
 
     init {
@@ -210,6 +245,16 @@ class IntelligenceViewModel(
         }
     }
 
+    private val presentationInputs: Flow<IntelligencePresentationInputs> = combine(
+        _settings,
+        _lastResolvedModelId,
+        inferenceLedger?.aggregate ?: MutableStateFlow(InferenceAggregate()),
+        inferenceLedger?.toolAggregate ?: MutableStateFlow(ToolAggregate()),
+        localVerificationInputs,
+    ) { settings, resolved, inference, tools, verification ->
+        IntelligencePresentationInputs(settings, resolved, inference, tools, verification)
+    }
+
     val uiState: StateFlow<IntelligenceUiState> = combine(
         snapshotManager.snapshot,
         combine(
@@ -223,22 +268,21 @@ class IntelligenceViewModel(
         },
         modelManager?.downloadStates ?: MutableStateFlow<Map<String, DownloadState>>(emptyMap()),
         modelManager?.legacyGgufFiles ?: MutableStateFlow(emptyList()),
-        combine(
-            _settings,
-            _lastResolvedModelId,
-            inferenceLedger?.aggregate ?: MutableStateFlow(InferenceAggregate()),
-            inferenceLedger?.toolAggregate ?: MutableStateFlow(ToolAggregate()),
-            localVerificationInputs,
-        ) { settings, resolved, inference, tools, verification ->
-            IntelligencePresentationInputs(settings, resolved, inference, tools, verification)
-        }
-    ) { snapshot, selection, dlStates, ggufs, presentation ->
+        combine(presentationInputs, devInputs) { presentation, dev -> presentation to dev }
+    ) { snapshot, selection, dlStates, ggufs, uiInputs ->
+        val presentation = uiInputs.first
+        val dev = uiInputs.second
         val settings = presentation.settings
         val lastResolvedModelId = presentation.lastResolvedModelId
         val inference = presentation.inference
         val tools = presentation.tools
         val verification = presentation.verification
         val (selectedProviderId, selectedModelId) = selection
+        val requestedBackends = modelManager?.getAllCatalogModels().orEmpty()
+            .associate { catalogModel ->
+                catalogModel.id to (localProvider?.requestedBackend(catalogModel.id)
+                    ?: catalogModel.runtimeProfile.preferredBackend)
+            }
         val allProviders = aiProviderRouter.getAllProviders()
         val activeProvider = allProviders.find { it.id == selectedProviderId }
         val activeProviderStatus = selectedProviderId?.let { id ->
@@ -320,6 +364,18 @@ class IntelligenceViewModel(
             verifications = verification.results,
             generationProvenIds = localModels.filter { localProvider?.isGenerationProven(it) == true }.mapTo(mutableSetOf()) { it.id },
             verifyingModelId = verification.verifyingModelId,
+            developerBackends = dev.developerBackends,
+            requestedBackends = requestedBackends,
+            modelFailureRecords = verification.modelMemory,
+            smokeTests = dev.smokeTests,
+            benchmarkResults = dev.benchmarkResults,
+            toolProbes = dev.toolProbes,
+            matrixRows = dev.matrixRows,
+            runningMatrix = dev.runningMatrix,
+            busyModelId = dev.busyModelId,
+            residentModelId = localProvider?.modelSession?.takeIf { it.isLoaded() }?.loadedModelId,
+            residentBackend = localProvider?.modelSession?.takeIf { it.isLoaded() }?.activeBackend,
+            residentContextTokens = localProvider?.modelSession?.takeIf { it.isLoaded() }?.effectiveContextSize,
             litertLoadDiagnostics = verification.diagnostics,
             litertAcquisitionDiagnostics = verification.acquisitionDiagnostics,
             temperature = settings.temperature,
@@ -506,14 +562,97 @@ class IntelligenceViewModel(
     }
 
     fun downloadCatalogModel(model: LiteRtCatalogModel) {
+        unloadIfResident(model.id)
+        modelManager?.downloadCatalogModel(model)
+        _refreshTrigger.update { it + 1 }
+    }
+
+    /** Resumes an interrupted transfer from the stored partial (HTTP Range when the server allows). */
+    fun resumeCatalogDownload(model: LiteRtCatalogModel) {
+        unloadIfResident(model.id)
+        modelManager?.resumeDownload(model)
+        _refreshTrigger.update { it + 1 }
+    }
+
+    /** Explicit "discard download": drops the partial artifact and its pinned metadata. */
+    fun discardPartialDownload(modelId: String) {
+        modelManager?.discardPartial(modelId)
+        _refreshTrigger.update { it + 1 }
+    }
+
+    fun storagePreflight(model: LiteRtCatalogModel): LiteRtStoragePreflightResult? =
+        modelManager?.storagePreflight(model)
+
+    /** Development per-model execution preference: AUTO, GPU or CPU. Persisted by model id. */
+    fun setDeveloperBackend(modelId: String, backend: LocalComputeBackend) {
+        localProvider?.setDeveloperBackend(modelId, backend)
+        devInputs.value = devInputs.value.copy(
+            developerBackends = devInputs.value.developerBackends + (modelId to backend),
+        )
+        _refreshTrigger.update { it + 1 }
+    }
+
+    /** Two-prompt smoke test: proves repeated generation without a process restart. */
+    fun smokeTestModel(modelId: String) = runModelTask(modelId) { provider ->
+        val result = provider.smokeTestModel(modelId)
+        devInputs.value = devInputs.value.copy(smokeTests = devInputs.value.smokeTests + (modelId to result))
+    }
+
+    fun benchmarkModel(modelId: String) = runModelTask(modelId) { provider ->
+        provider.benchmarkModel(modelId).onSuccess { result ->
+            devInputs.value = devInputs.value.copy(
+                benchmarkResults = devInputs.value.benchmarkResults + (modelId to result),
+            )
+        }
+    }
+
+    /** Optional capability probe: never marks the model broken when the artifact cannot tool-call. */
+    fun probeModelTools(modelId: String) = runModelTask(modelId) { provider ->
+        val result = provider.probeToolCalling(modelId)
+        devInputs.value = devInputs.value.copy(toolProbes = devInputs.value.toolProbes + (modelId to result))
+    }
+
+    fun unloadLocalModel() {
+        val provider = localProvider ?: return
+        viewModelScope.launch(dispatchers.io) { provider.unloadLocalModel() }
+    }
+
+    /** Development-only: loads, smoke-prompts and unloads every installed model, serially. */
+    fun runModelMatrix() {
+        val provider = localProvider ?: return
+        if (devInputs.value.runningMatrix) return
+        devInputs.value = devInputs.value.copy(runningMatrix = true)
+        viewModelScope.launch {
+            try {
+                val rows = withContext(dispatchers.io) { provider.runModelMatrix() }
+                devInputs.value = devInputs.value.copy(matrixRows = rows)
+            } finally {
+                devInputs.value = devInputs.value.copy(runningMatrix = false)
+            }
+        }
+    }
+
+    private fun unloadIfResident(modelId: String) {
         localProvider?.let { provider ->
-            if (provider.modelSession.loadedModelId == model.id) {
-                // Re-downloading a resident model must not leave the engine pinned to stale bytes.
+            if (provider.modelSession.loadedModelId == modelId) {
+                // Switching or re-downloading must not leave the engine pinned to stale bytes.
                 viewModelScope.launch(dispatchers.io) { provider.modelSession.unloadModel() }
             }
         }
-        modelManager?.downloadCatalogModel(model)
-        _refreshTrigger.update { it + 1 }
+    }
+
+    private fun runModelTask(modelId: String, block: suspend (LiteRtLocalProvider) -> Unit) {
+        val provider = localProvider ?: return
+        if (devInputs.value.busyModelId != null) return
+        devInputs.value = devInputs.value.copy(busyModelId = modelId)
+        viewModelScope.launch {
+            try {
+                withContext(dispatchers.io) { block(provider) }
+            } finally {
+                devInputs.value = devInputs.value.copy(busyModelId = null)
+                _refreshTrigger.update { it + 1 }
+            }
+        }
     }
 
     fun importModelUri(uri: Uri) {

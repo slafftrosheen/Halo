@@ -177,6 +177,7 @@ fun IntelligenceScreen(
         val providerAccent = when (providerState) {
             ProviderStatus.State.READY -> HaloPastelMint
             ProviderStatus.State.LOADING,
+            ProviderStatus.State.BUSY,
             ProviderStatus.State.STANDBY -> HaloPastelBlue
             else -> HaloWarning
         }
@@ -208,7 +209,8 @@ fun IntelligenceScreen(
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = when (providerState) {
-                        ProviderStatus.State.READY -> MaterialTheme.colorScheme.primary
+                        ProviderStatus.State.READY,
+                        ProviderStatus.State.BUSY -> MaterialTheme.colorScheme.primary
                         ProviderStatus.State.ERROR,
                         ProviderStatus.State.UNAVAILABLE -> MaterialTheme.colorScheme.error
                         else -> MaterialTheme.colorScheme.onSurfaceVariant

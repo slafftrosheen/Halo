@@ -93,6 +93,10 @@ data class RuntimeLoadResult(
     val activeGpuLayers: Int,
     val effectiveContextSize: Int,
     val fallbackReason: String? = null,
+    /** Context Halo originally asked for, when it differs from [effectiveContextSize]. */
+    val requestedContextSize: Int? = null,
+    /** Bounded reason the requested context could not be allocated. */
+    val contextFallbackReason: String? = null,
 )
 
 data class RuntimeConversationMessage(
@@ -156,6 +160,11 @@ data class RuntimeGenerationResult(
     val timeToFirstTokenMs: Long = 0L,
     val tokensPerSecond: Double = 0.0,
     val durationMs: Long = 0L,
+    /**
+     * Internal reasoning the runtime deliberately withheld from [text] (for example `<think>`
+     * blocks). Diagnostic evidence only: it must never be spoken or shown as the answer.
+     */
+    val reasoningText: String? = null,
 )
 
 /**

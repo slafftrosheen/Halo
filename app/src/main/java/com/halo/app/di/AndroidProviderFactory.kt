@@ -32,7 +32,10 @@ class AndroidProviderFactory(
             context = context,
             inventoryRepository = modelManager,
             storage = storage,
-            nativeResourceCoordinator = nativeResourceCoordinator
+            nativeResourceCoordinator = nativeResourceCoordinator,
+            // The manager owns the pinned development catalog (including gated entries used for
+            // import canonicalization); the provider resolves per-artifact runtime profiles from it.
+            catalog = modelManager.getAllCatalogModels()
         )
 
         val speechRoot = haloStorageLayout(context).speechModels

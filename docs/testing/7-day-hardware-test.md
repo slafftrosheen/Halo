@@ -27,6 +27,14 @@ This document outlines the test procedure for the 7-day hardware validation peri
 - **Speech Output Routing Invariant**: A voice turn initiated on a wearable returns speech to that wearable unless the user has explicitly enabled another fallback policy.
 - **Normal Usage**: Trigger photo capture, video recording start/stop, and audio recording.
 - **Provider Selection**: Exercise the real provider set — on-device LiteRT-LM (default), OpenRouter, and Ollama — and confirm the selected provider/model tuple is the one that runs. Android Assistant is a *handoff* target, not an inference provider; it is not selectable as an AI fallback.
+- **LiteRT Development Model Matrix**: for each installed artifact (`qwen3-0.6b-dynamic-int4`,
+  `qwen3-1.7b-dynamic-int4`, `qwen2.5-1.5b-instruct-q8`, `deepseek-r1-distill-qwen-1.5b-q8`) record
+  download, hash verify, select, AUTO load, smoke generation #1, generation #2 (no restart), unload,
+  reload and generation #3 — then repeat where feasible for explicit GPU and explicit CPU, recording
+  differences separately. Afterwards switch models sequentially without restarting Halo and run
+  `speech -> Whisper -> selected LiteRT -> TTS` at least twice. Classify each result as CATALOGUED,
+  DOWNLOAD VERIFIED, ENGINE VERIFIED, GENERATION VERIFIED or PHYSICAL DEVICE VERIFIED — never
+  conflate them. Checklist: `docs/08-providers/LITERT-DEVELOPMENT-MATRIX.md`.
 - **Explicit Selection Is Sticky**: With a provider explicitly selected, force a failure (bad key, cooldown, unreachable endpoint) and confirm Halo still reports that provider as selected. No silent substitution is acceptable.
 - **Recharging Lifecycle**: Place glasses on charger, observe `BatteryUpdated` and `charging` state, remove from charger and verify live battery telemetry updates.
 - **Phone Lock/Unlock**: Lock phone for >30 minutes, unlock phone, verify BLE session auto-reconnect backoff and state recovery.

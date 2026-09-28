@@ -42,12 +42,18 @@ import java.security.MessageDigest
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.UUID
 
-/** Stage at which a LiteRT load failed, so callers never have to guess from a message. */
-enum class ModelLoadStage { ABI, ARTIFACT, ENGINE_INIT, CONVERSATION, GENERATION }
+/**
+ * Stage at which a LiteRT load/generation failed, so callers never have to guess from a message.
+ *
+ * ENGINE_INIT, CONVERSATION and FIRST_TOKEN stay independently visible: an engine that
+ * initializes but cannot create a conversation is not a verified model, and a model that
+ * initializes but never emits a token is not a generation-proven model.
+ */
+enum class ModelLoadStage { ABI, ARTIFACT, ENGINE_INIT, CONVERSATION, FIRST_TOKEN, GENERATION }
 
 /**
- * Preserves the *first* failure (usually the GPU attempt) alongside the final one (usually the CPU
- * fallback). Without both, a failed on-device load is impossible to diagnose from the field.
+ * Preserves the *first* failure (usually the GPU attempt) alongside the final one (usually the
+ * CPU fallback). Without both, a failed on-device load is impossible to diagnose from the field.
  */
 class LiteRtModelLoadException(
     val stage: ModelLoadStage,
@@ -65,6 +71,12 @@ data class EngineLoadOutcome(
     val requestedBackend: LocalComputeBackend,
     val effectiveBackend: LocalComputeBackend,
     val fallbackReason: String?,
+    /** Context originally requested, or null when the model default was requested. */
+    val requestedContextTokens: Int?,
+    /** Context actually allocated, or null when the engine chose its own default. */
+    val effectiveContextTokens: Int?,
+    val contextFallbackReason: String?,
+    val engineInitDurationMs: Long,
 )
 
 data class LiteRtRuntimeSnapshot(
@@ -73,9 +85,13 @@ data class LiteRtRuntimeSnapshot(
     val requestedBackend: LocalComputeBackend?,
     val effectiveBackend: LocalComputeBackend?,
     val contextTokens: Int?,
+    val requestedContextTokens: Int?,
+    val contextFallbackReason: String?,
     val fallbackReason: String?,
     val activeRequestId: String?,
     val cachePath: String?,
+    val engineInitDurationMs: Long?,
+    val conversationCreateDurationMs: Long?,
 )
 
 /** Outcome of one generation attempt. A pre-first-token GPU failure may be retried on CPU. */
@@ -88,6 +104,18 @@ private data class DetachedRuntimeResources(
     val engine: Engine?,
     val conversation: Conversation?,
 )
+
+/** Outcome of initializing one engine at one context size on one backend policy. */
+private sealed interface EngineAttempt {
+    data class Success(
+        val engine: Engine,
+        val cacheDir: File,
+        val effectiveBackend: LocalComputeBackend,
+        val gpuFallbackReason: String?,
+    ) : EngineAttempt
+
+    data class Failure(val error: Throwable, val memoryRelated: Boolean) : EngineAttempt
+}
 
 class LiteRtRuntime(
     private val context: Context,
@@ -109,8 +137,12 @@ class LiteRtRuntime(
 
     /** Null means "the engine is using the model's own default context window". */
     private var effectiveContextTokens: Int? = null
+    private var requestedContextTokens: Int? = null
+    private var contextFallbackReason: String? = null
     private var lastFallbackReason: String? = null
     private var activeCachePath: String? = null
+    private var engineInitDurationMs: Long? = null
+    private var conversationCreateDurationMs: Long? = null
 
     /** Everything needed to rebuild this exact model on another accelerator. */
     private var activeModelPath: String? = null
@@ -145,9 +177,13 @@ class LiteRtRuntime(
         requestedBackend = requestedBackend,
         effectiveBackend = effectiveBackend,
         contextTokens = effectiveContextTokens,
+        requestedContextTokens = requestedContextTokens,
+        contextFallbackReason = contextFallbackReason,
         fallbackReason = lastFallbackReason,
         activeRequestId = activeRequestId,
         cachePath = activeCachePath,
+        engineInitDurationMs = engineInitDurationMs,
+        conversationCreateDurationMs = conversationCreateDurationMs,
     )
 
     /**
@@ -228,6 +264,42 @@ class LiteRtRuntime(
         "${it::class.java.simpleName}: ${it.message?.lineSequence()?.firstOrNull()?.take(300)}"
     } ?: "unknown"
 
+    /**
+     * True only for failures that a smaller context allocation could plausibly fix.
+     *
+     * A corrupt artifact, an unsupported op, an ABI mismatch or an invalid-metadata error must
+     * never trigger a context downshift: retrying would just hide a real defect.
+     */
+    private fun isMemoryAllocationFailure(error: Throwable?): Boolean {
+        var current = error
+        var depth = 0
+        while (current != null && depth < 4) {
+            if (current is OutOfMemoryError) return true
+            val message = current.message?.lowercase().orEmpty()
+            if (MEMORY_MARKERS.any { message.contains(it) }) return true
+            current = current.cause
+            depth++
+        }
+        return false
+    }
+
+    /**
+     * Bounded context ladder. Only an AUTO policy may downshift, and only through the declared
+     * 4096 -> 2048 -> 1024 steps. Explicit GPU/CPU never silently change the allocation.
+     */
+    private fun contextLadder(
+        requestedContext: Int?,
+        backend: LocalComputeBackend,
+    ): List<Int?> {
+        if (requestedContext == null) return listOf(null)
+        if (backend != LocalComputeBackend.AUTO) return listOf(requestedContext)
+        val candidates = mutableListOf(requestedContext)
+        CONTEXT_LADDER.forEach { candidate ->
+            if (candidate < requestedContext && candidate >= MINIMUM_CONTEXT_TOKENS) candidates.add(candidate)
+        }
+        return candidates.distinct()
+    }
+
     private fun resolveEngine(
         file: File,
         modelId: String,
@@ -241,102 +313,186 @@ class LiteRtRuntime(
         // A failed GPU initialization must never leave state that influences the CPU fallback.
         val gpuCacheDir = File(modelCacheRoot, GPU_CACHE_SUBDIR).also { if (!it.exists()) it.mkdirs() }
         val cpuCacheDir = File(modelCacheRoot, CPU_CACHE_SUBDIR).also { if (!it.exists()) it.mkdirs() }
-        val contextTokens = if (config.useModelDefaultContext) null else config.contextSize
+        val requestedContext = if (config.useModelDefaultContext) null else config.contextSize
+        val ladder = contextLadder(requestedContext, config.computeBackend)
 
-        when (config.computeBackend) {
-            LocalComputeBackend.CPU -> {
-                val engine = createAndInitializeEngine(file.absolutePath, LocalComputeBackend.CPU, contextTokens, cpuCacheDir)
-                    .getOrElse { error ->
-                        Log.e(
+        val start = System.currentTimeMillis()
+        var downshiftReason: String? = null
+        var lastFailure: EngineAttempt.Failure? = null
+
+        ladder.forEachIndexed { index, contextTokens ->
+            val attempt = attemptEngine(
+                file = file,
+                modelId = modelId,
+                requestedBackend = config.computeBackend,
+                contextTokens = contextTokens,
+                gpuCacheDir = gpuCacheDir,
+                cpuCacheDir = cpuCacheDir,
+                artifactFingerprint = artifactFingerprint,
+            )
+            when (attempt) {
+                is EngineAttempt.Success -> {
+                    if (downshiftReason != null) {
+                        Log.i(
                             TAG,
-                            "$EVENT_LOAD_FAILED model=$modelId backend=CPU stage=ENGINE_INIT type=${error::class.java.simpleName} " +
-                                "message=${bounded(error)} sha=$artifactFingerprint bytes=${file.length()} " +
-                                "context=${contextTokens ?: "model-default"}",
-                            error,
-                        )
-                        throw LiteRtModelLoadException(
-                            stage = ModelLoadStage.ENGINE_INIT,
-                            requestedBackend = LocalComputeBackend.CPU,
-                            effectiveCause = error,
-                            message = "CPU engine initialization failed (${bounded(error)})",
+                            "$EVENT_CONTEXT_READY model=$modelId requested=${requestedContext ?: "model-default"} " +
+                                "effective=${contextTokens ?: "model-default"}",
                         )
                     }
-                return EngineLoadOutcome(engine, modelCacheRoot, cpuCacheDir, LocalComputeBackend.CPU, LocalComputeBackend.CPU, null)
-            }
-            LocalComputeBackend.GPU -> {
-                val engine = createAndInitializeEngine(file.absolutePath, LocalComputeBackend.GPU, contextTokens, gpuCacheDir)
-                    .getOrElse { error ->
-                        Log.e(
-                            TAG,
-                            "$EVENT_LOAD_FAILED model=$modelId backend=GPU stage=ENGINE_INIT type=${error::class.java.simpleName} " +
-                                "message=${bounded(error)} sha=$artifactFingerprint bytes=${file.length()} " +
-                                "context=${contextTokens ?: "model-default"}",
-                            error,
-                        )
-                        throw LiteRtModelLoadException(
-                            stage = ModelLoadStage.ENGINE_INIT,
-                            requestedBackend = LocalComputeBackend.GPU,
-                            effectiveCause = error,
-                            message = "GPU engine initialization failed (${bounded(error)})",
-                        )
-                    }
-                return EngineLoadOutcome(engine, modelCacheRoot, gpuCacheDir, LocalComputeBackend.GPU, LocalComputeBackend.GPU, null)
-            }
-            LocalComputeBackend.AUTO -> {
-                val gpuResult = createAndInitializeEngine(file.absolutePath, LocalComputeBackend.GPU, contextTokens, gpuCacheDir)
-                if (gpuResult.isSuccess) {
                     return EngineLoadOutcome(
-                        gpuResult.getOrThrow(),
-                        modelCacheRoot,
-                        gpuCacheDir,
-                        LocalComputeBackend.AUTO,
-                        LocalComputeBackend.GPU,
-                        null,
+                        engine = attempt.engine,
+                        cacheRoot = modelCacheRoot,
+                        cacheDir = attempt.cacheDir,
+                        requestedBackend = config.computeBackend,
+                        effectiveBackend = attempt.effectiveBackend,
+                        fallbackReason = attempt.gpuFallbackReason,
+                        requestedContextTokens = requestedContext,
+                        effectiveContextTokens = contextTokens,
+                        contextFallbackReason = downshiftReason,
+                        engineInitDurationMs = System.currentTimeMillis() - start,
                     )
                 }
 
-                val gpuError = gpuResult.exceptionOrNull()
-                val gpuReason = "GPU failed: ${bounded(gpuError)}"
-                Log.w(
-                    TAG,
-                    "$EVENT_GPU_FAILED model=$modelId phase=INIT type=${gpuError?.let { it::class.java.simpleName }} " +
-                        "message=${bounded(gpuError)} sha=$artifactFingerprint bytes=${file.length()} " +
-                        "context=${contextTokens ?: "model-default"}",
-                    gpuError,
-                )
-
-                // Failed GPU engine is already closed by createAndInitializeEngine; the CPU attempt
-                // runs in its own cache directory.
-                val cpuResult = createAndInitializeEngine(file.absolutePath, LocalComputeBackend.CPU, contextTokens, cpuCacheDir)
-                if (cpuResult.isFailure) {
-                    val cpuError = cpuResult.exceptionOrNull()!!
-                    Log.e(
+                is EngineAttempt.Failure -> {
+                    lastFailure = attempt
+                    if (!attempt.memoryRelated || index == ladder.lastIndex) throw attempt.error
+                    downshiftReason = "Engine initialization failed at $contextTokens tokens: ${bounded(attempt.error)}"
+                    Log.w(
                         TAG,
-                        "$EVENT_LOAD_FAILED model=$modelId backend=AUTO stage=ENGINE_INIT gpu=$gpuReason cpu=${bounded(cpuError)}",
-                        cpuError,
+                        "$EVENT_CONTEXT_DOWNSHIFT model=$modelId sha=${artifactFingerprint.take(12)} " +
+                            "backend=${backendName(config.computeBackend)} failedContext=$contextTokens " +
+                            "reason=${bounded(attempt.error)}",
                     )
-                    throw LiteRtModelLoadException(
+                }
+            }
+        }
+
+        throw lastFailure?.error ?: IllegalStateException("LiteRT engine initialization produced no attempt")
+    }
+
+    private fun attemptEngine(
+        file: File,
+        modelId: String,
+        requestedBackend: LocalComputeBackend,
+        contextTokens: Int?,
+        gpuCacheDir: File,
+        cpuCacheDir: File,
+        artifactFingerprint: String,
+    ): EngineAttempt {
+        return when (requestedBackend) {
+        LocalComputeBackend.CPU -> {
+            createAndInitializeEngine(file.absolutePath, LocalComputeBackend.CPU, contextTokens, cpuCacheDir)
+                .fold(
+                    onSuccess = { EngineAttempt.Success(it, cpuCacheDir, LocalComputeBackend.CPU, null) },
+                    onFailure = { error ->
+                        logEngineInitFailure(modelId, file, artifactFingerprint, LocalComputeBackend.CPU, contextTokens, error)
+                        EngineAttempt.Failure(
+                            LiteRtModelLoadException(
+                                stage = ModelLoadStage.ENGINE_INIT,
+                                requestedBackend = LocalComputeBackend.CPU,
+                                effectiveCause = error,
+                                message = "CPU engine initialization failed (${bounded(error)})",
+                            ),
+                            isMemoryAllocationFailure(error),
+                        )
+                    },
+                )
+        }
+
+        LocalComputeBackend.GPU -> {
+            createAndInitializeEngine(file.absolutePath, LocalComputeBackend.GPU, contextTokens, gpuCacheDir)
+                .fold(
+                    onSuccess = { EngineAttempt.Success(it, gpuCacheDir, LocalComputeBackend.GPU, null) },
+                    onFailure = { error ->
+                        logEngineInitFailure(modelId, file, artifactFingerprint, LocalComputeBackend.GPU, contextTokens, error)
+                        EngineAttempt.Failure(
+                            LiteRtModelLoadException(
+                                stage = ModelLoadStage.ENGINE_INIT,
+                                requestedBackend = LocalComputeBackend.GPU,
+                                effectiveCause = error,
+                                message = "GPU engine initialization failed (${bounded(error)})",
+                            ),
+                            isMemoryAllocationFailure(error),
+                        )
+                    },
+                )
+        }
+
+        LocalComputeBackend.AUTO -> {
+            val gpuResult = createAndInitializeEngine(
+                file.absolutePath,
+                LocalComputeBackend.GPU,
+                contextTokens,
+                gpuCacheDir,
+            )
+            if (gpuResult.isSuccess) {
+                return EngineAttempt.Success(
+                    gpuResult.getOrThrow(),
+                    gpuCacheDir,
+                    LocalComputeBackend.GPU,
+                    null,
+                )
+            }
+
+            val gpuError = gpuResult.exceptionOrNull()
+            val gpuReason = "GPU failed: ${bounded(gpuError)}"
+            Log.w(
+                TAG,
+                "$EVENT_GPU_FAILED model=$modelId phase=INIT type=${gpuError?.let { it::class.java.simpleName }} " +
+                    "message=${bounded(gpuError)} sha=$artifactFingerprint bytes=${file.length()} " +
+                    "context=${contextTokens ?: "model-default"}",
+                gpuError,
+            )
+
+            // Failed GPU engine is already closed by createAndInitializeEngine; the CPU attempt
+            // runs in its own cache directory.
+            val cpuResult = createAndInitializeEngine(
+                file.absolutePath,
+                LocalComputeBackend.CPU,
+                contextTokens,
+                cpuCacheDir,
+            )
+            if (cpuResult.isFailure) {
+                val cpuError = cpuResult.exceptionOrNull()!!
+                Log.e(
+                    TAG,
+                    "$EVENT_LOAD_FAILED model=$modelId backend=AUTO stage=ENGINE_INIT gpu=$gpuReason cpu=${bounded(cpuError)}",
+                    cpuError,
+                )
+                return EngineAttempt.Failure(
+                    LiteRtModelLoadException(
                         stage = ModelLoadStage.ENGINE_INIT,
                         requestedBackend = LocalComputeBackend.AUTO,
                         effectiveCause = cpuError,
                         primaryCause = gpuError,
                         message = "GPU and CPU engine initialization both failed. " +
                             "GPU: ${bounded(gpuError)}. CPU: ${bounded(cpuError)}.",
-                    )
-                }
-
-                val cpuEngine = cpuResult.getOrThrow()
-                Log.i(TAG, "$EVENT_CPU_FALLBACK model=$modelId phase=INIT reason=$gpuReason")
-                return EngineLoadOutcome(
-                    cpuEngine,
-                    modelCacheRoot,
-                    cpuCacheDir,
-                    LocalComputeBackend.AUTO,
-                    LocalComputeBackend.CPU,
-                    gpuReason,
+                    ),
+                    isMemoryAllocationFailure(cpuError) || isMemoryAllocationFailure(gpuError),
                 )
             }
+
+            Log.i(TAG, "$EVENT_CPU_FALLBACK model=$modelId phase=INIT reason=$gpuReason")
+            EngineAttempt.Success(cpuResult.getOrThrow(), cpuCacheDir, LocalComputeBackend.CPU, gpuReason)
         }
+        }
+    }
+
+    private fun logEngineInitFailure(
+        modelId: String,
+        file: File,
+        artifactFingerprint: String,
+        backend: LocalComputeBackend,
+        contextTokens: Int?,
+        error: Throwable,
+    ) {
+        Log.e(
+            TAG,
+            "$EVENT_LOAD_FAILED model=$modelId backend=${backendName(backend)} stage=ENGINE_INIT " +
+                "type=${error::class.java.simpleName} message=${bounded(error)} " +
+                "sha=$artifactFingerprint bytes=${file.length()} context=${contextTokens ?: "model-default"}",
+            error,
+        )
     }
 
     override suspend fun loadModel(
@@ -364,11 +520,11 @@ class LiteRtRuntime(
                 )
             }
 
-            val contextTokens = if (config.useModelDefaultContext) null else config.contextSize
+            val requestedContext = if (config.useModelDefaultContext) null else config.contextSize
             Log.i(
                 TAG,
                 "$EVENT_LOAD_START model=$modelId backend=${backendName(config.computeBackend)} " +
-                    "bytes=${file.length()} context=${contextTokens ?: "model-default"} path=$modelPath",
+                    "bytes=${file.length()} context=${requestedContext ?: "model-default"} path=$modelPath",
             )
 
             // Close any previous engine before allocating a new one to avoid dual-model OOM.
@@ -386,8 +542,12 @@ class LiteRtRuntime(
                 engine = outcome.engine
                 requestedBackend = outcome.requestedBackend
                 effectiveBackend = outcome.effectiveBackend
-                effectiveContextTokens = contextTokens
+                requestedContextTokens = outcome.requestedContextTokens
+                effectiveContextTokens = outcome.effectiveContextTokens
+                contextFallbackReason = outcome.contextFallbackReason
                 lastFallbackReason = outcome.fallbackReason
+                engineInitDurationMs = outcome.engineInitDurationMs
+                conversationCreateDurationMs = null
                 activeCachePath = outcome.cacheDir.absolutePath
                 activeCacheRootPath = outcome.cacheRoot.absolutePath
                 activeModelPath = file.absolutePath
@@ -401,15 +561,21 @@ class LiteRtRuntime(
             Log.i(
                 TAG,
                 "$EVENT_LOAD_READY model=$modelId requested=${backendName(outcome.requestedBackend)} " +
-                    "effective=${backendName(outcome.effectiveBackend)} fallback=${outcome.fallbackReason != null}",
+                    "effective=${backendName(outcome.effectiveBackend)} " +
+                    "requestedContext=${outcome.requestedContextTokens ?: "model-default"} " +
+                    "effectiveContext=${outcome.effectiveContextTokens ?: "model-default"} " +
+                    "engineInitMs=${outcome.engineInitDurationMs} fallback=${outcome.fallbackReason != null} " +
+                    "contextDownshift=${outcome.contextFallbackReason != null}",
             )
 
             Result.success(
                 RuntimeLoadResult(
                     activeBackend = outcome.effectiveBackend,
                     activeGpuLayers = if (outcome.effectiveBackend == LocalComputeBackend.GPU) 1 else 0,
-                    effectiveContextSize = config.contextSize,
+                    effectiveContextSize = outcome.effectiveContextTokens ?: config.contextSize,
                     fallbackReason = outcome.fallbackReason,
+                    requestedContextSize = outcome.requestedContextTokens,
+                    contextFallbackReason = outcome.contextFallbackReason,
                 )
             )
         } catch (e: CancellationException) {
@@ -433,8 +599,8 @@ class LiteRtRuntime(
                 val reason = "GPU failed before first token: ${bounded(attempt.cause)}"
                 Log.w(
                     TAG,
-                    "$EVENT_GPU_FAILED model=$_loadedModelId phase=GENERATION type=${attempt.cause::class.java.simpleName} " +
-                        "message=${bounded(attempt.cause)}",
+                    "$EVENT_GPU_FAILED model=$_loadedModelId phase=GENERATION " +
+                        "type=${attempt.cause::class.java.simpleName} message=${bounded(attempt.cause)}",
                     attempt.cause,
                 )
                 val rebuilt = rebuildResidentEngineOnCpu(attempt.failedEngine, attempt.cause, reason)
@@ -503,28 +669,28 @@ class LiteRtRuntime(
 
                 val cpuEngine = createAndInitializeEngine(modelPath, LocalComputeBackend.CPU, contextTokens, cpuCacheDir)
                     .getOrElse { error ->
-                    Log.e(
-                        TAG,
-                        "$EVENT_LOAD_FAILED model=$modelId backend=CPU phase=GENERATION_FALLBACK " +
-                            "type=${error::class.java.simpleName} message=${bounded(error)}",
-                        error,
-                    )
-                    stateMutex.withLock {
-                        engine = null
-                        activeConversation = null
-                        lastFallbackReason = "$reason; CPU rebuild failed: ${bounded(error)}"
-                        _state.value = LocalModelSessionState.ERROR
-                    }
-                    return@inferenceLock Result.failure(
-                        LiteRtModelLoadException(
-                            stage = ModelLoadStage.GENERATION,
-                            requestedBackend = LocalComputeBackend.AUTO,
-                            effectiveCause = error,
-                            primaryCause = gpuGenerationFailure,
-                            message = "GPU generation failed and CPU fallback initialization failed",
+                        Log.e(
+                            TAG,
+                            "$EVENT_LOAD_FAILED model=$modelId backend=CPU phase=GENERATION_FALLBACK " +
+                                "type=${error::class.java.simpleName} message=${bounded(error)}",
+                            error,
                         )
-                    )
-                }
+                        stateMutex.withLock {
+                            engine = null
+                            activeConversation = null
+                            lastFallbackReason = "$reason; CPU rebuild failed: ${bounded(error)}"
+                            _state.value = LocalModelSessionState.ERROR
+                        }
+                        return@inferenceLock Result.failure(
+                            LiteRtModelLoadException(
+                                stage = ModelLoadStage.GENERATION,
+                                requestedBackend = LocalComputeBackend.AUTO,
+                                effectiveCause = error,
+                                primaryCause = gpuGenerationFailure,
+                                message = "GPU generation failed and CPU fallback initialization failed",
+                            )
+                        )
+                    }
 
                 stateMutex.withLock {
                     engine = cpuEngine
@@ -569,6 +735,7 @@ class LiteRtRuntime(
         var tokenCount = 0
         val textBuilder = StringBuilder()
         val nativeToolCalls = linkedMapOf<String, ToolCall>()
+        val thinkingFilter = LiteRtThinkingFilter()
 
         try {
             val convConfig = ConversationConfig(
@@ -590,8 +757,31 @@ class LiteRtRuntime(
                     "tools=${config.availableTools.size} maxTokens=${config.maxTokens}",
             )
 
-            val conversation = currentEngine.createConversation(convConfig)
-            stateMutex.withLock { activeConversation = conversation }
+            // Conversation creation is its own failure stage: an engine that initializes but
+            // cannot create a conversation is not a verified model.
+            val conversationCreateStart = System.currentTimeMillis()
+            val conversation = try {
+                currentEngine.createConversation(convConfig)
+            } catch (conversationError: Throwable) {
+                Log.e(
+                    TAG,
+                    "$EVENT_CONVERSATION_FAILED model=$_loadedModelId backend=${backendName(engineBackendAtStart)} " +
+                        "type=${conversationError::class.java.simpleName} message=${bounded(conversationError)}",
+                    conversationError,
+                )
+                throw LiteRtModelLoadException(
+                    stage = ModelLoadStage.CONVERSATION,
+                    requestedBackend = requestedBackend,
+                    effectiveCause = conversationError,
+                    message = "LiteRT conversation creation failed (${bounded(conversationError)})",
+                )
+            }
+            val conversationCreateMs = System.currentTimeMillis() - conversationCreateStart
+            stateMutex.withLock {
+                activeConversation = conversation
+                conversationCreateDurationMs = conversationCreateMs
+            }
+            Log.i(TAG, "$EVENT_CONVERSATION_READY model=$_loadedModelId durationMs=$conversationCreateMs")
 
             val outgoingContents = buildList<Content> {
                 if (config.prompt.isNotEmpty()) add(Content.Text(config.prompt))
@@ -601,6 +791,19 @@ class LiteRtRuntime(
                 Message.user(outgoingContents),
                 maxOutputToken = config.maxTokens.takeIf { it > 0 },
             )
+
+            fun emitVisible(text: String) {
+                if (text.isEmpty()) return
+                if (firstTokenTime == null) {
+                    firstTokenTime = System.currentTimeMillis()
+                    Log.i(
+                        TAG,
+                        "$EVENT_FIRST_TOKEN model=$_loadedModelId ttftMs=${firstTokenTime!! - startTime}",
+                    )
+                }
+                tokenCount += estimatedTokens(text)
+                textBuilder.append(text)
+            }
 
             messageFlow.collect { message ->
                 if (cancelRequested.get()) return@collect
@@ -618,18 +821,28 @@ class LiteRtRuntime(
                     }
                 }
                 if (chunk.isNotEmpty()) {
-                    if (firstTokenTime == null) {
-                        firstTokenTime = System.currentTimeMillis()
-                        Log.i(
-                            TAG,
-                            "$EVENT_FIRST_TOKEN model=$_loadedModelId ttftMs=${firstTokenTime!! - startTime}",
-                        )
+                    val visible = thinkingFilter.accept(chunk)
+                    if (visible.isNotEmpty()) {
+                        emitVisible(visible)
+                        onToken(visible)
                     }
-                    val estimatedTokens = (chunk.length / 3.8).toInt().coerceAtLeast(1)
-                    tokenCount += estimatedTokens
-                    textBuilder.append(chunk)
-                    onToken(chunk)
                 }
+            }
+
+            val tail = thinkingFilter.finish()
+            if (tail.isNotEmpty()) {
+                emitVisible(tail)
+                onToken(tail)
+            }
+
+            val reasoning = thinkingFilter.reasoningText()
+            if (reasoning.isNotBlank()) {
+                // Raw diagnostic evidence only: internal reasoning must never be spoken.
+                Log.i(
+                    TAG,
+                    "$EVENT_THINKING model=$_loadedModelId rawChars=${thinkingFilter.rawText().length} " +
+                        "reasoningChars=${reasoning.length} preview=${reasoning.take(160).replace('\n', ' ')}",
+                )
             }
 
             val endTime = System.currentTimeMillis()
@@ -652,7 +865,8 @@ class LiteRtRuntime(
             Log.i(
                 TAG,
                 "$EVENT_GENERATION_COMPLETE model=$_loadedModelId durationMs=$durationMs " +
-                    "ttftMs=$ttft chars=${textBuilder.length} toolCalls=${nativeToolCalls.size}",
+                    "ttftMs=$ttft chars=${textBuilder.length} estimatedTokens=$tokenCount " +
+                    "toolCalls=${nativeToolCalls.size}",
             )
 
             GenerationAttempt.Finished(
@@ -664,6 +878,7 @@ class LiteRtRuntime(
                         timeToFirstTokenMs = ttft,
                         tokensPerSecond = tokensPerSec,
                         durationMs = durationMs,
+                        reasoningText = reasoning.ifBlank { null },
                     )
                 )
             )
@@ -683,12 +898,22 @@ class LiteRtRuntime(
                     "type=${e::class.java.simpleName} message=${bounded(e)}",
                 e,
             )
+            val staged = e as? LiteRtModelLoadException ?: LiteRtModelLoadException(
+                stage = if (textBuilder.isEmpty() && firstTokenTime == null && !cancelRequested.get()) {
+                    ModelLoadStage.FIRST_TOKEN
+                } else {
+                    ModelLoadStage.GENERATION
+                },
+                requestedBackend = requestedBackend,
+                effectiveCause = e,
+                message = "LiteRT generation failed (${bounded(e)})",
+            )
             if (retryableOnGpu && textBuilder.isEmpty() && !cancelRequested.get()) {
                 _state.value = LocalModelSessionState.IDLE
-                GenerationAttempt.RetryableGpuFailure(e, currentEngine)
+                GenerationAttempt.RetryableGpuFailure(staged, currentEngine)
             } else {
                 _state.value = LocalModelSessionState.ERROR
-                GenerationAttempt.Finished(Result.failure(e))
+                GenerationAttempt.Finished(Result.failure(staged))
             }
         } finally {
             val conversation = stateMutex.withLock {
@@ -713,6 +938,7 @@ class LiteRtRuntime(
 
     override suspend fun unloadModel(): Result<Unit> = loadMutex.withLock {
         _state.value = LocalModelSessionState.UNLOADING
+        val unloadingModelId = _loadedModelId
         val replacedResources = inferenceMutex.withLock {
             stateMutex.withLock {
                 val detached = detachRuntimeState()
@@ -722,6 +948,7 @@ class LiteRtRuntime(
         }
         closeConversationQuietly(replacedResources.conversation, cancel = true)
         closeEngineQuietly(replacedResources.engine)
+        Log.i(TAG, "$EVENT_UNLOAD model=$unloadingModelId")
         Result.success(Unit)
     }
 
@@ -732,6 +959,10 @@ class LiteRtRuntime(
         engine = null
         _loadedModelId = null
         effectiveContextTokens = null
+        requestedContextTokens = null
+        contextFallbackReason = null
+        engineInitDurationMs = null
+        conversationCreateDurationMs = null
         activeModelPath = null
         activeCacheRootPath = null
         activeLoadConfig = null
@@ -781,15 +1012,38 @@ class LiteRtRuntime(
         private const val SUPPORTED_ABI = "arm64-v8a"
         private const val GPU_CACHE_SUBDIR = "gpu"
         private const val CPU_CACHE_SUBDIR = "cpu"
+        private const val MINIMUM_CONTEXT_TOKENS = 1024
+
+        /** Bounded ladder used only for memory/resource allocation failures under AUTO. */
+        private val CONTEXT_LADDER = listOf(2048, 1024)
+
+        private val MEMORY_MARKERS = listOf(
+            "out of memory",
+            "oom",
+            "memory",
+            "alloc",
+            "insufficient",
+            "resource exhausted",
+        )
+
+        /** Character-based estimate: NOT tokenizer-accurate, reported as estimatedTokens. */
+        internal fun estimatedTokens(text: String): Int =
+            (text.length / 3.8).toInt().coerceAtLeast(1)
 
         const val EVENT_LOAD_START = "HALO_LITERT_LOAD_START"
         const val EVENT_LOAD_READY = "HALO_LITERT_LOAD_READY"
         const val EVENT_LOAD_FAILED = "HALO_LITERT_LOAD_FAILED"
         const val EVENT_GPU_FAILED = "HALO_LITERT_GPU_FAILED"
         const val EVENT_CPU_FALLBACK = "HALO_LITERT_CPU_FALLBACK"
+        const val EVENT_CONTEXT_DOWNSHIFT = "HALO_LITERT_CONTEXT_DOWNSHIFT"
+        const val EVENT_CONTEXT_READY = "HALO_LITERT_CONTEXT_READY"
+        const val EVENT_CONVERSATION_READY = "HALO_LITERT_CONVERSATION_READY"
+        const val EVENT_CONVERSATION_FAILED = "HALO_LITERT_CONVERSATION_FAILED"
         const val EVENT_GENERATION_START = "HALO_LITERT_GENERATION_START"
         const val EVENT_FIRST_TOKEN = "HALO_LITERT_FIRST_TOKEN"
         const val EVENT_GENERATION_COMPLETE = "HALO_LITERT_GENERATION_COMPLETE"
         const val EVENT_GENERATION_FAILED = "HALO_LITERT_GENERATION_FAILED"
+        const val EVENT_THINKING = "HALO_LITERT_THINKING"
+        const val EVENT_UNLOAD = "HALO_LITERT_UNLOAD"
     }
 }

@@ -20,6 +20,15 @@ data class InstalledLiteRtModelMetadata(
     val contextKnown: Boolean = false,
     val supportsVision: Boolean = false,
     val supportsTools: Boolean = false,
+    val supportsText: Boolean = true,
+    val supportsAudio: Boolean = false,
+    val supportsThinking: Boolean = false,
+    val family: String? = null,
+    val quantizationLabel: String? = null,
+    val access: LiteRtCatalogAccess? = null,
+    val maturity: LiteRtModelMaturity? = null,
+    val tier: LiteRtModelTier? = null,
+    val minDeviceRamGb: Int? = null,
 ) {
     fun toJson(): String = JSONObject().apply {
         put("id", id)
@@ -32,6 +41,15 @@ data class InstalledLiteRtModelMetadata(
         put("contextKnown", contextKnown)
         put("supportsVision", supportsVision)
         put("supportsTools", supportsTools)
+        put("supportsText", supportsText)
+        put("supportsAudio", supportsAudio)
+        put("supportsThinking", supportsThinking)
+        put("family", family)
+        put("quantizationLabel", quantizationLabel)
+        put("access", access?.name)
+        put("maturity", maturity?.name)
+        put("tier", tier?.name)
+        put("minDeviceRamGb", minDeviceRamGb)
     }.toString()
 
     companion object {
@@ -52,7 +70,47 @@ data class InstalledLiteRtModelMetadata(
                 contextKnown = json.optBoolean("contextKnown", context > 0),
                 supportsVision = json.optBoolean("supportsVision", false),
                 supportsTools = json.optBoolean("supportsTools", false),
+                supportsText = json.optBoolean("supportsText", true),
+                supportsAudio = json.optBoolean("supportsAudio", false),
+                supportsThinking = json.optBoolean("supportsThinking", false),
+                family = json.optString("family").ifBlank { null },
+                quantizationLabel = json.optString("quantizationLabel").ifBlank { null },
+                access = json.optString("access").ifBlank { null }?.let(::parseAccess),
+                maturity = json.optString("maturity").ifBlank { null }?.let(::parseMaturity),
+                tier = json.optString("tier").ifBlank { null }?.let(::parseTier),
+                minDeviceRamGb = json.optInt("minDeviceRamGb", -1).takeIf { it > 0 },
             )
         }.getOrNull()
+
+        internal fun fromCatalog(model: LiteRtCatalogModel, sourceUrl: String?): InstalledLiteRtModelMetadata =
+            InstalledLiteRtModelMetadata(
+                id = model.id,
+                displayName = model.displayName,
+                sourceUrl = sourceUrl,
+                sha256 = model.sha256,
+                bytes = model.expectedBytes,
+                contextWindowTokens = model.contextWindowTokens,
+                contextKnown = !model.runtimeProfile.useModelDefaultContext,
+                supportsVision = model.supportsVision,
+                supportsTools = model.supportsTools,
+                supportsText = model.supportsText,
+                supportsAudio = model.supportsAudio,
+                supportsThinking = model.supportsThinking,
+                family = model.family,
+                quantizationLabel = model.quantizationLabel,
+                access = model.access,
+                maturity = model.maturity,
+                tier = model.tier,
+                minDeviceRamGb = model.minDeviceRamGb,
+            )
+
+        private fun parseAccess(value: String): LiteRtCatalogAccess? =
+            LiteRtCatalogAccess.entries.firstOrNull { it.name == value }
+
+        private fun parseMaturity(value: String): LiteRtModelMaturity? =
+            LiteRtModelMaturity.entries.firstOrNull { it.name == value }
+
+        private fun parseTier(value: String): LiteRtModelTier? =
+            LiteRtModelTier.entries.firstOrNull { it.name == value }
     }
 }

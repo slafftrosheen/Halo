@@ -70,6 +70,26 @@ class LocalModelSession(
     var fallbackReason: String? = null
         private set
 
+    /** Context Halo originally requested for the resident model, when it differs from the effective one. */
+    val requestedContextSize: Int?
+        get() = (activeRuntime as? LiteRtRuntime)?.snapshot()?.requestedContextTokens
+
+    /** Bounded reason a bounded context downshift occurred, or null. */
+    val contextFallbackReason: String?
+        get() = (activeRuntime as? LiteRtRuntime)?.snapshot()?.contextFallbackReason
+
+    /** Native engine initialization duration, when the runtime can report it. */
+    val engineInitDurationMs: Long?
+        get() = (activeRuntime as? LiteRtRuntime)?.snapshot()?.engineInitDurationMs
+
+    /** Conversation creation duration, when the runtime can report it. */
+    val conversationCreateDurationMs: Long?
+        get() = (activeRuntime as? LiteRtRuntime)?.snapshot()?.conversationCreateDurationMs
+
+    /** Context actually allocated for the resident model. */
+    val effectiveContextSize: Int?
+        get() = activeConfig?.contextSize
+
     private val lifecycleMutex = Mutex()
     private val generationMutex = Mutex()
     private val generationCounter = AtomicLong(0L)
@@ -197,13 +217,15 @@ class LocalModelSession(
         if (isLoaded() && loadedModelId == modelId && activeFormat == format) {
             // The native runtime may have downshifted context after an allocation
             // failure. Reuse the proven resident context instead of retrying the
-            // larger requested value on every turn.
+            // larger requested value on every prompt.
             return@generationLock Result.success(
                 RuntimeLoadResult(
                     activeBackend = activeBackend ?: LocalComputeBackend.CPU,
                     activeGpuLayers = activeGpuLayers,
                     effectiveContextSize = activeConfig?.contextSize ?: config.contextSize,
                     fallbackReason = fallbackReason,
+                    requestedContextSize = requestedContextSize,
+                    contextFallbackReason = contextFallbackReason,
                 )
             )
         }

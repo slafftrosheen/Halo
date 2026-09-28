@@ -45,3 +45,22 @@ disabled, a remote target is not eligible for a workload that requires that cont
 context never forces provider switching.
 
 RUNTIME-021 is **IMPLEMENTED / UNVALIDATED** pending STABILIZATION.
+
+## Development model matrix (RUNTIME-049)
+
+The built-in LiteRT catalog is no longer a single artifact. Four byte-pinned text models
+(`qwen3-0.6b-dynamic-int4`, `qwen3-1.7b-dynamic-int4`, `qwen2.5-1.5b-instruct-q8`,
+`deepseek-r1-distill-qwen-1.5b-q8`) plus one gated import-only identity (`gemma3-1b-it-int4`) let Halo
+tell a model-specific failure apart from a runtime, GPU-driver, quantization, prompt, or resource
+scheduling failure.
+
+Per-artifact runtime profiles (backend, CPU-fallback permission, context, sampling/output defaults)
+replace the previous one-size-fits-all engine configuration, and a per-model AUTO/GPU/CPU developer
+override is selectable and persisted. Loading, residency and execution are distinct: a resident model
+does **not** hold `compute.heavy`, the provider reports `CONFIGURED_COLD` for an installed but
+unloaded model (a valid execution target), and `BUSY` while a request is in flight.
+
+Pins, the evidence ladder (CATALOGUED -> DOWNLOAD VERIFIED -> ENGINE VERIFIED -> GENERATION
+VERIFIED -> PHYSICAL DEVICE VERIFIED) and the phone acceptance checklist are in
+[LITERT-DEVELOPMENT-MATRIX.md](LITERT-DEVELOPMENT-MATRIX.md). Model-role routing
+(FAST/REASONING/AGENTIC/VISION) and 3.5-5 GB multimodal artifacts are deliberately deferred.

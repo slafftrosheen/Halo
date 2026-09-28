@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import java.io.File
 import java.security.MessageDigest
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -215,20 +216,36 @@ class LiteRtModelDownloaderTest {
     }
 
     @Test
-    fun `cancelling a download removes the partial file and keeps existing artifacts`() {
-        alwaysRespond { MockResponse().setSocketPolicy(okhttp3.mockwebserver.SocketPolicy.NO_RESPONSE) }
+    fun `cancelling a download stops it and never installs an artifact`() {
+        // Slow but real streaming so cancellation is observed promptly.
+        alwaysRespond {
+            MockResponse()
+                .setResponseCode(200)
+                .setBody(Buffer().write(payload))
+                .throttleBody(16 * 1024, 100, TimeUnit.MILLISECONDS)
+        }
         val root = tempRoot("cancel")
         val manager = manager(root)
 
         manager.downloadCatalogModel(entry())
-        awaitDownloading(manager, ENTRY_ID)
+        awaitState(manager, ENTRY_ID) { it is DownloadState.Downloading && it.downloadedBytes > 0L }
         manager.cancelDownload(ENTRY_ID)
 
         val state = awaitNotDownloading(manager, ENTRY_ID)
         assertTrue("expected cancellation, got $state", state !is DownloadState.Installed)
         Thread.sleep(100)
-        assertFalse(File(root, "$ENTRY_ID.litertlm.part").exists())
         assertFalse(File(root, "$ENTRY_ID.litertlm").exists())
+        // A cancellation never installs. When bytes had already landed they are kept as a resumable
+        // partial (and its pinned metadata); otherwise nothing is left behind.
+        val partFile = File(root, "$ENTRY_ID.litertlm.part")
+        when (state) {
+            is DownloadState.Paused -> {
+                assertTrue(partFile.exists())
+                assertTrue(partFile.length() > 0L)
+                assertTrue(LiteRtPartialDownloadMetadata.sidecarFor(partFile).exists())
+            }
+            else -> assertFalse("a non-resumable cancellation must not leave a partial", partFile.exists())
+        }
     }
 
     @Test

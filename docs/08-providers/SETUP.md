@@ -13,40 +13,51 @@ using LiteRT-LM (GPU or CPU) and requires no server, API key or cloud account.
 
 Runtime: **LiteRT-LM 0.17.1** (`com.google.ai.edge.litertlm:litertlm-android:0.17.1`).
 
-### Built-in downloadable models
+### Built-in development model matrix
 
-Halo currently ships **exactly one** zero-configuration downloadable artifact:
+Halo ships four zero-configuration downloadable text artifacts plus one gated, import-only entry.
+The full pins, runtime profiles and acceptance checklist live in
+[LITERT-DEVELOPMENT-MATRIX.md](LITERT-DEVELOPMENT-MATRIX.md).
 
-| Field | Value |
-| --- | --- |
-| id | `qwen3-0.6b-dynamic-int4` |
-| Name | Qwen 3 0.6B Dynamic INT4 |
-| Source | `litert-community/Qwen3-0.6B` (official LiteRT Community repository) |
-| Revision | `a3c5d805ae362dff7f580bc25f2dfb9a5a7eaa76` (immutable) |
-| File | `Qwen3-0.6B_dynamic_wi4b32_afp32.litertlm` |
-| Bytes | `344671744` |
-| SHA-256 | `03e7da1eb1108b50dffaa9bb52cc7bcbad2eb0c66ca990267f480c1e545d2856` |
-| Context | 4096 tokens |
-| Capabilities | Text only (no vision, no tools) |
-| Minimum runtime | LiteRT-LM 0.17.1 |
+| id | Display | Source | Bytes | SHA-256 | Access |
+| --- | --- | --- | --- | --- | --- |
+| `qwen3-0.6b-dynamic-int4` | Qwen 3 0.6B Dynamic INT4 (control) | `litert-community/Qwen3-0.6B` | `344671744` | `03e7da1e…5d2856` | `OPEN_DIRECT` |
+| `qwen3-1.7b-dynamic-int4` | Qwen 3 1.7B Dynamic INT4 | `litert-community/Qwen3-1.7B` | `977184032` | `2eeffef7…2c918b` | `OPEN_DIRECT` |
+| `qwen2.5-1.5b-instruct-q8` | Qwen 2.5 1.5B Instruct Q8 | `litert-community/Qwen2.5-1.5B-Instruct` | `1597931520` | `faa60663…61a2dc9` | `OPEN_DIRECT` |
+| `deepseek-r1-distill-qwen-1.5b-q8` | DeepSeek R1 Distill Qwen 1.5B Q8 | `litert-community/DeepSeek-R1-Distill-Qwen-1.5B` | `1833451520` | `69b35f01…8b8c1295` | `OPEN_DIRECT` |
+| `gemma3-1b-it-int4` | Gemma 3 1B IT INT4 | `litert-community/Gemma3-1B-IT` | `584417280` | `1325ae36…98bba98be` | `GATED_IMPORT_ONLY` |
 
-The download URL is derived from `repoId` + `revision` + `filename`; `main`, `latest` and other mutable
-refs are never used. Integrity is checked on the streamed bytes, never on the HTTP `Content-Length`
-header (which may be absent or wrong behind a CDN redirect).
+Every downloadable entry pins an immutable 40-character revision, an exact byte count and a
+64-character SHA-256. The download URL is derived from `repoId` + `revision` + `filename`; `main`,
+`latest` and other mutable refs are never used. Integrity is checked on the streamed bytes, never on
+the HTTP `Content-Length` header (which may be absent or wrong behind a CDN redirect). Downloads are
+resumable and gated by a `StatFs` storage preflight.
 
-**Gemma is withheld.** The real upstream (`litert-community/Gemma3-1B-IT`) is gated by Gemma terms and
-Halo has no Hugging Face authentication or gated-license acceptance flow, so it is not a valid
-zero-config built-in. Halo will not use a mirror to bypass licensing or authentication; Gemma can
-return later through a proper gated-source flow.
+**Gemma is catalogued but not downloadable.** The upstream (`litert-community/Gemma3-1B-IT`) is gated
+by Gemma terms and Halo has no Hugging Face authentication or gated-license acceptance flow, so the
+Model Browser shows "Requires Gemma license acceptance on Hugging Face. Import a licensed .litertlm
+artifact from device." instead of a Download button. Halo will not use a mirror to bypass licensing
+or authentication. A manually imported file that matches the official SHA-256 and byte count is
+canonicalized to `gemma3-1b-it-int4` and treated as the known artifact.
+
+Capability flags describe the artifact, not the base model family: `supportsTools`, `supportsVision`
+and `supportsAudio` are false for every artifact above until a development probe proves otherwise.
+A **Probe tools** action can prove native tool calling for one artifact via a harmless synthetic
+`halo_probe` tool; a failed probe never marks the model broken.
 
 ### Setup
 
 1. Open **Settings -> Intelligence**.
 2. Keep/select **On-device (LiteRT)**.
-3. Open **Browse models for this phone**.
-4. Press **Download** on *Qwen 3 0.6B Dynamic INT4* and wait for **Verifying file** to finish.
+3. Open **Models** (the development model matrix).
+4. Press **Download** (or **Resume** when a partial exists) on an artifact and wait for **Verifying file** to finish.
 5. Press **Verify** to qualify the artifact (loads the engine, then generates a bounded probe).
-6. Press **Select** — this atomically sets **On-device (LiteRT)** + the Qwen model.
+6. Press **Use model** — this atomically sets **On-device (LiteRT)** + the model.
+7. Optional development actions: **Smoke test** (two prompts, no restart), **Benchmark**,
+   **Probe tools**, **Unload**, and **Run model matrix** (serial walk over every installed model).
+8. Optional per-model execution preference: **AUTO / GPU / CPU** chips on the model card.
+
+Nothing is auto-loaded just because the Model Browser is open.
 
 ### Model states and what they mean
 

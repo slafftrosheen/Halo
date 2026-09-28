@@ -35,6 +35,16 @@ data class LocalModelDescriptor(
     val supportsVision: Boolean,
     val supportsTools: Boolean,
     val validation: LocalModelValidation,
+    val supportsText: Boolean = true,
+    val supportsAudio: Boolean = false,
+    val supportsThinking: Boolean = false,
+    /** Model family as declared by the catalog, or null for arbitrary imports. */
+    val family: String? = null,
+    val quantizationLabel: String? = null,
+    /** How this artifact may be obtained. Null for artifacts Halo does not catalogue. */
+    val catalogAccess: LiteRtCatalogAccess? = null,
+    val maturity: LiteRtModelMaturity? = null,
+    val minDeviceRamGb: Int? = null,
     /**
      * True when the artifact's context window is unknown (arbitrary imports). The runtime then
      * asks LiteRT-LM for the model default instead of forcing a guessed 4096 tokens, which can
@@ -51,6 +61,11 @@ data class LocalModelDescriptor(
     /** Proven against a pinned catalog fingerprint. Only this state may advertise itself as ready. */
     val verified: Boolean
         get() = validation == LocalModelValidation.VERIFIED_ARTIFACT
+
+    /** True when the artifact can only be acquired by importing a licensed file from device. */
+    val importOnly: Boolean
+        get() = catalogAccess == LiteRtCatalogAccess.GATED_IMPORT_ONLY ||
+            catalogAccess == LiteRtCatalogAccess.MANUAL_IMPORT_ONLY
 }
 
 sealed interface LocalModelInventoryState {

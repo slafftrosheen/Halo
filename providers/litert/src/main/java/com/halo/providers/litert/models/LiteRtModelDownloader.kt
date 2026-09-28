@@ -8,6 +8,7 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
+import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InterruptedIOException
 import java.security.MessageDigest
@@ -30,7 +31,22 @@ enum class ModelDownloadFailure {
     CANCELLED,
 }
 
-/** Progress for a single in-flight artifact transfer. */
+/** True when a partial download is worth keeping for a later resume. */
+val ModelDownloadFailure.isResumable: Boolean
+    get() = when (this) {
+        ModelDownloadFailure.NETWORK,
+        ModelDownloadFailure.DISK_FULL,
+        ModelDownloadFailure.CANCELLED,
+        ModelDownloadFailure.IO_FAILURE,
+        -> true
+        ModelDownloadFailure.SIZE_MISMATCH,
+        ModelDownloadFailure.HASH_MISMATCH,
+        ModelDownloadFailure.HTTP_NOT_FOUND,
+        ModelDownloadFailure.AUTH_REQUIRED,
+        -> false
+    }
+
+/** Progress for a single in-flight artifact transfer. [downloadedBytes] includes a resumed prefix. */
 data class DownloadProgress(
     val downloadedBytes: Long,
     val totalBytes: Long?,
@@ -54,6 +70,10 @@ sealed interface DownloadResult {
         val file: File,
         val bytes: Long,
         val sha256: String,
+        /** Bytes that came from a previously stored partial, or 0 when the transfer started fresh. */
+        val resumedFrom: Long = 0L,
+        val etag: String? = null,
+        val lastModified: String? = null,
     ) : DownloadResult
 
     data class Failure(
@@ -61,6 +81,8 @@ sealed interface DownloadResult {
         val userMessage: String,
         val technicalMessage: String? = null,
         val cause: Throwable? = null,
+        /** Bytes already on disk when the transfer stopped, so a resume can continue. */
+        val partialBytes: Long = 0L,
     ) : DownloadResult
 }
 
@@ -72,6 +94,7 @@ sealed interface DownloadState {
         val downloadedBytes: Long,
         val totalBytes: Long?,
         val progress: Float?,
+        val resumedFrom: Long = 0L,
     ) : DownloadState
 
     data class Verifying(
@@ -81,10 +104,18 @@ sealed interface DownloadState {
 
     data object Installed : DownloadState
 
+    /** A resumable partial exists on disk. Never treated as installed. */
+    data class Paused(
+        val downloadedBytes: Long,
+        val totalBytes: Long?,
+    ) : DownloadState
+
     data class Failed(
         val kind: ModelDownloadFailure,
         val userMessage: String,
         val technicalMessage: String? = null,
+        /** True when a partial remains on disk and "Resume" is meaningful. */
+        val resumable: Boolean = false,
     ) : DownloadState
 }
 
@@ -92,13 +123,20 @@ sealed interface DownloadState {
  * Streams a pinned catalog artifact to a `.part` file and proves its integrity before returning.
  *
  * The integrity authority is the byte stream, never an HTTP header: `Content-Length` may be
- * absent or wrong behind a CDN/redirect and is used for progress reporting only.
+ * absent or wrong behind a CDN/redirect and is used for progress reporting only. A resumed
+ * transfer is verified over the *whole* file, so a corrupted or alien prefix cannot be
+ * mistaken for a good artifact.
  */
 interface LiteRtModelDownloader {
     suspend fun download(
         artifact: LiteRtCatalogModel,
         destinationPart: File,
         onProgress: (DownloadProgress) -> Unit,
+        /**
+         * Byte offset to resume from. The implementation may ignore it (server ignored the Range
+         * request) and restart from zero; the caller only trusts the final verified result.
+         */
+        resumeFrom: Long = 0L,
     ): DownloadResult
 }
 
@@ -116,20 +154,30 @@ class OkHttpLiteRtModelDownloader(
         artifact: LiteRtCatalogModel,
         destinationPart: File,
         onProgress: (DownloadProgress) -> Unit,
+        resumeFrom: Long,
     ): DownloadResult = withContext(Dispatchers.IO) {
         val url = resolveUrl(artifact)
-        val request = Request.Builder()
+        val requestedResume = resumeFrom > 0L && resumeFrom < artifact.expectedBytes
+        val builder = Request.Builder()
             .url(url)
             .header("Accept", "application/octet-stream")
             .header("Accept-Encoding", "identity")
             .header("User-Agent", userAgent)
-            .build()
+        if (requestedResume) builder.header("Range", "bytes=$resumeFrom-")
+        val request = builder.build()
 
         val call = client.newCall(request)
         val cancellationHandle = kotlinx.coroutines.currentCoroutineContext()[Job]
             ?.invokeOnCompletion { cause -> if (cause != null) call.cancel() }
 
-        Log.i(TAG, "$EVENT_START id=${artifact.id} revision=${artifact.revision} url=$url")
+        if (requestedResume) {
+            Log.i(
+                TAG,
+                "$EVENT_RESUME id=${artifact.id} from=$resumeFrom expected=${artifact.expectedBytes} url=$url",
+            )
+        } else {
+            Log.i(TAG, "$EVENT_START id=${artifact.id} revision=${artifact.revision} url=$url")
+        }
 
         val destinationParent = destinationPart.parentFile
         if (destinationParent != null && !destinationParent.exists() && !destinationParent.mkdirs()) {
@@ -147,6 +195,7 @@ class OkHttpLiteRtModelDownloader(
                         httpFailureKind(response.code),
                         httpFailureMessage(response.code),
                         "HTTP ${response.code} ${response.message} for $url",
+                        partialBytes = destinationPart.takeIf { it.exists() }?.length() ?: 0L,
                     )
                 }
                 val body = response.body ?: return@withContext failure(
@@ -155,25 +204,51 @@ class OkHttpLiteRtModelDownloader(
                     "HTTP ${response.code} with an empty body",
                 )
 
+                val contentRangeStart = parseContentRangeStart(response.header("Content-Range"))
+                val serverHonouredRange = response.code == 206 &&
+                    contentRangeStart == resumeFrom &&
+                    destinationPart.exists() &&
+                    destinationPart.length() == resumeFrom
+                val append = requestedResume && serverHonouredRange
+                if (requestedResume && !append) {
+                    Log.i(
+                        TAG,
+                        "$EVENT_RESUME_ABANDONED id=${artifact.id} from=$resumeFrom code=${response.code} " +
+                            "contentRange=${response.header("Content-Range") ?: "none"} — restarting from 0",
+                    )
+                }
+
                 // Header value: used for progress only. Never an integrity authority.
                 val headerLength = body.contentLength().takeIf { it >= 0L }
+                val totalBytes = if (append) headerLength?.let { resumeFrom + it } ?: artifact.expectedBytes
+                else headerLength
+
                 val digest = MessageDigest.getInstance("SHA-256")
                 var downloaded = 0L
+                if (append) {
+                    downloaded = hashPrefix(destinationPart, digest)
+                } else if (destinationPart.exists() && !destinationPart.delete()) {
+                    return@withContext failure(
+                        ModelDownloadFailure.IO_FAILURE,
+                        "Could not replace the partial model file.",
+                        "delete failed for ${destinationPart.absolutePath}",
+                    )
+                }
 
-                body.byteStream().use { input ->
-                    destinationPart.outputStream().use { output ->
-                        digest.reset()
+                val output = FileOutputStream(destinationPart, append)
+                output.use { stream ->
+                    body.byteStream().use { input ->
                         val buffer = ByteArray(128 * 1024)
                         while (true) {
                             val read = input.read(buffer)
                             if (read < 0) break
                             digest.update(buffer, 0, read)
-                            output.write(buffer, 0, read)
+                            stream.write(buffer, 0, read)
                             downloaded += read
-                            onProgress(DownloadProgress.of(downloaded, headerLength ?: artifact.expectedBytes))
+                            onProgress(DownloadProgress.of(downloaded, totalBytes ?: artifact.expectedBytes))
                         }
-                        output.flush()
-                        output.fd.sync()
+                        stream.flush()
+                        stream.fd.sync()
                     }
                 }
 
@@ -191,6 +266,7 @@ class OkHttpLiteRtModelDownloader(
                         INTEGRITY_USER_MESSAGE,
                         "Expected ${artifact.expectedBytes} bytes, received $actualBytes " +
                             "(HTTP ${response.code}, revision ${artifact.revision})",
+                        partialBytes = actualBytes,
                     )
                 }
 
@@ -205,14 +281,23 @@ class OkHttpLiteRtModelDownloader(
                         INTEGRITY_USER_MESSAGE,
                         "Expected SHA-256 ${artifact.sha256}, received $actualSha " +
                             "(HTTP ${response.code}, revision ${artifact.revision})",
+                        partialBytes = actualBytes,
                     )
                 }
 
                 Log.i(
                     TAG,
-                    "$EVENT_VERIFIED id=${artifact.id} bytes=$actualBytes sha256=$actualSha revision=${artifact.revision}",
+                    "$EVENT_VERIFIED id=${artifact.id} bytes=$actualBytes sha256=$actualSha " +
+                        "resumedFrom=${if (append) resumeFrom else 0L} revision=${artifact.revision}",
                 )
-                DownloadResult.Success(destinationPart, actualBytes, actualSha)
+                DownloadResult.Success(
+                    file = destinationPart,
+                    bytes = actualBytes,
+                    sha256 = actualSha,
+                    resumedFrom = if (append) resumeFrom else 0L,
+                    etag = response.header("ETag"),
+                    lastModified = response.header("Last-Modified"),
+                )
             }
         } catch (cancelled: CancellationException) {
             throw cancelled
@@ -224,11 +309,13 @@ class OkHttpLiteRtModelDownloader(
                     "Download cancelled.",
                     io.message,
                     userCancelled = true,
+                    partialBytes = destinationPart.takeIf { it.exists() }?.length() ?: 0L,
                 )
                 isDiskFull(io) -> failure(
                     ModelDownloadFailure.DISK_FULL,
                     "Not enough free space to install this model.",
                     io.message,
+                    partialBytes = destinationPart.takeIf { it.exists() }?.length() ?: 0L,
                 )
                 else -> {
                     Log.e(TAG, "$EVENT_FAILED id=${artifact.id} reason=NETWORK", io)
@@ -236,6 +323,7 @@ class OkHttpLiteRtModelDownloader(
                         ModelDownloadFailure.NETWORK,
                         "Download failed. Check your connection and try again.",
                         io.message,
+                        partialBytes = destinationPart.takeIf { it.exists() }?.length() ?: 0L,
                     )
                 }
             }
@@ -245,11 +333,27 @@ class OkHttpLiteRtModelDownloader(
                 ModelDownloadFailure.IO_FAILURE,
                 "The model could not be saved to this device.",
                 "${error::class.java.simpleName}: ${error.message}",
+                partialBytes = destinationPart.takeIf { it.exists() }?.length() ?: 0L,
             )
         } finally {
             cancellationHandle?.dispose()
             call.cancel()
         }
+    }
+
+    /** Feeds an existing partial prefix into [digest] and returns its byte count. */
+    private fun hashPrefix(file: File, digest: MessageDigest): Long {
+        var bytes = 0L
+        file.inputStream().use { input ->
+            val buffer = ByteArray(128 * 1024)
+            while (true) {
+                val read = input.read(buffer)
+                if (read < 0) break
+                digest.update(buffer, 0, read)
+                bytes += read
+            }
+        }
+        return bytes
     }
 
     private fun httpFailureKind(code: Int): ModelDownloadFailure = when (code) {
@@ -275,11 +379,12 @@ class OkHttpLiteRtModelDownloader(
         technicalMessage: String?,
         cause: Throwable? = null,
         userCancelled: Boolean = false,
+        partialBytes: Long = 0L,
     ): DownloadResult.Failure {
         if (!userCancelled) {
-            Log.w(TAG, "$EVENT_FAILED kind=$kind detail=$technicalMessage")
+            Log.w(TAG, "$EVENT_FAILED kind=$kind detail=$technicalMessage partialBytes=$partialBytes")
         }
-        return DownloadResult.Failure(kind, userMessage, technicalMessage, cause)
+        return DownloadResult.Failure(kind, userMessage, technicalMessage, cause, partialBytes)
     }
 
     companion object {
@@ -289,10 +394,19 @@ class OkHttpLiteRtModelDownloader(
         const val EVENT_PROGRESS = "HALO_LITERT_DOWNLOAD_PROGRESS"
         const val EVENT_VERIFIED = "HALO_LITERT_DOWNLOAD_VERIFY"
         const val EVENT_FAILED = "HALO_LITERT_DOWNLOAD_FAILED"
+        const val EVENT_RESUME = "HALO_LITERT_RESUME"
+        const val EVENT_RESUME_ABANDONED = "HALO_LITERT_RESUME_ABANDONED"
 
         const val INTEGRITY_USER_MESSAGE = "Downloaded model failed integrity verification."
 
         const val DEFAULT_USER_AGENT = "Halo-Android/1.0 (LiteRT model downloader)"
+
+        /** `Content-Range: bytes 100-199/200` -> 100, or null when absent/unparseable. */
+        internal fun parseContentRangeStart(value: String?): Long? {
+            val raw = value?.trim()?.removePrefix("bytes")?.trim() ?: return null
+            val start = raw.substringBefore('-').trim().toLongOrNull() ?: return null
+            return start.takeIf { it >= 0L }
+        }
 
         fun defaultClient(): OkHttpClient = OkHttpClient.Builder()
             .followRedirects(true)

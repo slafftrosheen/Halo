@@ -231,6 +231,8 @@ data class ProviderStatus(
         READY,
         STANDBY,
         LOADING,
+        /** Configured and usable, but a request is in flight right now. */
+        BUSY,
         UNCONFIGURED,
         OFFLINE,
         MODEL_MISSING,
