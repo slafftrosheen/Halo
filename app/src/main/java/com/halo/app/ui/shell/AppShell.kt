@@ -76,12 +76,20 @@ import kotlinx.coroutines.launch
 sealed class Screen(val route: String, val title: String, val glyph: HaloGlyph) {
     data object Home : Screen("home", "Home", HaloGlyph.HOME)
     data object Activity : Screen("activity", "Activity", HaloGlyph.ACTIVITY)
-    data object Notebook : Screen("notebook", "Notebook", HaloGlyph.NOTE)
+    data object Notebook : Screen("notebook", "Workspace", HaloGlyph.NOTE)
     data object Devices : Screen("devices", "Devices", HaloGlyph.DEVICE)
     data object Settings : Screen("settings", "Settings", HaloGlyph.SETTINGS)
 }
 
 val bottomNavItems = listOf(Screen.Home, Screen.Activity, Screen.Notebook, Screen.Devices, Screen.Settings)
+
+private fun primaryNavigationRoute(route: String?): String? = when {
+    route == null -> null
+    route.startsWith("notebook/") -> Screen.Notebook.route
+    route == "discovery" || route.startsWith("device/") -> Screen.Devices.route
+    route in setOf("ai_settings", "voice_settings", "permissions") -> Screen.Settings.route
+    else -> route
+}
 
 @Composable
 fun AppShell(
@@ -143,7 +151,7 @@ fun AppShell(
                 NavigationRail {
                     bottomNavItems.forEach { item ->
                         NavigationRailItem(
-                            selected = backStackEntry?.destination?.route == item.route,
+                            selected = primaryNavigationRoute(backStackEntry?.destination?.route) == item.route,
                             onClick = { navigateSafely(item.route) },
                             icon = { com.halo.app.ui.icons.HaloIcon(item.glyph, contentDescription = item.title, modifier = Modifier.size(24.dp)) },
                             label = { Text(item.title) }
@@ -357,15 +365,17 @@ fun AppShell(
                         LaunchedEffect(Unit) { navController.popBackStack() }
                     } else {
                         val history by ManualDependencyGraph.conversationStore.history.collectAsState()
+                        val conversations by ManualDependencyGraph.conversationStore.conversations.collectAsState()
                         val turns = history.filter { it.conversationId == conversationId }
                         ConversationDetailScreen(
                             conversationId = conversationId,
+                            savedTitle = conversations.firstOrNull { it.id == conversationId }?.title,
                             turns = turns,
                             onContinue = {
                                 scope.launch {
                                     ManualDependencyGraph.conversationStore.open(conversationId)
+                                    navController.popBackStack()
                                 }
-                                navController.popBackStack()
                             },
                             onBack = { navController.popBackStack() }
                         )

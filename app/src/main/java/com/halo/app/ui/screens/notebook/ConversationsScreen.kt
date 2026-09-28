@@ -3,38 +3,45 @@ package com.halo.app.ui.screens.notebook
 import android.text.format.DateUtils
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.ArrowForward
+import androidx.compose.material.icons.rounded.Forum
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.halo.app.data.PersistedConversation
 import com.halo.app.data.PersistedTurn
 import com.halo.app.data.RoomConversationStore
-import com.halo.app.ui.presence.HaloSignalGlyph
-import com.halo.app.ui.presence.HaloSignalKind
+import com.halo.app.ui.workspace.HaloWorkspaceCard
+import com.halo.app.ui.workspace.HaloWorkspaceHeader
 
 @Composable
 fun ConversationsListScreen(
@@ -43,59 +50,58 @@ fun ConversationsListScreen(
     onBack: () -> Unit
 ) {
     val history by conversationStore.history.collectAsState()
-    val conversations = history.groupBy { it.conversationId }
+    val summaries by conversationStore.conversations.collectAsState()
+    val loaded by conversationStore.historyLoaded.collectAsState()
+    var query by remember { mutableStateOf("") }
+    val conversations = remember(history, summaries, query) {
+        val titles = summaries.associate { it.id to it.title }
+        history
+            .groupBy { it.conversationId }
+            .map { (id, turns) -> Triple(id, titles[id].orEmpty(), turns.sortedBy { it.timestamp }) }
+            .filter { (_, title, turns) ->
+                query.isBlank() || title.contains(query, ignoreCase = true) || turns.any {
+                    it.userText.contains(query, ignoreCase = true) ||
+                        it.assistantText.contains(query, ignoreCase = true)
+                }
+            }
+            .sortedByDescending { (_, _, turns) -> turns.lastOrNull()?.timestamp ?: 0L }
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 20.dp, vertical = 10.dp)
+            .padding(horizontal = 20.dp, vertical = 12.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onBack) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                    contentDescription = "Back"
-                )
+        HaloWorkspaceHeader(
+            title = "Saved chats",
+            subtitle = "Browse and continue earlier conversations",
+            onBack = onBack
+        )
+
+        OutlinedTextField(
+            value = query,
+            onValueChange = { query = it },
+            modifier = Modifier.fillMaxWidth().padding(top = 14.dp),
+            singleLine = true,
+            leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
+            placeholder = { Text("Search chats") }
+        )
+
+        when {
+            !loaded -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
             }
-            Spacer(Modifier.size(8.dp))
-            Text(
-                text = "Conversations",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-        }
 
-        Spacer(Modifier.height(16.dp))
+            conversations.isEmpty() -> EmptyConversations(hasQuery = query.isNotBlank())
 
-        if (conversations.isEmpty()) {
-            Column(
+            else -> LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                HaloSignalGlyph(kind = HaloSignalKind.NOTE, size = 48.dp)
-                Spacer(Modifier.height(12.dp))
-                Text(
-                    text = "No saved conversations",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-            }
-        } else {
-            LazyColumn(
+                contentPadding = PaddingValues(vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                items(conversations.entries.toList(), key = { it.key }) { (id, turns) ->
-                    ConversationCard(
-                        id = id,
-                        turns = turns,
-                        onOpen = { onOpenConversation(id) }
-                    )
+                items(conversations, key = { it.first }) { (id, savedTitle, turns) ->
+                    ConversationCard(savedTitle = savedTitle, turns = turns, onOpen = { onOpenConversation(id) })
                 }
             }
         }
@@ -103,69 +109,100 @@ fun ConversationsListScreen(
 }
 
 @Composable
-private fun ConversationCard(
-    id: String,
-    turns: List<PersistedTurn>,
-    onOpen: () -> Unit
-) {
+private fun EmptyConversations(hasQuery: Boolean) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            imageVector = if (hasQuery) Icons.Rounded.Search else Icons.Rounded.Forum,
+            contentDescription = null,
+            modifier = Modifier.size(44.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = if (hasQuery) "No matching chats" else "No saved chats yet",
+            modifier = Modifier.padding(top = 12.dp),
+            style = MaterialTheme.typography.titleMedium
+        )
+        Text(
+            text = if (hasQuery) "Try a different word or phrase." else "Chats you start with Halo will appear here.",
+            modifier = Modifier.padding(top = 4.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+private fun ConversationCard(savedTitle: String, turns: List<PersistedTurn>, onOpen: () -> Unit) {
     val firstTurn = turns.firstOrNull()
     val lastTurn = turns.lastOrNull()
-    val title = firstTurn?.userText?.take(60)?.ifBlank { null } ?: "Conversation"
+    val title = savedTitle.takeUnless { it.isBlank() || it == "New conversation" }
+        ?: firstTurn?.userText?.trim()?.take(80)?.ifBlank { null }
+        ?: "Conversation"
+    val timestamp = lastTurn?.timestamp?.let {
+        DateUtils.getRelativeTimeSpanString(it, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS).toString()
+    }
 
     Surface(
         onClick = onOpen,
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(18.dp),
         color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 1.dp,
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier.padding(14.dp),
-            verticalAlignment = Alignment.Top
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            HaloSignalGlyph(kind = HaloSignalKind.NOTE, size = 36.dp)
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.secondaryContainer
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Forum,
+                    contentDescription = null,
+                    modifier = Modifier.padding(9.dp).size(22.dp),
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            }
             Spacer(Modifier.size(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                lastTurn?.assistantText?.takeIf { it.isNotBlank() }?.let { preview ->
                     Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Text(
-                        text = "${turns.size} turns",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                if (lastTurn != null) {
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        text = lastTurn.assistantText,
+                        text = preview,
+                        modifier = Modifier.padding(top = 3.dp),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
-
-                Spacer(Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    TextButton(onClick = onOpen) {
-                        Text("Continue")
-                    }
-                }
+                Text(
+                    text = listOfNotNull(
+                        "${turns.size} ${if (turns.size == 1) "turn" else "turns"}",
+                        timestamp
+                    ).joinToString(" · "),
+                    modifier = Modifier.padding(top = 7.dp),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
+            Icon(
+                imageVector = Icons.Rounded.ArrowForward,
+                contentDescription = null,
+                modifier = Modifier.padding(start = 10.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
@@ -173,80 +210,80 @@ private fun ConversationCard(
 @Composable
 fun ConversationDetailScreen(
     conversationId: String,
+    savedTitle: String?,
     turns: List<PersistedTurn>,
     onContinue: () -> Unit,
     onBack: () -> Unit
 ) {
-    val title = turns.firstOrNull()?.userText?.take(60)?.ifBlank { null } ?: "Conversation"
+    val orderedTurns = remember(conversationId, turns) { turns.sortedBy { it.timestamp } }
+    val title = savedTitle?.takeUnless { it.isBlank() || it == "New conversation" }
+        ?: orderedTurns.firstOrNull()?.userText?.trim()?.take(60)?.ifBlank { null }
+        ?: "Saved chat"
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 20.dp, vertical = 10.dp)
+            .padding(horizontal = 20.dp, vertical = 12.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onBack) {
-                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
-                }
-                Spacer(Modifier.size(8.dp))
+        HaloWorkspaceHeader(
+            title = title,
+            subtitle = "${orderedTurns.size} ${if (orderedTurns.size == 1) "turn" else "turns"}",
+            onBack = onBack,
+            trailing = {
+                TextButton(onClick = onContinue, enabled = orderedTurns.isNotEmpty()) { Text("Continue") }
+            }
+        )
+
+        if (orderedTurns.isEmpty()) {
+            HaloWorkspaceCard(modifier = Modifier.padding(top = 20.dp)) {
+                Text("This chat is empty", style = MaterialTheme.typography.titleMedium)
                 Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    "There are no saved messages to display.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            TextButton(onClick = onContinue) {
-                Text("Continue here")
-            }
-        }
-
-        Spacer(Modifier.height(12.dp))
-
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            items(turns, key = { it.id }) { turn ->
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        modifier = Modifier.align(Alignment.End)
+        } else {
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                items(orderedTurns, key = { it.id }) { turn ->
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(7.dp)
                     ) {
-                        Text(
+                        MessageBubble(
                             text = turn.userText,
-                            modifier = Modifier.padding(12.dp),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                            fromUser = true,
+                            modifier = Modifier.align(Alignment.End)
                         )
-                    }
-
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-                        modifier = Modifier.align(Alignment.Start)
-                    ) {
-                        Text(
+                        MessageBubble(
                             text = turn.assistantText,
-                            modifier = Modifier.padding(12.dp),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            fromUser = false,
+                            modifier = Modifier.align(Alignment.Start)
                         )
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun MessageBubble(text: String, fromUser: Boolean, modifier: Modifier = Modifier) {
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = if (fromUser) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+        modifier = modifier.fillMaxWidth(0.88f).widthIn(max = 560.dp)
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 11.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (fromUser) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }

@@ -11,6 +11,8 @@ import androidx.room.Query
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 @Entity(tableName = "notebook_collections", indices = [Index(value = ["name"], unique = true)])
 data class NotebookCollectionEntity(
@@ -69,6 +71,9 @@ interface NotebookOrganizationDao {
     @Query("SELECT objectId FROM notebook_favorites")
     fun observeFavoriteIds(): Flow<List<String>>
 
+    @Query("SELECT EXISTS(SELECT 1 FROM notebook_favorites WHERE objectId = :objectId)")
+    suspend fun isFavorite(objectId: String): Boolean
+
     @Query("SELECT objectId FROM notebook_collection_members WHERE collectionId = :collectionId")
     fun observeMemberIds(collectionId: String): Flow<List<String>>
 
@@ -99,6 +104,8 @@ class NotebookOrganizationRepository(
     private val now: () -> Long = System::currentTimeMillis,
     private val newId: () -> String = { UUID.randomUUID().toString() },
 ) {
+    private val favoriteMutationMutex = Mutex()
+
     fun observeCollections(): Flow<List<NotebookCollection>> =
         dao.observeCollections().map { rows ->
             rows.map { NotebookCollection(it.id, it.name, it.sortOrder) }
@@ -141,5 +148,10 @@ class NotebookOrganizationRepository(
         } else {
             dao.removeFavorite(objectId) == 1
         }
+    }
+
+    /** Serialize read-modify-write so rapid taps cannot apply the same stale UI state twice. */
+    suspend fun toggleFavorite(objectId: String): Boolean = favoriteMutationMutex.withLock {
+        setFavorite(objectId, !dao.isFavorite(objectId))
     }
 }

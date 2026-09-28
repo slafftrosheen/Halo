@@ -275,6 +275,7 @@ class NotebookDocumentRepository(
                 val storedRevision = dao.getRevision(noteId)?.toLong()
                     ?: return@withTransaction CommitOutcome.Rejected(DocumentRejection.MISSING)
                 val storedBlocks = dao.getBlocks(noteId).map(NoteBlockEntity::toDomain)
+                val existingById = dao.getBlocks(noteId).associateBy { it.id }
                 if (storedRevision != expectedRevision) {
                     return@withTransaction CommitOutcome.Conflict(storedRevision)
                 }
@@ -302,7 +303,18 @@ class NotebookDocumentRepository(
                 if (swapped != 1) {
                     return@withTransaction CommitOutcome.Conflict(dao.getRevision(noteId)?.toLong() ?: -1L)
                 }
-                dao.replaceBlocks(noteId, normalized.map { it.toEntity(noteId, timestamp) })
+                dao.replaceBlocks(noteId, normalized.map { block ->
+                    val existing = existingById[block.id]
+                    block.toEntity(
+                        noteId = noteId,
+                        createdAt = existing?.createdAtEpochMs ?: timestamp,
+                        updatedAt = if (existing != null && existing.toDomain() == block) {
+                            existing.updatedAtEpochMs
+                        } else {
+                            timestamp
+                        },
+                    )
+                })
                 dao.updateDocumentMetadata(noteId, resolvedTitle, timestamp)
                 // Only acknowledge the drafts covered by *this* commit's edit sequence.
                 if (acknowledgeDraftSequence > 0) {
@@ -332,6 +344,7 @@ class NotebookDocumentRepository(
         blocks: List<NoteBlock>,
         baseRevision: Long,
         sequence: Long,
+        title: String? = null,
     ) {
         val timestamp = now()
         dao.upsertRecovery(
@@ -341,7 +354,7 @@ class NotebookDocumentRepository(
                 updatedAt = timestamp,
                 baseRevision = baseRevision,
                 sequence = sequence,
-                structureJson = RecoveryJson.encode(blocks),
+                structureJson = RecoveryJson.encode(blocks, title),
             )
         )
     }
@@ -351,12 +364,13 @@ class NotebookDocumentRepository(
         val restored = RecoveryJson.decode(entity.structureJson)
         RecoveryDraft(
             noteId = noteId,
-            blocks = if (restored.isNotEmpty() && sequence > 0) {
-                restored
+            blocks = if (restored.blocks.isNotEmpty() && sequence > 0) {
+                restored.blocks
             } else {
                 // Legacy text-only recovery draft: parsed, never merged into newer structure.
                 NotebookDocumentCodec.parse(entity.body, newId).blocks
             },
+            title = restored.title,
             baseRevision = entity.baseRevision,
             sequence = sequence,
             updatedAt = entity.updatedAt,
@@ -392,6 +406,20 @@ internal fun NoteBlock.toEntity(noteId: String, timestamp: Long): NoteBlockEntit
     updatedAtEpochMs = timestamp,
 )
 
+internal fun NoteBlock.toEntity(noteId: String, createdAt: Long, updatedAt: Long): NoteBlockEntity = NoteBlockEntity(
+    id = id,
+    noteId = noteId,
+    position = position,
+    type = type.name,
+    text = text,
+    checked = checked,
+    indent = indent,
+    refObjectId = refObjectId,
+    language = language,
+    createdAtEpochMs = createdAt,
+    updatedAtEpochMs = updatedAt,
+)
+
 internal fun NoteDocumentRow.toDocument(blocks: List<NoteBlock>): NotebookDocument = NotebookDocument(
     noteId = id,
     title = title,
@@ -406,7 +434,9 @@ internal fun NoteDocumentRow.toDocument(blocks: List<NoteBlock>): NotebookDocume
 
 /** Minimal structural encoding for recovery drafts; no reflection and no schema negotiation. */
 internal object RecoveryJson {
-    fun encode(blocks: List<NoteBlock>): String {
+    data class Decoded(val blocks: List<NoteBlock>, val title: String?)
+
+    fun encode(blocks: List<NoteBlock>, title: String?): String {
         val array = JSONArray()
         blocks.forEach { block ->
             array.put(
@@ -420,14 +450,21 @@ internal object RecoveryJson {
                     .put("lang", block.language ?: JSONObject.NULL)
             )
         }
-        return array.toString()
+        return JSONObject()
+            .put("schemaVersion", 2)
+            .put("title", title ?: JSONObject.NULL)
+            .put("blocks", array)
+            .toString()
     }
 
-    fun decode(raw: String?): List<NoteBlock> {
-        if (raw.isNullOrBlank()) return emptyList()
+    fun decode(raw: String?): Decoded {
+        if (raw.isNullOrBlank()) return Decoded(emptyList(), null)
         return runCatching {
-            val array = JSONArray(raw)
-            (0 until array.length()).mapNotNull { index ->
+            // v1 was an array only. v2 wraps it with explicit-title metadata.
+            val root = raw.trim()
+            val objectRoot = root.takeIf { it.startsWith("{") }?.let(::JSONObject)
+            val array = objectRoot?.optJSONArray("blocks") ?: JSONArray(root)
+            val blocks = (0 until array.length()).mapNotNull { index ->
                 val item = array.optJSONObject(index) ?: return@mapNotNull null
                 val id = item.optString("id").takeIf { it.isNotBlank() } ?: return@mapNotNull null
                 NoteBlock(
@@ -441,6 +478,11 @@ internal object RecoveryJson {
                     language = item.optString("lang").takeIf { !item.isNull("lang") && it.isNotBlank() },
                 )
             }
-        }.getOrDefault(emptyList())
+            Decoded(
+                blocks = blocks,
+                title = objectRoot?.optString("title")
+                    ?.takeIf { !objectRoot.isNull("title") && it.isNotBlank() },
+            )
+        }.getOrDefault(Decoded(emptyList(), null))
     }
 }

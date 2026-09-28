@@ -55,15 +55,28 @@ class WorkspaceToolExecutor(
             )
         ),
         ToolDefinition(
-            id = "halo_study_with_halo",
-            name = "halo_study_with_halo",
-            description = "Start a study/tutoring session for a given note or workspace object.",
+            id = "halo_save_screen_to_notebook",
+            name = "halo_save_screen_to_notebook",
+            description = "Save the redacted semantic screen snapshot for an interaction to Halo Notebook.",
             parameters = mapOf(
                 "type" to "object",
                 "properties" to mapOf(
-                    "objectId" to mapOf("type" to "string", "description" to "ID of the workspace object or note")
+                    "interactionId" to mapOf("type" to "string", "maxLength" to 100)
                 ),
-                "required" to listOf("objectId"),
+                "required" to listOf("interactionId"),
+                "additionalProperties" to false
+            )
+        ),
+        ToolDefinition(
+            id = "halo_study_with_halo",
+            name = "halo_study_with_halo",
+            description = "Start a study/tutoring session from a Halo Notebook note.",
+            parameters = mapOf(
+                "type" to "object",
+                "properties" to mapOf(
+                    "noteId" to mapOf("type" to "string", "description" to "ID of a Halo Notebook note")
+                ),
+                "required" to listOf("noteId"),
                 "additionalProperties" to false
             )
         ),
@@ -114,6 +127,8 @@ class WorkspaceToolExecutor(
         val key = when (toolCall.functionName) {
             "halo_create_note" -> "body"
             "halo_search_notebook" -> "query"
+            "halo_save_screen_to_notebook" -> "interactionId"
+            "halo_study_with_halo" -> "noteId"
             "halo_get_study_session" -> "sessionId"
             else -> "objectId"
         }
@@ -124,7 +139,7 @@ class WorkspaceToolExecutor(
             else -> 100
         }
         if (toolCall.arguments.keys != setOf(key) || value.length > limit || (key != "query" && value.isBlank())) return reject("Invalid $key")
-        if (key == "objectId") {
+        if (key == "objectId" || key == "noteId") {
             val item = workspaceRepository.get(WorkspaceObjectId(value.trim())) ?: return reject("Workspace object not found")
             if (item.lifecycle == com.halo.app.data.notebook.WorkspaceObjectLifecycle.TRASHED) return reject("Workspace object is in trash")
         }
@@ -157,8 +172,13 @@ class WorkspaceToolExecutor(
                 ToolExecutionResult.Success(toolCall.id, toolCall.functionName, "Saved screen to notebook as note ${note.id}")
             }
             "halo_study_with_halo" -> {
-                val objectId = toolCall.arguments["objectId"]?.toString()?.trim().orEmpty()
-                if (objectId.isBlank()) return reject("objectId is required")
+                val objectId = toolCall.arguments["noteId"]?.toString()?.trim().orEmpty()
+                if (objectId.isBlank()) return reject("noteId is required")
+                val item = workspaceRepository.get(WorkspaceObjectId(objectId))
+                    ?: return reject("Notebook note not found")
+                if (item.type != com.halo.app.data.notebook.WorkspaceObjectType.NOTE) {
+                    return reject("Study currently supports Halo Notebook notes only; ${item.type} is unsupported")
+                }
                 val starter = studyStarter
                     ?: return reject("Study is unavailable: no durable study session store is configured")
                 when (val result = starter.start(objectId, null)) {

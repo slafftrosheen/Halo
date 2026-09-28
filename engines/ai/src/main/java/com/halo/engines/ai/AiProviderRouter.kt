@@ -56,7 +56,7 @@ class DefaultAiProviderRouter(
         }
     )
     override val diagnosticsFlow: StateFlow<List<AiProviderDiagnostic>> = _diagnosticsFlow.asStateFlow()
-    private val _routingPolicy = MutableStateFlow(AiRoutingPolicy.LOCAL_ONLY)
+    private val _routingPolicy = MutableStateFlow(AiRoutingPolicy.AUTOMATIC)
     override val routingPolicy: StateFlow<AiRoutingPolicy> = _routingPolicy.asStateFlow()
 
     init {
@@ -82,8 +82,8 @@ class DefaultAiProviderRouter(
 
         val rawPolicy = storage.getString("ai_routing_policy")
         val restoredPolicy = rawPolicy?.let {
-            runCatching { enumValueOf<AiRoutingPolicy>(it) }.getOrDefault(AiRoutingPolicy.LOCAL_ONLY)
-        } ?: AiRoutingPolicy.LOCAL_ONLY
+            runCatching { enumValueOf<AiRoutingPolicy>(it) }.getOrDefault(AiRoutingPolicy.AUTOMATIC)
+        } ?: AiRoutingPolicy.AUTOMATIC
         _routingPolicy.value = restoredPolicy
 
         _selectedProviderId.value = restoredProvider
@@ -412,8 +412,17 @@ class DefaultAiProviderRouter(
         }
     }
 
-    private suspend fun getFallbackExecutionTarget(request: AiRequest, workload: AiWorkloadSpec, failedProviderId: String?): AiExecutionTarget? {
-        val localOnly = _routingPolicy.value == AiRoutingPolicy.LOCAL_ONLY
+    override suspend fun resolveFallbackExecutionTarget(
+        request: AiRequest,
+        workload: AiWorkloadSpec,
+        failedProviderId: String,
+    ): AiExecutionTarget? {
+        val policy = _routingPolicy.value
+        if (policy == AiRoutingPolicy.EXPLICIT) return null
+        val localOnly = policy == AiRoutingPolicy.LOCAL_ONLY
+        // The failed target's model id was bound during preparation. It is not meaningful in a
+        // different provider namespace and would make every cross-provider fallback look missing.
+        val fallbackRequest = request.copy(modelId = null)
         for (provider in inferenceProviders.filter { it.id != failedProviderId }) {
             if (localOnly && !provider.isLocal) continue
             if (!workload.allowRemote && !provider.isLocal) continue
@@ -422,7 +431,7 @@ class DefaultAiProviderRouter(
             if (!isReady) continue
             val target = runCatching { resolveTargetForProvider(
                     provider = provider,
-                    request = request,
+                    request = fallbackRequest,
                     workload = workload,
                     preferredModelId = null,
                     allowPreferredModelFallback = true,
@@ -445,7 +454,7 @@ class DefaultAiProviderRouter(
     override suspend fun execute(request: AiRequest, context: AiContext): AiResponse =
         execute(request, AiWorkloadSpec(), context)
 
-    suspend fun execute(request: AiRequest, workload: AiWorkloadSpec, context: AiContext = AiContext.EMPTY): AiResponse {
+    override suspend fun execute(request: AiRequest, workload: AiWorkloadSpec, context: AiContext): AiResponse {
         val policy = _routingPolicy.value
         val target = resolveExecutionTarget(request, workload)
         val finalRequest = request.copy(modelId = target.modelId)
@@ -463,7 +472,7 @@ class DefaultAiProviderRouter(
         catch (e: Throwable) {
             eventBus?.publish(ProviderFailure(requestId = requestId, providerId = target.providerId, reason = e.message ?: "Execution failed"))
             if ((policy == AiRoutingPolicy.PREFERRED_WITH_FALLBACK || policy == AiRoutingPolicy.AUTOMATIC || policy == AiRoutingPolicy.LOCAL_ONLY) && fallbackEligible(e)) {
-                val fallbackTarget = getFallbackExecutionTarget(request, workload, failedProviderId = target.providerId)
+                val fallbackTarget = resolveFallbackExecutionTarget(request, workload, failedProviderId = target.providerId)
                 if (fallbackTarget != null) {
                     val fallbackRequest = request.copy(modelId = fallbackTarget.modelId)
                     val fallbackRequestId = UUID.randomUUID().toString()
@@ -479,6 +488,9 @@ class DefaultAiProviderRouter(
                     } catch (fallbackError: CancellationException) { throw fallbackError }
                     catch (fallbackError: Throwable) {
                         eventBus?.publish(ProviderFailure(requestId = fallbackRequestId, providerId = fallbackTarget.providerId, reason = fallbackError.message ?: "Fallback execution failed"))
+                        // Preserve both failures for diagnostics while keeping the primary target's
+                        // error as the stable outward contract.
+                        if (fallbackError !== e) e.addSuppressed(fallbackError)
                     }
                 }
             }

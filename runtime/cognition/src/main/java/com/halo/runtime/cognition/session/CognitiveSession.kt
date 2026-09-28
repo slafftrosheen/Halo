@@ -8,6 +8,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -114,7 +115,7 @@ class CognitiveSession(
                 contextAssembler = contextAssembler,
                 agentRunStore = agentRunStore,
             ),
-            providerExecutor = DefaultProviderTurnExecutor(eventBus),
+            providerExecutor = DefaultProviderTurnExecutor(eventBus, providerRouter),
             toolExecutor = DefaultToolTurnExecutor(
                 toolRegistry = toolRegistry,
                 toolAuthorizer = toolAuthorizer,
@@ -264,7 +265,10 @@ class CognitiveSession(
         val interactionId = InteractionId(newInteractionId)
         val requestId = UUID.randomUUID().toString()
 
-        val job = scope.launch {
+        // Register before execution. Starting eagerly here races the separate coordinator update:
+        // a fast failure/completion can clear nothing, after which an already-finished Job is
+        // installed as the active turn and every later speech request is dropped as occupied.
+        val job = scope.launch(start = CoroutineStart.LAZY) {
             try {
                 if (resumedRunId == null) {
                     eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Preparing(interactionId.value)))
@@ -292,7 +296,6 @@ class CognitiveSession(
                 }
 
             } catch (e: CancellationException) {
-                eventBus.publish(CognitiveFailed(requestId = requestId, message = "Interaction cancelled", interactionId = interactionId.value))
                 if (resumedRunId == null) eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Cancelled(interactionId.value, "Interaction cancelled")))
                 _state.value = CognitiveSessionState.Idle
                 throw e
@@ -334,6 +337,7 @@ class CognitiveSession(
             if (replaced != null && replaced.interactionId != interactionId) {
                 eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Interrupted(replaced.interactionId.value, interactionId.value)))
             }
+            job.start()
         }
     }
 

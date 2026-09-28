@@ -141,6 +141,13 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- OEM fallback qualification path when the role picker does not enumerate a
+                 VoiceInteractionService candidate directly. The active role still uses Halo's
+                 VoiceInteractionSession overlay; this opens Halo only on activity-based assist. -->
+            <intent-filter>
+                <action android:name="android.intent.action.ASSIST" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -172,6 +179,18 @@
             android:name=".assistant.HaloVoiceInteractionSessionService"
             android:permission="android.permission.BIND_VOICE_INTERACTION"
             android:exported="true" />
+
+        <service
+            android:name=".assistant.HaloRecognitionService"
+            android:permission="android.permission.BIND_SPEECH_RECOGNITION_SERVICE"
+            android:exported="true">
+            <meta-data
+                android:name="android.speech"
+                android:resource="@xml/recognition_service" />
+            <intent-filter>
+                <action android:name="android.speech.RecognitionService" />
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>

@@ -180,6 +180,8 @@ sealed interface CommitOutcome {
 data class RecoveryDraft(
     val noteId: String,
     val blocks: List<NoteBlock>,
+    /** Null means the title remains derived; non-null is an unsaved explicit rename. */
+    val title: String?,
     val baseRevision: Long,
     val sequence: Long,
     val updatedAt: Long,

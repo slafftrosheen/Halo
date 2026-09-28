@@ -127,13 +127,9 @@ class AndroidAssistantRoleController(
             }
         }
 
-        if (snapshot.roleHeld && !snapshot.activeVoiceInteractionService) {
-            val voiceSettingsIntent = Intent(Settings.ACTION_VOICE_INPUT_SETTINGS)
-            if (canResolve(voiceSettingsIntent)) {
-                list.add(AssistantEnrollmentCandidate(AssistantEnrollmentPath.VOICE_INPUT_SETTINGS, voiceSettingsIntent))
-            }
-        }
-
+        // If the role is held but VoiceInteractionService is not active, the authoritative repair
+        // surface is Default Apps. ACTION_VOICE_INPUT_SETTINGS commonly configures only the speech
+        // recognizer and previously swallowed the launch before users reached assistant selection.
         val manageAppsIntent = Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
         if (canResolve(manageAppsIntent)) {
             list.add(AssistantEnrollmentCandidate(AssistantEnrollmentPath.DEFAULT_APPS_SETTINGS, manageAppsIntent))

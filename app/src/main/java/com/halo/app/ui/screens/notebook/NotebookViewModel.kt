@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicBoolean
 
 enum class NotebookFilter(val label: String) {
     ALL("All"), NOTES("Notes"), FILES("Files"), CANVASES("Canvases"), CHATS("Chats"), MEMORY("Memory"),
@@ -40,6 +41,7 @@ enum class NotebookFilter(val label: String) {
 data class NotebookWorkspaceItem(val objectRef: WorkspaceObject, val snippet: String? = null)
 
 data class NotebookUiState(
+    val isLoaded: Boolean = false,
     val items: List<NotebookWorkspaceItem> = emptyList(),
     val query: String = "",
     val filter: NotebookFilter = NotebookFilter.ALL,
@@ -80,6 +82,8 @@ class NotebookViewModel(
     private val filter = MutableStateFlow(NotebookFilter.ALL)
     private val selectedCollection = MutableStateFlow<String?>(null)
     private val navigationChannel = Channel<NotebookNavigation>(Channel.BUFFERED)
+    private val creatingNote = AtomicBoolean(false)
+    private val creatingCanvas = AtomicBoolean(false)
     val navigationEvents = navigationChannel.receiveAsFlow()
     val memories = workspace.memories
     val history = workspace.history
@@ -125,8 +129,12 @@ class NotebookViewModel(
             }
             val types = when (selectedFilter) {
                 NotebookFilter.NOTES -> setOf(WorkspaceObjectType.NOTE)
-                NotebookFilter.FILES -> setOf(WorkspaceObjectType.FILE)
-                NotebookFilter.CANVASES -> setOf(WorkspaceObjectType.ARTIFACT)
+                NotebookFilter.FILES -> setOf(
+                    WorkspaceObjectType.FILE,
+                    WorkspaceObjectType.MEDIA,
+                    WorkspaceObjectType.ARTIFACT,
+                )
+                NotebookFilter.CANVASES -> setOf(WorkspaceObjectType.CANVAS, WorkspaceObjectType.ARTIFACT)
                 NotebookFilter.CHATS -> setOf(WorkspaceObjectType.CONVERSATION)
                 NotebookFilter.MEMORY -> setOf(WorkspaceObjectType.MEMORY)
                 else -> emptySet()
@@ -161,10 +169,21 @@ class NotebookViewModel(
                 if (selectedFilter == NotebookFilter.FAVORITES) {
                     visible = visible.filter { it.id.value in organized.favorites }
                 }
+                if (selectedFilter == NotebookFilter.FILES) {
+                    visible = visible.filterNot {
+                        it.type == WorkspaceObjectType.ARTIFACT && it.contentRef.startsWith("canvas:")
+                    }
+                }
+                if (selectedFilter == NotebookFilter.CANVASES) {
+                    visible = visible.filter {
+                        it.type == WorkspaceObjectType.CANVAS || it.contentRef.startsWith("canvas:")
+                    }
+                }
                 if (queryState.collectionId != null) {
                     visible = visible.filter { it.id.value in organized.members }
                 }
                 NotebookUiState(
+                    isLoaded = true,
                     items = visible.sortedByDescending { it.updatedAt }.map { row ->
                         NotebookWorkspaceItem(row, matches[row.id.value]?.snippet)
                     },
@@ -189,28 +208,48 @@ class NotebookViewModel(
     fun createCollection(name: String) = viewModelScope.launch {
         organization.createCollection(name)?.let { selectedCollection.value = it.id }
     }
-    fun deleteSelectedCollection() = viewModelScope.launch {
-        selectedCollection.value?.let { id ->
-            if (organization.deleteCollection(id)) selectedCollection.value = null
+    fun deleteSelectedCollection() {
+        val selectedId = selectedCollection.value ?: return
+        viewModelScope.launch {
+            if (organization.deleteCollection(selectedId) && selectedCollection.value == selectedId) {
+                selectedCollection.value = null
+            }
         }
     }
     fun addToCollection(objectId: String, collectionId: String) = viewModelScope.launch {
         organization.setMembership(collectionId, objectId, true)
     }
-    fun removeFromSelectedCollection(objectId: String) = viewModelScope.launch {
-        selectedCollection.value?.let { organization.setMembership(it, objectId, false) }
+    fun removeFromSelectedCollection(objectId: String) {
+        val collectionId = selectedCollection.value ?: return
+        viewModelScope.launch {
+            organization.setMembership(collectionId, objectId, false)
+        }
     }
     fun toggleFavorite(objectId: String) = viewModelScope.launch {
-        organization.setFavorite(objectId, objectId !in uiState.value.favorites)
+        organization.toggleFavorite(objectId)
     }
-    fun createNote() = viewModelScope.launch {
-        navigationChannel.send(NotebookNavigation.OpenNote(notes.createQuickNote().id))
+    fun createNote() {
+        if (!creatingNote.compareAndSet(false, true)) return
+        viewModelScope.launch {
+            try {
+                navigationChannel.send(NotebookNavigation.OpenNote(notes.createQuickNote().id))
+            } finally {
+                creatingNote.set(false)
+            }
+        }
     }
     fun openStudy(sessionId: String) {
         navigationChannel.trySend(NotebookNavigation.OpenStudy(sessionId))
     }
-    fun createCanvas() = viewModelScope.launch {
-        navigationChannel.send(NotebookNavigation.OpenCanvas(canvases.create()))
+    fun createCanvas() {
+        if (!creatingCanvas.compareAndSet(false, true)) return
+        viewModelScope.launch {
+            try {
+                navigationChannel.send(NotebookNavigation.OpenCanvas(canvases.create()))
+            } finally {
+                creatingCanvas.set(false)
+            }
+        }
     }
     fun openObject(item: WorkspaceObject) {
         val id = item.id.value

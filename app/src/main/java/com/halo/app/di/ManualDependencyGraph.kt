@@ -540,7 +540,7 @@ object ManualDependencyGraph {
         DefaultActiveTurnCoordinator(eventBus)
     }
     val providerTurnExecutor by lazy {
-        DefaultProviderTurnExecutor(eventBus)
+        DefaultProviderTurnExecutor(eventBus, aiProviderRouter)
     }
     val toolTurnExecutor by lazy {
         DefaultToolTurnExecutor(

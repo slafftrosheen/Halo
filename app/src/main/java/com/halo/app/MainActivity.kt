@@ -27,16 +27,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.halo.app.di.ManualDependencyGraph
+import com.halo.app.assistant.HaloAssistantRuntimeBridge
 import com.halo.app.ui.shell.AppShell
 import com.halo.app.ui.screens.discovery.requiredBluetoothDiscoveryPermissions
 import com.halo.app.ui.theme.AppearanceMode
 import com.halo.app.ui.theme.HaloTheme
 import com.halo.app.ui.workspace.HaloWorkspaceButton
+import com.halo.sdk.runtime.HostInvocation
+import com.halo.sdk.runtime.InvocationSource
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.UUID
 
 class MainActivity : ComponentActivity() {
     private var uiGraphReady by mutableStateOf(false)
@@ -48,6 +52,8 @@ class MainActivity : ComponentActivity() {
     private var fullyDrawnReported = false
     private var uiGraphJob: Job? = null
     private var runtimeJob: Job? = null
+    private var activityAssistJob: Job? = null
+    private var activityAssistInteractionId: String? = null
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -195,6 +201,7 @@ class MainActivity : ComponentActivity() {
         startUiGraphBootstrap()
         startRuntimeLoop()
         handleIncomingShareIntent(intent)
+        handleAssistantIntent(intent)
         RuntimeStartupTrace.mark("activity.onCreate.end", startedAt)
     }
 
@@ -202,6 +209,45 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         handleIncomingShareIntent(intent)
+        handleAssistantIntent(intent)
+    }
+
+    /** OEM fallback for devices that route the default-assistant contract through an activity. */
+    private fun handleAssistantIntent(intent: Intent?) {
+        if (intent?.action != Intent.ACTION_ASSIST) return
+        intent.action = null
+
+        val previousId = activityAssistInteractionId
+        val interactionId = UUID.randomUUID().toString()
+        activityAssistInteractionId = interactionId
+        activityAssistJob?.cancel()
+        activityAssistJob = lifecycleScope.launch {
+            val bridge = HaloAssistantRuntimeBridge(this@MainActivity)
+            try {
+                if (previousId != null) {
+                    bridge.cancelAssistantInteraction(previousId, "superseded")
+                }
+                val inputDeviceId = intent.getIntExtra(Intent.EXTRA_ASSIST_INPUT_DEVICE_ID, -1)
+                    .takeIf { it >= 0 }
+                bridge.begin(
+                    HostInvocation(
+                        interactionId = interactionId,
+                        source = InvocationSource.ANDROID_ASSISTANT,
+                        invokedAtMs = System.currentTimeMillis(),
+                        inputDeviceId = inputDeviceId,
+                        requestedAssistContext = false,
+                        requestedScreenshot = false,
+                    )
+                )
+                bridge.startListening(interactionId, inputDeviceId)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Throwable) {
+                Log.e("MainActivity", "Activity assistant fallback failed", error)
+                bridge.cancelAssistantInteraction(interactionId, "startup_failed")
+                if (activityAssistInteractionId == interactionId) activityAssistInteractionId = null
+            }
+        }
     }
 
     private fun handleIncomingShareIntent(intent: Intent?) {
@@ -339,6 +385,16 @@ class MainActivity : ComponentActivity() {
         runtimeReady = false
         uiGraphJob?.cancel()
         runtimeJob?.cancel()
+        activityAssistJob?.cancel()
+        if (!isChangingConfigurations) {
+            activityAssistInteractionId?.let { interactionId ->
+                ManualDependencyGraph.infra.scope.launch {
+                    HaloAssistantRuntimeBridge(applicationContext)
+                        .cancelAssistantInteraction(interactionId, "activity_destroyed")
+                }
+            }
+        }
+        activityAssistInteractionId = null
 
         // HaloRuntime belongs to the Android process, not to an Activity. Stopping
         // or disposing it here made rotation race the next Activity and left lazy

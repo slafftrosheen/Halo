@@ -9,7 +9,10 @@ import com.halo.sdk.runtime.study.StudySession
 import com.halo.sdk.runtime.study.TutorStage
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.delay
 
 /**
  * Persistence for guided Study. The repository owns durable state only; teaching policy lives in the
@@ -20,6 +23,7 @@ class StudyRepository(
     private val dao: StudyDao,
     private val now: () -> Long = System::currentTimeMillis,
     private val newId: () -> String = { UUID.randomUUID().toString() },
+    private val clockTicks: Flow<Long> = minuteClock(now),
 ) {
     fun observeActiveSessions(): Flow<List<StudySessionRecord>> =
         dao.observeActiveSessions().map { rows -> rows.map(StudySessionEntity::toRecord) }
@@ -274,9 +278,20 @@ class StudyRepository(
     suspend fun deleteSessionData(sessionId: String): Boolean = dao.deleteSessionData(sessionId) == 1
 
     private fun flushDueQuery(limit: Int): Flow<List<StudyPracticeItem>> {
-        // The due window is evaluated at collection time so a long-lived screen does not keep a
-        // stale clock bound into the query.
-        val at = now()
-        return dao.observeDuePracticeItems(at, limit).map { rows -> rows.map(StudyPracticeItemEntity::toDomain) }
+        // Time is an input, not a captured constant. While collected by the visible Study UI this
+        // rebinds Room's :now parameter at minute granularity even when the DB has not changed.
+        return clockTicks.flatMapLatest { at ->
+            dao.observeDuePracticeItems(at, limit)
+        }.map { rows -> rows.map(StudyPracticeItemEntity::toDomain) }
+    }
+
+    companion object {
+        private fun minuteClock(now: () -> Long): Flow<Long> = flow {
+            while (true) {
+                val current = now()
+                emit(current)
+                delay((60_000L - current.mod(60_000L)).coerceAtLeast(1L))
+            }
+        }
     }
 }

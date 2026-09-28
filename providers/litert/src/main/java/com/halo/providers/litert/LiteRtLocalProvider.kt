@@ -189,6 +189,13 @@ class LiteRtLocalProvider(
     suspend fun loadModelIfNeeded(): Boolean = loadMutex.withLock {
         val modelId = configuredModelId ?: return@withLock false
         val descriptor = inventoryRepository.resolveModel(modelId) ?: return@withLock false
+        if (!descriptor.valid) {
+            _status.value = ProviderStatus(
+                ProviderStatus.State.ERROR,
+                "${descriptor.displayName} is ${describeValidation(descriptor.validation)} — re-download it",
+            )
+            return@withLock false
+        }
         loadLocked(descriptor)
     }
 
@@ -215,6 +222,12 @@ class LiteRtLocalProvider(
                 config = loadConfig,
             )
         } catch (cancelled: CancellationException) {
+            nativeResourceCoordinator?.release(this)
+            _status.value = ProviderStatus(
+                ProviderStatus.State.READY,
+                "Loading ${descriptor.displayName} was cancelled",
+                ProviderReadiness.ConfiguredCold,
+            )
             throw cancelled
         } catch (error: Throwable) {
             Result.failure(error)
@@ -282,7 +295,7 @@ class LiteRtLocalProvider(
     override suspend fun listModels(): List<AiModel> = withContext(Dispatchers.IO) {
         val state = inventoryRepository.inventoryState.value
         if (state !is LocalModelInventoryState.Ready) return@withContext emptyList()
-        state.models.map { desc ->
+        state.models.filter(LocalModelDescriptor::valid).map { desc ->
             AiModel(
                 id = desc.id,
                 displayName = desc.displayName,
@@ -329,8 +342,7 @@ class LiteRtLocalProvider(
             )
         }
         val loadMs = System.currentTimeMillis() - loadStart
-        val backend = modelSession.activeBackend ?: LocalComputeBackend.AUTO
-
+        val loadBackend = modelSession.activeBackend ?: LocalComputeBackend.AUTO
         val generation = withTimeoutOrNull(VERIFY_TIMEOUT_MS) {
             modelSession.generate(
                 RuntimeGenerationConfig(
@@ -369,6 +381,8 @@ class LiteRtLocalProvider(
             )
         }
 
+        val backend = modelSession.activeBackend ?: LocalComputeBackend.AUTO
+
         Log.i(
             "HALO_LITERT_VERIFY",
             "HALO_LITERT_VERIFY_OK model=$modelId backend=$backend loadMs=$loadMs ttftMs=${result.timeToFirstTokenMs}",
@@ -379,6 +393,9 @@ class LiteRtLocalProvider(
             loadMs = loadMs,
             ttftMs = result.timeToFirstTokenMs,
             sampleText = text.take(80),
+            loadBackend = loadBackend,
+            generationBackend = backend,
+            fallbackReason = modelSession.fallbackReason,
         )
     }
 
@@ -420,6 +437,7 @@ class LiteRtLocalProvider(
 
         return@withContext try {
             val result = modelSession.generate(genConfig).getOrElse { err ->
+                if (err is CancellationException) throw err
                 throw AiProviderException(AiErrorType.GENERATION_FAILED, "LiteRT generation failed: ${err.message}", err)
             }
 
@@ -483,6 +501,7 @@ class LiteRtLocalProvider(
                     )
                 )
             }.onFailure { err ->
+                if (err is CancellationException) throw err
                 send(AiStreamEvent.Failed(AiProviderException(AiErrorType.GENERATION_FAILED, err.message ?: "Stream failed", err)))
             }
         } catch (cancelled: CancellationException) {

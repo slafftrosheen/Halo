@@ -113,6 +113,12 @@ class HaloAssistantRuntimeBridge(private val context: Context) : AssistantRuntim
         }
 
     override suspend fun hideAssistantSurface(interactionId: String) {
+        // Dismissing the system assistant must release its microphone capture even when the
+        // cognitive turn has not started yet. Otherwise a hidden session can keep the recorder
+        // and prevent the next assistant invocation from listening.
+        if (ManualDependencyGraph.audioPerceptionEngine.inputStatus.value.turn?.captureId == interactionId) {
+            ManualDependencyGraph.commandBus.dispatch(StopListening)
+        }
         ManualDependencyGraph.eventBus.publish(AssistantInvocationEnded(interactionId, "hidden"))
     }
 

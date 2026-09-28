@@ -6,7 +6,6 @@ import androidx.lifecycle.viewModelScope
 import com.halo.app.data.notebook.CanvasNode
 import com.halo.app.data.notebook.NotebookCanvasRepository
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,6 +21,8 @@ data class CanvasEditorUiState(
     val selectedNodeId: String? = null,
     val loading: Boolean = true,
     val missing: Boolean = false,
+    val addingNode: Boolean = false,
+    val notice: String? = null,
 )
 
 class CanvasEditorViewModel(
@@ -32,19 +33,37 @@ class CanvasEditorViewModel(
     val uiState: StateFlow<CanvasEditorUiState> = mutableState.asStateFlow()
     private var viewportSave: Job? = null
     private val nodePositionSaves = mutableMapOf<String, Job>()
+    private val nodeTextSaves = mutableMapOf<String, Job>()
+    private val pendingNodePositions = mutableMapOf<String, Pair<Float, Float>>()
+    private val pendingNodeText = mutableMapOf<String, String>()
+    private var pendingViewport: Triple<Float, Float, Float>? = null
 
     init {
         viewModelScope.launch {
             repository.observe(canvasId).collect { canvas ->
                 if (canvas == null) {
-                    mutableState.value = mutableState.value.copy(loading = false, missing = true)
+                    mutableState.value = mutableState.value.copy(
+                        nodes = emptyList(),
+                        selectedNodeId = null,
+                        loading = false,
+                        missing = true,
+                        addingNode = false,
+                    )
                 } else {
+                    val viewport = pendingViewport
                     mutableState.value = mutableState.value.copy(
                         title = canvas.title,
-                        nodes = canvas.nodes,
-                        viewportX = canvas.viewportX,
-                        viewportY = canvas.viewportY,
-                        viewportScale = canvas.viewportScale,
+                        nodes = canvas.nodes.map { node ->
+                            val position = pendingNodePositions[node.id]
+                            node.copy(
+                                text = pendingNodeText[node.id] ?: node.text,
+                                x = position?.first ?: node.x,
+                                y = position?.second ?: node.y,
+                            )
+                        },
+                        viewportX = viewport?.first ?: canvas.viewportX,
+                        viewportY = viewport?.second ?: canvas.viewportY,
+                        viewportScale = viewport?.third ?: canvas.viewportScale,
                         loading = false,
                         missing = false,
                     )
@@ -58,18 +77,44 @@ class CanvasEditorViewModel(
     }
 
     fun addTextNode() = viewModelScope.launch {
+        if (mutableState.value.addingNode || mutableState.value.missing) return@launch
+        mutableState.value = mutableState.value.copy(addingNode = true, notice = null)
         val state = mutableState.value
         val centerX = -state.viewportX / state.viewportScale + 80f
         val centerY = -state.viewportY / state.viewportScale + 120f
-        val id = repository.addTextNode(canvasId, centerX, centerY)
-        mutableState.value = mutableState.value.copy(selectedNodeId = id)
+        runCatching { repository.addTextNode(canvasId, centerX, centerY) }
+            .onSuccess { id ->
+                mutableState.value = mutableState.value.copy(selectedNodeId = id, addingNode = false)
+            }
+            .onFailure {
+                mutableState.value = mutableState.value.copy(
+                    addingNode = false,
+                    notice = "Could not add a card. Try again.",
+                )
+            }
     }
 
     fun updateNodeText(nodeId: String, text: String) {
+        pendingNodeText[nodeId] = text
         mutableState.value = mutableState.value.copy(
             nodes = mutableState.value.nodes.map { if (it.id == nodeId) it.copy(text = text) else it }
         )
-        viewModelScope.launch { repository.updateText(canvasId, nodeId, text) }
+        if (nodeTextSaves[nodeId]?.isActive == true) return
+        nodeTextSaves[nodeId] = viewModelScope.launch {
+            while (true) {
+                val latestText = pendingNodeText[nodeId] ?: break
+                val saved = runCatching { repository.updateText(canvasId, nodeId, latestText) }.getOrDefault(false)
+                if (!saved) {
+                    mutableState.value = mutableState.value.copy(notice = "This card could not be saved yet.")
+                    break
+                }
+                if (pendingNodeText[nodeId] == latestText) {
+                    pendingNodeText.remove(nodeId)
+                    break
+                }
+            }
+            nodeTextSaves.remove(nodeId)
+        }
     }
 
     fun moveNode(nodeId: String, dx: Float, dy: Float) {
@@ -79,10 +124,24 @@ class CanvasEditorViewModel(
         }
         mutableState.value = mutableState.value.copy(nodes = updated, selectedNodeId = nodeId)
         updated.firstOrNull { it.id == nodeId }?.let { node ->
-            nodePositionSaves.remove(nodeId)?.cancel()
+            val target = node.x to node.y
+            pendingNodePositions[nodeId] = target
+            if (nodePositionSaves[nodeId]?.isActive == true) return@let
             nodePositionSaves[nodeId] = viewModelScope.launch {
-                delay(120)
-                repository.moveNode(canvasId, nodeId, node.x, node.y)
+                while (true) {
+                    val latestPosition = pendingNodePositions[nodeId] ?: break
+                    val saved = runCatching {
+                        repository.moveNode(canvasId, nodeId, latestPosition.first, latestPosition.second)
+                    }.getOrDefault(false)
+                    if (!saved) {
+                        mutableState.value = mutableState.value.copy(notice = "This card position could not be saved yet.")
+                        break
+                    }
+                    if (pendingNodePositions[nodeId] == latestPosition) {
+                        pendingNodePositions.remove(nodeId)
+                        break
+                    }
+                }
                 nodePositionSaves.remove(nodeId)
             }
         }
@@ -90,10 +149,20 @@ class CanvasEditorViewModel(
 
     fun deleteSelectedNode() {
         val id = mutableState.value.selectedNodeId ?: return
+        val selectedNode = mutableState.value.nodes.firstOrNull { it.id == id }
         nodePositionSaves.remove(id)?.cancel()
+        nodeTextSaves.remove(id)?.cancel()
         viewModelScope.launch {
-            if (repository.deleteNode(canvasId, id)) {
+            if (runCatching { repository.deleteNode(canvasId, id) }.getOrDefault(false)) {
+                pendingNodePositions.remove(id)
+                pendingNodeText.remove(id)
                 mutableState.value = mutableState.value.copy(selectedNodeId = null)
+            } else {
+                mutableState.value = mutableState.value.copy(notice = "Could not delete this card.")
+                selectedNode?.let { node ->
+                    updateNodeText(id, node.text)
+                    moveNode(id, 0f, 0f)
+                }
             }
         }
     }
@@ -101,24 +170,49 @@ class CanvasEditorViewModel(
     fun transform(panX: Float, panY: Float, zoom: Float) {
         val current = mutableState.value
         val scale = (current.viewportScale * zoom).coerceIn(0.35f, 2.5f)
+        val target = Triple(
+            current.viewportX + panX,
+            current.viewportY + panY,
+            scale,
+        )
+        pendingViewport = target
         mutableState.value = current.copy(
-            viewportX = current.viewportX + panX,
-            viewportY = current.viewportY + panY,
+            viewportX = target.first,
+            viewportY = target.second,
             viewportScale = scale,
             selectedNodeId = null,
         )
-        viewportSave?.cancel()
-        viewportSave = viewModelScope.launch {
-            delay(250)
-            val latest = mutableState.value
-            repository.saveViewport(canvasId, latest.viewportX, latest.viewportY, latest.viewportScale)
-        }
+        savePendingViewport()
     }
 
     fun resetViewport() {
+        pendingViewport = Triple(0f, 0f, 1f)
         mutableState.value = mutableState.value.copy(viewportX = 0f, viewportY = 0f, viewportScale = 1f)
-        viewportSave?.cancel()
-        viewportSave = viewModelScope.launch { repository.saveViewport(canvasId, 0f, 0f, 1f) }
+        savePendingViewport()
+    }
+
+    private fun savePendingViewport() {
+        if (viewportSave?.isActive == true) return
+        viewportSave = viewModelScope.launch {
+            while (true) {
+                val latest = pendingViewport ?: break
+                val saved = runCatching {
+                    repository.saveViewport(canvasId, latest.first, latest.second, latest.third)
+                }.getOrDefault(false)
+                if (!saved) {
+                    mutableState.value = mutableState.value.copy(notice = "Canvas position could not be saved yet.")
+                    break
+                }
+                if (pendingViewport == latest) {
+                    pendingViewport = null
+                    break
+                }
+            }
+        }
+    }
+
+    fun clearNotice() {
+        mutableState.value = mutableState.value.copy(notice = null)
     }
 
     class Factory(
