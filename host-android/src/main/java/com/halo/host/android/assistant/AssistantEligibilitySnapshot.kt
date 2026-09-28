@@ -13,6 +13,8 @@ data class AssistantEligibilitySnapshot(
 
     val sessionServiceDeclared: Boolean = false,
     val sessionServiceClassValid: Boolean = false,
+    val recognitionServiceDeclared: Boolean = false,
+    val recognitionServicePermissionCorrect: Boolean = false,
 
     val activeVoiceInteractionService: Boolean = false,
 

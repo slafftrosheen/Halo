@@ -64,6 +64,7 @@ class CognitiveTurnExecutor(
 
         var currentContext = prepared.context
         var currentRequest = prepared.providerRequest
+        var currentTarget = prepared.target
 
         if (turn.mode == CognitiveTurnMode.FRESH || turn.mode == CognitiveTurnMode.RECOVER_PROVIDER) {
             val durableRunId = createDurableRunIfNeeded()
@@ -92,6 +93,7 @@ class CognitiveTurnExecutor(
                 context = currentContext,
                 requestId = turn.requestId,
                 interactionId = turn.interactionId,
+                workload = prepared.workload.inference,
             )
 
             val initialResponse = when (outcome) {
@@ -109,7 +111,10 @@ class CognitiveTurnExecutor(
                         metadata = turn.metadata,
                     )
                 }
-                is ProviderTurnResult.Response -> outcome.response
+                is ProviderTurnResult.Response -> {
+                    currentTarget = outcome.target ?: currentTarget
+                    outcome.response
+                }
             }
 
             if (durableRunId != null) {
@@ -177,7 +182,7 @@ class CognitiveTurnExecutor(
                             interactionId = turn.interactionId,
                             requestId = turn.requestId,
                             userText = turn.request.text.orEmpty(),
-                            response = AiResponse(text = "Waiting for approval", providerId = prepared.target.providerId, modelId = prepared.target.modelId),
+                            response = AiResponse(text = "Waiting for approval", providerId = currentTarget.providerId, modelId = currentTarget.modelId),
                             responseDelivery = turn.responseDelivery,
                             outputTarget = SpeechOutputTarget.Phone,
                             outputFallback = SpeechOutputFallback.ALLOW_PHONE,
@@ -191,7 +196,7 @@ class CognitiveTurnExecutor(
                             interactionId = turn.interactionId,
                             requestId = turn.requestId,
                             userText = turn.request.text.orEmpty(),
-                            response = AiResponse(text = "Resource busy", providerId = prepared.target.providerId, modelId = prepared.target.modelId),
+                            response = AiResponse(text = "Resource busy", providerId = currentTarget.providerId, modelId = currentTarget.modelId),
                             responseDelivery = turn.responseDelivery,
                             outputTarget = SpeechOutputTarget.Phone,
                             outputFallback = SpeechOutputFallback.ALLOW_PHONE,
@@ -205,7 +210,7 @@ class CognitiveTurnExecutor(
                             interactionId = turn.interactionId,
                             requestId = turn.requestId,
                             userText = turn.request.text.orEmpty(),
-                            response = AiResponse(text = "Capability missing", providerId = prepared.target.providerId, modelId = prepared.target.modelId),
+                            response = AiResponse(text = "Capability missing", providerId = currentTarget.providerId, modelId = currentTarget.modelId),
                             responseDelivery = turn.responseDelivery,
                             outputTarget = SpeechOutputTarget.Phone,
                             outputFallback = SpeechOutputFallback.ALLOW_PHONE,
@@ -241,8 +246,8 @@ class CognitiveTurnExecutor(
                                     runId = durableRun,
                                     createdAt = Instant.now(),
                                     turnId = roundTurnId,
-                                    providerId = prepared.target.providerId,
-                                    modelId = prepared.target.modelId,
+                                    providerId = currentTarget.providerId,
+                                    modelId = currentTarget.modelId,
                                     requestIdentity = ToolArgumentCanonicalizer.sha256Hex(
                                         (currentRequest.text ?: "") + ":" + (currentRequest.image?.contentHashCode() ?: 0)
                                     ),
@@ -254,15 +259,19 @@ class CognitiveTurnExecutor(
                         }
 
                         val roundOutcome = providerExecutor.execute(
-                            target = prepared.target,
-                            request = currentRequest.copy(modelId = prepared.target.modelId),
+                            target = currentTarget,
+                            request = currentRequest.copy(modelId = currentTarget.modelId),
                             context = currentContext,
                             requestId = roundRequestId,
                             interactionId = turn.interactionId,
+                            workload = prepared.workload.inference,
                         )
 
                         response = when (roundOutcome) {
-                            is ProviderTurnResult.Response -> roundOutcome.response
+                            is ProviderTurnResult.Response -> {
+                                currentTarget = roundOutcome.target ?: currentTarget
+                                roundOutcome.response
+                            }
                             is ProviderTurnResult.HandoffStarted -> throw AiProviderException(
                                 AiErrorType.INVALID_RESPONSE,
                                 "Handoff started during tool loop"
@@ -349,15 +358,19 @@ class CognitiveTurnExecutor(
             )
 
             val roundOutcome = providerExecutor.execute(
-                target = prepared.target,
-                request = currentRequest.copy(modelId = prepared.target.modelId),
+                target = currentTarget,
+                request = currentRequest.copy(modelId = currentTarget.modelId),
                 context = currentContext,
                 requestId = roundRequestId,
                 interactionId = turn.interactionId,
+                workload = prepared.workload.inference,
             )
 
             response = when (roundOutcome) {
-                is ProviderTurnResult.Response -> roundOutcome.response
+                is ProviderTurnResult.Response -> {
+                    currentTarget = roundOutcome.target ?: currentTarget
+                    roundOutcome.response
+                }
                 is ProviderTurnResult.HandoffStarted -> throw AiProviderException(
                     AiErrorType.INVALID_RESPONSE,
                     "Handoff started during continuation"

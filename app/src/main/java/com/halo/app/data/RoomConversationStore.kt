@@ -46,9 +46,15 @@ class RoomConversationStore(private val db: AppDatabase, scope: CoroutineScope) 
     private val mutex = Mutex()
     private var conversationId = ""
     private val _turns = MutableStateFlow<List<ConversationTurn>>(emptyList())
+    private val _historyLoaded = MutableStateFlow(false)
     override val turns = _turns.asStateFlow()
     override fun activeConversationId(): String? = conversationId.ifBlank { null }
-    val history = dao.observeAll().stateIn(scope, SharingStarted.Eagerly, emptyList())
+    val historyLoaded = _historyLoaded.asStateFlow()
+    val history = dao.observeAll()
+        .onEach { _historyLoaded.value = true }
+        .stateIn(scope, SharingStarted.Eagerly, emptyList())
+    val conversations = dao.observeConversations()
+        .stateIn(scope, SharingStarted.Eagerly, emptyList())
     private val ready = scope.async(Dispatchers.IO) {
         val now = System.currentTimeMillis()
         conversationId = dao.active()?.id ?: UUID.randomUUID().toString().also { id ->

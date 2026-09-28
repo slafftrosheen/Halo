@@ -53,10 +53,11 @@ fun HaloNavigation(
     val currentDestination = navBackStackEntry?.destination
     val currentRoute = currentDestination?.route
 
-    fun primaryRoute(route: String?): String? = when (route) {
-        "ai_settings", "voice_settings", "permissions" -> "settings"
-        "discovery", "device/{deviceId}" -> "devices"
-        "notebook/note/{noteId}" -> "notebook"
+    fun primaryRoute(route: String?): String? = when {
+        route == null -> null
+        route.startsWith("notebook/") -> "notebook"
+        route in setOf("ai_settings", "voice_settings", "permissions") -> "settings"
+        route == "discovery" || route.startsWith("device/") -> "devices"
         else -> route
     }
 

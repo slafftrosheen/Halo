@@ -11,6 +11,8 @@ import com.halo.sdk.provider.Recoverability
 import com.halo.sdk.provider.AiRequest
 import com.halo.sdk.provider.AiResponse
 import com.halo.sdk.provider.AiStreamEvent
+import com.halo.sdk.provider.AiProviderRouter
+import com.halo.sdk.provider.AiWorkloadSpec
 import com.halo.sdk.provider.StreamingToolCallAssembler
 import com.halo.sdk.provider.StreamToolCallException
 import com.halo.sdk.runtime.CognitiveTokenReceived
@@ -27,6 +29,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 sealed interface ProviderTurnResult {
     data class Response(
         val response: AiResponse,
+        val target: AiExecutionTarget? = null,
     ) : ProviderTurnResult
 
     data class HandoffStarted(
@@ -45,10 +48,20 @@ interface ProviderTurnExecutor {
         requestId: String,
         interactionId: InteractionId,
     ): ProviderTurnResult
+
+    suspend fun execute(
+        target: AiExecutionTarget,
+        request: AiRequest,
+        context: AiContext,
+        requestId: String,
+        interactionId: InteractionId,
+        workload: AiWorkloadSpec,
+    ): ProviderTurnResult = execute(target, request, context, requestId, interactionId)
 }
 
 class DefaultProviderTurnExecutor(
-    private val eventBus: EventBus
+    private val eventBus: EventBus,
+    private val providerRouter: AiProviderRouter? = null,
 ) : ProviderTurnExecutor {
     private val _streamingText = MutableStateFlow<String?>(null)
     override val streamingText = _streamingText.asStateFlow()
@@ -95,7 +108,22 @@ class DefaultProviderTurnExecutor(
                             }
 
                             is AiStreamEvent.Completed -> completedResponse = event.response
-                            is AiStreamEvent.Failed -> throw event.error
+                            is AiStreamEvent.Failed -> {
+                                val visible = accumulatedText.isNotEmpty() || toolCalls.hasDeltas()
+                                val failure = event.error
+                                if (visible && failure is AiProviderException) {
+                                    throw AiProviderException(
+                                        type = failure.type,
+                                        message = failure.message ?: "Provider stream failed after partial output",
+                                        cause = failure,
+                                        details = failure.details.copy(
+                                            providerCode = "STREAM_FAILED_AFTER_OUTPUT",
+                                            recoverability = Recoverability.PERMANENT,
+                                        ),
+                                    )
+                                }
+                                throw failure
+                            }
                             is AiStreamEvent.ToolCallDelta -> toolCalls.appendDelta(event)
                         }
                     }
@@ -140,9 +168,59 @@ class DefaultProviderTurnExecutor(
                 modelId = expectedModelId
             )
         } else {
-            ProviderTurnResult.Response(validated)
+            ProviderTurnResult.Response(validated, target)
         }
     }
+
+    override suspend fun execute(
+        target: AiExecutionTarget,
+        request: AiRequest,
+        context: AiContext,
+        requestId: String,
+        interactionId: InteractionId,
+        workload: AiWorkloadSpec,
+    ): ProviderTurnResult {
+        return try {
+            execute(target, request, context, requestId, interactionId)
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            throw cancelled
+        } catch (error: Throwable) {
+            val providerCode = (error as? AiProviderException)?.details?.providerCode
+            if (providerCode == "STREAM_IDLE_AFTER_OUTPUT" ||
+                providerCode == "STREAM_FAILED_AFTER_OUTPUT" ||
+                !fallbackEligible(error)
+            ) throw error
+
+            val fallback = providerRouter?.resolveFallbackExecutionTarget(
+                request = request,
+                workload = workload,
+                failedProviderId = target.providerId,
+            ) ?: throw error
+
+            execute(
+                target = fallback,
+                request = request.copy(modelId = fallback.modelId),
+                context = context,
+                requestId = requestId,
+                interactionId = interactionId,
+            )
+        }
+    }
+
+    private fun fallbackEligible(error: Throwable): Boolean =
+        error is AiProviderException && error.type in setOf(
+            AiErrorType.PROVIDER_UNAVAILABLE,
+            AiErrorType.MODEL_UNAVAILABLE,
+            AiErrorType.MODEL_LOAD_FAILED,
+            AiErrorType.MODEL_NOT_READY,
+            AiErrorType.GENERATION_FAILED,
+            AiErrorType.EMPTY_RESPONSE,
+            AiErrorType.TIMEOUT,
+            AiErrorType.NETWORK_UNAVAILABLE,
+            AiErrorType.NETWORK_ERROR,
+            AiErrorType.LOCAL_MODEL_UNAVAILABLE,
+            AiErrorType.UNKNOWN_ERROR,
+        )
 
     private fun streamTimeout(partialTextVisible: Boolean, toolCallStarted: Boolean, timeoutMs: Long): AiProviderException {
         val externallyVisible = partialTextVisible || toolCallStarted

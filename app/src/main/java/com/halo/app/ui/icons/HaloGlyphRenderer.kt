@@ -20,9 +20,11 @@ fun HaloGlyphRenderer(
         val gridWidth = 16
         val gridHeight = 16
         val cellSize = min(size.width, size.height) / gridWidth
-        val overlap = cellSize * 0.06f
-        val barHeight = cellSize * 0.78f
-        val cornerRadius = CornerRadius(barHeight * 0.42f)
+        val overlap = cellSize * 0.08f
+        // Adjacent rows must overlap. The previous 0.78-cell bars rendered every glyph as
+        // disconnected scanlines at navigation sizes, making curves and diagonals look striped.
+        val barHeight = cellSize + overlap * 2f
+        val cornerRadius = CornerRadius(cellSize * 0.18f)
 
         val offsetX = (size.width - (cellSize * gridWidth)) / 2f
         val offsetY = (size.height - (cellSize * gridHeight)) / 2f
@@ -43,7 +45,7 @@ fun HaloGlyphRenderer(
                     color = tint,
                     topLeft = Offset(
                         offsetX + start * cellSize - overlap,
-                        offsetY + y * cellSize + (cellSize - barHeight) / 2f,
+                        offsetY + y * cellSize - overlap,
                     ),
                     size = Size(cells * cellSize + overlap * 2f, barHeight),
                     cornerRadius = cornerRadius,

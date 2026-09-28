@@ -48,14 +48,25 @@ class OpenRouterProvider(
     private val _status = MutableStateFlow(ProviderStatus.UNCONFIGURED)
     override val status: StateFlow<ProviderStatus> = _status.asStateFlow()
 
-    private val apiKey: String? get() = storage.getString("openrouter_api_key")
-    private val selectedModelId: String get() = storage.getString("openrouter_model") ?: "openrouter/free"
+    private val apiKey: String?
+        get() = storage.getString("openrouter_api_key")?.trim()?.ifBlank { null }
+    private val selectedModelId: String
+        get() = storage.getString("openrouter_model")?.trim()?.ifBlank { null } ?: FREE_ROUTER_ID
     @Volatile private var cooldown: ProviderCooldown? = null
+    /** Only credential failures are sticky. Request/model/network failures must not brick routing. */
+    @Volatile private var rejectedApiKey: String? = null
     @Volatile var modelMetadata: Map<String, OpenRouterModelMetadata> = emptyMap()
         private set
     override suspend fun getStatus(): ProviderStatus = withContext(Dispatchers.IO) {
         val current = if (apiKey.isNullOrBlank()) {
             ProviderStatus.UNCONFIGURED
+        } else if (rejectedApiKey == apiKey) {
+            ProviderStatus(
+                ProviderStatus.State.ERROR,
+                "OpenRouter rejected the configured API key",
+                ProviderReadiness.Failed("Authentication failed"),
+                rejectionReason = TargetRejectionReason.CONFIGURATION_MISSING,
+            )
         } else if (activeCooldown() != null) {
             cooldownStatus(activeCooldown()!!)
         } else {
@@ -82,6 +93,7 @@ class OpenRouterProvider(
                 val ok = response.isSuccessful
                 _status.value = if (ok) {
                     cooldown = null
+                    rejectedApiKey = null
                     ProviderStatus.READY
                 } else {
                     providerStatus(httpError(response.code, response.body?.string(), response.header("Retry-After")))
@@ -122,6 +134,9 @@ class OpenRouterProvider(
                     response.body?.string()
                         ?: throw AiProviderException(AiErrorType.INVALID_RESPONSE, "OpenRouter returned an empty response body")
                 )
+                responseJson.optJSONObject("error")?.let { error ->
+                    throw streamError(error)
+                }
                 val choices = responseJson.optJSONArray("choices")
                     ?: throw AiProviderException(AiErrorType.INVALID_RESPONSE, "OpenRouter returned no choices")
                 if (choices.length() == 0) throw AiProviderException(AiErrorType.INVALID_RESPONSE, "OpenRouter returned no choices")
@@ -139,6 +154,7 @@ class OpenRouterProvider(
                 )
                 _status.value = ProviderStatus.READY
                 cooldown = null
+                rejectedApiKey = null
                 result
             }
         } catch (e: CancellationException) {
@@ -185,24 +201,38 @@ class OpenRouterProvider(
                 var streamFinishedCleanly = false
                 while (!source.exhausted()) {
                     val line = source.readUtf8Line() ?: break
-                    if (!line.startsWith("data: ")) continue
-                    val data = line.substring(6)
+                    if (!line.startsWith("data:")) continue
+                    val data = line.removePrefix("data:").trimStart()
+                    if (data.isBlank()) continue
                     if (data == "[DONE]") {
                         streamFinishedCleanly = true
                         break
                     }
-                    val event = runCatching { JSONObject(data) }.getOrNull() ?: continue
+                    val event = try {
+                        JSONObject(data)
+                    } catch (error: org.json.JSONException) {
+                        throw AiProviderException(
+                            AiErrorType.INVALID_RESPONSE,
+                            "OpenRouter returned malformed stream data",
+                            error,
+                        )
+                    }
+                    event.optJSONObject("error")?.let { error ->
+                        throw streamError(error)
+                    }
                     event.optString("model").takeIf { it.isNotBlank() }?.let { resolvedModel = it }
                     val choices = event.optJSONArray("choices") ?: continue
                     if (choices.length() == 0) continue
                     val choice = choices.getJSONObject(0)
+                    finish = choice.optString("finish_reason").takeIf {
+                        it.isNotBlank() && it != "null"
+                    } ?: finish
                     val delta = choice.optJSONObject("delta") ?: continue
                     val token = delta.optString("content")
                     if (token.isNotEmpty()) {
                         text.append(token)
                         emit(AiStreamEvent.Token(token))
                     }
-                    finish = choice.optString("finish_reason").takeIf { it.isNotBlank() } ?: finish
                     delta.optJSONArray("tool_calls")?.let { calls ->
                         for (i in 0 until calls.length()) {
                             val tc = calls.getJSONObject(i)
@@ -231,6 +261,7 @@ class OpenRouterProvider(
 
                 _status.value = ProviderStatus.READY
                 cooldown = null
+                rejectedApiKey = null
                 emit(
                     AiStreamEvent.Completed(
                         AiResponse(
@@ -278,6 +309,13 @@ class OpenRouterProvider(
     override suspend fun listModels(): List<AiModel> = withContext(Dispatchers.IO) {
         throwIfCoolingDown()
         val key = apiKey ?: return@withContext readCachedModels()
+        val cached = readCachedModels()
+        val refreshedAt = storage.getString(MODEL_CATALOG_REFRESHED_AT_KEY)?.toLongOrNull()
+        if (cached.isNotEmpty() && refreshedAt != null &&
+            nowEpochMs() - refreshedAt in 0 until MODEL_CATALOG_TTL_MS
+        ) {
+            return@withContext cached
+        }
         val request = Request.Builder()
             .url("https://openrouter.ai/api/v1/models")
             .header("Authorization", "Bearer $key")
@@ -295,6 +333,7 @@ class OpenRouterProvider(
                 storage.putString(MODEL_CATALOG_REFRESHED_AT_KEY, nowEpochMs().toString())
                 _status.value = ProviderStatus.READY
                 cooldown = null
+                rejectedApiKey = null
                 models
             }
         } catch (e: CancellationException) {
@@ -345,7 +384,9 @@ class OpenRouterProvider(
                     providerId = id,
                     inputCapabilities = mapCapabilities(item),
                     contextLength = item.optLong("context_length").takeIf { it > 0L },
-                    supportsStreaming = "stream" in parameters,
+                    // Streaming is an OpenRouter chat-completions transport capability, not a
+                    // consistently advertised per-model supported_parameter.
+                    supportsStreaming = true,
                     supportsTools = "tools" in parameters,
                     isFree = isFreeModel(item),
                 ))
@@ -356,10 +397,12 @@ class OpenRouterProvider(
                 id = FREE_ROUTER_ID,
                 displayName = "OpenRouter Free",
                 providerId = id,
-                inputCapabilities = setOf(AiCapability.TEXT, AiCapability.IMAGE),
+                // The router chooses a concrete free model per request. Capabilities vary, so the
+                // pseudo-model must advertise only the portable guarantee.
+                inputCapabilities = setOf(AiCapability.TEXT),
                 contextLength = null,
                 supportsStreaming = true,
-                supportsTools = true,
+                supportsTools = false,
                 isFree = true,
             ))
         }
@@ -368,8 +411,8 @@ class OpenRouterProvider(
             description = "Free cloud router; the concrete model may vary by request.",
             promptPrice = BigDecimal.ZERO,
             completionPrice = BigDecimal.ZERO,
-            supportedParameters = setOf("stream", "tools"),
-            inputModalities = setOf("text", "image"),
+            supportedParameters = setOf("stream"),
+            inputModalities = setOf("text"),
             routingModel = true,
         )
         modelMetadata = metadata
@@ -540,8 +583,9 @@ class OpenRouterProvider(
         } else null
         val type = when (statusCode) {
             400 -> if (ContextOverflow.matches(providerCode, detail)) AiErrorType.CONTEXT_TOO_LARGE else AiErrorType.INVALID_REQUEST
-            401, 403 -> AiErrorType.AUTHENTICATION_FAILED
-            402 -> AiErrorType.AUTHENTICATION_FAILED
+            401 -> AiErrorType.AUTHENTICATION_FAILED
+            402 -> AiErrorType.PROVIDER_UNAVAILABLE
+            403 -> AiErrorType.INVALID_REQUEST
             408 -> AiErrorType.TIMEOUT
             409 -> AiErrorType.PROVIDER_UNAVAILABLE
             429 -> AiErrorType.RATE_LIMITED
@@ -566,6 +610,36 @@ class OpenRouterProvider(
                     statusCode in setOf(408, 409, 500, 502, 503, 504) -> Recoverability.RETRY_IMMEDIATELY
                     statusCode in 400..499 -> Recoverability.PERMANENT
                     else -> Recoverability.UNKNOWN
+                },
+            ),
+        )
+    }
+
+    private fun streamError(error: JSONObject): AiProviderException {
+        val message = error.optString("message").takeIf { it.isNotBlank() }
+            ?: "OpenRouter stream failed"
+        val providerCode = error.opt("code")?.toString()?.takeIf { it.isNotBlank() }
+        val numericCode = providerCode?.toIntOrNull()
+        val type = when {
+            ContextOverflow.matches(providerCode, message) -> AiErrorType.CONTEXT_TOO_LARGE
+            numericCode == 401 -> AiErrorType.AUTHENTICATION_FAILED
+            numericCode == 408 -> AiErrorType.TIMEOUT
+            numericCode == 429 -> AiErrorType.RATE_LIMITED
+            numericCode in setOf(402, 409, 500, 502, 503, 504) -> AiErrorType.PROVIDER_UNAVAILABLE
+            numericCode != null && numericCode in 400..499 -> AiErrorType.INVALID_REQUEST
+            else -> AiErrorType.PROVIDER_UNAVAILABLE
+        }
+        return AiProviderException(
+            type = type,
+            message = "OpenRouter stream error: $message",
+            details = AiFailureDetails(
+                providerCode = providerCode,
+                httpStatus = numericCode,
+                recoverability = when (type) {
+                    AiErrorType.AUTHENTICATION_FAILED -> Recoverability.USER_ACTION_REQUIRED
+                    AiErrorType.RATE_LIMITED -> Recoverability.UNKNOWN
+                    AiErrorType.INVALID_REQUEST, AiErrorType.CONTEXT_TOO_LARGE -> Recoverability.PERMANENT
+                    else -> Recoverability.RETRY_IMMEDIATELY
                 },
             ),
         )
@@ -636,13 +710,33 @@ class OpenRouterProvider(
     }
 
     private fun providerStatus(error: AiProviderException): ProviderStatus {
+        if (error.type == AiErrorType.AUTHENTICATION_FAILED && !apiKey.isNullOrBlank()) {
+            rejectedApiKey = apiKey
+        }
         if (error.type == AiErrorType.RATE_LIMITED) {
             error.details.retryAfterMs?.takeIf { it > 0L }?.let { retryAfter ->
                 cooldown = ProviderCooldown(nowEpochMs() + retryAfter, AiErrorType.RATE_LIMITED)
             }
         }
-        return activeCooldown()?.let(::cooldownStatus)
-            ?: ProviderStatus(ProviderStatus.State.ERROR, error.message ?: error.type.name)
+        return activeCooldown()?.let(::cooldownStatus) ?: when (error.type) {
+            AiErrorType.AUTHENTICATION_FAILED -> ProviderStatus(
+                ProviderStatus.State.ERROR,
+                error.message ?: "OpenRouter authentication failed",
+                ProviderReadiness.Failed("Authentication failed"),
+                rejectionReason = TargetRejectionReason.CONFIGURATION_MISSING,
+            )
+            AiErrorType.NETWORK_UNAVAILABLE -> ProviderStatus(
+                ProviderStatus.State.OFFLINE,
+                error.message ?: "OpenRouter network unavailable",
+                ProviderReadiness.ConfiguredCold,
+                rejectionReason = TargetRejectionReason.NETWORK_UNAVAILABLE,
+            )
+            else -> ProviderStatus(
+                ProviderStatus.State.READY,
+                error.message,
+                ProviderReadiness.ConfiguredCold,
+            )
+        }
     }
 
     private fun cooldownStatus(value: ProviderCooldown): ProviderStatus {
@@ -656,13 +750,16 @@ class OpenRouterProvider(
         )
     }
 
-    private fun statusFromLastErrorOrReady(): ProviderStatus =
-        status.value.takeIf { it.state == ProviderStatus.State.ERROR } ?: ProviderStatus.READY
+    private fun statusFromLastErrorOrReady(): ProviderStatus = ProviderStatus(
+        ProviderStatus.State.READY,
+        readiness = ProviderReadiness.ConfiguredCold,
+    )
 
     private companion object {
         const val FREE_ROUTER_ID = "openrouter/free"
         const val MODEL_CATALOG_CACHE_KEY = "openrouter_model_catalog_v1"
         const val MODEL_CATALOG_REFRESHED_AT_KEY = "openrouter_model_catalog_refreshed_at_ms"
+        const val MODEL_CATALOG_TTL_MS = 15 * 60 * 1_000L
         fun defaultClient(): OkHttpClient =
             OkHttpClient.Builder()
                 .connectTimeout(12, TimeUnit.SECONDS)

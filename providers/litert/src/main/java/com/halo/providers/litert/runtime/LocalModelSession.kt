@@ -18,6 +18,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,6 +27,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import java.util.PriorityQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
@@ -208,10 +210,12 @@ class LocalModelSession(
 
         _state.value = LocalModelSessionState.LOADING
         _activity.value = LocalModelActivityState.Loading(modelId)
+        var loadingRuntime: LocalInferenceRuntime? = null
         try {
             unloadInternal()
 
             val runtime = runtimeProvider(format)
+            loadingRuntime = runtime
             activeRuntime = runtime
 
             val result = runtime.loadModel(modelId, modelPath, config)
@@ -233,19 +237,36 @@ class LocalModelSession(
                 Log.e(TAG, "Failed to load local model: $modelId", err)
             }
             if (result.isFailure) {
-                runtime.unloadModel()
-                activeRuntime = null
+                discardFailedRuntime(runtime, result.exceptionOrNull())
             }
             result
         } catch (c: CancellationException) {
+            loadingRuntime?.let { discardFailedRuntime(it, c) }
             _state.value = LocalModelSessionState.IDLE
+            _activity.value = LocalModelActivityState.Idle
             throw c
         } catch (t: Throwable) {
+            loadingRuntime?.let { discardFailedRuntime(it, t) }
             _state.value = LocalModelSessionState.ERROR
             _activity.value = LocalModelActivityState.Error(t.message ?: "Model load failed")
             Result.failure(t)
         }
         }
+    }
+
+    /** Release a runtime that never became resident without replacing its original failure. */
+    private suspend fun discardFailedRuntime(runtime: LocalInferenceRuntime, primary: Throwable?) {
+        val cleanupFailure = withContext(NonCancellable) {
+            try {
+                runtime.unloadModel().exceptionOrNull()
+            } catch (cleanup: Throwable) {
+                cleanup
+            }
+        }
+        if (primary != null && cleanupFailure != null && cleanupFailure !== primary) {
+            primary.addSuppressed(cleanupFailure)
+        }
+        if (activeRuntime === runtime) activeRuntime = null
     }
 
     suspend fun generate(

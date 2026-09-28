@@ -12,7 +12,8 @@ import android.service.voice.VoiceInteractionService
 class AssistantEligibilityInspector(
     private val context: Context,
     private val voiceServiceComponent: ComponentName = ComponentName(context.packageName, "com.halo.app.assistant.HaloVoiceInteractionService"),
-    private val sessionServiceComponent: ComponentName = ComponentName(context.packageName, "com.halo.app.assistant.HaloVoiceInteractionSessionService")
+    private val sessionServiceComponent: ComponentName = ComponentName(context.packageName, "com.halo.app.assistant.HaloVoiceInteractionSessionService"),
+    private val recognitionServiceComponent: ComponentName = ComponentName(context.packageName, "com.halo.app.assistant.HaloRecognitionService"),
 ) {
 
     fun inspect(): AssistantEligibilitySnapshot {
@@ -58,6 +59,18 @@ class AssistantEligibilityInspector(
             problems.add("Voice interaction session service must require android.permission.BIND_VOICE_INTERACTION")
         }
 
+        val recognitionServiceInfo = runCatching {
+            pm.getServiceInfo(recognitionServiceComponent, 0)
+        }.getOrNull()
+        val recognitionServiceDeclared = recognitionServiceInfo != null
+        val recognitionServicePermissionCorrect =
+            recognitionServiceInfo?.permission == "android.permission.BIND_SPEECH_RECOGNITION_SERVICE"
+        if (!recognitionServiceDeclared) {
+            problems.add("HaloRecognitionService is not declared")
+        } else if (!recognitionServicePermissionCorrect) {
+            problems.add("Recognition service must require android.permission.BIND_SPEECH_RECOGNITION_SERVICE")
+        }
+
         val activeVoiceInteractionService = runCatching {
             VoiceInteractionService.isActiveService(context, voiceServiceComponent)
         }.getOrDefault(false)
@@ -82,6 +95,8 @@ class AssistantEligibilityInspector(
             serviceMetadataPresent = serviceMetadataPresent,
             sessionServiceDeclared = sessionServiceDeclared,
             sessionServiceClassValid = sessionServiceClassValid,
+            recognitionServiceDeclared = recognitionServiceDeclared,
+            recognitionServicePermissionCorrect = recognitionServicePermissionCorrect,
             activeVoiceInteractionService = activeVoiceInteractionService,
             roleRequestResolvable = roleRequestResolvable,
             defaultAppsSettingsResolvable = defaultAppsSettingsResolvable,
@@ -103,7 +118,9 @@ class AssistantEligibilityInspector(
             !snapshot.bindPermissionCorrect ||
             !snapshot.serviceMetadataPresent ||
             !snapshot.sessionServiceDeclared ||
-            !snapshot.sessionServiceClassValid
+            !snapshot.sessionServiceClassValid ||
+            !snapshot.recognitionServiceDeclared ||
+            !snapshot.recognitionServicePermissionCorrect
         ) {
             return AssistantIntegrationState.NotEligible(snapshot)
         }

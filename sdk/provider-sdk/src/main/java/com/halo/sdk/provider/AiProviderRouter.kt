@@ -104,6 +104,13 @@ interface AiProviderRouter {
         request: AiRequest
     ): AiExecutionTarget = resolveExecutionTarget(request, AiWorkloadSpec())
 
+    /** Resolve a different target after a pre-output execution failure, if policy permits it. */
+    suspend fun resolveFallbackExecutionTarget(
+        request: AiRequest,
+        workload: AiWorkloadSpec,
+        failedProviderId: String,
+    ): AiExecutionTarget? = null
+
     /** Exact target resolution for durable recovery; never falls back or mutates selection. */
     suspend fun resolvePinnedExecutionTarget(
         request: AiRequest,
@@ -159,6 +166,13 @@ interface AiProviderRouter {
         request: AiRequest,
         context: AiContext = AiContext.EMPTY
     ): AiResponse
+
+    /** Execute through the complete routing, policy, validation, telemetry and fallback boundary. */
+    suspend fun execute(
+        request: AiRequest,
+        workload: AiWorkloadSpec,
+        context: AiContext = AiContext.EMPTY,
+    ): AiResponse = execute(request, context)
 
     suspend fun diagnostics(): List<AiProviderDiagnostic> = emptyList()
 

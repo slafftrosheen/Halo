@@ -176,6 +176,17 @@ private fun ModelCard(
 
             Spacer(Modifier.height(8.dp))
 
+            if (verification is ModelVerificationResult.Verified &&
+                verification.loadBackend != verification.generationBackend
+            ) {
+                Text(
+                    "${backendLabel(verification.loadBackend)} generation failed; " +
+                        "${backendLabel(verification.generationBackend)} fallback succeeded",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,

@@ -285,9 +285,10 @@ class NoteEditorViewModel(
 
             recovery != null && recovery.supersedes(stored.revision, stored.updatedAt) -> {
                 draftSequence = recovery.sequence
+                explicitTitle = recovery.title
                 publishBlocks(
                     blocks = recovery.blocks,
-                    title = stored.title,
+                    title = recovery.title ?: stored.title,
                     lifecycle = stored.lifecycle,
                     revision = stored.revision,
                     status = SaveStatus.SAVING,
@@ -764,15 +765,12 @@ class NoteEditorViewModel(
             mutableUiState.value = mutableUiState.value.copy(isGenerating = true, proposalError = null)
             try {
                 val request = AiRequest(text = buildPrompt(operation, source))
-                val target = router.resolveExecutionTarget(request)
-                if (!target.provider.isLocal && !allowCloudSharing()) {
-                    mutableUiState.value = mutableUiState.value.copy(
-                        isGenerating = false,
-                        proposalError = "Enable workspace sharing before sending this note to a network model",
-                    )
-                    return@launch
-                }
-                val result = target.provider.generate(request.copy(modelId = target.modelId), AiContext.EMPTY)
+                val workload = com.halo.sdk.provider.AiWorkloadSpec(
+                    kind = com.halo.sdk.provider.AiWorkloadKind.DOCUMENT_CONTEXT,
+                    requiredCapabilities = setOf(com.halo.sdk.provider.AiCapability.TEXT),
+                    allowRemote = allowCloudSharing(),
+                )
+                val result = router.execute(request, workload, AiContext.EMPTY)
                 val text = result.text.trim()
                 if (text.isEmpty()) {
                     mutableUiState.value = mutableUiState.value.copy(
@@ -921,7 +919,7 @@ class NoteEditorViewModel(
         draftJob?.cancel()
         draftJob = viewModelScope.launch {
             if (documents != null) {
-                documents.saveRecovery(noteId, blocks, baseRevision, sequence)
+                documents.saveRecovery(noteId, blocks, baseRevision, sequence, explicitTitle)
             } else {
                 useCases.saveDraft(noteId, NotebookDocumentCodec.serialize(blocks))
             }

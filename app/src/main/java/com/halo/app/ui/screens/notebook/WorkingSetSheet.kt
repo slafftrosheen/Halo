@@ -11,8 +11,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.DashboardCustomize
+import androidx.compose.material.icons.rounded.Description
+import androidx.compose.material.icons.rounded.Forum
+import androidx.compose.material.icons.rounded.NoteAlt
+import androidx.compose.material.icons.rounded.Psychology
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
@@ -24,8 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.halo.app.data.notebook.WorkspaceObject
-import com.halo.app.ui.presence.HaloSignalGlyph
-import com.halo.app.ui.presence.HaloSignalKind
+import com.halo.app.data.notebook.WorkspaceObjectType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,13 +54,13 @@ fun WorkingSetSheet(
             ) {
                 Column {
                     Text(
-                        text = "Working Set",
+                        text = "Halo context",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "${items.size} objects in active context",
+                        text = "${items.size} ${if (items.size == 1) "item" else "items"} available to Halo",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -62,7 +68,7 @@ fun WorkingSetSheet(
 
                 if (items.isNotEmpty()) {
                     TextButton(onClick = onClearAll) {
-                        Text("Clear Working Set")
+                        Text("Clear all")
                     }
                 }
             }
@@ -71,7 +77,7 @@ fun WorkingSetSheet(
 
             if (items.isEmpty()) {
                 Text(
-                    text = "No objects selected in Working Set. Tap 'Add to Working Set' on any note, chat, file, or memory to include it in Halo's active context.",
+                    text = "Nothing added yet. Add a note, chat, file, or memory when you want Halo to use it in a conversation.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(vertical = 24.dp)
@@ -90,7 +96,20 @@ fun WorkingSetSheet(
                                 modifier = Modifier.padding(12.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                HaloSignalGlyph(kind = HaloSignalKind.NOTE, size = 28.dp)
+                                Icon(
+                                    imageVector = when (item.type) {
+                                        WorkspaceObjectType.NOTE -> Icons.Rounded.NoteAlt
+                                        WorkspaceObjectType.CONVERSATION -> Icons.Rounded.Forum
+                                        WorkspaceObjectType.MEMORY -> Icons.Rounded.Psychology
+                                        WorkspaceObjectType.CANVAS -> Icons.Rounded.DashboardCustomize
+                                        WorkspaceObjectType.FILE,
+                                        WorkspaceObjectType.MEDIA,
+                                        WorkspaceObjectType.ARTIFACT -> Icons.Rounded.Description
+                                    },
+                                    contentDescription = null,
+                                    modifier = Modifier.size(26.dp),
+                                    tint = MaterialTheme.colorScheme.secondary
+                                )
                                 Spacer(Modifier.size(10.dp))
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
@@ -100,7 +119,15 @@ fun WorkingSetSheet(
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                     Text(
-                                        text = item.type.name,
+                                        text = when (item.type) {
+                                            WorkspaceObjectType.CONVERSATION -> "Saved chat"
+                                            WorkspaceObjectType.CANVAS -> "Canvas"
+                                            WorkspaceObjectType.NOTE -> "Note"
+                                            WorkspaceObjectType.FILE -> "File"
+                                            WorkspaceObjectType.MEMORY -> "Memory"
+                                            WorkspaceObjectType.MEDIA -> "Media"
+                                            WorkspaceObjectType.ARTIFACT -> "Artifact"
+                                        },
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -155,8 +182,8 @@ fun ContextTransparencySheet(
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
             ContextSourceRow(
-                title = "Working Set",
-                description = "$workingSetCount user-selected workspace objects"
+                title = "Halo context",
+                description = "$workingSetCount user-selected workspace ${if (workingSetCount == 1) "item" else "items"}"
             )
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 

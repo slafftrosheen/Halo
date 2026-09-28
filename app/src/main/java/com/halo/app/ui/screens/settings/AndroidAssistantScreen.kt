@@ -154,6 +154,8 @@ fun AndroidAssistantScreen(
             BreakdownRow("BIND_VOICE_INTERACTION Permission", diag.bindPermissionCorrect)
             BreakdownRow("Voice Interaction Metadata", diag.serviceMetadataPresent)
             BreakdownRow("Session Service Declared", diag.sessionServiceDeclared)
+            BreakdownRow("Recognition Service Declared", diag.recognitionServiceDeclared)
+            BreakdownRow("Speech Recognition Permission", diag.recognitionServicePermissionCorrect)
             BreakdownRow("ROLE_ASSISTANT Available", diag.roleAvailable)
             BreakdownRow("ROLE_ASSISTANT Held", diag.roleHeld)
             BreakdownRow("Active Interactor Service", diag.activeVoiceInteractionService)

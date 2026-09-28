@@ -106,7 +106,12 @@ object NotebookDocumentCodec {
                 }
                 if (!closed) {
                     lossy = true
-                    preserved += line
+                    val literal = (listOf(line) + body).joinToString("\n")
+                    preserved += listOf(line) + body
+                    // A malformed fence is not a code block. Preserve every source character in a
+                    // literal paragraph so forced conversion cannot silently delete the opener.
+                    add(NoteBlockType.PARAGRAPH, literal)
+                    continue
                 }
                 add(NoteBlockType.CODE, body.joinToString("\n"), language = language)
                 continue

@@ -52,6 +52,9 @@ sealed interface ModelVerificationResult {
         val loadMs: Long,
         val ttftMs: Long,
         val sampleText: String,
+        val loadBackend: LocalComputeBackend = backend,
+        val generationBackend: LocalComputeBackend = backend,
+        val fallbackReason: String? = null,
     ) : ModelVerificationResult
 
     data class Failed(

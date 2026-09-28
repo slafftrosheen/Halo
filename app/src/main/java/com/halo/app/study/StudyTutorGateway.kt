@@ -6,6 +6,12 @@ import com.halo.app.data.study.StudyVerdict
 import com.halo.sdk.provider.AiContext
 import com.halo.sdk.provider.AiProviderRouter
 import com.halo.sdk.provider.AiRequest
+import com.halo.sdk.provider.AiCapability
+import com.halo.sdk.provider.AiInferenceProvider
+import com.halo.sdk.provider.AiProviderException
+import com.halo.sdk.provider.AiErrorType
+import com.halo.sdk.provider.AiWorkloadKind
+import com.halo.sdk.provider.AiWorkloadSpec
 import com.halo.sdk.runtime.study.StudyLanguagePreferences
 import com.halo.sdk.runtime.study.TutorStage
 
@@ -69,28 +75,21 @@ interface StudyTutorGateway {
 class AiRouterTutorGateway(
     private val router: AiProviderRouter,
     private val allowCloudSharing: () -> Boolean,
-    private val phoneOnly: () -> Boolean = { true },
 ) : StudyTutorGateway {
 
     override val available: Boolean
-        get() = router.getAllProviders().any { it.status.value.state == com.halo.sdk.provider.ProviderStatus.State.READY }
+        get() = router.getAllProviders().any { it is AiInferenceProvider }
 
     override suspend fun respond(request: TutorTurnRequest): TutorTurnResponse {
         val prompt = buildPrompt(request)
         return try {
             val aiRequest = AiRequest(text = prompt)
-            val target = router.resolveExecutionTarget(aiRequest)
-            if (!target.provider.isLocal && !allowCloudSharing()) {
-                return TutorTurnResponse.Unavailable(
-                    "Enable context sharing before Study sends this material to a network model"
-                )
-            }
-            if (phoneOnly() && !target.provider.isLocal) {
-                return TutorTurnResponse.Unavailable(
-                    "This study session is on-device only; no local model can serve this turn"
-                )
-            }
-            val result = target.provider.generate(aiRequest.copy(modelId = target.modelId), AiContext.EMPTY)
+            val workload = AiWorkloadSpec(
+                kind = AiWorkloadKind.DOCUMENT_CONTEXT,
+                requiredCapabilities = setOf(AiCapability.TEXT),
+                allowRemote = allowCloudSharing(),
+            )
+            val result = router.execute(aiRequest, workload, AiContext.EMPTY)
             val text = result.text.trim()
             if (text.isEmpty()) {
                 TutorTurnResponse.Failed("Halo returned an empty response")
@@ -114,11 +113,20 @@ class AiRouterTutorGateway(
                     verdict = verdictFor(request),
                     nextStep = nextStepFor(request),
                     uncertainty = "Halo has not verified this explanation against a trusted answer key",
-                    modelId = target.modelId,
+                    modelId = result.resolvedModelId ?: result.modelId,
                 )
             }
         } catch (error: kotlinx.coroutines.CancellationException) {
             throw error
+        } catch (error: AiProviderException) {
+            if (error.type == AiErrorType.UNSUPPORTED_CAPABILITY ||
+                error.type == AiErrorType.PROVIDER_UNAVAILABLE ||
+                error.type == AiErrorType.MODEL_UNAVAILABLE
+            ) {
+                TutorTurnResponse.Unavailable(error.message ?: "No permitted provider can serve this study turn")
+            } else {
+                TutorTurnResponse.Failed(error.message ?: "The tutor turn failed")
+            }
         } catch (error: Exception) {
             TutorTurnResponse.Failed(error.message ?: "The tutor turn failed")
         }
