@@ -14,6 +14,8 @@ import com.halo.providers.litert.models.DownloadState
 import com.halo.providers.litert.models.LiteRtCatalogModel
 import com.halo.providers.litert.models.LocalModelDescriptor
 import com.halo.providers.litert.models.ModelVerificationResult
+import com.halo.providers.gemini.GeminiAuthenticationMode
+import com.halo.providers.gemini.GeminiProvider
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.HaloDispatchers
 import com.halo.sdk.runtime.NativeResourceSnapshot
@@ -47,6 +49,10 @@ data class IntelligenceUiState(
     val openAiModel: String = "",
     val anthropicKey: String = "",
     val anthropicModel: String = "",
+    val geminiApiKey: String = "",
+    val geminiProjectId: String = "",
+    val geminiModel: String = "",
+    val geminiAuthenticationMode: GeminiAuthenticationMode = GeminiAuthenticationMode.NONE,
     val ollamaEndpoint: String = "",
     val ollamaModel: String = "",
     val litertModel: String = "",
@@ -87,6 +93,9 @@ private data class IntelligenceSettings(
     val openAiModel: String = "",
     val anthropicKey: String = "",
     val anthropicModel: String = "",
+    val geminiApiKey: String = "",
+    val geminiProjectId: String = "",
+    val geminiModel: String = "",
     val ollamaEndpoint: String = "",
     val ollamaModel: String = "llama3",
     val litertModel: String = "",
@@ -143,6 +152,8 @@ class IntelligenceViewModel(
     /** The on-device provider owns load failures and the qualification probe. */
     private val localProvider: LiteRtLocalProvider?
         get() = aiProviderRouter.getAllProviders().filterIsInstance<LiteRtLocalProvider>().firstOrNull()
+    private val geminiProvider: GeminiProvider?
+        get() = aiProviderRouter.getAllProviders().filterIsInstance<GeminiProvider>().firstOrNull()
 
     private val localVerificationInputs: Flow<LocalVerificationInputs> = combine(
         _verifications,
@@ -186,6 +197,9 @@ class IntelligenceViewModel(
                 openAiModel = activeModel.takeIf { activeProvider == ProviderIds.OPENAI }.orEmpty(),
                 anthropicKey = storage.getString("anthropic_api_key") ?: "",
                 anthropicModel = activeModel.takeIf { activeProvider == ProviderIds.ANTHROPIC }.orEmpty(),
+                geminiApiKey = storage.getString("gemini_api_key") ?: "",
+                geminiProjectId = storage.getString("gemini_project_id") ?: "",
+                geminiModel = activeModel.takeIf { activeProvider == ProviderIds.GEMINI }.orEmpty(),
                 ollamaEndpoint = storage.getString("ollama_endpoint") ?: "",
                 ollamaModel = activeModel.takeIf { activeProvider == ProviderIds.OLLAMA }.orEmpty(),
                 litertModel = activeModel.takeIf { activeProvider == ProviderIds.LITERT }.orEmpty(),
@@ -292,6 +306,10 @@ class IntelligenceViewModel(
             openAiModel = settings.openAiModel,
             anthropicKey = settings.anthropicKey,
             anthropicModel = settings.anthropicModel,
+            geminiApiKey = settings.geminiApiKey,
+            geminiProjectId = settings.geminiProjectId,
+            geminiModel = settings.geminiModel,
+            geminiAuthenticationMode = geminiProvider?.authenticationMode ?: GeminiAuthenticationMode.NONE,
             ollamaEndpoint = settings.ollamaEndpoint,
             ollamaModel = settings.ollamaModel,
             litertModel = settings.litertModel,
@@ -344,6 +362,7 @@ class IntelligenceViewModel(
             ProviderIds.OPENROUTER -> selectTarget(AiModelRef(ProviderIds.OPENROUTER, modelId))
             ProviderIds.OPENAI -> selectTarget(AiModelRef(ProviderIds.OPENAI, modelId))
             ProviderIds.ANTHROPIC -> selectTarget(AiModelRef(ProviderIds.ANTHROPIC, modelId))
+            ProviderIds.GEMINI -> selectTarget(AiModelRef(ProviderIds.GEMINI, modelId))
         }
     }
 
@@ -365,6 +384,7 @@ class IntelligenceViewModel(
             ProviderIds.OPENROUTER -> updateSettings { it.copy(openRouterModel = ref.modelId) }
             ProviderIds.OPENAI -> updateSettings { it.copy(openAiModel = ref.modelId) }
             ProviderIds.ANTHROPIC -> updateSettings { it.copy(anthropicModel = ref.modelId) }
+            ProviderIds.GEMINI -> updateSettings { it.copy(geminiModel = ref.modelId) }
         }
         aiProviderRouter.selectTarget(ref)
     }
@@ -414,29 +434,51 @@ class IntelligenceViewModel(
     fun setOpenRouterKey(key: String) {
         val normalized = key.trim()
         updateSettings { it.copy(openRouterKey = normalized) }
-        persist { storage.putString("openrouter_api_key", normalized) }
-        refreshModelsFor(ProviderIds.OPENROUTER)
+        persistAndRefresh { storage.putString("openrouter_api_key", normalized) }
     }
 
     fun setOpenAiKey(key: String) {
         val normalized = key.trim()
         updateSettings { it.copy(openAiKey = normalized) }
-        persist { storage.putString("openai_api_key", normalized) }
-        refreshModelsFor(ProviderIds.OPENAI)
+        persistAndRefresh { storage.putString("openai_api_key", normalized) }
     }
 
     fun setAnthropicKey(key: String) {
         val normalized = key.trim()
         updateSettings { it.copy(anthropicKey = normalized) }
-        persist { storage.putString("anthropic_api_key", normalized) }
-        refreshModelsFor(ProviderIds.ANTHROPIC)
+        persistAndRefresh { storage.putString("anthropic_api_key", normalized) }
+    }
+
+    fun setGeminiConfiguration(projectId: String, apiKey: String) {
+        val normalizedProject = projectId.trim()
+        val normalizedKey = apiKey.trim()
+        updateSettings {
+            it.copy(geminiProjectId = normalizedProject, geminiApiKey = normalizedKey)
+        }
+        persistAndRefresh {
+            storage.putString("gemini_project_id", normalizedProject)
+            storage.putString("gemini_api_key", normalizedKey)
+        }
+    }
+
+    fun acceptGeminiOAuthToken(token: String, projectId: String) {
+        val normalizedProject = projectId.trim()
+        updateSettings { it.copy(geminiProjectId = normalizedProject) }
+        geminiProvider?.acceptOAuthAccessToken(token, normalizedProject)
+        _refreshTrigger.update { it + 1 }
+        persistAndRefresh { storage.putString("gemini_project_id", normalizedProject) }
+    }
+
+    fun disconnectGeminiOAuth() {
+        geminiProvider?.clearOAuthSession()
+        _refreshTrigger.update { it + 1 }
+        refreshModelsFor(ProviderIds.GEMINI)
     }
 
     fun setOllamaEndpoint(endpoint: String) {
         val normalized = endpoint.trim().trimEnd('/')
         updateSettings { it.copy(ollamaEndpoint = normalized) }
-        persist { storage.putString("ollama_endpoint", normalized) }
-        refreshModelsFor(ProviderIds.OLLAMA)
+        persistAndRefresh { storage.putString("ollama_endpoint", normalized) }
     }
 
     fun setToolsEnabled(enabled: Boolean) {
@@ -516,5 +558,17 @@ class IntelligenceViewModel(
 
     private fun persist(block: suspend () -> Unit) {
         viewModelScope.launch(dispatchers.io) { block() }
+    }
+
+    private fun persistAndRefresh(block: suspend () -> Unit) {
+        viewModelScope.launch {
+            withContext(dispatchers.io) { block() }
+            _isRefreshing.value = true
+            try {
+                catalogRepository.refresh()
+            } finally {
+                _isRefreshing.value = false
+            }
+        }
     }
 }

@@ -83,6 +83,7 @@ class DefaultAiModelCatalogRepository(
                     "openrouter" -> AiWireProtocol.OPENAI_CHAT_COMPLETIONS
                     "openai" -> AiWireProtocol.OPENAI_CHAT_COMPLETIONS
                     "anthropic" -> AiWireProtocol.ANTHROPIC_MESSAGES
+                    "gemini" -> AiWireProtocol.GEMINI_GENERATE_CONTENT
                     else -> null
                 },
             ),

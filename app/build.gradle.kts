@@ -138,6 +138,7 @@ dependencies {
   implementation(libs.kotlinx.coroutines.android)
   implementation(libs.kotlinx.coroutines.core)
   implementation(libs.logging.interceptor)
+  implementation(libs.play.services.auth)
   implementation(libs.moshi.kotlin)
   implementation(libs.okhttp)
   // implementation(libs.play.services.location)
@@ -219,6 +220,7 @@ dependencies {
     implementation(project(":providers:openrouter"))
     implementation(project(":providers:openai"))
     implementation(project(":providers:anthropic"))
+    implementation(project(":providers:gemini"))
     implementation(project(":drivers:heycyan"))
     implementation(project(":drivers:simulator"))
 }

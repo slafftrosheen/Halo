@@ -301,9 +301,8 @@ class CognitiveSession(
                 throw e
             } catch (e: Exception) {
                 val message = mapErrorMessage(e)
-                val routing = providerRouter.lastRoutingDecision.value
-                val failedProviderId = routing?.resolvedProviderId ?: routing?.selectedProviderId
-                val failedModelId = routing?.resolvedModelId ?: routing?.selectedModelId
+                val failedProviderId = null
+                val failedModelId = null
                 println(
                     "[HALO-COGNITION-FAIL] requestId=$requestId interactionId=${interactionId.value} " +
                         "type=${e.javaClass.simpleName} message=${e.message ?: "none"}"
@@ -327,7 +326,7 @@ class CognitiveSession(
                 eventBus.publish(InferenceObserved(
                     requestId = requestId,
                     providerId = failedProviderId ?: "unknown",
-                    requestedModelId = routing?.selectedModelId,
+                    requestedModelId = null,
                     resolvedModelId = failedModelId,
                     success = false,
                 ))

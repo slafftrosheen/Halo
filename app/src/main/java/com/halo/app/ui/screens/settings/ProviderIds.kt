@@ -8,6 +8,7 @@ object ProviderIds {
     const val OPENROUTER = "openrouter"
     const val OPENAI = "openai"
     const val ANTHROPIC = "anthropic"
+    const val GEMINI = "gemini"
     const val OLLAMA = "provider.ollama"
 
     /**

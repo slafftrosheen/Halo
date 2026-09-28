@@ -1,5 +1,11 @@
 package com.halo.app.ui.screens.settings
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -22,10 +28,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -39,6 +47,10 @@ import com.halo.app.ui.workspace.HaloWorkspaceRow
 import com.halo.app.ui.workspace.HaloWorkspaceSection
 import com.halo.providers.litert.models.LocalModelDescriptor
 import com.halo.providers.litert.models.LocalModelValidation
+import com.halo.providers.gemini.GeminiAuthenticationMode
+import com.google.android.gms.auth.api.identity.AuthorizationRequest
+import com.google.android.gms.auth.api.identity.Identity
+import com.google.android.gms.common.api.Scope
 import com.halo.sdk.provider.AiCapability
 import com.halo.sdk.provider.AiModel
 import com.halo.sdk.provider.AiExecutionLocation
@@ -63,11 +75,88 @@ fun IntelligenceScreen(
     var anthropicKeyDraft by rememberSaveable(uiState.activeProviderId, uiState.anthropicKey) {
         mutableStateOf(uiState.anthropicKey)
     }
+    var geminiApiKeyDraft by rememberSaveable(uiState.activeProviderId, uiState.geminiApiKey) {
+        mutableStateOf(uiState.geminiApiKey)
+    }
+    var geminiProjectDraft by rememberSaveable(uiState.activeProviderId, uiState.geminiProjectId) {
+        mutableStateOf(uiState.geminiProjectId)
+    }
+    var geminiAuthMessage by rememberSaveable { mutableStateOf<String?>(null) }
     var ollamaEndpointDraft by rememberSaveable(uiState.activeProviderId, uiState.ollamaEndpoint) {
         mutableStateOf(uiState.ollamaEndpoint)
     }
     var modelSearch by rememberSaveable { mutableStateOf("") }
     var modelFilter by rememberSaveable { mutableStateOf(ModelHubFilter.ALL) }
+    val context = LocalContext.current
+    val activity = context.findActivity()
+    val googleAuthorizationClient = remember(activity) {
+        activity?.let { host -> Identity.getAuthorizationClient(host) }
+    }
+    val googleAuthorizationLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult(),
+    ) { result ->
+        val data = result.data
+        if (result.resultCode != Activity.RESULT_OK || data == null) {
+            geminiAuthMessage = "Google authorization was cancelled"
+        } else {
+            val authorization = runCatching {
+                googleAuthorizationClient?.getAuthorizationResultFromIntent(data)
+            }.getOrNull()
+            val token = authorization?.accessToken?.takeIf { it.isNotBlank() }
+            if (token == null) {
+                geminiAuthMessage = "Google did not return an access token"
+            } else {
+                viewModel.acceptGeminiOAuthToken(token, geminiProjectDraft)
+                geminiAuthMessage = "Google OAuth connected"
+            }
+        }
+    }
+
+    fun requestGeminiOAuth() {
+        val client = googleAuthorizationClient
+        if (client == null) {
+            geminiAuthMessage = "Google authorization is unavailable on this device"
+            return
+        }
+        val projectId = geminiProjectDraft.trim()
+        if (projectId.isBlank()) {
+            geminiAuthMessage = "Enter the Google Cloud project ID first"
+            return
+        }
+        geminiAuthMessage = "Opening Google authorization…"
+        val request = AuthorizationRequest.builder()
+            .setRequestedScopes(
+                listOf(
+                    Scope("https://www.googleapis.com/auth/cloud-platform"),
+                    Scope("https://www.googleapis.com/auth/generative-language.retriever"),
+                ),
+            )
+            .build()
+        client.authorize(request)
+            .addOnSuccessListener { authorization ->
+                if (authorization.hasResolution()) {
+                    val pendingIntent = authorization.pendingIntent
+                    if (pendingIntent == null) {
+                        geminiAuthMessage = "Google authorization could not be opened"
+                    } else {
+                        googleAuthorizationLauncher.launch(
+                            IntentSenderRequest.Builder(pendingIntent.intentSender).build(),
+                        )
+                    }
+                } else {
+                    val token = authorization.accessToken?.takeIf { it.isNotBlank() }
+                    if (token == null) {
+                        geminiAuthMessage = "Google did not return an access token"
+                    } else {
+                        viewModel.acceptGeminiOAuthToken(token, projectId)
+                        geminiAuthMessage = "Google OAuth connected"
+                    }
+                }
+            }
+            .addOnFailureListener {
+                geminiAuthMessage = "Google authorization failed"
+            }
+    }
 
     Column(
         modifier = Modifier
@@ -190,6 +279,102 @@ fun IntelligenceScreen(
         }
 
         when (uiState.activeProviderId) {
+            ProviderIds.GEMINI -> {
+                Spacer(Modifier.height(20.dp))
+                HaloWorkspaceSection(title = "Google OAuth · recommended") {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        OutlinedTextField(
+                            value = geminiProjectDraft,
+                            onValueChange = { geminiProjectDraft = it },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            label = { Text("Google Cloud project ID") },
+                            placeholder = { Text("my-gemini-project") },
+                        )
+                        Text(
+                            text = "The project must have the Generative Language API enabled and your Google account must be allowed by its OAuth consent screen.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Text(
+                            text = when (uiState.geminiAuthenticationMode) {
+                                GeminiAuthenticationMode.OAUTH -> "Active authentication · Google OAuth"
+                                GeminiAuthenticationMode.API_KEY -> "Active authentication · API key fallback"
+                                GeminiAuthenticationMode.NONE -> "Not connected"
+                            },
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        HaloWorkspaceButton(
+                            text = if (uiState.geminiAuthenticationMode == GeminiAuthenticationMode.OAUTH) {
+                                "Reconnect Google"
+                            } else {
+                                "Connect Google"
+                            },
+                            onClick = ::requestGeminiOAuth,
+                            enabled = geminiProjectDraft.isNotBlank() && googleAuthorizationClient != null,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        if (uiState.geminiAuthenticationMode == GeminiAuthenticationMode.OAUTH) {
+                            HaloWorkspaceButton(
+                                text = "Disconnect OAuth",
+                                onClick = viewModel::disconnectGeminiOAuth,
+                                modifier = Modifier.fillMaxWidth(),
+                                primary = false,
+                            )
+                        }
+                        geminiAuthMessage?.let { message ->
+                            Text(
+                                text = message,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Text(
+                            text = "OAuth access tokens stay in memory only. After Halo restarts, Connect Google can renew access without storing the token.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(12.dp))
+                HaloWorkspaceSection(title = "API key fallback") {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        OutlinedTextField(
+                            value = geminiApiKeyDraft,
+                            onValueChange = { geminiApiKeyDraft = it },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            label = { Text("Gemini API key") },
+                            visualTransformation = PasswordVisualTransformation(),
+                        )
+                        Text(
+                            text = "Optional. OAuth is used first when connected; this key is only used when no OAuth session exists.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        HaloWorkspaceButton(
+                            text = "Save fallback",
+                            onClick = {
+                                viewModel.setGeminiConfiguration(geminiProjectDraft, geminiApiKeyDraft)
+                            },
+                            enabled = geminiApiKeyDraft.trim() != uiState.geminiApiKey.trim() ||
+                                geminiProjectDraft.trim() != uiState.geminiProjectId.trim(),
+                            modifier = Modifier.fillMaxWidth(),
+                            primary = false,
+                        )
+                    }
+                }
+            }
+
             ProviderIds.ANTHROPIC -> {
                 Spacer(Modifier.height(20.dp))
                 HaloWorkspaceSection(title = "Configuration") {
@@ -524,6 +709,7 @@ private fun providerSetupSummary(providerId: String): String = when (providerId)
     ProviderIds.OPENROUTER -> "Optional cloud inference · API key required"
     ProviderIds.OPENAI -> "Direct OpenAI cloud inference · API key required"
     ProviderIds.ANTHROPIC -> "Direct Claude cloud inference · API key required"
+    ProviderIds.GEMINI -> "Google OAuth preferred · API key fallback"
     else -> "Optional inference provider"
 }
 
@@ -596,6 +782,7 @@ private fun modelEntrySummary(entry: AiModelCatalogEntry): String = buildList {
             ProviderIds.OPENAI -> "Cloud · OpenAI"
             ProviderIds.OPENROUTER -> "Cloud · OpenRouter"
             ProviderIds.ANTHROPIC -> "Cloud · Anthropic"
+            ProviderIds.GEMINI -> "Cloud · Google Gemini"
             else -> "Cloud"
         }
     })
@@ -616,4 +803,10 @@ private fun activeTargetSummary(state: IntelligenceUiState): String {
     val resolved = state.lastResolvedModelId
         ?.takeIf { entry?.kind == AiModelKind.ROUTER && it != state.activeModelId }
     return if (resolved == null) base else "$base\nResolved last turn · $resolved"
+}
+
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
 }

@@ -85,6 +85,7 @@ include(":providers:android-assistant")
 include(":providers:openrouter")
 include(":providers:openai")
 include(":providers:anthropic")
+include(":providers:gemini")
 
 include(":libraries:common")
 include(":libraries:halo-cognition-language")
