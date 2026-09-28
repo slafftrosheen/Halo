@@ -20,6 +20,16 @@ enum class AssistantEnrollmentPath {
     GENERAL_SETTINGS,
 }
 
+data class AssistantEnrollmentDiagnostics(
+    val requestMechanism: AssistantEnrollmentPath? = null,
+    val activityResultCode: Int? = null,
+    val roleHeldAfterReturn: Boolean? = null,
+    val activeInteractorStatus: ActiveInteractorStatus = ActiveInteractorStatus.UNKNOWN,
+    val activeInteractorComponent: String? = null,
+    val recordedAtMs: Long? = null,
+    val settingsFallbackRecommended: Boolean = false,
+)
+
 data class AssistantEnrollmentCandidate(
     val path: AssistantEnrollmentPath,
     val intent: Intent,
@@ -53,11 +63,14 @@ interface AssistantRoleController {
     val state: StateFlow<AssistantRoleState>
     val enrollmentState: StateFlow<AssistantEnrollmentState>
     val integrationState: StateFlow<AssistantIntegrationState>
+    val enrollmentDiagnostics: StateFlow<AssistantEnrollmentDiagnostics>
     fun refresh()
     fun createRoleRequestIntent(): Intent?
     fun resolveEnrollmentAction(): AssistantEnrollmentAction
     fun enrollmentCandidates(): List<AssistantEnrollmentCandidate>
     fun launchEnrollment(launcher: (Intent) -> Unit): AssistantEnrollmentLaunchResult
+    fun launchDefaultAssistantSettings(launcher: (Intent) -> Unit): AssistantEnrollmentLaunchResult
+    fun recordEnrollmentActivityResult(resultCode: Int?)
 }
 
 class AndroidAssistantRoleController(
@@ -78,6 +91,11 @@ class AndroidAssistantRoleController(
 
     private val _integrationState = MutableStateFlow<AssistantIntegrationState>(AssistantIntegrationState.Checking)
     override val integrationState: StateFlow<AssistantIntegrationState> = _integrationState.asStateFlow()
+    private val _enrollmentDiagnostics = MutableStateFlow(AssistantEnrollmentDiagnostics())
+    override val enrollmentDiagnostics: StateFlow<AssistantEnrollmentDiagnostics> =
+        _enrollmentDiagnostics.asStateFlow()
+
+    private var roleRequestReturnedWithoutOwnership = false
 
     init { refresh() }
 
@@ -85,8 +103,16 @@ class AndroidAssistantRoleController(
         val snapshot = inspector.inspect()
         val nextState = inspector.evaluateState(snapshot)
         _integrationState.value = nextState
+        if (snapshot.roleHeld) roleRequestReturnedWithoutOwnership = false
+        _enrollmentDiagnostics.value = _enrollmentDiagnostics.value.copy(
+            roleHeldAfterReturn = snapshot.roleHeld,
+            activeInteractorStatus = snapshot.activeInteractorStatus,
+            activeInteractorComponent = snapshot.activeInteractorComponent,
+            settingsFallbackRecommended = !snapshot.activeVoiceInteractionService &&
+                (roleRequestReturnedWithoutOwnership || snapshot.roleHeld),
+        )
 
-        val isActive = snapshot.activeVoiceInteractionService
+        val isActive = snapshot.roleHeld && snapshot.activeVoiceInteractionService
 
         if (isActive) {
             mutableEnrollmentState.value = AssistantEnrollmentState.Active
@@ -119,7 +145,10 @@ class AndroidAssistantRoleController(
         val list = mutableListOf<AssistantEnrollmentCandidate>()
         val snapshot = inspector.inspect()
 
-        if (!snapshot.roleHeld && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && roleManager != null && roleManager.isRoleAvailable(RoleManager.ROLE_ASSISTANT)) {
+        if (!snapshot.roleHeld && !roleRequestReturnedWithoutOwnership &&
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && roleManager != null &&
+            roleManager.isRoleAvailable(RoleManager.ROLE_ASSISTANT)
+        ) {
             val roleIntent = roleManager.createRequestRoleIntent(RoleManager.ROLE_ASSISTANT)
             // RoleManager owns this contract; OEM role activities are not always returned by resolveActivity().
             if (roleIntent != null) {
@@ -155,7 +184,13 @@ class AndroidAssistantRoleController(
     }
 
     override fun launchEnrollment(launcher: (Intent) -> Unit): AssistantEnrollmentLaunchResult {
-        val candidates = enrollmentCandidates()
+        val available = enrollmentCandidates()
+        val roleCandidate = available.firstOrNull { it.path == AssistantEnrollmentPath.ROLE_REQUEST }
+        val candidates = if (roleCandidate != null && !roleRequestReturnedWithoutOwnership) {
+            listOf(roleCandidate)
+        } else {
+            available.filter { it.path != AssistantEnrollmentPath.ROLE_REQUEST }
+        }
         if (candidates.isEmpty()) {
             Log.e("HaloAssistant", "HALO_ASSISTANT_ENROLLMENT_FAILED reason=no_resolvable_candidate")
             return AssistantEnrollmentLaunchResult.Failed("No assistant settings activity found on device")
@@ -165,6 +200,7 @@ class AndroidAssistantRoleController(
         for (candidate in candidates) {
             try {
                 Log.i("HaloAssistant", "HALO_ASSISTANT_ENROLLMENT_TAP path=${candidate.path}")
+                recordLaunch(candidate.path)
                 launcher(candidate.intent)
                 Log.i("HaloAssistant", "HALO_ASSISTANT_ENROLLMENT_LAUNCHED path=${candidate.path}")
                 return AssistantEnrollmentLaunchResult.Launched(candidate.path)
@@ -176,6 +212,53 @@ class AndroidAssistantRoleController(
 
         Log.e("HaloAssistant", "HALO_ASSISTANT_ENROLLMENT_FAILED all_candidates_failed error=${lastError?.message}")
         return AssistantEnrollmentLaunchResult.Failed(lastError?.message ?: "All launch candidates failed")
+    }
+
+    override fun launchDefaultAssistantSettings(launcher: (Intent) -> Unit): AssistantEnrollmentLaunchResult {
+        val candidate = enrollmentCandidates().firstOrNull {
+            it.path in setOf(
+                AssistantEnrollmentPath.DEFAULT_APPS_SETTINGS,
+                AssistantEnrollmentPath.ASSIST_GESTURE_SETTINGS,
+                AssistantEnrollmentPath.GENERAL_SETTINGS,
+            )
+        } ?: return AssistantEnrollmentLaunchResult.Failed(
+            "Default assistant settings are not available on this device",
+        )
+        return try {
+            recordLaunch(candidate.path)
+            launcher(candidate.intent)
+            AssistantEnrollmentLaunchResult.Launched(candidate.path)
+        } catch (error: Exception) {
+            AssistantEnrollmentLaunchResult.Failed(
+                error.message ?: "Could not open default assistant settings",
+            )
+        }
+    }
+
+    override fun recordEnrollmentActivityResult(resultCode: Int?) {
+        val snapshot = inspector.inspect()
+        val mechanism = _enrollmentDiagnostics.value.requestMechanism
+        roleRequestReturnedWithoutOwnership =
+            mechanism == AssistantEnrollmentPath.ROLE_REQUEST && !snapshot.roleHeld
+        _enrollmentDiagnostics.value = AssistantEnrollmentDiagnostics(
+            requestMechanism = mechanism,
+            activityResultCode = resultCode,
+            roleHeldAfterReturn = snapshot.roleHeld,
+            activeInteractorStatus = snapshot.activeInteractorStatus,
+            activeInteractorComponent = snapshot.activeInteractorComponent,
+            recordedAtMs = System.currentTimeMillis(),
+            settingsFallbackRecommended = roleRequestReturnedWithoutOwnership ||
+                (snapshot.roleHeld && snapshot.activeInteractorStatus != ActiveInteractorStatus.ACTIVE),
+        )
+        refresh()
+    }
+
+    private fun recordLaunch(path: AssistantEnrollmentPath) {
+        _enrollmentDiagnostics.value = AssistantEnrollmentDiagnostics(
+            requestMechanism = path,
+            recordedAtMs = System.currentTimeMillis(),
+            settingsFallbackRecommended = path != AssistantEnrollmentPath.ROLE_REQUEST,
+        )
     }
 
     override fun createRoleRequestIntent(): Intent? {

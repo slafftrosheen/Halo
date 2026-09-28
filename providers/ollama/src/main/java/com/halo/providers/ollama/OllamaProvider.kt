@@ -1,6 +1,5 @@
 package com.halo.providers.ollama
 
-import android.os.Build
 import android.util.Base64
 import android.util.Log
 import com.halo.sdk.provider.AIConversation
@@ -57,11 +56,12 @@ class OllamaProvider(
     private val tag = "OllamaProvider"
     private val jsonMediaType = "application/json; charset=utf-8".toMediaType()
 
-    private val defaultEndpoint: String?
-        get() = if (isAndroidEmulator()) "http://10.0.2.2:11434" else null
-
-    private val configuredModelId: String
-        get() = storage.getString("ollama_model")?.trim()?.ifBlank { null } ?: "llama3"
+    private val configuredModelId: String?
+        get() = storage.getString("active_ai_provider")
+            ?.takeIf { it == id }
+            ?.let { storage.getString("active_ai_model") }
+            ?.trim()
+            ?.ifBlank { null }
 
     private val _status = MutableStateFlow(ProviderStatus.UNAVAILABLE)
     override val status: StateFlow<ProviderStatus> = _status.asStateFlow()
@@ -99,6 +99,11 @@ class OllamaProvider(
                 ProviderStatus.State.UNCONFIGURED,
                 "Ollama endpoint is not configured"
             ).also { _status.value = it }
+        val modelId = configuredModelId
+            ?: return@withContext ProviderStatus(
+                ProviderStatus.State.MODEL_MISSING,
+                "No Ollama model is selected"
+            ).also { _status.value = it }
 
         val probe = fetchModels(endpoint)
         val status = when {
@@ -112,15 +117,15 @@ class OllamaProvider(
                     ProviderStatus.State.OFFLINE,
                     "Ollama responded at $endpoint but returned no models"
                 )
-            probe.models.none { sameModel(it.id, configuredModelId) } ->
+            probe.models.none { sameModel(it.id, modelId) } ->
                 ProviderStatus(
                     ProviderStatus.State.MODEL_MISSING,
-                    "Connected to $endpoint, but model '$configuredModelId' is not pulled"
+                    "Connected to $endpoint, but model '$modelId' is not pulled"
                 )
             else ->
                 ProviderStatus(
                     ProviderStatus.State.READY,
-                    "Connected to $endpoint • $configuredModelId"
+                    "Connected to $endpoint • $modelId"
                 )
         }
         _status.value = status
@@ -153,12 +158,14 @@ class OllamaProvider(
                     "Ollama endpoint is not configured"
                 )
             val model = request.modelId?.trim()?.ifBlank { null } ?: configuredModelId
+                ?: throw AiProviderException(AiErrorType.MODEL_NOT_SELECTED, "No Ollama model is selected")
             val messages = buildMessages(request, context)
             val body = chatRequestAdapter.toJson(
                 OllamaChatRequest(
                     model = model,
                     messages = messages,
                     stream = false,
+                    options = request.maxOutputTokens?.takeIf { it > 0 }?.let { mapOf("num_predict" to it) },
                 )
             ).toRequestBody(jsonMediaType)
 
@@ -220,12 +227,13 @@ class OllamaProvider(
                 AiErrorType.LOCAL_MODEL_UNAVAILABLE,
                 "Ollama endpoint is not configured"
             )
-        val model = request.modelId?.trim()?.ifBlank { null } ?: configuredModelId
+        val model = request.modelId?.trim()?.ifBlank { null } ?: requireSelectedModel()
         val body = chatRequestAdapter.toJson(
             OllamaChatRequest(
                 model = model,
                 messages = buildMessages(request, context),
                 stream = true,
+                options = request.maxOutputTokens?.takeIf { it > 0 }?.let { mapOf("num_predict" to it) },
             )
         ).toRequestBody(jsonMediaType)
 
@@ -334,7 +342,7 @@ class OllamaProvider(
      * Legacy text-only helpers remain for callers not yet migrated to AiRequest.
      */
     suspend fun complete(request: AIRequestLegacy): AIResponseLegacy =
-        completeWithModel(request, configuredModelId)
+        completeWithModel(request, requireSelectedModel())
 
     private suspend fun completeWithModel(
         request: AIRequestLegacy,
@@ -406,7 +414,7 @@ class OllamaProvider(
             )
         val body = chatRequestAdapter.toJson(
             OllamaChatRequest(
-                model = configuredModelId,
+                model = requireSelectedModel(),
                 messages = listOf(OllamaChatMessage("user", prompt)),
                 stream = true,
             )
@@ -580,7 +588,7 @@ class OllamaProvider(
         val raw = configured?.takeIf { it.isNotBlank() }?.let {
             val withScheme = if (it.contains("://")) it else "http://$it"
             withScheme.removeSuffix("/api")
-        } ?: defaultEndpoint
+        }
 
         if (raw.isNullOrBlank()) return null
 
@@ -607,6 +615,9 @@ class OllamaProvider(
         advertised == selected ||
             advertised.removeSuffix(":latest") == selected.removeSuffix(":latest")
 
+    private fun requireSelectedModel(): String = configuredModelId
+        ?: throw AiProviderException(AiErrorType.MODEL_NOT_SELECTED, "No Ollama model is selected")
+
     private fun ollamaHttpError(code: Int, body: String?): String {
         val detail = body?.let {
             runCatching { JSONObject(it).optString("error") }.getOrNull()
@@ -618,12 +629,6 @@ class OllamaProvider(
             "Ollama returned HTTP $code: $detail"
         }
     }
-
-    private fun isAndroidEmulator(): Boolean =
-        Build.FINGERPRINT.contains("generic", ignoreCase = true) ||
-            Build.FINGERPRINT.contains("emulator", ignoreCase = true) ||
-            Build.MODEL.contains("Emulator", ignoreCase = true) ||
-            Build.MODEL.contains("Android SDK built for", ignoreCase = true)
 
     suspend fun close() {
         Log.i(tag, "Disconnecting from Ollama")

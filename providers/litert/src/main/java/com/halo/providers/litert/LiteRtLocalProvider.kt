@@ -46,12 +46,19 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import java.util.UUID
+
+enum class LiteRtFailureStage {
+    DOWNLOAD, HASH_VERIFY, INVENTORY, ENGINE_INIT_GPU, ENGINE_INIT_CPU,
+    CONVERSATION_CREATE, FIRST_TOKEN, GENERATION, CANCEL, TEARDOWN,
+}
 
 /**
  * Bounded technical diagnostics for the last failed local load. Surfaced through System Check /
  * Activity so a native failure is never reduced to "Failed to load <model>".
  */
 data class LiteRtLoadDiagnostics(
+    val diagnosticsId: String = UUID.randomUUID().toString(),
     val modelId: String,
     val displayName: String,
     val artifactSha256: String?,
@@ -59,16 +66,17 @@ data class LiteRtLoadDiagnostics(
     val requestedBackend: LocalComputeBackend,
     val effectiveBackend: LocalComputeBackend?,
     val contextTokens: Int?,
-    val stage: String,
+    val runtimeVersion: String = LiteRtLocalProvider.RUNTIME_VERSION,
+    val stage: LiteRtFailureStage,
     val exceptionClass: String,
     val exceptionMessage: String?,
     val recordedAtMs: Long = System.currentTimeMillis(),
 ) {
     fun technicalSummary(): String = buildString {
-        append("stage=$stage model=$modelId backend=$requestedBackend")
+        append("id=${diagnosticsId.take(8)} stage=$stage model=$modelId runtime=$runtimeVersion backend=$requestedBackend")
         effectiveBackend?.let { append(" effective=$it") }
         append(" bytes=$bytes")
-        append(" sha256=${artifactSha256 ?: "unknown"}")
+        append(" fingerprint=${artifactSha256?.take(12) ?: "unknown"}")
         append(" context=${contextTokens ?: "model-default"}")
         append(" type=$exceptionClass")
         exceptionMessage?.let { append(" message=${it.take(300)}") }
@@ -112,13 +120,22 @@ class LiteRtLocalProvider(
 
     private val loadMutex = Mutex()
 
+    fun isGenerationProven(descriptor: LocalModelDescriptor): Boolean =
+        storage.getBoolean(generationProofKey(descriptor), false)
+
+    private fun markGenerationProven(descriptor: LocalModelDescriptor) {
+        storage.putBoolean(generationProofKey(descriptor), true)
+    }
+
+    private fun generationProofKey(descriptor: LocalModelDescriptor): String =
+        "litert_generation_proven_${descriptor.sha256 ?: "unknown"}_$RUNTIME_VERSION"
+
     private val configuredModelId: String?
-        get() = storage.getString("litert_model")
+        get() = storage.getString("active_ai_provider")
+            ?.takeIf { it == id }
+            ?.let { storage.getString("active_ai_model") }
             ?.trim()
             ?.ifBlank { null }
-            ?: storage.getString("active_ai_model")
-                ?.trim()
-                ?.ifBlank { null }
 
     override suspend fun getStatus(): ProviderStatus = withContext(Dispatchers.IO) {
         val modelId = configuredModelId
@@ -150,7 +167,11 @@ class LiteRtLocalProvider(
             val backend = modelSession.activeBackend ?: LocalComputeBackend.AUTO
             val status = ProviderStatus(
                 ProviderStatus.State.READY,
-                "LiteRT model '$modelId' loaded on $backend",
+                if (isGenerationProven(descriptor)) {
+                    "LiteRT model '$modelId' generation proven on $backend"
+                } else {
+                    "LiteRT model '$modelId' resident on $backend; generation not yet proven"
+                },
                 ProviderReadiness.Ready
             )
             _status.value = status
@@ -158,8 +179,8 @@ class LiteRtLocalProvider(
         }
 
         val status = ProviderStatus(
-            ProviderStatus.State.READY,
-            "Model '$modelId' installed and ready to load",
+            ProviderStatus.State.STANDBY,
+            "Model '$modelId' verified on disk; not loaded",
             ProviderReadiness.ConfiguredCold
         )
         _status.value = status
@@ -274,7 +295,17 @@ class LiteRtLocalProvider(
             requestedBackend = loadException?.requestedBackend ?: loadConfig.computeBackend,
             effectiveBackend = modelSession.activeBackend,
             contextTokens = if (loadConfig.useModelDefaultContext) null else loadConfig.contextSize,
-            stage = (loadException?.stage ?: com.halo.providers.litert.runtime.ModelLoadStage.ENGINE_INIT).name,
+            stage = when (loadException?.stage) {
+                com.halo.providers.litert.runtime.ModelLoadStage.ABI,
+                com.halo.providers.litert.runtime.ModelLoadStage.ARTIFACT -> LiteRtFailureStage.INVENTORY
+                com.halo.providers.litert.runtime.ModelLoadStage.CONVERSATION -> LiteRtFailureStage.CONVERSATION_CREATE
+                com.halo.providers.litert.runtime.ModelLoadStage.GENERATION -> LiteRtFailureStage.GENERATION
+                else -> if (loadException?.requestedBackend == LocalComputeBackend.CPU) {
+                    LiteRtFailureStage.ENGINE_INIT_CPU
+                } else {
+                    LiteRtFailureStage.ENGINE_INIT_GPU
+                }
+            },
             exceptionClass = failure?.let { it::class.java.simpleName } ?: "UnknownError",
             exceptionMessage = failure?.message,
         )
@@ -336,7 +367,7 @@ class LiteRtLocalProvider(
             val diagnostics = _loadDiagnostics.value
             return@withContext ModelVerificationResult.Failed(
                 modelId,
-                if (diagnostics?.stage == "ABI") ModelVerificationStage.ENGINE_INIT else ModelVerificationStage.ENGINE_INIT,
+                ModelVerificationStage.ENGINE_INIT,
                 "${descriptor.displayName} could not be loaded.",
                 diagnostics?.technicalSummary(),
             )
@@ -433,13 +464,24 @@ class LiteRtLocalProvider(
             imageBytes = request.image,
             initialMessages = mapped.initialMessages.map { message -> message.toRuntimeMessage() },
             availableTools = toolDefinitionsFor(context),
+            maxTokens = request.maxOutputTokens ?: 512,
         )
 
         return@withContext try {
             val result = modelSession.generate(genConfig).getOrElse { err ->
                 if (err is CancellationException) throw err
+                recordGenerationFailure(modelSession.loadedModelId, err, LiteRtFailureStage.GENERATION)
                 throw AiProviderException(AiErrorType.GENERATION_FAILED, "LiteRT generation failed: ${err.message}", err)
             }
+
+            if (result.text.isBlank()) {
+                val error = AiProviderException(AiErrorType.EMPTY_RESPONSE, "LiteRT produced no response text")
+                recordGenerationFailure(modelSession.loadedModelId, error, LiteRtFailureStage.FIRST_TOKEN)
+                throw error
+            }
+            inventoryRepository.resolveModel(modelSession.loadedModelId ?: configuredModelId.orEmpty())
+                ?.let(::markGenerationProven)
+            _loadDiagnostics.value = null
 
             AiResponse(
                 text = result.text,
@@ -481,6 +523,7 @@ class LiteRtLocalProvider(
             imageBytes = request.image,
             initialMessages = mapped.initialMessages.map { message -> message.toRuntimeMessage() },
             availableTools = toolDefinitionsFor(context),
+            maxTokens = request.maxOutputTokens ?: 512,
         )
 
         try {
@@ -489,6 +532,11 @@ class LiteRtLocalProvider(
             }
 
             result.onSuccess { gen ->
+                if (gen.text.isNotBlank()) {
+                    inventoryRepository.resolveModel(modelSession.loadedModelId ?: configuredModelId.orEmpty())
+                        ?.let(::markGenerationProven)
+                    _loadDiagnostics.value = null
+                }
                 send(
                     AiStreamEvent.Completed(
                         AiResponse(
@@ -502,6 +550,7 @@ class LiteRtLocalProvider(
                 )
             }.onFailure { err ->
                 if (err is CancellationException) throw err
+                recordGenerationFailure(modelSession.loadedModelId, err, LiteRtFailureStage.GENERATION)
                 send(AiStreamEvent.Failed(AiProviderException(AiErrorType.GENERATION_FAILED, err.message ?: "Stream failed", err)))
             }
         } catch (cancelled: CancellationException) {
@@ -514,6 +563,26 @@ class LiteRtLocalProvider(
             nativeResourceCoordinator?.mark(this@LiteRtLocalProvider, NativeResourceState.RESIDENT, "Resident")
         }
     }.flowOn(Dispatchers.IO)
+
+    private suspend fun recordGenerationFailure(
+        modelId: String?,
+        error: Throwable,
+        stage: LiteRtFailureStage,
+    ) {
+        val descriptor = modelId?.let { inventoryRepository.resolveModel(it) } ?: return
+        _loadDiagnostics.value = LiteRtLoadDiagnostics(
+            modelId = descriptor.id,
+            displayName = descriptor.displayName,
+            artifactSha256 = descriptor.sha256,
+            bytes = descriptor.bytes,
+            requestedBackend = LocalComputeBackend.AUTO,
+            effectiveBackend = modelSession.activeBackend,
+            contextTokens = descriptor.contextWindowTokens,
+            stage = stage,
+            exceptionClass = error::class.java.simpleName,
+            exceptionMessage = error.message?.take(300),
+        )
+    }
 
     private fun com.halo.providers.litert.runtime.LiteRtMappedMessage.toRuntimeMessage() =
         RuntimeConversationMessage(
@@ -532,6 +601,7 @@ class LiteRtLocalProvider(
     }
 
     companion object {
+        const val RUNTIME_VERSION = "0.17.1"
         const val VERIFY_PROMPT = "Reply with OK."
         const val VERIFY_MAX_TOKENS = 8
         const val VERIFY_TIMEOUT_MS = 120_000L

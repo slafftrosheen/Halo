@@ -11,7 +11,7 @@ Record:
 - APK/build variant.
 - Phone model and Android version.
 - HeyCyan firmware/device name if glasses are involved.
-- AI provider/model in use, and (for local runs) the selected `llama.cpp` model file.
+- AI provider/model in use, and (for local runs) the selected LiteRT-LM artifact fingerprint and effective backend.
 - Whether Whisper Tiny is installed.
 - Whether microphone/Bluetooth permissions were granted before launch.
 - The `interactionId` of the turn under test, when the scenario involves a voice interaction.

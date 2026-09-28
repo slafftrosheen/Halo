@@ -190,6 +190,9 @@ object ManualDependencyGraph {
 
     val modelManager get() = providerGraph.modelManager
     val assistantRoleController by lazy { AndroidAssistantRoleController(applicationContext) }
+    val assistantInvocationCoordinator by lazy {
+        com.halo.app.assistant.AssistantInvocationCoordinator(applicationContext, eventBus, infra.scope)
+    }
     val providers get() = providerGraph.providers
     val speechRecognitionAvailability: StateFlow<Boolean> by lazy {
         (providers.speechRecognition as? ReloadableSpeechRecognitionProvider)?.availability

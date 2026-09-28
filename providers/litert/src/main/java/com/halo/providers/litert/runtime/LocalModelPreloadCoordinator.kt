@@ -15,8 +15,9 @@ class LocalModelPreloadCoordinator(
         val selectedProvider = storage.getString("active_ai_provider") ?: "provider.litert.local"
         if (selectedProvider != "provider.litert.local") return false
 
+        // Legacy litert_model is migration input only when the canonical tuple has no provider.
         val selectedModelId = storage.getString("active_ai_model")
-            ?: storage.getString("litert_model")
+            ?: storage.getString("litert_model").takeIf { storage.getString("active_ai_provider") == null }
             ?: return false
 
         val descriptor = inventoryRepository.resolveModel(selectedModelId) ?: return false

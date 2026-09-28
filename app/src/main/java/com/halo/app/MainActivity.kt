@@ -27,7 +27,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.halo.app.di.ManualDependencyGraph
-import com.halo.app.assistant.HaloAssistantRuntimeBridge
 import com.halo.app.ui.shell.AppShell
 import com.halo.app.ui.screens.discovery.requiredBluetoothDiscoveryPermissions
 import com.halo.app.ui.theme.AppearanceMode
@@ -217,19 +216,15 @@ class MainActivity : ComponentActivity() {
         if (intent?.action != Intent.ACTION_ASSIST) return
         intent.action = null
 
-        val previousId = activityAssistInteractionId
         val interactionId = UUID.randomUUID().toString()
         activityAssistInteractionId = interactionId
         activityAssistJob?.cancel()
         activityAssistJob = lifecycleScope.launch {
-            val bridge = HaloAssistantRuntimeBridge(this@MainActivity)
+            val coordinator = ManualDependencyGraph.assistantInvocationCoordinator
             try {
-                if (previousId != null) {
-                    bridge.cancelAssistantInteraction(previousId, "superseded")
-                }
                 val inputDeviceId = intent.getIntExtra(Intent.EXTRA_ASSIST_INPUT_DEVICE_ID, -1)
                     .takeIf { it >= 0 }
-                bridge.begin(
+                coordinator.begin(
                     HostInvocation(
                         interactionId = interactionId,
                         source = InvocationSource.ANDROID_ASSISTANT,
@@ -239,12 +234,12 @@ class MainActivity : ComponentActivity() {
                         requestedScreenshot = false,
                     )
                 )
-                bridge.startListening(interactionId, inputDeviceId)
+                coordinator.startListening(interactionId, inputDeviceId)
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (error: Throwable) {
                 Log.e("MainActivity", "Activity assistant fallback failed", error)
-                bridge.cancelAssistantInteraction(interactionId, "startup_failed")
+                coordinator.cancelAssistantInteraction(interactionId, "startup_failed")
                 if (activityAssistInteractionId == interactionId) activityAssistInteractionId = null
             }
         }
@@ -389,7 +384,7 @@ class MainActivity : ComponentActivity() {
         if (!isChangingConfigurations) {
             activityAssistInteractionId?.let { interactionId ->
                 ManualDependencyGraph.infra.scope.launch {
-                    HaloAssistantRuntimeBridge(applicationContext)
+                    ManualDependencyGraph.assistantInvocationCoordinator
                         .cancelAssistantInteraction(interactionId, "activity_destroyed")
                 }
             }

@@ -35,7 +35,7 @@ The pre-existing change to `AudioPerceptionEngine.kt` was left untouched.
 | Agents | `engines/agents/.../ConversationAgent.kt` | Lifecycle methods contain placeholder comments; the module name overstates the implemented behavior. Audit other agents and consolidate around the working session path. |
 | Older AI path | `engines/ai/.../AIEngine.kt` | `availableTools` is empty in both policy branches. Trace reachability and converge tool/context assembly; do not create another orchestrator. |
 | Providers | `providers/openrouter/.../OpenRouterProvider.kt` | Streaming tool fragments, tool messages and model discovery exist. Contract tests and provider-specific parity remain necessary. |
-| Local AI | `providers/llamacpp/` | Local infrastructure exists. Native provider explicitly reports `supportsTools = false`; never advertise universal local tool support. Audit Ollama separately against its current API. |
+| Local AI | `providers/litert/` | LiteRT-LM is the on-device path. The pinned model explicitly reports `supportsTools = false`; never advertise universal local tool support. Audit Ollama separately against its current API. |
 | System assistant | `providers/android-assistant/.../AndroidAssistantProvider.kt` | Correctly modeled as external handoff, not inference. Custom prompt extras are explicitly non-standard. It does not make Halo the Android voice assistant. |
 | Android actions | `host-android/.../capability/` | Adapters cover application, communication, media, navigation, web, device and memory tasks. Communication opens a dialer; dispatch success cannot establish that a call completed. |
 | Reminders | `AndroidMemoryCapability.kt` | Uses exact alarms and simple duration parsing, defaulting ambiguous input to ten minutes. Needs clarification, scheduling permission handling, persistence and edit/cancel behavior. |
@@ -224,7 +224,7 @@ agent SDK simply to obtain tool calling that already exists.
 | [OpenRouter tool calling](https://openrouter.ai/docs/guides/features/tool-calling) | Preserve assistant tool calls, matching result IDs, schemas and subsequent rounds; test incomplete streamed arguments, multiple calls, unsupported models and cancellation |
 | [Ollama tool calling](https://docs.ollama.com/capabilities/tool-calling) | Implement/test provider-specific message and streaming semantics for supported models; do not copy the OpenRouter wire format blindly |
 
-For llama.cpp and Sherpa, inventory the pinned native artifact/commit, ABI coverage,
+For LiteRT-LM and Sherpa, inventory the pinned native artifact/version, ABI coverage,
 model licensing/checksums and lifecycle contract before scheduling an update.
 Their latest upstream revisions were not verified in this review. Provider
 acceptance must include text-only, supported tools/vision, timeout, model unload,

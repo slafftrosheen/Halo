@@ -52,6 +52,7 @@ data class IntelligenceUiState(
     val downloadErrors: Map<String, String> = emptyMap(),
     val activeLocalModelId: String? = null,
     val verifications: Map<String, ModelVerificationResult> = emptyMap(),
+    val generationProvenIds: Set<String> = emptySet(),
     val verifyingModelId: String? = null,
     val litertLoadDiagnostics: LiteRtLoadDiagnostics? = null,
     val temperature: Float = 0.7f,
@@ -146,7 +147,6 @@ class IntelligenceViewModel(
             aiProviderRouter.selectedProviderId.collectLatest { providerId ->
                 if (providerId != null) {
                     runCatching { aiProviderRouter.diagnostics() }
-                    syncStoredModelSelection(providerId)
                     refreshModelsFor(providerId)
                 }
             }
@@ -165,36 +165,19 @@ class IntelligenceViewModel(
 
     private suspend fun loadSettings() {
         _settings.value = withContext(dispatchers.io) {
-            val storedOpenRouterModel = storage.getString("openrouter_model")?.trim()?.ifBlank { null }
-            val openRouterModel = storedOpenRouterModel ?: "openrouter/free"
-            if (storedOpenRouterModel == null) storage.putString("openrouter_model", openRouterModel)
+            val activeProvider = aiProviderRouter.selectedProviderId.value
+            val activeModel = aiProviderRouter.selectedModelId.value
             IntelligenceSettings(
                 openRouterKey = storage.getString("openrouter_api_key") ?: "",
-                openRouterModel = openRouterModel,
+                openRouterModel = activeModel.takeIf { activeProvider == ProviderIds.OPENROUTER } ?: "openrouter/free",
                 ollamaEndpoint = storage.getString("ollama_endpoint") ?: "",
-                ollamaModel = storage.getString("ollama_model") ?: "llama3",
-                litertModel = storage.getString("litert_model")?.trim().orEmpty(),
+                ollamaModel = activeModel.takeIf { activeProvider == ProviderIds.OLLAMA }.orEmpty(),
+                litertModel = activeModel.takeIf { activeProvider == ProviderIds.LITERT }.orEmpty(),
                 litertContext = storage.getInt("litert_context", 4096),
                 temperature = storage.getInt("ai_temperature", 70) / 100f,
                 policy = storage.readRuntimeAiContextPolicy()
             )
         }
-    }
-
-    /**
-     * The router owns provider/model persistence, so the restore path reads storage directly
-     * instead of a second in-memory copy of the same selection.
-     */
-    private suspend fun syncStoredModelSelection(providerId: String) {
-        val storedModelId = withContext(dispatchers.io) {
-            when (providerId) {
-                ProviderIds.OPENROUTER -> storage.getString("openrouter_model")?.trim()?.ifBlank { null } ?: "openrouter/free"
-                ProviderIds.OLLAMA -> storage.getString("ollama_model")?.trim()?.ifBlank { null }
-                ProviderIds.LITERT -> storage.getString("litert_model")?.trim()?.ifBlank { null }
-                else -> null
-            }
-        }
-        if (storedModelId != aiProviderRouter.selectedModelId.value) aiProviderRouter.selectModel(storedModelId)
     }
 
     val uiState: StateFlow<IntelligenceUiState> = combine(
@@ -297,6 +280,7 @@ class IntelligenceViewModel(
             catalogModels = modelManager?.getAllCatalogModels().orEmpty(),
             downloadStates = dlStates,
             verifications = verification.results,
+            generationProvenIds = localModels.filter { localProvider?.isGenerationProven(it) == true }.mapTo(mutableSetOf()) { it.id },
             verifyingModelId = verification.verifyingModelId,
             litertLoadDiagnostics = verification.diagnostics,
             temperature = settings.temperature,
@@ -325,13 +309,11 @@ class IntelligenceViewModel(
 
     fun selectProvider(providerId: String) {
         aiProviderRouter.selectProvider(providerId)
-        viewModelScope.launch { syncStoredModelSelection(providerId) }
     }
 
     /**
      * Selects a model for the *currently selected* provider. Persistence stays in the router:
-     * [selectTarget] is the single writer for `active_ai_provider` / `active_ai_model` and the
-     * per-provider model key.
+     * [selectTarget] is the single writer for `active_ai_provider` / `active_ai_model`.
      */
     fun selectModel(modelId: String) {
         val providerId = aiProviderRouter.selectedProviderId.value ?: return

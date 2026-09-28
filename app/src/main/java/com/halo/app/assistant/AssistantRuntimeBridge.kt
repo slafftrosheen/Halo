@@ -102,14 +102,24 @@ class HaloAssistantRuntimeBridge(private val context: Context) : AssistantRuntim
         withContext(Dispatchers.IO) {
             val route = audioResolver.resolve(inputDeviceId)
             ManualDependencyGraph.hostGraph.androidInteractionAudioManager.prepareInteractionRoute(interactionId, route)
-            ManualDependencyGraph.audioPerceptionEngine.startCapture(
+            val started = ManualDependencyGraph.audioPerceptionEngine.startCapture(
                 SpeechInputTurn(
                     captureId = interactionId,
                     route = route,
                     source = if (route is SpeechInputRoute.Phone) ObservationSource.AndroidPhoneMic else ObservationSource.BluetoothHeadset,
                 )
             )
-            true
+            if (started) {
+                com.halo.host.android.assistant.AssistantRuntimeStateStore.capture(
+                    interactionId,
+                    com.halo.host.android.assistant.AssistantCaptureState.LISTENING,
+                    when (route) {
+                        SpeechInputRoute.Phone -> "phone"
+                        is SpeechInputRoute.Device -> "device:${route.deviceId ?: route.platformEndpointId ?: "unknown"}"
+                    },
+                )
+            }
+            started
         }
 
     override suspend fun hideAssistantSurface(interactionId: String) {

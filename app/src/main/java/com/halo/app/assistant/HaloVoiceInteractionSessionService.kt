@@ -4,12 +4,19 @@ import android.os.Bundle
 import android.service.voice.VoiceInteractionSession
 import android.service.voice.VoiceInteractionSessionService
 import com.halo.app.di.ManualDependencyGraph
+import com.halo.host.android.assistant.AssistantRuntimeStateStore
 
 class HaloVoiceInteractionSessionService : VoiceInteractionSessionService() {
+    override fun onCreate() {
+        super.onCreate()
+        AssistantRuntimeStateStore.sessionServiceCreated()
+    }
+
     override fun onNewSession(args: Bundle?): VoiceInteractionSession {
+        AssistantRuntimeStateStore.sessionCreated()
         return HaloVoiceInteractionSession(
             this,
-            HaloAssistantRuntimeBridge(this),
+            ManualDependencyGraph.assistantInvocationCoordinator,
             applicationScope = ManualDependencyGraph.infra.scope,
         )
     }

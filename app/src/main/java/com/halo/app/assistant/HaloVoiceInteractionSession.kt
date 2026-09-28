@@ -45,6 +45,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import com.halo.host.android.assistant.AssistantRuntimeStateStore
 
 class HaloVoiceInteractionSession(
     context: Context,
@@ -122,12 +123,8 @@ class HaloVoiceInteractionSession(
 
     override fun onShow(args: Bundle?, showFlags: Int) {
         super.onShow(args, showFlags)
+        AssistantRuntimeStateStore.sessionVisible(true)
         lifecycleRegistry.currentState = Lifecycle.State.RESUMED
-        active?.let { previous ->
-            scope.launch {
-                runtimeBridge.cancelAssistantInteraction(previous.invocation.interactionId, "superseded")
-            }
-        }
         val inputDeviceId = args?.getInt(Intent.EXTRA_ASSIST_INPUT_DEVICE_ID, -1)?.takeIf { it >= 0 }
         val invocation = HostInvocation(
             interactionId = UUID.randomUUID().toString(),
@@ -204,6 +201,7 @@ class HaloVoiceInteractionSession(
     }
 
     override fun onHide() {
+        AssistantRuntimeStateStore.sessionVisible(false)
         interactionObserverJob?.cancel()
         interactionObserverJob = null
         val ending = active
@@ -215,6 +213,7 @@ class HaloVoiceInteractionSession(
     }
 
     override fun onDestroy() {
+        AssistantRuntimeStateStore.sessionDestroyed()
         interactionObserverJob?.cancel()
         interactionObserverJob = null
         active?.let { ending ->

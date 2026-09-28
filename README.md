@@ -10,7 +10,7 @@ Halo feels like one intelligence that follows the user across their operating sy
 
 - **Android** is our first host, not the architecture itself. Future hosts could include Linux and Windows through equivalent native adapters.
 - **HeyCyan** is our first deeply tested wearable driver. Wearables are first-class interaction devices, but Halo is not tied to any individual hardware family. 
-- **llama.cpp** is the default local inference path, but AI providers are replaceable reasoning backends, not the runtime itself.
+- **LiteRT-LM** is the default on-device inference path; OpenRouter and Ollama remain explicitly selectable alternatives, not hidden fallbacks.
 
 None of these individual technologies define Halo. Core functionality remains useful without a mandatory cloud account, companion application, or subscription.
 

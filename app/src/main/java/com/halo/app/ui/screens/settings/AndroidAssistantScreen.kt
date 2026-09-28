@@ -40,6 +40,10 @@ import com.halo.app.ui.theme.HaloPastelMint
 import com.halo.host.android.assistant.AssistantIntegrationState
 import com.halo.host.android.assistant.AssistantEnrollmentLaunchResult
 import com.halo.host.android.assistant.AssistantRoleController
+import com.halo.host.android.assistant.ActiveInteractorStatus
+import com.halo.host.android.assistant.AssistantRuntimeStateStore
+import java.text.DateFormat
+import java.util.Date
 
 @Composable
 fun AndroidAssistantScreen(
@@ -47,12 +51,14 @@ fun AndroidAssistantScreen(
     onBack: () -> Unit
 ) {
     val state by roleController.integrationState.collectAsState()
+    val enrollmentDiagnostics by roleController.enrollmentDiagnostics.collectAsState()
+    val runtimeState by AssistantRuntimeStateStore.state.collectAsState()
     var enrollmentError by remember { mutableStateOf<String?>(null) }
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
-    ) {
-        roleController.refresh()
+    ) { result ->
+        roleController.recordEnrollmentActivityResult(result.resultCode)
     }
 
     LaunchedEffect(Unit) {
@@ -78,9 +84,9 @@ fun AndroidAssistantScreen(
         Spacer(Modifier.height(HaloSpacing.md))
 
         val (bannerTitle, bannerSubtitle, bannerColor) = when (val s = state) {
-            is AssistantIntegrationState.Active -> Triple("Halo is your Default Assistant ✓", "Assistant gesture and voice interactor active", HaloPastelMint)
-            is AssistantIntegrationState.RoleHeldNotActive -> Triple("Role Held, Service Inactive", "Halo holds the role but needs system interactor activation", MaterialTheme.colorScheme.tertiaryContainer)
-            is AssistantIntegrationState.EligibleNotSelected -> Triple("Halo is Ready for Assistant Role", "Eligible candidate for default system assistant", HaloPastelBlue)
+            is AssistantIntegrationState.Active -> Triple("Halo is the active Android assistant", "Android reports both the default role and Halo voice interactor active.", HaloPastelMint)
+            is AssistantIntegrationState.RoleHeldNotActive -> Triple("Halo is selected, but not active", "Android has not activated Halo's voice interaction service.", MaterialTheme.colorScheme.tertiaryContainer)
+            is AssistantIntegrationState.EligibleNotSelected -> Triple("Halo is ready for assistant selection", "Android recognizes Halo as an assistant candidate, but Halo is not selected.", HaloPastelBlue)
             is AssistantIntegrationState.NotEligible -> Triple("Assistant Integration Needs Repair", "Voice interaction service metadata or permission missing", MaterialTheme.colorScheme.errorContainer)
             is AssistantIntegrationState.Checking -> Triple("Checking Assistant Integration...", "Inspecting package manager and role state", MaterialTheme.colorScheme.surfaceVariant)
             is AssistantIntegrationState.Error -> Triple("Integration Error", s.message, MaterialTheme.colorScheme.errorContainer)
@@ -104,6 +110,8 @@ fun AndroidAssistantScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            val canRequestRole = state is AssistantIntegrationState.EligibleNotSelected &&
+                !enrollmentDiagnostics.settingsFallbackRecommended
             Button(
                 onClick = {
                     enrollmentError = when (val result = roleController.launchEnrollment { launcher.launch(it) }) {
@@ -111,15 +119,11 @@ fun AndroidAssistantScreen(
                         is AssistantEnrollmentLaunchResult.Failed -> result.reason
                     }
                 },
-                enabled = state !is AssistantIntegrationState.Active && state !is AssistantIntegrationState.NotEligible,
+                enabled = canRequestRole,
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text(when (state) {
-                    is AssistantIntegrationState.Active -> "Assistant active"
-                    is AssistantIntegrationState.RoleHeldNotActive -> "Repair activation"
-                    else -> "Set as Assistant"
-                })
+                Text(if (state is AssistantIntegrationState.Active) "Assistant active" else "Set as Assistant")
             }
 
             OutlinedButton(
@@ -129,6 +133,20 @@ fun AndroidAssistantScreen(
             ) {
                 Text("Re-inspect")
             }
+        }
+
+        if (enrollmentDiagnostics.settingsFallbackRecommended || state is AssistantIntegrationState.RoleHeldNotActive) {
+            Spacer(Modifier.height(10.dp))
+            OutlinedButton(
+                onClick = {
+                    enrollmentError = when (val result = roleController.launchDefaultAssistantSettings { launcher.launch(it) }) {
+                        is AssistantEnrollmentLaunchResult.Launched -> null
+                        is AssistantEnrollmentLaunchResult.Failed -> result.reason
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+            ) { Text("Open Default Assistant Settings") }
         }
 
         enrollmentError?.let { error ->
@@ -150,6 +168,27 @@ fun AndroidAssistantScreen(
         }
 
         if (diag != null) {
+            val candidate = diag.voiceInteractionServiceDeclared && diag.bindPermissionCorrect &&
+                diag.serviceMetadataPresent && diag.sessionServiceDeclared
+            DiagnosticStateRow("Candidate", if (candidate) "YES" else "NO", candidate)
+            DiagnosticStateRow("Default role", if (diag.roleHeld) "HELD" else "NOT HELD", diag.roleHeld)
+            DiagnosticStateRow(
+                "Interactor",
+                when (diag.activeInteractorStatus) {
+                    ActiveInteractorStatus.ACTIVE -> "ACTIVE"
+                    ActiveInteractorStatus.INACTIVE -> "INACTIVE"
+                    ActiveInteractorStatus.UNKNOWN -> "UNKNOWN"
+                },
+                diag.activeInteractorStatus == ActiveInteractorStatus.ACTIVE,
+                unknown = diag.activeInteractorStatus == ActiveInteractorStatus.UNKNOWN,
+            )
+            DiagnosticStateRow("Service", if (runtimeState.serviceReady) "ACTIVE" else "NOT BOUND", runtimeState.serviceReady)
+            DiagnosticStateRow("Session", if (runtimeState.sessionCreated) "CREATED" else "NOT CREATED", runtimeState.sessionCreated)
+            DiagnosticStateRow("Capture", runtimeState.captureState.name.replace('_', ' '), runtimeState.captureState.name in setOf("LISTENING", "TRANSCRIBING", "INFERENCE_RUNNING", "RESPONDING"))
+            runtimeState.inputRoute?.let { DiagnosticTextRow("Input route", it) }
+            runtimeState.outputRoute?.let { DiagnosticTextRow("Output route", it) }
+
+            Spacer(Modifier.height(14.dp))
             BreakdownRow("VoiceInteractionService Declared", diag.voiceInteractionServiceDeclared)
             BreakdownRow("BIND_VOICE_INTERACTION Permission", diag.bindPermissionCorrect)
             BreakdownRow("Voice Interaction Metadata", diag.serviceMetadataPresent)
@@ -160,6 +199,21 @@ fun AndroidAssistantScreen(
             BreakdownRow("ROLE_ASSISTANT Held", diag.roleHeld)
             BreakdownRow("Active Interactor Service", diag.activeVoiceInteractionService)
 
+            enrollmentDiagnostics.recordedAtMs?.let { recordedAt ->
+                Spacer(Modifier.height(12.dp))
+                Text("Last enrollment return", style = MaterialTheme.typography.labelLarge)
+                DiagnosticTextRow("Mechanism", enrollmentDiagnostics.requestMechanism?.name ?: "Unknown")
+                DiagnosticTextRow("Activity result", enrollmentDiagnostics.activityResultCode?.toString() ?: "Unavailable")
+                DiagnosticTextRow("Role after return", enrollmentDiagnostics.roleHeldAfterReturn?.toString() ?: "Unknown")
+                DiagnosticTextRow("Recorded", DateFormat.getDateTimeInstance().format(Date(recordedAt)))
+            }
+
+            Spacer(Modifier.height(12.dp))
+            Text("Platform recognition adapter", style = MaterialTheme.typography.labelLarge)
+            DiagnosticTextRow("Service created", runtimeState.recognition.serviceCreatedCount.toString())
+            DiagnosticTextRow("Start requests", runtimeState.recognition.startListeningCount.toString())
+            DiagnosticTextRow("Mode", "Compatibility endpoint; Halo STT owns capture")
+
             if (diag.problems.isNotEmpty()) {
                 Spacer(Modifier.height(16.dp))
                 Text("Detected Issues:", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.error)
@@ -168,6 +222,31 @@ fun AndroidAssistantScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun DiagnosticStateRow(label: String, value: String, pass: Boolean, unknown: Boolean = false) {
+    DiagnosticTextRow(
+        label,
+        value,
+        when {
+            unknown -> MaterialTheme.colorScheme.tertiary
+            pass -> HaloPastelMint
+            else -> MaterialTheme.colorScheme.error
+        },
+    )
+}
+
+@Composable
+private fun DiagnosticTextRow(label: String, value: String, valueColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurfaceVariant) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 5.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(label, style = MaterialTheme.typography.bodyMedium)
+        Text(value, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = valueColor)
     }
 }
 

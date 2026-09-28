@@ -194,7 +194,7 @@ HOST / DRIVER INTERNAL ARBITRATION REMAINS BELOW THIS:
 
 Android audio routing
 HeyCyanResourceArbiter
-llama.cpp model lifecycle
+LiteRT-LM model lifecycle
 Bluetooth transport
 ...
 ```

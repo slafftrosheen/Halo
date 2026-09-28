@@ -71,9 +71,23 @@ class AssistantEligibilityInspector(
             problems.add("Recognition service must require android.permission.BIND_SPEECH_RECOGNITION_SERVICE")
         }
 
-        val activeVoiceInteractionService = runCatching {
-            VoiceInteractionService.isActiveService(context, voiceServiceComponent)
-        }.getOrDefault(false)
+        val activeInteractorRead = runCatching {
+            Settings.Secure.getString(
+                context.contentResolver,
+                Settings.Secure.VOICE_INTERACTION_SERVICE,
+            )
+        }
+        val activeInteractorComponent = activeInteractorRead.getOrNull()?.trim()?.ifBlank { null }
+        val activeInteractorStatus = when {
+            activeInteractorRead.isFailure -> ActiveInteractorStatus.UNKNOWN
+            activeInteractorComponent == null -> ActiveInteractorStatus.INACTIVE
+            ComponentName.unflattenFromString(activeInteractorComponent) == voiceServiceComponent ->
+                ActiveInteractorStatus.ACTIVE
+            else -> ActiveInteractorStatus.INACTIVE
+        }
+        if (activeInteractorStatus == ActiveInteractorStatus.UNKNOWN) {
+            problems.add("Android did not expose the active voice interaction service")
+        }
 
         val roleRequestIntent = if (roleAvailable && roleManager != null) {
             roleManager.createRequestRoleIntent(RoleManager.ROLE_ASSISTANT)
@@ -97,7 +111,8 @@ class AssistantEligibilityInspector(
             sessionServiceClassValid = sessionServiceClassValid,
             recognitionServiceDeclared = recognitionServiceDeclared,
             recognitionServicePermissionCorrect = recognitionServicePermissionCorrect,
-            activeVoiceInteractionService = activeVoiceInteractionService,
+            activeInteractorStatus = activeInteractorStatus,
+            activeInteractorComponent = activeInteractorComponent,
             roleRequestResolvable = roleRequestResolvable,
             defaultAppsSettingsResolvable = defaultAppsSettingsResolvable,
             voiceSettingsResolvable = voiceSettingsResolvable,
@@ -107,8 +122,7 @@ class AssistantEligibilityInspector(
     }
 
     fun evaluateState(snapshot: AssistantEligibilitySnapshot): AssistantIntegrationState {
-        // Android's active-service truth is authoritative even if an OEM omits query metadata.
-        if (snapshot.activeVoiceInteractionService) {
+        if (snapshot.roleHeld && snapshot.activeInteractorStatus == ActiveInteractorStatus.ACTIVE) {
             return AssistantIntegrationState.Active(snapshot)
         }
 

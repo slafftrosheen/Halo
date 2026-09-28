@@ -4,7 +4,7 @@
 mkdir -p runtime/kernel runtime/events runtime/commands runtime/queries runtime/scheduler runtime/registry runtime/lifecycle
 mkdir -p sdk/runtime-sdk sdk/driver-sdk sdk/provider-sdk sdk/plugin-sdk
 mkdir -p engines/voice engines/memory engines/workflow engines/provider engines/device engines/context engines/privacy engines/automation engines/notification
-mkdir -p drivers/heycyan providers/llamacpp
+mkdir -p drivers/heycyan providers/litert providers/ollama providers/openrouter
 mkdir -p libraries/common libraries/logging libraries/testing
 
 # Base build.gradle.kts content for a Kotlin library (Android library)
@@ -61,7 +61,9 @@ setup_module "engines/automation" "engines.automation"
 setup_module "engines/notification" "engines.notification"
 
 setup_module "drivers/heycyan" "drivers.heycyan"
-setup_module "providers/llamacpp" "providers.llamacpp"
+setup_module "providers/litert" "providers.litert"
+setup_module "providers/ollama" "providers.ollama"
+setup_module "providers/openrouter" "providers.openrouter"
 
 setup_module "libraries/common" "libraries.common"
 setup_module "libraries/logging" "libraries.logging"

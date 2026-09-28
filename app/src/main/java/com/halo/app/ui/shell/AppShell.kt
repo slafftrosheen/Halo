@@ -337,7 +337,6 @@ fun AppShell(
                     val viewModel = remember(context) {
                         SystemCheckViewModel(
                             appContext = context.applicationContext,
-                            eventBus = ManualDependencyGraph.eventBus,
                             providerRouter = ManualDependencyGraph.aiProviderRouter
                         )
                     }

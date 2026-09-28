@@ -69,7 +69,7 @@ fun SystemCheckScreen(
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Run Safe Checks")
+                Text("Refresh")
             }
 
             OutlinedButton(
@@ -87,8 +87,8 @@ fun SystemCheckScreen(
 
     val assistantLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
-    ) {
-        viewModel.refreshChecks()
+    ) { result ->
+        viewModel.recordAssistantEnrollmentResult(result.resultCode)
     }
 
     LazyColumn(
@@ -102,7 +102,7 @@ fun SystemCheckScreen(
                     when (item.id) {
                         "assistant" -> viewModel.launchAssistantEnrollment { intent -> assistantLauncher.launch(intent) }
                         "mic" -> viewModel.testMicrophone()
-                        "local_ai" -> viewModel.testTextInference()
+                        "ai_execution" -> viewModel.runAiProbe()
                         "audio" -> viewModel.testAudioOutput()
                         else -> viewModel.refreshChecks()
                     }
@@ -184,7 +184,11 @@ private fun SystemCheckCard(
                 onClick = onAction
             ) {
                 Text(
-                    text = item.status.name,
+                    text = if (item.id == "ai_execution" && item.status != CheckStatus.RUNNING) {
+                        "RUN AI PROBE"
+                    } else {
+                        item.status.name
+                    },
                     color = statusColor,
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,

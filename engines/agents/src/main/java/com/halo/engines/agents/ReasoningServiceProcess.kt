@@ -28,7 +28,7 @@ import com.halo.sdk.provider.AiContext
  *
  * The actual AI selection is delegated to the same AiProviderRouter used by
  * CognitiveSession, so this process can never bypass the user's provider/model
- * selection and accidentally invoke the native llama.cpp backend.
+ * selection and accidentally invoke a different inference provider.
  */
 class ReasoningServiceProcess(
     private val perceptionBus: PerceptionBus,

@@ -80,7 +80,7 @@ class HaloSpeechOutputCoordinator(
 
     private fun speak(event: TtsRequested) {
         if (event.text.isBlank()) {
-            scope.launch { eventBus.publish(TtsFailed(transactionId = event.transactionId, target = event.target, reason = "Speech text is empty")) }
+            scope.launch { eventBus.publish(TtsFailed(transactionId = event.transactionId, target = event.target, reason = "Speech text is empty", interactionId = event.interactionId)) }
             return
         }
         val fallback = event.fallback
@@ -155,7 +155,8 @@ class HaloSpeechOutputCoordinator(
                             TtsFailed(
                                 transactionId = event.transactionId,
                                 target = playbackTarget,
-                                reason = reason
+                                reason = reason,
+                                interactionId = event.interactionId,
                             )
                         )
                         return@launch
@@ -182,7 +183,8 @@ class HaloSpeechOutputCoordinator(
                             TtsFailed(
                                 transactionId = event.transactionId,
                                 target = playbackTarget,
-                                reason = "PHONE_FALLBACK_ROUTE_FAILED"
+                                reason = "PHONE_FALLBACK_ROUTE_FAILED",
+                                interactionId = event.interactionId,
                             )
                         )
                         return@launch
@@ -201,7 +203,8 @@ class HaloSpeechOutputCoordinator(
                                 TtsStarted(
                                     transactionId = event.transactionId,
                                     target = playbackTarget,
-                                    textLength = event.text.length
+                                    textLength = event.text.length,
+                                    interactionId = event.interactionId,
                                 )
                             )
                         }
@@ -229,7 +232,8 @@ class HaloSpeechOutputCoordinator(
                     eventBus.publish(
                         TtsCompleted(
                             transactionId = event.transactionId,
-                            target = playbackTarget
+                            target = playbackTarget,
+                            interactionId = event.interactionId,
                         )
                     )
                 } else {
@@ -238,7 +242,8 @@ class HaloSpeechOutputCoordinator(
                         TtsFailed(
                             transactionId = event.transactionId,
                             target = playbackTarget,
-                            reason = "TTS_FAILED"
+                            reason = "TTS_FAILED",
+                            interactionId = event.interactionId,
                         )
                     )
                 }
@@ -249,7 +254,8 @@ class HaloSpeechOutputCoordinator(
                     eventBus.publish(
                         TtsCancelled(
                             transactionId = event.transactionId,
-                            target = playbackTarget
+                            target = playbackTarget,
+                            interactionId = event.interactionId,
                         )
                     )
                 }
@@ -261,7 +267,8 @@ class HaloSpeechOutputCoordinator(
                     TtsFailed(
                         transactionId = event.transactionId,
                         target = playbackTarget,
-                        reason = e.message ?: "UNKNOWN_ERROR"
+                        reason = e.message ?: "UNKNOWN_ERROR",
+                        interactionId = event.interactionId,
                     )
                 )
             } finally {

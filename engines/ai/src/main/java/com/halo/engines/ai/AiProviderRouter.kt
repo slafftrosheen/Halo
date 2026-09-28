@@ -44,6 +44,7 @@ class DefaultAiProviderRouter(
     private val inferenceProviders: List<AiInferenceProvider> = providerRegistry.inference
     private val allProviders: List<AiProvider> = providerRegistry.all
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val selectionRepository = AiSelectionRepository(storage)
 
     private val _selectedProviderId = MutableStateFlow<String?>(null)
     override val selectedProviderId: StateFlow<String?> = _selectedProviderId.asStateFlow()
@@ -64,21 +65,12 @@ class DefaultAiProviderRouter(
     }
 
     private fun restoreStoredRoutingState() {
-        // Migration boundary: the retired llama.cpp provider ID is read once and rewritten to LiteRT.
-        // No new code may treat it as a live selectable provider.
-        var rawStoredProvider = storage.getString("active_ai_provider")
-        if (rawStoredProvider == LEGACY_LLAMACPP_PROVIDER_ID) {
-            rawStoredProvider = LITERT_PROVIDER_ID
-            storage.putString("active_ai_provider", LITERT_PROVIDER_ID)
-        }
-        val storedProvider = rawStoredProvider
-            ?.takeIf { id -> inferenceProviders.any { it.id == id } }
         val designatedDefault = defaultInferenceProviderId
             ?.let { id -> inferenceProviders.firstOrNull { it.id == id } }
-        val restoredProvider = storedProvider
-            ?: designatedDefault?.id
+        val defaultProvider = designatedDefault?.id
             ?: inferenceProviders.firstOrNull { it.isLocal }?.id
             ?: inferenceProviders.firstOrNull()?.id
+        val selection = selectionRepository.read(inferenceProviders.mapTo(mutableSetOf()) { it.id }, defaultProvider)
 
         val rawPolicy = storage.getString("ai_routing_policy")
         val restoredPolicy = rawPolicy?.let {
@@ -86,13 +78,8 @@ class DefaultAiProviderRouter(
         } ?: AiRoutingPolicy.AUTOMATIC
         _routingPolicy.value = restoredPolicy
 
-        _selectedProviderId.value = restoredProvider
-        if (restoredProvider != null) {
-            restoreStoredModel(restoredProvider)
-        } else {
-            _selectedModelId.value = null
-            storage.putString("active_ai_model", null)
-        }
+        _selectedProviderId.value = selection.providerId
+        _selectedModelId.value = selection.modelId
     }
 
     override fun start() {}
@@ -108,9 +95,9 @@ class DefaultAiProviderRouter(
         if (allProviders.any { it.id == id }) {
             val providerChanged = _selectedProviderId.value != id
             _selectedProviderId.value = id
-            storage.putString("active_ai_provider", id)
+            if (providerChanged) _selectedModelId.value = null
+            selectionRepository.write(PersistedAiSelection(id, _selectedModelId.value))
             setRoutingPolicy(AiRoutingPolicy.EXPLICIT)
-            if (providerChanged) restoreStoredModel(id)
             updateDiagnosticsSelection()
             scope.launch { refreshDiagnostics() }
         }
@@ -119,8 +106,7 @@ class DefaultAiProviderRouter(
     override fun selectModel(modelId: String?) {
         _selectedModelId.value = modelId
         val providerId = _selectedProviderId.value
-        storage.putString("active_ai_model", modelId)
-        if (providerId != null && modelId != null) persistProviderModel(providerId, modelId)
+        selectionRepository.write(PersistedAiSelection(providerId, modelId))
         updateDiagnosticsSelection()
         scope.launch { refreshDiagnostics() }
     }
@@ -130,9 +116,7 @@ class DefaultAiProviderRouter(
         if (inferenceProviders.none { it.id == ref.providerId }) return
         _selectedProviderId.value = ref.providerId
         _selectedModelId.value = ref.modelId
-        storage.putString("active_ai_provider", ref.providerId)
-        storage.putString("active_ai_model", ref.modelId)
-        persistProviderModel(ref.providerId, ref.modelId)
+        selectionRepository.write(PersistedAiSelection(ref.providerId, ref.modelId))
         setRoutingPolicy(AiRoutingPolicy.EXPLICIT)
         updateDiagnosticsSelection()
         scope.launch { refreshDiagnostics() }
@@ -250,26 +234,6 @@ class DefaultAiProviderRouter(
         AiErrorType.NETWORK_ERROR, AiErrorType.NETWORK_UNAVAILABLE -> TargetRejectionReason.NETWORK_UNAVAILABLE
         AiErrorType.AUTHENTICATION_FAILED, AiErrorType.MODEL_NOT_SELECTED -> TargetRejectionReason.CONFIGURATION_MISSING
         else -> TargetRejectionReason.PROVIDER_NOT_READY
-    }
-
-    private fun restoreStoredModel(providerId: String) {
-        val modelId = when (providerId) {
-            "openrouter" -> storage.getString("openrouter_model")
-            "provider.ollama" -> storage.getString("ollama_model")
-            LITERT_PROVIDER_ID -> storage.getString("litert_model")
-            else -> storage.getString("ai_model_$providerId")
-        }?.trim()?.ifBlank { null }
-        _selectedModelId.value = modelId
-        storage.putString("active_ai_model", modelId)
-    }
-
-    private fun persistProviderModel(providerId: String, modelId: String) {
-        when (providerId) {
-            "openrouter" -> storage.putString("openrouter_model", modelId)
-            "provider.ollama" -> storage.putString("ollama_model", modelId)
-            LITERT_PROVIDER_ID -> storage.putString("litert_model", modelId)
-            else -> storage.putString("ai_model_$providerId", modelId)
-        }
     }
 
     private fun updateDiagnosticsSelection() {

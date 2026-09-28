@@ -44,15 +44,17 @@ class AndroidInteractionAudioManager(
     }
 
     suspend fun prepareInteractionRoute(interactionId: String, route: SpeechInputRoute) {
+        activeLease?.release()
+        activeLease = null
+        activeInteractionId = null
+        expectedInputDeviceId = null
         if (route is SpeechInputRoute.Device && route.kind != AudioDeviceKind.WEARABLE) {
             val selector = AudioDeviceSelector(deviceId = route.platformEndpointId)
-            activeLease?.release()
             activeLease = audioRouter.acquire(selector, needsInput = true, needsOutput = true).getOrNull()
             activeInteractionId = interactionId
             expectedInputDeviceId = route.platformEndpointId
-        } else {
-            // For phone or HeyCyan Wearable, we don't manage Android communication audio here.
-            expectedInputDeviceId = null
         }
+        // Phone uses the current Android assistant/media route. HeyCyan wearable transport owns
+        // its own route; in both cases any prior Android communication lease must be gone.
     }
 }

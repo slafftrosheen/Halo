@@ -32,6 +32,8 @@ data class AiRequest(
     val mimeTypes: List<String> = emptyList(),
     val modelId: String? = null,
     val priority: InferencePriority = InferencePriority.NORMAL,
+    /** Optional hard output cap used by bounded diagnostics and compact turns. */
+    val maxOutputTokens: Int? = null,
     /** False when durable continuation already contains this user message in context. */
     val appendTextAsUserMessage: Boolean = true,
 )

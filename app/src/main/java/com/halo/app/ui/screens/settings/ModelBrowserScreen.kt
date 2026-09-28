@@ -103,6 +103,7 @@ fun ModelBrowserScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit) {
                         descriptor = descriptor,
                         downloadState = downloadState,
                         verification = verification,
+                        generationProven = model.id in ui.generationProvenIds,
                         verifying = ui.verifyingModelId == model.id,
                         isActive = descriptor?.verified == true && model.id == ui.activeModelId,
                         detailsExpanded = detailsFor == model.id,
@@ -128,6 +129,7 @@ private fun ModelCard(
     descriptor: LocalModelDescriptor?,
     downloadState: DownloadState,
     verification: ModelVerificationResult?,
+    generationProven: Boolean,
     verifying: Boolean,
     isActive: Boolean,
     detailsExpanded: Boolean,
@@ -145,13 +147,14 @@ private fun ModelCard(
 
     val statusText = when {
         verifying -> "Verifying on device…"
+        generationProven -> "Generation proven"
         verification is ModelVerificationResult.Verified ->
-            "Verified on ${backendLabel(verification.backend)}"
+            "Verified on ${backendLabel(verification.backend)} — generation not yet proven"
         verification is ModelVerificationResult.Failed -> "Load failed"
         downloadState is DownloadState.Downloading -> "Downloading ${percent(downloadState)}"
         downloadState is DownloadState.Verifying -> "Verifying file"
         damaged -> "Corrupt/stale — re-download"
-        installedAndVerified -> if (isActive) "Active" else "Installed — ready to select"
+        installedAndVerified -> if (isActive) "Selected cold — not loaded" else "Verified artifact — not loaded"
         descriptor != null -> "Installed (unverified)"
         else -> "Not installed"
     }

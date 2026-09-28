@@ -12,14 +12,14 @@ This document describes the step-by-step physical phone verification sequence fo
 
 2. **System Check — Core Probe**:
    - Navigate to `Settings` -> `Runtime Status` -> `System Check`
-   - Click `Run Safe Checks`.
-   - Verify `Core Runtime` status is `PASSED`.
+   - Click `Refresh`.
+   - Verify the diagnostic surface refreshes; do not treat this row as proof of AI generation.
 
 3. **Android Assistant Enrollment**:
    - In `System Check` -> `Android Assistant`, tap `Set Halo as assistant` / `Open assistant settings`.
    - Enroll Halo as Default Assistant.
-   - Return to app and tap `Run Safe Checks`.
-   - Verify `Android Assistant` status updates to `PASSED` (`Halo is default system assistant ✓`).
+   - Return to app and tap `Refresh`.
+   - Verify Default role and Active Interactor are both active; then invoke Halo with the system gesture and verify service/session/capture lifecycle rows advance.
 
 4. **Microphone & STT**:
    - In `System Check`, tap `Test Microphone`.
@@ -27,9 +27,9 @@ This document describes the step-by-step physical phone verification sequence fo
    - Verify 2-second audio sample records, measures amplitude, and updates status to `PASSED`.
 
 5. **Local Model Load & Text Inference**:
-   - In `Settings` -> `Intelligence`, select an installed local GGUF model (or download via Model Browser).
-   - In `System Check`, tap `Test Text`.
-   - Verify text probe prompt (`Reply with exactly: HALO`) executes, displays TTFT and tokens/sec, and status is `PASSED`.
+   - In `Settings` -> `Intelligence`, download, verify, and select the pinned `.litertlm` model.
+   - In `System Check`, tap `Run AI probe`.
+   - Verify the bounded probe executes through the selected provider/model and returns non-empty text.
 
 6. **Local Tool Protocol**:
    - Verify prompt-mediated tool calling (`<halo_tool_call>`) parses and executes configured tools correctly.

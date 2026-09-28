@@ -23,14 +23,14 @@ These are reasoning backends that process conversational turns and tool invocati
 
 `CognitiveSession` performs bounded tool rounds, authorization, and result feedback. 
 
-Tool capabilities remain provider/model-specific. Native llama.cpp currently explicitly advertises `supportsTools = false`. We do not advertise universal local tool support until a reliable capability bridge exists.
+Tool capabilities remain provider/model-specific. The pinned Qwen LiteRT model explicitly advertises `supportsTools = false`. We do not advertise universal local tool support until a reliable capability bridge exists.
 
 ## RUNTIME-021 workload-aware routing
 
 Routing uses the intersection of provider/adapter capability and the selected model's advertised
 capability. Provider-wide IMAGE/TOOLS support does not make every model compatible.
 
-- Native llama.cpp remains conservative: TEXT + STREAMING only unless the local adapter actually
+- On-device LiteRT-LM remains conservative: TEXT + STREAMING only unless the selected model and adapter actually
   implements more.
 - Ollama remains optional local/LAN inference. Halo queries `/api/show` metadata for model
   capabilities and context length. Vision is advertised only when the model metadata reports it and

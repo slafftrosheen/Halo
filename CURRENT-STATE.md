@@ -1,7 +1,9 @@
 # Halo current state
 
 Status: CURRENT SOURCE MAP. Provider review updated 2026-09-24.
-Source review is correlated with the supplied 2026-09-21 device trace. No post-fix build, instrumented test, benchmark, or hardware rerun is claimed.
+Source review is correlated with the supplied 2026-09-21 device trace. RUNTIME-048 is source-complete but uncompiled and has not been unit- or physical-device-verified.
+
+RUNTIME-048 source addition (2026-09-28): Android assistant enrollment now treats `RoleManager` ownership and the exact active `VOICE_INTERACTION_SERVICE` component as separate truths, exposes OEM Default Assistant settings after an unsuccessful role request, and records bounded enrollment/runtime/recognizer lifecycle diagnostics. `VoiceInteractionSession` and `ACTION_ASSIST` converge through one invocation coordinator. AI selection now has one persisted `(providerId, modelId)` authority; legacy provider model keys are migration input only. Explicit routing stays on the selected provider after failure. System Check reports the selected target without generating on open and offers a separate bounded **Run AI probe** action. LiteRT distinguishes verified-on-disk, selected-cold, resident, and generation-proven states, keys generation proof to artifact fingerprint plus LiteRT-LM 0.17.1, and exposes bounded staged failure diagnostics. SOURCE COMPLETE / COMPILED: NO / UNIT VERIFIED: NO / PHYSICAL DEVICE VERIFIED: NO.
 
 [ManualDependencyGraph](app/src/main/java/com/halo/app/di/ManualDependencyGraph.kt) is
 the process composition root. [App HaloRuntime](app/src/main/java/com/halo/app/HaloRuntime.kt)
@@ -29,7 +31,7 @@ excludes the older microkernel/ProcessManager path from normal phone startup.
 Source-only follow-up on 2026-09-24: the HeyCyan transfer path now carries the BLE-decoded
 device IP into live device state, prefers that endpoint for media sync, and scopes transfer HTTP to
 the glasses Android `Network` instead of process-wide routing. Wearable voice activation can also
-start native llama.cpp model loading while capture is in progress, but only when native llama.cpp is
+start selected local-model loading while capture is in progress, but only when LiteRT-LM is
 the selected inference provider and the native-resource budget permits concurrent heavyweight
 models. Neither change is counted as hardware or latency acceptance until rerun on the physical
 glasses/phone pair.
@@ -145,7 +147,7 @@ workload requirements before generation and respects routing policy (`EXPLICIT`,
 immutable across tool execution rounds of a cognitive transaction.
 IMPLEMENTED / UNVALIDATED: no test or hardware validation performed in this pass.
 
-Additional recent source additions: The codebase now includes structured `AiFailureDetails`, provider retry/cooldown behavior, `LOCAL_ONLY` routing, unified error presentation, detailed interaction turn lifecycles, barge-in evidence tracking, observation freshness and supersession, explicit local-inference readiness/preload stages, latency tracing, HeyCyan arbitration and thumbnail decoding work, and significant `llama.cpp` runtime improvements. As with the rest of the file, these are present in code but not yet validated as physically accepted on real hardware.
+Additional recent source additions: The codebase now includes structured `AiFailureDetails`, provider retry/cooldown behavior, `LOCAL_ONLY` routing, unified error presentation, detailed interaction turn lifecycles, barge-in evidence tracking, observation freshness and supersession, explicit LiteRT readiness/preload stages, latency tracing, and HeyCyan arbitration and thumbnail decoding work. As with the rest of the file, these are present in code but not yet validated as physically accepted on real hardware.
 
 See [architecture](docs/04-architecture/ARCHITECTURE.md),
 [providers](docs/08-providers/ARCHITECTURE.md),

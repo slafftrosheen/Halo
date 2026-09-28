@@ -13,22 +13,19 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.halo.app.ui.icons.HaloGlyph
 import com.halo.host.android.assistant.AndroidAssistantRoleController
-import com.halo.host.android.assistant.AssistantEnrollmentState
-import com.halo.sdk.provider.AiCapability
+import com.halo.host.android.assistant.AssistantIntegrationState
+import com.halo.host.android.assistant.AssistantRuntimeStateStore
+import com.halo.providers.litert.LiteRtLocalProvider
 import com.halo.sdk.provider.AiContext
-import com.halo.sdk.provider.AiInferenceProvider
 import com.halo.sdk.provider.AiProviderRouter
 import com.halo.sdk.provider.AiRequest
-import com.halo.sdk.runtime.EventBus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.io.File
-import java.util.UUID
 
 enum class CheckStatus { READY, NOT_CONFIGURED, BLOCKED, RUNNING, PASSED, FAILED, UNSUPPORTED }
 
@@ -49,7 +46,6 @@ data class SystemCheckUiState(
 
 class SystemCheckViewModel(
     private val appContext: Context,
-    private val eventBus: EventBus,
     private val providerRouter: AiProviderRouter,
     val assistantRoleController: AndroidAssistantRoleController = AndroidAssistantRoleController(appContext),
 ) : ViewModel() {
@@ -71,19 +67,25 @@ class SystemCheckViewModel(
                     id = "core",
                     name = "Core Runtime",
                     glyph = HaloGlyph.HALO,
-                    status = CheckStatus.PASSED,
-                    reason = "EventBus alive, CognitiveSession ready"
+                    status = CheckStatus.READY,
+                    reason = "System Check is running; this does not prove an inference path"
                 )
             )
 
             // 2. Android Assistant
             assistantRoleController.refresh()
-            val enrollment = assistantRoleController.enrollmentState.value
-            val assistantStatus = when (enrollment) {
-                AssistantEnrollmentState.Active -> CheckStatus.PASSED to "Halo is default system assistant ✓"
-                AssistantEnrollmentState.RoleRequestAvailable -> CheckStatus.NOT_CONFIGURED to "Assistant role available for request"
-                AssistantEnrollmentState.SystemSettingsRequired -> CheckStatus.NOT_CONFIGURED to "Voice input settings enrollment required"
-                is AssistantEnrollmentState.Unavailable -> CheckStatus.UNSUPPORTED to enrollment.reason
+            val integration = assistantRoleController.integrationState.value
+            val runtime = AssistantRuntimeStateStore.state.value
+            val assistantStatus = when (integration) {
+                is AssistantIntegrationState.Active -> CheckStatus.READY to
+                    "Role held; interactor active; service=${runtime.serviceReady}; session=${runtime.sessionCreated}; capture=${runtime.captureState}"
+                is AssistantIntegrationState.RoleHeldNotActive -> CheckStatus.BLOCKED to
+                    "Role held, but Android interactor is ${integration.diagnostics.activeInteractorStatus} (${integration.diagnostics.activeInteractorComponent ?: "unavailable"})"
+                is AssistantIntegrationState.EligibleNotSelected -> CheckStatus.NOT_CONFIGURED to
+                    "Candidate=yes; default role=no; interactor=${integration.diagnostics.activeInteractorStatus}"
+                is AssistantIntegrationState.NotEligible -> CheckStatus.UNSUPPORTED to integration.diagnostics.problems.joinToString().ifBlank { "Not eligible" }
+                is AssistantIntegrationState.Error -> CheckStatus.FAILED to integration.message
+                AssistantIntegrationState.Checking -> CheckStatus.RUNNING to "Reading Android assistant state"
             }
             list.add(
                 SystemCheckItem(
@@ -109,16 +111,27 @@ class SystemCheckViewModel(
                 )
             )
 
-            // 4. Local AI
-            val localProvider = providerRouter.getAllProviders().firstOrNull { it.isLocal }
+            // 4. Selected AI execution target. Refreshing this row never runs generation.
+            val selectedProvider = providerRouter.selectedProviderId.value
             val selectedModel = providerRouter.selectedModelId.value
+            val provider = providerRouter.getAllProviders().firstOrNull { it.id == selectedProvider }
+            val providerStatus = provider?.let { runCatching { it.getStatus() }.getOrNull() }
+            val localDiagnostics = (provider as? LiteRtLocalProvider)?.loadDiagnostics?.value
             list.add(
                 SystemCheckItem(
-                    id = "local_ai",
-                    name = "Local AI Model",
+                    id = "ai_execution",
+                    name = "AI Execution",
                     glyph = HaloGlyph.MODEL,
-                    status = if (selectedModel != null) CheckStatus.READY else CheckStatus.NOT_CONFIGURED,
-                    reason = if (selectedModel != null) "Selected: $selectedModel" else "No local LiteRT model selected"
+                    status = when {
+                        provider == null || selectedModel == null -> CheckStatus.NOT_CONFIGURED
+                        providerStatus?.state == com.halo.sdk.provider.ProviderStatus.State.READY -> CheckStatus.READY
+                        else -> CheckStatus.BLOCKED
+                    },
+                    reason = buildString {
+                        append("provider=${selectedProvider ?: "none"}; model=${selectedModel ?: "none"}; status=${providerStatus?.state ?: "unknown"}; ")
+                        append(providerStatus?.message.orEmpty())
+                        localDiagnostics?.let { append("; failure=${it.technicalSummary()}") }
+                    }
                 )
             )
 
@@ -128,8 +141,8 @@ class SystemCheckViewModel(
                     id = "audio",
                     name = "Audio Output Route",
                     glyph = HaloGlyph.SPEAK,
-                    status = CheckStatus.READY,
-                    reason = "Speaker output ready"
+                    status = if (runtime.outputRoute != null) CheckStatus.READY else CheckStatus.NOT_CONFIGURED,
+                    reason = "input=${runtime.inputRoute ?: "not observed"}; output=${runtime.outputRoute ?: "not observed"}"
                 )
             )
 
@@ -140,6 +153,11 @@ class SystemCheckViewModel(
 
     fun launchAssistantEnrollment(launcher: (Intent) -> Unit) {
         assistantRoleController.launchEnrollment(launcher)
+        refreshChecks()
+    }
+
+    fun recordAssistantEnrollmentResult(resultCode: Int?) {
+        assistantRoleController.recordEnrollmentActivityResult(resultCode)
         refreshChecks()
     }
 
@@ -187,27 +205,30 @@ class SystemCheckViewModel(
         }
     }
 
-    fun testTextInference() {
+    fun runAiProbe() {
         viewModelScope.launch(Dispatchers.IO) {
-            updateItem("local_ai", CheckStatus.RUNNING, "Running text probe prompt...")
+            updateItem("ai_execution", CheckStatus.RUNNING, "Running bounded probe on the selected provider/model...")
             val startTime = System.currentTimeMillis()
             runCatching {
-                val provider = providerRouter.getAllProviders().firstOrNull { it.isLocal } as? AiInferenceProvider
-                    ?: throw IllegalStateException("No local provider available")
-
-                val request = AiRequest(text = "Reply with exactly: HALO")
-                val response = provider.generate(request, AiContext.EMPTY)
+                val selectedProvider = providerRouter.selectedProviderId.value
+                    ?: throw IllegalStateException("No AI provider selected")
+                val selectedModel = providerRouter.selectedModelId.value
+                    ?: throw IllegalStateException("No AI model selected")
+                val response = providerRouter.execute(
+                    AiRequest(text = "Reply with one word: HALO", maxOutputTokens = 8),
+                    AiContext.EMPTY,
+                )
 
                 val elapsed = System.currentTimeMillis() - startTime
-                val pass = response.text.contains("HALO", ignoreCase = true)
+                val pass = response.text.isNotBlank()
                 updateItem(
-                    "local_ai",
+                    "ai_execution",
                     if (pass) CheckStatus.PASSED else CheckStatus.FAILED,
-                    if (pass) "Response: \"${response.text.trim()}\"" else "Unexpected response: \"${response.text.trim()}\"",
+                    if (pass) "provider=$selectedProvider; model=$selectedModel; backend=${response.providerId}; non-empty response" else "Selected provider returned empty text",
                     elapsed
                 )
             }.onFailure { err ->
-                updateItem("local_ai", CheckStatus.FAILED, err.message ?: "Text inference failed")
+                updateItem("ai_execution", CheckStatus.FAILED, "${err::class.java.simpleName}: ${err.message ?: "AI probe failed"}")
             }
         }
     }
@@ -225,7 +246,7 @@ class SystemCheckViewModel(
                 mediaPlayer?.release()
 
                 val elapsed = System.currentTimeMillis() - startTime
-                updateItem("audio", CheckStatus.PASSED, "Audio tone played on phone speaker", elapsed)
+                updateItem("audio", CheckStatus.PASSED, "Audio tone requested on the current Android media route", elapsed)
             }.onFailure { err ->
                 updateItem("audio", CheckStatus.FAILED, err.message ?: "Audio playback failed")
             }
@@ -234,7 +255,6 @@ class SystemCheckViewModel(
 
     fun runSafeChecks() {
         refreshChecks()
-        testTextInference()
     }
 
     private fun updateItem(id: String, status: CheckStatus, reason: String, durationMs: Long? = null) {

@@ -51,7 +51,12 @@ class OpenRouterProvider(
     private val apiKey: String?
         get() = storage.getString("openrouter_api_key")?.trim()?.ifBlank { null }
     private val selectedModelId: String
-        get() = storage.getString("openrouter_model")?.trim()?.ifBlank { null } ?: FREE_ROUTER_ID
+        get() = storage.getString("active_ai_provider")
+            ?.takeIf { it == id }
+            ?.let { storage.getString("active_ai_model") }
+            ?.trim()
+            ?.ifBlank { null }
+            ?: FREE_ROUTER_ID
     @Volatile private var cooldown: ProviderCooldown? = null
     /** Only credential failures are sticky. Request/model/network failures must not brick routing. */
     @Volatile private var rejectedApiKey: String? = null
@@ -484,6 +489,7 @@ class OpenRouterProvider(
             put("model", model)
             put("messages", messages)
             put("stream", stream)
+            request.maxOutputTokens?.takeIf { it > 0 }?.let { put("max_tokens", it) }
             if (context.availableTools.isNotEmpty()) {
                 put("tools", JSONArray().apply {
                     context.availableTools.forEach { tool ->
@@ -751,7 +757,8 @@ class OpenRouterProvider(
     }
 
     private fun statusFromLastErrorOrReady(): ProviderStatus = ProviderStatus(
-        ProviderStatus.State.READY,
+        ProviderStatus.State.STANDBY,
+        message = "OpenRouter is configured; connectivity has not been proven in this process",
         readiness = ProviderReadiness.ConfiguredCold,
     )
 
