@@ -73,7 +73,7 @@ class AiProviderRouterTest {
     }
 
     @Test
-    fun `changing provider restores its own model`() = runTest {
+    fun `changing provider clears the old provider model`() = runTest {
         val storage = FakeStorage()
         val p1 = MockProvider("p1", "P1", modelId = "model-p1")
         val p2 = MockProvider("p2", "P2", modelId = "model-p2")
@@ -83,12 +83,12 @@ class AiProviderRouterTest {
         router.selectProvider("p2")
         router.selectModel("model-p2")
         router.selectProvider("p1")
-        assertEquals("model-p1", router.selectedModelId.value)
-        assertEquals("model-p1", storage.getString("active_ai_model"))
+        assertEquals(null, router.selectedModelId.value)
+        assertEquals(null, storage.getString("active_ai_model"))
     }
 
     @Test
-    fun `provider-scoped model selection is persisted independently`() = runTest {
+    fun `only the current provider model tuple is persisted`() = runTest {
         val storage = FakeStorage()
         val p1 = MockProvider("p1", "P1", modelId = "model-p1")
         val p2 = MockProvider("p2", "P2", modelId = "model-p2")
@@ -98,10 +98,10 @@ class AiProviderRouterTest {
         router.selectProvider("p2")
         router.selectModel("model-p2")
         val restored = DefaultAiProviderRouter(listOf(p1, p2), storage)
-        restored.selectProvider("p1")
-        assertEquals("model-p1", restored.selectedModelId.value)
-        restored.selectProvider("p2")
+        assertEquals("p2", restored.selectedProviderId.value)
         assertEquals("model-p2", restored.selectedModelId.value)
+        restored.selectProvider("p1")
+        assertEquals(null, restored.selectedModelId.value)
     }
 
     @Test

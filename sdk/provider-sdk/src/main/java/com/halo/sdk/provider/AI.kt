@@ -166,6 +166,8 @@ data class AiResponse(
     val metrics: AiGenerationMetrics? = null,
     val requestedModelId: String? = modelId,
     val resolvedModelId: String? = modelId,
+    /** Physical/runtime backend when the provider can report it (for example GPU or CPU). */
+    val executionBackend: String? = null,
 )
 
 sealed interface AiStreamEvent {

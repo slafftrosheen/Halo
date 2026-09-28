@@ -116,6 +116,7 @@ class DefaultCognitiveResponseCommitter(
                 requestedModelId = response.requestedModelId,
                 resolvedModelId = response.resolvedModelId,
                 success = true,
+                backend = response.executionBackend,
                 metrics = response.metrics?.let {
                     CognitiveGenerationMetrics(it.startedAtMs, it.firstTokenAtMs, it.completedAtMs, it.inputTokens, it.outputTokens)
                 },

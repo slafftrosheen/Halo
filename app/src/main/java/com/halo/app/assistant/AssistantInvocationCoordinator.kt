@@ -12,6 +12,8 @@ import com.halo.sdk.runtime.SpeechInputRoute
 import com.halo.sdk.runtime.SpeechOutputTarget
 import com.halo.sdk.runtime.SpeechRecognized
 import com.halo.sdk.runtime.TtsFailed
+import com.halo.sdk.runtime.TtsCompleted
+import com.halo.sdk.runtime.TtsCancelled
 import com.halo.sdk.runtime.TtsRequested
 import com.halo.sdk.runtime.TtsStarted
 import com.halo.sdk.runtime.ScreenContextSnapshot
@@ -53,6 +55,8 @@ class AssistantInvocationCoordinator(
                         event.interactionId,
                         event.target.diagnosticLabel(),
                     )
+                    is TtsCompleted -> AssistantRuntimeStateStore.responseCompleted(event.interactionId)
+                    is TtsCancelled -> AssistantRuntimeStateStore.failed(event.interactionId, "Speech response cancelled")
                     is CognitiveFailed -> AssistantRuntimeStateStore.failed(
                         event.interactionId,
                         "${event.stage}: ${event.message}",

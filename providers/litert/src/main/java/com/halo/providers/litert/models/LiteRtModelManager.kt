@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
 import android.util.Log
+import com.halo.providers.litert.LiteRtFailureStage
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -23,6 +24,22 @@ import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
+import java.util.UUID
+
+data class LiteRtAcquisitionDiagnostics(
+    val diagnosticsId: String = UUID.randomUUID().toString(),
+    val modelId: String?,
+    val stage: LiteRtFailureStage,
+    val artifactFingerprint: String?,
+    val exceptionClass: String,
+    val nativeMessage: String?,
+    val recordedAtMs: Long = System.currentTimeMillis(),
+) {
+    fun technicalSummary(): String =
+        "id=${diagnosticsId.take(8)} stage=$stage model=${modelId ?: "unknown"} " +
+            "fingerprint=${artifactFingerprint?.take(12) ?: "unknown"} type=$exceptionClass" +
+            (nativeMessage?.let { " message=${it.take(300)}" } ?: "")
+}
 
 /**
  * Owns the on-disk LiteRT model directory: acquisition, verification, inventory and deletion.
@@ -60,6 +77,9 @@ class LiteRtModelManager(
     private val _downloadStates = MutableStateFlow<Map<String, DownloadState>>(emptyMap())
     val downloadStates: StateFlow<Map<String, DownloadState>> = _downloadStates.asStateFlow()
 
+    private val _acquisitionDiagnostics = MutableStateFlow<LiteRtAcquisitionDiagnostics?>(null)
+    val acquisitionDiagnostics: StateFlow<LiteRtAcquisitionDiagnostics?> = _acquisitionDiagnostics.asStateFlow()
+
     private val _legacyGgufFiles = MutableStateFlow<List<File>>(emptyList())
     val legacyGgufFiles: StateFlow<List<File>> = _legacyGgufFiles.asStateFlow()
 
@@ -76,11 +96,21 @@ class LiteRtModelManager(
         runCatching {
             withContext(Dispatchers.IO) { scanModelRoot() }
         }.onSuccess { descriptors ->
+            if (_acquisitionDiagnostics.value?.stage == LiteRtFailureStage.INVENTORY) {
+                _acquisitionDiagnostics.value = null
+            }
             _inventoryState.value = LocalModelInventoryState.Ready(descriptors, System.currentTimeMillis())
             reconcileDownloadStates(descriptors)
             Log.i(TAG, "$EVENT_INVENTORY reason=$reason models=${descriptors.size} verified=${descriptors.count { it.verified }}")
         }.onFailure { error ->
             Log.e(TAG, "HALO_LITERT_INVENTORY_FAILED reason=$reason", error)
+            _acquisitionDiagnostics.value = LiteRtAcquisitionDiagnostics(
+                modelId = null,
+                stage = LiteRtFailureStage.INVENTORY,
+                artifactFingerprint = null,
+                exceptionClass = error::class.java.simpleName,
+                nativeMessage = error.message,
+            )
             _inventoryState.value = LocalModelInventoryState.Failed(error.message ?: "Model inventory scan failed")
         }
         Unit
@@ -165,6 +195,18 @@ class LiteRtModelManager(
             when (result) {
                 is DownloadResult.Failure -> {
                     partFile.delete()
+                    _acquisitionDiagnostics.value = LiteRtAcquisitionDiagnostics(
+                        modelId = model.id,
+                        stage = when (result.kind) {
+                            ModelDownloadFailure.HASH_MISMATCH,
+                            ModelDownloadFailure.SIZE_MISMATCH -> LiteRtFailureStage.HASH_VERIFY
+                            ModelDownloadFailure.CANCELLED -> LiteRtFailureStage.CANCEL
+                            else -> LiteRtFailureStage.DOWNLOAD
+                        },
+                        artifactFingerprint = model.sha256,
+                        exceptionClass = result.cause?.let { it::class.java.simpleName } ?: result.kind.name,
+                        nativeMessage = result.technicalMessage,
+                    )
                     Log.e(TAG, "$EVENT_FAILED id=${model.id} kind=${result.kind} detail=${result.technicalMessage}")
                     setDownloadState(
                         model.id,
@@ -185,11 +227,25 @@ class LiteRtModelManager(
             }
         } catch (cancelled: CancellationException) {
             partFile.delete()
+            _acquisitionDiagnostics.value = LiteRtAcquisitionDiagnostics(
+                modelId = model.id,
+                stage = LiteRtFailureStage.CANCEL,
+                artifactFingerprint = model.sha256,
+                exceptionClass = cancelled::class.java.simpleName,
+                nativeMessage = cancelled.message,
+            )
             setDownloadState(model.id, DownloadState.NotInstalled)
             Log.i(TAG, "$EVENT_FAILED id=${model.id} kind=CANCELLED")
             throw cancelled
         } catch (error: Throwable) {
             partFile.delete()
+            _acquisitionDiagnostics.value = LiteRtAcquisitionDiagnostics(
+                modelId = model.id,
+                stage = LiteRtFailureStage.DOWNLOAD,
+                artifactFingerprint = model.sha256,
+                exceptionClass = error::class.java.simpleName,
+                nativeMessage = error.message,
+            )
             Log.e(TAG, "$EVENT_FAILED id=${model.id} kind=IO_FAILURE", error)
             setDownloadState(
                 model.id,
@@ -251,11 +307,19 @@ class LiteRtModelManager(
                         "(validation=${installed?.validation?.name ?: "missing"})",
                 ),
             )
+            _acquisitionDiagnostics.value = LiteRtAcquisitionDiagnostics(
+                modelId = model.id,
+                stage = LiteRtFailureStage.HASH_VERIFY,
+                artifactFingerprint = model.sha256,
+                exceptionClass = ModelDownloadFailure.HASH_MISMATCH.name,
+                nativeMessage = "Installed artifact did not resolve as valid (${installed?.validation?.name ?: "missing"})",
+            )
             return
         }
 
         // 12. only now is the model actually installed
         setDownloadState(model.id, DownloadState.Installed)
+        _acquisitionDiagnostics.value = null
         Log.i(
             TAG,
             "$EVENT_INSTALLED id=${model.id} bytes=${finalFile.length()} sha256=${installed.sha256} " +

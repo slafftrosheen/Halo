@@ -28,9 +28,10 @@ class AssistantEligibilityInspectorTest {
         val inspector = AssistantEligibilityInspector(context)
 
         val snapshot = AssistantEligibilitySnapshot(
+            roleHeld = true,
             voiceInteractionServiceDeclared = true,
             bindPermissionCorrect = true,
-            activeVoiceInteractionService = true
+            activeInteractorStatus = ActiveInteractorStatus.ACTIVE,
         )
 
         val state = inspector.evaluateState(snapshot)

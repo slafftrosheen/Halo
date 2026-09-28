@@ -9,6 +9,7 @@ import com.halo.app.ai.writeRuntimeAiContextPolicy
 import com.halo.providers.litert.LiteRtLoadDiagnostics
 import com.halo.providers.litert.LiteRtLocalProvider
 import com.halo.providers.litert.models.LiteRtModelManager
+import com.halo.providers.litert.models.LiteRtAcquisitionDiagnostics
 import com.halo.providers.litert.models.DownloadState
 import com.halo.providers.litert.models.LiteRtCatalogModel
 import com.halo.providers.litert.models.LocalModelDescriptor
@@ -55,6 +56,7 @@ data class IntelligenceUiState(
     val generationProvenIds: Set<String> = emptySet(),
     val verifyingModelId: String? = null,
     val litertLoadDiagnostics: LiteRtLoadDiagnostics? = null,
+    val litertAcquisitionDiagnostics: LiteRtAcquisitionDiagnostics? = null,
     val temperature: Float = 0.7f,
     val policy: AiContextPolicy = AiContextPolicy.CONSERVATIVE,
     val routingPolicy: AiRoutingPolicy = AiRoutingPolicy.AUTOMATIC,
@@ -97,6 +99,7 @@ private data class LocalVerificationInputs(
     val results: Map<String, ModelVerificationResult> = emptyMap(),
     val verifyingModelId: String? = null,
     val diagnostics: LiteRtLoadDiagnostics? = null,
+    val acquisitionDiagnostics: LiteRtAcquisitionDiagnostics? = null,
 )
 
 private data class IntelligencePresentationInputs(
@@ -137,8 +140,9 @@ class IntelligenceViewModel(
         _verifications,
         _verifyingModelId,
         localProvider?.loadDiagnostics ?: MutableStateFlow<LiteRtLoadDiagnostics?>(null),
-    ) { results, verifying, diagnostics ->
-        LocalVerificationInputs(results, verifying, diagnostics)
+        modelManager?.acquisitionDiagnostics ?: MutableStateFlow<LiteRtAcquisitionDiagnostics?>(null),
+    ) { results, verifying, diagnostics, acquisitionDiagnostics ->
+        LocalVerificationInputs(results, verifying, diagnostics, acquisitionDiagnostics)
     }
 
     init {
@@ -283,6 +287,7 @@ class IntelligenceViewModel(
             generationProvenIds = localModels.filter { localProvider?.isGenerationProven(it) == true }.mapTo(mutableSetOf()) { it.id },
             verifyingModelId = verification.verifyingModelId,
             litertLoadDiagnostics = verification.diagnostics,
+            litertAcquisitionDiagnostics = verification.acquisitionDiagnostics,
             temperature = settings.temperature,
             policy = settings.policy,
             routingPolicy = selection.routingPolicy,

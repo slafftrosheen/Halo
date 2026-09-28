@@ -34,6 +34,7 @@ data class AssistantRuntimeSnapshot(
     val lastFailure: String? = null,
     val inputRoute: String? = null,
     val outputRoute: String? = null,
+    val lastResponseAtMs: Long? = null,
     val lastTransitionAtMs: Long = System.currentTimeMillis(),
     val recognition: AssistantRecognitionDiagnostics = AssistantRecognitionDiagnostics(),
 )
@@ -73,18 +74,23 @@ object AssistantRuntimeStateStore {
     }
 
     fun capture(interactionId: String?, state: AssistantCaptureState, inputRoute: String? = null) = transition {
-        if (interactionId != null && this.interactionId != interactionId) this
+        if (interactionId == null || this.interactionId != interactionId) this
         else copy(captureState = state, inputRoute = inputRoute ?: this.inputRoute)
     }
 
     fun outputRoute(interactionId: String?, route: String) = transition {
-        if (interactionId != null && this.interactionId != interactionId) this
+        if (interactionId == null || this.interactionId != interactionId) this
         else copy(outputRoute = route)
     }
 
     fun failed(interactionId: String?, reason: String) = transition {
-        if (interactionId != null && this.interactionId != interactionId) this
+        if (interactionId == null || this.interactionId != interactionId) this
         else copy(captureState = AssistantCaptureState.FAILED, lastFailure = reason.take(240))
+    }
+
+    fun responseCompleted(interactionId: String?) = transition {
+        if (interactionId == null || this.interactionId != interactionId) this
+        else copy(captureState = AssistantCaptureState.IDLE, lastResponseAtMs = System.currentTimeMillis())
     }
 
     fun invocationEnded(interactionId: String) = transition {

@@ -93,7 +93,11 @@ class LiteRtLocalProviderStreamTest {
     }
 
     private class FakeStorage : Storage {
-        override fun getString(key: String, defaultValue: String?): String? = if (key == "litert_model") "test_model" else defaultValue
+        override fun getString(key: String, defaultValue: String?): String? = when (key) {
+            "active_ai_provider" -> "provider.litert.local"
+            "active_ai_model" -> "test_model"
+            else -> defaultValue
+        }
         override fun putString(key: String, value: String?) {}
         override fun getInt(key: String, defaultValue: Int): Int = defaultValue
         override fun putInt(key: String, value: Int) {}

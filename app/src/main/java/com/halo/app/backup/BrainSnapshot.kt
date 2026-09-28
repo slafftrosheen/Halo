@@ -127,7 +127,7 @@ class RoomBrainSnapshotSource(
                 DeviceConfigurationSnapshot(it.identity.deviceId, it.identity.displayName, it.identity.deviceType, it.firmwareVersion, it.autoConnect)
             },
             settings = UserSettingsSnapshot(
-                values = listOf("openrouter_model", "ollama_endpoint", "ollama_model", "llamacpp_model", "speech_locale")
+                values = listOf("active_ai_provider", "active_ai_model", "ai_routing_policy", "ollama_endpoint", "speech_locale")
                     .mapNotNull { key -> storage.getString(key)?.let { key to it } }.toMap(),
                 providerConfiguration = mapOf("openrouter" to !storage.getString("openrouter_api_key").isNullOrBlank()),
                 skillEnabled = com.halo.runtime.cognition.skills.DefaultSkillRegistry.defaultBuiltInSkills()
@@ -137,7 +137,7 @@ class RoomBrainSnapshotSource(
                     "policy_tools", "policy_location", "policy_images", "policy_audio", "policy_video",
                     "policy_cloud_workspace",
                 ).associateWith { storage.getBoolean(it, false) },
-                integerValues = listOf("llamacpp_context", "ai_temperature")
+                integerValues = listOf("litert_context", "ai_temperature")
                     .associateWith { storage.getInt(it, 0) },
                 appearanceMode = context.getSharedPreferences("halo_appearance", Context.MODE_PRIVATE)
                     .getString("mode", null),

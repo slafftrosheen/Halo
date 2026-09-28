@@ -43,7 +43,6 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -107,7 +106,7 @@ class LiteRtSelectionTest {
         assertEquals(qwenId, router.selectedModelId.value)
         assertEquals(ProviderIds.LITERT, storage.getString("active_ai_provider"))
         assertEquals(qwenId, storage.getString("active_ai_model"))
-        assertEquals(qwenId, storage.getString("litert_model"))
+        assertEquals(null, storage.getString("litert_model"))
         assertEquals(AiRoutingPolicy.EXPLICIT, router.routingPolicy.value)
     }
 
@@ -117,7 +116,7 @@ class LiteRtSelectionTest {
 
         assertNotEquals(qwenId, storage.getString("openrouter_model"))
         assertNotEquals(qwenId, storage.getString("ollama_model"))
-        assertEquals(qwenId, storage.getString("litert_model"))
+        assertEquals(null, storage.getString("litert_model"))
     }
 
     @Test
@@ -132,7 +131,7 @@ class LiteRtSelectionTest {
 
         assertEquals(ProviderIds.LITERT, router.selectedProviderId.value)
         assertEquals(qwenId, router.selectedModelId.value)
-        assertNotNull(storage.getString("litert_model"))
+        assertEquals(qwenId, storage.getString("active_ai_model"))
     }
 
     @Test
@@ -148,7 +147,7 @@ class LiteRtSelectionTest {
             defaultInferenceProviderId = "openrouter",
         )
 
-        assertEquals("provider.litert.local", storage.getString("active_ai_provider"))
+        assertEquals("openrouter", storage.getString("active_ai_provider"))
         assertEquals("openrouter", migrated.selectedProviderId.value)
     }
 

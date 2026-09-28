@@ -109,7 +109,10 @@ fun ModelBrowserScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit) {
                         detailsExpanded = detailsFor == model.id,
                         diagnosticsLine = ui.litertLoadDiagnostics
                             ?.takeIf { it.modelId == model.id }
-                            ?.technicalSummary(),
+                            ?.technicalSummary()
+                            ?: ui.litertAcquisitionDiagnostics
+                                ?.takeIf { it.modelId == null || it.modelId == model.id }
+                                ?.technicalSummary(),
                         onDownload = { viewModel.downloadCatalogModel(model) },
                         onCancel = { viewModel.cancelDownload(model.id) },
                         onSelect = { viewModel.selectLocalModel(model.id) },

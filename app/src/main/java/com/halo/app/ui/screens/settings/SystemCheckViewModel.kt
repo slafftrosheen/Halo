@@ -16,9 +16,11 @@ import com.halo.host.android.assistant.AndroidAssistantRoleController
 import com.halo.host.android.assistant.AssistantIntegrationState
 import com.halo.host.android.assistant.AssistantRuntimeStateStore
 import com.halo.providers.litert.LiteRtLocalProvider
+import com.halo.providers.litert.models.LiteRtModelManager
 import com.halo.sdk.provider.AiContext
 import com.halo.sdk.provider.AiProviderRouter
 import com.halo.sdk.provider.AiRequest
+import com.halo.runtime.observer.InferenceLedger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -47,6 +49,8 @@ data class SystemCheckUiState(
 class SystemCheckViewModel(
     private val appContext: Context,
     private val providerRouter: AiProviderRouter,
+    private val modelManager: LiteRtModelManager? = null,
+    private val inferenceLedger: InferenceLedger? = null,
     val assistantRoleController: AndroidAssistantRoleController = AndroidAssistantRoleController(appContext),
 ) : ViewModel() {
 
@@ -116,21 +120,123 @@ class SystemCheckViewModel(
             val selectedModel = providerRouter.selectedModelId.value
             val provider = providerRouter.getAllProviders().firstOrNull { it.id == selectedProvider }
             val providerStatus = provider?.let { runCatching { it.getStatus() }.getOrNull() }
-            val localDiagnostics = (provider as? LiteRtLocalProvider)?.loadDiagnostics?.value
+            val localProvider = provider as? LiteRtLocalProvider
+            val localDiagnostics = localProvider?.loadDiagnostics?.value
+            val acquisitionDiagnostics = modelManager?.acquisitionDiagnostics?.value
+            val execution = providerRouter.executionDiagnostics.value
+            val observedExecution = inferenceLedger?.lastExecution?.value
+            val useObserved = observedExecution != null &&
+                observedExecution.recordedAtMs >= (execution.recordedAtMs ?: Long.MIN_VALUE)
+            val lastProviderId = if (useObserved) observedExecution?.providerId else execution.providerId
+            val lastModelId = if (useObserved) observedExecution?.modelId else execution.modelId
+            val executionMatchesSelection = lastProviderId == selectedProvider && lastModelId == selectedModel
+            list.add(
+                SystemCheckItem(
+                    id = "ai_selection",
+                    name = "AI Selection",
+                    glyph = HaloGlyph.MODEL,
+                    status = if (provider != null && selectedModel != null) CheckStatus.PASSED else CheckStatus.NOT_CONFIGURED,
+                    reason = "provider=${selectedProvider ?: "none"}; model=${selectedModel ?: "none"}",
+                )
+            )
+            list.add(
+                SystemCheckItem(
+                    id = "ai_configuration",
+                    name = "AI Configuration",
+                    glyph = HaloGlyph.MODEL,
+                    status = when (providerStatus?.state) {
+                        com.halo.sdk.provider.ProviderStatus.State.UNCONFIGURED,
+                        com.halo.sdk.provider.ProviderStatus.State.MODEL_MISSING -> CheckStatus.NOT_CONFIGURED
+                        com.halo.sdk.provider.ProviderStatus.State.ERROR,
+                        com.halo.sdk.provider.ProviderStatus.State.OFFLINE -> CheckStatus.FAILED
+                        null -> CheckStatus.NOT_CONFIGURED
+                        else -> CheckStatus.READY
+                    },
+                    reason = "state=${providerStatus?.state ?: "unknown"}; ${providerStatus?.message.orEmpty()}",
+                )
+            )
+            if (localProvider != null) {
+                val resident = localProvider.modelSession.isLoaded() &&
+                    localProvider.modelSession.loadedModelId == selectedModel
+                list.add(
+                    SystemCheckItem(
+                        id = "ai_artifact",
+                        name = "Local Artifact",
+                        glyph = HaloGlyph.MODEL,
+                        status = when (providerStatus?.state) {
+                            com.halo.sdk.provider.ProviderStatus.State.UNCONFIGURED,
+                            com.halo.sdk.provider.ProviderStatus.State.MODEL_MISSING -> CheckStatus.NOT_CONFIGURED
+                            com.halo.sdk.provider.ProviderStatus.State.ERROR -> CheckStatus.FAILED
+                            else -> CheckStatus.READY
+                        },
+                        reason = localDiagnostics?.technicalSummary()
+                            ?: acquisitionDiagnostics?.technicalSummary()
+                            ?: when (providerStatus?.state) {
+                                com.halo.sdk.provider.ProviderStatus.State.UNCONFIGURED -> "artifact=unknown; no selected model"
+                                com.halo.sdk.provider.ProviderStatus.State.MODEL_MISSING -> "artifact=missing"
+                                else -> "artifact=valid"
+                            },
+                    )
+                )
+                list.add(
+                    SystemCheckItem(
+                        id = "ai_residency",
+                        name = "Model Residency",
+                        glyph = HaloGlyph.MODEL,
+                        status = if (resident) CheckStatus.PASSED else CheckStatus.NOT_CONFIGURED,
+                        reason = if (resident) {
+                            "resident=true; backend=${localProvider.modelSession.activeBackend ?: "unknown"}"
+                        } else {
+                            "resident=false; selected model has not been loaded in this process"
+                        },
+                    )
+                )
+            } else {
+                list.add(
+                    SystemCheckItem(
+                        id = "ai_reachability",
+                        name = "Provider Reachability",
+                        glyph = HaloGlyph.MODEL,
+                        status = when (providerStatus?.state) {
+                            com.halo.sdk.provider.ProviderStatus.State.READY -> CheckStatus.PASSED
+                            com.halo.sdk.provider.ProviderStatus.State.OFFLINE -> CheckStatus.FAILED
+                            else -> CheckStatus.NOT_CONFIGURED
+                        },
+                        reason = providerStatus?.message ?: "No reachability evidence",
+                    )
+                )
+            }
             list.add(
                 SystemCheckItem(
                     id = "ai_execution",
-                    name = "AI Execution",
+                    name = "Last AI Generation",
                     glyph = HaloGlyph.MODEL,
                     status = when {
-                        provider == null || selectedModel == null -> CheckStatus.NOT_CONFIGURED
-                        providerStatus?.state == com.halo.sdk.provider.ProviderStatus.State.READY -> CheckStatus.READY
-                        else -> CheckStatus.BLOCKED
+                        !useObserved && execution.inFlight && executionMatchesSelection -> CheckStatus.RUNNING
+                        useObserved && observedExecution?.success == true && executionMatchesSelection -> CheckStatus.PASSED
+                        useObserved && observedExecution?.success == false && executionMatchesSelection -> CheckStatus.FAILED
+                        !useObserved && execution.lastSuccessAtMs != null && executionMatchesSelection -> CheckStatus.PASSED
+                        !useObserved && execution.lastFailureStage != null && executionMatchesSelection -> CheckStatus.FAILED
+                        else -> CheckStatus.NOT_CONFIGURED
                     },
                     reason = buildString {
-                        append("provider=${selectedProvider ?: "none"}; model=${selectedModel ?: "none"}; status=${providerStatus?.state ?: "unknown"}; ")
-                        append(providerStatus?.message.orEmpty())
-                        localDiagnostics?.let { append("; failure=${it.technicalSummary()}") }
+                        if (!executionMatchesSelection) {
+                            append("No generation recorded for the selected provider/model")
+                        } else {
+                            append("successAt=${if (useObserved && observedExecution?.success == true) observedExecution?.recordedAtMs else execution.lastSuccessAtMs ?: "none"}")
+                            append("; latencyMs=${if (useObserved) observedExecution?.latencyMs ?: "unknown" else execution.lastLatencyMs ?: "unknown"}")
+                            append("; backend=${if (useObserved) observedExecution?.backend ?: localProvider?.modelSession?.activeBackend ?: "unknown" else execution.lastBackend ?: localProvider?.modelSession?.activeBackend ?: "unknown"}")
+                            val failureStage = localDiagnostics?.stage?.name
+                                ?: acquisitionDiagnostics?.stage?.name
+                                ?: if (useObserved) observedExecution?.failureStage else execution.lastFailureStage
+                            failureStage?.let { append("; failureStage=$it") }
+                            (if (useObserved) observedExecution?.failureType else execution.lastFailureType)
+                                ?.let { append("; failureType=$it") }
+                            val diagnosticsId = localDiagnostics?.diagnosticsId?.take(8)
+                                ?: acquisitionDiagnostics?.diagnosticsId?.take(8)
+                                ?: if (useObserved) observedExecution?.requestId?.take(8) else execution.diagnosticsId?.take(8)
+                            append("; diagnosticsId=${diagnosticsId ?: "none"}")
+                        }
                     }
                 )
             )
@@ -224,7 +330,7 @@ class SystemCheckViewModel(
                 updateItem(
                     "ai_execution",
                     if (pass) CheckStatus.PASSED else CheckStatus.FAILED,
-                    if (pass) "provider=$selectedProvider; model=$selectedModel; backend=${response.providerId}; non-empty response" else "Selected provider returned empty text",
+                    if (pass) "provider=$selectedProvider; model=$selectedModel; backend=${response.executionBackend ?: "unreported"}; non-empty response" else "Selected provider returned empty text",
                     elapsed
                 )
             }.onFailure { err ->

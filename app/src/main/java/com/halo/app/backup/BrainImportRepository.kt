@@ -252,7 +252,12 @@ class StagedBrainImporter(
                 dao.putAgentRuns(normalizedAgentRuns)
                 dao.putAgentSteps(room.agentSteps)
             }
-            snapshot.settings.values.forEach { (key, value) -> settingsStorage.putString(key, value) }
+            snapshot.settings.values.forEach { (key, value) ->
+                if (key in PORTABLE_STRING_KEYS) settingsStorage.putString(key, value)
+            }
+            if (snapshot.settings.values.keys.any { it == "active_ai_provider" || it == "active_ai_model" }) {
+                settingsStorage.putBoolean("active_ai_selection_migrated_v1", true)
+            }
             snapshot.settings.booleanValues.forEach { (key, value) ->
                 if (key in PORTABLE_BOOLEAN_KEYS) settingsStorage.putBoolean(key, value)
             }
@@ -504,11 +509,15 @@ class StagedBrainImporter(
     private data class ParsedArchive(val zipFile: ZipFile, val manifest: HaloBrainManifest, val snapshot: BrainSnapshot, val contentEntries: Map<String, String>, val encrypted: Boolean)
 
     private companion object {
+        val PORTABLE_STRING_KEYS = setOf(
+            "active_ai_provider", "active_ai_model", "ai_routing_policy",
+            "ollama_endpoint", "speech_locale",
+        )
         val PORTABLE_BOOLEAN_KEYS = setOf(
             "policy_conversation", "policy_device_state", "policy_recent_events", "policy_memories",
             "policy_tools", "policy_location", "policy_images", "policy_audio", "policy_video",
             "policy_cloud_workspace",
         )
-        val PORTABLE_INTEGER_KEYS = setOf("llamacpp_context", "ai_temperature")
+        val PORTABLE_INTEGER_KEYS = setOf("litert_context", "ai_temperature")
     }
 }

@@ -2,6 +2,7 @@ package com.halo.runtime.observer
 
 import com.halo.sdk.runtime.EventBus
 import com.halo.sdk.runtime.InferenceObserved
+import com.halo.sdk.runtime.CognitiveFailed
 import com.halo.sdk.runtime.ToolCallCompleted
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,12 +28,26 @@ data class ToolAggregate(
     val failuresByCode: Map<String, Long> = emptyMap(),
 )
 
+data class InferenceExecutionSnapshot(
+    val requestId: String,
+    val providerId: String,
+    val modelId: String?,
+    val success: Boolean,
+    val backend: String? = null,
+    val latencyMs: Long? = null,
+    val failureStage: String? = null,
+    val failureType: String? = null,
+    val recordedAtMs: Long,
+)
+
 /** Bounded, content-free operational telemetry projection. */
 class InferenceLedger(eventBus: EventBus, scope: CoroutineScope) {
     private val _aggregate = MutableStateFlow(InferenceAggregate())
     val aggregate: StateFlow<InferenceAggregate> = _aggregate.asStateFlow()
     private val _toolAggregate = MutableStateFlow(ToolAggregate())
     val toolAggregate: StateFlow<ToolAggregate> = _toolAggregate.asStateFlow()
+    private val _lastExecution = MutableStateFlow<InferenceExecutionSnapshot?>(null)
+    val lastExecution: StateFlow<InferenceExecutionSnapshot?> = _lastExecution.asStateFlow()
 
     init {
         scope.launch {
@@ -49,6 +64,30 @@ class InferenceLedger(eventBus: EventBus, scope: CoroutineScope) {
                             totalDurationMs = current.totalDurationMs + (event.metrics?.totalDurationMs ?: 0L),
                             routerResolutions = if (resolved == null) current.routerResolutions else
                                 current.routerResolutions.incrementBounded(resolved),
+                        )
+                        val priorFailure = _lastExecution.value
+                            ?.takeIf { !event.success && it.requestId == event.requestId }
+                        _lastExecution.value = InferenceExecutionSnapshot(
+                            requestId = event.requestId,
+                            providerId = event.providerId,
+                            modelId = event.resolvedModelId ?: event.requestedModelId,
+                            success = event.success,
+                            backend = event.backend,
+                            latencyMs = event.metrics?.totalDurationMs,
+                            failureStage = priorFailure?.failureStage,
+                            failureType = priorFailure?.failureType,
+                            recordedAtMs = event.timestamp,
+                        )
+                    }
+                    is CognitiveFailed -> event.providerId?.let { providerId ->
+                        _lastExecution.value = InferenceExecutionSnapshot(
+                            requestId = event.requestId,
+                            providerId = providerId,
+                            modelId = event.modelId,
+                            success = false,
+                            failureStage = event.stage,
+                            failureType = event.type,
+                            recordedAtMs = event.timestamp,
                         )
                     }
                     is ToolCallCompleted -> {

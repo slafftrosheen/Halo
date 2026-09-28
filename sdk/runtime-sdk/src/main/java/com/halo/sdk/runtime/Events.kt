@@ -64,6 +64,7 @@ data class InferenceObserved(
     val requestedModelId: String?,
     val resolvedModelId: String?,
     val success: Boolean,
+    val backend: String? = null,
     val metrics: CognitiveGenerationMetrics? = null,
     override val timestamp: Long = System.currentTimeMillis(),
 ) : HaloEvent

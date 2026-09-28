@@ -19,7 +19,8 @@ class AiSelectionRepository(
         if (providerId !in validProviderIds) providerId = defaultProviderId
 
         var modelId = storage.getString(MODEL_KEY)?.trim()?.ifBlank { null }
-        if (modelId == null && providerId != null) {
+        val migrationPending = !storage.getBoolean(MIGRATION_COMPLETE_KEY, false)
+        if (migrationPending && modelId == null && providerId != null) {
             // Read old provider-specific keys only at this migration boundary. They are never
             // written again and never act as an independent selection authority.
             modelId = legacyModelKey(providerId)
@@ -35,6 +36,7 @@ class AiSelectionRepository(
     fun write(selection: PersistedAiSelection) {
         storage.putString(PROVIDER_KEY, selection.providerId)
         storage.putString(MODEL_KEY, selection.modelId)
+        storage.putBoolean(MIGRATION_COMPLETE_KEY, true)
     }
 
     private fun legacyModelKey(providerId: String): String? = when (providerId) {
@@ -47,5 +49,6 @@ class AiSelectionRepository(
     companion object {
         const val PROVIDER_KEY = "active_ai_provider"
         const val MODEL_KEY = "active_ai_model"
+        const val MIGRATION_COMPLETE_KEY = "active_ai_selection_migrated_v1"
     }
 }

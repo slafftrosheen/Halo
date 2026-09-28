@@ -5,6 +5,7 @@ import com.halo.sdk.provider.AiCapability
 import com.halo.sdk.provider.AiContext
 import com.halo.sdk.provider.AiErrorType
 import com.halo.sdk.provider.AiExecutionTarget
+import com.halo.sdk.provider.AiGenerationMetrics
 import com.halo.sdk.provider.AiProviderException
 import com.halo.sdk.provider.AiFailureDetails
 import com.halo.sdk.provider.Recoverability
@@ -74,6 +75,7 @@ class DefaultProviderTurnExecutor(
         requestId: String,
         interactionId: InteractionId,
     ): ProviderTurnResult {
+        val startedAtMs = System.currentTimeMillis()
         request.validateAgainst(target.providerCapabilities)
         val provider = target.provider
         val expectedModelId = target.modelId
@@ -153,12 +155,22 @@ class DefaultProviderTurnExecutor(
             provider.generate(request, context)
         }
 
-        val validated = AiResponseValidator.validate(
+        val validatedResponse = AiResponseValidator.validate(
             provider = provider,
             capabilities = target.providerCapabilities,
             expectedModelId = expectedModelId,
             response = response
         )
+        val validated = if (validatedResponse.metrics == null) {
+            validatedResponse.copy(
+                metrics = AiGenerationMetrics(
+                    startedAtMs = startedAtMs,
+                    completedAtMs = System.currentTimeMillis(),
+                )
+            )
+        } else {
+            validatedResponse
+        }
 
         val isHandoff = validated.finishReason.equals("handoff", ignoreCase = true) ||
             validated.text.equals("HANDOFF_STARTED", ignoreCase = true)

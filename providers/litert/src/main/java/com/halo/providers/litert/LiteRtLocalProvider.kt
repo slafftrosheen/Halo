@@ -99,6 +99,7 @@ class LiteRtLocalProvider(
 
     override suspend fun releaseIfIdle(): Boolean {
         if (!modelSession.isLoaded()) return true
+        val releasingModelId = modelSession.loadedModelId
         val currentActivity = modelSession.activity.value
         if (currentActivity is LocalModelActivityState.Generating ||
             currentActivity is LocalModelActivityState.Loading ||
@@ -106,7 +107,15 @@ class LiteRtLocalProvider(
         ) {
             return false
         }
-        val unloaded = modelSession.unloadModel().isSuccess
+        val unloadResult = modelSession.unloadModel()
+        val unloaded = unloadResult.isSuccess
+        if (!unloaded) {
+            recordGenerationFailure(
+                releasingModelId,
+                unloadResult.exceptionOrNull() ?: IllegalStateException("LiteRT teardown failed"),
+                LiteRtFailureStage.TEARDOWN,
+            )
+        }
         // The coordinator owns lease bookkeeping. releaseIfIdle() is invoked while it
         // arbitrates an owner, so re-entering coordinator.release() here can deadlock.
         return unloaded
@@ -243,6 +252,12 @@ class LiteRtLocalProvider(
                 config = loadConfig,
             )
         } catch (cancelled: CancellationException) {
+            _loadDiagnostics.value = buildDiagnostics(
+                descriptor,
+                loadConfig,
+                cancelled,
+                LiteRtFailureStage.CANCEL,
+            )
             nativeResourceCoordinator?.release(this)
             _status.value = ProviderStatus(
                 ProviderStatus.State.READY,
@@ -285,6 +300,7 @@ class LiteRtLocalProvider(
         descriptor: LocalModelDescriptor,
         loadConfig: RuntimeLoadConfig,
         failure: Throwable?,
+        stageOverride: LiteRtFailureStage? = null,
     ): LiteRtLoadDiagnostics {
         val loadException = failure as? LiteRtModelLoadException
         val diagnostics = LiteRtLoadDiagnostics(
@@ -295,12 +311,15 @@ class LiteRtLocalProvider(
             requestedBackend = loadException?.requestedBackend ?: loadConfig.computeBackend,
             effectiveBackend = modelSession.activeBackend,
             contextTokens = if (loadConfig.useModelDefaultContext) null else loadConfig.contextSize,
-            stage = when (loadException?.stage) {
+            stage = stageOverride ?: when (loadException?.stage) {
                 com.halo.providers.litert.runtime.ModelLoadStage.ABI,
                 com.halo.providers.litert.runtime.ModelLoadStage.ARTIFACT -> LiteRtFailureStage.INVENTORY
                 com.halo.providers.litert.runtime.ModelLoadStage.CONVERSATION -> LiteRtFailureStage.CONVERSATION_CREATE
                 com.halo.providers.litert.runtime.ModelLoadStage.GENERATION -> LiteRtFailureStage.GENERATION
-                else -> if (loadException?.requestedBackend == LocalComputeBackend.CPU) {
+                else -> if (
+                    loadException?.requestedBackend == LocalComputeBackend.CPU ||
+                    loadException?.primaryCause != null
+                ) {
                     LiteRtFailureStage.ENGINE_INIT_CPU
                 } else {
                     LiteRtFailureStage.ENGINE_INIT_GPU
@@ -387,6 +406,11 @@ class LiteRtLocalProvider(
         }
 
         if (generation == null) {
+            recordGenerationFailure(
+                modelId,
+                java.util.concurrent.TimeoutException("LiteRT verification timed out"),
+                LiteRtFailureStage.FIRST_TOKEN,
+            )
             return@withContext ModelVerificationResult.Failed(
                 modelId,
                 ModelVerificationStage.GENERATION,
@@ -395,6 +419,7 @@ class LiteRtLocalProvider(
         }
 
         val result = generation.getOrElse { error ->
+            recordGenerationFailure(modelId, error, LiteRtFailureStage.GENERATION)
             return@withContext ModelVerificationResult.Failed(
                 modelId,
                 if (error is LiteRtModelLoadException) ModelVerificationStage.ENGINE_INIT else ModelVerificationStage.GENERATION,
@@ -405,6 +430,11 @@ class LiteRtLocalProvider(
 
         val text = result.text.trim()
         if (text.isEmpty()) {
+            recordGenerationFailure(
+                modelId,
+                AiProviderException(AiErrorType.EMPTY_RESPONSE, "LiteRT verification returned empty text"),
+                LiteRtFailureStage.FIRST_TOKEN,
+            )
             return@withContext ModelVerificationResult.Failed(
                 modelId,
                 ModelVerificationStage.GENERATION,
@@ -488,7 +518,8 @@ class LiteRtLocalProvider(
                 providerId = id,
                 modelId = modelSession.loadedModelId ?: "litert",
                 finishReason = if (result.toolCalls.isNotEmpty()) "tool_calls" else "stop",
-                toolCalls = result.toolCalls
+                toolCalls = result.toolCalls,
+                executionBackend = modelSession.activeBackend?.name,
             )
         } finally {
             nativeResourceCoordinator?.mark(this@LiteRtLocalProvider, NativeResourceState.RESIDENT, "Resident")
@@ -544,7 +575,8 @@ class LiteRtLocalProvider(
                             providerId = id,
                             modelId = modelSession.loadedModelId ?: "litert",
                             finishReason = if (gen.toolCalls.isNotEmpty()) "tool_calls" else "stop",
-                            toolCalls = gen.toolCalls
+                            toolCalls = gen.toolCalls,
+                            executionBackend = modelSession.activeBackend?.name,
                         )
                     )
                 )

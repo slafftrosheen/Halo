@@ -99,13 +99,8 @@ class OllamaProvider(
                 ProviderStatus.State.UNCONFIGURED,
                 "Ollama endpoint is not configured"
             ).also { _status.value = it }
-        val modelId = configuredModelId
-            ?: return@withContext ProviderStatus(
-                ProviderStatus.State.MODEL_MISSING,
-                "No Ollama model is selected"
-            ).also { _status.value = it }
-
         val probe = fetchModels(endpoint)
+        val modelId = configuredModelId
         val status = when {
             probe.error != null ->
                 ProviderStatus(
@@ -116,6 +111,11 @@ class OllamaProvider(
                 ProviderStatus(
                     ProviderStatus.State.OFFLINE,
                     "Ollama responded at $endpoint but returned no models"
+                )
+            modelId == null ->
+                ProviderStatus(
+                    ProviderStatus.State.MODEL_MISSING,
+                    "Ollama is reachable, but no model is selected"
                 )
             probe.models.none { sameModel(it.id, modelId) } ->
                 ProviderStatus(
@@ -202,6 +202,7 @@ class OllamaProvider(
                         providerId = id,
                         modelId = model,
                         finishReason = if (result.done) "stop" else "length",
+                        executionBackend = "OLLAMA_HTTP",
                     )
                 }
             } catch (cancelled: kotlinx.coroutines.CancellationException) {
@@ -295,6 +296,7 @@ class OllamaProvider(
                         providerId = id,
                         modelId = model,
                         finishReason = "stop",
+                        executionBackend = "OLLAMA_HTTP",
                     )
                 )
             )

@@ -156,6 +156,7 @@ class OpenRouterProvider(
                     modelId = actualModel,
                     requestedModelId = actualModel,
                     resolvedModelId = resolvedModel,
+                    executionBackend = "OPENROUTER",
                 )
                 _status.value = ProviderStatus.READY
                 cooldown = null
@@ -283,6 +284,7 @@ class OpenRouterProvider(
                             modelId = actualModel,
                             requestedModelId = actualModel,
                             resolvedModelId = resolvedModel ?: actualModel,
+                            executionBackend = "OPENROUTER",
                         )
                     )
                 )

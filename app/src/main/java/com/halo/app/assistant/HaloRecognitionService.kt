@@ -23,7 +23,7 @@ class HaloRecognitionService : RecognitionService() {
         // This endpoint exists for Android VoiceInteractionService compatibility. Halo's
         // VoiceInteractionSession performs STT through AudioPerceptionEngine, so an independent
         // platform recognition request is rejected before it can contend for the microphone.
-        listener.error(SpeechRecognizer.ERROR_RECOGNIZER_BUSY)
+        listener.error(SpeechRecognizer.ERROR_CLIENT)
     }
 
     override fun onStopListening(listener: Callback) = Unit

@@ -238,8 +238,11 @@ class AndroidAssistantRoleController(
     override fun recordEnrollmentActivityResult(resultCode: Int?) {
         val snapshot = inspector.inspect()
         val mechanism = _enrollmentDiagnostics.value.requestMechanism
-        roleRequestReturnedWithoutOwnership =
-            mechanism == AssistantEnrollmentPath.ROLE_REQUEST && !snapshot.roleHeld
+        roleRequestReturnedWithoutOwnership = when {
+            snapshot.roleHeld -> false
+            mechanism == AssistantEnrollmentPath.ROLE_REQUEST -> true
+            else -> roleRequestReturnedWithoutOwnership
+        }
         _enrollmentDiagnostics.value = AssistantEnrollmentDiagnostics(
             requestMechanism = mechanism,
             activityResultCode = resultCode,

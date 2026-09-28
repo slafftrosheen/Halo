@@ -128,6 +128,8 @@ class DefaultAiProviderRouter(
 
     private val _lastRoutingDecision = MutableStateFlow<AiRoutingDecision?>(null)
     override val lastRoutingDecision: StateFlow<AiRoutingDecision?> = _lastRoutingDecision.asStateFlow()
+    private val _executionDiagnostics = MutableStateFlow(AiExecutionDiagnostics())
+    override val executionDiagnostics: StateFlow<AiExecutionDiagnostics> = _executionDiagnostics.asStateFlow()
 
     override suspend fun resolveExecutionTarget(request: AiRequest): AiExecutionTarget =
         resolveExecutionTarget(request, AiWorkloadSpec())
@@ -423,6 +425,14 @@ class DefaultAiProviderRouter(
         val target = resolveExecutionTarget(request, workload)
         val finalRequest = request.copy(modelId = target.modelId)
         val requestId = UUID.randomUUID().toString()
+        val startedAtMs = System.currentTimeMillis()
+        _executionDiagnostics.value = AiExecutionDiagnostics(
+            inFlight = true,
+            providerId = target.providerId,
+            modelId = target.modelId,
+            startedAtMs = startedAtMs,
+            diagnosticsId = requestId,
+        )
         logger?.info("AiProviderRouter", "AI execute start provider=${target.providerId} model=${target.modelId}")
         eventBus?.publish(ProviderRequest(requestId = requestId, providerId = target.providerId))
         return try {
@@ -431,8 +441,12 @@ class DefaultAiProviderRouter(
             val response = target.provider.generate(finalRequest, context)
             val validated = AiResponseValidator.validate(target.provider, target.effectiveCapabilities, target.modelId, response)
             eventBus?.publish(ProviderResult(requestId = requestId, success = true))
+            recordExecutionSuccess(target, validated, startedAtMs, requestId)
             validated
-        } catch (e: CancellationException) { throw e }
+        } catch (e: CancellationException) {
+            recordExecutionFailure(target, e, "CANCEL", startedAtMs, requestId)
+            throw e
+        }
         catch (e: Throwable) {
             eventBus?.publish(ProviderFailure(requestId = requestId, providerId = target.providerId, reason = e.message ?: "Execution failed"))
             if ((policy == AiRoutingPolicy.PREFERRED_WITH_FALLBACK || policy == AiRoutingPolicy.AUTOMATIC || policy == AiRoutingPolicy.LOCAL_ONLY) && fallbackEligible(e)) {
@@ -447,9 +461,13 @@ class DefaultAiProviderRouter(
                         val fallbackResponse = fallbackTarget.provider.generate(fallbackRequest, context)
                         val validatedFallback = AiResponseValidator.validate(fallbackTarget.provider, fallbackTarget.effectiveCapabilities, fallbackTarget.modelId, fallbackResponse)
                         eventBus?.publish(ProviderResult(requestId = fallbackRequestId, success = true))
+                        recordExecutionSuccess(fallbackTarget, validatedFallback, startedAtMs, fallbackRequestId)
                         logger?.info("AiProviderRouter", "AI fallback success provider=${fallbackTarget.providerId} model=${fallbackTarget.modelId}")
                         return validatedFallback
-                    } catch (fallbackError: CancellationException) { throw fallbackError }
+                    } catch (fallbackError: CancellationException) {
+                        recordExecutionFailure(fallbackTarget, fallbackError, "CANCEL", startedAtMs, fallbackRequestId)
+                        throw fallbackError
+                    }
                     catch (fallbackError: Throwable) {
                         eventBus?.publish(ProviderFailure(requestId = fallbackRequestId, providerId = fallbackTarget.providerId, reason = fallbackError.message ?: "Fallback execution failed"))
                         // Preserve both failures for diagnostics while keeping the primary target's
@@ -458,8 +476,51 @@ class DefaultAiProviderRouter(
                     }
                 }
             }
+            recordExecutionFailure(target, e, "GENERATION", startedAtMs, requestId)
             throw e
         }
+    }
+
+    private fun recordExecutionSuccess(
+        target: AiExecutionTarget,
+        response: AiResponse,
+        startedAtMs: Long,
+        diagnosticsId: String,
+    ) {
+        val completedAtMs = System.currentTimeMillis()
+        _executionDiagnostics.value = AiExecutionDiagnostics(
+            inFlight = false,
+            providerId = target.providerId,
+            modelId = target.modelId,
+            startedAtMs = startedAtMs,
+            lastSuccessAtMs = completedAtMs,
+            lastLatencyMs = response.metrics?.totalDurationMs ?: (completedAtMs - startedAtMs),
+            lastBackend = response.executionBackend,
+            diagnosticsId = diagnosticsId,
+            recordedAtMs = completedAtMs,
+        )
+    }
+
+    private fun recordExecutionFailure(
+        target: AiExecutionTarget,
+        error: Throwable,
+        stage: String,
+        startedAtMs: Long,
+        diagnosticsId: String,
+    ) {
+        val completedAtMs = System.currentTimeMillis()
+        _executionDiagnostics.value = AiExecutionDiagnostics(
+            inFlight = false,
+            providerId = target.providerId,
+            modelId = target.modelId,
+            startedAtMs = startedAtMs,
+            lastLatencyMs = completedAtMs - startedAtMs,
+            lastFailureStage = stage,
+            lastFailureType = error::class.java.simpleName,
+            lastFailureMessage = error.message?.take(240),
+            diagnosticsId = diagnosticsId,
+            recordedAtMs = completedAtMs,
+        )
     }
 
     companion object {

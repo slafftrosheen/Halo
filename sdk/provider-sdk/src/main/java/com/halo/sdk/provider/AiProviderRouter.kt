@@ -64,12 +64,31 @@ data class AiRoutingDecision(
     val rejectedTargets: List<RejectedAiTarget>
 )
 
+/** Content-free evidence for the most recent generation attempted through the router. */
+data class AiExecutionDiagnostics(
+    val inFlight: Boolean = false,
+    val providerId: String? = null,
+    val modelId: String? = null,
+    val startedAtMs: Long? = null,
+    val lastSuccessAtMs: Long? = null,
+    val lastLatencyMs: Long? = null,
+    val lastBackend: String? = null,
+    val lastFailureStage: String? = null,
+    val lastFailureType: String? = null,
+    val lastFailureMessage: String? = null,
+    val diagnosticsId: String? = null,
+    val recordedAtMs: Long? = null,
+)
+
 /**
  * Interface for routing AI requests to the appropriate provider.
  */
 interface AiProviderRouter {
     val lastRoutingDecision: StateFlow<AiRoutingDecision?>
         get() = MutableStateFlow(null)
+
+    val executionDiagnostics: StateFlow<AiExecutionDiagnostics>
+        get() = MutableStateFlow(AiExecutionDiagnostics())
 
     val selectedProviderId: StateFlow<String?>
     val selectedModelId: StateFlow<String?>
