@@ -223,7 +223,14 @@ class DefaultAgentRunCoordinator(
     override suspend fun transition(runId: AgentRunId, state: AgentRunState, reason: String?) = mutex.withLock {
         val run = requireNotNull(store.get(runId)) { "Unknown run ${runId.value}" }
         if (run.state == state) return@withLock
-        check(!run.state.isTerminal) { "Cannot transition terminal run ${run.id.value} from ${run.state} to $state" }
+        if (run.state.isTerminal) {
+            if (state.isTerminal) {
+                println("[HALO-AGENT-RUN-IDEMPOTENT] Terminal run ${run.id.value} in state ${run.state} ignored late terminal transition request to $state (reason: $reason)")
+                return@withLock
+            } else {
+                check(!run.state.isTerminal) { "Cannot transition terminal run ${run.id.value} from ${run.state} to $state" }
+            }
+        }
         val allowed = when (run.state) {
             AgentRunState.CREATED -> setOf(AgentRunState.PLANNING, AgentRunState.EXECUTING, AgentRunState.COMPLETED)
             AgentRunState.PLANNING -> setOf(AgentRunState.EXECUTING, AgentRunState.COMPLETED, AgentRunState.WAITING_FOR_CLARIFICATION, AgentRunState.WAITING_FOR_CAPABILITY, AgentRunState.WAITING_FOR_RESOURCE)

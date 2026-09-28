@@ -118,6 +118,7 @@ class NativeResourceCoordinator(
     }
 
     suspend fun acquire(owner: NativeResourceOwner): Boolean {
+        val start = System.currentTimeMillis()
         val resourceId = when (owner.nativeResourceKind) {
             NativeResourceKind.HEAVY_LLM -> HaloResourceIds.ComputeInference
             NativeResourceKind.HEAVY_ASR -> HaloResourceIds.ComputeAsr
@@ -129,13 +130,15 @@ class NativeResourceCoordinator(
             claims.add(ResourceClaim(ResourceKey(HaloResourceIds.ComputeHeavy, ResourceEndpointId("host:primary")), ResourceAccess.EXCLUSIVE))
         }
 
+        println("NATIVE_EXECUTION_ACQUIRE owner=${owner.nativeResourceId} kind=${owner.nativeResourceKind.name} resource=$resourceId reason=acquire")
+
         if (resourceLeaseManager != null) {
             val req = ResourceLeaseRequest(
                 requestId = "native:${owner.nativeResourceId}",
                 holder = ResourceHolder(id = owner.nativeResourceId, kind = ResourceHolderKind.PROVIDER),
                 claims = claims,
                 priority = ResourcePriority.INTERACTIVE,
-                waitPolicy = ResourceWaitPolicy.Wait(500L),
+                waitPolicy = ResourceWaitPolicy.Wait(1000L),
                 preemption = ResourcePreemptionPolicy.COOPERATIVE,
             )
             when (val acq = resourceLeaseManager.acquire(req)) {
@@ -151,7 +154,7 @@ class NativeResourceCoordinator(
             }
         }
 
-        val acquired = withTimeoutOrNull(500) {
+        val acquired = withTimeoutOrNull(1000) {
             while (true) {
                 val success = mutex.withLock {
                     owners += owner
@@ -183,7 +186,10 @@ class NativeResourceCoordinator(
             @Suppress("UNREACHABLE_CODE") false
         } ?: false
 
-        if (!acquired) {
+        val duration = System.currentTimeMillis() - start
+        if (acquired) {
+            println("NATIVE_EXECUTION_GRANTED owner=${owner.nativeResourceId} kind=${owner.nativeResourceKind.name} waitMs=$duration")
+        } else {
             mutex.withLock {
                 activeLeases.remove(owner)?.release()
                 publish(owner, NativeResourceState.RELEASED, "busy")
@@ -192,25 +198,34 @@ class NativeResourceCoordinator(
         return acquired
     }
 
-    /** Update provider lifecycle state without changing the arbitration lease. */
+    /** Update provider lifecycle state. Active compute lease is released when model is merely RESIDENT or RELEASED. */
     suspend fun mark(owner: NativeResourceOwner, state: NativeResourceState, reason: String) = mutex.withLock {
         owners += owner
         publish(owner, state, reason)
         expiry.remove(owner)?.cancel()
-        if (state == NativeResourceState.RESIDENT) expiry[owner] = scope.launch {
-            delay(if (_budget.value.pressure == NativeMemoryPressure.NORMAL) _budget.value.idleGraceMillis else 0)
-            while (isActive) {
-                val released = mutex.withLock {
-                    if (owner !in active) true else if (owner.releaseIfIdle()) {
-                        active -= owner
-                        expiry.remove(owner)?.cancel()
-                        activeLeases.remove(owner)?.release()
-                        publish(owner, NativeResourceState.RELEASED, "idle grace elapsed")
-                        true
-                    } else false
+
+        // When execution finishes and provider returns to RESIDENT or RELEASED, release active execution lease on ResourceLeaseManager immediately!
+        if (state == NativeResourceState.RESIDENT || state == NativeResourceState.RELEASED) {
+            activeLeases.remove(owner)?.release()
+            println("NATIVE_EXECUTION_RELEASE owner=${owner.nativeResourceId} kind=${owner.nativeResourceKind.name} reason=$reason")
+        }
+
+        if (state == NativeResourceState.RESIDENT) {
+            expiry[owner] = scope.launch {
+                delay(if (_budget.value.pressure == NativeMemoryPressure.NORMAL) _budget.value.idleGraceMillis else 0)
+                while (isActive) {
+                    val released = mutex.withLock {
+                        if (owner !in active) true else if (owner.releaseIfIdle()) {
+                            active -= owner
+                            expiry.remove(owner)?.cancel()
+                            activeLeases.remove(owner)?.release()
+                            publish(owner, NativeResourceState.RELEASED, "idle grace elapsed")
+                            true
+                        } else false
+                    }
+                    if (released) break
+                    delay(500)
                 }
-                if (released) break
-                delay(500)
             }
         }
     }
@@ -220,6 +235,7 @@ class NativeResourceCoordinator(
         active -= owner
         activeLeases.remove(owner)?.release()
         if (owners.contains(owner)) publish(owner, NativeResourceState.RELEASED, "released")
+        println("NATIVE_EXECUTION_RELEASE owner=${owner.nativeResourceId} kind=${owner.nativeResourceKind.name} reason=released")
     }
 
     suspend fun activeKinds(): Set<NativeResourceKind> = mutex.withLock {
@@ -227,7 +243,7 @@ class NativeResourceCoordinator(
     }
 
     private fun publish(owner: NativeResourceOwner, state: NativeResourceState, reason: String) {
-        val message = "NATIVE_RESOURCE_TRANSITION owner=${owner.nativeResourceId} kind=${owner.nativeResourceKind.name} state=${state.name} reason=$reason"
+        val message = "NATIVE_RESIDENCY_CHANGED owner=${owner.nativeResourceId} kind=${owner.nativeResourceKind.name} state=${state.name} reason=$reason"
         println(message)
         val next = _snapshot.value.filterNot { it.ownerId == owner.nativeResourceId } +
             NativeResourceSnapshot(owner.nativeResourceId, owner.nativeResourceKind, state, reason)

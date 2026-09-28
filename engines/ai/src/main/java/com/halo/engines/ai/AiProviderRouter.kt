@@ -192,7 +192,9 @@ class DefaultAiProviderRouter(
                         )
                     }
                     val ready = status.state == ProviderStatus.State.READY ||
-                        status.readiness is ProviderReadiness.ConfiguredCold || status.readiness is ProviderReadiness.Ready
+                        status.readiness is ProviderReadiness.ConfiguredCold ||
+                        status.readiness is ProviderReadiness.Ready ||
+                        status.readiness is ProviderReadiness.Loading
                     if (!ready) {
                         val type = when (status.state) {
                             ProviderStatus.State.UNCONFIGURED -> AiErrorType.AUTHENTICATION_FAILED

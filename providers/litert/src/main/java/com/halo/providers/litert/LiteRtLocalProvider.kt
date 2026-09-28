@@ -14,9 +14,11 @@ import com.halo.providers.litert.runtime.LocalModelSession
 import com.halo.sdk.provider.AiCapability
 import com.halo.sdk.provider.AiContext
 import com.halo.sdk.provider.AiErrorType
+import com.halo.sdk.provider.AiFailureDetails
 import com.halo.sdk.provider.AiInferenceProvider
 import com.halo.sdk.provider.AiModel
 import com.halo.sdk.provider.AiProviderException
+import com.halo.sdk.provider.Recoverability
 import com.halo.sdk.provider.AiRequest
 import com.halo.sdk.provider.AiResponse
 import com.halo.sdk.provider.AiStreamEvent
@@ -232,8 +234,22 @@ class LiteRtLocalProvider(
     private suspend fun loadLocked(descriptor: LocalModelDescriptor): Boolean {
         if (modelSession.isLoaded() && modelSession.loadedModelId == descriptor.id) return true
 
-        check(nativeResourceCoordinator?.acquire(this) ?: true) {
-            "Local inference resource is busy"
+        val acquired = try {
+            nativeResourceCoordinator?.acquire(this) ?: true
+        } catch (e: Exception) {
+            false
+        }
+        if (!acquired) {
+            _status.value = ProviderStatus(
+                ProviderStatus.State.READY,
+                "Local inference resource is temporarily busy. Retry shortly.",
+                ProviderReadiness.ConfiguredCold
+            )
+            throw AiProviderException(
+                AiErrorType.SESSION_CONFLICT,
+                "Local inference resource is busy",
+                AiFailureDetails(retryAfterMs = 1000L, recoverability = Recoverability.RETRY_AFTER)
+            )
         }
 
         nativeResourceCoordinator?.mark(this, NativeResourceState.LOADING, "Loading LiteRT model: ${descriptor.id}")
