@@ -14,14 +14,12 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -66,7 +64,7 @@ fun HaloNavigation(
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.97f))
             .navigationBarsPadding()
-            .height(68.dp)
+            .height(72.dp)
             .padding(horizontal = 8.dp),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
@@ -100,45 +98,51 @@ fun HaloNavigation(
                             }
                         }
                     )
-                    .padding(vertical = 6.dp),
+                    .padding(vertical = 7.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                if (selected) {
-                    Row(
-                        modifier = Modifier.height(7.dp),
-                        horizontalArrangement = Arrangement.spacedBy(2.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        listOf(
-                            MaterialTheme.colorScheme.primary,
-                            MaterialTheme.colorScheme.secondary,
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.55f)
-                        ).forEachIndexed { index, color ->
-                            Box(
-                                Modifier
-                                    .size(if (index == 1) 5.dp else 4.dp)
-                                    .background(color, RoundedCornerShape(1.5.dp))
-                            )
-                        }
-                    }
-                } else {
-                    Spacer(Modifier.height(7.dp))
+                Box(
+                    modifier = Modifier
+                        .size(width = 40.dp, height = 30.dp)
+                        .background(
+                            if (selected) MaterialTheme.colorScheme.primaryContainer
+                            else MaterialTheme.colorScheme.surface,
+                            RoundedCornerShape(11.dp),
+                        ),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    HaloIcon(
+                        glyph = item.glyph,
+                        contentDescription = item.label,
+                        modifier = Modifier.size(22.dp),
+                        tint = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else tint,
+                    )
                 }
-
-                HaloIcon(
-                    glyph = item.glyph,
-                    contentDescription = item.label,
-                    modifier = Modifier.size(24.dp),
-                    tint = tint
-                )
-                Spacer(Modifier.height(2.dp))
+                Spacer(Modifier.height(3.dp))
                 Text(
                     text = item.label,
                     color = tint,
-                    fontSize = 12.sp,
+                    fontSize = 11.sp,
                     fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
                 )
+                Spacer(Modifier.height(3.dp))
+                Row(
+                    modifier = Modifier.height(3.dp),
+                    horizontalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
+                    repeat(3) { index ->
+                        Box(
+                            Modifier
+                                .size(if (selected && index == 1) 4.dp else 3.dp)
+                                .background(
+                                    if (selected) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.surface,
+                                    RoundedCornerShape(1.dp),
+                                ),
+                        )
+                    }
+                }
             }
         }
     }

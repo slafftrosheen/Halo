@@ -195,24 +195,47 @@ fun HomeScreen(
             .padding(horizontal = 24.dp, vertical = 18.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Halo", style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
-
-        if (providerNeedsAttention) {
-            TextButton(onClick = viewModel::navigateToIntelligence) { Text("Set up intelligence") }
-        } else if (!uiState.microphonePermissionGranted) {
-            TextButton(onClick = onRequestMicrophonePermission) { Text("Enable voice input") }
-        } else if (!uiState.speechReady) {
-            TextButton(onClick = viewModel::navigateToVoice) { Text("Set up voice") }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column {
+                Text(
+                    "Halo",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+                Text(
+                    "Your personal intelligence",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            when {
+                providerNeedsAttention -> TextButton(onClick = viewModel::navigateToIntelligence) { Text("Set up") }
+                !uiState.microphonePermissionGranted -> TextButton(onClick = onRequestMicrophonePermission) { Text("Enable voice") }
+                !uiState.speechReady -> TextButton(onClick = viewModel::navigateToVoice) { Text("Set up voice") }
+            }
         }
 
-        Spacer(Modifier.height(30.dp))
+        Spacer(Modifier.height(20.dp))
 
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(28.dp),
+            color = MaterialTheme.colorScheme.surface,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            shadowElevation = 2.dp,
+        ) {
+            Column(
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(180.dp),
-            contentAlignment = Alignment.Center
+            modifier = Modifier.fillMaxWidth().height(172.dp),
+            contentAlignment = Alignment.Center,
         ) {
             val basePresentation = uiState.sessionState.toSignalPresentation(
                 fallback = uiState.runtimeState,
@@ -247,7 +270,7 @@ fun HomeScreen(
             )
         }
 
-        Spacer(Modifier.height(18.dp))
+        Spacer(Modifier.height(10.dp))
 
         Text(
             text = presenceLabel,
@@ -262,22 +285,28 @@ fun HomeScreen(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(Modifier.height(8.dp))
-        Text("Context · ${selectedContext.size}", style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Surface(
+            shape = RoundedCornerShape(10.dp),
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
+        ) {
+            Text(
+                "${uiState.activeProvider}  ·  ${selectedContext.size} in context",
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         var showActions by remember { mutableStateOf(false) }
-        Box {
-            TextButton(onClick = { showActions = true }) { Text("More") }
-            DropdownMenu(expanded = showActions, onDismissRequest = { showActions = false }) {
-                DropdownMenuItem(text = { Text("Capture") }, onClick = {
-                    showActions = false
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            TextButton(onClick = {
                     if (context.checkSelfPermission(android.Manifest.permission.CAMERA) ==
                         android.content.pm.PackageManager.PERMISSION_GRANTED) launchCamera()
                     else cameraPermission.launch(android.Manifest.permission.CAMERA)
-                })
-                DropdownMenuItem(text = { Text("New note") }, onClick = {
-                    showActions = false
-                    viewModel.createNote()
-                })
+            }) { Text("Capture") }
+            TextButton(onClick = viewModel::createNote) { Text("New note") }
+            Box {
+                TextButton(onClick = { showActions = true }) { Text("More") }
+                DropdownMenu(expanded = showActions, onDismissRequest = { showActions = false }) {
                 DropdownMenuItem(text = { Text("New conversation") }, onClick = {
                     showActions = false
                     viewModel.newConversation()
@@ -286,8 +315,12 @@ fun HomeScreen(
                     showActions = false
                     viewModel.clearConversation()
                 })
+                }
             }
         }
+            }
+        }
+        Spacer(Modifier.height(16.dp))
         captureMessage?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
         uiState.inputStatus.rejection?.let { Text(it.replace('_', ' '), style = MaterialTheme.typography.bodySmall) }
         AnimatedVisibility(visible = responseText.isNotBlank()) {

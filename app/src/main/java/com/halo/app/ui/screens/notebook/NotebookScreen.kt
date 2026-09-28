@@ -1,6 +1,7 @@
 package com.halo.app.ui.screens.notebook
 
 import android.text.format.DateUtils
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -16,7 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -40,6 +40,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -150,14 +151,24 @@ fun NotebookScreen(viewModel: NotebookViewModel) {
         item(key = "tools") {
             val due = state.duePractice.firstOrNull()
             val session = state.studySessions.firstOrNull()
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                item {
-                    WorkspaceToolCard("Note", "Capture an idea", Icons.Rounded.NoteAlt, onClick = viewModel::createNote)
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    WorkspaceToolCard(
+                        "Note",
+                        "Capture an idea",
+                        Icons.Rounded.NoteAlt,
+                        modifier = Modifier.weight(1f),
+                        onClick = viewModel::createNote,
+                    )
+                    WorkspaceToolCard(
+                        "Canvas",
+                        "Arrange and explore",
+                        Icons.Rounded.DashboardCustomize,
+                        modifier = Modifier.weight(1f),
+                        onClick = viewModel::createCanvas,
+                    )
                 }
-                item {
-                    WorkspaceToolCard("Canvas", "Arrange and explore", Icons.Rounded.DashboardCustomize, onClick = viewModel::createCanvas)
-                }
-                item {
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     WorkspaceToolCard(
                         title = "Study",
                         subtitle = when {
@@ -174,13 +185,13 @@ fun NotebookScreen(viewModel: NotebookViewModel) {
                                 else -> viewModel.setFilter(NotebookFilter.NOTES)
                             }
                         },
+                        modifier = Modifier.weight(1f),
                     )
-                }
-                item {
                     WorkspaceToolCard(
                         title = "Halo context",
                         subtitle = "${state.workingSet.size} item${if (state.workingSet.size == 1) "" else "s"} attached",
                         icon = Icons.Rounded.Psychology,
+                        modifier = Modifier.weight(1f),
                         onClick = { showWorkingSet = true },
                     )
                 }
@@ -218,26 +229,36 @@ fun NotebookScreen(viewModel: NotebookViewModel) {
             }
         }
 
-        item(key = "search") {
-            OutlinedTextField(
-                value = state.query,
-                onValueChange = viewModel::setQuery,
+        item(key = "library-controls") {
+            Surface(
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
-                placeholder = { Text("Search files, notes and chats") },
-                shape = RoundedCornerShape(16.dp),
-            )
-        }
-
-        item(key = "filters") { FilterBar(state.filter, viewModel::setFilter) }
-        item(key = "collections") {
-            CollectionBar(
-                state = state,
-                onSelect = viewModel::selectCollection,
-                onCreate = { showNewCollection = true },
-                onDelete = { showDeleteCollection = true },
-            )
+                shape = RoundedCornerShape(20.dp),
+                color = MaterialTheme.colorScheme.surface,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            ) {
+                Column(
+                    Modifier.padding(horizontal = 12.dp, vertical = 14.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    OutlinedTextField(
+                        value = state.query,
+                        onValueChange = viewModel::setQuery,
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
+                        placeholder = { Text("Search your workspace") },
+                        shape = RoundedCornerShape(14.dp),
+                    )
+                    FilterBar(state.filter, viewModel::setFilter)
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    CollectionBar(
+                        state = state,
+                        onSelect = viewModel::selectCollection,
+                        onCreate = { showNewCollection = true },
+                        onDelete = { showDeleteCollection = true },
+                    )
+                }
+            }
         }
         item(key = "library-title") {
             val location = state.collections.firstOrNull { it.id == state.selectedCollectionId }?.name ?: state.filter.label
@@ -293,18 +314,32 @@ private fun WorkspaceToolCard(
     title: String,
     subtitle: String,
     icon: ImageVector,
+    modifier: Modifier = Modifier,
     emphasized: Boolean = false,
     onClick: () -> Unit,
 ) {
     Surface(
         onClick = onClick,
-        modifier = Modifier.width(152.dp).heightIn(min = 100.dp),
+        modifier = modifier.heightIn(min = 112.dp),
         shape = RoundedCornerShape(18.dp),
         color = if (emphasized) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
         tonalElevation = if (emphasized) 2.dp else 0.dp,
+        border = BorderStroke(
+            1.dp,
+            if (emphasized) MaterialTheme.colorScheme.primary.copy(alpha = 0.30f)
+            else MaterialTheme.colorScheme.outlineVariant,
+        ),
     ) {
-        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
+                modifier = Modifier.size(34.dp),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(19.dp))
+                }
+            }
             Column {
                 Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                 Text(
@@ -420,7 +455,13 @@ private fun WorkspaceObjectRow(
 ) {
     val row = item.objectRef
     var menuExpanded by remember(row.id.value) { mutableStateOf(false) }
-    Surface(onClick = onOpen, modifier = Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(16.dp)) {
+    Surface(
+        onClick = onOpen,
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surface,
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.72f)),
+    ) {
         Row(
             Modifier.padding(start = 12.dp, top = 12.dp, bottom = 12.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically,

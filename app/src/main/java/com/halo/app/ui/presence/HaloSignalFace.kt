@@ -154,10 +154,33 @@ fun HaloSignalFace(
             } else 0f
 
             val haloRadius = outerRadius + expansion
+            val ambientRadius = haloRadius + ringWidth * (1.55f + motionOffset * 0.18f)
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        palette.halo.copy(alpha = 0.16f),
+                        palette.haloSecondary.copy(alpha = 0.07f),
+                        Color.Transparent,
+                    ),
+                    center = center,
+                    radius = ambientRadius,
+                ),
+                radius = ambientRadius,
+                center = center,
+            )
+
+            // A quiet outer rail gives the active color a physical boundary and
+            // keeps the presence legible without relying on a large neon glow.
+            drawCircle(
+                color = palette.halo.copy(alpha = 0.18f),
+                radius = haloRadius + ringWidth * 0.72f,
+                center = center,
+                style = Stroke(width = 1.dp.toPx()),
+            )
             val haloGlowBrush = Brush.radialGradient(
                 colors = listOf(
-                    palette.halo.copy(alpha = 0.85f),
-                    palette.haloSecondary.copy(alpha = 0.50f),
+                    palette.halo.copy(alpha = 0.54f),
+                    palette.haloSecondary.copy(alpha = 0.28f),
                     palette.halo.copy(alpha = 0f)
                 ),
                 center = center,
@@ -179,6 +202,25 @@ fun HaloSignalFace(
                 center = center,
                 style = Stroke(width = ringWidth)
             )
+
+            val signalPixel = when (sizeProfile) {
+                HaloSignalFaceSize.HERO -> 5.dp.toPx()
+                HaloSignalFaceSize.STANDARD -> 4.dp.toPx()
+                else -> 3.dp.toPx()
+            }
+            val signalOffset = haloRadius + ringWidth * 0.72f
+            listOf(
+                Offset(center.x, center.y - signalOffset),
+                Offset(center.x + signalOffset, center.y),
+                Offset(center.x, center.y + signalOffset),
+                Offset(center.x - signalOffset, center.y),
+            ).forEachIndexed { index, point ->
+                drawRoundRect(
+                    color = if (index == 0) palette.glyph.copy(alpha = 0.90f) else palette.halo.copy(alpha = 0.58f),
+                    topLeft = point - Offset(signalPixel / 2f, signalPixel / 2f),
+                    size = Size(signalPixel, signalPixel),
+                )
+            }
 
             val motionAlpha = if (presentation.reducedMotion) 0f else 1f
             when (presentation.state) {
@@ -255,8 +297,21 @@ fun HaloSignalFace(
                 center = center
             )
 
+            if (sizeProfile == HaloSignalFaceSize.HERO || sizeProfile == HaloSignalFaceSize.STANDARD) {
+                val scanHalfWidth = displayRadius * 0.72f
+                repeat(3) { index ->
+                    val y = center.y + (index - 1) * displayRadius * 0.34f
+                    drawLine(
+                        color = palette.glyph.copy(alpha = 0.028f),
+                        start = Offset(center.x - scanHalfWidth, y),
+                        end = Offset(center.x + scanHalfWidth, y),
+                        strokeWidth = 1.dp.toPx(),
+                    )
+                }
+            }
+
             drawCircle(
-                color = palette.halo.copy(alpha = 0.25f),
+                color = palette.halo.copy(alpha = 0.32f),
                 radius = displayRadius,
                 center = center,
                 style = Stroke(width = 1.5.dp.toPx())
