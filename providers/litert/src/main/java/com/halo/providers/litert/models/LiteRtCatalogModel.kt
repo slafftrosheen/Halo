@@ -40,6 +40,19 @@ enum class LiteRtModelMaturity {
 }
 
 /**
+ * AGENTIC-001 declared tool-call capability of an artifact.
+ *
+ * [NATIVE] is only ever set after Halo observed a real native tool call for that exact
+ * fingerprint; the catalog default is [HALO_PROMPT] for text artifacts Halo has measured
+ * as instruction-following, and [NONE] for artifacts where even that is unproven.
+ */
+enum class LiteRtToolCallPreference {
+    NONE,
+    NATIVE,
+    HALO_PROMPT,
+}
+
+/**
  * Model-scoped runtime parameters.
  *
  * Halo must not assume every LiteRT artifact wants identical engine/sampler settings: upstream
@@ -99,6 +112,10 @@ data class LiteRtCatalogModel(
     val sha256: String,
     val contextWindowTokens: Int,
     val supportsVision: Boolean,
+    /**
+     * NATIVE tool calling proven for this artifact by Halo's own probe. Never inferred
+     * from the base model family. A catalogued capability is not a measured one.
+     */
     val supportsTools: Boolean,
     val minLiteRtLmVersion: String,
     // ---- development catalog matrix metadata -------------------------------------------------
@@ -112,6 +129,15 @@ data class LiteRtCatalogModel(
     val supportsThinking: Boolean = false,
     /** Lower bound for a comfortable load, or null when Halo has no measurement yet. */
     val minDeviceRamGb: Int? = null,
+    /**
+     * AGENTIC-001 how Halo can complete a tool loop with this artifact.
+     *
+     * [LiteRtToolCallPreference.HALO_PROMPT] means the artifact cannot be trusted to emit
+     * native tool calls, but Halo can still complete a bounded tool loop by advertising the
+     * exposed actions as an instruction and parsing one envelope format. That is a truthful
+     * claim about Halo's ability, not about the model's native tool channel.
+     */
+    val toolCallPreference: LiteRtToolCallPreference = LiteRtToolCallPreference.HALO_PROMPT,
     val runtimeProfile: LiteRtRuntimeProfile = LiteRtRuntimeProfile(),
 ) {
     init {

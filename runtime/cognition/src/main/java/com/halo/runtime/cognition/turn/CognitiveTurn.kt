@@ -2,11 +2,14 @@ package com.halo.runtime.cognition.turn
 
 import com.halo.cognition.language.InteractionId
 import com.halo.runtime.cognition.agent.AgentRunId
+import com.halo.runtime.cognition.tools.LocalModelToolPolicy
+import com.halo.runtime.cognition.tools.ToolExposureSet
 import com.halo.runtime.cognition.workload.CognitiveWorkloadPlan
 import com.halo.sdk.provider.AiContext
 import com.halo.sdk.provider.AiContextPolicy
 import com.halo.sdk.provider.AiExecutionTarget
 import com.halo.sdk.provider.AiRequest
+import com.halo.sdk.provider.ToolCallProtocol
 import com.halo.runtime.cognition.blackboard.InteractionOrigin
 import com.halo.sdk.runtime.ResponseDelivery
 
@@ -37,4 +40,12 @@ data class PreparedCognitiveTurn(
     val providerRequest: AiRequest,
     val requiredCapabilityIds: Set<String>,
     val contextRequirementIds: Set<String>,
+    /**
+     * AGENTIC-001: the tool set this turn starts with, carried across tool rounds.
+     * Null when no planner is wired, in which case the gate result is the exposure.
+     */
+    val toolExposure: ToolExposureSet? = null,
+    /** AGENTIC-001: allowlist and schema budget for a constrained local model. */
+    val localToolPolicy: LocalModelToolPolicy? = null,
+    val toolProtocol: ToolCallProtocol = ToolCallProtocol.NATIVE,
 )

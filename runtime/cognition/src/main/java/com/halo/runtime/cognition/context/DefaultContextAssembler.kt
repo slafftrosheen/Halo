@@ -420,17 +420,47 @@ class DefaultContextAssembler(
             toolExposureGate.evaluate(descriptor, exposureContext) is ToolExposureDecision.Allow
         }.map { it.definition }
 
-        return gatedTools.let { enabled ->
-            val discovery = discoveryProvider?.invoke()
-            if (discovery != null && discovery.discoveryRecommended()) {
-                listOf(
-                    com.halo.runtime.cognition.tools.ToolDiscoveryService.discoveryToolDefinition(
-                        discovery.catalogueSummary()
-                    )
+        /*
+         * AGENTIC-001 exposure scoping.
+         *
+         * 1. The planned exposure set is authoritative when supplied, so tools a
+         *    previous round discovered (or a skill that was loaded) are what the next
+         *    provider turn actually receives.
+         * 2. A constrained local model additionally gets an allowlist and a schema
+         *    budget. Without this a 4096-token model receives the whole registry.
+         */
+        val localPolicy = request.localToolPolicy
+        val exposureSet = request.exposureSet
+
+        fun inExposure(definition: ToolDefinition): Boolean =
+            exposureSet?.effective?.any { it.value == definition.name || it.value == definition.id } == true
+
+        val scopedByExposure = when {
+            /*
+             * A local model sees its allowlist, plus anything the planned exposure set
+             * already admitted (discovered tools, an activated skill's tools). The
+             * planner applies the policy before anything reaches this set, so a tool
+             * that is here has already passed the allowlist and availability checks.
+             */
+            localPolicy != null && exposureSet != null ->
+                gatedTools.filter { policy -> localPolicy.mayExpose(policy.name) && inExposure(policy) }
+            localPolicy != null -> gatedTools.filter { localPolicy.allows(it.name) }
+            exposureSet != null -> gatedTools.filter { inExposure(it) }
+            else -> gatedTools
+        }
+        val bounded = localPolicy?.let { scopedByExposure.take(it.maxExposedSchemas) } ?: scopedByExposure
+
+        if (localPolicy != null) return bounded
+
+        val discovery = discoveryProvider?.invoke()
+        return if (discovery != null && discovery.discoveryRecommended()) {
+            listOf(
+                com.halo.runtime.cognition.tools.ToolDiscoveryService.discoveryToolDefinition(
+                    discovery.catalogueSummary()
                 )
-            } else {
-                enabled
-            }
+            )
+        } else {
+            bounded
         }
     }
 

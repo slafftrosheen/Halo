@@ -21,12 +21,16 @@ class ToolDiscoveryService(
 
         private const val MAX_CATALOGUE_ENTRIES = 40
 
+        /** Bounded result count: a small model must not receive a wall of matches. */
+        const val MAX_SEARCH_MATCHES = 8
+
         /**
          * Schema of the discovery meta-tool with optional bounded domain summary.
          */
         fun discoveryToolDefinition(summary: String = ""): ToolDefinition {
-            val baseDesc = "Expand one or more tool ids into full callable schemas for this turn. " +
-                "Call this before using any tool you have not been given a schema for."
+            val baseDesc = "Find the actions Halo can actually perform on this device and make them callable " +
+                "for this turn. Search by plain words such as \"alarm\", \"volume\", \"call Alice\" or \"settings\", " +
+                "or pass exact tool ids. Always call this before using an action whose schema you were not given."
             val fullDesc = if (summary.isNotBlank()) "$baseDesc\n\n$summary" else baseDesc
 
             return ToolDefinition(
@@ -36,14 +40,18 @@ class ToolDiscoveryService(
                 parameters = mapOf(
                     "type" to "object",
                     "properties" to mapOf(
+                        "query" to mapOf(
+                            "type" to "string",
+                            "maxLength" to 200,
+                            "description" to "Plain words describing what you want to do, for example 'alarm' or 'turn volume down'",
+                        ),
                         "toolIds" to mapOf(
                             "type" to "array",
                             "items" to mapOf("type" to "string", "maxLength" to 100),
                             "maxItems" to 8,
-                            "minItems" to 1,
                         ),
                     ),
-                    "required" to listOf("toolIds"),
+                    "required" to emptyList<String>(),
                     "additionalProperties" to false,
                 ),
             )
@@ -68,6 +76,46 @@ class ToolDiscoveryService(
     }
 
     /**
+     * Searchable discovery: match a plain-language query against the metadata a model
+     * can actually reason about (id, title/verb, description, keywords, category).
+     * Ranking is deliberately simple and deterministic: name matches first, then
+     * keyword matches, then description matches.
+     */
+    fun search(query: String, limit: Int = MAX_SEARCH_MATCHES): List<ToolDescriptor> {
+        val terms = query.lowercase().split(Regex("[^a-z0-9_]+")).filter { it.length >= 2 }
+        if (terms.isEmpty()) return emptyList()
+
+        val candidates = registry.descriptors()
+            .filter { it.visibility == ToolVisibility.DISCOVERABLE }
+            .filter { availabilityResolver?.isAvailable(it) != false }
+
+        return candidates.mapNotNull { descriptor ->
+            val name = descriptor.name.lowercase()
+            val keywords = descriptor.keywords.joinToString(" ").lowercase()
+            val description = descriptor.definition.description.lowercase()
+            val category = descriptor.category.name.lowercase()
+            var score = 0
+            for (term in terms) {
+                if (name.contains(term)) score += 3
+                if (keywords.contains(term)) score += 2
+                if (description.contains(term)) score += 1
+                if (category.contains(term)) score += 1
+            }
+            if (score == 0) null else descriptor to score
+        }
+            .sortedWith(compareByDescending<Pair<ToolDescriptor, Int>> { it.second }.thenBy { it.first.name })
+            .take(limit)
+            .map { it.first }
+    }
+
+    /** One bounded line per candidate, stable enough for a small model to copy an id from. */
+    fun describe(descriptors: List<ToolDescriptor>): String = descriptors.joinToString("\n") { descriptor ->
+        val risk = descriptor.security.risk.name.lowercase()
+        "- ${descriptor.name} [${descriptor.category.name.lowercase()}/$risk]: " +
+            descriptor.definition.description.lineSequence().first().take(120)
+    }
+
+    /**
      * Expose schemas for an explicit id list plus the discovery meta-tool itself.
      */
     fun expand(toolIds: List<String>): List<ToolDefinition> {
@@ -83,6 +131,14 @@ class ToolDiscoveryService(
             expanded.add(descriptor.definition)
         }
         return expanded.toList()
+    }
+
+    /** Descriptor lookup for discovery callers that only have a plain id. */
+    fun registryDescriptorOrNull(toolId: String): ToolDescriptor? {
+        val descriptor = registry.descriptor(toolId) ?: return null
+        if (descriptor.visibility != ToolVisibility.DISCOVERABLE) return null
+        if (availabilityResolver?.isAvailable(descriptor) == false) return null
+        return descriptor
     }
 
     fun discoveryRecommended(): Boolean =

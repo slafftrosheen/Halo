@@ -387,7 +387,8 @@ object ManualDependencyGraph {
     val toolExposurePlanner by lazy {
         ToolExposurePlanner(
             registry = toolRegistry,
-            availabilityResolver = toolAvailabilityResolver
+            availabilityResolver = toolAvailabilityResolver,
+            skillRegistry = skillRegistry,
         )
     }
 
@@ -413,7 +414,7 @@ object ManualDependencyGraph {
         com.halo.runtime.cognition.tools.ToolDiscoveryExecutor { toolDiscovery }
     }
 
-    val toolRegistry by lazy {
+    val toolRegistry: com.halo.runtime.cognition.tools.ToolRegistry by lazy {
         val foreground = {
             attentionContextProvider.snapshot().foregroundState == com.halo.runtime.cognition.attention.ForegroundState.HALO_FOREGROUND
         }
@@ -436,6 +437,10 @@ object ManualDependencyGraph {
         )
         val memoryExecutor = com.halo.app.di.tools.MemoryToolExecutor(memoryRepository, memoryContextSource)
         val hostExecutor = com.halo.app.di.tools.HostTools(applicationContext, foreground)
+        // AGENTIC-001: skill loading must be a real registered tool, otherwise the
+        // agent loop can never widen its own exposure.
+        val useSkillExecutor: com.halo.runtime.cognition.tools.UseSkillToolExecutor =
+            com.halo.runtime.cognition.tools.UseSkillToolExecutor(skillInstructionSource, { skillRegistry })
         com.halo.runtime.cognition.tools.ToolRegistry(
             listOf(
                 currentTimeExecutor,
@@ -445,6 +450,7 @@ object ManualDependencyGraph {
                 workspaceExecutor,
                 memoryExecutor,
                 hostExecutor,
+                useSkillExecutor,
                 // Discovery meta-tool is internal: it expands schemas without widening authorization.
                 toolDiscoveryExecutor,
             ),
@@ -463,6 +469,7 @@ object ManualDependencyGraph {
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.COMMUNICATION to hostExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.MEDIA to hostExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.ACCESSIBILITY to hostExecutor,
+                com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.USE_SKILL to useSkillExecutor,
             ) + listOf(
                 com.halo.app.di.tools.HaloToolDescriptors.discoveryMeta(
                     com.halo.runtime.cognition.tools.ToolDiscoveryService.discoveryToolDefinition()
@@ -562,6 +569,7 @@ object ManualDependencyGraph {
             contextAcquisitionCoordinator = contextAcquisitionCoordinator,
             contextAssembler = contextAssembler,
             agentRunStore = agentRunStore,
+            toolExposurePlanner = toolExposurePlanner,
         )
     }
     val cognitiveResponseCommitter by lazy {
@@ -579,6 +587,8 @@ object ManualDependencyGraph {
             agentRunCoordinator = agentRunCoordinator,
             agentRunStore = agentRunStore,
             eventBus = eventBus,
+            toolExposurePlanner = toolExposurePlanner,
+            toolExposureGate = toolExposureGate,
         )
     }
     val agentRecoveryExecutor by lazy {

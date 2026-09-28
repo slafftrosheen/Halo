@@ -12,6 +12,13 @@ import com.halo.runtime.cognition.agent.ProviderToolCallRecord
 import com.halo.runtime.cognition.agent.RunRecoveryPolicy
 import com.halo.runtime.cognition.agent.ToolArgumentCanonicalizer
 import com.halo.runtime.cognition.agent.AgentRequest
+import com.halo.runtime.cognition.tools.LocalModelToolPolicy
+import com.halo.runtime.cognition.tools.ToolExposureContext
+import com.halo.runtime.cognition.tools.ToolExposureDirective
+import com.halo.runtime.cognition.tools.ToolExposureGate
+import com.halo.runtime.cognition.tools.ToolExposurePlanner
+import com.halo.runtime.cognition.tools.ToolExposureSet
+import com.halo.runtime.cognition.tools.ToolLoopLimits
 import com.halo.sdk.provider.CognitiveSessionState
 import com.halo.sdk.provider.AIMessage
 import com.halo.sdk.provider.AiCapability
@@ -33,8 +40,17 @@ class CognitiveTurnExecutor(
     private val agentRunCoordinator: AgentRunCoordinator?,
     private val agentRunStore: AgentRunStore?,
     private val eventBus: EventBus,
+    /** AGENTIC-001: re-plans tool exposure between tool rounds. */
+    private val toolExposurePlanner: ToolExposurePlanner? = null,
+    private val toolExposureGate: ToolExposureGate? = null,
+    private val limits: ToolLoopLimits = ToolLoopLimits(),
 ) {
     private fun newStepId() = AgentStepId(UUID.randomUUID().toString())
+
+    private fun trace(event: String, fields: List<Pair<String, Any?>>) {
+        val rendered = fields.joinToString(" ") { (key, value) -> "$key=${value ?: "none"}" }
+        println("[HALO_$event] $rendered")
+    }
 
     suspend fun execute(
         turn: CognitiveTurnRequest,
@@ -164,15 +180,56 @@ class CognitiveTurnExecutor(
             val workspaceReadAllowed = turn.policy.includeWorkspace
             var round = 0
 
+            /*
+             * AGENTIC-001 exposure carries across rounds. A tool discovered (or a skill
+             * loaded) in round N is what round N+1 receives, and the model can never
+             * execute a tool that was not exposed to it.
+             */
+            var exposure: ToolExposureSet = prepared.toolExposure ?: ToolExposureSet()
+            var activatedSkills: Set<com.halo.sdk.runtime.skills.SkillId> = emptySet()
+            trace(
+                "TOOL_EXPOSURE_INITIAL",
+                listOf(
+                    "interactionId" to turn.interactionId.value,
+                    "provider" to prepared.target.providerId,
+                    "model" to prepared.target.modelId,
+                    "protocol" to prepared.toolProtocol,
+                    "tools" to prepared.context.availableTools.joinToString(",") { it.name },
+                    "count" to prepared.context.availableTools.size,
+                ),
+            )
+
             while (response.toolCalls.isNotEmpty()) {
                 round++
+                if (round > limits.maxToolRounds) {
+                    trace(
+                        "AGENT_COMPLETED",
+                        listOf(
+                            "interactionId" to turn.interactionId.value,
+                            "rounds" to round,
+                            "outcome" to "max_tool_rounds_reached",
+                        ),
+                    )
+                    response = response.copy(
+                        text = response.text.ifBlank {
+                            "I stopped after ${limits.maxToolRounds} tool steps to avoid going in circles. " +
+                                "Here is what I have so far."
+                        },
+                        toolCalls = emptyList(),
+                        finishReason = "tool_round_limit",
+                    )
+                    break
+                }
+
                 val durableRun = createDurableRunIfNeeded()
+                val exposedToolIds = currentContext.availableTools.map { it.name }.toSet()
                 val toolResult = toolExecutor.execute(
                     runId = durableRun,
                     interactionId = turn.interactionId,
                     requestId = turn.requestId,
                     toolCalls = response.toolCalls,
                     workspaceReadAllowed = workspaceReadAllowed,
+                    exposedToolIds = exposedToolIds,
                 )
 
                 when (toolResult) {
@@ -234,6 +291,72 @@ class CognitiveTurnExecutor(
                                 addAll(toolResult.toolMessages)
                             }
                         )
+
+                        /*
+                         * Re-plan exposure from what the tools actually declared, then
+                         * rebuild the provider-visible schemas. Without this step a
+                         * successful halo_discover_tools or halo_use_skill would only be
+                         * guidance the next request never sees.
+                         */
+                        val planner = toolExposurePlanner
+                        if (planner != null) {
+                            val outputs = toolResult.toolMessages.map { it.content }
+                            val newlyActivated = outputs
+                                .flatMap { ToolExposureDirective.parseSkills(it) }
+                                .map { com.halo.sdk.runtime.skills.SkillId(it) }
+                                .toSet() - activatedSkills
+                            if (newlyActivated.isNotEmpty()) {
+                                activatedSkills = activatedSkills + newlyActivated
+                                trace(
+                                    "TOOL_DISCOVERY_RESULT",
+                                    listOf(
+                                        "interactionId" to turn.interactionId.value,
+                                        "skills" to activatedSkills.joinToString(",") { it.value },
+                                    ),
+                                )
+                            }
+
+                            val exposureContext = ToolExposureContext(
+                                policy = turn.policy,
+                                isLocalTarget = prepared.target.provider.isLocal,
+                                activatedSkillIds = activatedSkills,
+                            )
+                            val expanded = planner.expandFromToolOutputs(
+                                current = exposure,
+                                toolOutputs = outputs,
+                                gate = toolExposureGate,
+                                exposureContext = exposureContext,
+                                localPolicy = prepared.localToolPolicy,
+                            )
+                            if (expanded != exposure) {
+                                exposure = expanded
+                                trace(
+                                    "TOOL_EXPOSURE_EXPANDED",
+                                    listOf(
+                                        "interactionId" to turn.interactionId.value,
+                                        "tools" to exposure.effective.joinToString(",") { it.value },
+                                        "count" to exposure.effective.size,
+                                    ),
+                                )
+                            }
+
+                            val plannedDefinitions = planner.effectiveDefinitions(
+                                exposure = exposure,
+                                discoverySummary = "",
+                                localPolicy = prepared.localToolPolicy,
+                            )
+                            currentContext = currentContext.copy(availableTools = plannedDefinitions)
+                            trace(
+                                "PROVIDER_TURN_TOOLS",
+                                listOf(
+                                    "interactionId" to turn.interactionId.value,
+                                    "round" to round,
+                                    "protocol" to prepared.toolProtocol,
+                                    "tools" to plannedDefinitions.joinToString(",") { it.name },
+                                    "count" to plannedDefinitions.size,
+                                ),
+                            )
+                        }
 
                         val roundTurnId = ProviderTurnId(UUID.randomUUID().toString())
                         val roundRequestId = UUID.randomUUID().toString()

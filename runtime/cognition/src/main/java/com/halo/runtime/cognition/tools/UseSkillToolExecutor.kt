@@ -9,8 +9,15 @@ import com.halo.sdk.runtime.skills.SkillAvailability
 
 class UseSkillToolExecutor(
     private val instructionSource: SkillInstructionSource,
-    private val skillRegistry: SkillRegistry? = null,
+    /**
+     * Resolved on use, not at construction: the registry is built from the tool catalogue,
+     * which contains this executor, so holding it directly would close a construction cycle.
+     */
+    private val skillRegistryProvider: () -> SkillRegistry? = { null },
 ) : ToolExecutor {
+
+    constructor(instructionSource: SkillInstructionSource, skillRegistry: SkillRegistry?) :
+        this(instructionSource, { skillRegistry })
 
     override fun definitions(): List<ToolDefinition> {
         return listOf(
@@ -35,6 +42,7 @@ class UseSkillToolExecutor(
             ?: return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Missing 'skillId' argument")
 
         val skillId = SkillId(rawSkillId)
+        val skillRegistry = skillRegistryProvider()
         val descriptor = skillRegistry?.get(skillId)
         if (descriptor != null && !descriptor.enabled) {
             return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Skill $rawSkillId is disabled")
@@ -69,6 +77,14 @@ class UseSkillToolExecutor(
             if (hasMore) append("\nContinue with halo_use_skill skillId=").append(skillId.value).append(" offset=").append(end)
             if (toolsExposed.isNotEmpty()) {
                 append("\nAvailable tools for this skill: ").append(toolsExposed.joinToString(", "))
+                /*
+                 * AGENTIC-001: guidance alone is not enough. The successful load must
+                 * change the NEXT provider request, so the result declares the tools
+                 * and the skill activation in machine-readable form. Runtime parses
+                 * these lines and re-plans exposure before the next round.
+                 */
+                append('\n').append(ToolExposureDirective.emitSkill(skillId.value))
+                append('\n').append(ToolExposureDirective.emit(toolsExposed))
             }
         }
 

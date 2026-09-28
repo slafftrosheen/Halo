@@ -7,12 +7,14 @@ import com.halo.providers.litert.models.LiteRtModelCatalog
 import com.halo.providers.litert.models.LiteRtModelFailureMemory
 import com.halo.providers.litert.models.LiteRtModelFailureRecord
 import com.halo.providers.litert.models.LiteRtModelPreferences
+import com.halo.providers.litert.models.LiteRtToolCallPreference
 import com.halo.providers.litert.models.LocalModelDescriptor
 import com.halo.providers.litert.models.LocalModelInventoryRepository
 import com.halo.providers.litert.models.LocalModelInventoryState
 import com.halo.providers.litert.models.LocalModelValidation
 import com.halo.providers.litert.models.ModelVerificationResult
 import com.halo.providers.litert.models.ModelVerificationStage
+import com.halo.providers.litert.runtime.HaloPromptToolProtocol
 import com.halo.providers.litert.runtime.LiteRtConversationMapper
 import com.halo.providers.litert.runtime.LiteRtModelLoadException
 import com.halo.providers.litert.runtime.LocalModelBenchmarkResult
@@ -39,7 +41,10 @@ import com.halo.sdk.provider.ProviderReadiness
 import com.halo.sdk.provider.ProviderStatus
 import com.halo.sdk.provider.RuntimeConversationMessage
 import com.halo.sdk.provider.RuntimeGenerationConfig
+import com.halo.sdk.provider.RuntimeGenerationResult
 import com.halo.sdk.provider.RuntimeLoadConfig
+import com.halo.sdk.provider.ToolCall
+import com.halo.sdk.provider.ToolCallProtocol
 import com.halo.sdk.provider.ToolDefinition
 import com.halo.sdk.provider.ToolRisk
 import com.halo.sdk.provider.validateAgainst
@@ -146,7 +151,7 @@ class LiteRtLocalProvider(
     private val catalog: List<LiteRtCatalogModel> = LiteRtModelCatalog.BUILT_IN_MODELS,
     preferences: LiteRtModelPreferences? = null,
     failureMemory: LiteRtModelFailureMemory? = null,
-) : AiInferenceProvider, NativeResourceOwner {
+) : AiInferenceProvider, NativeResourceOwner, com.halo.sdk.provider.ToolProtocolReporting {
 
     override val id: String = ProviderIds.LITERT
     override val displayName: String = "On-device (LiteRT)"
@@ -195,6 +200,17 @@ class LiteRtLocalProvider(
     val lastReasoningPreview: StateFlow<String?> = _lastReasoningPreview.asStateFlow()
 
     private val loadMutex = Mutex()
+
+    /**
+     * Artifact fingerprints for which Halo observed a real native tool call. Keyed by
+     * fingerprint so a failed or succeeded probe for one revision can never be inherited by
+     * another, and so a GPU failure on one model cannot poison a different one.
+     */
+    private val nativeToolProvenFingerprints =
+        java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+
+    private fun LocalModelDescriptor.artifactFingerprint(): String =
+        sha256 ?: "id:$id:bytes:$bytes"
 
     @Volatile
     private var lastLoggedSelection: String? = null
@@ -347,9 +363,40 @@ class LiteRtLocalProvider(
             add(AiCapability.STREAMING)
             if (descriptor.supportsVision) add(AiCapability.IMAGE)
             if (descriptor.supportsAudio) add(AiCapability.AUDIO)
-            if (descriptor.supportsTools) add(AiCapability.TOOLS)
+            /*
+             * AGENTIC-001: TOOLS describes whether Halo can complete a tool loop with this
+             * artifact, which is true for a prompt-mediated loop as well. The native flag
+             * stays artifact-scoped and is only set by an observed probe.
+             */
+            if (toolCallProtocolFor(descriptor).supportsToolLoop) add(AiCapability.TOOLS)
         }
     }
+
+    /**
+     * How Halo can complete a tool loop with this artifact. Native calling is claimed only
+     * when Halo's own probe observed a real tool call for this exact fingerprint.
+     */
+    override suspend fun toolCallProtocol(): ToolCallProtocol = withContext(Dispatchers.IO) {
+        val modelId = configuredModelId ?: return@withContext ToolCallProtocol.NONE
+        val descriptor = inventoryRepository.resolveModel(modelId) ?: return@withContext ToolCallProtocol.NONE
+        if (!descriptor.valid) return@withContext ToolCallProtocol.NONE
+        toolCallProtocolFor(descriptor)
+    }
+
+    private fun toolCallProtocolFor(descriptor: LocalModelDescriptor): ToolCallProtocol {
+        if (!descriptor.supportsText) return ToolCallProtocol.NONE
+        if (descriptor.supportsTools || nativeToolProven(descriptor)) return ToolCallProtocol.NATIVE
+        val preference = catalogModelFor(descriptor)?.toolCallPreference
+            ?: LiteRtToolCallPreference.HALO_PROMPT
+        return when (preference) {
+            LiteRtToolCallPreference.NATIVE -> ToolCallProtocol.NATIVE
+            LiteRtToolCallPreference.HALO_PROMPT -> ToolCallProtocol.HALO_PROMPT
+            LiteRtToolCallPreference.NONE -> ToolCallProtocol.NONE
+        }
+    }
+
+    private fun nativeToolProven(descriptor: LocalModelDescriptor): Boolean =
+        nativeToolProvenFingerprints.contains(descriptor.artifactFingerprint())
 
     override suspend fun testConnection(): Boolean = loadModelIfNeeded()
 
@@ -542,7 +589,8 @@ class LiteRtLocalProvider(
                 },
                 contextLength = desc.contextWindowTokens.toLong(),
                 supportsStreaming = true,
-                supportsTools = desc.supportsTools
+                // True when Halo can complete a tool loop, native or prompt-mediated.
+                supportsTools = toolCallProtocolFor(desc).supportsToolLoop
             )
         }
     }
@@ -648,6 +696,7 @@ class LiteRtLocalProvider(
                     "$EVENT_TOOL_PROBE model=$modelId nativeToolCall=${call != null} " +
                         "sha=${descriptor.sha256?.take(12) ?: "unknown"}",
                 )
+                if (call != null) nativeToolProvenFingerprints.add(descriptor.artifactFingerprint())
                 LiteRtToolProbeResult(
                     modelId = modelId,
                     nativeToolCallObserved = call != null,
@@ -803,7 +852,7 @@ class LiteRtLocalProvider(
      * does not, so no tool schema may reach its conversation.
      */
     private fun toolsFor(descriptor: LocalModelDescriptor?, requested: List<ToolDefinition>) =
-        if (descriptor?.supportsTools == true) requested else emptyList()
+        if (descriptor != null && toolCallProtocolFor(descriptor).supportsToolLoop) requested else emptyList()
 
     private suspend fun toolDefinitionsFor(requestContext: AiContext): List<ToolDefinition> {
         val modelId = modelSession.loadedModelId ?: configuredModelId
@@ -813,6 +862,45 @@ class LiteRtLocalProvider(
 
     private suspend fun descriptorForGeneration(): LocalModelDescriptor? =
         (modelSession.loadedModelId ?: configuredModelId)?.let { inventoryRepository.resolveModel(it) }
+
+    /**
+     * AGENTIC-001 prompt-mediated loop, applied at the provider adapter boundary.
+     *
+     * The model's text is the only channel, so one bounded envelope is parsed out of it.
+     * Never a guess: [HaloPromptToolProtocol] refuses prose, malformed JSON, partial output
+     * and any action name that was not exposed for this turn.
+     */
+    private data class EffectiveGeneration(val text: String, val toolCalls: List<ToolCall>)
+
+    private fun applyPromptProtocol(
+        result: RuntimeGenerationResult,
+        usePromptProtocol: Boolean,
+        tools: List<ToolDefinition>,
+    ): EffectiveGeneration {
+        if (!usePromptProtocol || tools.isEmpty()) return EffectiveGeneration(result.text, result.toolCalls)
+        val parsed = HaloPromptToolProtocol.parse(result.text, tools)
+        parsed.diagnostic?.let { reason ->
+            Log.i(
+                TAG,
+                "HALO_LITERT_TOOL_PROTOCOL action=parse_result calls=${parsed.toolCalls.size} dropped=$reason" +
+                    " model=${modelSession.loadedModelId ?: "litert"}",
+            )
+        }
+        if (parsed.toolCalls.isEmpty()) return EffectiveGeneration(result.text, result.toolCalls)
+        return EffectiveGeneration(parsed.visibleText, result.toolCalls + parsed.toolCalls)
+    }
+
+    private fun systemInstructionFor(
+        base: String?,
+        tools: List<ToolDefinition>,
+        usePromptProtocol: Boolean,
+    ): String? {
+        if (!usePromptProtocol || tools.isEmpty()) return base
+        val instruction = HaloPromptToolProtocol.instruction(tools)
+        if (instruction.isBlank()) return base
+        return listOfNotNull(base?.takeIf { it.isNotBlank() }, instruction)
+            .joinToString("\n\n")
+    }
 
     private fun generationConfig(
         descriptor: LocalModelDescriptor?,
@@ -856,13 +944,18 @@ class LiteRtLocalProvider(
 
         val descriptor = descriptorForGeneration()
         val mapped = LiteRtConversationMapper.map(request, context)
+        val requestedTools = toolDefinitionsFor(context)
+        val protocol = descriptor?.let(::toolCallProtocolFor) ?: ToolCallProtocol.NONE
+        val usePromptProtocol = protocol == ToolCallProtocol.HALO_PROMPT
         val genConfig = generationConfig(
             descriptor = descriptor,
             mappedPrompt = mapped.outgoingMessage?.content ?: request.text ?: "",
-            systemInstruction = mapped.systemInstruction,
+            systemInstruction = systemInstructionFor(mapped.systemInstruction, requestedTools, usePromptProtocol),
             imageBytes = request.image,
             initialMessages = mapped.initialMessages.map { message -> message.toRuntimeMessage() },
-            availableTools = toolDefinitionsFor(context),
+            // The prompt protocol advertises actions as text; passing them as native tools
+            // too would invite double execution and claim a channel the artifact lacks.
+            availableTools = if (usePromptProtocol) emptyList() else requestedTools,
             requestMaxTokens = request.maxOutputTokens,
         )
 
@@ -873,7 +966,9 @@ class LiteRtLocalProvider(
                 throw AiProviderException(AiErrorType.GENERATION_FAILED, "LiteRT generation failed: ${err.message}", err)
             }
 
-            if (result.text.isBlank()) {
+            val effective = applyPromptProtocol(result, usePromptProtocol, requestedTools)
+
+            if (effective.text.isBlank() && effective.toolCalls.isEmpty()) {
                 val error = AiProviderException(AiErrorType.EMPTY_RESPONSE, "LiteRT produced no response text")
                 recordGenerationFailure(modelSession.loadedModelId, error, LiteRtFailureStage.FIRST_TOKEN)
                 throw error
@@ -883,11 +978,11 @@ class LiteRtLocalProvider(
             _loadDiagnostics.value = null
 
             AiResponse(
-                text = result.text,
+                text = effective.text,
                 providerId = id,
                 modelId = modelSession.loadedModelId ?: "litert",
-                finishReason = if (result.toolCalls.isNotEmpty()) "tool_calls" else "stop",
-                toolCalls = result.toolCalls,
+                finishReason = if (effective.toolCalls.isNotEmpty()) "tool_calls" else "stop",
+                toolCalls = effective.toolCalls,
                 executionBackend = modelSession.activeBackend?.name,
             )
         } finally {
@@ -918,13 +1013,16 @@ class LiteRtLocalProvider(
 
         val descriptor = descriptorForGeneration()
         val mapped = LiteRtConversationMapper.map(request, context)
+        val requestedTools = toolDefinitionsFor(context)
+        val protocol = descriptor?.let(::toolCallProtocolFor) ?: ToolCallProtocol.NONE
+        val usePromptProtocol = protocol == ToolCallProtocol.HALO_PROMPT
         val genConfig = generationConfig(
             descriptor = descriptor,
             mappedPrompt = mapped.outgoingMessage?.content ?: request.text ?: "",
-            systemInstruction = mapped.systemInstruction,
+            systemInstruction = systemInstructionFor(mapped.systemInstruction, requestedTools, usePromptProtocol),
             imageBytes = request.image,
             initialMessages = mapped.initialMessages.map { message -> message.toRuntimeMessage() },
-            availableTools = toolDefinitionsFor(context),
+            availableTools = if (usePromptProtocol) emptyList() else requestedTools,
             requestMaxTokens = request.maxOutputTokens,
         )
 
@@ -934,7 +1032,8 @@ class LiteRtLocalProvider(
             }
 
             result.onSuccess { gen ->
-                if (gen.text.isNotBlank()) {
+                val effective = applyPromptProtocol(gen, usePromptProtocol, requestedTools)
+                if (effective.text.isNotBlank() || effective.toolCalls.isNotEmpty()) {
                     recordReasoning(gen.reasoningText)
                     descriptorForGeneration()?.let(::markGenerationProven)
                     _loadDiagnostics.value = null
@@ -942,11 +1041,11 @@ class LiteRtLocalProvider(
                 send(
                     AiStreamEvent.Completed(
                         AiResponse(
-                            text = gen.text,
+                            text = effective.text,
                             providerId = id,
                             modelId = modelSession.loadedModelId ?: "litert",
-                            finishReason = if (gen.toolCalls.isNotEmpty()) "tool_calls" else "stop",
-                            toolCalls = gen.toolCalls,
+                            finishReason = if (effective.toolCalls.isNotEmpty()) "tool_calls" else "stop",
+                            toolCalls = effective.toolCalls,
                             executionBackend = modelSession.activeBackend?.name,
                         )
                     )

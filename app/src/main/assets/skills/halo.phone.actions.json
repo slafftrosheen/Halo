@@ -1,0 +1,40 @@
+{
+  "id": "halo.phone.actions",
+  "schemaVersion": 2,
+  "name": "Phone actions",
+  "description": "Deterministic Android phone actions: alarms, apps, volume, flashlight, contacts, dialing, settings, navigation, web and media. Prefer these over screen automation whenever a dedicated Android capability exists.",
+  "category": "DEVICE",
+  "risk": "EXTERNAL_SIDE_EFFECT",
+  "tools": [
+    "halo_list_apps",
+    "halo_open_app",
+    "halo_set_alarm",
+    "halo_volume",
+    "halo_flashlight",
+    "halo_find_contact",
+    "halo_dial_contact",
+    "halo_open_settings",
+    "halo_navigation",
+    "halo_browser",
+    "halo_search",
+    "halo_share_text",
+    "halo_media_status",
+    "halo_media_control"
+  ],
+  "toolDefinitions": [
+    { "toolId": "halo_list_apps", "risk": "READ_ONLY" },
+    { "toolId": "halo_open_app", "risk": "EXTERNAL_SIDE_EFFECT" },
+    { "toolId": "halo_set_alarm", "risk": "EXTERNAL_SIDE_EFFECT" },
+    { "toolId": "halo_volume", "risk": "REVERSIBLE" },
+    { "toolId": "halo_flashlight", "risk": "REVERSIBLE" },
+    { "toolId": "halo_find_contact", "risk": "READ_ONLY" },
+    { "toolId": "halo_dial_contact", "risk": "EXTERNAL_SIDE_EFFECT" },
+    { "toolId": "halo_open_settings", "risk": "REVERSIBLE" },
+    { "toolId": "halo_navigation", "risk": "EXTERNAL_SIDE_EFFECT" },
+    { "toolId": "halo_browser", "risk": "EXTERNAL_SIDE_EFFECT" },
+    { "toolId": "halo_search", "risk": "EXTERNAL_SIDE_EFFECT" },
+    { "toolId": "halo_share_text", "risk": "EXTERNAL_SIDE_EFFECT" },
+    { "toolId": "halo_media_status", "risk": "READ_ONLY" },
+    { "toolId": "halo_media_control", "risk": "REVERSIBLE" }
+  ]
+}

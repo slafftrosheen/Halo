@@ -210,6 +210,20 @@ object HaloToolDescriptors {
         else -> descriptor(definition.name, definition, ToolCategory.HOST_CONTROL, external())
     }
 
+    /**
+     * AGENTIC-001: loading a skill is guidance and exposure planning, not a side
+     * effect. It must be callable without an approval prompt or the agent loop
+     * deadlocks on its own bootstrap step.
+     */
+    fun useSkill(definition: ToolDefinition) = descriptor(
+        id = definition.id,
+        definition = definition,
+        category = ToolCategory.INFORMATION,
+        security = readOnly(definition.id),
+        keywords = setOf("skill", "guidance", "enable", "instructions"),
+        visibility = ToolVisibility.BOOTSTRAP,
+    )
+
     fun accessibility(definition: ToolDefinition) = when (definition.name) {
         "halo_read_screen" -> descriptor(definition.name, definition, ToolCategory.PERCEPTION,
             readOnly(definition.name), keywords = setOf("screen", "read", "observe", "accessibility"),
@@ -271,6 +285,7 @@ object HaloToolDescriptors {
             ExecutorKind.NAVIGATION -> navigation(definition)
             ExecutorKind.SYSTEM -> system(definition)
             ExecutorKind.ACCESSIBILITY -> accessibility(definition)
+            ExecutorKind.USE_SKILL -> useSkill(definition)
         }
 
     enum class ExecutorKind {
@@ -288,6 +303,7 @@ object HaloToolDescriptors {
         NAVIGATION,
         SYSTEM,
         ACCESSIBILITY,
+        USE_SKILL,
     }
 
     /** Discovery meta-tool is always part of bounded bootstrap exposure. */

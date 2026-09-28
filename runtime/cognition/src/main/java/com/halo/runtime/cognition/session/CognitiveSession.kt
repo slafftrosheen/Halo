@@ -70,6 +70,7 @@ class CognitiveSession(
     private val agentRecoveryExecutor: DefaultAgentRecoveryExecutor,
     private val turnExecutor: CognitiveTurnExecutor,
     private val responseCommitter: CognitiveResponseCommitter,
+    private val routeResolver: InterpretationRouteResolver = InterpretationRouteResolver(),
 ) {
     constructor(
         eventBus: EventBus,
@@ -89,6 +90,7 @@ class CognitiveSession(
         agentRunStore: AgentRunStore? = null,
         toolResourceCoordinator: ToolResourceCoordinator? = null,
         toolExposurePlanner: ToolExposurePlanner? = null,
+        toolExposureGate: ToolExposureGate? = null,
         toolAvailabilityResolver: ToolAvailabilityResolver? = null,
         workloadPlanner: AiWorkloadPlanner = DefaultAiWorkloadPlanner(),
         contextAcquisitionCoordinator: ContextAcquisitionCoordinator? = null,
@@ -114,6 +116,7 @@ class CognitiveSession(
                 contextAcquisitionCoordinator = contextAcquisitionCoordinator,
                 contextAssembler = contextAssembler,
                 agentRunStore = agentRunStore,
+                toolExposurePlanner = toolExposurePlanner,
             ),
             providerExecutor = DefaultProviderTurnExecutor(eventBus, providerRouter),
             toolExecutor = DefaultToolTurnExecutor(
@@ -127,6 +130,8 @@ class CognitiveSession(
             agentRunCoordinator = agentRunCoordinator,
             agentRunStore = agentRunStore,
             eventBus = eventBus,
+            toolExposurePlanner = toolExposurePlanner,
+            toolExposureGate = toolExposureGate,
         ),
         responseCommitter = DefaultCognitiveResponseCommitter(
             conversationStore = conversationStore,
@@ -220,11 +225,44 @@ class CognitiveSession(
                     return@collect
                 }
 
-                if (intent !is ConversationIntent && intent !is QuestionIntent) {
-                    println(
-                        "[HALO-TXN] speech knowledgeId=$knowledgeId " +
-                            "intent=${intent::class.simpleName} -> BYPASSING LLM (deterministic execution)"
+                /*
+                 * AGENTIC-001 explicit routing.
+                 *
+                 * A recognized actionable intent must name what will act on it. The old
+                 * code returned after logging "BYPASSING LLM", which is only valid when a
+                 * deterministic executor actually consumes the intent; now that decision
+                 * is a value, it is traced, and everything the deterministic pipeline does
+                 * not own is submitted to the agentic path instead of disappearing.
+                 */
+                val route = routeResolver.resolve(intent)
+                println(
+                    "[HALO_INTENT_CLASSIFIED] knowledgeId=$knowledgeId " +
+                        "intent=${intent::class.simpleName} confidence=${interpretation.confidence}"
+                )
+                println(
+                    "[HALO_EXECUTION_ROUTE] knowledgeId=$knowledgeId intent=${intent::class.simpleName} " +
+                        "route=${route::class.simpleName} " +
+                        when (route) {
+                            is InterpretationExecutionRoute.DeterministicAction -> "executor=${route.executorId}"
+                            is InterpretationExecutionRoute.Agentic -> "hint=${route.hint != null}"
+                            is InterpretationExecutionRoute.Unsupported -> "reason=${route.reason}"
+                            InterpretationExecutionRoute.LocalFact -> "resolver=fact-resolver"
+                        }
+                )
+
+                if (route is InterpretationExecutionRoute.Unsupported) {
+                    publishRouteResponse(
+                        text = route.reason,
+                        interpretation = interpretation,
+                        responseDelivery = responseDelivery,
+                        interactionId = interpretation.metadata["interactionId"],
                     )
+                    return@collect
+                }
+
+                if (route is InterpretationExecutionRoute.DeterministicAction) {
+                    // The deterministic engine is already collecting this intent from the
+                    // blackboard; the named executor owns the outcome.
                     return@collect
                 }
 
@@ -241,13 +279,67 @@ class CognitiveSession(
                     "[HALO-TXN] speech knowledgeId=$knowledgeId textLength=${text.length} " +
                         "intent=${intent::class.simpleName} delivery=$responseDelivery -> SUBMITTING TO LLM"
                 )
+                val routeHint = (route as? InterpretationExecutionRoute.Agentic)?.hint
                 submit(
                     request = AiRequest(text = text, priority = InferencePriority.INTERACTIVE),
                     responseDelivery = responseDelivery,
                     origin = interpretation.origin,
-                    metadata = interpretation.metadata
+                    metadata = if (routeHint == null) {
+                        interpretation.metadata
+                    } else {
+                        interpretation.metadata + ("agenticHint" to routeHint)
+                    }
                 )
             }
+        }
+    }
+
+    /**
+     * A routed-but-unactionable intent still has to reach the user. Silent drops are
+     * the failure mode this batch exists to remove.
+     */
+    private suspend fun publishRouteResponse(
+        text: String,
+        interpretation: com.halo.runtime.cognition.blackboard.Interpretation,
+        responseDelivery: ResponseDelivery,
+        interactionId: String?,
+    ) {
+        val requestId = UUID.randomUUID().toString()
+        eventBus.publish(CognitiveRequestStarted(requestId = requestId, interactionId = interactionId))
+        eventBus.publish(CognitiveCompleted(requestId = requestId, response = text, interactionId = interactionId))
+        eventBus.publish(
+            AssistantResponsePublished(
+                text = text,
+                delivery = responseDelivery,
+                transactionId = requestId,
+            )
+        )
+        if (responseDelivery == ResponseDelivery.SPEECH_AND_VISUAL) {
+            val outputTarget = when (val route = interpretation.origin?.speechRoute) {
+                is SpeechInputRoute.Device -> SpeechOutputTarget.Device(
+                    deviceId = route.deviceId,
+                    platformEndpointId = route.platformEndpointId,
+                    displayName = route.displayName,
+                    kind = route.kind,
+                )
+                SpeechInputRoute.Phone -> SpeechOutputTarget.Phone
+                null -> SpeechOutputTarget.Phone
+            }
+            eventBus.publish(
+                TtsRequested(
+                    text = text,
+                    transactionId = requestId,
+                    target = outputTarget,
+                    fallback = if (outputTarget is SpeechOutputTarget.Device) {
+                        SpeechOutputFallback.DISALLOW_PHONE
+                    } else {
+                        SpeechOutputFallback.ALLOW_PHONE
+                    },
+                    sourceCaptureId = interpretation.origin?.captureId,
+                    interactionId = interactionId,
+                    timestamp = System.currentTimeMillis(),
+                )
+            )
         }
     }
 

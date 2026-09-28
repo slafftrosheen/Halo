@@ -48,6 +48,17 @@ enum class ToolRejectionCode {
     CAPABILITY_UNAVAILABLE,
     RESOURCE_UNAVAILABLE,
     INTERACTION_CANCELLED,
+
+    /**
+     * AGENTIC-001 taxonomy. A disabled AccessibilityService is not an invalid
+     * argument, and a missing contacts permission is not an invalid argument
+     * either. Keep the meaningful category or the model cannot recover.
+     */
+    PERMISSION_REQUIRED,
+    UNSUPPORTED_OPERATION,
+    TRANSIENT_FAILURE,
+    TOOL_NOT_EXPOSED,
+    REPEATED_TOOL_CALL,
 }
 
 /**

@@ -17,8 +17,11 @@ import com.halo.runtime.cognition.tools.PolicyToolAuthorizer
 import com.halo.runtime.cognition.tools.ToolAuthorizer
 import com.halo.runtime.cognition.tools.ToolAuthorization
 import com.halo.runtime.cognition.tools.ToolExecutionResult
-import com.halo.runtime.cognition.tools.ToolFailureKind
 import com.halo.runtime.cognition.tools.ToolId
+import com.halo.runtime.cognition.tools.ToolLoopLimits
+import com.halo.runtime.cognition.tools.ToolRejectionKind
+import com.halo.runtime.cognition.tools.ToolResultEnvelope
+import com.halo.runtime.cognition.tools.enveloped
 import com.halo.runtime.cognition.agent.ToolInvocation
 import com.halo.runtime.cognition.tools.ToolRegistry
 import com.halo.runtime.cognition.tools.ToolResourceAcquisition
@@ -37,7 +40,6 @@ import com.halo.sdk.runtime.ToolCallRequested
 import com.halo.sdk.runtime.resource.ResourceLease
 import com.halo.sdk.runtime.resource.ResourceAcquireResult
 import com.halo.sdk.runtime.resource.ResourceHolder
-import com.halo.sdk.runtime.resource.ResourceLeaseManager
 import java.time.Instant
 import java.util.UUID
 
@@ -68,6 +70,12 @@ interface ToolTurnExecutor {
         requestId: String,
         toolCalls: List<ToolCall>,
         workspaceReadAllowed: Boolean,
+        /**
+         * Tool ids the provider was actually shown this turn. A model must never be
+         * able to execute a tool whose schema it never received; null skips the
+         * check for callers that predate exposure planning.
+         */
+        exposedToolIds: Set<String>? = null,
     ): ToolTurnResult
 }
 
@@ -80,8 +88,27 @@ class DefaultToolTurnExecutor(
     private val agentRunCoordinator: AgentRunCoordinator?,
     private val agentRunStore: AgentRunStore?,
     private val eventBus: EventBus,
+    private val limits: ToolLoopLimits = ToolLoopLimits(),
 ) : ToolTurnExecutor {
     private fun newStepId() = AgentStepId(UUID.randomUUID().toString())
+
+    private fun trace(event: String, fields: List<Pair<String, Any?>>) {
+        val rendered = fields.joinToString(" ") { (key, value) -> "$key=${value ?: "none"}" }
+        println("[HALO_$event] $rendered")
+    }
+
+    private fun rejectionCodeFor(kind: ToolRejectionKind): ToolRejectionCode = when (kind) {
+        ToolRejectionKind.TOOL_UNKNOWN -> ToolRejectionCode.TOOL_UNKNOWN
+        ToolRejectionKind.TOOL_DISABLED -> ToolRejectionCode.TOOL_DISABLED
+        ToolRejectionKind.INVALID_ARGUMENTS -> ToolRejectionCode.INVALID_ARGUMENTS
+        ToolRejectionKind.CAPABILITY_UNAVAILABLE -> ToolRejectionCode.CAPABILITY_UNAVAILABLE
+        ToolRejectionKind.PERMISSION_REQUIRED -> ToolRejectionCode.PERMISSION_REQUIRED
+        ToolRejectionKind.USER_REJECTED -> ToolRejectionCode.USER_REJECTED
+        ToolRejectionKind.RESOURCE_UNAVAILABLE -> ToolRejectionCode.RESOURCE_UNAVAILABLE
+        ToolRejectionKind.INTERACTION_CANCELLED -> ToolRejectionCode.INTERACTION_CANCELLED
+        ToolRejectionKind.UNSUPPORTED_OPERATION -> ToolRejectionCode.UNSUPPORTED_OPERATION
+        ToolRejectionKind.TRANSIENT_FAILURE -> ToolRejectionCode.TRANSIENT_FAILURE
+    }
 
     private suspend fun resolvedApprovalEvidence(
         runId: AgentRunId,
@@ -123,7 +150,7 @@ class DefaultToolTurnExecutor(
         interactionId: InteractionId,
         requestId: String,
         toolCall: ToolCall,
-        rejection: RuntimeToolRejection
+        rejection: RuntimeToolRejection,
     ): AIMessage {
         runId?.let {
             agentRunCoordinator?.recordStep(
@@ -136,7 +163,16 @@ class DefaultToolTurnExecutor(
                 )
             )
         }
-        println("[HALO-DIAGNOSTIC] event=TOOL_CALL_REJECTED run=${runId?.value ?: "ephemeral"} interaction=${interactionId.value} tool=${toolCall.functionName} reason=\"${rejection.humanReason}\"")
+        trace(
+            "TOOL_REJECTED",
+            listOf(
+                "run" to (runId?.value ?: "ephemeral"),
+                "interactionId" to interactionId.value,
+                "requestId" to requestId,
+                "tool" to toolCall.functionName,
+                "reasonCode" to rejection.reasonCode,
+            ),
+        )
         eventBus.publish(
             ToolCallRejected(
                 requestId = requestId,
@@ -162,17 +198,43 @@ class DefaultToolTurnExecutor(
         }
     }
 
+    /**
+     * How often this exact tool + canonical arguments pair has already been prepared
+     * inside this run. Small models loop, and a repeated side effect must never be
+     * launched twice.
+     */
+    private suspend fun priorInvocationsOf(
+        runId: AgentRunId,
+        toolId: String,
+        argumentsDigest: String,
+    ): Int {
+        val run = agentRunStore?.get(runId) ?: return 0
+        return run.steps
+            .filterIsInstance<AgentStep.ToolInvocationPrepared>()
+            .count { it.toolId == toolId && it.argumentsDigest == argumentsDigest }
+    }
+
     override suspend fun execute(
         runId: AgentRunId?,
         interactionId: InteractionId,
         requestId: String,
         toolCalls: List<ToolCall>,
         workspaceReadAllowed: Boolean,
+        exposedToolIds: Set<String>?,
     ): ToolTurnResult {
         val toolMessages = mutableListOf<AIMessage>()
         var hasUnconfirmedAction = false
 
-        for (toolCall in toolCalls) {
+        for ((index, toolCall) in toolCalls.withIndex()) {
+            if (index >= limits.maxToolCallsPerTurn) {
+                val rejection = ToolRejectionFactory.create(
+                    ToolRejectionCode.TRANSIENT_FAILURE,
+                    "Tool call budget for this turn is already spent. Answer with what you have.",
+                )
+                toolMessages.add(persistAndPublishToolRejection(runId, interactionId, requestId, toolCall, rejection))
+                break
+            }
+
             val toolIsEnabled = toolRegistry?.descriptor(toolCall.functionName) != null
 
             if (runId != null) {
@@ -182,8 +244,12 @@ class DefaultToolTurnExecutor(
                         is AgentStep.ToolOutcomeRecorded -> existing.output
                         is AgentStep.ToolRejected -> existing.modelResult
                         is AgentStep.ToolCompleted -> existing.resultSummary
-                        is AgentStep.ToolFailed -> "tool_result: status=failed reason_code=PERMANENT retryable=false\nreason: " + existing.reason.replace('\n', ' ').take(512)
-                        else -> "tool_result: status=failed reason_code=UNKNOWN retryable=false"
+                        is AgentStep.ToolFailed -> ToolResultEnvelope.failure(
+                            reasonCode = "PERMANENT",
+                            retryable = false,
+                            details = existing.reason.replace('\n', ' ').take(512),
+                        )
+                        else -> ToolResultEnvelope.failure("UNKNOWN", retryable = false)
                     }
                     toolMessages.add(AIMessage(Role.TOOL, resultText, toolCallId = toolCall.id))
                     continue
@@ -193,9 +259,9 @@ class DefaultToolTurnExecutor(
             val invalidArguments = toolRegistry?.validate(toolCall)
             if (toolRegistry == null || toolAuthorizer == null || !toolIsEnabled || invalidArguments != null || !workspaceReadAllowed) {
                 val rejection = when {
-                    toolRegistry == null -> ToolRejectionFactory.create(ToolRejectionCode.TOOL_DISABLED, "Tool registry unavailable")
+                    toolRegistry == null -> ToolRejectionFactory.create(ToolRejectionCode.TOOL_REGISTRY_UNAVAILABLE, "Tool registry unavailable")
                     !workspaceReadAllowed -> ToolRejectionFactory.create(ToolRejectionCode.PRIVATE_CONTEXT_BLOCKED, "Private workspace access is disabled for this provider")
-                    !toolIsEnabled -> ToolRejectionFactory.create(ToolRejectionCode.TOOL_UNKNOWN, "Skill unavailable or disabled")
+                    !toolIsEnabled -> ToolRejectionFactory.create(ToolRejectionCode.TOOL_DISABLED, "Unknown or disabled action: ${toolCall.functionName}")
                     invalidArguments != null -> ToolRejectionFactory.create(ToolRejectionCode.INVALID_ARGUMENTS, invalidArguments.reason)
                     else -> ToolRejectionFactory.create(ToolRejectionCode.AUTHORIZATION_DENIED, "Tool authorization service unavailable")
                 }
@@ -203,14 +269,42 @@ class DefaultToolTurnExecutor(
                 continue
             }
 
+            if (exposedToolIds != null && toolCall.functionName !in exposedToolIds) {
+                val rejection = ToolRejectionFactory.create(
+                    ToolRejectionCode.TOOL_NOT_EXPOSED,
+                    "Action ${toolCall.functionName} was not offered for this turn. Call halo_discover_tools first.",
+                )
+                toolMessages.add(persistAndPublishToolRejection(runId, interactionId, requestId, toolCall, rejection))
+                continue
+            }
+
             val canonicalArguments = ToolArgumentCanonicalizer.canonicalize(toolCall.arguments)
             val argumentsDigest = ToolArgumentCanonicalizer.digest(canonicalArguments)
+            trace(
+                "TOOL_VALIDATED",
+                listOf(
+                    "run" to (runId?.value ?: "ephemeral"),
+                    "requestId" to requestId,
+                    "tool" to toolCall.functionName,
+                    "digest" to argumentsDigest.take(12),
+                ),
+            )
             val invocationId = ToolInvocationId(UUID.randomUUID().toString())
             val idempotencyKey = ToolInvocation.idempotencyKey(
                 runId ?: AgentRunId("ephemeral"), toolCall.id, ToolId(toolCall.functionName), argumentsDigest
             )
             val replaySafety = toolRegistry.descriptor(toolCall.functionName)?.security?.replaySafety ?: ReplaySafety.NEVER_REPLAY
             val descriptorVersion = 1
+
+            if (runId != null && priorInvocationsOf(runId, toolCall.functionName, argumentsDigest) >= limits.maxRepeatedIdenticalCalls) {
+                val rejection = ToolRejectionFactory.create(
+                    ToolRejectionCode.REPEATED_TOOL_CALL,
+                    "You already ran ${toolCall.functionName} with these exact arguments. " +
+                        "Do not repeat it; change the arguments or answer using the result you already have.",
+                )
+                toolMessages.add(persistAndPublishToolRejection(runId, interactionId, requestId, toolCall, rejection))
+                continue
+            }
 
             if (runId != null) {
                 val run = agentRunStore?.get(runId)
@@ -277,11 +371,21 @@ class DefaultToolTurnExecutor(
                     ToolAuthorization.Rejected(toolCall, durableDecision.reason)
                 durableDecision is AuthorizationDecision.NeedsUserInput -> {
                     val request = durableDecision.request
-                    val waitingRunId = runId ?: return ToolTurnResult.WaitingForInput(request) // Can't happen if runId is null as durableDecision would be null
+                    val waitingRunId = runId ?: return ToolTurnResult.WaitingForInput(request)
                     agentRunCoordinator?.recordStep(
                         AgentStep.InputRequested(newStepId(), waitingRunId, Instant.now(), request.id, request)
                     )
                     agentRunCoordinator?.transition(waitingRunId, AgentRunState.WAITING_FOR_APPROVAL)
+                    trace(
+                        "TOOL_WAITING_INPUT",
+                        listOf(
+                            "run" to waitingRunId.value,
+                            "interactionId" to interactionId.value,
+                            "requestId" to requestId,
+                            "tool" to toolCall.functionName,
+                            "toolCallId" to toolCall.id,
+                        ),
+                    )
                     eventBus.publish(
                         ToolCallRejected(
                             requestId = requestId,
@@ -302,6 +406,15 @@ class DefaultToolTurnExecutor(
                     continue
                 }
                 is ToolAuthorization.Authorized -> {
+                    trace(
+                        "TOOL_AUTHORIZATION",
+                        listOf(
+                            "run" to (runId?.value ?: "ephemeral"),
+                            "requestId" to requestId,
+                            "tool" to toolCall.functionName,
+                            "toolCallId" to toolCall.id,
+                        ),
+                    )
                     eventBus.publish(
                         ToolCallAuthorized(
                             requestId = requestId,
@@ -312,54 +425,88 @@ class DefaultToolTurnExecutor(
                 }
             }
 
-            if (toolResourceCoordinator != null) {
-                val descriptor = toolRegistry.descriptor(toolCall.functionName)!!
-                val holder = ResourceHolder(interactionId.value, interactionId.value)
-                when (val acquisition = toolResourceCoordinator.prepareAndAcquire(descriptor, holder)) {
-                    is ToolResourceAcquisition.Granted -> { /* Acquired */ }
-                    is ToolResourceAcquisition.Blocked -> {
-                        if (runId != null) {
-                            agentRunCoordinator?.recordStep(
-                                AgentStep.ResourceBlocked(
-                                    id = newStepId(),
-                                    runId = runId,
-                                    createdAt = Instant.now(),
-                                    invocationId = invocationId,
-                                    toolId = toolCall.functionName,
-                                    resourceIds = acquisition.plan.resourcePlan.claims.map { it.key.resourceId.value },
-                                    endpointIds = acquisition.plan.resourcePlan.claims.map { it.key.endpointId.value },
-                                    blockingLeaseIds = (acquisition.acquireResult as? ResourceAcquireResult.Busy)?.conflicts?.map { it.heldLeaseId.value }.orEmpty(),
+            /*
+             * AGENTIC-001 resource lease ownership.
+             *
+             * The lease covers THIS execution only. The previous comment claiming
+             * ResourceLease could not be released was wrong: release() exists and is
+             * the only correct owner here. Without it one unfinished tool could block
+             * the next one, and compute.heavy would stay claimed after the work ended.
+             */
+            var executionLease: ResourceLease? = null
+            val startedAtMs = System.currentTimeMillis()
+            val result: ToolExecutionResult = try {
+                if (toolResourceCoordinator != null) {
+                    val descriptor = toolRegistry.descriptor(toolCall.functionName)!!
+                    val holder = ResourceHolder(interactionId.value, interactionId.value)
+                    when (val acquisition = toolResourceCoordinator.prepareAndAcquire(descriptor, holder)) {
+                        is ToolResourceAcquisition.Granted -> {
+                            executionLease = acquisition.lease
+                            trace(
+                                "TOOL_RESOURCE_GRANTED",
+                                listOf(
+                                    "run" to (runId?.value ?: "ephemeral"),
+                                    "tool" to toolCall.functionName,
+                                    "lease" to acquisition.lease.leaseId.value,
+                                ),
+                            )
+                        }
+                        is ToolResourceAcquisition.Blocked -> {
+                            if (runId != null) {
+                                agentRunCoordinator?.recordStep(
+                                    AgentStep.ResourceBlocked(
+                                        id = newStepId(),
+                                        runId = runId,
+                                        createdAt = Instant.now(),
+                                        invocationId = invocationId,
+                                        toolId = toolCall.functionName,
+                                        resourceIds = acquisition.plan.resourcePlan.claims.map { it.key.resourceId.value },
+                                        endpointIds = acquisition.plan.resourcePlan.claims.map { it.key.endpointId.value },
+                                        blockingLeaseIds = (acquisition.acquireResult as? ResourceAcquireResult.Busy)?.conflicts?.map { it.heldLeaseId.value }.orEmpty(),
+                                    )
                                 )
-                            )
-                            agentRunCoordinator?.transition(
-                                runId,
-                                AgentRunState.WAITING_FOR_RESOURCE,
-                                "Required resource is currently busy",
-                            )
-                            return ToolTurnResult.WaitingForResource(runId)
+                                agentRunCoordinator?.transition(
+                                    runId,
+                                    AgentRunState.WAITING_FOR_RESOURCE,
+                                    "Required resource is currently busy",
+                                )
+                                return ToolTurnResult.WaitingForResource(runId)
+                            }
+                            val rejection = ToolRejectionFactory.create(ToolRejectionCode.RESOURCE_UNAVAILABLE, "Required resource is currently busy", true)
+                            toolMessages.add(persistAndPublishToolRejection(runId, interactionId, requestId, toolCall, rejection))
+                            continue
                         }
-                        val rejection = ToolRejectionFactory.create(ToolRejectionCode.RESOURCE_UNAVAILABLE, "Required resource is currently busy", true)
-                        toolMessages.add(persistAndPublishToolRejection(runId, interactionId, requestId, toolCall, rejection))
-                        continue
-                    }
-                    is ToolResourceAcquisition.CapabilityMissing -> {
-                        if (runId != null) {
-                            agentRunCoordinator?.transition(
-                                runId,
-                                AgentRunState.WAITING_FOR_CAPABILITY,
-                                "Required device capability is unavailable",
+                        is ToolResourceAcquisition.CapabilityMissing -> {
+                            if (runId != null) {
+                                agentRunCoordinator?.transition(
+                                    runId,
+                                    AgentRunState.WAITING_FOR_CAPABILITY,
+                                    "Required device capability is unavailable",
+                                )
+                                return ToolTurnResult.WaitingForCapability(runId)
+                            }
+                            val rejection = ToolRejectionFactory.create(
+                                ToolRejectionCode.CAPABILITY_UNAVAILABLE,
+                                "This device capability is unavailable: " +
+                                    acquisition.missingRequirements.joinToString(", ") { it.capabilityKind },
                             )
-                            return ToolTurnResult.WaitingForCapability(runId)
+                            toolMessages.add(persistAndPublishToolRejection(runId, interactionId, requestId, toolCall, rejection))
+                            continue
                         }
-                        val rejection = ToolRejectionFactory.create(ToolRejectionCode.CAPABILITY_UNAVAILABLE, "Required device capability is unavailable")
-                        toolMessages.add(persistAndPublishToolRejection(runId, interactionId, requestId, toolCall, rejection))
-                        continue
                     }
                 }
-            }
 
-            val toolStartedAtMs = System.currentTimeMillis()
-            val result = try {
+                trace(
+                    "TOOL_EXECUTION_START",
+                    listOf(
+                        "run" to (runId?.value ?: "ephemeral"),
+                        "interactionId" to interactionId.value,
+                        "requestId" to requestId,
+                        "tool" to toolCall.functionName,
+                        "toolCallId" to toolCall.id,
+                    ),
+                )
+
                 if (runId != null) {
                     val claimed = agentRunCoordinator?.recordStep(
                         AgentStep.ToolExecutionClaimed(
@@ -376,20 +523,46 @@ class DefaultToolTurnExecutor(
                     toolRegistry.executeAuthorized(authorization as ToolAuthorization.Authorized)
                 }
             } finally {
-                // Leases are usually released by the specific acquire logic or scoped.
-                // Assuming toolResourceCoordinator provides a release method if needed, or we ignore it if it is released internally.
-                // For now we do not release here since ResourceLease interface doesn't have it and Manager is not injected.
+                // Released for success, rejection, executor failure, timeout,
+                // cancellation and unexpected exceptions alike.
+                val lease = executionLease
+                runCatching { lease?.release() }
+                if (lease != null) {
+                    trace(
+                        "TOOL_RESOURCE_RELEASED",
+                        listOf(
+                            "run" to (runId?.value ?: "ephemeral"),
+                            "tool" to toolCall.functionName,
+                            "lease" to lease.leaseId.value,
+                        ),
+                    )
+                }
             }
+
+            val durationMs = (System.currentTimeMillis() - startedAtMs).coerceAtLeast(0L)
 
             when (result) {
                 is ToolExecutionResult.Success -> {
-                    val modelResult = result.output
+                    // Every host action result reaches the model with the same stable
+                    // header, so control flow never has to be inferred from prose.
+                    val modelResult = ToolResultEnvelope.ensureEnveloped(result.output, result.actionTruth)
                     runId?.let {
                         agentRunCoordinator?.recordStep(
                             AgentStep.ToolOutcomeRecorded(newStepId(), it, Instant.now(), invocationId,
                                 toolCall.id, toolCall.functionName, true, modelResult,
                                 result.actionTruth, null))
                     }
+                    trace(
+                        "TOOL_EXECUTION_RESULT",
+                        listOf(
+                            "run" to (runId?.value ?: "ephemeral"),
+                            "interactionId" to interactionId.value,
+                            "requestId" to requestId,
+                            "tool" to toolCall.functionName,
+                            "actionTruth" to result.actionTruth,
+                            "durationMs" to durationMs,
+                        ),
+                    )
                     eventBus.publish(
                         ToolCallCompleted(
                             requestId = requestId,
@@ -397,7 +570,7 @@ class DefaultToolTurnExecutor(
                             toolId = toolCall.functionName,
                             success = true,
                             actionTruth = result.actionTruth.name,
-                            durationMs = (System.currentTimeMillis() - toolStartedAtMs).coerceAtLeast(0L),
+                            durationMs = durationMs,
                         )
                     )
                     toolMessages.add(
@@ -410,27 +583,39 @@ class DefaultToolTurnExecutor(
                 }
 
                 is ToolExecutionResult.Rejected -> {
-                    val rejection = ToolRejectionFactory.create(ToolRejectionCode.INVALID_ARGUMENTS, result.reason)
+                    val rejection = ToolRejectionFactory.create(
+                        rejectionCodeFor(result.kind),
+                        result.reason,
+                        retryable = result.kind == ToolRejectionKind.TRANSIENT_FAILURE ||
+                            result.kind == ToolRejectionKind.RESOURCE_UNAVAILABLE,
+                        requiresUserAction = result.kind == ToolRejectionKind.PERMISSION_REQUIRED ||
+                            result.kind == ToolRejectionKind.UNSUPPORTED_OPERATION,
+                    )
                     toolMessages.add(persistAndPublishToolRejection(runId, interactionId, requestId, toolCall, rejection))
                 }
 
                 is ToolExecutionResult.Failed -> {
                     hasUnconfirmedAction = hasUnconfirmedAction || result.completionUnknown
                     val truth = if (result.completionUnknown) ActionTruth.UNKNOWN else ActionTruth.FAILED
-                    val modelResult = com.halo.runtime.cognition.tools.ToolResultBudgeter.budgetText(buildString {
-                        append("tool_result: status=failed reason_code=").append(result.code)
-                        append(" retryable=").append(result.failureKind == ToolFailureKind.TRANSIENT)
-                        append(" completion_unknown=").append(result.completionUnknown)
-                        append("\nreason: ").append(result.message.replace('\n', ' ').take(512))
-                        result.hint?.let { append("\nhint: ").append(it.replace('\n', ' ').take(512)) }
-                        result.payload?.let { append("\npayload:\n").append(it) }
-                    }, com.halo.runtime.cognition.tools.ToolExecutionLimits.MAX_TOOL_OUTPUT_CHARS)
+                    val modelResult = result.enveloped().message
                     runId?.let {
                         agentRunCoordinator?.recordStep(
                             AgentStep.ToolOutcomeRecorded(newStepId(), it, Instant.now(), invocationId,
                                 toolCall.id, toolCall.functionName, false, modelResult,
                                 truth, result.code))
                     }
+                    trace(
+                        "TOOL_EXECUTION_RESULT",
+                        listOf(
+                            "run" to (runId?.value ?: "ephemeral"),
+                            "interactionId" to interactionId.value,
+                            "requestId" to requestId,
+                            "tool" to toolCall.functionName,
+                            "actionTruth" to truth,
+                            "reasonCode" to result.code,
+                            "durationMs" to durationMs,
+                        ),
+                    )
                     eventBus.publish(
                         ToolCallCompleted(
                             requestId = requestId,
@@ -439,7 +624,7 @@ class DefaultToolTurnExecutor(
                             success = false,
                             failureCode = result.code,
                             actionTruth = truth.name,
-                            durationMs = (System.currentTimeMillis() - toolStartedAtMs).coerceAtLeast(0L),
+                            durationMs = durationMs,
                         )
                     )
                     toolMessages.add(

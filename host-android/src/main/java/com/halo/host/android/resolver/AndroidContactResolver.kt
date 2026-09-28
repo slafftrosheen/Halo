@@ -11,7 +11,13 @@ import kotlinx.coroutines.withContext
 sealed interface ContactResolveResult {
     data class Found(val name: String, val number: String) : ContactResolveResult
     data object NotFound : ContactResolveResult
-    data object MultipleMatches : ContactResolveResult
+
+    /**
+     * AGENTIC-001: an ambiguous lookup must hand the model the choices it needs to
+     * ask a disambiguating question. Names only: numbers are not needed to clarify,
+     * and contact data should not be spread further than the action requires.
+     */
+    data class MultipleMatches(val candidateNames: List<String> = emptyList()) : ContactResolveResult
     data object NoPhoneNumber : ContactResolveResult
 }
 
@@ -69,9 +75,13 @@ class AndroidContactResolver(private val context: Context) {
                 if (distinctNames.size == 1) {
                     ContactResolveResult.Found(matches[0].first, matches[0].second)
                 } else {
-                    ContactResolveResult.MultipleMatches
+                    ContactResolveResult.MultipleMatches(distinctNames.take(MAX_CLARIFY_CANDIDATES))
                 }
             }
         }
+    }
+
+    private companion object {
+        const val MAX_CLARIFY_CANDIDATES = 6
     }
 }

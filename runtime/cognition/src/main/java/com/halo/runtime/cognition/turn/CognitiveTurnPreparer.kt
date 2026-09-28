@@ -46,6 +46,8 @@ class DefaultCognitiveTurnPreparer(
     private val contextAcquisitionCoordinator: ContextAcquisitionCoordinator?,
     private val contextAssembler: ContextAssembler,
     private val agentRunStore: AgentRunStore?,
+    /** AGENTIC-001: initial exposure planning, scoped for local models. */
+    private val toolExposurePlanner: com.halo.runtime.cognition.tools.ToolExposurePlanner? = null,
 ) : CognitiveTurnPreparer {
 
     override suspend fun prepare(turn: CognitiveTurnRequest): PreparedCognitiveTurn {
@@ -111,6 +113,34 @@ class DefaultCognitiveTurnPreparer(
             },
         )
 
+        /*
+         * AGENTIC-001 tool exposure planning.
+         *
+         * A local provider reports how a Halo tool loop can run. NATIVE means the
+         * runtime emits tool calls; HALO_PROMPT means Halo parses one bounded envelope
+         * out of the model's text. Either way the model gets a bounded allowlist and a
+         * bootstrap exposure set instead of every registered schema.
+         */
+        /*
+         * The bounded local allowlist applies to providers that actually declare how a tool
+         * loop runs (LiteRT). A local provider that declares nothing keeps the previous
+         * gated-catalogue behaviour rather than inheriting a small-model restriction it
+         * never asked for.
+         */
+        val toolProtocolReporter = (target.provider as? com.halo.sdk.provider.ToolProtocolReporting)
+            ?.takeIf { target.provider.isLocal }
+        val toolProtocol = toolProtocolReporter?.toolCallProtocol()
+            ?: com.halo.sdk.provider.ToolCallProtocol.NATIVE
+        val localToolPolicy = if (toolProtocolReporter != null) {
+            com.halo.runtime.cognition.tools.LocalModelToolPolicy.forProtocol(toolProtocol)
+        } else null
+        val toolExposure = when {
+            localToolPolicy != null && toolExposurePlanner != null ->
+                toolExposurePlanner.localBootstrapExposure(localToolPolicy, toolProtocol)
+            toolExposurePlanner != null -> toolExposurePlanner.initialExposure()
+            else -> null
+        }
+
         val assemblyResult = contextAssembler.assemble(
             policy = turn.policy,
             capabilities = requiredCapabilities,
@@ -119,7 +149,9 @@ class DefaultCognitiveTurnPreparer(
                 acquisition = acquisitionResult,
                 targetIsLocal = target.provider.isLocal,
                 contextWindowTokens = target.model.contextLength,
-                requiredNeeds = targetContextPlan.needs.filter { it.requirement == ContextRequirement.REQUIRED }
+                requiredNeeds = targetContextPlan.needs.filter { it.requirement == ContextRequirement.REQUIRED },
+                exposureSet = toolExposure,
+                localToolPolicy = localToolPolicy,
             )
         )
 
@@ -148,6 +180,9 @@ class DefaultCognitiveTurnPreparer(
             providerRequest = boundRequest,
             requiredCapabilityIds = requiredCapabilities.map { it.name }.toSet(),
             contextRequirementIds = contextRequirementIds,
+            toolExposure = toolExposure,
+            localToolPolicy = localToolPolicy,
+            toolProtocol = toolProtocol,
         )
     }
 

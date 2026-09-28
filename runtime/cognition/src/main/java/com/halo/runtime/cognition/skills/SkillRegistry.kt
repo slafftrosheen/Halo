@@ -187,8 +187,46 @@ class DefaultSkillRegistry(
             ),
             SkillDescriptor(
                 id = SkillId("halo.phone"),
-                name = "Phone control",
-                description = "Observe and operate supported Android screens using snapshot-scoped semantic controls.",
+                name = "Phone",
+                description = "Entry point for phone control: load halo.phone.actions for deterministic actions " +
+                    "and halo.phone.screen only for UI workflows with no dedicated capability.",
+                category = SkillCategory.DEVICE,
+                tools = setOf("halo_use_skill"),
+                toolDefinitions = listOf(
+                    com.halo.sdk.runtime.skills.SkillToolDefinition("halo_use_skill", SkillRisk.READ_ONLY),
+                ),
+                risk = SkillRisk.REVERSIBLE,
+                source = SkillSource.BUILT_IN,
+            ),
+            SkillDescriptor(
+                id = SkillId("halo.phone.actions"),
+                name = "Phone actions",
+                description = "Deterministic Android phone actions. Preferred over screen automation whenever a " +
+                    "dedicated Android capability exists.",
+                category = SkillCategory.DEVICE,
+                tools = setOf(
+                    "halo_list_apps",
+                    "halo_open_app",
+                    "halo_set_alarm",
+                    "halo_volume",
+                    "halo_flashlight",
+                    "halo_find_contact",
+                    "halo_dial_contact",
+                    "halo_open_settings",
+                    "halo_navigation",
+                    "halo_browser",
+                    "halo_search",
+                    "halo_share_text",
+                    "halo_media_status",
+                    "halo_media_control",
+                ),
+                risk = SkillRisk.EXTERNAL_SIDE_EFFECT,
+                source = SkillSource.BUILT_IN,
+            ),
+            SkillDescriptor(
+                id = SkillId("halo.phone.screen"),
+                name = "Phone screen control",
+                description = "Read and operate supported Android screens using snapshot-scoped semantic controls.",
                 category = SkillCategory.DEVICE,
                 tools = setOf(
                     "halo_read_screen",

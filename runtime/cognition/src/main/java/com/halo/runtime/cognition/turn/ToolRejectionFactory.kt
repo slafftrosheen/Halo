@@ -1,6 +1,7 @@
 package com.halo.runtime.cognition.turn
 
 import com.halo.runtime.cognition.agent.ToolRejectionCode
+import com.halo.runtime.cognition.tools.ToolResultEnvelope
 
 data class RuntimeToolRejection(
     val reasonCode: ToolRejectionCode,
@@ -17,7 +18,17 @@ object ToolRejectionFactory {
         retryable: Boolean = false,
         requiresUserAction: Boolean = false,
     ): RuntimeToolRejection {
-        val modelResult = "tool_result: status=rejected reason_code=${code.name} retryable=$retryable requires_user_action=$requiresUserAction\nreason: $humanReason"
+        /*
+         * AGENTIC-001: rejections carry the same machine-readable header as
+         * successes so a small local model can distinguish "I may retry with
+         * different arguments" from "a permission is missing, tell the user".
+         */
+        val modelResult = ToolResultEnvelope.rejected(
+            reasonCode = code.name,
+            retryable = retryable,
+            requiresUserAction = requiresUserAction,
+            details = humanReason.replace('\n', ' ').take(512),
+        )
         return RuntimeToolRejection(
             reasonCode = code,
             humanReason = humanReason,

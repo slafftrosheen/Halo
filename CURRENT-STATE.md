@@ -286,3 +286,42 @@ roles are display information, so a token cannot change because a list gained or
 Composition is unchanged: node/depth/character budgets, redaction and the per-action consent model.
 UNCOMPILED AND UNTESTED AT COMMIT TIME — a build and the physical-phone checklist are still required
 before this is called verified; the rule tests added for the new object have never been executed.
+
+## RUNTIME-050 / AGENTIC-PHONE-001 — local agentic execution and phone actions
+
+The local text path was physically verified (Qwen answers on a real phone). This batch makes
+the *action* path real and stops silent drops. See `docs/testing/AGENTIC-PHONE-ACCEPTANCE.md`
+for the evidence ladder and the physical checklist.
+
+- `CognitiveSession` no longer returns after logging "BYPASSING LLM". Every recognized intent
+  resolves through an explicit `InterpretationExecutionRoute`: `LocalFact`,
+  `DeterministicAction(executorId)`, `Agentic` or `Unsupported`. Intents the deterministic
+  goal/plan/execution pipeline already owns are named, not assumed; anything else is submitted
+  to the agentic path, and an unactionable but recognized intent now produces a user-visible
+  answer instead of disappearing. Traces: `HALO_INTENT_CLASSIFIED`, `HALO_EXECUTION_ROUTE`.
+- Escaped-interpolation bugs fixed: `AlarmTools` returned the literal text
+  `Clarification required: ${plan.prompt}` and `CommunicationTools` returned the literal
+  `Found ${result.name} at ...` and opened `tel:$phoneNumber`. Alarm clarifications now carry
+  the resolver's real question, contact lookups interpolate, and the dial intent carries the
+  resolved number (`Uri.parse`, not `Uri.fromParts`, which would percent-encode a leading `+`).
+- Machine-readable tool results: every result Halo hands a model now begins with
+  `tool_result: status=... action_truth=... reason_code=...`. Rejections keep a real category —
+  a disabled AccessibilityService reports `PERMISSION_REQUIRED`, not `INVALID_ARGUMENTS`.
+- Local tool exposure is bounded. `halo_discover_tools` (now searchable by plain words) and
+  `halo_use_skill` (now an actually registered tool) declare `halo_exposure_add=` /
+  `halo_skill_activated=`, and the Runtime re-plans exposure before the next provider turn.
+  A 0.6B model starts with three schemas, never the whole registry.
+- Tool-call capability is split honestly: `nativeToolCallingSupported` (only ever set by an
+  observed probe) versus `haloToolLoopSupported`. LiteRT artifacts default to a bounded
+  `HALO_PROMPT` protocol — one envelope format, JSON only, exposed names only, bounded calls,
+  no prose heuristics — so Qwen 0.6 is agentically useful without claiming a native channel.
+- `DefaultToolTurnExecutor` releases its resource lease on success, rejection, executor
+  failure, timeout and cancellation (the old comment claiming `ResourceLease` had no release
+  was wrong), and enforces loop guards: identical tool+argument digests stop after
+  `maxRepeatedIdenticalCalls`, and a tool that was never exposed cannot execute.
+- Skills split: `halo.phone.actions` (deterministic Android actions), `halo.phone.screen`
+  (accessibility fallback) and `halo.phone` as the router/entry skill.
+
+Verification: `:runtime:cognition:test`, `:providers:litert:testDebugUnitTest`,
+`:host-android:test`, `:engines:ai:test`, `:app:testDebugUnitTest` and
+`:app:compileDebugKotlin` all pass. No physical-phone run has been performed by this batch.

@@ -96,4 +96,11 @@ data class ContextAssemblyRequest(
     val queryText: String = "",
     val mode: CognitiveOperatingMode = CognitiveOperatingMode.AUTO,
     val activatedSkillIds: Set<SkillId> = emptySet(),
+    /**
+     * AGENTIC-001: the exact tool set already planned for this turn. When present it
+     * is authoritative, so discovery/skill expansion in round N is what round N+1 sees.
+     */
+    val exposureSet: com.halo.runtime.cognition.tools.ToolExposureSet? = null,
+    /** Present for constrained local models: an allowlist plus a schema budget. */
+    val localToolPolicy: com.halo.runtime.cognition.tools.LocalModelToolPolicy? = null,
 )
