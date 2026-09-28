@@ -121,18 +121,39 @@ interface NotebookDao {
     )
     suspend fun updateObjectForNote(id: String, title: String, updatedAt: Long): Int
 
-    @Query("UPDATE notes SET body = :body, revision = revision + 1 WHERE objectId = :id")
+    /**
+     * Body-only write guard: refuses trashed notes at the storage layer, not only in the UI. Notes
+     * that own canonical blocks are written through [NotebookDocumentRepository] instead.
+     */
+    @Query(
+        """
+        UPDATE notes SET body = :body, revision = revision + 1
+        WHERE objectId = :id
+          AND EXISTS (SELECT 1 FROM workspace_objects w WHERE w.id = :id AND w.lifecycle != 'TRASHED')
+        """
+    )
     suspend fun updateNoteBody(id: String, body: String): Int
+
+    @Query("SELECT COUNT(*) FROM note_blocks WHERE noteId = :id")
+    suspend fun countBlocks(id: String): Int
+
 
     @Query("DELETE FROM note_drafts WHERE objectId = :id")
     suspend fun deleteDraft(id: String): Int
+
+    /**
+     * A legacy body-only save may only acknowledge a legacy draft. A newer structural draft is
+     * never cleared by an older save acknowledgement.
+     */
+    @Query("DELETE FROM note_drafts WHERE objectId = :id AND sequence = 0")
+    suspend fun deleteLegacyDraft(id: String): Int
 
     @Transaction
     suspend fun updateNote(id: String, title: String, body: String, updatedAt: Long): Boolean {
         val metadataUpdated = updateObjectForNote(id, title, updatedAt)
         if (metadataUpdated == 0) return false
         check(updateNoteBody(id, body) == 1) { "Note content missing for workspace object $id" }
-        deleteDraft(id)
+        deleteLegacyDraft(id)
         return true
     }
 

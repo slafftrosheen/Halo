@@ -22,6 +22,9 @@ class NotebookUseCases(private val repository: NotebookRepository) {
 
     suspend fun createQuickNote(): NotebookNote = repository.createNote()
 
+    suspend fun createNote(body: String = "", title: String? = null): NotebookNote =
+        repository.createNote(body = body, title = title)
+
     suspend fun saveNote(id: String, body: String): Boolean = repository.saveNote(id, body)
 
     suspend fun saveDraft(id: String, body: String) = repository.saveDraft(id, body)

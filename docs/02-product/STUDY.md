@@ -2,8 +2,11 @@
 
 Next implementation plan: [Notebook editor and Study companion, RFC 0002](../rfc/0002-notebook-editor-and-study.md).
 [Reference mining](../engineering/NOTEBOOK-STUDY-MINING.md) records the source review.
-As of 2026-09-28, the existing Study tool constructs a temporary session and returns success text;
-it does not persist or execute a tutoring workflow. The definition below remains intended behavior.
+As of 2026-09-28, the Study tool persists a durable session before reporting success and refuses
+when no session store is available. Guided stages, attempts, feedback and practice items are stored
+in Room (`data/study/`), with the teaching policy in `study/StudyUseCases.kt`. The loop is
+implemented in source only: it is not device- or test-verified, and source extraction breadth (PDF
+and OCR) is still open. The definition below remains the intended behavior.
 
 Status: DESIGN TARGET. Reviewed 2026-09-24.
 

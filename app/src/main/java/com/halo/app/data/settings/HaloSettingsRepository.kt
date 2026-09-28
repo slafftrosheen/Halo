@@ -23,6 +23,8 @@ data class HaloSettings(
     val automaticBackup: String = "OFF",
     val backupRetention: Int = 5,
     val restoreGeneration: Int = 0,
+    /** Review intensity for guided Study; null means the learner never chose one. */
+    val studyReviewIntensity: String? = null,
 )
 
 /** Typed, asynchronous owner for user preferences; legacy SharedPreferences migrate once. */
@@ -47,6 +49,7 @@ class HaloSettingsRepository(context: Context) {
                 automaticBackup = preferences[AUTOMATIC_BACKUP] ?: "OFF",
                 backupRetention = preferences[BACKUP_RETENTION] ?: 5,
                 restoreGeneration = preferences[RESTORE_GENERATION] ?: 0,
+                studyReviewIntensity = preferences[STUDY_REVIEW_INTENSITY],
             )
         }
 
@@ -68,6 +71,8 @@ class HaloSettingsRepository(context: Context) {
     suspend fun setBackupRetention(value: Int) { dataStore.edit { it[BACKUP_RETENTION] = value.coerceIn(3, 20) } }
     suspend fun setRestoreGeneration(value: Int) { dataStore.edit { it[RESTORE_GENERATION] = value } }
 
+    suspend fun setStudyReviewIntensity(value: String) { dataStore.edit { it[STUDY_REVIEW_INTENSITY] = value } }
+
     private companion object {
         const val DATASTORE_NAME = "halo_settings"
         const val LEGACY_STORE_NAME = "halo_storage"
@@ -78,5 +83,6 @@ class HaloSettingsRepository(context: Context) {
         val AUTOMATIC_BACKUP = stringPreferencesKey("automatic_backup")
         val BACKUP_RETENTION = intPreferencesKey("backup_retention")
         val RESTORE_GENERATION = intPreferencesKey("restore_generation")
+        val STUDY_REVIEW_INTENSITY = stringPreferencesKey("study_review_intensity")
     }
 }

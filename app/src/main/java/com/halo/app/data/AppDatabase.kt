@@ -31,6 +31,12 @@ import com.halo.app.data.notebook.NotebookCanvasDao
 import com.halo.app.data.notebook.WorkspaceObjectEntity
 import com.halo.app.data.routine.RoutineEntity
 import com.halo.app.data.routine.RoutineRunEntity
+import com.halo.app.data.study.StudyAttemptEntity
+import com.halo.app.data.study.StudyDao
+import com.halo.app.data.study.StudyFeedbackEntity
+import com.halo.app.data.study.StudyPracticeItemEntity
+import com.halo.app.data.study.StudyReviewEventEntity
+import com.halo.app.data.study.StudySessionEntity
 import com.halo.app.data.workspace.WorkspaceAssetEntity
 import com.halo.app.data.workspace.NoteAttachmentEntity
 import com.halo.app.data.workspace.WorkspaceAssetDao
@@ -72,9 +78,14 @@ import com.halo.app.data.notebook.NotebookDao
         RoutineRunEntity::class,
         WorkspaceAssetEntity::class,
         NoteAttachmentEntity::class,
-        ModelRuntimeProfileEntity::class
+        ModelRuntimeProfileEntity::class,
+        StudySessionEntity::class,
+        StudyAttemptEntity::class,
+        StudyFeedbackEntity::class,
+        StudyPracticeItemEntity::class,
+        StudyReviewEventEntity::class
     ],
-    version = 15,
+    version = 17,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -89,6 +100,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun notebookDocumentDao(): NotebookDocumentDao
     abstract fun notebookOrganizationDao(): NotebookOrganizationDao
     abstract fun notebookCanvasDao(): NotebookCanvasDao
+    abstract fun studyDao(): StudyDao
     abstract fun workspaceFileDao(): WorkspaceFileDao
     abstract fun workspaceAssetDao(): WorkspaceAssetDao
     abstract fun brainSnapshotDao(): BrainSnapshotDao
@@ -646,9 +658,155 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * v16: canonical document structure for the editor (block indent/reference/language, note
+         * schema version, structured recovery drafts) plus the durable Study tables.
+         */
+        val MIGRATION_15_16 = object : Migration(15, 16) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE note_blocks ADD COLUMN indent INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE note_blocks ADD COLUMN refObjectId TEXT")
+                db.execSQL("ALTER TABLE note_blocks ADD COLUMN language TEXT")
+                db.execSQL("ALTER TABLE notes ADD COLUMN schemaVersion INTEGER NOT NULL DEFAULT 1")
+                db.execSQL("ALTER TABLE note_drafts ADD COLUMN baseRevision INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE note_drafts ADD COLUMN sequence INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE note_drafts ADD COLUMN structureJson TEXT")
+
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS study_sessions (
+                        id TEXT NOT NULL,
+                        goal TEXT,
+                        assignmentLanguage TEXT,
+                        explanationLanguage TEXT,
+                        strongestLanguage TEXT,
+                        sourceObjectIdsJson TEXT NOT NULL,
+                        sourceRevision INTEGER,
+                        conversationId TEXT,
+                        runId TEXT,
+                        interactionId TEXT,
+                        tutorStage TEXT NOT NULL,
+                        lifecycle TEXT NOT NULL,
+                        currentExerciseId TEXT,
+                        solutionRevealed INTEGER NOT NULL,
+                        completedAtEpochMs INTEGER,
+                        schemaVersion INTEGER NOT NULL,
+                        createdAtEpochMs INTEGER NOT NULL,
+                        updatedAtEpochMs INTEGER NOT NULL,
+                        PRIMARY KEY(id)
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_study_sessions_lifecycle ON study_sessions(lifecycle)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_study_sessions_updatedAtEpochMs ON study_sessions(updatedAtEpochMs)")
+
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS study_attempts (
+                        id TEXT NOT NULL,
+                        sessionId TEXT NOT NULL,
+                        exerciseId TEXT NOT NULL,
+                        response TEXT NOT NULL,
+                        stage TEXT NOT NULL,
+                        helpRevealedJson TEXT NOT NULL,
+                        submissionKey TEXT NOT NULL,
+                        submittedAtEpochMs INTEGER NOT NULL,
+                        PRIMARY KEY(id),
+                        FOREIGN KEY(sessionId) REFERENCES study_sessions(id)
+                            ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_study_attempts_sessionId ON study_attempts(sessionId)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_study_attempts_exerciseId ON study_attempts(exerciseId)")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_study_attempts_submissionKey ON study_attempts(submissionKey)")
+
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS study_feedback (
+                        id TEXT NOT NULL,
+                        sessionId TEXT NOT NULL,
+                        attemptId TEXT NOT NULL,
+                        generationId TEXT NOT NULL,
+                        verdict TEXT NOT NULL,
+                        summary TEXT NOT NULL,
+                        nextStep TEXT NOT NULL,
+                        uncertainty TEXT,
+                        citationsJson TEXT NOT NULL,
+                        createdAtEpochMs INTEGER NOT NULL,
+                        PRIMARY KEY(id),
+                        FOREIGN KEY(attemptId) REFERENCES study_attempts(id)
+                            ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_study_feedback_sessionId ON study_feedback(sessionId)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_study_feedback_attemptId ON study_feedback(attemptId)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_study_feedback_generationId ON study_feedback(generationId)")
+
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS study_practice_items (
+                        id TEXT NOT NULL,
+                        sessionId TEXT NOT NULL,
+                        question TEXT NOT NULL,
+                        answer TEXT NOT NULL,
+                        sourceObjectId TEXT,
+                        sourceRevision INTEGER,
+                        accepted INTEGER NOT NULL,
+                        intervalIndex INTEGER NOT NULL,
+                        dueAtEpochMs INTEGER NOT NULL,
+                        reviewCount INTEGER NOT NULL,
+                        createdAtEpochMs INTEGER NOT NULL,
+                        lastReviewedAtEpochMs INTEGER,
+                        PRIMARY KEY(id),
+                        FOREIGN KEY(sessionId) REFERENCES study_sessions(id)
+                            ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_study_practice_items_sessionId ON study_practice_items(sessionId)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_study_practice_items_sourceObjectId ON study_practice_items(sourceObjectId)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_study_practice_items_dueAtEpochMs ON study_practice_items(dueAtEpochMs)")
+
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS study_review_events (
+                        id TEXT NOT NULL,
+                        itemId TEXT NOT NULL,
+                        sessionId TEXT NOT NULL,
+                        known INTEGER NOT NULL,
+                        previousIntervalIndex INTEGER NOT NULL,
+                        nextIntervalIndex INTEGER NOT NULL,
+                        nextDueAtEpochMs INTEGER NOT NULL,
+                        reviewedAtEpochMs INTEGER NOT NULL,
+                        PRIMARY KEY(id),
+                        FOREIGN KEY(itemId) REFERENCES study_practice_items(id)
+                            ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_study_review_events_itemId ON study_review_events(itemId)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_study_review_events_reviewedAtEpochMs ON study_review_events(reviewedAtEpochMs)")
+            }
+        }
+
+        /**
+         * v17: practice cards carry their ladder streaks, derived mastery flag and a user-edit flag
+         * so generated content can never overwrite learner edits silently.
+         */
+        val MIGRATION_16_17 = object : Migration(16, 17) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE study_practice_items ADD COLUMN knownStreak INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE study_practice_items ADD COLUMN wrongStreak INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE study_practice_items ADD COLUMN mastered INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE study_practice_items ADD COLUMN userEdited INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
         fun create(context: Context): AppDatabase =
             Room.databaseBuilder(context, AppDatabase::class.java, "halo.db")
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17)
                 .build()
     }
 }

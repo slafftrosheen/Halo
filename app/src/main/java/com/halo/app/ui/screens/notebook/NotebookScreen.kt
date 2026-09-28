@@ -12,7 +12,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -167,6 +169,74 @@ fun NotebookScreen(viewModel: NotebookViewModel) {
             if (state.selectedCollectionId != null) {
                 IconButton(onClick = { showDeleteCollection = true }) {
                     Icon(Icons.Default.DeleteOutline, contentDescription = "Delete selected collection")
+                }
+            }
+        }
+        if (state.duePractice.isNotEmpty()) {
+            Spacer(Modifier.height(8.dp))
+            val firstDue = state.duePractice.firstOrNull()
+            Surface(
+                onClick = { firstDue?.let { viewModel.openStudy(it.sessionId) } },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp),
+                color = MaterialTheme.colorScheme.primaryContainer,
+            ) {
+                Row(
+                    Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    HaloSignalGlyph(kind = HaloSignalKind.ACTION, size = 24.dp)
+                    Spacer(Modifier.size(10.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            "${state.duePractice.size} card(s) due for review",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        )
+                        Text(
+                            "Oldest: ${state.duePractice.first().question}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                    Text("Review", style = MaterialTheme.typography.labelLarge)
+                }
+            }
+        }
+        if (state.studySessions.isNotEmpty()) {
+            Spacer(Modifier.height(8.dp))
+            Text("Resume study", style = MaterialTheme.typography.titleSmall)
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(state.studySessions, key = { it.id }) { session ->
+                    Surface(
+                        onClick = { viewModel.openStudy(session.id) },
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                    ) {
+                        Row(
+                            Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            HaloSignalGlyph(kind = HaloSignalKind.NOTE, size = 20.dp)
+                            Spacer(Modifier.size(8.dp))
+                            Column {
+                                Text(
+                                    session.goal ?: "Study session",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                                Text(
+                                    session.tutorStage.name.replace('_', ' ').lowercase()
+                                        .replaceFirstChar { it.uppercase() },
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }

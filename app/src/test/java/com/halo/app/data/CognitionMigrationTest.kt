@@ -22,8 +22,8 @@ class CognitionMigrationTest {
         return JSONObject(file.readText()).getJSONObject("database")
     }
     private fun assertCurrentSchema(db: SupportSQLiteDatabase) {
-        assertEquals(15, db.version)
-        val entities = schema(15).getJSONArray("entities")
+        assertEquals(17, db.version)
+        val entities = schema(17).getJSONArray("entities")
         for (index in 0 until entities.length()) {
             val entity = entities.getJSONObject(index)
             val name = entity.getString("tableName")
@@ -91,7 +91,11 @@ class CognitionMigrationTest {
         helper.writableDatabase
         helper.close()
         val db = Room.databaseBuilder(context, AppDatabase::class.java, name)
-            .addMigrations(AppDatabase.MIGRATION_8_9, AppDatabase.MIGRATION_9_10, AppDatabase.MIGRATION_10_11, AppDatabase.MIGRATION_11_12, AppDatabase.MIGRATION_12_13, AppDatabase.MIGRATION_13_14, AppDatabase.MIGRATION_14_15)
+            .addMigrations(
+                AppDatabase.MIGRATION_8_9, AppDatabase.MIGRATION_9_10, AppDatabase.MIGRATION_10_11, AppDatabase.MIGRATION_11_12,
+                AppDatabase.MIGRATION_12_13, AppDatabase.MIGRATION_13_14, AppDatabase.MIGRATION_14_15,
+                AppDatabase.MIGRATION_15_16, AppDatabase.MIGRATION_16_17
+            )
             .allowMainThreadQueries().build()
         try {
             val sql = db.openHelper.writableDatabase // Room validates the entire migrated entity schema here.

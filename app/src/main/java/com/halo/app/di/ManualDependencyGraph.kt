@@ -106,13 +106,19 @@ object ManualDependencyGraph {
     val engineGraph by lazy { RuntimeStartupTrace.measure("graph.engines") { EngineGraph(applicationContext, infra, providerGraph, agentRunCoordinator, clarificationCoordinator, agentRunStore) } }
     val observerGraph by lazy { RuntimeStartupTrace.measure("graph.observers") { ObserverGraph(applicationContext, infra, engineGraph) } }
     val appDatabase by lazy { RuntimeStartupTrace.measure("graph.database") { AppDatabase.create(applicationContext) } }
-    val notebookRepository by lazy { RoomNotebookRepository(appDatabase.notebookDao()) }
+    val notebookRepository by lazy {
+        RoomNotebookRepository(
+            dao = appDatabase.notebookDao(),
+            // Legacy body writers are routed through the canonical document path.
+            documents = notebookDocumentRepository,
+        )
+    }
     val notebookUseCases by lazy { NotebookUseCases(notebookRepository) }
     val notebookAssetRepository by lazy {
         com.halo.app.data.workspace.NotebookAssetRepository(applicationContext, appDatabase)
     }
     val notebookDocumentRepository by lazy {
-        NotebookDocumentRepository(appDatabase.notebookDocumentDao(), appDatabase.notebookDao(), appDatabase)
+        NotebookDocumentRepository(appDatabase.notebookDocumentDao(), appDatabase)
     }
     val notebookOrganizationRepository by lazy {
         com.halo.app.data.notebook.NotebookOrganizationRepository(appDatabase.notebookOrganizationDao())
@@ -123,6 +129,43 @@ object ManualDependencyGraph {
         )
     }
     val captures by lazy { com.halo.app.capture.LocalCaptureStore(applicationContext, appDatabase, notebookRepository, eventBus) }
+
+    /** Durable guided Study: sessions, attempts, feedback, practice items and review history. */
+    val studyRepository by lazy {
+        com.halo.app.data.study.StudyRepository(appDatabase, appDatabase.studyDao())
+    }
+
+    val studyNarration by lazy {
+        com.halo.app.study.SpeechOutputStudyNarration(
+            eventBus = eventBus,
+            stopSpeech = { reason -> haloSpeechOutputCoordinator.stop(reason) },
+            scope = infra.scope,
+        )
+    }
+
+    val studyTutorGateway by lazy {
+        com.halo.app.study.AiRouterTutorGateway(
+            router = aiProviderRouter,
+            allowCloudSharing = { workspaceContext.cloudSharing.value },
+        )
+    }
+
+    /** Mirrors the stored review intensity so scheduling can read it without suspending. */
+    val studyReviewIntensity by lazy {
+        com.halo.app.study.StudyReviewIntensityController(
+            store = com.halo.app.study.HaloSettingsStudyReviewIntensityStore(settingsRepository),
+            scope = infra.scope,
+        )
+    }
+
+    val studyUseCases by lazy {
+        com.halo.app.study.StudyUseCases(
+            repository = studyRepository,
+            documents = notebookDocumentRepository,
+            narration = studyNarration,
+            reviewIntensity = studyReviewIntensity,
+        )
+    }
     val appearancePreferences by lazy { AppearancePreferences(applicationContext) }
 
     /** One runtime instance per Android process; Activities are only views over it. */
@@ -375,7 +418,19 @@ object ManualDependencyGraph {
         val notificationExecutor = notificationDigestTool
         val storageExecutor = StorageStatusToolExecutor(storageUsageRepository, storageAccessRepository)
         val fileExecutor = com.halo.app.di.tools.FileToolExecutor(applicationContext, workspaceFileRepository, workspaceRepository)
-        val workspaceExecutor = WorkspaceToolExecutor(notebookRepository, workspaceRepository, workspaceContext, assistantContextRepository)
+        val workspaceExecutor = WorkspaceToolExecutor(
+            notebookRepository, workspaceRepository, workspaceContext, assistantContextRepository,
+            studyStarter = com.halo.app.study.StudySessionStarter { sourceObjectId, interactionId ->
+                studyUseCases.start(
+                    com.halo.app.study.StartStudyRequest(
+                        sourceObjectId = sourceObjectId,
+                        interactionId = interactionId,
+                        actor = com.halo.app.study.StudyStarter.TOOL,
+                    )
+                )
+            },
+            studySessionDescriptions = { sessionId -> studyUseCases.describeSession(sessionId) },
+        )
         val memoryExecutor = com.halo.app.di.tools.MemoryToolExecutor(memoryRepository, memoryContextSource)
         val hostExecutor = com.halo.app.di.tools.HostTools(applicationContext, foreground)
         com.halo.runtime.cognition.tools.ToolRegistry(
@@ -642,7 +697,8 @@ object ManualDependencyGraph {
     val activityViewModel by lazy { ActivityViewModel(runtimeSnapshotManager, agentRunStore = agentRunStore) }
     val notebookViewModel by lazy {
         NotebookViewModel(
-            workspaceUseCases, notebookUseCases, notebookOrganizationRepository, notebookCanvasRepository
+            workspaceUseCases, notebookUseCases, notebookOrganizationRepository, notebookCanvasRepository,
+            study = studyUseCases,
         )
     }
     val devicesViewModel by lazy {

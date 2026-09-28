@@ -25,7 +25,12 @@ interface NotebookRepository {
 class RoomNotebookRepository(
     private val dao: NotebookDao,
     private val now: () -> Long = System::currentTimeMillis,
-    private val newId: () -> String = { UUID.randomUUID().toString() }
+    private val newId: () -> String = { UUID.randomUUID().toString() },
+    /**
+     * Optional canonical document writer. When a note owns blocks, the body-only path must not
+     * desynchronise the derived projection: it is re-routed through the command path instead.
+     */
+    private val documents: NotebookDocumentRepository? = null,
 ) : NotebookRepository {
     override fun observeNotes(
         query: String,
@@ -66,8 +71,19 @@ class RoomNotebookRepository(
     }
 
     override suspend fun saveNote(id: String, body: String): Boolean {
+        val documentWriter = documents
+        if (documentWriter != null && dao.countBlocks(id) > 0) {
+            // Legacy body callers are routed through the single document command path.
+            return when (documentWriter.replaceFromText(id, body)) {
+                is CommitOutcome.Committed -> {
+                    dao.deleteLegacyDraft(id)
+                    true
+                }
+                else -> false
+            }
+        }
         val updated = dao.updateNoteBody(id, body) == 1
-        if (updated) dao.deleteDraft(id)
+        if (updated) dao.deleteLegacyDraft(id)
         return updated
     }
 
@@ -76,6 +92,9 @@ class RoomNotebookRepository(
     }
 
     override suspend fun saveDraft(id: String, body: String) {
+        // A structural recovery draft (sequence > 0) owns block ids and base revision; a legacy
+        // text-only write must not flatten it.
+        if ((dao.getDraft(id)?.sequence ?: 0L) > 0L) return
         dao.upsertDraft(NoteDraftEntity(objectId = id, body = body, updatedAt = now()))
     }
 

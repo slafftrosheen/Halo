@@ -106,7 +106,11 @@ object HaloToolDescriptors {
         "halo_save_screen_to_notebook" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
             reversible(ReplaySafety.IDEMPOTENT_WITH_KEY), keywords = setOf("screen", "capture", "note"))
         "halo_study_with_halo" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
-            readOnly(definition.name), keywords = setOf("study", "tutor", "learn"))
+            reversible(ReplaySafety.IDEMPOTENT_WITH_KEY),
+            keywords = setOf("study", "tutor", "learn"),
+            presentation = ToolPresentation(title = "Start a study session", actionVerb = "Start study"))
+        "halo_get_study_session" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
+            readOnly(definition.name), keywords = setOf("study", "session", "progress", "mastery"))
         "halo_add_to_working_set" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
             reversible(), keywords = setOf("working", "set", "context"))
         "halo_remove_from_working_set" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,

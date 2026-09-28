@@ -55,6 +55,8 @@ import com.halo.app.ui.screens.notebook.CanvasEditorScreen
 import com.halo.app.ui.screens.notebook.CanvasEditorViewModel
 import com.halo.app.ui.screens.notebook.NoteEditorScreen
 import com.halo.app.ui.screens.notebook.NoteEditorViewModel
+import com.halo.app.ui.screens.study.StudyScreen
+import com.halo.app.ui.screens.study.StudyViewModel
 import com.halo.app.ui.screens.notebook.NotebookNavigation
 import com.halo.app.ui.screens.notebook.NotebookScreen
 import com.halo.app.ui.screens.notebook.WorkspaceObjectDetailScreen
@@ -190,6 +192,7 @@ fun AppShell(
                                 is NotebookNavigation.OpenFile -> navigateSafely("notebook/file/${event.id}")
                                 is NotebookNavigation.OpenMemory -> navigateSafely("notebook/memory/${event.id}")
                                 is NotebookNavigation.OpenCanvas -> navigateSafely("notebook/canvas/${event.id}")
+                                is NotebookNavigation.OpenStudy -> navigateSafely("notebook/study/${event.sessionId}")
                             }
                         }
                     }
@@ -212,10 +215,35 @@ fun AppShell(
                                 ManualDependencyGraph.notebookDocumentRepository,
                                 ManualDependencyGraph.workspaceUseCases,
                                 ManualDependencyGraph.aiProviderRouter,
-                                { ManualDependencyGraph.workspaceContext.cloudSharing.value }
+                                { ManualDependencyGraph.workspaceContext.cloudSharing.value },
+                                study = ManualDependencyGraph.studyUseCases,
                             )
                         )
-                        NoteEditorScreen(editorViewModel) { navController.popBackStack() }
+                        NoteEditorScreen(
+                            viewModel = editorViewModel,
+                            onBack = { navController.popBackStack() },
+                            onOpenStudy = { sessionId -> navigateSafely("notebook/study/$sessionId") },
+                        )
+                    }
+                }
+
+                composable(
+                    "notebook/study/{sessionId}",
+                    arguments = listOf(navArgument("sessionId") { type = NavType.StringType })
+                ) { entry ->
+                    val sessionId = entry.arguments?.getString("sessionId")
+                    if (sessionId == null) {
+                        LaunchedEffect(Unit) { navController.popBackStack() }
+                    } else {
+                        val studyViewModel: StudyViewModel = viewModel(
+                            key = "study-$sessionId",
+                            factory = StudyViewModel.Factory(
+                                sessionId,
+                                ManualDependencyGraph.studyUseCases,
+                                ManualDependencyGraph.studyTutorGateway,
+                            ),
+                        )
+                        StudyScreen(studyViewModel) { navController.popBackStack() }
                     }
                 }
 

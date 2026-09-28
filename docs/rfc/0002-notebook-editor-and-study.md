@@ -1,6 +1,26 @@
 # RFC: Notebook editor and Study companion
 
-Status: PROPOSED / PLAN FIRST. No implementation claimed. 2026-09-28.
+Status: PARTIALLY IMPLEMENTED IN SOURCE / UNVALIDATED. 2026-09-28.
+
+> Implementation record (source-only, no build or test run):
+> - NBS-01 — `NotebookDocumentRepository` is now the single, revision-checked document mutation
+>   owner (`NotebookDocumentModel.kt`, `NotebookDocument.kt`); commits are a SQL
+>   compare-and-swap that also refuses trashed notes; recovery drafts carry structure, base
+>   revision and edit sequence; one codec (`NotebookDocumentCodec.kt`) produces both the block
+>   document and the derived `notes.body` projection; the legacy body writer re-routes through the
+>   command path when a note owns blocks.
+> - NBS-02 — typed `DocumentCommand`/`DocumentReducer` (undo/redo source), find/replace, inline
+>   emphasis, list indent/outdent, read/source modes with lossy-conversion refusal, outline, real
+>   object references, and a command-driven editor UI (`NoteEditorViewModel.kt`,
+>   `NoteEditorScreen.kt`). The bounded renderer comparison is still open: this pass extends Compose.
+> - NBS-04 (note-source portion) — AI results are attributable proposals bound to a base revision
+>   and selection; application is revision checked, undoable and never silent.
+> - NBS-05 (core) — durable Study tables, repository and guided use cases
+>   (`data/study/`, `study/`, `ui/screens/study/`), a real `ASK -> … -> SOLUTION` transition policy,
+>   idempotent attempts, revision-bound feedback with citations, a review policy with a fake-clock
+>   friendly clock injection, and `halo_study_with_halo` now either persists a session or refuses.
+> - Still open: PDF/OCR breadth (NBS-03), practice scheduling UI polish and reminders (NBS-06), the
+>   renderer spike, and every acceptance gate. Nothing here is device- or test-verified.
 
 - Start Date: 2026-09-28
 - Target Milestone: Notebook and Study, NBS-01 through NBS-07

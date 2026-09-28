@@ -9,9 +9,12 @@ import com.halo.app.data.notebook.WorkspaceObjectType
 import com.halo.app.data.notebook.NotebookCollection
 import com.halo.app.data.notebook.NotebookOrganizationRepository
 import com.halo.app.data.notebook.NotebookCanvasRepository
+import com.halo.app.data.study.StudyPracticeItem
+import com.halo.app.data.study.StudySessionRecord
 import com.halo.app.data.workspace.WorkspaceQuery
 import com.halo.app.notebook.NotebookUseCases
 import com.halo.app.notebook.WorkspaceUseCases
+import com.halo.app.study.StudyUseCases
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
@@ -46,6 +49,10 @@ data class NotebookUiState(
     val selectedCollectionId: String? = null,
     val favorites: Set<String> = emptySet(),
     val selectedCollectionMembers: Set<String> = emptySet(),
+    /** Active guided-study sessions, resumable from Notebook. */
+    val studySessions: List<StudySessionRecord> = emptyList(),
+    /** Accepted practice cards whose review is due now, across every session. */
+    val duePractice: List<StudyPracticeItem> = emptyList(),
 )
 
 sealed interface NotebookNavigation {
@@ -54,6 +61,7 @@ sealed interface NotebookNavigation {
     data class OpenFile(val id: String) : NotebookNavigation
     data class OpenMemory(val id: String) : NotebookNavigation
     data class OpenCanvas(val id: String) : NotebookNavigation
+    data class OpenStudy(val sessionId: String) : NotebookNavigation
 }
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
@@ -62,7 +70,12 @@ class NotebookViewModel(
     private val notes: NotebookUseCases,
     private val organization: NotebookOrganizationRepository,
     private val canvases: NotebookCanvasRepository,
+    private val study: StudyUseCases? = null,
 ) : ViewModel() {
+    private val studySessionsFlow: kotlinx.coroutines.flow.Flow<List<StudySessionRecord>> =
+        study?.observeActiveSessions() ?: flowOf(emptyList())
+    private val duePracticeFlow: kotlinx.coroutines.flow.Flow<List<StudyPracticeItem>> =
+        study?.observeDuePracticeItems(limit = 50) ?: flowOf(emptyList())
     private val query = MutableStateFlow("")
     private val filter = MutableStateFlow(NotebookFilter.ALL)
     private val selectedCollection = MutableStateFlow<String?>(null)
@@ -91,6 +104,12 @@ class NotebookViewModel(
         val members: Set<String>,
     )
 
+    private data class AuxState(
+        val organization: OrganizationState,
+        val sessions: List<StudySessionRecord>,
+        val duePractice: List<StudyPracticeItem>,
+    )
+
     val uiState: StateFlow<NotebookUiState> = combine(query, debouncedQuery, filter, selectedCollection) {
             rawText, text, selectedFilter, collectionId ->
         QueryState(rawText, text, selectedFilter, collectionId)
@@ -114,6 +133,8 @@ class NotebookViewModel(
             }
             val objects = workspace.observe(WorkspaceQuery(types = types, lifecycle = lifecycle,
                 inboxOnly = selectedFilter == NotebookFilter.INBOX))
+            val sessions = studySessionsFlow
+            val due = duePracticeFlow
             val hits = flow { emit(if (text.isBlank()) null else workspace.search(text)) }
             val members = queryState.collectionId?.let(organization::observeMembers) ?: flowOf(emptySet<String>())
             val organizationState = combine(
@@ -121,8 +142,18 @@ class NotebookViewModel(
             ) { collections, favorites, collectionMembers ->
                 OrganizationState(collections, favorites, collectionMembers)
             }
-            combine(objects, hits, workspace.workingSet, workspace.observe(WorkspaceQuery()), organizationState) {
-                rows, result, selected, allObjects, organized ->
+            val auxState = combine(organizationState, sessions, due) { organizationState, sessionRows, dueRows ->
+                AuxState(organizationState, sessionRows, dueRows)
+            }
+            combine(
+                objects,
+                hits,
+                workspace.workingSet,
+                workspace.observe(WorkspaceQuery()),
+                auxState,
+            ) { rows, result, selected, allObjects, aux ->
+                val organized = aux.organization
+                val sessionRows = aux.sessions
                 val matches = result?.hits?.associateBy { it.objectId.value }.orEmpty()
                 var visible = if (text.isBlank()) rows else rows.filter { row ->
                     row.id.value in matches || row.title.contains(text, ignoreCase = true)
@@ -145,6 +176,8 @@ class NotebookViewModel(
                     selectedCollectionId = queryState.collectionId,
                     favorites = organized.favorites,
                     selectedCollectionMembers = organized.members,
+                    studySessions = sessionRows,
+                    duePractice = aux.duePractice,
                 )
             }
         }
@@ -172,6 +205,9 @@ class NotebookViewModel(
     }
     fun createNote() = viewModelScope.launch {
         navigationChannel.send(NotebookNavigation.OpenNote(notes.createQuickNote().id))
+    }
+    fun openStudy(sessionId: String) {
+        navigationChannel.trySend(NotebookNavigation.OpenStudy(sessionId))
     }
     fun createCanvas() = viewModelScope.launch {
         navigationChannel.send(NotebookNavigation.OpenCanvas(canvases.create()))

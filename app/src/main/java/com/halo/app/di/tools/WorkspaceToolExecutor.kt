@@ -4,21 +4,24 @@ import com.halo.app.data.WorkspaceContextStore
 import com.halo.app.data.notebook.NotebookRepository
 import com.halo.app.data.notebook.WorkspaceObjectId
 import com.halo.app.data.workspace.WorkspaceRepository
+import com.halo.app.study.StudySessionStarter
+import com.halo.app.study.StudyStartResult
 import com.halo.runtime.cognition.context.AssistantContextRepository
 import com.halo.runtime.cognition.tools.ToolExecutionResult
 import com.halo.runtime.cognition.tools.ToolExecutor
 import com.halo.sdk.provider.ToolCall
 import com.halo.sdk.provider.ToolDefinition
-import com.halo.sdk.runtime.study.StudySession
-import com.halo.sdk.runtime.study.TutorStage
 import kotlinx.coroutines.flow.first
-import java.util.UUID
 
 class WorkspaceToolExecutor(
     private val notebookRepository: NotebookRepository,
     private val workspaceRepository: WorkspaceRepository,
     private val workspaceContextStore: WorkspaceContextStore,
-    private val assistantContextRepository: AssistantContextRepository? = null
+    private val assistantContextRepository: AssistantContextRepository? = null,
+    /** Durable Study starter. Null means Study has no session store, so the tool must refuse. */
+    private val studyStarter: StudySessionStarter? = null,
+    /** Read-only Study description; the runtime sees the portable session contract, not storage. */
+    private val studySessionDescriptions: (suspend (String) -> String?)? = null,
 ) : ToolExecutor {
 
     override fun definitions(): List<ToolDefinition> = listOf(
@@ -65,6 +68,19 @@ class WorkspaceToolExecutor(
             )
         ),
         ToolDefinition(
+            id = "halo_get_study_session",
+            name = "halo_get_study_session",
+            description = "Read the state of an existing study session: goal, stage, sources, languages, attempts and measured mastery.",
+            parameters = mapOf(
+                "type" to "object",
+                "properties" to mapOf(
+                    "sessionId" to mapOf("type" to "string", "maxLength" to 100)
+                ),
+                "required" to listOf("sessionId"),
+                "additionalProperties" to false
+            )
+        ),
+        ToolDefinition(
             id = "halo_add_to_working_set",
             name = "halo_add_to_working_set",
             description = "Add a workspace object to active Working Set context.",
@@ -98,10 +114,15 @@ class WorkspaceToolExecutor(
         val key = when (toolCall.functionName) {
             "halo_create_note" -> "body"
             "halo_search_notebook" -> "query"
+            "halo_get_study_session" -> "sessionId"
             else -> "objectId"
         }
         val value = toolCall.arguments[key] as? String ?: return reject("Expected $key text")
-        val limit = if (key == "body") 2000 else if (key == "query") 500 else 100
+        val limit = when (key) {
+            "body" -> 2000
+            "query" -> 500
+            else -> 100
+        }
         if (toolCall.arguments.keys != setOf(key) || value.length > limit || (key != "query" && value.isBlank())) return reject("Invalid $key")
         if (key == "objectId") {
             val item = workspaceRepository.get(WorkspaceObjectId(value.trim())) ?: return reject("Workspace object not found")
@@ -138,15 +159,28 @@ class WorkspaceToolExecutor(
             "halo_study_with_halo" -> {
                 val objectId = toolCall.arguments["objectId"]?.toString()?.trim().orEmpty()
                 if (objectId.isBlank()) return reject("objectId is required")
-                val session = StudySession(
-                    id = UUID.randomUUID().toString(),
-                    assignmentLanguage = null,
-                    explanationLanguage = null,
-                    sourceObjectIds = listOf(objectId),
-                    interactionId = null,
-                    tutorStage = TutorStage.ASK
-                )
-                ToolExecutionResult.Success(toolCall.id, toolCall.functionName, "Started study session ${session.id} for object $objectId in ASK stage.")
+                val starter = studyStarter
+                    ?: return reject("Study is unavailable: no durable study session store is configured")
+                when (val result = starter.start(objectId, null)) {
+                    is StudyStartResult.Started -> ToolExecutionResult.Success(
+                        toolCall.id,
+                        toolCall.functionName,
+                        "Started study session ${result.session.id} for object $objectId in " +
+                            "${result.session.tutorStage.name} stage. Source revision " +
+                            "${result.session.sourceRevision ?: "unknown"}. It is saved and can be resumed from Notebook.",
+                    )
+                    is StudyStartResult.Unavailable ->
+                        reject("Study is unavailable: ${result.reason.explanation}")
+                }
+            }
+            "halo_get_study_session" -> {
+                val sessionId = toolCall.arguments["sessionId"]?.toString()?.trim().orEmpty()
+                if (sessionId.isBlank()) return reject("sessionId is required")
+                val describe = studySessionDescriptions
+                    ?: return reject("Study is unavailable: no durable study session store is configured")
+                val description = describe(sessionId)
+                    ?: return reject("Study session $sessionId was not found")
+                ToolExecutionResult.Success(toolCall.id, toolCall.functionName, description.take(2_000))
             }
             "halo_add_to_working_set" -> {
                 val objectId = toolCall.arguments["objectId"]?.toString()?.trim().orEmpty()

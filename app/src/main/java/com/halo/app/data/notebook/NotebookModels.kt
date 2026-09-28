@@ -1,5 +1,6 @@
 package com.halo.app.data.notebook
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -85,10 +86,15 @@ data class WorkspaceObjectEntity(
         )
     ]
 )
+/**
+ * Committed note header. [body] is the derived text projection of the canonical block document,
+ * kept for search/context/export consumers; it is never an independent editable document.
+ */
 data class NoteEntity(
     @PrimaryKey val objectId: String,
     val body: String,
-    val revision: Int
+    val revision: Int,
+    @ColumnInfo(defaultValue = "1") val schemaVersion: Int = 2
 )
 
 @Entity(
@@ -105,7 +111,13 @@ data class NoteEntity(
 data class NoteDraftEntity(
     @PrimaryKey val objectId: String,
     val body: String,
-    val updatedAt: Long
+    val updatedAt: Long,
+    /** Committed revision this draft was edited from. */
+    @ColumnInfo(defaultValue = "0") val baseRevision: Long = 0,
+    /** Monotonic edit sequence; an older save acknowledgement never clears a newer draft. */
+    @ColumnInfo(defaultValue = "0") val sequence: Long = 0,
+    /** Structural payload of the draft, so recovery preserves block ids and types. */
+    val structureJson: String? = null
 )
 
 data class NoteDraft(
