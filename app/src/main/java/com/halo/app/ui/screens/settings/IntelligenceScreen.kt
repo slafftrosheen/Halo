@@ -54,13 +54,16 @@ fun IntelligenceScreen(
     onBrowseModels: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var openRouterKeyDraft by rememberSaveable(uiState.activeProviderId) {
+    var openRouterKeyDraft by rememberSaveable(uiState.activeProviderId, uiState.openRouterKey) {
         mutableStateOf(uiState.openRouterKey)
     }
-    var openAiKeyDraft by rememberSaveable(uiState.activeProviderId) {
+    var openAiKeyDraft by rememberSaveable(uiState.activeProviderId, uiState.openAiKey) {
         mutableStateOf(uiState.openAiKey)
     }
-    var ollamaEndpointDraft by rememberSaveable(uiState.activeProviderId) {
+    var anthropicKeyDraft by rememberSaveable(uiState.activeProviderId, uiState.anthropicKey) {
+        mutableStateOf(uiState.anthropicKey)
+    }
+    var ollamaEndpointDraft by rememberSaveable(uiState.activeProviderId, uiState.ollamaEndpoint) {
         mutableStateOf(uiState.ollamaEndpoint)
     }
     var modelSearch by rememberSaveable { mutableStateOf("") }
@@ -187,6 +190,36 @@ fun IntelligenceScreen(
         }
 
         when (uiState.activeProviderId) {
+            ProviderIds.ANTHROPIC -> {
+                Spacer(Modifier.height(20.dp))
+                HaloWorkspaceSection(title = "Configuration") {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        OutlinedTextField(
+                            value = anthropicKeyDraft,
+                            onValueChange = { anthropicKeyDraft = it },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            label = { Text("Anthropic API key") },
+                            visualTransformation = PasswordVisualTransformation(),
+                        )
+                        Text(
+                            text = "Direct Claude access through Anthropic's Messages API. The key stays on this Android host.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        HaloWorkspaceButton(
+                            text = "Save and refresh",
+                            onClick = { viewModel.setAnthropicKey(anthropicKeyDraft) },
+                            enabled = anthropicKeyDraft.trim() != uiState.anthropicKey.trim(),
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
+            }
+
             ProviderIds.OPENAI -> {
                 Spacer(Modifier.height(20.dp))
                 HaloWorkspaceSection(title = "Configuration") {
@@ -490,6 +523,7 @@ private fun providerSetupSummary(providerId: String): String = when (providerId)
     ProviderIds.OLLAMA -> "Optional local-network server · endpoint required"
     ProviderIds.OPENROUTER -> "Optional cloud inference · API key required"
     ProviderIds.OPENAI -> "Direct OpenAI cloud inference · API key required"
+    ProviderIds.ANTHROPIC -> "Direct Claude cloud inference · API key required"
     else -> "Optional inference provider"
 }
 
@@ -561,6 +595,7 @@ private fun modelEntrySummary(entry: AiModelCatalogEntry): String = buildList {
         AiExecutionLocation.REMOTE -> when (entry.runtime.ref.providerId) {
             ProviderIds.OPENAI -> "Cloud · OpenAI"
             ProviderIds.OPENROUTER -> "Cloud · OpenRouter"
+            ProviderIds.ANTHROPIC -> "Cloud · Anthropic"
             else -> "Cloud"
         }
     })

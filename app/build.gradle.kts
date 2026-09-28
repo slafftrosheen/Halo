@@ -218,6 +218,7 @@ dependencies {
     implementation(project(":providers:android-assistant"))
     implementation(project(":providers:openrouter"))
     implementation(project(":providers:openai"))
+    implementation(project(":providers:anthropic"))
     implementation(project(":drivers:heycyan"))
     implementation(project(":drivers:simulator"))
 }

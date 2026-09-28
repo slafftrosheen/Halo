@@ -4,6 +4,7 @@ import android.content.Context
 import com.halo.app.storage.haloStorageLayout
 import com.halo.engines.speech.AlwaysWakeDetector
 import com.halo.providers.android.tts.AndroidTTSProvider
+import com.halo.providers.anthropic.AnthropicProvider
 import com.halo.providers.litert.LiteRtLocalProvider
 import com.halo.providers.litert.models.LiteRtModelManager
 import com.halo.providers.ollama.OllamaProvider
@@ -77,6 +78,7 @@ class AndroidProviderFactory(
                 runCatching { OllamaProvider(storage) }.getOrNull(),
                 runCatching { OpenRouterProvider(storage) }.getOrNull(),
                 runCatching { OpenAiProvider(storage) }.getOrNull(),
+                runCatching { AnthropicProvider(storage) }.getOrNull(),
             )
         )
     }

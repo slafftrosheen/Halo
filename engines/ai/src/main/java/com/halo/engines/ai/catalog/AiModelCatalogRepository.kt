@@ -82,6 +82,7 @@ class DefaultAiModelCatalogRepository(
                     "provider.ollama" -> AiWireProtocol.OLLAMA
                     "openrouter" -> AiWireProtocol.OPENAI_CHAT_COMPLETIONS
                     "openai" -> AiWireProtocol.OPENAI_CHAT_COMPLETIONS
+                    "anthropic" -> AiWireProtocol.ANTHROPIC_MESSAGES
                     else -> null
                 },
             ),

@@ -45,6 +45,8 @@ data class IntelligenceUiState(
     val openRouterModel: String = "openrouter/free",
     val openAiKey: String = "",
     val openAiModel: String = "",
+    val anthropicKey: String = "",
+    val anthropicModel: String = "",
     val ollamaEndpoint: String = "",
     val ollamaModel: String = "",
     val litertModel: String = "",
@@ -83,6 +85,8 @@ private data class IntelligenceSettings(
     val openRouterModel: String = "openrouter/free",
     val openAiKey: String = "",
     val openAiModel: String = "",
+    val anthropicKey: String = "",
+    val anthropicModel: String = "",
     val ollamaEndpoint: String = "",
     val ollamaModel: String = "llama3",
     val litertModel: String = "",
@@ -180,6 +184,8 @@ class IntelligenceViewModel(
                 openRouterModel = activeModel.takeIf { activeProvider == ProviderIds.OPENROUTER } ?: "openrouter/free",
                 openAiKey = storage.getString("openai_api_key") ?: "",
                 openAiModel = activeModel.takeIf { activeProvider == ProviderIds.OPENAI }.orEmpty(),
+                anthropicKey = storage.getString("anthropic_api_key") ?: "",
+                anthropicModel = activeModel.takeIf { activeProvider == ProviderIds.ANTHROPIC }.orEmpty(),
                 ollamaEndpoint = storage.getString("ollama_endpoint") ?: "",
                 ollamaModel = activeModel.takeIf { activeProvider == ProviderIds.OLLAMA }.orEmpty(),
                 litertModel = activeModel.takeIf { activeProvider == ProviderIds.LITERT }.orEmpty(),
@@ -284,6 +290,8 @@ class IntelligenceViewModel(
             openRouterModel = settings.openRouterModel,
             openAiKey = settings.openAiKey,
             openAiModel = settings.openAiModel,
+            anthropicKey = settings.anthropicKey,
+            anthropicModel = settings.anthropicModel,
             ollamaEndpoint = settings.ollamaEndpoint,
             ollamaModel = settings.ollamaModel,
             litertModel = settings.litertModel,
@@ -335,6 +343,7 @@ class IntelligenceViewModel(
             ProviderIds.OLLAMA -> selectTarget(AiModelRef(ProviderIds.OLLAMA, modelId))
             ProviderIds.OPENROUTER -> selectTarget(AiModelRef(ProviderIds.OPENROUTER, modelId))
             ProviderIds.OPENAI -> selectTarget(AiModelRef(ProviderIds.OPENAI, modelId))
+            ProviderIds.ANTHROPIC -> selectTarget(AiModelRef(ProviderIds.ANTHROPIC, modelId))
         }
     }
 
@@ -355,6 +364,7 @@ class IntelligenceViewModel(
             ProviderIds.OLLAMA -> updateSettings { it.copy(ollamaModel = ref.modelId) }
             ProviderIds.OPENROUTER -> updateSettings { it.copy(openRouterModel = ref.modelId) }
             ProviderIds.OPENAI -> updateSettings { it.copy(openAiModel = ref.modelId) }
+            ProviderIds.ANTHROPIC -> updateSettings { it.copy(anthropicModel = ref.modelId) }
         }
         aiProviderRouter.selectTarget(ref)
     }
@@ -413,6 +423,13 @@ class IntelligenceViewModel(
         updateSettings { it.copy(openAiKey = normalized) }
         persist { storage.putString("openai_api_key", normalized) }
         refreshModelsFor(ProviderIds.OPENAI)
+    }
+
+    fun setAnthropicKey(key: String) {
+        val normalized = key.trim()
+        updateSettings { it.copy(anthropicKey = normalized) }
+        persist { storage.putString("anthropic_api_key", normalized) }
+        refreshModelsFor(ProviderIds.ANTHROPIC)
     }
 
     fun setOllamaEndpoint(endpoint: String) {
