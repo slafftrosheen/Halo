@@ -83,6 +83,7 @@ include(":providers:sherpa-stt")
 include(":providers:android-tts")
 include(":providers:android-assistant")
 include(":providers:openrouter")
+include(":providers:openai")
 
 include(":libraries:common")
 include(":libraries:halo-cognition-language")

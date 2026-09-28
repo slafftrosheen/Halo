@@ -7,6 +7,7 @@ import com.halo.providers.android.tts.AndroidTTSProvider
 import com.halo.providers.litert.LiteRtLocalProvider
 import com.halo.providers.litert.models.LiteRtModelManager
 import com.halo.providers.ollama.OllamaProvider
+import com.halo.providers.openai.OpenAiProvider
 import com.halo.providers.openrouter.OpenRouterProvider
 import com.halo.providers.sherpa.stt.ReloadableSpeechRecognitionProvider
 import com.halo.providers.sherpa.stt.SherpaKeywordSpotterWakeWordDetector
@@ -74,7 +75,8 @@ class AndroidProviderFactory(
             aiProviders = listOfNotNull(
                 localProvider,
                 runCatching { OllamaProvider(storage) }.getOrNull(),
-                runCatching { OpenRouterProvider(storage) }.getOrNull()
+                runCatching { OpenRouterProvider(storage) }.getOrNull(),
+                runCatching { OpenAiProvider(storage) }.getOrNull(),
             )
         )
     }

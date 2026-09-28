@@ -57,6 +57,9 @@ fun IntelligenceScreen(
     var openRouterKeyDraft by rememberSaveable(uiState.activeProviderId) {
         mutableStateOf(uiState.openRouterKey)
     }
+    var openAiKeyDraft by rememberSaveable(uiState.activeProviderId) {
+        mutableStateOf(uiState.openAiKey)
+    }
     var ollamaEndpointDraft by rememberSaveable(uiState.activeProviderId) {
         mutableStateOf(uiState.ollamaEndpoint)
     }
@@ -169,7 +172,11 @@ fun IntelligenceScreen(
                 HaloWorkspaceRow(
                     title = provider.name,
                     subtitle = providerSetupSummary(provider.id),
-                    trailingText = if (provider.isSelected) "Selected" else null,
+                    trailingText = if (provider.isSelected) {
+                        "Selected"
+                    } else {
+                        provider.status.state.name.lowercase().replaceFirstChar { it.uppercase() }
+                    },
                     selected = provider.isSelected,
                     onClick = { viewModel.selectProvider(provider.id) }
                 )
@@ -180,6 +187,36 @@ fun IntelligenceScreen(
         }
 
         when (uiState.activeProviderId) {
+            ProviderIds.OPENAI -> {
+                Spacer(Modifier.height(20.dp))
+                HaloWorkspaceSection(title = "Configuration") {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        OutlinedTextField(
+                            value = openAiKeyDraft,
+                            onValueChange = { openAiKeyDraft = it },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            label = { Text("OpenAI API key") },
+                            visualTransformation = PasswordVisualTransformation(),
+                        )
+                        Text(
+                            text = "Direct OpenAI access. The key stays on this Android host and is never routed through OpenRouter.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        HaloWorkspaceButton(
+                            text = "Save and refresh",
+                            onClick = { viewModel.setOpenAiKey(openAiKeyDraft) },
+                            enabled = openAiKeyDraft.trim() != uiState.openAiKey.trim(),
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
+            }
+
             ProviderIds.OPENROUTER -> {
                 Spacer(Modifier.height(20.dp))
                 HaloWorkspaceSection(title = "Configuration") {
@@ -452,6 +489,7 @@ private fun providerSetupSummary(providerId: String): String = when (providerId)
     ProviderIds.LITERT -> "Default · on-device LiteRT · no server or API key"
     ProviderIds.OLLAMA -> "Optional local-network server · endpoint required"
     ProviderIds.OPENROUTER -> "Optional cloud inference · API key required"
+    ProviderIds.OPENAI -> "Direct OpenAI cloud inference · API key required"
     else -> "Optional inference provider"
 }
 
@@ -520,7 +558,11 @@ private fun modelEntrySummary(entry: AiModelCatalogEntry): String = buildList {
     add(when (entry.runtime.location) {
         AiExecutionLocation.ON_DEVICE -> "On device"
         AiExecutionLocation.LOCAL_NETWORK -> "Local network"
-        AiExecutionLocation.REMOTE -> "Cloud · OpenRouter"
+        AiExecutionLocation.REMOTE -> when (entry.runtime.ref.providerId) {
+            ProviderIds.OPENAI -> "Cloud · OpenAI"
+            ProviderIds.OPENROUTER -> "Cloud · OpenRouter"
+            else -> "Cloud"
+        }
     })
     if (entry.kind == AiModelKind.ROUTER) add("Dynamic router")
     if (entry.source == ModelCatalogueSource.LOCAL_DOWNLOADABLE) add("Download")

@@ -81,6 +81,7 @@ class DefaultAiModelCatalogRepository(
                     DefaultAiProviderRouter.LITERT_PROVIDER_ID -> AiWireProtocol.LITERT_NATIVE
                     "provider.ollama" -> AiWireProtocol.OLLAMA
                     "openrouter" -> AiWireProtocol.OPENAI_CHAT_COMPLETIONS
+                    "openai" -> AiWireProtocol.OPENAI_CHAT_COMPLETIONS
                     else -> null
                 },
             ),

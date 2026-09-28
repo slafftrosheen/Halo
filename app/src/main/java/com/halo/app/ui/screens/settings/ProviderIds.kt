@@ -6,6 +6,7 @@ package com.halo.app.ui.screens.settings
  */
 object ProviderIds {
     const val OPENROUTER = "openrouter"
+    const val OPENAI = "openai"
     const val OLLAMA = "provider.ollama"
 
     /**

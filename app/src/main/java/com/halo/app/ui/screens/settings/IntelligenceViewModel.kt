@@ -43,6 +43,8 @@ data class IntelligenceUiState(
     val isRefreshingModels: Boolean = false,
     val openRouterKey: String = "",
     val openRouterModel: String = "openrouter/free",
+    val openAiKey: String = "",
+    val openAiModel: String = "",
     val ollamaEndpoint: String = "",
     val ollamaModel: String = "",
     val litertModel: String = "",
@@ -79,6 +81,8 @@ data class IntelligenceUiState(
 private data class IntelligenceSettings(
     val openRouterKey: String = "",
     val openRouterModel: String = "openrouter/free",
+    val openAiKey: String = "",
+    val openAiModel: String = "",
     val ollamaEndpoint: String = "",
     val ollamaModel: String = "llama3",
     val litertModel: String = "",
@@ -174,6 +178,8 @@ class IntelligenceViewModel(
             IntelligenceSettings(
                 openRouterKey = storage.getString("openrouter_api_key") ?: "",
                 openRouterModel = activeModel.takeIf { activeProvider == ProviderIds.OPENROUTER } ?: "openrouter/free",
+                openAiKey = storage.getString("openai_api_key") ?: "",
+                openAiModel = activeModel.takeIf { activeProvider == ProviderIds.OPENAI }.orEmpty(),
                 ollamaEndpoint = storage.getString("ollama_endpoint") ?: "",
                 ollamaModel = activeModel.takeIf { activeProvider == ProviderIds.OLLAMA }.orEmpty(),
                 litertModel = activeModel.takeIf { activeProvider == ProviderIds.LITERT }.orEmpty(),
@@ -276,6 +282,8 @@ class IntelligenceViewModel(
             isRefreshingModels = selection.catalog.refreshingProviders.isNotEmpty(),
             openRouterKey = settings.openRouterKey,
             openRouterModel = settings.openRouterModel,
+            openAiKey = settings.openAiKey,
+            openAiModel = settings.openAiModel,
             ollamaEndpoint = settings.ollamaEndpoint,
             ollamaModel = settings.ollamaModel,
             litertModel = settings.litertModel,
@@ -326,6 +334,7 @@ class IntelligenceViewModel(
             ProviderIds.LITERT -> selectLocalModel(modelId)
             ProviderIds.OLLAMA -> selectTarget(AiModelRef(ProviderIds.OLLAMA, modelId))
             ProviderIds.OPENROUTER -> selectTarget(AiModelRef(ProviderIds.OPENROUTER, modelId))
+            ProviderIds.OPENAI -> selectTarget(AiModelRef(ProviderIds.OPENAI, modelId))
         }
     }
 
@@ -345,6 +354,7 @@ class IntelligenceViewModel(
             ProviderIds.LITERT -> updateSettings { it.copy(litertModel = ref.modelId) }
             ProviderIds.OLLAMA -> updateSettings { it.copy(ollamaModel = ref.modelId) }
             ProviderIds.OPENROUTER -> updateSettings { it.copy(openRouterModel = ref.modelId) }
+            ProviderIds.OPENAI -> updateSettings { it.copy(openAiModel = ref.modelId) }
         }
         aiProviderRouter.selectTarget(ref)
     }
@@ -396,6 +406,13 @@ class IntelligenceViewModel(
         updateSettings { it.copy(openRouterKey = normalized) }
         persist { storage.putString("openrouter_api_key", normalized) }
         refreshModelsFor(ProviderIds.OPENROUTER)
+    }
+
+    fun setOpenAiKey(key: String) {
+        val normalized = key.trim()
+        updateSettings { it.copy(openAiKey = normalized) }
+        persist { storage.putString("openai_api_key", normalized) }
+        refreshModelsFor(ProviderIds.OPENAI)
     }
 
     fun setOllamaEndpoint(endpoint: String) {
