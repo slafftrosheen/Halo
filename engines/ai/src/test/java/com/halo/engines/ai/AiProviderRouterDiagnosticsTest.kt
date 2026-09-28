@@ -154,7 +154,8 @@ class AiProviderRouterDiagnosticsTest {
         assertEquals(TargetRejectionReason.MODEL_NOT_INSTALLED, decision.rejectedTargets.single().reason)
     }
     @Test fun `local only records cloud policy exclusion`() = runTest {
-        val router = DefaultAiProviderRouter(listOf(MockProvider("cloud", "Cloud", isLocal = false)), FakeStorage())
+        val storage = FakeStorage().apply { putString("ai_routing_policy", AiRoutingPolicy.LOCAL_ONLY.name) }
+        val router = DefaultAiProviderRouter(listOf(MockProvider("cloud", "Cloud", isLocal = false)), storage)
         assertTrue(runCatching { router.resolveExecutionTarget(AiRequest(text = "hello")) }.isFailure)
         assertEquals(TargetRejectionReason.POLICY_EXCLUDED, router.lastRoutingDecision.value?.rejectedTargets?.single()?.reason)
         assertNull(router.lastRoutingDecision.value?.resolvedProviderId)

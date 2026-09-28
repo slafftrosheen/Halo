@@ -591,9 +591,8 @@ class OpenRouterProvider(
         } else null
         val type = when (statusCode) {
             400 -> if (ContextOverflow.matches(providerCode, detail)) AiErrorType.CONTEXT_TOO_LARGE else AiErrorType.INVALID_REQUEST
-            401 -> AiErrorType.AUTHENTICATION_FAILED
+            401, 403 -> AiErrorType.AUTHENTICATION_FAILED
             402 -> AiErrorType.PROVIDER_UNAVAILABLE
-            403 -> AiErrorType.INVALID_REQUEST
             408 -> AiErrorType.TIMEOUT
             409 -> AiErrorType.PROVIDER_UNAVAILABLE
             429 -> AiErrorType.RATE_LIMITED
@@ -630,7 +629,7 @@ class OpenRouterProvider(
         val numericCode = providerCode?.toIntOrNull()
         val type = when {
             ContextOverflow.matches(providerCode, message) -> AiErrorType.CONTEXT_TOO_LARGE
-            numericCode == 401 -> AiErrorType.AUTHENTICATION_FAILED
+            numericCode == 401 || numericCode == 403 -> AiErrorType.AUTHENTICATION_FAILED
             numericCode == 408 -> AiErrorType.TIMEOUT
             numericCode == 429 -> AiErrorType.RATE_LIMITED
             numericCode in setOf(402, 409, 500, 502, 503, 504) -> AiErrorType.PROVIDER_UNAVAILABLE

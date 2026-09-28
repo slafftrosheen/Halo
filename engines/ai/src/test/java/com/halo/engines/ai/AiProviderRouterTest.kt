@@ -232,7 +232,7 @@ class AiProviderRouterTest {
     fun `designated default provider wins registration order on clean install`() = runTest {
         val storage = FakeStorage()
         val ollama = MockProvider("provider.ollama", "Ollama", isLocal = true)
-        val native = MockProvider("provider.llamacpp.native", "llama.cpp", isLocal = true)
+        val native = MockProvider("provider.litert.local", "LiteRT", isLocal = true)
         val router = DefaultAiProviderRouter(
             providers = listOf(ollama, native),
             storage = storage,
@@ -240,7 +240,7 @@ class AiProviderRouterTest {
         )
 
         assertEquals(native.id, router.selectedProviderId.value)
-        assertEquals(AiRoutingPolicy.LOCAL_ONLY, router.routingPolicy.value)
+        assertEquals(AiRoutingPolicy.AUTOMATIC, router.routingPolicy.value)
     }
 
     @Test
@@ -262,13 +262,13 @@ class AiProviderRouterTest {
     }
 
     @Test
-    fun `router defaults to local-only routing`() = runTest {
+    fun `router defaults to automatic routing`() = runTest {
         val storage = FakeStorage()
         val cloud = MockProvider("cloud", "Cloud", isLocal = false)
         val local = MockProvider("local", "Local", isLocal = true)
         val router = DefaultAiProviderRouter(listOf(cloud, local), storage)
 
-        assertEquals(AiRoutingPolicy.LOCAL_ONLY, router.routingPolicy.value)
+        assertEquals(AiRoutingPolicy.AUTOMATIC, router.routingPolicy.value)
         val response = router.execute(AiRequest(text = "Hello"), AiContext.EMPTY)
         assertEquals("local", response.providerId)
         assertEquals(0, cloud.receivedRequests.size)

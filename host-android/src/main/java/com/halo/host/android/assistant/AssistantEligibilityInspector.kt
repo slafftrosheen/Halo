@@ -74,7 +74,7 @@ class AssistantEligibilityInspector(
         val activeInteractorRead = runCatching {
             Settings.Secure.getString(
                 context.contentResolver,
-                Settings.Secure.VOICE_INTERACTION_SERVICE,
+                "voice_interaction_service",
             )
         }
         val activeInteractorComponent = activeInteractorRead.getOrNull()?.trim()?.ifBlank { null }
