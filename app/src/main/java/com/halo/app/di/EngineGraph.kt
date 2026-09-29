@@ -23,6 +23,7 @@ import com.halo.host.android.capability.AndroidWebCapability
 import com.halo.runtime.cognition.response.CommandResponseProcess
 import com.halo.runtime.speech.SpeechPerceptionBridge
 import com.halo.runtime.speech.SpeechSessionManager
+import com.halo.providers.litert.models.LiteRtModelCatalog
 import com.halo.sdk.runtime.NativeResourceCoordinator
 
 /**
@@ -104,7 +105,8 @@ class EngineGraph(
             storage = ManualDependencyGraph.storage,
             eventBus = infra.eventBus,
             logger = infra.logger,
-            defaultInferenceProviderId = providerGraph.providers.inference.id
+            defaultInferenceProviderId = providerGraph.providers.inference.id,
+            defaultInferenceModelId = LiteRtModelCatalog.QWEN3_0_6B_DYNAMIC_INT4_ID,
         )
     }
     val aiEngine by lazy { AIEngine(aiProviderRouter, ManualDependencyGraph.storage) }
