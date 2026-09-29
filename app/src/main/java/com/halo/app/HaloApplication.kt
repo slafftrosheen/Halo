@@ -13,6 +13,7 @@ import com.halo.app.backup.BrainBackupScheduler
 import com.halo.app.di.ManualDependencyGraph
 import com.halo.app.security.AndroidKeystoreSecretStore
 import com.halo.app.security.SecretMigration
+import com.halo.app.security.SecretMigrationV2
 import com.halo.app.storage.LocalAssetStorageMigration
 import com.halo.app.storage.haloStorageLayout
 import com.halo.sdk.runtime.NativeMemoryPressure
@@ -122,9 +123,16 @@ class HaloApplication :
                 val layout = haloStorageLayout(this@HaloApplication)
                 layout.ensureDirectories()
                 LocalAssetStorageMigration(this@HaloApplication, layout).migrate()
+                val secretStore = AndroidKeystoreSecretStore(layout)
                 SecretMigration(
                     this@HaloApplication,
-                    AndroidKeystoreSecretStore(layout),
+                    secretStore,
+                ).migrate()
+                // Migrate every newer provider credential from legacy/plain storage before the
+                // SecretBackedStorage facade begins serving those keys exclusively from Keystore.
+                SecretMigrationV2(
+                    com.halo.host.android.AndroidStorage(this@HaloApplication),
+                    secretStore,
                 ).migrate()
             } finally {
                 RuntimeStartupTrace.mark("application.storageBootstrap.end", startedAt)
