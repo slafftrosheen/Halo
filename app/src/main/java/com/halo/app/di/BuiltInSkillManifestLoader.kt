@@ -15,12 +15,24 @@ import java.security.MessageDigest
 
 class BuiltInSkillManifestLoader(private val context: Context) {
     fun load(): List<SkillDescriptor> {
-        val descriptors = loadBundledManifests(strict = false)
-        // Duplicate ids are resolved by BuiltInSkillMerge, which keeps the strictest declared risk
-        // and unions tools/permissions. A plain associateBy here let a manifest override the
-        // registry with a weaker classification for the same skill.
+        val descriptors = loadBundledManifests(strict = true)
+        val defaults = DefaultSkillRegistry.defaultBuiltInSkills()
+
+        val duplicateIds = descriptors.groupBy { it.id }.filterValues { it.size > 1 }.keys
+        require(duplicateIds.isEmpty()) {
+            "Duplicate bundled skill ids: ${duplicateIds.joinToString { it.value }}"
+        }
+
+        val manifestIds = descriptors.mapTo(linkedSetOf()) { it.id }
+        val missingManifests = defaults.map { it.id }.filterNot(manifestIds::contains)
+        require(missingManifests.isEmpty()) {
+            "Built-in skills missing manifests: ${missingManifests.joinToString { it.value }}"
+        }
+
+        // Runtime defaults are now a compatibility/risk floor only. Every built-in skill must
+        // ship a validated manifest; invalid assets fail closed instead of silently disappearing.
         return BuiltInSkillMerge.merge(
-            defaults = DefaultSkillRegistry.defaultBuiltInSkills(),
+            defaults = defaults,
             manifests = descriptors,
         )
     }
