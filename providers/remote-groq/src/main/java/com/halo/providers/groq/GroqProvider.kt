@@ -2,6 +2,8 @@ package com.halo.providers.groq
 
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.Storage
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import java.util.concurrent.TimeUnit
 import okhttp3.OkHttpClient
 
@@ -35,7 +37,7 @@ class GroqProvider(
     )
 
     override val status: StateFlow<ProviderStatus> get() = configured.status
-    override val authInfo: StateFlow<ProviderAuthInfo> get() = configured.authInfo
+    val authInfo: StateFlow<ProviderAuthInfo> get() = configured.authInfo
 
     override suspend fun getCapabilities(): Set<AiCapability> = configured.getCapabilities()
     override suspend fun getStatus(): ProviderStatus = configured.getStatus()

@@ -1,7 +1,7 @@
 package com.halo.providers.xai
 
-import com.halo.app.security.SecretStore
 import com.halo.sdk.provider.CredentialTransportPolicy
+import com.halo.sdk.provider.ProviderSecretStore
 import com.halo.sdk.provider.CredentialTransportResult
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -27,7 +27,7 @@ import java.net.URI
  * client identity into Halo.
  */
 class XaiSubscriptionAuthCoordinator(
-    private val secretStore: SecretStore,
+    private val secretStore: ProviderSecretStore,
     /** Base device/auth endpoint. This is illustrative, not permanent truth. */
     private val baseUrl: String = "https://api.x.ai/v1/oauth",
     /** Set when Halo has its own suitable client configuration. */
@@ -117,3 +117,5 @@ sealed interface RefreshResult {
     data class Success(val accessToken: String, val expiresInSeconds: Long) : RefreshResult
     data class Unavailable(val reason: String) : RefreshResult
 }
+
+private suspend fun <T> withLock(mutex: Mutex, block: suspend () -> T): T = mutex.withLock { block() }

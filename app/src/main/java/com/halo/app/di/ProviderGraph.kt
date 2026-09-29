@@ -8,6 +8,7 @@ import com.halo.providers.sherpa.stt.ReloadableSpeechRecognitionProvider
 import com.halo.providers.sherpa.stt.DefaultSpeechModelInventoryRepository
 import com.halo.sdk.runtime.NativeResourceCoordinator
 import com.halo.sdk.runtime.Storage
+import com.halo.sdk.provider.RemoteProviderPresenceRegistry
 
 /**
  * Owns provider construction. Android-aware (needs Context for provider instantiation).
@@ -17,11 +18,16 @@ class ProviderGraph(
     applicationContext: Context,
     private val storage: Storage,
     private val infra: InfrastructureGraph? = null,
+    private val secretStore: com.halo.app.security.SecretStore? = null,
 ) {
 
     private val storageLayout by lazy { haloStorageLayout(applicationContext) }
     val modelManager by lazy { LiteRtModelManager(applicationContext, modelRoot = storageLayout.models) }
     val nativeResourceCoordinator by lazy { NativeResourceCoordinator(infra?.resourceLeaseManager) }
+
+    /** Presence for the remote provider fabric, populated when providers are created. */
+    val remoteProviderPresenceRegistry: RemoteProviderPresenceRegistry
+        get() = providerFactory.remoteProviderPresenceRegistry
     val speechModelInventory by lazy {
         DefaultSpeechModelInventoryRepository(
             speechRoot = { storageLayout.speechModels }
@@ -33,7 +39,8 @@ class ProviderGraph(
             applicationContext,
             modelManager,
             storage,
-            nativeResourceCoordinator
+            nativeResourceCoordinator,
+            secretStore = secretStore,
         )
     }
 

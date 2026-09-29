@@ -205,7 +205,8 @@ data class EngineStarted(override val id: String = UUID.randomUUID().toString(),
 data class EngineFailed(override val id: String = UUID.randomUUID().toString(), override val engineId: String, val reason: String, override val timestamp: Long = System.currentTimeMillis()) : EngineLifecycleEvent
 data class EngineStopped(override val id: String = UUID.randomUUID().toString(), override val engineId: String, override val timestamp: Long = System.currentTimeMillis()) : EngineLifecycleEvent
 
-// Provider Events    data class ProviderConnected(override val id: String = UUID.randomUUID().toString(), val providerId: String, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
+// Provider Events
+data class ProviderConnected(override val id: String = UUID.randomUUID().toString(), val providerId: String, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
     data class ProviderAuthStateChanged(override val id: String = UUID.randomUUID().toString(), val providerId: String, val authState: String, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
 
 

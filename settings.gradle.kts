@@ -87,6 +87,15 @@ include(":providers:openai")
 include(":providers:anthropic")
 include(":providers:gemini")
 
+// RUNTIME-055 remote-provider fabric presets
+include(":providers:remote-groq")
+include(":providers:remote-cerebras")
+include(":providers:remote-opencode-zen")
+include(":providers:remote-xai")
+include(":providers:remote-opencode-companion")
+include(":providers:remote-custom-openai-compatible")
+include(":providers:remote-gemini-oauth")
+
 include(":libraries:common")
 include(":libraries:halo-cognition-language")
 include(":libraries:logging")

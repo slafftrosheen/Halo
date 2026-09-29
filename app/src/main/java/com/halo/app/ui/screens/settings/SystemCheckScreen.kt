@@ -107,17 +107,19 @@ fun SystemCheckScreen(
                 SystemCheckCard(
                     item = item,
                     onAction = {
-                        val action = when (item.id) {
-                            "assistant" -> SystemCheckAction.OpenAssistantSettings
-                            "mic" -> SystemCheckAction.RunSttProbe
-                            "ai_execution" -> SystemCheckAction.RunTextProbe
-                            "agentic_execution" -> SystemCheckAction.RunAgenticProbe
-                            "audio" -> SystemCheckAction.RunTtsProbe
-                            "phone_alarm" -> SystemCheckAction.TestAlarm
-                            "phone_app" -> SystemCheckAction.TestOpenApp
-                            "phone_volume" -> SystemCheckAction.TestVolume
+                        val action = when {
+                            item.id == "assistant" -> SystemCheckAction.OpenAssistantSettings
+                            item.id == "mic" -> SystemCheckAction.RunSttProbe
+                            item.id == "ai_execution" -> SystemCheckAction.RunTextProbe
+                            item.id == "agentic_execution" -> SystemCheckAction.RunAgenticProbe
+                            item.id == "audio" -> SystemCheckAction.RunTtsProbe
+                            item.id == "phone_alarm" -> SystemCheckAction.TestAlarm
+                            item.id == "phone_app" -> SystemCheckAction.TestOpenApp
+                            item.id == "phone_volume" -> SystemCheckAction.TestVolume
+                            item.id.startsWith("remote_") -> SystemCheckAction.Refresh
                             else -> SystemCheckAction.Refresh
                         }
+                        if (item.id.startsWith("remote_")) viewModel.refreshRemoteProviders()
                         if (action is SystemCheckAction.OpenAssistantSettings) {
                             viewModel.launchAssistantEnrollment { intent -> assistantLauncher.launch(intent) }
                         } else {

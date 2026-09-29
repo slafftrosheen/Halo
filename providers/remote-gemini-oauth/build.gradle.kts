@@ -13,4 +13,5 @@ dependencies {
     implementation(project(":sdk:runtime-sdk"))
     implementation(libs.okhttp)
     implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.play.services.auth)
 }

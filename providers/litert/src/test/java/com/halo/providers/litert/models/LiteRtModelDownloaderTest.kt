@@ -250,7 +250,7 @@ class LiteRtModelDownloaderTest {
 
     @Test
     fun `a second download for the same model is refused while one is in flight`() {
-        alwaysRespond { MockResponse().setSocketPolicy(okhttp3.mockwebserver.SocketPolicy.NO_RESPONSE) }
+        alwaysRespond { MockResponse().setBodyDelay(10, TimeUnit.SECONDS) }
         val manager = manager(tempRoot("lock"))
 
         manager.downloadCatalogModel(entry())

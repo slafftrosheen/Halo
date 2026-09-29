@@ -2,6 +2,8 @@ package com.halo.providers.xai
 
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.Storage
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 
 /**
  * xAI direct API preset over the shared OpenAI-compatible fabric.
@@ -34,7 +36,7 @@ class XaiProvider(
     )
 
     override val status: StateFlow<ProviderStatus> get() = configured.status
-    override val authInfo: StateFlow<ProviderAuthInfo> get() = configured.authInfo
+    val authInfo: StateFlow<ProviderAuthInfo> get() = configured.authInfo
 
     override suspend fun getCapabilities(): Set<AiCapability> = configured.getCapabilities()
     override suspend fun getStatus(): ProviderStatus = configured.getStatus()

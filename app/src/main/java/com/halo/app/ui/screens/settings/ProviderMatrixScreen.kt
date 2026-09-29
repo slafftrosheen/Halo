@@ -30,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -43,9 +44,12 @@ import com.halo.sdk.provider.AiWireProtocol
 import com.halo.sdk.provider.ProviderAuthKind
 import com.halo.sdk.provider.ProviderAuthState
 import com.halo.sdk.provider.ProviderAccessKind
+import com.halo.sdk.provider.ProviderReadiness
 import com.halo.sdk.provider.ProviderStatus
 import com.halo.sdk.provider.RemoteProviderDescriptor
 import com.halo.sdk.provider.RemoteProviderIds
+import com.halo.sdk.provider.RemoteProviderPresenceRegistry
+import com.halo.sdk.provider.RemoteProviderPresets
 
 data class RemoteProviderMatrixRow(
     val descriptor: RemoteProviderDescriptor,
@@ -111,8 +115,10 @@ private fun AiExecutionLocation.toIcon(): ImageVector = when (this) {
 @Composable
 fun ProviderMatrixScreen(
     onBack: () -> Unit,
+    registry: RemoteProviderPresenceRegistry? = null,
+    credentialPresent: (String) -> Boolean = { false },
 ) {
-    val rows = rememberRemoteProviderMatrix()
+    val rows = rememberRemoteProviderMatrix(registry, credentialPresent)
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -285,6 +291,40 @@ private fun RowScope.MatrixChip(label: String, value: String) {
 }
 
 @Composable
-private fun rememberRemoteProviderMatrix(): List<RemoteProviderMatrixRow> {
-    return emptyList()
+private fun rememberRemoteProviderMatrix(
+    registry: RemoteProviderPresenceRegistry?,
+    credentialPresent: (String) -> Boolean,
+): List<RemoteProviderMatrixRow> {
+    return remember(registry, credentialPresent) {
+        listOf(
+            RemoteProviderPresets.groq,
+            RemoteProviderPresets.cerebras,
+            RemoteProviderPresets.opencodeZen,
+            RemoteProviderPresets.xai,
+            RemoteProviderPresets.opencodeCompanion,
+            RemoteProviderPresets.customOpenAiCompatible,
+        ).map { descriptor ->
+            val presence = registry?.presence(descriptor.id)?.value
+            val configured = presence?.isConfigured
+                ?: credentialPresent(credentialKeyFor(descriptor.id))
+            val authState = presence?.authInfo?.authState
+                ?: if (configured) ProviderAuthState.CONNECTED else ProviderAuthState.NOT_CONFIGURED
+            RemoteProviderMatrixRow(
+                descriptor = descriptor,
+                status = presence?.status ?: ProviderStatus(ProviderStatus.State.UNCONFIGURED, null, ProviderReadiness.Unconfigured),
+                authState = authState,
+                authKind = descriptor.authKinds.firstOrNull() ?: ProviderAuthKind.NONE,
+                isConfigured = configured,
+            )
+        }
+    }
+}
+
+private fun credentialKeyFor(providerId: String): String = when (providerId) {
+    RemoteProviderIds.GROQ -> "groq_api_key"
+    RemoteProviderIds.CEREBRAS -> "cerebras_api_key"
+    RemoteProviderIds.OPENCODE_ZEN -> "opencode_zen_api_key"
+    RemoteProviderIds.XAI -> "xai_api_key"
+    RemoteProviderIds.OPENCODE_COMPANION -> "opencode_companion_credential"
+    else -> "custom_openai_compatible_credential"
 }

@@ -20,6 +20,11 @@ import com.halo.providers.litert.models.LiteRtModelManager
 import com.halo.sdk.provider.AiContext
 import com.halo.sdk.provider.AiProviderRouter
 import com.halo.sdk.provider.AiRequest
+import com.halo.sdk.provider.ProviderAuthState
+import com.halo.sdk.provider.ProviderStatus
+import com.halo.sdk.provider.RemoteProviderPresenceRegistry
+import com.halo.sdk.provider.RemoteProviderPresets
+import com.halo.sdk.provider.RemoteProviderIds
 import com.halo.runtime.observer.InferenceLedger
 import com.halo.sdk.provider.AiWorkloadKind
 import com.halo.sdk.provider.AiWorkloadSpec
@@ -70,6 +75,10 @@ class SystemCheckViewModel(
     private val providerRouter: AiProviderRouter,
     private val modelManager: LiteRtModelManager? = null,
     private val inferenceLedger: InferenceLedger? = null,
+    /** Live remote-provider presence; null keeps legacy local-only behavior. */
+    private val remoteProviderRegistry: RemoteProviderPresenceRegistry? = null,
+    /** Reports whether a stored credential exists for the given secret key. */
+    private val remoteCredentialPresent: (String) -> Boolean = { false },
     val assistantRoleController: AndroidAssistantRoleController = AndroidAssistantRoleController(appContext),
 ) : ViewModel() {
 
@@ -213,9 +222,82 @@ class SystemCheckViewModel(
                 )
             ))
 
+            // Remote provider fabric presence (RUNTIME-055)
+            remoteProviderRegistry?.let { registry ->
+                val remoteItems = RemoteProviderPresets.groq.let { groq ->
+                    listOf(groq, RemoteProviderPresets.cerebras, RemoteProviderPresets.opencodeZen,
+                        RemoteProviderPresets.xai, RemoteProviderPresets.opencodeCompanion,
+                        RemoteProviderPresets.customOpenAiCompatible).map { descriptor ->
+                        val presence = runCatching { registry.presence(descriptor.id).value }.getOrNull()
+                        val configured = presence?.isConfigured ?: remoteCredentialPresent(credentialKeyFor(descriptor.id))
+                        val authState = presence?.authInfo?.authState
+                            ?: if (configured) ProviderAuthState.CONNECTED else ProviderAuthState.NOT_CONFIGURED
+                        SystemCheckItem(
+                            id = "remote_${descriptor.id}",
+                            name = descriptor.displayName,
+                            glyph = HaloGlyph.MODEL,
+                            status = when (authState) {
+                                ProviderAuthState.CONNECTED -> CheckStatus.PASSED
+                                ProviderAuthState.NOT_CONFIGURED -> CheckStatus.NOT_CONFIGURED
+                                ProviderAuthState.AUTHORIZING, ProviderAuthState.REFRESHING -> CheckStatus.RUNNING
+                                ProviderAuthState.EXPIRED, ProviderAuthState.FAILED -> CheckStatus.FAILED
+                                ProviderAuthState.NOT_REQUIRED -> if (configured) CheckStatus.PASSED else CheckStatus.READY
+                            },
+                            reason = authStateLabel(authState, configured),
+                        )
+                    }
+                }
+                sections.add(SystemCheckSection(
+                    id = "remote_providers",
+                    title = "Remote Providers",
+                    items = remoteItems,
+                ))
+            }
+
             _uiState.value = _uiState.value.copy(sections = sections)
             generateSummaryReport()
         }
+    }
+
+    /** Best-effort refresh of live remote presence, safe to call from UI actions. */
+    fun refreshRemoteProviders() {
+        val registry = remoteProviderRegistry ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            registry.allPresences().forEach { presence ->
+                runCatching {
+                    val authInfo = presence.authInfo
+                    registry.register(
+                        presence.copy(
+                            authInfo = authInfo.copy(
+                                authState = when {
+                                    presence.isConfigured && authInfo.authState == ProviderAuthState.NOT_CONFIGURED -> ProviderAuthState.CONNECTED
+                                    else -> authInfo.authState
+                                },
+                            ),
+                        ),
+                    )
+                }
+            }
+        }
+    }
+
+    private fun credentialKeyFor(providerId: String): String = when (providerId) {
+        RemoteProviderIds.GROQ -> "groq_api_key"
+        RemoteProviderIds.CEREBRAS -> "cerebras_api_key"
+        RemoteProviderIds.OPENCODE_ZEN -> "opencode_zen_api_key"
+        RemoteProviderIds.XAI -> "xai_api_key"
+        RemoteProviderIds.OPENCODE_COMPANION -> "opencode_companion_credential"
+        else -> "custom_openai_compatible_credential"
+    }
+
+    private fun authStateLabel(state: ProviderAuthState, configured: Boolean): String = when (state) {
+        ProviderAuthState.CONNECTED -> "Connected"
+        ProviderAuthState.NOT_CONFIGURED -> "Not configured — add an API key in Intelligence settings"
+        ProviderAuthState.AUTHORIZING -> "Authorizing"
+        ProviderAuthState.REFRESHING -> "Refreshing token"
+        ProviderAuthState.EXPIRED -> "Credential expired — reconnect"
+        ProviderAuthState.FAILED -> "Connection failed — test connection in settings"
+        ProviderAuthState.NOT_REQUIRED -> if (configured) "Ready (no auth required)" else "Endpoint set, no auth"
     }
 
     fun launchAssistantEnrollment(launcher: (Intent) -> Unit) {

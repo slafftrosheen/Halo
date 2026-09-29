@@ -221,6 +221,13 @@ dependencies {
     implementation(project(":providers:openai"))
     implementation(project(":providers:anthropic"))
     implementation(project(":providers:gemini"))
+    implementation(project(":providers:remote-groq"))
+    implementation(project(":providers:remote-cerebras"))
+    implementation(project(":providers:remote-opencode-zen"))
+    implementation(project(":providers:remote-xai"))
+    implementation(project(":providers:remote-opencode-companion"))
+    implementation(project(":providers:remote-custom-openai-compatible"))
+    implementation(project(":providers:remote-gemini-oauth"))
     implementation(project(":drivers:heycyan"))
     implementation(project(":drivers:simulator"))
 }

@@ -2,6 +2,9 @@ package com.halo.providers.opencode.zen
 
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.Storage
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
+import okhttp3.OkHttpClient
 
 /**
  * OpenCode Zen preset over the shared OpenAI-compatible fabric.
@@ -24,16 +27,10 @@ class OpenCodeZenProvider(
     override val displayName: String = "OpenCode Zen"
     override val isLocal: Boolean = false
 
-    // Zen uses a dedicated catalog endpoint in this preset so free/paid metadata
-    // can be determined per model from current catalog response.
-    private val transportWithZenCatalog = object : OpenAiCompatibleTransport(
-        client = transport.javaClass.getDeclaredField("client").apply { isAccessible = true }.get(transport) as OkHttpClient,
-        baseUrl = "https://api.opencode.ai/v1",
-        protocol = AiWireProtocol.OPENAI_CHAT_COMPLETIONS,
-    ) {
-        // Zen-specific free metadata is determined from catalog parsing in the shared transport;
-        // no provider-wide free label is applied here.
-    }
+    // Zen shares the preset transport directly; free/paid metadata is
+    // determined per model from the current remote catalog by the shared
+    // transport — no provider-wide free label is applied here.
+    private val transportWithZenCatalog: OpenAiCompatibleTransport = transport
 
     private val descriptor = RemoteProviderPresets.opencodeZen
     private val configured: ConfiguredOpenAiCompatibleProvider = ConfiguredOpenAiCompatibleProvider(
@@ -47,7 +44,7 @@ class OpenCodeZenProvider(
     )
 
     override val status: StateFlow<ProviderStatus> get() = configured.status
-    override val authInfo: StateFlow<ProviderAuthInfo> get() = configured.authInfo
+    val authInfo: StateFlow<ProviderAuthInfo> get() = configured.authInfo
 
     override suspend fun getCapabilities(): Set<AiCapability> = configured.getCapabilities()
     override suspend fun getStatus(): ProviderStatus = configured.getStatus()

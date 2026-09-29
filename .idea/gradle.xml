@@ -54,6 +54,13 @@
             <option value="$PROJECT_DIR$/providers/ollama" />
             <option value="$PROJECT_DIR$/providers/openai" />
             <option value="$PROJECT_DIR$/providers/openrouter" />
+            <option value="$PROJECT_DIR$/providers/remote-cerebras" />
+            <option value="$PROJECT_DIR$/providers/remote-custom-openai-compatible" />
+            <option value="$PROJECT_DIR$/providers/remote-gemini-oauth" />
+            <option value="$PROJECT_DIR$/providers/remote-groq" />
+            <option value="$PROJECT_DIR$/providers/remote-opencode-companion" />
+            <option value="$PROJECT_DIR$/providers/remote-opencode-zen" />
+            <option value="$PROJECT_DIR$/providers/remote-xai" />
             <option value="$PROJECT_DIR$/providers/sherpa-stt" />
             <option value="$PROJECT_DIR$/runtime" />
             <option value="$PROJECT_DIR$/runtime/cognition" />

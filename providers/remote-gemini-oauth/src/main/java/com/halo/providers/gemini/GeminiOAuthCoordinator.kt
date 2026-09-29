@@ -1,9 +1,8 @@
 package com.halo.providers.gemini
 
-import com.halo.app.security.SecretStore
+import com.halo.sdk.provider.ProviderSecretStore
 import com.google.android.gms.auth.api.identity.AuthorizationClient
 import com.google.android.gms.auth.api.identity.AuthorizationResult
-import com.google.android.gms.auth.api.identity.FetchSignInResult
 import com.google.android.gms.common.api.Scope
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
@@ -39,13 +38,19 @@ import kotlin.coroutines.resumeWithException
  *    Gemini API key. CLI credential import, token harvesting from Gemini CLI,
  *    copying CLI access tokens, and any Gemini Code Assist / Gemini CLI OAuth
  *    piggyback are explicitly out of scope and must not be added.
+ *
+ * WIRING NOTE: the activity layer launches the pending intent from
+ * [GoogleAuthorizationOutcome.ResolutionRequired] and then converts the final
+ * result via [fromAuthorizationResult], keeping Android Activity concerns out
+ * of the provider module. A granted (no-resolution) result carries its access
+ * token directly.
  */
 class GeminiOAuthCoordinator(
     private val authorizationClient: AuthorizationClient,
     /** Halo-owned project id used for x-goog-user-project. */
     private val projectId: String,
-    /** SecretStore for optional limited token lifecycle metadata. */
-    private val secretStore: SecretStore,
+    /** Secret store for optional limited token lifecycle metadata. */
+    private val secretStore: ProviderSecretStore,
     /** Debug or release Halo-owned OAuth client id, when configured. */
     private val haloSignedClientId: String? = null,
 ) {
@@ -58,28 +63,9 @@ class GeminiOAuthCoordinator(
      * Initiates or renews Google authorization.
      *
      * Returns the access token when one is available immediately, otherwise
-     * signals that a resolution intent must be launched.
+     * signals that a resolution intent must be launched by the caller.
      */
-    suspend fun authorize(): GoogleAuthorizationOutcome = suspendCancellableCoroutine { cont ->
-        try {
-            val request = com.google.android.gms.auth.api.identity.AuthorizationRequest.builder()
-                .setRequestedScopes(scopes)
-                .build()
-            authorizationClient.authorize(request)
-                .addOnSuccessListener { result ->
-                    if (result.hasResolution()) {
-                        cont.resume(GoogleAuthorizationOutcome.ResolutionRequired(result))
-                    } else {
-                        cont.resume(handleSignInResult(result))
-                    }
-                }
-                .addOnFailureListener {
-                    cont.resumeWithException(GeminiOAuthException("Google authorization failed", it))
-                }
-        } catch (e: Exception) {
-            cont.resumeWithException(GeminiOAuthException("Google authorization request failed", e))
-        }
-    }
+    suspend fun authorize(): GoogleAuthorizationOutcome = authorizeInternal(silent = false)
 
     /**
      * Silent reissue attempt for an existing grant.
@@ -87,32 +73,40 @@ class GeminiOAuthCoordinator(
      * On restart this is used to get a fresh short-lived token without forcing
      * the user through the consent flow again, when the grant still exists.
      */
-    suspend fun silentAuthorize(): GoogleAuthorizationOutcome = suspendCancellableCoroutine { cont ->
-        try {
-            val request = com.google.android.gms.auth.api.identity.AuthorizationRequest.builder()
-                .setRequestedScopes(scopes)
-                .build()
-            authorizationClient.authorize(request)
-                .addOnSuccessListener { result ->
-                    if (result.hasResolution()) {
-                        cont.resume(GoogleAuthorizationOutcome.SilentFailed(result))
-                    } else {
-                        cont.resume(handleSignInResult(result))
+    suspend fun silentAuthorize(): GoogleAuthorizationOutcome = authorizeInternal(silent = true)
+
+    private suspend fun authorizeInternal(silent: Boolean): GoogleAuthorizationOutcome =
+        suspendCancellableCoroutine { cont ->
+            try {
+                val request = com.google.android.gms.auth.api.identity.AuthorizationRequest.builder()
+                    .setRequestedScopes(scopes)
+                    .build()
+                authorizationClient.authorize(request)
+                    .addOnSuccessListener { result ->
+                        if (result.hasResolution()) {
+                            cont.resume(
+                                if (silent) GoogleAuthorizationOutcome.SilentFailed(result)
+                                else GoogleAuthorizationOutcome.ResolutionRequired(result),
+                            )
+                        } else {
+                            cont.resume(fromAuthorizationResult(result))
+                        }
                     }
-                }
-                .addOnFailureListener {
-                    cont.resumeWithException(GeminiOAuthException("Silent Google authorization failed", it))
-                }
-        } catch (e: Exception) {
-            cont.resumeWithException(GeminiOAuthException("Silent Google authorization request failed", e))
+                    .addOnFailureListener {
+                        cont.resumeWithException(GeminiOAuthException("Silent Google authorization failed", it))
+                    }
+            } catch (e: Exception) {
+                cont.resumeWithException(GeminiOAuthException("Silent Google authorization request failed", e))
+            }
         }
-    }
 
     /**
-     * Result of the Google sign-in fetch, converted into an access token + project id.
+     * Convert an already-granted [AuthorizationResult] into a token outcome.
+     *
+     * A granted (no-resolution) result carries its access token directly.
      */
-    private fun handleSignInResult(result: FetchSignInResult): GoogleAuthorizationOutcome {
-        val token = result.token?.accessToken?.takeIf { it.isNotBlank() }
+    fun fromAuthorizationResult(result: AuthorizationResult): GoogleAuthorizationOutcome {
+        val token = result.accessToken?.takeIf { it.isNotBlank() }
         return if (token != null) {
             GoogleAuthorizationOutcome.Connected(token, projectId)
         } else {

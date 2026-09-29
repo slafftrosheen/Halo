@@ -1,7 +1,16 @@
 package com.halo.app.security
 
-interface SecretStore {
-    suspend fun put(key: String, value: String?)
-    suspend fun get(key: String): String?
-    suspend fun remove(key: String)
+import com.halo.sdk.provider.ProviderSecretStore
+
+/**
+ * App secret persistence contract (Android keystore-backed implementations).
+ *
+ * Extends the provider-layer [ProviderSecretStore] so provider modules can
+ * persist OAuth/companion secrets without depending on the app module; app
+ * objects implementing [SecretStore] satisfy both contracts.
+ */
+interface SecretStore : ProviderSecretStore {
+    override suspend fun put(key: String, value: String?)
+    override suspend fun get(key: String): String?
+    override suspend fun remove(key: String)
 }

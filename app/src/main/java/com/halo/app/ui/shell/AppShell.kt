@@ -340,6 +340,10 @@ fun AppShell(
                             providerRouter = ManualDependencyGraph.aiProviderRouter,
                             modelManager = ManualDependencyGraph.modelManager,
                             inferenceLedger = ManualDependencyGraph.inferenceLedger,
+                            remoteProviderRegistry = ManualDependencyGraph.providerGraph.remoteProviderPresenceRegistry,
+                            remoteCredentialPresent = { key ->
+                                !ManualDependencyGraph.storage.getString(key, null).isNullOrBlank()
+                            },
                         )
                     }
                     SystemCheckScreen(
