@@ -541,6 +541,75 @@ class IntelligenceViewModel(
         persistAndRefresh { storage.putString("ollama_endpoint", normalized) }
     }
 
+    /**
+     * Configures the credential for a remote-fabric provider without changing the selected
+     * provider/model. Authentication and inference selection are deliberately separate concerns.
+     */
+    fun setRemoteProviderCredential(providerId: String, credential: String) {
+        val key = when (providerId) {
+            RemoteProviderIds.GROQ -> "groq_api_key"
+            RemoteProviderIds.CEREBRAS -> "cerebras_api_key"
+            RemoteProviderIds.OPENCODE_ZEN -> "opencode_zen_api_key"
+            RemoteProviderIds.XAI -> "xai_api_key"
+            RemoteProviderIds.OPENCODE_COMPANION -> "opencode_companion_credential"
+            RemoteProviderIds.CUSTOM_OPENAI_COMPATIBLE -> "custom_openai_compatible_credential"
+            else -> null
+        } ?: return
+        val normalized = credential.trim()
+        persistAndRefresh {
+            if (normalized.isBlank()) storage.remove(key) else storage.putString(key, normalized)
+        }
+    }
+
+    fun setRemoteProviderEndpoint(providerId: String, endpoint: String) {
+        val key = when (providerId) {
+            RemoteProviderIds.OPENCODE_COMPANION -> "opencode_companion_endpoint"
+            RemoteProviderIds.CUSTOM_OPENAI_COMPATIBLE -> "custom_openai_compatible_endpoint"
+            else -> null
+        } ?: return
+        val normalized = endpoint.trim().trimEnd('/')
+        persistAndRefresh {
+            if (normalized.isBlank()) storage.remove(key) else storage.putString(key, normalized)
+        }
+    }
+
+    fun setCustomOpenAiAuthMode(mode: String) {
+        val normalized = mode.trim().uppercase()
+        if (normalized !in setOf("NONE", "API_KEY", "BEARER_TOKEN")) return
+        persistAndRefresh { storage.putString("custom_openai_compatible_auth_mode", normalized) }
+    }
+
+    fun configuredEndpoint(providerId: String): String = when (providerId) {
+        RemoteProviderIds.OPENCODE_COMPANION ->
+            storage.getString("opencode_companion_endpoint")?.trim().orEmpty()
+        RemoteProviderIds.CUSTOM_OPENAI_COMPATIBLE ->
+            storage.getString("custom_openai_compatible_endpoint")?.trim().orEmpty()
+        else -> ""
+    }
+
+    fun hasRemoteCredential(providerId: String): Boolean {
+        val key = when (providerId) {
+            RemoteProviderIds.GROQ -> "groq_api_key"
+            RemoteProviderIds.CEREBRAS -> "cerebras_api_key"
+            RemoteProviderIds.OPENCODE_ZEN -> "opencode_zen_api_key"
+            RemoteProviderIds.XAI -> "xai_api_key"
+            RemoteProviderIds.OPENCODE_COMPANION -> "opencode_companion_credential"
+            RemoteProviderIds.CUSTOM_OPENAI_COMPATIBLE -> "custom_openai_compatible_credential"
+            else -> return false
+        }
+        return !storage.getString(key, null).isNullOrBlank()
+    }
+
+    fun testProvider(providerId: String, onResult: (Boolean) -> Unit = {}) {
+        viewModelScope.launch {
+            val provider = aiProviderRouter.getAllProviders().firstOrNull { it.id == providerId }
+            val ok = runCatching { provider?.testConnection() == true }.getOrDefault(false)
+            onResult(ok)
+            runCatching { aiProviderRouter.diagnostics() }
+            refreshModelsFor(providerId)
+        }
+    }
+
     fun setToolsEnabled(enabled: Boolean) {
         updatePolicy { it.copy(includeAvailableTools = enabled) }
     }
