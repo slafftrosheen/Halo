@@ -295,7 +295,7 @@ class CognitiveSession(
     }
 
     /**
-     * A routed-but-unactionable intent still has to reach the user. Silent drops are
+     * A mrouted-but-unactionable intent still has to reach the user. Silent drops are
      * the failure mode this batch exists to remove.
      */
     private suspend fun publishRouteResponse(
