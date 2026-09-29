@@ -2,6 +2,7 @@ package com.halo.runtime.cognition
 
 sealed interface Outcome {
     data class Success(val message: String? = null) : Outcome
+    data class Dispatched(val message: String, val target: String? = null) : Outcome
     data class PermanentFailure(val reason: String, val error: Throwable? = null) : Outcome
     data class RetryableFailure(
         val reason: String,

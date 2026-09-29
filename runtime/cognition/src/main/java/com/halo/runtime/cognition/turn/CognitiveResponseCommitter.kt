@@ -134,6 +134,7 @@ class DefaultCognitiveResponseCommitter(
                 text = response.text,
                 transactionId = requestId,
                 delivery = commit.responseDelivery,
+                interactionId = interactionId.value,
                 timestamp = System.currentTimeMillis()
             )
         )

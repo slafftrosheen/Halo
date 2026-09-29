@@ -245,3 +245,14 @@ Durable journal metadata records requirement identities only; private context bo
 written to the agent journal.
 
 Source implementation is present but remains **UNVALIDATED** pending STABILIZATION.
+
+## Action execution truth
+
+Halo chooses exactly one owner per utterance. Deterministic actions follow interpretation → goal →
+plan → capability; complex or unclassified actions follow provider → tool loop. An Android intent
+handoff is `DISPATCHED`, while `CONFIRMED` is reserved for state Halo can actually verify.
+
+A tool continuation is not a new user turn. The runtime reconstructs USER → ASSISTANT tool call →
+TOOL result plus the recorded exposure set from the AgentRun journal, pins the recorded
+provider/model, and invokes the adapter with `TOOL_CONTINUATION`. A recovered continuation uses the
+same reconstruction and cannot execute an already recorded tool outcome again.

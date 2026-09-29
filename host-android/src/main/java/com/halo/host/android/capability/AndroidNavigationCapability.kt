@@ -32,7 +32,7 @@ class AndroidNavigationCapability(private val context: Context) : Capability {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
             }
             context.startActivity(mapIntent)
-            Outcome.Success("Opened map for $destination")
+            Outcome.Dispatched("Navigation request sent", "Maps")
         } catch (_: ActivityNotFoundException) {
             try {
                 val searchIntent = Intent(Intent.ACTION_WEB_SEARCH).apply {
@@ -40,7 +40,7 @@ class AndroidNavigationCapability(private val context: Context) : Capability {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
                 context.startActivity(searchIntent)
-                Outcome.Success("Searched for $destination")
+                Outcome.Dispatched("Map search request sent", "Web search")
             } catch (_: ActivityNotFoundException) {
                 Outcome.PermanentFailure("No navigation or web search app is available")
             }

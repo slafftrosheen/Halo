@@ -3,6 +3,7 @@ package com.halo.providers.litert.runtime
 import com.halo.sdk.provider.AiContext
 import com.halo.sdk.provider.AiRequest
 import com.halo.sdk.provider.Role
+import com.halo.sdk.provider.ProviderTurnKind
 import com.halo.sdk.provider.ToolCall
 import com.halo.sdk.provider.asUntrustedPromptSection
 
@@ -17,6 +18,7 @@ data class LiteRtConversationInput(
     val systemInstruction: String?,
     val initialMessages: List<LiteRtMappedMessage>,
     val outgoingMessage: LiteRtMappedMessage?,
+    val continuation: Boolean,
 )
 
 object LiteRtConversationMapper {
@@ -55,7 +57,10 @@ object LiteRtConversationMapper {
             }
         }
 
-        val outgoingMessage = if (request.appendTextAsUserMessage && !request.text.isNullOrBlank()) {
+        val continuation = request.turnKind == ProviderTurnKind.TOOL_CONTINUATION
+        val outgoingMessage = if (continuation) {
+            LiteRtMappedMessage("user", TOOL_CONTINUATION_TRIGGER)
+        } else if (request.appendTextAsUserMessage && !request.text.isNullOrBlank()) {
             LiteRtMappedMessage("user", request.text!!)
         } else if (initialMessages.isNotEmpty()) {
             null
@@ -66,7 +71,13 @@ object LiteRtConversationMapper {
         return LiteRtConversationInput(
             systemInstruction = systemInstruction,
             initialMessages = initialMessages,
-            outgoingMessage = outgoingMessage
+            outgoingMessage = outgoingMessage,
+            continuation = continuation,
         )
     }
+
+    const val TOOL_CONTINUATION_TRIGGER =
+        "Continue the same request using the tool result immediately above. " +
+            "If another available action is required, call it. Otherwise answer the user with the result. " +
+            "Do not greet the user or restart the conversation."
 }

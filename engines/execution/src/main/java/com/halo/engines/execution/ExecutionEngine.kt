@@ -146,14 +146,18 @@ class ExecutionEngine(
             coordinator.transition(runId, AgentRunState.EXECUTING)
         }
         var finalOutcome: Outcome = Outcome.Success("Plan executed successfully")
+        val invocationIds = mutableMapOf<String, ToolInvocationId>()
 
         for (task in plan.tasks) {
             val result = try {
                 scheduler.executeTaskGraph(task,
                     beforeDispatch = { dispatched ->
+                        println("HALO_ACTION_DISPATCH interactionId=${plan.interactionId} runId=${runId?.value} " +
+                            "planId=${plan.id} executionId=$executionId task=${dispatched::class.simpleName}")
                         if (runId != null && coordinator != null) {
                             val operationId = dispatched.id.toString()
                             val invocationId = com.halo.runtime.cognition.agent.ToolInvocationId(UUID.randomUUID().toString())
+                            invocationIds[operationId] = invocationId
                             val argumentsDigest = com.halo.runtime.cognition.agent.ToolArgumentCanonicalizer
                                 .digest(dispatched.toString())
                             coordinator.recordStep(AgentStep.ToolRequested(AgentStepId(UUID.randomUUID().toString()), runId,
@@ -172,11 +176,20 @@ class ExecutionEngine(
                         }
                     },
                     afterDispatch = { dispatched, outcome ->
+                        println("HALO_ACTION_RESULT interactionId=${plan.interactionId} runId=${runId?.value} " +
+                            "planId=${plan.id} executionId=$executionId outcome=${outcome::class.simpleName}")
                         if (runId != null && coordinator != null) {
                             val operationId = dispatched.id.toString()
                             if (outcome is Outcome.Success) {
                                 coordinator.recordStep(AgentStep.ToolCompleted(AgentStepId(UUID.randomUUID().toString()), runId,
                                     Instant.now(), operationId, dispatched::class.java.simpleName, outcome.message.orEmpty(), true))
+                            } else if (outcome is Outcome.Dispatched) {
+                                coordinator.recordStep(AgentStep.ToolOutcomeRecorded(
+                                    AgentStepId(UUID.randomUUID().toString()), runId, Instant.now(),
+                                    invocationIds.getValue(operationId), operationId,
+                                    dispatched::class.java.simpleName, true, outcome.message,
+                                    ActionTruth.DISPATCHED, null,
+                                ))
                             } else if (outcome !is Outcome.Partial) {
                                 coordinator.recordStep(AgentStep.ToolFailed(AgentStepId(UUID.randomUUID().toString()), runId,
                                     Instant.now(), operationId, dispatched::class.java.simpleName, outcome.messageForTelemetry()))
@@ -220,6 +233,7 @@ class ExecutionEngine(
                 }
 
                 is Outcome.Partial -> finalOutcome = result
+                is Outcome.Dispatched -> finalOutcome = result
                 is Outcome.Success -> Unit
             }
         }
@@ -228,9 +242,27 @@ class ExecutionEngine(
             coordinator.recordStep(AgentStep.ResponseProduced(AgentStepId(UUID.randomUUID().toString()), runId,
                 Instant.now(), executionId, finalOutcome.messageForTelemetry()))
             when (finalOutcome) {
-                is Outcome.Success -> coordinator.complete(runId)
+                // Keep successful deterministic runs open until their response is
+                // durably committed: ResponseProduced -> ResponseCommitted -> COMPLETED.
+                is Outcome.Success -> Unit
+                is Outcome.Dispatched -> Unit
                 is Outcome.Partial -> coordinator.transition(runId, AgentRunState.INTERRUPTED, finalOutcome.messageForTelemetry())
                 is Outcome.Cancelled -> coordinator.cancel(runId, finalOutcome.messageForTelemetry())
+                is Outcome.NeedsClarification -> {
+                    val requestId = AgentInputRequestId(UUID.randomUUID().toString())
+                    val input = AgentInputRequest.Clarification(
+                        id = requestId,
+                        runId = runId,
+                        createdAt = Instant.now(),
+                        question = finalOutcome.prompt,
+                        field = finalOutcome.field,
+                        expected = ExpectedInput.Text(singleLine = true),
+                    )
+                    coordinator.recordStep(AgentStep.InputRequested(
+                        AgentStepId(UUID.randomUUID().toString()), runId, Instant.now(), requestId, input,
+                    ))
+                    coordinator.transition(runId, AgentRunState.WAITING_FOR_CLARIFICATION)
+                }
                 else -> coordinator.fail(runId, finalOutcome.messageForTelemetry())
             }
         }
@@ -239,6 +271,7 @@ class ExecutionEngine(
 
     private fun Outcome.messageForTelemetry(): String = when (this) {
         is Outcome.Success -> message.orEmpty()
+        is Outcome.Dispatched -> message
         is Outcome.PermanentFailure -> reason
         is Outcome.RetryableFailure -> reason
         is Outcome.Partial -> message

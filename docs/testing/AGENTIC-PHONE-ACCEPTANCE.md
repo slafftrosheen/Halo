@@ -82,3 +82,15 @@ Deliberately not transplanted: the Hilt graph, database schema, screen routing, 
 visual automation and tool interfaces. Halo needs cross-app control, and its semantic
 snapshot with opaque tokens, freshness and redaction is stronger than raw coordinate
 clicking. Accessibility is never used for work a dedicated Android capability can do.
+
+## RUNTIME-052 action checks
+
+- Deterministic alarm: “Set an alarm for 6 AM tomorrow” reaches Clock once, reports
+  `DISPATCHED`, never claims confirmation, and its response survives Home/Activity navigation.
+- Tool discovery: the next provider history is USER, ASSISTANT tool call, TOOL result; the original
+  request is not appended again, and the newly exposed action can be called.
+- Recovery: after a durable tool outcome, restart and continue on the same provider/model without
+  replaying the side effect.
+- Clarification: missing input enters `WAITING_FOR_CLARIFICATION`; the answer resumes the same run.
+- Android Assistant: a visual-only published response completes the invocation without waiting for
+  TTS.

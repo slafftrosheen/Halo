@@ -36,7 +36,7 @@ class AndroidWebCapability(private val context: Context) : Capability {
             }
 
             context.startActivity(intent)
-            Outcome.Success(target)
+            Outcome.Dispatched("Web request sent", "Browser")
         } catch (_: ActivityNotFoundException) {
             Outcome.PermanentFailure("No web browser or search app is available")
         } catch (_: SecurityException) {

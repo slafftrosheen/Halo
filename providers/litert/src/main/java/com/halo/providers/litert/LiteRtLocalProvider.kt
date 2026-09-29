@@ -949,7 +949,7 @@ class LiteRtLocalProvider(
         val usePromptProtocol = protocol == ToolCallProtocol.HALO_PROMPT
         val genConfig = generationConfig(
             descriptor = descriptor,
-            mappedPrompt = mapped.outgoingMessage?.content ?: request.text ?: "",
+            mappedPrompt = mapped.outgoingMessage?.content.orEmpty(),
             systemInstruction = systemInstructionFor(mapped.systemInstruction, requestedTools, usePromptProtocol),
             imageBytes = request.image,
             initialMessages = mapped.initialMessages.map { message -> message.toRuntimeMessage() },
@@ -1018,7 +1018,7 @@ class LiteRtLocalProvider(
         val usePromptProtocol = protocol == ToolCallProtocol.HALO_PROMPT
         val genConfig = generationConfig(
             descriptor = descriptor,
-            mappedPrompt = mapped.outgoingMessage?.content ?: request.text ?: "",
+            mappedPrompt = mapped.outgoingMessage?.content.orEmpty(),
             systemInstruction = systemInstructionFor(mapped.systemInstruction, requestedTools, usePromptProtocol),
             imageBytes = request.image,
             initialMessages = mapped.initialMessages.map { message -> message.toRuntimeMessage() },

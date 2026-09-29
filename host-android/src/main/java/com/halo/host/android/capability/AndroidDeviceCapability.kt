@@ -41,7 +41,7 @@ class AndroidDeviceCapability(private val context: Context) : Capability {
                         Intent(AlarmClock.ACTION_SHOW_ALARMS)
                             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     )
-                    Outcome.Success("Opened alarms")
+                    Outcome.Dispatched("Alarm list requested", "Android Clock")
                 }
 
                 action.contains("flashlight_on") || action.contains("turn_on_flashlight") -> {
@@ -107,30 +107,13 @@ class AndroidDeviceCapability(private val context: Context) : Capability {
         audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, direction, 0)
     }
 
-    private val alarmResolver = AlarmCommandResolver()
+    private val alarmAction = AndroidAlarmAction(context)
 
     private fun setSystemAlarm(expression: String, parameters: Map<String, Any> = emptyMap()): Outcome {
-        val temporalValue = parameters["temporal_value"] as? TemporalValue
-        val plan = alarmResolver.resolve(temporalValue, expression)
-        return when (plan) {
-            is AlarmExecutionPlan.SystemAlarm -> {
-                context.startActivity(
-                    Intent(AlarmClock.ACTION_SET_ALARM).apply {
-                        putExtra(AlarmClock.EXTRA_HOUR, plan.hour)
-                        putExtra(AlarmClock.EXTRA_MINUTES, plan.minute)
-                        putExtra(AlarmClock.EXTRA_MESSAGE, plan.label ?: "Halo alarm")
-                        putExtra(AlarmClock.EXTRA_SKIP_UI, false)
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    }
-                )
-                Outcome.Partial("Opened the clock app to create the alarm. Alarm creation is not confirmed.")
-            }
-            is AlarmExecutionPlan.Clarification -> {
-                Outcome.NeedsClarification(plan.prompt, plan.field)
-            }
-            is AlarmExecutionPlan.HaloExactAlarm -> {
-                Outcome.PermanentFailure("Date-specific system alarms are unsupported. Use a Halo reminder instead.")
-            }
-        }
+        return alarmAction.execute(
+            temporalValue = parameters["temporal_value"] as? TemporalValue,
+            timeExpression = expression,
+            skipUi = false,
+        )
     }
 }

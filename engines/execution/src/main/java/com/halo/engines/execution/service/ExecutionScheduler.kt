@@ -30,7 +30,7 @@ class ExecutionScheduler(
                 }
                 val results = deferreds.awaitAll()
                 val firstFailure = results.firstOrNull { 
-                    it !is Outcome.Success 
+                    it !is Outcome.Success && it !is Outcome.Dispatched
                 }
                 if (firstFailure != null) {
                     return@coroutineScope firstFailure
@@ -38,7 +38,7 @@ class ExecutionScheduler(
             } else {
                 for (dep in task.dependencies) {
                     val depResult = executeTaskGraph(dep, beforeDispatch, afterDispatch)
-                    if (depResult !is Outcome.Success) {
+                    if (depResult !is Outcome.Success && depResult !is Outcome.Dispatched) {
                         return@coroutineScope depResult
                     }
                 }

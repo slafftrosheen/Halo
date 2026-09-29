@@ -36,7 +36,10 @@ data class AiRequest(
     val maxOutputTokens: Int? = null,
     /** False when durable continuation already contains this user message in context. */
     val appendTextAsUserMessage: Boolean = true,
+    val turnKind: ProviderTurnKind = ProviderTurnKind.INITIAL,
 )
+
+enum class ProviderTurnKind { INITIAL, TOOL_CONTINUATION }
 
 fun AiRequest.validateForTextGeneration() {
     require(!text.isNullOrBlank()) {

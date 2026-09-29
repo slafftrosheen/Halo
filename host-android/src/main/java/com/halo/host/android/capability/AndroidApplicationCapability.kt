@@ -30,7 +30,7 @@ class AndroidApplicationCapability(
             if (intent != null) {
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
                 context.startActivity(intent)
-                Outcome.Success(label)
+                Outcome.Dispatched("Application launch requested", label)
             } else {
                 Outcome.PermanentFailure("Application $label not found")
             }

@@ -325,3 +325,17 @@ for the evidence ladder and the physical checklist.
 Verification: `:runtime:cognition:test`, `:providers:litert:testDebugUnitTest`,
 `:host-android:test`, `:engines:ai:test`, `:app:testDebugUnitTest` and
 `:app:compileDebugKotlin` all pass. No physical-phone run has been performed by this batch.
+
+## RUNTIME-052 — action execution truth and continuation
+
+Deterministic and agentic actions remain separate execution owners. A classified single-step
+intent compiles to one deterministic plan; an agentic request executes through the tool loop, and
+`HALO_ACTION_ROUTE` identifies the sole owner. `DevicePayload.parameters` now survive generic plan
+compilation. Android external handoffs are `DISPATCHED`, not confirmed success or interrupted work.
+
+Tool continuation is an explicit provider turn kind. It reconstructs the original request,
+assistant tool call, durable tool outcome, and exposed schemas from the AgentRun journal, stays on
+the recorded provider/model, and sends only an internal continuation trigger. Recovered
+continuation never replays a completed side effect. Deterministic responses use the same durable
+conversation store and idempotent commit boundary as agentic responses. Source complete; build,
+unit, and physical-phone verification were intentionally not run in this patching pass.

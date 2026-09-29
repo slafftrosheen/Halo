@@ -5,6 +5,7 @@ import com.halo.sdk.provider.AIMessage
 import com.halo.sdk.provider.AiContext
 import com.halo.sdk.provider.AiRequest
 import com.halo.sdk.provider.Role
+import com.halo.sdk.provider.ProviderTurnKind
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -54,5 +55,34 @@ class LiteRtConversationMapperTest {
 
         assertEquals(1, result.initialMessages.size)
         assertNull(result.outgoingMessage)
+    }
+
+    @Test
+    fun `tool continuation uses bounded internal trigger without replaying original user text`() {
+        val context = AiContext(
+            conversation = listOf(
+                AIMessage(Role.USER, "set an alarm for 7"),
+                AIMessage(Role.ASSISTANT, "", toolCallId = null),
+                AIMessage(Role.TOOL, "Clock accepted alarm request", toolCallId = "call-1"),
+            ),
+            deviceState = null,
+            recentEvents = emptyList(),
+            memories = emptyList(),
+            availableTools = emptyList(),
+        )
+
+        val result = LiteRtConversationMapper.map(
+            AiRequest(
+                text = "set an alarm for 7",
+                appendTextAsUserMessage = false,
+                turnKind = ProviderTurnKind.TOOL_CONTINUATION,
+            ),
+            context,
+        )
+
+        assertEquals(3, result.initialMessages.size)
+        assertEquals(true, result.continuation)
+        assertNotNull(result.outgoingMessage)
+        assertEquals(false, result.outgoingMessage?.content?.contains("set an alarm for 7"))
     }
 }

@@ -80,6 +80,14 @@ stabilization (compile/test/device/HIL) follows after the substrate exists.
    Android role ownership and exact active-interactor identity are independently reported; OEM settings fallback and enrollment diagnostics are explicit. System and OEM `ACTION_ASSIST` invocations converge on one coordinator with service/session/capture lifecycle state and strict interaction-ID correlation. One persisted provider/model tuple owns selection, legacy per-provider keys are one-time migration inputs only, Brain backup preserves only the canonical tuple, explicit routing never substitutes providers, and the selected target powers the bounded System Check AI probe. Normal cognition and probes expose content-free last-execution evidence. LiteRT now distinguishes artifact verification, cold selection, residency, backend, fingerprint/version-scoped generation proof, and acquisition/engine/generation/teardown failure stages. Remaining acceptance is compilation/unit verification plus the physical Samsung assistant, LiteRT, OpenRouter, Ollama, and HeyCyan route checks.
 
 HeyCyan validation remains an essential engineering track, but it is not the entire roadmap. 
+
+18. **RUNTIME-052 — action truth + tool continuation** — SOURCE COMPLETE / **NO BUILD OR TEST RUN / PHONE ACCEPTANCE REQUIRED** (2026-09-29).
+   Device parameters survive plan compilation; one utterance has one deterministic or agentic
+   owner; external Android handoffs report `DISPATCHED`; deterministic responses commit to durable
+   conversation truth. Initial and tool-continuation provider turns are explicit, recovered loops
+   restore journaled history/exposure and remain pinned to the original target without replaying
+   completed tools.
+
 All future batches must adhere to the product contract and interaction-origin continuity rules established in the [Vision](../01-vision/VISION.md).
 Runtime expresses capabilities, resources, context, tools, interactions and execution; hosts and
 drivers translate those abstractions into Android/Linux/Windows/wearable-specific behavior.

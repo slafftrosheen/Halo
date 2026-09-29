@@ -27,6 +27,7 @@ import com.halo.sdk.provider.AiErrorType
 import com.halo.sdk.provider.AiProviderException
 import com.halo.sdk.provider.AiResponse
 import com.halo.sdk.provider.Role
+import com.halo.sdk.provider.ProviderTurnKind
 import com.halo.sdk.runtime.CognitiveRequestStarted
 import com.halo.sdk.runtime.EventBus
 import com.halo.sdk.runtime.SpeechOutputFallback
@@ -83,7 +84,16 @@ class CognitiveTurnExecutor(
         var currentRequest = prepared.providerRequest
         var currentTarget = prepared.target
 
-        if (turn.mode == CognitiveTurnMode.FRESH || turn.mode == CognitiveTurnMode.RECOVER_PROVIDER) {
+        if (turn.mode == CognitiveTurnMode.CONTINUE_AFTER_TOOL) {
+            currentRequest = currentRequest.copy(
+                appendTextAsUserMessage = false,
+                turnKind = ProviderTurnKind.TOOL_CONTINUATION,
+            )
+        }
+
+        if (turn.mode == CognitiveTurnMode.FRESH || turn.mode == CognitiveTurnMode.RECOVER_PROVIDER ||
+            turn.mode == CognitiveTurnMode.CONTINUE_AFTER_TOOL
+        ) {
             val durableRunId = createDurableRunIfNeeded()
             if (durableRunId != null) {
                 agentRunCoordinator?.recordStep(
@@ -104,6 +114,18 @@ class CognitiveTurnExecutor(
                 )
             }
 
+            trace("PROVIDER_TURN_CONTEXT", listOf(
+                "interactionId" to turn.interactionId.value,
+                "runId" to durableRunId?.value,
+                "round" to 0,
+                "turnKind" to currentRequest.turnKind,
+                "historyMessages" to currentContext.conversation.size,
+                "historyRoles" to currentContext.conversation.joinToString(",") { it.role.name },
+                "toolMessages" to currentContext.conversation.count { it.role == Role.TOOL },
+                "exposedToolCount" to currentContext.availableTools.size,
+                "outgoingUserChars" to if (currentRequest.appendTextAsUserMessage) currentRequest.text.orEmpty().length else 0,
+                "continuation" to (currentRequest.turnKind == ProviderTurnKind.TOOL_CONTINUATION),
+            ))
             val outcome = providerExecutor.execute(
                 target = prepared.target,
                 request = currentRequest,
@@ -175,6 +197,13 @@ class CognitiveTurnExecutor(
                     metadata = turn.metadata,
                 )
             }
+
+            trace("ACTION_ROUTE", listOf(
+                "interactionId" to turn.interactionId.value,
+                "intent" to "UNCLASSIFIED_OR_COMPOSITE",
+                "owner" to "AGENTIC",
+                "executor" to "ToolTurnExecutor",
+            ))
 
             // Loop over tool calls if present
             var response = initialResponse
@@ -378,9 +407,25 @@ class CognitiveTurnExecutor(
                             )
                         }
 
+                        trace("PROVIDER_TURN_CONTEXT", listOf(
+                            "interactionId" to turn.interactionId.value,
+                            "runId" to durableRun?.value,
+                            "round" to round,
+                            "turnKind" to ProviderTurnKind.TOOL_CONTINUATION,
+                            "historyMessages" to currentContext.conversation.size,
+                            "historyRoles" to currentContext.conversation.joinToString(",") { it.role.name },
+                            "toolMessages" to currentContext.conversation.count { it.role == Role.TOOL },
+                            "exposedToolCount" to currentContext.availableTools.size,
+                            "outgoingUserChars" to 0,
+                            "continuation" to true,
+                        ))
                         val roundOutcome = providerExecutor.execute(
                             target = currentTarget,
-                            request = currentRequest.copy(modelId = currentTarget.modelId),
+                            request = currentRequest.copy(
+                                modelId = currentTarget.modelId,
+                                appendTextAsUserMessage = false,
+                                turnKind = ProviderTurnKind.TOOL_CONTINUATION,
+                            ),
                             context = currentContext,
                             requestId = roundRequestId,
                             interactionId = turn.interactionId,
@@ -445,14 +490,6 @@ class CognitiveTurnExecutor(
         } else {
             // CONTINUE_AFTER_TOOL
             val durableRun = activeRunId ?: throw IllegalStateException("RunId must exist for CONTINUE_AFTER_TOOL")
-            val toolResult = toolExecutor.execute(
-                runId = durableRun,
-                interactionId = turn.interactionId,
-                requestId = turn.requestId,
-                toolCalls = emptyList(), // Durable results are read inside toolExecutor
-                workspaceReadAllowed = turn.policy.includeWorkspace,
-            )
-
             var response = AiResponse(text = "", toolCalls = emptyList(), providerId = prepared.target.providerId, modelId = prepared.target.modelId)
             
             // Re-run provider with updated context
@@ -479,7 +516,11 @@ class CognitiveTurnExecutor(
 
             val roundOutcome = providerExecutor.execute(
                 target = currentTarget,
-                request = currentRequest.copy(modelId = currentTarget.modelId),
+                request = currentRequest.copy(
+                    modelId = currentTarget.modelId,
+                    appendTextAsUserMessage = false,
+                    turnKind = ProviderTurnKind.TOOL_CONTINUATION,
+                ),
                 context = currentContext,
                 requestId = roundRequestId,
                 interactionId = turn.interactionId,

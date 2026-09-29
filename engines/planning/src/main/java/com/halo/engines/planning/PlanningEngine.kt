@@ -97,6 +97,12 @@ class PlanningEngine(
                         agentRunId = event.agentRunId,
                         userRequest = event.userRequest
                     )
+                    println("HALO_ACTION_ROUTE interactionId=${event.interactionId} intent=${event.goal.type} " +
+                        "owner=DETERMINISTIC executor=ExecutionEngine")
+                    (plan.tasks.singleOrNull() as? DeviceTask)?.let { task ->
+                        println("HALO_ACTION_PARAMETERS interactionId=${event.interactionId} planId=${plan.id} " +
+                            "action=${task.action} hasTemporalValue=${task.parameters.containsKey("temporal_value")}")
+                    }
 
                     blackboard.publish(
                         Knowledge(
@@ -211,8 +217,10 @@ class PlanningEngine(
 
                 DeviceTask(
                     action = payload.action,
-                    parameters = if (payload.target.isBlank()) emptyMap()
-                    else mapOf("target" to payload.target)
+                    parameters = buildMap {
+                        putAll(payload.parameters)
+                        if (payload.target.isNotBlank()) put("target", payload.target)
+                    }
                 )
             }
 

@@ -10,4 +10,5 @@ dependencies {
     implementation(project(":libraries:halo-cognition-language"))
     implementation(project(":libraries:common"))
     implementation(libs.kotlinx.coroutines.core)
+    testImplementation(libs.junit)
 }

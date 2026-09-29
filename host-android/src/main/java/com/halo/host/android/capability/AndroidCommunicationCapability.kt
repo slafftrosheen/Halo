@@ -30,7 +30,7 @@ class AndroidCommunicationCapability(
                         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     }
                     context.startActivity(dialIntent)
-                    Outcome.Success(resolveResult.name)
+                    Outcome.Dispatched("Dialer opened", resolveResult.name)
                 }
                 is ContactResolveResult.NotFound -> {
                     Outcome.PermanentFailure("No contact named ${task.targetId} was found")

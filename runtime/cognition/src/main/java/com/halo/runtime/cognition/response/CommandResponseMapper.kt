@@ -41,7 +41,7 @@ class CommandResponseMapper {
     }
 
     fun mapResponse(task: Task, outcome: Outcome): String? {
-        val isSuccess = outcome is Outcome.Success || outcome is Outcome.Partial
+        val isSuccess = outcome is Outcome.Success || outcome is Outcome.Dispatched
 
         return when (task) {
             is ApplicationTask -> {
@@ -116,6 +116,7 @@ class CommandResponseMapper {
                     task.action.equals("set_alarm", ignoreCase = true) -> {
                         when (outcome) {
                             is Outcome.Success -> "Alarm set."
+                            is Outcome.Dispatched -> "Alarm request sent to Clock."
                             is Outcome.NeedsClarification -> outcome.prompt
                             is Outcome.PermanentFailure -> outcome.reason
                             is Outcome.RetryableFailure -> "I couldn't set the alarm yet."

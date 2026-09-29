@@ -74,7 +74,9 @@ class EngineGraph(
             eventBus = infra.eventBus,
             blackboard = infra.blackboard,
             scope = infra.scope,
-            logger = infra.logger
+            logger = infra.logger,
+            conversationStore = ManualDependencyGraph.conversationStore,
+            agentRunCoordinator = agentRunCoordinator,
         )
     }
     val planningEngine by lazy { PlanningEngine(infra.eventBus, infra.blackboard) }

@@ -16,6 +16,7 @@ import com.halo.runtime.cognition.blackboard.Knowledge
 import com.halo.runtime.cognition.blackboard.KnowledgeId
 import com.halo.runtime.cognition.blackboard.KnowledgeSource
 import com.halo.runtime.cognition.blackboard.PlanKnowledge
+import com.halo.runtime.cognition.conversation.InMemoryConversationStore
 import com.halo.sdk.runtime.AssistantResponsePublished
 import com.halo.sdk.runtime.AudioDeviceKind
 import com.halo.sdk.runtime.EventBus
@@ -49,6 +50,13 @@ class CommandResponseProcessTest {
         assertEquals(
             "Alarm set.",
             mapper.mapResponse(DeviceTask(action = "set_alarm"), Outcome.Success("Alarm set"))
+        )
+        assertEquals(
+            "Alarm request sent to Clock.",
+            mapper.mapResponse(
+                DeviceTask(action = "set_alarm"),
+                Outcome.Dispatched("Clock accepted alarm request", "Android Clock")
+            )
         )
         assertEquals(
             "I couldn't understand the alarm time",
@@ -189,6 +197,45 @@ class CommandResponseProcessTest {
         process.stop()
     }
 
+    @Test
+    fun `deterministic response is committed once and published`() = runTest {
+        val eventBus = FakeEventBus()
+        val blackboard = DefaultBlackboard()
+        val conversations = InMemoryConversationStore()
+        val process = CommandResponseProcess(
+            eventBus = eventBus,
+            blackboard = blackboard,
+            scope = this,
+            conversationStore = conversations,
+        )
+        process.start()
+        runCurrent()
+
+        val (plan, task) = createPlan(
+            delivery = ResponseDelivery.VISUAL_ONLY,
+            interactionId = "interaction-1",
+            userRequest = "open settings",
+        )
+        publishPlan(blackboard, plan)
+        eventBus.publish(ExecutionResultPublished(
+            executionId = "exec-commit",
+            planId = plan.id.toString(),
+            task = task,
+            outcome = Outcome.Dispatched("Settings opened"),
+        ))
+        eventBus.publish(ExecutionFinished(id = "exec-commit", planId = plan.id.toString()))
+        eventBus.publish(ExecutionFinished(id = "exec-commit", planId = plan.id.toString()))
+        runCurrent()
+
+        assertEquals(1, conversations.turns.value.size)
+        assertEquals("open settings", conversations.turns.value.single().userText)
+        assertEquals("Opening settings.", conversations.turns.value.single().assistantText)
+        assertEquals(1, eventBus.published.filterIsInstance<AssistantResponsePublished>().size)
+        assertEquals(1, eventBus.published.filterIsInstance<com.halo.sdk.runtime.ConversationTurnCompleted>().size)
+
+        process.stop()
+    }
+
     private suspend fun publishPlan(
         blackboard: DefaultBlackboard,
         plan: ExecutionPlan
@@ -208,7 +255,9 @@ class CommandResponseProcessTest {
         delivery: ResponseDelivery,
         speechOutputTarget: SpeechOutputTarget = SpeechOutputTarget.Phone,
         speechOutputFallback: SpeechOutputFallback = SpeechOutputFallback.ALLOW_PHONE,
-        sourceCaptureId: String? = null
+        sourceCaptureId: String? = null,
+        interactionId: String? = null,
+        userRequest: String? = null,
     ): Pair<ExecutionPlan, DeviceTask> {
         val goal = Goal(
             id = CognitiveId(),
@@ -226,7 +275,9 @@ class CommandResponseProcessTest {
             responseDelivery = delivery,
             speechOutputTarget = speechOutputTarget,
             speechOutputFallback = speechOutputFallback,
-            sourceCaptureId = sourceCaptureId
+            sourceCaptureId = sourceCaptureId,
+            interactionId = interactionId,
+            userRequest = userRequest,
         ) to task
     }
 

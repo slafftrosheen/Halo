@@ -6,6 +6,8 @@ import com.halo.host.android.assistant.AssistantCaptureState
 import com.halo.host.android.assistant.AssistantRuntimeStateStore
 import com.halo.sdk.runtime.CognitiveFailed
 import com.halo.sdk.runtime.CognitiveRequestStarted
+import com.halo.sdk.runtime.AssistantResponsePublished
+import com.halo.sdk.runtime.ResponseDelivery
 import com.halo.sdk.runtime.EventBus
 import com.halo.sdk.runtime.HostInvocation
 import com.halo.sdk.runtime.SpeechInputRoute
@@ -47,6 +49,9 @@ class AssistantInvocationCoordinator(
                         event.interactionId,
                         AssistantCaptureState.INFERENCE_RUNNING,
                     )
+                    is AssistantResponsePublished -> if (event.delivery == ResponseDelivery.VISUAL_ONLY) {
+                        AssistantRuntimeStateStore.responseCompleted(event.interactionId)
+                    }
                     is TtsRequested -> {
                         AssistantRuntimeStateStore.capture(event.interactionId, AssistantCaptureState.RESPONDING)
                         AssistantRuntimeStateStore.outputRoute(event.interactionId, event.target.diagnosticLabel())

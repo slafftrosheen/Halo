@@ -17,12 +17,14 @@ import com.halo.runtime.cognition.context.ContextQuery
 import com.halo.runtime.cognition.workload.AiWorkloadPlanner
 import com.halo.runtime.cognition.workload.CognitiveWorkloadPlan
 import com.halo.runtime.cognition.workload.WorkloadPlanningRequest
+import com.halo.runtime.cognition.tools.ToolId
 import com.halo.sdk.provider.AIMessage
 import com.halo.sdk.provider.AiCapability
 import com.halo.sdk.provider.AiContext
 import com.halo.sdk.provider.AiErrorType
 import com.halo.sdk.provider.AiExecutionTarget
 import com.halo.sdk.provider.AiProviderException
+import com.halo.sdk.provider.AiInferenceProvider
 import com.halo.sdk.provider.AiProviderRouter
 import com.halo.sdk.provider.AiRequest
 import com.halo.sdk.provider.Role
@@ -72,12 +74,15 @@ class DefaultCognitiveTurnPreparer(
             val providerId = metadata?.providerId
             val modelId = metadata?.modelId
             
-            val eligible = providerRouter.getAllProviders().firstOrNull { it.id == providerId }
+            val eligible = providerRouter.getAllProviders().firstOrNull { it.id == providerId } as? AiInferenceProvider
                 ?: throw AiProviderException(AiErrorType.PROVIDER_UNAVAILABLE, "Pinned provider $providerId is unavailable")
-            
-            // Re-resolve target with pinned model
-            val tempRequest = turn.request.copy(modelId = modelId)
-            providerRouter.resolveExecutionTarget(tempRequest, workload.inference)
+            val model = eligible.listModels().firstOrNull { it.id == modelId }
+                ?: throw AiProviderException(AiErrorType.MODEL_NOT_FOUND, "Pinned model $modelId is unavailable")
+            com.halo.sdk.provider.AiExecutionTarget(
+                provider = eligible,
+                model = model,
+                providerCapabilities = eligible.getCapabilities(),
+            )
         } else {
             providerRouter.resolveExecutionTarget(turn.request, workload.inference)
         }
@@ -134,7 +139,7 @@ class DefaultCognitiveTurnPreparer(
         val localToolPolicy = if (toolProtocolReporter != null) {
             com.halo.runtime.cognition.tools.LocalModelToolPolicy.forProtocol(toolProtocol)
         } else null
-        val toolExposure = when {
+        var toolExposure = when {
             localToolPolicy != null && toolExposurePlanner != null ->
                 toolExposurePlanner.localBootstrapExposure(localToolPolicy, toolProtocol)
             toolExposurePlanner != null -> toolExposurePlanner.initialExposure()
@@ -163,7 +168,27 @@ class DefaultCognitiveTurnPreparer(
             val run = turn.runId?.let { agentRunStore?.get(it) }
             if (run != null) {
                 val continuation = AgentContinuationAssembler.fromJournal(run, excludeLastCompletedTurn = (turn.mode == CognitiveTurnMode.RECOVER_PROVIDER))
-                val additionalMessages = continuation.messages.drop(1).map {
+                if (toolExposure != null && toolExposurePlanner != null) {
+                    toolExposure = toolExposure.copy(
+                        pinned = toolExposure.pinned + continuation.exposedToolIds.map(::ToolId)
+                    )
+                    finalContext = finalContext.copy(
+                        availableTools = toolExposurePlanner.effectiveDefinitions(
+                            exposure = toolExposure,
+                            localPolicy = localToolPolicy,
+                        )
+                    )
+                }
+                // CONTINUE_AFTER_TOOL sends no user-authored outgoing message, so the
+                // durable original request must be present in history. Provider retry
+                // still sends its original request and therefore excludes that first
+                // journal message to avoid duplication.
+                val reconstructedMessages = if (turn.mode == CognitiveTurnMode.CONTINUE_AFTER_TOOL) {
+                    continuation.messages
+                } else {
+                    continuation.messages.drop(1)
+                }
+                val additionalMessages = reconstructedMessages.map {
                     continuationMessageToAiMessage(it, boundRequest.appendTextAsUserMessage, turn.responseDelivery)
                 }
                 finalContext = finalContext.copy(
