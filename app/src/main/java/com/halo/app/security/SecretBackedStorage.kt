@@ -34,6 +34,7 @@ class SecretBackedStorage(
             com.halo.app.security.SecretMigrationV2.XAI_KEY,
             com.halo.app.security.SecretMigrationV2.OPENCODE_ZEN_KEY,
             com.halo.app.security.SecretMigrationV2.OPENCODE_COMPANION_PASSWORD_KEY,
+            com.halo.app.security.SecretMigrationV2.OPENCODE_COMPANION_CREDENTIAL_KEY,
             com.halo.app.security.SecretMigrationV2.CUSTOM_OPENAI_COMPATIBLE_CREDENTIAL_KEY,
         )
     }
