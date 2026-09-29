@@ -62,6 +62,7 @@ import com.halo.app.ui.screens.notebook.NotebookScreen
 import com.halo.app.ui.screens.notebook.WorkspaceObjectDetailScreen
 import com.halo.app.ui.screens.settings.AndroidAssistantScreen
 import com.halo.app.ui.screens.settings.IntelligenceScreen
+import com.halo.app.ui.screens.settings.ProviderMatrixScreen
 import com.halo.app.ui.screens.settings.RuntimeScreen
 import com.halo.app.ui.screens.settings.SettingsScreen
 import com.halo.app.ui.screens.settings.SkillsScreen
@@ -403,8 +404,33 @@ fun AppShell(
                 }
                 composable("ai_settings") {
                     val viewModel = ManualDependencyGraph.intelligenceViewModel
-                    IntelligenceScreen(viewModel, { navController.popBackStack() },
-                        onBrowseModels = { navigateSafely("model_browser") })
+                    IntelligenceScreen(
+                        viewModel = viewModel,
+                        onBack = { navController.popBackStack() },
+                        onBrowseModels = { navigateSafely("model_browser") },
+                        onProviderSetup = { navigateSafely("provider_setup") },
+                    )
+                }
+                composable("provider_setup") {
+                    ProviderMatrixScreen(
+                        onBack = { navController.popBackStack() },
+                        registry = ManualDependencyGraph.providerGraph.remoteProviderPresenceRegistry,
+                        credentialPresent = { key ->
+                            val providerId = when (key) {
+                                "groq_api_key" -> com.halo.sdk.provider.RemoteProviderIds.GROQ
+                                "cerebras_api_key" -> com.halo.sdk.provider.RemoteProviderIds.CEREBRAS
+                                "opencode_zen_api_key" -> com.halo.sdk.provider.RemoteProviderIds.OPENCODE_ZEN
+                                "xai_api_key" -> com.halo.sdk.provider.RemoteProviderIds.XAI
+                                "opencode_companion_credential" -> com.halo.sdk.provider.RemoteProviderIds.OPENCODE_COMPANION
+                                else -> com.halo.sdk.provider.RemoteProviderIds.CUSTOM_OPENAI_COMPATIBLE
+                            }
+                            ManualDependencyGraph.intelligenceViewModel.hasRemoteCredential(providerId)
+                        },
+                        onSaveCredential = ManualDependencyGraph.intelligenceViewModel::setRemoteProviderCredential,
+                        onSaveEndpoint = ManualDependencyGraph.intelligenceViewModel::setRemoteProviderEndpoint,
+                        onSaveCustomAuthMode = ManualDependencyGraph.intelligenceViewModel::setCustomOpenAiAuthMode,
+                        onTestProvider = ManualDependencyGraph.intelligenceViewModel::testProvider,
+                    )
                 }
                 composable("model_browser") {
                     com.halo.app.ui.screens.settings.ModelBrowserScreen(

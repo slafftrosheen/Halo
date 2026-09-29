@@ -85,12 +85,28 @@ class OpenCodeCompanionProvider(
     override val status: StateFlow<ProviderStatus> get() = configured.status
     val authInfo: StateFlow<ProviderAuthInfo> get() = configured.authInfo
 
+    private fun syncEndpoint() {
+        transport.updateBaseUrl(companionEndpoint())
+    }
+
     override suspend fun getCapabilities(): Set<AiCapability> = configured.getCapabilities()
     override suspend fun getStatus(): ProviderStatus = configured.getStatus()
-    override suspend fun testConnection(): Boolean = configured.testConnection()
-    override suspend fun generate(request: AiRequest, context: AiContext): AiResponse = companionGenerate(request, context)
-    override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = companionStream(request, context)
-    override suspend fun listModels(): List<AiModel> = companionListModels()
+    override suspend fun testConnection(): Boolean {
+        syncEndpoint()
+        return configured.testConnection()
+    }
+    override suspend fun generate(request: AiRequest, context: AiContext): AiResponse {
+        syncEndpoint()
+        return companionGenerate(request, context)
+    }
+    override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> {
+        syncEndpoint()
+        return companionStream(request, context)
+    }
+    override suspend fun listModels(): List<AiModel> {
+        syncEndpoint()
+        return companionListModels()
+    }
 
     /** Health diagnostics from the OpenCode server health endpoint. */
     suspend fun health(): CompanionHealth = withContext(Dispatchers.IO) {

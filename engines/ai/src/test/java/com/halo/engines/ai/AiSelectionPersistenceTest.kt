@@ -37,6 +37,27 @@ class AiSelectionPersistenceTest {
         override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = emptyFlow()
     }
 
+
+    @Test fun freshInstallSelectsAndPersistsLocalQwenDefault() {
+        val storage = MemoryStorage()
+        val first = router(storage, providers())
+        assertSelection(first, LITERT, QWEN)
+
+        val reconstructed = router(storage, providers().reversed())
+        assertSelection(reconstructed, LITERT, QWEN)
+    }
+
+    @Test fun legacyLiteRtSelectionWithoutModelGetsQwenDefaultOnce() {
+        val storage = MemoryStorage().apply {
+            putString(AiSelectionRepository.PROVIDER_KEY, LITERT)
+            putString(AiSelectionRepository.POLICY_KEY, AiRoutingPolicy.EXPLICIT.name)
+            putBoolean(AiSelectionRepository.MIGRATION_COMPLETE_KEY, true)
+        }
+        val first = router(storage, providers())
+        assertSelection(first, LITERT, QWEN)
+        assertSelection(router(storage, providers().reversed()), LITERT, QWEN)
+    }
+
     @Test fun litertQwenSurvivesProcessReconstruction() = assertRestart(LITERT, QWEN)
     @Test fun openRouterSurvivesProcessReconstruction() = assertRestart(OPENROUTER, "openrouter/free")
     @Test fun ollamaSurvivesProcessReconstruction() = assertRestart(OLLAMA, "llama3.2")
@@ -77,7 +98,12 @@ class AiSelectionPersistenceTest {
     }
 
     private fun router(storage: Storage, providers: List<AiProvider>) =
-        DefaultAiProviderRouter(providers, storage, defaultInferenceProviderId = LITERT)
+        DefaultAiProviderRouter(
+            providers,
+            storage,
+            defaultInferenceProviderId = LITERT,
+            defaultInferenceModelId = QWEN,
+        )
 
     private fun providers(): List<AiProvider> = listOf(
         Provider(LITERT, QWEN),

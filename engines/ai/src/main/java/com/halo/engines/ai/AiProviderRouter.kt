@@ -28,20 +28,23 @@ class DefaultAiProviderRouter(
     private val storage: Storage,
     private val eventBus: EventBus? = null,
     private val logger: RuntimeLogger? = null,
-    private val defaultInferenceProviderId: String? = null
+    private val defaultInferenceProviderId: String? = null,
+    private val defaultInferenceModelId: String? = null,
 ) : AiProviderRouter {
     constructor(
         providers: List<AiProvider>,
         storage: Storage,
         eventBus: EventBus? = null,
         logger: RuntimeLogger? = null,
-        defaultInferenceProviderId: String? = null
+        defaultInferenceProviderId: String? = null,
+        defaultInferenceModelId: String? = null,
     ) : this(
         AiProviderRegistry.from(providers),
         storage,
         eventBus,
         logger,
-        defaultInferenceProviderId
+        defaultInferenceProviderId,
+        defaultInferenceModelId,
     )
 
     private val inferenceProviders: List<AiInferenceProvider> = providerRegistry.inference
@@ -88,19 +91,49 @@ class DefaultAiProviderRouter(
                     "newProvider=${stored.providerId} newModel=${stored.modelId} newPolicy=${stored.policy}",
             )
         }
-        // A missing preference gets the composition default in memory. An existing preference is
-        // never replaced merely because its provider/model is temporarily unavailable.
+        // Fresh installs and older LiteRT-only selections get one deterministic default target.
+        // This is a preference, not an installation claim: if the artifact is not downloaded yet,
+        // the router keeps the selection and the provider reports MODEL_MISSING instead of silently
+        // switching to a remote provider.
         val resolvedProvider = stored.providerId ?: defaultProvider
-        _routingPolicy.value = stored.policy
+        val canApplyDefaultModel = resolvedProvider == defaultProvider &&
+            stored.modelId == null &&
+            !defaultInferenceModelId.isNullOrBlank()
+        val resolvedModel = if (canApplyDefaultModel) defaultInferenceModelId else stored.modelId
+        val freshInstall = stored.providerId == null && stored.modelId == null
+        val resolvedPolicy = if (
+            freshInstall &&
+            stored.policy == AiRoutingPolicy.AUTOMATIC &&
+            resolvedProvider != null &&
+            resolvedModel != null
+        ) {
+            AiRoutingPolicy.EXPLICIT
+        } else {
+            stored.policy
+        }
+        val resolvedSelection = PersistedAiSelection(resolvedProvider, resolvedModel, resolvedPolicy)
+
+        _routingPolicy.value = resolvedPolicy
         _selectedProviderId.value = resolvedProvider
-        _selectedModelId.value = stored.modelId
+        _selectedModelId.value = resolvedModel
         _roleBindings.value = selectionRepository.readRoleBindings()
+
+        // Persist the first-run/default-model choice once so process recreation cannot fall back to
+        // provider ordering. Also repairs older installs that persisted LiteRT without a model.
+        if (resolvedSelection != stored && (freshInstall || (stored.providerId == defaultProvider && stored.modelId == null))) {
+            persistSelection(resolvedSelection, "STARTUP_DEFAULT", stored)
+        }
+
         logger?.info(
             "AiProviderRouter",
             "HALO_AI_SELECTION_RESTORE storedProvider=${stored.providerId} " +
                 "storedModel=${stored.modelId} storedPolicy=${stored.policy} " +
-                "resolvedProvider=$resolvedProvider resolvedModel=${stored.modelId} " +
-                "fallbackReason=${if (stored.providerId == null) "FRESH_INSTALL_DEFAULT" else "NONE"}",
+                "resolvedProvider=$resolvedProvider resolvedModel=$resolvedModel " +
+                "fallbackReason=${when {
+                    freshInstall -> "FRESH_INSTALL_DEFAULT"
+                    canApplyDefaultModel -> "DEFAULT_MODEL_REPAIR"
+                    else -> "NONE"
+                }}",
         )
     }
 

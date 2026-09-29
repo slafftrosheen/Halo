@@ -63,7 +63,8 @@ import com.halo.sdk.provider.ProviderStatus
 fun IntelligenceScreen(
     viewModel: IntelligenceViewModel,
     onBack: () -> Unit,
-    onBrowseModels: () -> Unit = {}
+    onBrowseModels: () -> Unit = {},
+    onProviderSetup: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var openRouterKeyDraft by rememberSaveable(uiState.activeProviderId, uiState.openRouterKey) {
@@ -262,6 +263,13 @@ fun IntelligenceScreen(
 
         val inferenceProviders = uiState.providers
         HaloWorkspaceSection(title = "Providers & access") {
+            HaloWorkspaceButton(
+                text = "Provider setup & connections",
+                onClick = onProviderSetup,
+                modifier = Modifier.fillMaxWidth().padding(12.dp),
+                primary = false,
+            )
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             inferenceProviders.forEachIndexed { index, provider ->
                 HaloWorkspaceRow(
                     title = provider.name,

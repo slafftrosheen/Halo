@@ -57,6 +57,7 @@ class SecretMigrationV2(
         const val XAI_KEY = "xai_api_key"
         const val OPENCODE_ZEN_KEY = "opencode_zen_api_key"
         const val OPENCODE_COMPANION_PASSWORD_KEY = "opencode_companion_password"
+        const val OPENCODE_COMPANION_CREDENTIAL_KEY = "opencode_companion_credential"
         const val CUSTOM_OPENAI_COMPATIBLE_CREDENTIAL_KEY = "custom_openai_compatible_credential"
 
         val SECRET_KEYS = setOf(
@@ -69,6 +70,7 @@ class SecretMigrationV2(
             XAI_KEY,
             OPENCODE_ZEN_KEY,
             OPENCODE_COMPANION_PASSWORD_KEY,
+            OPENCODE_COMPANION_CREDENTIAL_KEY,
             CUSTOM_OPENAI_COMPATIBLE_CREDENTIAL_KEY,
         )
 

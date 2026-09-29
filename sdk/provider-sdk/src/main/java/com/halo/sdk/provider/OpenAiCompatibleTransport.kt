@@ -31,12 +31,25 @@ import kotlin.coroutines.cancellation.CancellationException
  */
 class OpenAiCompatibleTransport(
     private val client: OkHttpClient,
-    private val baseUrl: String,
+    baseUrl: String,
     private val protocol: AiWireProtocol,
     private val quotaSnapshot: (ProviderQuotaSnapshot) -> Unit = {},
     private val nowMs: () -> Long = System::currentTimeMillis,
 ) {
+    @Volatile
+    private var baseUrl: String = baseUrl.trim().trimEnd('/')
+
     private val json = "application/json".toMediaType()
+
+    /**
+     * Rebinds a configurable provider to its persisted endpoint without recreating the provider
+     * graph. Fixed provider presets never call this; custom/companion providers do after setup.
+     */
+    fun updateBaseUrl(value: String) {
+        val normalized = value.trim().trimEnd('/')
+        require(normalized.isNotBlank()) { "Provider base URL must not be blank" }
+        baseUrl = normalized
+    }
 
     /**
      * Credential-bearing request security gate.
