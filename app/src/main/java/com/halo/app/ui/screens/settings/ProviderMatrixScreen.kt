@@ -1,6 +1,7 @@
 package com.halo.app.ui.screens.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -16,34 +17,37 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Cloud
-import androidx.compose.material.icons.filled.CloudOff
-import androidx.compose.material.icons.filled.Key
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.halo.app.ui.design.HaloScreenHeader
 import com.halo.sdk.provider.AiCapability
-import com.halo.sdk.provider.AiCostClass
 import com.halo.sdk.provider.AiExecutionLocation
 import com.halo.sdk.provider.AiWireProtocol
+import com.halo.sdk.provider.ProviderAccessKind
 import com.halo.sdk.provider.ProviderAuthKind
 import com.halo.sdk.provider.ProviderAuthState
-import com.halo.sdk.provider.ProviderAccessKind
 import com.halo.sdk.provider.ProviderReadiness
 import com.halo.sdk.provider.ProviderStatus
 import com.halo.sdk.provider.RemoteProviderDescriptor
@@ -96,29 +100,37 @@ private fun authStateLabel(state: ProviderAuthState): String = when (state) {
     ProviderAuthState.FAILED -> "Failed"
 }
 
-private fun authStateStatus(state: ProviderAuthState, configured: Boolean): CheckStatus = when (state) {
-    ProviderAuthState.NOT_REQUIRED -> if (configured) CheckStatus.PASSED else CheckStatus.READY
-    ProviderAuthState.NOT_CONFIGURED -> CheckStatus.NOT_CONFIGURED
-    ProviderAuthState.AUTHORIZING -> CheckStatus.RUNNING
-    ProviderAuthState.CONNECTED -> CheckStatus.PASSED
-    ProviderAuthState.EXPIRED -> CheckStatus.FAILED
-    ProviderAuthState.REFRESHING -> CheckStatus.RUNNING
-    ProviderAuthState.FAILED -> CheckStatus.FAILED
-}
-
-private fun AiExecutionLocation.toIcon(): ImageVector = when (this) {
-    AiExecutionLocation.ON_DEVICE -> Icons.Default.CheckCircle
-    AiExecutionLocation.LOCAL_NETWORK -> Icons.Default.Cloud
-    AiExecutionLocation.REMOTE -> Icons.Default.Cloud
-}
+private fun AiExecutionLocation.toIcon(): ImageVector = Icons.Default.Cloud
 
 @Composable
 fun ProviderMatrixScreen(
     onBack: () -> Unit,
     registry: RemoteProviderPresenceRegistry? = null,
     credentialPresent: (String) -> Boolean = { false },
+    onSaveCredential: (String, String) -> Unit = { _, _ -> },
+    onSaveEndpoint: (String, String) -> Unit = { _, _ -> },
+    onSaveCustomAuthMode: (String) -> Unit = {},
+    onTestProvider: (String, (Boolean) -> Unit) -> Unit = { _, callback -> callback(false) },
 ) {
-    val rows = rememberRemoteProviderMatrix(registry, credentialPresent)
+    var setupRevision by remember { mutableIntStateOf(0) }
+    var configuring by remember { mutableStateOf<RemoteProviderDescriptor?>(null) }
+    val rows = remoteProviderMatrixRows(registry, credentialPresent, setupRevision)
+
+    configuring?.let { descriptor ->
+        ProviderSetupDialog(
+            descriptor = descriptor,
+            configured = credentialPresent(credentialKeyFor(descriptor.id)),
+            onDismiss = { configuring = null },
+            onSave = { credential, endpoint, customAuthMode ->
+                if (credential.isNotBlank()) onSaveCredential(descriptor.id, credential)
+                if (endpoint.isNotBlank()) onSaveEndpoint(descriptor.id, endpoint)
+                customAuthMode?.let(onSaveCustomAuthMode)
+                setupRevision++
+            },
+            onTest = { callback -> onTestProvider(descriptor.id, callback) },
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -127,14 +139,14 @@ fun ProviderMatrixScreen(
     ) {
         Spacer(Modifier.height(16.dp))
         HaloScreenHeader(
-            title = "Provider Matrix",
-            subtitle = "Provider · wire protocol · auth method · access type",
+            title = "Provider setup",
+            subtitle = "Connect remote inference without changing your active model",
             navigation = onBack,
         )
         Spacer(Modifier.height(20.dp))
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item {
                 Text(
@@ -144,15 +156,25 @@ fun ProviderMatrixScreen(
                 )
             }
             items(rows, key = { it.descriptor.id }) { row ->
-                RemoteProviderMatrixCard(row = row)
+                RemoteProviderMatrixCard(
+                    row = row,
+                    onConfigure = { configuring = row.descriptor },
+                )
             }
             item {
                 Spacer(Modifier.height(16.dp))
                 Text(
-                    text = "Free-tier presence is REMOTE_LIVE evidence from current remote catalog metadata, not permanent truth baked into Halo.",
+                    text = "Connecting a provider only stores its configuration. It never changes Halo's selected provider or model.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 16.dp),
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = "Free-tier labels describe provider access, not guaranteed permanent quota. Live model discovery remains authoritative.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 )
             }
         }
@@ -160,17 +182,19 @@ fun ProviderMatrixScreen(
 }
 
 @Composable
-private fun RemoteProviderMatrixCard(row: RemoteProviderMatrixRow) {
-    val statusColor = when (authStateStatus(row.authState, row.isConfigured)) {
-        CheckStatus.PASSED -> MaterialTheme.colorScheme.primary
-        CheckStatus.FAILED -> MaterialTheme.colorScheme.error
-        CheckStatus.RUNNING -> MaterialTheme.colorScheme.tertiary
-        CheckStatus.READY -> MaterialTheme.colorScheme.secondary
-        CheckStatus.NOT_CONFIGURED -> MaterialTheme.colorScheme.onSurfaceVariant
-        else -> MaterialTheme.colorScheme.onSurfaceVariant
+private fun RemoteProviderMatrixCard(
+    row: RemoteProviderMatrixRow,
+    onConfigure: () -> Unit,
+) {
+    val statusColor = when (row.authState) {
+        ProviderAuthState.CONNECTED, ProviderAuthState.NOT_REQUIRED -> MaterialTheme.colorScheme.primary
+        ProviderAuthState.EXPIRED, ProviderAuthState.FAILED -> MaterialTheme.colorScheme.error
+        ProviderAuthState.AUTHORIZING, ProviderAuthState.REFRESHING -> MaterialTheme.colorScheme.tertiary
+        ProviderAuthState.NOT_CONFIGURED -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
     Card(
+        onClick = onConfigure,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -199,9 +223,7 @@ private fun RemoteProviderMatrixCard(row: RemoteProviderMatrixRow) {
                         text = row.descriptor.displayName,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onBackground,
                     )
-                    Spacer(Modifier.height(2.dp))
                     Text(
                         text = "${accessLabel(row.descriptor.accessKind)} · ${authKindLabel(row.authKind)}",
                         style = MaterialTheme.typography.bodySmall,
@@ -211,7 +233,6 @@ private fun RemoteProviderMatrixCard(row: RemoteProviderMatrixRow) {
                 Surface(
                     shape = RoundedCornerShape(20.dp),
                     color = statusColor.copy(alpha = 0.15f),
-                    modifier = Modifier.padding(start = 8.dp),
                 ) {
                     Text(
                         text = authStateLabel(row.authState),
@@ -226,36 +247,17 @@ private fun RemoteProviderMatrixCard(row: RemoteProviderMatrixRow) {
             Spacer(Modifier.height(12.dp))
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             Spacer(Modifier.height(12.dp))
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                MatrixChip(label = "Protocol", value = protocolLabel(row.descriptor.protocol))
-                MatrixChip(label = "Auth", value = authKindLabel(row.authKind))
-                MatrixChip(label = "Access", value = accessLabel(row.descriptor.accessKind))
+                MatrixChip("Protocol", protocolLabel(row.descriptor.protocol))
+                MatrixChip("Tools", if (AiCapability.TOOLS in row.descriptor.capabilities) "Yes" else "No")
+                MatrixChip("Vision", if (AiCapability.IMAGE in row.descriptor.capabilities) "Yes" else "No")
             }
-            Spacer(Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween,
-            ) {
-                MatrixChip(label = "Location", value = row.descriptor.executionLocation.name.lowercase().replaceFirstChar { it.uppercase() })
-                MatrixChip(
-                    label = "Tools",
-                    value = if (AiCapability.TOOLS in row.descriptor.capabilities) "Yes" else "No",
-                )
-                MatrixChip(
-                    label = "Vision",
-                    value = if (AiCapability.IMAGE in row.descriptor.capabilities) "Yes" else "No",
-                )
-            }
-            if (row.descriptor.freeModelHint != null) {
+            row.descriptor.freeModelHint?.let { hint ->
                 Spacer(Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.Warning,
                         contentDescription = null,
@@ -264,14 +266,133 @@ private fun RemoteProviderMatrixCard(row: RemoteProviderMatrixRow) {
                     )
                     Spacer(Modifier.size(8.dp))
                     Text(
-                        text = "Free model hint: ${row.descriptor.freeModelHint} — server discovery is authoritative.",
+                        text = "Free model hint: $hint · server discovery is authoritative.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "Tap to configure",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+            )
         }
     }
+}
+
+@Composable
+private fun ProviderSetupDialog(
+    descriptor: RemoteProviderDescriptor,
+    configured: Boolean,
+    onDismiss: () -> Unit,
+    onSave: (credential: String, endpoint: String, customAuthMode: String?) -> Unit,
+    onTest: ((Boolean) -> Unit) -> Unit,
+) {
+    var credential by rememberSaveable(descriptor.id) { mutableStateOf("") }
+    var endpoint by rememberSaveable(descriptor.id) { mutableStateOf("") }
+    var customAuthMode by rememberSaveable(descriptor.id) { mutableStateOf("NONE") }
+    var testResult by rememberSaveable(descriptor.id) { mutableStateOf<String?>(null) }
+    val needsEndpoint = descriptor.id == RemoteProviderIds.OPENCODE_COMPANION ||
+        descriptor.id == RemoteProviderIds.CUSTOM_OPENAI_COMPATIBLE
+    val needsCredential = descriptor.authKinds.any { it != ProviderAuthKind.NONE }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(descriptor.displayName) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    text = "${accessLabel(descriptor.accessKind)} · ${protocolLabel(descriptor.protocol)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    text = if (configured) "Credential configured" else "Credential not configured",
+                    style = MaterialTheme.typography.labelMedium,
+                )
+                if (needsEndpoint) {
+                    OutlinedTextField(
+                        value = endpoint,
+                        onValueChange = { endpoint = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        label = { Text("Endpoint") },
+                        placeholder = {
+                            Text(
+                                if (descriptor.id == RemoteProviderIds.OPENCODE_COMPANION) {
+                                    "http://100.x.x.x:8080"
+                                } else {
+                                    "http://192.168.1.10:8080/v1"
+                                }
+                            )
+                        },
+                    )
+                }
+                if (descriptor.id == RemoteProviderIds.CUSTOM_OPENAI_COMPATIBLE) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        listOf("NONE", "API_KEY", "BEARER_TOKEN").forEach { mode ->
+                            TextButton(onClick = { customAuthMode = mode }) {
+                                Text(if (customAuthMode == mode) "✓ $mode" else mode)
+                            }
+                        }
+                    }
+                }
+                if (needsCredential || customAuthMode != "NONE") {
+                    OutlinedTextField(
+                        value = credential,
+                        onValueChange = { credential = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        label = {
+                            Text(
+                                if (descriptor.id == RemoteProviderIds.OPENCODE_COMPANION) {
+                                    "Companion credential"
+                                } else {
+                                    "API key / token"
+                                }
+                            )
+                        },
+                        visualTransformation = PasswordVisualTransformation(),
+                        placeholder = { Text(if (configured) "Leave blank to keep current credential" else "") },
+                    )
+                }
+                Text(
+                    text = "Saving connection details does not select this provider.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                TextButton(onClick = {
+                    testResult = "Testing…"
+                    onTest { ok -> testResult = if (ok) "Connection OK" else "Connection failed" }
+                }) {
+                    Text("Test connection")
+                }
+                testResult?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (it == "Connection OK") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                onSave(
+                    credential,
+                    endpoint,
+                    customAuthMode.takeIf { descriptor.id == RemoteProviderIds.CUSTOM_OPENAI_COMPATIBLE },
+                )
+                credential = ""
+                onDismiss()
+            }) { Text("Save") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Close") }
+        },
+    )
 }
 
 @Composable
@@ -290,37 +411,39 @@ private fun RowScope.MatrixChip(label: String, value: String) {
     }
 }
 
-@Composable
-private fun rememberRemoteProviderMatrix(
+private fun remoteProviderMatrixRows(
     registry: RemoteProviderPresenceRegistry?,
     credentialPresent: (String) -> Boolean,
+    revision: Int,
 ): List<RemoteProviderMatrixRow> {
-    return remember(registry, credentialPresent) {
-        listOf(
-            RemoteProviderPresets.groq,
-            RemoteProviderPresets.cerebras,
-            RemoteProviderPresets.opencodeZen,
-            RemoteProviderPresets.xai,
-            RemoteProviderPresets.opencodeCompanion,
-            RemoteProviderPresets.customOpenAiCompatible,
-        ).map { descriptor ->
-            val presence = registry?.presence(descriptor.id)?.value
-            val configured = presence?.isConfigured
-                ?: credentialPresent(credentialKeyFor(descriptor.id))
-            val authState = presence?.authInfo?.authState
-                ?: if (configured) ProviderAuthState.CONNECTED else ProviderAuthState.NOT_CONFIGURED
-            RemoteProviderMatrixRow(
-                descriptor = descriptor,
-                status = presence?.status ?: ProviderStatus(ProviderStatus.State.UNCONFIGURED, null, ProviderReadiness.Unconfigured),
-                authState = authState,
-                authKind = descriptor.authKinds.firstOrNull() ?: ProviderAuthKind.NONE,
-                isConfigured = configured,
-            )
+    revision // force recalculation after a setup write
+    return listOf(
+        RemoteProviderPresets.groq,
+        RemoteProviderPresets.cerebras,
+        RemoteProviderPresets.opencodeZen,
+        RemoteProviderPresets.xai,
+        RemoteProviderPresets.opencodeCompanion,
+        RemoteProviderPresets.customOpenAiCompatible,
+    ).map { descriptor ->
+        val presence = registry?.presence(descriptor.id)?.value
+        val configured = credentialPresent(credentialKeyFor(descriptor.id)) || presence?.isConfigured == true
+        val authState = when {
+            configured -> ProviderAuthState.CONNECTED
+            presence != null -> presence.authInfo.authState
+            else -> ProviderAuthState.NOT_CONFIGURED
         }
+        RemoteProviderMatrixRow(
+            descriptor = descriptor,
+            status = presence?.status
+                ?: ProviderStatus(ProviderStatus.State.UNCONFIGURED, null, ProviderReadiness.Unconfigured),
+            authState = authState,
+            authKind = descriptor.authKinds.firstOrNull() ?: ProviderAuthKind.NONE,
+            isConfigured = configured,
+        )
     }
 }
 
-private fun credentialKeyFor(providerId: String): String = when (providerId) {
+fun credentialKeyFor(providerId: String): String = when (providerId) {
     RemoteProviderIds.GROQ -> "groq_api_key"
     RemoteProviderIds.CEREBRAS -> "cerebras_api_key"
     RemoteProviderIds.OPENCODE_ZEN -> "opencode_zen_api_key"
