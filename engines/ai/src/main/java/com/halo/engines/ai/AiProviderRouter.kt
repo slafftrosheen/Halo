@@ -101,7 +101,12 @@ class DefaultAiProviderRouter(
             !defaultInferenceModelId.isNullOrBlank()
         val resolvedModel = if (canApplyDefaultModel) defaultInferenceModelId else stored.modelId
         val freshInstall = stored.providerId == null && stored.modelId == null
-        val resolvedPolicy = if (freshInstall && resolvedProvider != null && resolvedModel != null) {
+        val resolvedPolicy = if (
+            freshInstall &&
+            stored.policy == AiRoutingPolicy.AUTOMATIC &&
+            resolvedProvider != null &&
+            resolvedModel != null
+        ) {
             AiRoutingPolicy.EXPLICIT
         } else {
             stored.policy
