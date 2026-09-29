@@ -37,9 +37,10 @@ class AiSelectionRepository(
             ?.trim()
             ?.ifBlank { null }
         val migrated = PersistedAiSelection(migratedProvider, migratedModel, stored.policy)
-        if (migrated != stored) {
-            writeExplicitSelection(migrated)
-        }
+        // Mark the migration complete even when no legacy value existed. Otherwise a fresh install
+        // remains permanently "migration pending" and a later provider-specific key can
+        // unexpectedly rewrite the canonical selection on a future start.
+        writeExplicitSelection(migrated)
         return migrated
     }
 
