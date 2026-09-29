@@ -13,7 +13,7 @@ object DescriptorCatalog {
     fun descriptorsFor(
         kind: HaloToolDescriptors.ExecutorKind,
         executor: ToolExecutor,
-    ): List<ToolDescriptor> = executor.definitions().map { definition ->
+    ): List<ToolDescriptor> = executor.definitions().mapNotNull { definition ->
         HaloToolDescriptors.forExecutor(kind, definition)
     }
 

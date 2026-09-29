@@ -341,6 +341,10 @@ fun AppShell(
                             providerRouter = ManualDependencyGraph.aiProviderRouter,
                             modelManager = ManualDependencyGraph.modelManager,
                             inferenceLedger = ManualDependencyGraph.inferenceLedger,
+                            // RUNTIME-056: the Phone abilities list reports real descriptor
+                            // availability instead of hardcoded "Available" rows.
+                            toolRegistry = ManualDependencyGraph.toolRegistry,
+                            toolAvailabilityResolver = ManualDependencyGraph.toolAvailabilityResolver,
                             remoteProviderRegistry = ManualDependencyGraph.providerGraph.remoteProviderPresenceRegistry,
                             remoteCredentialPresent = { key ->
                                 !ManualDependencyGraph.storage.getString(key, null).isNullOrBlank()

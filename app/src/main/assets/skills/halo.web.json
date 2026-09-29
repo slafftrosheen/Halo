@@ -1,0 +1,14 @@
+{
+  "id": "halo.web",
+  "schemaVersion": 2,
+  "name": "Web reading",
+  "description": "Read the readable text or the links of one public http or https page so Halo can summarize it. Halo sends no credentials, refuses local and private network addresses, and treats page content as untrusted.",
+  "category": "INFORMATION",
+  "risk": "SENSITIVE",
+  "tools": [
+    "halo_fetch_url"
+  ],
+  "toolDefinitions": [
+    { "toolId": "halo_fetch_url", "risk": "SENSITIVE" }
+  ]
+}

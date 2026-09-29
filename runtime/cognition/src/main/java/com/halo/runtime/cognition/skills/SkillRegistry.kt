@@ -170,19 +170,47 @@ class DefaultSkillRegistry(
             SkillDescriptor(
                 id = SkillId("halo.files"),
                 name = "Files",
-                description = "Search and read metadata or text from user-imported documents.",
+                description = "Search and read metadata or text from user-imported documents, and checksum imported files or " +
+                    "user-provided text.",
                 category = SkillCategory.WORKSPACE,
-                tools = setOf("halo_search_files", "halo_get_file_metadata", "halo_read_text_file"),
+                tools = setOf("halo_search_files", "halo_get_file_metadata", "halo_read_text_file", "halo_checksum"),
                 risk = SkillRisk.READ_ONLY,
                 source = SkillSource.BUILT_IN
             ),
             SkillDescriptor(
                 id = SkillId("halo.device"),
                 name = "Device controls",
-                description = "Control local phone settings like volume and flashlight.",
+                description = "Control local phone state like media volume, flashlight, sound mode and screen brightness.",
                 category = SkillCategory.DEVICE,
-                tools = setOf("halo_volume", "halo_flashlight"),
+                tools = setOf("halo_volume", "halo_flashlight", "halo_ringer", "halo_brightness"),
                 risk = SkillRisk.REVERSIBLE,
+                source = SkillSource.BUILT_IN
+            ),
+            SkillDescriptor(
+                id = SkillId("halo.device.info"),
+                name = "Device insight",
+                description = "Describe the phone, battery state and active network. Observation only.",
+                category = SkillCategory.INFORMATION,
+                tools = setOf("halo_device_info", "halo_battery_status", "halo_network_status"),
+                risk = SkillRisk.READ_ONLY,
+                source = SkillSource.BUILT_IN
+            ),
+            SkillDescriptor(
+                id = SkillId("halo.clipboard"),
+                name = "Clipboard",
+                description = "Read the text the user last copied, or copy text for the user to paste elsewhere.",
+                category = SkillCategory.INFORMATION,
+                tools = setOf("halo_clipboard_read", "halo_clipboard_write"),
+                risk = SkillRisk.SENSITIVE,
+                source = SkillSource.BUILT_IN
+            ),
+            SkillDescriptor(
+                id = SkillId("halo.web"),
+                name = "Web reading",
+                description = "Read the readable text or links of one public web page so Halo can summarize it.",
+                category = SkillCategory.INFORMATION,
+                tools = setOf("halo_fetch_url"),
+                risk = SkillRisk.SENSITIVE,
                 source = SkillSource.BUILT_IN
             ),
             SkillDescriptor(
@@ -219,6 +247,9 @@ class DefaultSkillRegistry(
                     "halo_share_text",
                     "halo_media_status",
                     "halo_media_control",
+                    "halo_ringer",
+                    "halo_brightness",
+                    "halo_timer",
                 ),
                 risk = SkillRisk.EXTERNAL_SIDE_EFFECT,
                 source = SkillSource.BUILT_IN,
@@ -259,11 +290,21 @@ class DefaultSkillRegistry(
             ),
             SkillDescriptor(
                 id = SkillId("halo.reminders"),
-                name = "Reminders & Settings",
-                description = "Set reminders and open device settings.",
+                name = "Alarms, timers & settings",
+                description = "Set clock alarms and countdown timers, open specific Android settings screens, and share text.",
                 category = SkillCategory.AUTOMATION,
-                tools = setOf("halo_create_reminder", "halo_open_settings", "halo_share_text", "halo_prepare_contact", "halo_list_reminders"),
-                risk = SkillRisk.REVERSIBLE,
+                // RUNTIME-056: this skill previously declared five tools, three of which
+                // (halo_create_reminder, halo_prepare_contact, halo_list_reminders) are not
+                // registered anywhere, so the Skills screen reported the skill as
+                // permanently partly-unavailable. It now names the registered actions.
+                tools = setOf("halo_set_alarm", "halo_timer", "halo_open_settings", "halo_share_text"),
+                toolDefinitions = listOf(
+                    com.halo.sdk.runtime.skills.SkillToolDefinition("halo_set_alarm", SkillRisk.EXTERNAL_SIDE_EFFECT),
+                    com.halo.sdk.runtime.skills.SkillToolDefinition("halo_timer", SkillRisk.EXTERNAL_SIDE_EFFECT),
+                    com.halo.sdk.runtime.skills.SkillToolDefinition("halo_open_settings", SkillRisk.REVERSIBLE),
+                    com.halo.sdk.runtime.skills.SkillToolDefinition("halo_share_text", SkillRisk.EXTERNAL_SIDE_EFFECT),
+                ),
+                risk = SkillRisk.EXTERNAL_SIDE_EFFECT,
                 source = SkillSource.BUILT_IN
             )
         )

@@ -436,7 +436,24 @@ object ManualDependencyGraph {
             studySessionDescriptions = { sessionId -> studyUseCases.describeSession(sessionId) },
         )
         val memoryExecutor = com.halo.app.di.tools.MemoryToolExecutor(memoryRepository, memoryContextSource)
-        val hostExecutor = com.halo.app.di.tools.HostTools(applicationContext, foreground)
+        // RUNTIME-056: native ability batch mined from the OneBox agent tool catalogue.
+        // Device insight, clipboard, checksum and bounded web reading are host executors
+        // that only need Android APIs (plus, for checksums, the workspace file grants the
+        // user already gave Halo).
+        val hostExecutor = com.halo.app.di.tools.HostTools(
+            applicationContext,
+            foreground,
+            listOf(
+                com.halo.app.di.tools.host.DeviceInsightTools(applicationContext),
+                com.halo.app.di.tools.host.ClipboardTools(applicationContext),
+                com.halo.app.di.tools.host.IntegrityTools(
+                    applicationContext,
+                    workspaceFileRepository,
+                    workspaceRepository,
+                ),
+                com.halo.app.di.tools.host.WebInsightTools(),
+            ),
+        )
         // AGENTIC-001: skill loading must be a real registered tool, otherwise the
         // agent loop can never widen its own exposure.
         val useSkillExecutor: com.halo.runtime.cognition.tools.UseSkillToolExecutor =
@@ -461,10 +478,14 @@ object ManualDependencyGraph {
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.FILE to fileExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.WORKSPACE to workspaceExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.MEMORY to memoryExecutor,
+                com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.INTEGRITY to hostExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.NAVIGATION to hostExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.SYSTEM to hostExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.APPLICATION to hostExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.DEVICE to hostExecutor,
+                com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.DEVICE_INSIGHT to hostExecutor,
+                com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.CLIPBOARD to hostExecutor,
+                com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.WEB_INSIGHT to hostExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.ALARM to hostExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.COMMUNICATION to hostExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.MEDIA to hostExecutor,

@@ -38,6 +38,11 @@ class AndroidCapabilityPublisher(
         val canNavigate = intentResolves(pm, Intent(Intent.ACTION_VIEW, Uri.parse("geo:0,0?q=place")))
         val canDial = intentResolves(pm, Intent(Intent.ACTION_DIAL))
         val canSetAlarm = intentResolves(pm, Intent(AlarmClock.ACTION_SET_ALARM))
+        // RUNTIME-056 native abilities.
+        val canSetTimer = intentResolves(pm, Intent(AlarmClock.ACTION_SET_TIMER))
+        val canOpenSettings = intentResolves(pm, Intent(android.provider.Settings.ACTION_SETTINGS))
+        val canControlRinger = context.getSystemService(Context.AUDIO_SERVICE) != null
+        val canWriteSystemSettings = android.provider.Settings.System.canWrite(context)
         val assistant = AssistantEligibilityInspector(context).inspect()
 
         return listOf(
@@ -85,6 +90,36 @@ class AndroidCapabilityPublisher(
             capability("host.assistant.native", "Android default assistant",
                 "Receive Android assist gestures and voice-interaction sessions as the selected system assistant.",
                 ToolCategory.HOST_CONTROL, assistant.activeVoiceInteractionService),
+            capability("host.device.inspect", "Describe this device",
+                "Report the phone's model, Android version, screen, memory and locale.",
+                ToolCategory.SYSTEM, true),
+            capability("host.battery.read", "Read battery state",
+                "Report battery level, charging state and power-save state.",
+                ToolCategory.SYSTEM, context.getSystemService(Context.BATTERY_SERVICE) != null),
+            capability("host.network.read", "Read network state",
+                "Report the active connection type, metering and local addresses.",
+                ToolCategory.SYSTEM, granted(context, Manifest.permission.ACCESS_NETWORK_STATE)),
+            capability("host.clipboard.read", "Read the clipboard",
+                "Read text the user last copied. Android only allows this while Halo is the focused app.",
+                ToolCategory.INFORMATION, true),
+            capability("host.clipboard.write", "Write the clipboard",
+                "Copy text so the user can paste it in another app.",
+                ToolCategory.DEVICE_CONTROL, true),
+            capability("host.web.fetch", "Read web pages",
+                "Read the readable text of a public web page on the user's behalf.",
+                ToolCategory.INFORMATION, granted(context, Manifest.permission.INTERNET)),
+            capability("host.timer.set", "Set timers",
+                "Start a countdown timer in the host clock app.",
+                ToolCategory.AUTOMATION, canSetTimer),
+            capability("host.ringer.control", "Control sound mode",
+                "Switch the phone between ring, vibrate and silent.",
+                ToolCategory.DEVICE_CONTROL, canControlRinger),
+            capability("host.screen.brightness", "Control screen brightness",
+                "Set screen brightness. Needs the user to allow Halo to modify system settings.",
+                ToolCategory.DEVICE_CONTROL, canWriteSystemSettings),
+            capability("host.settings.open", "Open Android settings",
+                "Open an Android settings screen that this device can actually display.",
+                ToolCategory.HOST_CONTROL, canOpenSettings),
             capability("workspace.read", "Read workspace",
                 "Read user-curated notes and documents in the Halo workspace.", ToolCategory.WORKSPACE, true),
             capability("workspace.write", "Write workspace",

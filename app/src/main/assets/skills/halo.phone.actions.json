@@ -19,7 +19,10 @@
     "halo_search",
     "halo_share_text",
     "halo_media_status",
-    "halo_media_control"
+    "halo_media_control",
+    "halo_ringer",
+    "halo_brightness",
+    "halo_timer"
   ],
   "toolDefinitions": [
     { "toolId": "halo_list_apps", "risk": "READ_ONLY" },
@@ -35,6 +38,9 @@
     { "toolId": "halo_search", "risk": "EXTERNAL_SIDE_EFFECT" },
     { "toolId": "halo_share_text", "risk": "EXTERNAL_SIDE_EFFECT" },
     { "toolId": "halo_media_status", "risk": "READ_ONLY" },
-    { "toolId": "halo_media_control", "risk": "REVERSIBLE" }
+    { "toolId": "halo_media_control", "risk": "REVERSIBLE" },
+    { "toolId": "halo_ringer", "risk": "REVERSIBLE" },
+    { "toolId": "halo_brightness", "risk": "REVERSIBLE" },
+    { "toolId": "halo_timer", "risk": "EXTERNAL_SIDE_EFFECT" }
   ]
 }

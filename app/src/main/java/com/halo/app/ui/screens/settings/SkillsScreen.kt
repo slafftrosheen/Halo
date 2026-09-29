@@ -368,6 +368,17 @@ private fun capabilityLabel(id: String): String = when (id) {
     "device.mobility" -> "a connected mobility device"
     "host.screen.observe" -> "screen observation access"
     "host.screen.control" -> "screen control access"
+    // RUNTIME-056 native abilities.
+    "host.device.inspect" -> "a readable device profile"
+    "host.battery.read" -> "battery state access"
+    "host.network.read" -> "network state access"
+    "host.clipboard.read" -> "clipboard read access"
+    "host.clipboard.write" -> "clipboard write access"
+    "host.web.fetch" -> "internet access"
+    "host.timer.set" -> "a clock app that accepts timers"
+    "host.ringer.control" -> "sound mode control"
+    "host.screen.brightness" -> "permission to modify system settings"
+    "host.settings.open" -> "Android settings access"
     else -> id.substringAfterLast('.').replace('_', ' ')
 }
 

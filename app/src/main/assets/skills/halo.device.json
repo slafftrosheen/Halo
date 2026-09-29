@@ -1,21 +1,20 @@
 {
   "id": "halo.device",
+  "schemaVersion": 2,
   "name": "Device controls",
-  "description": "Control local phone volume and flashlight.",
+  "description": "Control local phone state: media volume, flashlight, sound mode and screen brightness. Brightness needs Android's modify-system-settings access and reports that requirement until it is granted.",
   "category": "DEVICE",
   "risk": "REVERSIBLE",
   "tools": [
     "halo_volume",
-    "halo_flashlight"
+    "halo_flashlight",
+    "halo_ringer",
+    "halo_brightness"
   ],
   "toolDefinitions": [
-    {
-      "toolId": "halo_volume",
-      "risk": "REVERSIBLE"
-    },
-    {
-      "toolId": "halo_flashlight",
-      "risk": "REVERSIBLE"
-    }
+    { "toolId": "halo_volume", "risk": "REVERSIBLE" },
+    { "toolId": "halo_flashlight", "risk": "REVERSIBLE" },
+    { "toolId": "halo_ringer", "risk": "REVERSIBLE" },
+    { "toolId": "halo_brightness", "risk": "REVERSIBLE" }
   ]
 }

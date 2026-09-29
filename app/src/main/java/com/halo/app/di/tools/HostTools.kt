@@ -15,21 +15,31 @@ import com.halo.runtime.cognition.tools.ToolExecutor
 import com.halo.sdk.provider.ToolCall
 import com.halo.sdk.provider.ToolDefinition
 
+/**
+ * The Android host adapter: every phone-side tool executor behind the single portable
+ * [ToolExecutor] contract the Runtime registers.
+ *
+ * RUNTIME-056: executors that need runtime-owned repositories (workspace files, for
+ * example) are supplied by the composition root rather than constructed here, so this
+ * class never reaches into storage it does not own.
+ */
 class HostTools(
     private val context: Context,
-    private val isForeground: () -> Boolean = { true }
+    private val isForeground: () -> Boolean = { true },
+    private val additionalExecutors: List<ToolExecutor> = emptyList(),
 ) : ToolExecutor {
     private val registry = HostToolRegistry(
-        listOf(
-            ApplicationTools(context, isForeground),
-            MediaTools(context),
-            DeviceTools(context),
-            AlarmTools(context),
-            CommunicationTools(context),
-            SystemTools(context),
-            NavigationTools(context, isForeground),
-            AccessibilityTools()
-        )
+        buildList {
+            add(ApplicationTools(context, isForeground))
+            add(MediaTools(context))
+            add(DeviceTools(context))
+            add(AlarmTools(context))
+            add(CommunicationTools(context))
+            add(SystemTools(context))
+            add(NavigationTools(context, isForeground))
+            add(AccessibilityTools())
+            addAll(additionalExecutors)
+        }
     )
 
     override fun definitions(): List<ToolDefinition> = registry.definitions()

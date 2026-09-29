@@ -75,6 +75,13 @@ class SystemCheckViewModel(
     private val providerRouter: AiProviderRouter,
     private val modelManager: LiteRtModelManager? = null,
     private val inferenceLedger: InferenceLedger? = null,
+    /**
+     * RUNTIME-056: the Phone section used to print three hardcoded "Available" rows.
+     * Availability is a Runtime fact derived from descriptors and the live capability
+     * catalogue, so this screen reads it instead of asserting it.
+     */
+    private val toolRegistry: com.halo.runtime.cognition.tools.ToolRegistry? = null,
+    private val toolAvailabilityResolver: com.halo.runtime.cognition.tools.ToolAvailabilityResolver? = null,
     /** Live remote-provider presence; null keeps legacy local-only behavior. */
     private val remoteProviderRegistry: RemoteProviderPresenceRegistry? = null,
     /** Reports whether a stored credential exists for the given secret key. */
@@ -211,15 +218,11 @@ class SystemCheckViewModel(
                 )
             ))
 
-            // Phone
+            // Phone abilities (RUNTIME-056): real descriptor/capability truth, not asserted rows.
             sections.add(SystemCheckSection(
                 id = "phone",
-                title = "Phone",
-                items = listOf(
-                    SystemCheckItem("phone_alarm", "Alarm Capability", HaloGlyph.PHONE, CheckStatus.READY, "Available"),
-                    SystemCheckItem("phone_app", "App Launcher", HaloGlyph.PHONE, CheckStatus.READY, "Available"),
-                    SystemCheckItem("phone_volume", "Volume Control", HaloGlyph.PHONE, CheckStatus.READY, "Available")
-                )
+                title = "Phone abilities",
+                items = phoneAbilityItems()
             ))
 
             // Remote provider fabric presence (RUNTIME-055)
@@ -281,6 +284,39 @@ class SystemCheckViewModel(
         }
     }
 
+    private companion object {
+        /**
+         * The abilities a user can actually reach from a phone conversation, in the order
+         * they matter. A tool missing from this build is simply absent from the list.
+         */
+        val PHONE_ABILITIES: List<Pair<String, String>> = listOf(
+            "halo_open_app" to "App launcher",
+            "halo_open_settings" to "Android settings",
+            "halo_set_alarm" to "Alarms",
+            "halo_timer" to "Timers",
+            "halo_volume" to "Volume",
+            "halo_ringer" to "Sound mode",
+            "halo_brightness" to "Screen brightness",
+            "halo_flashlight" to "Flashlight",
+            "halo_media_control" to "Media control",
+            "halo_device_info" to "Device profile",
+            "halo_battery_status" to "Battery state",
+            "halo_network_status" to "Network state",
+            "halo_clipboard_read" to "Read clipboard",
+            "halo_clipboard_write" to "Copy to clipboard",
+            "halo_checksum" to "File checksums",
+            "halo_fetch_url" to "Read web pages",
+            "halo_navigation" to "Navigation",
+            "halo_browser" to "Open web pages",
+            "halo_search" to "Web search",
+            "halo_find_contact" to "Contacts",
+            "halo_dial_contact" to "Dialer",
+            "halo_share_text" to "Share text",
+            "halo_read_screen" to "Read active screen",
+            "halo_ui_click" to "Control active screen",
+        )
+    }
+
     private fun credentialKeyFor(providerId: String): String = when (providerId) {
         RemoteProviderIds.GROQ -> "groq_api_key"
         RemoteProviderIds.CEREBRAS -> "cerebras_api_key"
@@ -298,6 +334,81 @@ class SystemCheckViewModel(
         ProviderAuthState.EXPIRED -> "Credential expired — reconnect"
         ProviderAuthState.FAILED -> "Connection failed — test connection in settings"
         ProviderAuthState.NOT_REQUIRED -> if (configured) "Ready (no auth required)" else "Endpoint set, no auth"
+    }
+
+    /**
+     * RUNTIME-056: one row per phone ability this build actually registers, with the
+     * availability the Runtime resolver reports. Missing capabilities name the setup step
+     * that is missing (for example "permission to modify system settings" for brightness)
+     * instead of a generic failure.
+     */
+    private fun phoneAbilityItems(): List<SystemCheckItem> {
+        val registry = toolRegistry
+        val resolver = toolAvailabilityResolver
+        if (registry == null || resolver == null) {
+            return listOf(
+                SystemCheckItem(
+                    id = "phone_catalogue",
+                    name = "Phone abilities",
+                    glyph = HaloGlyph.PHONE,
+                    status = CheckStatus.NOT_CONFIGURED,
+                    reason = "Halo's tool catalogue is not attached to System Check",
+                )
+            )
+        }
+
+        return PHONE_ABILITIES.mapNotNull { (toolName, label) ->
+            val descriptor = registry.descriptor(toolName) ?: return@mapNotNull null
+            val availability = resolver.checkAvailability(descriptor)
+            SystemCheckItem(
+                id = "phone_$toolName",
+                name = label,
+                glyph = glyphFor(toolName),
+                status = when (availability) {
+                    is com.halo.runtime.cognition.tools.ToolAvailability.Available -> CheckStatus.PASSED
+                    is com.halo.runtime.cognition.tools.ToolAvailability.MissingCapabilities -> CheckStatus.NOT_CONFIGURED
+                    is com.halo.runtime.cognition.tools.ToolAvailability.Disabled -> CheckStatus.BLOCKED
+                    is com.halo.runtime.cognition.tools.ToolAvailability.Degraded -> CheckStatus.READY
+                },
+                reason = when (availability) {
+                    is com.halo.runtime.cognition.tools.ToolAvailability.Available ->
+                        descriptor.presentation?.title ?: "Available"
+                    is com.halo.runtime.cognition.tools.ToolAvailability.MissingCapabilities ->
+                        "Needs " + availability.missing.joinToString { capabilityLabel(it.value) }
+                    is com.halo.runtime.cognition.tools.ToolAvailability.Disabled -> availability.reason
+                    is com.halo.runtime.cognition.tools.ToolAvailability.Degraded -> availability.reason
+                },
+            )
+        }
+    }
+
+    private fun glyphFor(toolName: String): HaloGlyph = when (toolName) {
+        "halo_device_info", "halo_battery_status", "halo_network_status" -> HaloGlyph.DEVICE
+        "halo_clipboard_read", "halo_clipboard_write" -> HaloGlyph.NOTE
+        "halo_checksum" -> HaloGlyph.FILE
+        "halo_fetch_url" -> HaloGlyph.SEARCH
+        "halo_browser", "halo_search" -> HaloGlyph.SEARCH
+        "halo_media_control", "halo_media_status" -> HaloGlyph.PLAY
+        "halo_read_screen", "halo_ui_click" -> HaloGlyph.SEE
+        "halo_open_settings", "halo_brightness", "halo_ringer" -> HaloGlyph.SETTINGS
+        "halo_set_alarm", "halo_timer" -> HaloGlyph.AUTOMATION
+        "halo_share_text", "halo_dial_contact", "halo_find_contact" -> HaloGlyph.SPEAK
+        else -> HaloGlyph.PHONE
+    }
+
+    private fun capabilityLabel(id: String): String = when (id) {
+        "host.screen.brightness" -> "permission to modify system settings"
+        "host.screen.observe" -> "screen observation access"
+        "host.screen.control" -> "screen control access"
+        "host.contacts.read" -> "contacts access"
+        "host.notification.read" -> "notification access"
+        "host.dialer.open" -> "a dialer"
+        "host.web.open", "host.web.search", "host.web.fetch" -> "internet access"
+        "host.navigation.open" -> "a maps app"
+        "host.application.launch" -> "launchable apps"
+        "host.alarm.set" -> "a clock app"
+        "host.timer.set" -> "a clock app that accepts timers"
+        else -> id.substringAfterLast('.').replace('_', ' ')
     }
 
     fun launchAssistantEnrollment(launcher: (Intent) -> Unit) {
