@@ -1,0 +1,17 @@
+{
+  "id": "halo.discovery",
+  "schemaVersion": 2,
+  "name": "Tool discovery",
+  "description": "Let Halo discover additional tool schemas on demand without exposing the entire tool registry to the model.",
+  "category": "INFORMATION",
+  "risk": "READ_ONLY",
+  "tools": [
+    "halo_discover_tools"
+  ],
+  "toolDefinitions": [
+    {
+      "toolId": "halo_discover_tools",
+      "risk": "READ_ONLY"
+    }
+  ]
+}
