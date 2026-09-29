@@ -38,12 +38,32 @@ class CustomOpenAiCompatibleProvider(
     override val status: StateFlow<ProviderStatus> get() = configured.status
     val authInfo: StateFlow<ProviderAuthInfo> get() = configured.authInfo
 
+    private fun syncEndpoint() {
+        val endpoint = storage.getString("custom_openai_compatible_endpoint")
+            ?.trim()
+            ?.takeIf { it.isNotBlank() }
+            ?: "http://localhost:8080/v1"
+        transport.updateBaseUrl(endpoint)
+    }
+
     override suspend fun getCapabilities(): Set<AiCapability> = configured.getCapabilities()
     override suspend fun getStatus(): ProviderStatus = configured.getStatus()
-    override suspend fun testConnection(): Boolean = configured.testConnection()
-    override suspend fun generate(request: AiRequest, context: AiContext): AiResponse = configured.generate(request, context)
-    override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = configured.stream(request, context)
-    override suspend fun listModels(): List<AiModel> = configured.listModels()
+    override suspend fun testConnection(): Boolean {
+        syncEndpoint()
+        return configured.testConnection()
+    }
+    override suspend fun generate(request: AiRequest, context: AiContext): AiResponse {
+        syncEndpoint()
+        return configured.generate(request, context)
+    }
+    override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> {
+        syncEndpoint()
+        return configured.stream(request, context)
+    }
+    override suspend fun listModels(): List<AiModel> {
+        syncEndpoint()
+        return configured.listModels()
+    }
 }
 
 class CustomOpenAiCompatibleCredentialProvider(
@@ -58,12 +78,12 @@ class CustomOpenAiCompatibleCredentialProvider(
         ?: CustomAuthMode.NONE
 
     override fun hasCredential(): Boolean = when (mode()) {
-        CustomAuthMode.NONE -> false
+        CustomAuthMode.NONE -> true
         CustomAuthMode.API_KEY, CustomAuthMode.BEARER_TOKEN -> storage.getString(keyStorage)?.takeIf { it.isNotBlank() } != null
     }
 
     override fun credential(): Credential? = when (mode()) {
-        CustomAuthMode.NONE -> null
+        CustomAuthMode.NONE -> Credential(id = "custom.none", value = "", label = "No authentication")
         CustomAuthMode.API_KEY -> storage.getString(keyStorage)?.trim()?.ifBlank { null }?.let {
             Credential(id = "custom.api_key", value = it, label = "Custom API key")
         }
