@@ -122,12 +122,22 @@ class ConfiguredOpenAiCompatibleProvider(
         _authInfo.value = _authInfo.value.copy(quotaSnapshot = snapshot)
     }
 
-    private fun credentialHeader(cred: Credential): Pair<String, String> = when (descriptor.authKinds.firstOrNull()) {
-        ProviderAuthKind.API_KEY -> Pair("Authorization", "Bearer ${cred.value}")
-        ProviderAuthKind.BEARER_TOKEN -> Pair("Authorization", "Bearer ${cred.value}")
-        ProviderAuthKind.GOOGLE_OAUTH -> Pair("Authorization", "Bearer ${cred.value}")
-        ProviderAuthKind.DEVICE_OAUTH -> Pair("Authorization", "Bearer ${cred.value}")
-        else -> Pair("", cred.value)
+    private fun credentialHeader(cred: Credential): Pair<String?, String?> = when {
+        cred.id.endsWith(".none") -> null to null
+        cred.id.endsWith(".bearer") || cred.id.endsWith(".token") ->
+            "Authorization" to "Bearer ${cred.value}"
+        cred.id.endsWith(".api_key") ->
+            "Authorization" to "Bearer ${cred.value}"
+        descriptor.authKinds.firstOrNull() == ProviderAuthKind.API_KEY ->
+            "Authorization" to "Bearer ${cred.value}"
+        descriptor.authKinds.firstOrNull() == ProviderAuthKind.BEARER_TOKEN ->
+            "Authorization" to "Bearer ${cred.value}"
+        descriptor.authKinds.firstOrNull() == ProviderAuthKind.GOOGLE_OAUTH ->
+            "Authorization" to "Bearer ${cred.value}"
+        descriptor.authKinds.firstOrNull() == ProviderAuthKind.DEVICE_OAUTH ->
+            "Authorization" to "Bearer ${cred.value}"
+        descriptor.authKinds.firstOrNull() == ProviderAuthKind.NONE -> null to null
+        else -> "Authorization" to "Bearer ${cred.value}"
     }
 
     private fun missingCredential() = AiProviderException(
