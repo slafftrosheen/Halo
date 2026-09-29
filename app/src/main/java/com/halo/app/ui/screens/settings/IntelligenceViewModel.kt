@@ -546,18 +546,31 @@ class IntelligenceViewModel(
      * provider/model. Authentication and inference selection are deliberately separate concerns.
      */
     fun setRemoteProviderCredential(providerId: String, credential: String) {
-        val key = when (providerId) {
-            RemoteProviderIds.GROQ -> "groq_api_key"
-            RemoteProviderIds.CEREBRAS -> "cerebras_api_key"
-            RemoteProviderIds.OPENCODE_ZEN -> "opencode_zen_api_key"
-            RemoteProviderIds.XAI -> "xai_api_key"
-            RemoteProviderIds.OPENCODE_COMPANION -> "opencode_companion_credential"
-            RemoteProviderIds.CUSTOM_OPENAI_COMPATIBLE -> "custom_openai_compatible_credential"
-            else -> null
-        } ?: return
+        val provider = aiProviderRouter.getAllProviders().firstOrNull { it.id == providerId }
+        val credentialProvider = provider as? CredentialProvider ?: return
         val normalized = credential.trim()
         persistAndRefresh {
-            if (normalized.isBlank()) storage.remove(key) else storage.putString(key, normalized)
+            if (normalized.isBlank()) {
+                credentialProvider.clearCredential()
+            } else {
+                val credentialId = when (providerId) {
+                    RemoteProviderIds.OPENCODE_COMPANION -> "companion.token"
+                    RemoteProviderIds.CUSTOM_OPENAI_COMPATIBLE -> when (
+                        storage.getString("custom_openai_compatible_auth_mode")?.trim()?.uppercase()
+                    ) {
+                        "BEARER_TOKEN" -> "custom.bearer"
+                        else -> "custom.api_key"
+                    }
+                    else -> providerId
+                }
+                credentialProvider.setCredential(
+                    Credential(
+                        id = credentialId,
+                        value = normalized,
+                        label = "${provider.displayName} credential",
+                    )
+                )
+            }
         }
     }
 
@@ -587,18 +600,9 @@ class IntelligenceViewModel(
         else -> ""
     }
 
-    fun hasRemoteCredential(providerId: String): Boolean {
-        val key = when (providerId) {
-            RemoteProviderIds.GROQ -> "groq_api_key"
-            RemoteProviderIds.CEREBRAS -> "cerebras_api_key"
-            RemoteProviderIds.OPENCODE_ZEN -> "opencode_zen_api_key"
-            RemoteProviderIds.XAI -> "xai_api_key"
-            RemoteProviderIds.OPENCODE_COMPANION -> "opencode_companion_credential"
-            RemoteProviderIds.CUSTOM_OPENAI_COMPATIBLE -> "custom_openai_compatible_credential"
-            else -> return false
-        }
-        return !storage.getString(key, null).isNullOrBlank()
-    }
+    fun hasRemoteCredential(providerId: String): Boolean =
+        (aiProviderRouter.getAllProviders().firstOrNull { it.id == providerId } as? CredentialProvider)
+            ?.hasCredential() == true
 
     fun testProvider(providerId: String, onResult: (Boolean) -> Unit = {}) {
         viewModelScope.launch {
