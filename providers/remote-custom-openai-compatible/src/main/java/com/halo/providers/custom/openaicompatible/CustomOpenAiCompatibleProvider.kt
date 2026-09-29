@@ -48,16 +48,21 @@ class CustomOpenAiCompatibleProvider(
 
 class CustomOpenAiCompatibleCredentialProvider(
     private val storage: Storage,
-    private val mode: CustomAuthMode = CustomAuthMode.NONE,
+    private val fixedMode: CustomAuthMode? = null,
 ) : CredentialProvider {
     private val keyStorage = "custom_openai_compatible_credential"
 
-    override fun hasCredential(): Boolean = when (mode) {
+    private fun mode(): CustomAuthMode = fixedMode ?: storage
+        .getString("custom_openai_compatible_auth_mode")
+        ?.let { raw -> runCatching { CustomAuthMode.valueOf(raw.trim().uppercase()) }.getOrNull() }
+        ?: CustomAuthMode.NONE
+
+    override fun hasCredential(): Boolean = when (mode()) {
         CustomAuthMode.NONE -> false
         CustomAuthMode.API_KEY, CustomAuthMode.BEARER_TOKEN -> storage.getString(keyStorage)?.takeIf { it.isNotBlank() } != null
     }
 
-    override fun credential(): Credential? = when (mode) {
+    override fun credential(): Credential? = when (mode()) {
         CustomAuthMode.NONE -> null
         CustomAuthMode.API_KEY -> storage.getString(keyStorage)?.trim()?.ifBlank { null }?.let {
             Credential(id = "custom.api_key", value = it, label = "Custom API key")
