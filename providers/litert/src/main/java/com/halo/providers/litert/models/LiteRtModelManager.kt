@@ -141,6 +141,7 @@ class LiteRtModelManager(
     // ---------------------------------------------------------------------------------------
 
     fun downloadCatalogModel(model: LiteRtCatalogModel) {
+        Log.i(TAG, "$EVENT_REQUESTED id=${model.id}")
         if (!model.directDownloadAllowed) {
             // Gated / manual artifacts must never be fetched by the built-in downloader.
             Log.w(TAG, "$EVENT_FAILED id=${model.id} reason=IMPORT_ONLY access=${model.access}")
@@ -167,6 +168,7 @@ class LiteRtModelManager(
                 Log.i(TAG, "$EVENT_FAILED id=${model.id} reason=ALREADY_DOWNLOADING")
                 return
             }
+            setDownloadState(model.id, DownloadState.Queued)
             downloadJobs[model.id] = scope.launch {
                 try {
                     runDownload(model)
@@ -216,6 +218,8 @@ class LiteRtModelManager(
         val partialMetaFile = LiteRtPartialDownloadMetadata.sidecarFor(partFile)
 
         try {
+            setDownloadState(model.id, DownloadState.Preparing)
+            Log.i(TAG, "$EVENT_PREPARING id=${model.id}")
             // 1. model directory
             if (!modelRoot.exists() && !modelRoot.mkdirs()) {
                 throw IOException("Unable to create model directory ${modelRoot.absolutePath}")
@@ -261,6 +265,7 @@ class LiteRtModelManager(
                     resumedFrom = resumeFrom,
                 ),
             )
+            Log.i(TAG, "$EVENT_START id=${model.id} from=$resumeFrom expected=${model.expectedBytes}")
 
             var lastLoggedBytes = resumeFrom
             var lastMetadataBytes = resumeFrom
@@ -830,7 +835,9 @@ class LiteRtModelManager(
         val next = _downloadStates.value.toMutableMap()
         descriptors.forEach { descriptor ->
             val existing = next[descriptor.id]
-            if (existing is DownloadState.Downloading || existing is DownloadState.Verifying) return@forEach
+            if (existing is DownloadState.Queued || existing is DownloadState.Preparing ||
+                existing is DownloadState.Downloading || existing is DownloadState.Verifying
+            ) return@forEach
             next[descriptor.id] = when (descriptor.validation) {
                 LocalModelValidation.VERIFIED_ARTIFACT -> DownloadState.Installed
                 LocalModelValidation.CORRUPT, LocalModelValidation.INCOMPATIBLE -> DownloadState.Failed(
@@ -849,7 +856,9 @@ class LiteRtModelManager(
         // A stored partial outlives the process: surface it as resumable instead of NotInstalled.
         storedPartials().forEach { (id, bytes) ->
             val existing = next[id]
-            if (existing is DownloadState.Downloading ||
+            if (existing is DownloadState.Queued ||
+                existing is DownloadState.Preparing ||
+                existing is DownloadState.Downloading ||
                 existing is DownloadState.Verifying ||
                 existing == DownloadState.Installed
             ) {
@@ -939,6 +948,9 @@ class LiteRtModelManager(
         private const val DEFAULT_CONTEXT_FOR_DISPLAY = 4096
 
         const val EVENT_INVENTORY = "HALO_LITERT_INVENTORY"
+        const val EVENT_REQUESTED = "HALO_LITERT_DOWNLOAD_REQUESTED"
+        const val EVENT_PREPARING = "HALO_LITERT_DOWNLOAD_PREPARING"
+        const val EVENT_START = "HALO_LITERT_DOWNLOAD_START"
         const val EVENT_PROGRESS = OkHttpLiteRtModelDownloader.EVENT_PROGRESS
         const val EVENT_VERIFY = "HALO_LITERT_VERIFY"
         const val EVENT_INSTALLED = "HALO_LITERT_DOWNLOAD_INSTALLED"

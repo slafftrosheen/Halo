@@ -70,16 +70,29 @@ class DefaultAiProviderRouter(
         val defaultProvider = designatedDefault?.id
             ?: inferenceProviders.firstOrNull { it.isLocal }?.id
             ?: inferenceProviders.firstOrNull()?.id
-        val selection = selectionRepository.read(inferenceProviders.mapTo(mutableSetOf()) { it.id }, defaultProvider)
-
-        val rawPolicy = storage.getString("ai_routing_policy")
-        val restoredPolicy = rawPolicy?.let {
-            runCatching { enumValueOf<AiRoutingPolicy>(it) }.getOrDefault(AiRoutingPolicy.AUTOMATIC)
-        } ?: AiRoutingPolicy.AUTOMATIC
-        _routingPolicy.value = restoredPolicy
-
-        _selectedProviderId.value = selection.providerId
-        _selectedModelId.value = selection.modelId
+        val beforeMigration = selectionRepository.readPersistedSelection()
+        val stored = selectionRepository.migrateLegacySelectionIfNeeded()
+        if (stored != beforeMigration) {
+            logger?.info(
+                "AiProviderRouter",
+                "HALO_AI_SELECTION_WRITE source=LEGACY_MIGRATION " +
+                    "previousProvider=${beforeMigration.providerId} previousModel=${beforeMigration.modelId} previousPolicy=${beforeMigration.policy} " +
+                    "newProvider=${stored.providerId} newModel=${stored.modelId} newPolicy=${stored.policy}",
+            )
+        }
+        // A missing preference gets the composition default in memory. An existing preference is
+        // never replaced merely because its provider/model is temporarily unavailable.
+        val resolvedProvider = stored.providerId ?: defaultProvider
+        _routingPolicy.value = stored.policy
+        _selectedProviderId.value = resolvedProvider
+        _selectedModelId.value = stored.modelId
+        logger?.info(
+            "AiProviderRouter",
+            "HALO_AI_SELECTION_RESTORE storedProvider=${stored.providerId} " +
+                "storedModel=${stored.modelId} storedPolicy=${stored.policy} " +
+                "resolvedProvider=$resolvedProvider resolvedModel=${stored.modelId} " +
+                "fallbackReason=${if (stored.providerId == null) "FRESH_INSTALL_DEFAULT" else "NONE"}",
+        )
     }
 
     override fun start() {}
@@ -87,26 +100,28 @@ class DefaultAiProviderRouter(
     override fun stop() = Unit
 
     fun setRoutingPolicy(policy: AiRoutingPolicy) {
+        val previous = currentSelection()
         _routingPolicy.value = policy
-        storage.putString("ai_routing_policy", policy.name)
+        persistSelection(currentSelection(), "USER_TARGET", previous)
     }
 
     override fun selectProvider(id: String) {
         if (allProviders.any { it.id == id }) {
+            val previous = currentSelection()
             val providerChanged = _selectedProviderId.value != id
             _selectedProviderId.value = id
             if (providerChanged) _selectedModelId.value = null
-            selectionRepository.write(PersistedAiSelection(id, _selectedModelId.value))
-            setRoutingPolicy(AiRoutingPolicy.EXPLICIT)
+            _routingPolicy.value = AiRoutingPolicy.EXPLICIT
+            persistSelection(currentSelection(), "USER_PROVIDER", previous)
             updateDiagnosticsSelection()
             scope.launch { refreshDiagnostics() }
         }
     }
 
     override fun selectModel(modelId: String?) {
+        val previous = currentSelection()
         _selectedModelId.value = modelId
-        val providerId = _selectedProviderId.value
-        selectionRepository.write(PersistedAiSelection(providerId, modelId))
+        persistSelection(currentSelection(), "USER_MODEL", previous)
         updateDiagnosticsSelection()
         scope.launch { refreshDiagnostics() }
     }
@@ -114,12 +129,33 @@ class DefaultAiProviderRouter(
     @Synchronized
     override fun selectTarget(ref: AiModelRef) {
         if (inferenceProviders.none { it.id == ref.providerId }) return
+        val previous = currentSelection()
         _selectedProviderId.value = ref.providerId
         _selectedModelId.value = ref.modelId
-        selectionRepository.write(PersistedAiSelection(ref.providerId, ref.modelId))
-        setRoutingPolicy(AiRoutingPolicy.EXPLICIT)
+        _routingPolicy.value = AiRoutingPolicy.EXPLICIT
+        persistSelection(currentSelection(), "USER_TARGET", previous)
         updateDiagnosticsSelection()
         scope.launch { refreshDiagnostics() }
+    }
+
+    private fun currentSelection() = PersistedAiSelection(
+        _selectedProviderId.value,
+        _selectedModelId.value,
+        _routingPolicy.value,
+    )
+
+    private fun persistSelection(
+        selection: PersistedAiSelection,
+        source: String,
+        previous: PersistedAiSelection,
+    ) {
+        selectionRepository.writeExplicitSelection(selection)
+        logger?.info(
+            "AiProviderRouter",
+            "HALO_AI_SELECTION_WRITE source=$source " +
+                "previousProvider=${previous.providerId} previousModel=${previous.modelId} previousPolicy=${previous.policy} " +
+                "newProvider=${selection.providerId} newModel=${selection.modelId} newPolicy=${selection.policy}",
+        )
     }
 
     override fun getAllProviders(): List<AiProvider> = allProviders

@@ -53,7 +53,8 @@ class SpeechTranscriptGate(private val policy: SpeechAdmissionPolicy = SpeechAdm
         if (quality.noSpeechProbability?.let { it > 0.85f } == true || quality.peakAmplitude == 0) {
             return reject(SpeechRejectionReason.NO_SPEECH)
         }
-        if (quality.voicedRatio != null && quality.voicedDurationMs < policy.minimumVoicedMs) {
+        val hasKnownVad = !quality.qualityEstimator.equals("UNKNOWN", ignoreCase = true)
+        if (hasKnownVad && quality.voicedRatio != null && quality.voicedDurationMs < policy.minimumVoicedMs) {
             return reject(SpeechRejectionReason.INSUFFICIENT_VOICED_AUDIO)
         }
         // A whole-capture voiced-ratio threshold is only trustworthy when the

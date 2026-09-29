@@ -15,6 +15,15 @@ interface Storage {
     
     fun getBoolean(key: String, defaultValue: Boolean = false): Boolean
     fun putBoolean(key: String, value: Boolean)
+
+    /** Commits related preference values as one logical update when the backend supports it. */
+    fun putBatch(
+        strings: Map<String, String?> = emptyMap(),
+        booleans: Map<String, Boolean> = emptyMap(),
+    ) {
+        strings.forEach { (key, value) -> putString(key, value) }
+        booleans.forEach { (key, value) -> putBoolean(key, value) }
+    }
     
     fun remove(key: String)
     fun clear()

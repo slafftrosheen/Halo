@@ -89,6 +89,8 @@ sealed interface DownloadResult {
 /** Observable lifecycle for a single catalog artifact. */
 sealed interface DownloadState {
     data object NotInstalled : DownloadState
+    data object Queued : DownloadState
+    data object Preparing : DownloadState
 
     data class Downloading(
         val downloadedBytes: Long,

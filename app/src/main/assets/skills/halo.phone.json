@@ -1,6 +1,6 @@
 {
   "id": "halo.phone",
-  "schemaVersion": 3,
+  "schemaVersion": 2,
   "name": "Phone",
   "description": "Entry point for phone control. Load halo.phone.actions for deterministic Android actions (alarms, apps, volume, contacts, settings, navigation) and halo.phone.screen only for UI workflows with no dedicated capability.",
   "category": "DEVICE",

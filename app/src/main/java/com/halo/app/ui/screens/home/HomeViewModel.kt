@@ -32,6 +32,17 @@ import kotlinx.coroutines.sync.withLock
 
 data class TimelinePreviewEvent(val command: String, val status: String, val timestamp: Long)
 
+enum class ResponsePresentationSource { STREAMING, SESSION_COMPLETED, COMMITTED_CONVERSATION }
+
+data class PresentedAssistantResponse(
+    val conversationId: String,
+    val turnId: String? = null,
+    val interactionId: String? = null,
+    val requestId: String? = null,
+    val text: String,
+    val source: ResponsePresentationSource,
+)
+
 data class HomeUiState(
     val contextualText: String = "Ready when you are",
     val runtimeState: HaloRuntimeState = HaloRuntimeState.Idle,
@@ -165,7 +176,8 @@ class HomeViewModel(
     private val listeningCommandMutex = Mutex()
     private val _listeningRequested = MutableStateFlow(false)
     val listeningRequested: StateFlow<Boolean> = _listeningRequested.asStateFlow()
-    private val _presentedResponse = MutableStateFlow<String?>(null)
+    private val _publishedResponse = MutableStateFlow<PresentedAssistantResponse?>(null)
+    private var lastProjectedResponseKey: String? = null
     val selectedMode = MutableStateFlow(CognitiveOperatingMode.AUTO)
 
     val uiState: StateFlow<HomeUiState> = combine(
@@ -174,7 +186,8 @@ class HomeViewModel(
         aiProviderRouter?.selectedProviderId ?: MutableStateFlow<String?>(null),
         aiProviderRouter?.selectedModelId ?: MutableStateFlow<String?>(null),
         aiProviderRouter?.diagnosticsFlow ?: MutableStateFlow(emptyList<AiProviderDiagnostic>()),
-        _presentedResponse,
+        _publishedResponse,
+        conversations?.turns ?: MutableStateFlow(emptyList()),
         speechAvailability,
         microphonePermission,
         speechInput,
@@ -188,11 +201,45 @@ class HomeViewModel(
         val selectedProviderId = args[2] as String?
         val selectedModelId = args[3] as String?
         @Suppress("UNCHECKED_CAST") val diagnostics = args[4] as List<AiProviderDiagnostic>
-        val presentedResponse = args[5] as String?
-        val speechReady = args[6] as Boolean
-        val microphonePermissionGranted = args[7] as Boolean
-        val input = args[8] as SpeechInputStatus
-        val taskSummary = args[9] as com.halo.app.ui.state.RuntimeTaskSummary
+        val publishedResponse = args[5] as PresentedAssistantResponse?
+        @Suppress("UNCHECKED_CAST") val turns = args[6] as List<com.halo.runtime.cognition.conversation.ConversationTurn>
+        val speechReady = args[7] as Boolean
+        val microphonePermissionGranted = args[8] as Boolean
+        val input = args[9] as SpeechInputStatus
+        val taskSummary = args[10] as com.halo.app.ui.state.RuntimeTaskSummary
+        val activeConversationId = conversations?.activeConversationId().orEmpty()
+        val committed = turns.lastOrNull {
+            it.conversationId == activeConversationId && it.assistantText.isNotBlank()
+        }?.let { turn ->
+            PresentedAssistantResponse(
+                conversationId = activeConversationId,
+                turnId = turn.id,
+                interactionId = turn.metadata["interactionId"],
+                requestId = turn.metadata["requestId"],
+                text = turn.assistantText,
+                source = ResponsePresentationSource.COMMITTED_CONVERSATION,
+            )
+        }
+        val presented = when (sessionState) {
+            is CognitiveSessionState.Streaming -> PresentedAssistantResponse(
+                activeConversationId, text = sessionState.text,
+                source = ResponsePresentationSource.STREAMING,
+            )
+            is CognitiveSessionState.Completed -> PresentedAssistantResponse(
+                activeConversationId, text = sessionState.response.text,
+                source = ResponsePresentationSource.SESSION_COMPLETED,
+            )
+            else -> publishedResponse?.takeIf { it.conversationId == activeConversationId } ?: committed
+        }
+        presented?.let {
+            val key = "${it.conversationId}:${it.turnId}:${it.source}:${it.text.length}"
+            if (key != lastProjectedResponseKey) {
+                lastProjectedResponseKey = key
+                Log.i("HomeViewModel", "HALO_HOME_RESPONSE_PROJECTED conversationId=${it.conversationId} " +
+                    "turnId=${it.turnId} interactionId=${it.interactionId} requestId=${it.requestId} " +
+                    "source=${it.source} textLength=${it.text.length}")
+            }
+        }
         val mapped = mapper.map(snapshot, sessionState, selectedProviderId, selectedModelId, diagnostics)
         val durableStatus = taskSummary.statusText.takeIf {
             sessionState == CognitiveSessionState.Idle &&
@@ -223,7 +270,7 @@ class HomeViewModel(
                     failed = sessionState is CognitiveSessionState.Failed,
                     transition = (sessionState as? CognitiveSessionState.ExecutingTool)?.hashCode() ?: 0
                 ),
-                presentedResponse = presentedResponse,
+                presentedResponse = presented?.text,
                 speechReady = speechReady,
                 microphonePermissionGranted = microphonePermissionGranted,
                 runtimeTaskStatus = durableStatus,
@@ -249,7 +296,27 @@ class HomeViewModel(
 
         viewModelScope.launch {
             eventBus.observe(AssistantResponsePublished::class.java).collect { response ->
-                _presentedResponse.value = response.text
+                val conversationId = conversations?.activeConversationId().orEmpty()
+                _publishedResponse.value = PresentedAssistantResponse(
+                    conversationId = conversationId,
+                    requestId = response.transactionId,
+                    text = response.text,
+                    source = ResponsePresentationSource.SESSION_COMPLETED,
+                )
+            }
+        }
+
+        viewModelScope.launch {
+            val store = conversations ?: return@launch
+            store.turns.collect { turns ->
+                val conversationId = store.activeConversationId().orEmpty()
+                turns.lastOrNull { it.conversationId == conversationId && it.assistantText.isNotBlank() }
+                    ?.let { turn ->
+                        Log.i("HomeViewModel", "HALO_HOME_RESPONSE_OBSERVED conversationId=$conversationId " +
+                            "turnId=${turn.id} interactionId=${turn.metadata["interactionId"]} " +
+                            "requestId=${turn.metadata["requestId"]} source=COMMITTED_CONVERSATION " +
+                            "textLength=${turn.assistantText.length}")
+                    }
             }
         }
 
@@ -272,7 +339,7 @@ class HomeViewModel(
         // Text enters the same interpretation/reasoning pipeline as recognized
         // speech, but it remains a TEXT/USER observation. Response delivery is
         // carried by the transaction, so keyboard turns never need a global TTS mute.
-        _presentedResponse.value = null
+        _publishedResponse.value = null
         viewModelScope.launch {
             runCatching {
                 val timestamp = System.currentTimeMillis()
@@ -357,18 +424,22 @@ class HomeViewModel(
             note.id, turn.conversationId, turn.id, org.json.JSONObject(turn.metadata).toString()))
         _navigationEvents.emit("notebook/note/${note.id}")
     } }
-    fun newConversation() { viewModelScope.launch { conversations?.newConversation(); _presentedResponse.value = null } }
+    fun newConversation() {
+        cognitiveSession.cancel()
+        viewModelScope.launch { conversations?.newConversation(); _publishedResponse.value = null }
+    }
 
     fun clearConversation() {
+        cognitiveSession.cancel()
         cognitiveSession.clearConversation()
-        _presentedResponse.value = null
+        _publishedResponse.value = null
     }
 
     fun cancelSession() { cognitiveSession.cancel() }
 
     fun stopSpeakingAndListen() {
         cognitiveSession.cancel()
-        _presentedResponse.value = null
+        _publishedResponse.value = null
         _listeningRequested.value = true
         viewModelScope.launch {
             listeningCommandMutex.withLock {
@@ -385,7 +456,7 @@ class HomeViewModel(
 
     fun toggleListening() {
         val shouldStart = !_listeningRequested.value
-        if (shouldStart) _presentedResponse.value = null
+        if (shouldStart) _publishedResponse.value = null
         _listeningRequested.value = shouldStart
         viewModelScope.launch {
             listeningCommandMutex.withLock {
@@ -403,7 +474,7 @@ class HomeViewModel(
     }
 
     fun startListening() {
-        _presentedResponse.value = null
+        _publishedResponse.value = null
         _listeningRequested.value = true
         viewModelScope.launch {
             listeningCommandMutex.withLock {

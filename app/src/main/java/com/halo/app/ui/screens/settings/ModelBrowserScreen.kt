@@ -234,7 +234,10 @@ private fun ModelCard(
     val installedAndVerified = descriptor?.validation == LocalModelValidation.VERIFIED_ARTIFACT
     val damaged = descriptor != null && !descriptor.valid
     val downloadFailed = downloadState is DownloadState.Failed
-    val inFlight = downloadState is DownloadState.Downloading || downloadState is DownloadState.Verifying
+    val inFlight = downloadState is DownloadState.Queued ||
+        downloadState is DownloadState.Preparing ||
+        downloadState is DownloadState.Downloading ||
+        downloadState is DownloadState.Verifying
     val paused = downloadState is DownloadState.Paused
     val importOnly = model.access != LiteRtCatalogAccess.OPEN_DIRECT
 
@@ -243,6 +246,8 @@ private fun ModelCard(
         resident && generationProven -> "Resident on ${backendLabel(effectiveBackend ?: requestedBackend)} · generation proven"
         resident -> "Resident on ${backendLabel(effectiveBackend ?: requestedBackend)} · generation not yet proven"
         verification is ModelVerificationResult.Failed -> "Load failed (${verification.stage})"
+        downloadState is DownloadState.Queued -> "Queued"
+        downloadState is DownloadState.Preparing -> "Preparing…"
         downloadState is DownloadState.Downloading -> "Downloading ${percent(downloadState)}"
         downloadState is DownloadState.Verifying -> "Verifying file"
         downloadState is DownloadState.Paused -> "Partial ${size(downloadState.downloadedBytes)} — resumable"

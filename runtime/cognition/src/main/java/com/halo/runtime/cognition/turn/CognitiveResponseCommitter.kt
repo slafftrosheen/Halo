@@ -64,6 +64,7 @@ class DefaultCognitiveResponseCommitter(
                     "modelId" to (response.modelId ?: ""),
                     "requestedModelId" to (response.requestedModelId ?: response.modelId ?: ""),
                     "resolvedModelId" to (response.resolvedModelId ?: response.modelId ?: ""),
+                    "requestId" to requestId,
                     "interactionId" to interactionId.value,
                     "sourceCaptureId" to (commit.sourceCaptureId ?: "")
                 )
@@ -71,6 +72,11 @@ class DefaultCognitiveResponseCommitter(
         } else null
 
         if (turn != null) {
+            println(
+                "HALO_RESPONSE_COMMITTED conversationId=${turn.conversationId} turnId=${turn.id} " +
+                    "interactionId=${interactionId.value} requestId=$requestId " +
+                    "source=COMMITTED_CONVERSATION textLength=${response.text.length}",
+            )
             eventBus.publish(
                 ConversationTurnCompleted(
                     turnId = turn.id,

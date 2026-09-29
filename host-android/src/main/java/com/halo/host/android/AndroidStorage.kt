@@ -36,6 +36,14 @@ class AndroidStorage(private val context: Context, private val name: String = "h
         prefs.edit().putBoolean(key, value).apply()
     }
 
+    override fun putBatch(strings: Map<String, String?>, booleans: Map<String, Boolean>) {
+        val editor = prefs.edit()
+        strings.forEach { (key, value) -> editor.putString(key, value) }
+        booleans.forEach { (key, value) -> editor.putBoolean(key, value) }
+        // One editor commit prevents observers/process death from seeing a torn AI selection.
+        editor.apply()
+    }
+
     override fun remove(key: String) {
         prefs.edit().remove(key).apply()
     }

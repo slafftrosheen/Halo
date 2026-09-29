@@ -2,6 +2,7 @@ package com.halo.app.backup
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.core.content.FileProvider
 import androidx.room.withTransaction
 import com.halo.app.data.AppDatabase
@@ -252,11 +253,24 @@ class StagedBrainImporter(
                 dao.putAgentRuns(normalizedAgentRuns)
                 dao.putAgentSteps(room.agentSteps)
             }
-            snapshot.settings.values.forEach { (key, value) ->
-                if (key in PORTABLE_STRING_KEYS) settingsStorage.putString(key, value)
-            }
-            if (snapshot.settings.values.keys.any { it == "active_ai_provider" || it == "active_ai_model" }) {
-                settingsStorage.putBoolean("active_ai_selection_migrated_v1", true)
+            val portableStrings = snapshot.settings.values.filterKeys { it in PORTABLE_STRING_KEYS }
+            portableStrings.filterKeys { it !in AI_SELECTION_KEYS }.forEach(settingsStorage::putString)
+            if (portableStrings.keys.any { it in AI_SELECTION_KEYS }) {
+                val previousProvider = settingsStorage.getString("active_ai_provider")
+                val previousModel = settingsStorage.getString("active_ai_model")
+                val previousPolicy = settingsStorage.getString("ai_routing_policy")
+                settingsStorage.putBatch(
+                    strings = mapOf(
+                        "active_ai_provider" to portableStrings["active_ai_provider"],
+                        "active_ai_model" to portableStrings["active_ai_model"],
+                        "ai_routing_policy" to (portableStrings["ai_routing_policy"] ?: "AUTOMATIC"),
+                    ),
+                    booleans = mapOf("active_ai_selection_migrated_v1" to true),
+                )
+                Log.i(TAG, "HALO_AI_SELECTION_WRITE source=IMPORT_RESTORE " +
+                    "previousProvider=$previousProvider previousModel=$previousModel previousPolicy=$previousPolicy " +
+                    "newProvider=${portableStrings["active_ai_provider"]} newModel=${portableStrings["active_ai_model"]} " +
+                    "newPolicy=${portableStrings["ai_routing_policy"] ?: "AUTOMATIC"}")
             }
             snapshot.settings.booleanValues.forEach { (key, value) ->
                 if (key in PORTABLE_BOOLEAN_KEYS) settingsStorage.putBoolean(key, value)
@@ -509,6 +523,8 @@ class StagedBrainImporter(
     private data class ParsedArchive(val zipFile: ZipFile, val manifest: HaloBrainManifest, val snapshot: BrainSnapshot, val contentEntries: Map<String, String>, val encrypted: Boolean)
 
     private companion object {
+        const val TAG = "BrainImportRepository"
+        val AI_SELECTION_KEYS = setOf("active_ai_provider", "active_ai_model", "ai_routing_policy")
         val PORTABLE_STRING_KEYS = setOf(
             "active_ai_provider", "active_ai_model", "ai_routing_policy",
             "ollama_endpoint", "speech_locale",
