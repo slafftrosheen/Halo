@@ -9,6 +9,21 @@ import org.junit.Test
 class NativeResourceCoordinatorTest {
 
     @Test
+    fun nextUseHintDoesNotEvictWarmLlmBeforeAsrActuallyAcquires() = runBlocking {
+        val coordinator = NativeResourceCoordinator()
+        coordinator.updateBudget(NativeResourceBudget(allowConcurrentHeavyweights = false, idleGraceMillis = 60_000))
+        val llm = FakeOwner(NativeResourceKind.HEAVY_LLM)
+
+        assertTrue(coordinator.acquire(llm))
+        coordinator.mark(llm, NativeResourceState.RESIDENT, "generation complete")
+        coordinator.hint(NativeNextUseHint.EXPECT_ASR)
+
+        assertFalse(llm.released)
+        assertTrue(coordinator.activeKinds().contains(NativeResourceKind.HEAVY_LLM))
+        assertEquals(NativeResourceState.RESIDENT, coordinator.snapshot.value.single().state)
+    }
+
+    @Test
     fun conflictingOwnerIsAskedToYieldAndDiagnosticsTrackTransition() = runBlocking {
         val coordinator = NativeResourceCoordinator()
         val firstLlm = FakeOwner(NativeResourceKind.HEAVY_LLM)

@@ -285,9 +285,12 @@ class IntelligenceViewModel(
             }
         val allProviders = aiProviderRouter.getAllProviders()
         val activeProvider = allProviders.find { it.id == selectedProviderId }
-        val activeProviderStatus = selectedProviderId?.let { id ->
-            runCatching { activeProvider?.getStatus() }.getOrNull()
-        } ?: ProviderStatus.UNAVAILABLE
+        // Presentation consumes the router's cached diagnostics. Provider status/capability calls
+        // may touch credentials, files, or the network and must never execute in Compose mapping.
+        val diagnosticsById = selection.diagnostics.associateBy { it.providerId }
+        val activeDiagnostic = selectedProviderId?.let(diagnosticsById::get)
+        val activeProviderStatus = activeDiagnostic?.let { ProviderStatus(it.state, it.message) }
+            ?: ProviderStatus.UNAVAILABLE
 
         val localModels = (modelManager?.inventoryState?.value as? com.halo.providers.litert.models.LocalModelInventoryState.Ready)?.models.orEmpty()
         val installedIds = localModels.mapTo(hashSetOf()) { it.id }
@@ -326,18 +329,19 @@ class IntelligenceViewModel(
             activeProviderId = selectedProviderId ?: "",
             activeProviderName = activeProvider?.displayName ?: "None",
             activeProviderStatus = activeProviderStatus,
-            capabilities = activeProvider?.getCapabilities() ?: emptySet(),
+            capabilities = activeDiagnostic?.capabilities ?: emptySet(),
             activeModelId = selectedModelId,
             lastResolvedModelId = lastResolvedModelId,
             providers = allProviders.map { p ->
-                val status = runCatching { p.getStatus() }.getOrDefault(ProviderStatus.UNAVAILABLE)
-                val caps = runCatching { p.getCapabilities() }.getOrDefault(emptySet())
+                val diagnostic = diagnosticsById[p.id]
+                val status = diagnostic?.let { ProviderStatus(it.state, it.message) }
+                    ?: ProviderStatus.UNAVAILABLE
                 AiProviderUiState(
                     id = p.id,
                     name = p.displayName,
                     status = status,
                     isSelected = p.id == selectedProviderId,
-                    capabilities = caps
+                    capabilities = diagnostic?.capabilities ?: emptySet()
                 )
             },
             availableModels = catalogEntries.map { it.model },

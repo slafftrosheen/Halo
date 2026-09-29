@@ -249,7 +249,7 @@ private fun ModelCard(
         downloadState is DownloadState.Queued -> "Queued"
         downloadState is DownloadState.Preparing -> "Preparing…"
         downloadState is DownloadState.Downloading -> "Downloading ${percent(downloadState)}"
-        downloadState is DownloadState.Verifying -> "Verifying file"
+        downloadState is DownloadState.Verifying -> "Verifying…"
         downloadState is DownloadState.Paused -> "Partial ${size(downloadState.downloadedBytes)} — resumable"
         damaged -> "Corrupt/stale — re-download"
         installedAndVerified && selected -> "Selected · cold (will load on request)"
@@ -370,7 +370,7 @@ private fun ModelCard(
                         }
                     }
                     installedAndVerified -> {
-                        if (!selected) Button(onClick = onSelect) { Text("Use model") }
+                        if (!selected) Button(onClick = onSelect) { Text("Select") }
                         OutlinedButton(onClick = onVerify, enabled = !busy) { Text("Verify") }
                         OutlinedButton(onClick = onSmokeTest, enabled = !busy) { Text("Smoke test") }
                         OutlinedButton(onClick = onBenchmark, enabled = !busy) { Text("Benchmark") }

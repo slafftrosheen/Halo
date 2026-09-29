@@ -22,6 +22,7 @@ import com.halo.runtime.cognition.tools.ToolLoopLimits
 import com.halo.sdk.provider.CognitiveSessionState
 import com.halo.sdk.provider.AIMessage
 import com.halo.sdk.provider.AiCapability
+import com.halo.sdk.provider.AiContext
 import com.halo.sdk.provider.AiErrorType
 import com.halo.sdk.provider.AiProviderException
 import com.halo.sdk.provider.AiResponse
@@ -223,11 +224,21 @@ class CognitiveTurnExecutor(
 
                 val durableRun = createDurableRunIfNeeded()
                 val exposedToolIds = currentContext.availableTools.map { it.name }.toSet()
+                val toolCalls = response.toolCalls.map { call ->
+                    if (call.functionName == "halo_set_alarm" &&
+                        (call.arguments["timeExpression"] as? String).isNullOrBlank() &&
+                        !turn.request.text.isNullOrBlank()
+                    ) {
+                        // Preserve the user's temporal expression when a model discovered the
+                        // alarm schema but omitted the required argument on its next turn.
+                        call.copy(arguments = call.arguments + ("timeExpression" to turn.request.text.orEmpty()))
+                    } else call
+                }
                 val toolResult = toolExecutor.execute(
                     runId = durableRun,
                     interactionId = turn.interactionId,
                     requestId = turn.requestId,
-                    toolCalls = response.toolCalls,
+                    toolCalls = toolCalls,
                     workspaceReadAllowed = workspaceReadAllowed,
                     exposedToolIds = exposedToolIds,
                 )
@@ -276,21 +287,7 @@ class CognitiveTurnExecutor(
                         )
                     }
                     is ToolTurnResult.Completed -> {
-                        currentContext = currentContext.copy(
-                            conversation = buildList {
-                                addAll(currentContext.conversation)
-                                if (response.text.isNotBlank() || response.toolCalls.isNotEmpty()) {
-                                    add(
-                                        AIMessage(
-                                            Role.ASSISTANT,
-                                            response.text,
-                                            toolCalls = response.toolCalls
-                                        )
-                                    )
-                                }
-                                addAll(toolResult.toolMessages)
-                            }
-                        )
+                        currentContext = continueToolConversation(currentContext, response, toolResult.toolMessages)
 
                         /*
                          * Re-plan exposure from what the tools actually declared, then
@@ -539,3 +536,17 @@ class CognitiveTurnExecutor(
         }
     }
 }
+
+internal fun continueToolConversation(
+    context: AiContext,
+    response: AiResponse,
+    toolMessages: List<AIMessage>,
+): AiContext = context.copy(
+    conversation = buildList {
+        addAll(context.conversation)
+        if (response.text.isNotBlank() || response.toolCalls.isNotEmpty()) {
+            add(AIMessage(Role.ASSISTANT, response.text, toolCalls = response.toolCalls))
+        }
+        addAll(toolMessages)
+    },
+)

@@ -9,6 +9,23 @@ class SpeechTranscriptGateTest {
     private val gate = SpeechTranscriptGate()
 
     @Test
+    fun unknownVadWithRecognizedTextIsNotAnnotationOnlyBecauseVoicedDurationIsZero() {
+        val result = gate.evaluate(
+            transcript = "set alarm",
+            quality = SpeechRecognitionQuality(
+                confidence = null,
+                audioDurationMs = 740L,
+                voicedDurationMs = 0L,
+                voicedRatio = 0f,
+                peakAmplitude = null,
+                qualityEstimator = "UNKNOWN",
+            ),
+        )
+
+        assertTrue(result is SpeechGateResult.Accepted)
+    }
+
+    @Test
     fun lowGainWearableSpeechFromEnergyFallbackIsNotRejectedByRatioAlone() {
         val result = gate.evaluate(
             transcript = "What is the current time?",

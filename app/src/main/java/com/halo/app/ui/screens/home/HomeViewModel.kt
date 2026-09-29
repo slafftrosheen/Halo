@@ -32,17 +32,6 @@ import kotlinx.coroutines.sync.withLock
 
 data class TimelinePreviewEvent(val command: String, val status: String, val timestamp: Long)
 
-enum class ResponsePresentationSource { STREAMING, SESSION_COMPLETED, COMMITTED_CONVERSATION }
-
-data class PresentedAssistantResponse(
-    val conversationId: String,
-    val turnId: String? = null,
-    val interactionId: String? = null,
-    val requestId: String? = null,
-    val text: String,
-    val source: ResponsePresentationSource,
-)
-
 data class HomeUiState(
     val contextualText: String = "Ready when you are",
     val runtimeState: HaloRuntimeState = HaloRuntimeState.Idle,
@@ -177,6 +166,7 @@ class HomeViewModel(
     private val _listeningRequested = MutableStateFlow(false)
     val listeningRequested: StateFlow<Boolean> = _listeningRequested.asStateFlow()
     private val _publishedResponse = MutableStateFlow<PresentedAssistantResponse?>(null)
+    private val _sessionPresentationEnabled = MutableStateFlow(true)
     private var lastProjectedResponseKey: String? = null
     val selectedMode = MutableStateFlow(CognitiveOperatingMode.AUTO)
 
@@ -187,6 +177,7 @@ class HomeViewModel(
         aiProviderRouter?.selectedModelId ?: MutableStateFlow<String?>(null),
         aiProviderRouter?.diagnosticsFlow ?: MutableStateFlow(emptyList<AiProviderDiagnostic>()),
         _publishedResponse,
+        _sessionPresentationEnabled,
         conversations?.turns ?: MutableStateFlow(emptyList()),
         speechAvailability,
         microphonePermission,
@@ -202,35 +193,20 @@ class HomeViewModel(
         val selectedModelId = args[3] as String?
         @Suppress("UNCHECKED_CAST") val diagnostics = args[4] as List<AiProviderDiagnostic>
         val publishedResponse = args[5] as PresentedAssistantResponse?
-        @Suppress("UNCHECKED_CAST") val turns = args[6] as List<com.halo.runtime.cognition.conversation.ConversationTurn>
-        val speechReady = args[7] as Boolean
-        val microphonePermissionGranted = args[8] as Boolean
-        val input = args[9] as SpeechInputStatus
-        val taskSummary = args[10] as com.halo.app.ui.state.RuntimeTaskSummary
+        val sessionPresentationEnabled = args[6] as Boolean
+        @Suppress("UNCHECKED_CAST") val turns = args[7] as List<com.halo.runtime.cognition.conversation.ConversationTurn>
+        val speechReady = args[8] as Boolean
+        val microphonePermissionGranted = args[9] as Boolean
+        val input = args[10] as SpeechInputStatus
+        val taskSummary = args[11] as com.halo.app.ui.state.RuntimeTaskSummary
         val activeConversationId = conversations?.activeConversationId().orEmpty()
-        val committed = turns.lastOrNull {
-            it.conversationId == activeConversationId && it.assistantText.isNotBlank()
-        }?.let { turn ->
-            PresentedAssistantResponse(
-                conversationId = activeConversationId,
-                turnId = turn.id,
-                interactionId = turn.metadata["interactionId"],
-                requestId = turn.metadata["requestId"],
-                text = turn.assistantText,
-                source = ResponsePresentationSource.COMMITTED_CONVERSATION,
-            )
-        }
-        val presented = when (sessionState) {
-            is CognitiveSessionState.Streaming -> PresentedAssistantResponse(
-                activeConversationId, text = sessionState.text,
-                source = ResponsePresentationSource.STREAMING,
-            )
-            is CognitiveSessionState.Completed -> PresentedAssistantResponse(
-                activeConversationId, text = sessionState.response.text,
-                source = ResponsePresentationSource.SESSION_COMPLETED,
-            )
-            else -> publishedResponse?.takeIf { it.conversationId == activeConversationId } ?: committed
-        }
+        val presented = HomeResponseProjector.project(
+            activeConversationId,
+            sessionState,
+            publishedResponse,
+            turns,
+            sessionPresentationEnabled,
+        )
         presented?.let {
             val key = "${it.conversationId}:${it.turnId}:${it.source}:${it.text.length}"
             if (key != lastProjectedResponseKey) {
@@ -303,6 +279,16 @@ class HomeViewModel(
                     text = response.text,
                     source = ResponsePresentationSource.SESSION_COMPLETED,
                 )
+            }
+        }
+
+        viewModelScope.launch {
+            cognitiveSession.state.collect { state ->
+                if (state is CognitiveSessionState.PreparingContext ||
+                    state is CognitiveSessionState.Reasoning ||
+                    state is CognitiveSessionState.Streaming ||
+                    state is CognitiveSessionState.ExecutingTool
+                ) _sessionPresentationEnabled.value = true
             }
         }
 
@@ -425,11 +411,13 @@ class HomeViewModel(
         _navigationEvents.emit("notebook/note/${note.id}")
     } }
     fun newConversation() {
+        _sessionPresentationEnabled.value = false
         cognitiveSession.cancel()
         viewModelScope.launch { conversations?.newConversation(); _publishedResponse.value = null }
     }
 
     fun clearConversation() {
+        _sessionPresentationEnabled.value = false
         cognitiveSession.cancel()
         cognitiveSession.clearConversation()
         _publishedResponse.value = null

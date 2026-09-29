@@ -102,7 +102,7 @@ class DefaultAiProviderRouter(
     fun setRoutingPolicy(policy: AiRoutingPolicy) {
         val previous = currentSelection()
         _routingPolicy.value = policy
-        persistSelection(currentSelection(), "USER_TARGET", previous)
+        persistSelection(currentSelection(), "OTHER", previous)
     }
 
     override fun selectProvider(id: String) {

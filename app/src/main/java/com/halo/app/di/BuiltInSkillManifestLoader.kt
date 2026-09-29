@@ -15,8 +15,20 @@ import java.security.MessageDigest
 
 class BuiltInSkillManifestLoader(private val context: Context) {
     fun load(): List<SkillDescriptor> {
+        val descriptors = loadBundledManifests(strict = false)
+        // Duplicate ids are resolved by BuiltInSkillMerge, which keeps the strictest declared risk
+        // and unions tools/permissions. A plain associateBy here let a manifest override the
+        // registry with a weaker classification for the same skill.
+        return BuiltInSkillMerge.merge(
+            defaults = DefaultSkillRegistry.defaultBuiltInSkills(),
+            manifests = descriptors,
+        )
+    }
+
+    /** Strict entry point used by the build guard so no invalid bundled asset can be ignored. */
+    fun loadBundledManifests(strict: Boolean = true): List<SkillDescriptor> {
         val files = context.assets.list("skills").orEmpty().filter { it.endsWith(".json") }.sorted()
-        val descriptors = files.mapNotNull { file ->
+        return files.mapNotNull { file ->
             runCatching {
                 val bytes = context.assets.open("skills/$file").use { it.readBytes() }
                 require(bytes.size <= SkillManifestPolicy.MAX_MANIFEST_BYTES) { "Manifest exceeds size limit" }
@@ -53,15 +65,12 @@ class BuiltInSkillManifestLoader(private val context: Context) {
                 val errors = SkillManifestPolicy.validate(descriptor)
                 require(errors.isEmpty()) { errors.joinToString("; ") }
                 descriptor
-            }.onFailure { android.util.Log.e("HaloSkills", "Invalid built-in skill manifest: $file", it) }.getOrNull()
+            }.onFailure { android.util.Log.e("HaloSkills", "Invalid built-in skill manifest: $file", it) }
+                .fold(
+                    onSuccess = { it },
+                    onFailure = { if (strict) throw IllegalArgumentException("Invalid built-in skill manifest: $file", it) else null },
+                )
         }
-        // Duplicate ids are resolved by BuiltInSkillMerge, which keeps the strictest declared risk
-        // and unions tools/permissions. A plain associateBy here let a manifest override the
-        // registry with a weaker classification for the same skill.
-        return BuiltInSkillMerge.merge(
-            defaults = DefaultSkillRegistry.defaultBuiltInSkills(),
-            manifests = descriptors,
-        )
     }
 
     private fun ByteArray.sha256(): String = MessageDigest.getInstance("SHA-256")

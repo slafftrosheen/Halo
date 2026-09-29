@@ -9,6 +9,9 @@ import com.halo.app.data.AppDatabase
 import com.halo.app.data.Memory
 import com.halo.app.data.workspace.WorkspaceFileAvailability
 import com.halo.app.storage.HaloStorageLayout
+import com.halo.engines.ai.AiSelectionRepository
+import com.halo.engines.ai.PersistedAiSelection
+import com.halo.sdk.provider.AiRoutingPolicy
 import com.halo.sdk.runtime.Storage
 import com.halo.host.android.reminder.ReminderRecord
 import com.halo.host.android.reminder.ReminderRecordStore
@@ -259,18 +262,20 @@ class StagedBrainImporter(
                 val previousProvider = settingsStorage.getString("active_ai_provider")
                 val previousModel = settingsStorage.getString("active_ai_model")
                 val previousPolicy = settingsStorage.getString("ai_routing_policy")
-                settingsStorage.putBatch(
-                    strings = mapOf(
-                        "active_ai_provider" to portableStrings["active_ai_provider"],
-                        "active_ai_model" to portableStrings["active_ai_model"],
-                        "ai_routing_policy" to (portableStrings["ai_routing_policy"] ?: "AUTOMATIC"),
+                val importedPolicy = portableStrings["ai_routing_policy"]?.let {
+                    runCatching { enumValueOf<AiRoutingPolicy>(it) }.getOrNull()
+                } ?: AiRoutingPolicy.AUTOMATIC
+                AiSelectionRepository(settingsStorage).writeExplicitSelection(
+                    PersistedAiSelection(
+                        providerId = portableStrings["active_ai_provider"],
+                        modelId = portableStrings["active_ai_model"],
+                        policy = importedPolicy,
                     ),
-                    booleans = mapOf("active_ai_selection_migrated_v1" to true),
                 )
                 Log.i(TAG, "HALO_AI_SELECTION_WRITE source=IMPORT_RESTORE " +
                     "previousProvider=$previousProvider previousModel=$previousModel previousPolicy=$previousPolicy " +
                     "newProvider=${portableStrings["active_ai_provider"]} newModel=${portableStrings["active_ai_model"]} " +
-                    "newPolicy=${portableStrings["ai_routing_policy"] ?: "AUTOMATIC"}")
+                    "newPolicy=$importedPolicy")
             }
             snapshot.settings.booleanValues.forEach { (key, value) ->
                 if (key in PORTABLE_BOOLEAN_KEYS) settingsStorage.putBoolean(key, value)

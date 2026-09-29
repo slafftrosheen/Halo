@@ -68,20 +68,9 @@ class NativeResourceCoordinator(
 
     suspend fun hint(next: NativeNextUseHint) = mutex.withLock {
         _nextUseHint.value = next
-        val idleKind = when (next) {
-            NativeNextUseHint.EXPECT_ASR -> NativeResourceKind.HEAVY_LLM
-            NativeNextUseHint.EXPECT_LLM -> NativeResourceKind.HEAVY_ASR
-            NativeNextUseHint.NONE -> null
-        }
-        if (idleKind != null && !_budget.value.allowConcurrentHeavyweights) {
-            active.filter { it.nativeResourceKind == idleKind && it.releaseIfIdle() }
-                .forEach { owner ->
-                    active -= owner
-                    expiry.remove(owner)?.cancel()
-                    activeLeases.remove(owner)?.release()
-                    publish(owner, NativeResourceState.RELEASED, "next use hint=$next")
-                }
-        }
+        // A hint predicts likely work; it is not an allocation request. Residency remains warm
+        // until grace expiry or pressure. A real conflicting acquire still asks idle owners to
+        // yield, preserving execution exclusivity without paying a cold LLM reload pre-emptively.
     }
 
     suspend fun updateBudget(value: NativeResourceBudget) {

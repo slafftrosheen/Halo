@@ -56,4 +56,13 @@ class AlarmCommandResolverTest {
         val clarification = plan as AlarmExecutionPlan.Clarification
         assertEquals("What time in the evening?", clarification.prompt)
     }
+
+    @Test
+    fun `original tomorrow clock expression retains enough information for resolution`() {
+        val plan = resolver.resolve(null, "set an alarm for 6 am tomorrow")
+        assertTrue(plan !is AlarmExecutionPlan.Clarification)
+        val alarm = plan as AlarmExecutionPlan.SystemAlarm
+        assertEquals(6, alarm.hour)
+        assertEquals(0, alarm.minute)
+    }
 }
