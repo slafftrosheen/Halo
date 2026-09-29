@@ -22,5 +22,11 @@ class BuiltInSkillManifestTest {
             assertEquals(SkillManifestPolicy.CURRENT_SCHEMA_VERSION, manifest.schemaVersion)
             assertTrue(SkillManifestPolicy.validate(manifest).isEmpty())
         }
+
+        val manifestIds = manifests.map { it.id }.toSet()
+        val defaultIds = com.halo.runtime.cognition.skills.DefaultSkillRegistry.defaultBuiltInSkills()
+            .map { it.id }
+            .toSet()
+        assertEquals("Every Runtime built-in skill must ship a manifest", defaultIds, manifestIds)
     }
 }
