@@ -416,7 +416,15 @@ fun AppShell(
                         onBack = { navController.popBackStack() },
                         registry = ManualDependencyGraph.providerGraph.remoteProviderPresenceRegistry,
                         credentialPresent = { key ->
-                            !ManualDependencyGraph.storage.getString(key, null).isNullOrBlank()
+                            val providerId = when (key) {
+                                "groq_api_key" -> com.halo.sdk.provider.RemoteProviderIds.GROQ
+                                "cerebras_api_key" -> com.halo.sdk.provider.RemoteProviderIds.CEREBRAS
+                                "opencode_zen_api_key" -> com.halo.sdk.provider.RemoteProviderIds.OPENCODE_ZEN
+                                "xai_api_key" -> com.halo.sdk.provider.RemoteProviderIds.XAI
+                                "opencode_companion_credential" -> com.halo.sdk.provider.RemoteProviderIds.OPENCODE_COMPANION
+                                else -> com.halo.sdk.provider.RemoteProviderIds.CUSTOM_OPENAI_COMPATIBLE
+                            }
+                            ManualDependencyGraph.intelligenceViewModel.hasRemoteCredential(providerId)
                         },
                         onSaveCredential = ManualDependencyGraph.intelligenceViewModel::setRemoteProviderCredential,
                         onSaveEndpoint = ManualDependencyGraph.intelligenceViewModel::setRemoteProviderEndpoint,
