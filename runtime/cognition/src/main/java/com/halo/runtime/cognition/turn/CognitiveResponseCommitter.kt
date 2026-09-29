@@ -140,17 +140,20 @@ class DefaultCognitiveResponseCommitter(
         )
 
         if (!isHandoff && commit.responseDelivery == ResponseDelivery.SPEECH_AND_VISUAL && response.text.isNotBlank()) {
-            eventBus.publish(
-                TtsRequested(
-                    text = response.text,
-                    transactionId = requestId,
-                    target = commit.outputTarget,
-                    fallback = commit.outputFallback,
-                    sourceCaptureId = commit.sourceCaptureId,
-                    interactionId = interactionId.value,
-                    timestamp = System.currentTimeMillis()
+            val spokenText = TtsSanitizer.sanitize(response.text)
+            if (spokenText.isNotBlank()) {
+                eventBus.publish(
+                    TtsRequested(
+                        text = spokenText,
+                        transactionId = requestId,
+                        target = commit.outputTarget,
+                        fallback = commit.outputFallback,
+                        sourceCaptureId = commit.sourceCaptureId,
+                        interactionId = interactionId.value,
+                        timestamp = System.currentTimeMillis()
+                    )
                 )
-            )
+            }
         }
 
         if (runIdToCommit != null) {

@@ -147,8 +147,8 @@ class LiteRtSelectionTest {
             defaultInferenceProviderId = "openrouter",
         )
 
-        assertEquals("openrouter", storage.getString("active_ai_provider"))
-        assertEquals("openrouter", migrated.selectedProviderId.value)
+        assertEquals("provider.litert.local", storage.getString("active_ai_provider"))
+        assertEquals("provider.litert.local", migrated.selectedProviderId.value)
     }
 
     // ---------------------------------------------------------------------------------------

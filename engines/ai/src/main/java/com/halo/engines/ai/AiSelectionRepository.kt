@@ -1,5 +1,8 @@
 package com.halo.engines.ai
 
+import com.halo.sdk.provider.AiModelRole
+import com.halo.sdk.provider.AiRoleBinding
+import com.halo.sdk.provider.AiRoleSelection
 import com.halo.sdk.runtime.Storage
 
 /** The sole persisted authority for the explicitly selected inference target. */
@@ -48,6 +51,34 @@ class AiSelectionRepository(
                 POLICY_KEY to selection.policy.name,
             ),
             booleans = mapOf(MIGRATION_COMPLETE_KEY to true),
+        )
+    }
+
+    fun readRoleBindings(): Map<AiModelRole, AiRoleBinding> {
+        val bindings = mutableMapOf<AiModelRole, AiRoleBinding>()
+        AiModelRole.entries.forEach { role ->
+            if (role == AiModelRole.CHAT) return@forEach // CHAT is handled by PersistedAiSelection
+            
+            val selectionRaw = storage.getString("role_${role.name}_selection")
+            val selection = selectionRaw?.let { 
+                runCatching { enumValueOf<AiRoleSelection>(it) }.getOrNull()
+            } ?: if (role == AiModelRole.VISION) AiRoleSelection.AUTOMATIC else AiRoleSelection.INHERIT_DEFAULT
+            
+            val providerId = storage.getString("role_${role.name}_provider")?.trim()?.ifBlank { null }
+            val modelId = storage.getString("role_${role.name}_model")?.trim()?.ifBlank { null }
+            
+            bindings[role] = AiRoleBinding(role, providerId, modelId, selection)
+        }
+        return bindings
+    }
+
+    fun writeRoleBinding(binding: AiRoleBinding) {
+        storage.putBatch(
+            strings = mapOf(
+                "role_${binding.role.name}_selection" to binding.selection.name,
+                "role_${binding.role.name}_provider" to binding.providerId,
+                "role_${binding.role.name}_model" to binding.modelId
+            )
         )
     }
 

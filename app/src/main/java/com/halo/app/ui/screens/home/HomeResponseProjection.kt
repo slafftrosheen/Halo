@@ -24,15 +24,16 @@ object HomeResponseProjector {
         allowTransientSession: Boolean = true,
     ): PresentedAssistantResponse? {
         if (activeConversationId.isBlank()) return null
-        return when (sessionState.takeIf { allowTransientSession } ?: CognitiveSessionState.Idle) {
-            is CognitiveSessionState.Streaming -> sessionState.text.takeIf(String::isNotBlank)?.let {
+        val state = sessionState.takeIf { allowTransientSession } ?: CognitiveSessionState.Idle
+        return when (state) {
+            is CognitiveSessionState.Streaming -> state.text.takeIf(String::isNotBlank)?.let {
                 PresentedAssistantResponse(
                     conversationId = activeConversationId,
                     text = it,
                     source = ResponsePresentationSource.STREAMING,
                 )
             }
-            is CognitiveSessionState.Completed -> sessionState.response.text.takeIf(String::isNotBlank)?.let {
+            is CognitiveSessionState.Completed -> state.response.text.takeIf(String::isNotBlank)?.let {
                 PresentedAssistantResponse(
                     conversationId = activeConversationId,
                     text = it,

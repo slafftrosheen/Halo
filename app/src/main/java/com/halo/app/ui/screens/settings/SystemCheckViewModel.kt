@@ -21,6 +21,8 @@ import com.halo.sdk.provider.AiContext
 import com.halo.sdk.provider.AiProviderRouter
 import com.halo.sdk.provider.AiRequest
 import com.halo.runtime.observer.InferenceLedger
+import com.halo.sdk.provider.AiWorkloadKind
+import com.halo.sdk.provider.AiWorkloadSpec
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -82,7 +84,7 @@ class SystemCheckViewModel(
             val runtime = AssistantRuntimeStateStore.state.value
             val assistantStatus = when (integration) {
                 is AssistantIntegrationState.Active -> CheckStatus.READY to
-                    "Role held; interactor active; service=${runtime.serviceReady}; session=${runtime.sessionCreated}; capture=${runtime.captureState}"
+                    "Role held; interactor active; service=${runtime.serviceReady}; session=${runtime.sessionCreated}; capture=${runtime.state}"
                 is AssistantIntegrationState.RoleHeldNotActive -> CheckStatus.BLOCKED to
                     "Role held, but Android interactor is ${integration.diagnostics.activeInteractorStatus} (${integration.diagnostics.activeInteractorComponent ?: "unavailable"})"
                 is AssistantIntegrationState.EligibleNotSelected -> CheckStatus.NOT_CONFIGURED to
@@ -361,6 +363,28 @@ class SystemCheckViewModel(
 
     fun runSafeChecks() {
         refreshChecks()
+    }
+
+    fun runLocalLoop() {
+        viewModelScope.launch(Dispatchers.IO) {
+            updateItem("core", CheckStatus.RUNNING, "Running synthetic loop...")
+            val startTime = System.currentTimeMillis()
+            runCatching {
+                val response = providerRouter.execute(
+                    AiRequest(text = "Hello", maxOutputTokens = 8),
+                    AiWorkloadSpec(kind = AiWorkloadKind.CONVERSATION),
+                    AiContext.EMPTY,
+                )
+                val elapsed = System.currentTimeMillis() - startTime
+                if (response.text.isNotBlank()) {
+                    updateItem("core", CheckStatus.PASSED, "Synthetic loop completed (${response.text})", elapsed)
+                } else {
+                    updateItem("core", CheckStatus.FAILED, "Synthetic loop returned empty text", elapsed)
+                }
+            }.onFailure { err ->
+                updateItem("core", CheckStatus.FAILED, "${err::class.java.simpleName}: ${err.message}", System.currentTimeMillis() - startTime)
+            }
+        }
     }
 
     private fun updateItem(id: String, status: CheckStatus, reason: String, durationMs: Long? = null) {

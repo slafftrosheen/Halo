@@ -11,6 +11,9 @@ import com.halo.sdk.runtime.NativeResourceKind
 import com.halo.sdk.runtime.NativeResourceOwner
 import com.halo.sdk.runtime.NativeResourceState
 import com.halo.sdk.runtime.NativeNextUseHint
+import com.halo.sdk.runtime.RuntimeWorkloadClass
+import com.halo.sdk.runtime.ResidencyPreference
+import com.halo.sdk.runtime.WorkloadResourcePolicy
 import com.halo.sdk.runtime.RecognitionQuality
 import com.k2fsa.sherpa.onnx.FeatureConfig
 import com.k2fsa.sherpa.onnx.OfflineModelConfig
@@ -50,6 +53,11 @@ class SherpaOfflineSpeechRecognitionProvider(
     )
 
     override val nativeResourceKind: NativeResourceKind = NativeResourceKind.HEAVY_ASR
+    override val defaultResourcePolicy = WorkloadResourcePolicy(
+        workloadClass = RuntimeWorkloadClass.ASR,
+        exclusive = true,
+        residencyPreference = ResidencyPreference.WARM_EJECTABLE
+    )
 
     override val nativeResourceId = "whisper:" + java.util.UUID.randomUUID().toString()
     private val closeRequested = AtomicBoolean(false)

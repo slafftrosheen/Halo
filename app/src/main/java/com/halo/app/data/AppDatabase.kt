@@ -85,7 +85,7 @@ import com.halo.app.data.notebook.NotebookDao
         StudyPracticeItemEntity::class,
         StudyReviewEventEntity::class
     ],
-    version = 17,
+    version = 18,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -804,9 +804,18 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_17_18 = object : Migration(17, 18) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE model_runtime_profiles ADD COLUMN textGenerationProven INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE model_runtime_profiles ADD COLUMN nativeToolCallingProven INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE model_runtime_profiles ADD COLUMN haloPromptToolLoopProven INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE model_runtime_profiles ADD COLUMN agenticContinuationProven INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
         fun create(context: Context): AppDatabase =
             Room.databaseBuilder(context, AppDatabase::class.java, "halo.db")
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18)
                 .build()
     }
 }

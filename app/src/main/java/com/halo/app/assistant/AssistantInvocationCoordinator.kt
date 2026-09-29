@@ -2,7 +2,7 @@ package com.halo.app.assistant
 
 import android.content.Context
 import android.graphics.Bitmap
-import com.halo.host.android.assistant.AssistantCaptureState
+import com.halo.host.android.assistant.AssistantState
 import com.halo.host.android.assistant.AssistantRuntimeStateStore
 import com.halo.sdk.runtime.CognitiveFailed
 import com.halo.sdk.runtime.CognitiveRequestStarted
@@ -43,17 +43,17 @@ class AssistantInvocationCoordinator(
             eventBus.events().collect { event ->
                 when (event) {
                     is SpeechRecognized -> event.input?.captureId?.let { interactionId ->
-                        AssistantRuntimeStateStore.capture(interactionId, AssistantCaptureState.TRANSCRIBING)
+                        AssistantRuntimeStateStore.capture(interactionId, AssistantState.TRANSCRIBING)
                     }
                     is CognitiveRequestStarted -> AssistantRuntimeStateStore.capture(
                         event.interactionId,
-                        AssistantCaptureState.INFERENCE_RUNNING,
+                        AssistantState.THINKING,
                     )
                     is AssistantResponsePublished -> if (event.delivery == ResponseDelivery.VISUAL_ONLY) {
                         AssistantRuntimeStateStore.responseCompleted(event.interactionId)
                     }
                     is TtsRequested -> {
-                        AssistantRuntimeStateStore.capture(event.interactionId, AssistantCaptureState.RESPONDING)
+                        AssistantRuntimeStateStore.capture(event.interactionId, AssistantState.RESPONDING)
                         AssistantRuntimeStateStore.outputRoute(event.interactionId, event.target.diagnosticLabel())
                     }
                     is TtsStarted -> AssistantRuntimeStateStore.outputRoute(

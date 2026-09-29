@@ -60,6 +60,11 @@ class DefaultAiProviderRouter(
     private val _routingPolicy = MutableStateFlow(AiRoutingPolicy.AUTOMATIC)
     override val routingPolicy: StateFlow<AiRoutingPolicy> = _routingPolicy.asStateFlow()
 
+    private val _roleBindings = MutableStateFlow<Map<AiModelRole, AiRoleBinding>>(emptyMap())
+    val roleBindings: StateFlow<Map<AiModelRole, AiRoleBinding>> = _roleBindings.asStateFlow()
+    
+    private val roleResolver: AiRoleResolver = DefaultAiRoleResolver()
+
     init {
         restoreStoredRoutingState()
     }
@@ -86,6 +91,7 @@ class DefaultAiProviderRouter(
         _routingPolicy.value = stored.policy
         _selectedProviderId.value = resolvedProvider
         _selectedModelId.value = stored.modelId
+        _roleBindings.value = selectionRepository.readRoleBindings()
         logger?.info(
             "AiProviderRouter",
             "HALO_AI_SELECTION_RESTORE storedProvider=${stored.providerId} " +
@@ -158,6 +164,11 @@ class DefaultAiProviderRouter(
         )
     }
 
+    fun setRoleBinding(binding: AiRoleBinding) {
+        selectionRepository.writeRoleBinding(binding)
+        _roleBindings.value = selectionRepository.readRoleBindings()
+    }
+
     override fun getAllProviders(): List<AiProvider> = allProviders
     override suspend fun diagnostics(): List<AiProviderDiagnostic> = refreshDiagnostics()
     override suspend fun getEligibleProvider(request: AiRequest): AiProvider = resolveExecutionTarget(request).provider
@@ -174,9 +185,15 @@ class DefaultAiProviderRouter(
         request: AiRequest,
         workload: AiWorkloadSpec,
     ): AiExecutionTarget {
-        val policy = _routingPolicy.value
-        val selectedId = _selectedProviderId.value
-        val selectedModel = _selectedModelId.value
+        val pref = roleResolver.resolvePreference(
+            workload,
+            currentSelection(),
+            _roleBindings.value,
+            allProviders
+        )
+        val policy = pref.policy
+        val selectedId = pref.providerId
+        val selectedModel = pref.modelId
         val selected = allProviders.firstOrNull { it.id == selectedId }
         val rejected = mutableListOf<RejectedAiTarget>()
         var resolved: AiExecutionTarget? = null

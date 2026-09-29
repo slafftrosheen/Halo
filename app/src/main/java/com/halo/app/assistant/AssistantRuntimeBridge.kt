@@ -19,6 +19,7 @@ import com.halo.sdk.runtime.SpeechInputRoute
 import com.halo.sdk.runtime.SpeechInputTurn
 import android.content.Context
 import com.halo.app.audio.AndroidInvocationAudioResolver
+import com.halo.host.android.assistant.AssistantState
 import com.halo.sdk.runtime.StopListening
 import java.io.ByteArrayOutputStream
 import kotlinx.coroutines.Dispatchers
@@ -112,7 +113,7 @@ class HaloAssistantRuntimeBridge(private val context: Context) : AssistantRuntim
             if (started) {
                 com.halo.host.android.assistant.AssistantRuntimeStateStore.capture(
                     interactionId,
-                    com.halo.host.android.assistant.AssistantCaptureState.LISTENING,
+                    AssistantState.LISTENING,
                     when (route) {
                         SpeechInputRoute.Phone -> "phone"
                         is SpeechInputRoute.Device -> "device:${route.deviceId ?: route.platformEndpointId ?: "unknown"}"

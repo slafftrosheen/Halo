@@ -9,9 +9,34 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 /** Native resources that should not be resident concurrently on constrained devices. */
+enum class RuntimeWorkloadClass {
+    ASR,
+    TEXT_FAST,
+    TEXT_CHAT,
+    TEXT_REASONING,
+    AGENTIC,
+    VISION,
+    TTS
+}
+
+enum class ResidencyPreference {
+    ON_DEMAND,
+    WARM_EJECTABLE,
+    PINNED
+}
+
+data class WorkloadResourcePolicy(
+    val workloadClass: RuntimeWorkloadClass,
+    val memoryEstimateBytes: Long = 0,
+    val exclusive: Boolean = true,
+    val residencyPreference: ResidencyPreference = ResidencyPreference.ON_DEMAND,
+    val priority: Int = 0
+)
+
 enum class NativeResourceKind {
     HEAVY_LLM,
-    HEAVY_ASR
+    HEAVY_ASR,
+    HEAVY_TTS
 }
 
 enum class NativeResourceState {
@@ -40,6 +65,8 @@ interface NativeResourceOwner {
     val nativeResourceKind: NativeResourceKind
     val nativeResourceId: String
         get() = nativeResourceKind.name + ":" + (this::class.qualifiedName ?: this::class.simpleName ?: "unknown")
+    val defaultResourcePolicy: WorkloadResourcePolicy
+        get() = WorkloadResourcePolicy(RuntimeWorkloadClass.TEXT_CHAT, exclusive = true, residencyPreference = ResidencyPreference.WARM_EJECTABLE)
     suspend fun releaseIfIdle(): Boolean
 }
 
@@ -79,7 +106,15 @@ class NativeResourceCoordinator(
     }
 
     suspend fun releaseIdle(reason: String) = mutex.withLock {
-        val released = active.filter { it.releaseIfIdle() }
+        // Evict based on residency preference if memory pressure is critical
+        val pressure = _budget.value.pressure
+        val evictable = active.filter { owner ->
+            val pref = owner.defaultResourcePolicy.residencyPreference
+            pref == ResidencyPreference.ON_DEMAND || 
+            (pref == ResidencyPreference.WARM_EJECTABLE && pressure != NativeMemoryPressure.NORMAL)
+        }.sortedBy { it.defaultResourcePolicy.priority } // lower priority first
+
+        val released = evictable.filter { it.releaseIfIdle() }
         released.forEach { owner ->
             active -= owner
             expiry.remove(owner)?.cancel()
@@ -111,6 +146,7 @@ class NativeResourceCoordinator(
         val resourceId = when (owner.nativeResourceKind) {
             NativeResourceKind.HEAVY_LLM -> HaloResourceIds.ComputeInference
             NativeResourceKind.HEAVY_ASR -> HaloResourceIds.ComputeAsr
+            NativeResourceKind.HEAVY_TTS -> HaloResourceIds.ComputeTts
         }
         val claims = mutableSetOf(
             ResourceClaim(ResourceKey(resourceId, ResourceEndpointId("host:primary")), ResourceAccess.EXCLUSIVE)

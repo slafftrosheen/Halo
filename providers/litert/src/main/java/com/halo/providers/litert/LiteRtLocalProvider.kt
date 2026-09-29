@@ -53,6 +53,9 @@ import com.halo.sdk.runtime.NativeResourceCoordinator
 import com.halo.sdk.runtime.NativeResourceKind
 import com.halo.sdk.runtime.NativeResourceOwner
 import com.halo.sdk.runtime.NativeResourceState
+import com.halo.sdk.runtime.RuntimeWorkloadClass
+import com.halo.sdk.runtime.ResidencyPreference
+import com.halo.sdk.runtime.WorkloadResourcePolicy
 import com.halo.sdk.runtime.Storage
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -158,6 +161,11 @@ class LiteRtLocalProvider(
     override val isLocal: Boolean = true
     override val nativeResourceId: String = "litert_local"
     override val nativeResourceKind: NativeResourceKind = NativeResourceKind.HEAVY_LLM
+    override val defaultResourcePolicy = WorkloadResourcePolicy(
+        workloadClass = RuntimeWorkloadClass.TEXT_CHAT,
+        exclusive = true,
+        residencyPreference = ResidencyPreference.WARM_EJECTABLE
+    )
 
     val preferences: LiteRtModelPreferences = preferences ?: LiteRtModelPreferences(storage)
     val failureMemory: LiteRtModelFailureMemory = failureMemory ?: LiteRtModelFailureMemory(storage)

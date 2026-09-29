@@ -7,6 +7,7 @@ import com.halo.sdk.runtime.NativeResourceState
 fun NativeResourceKind.label(): String = when (this) {
     NativeResourceKind.HEAVY_LLM -> "LLM"
     NativeResourceKind.HEAVY_ASR -> "ASR"
+    NativeResourceKind.HEAVY_TTS -> "TTS"
 }
 
 /** Human-readable projection of the native residency lifecycle. */

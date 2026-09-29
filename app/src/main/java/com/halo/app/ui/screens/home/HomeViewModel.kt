@@ -8,6 +8,7 @@ import com.halo.app.ui.glass.material.HaloRuntimeState
 import com.halo.app.ui.state.presenceFromSpeech
 import com.halo.engines.speech.SpeechRecognizedPayload
 import com.halo.runtime.cognition.context.CognitiveOperatingMode
+import com.halo.runtime.cognition.conversation.ConversationTurn
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.*
 import com.halo.runtime.cognition.session.CognitiveSession
@@ -178,7 +179,7 @@ class HomeViewModel(
         aiProviderRouter?.diagnosticsFlow ?: MutableStateFlow(emptyList<AiProviderDiagnostic>()),
         _publishedResponse,
         _sessionPresentationEnabled,
-        conversations?.turns ?: MutableStateFlow(emptyList()),
+        conversations?.turns ?: MutableStateFlow(emptyList<ConversationTurn>()),
         speechAvailability,
         microphonePermission,
         speechInput,

@@ -5,14 +5,21 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-enum class AssistantCaptureState {
-    IDLE,
-    STARTING,
+enum class AssistantState {
+    NOT_ELIGIBLE,
+    ELIGIBLE,
+    ROLE_REQUESTED,
+    ROLE_HELD,
+    SERVICE_READY,
+    SESSION_CREATED,
+    SESSION_SHOWN,
     LISTENING,
     TRANSCRIBING,
-    INFERENCE_RUNNING,
+    THINKING,
+    WAITING_FOR_INPUT,
     RESPONDING,
-    FAILED,
+    COMPLETED,
+    FAILED
 }
 
 data class AssistantRecognitionDiagnostics(
@@ -29,7 +36,7 @@ data class AssistantRuntimeSnapshot(
     val sessionCreated: Boolean = false,
     val sessionVisible: Boolean = false,
     val interactionId: String? = null,
-    val captureState: AssistantCaptureState = AssistantCaptureState.IDLE,
+    val state: AssistantState = AssistantState.NOT_ELIGIBLE,
     val lastInvocationSource: String? = null,
     val lastFailure: String? = null,
     val inputRoute: String? = null,
@@ -45,37 +52,39 @@ object AssistantRuntimeStateStore {
     val state: StateFlow<AssistantRuntimeSnapshot> = mutableState.asStateFlow()
 
     fun serviceReady(ready: Boolean) = transition {
-        if (ready) copy(serviceReady = true)
+        if (ready) copy(serviceReady = true, state = AssistantState.SERVICE_READY)
         else copy(
             serviceReady = false,
             sessionServiceCreated = false,
             sessionCreated = false,
             sessionVisible = false,
             interactionId = null,
-            captureState = AssistantCaptureState.IDLE,
+            state = AssistantState.ROLE_HELD,
         )
     }
     fun sessionServiceCreated() = transition { copy(sessionServiceCreated = true) }
-    fun sessionCreated() = transition { copy(sessionCreated = true) }
+    fun sessionCreated() = transition { copy(sessionCreated = true, state = AssistantState.SESSION_CREATED) }
     fun sessionDestroyed() = transition {
-        copy(sessionCreated = false, sessionVisible = false, interactionId = null, captureState = AssistantCaptureState.IDLE)
+        copy(sessionCreated = false, sessionVisible = false, interactionId = null, state = AssistantState.SERVICE_READY)
     }
-    fun sessionVisible(visible: Boolean) = transition { copy(sessionVisible = visible) }
+    fun sessionVisible(visible: Boolean) = transition { 
+        copy(sessionVisible = visible, state = if (visible) AssistantState.SESSION_SHOWN else AssistantState.SESSION_CREATED) 
+    }
 
     fun invocationStarted(interactionId: String, source: String) = transition {
         copy(
             interactionId = interactionId,
             lastInvocationSource = source,
-            captureState = AssistantCaptureState.STARTING,
+            state = AssistantState.SESSION_SHOWN,
             lastFailure = null,
             inputRoute = null,
             outputRoute = null,
         )
     }
 
-    fun capture(interactionId: String?, state: AssistantCaptureState, inputRoute: String? = null) = transition {
+    fun capture(interactionId: String?, newState: AssistantState, inputRoute: String? = null) = transition {
         if (interactionId == null || this.interactionId != interactionId) this
-        else copy(captureState = state, inputRoute = inputRoute ?: this.inputRoute)
+        else copy(state = newState, inputRoute = inputRoute ?: this.inputRoute)
     }
 
     fun outputRoute(interactionId: String?, route: String) = transition {
@@ -85,12 +94,12 @@ object AssistantRuntimeStateStore {
 
     fun failed(interactionId: String?, reason: String) = transition {
         if (interactionId == null || this.interactionId != interactionId) this
-        else copy(captureState = AssistantCaptureState.FAILED, lastFailure = reason.take(240))
+        else copy(state = AssistantState.FAILED, lastFailure = reason.take(240))
     }
 
     fun responseCompleted(interactionId: String?) = transition {
         if (interactionId == null || this.interactionId != interactionId) this
-        else copy(captureState = AssistantCaptureState.IDLE, lastResponseAtMs = System.currentTimeMillis())
+        else copy(state = AssistantState.COMPLETED, lastResponseAtMs = System.currentTimeMillis())
     }
 
     fun invocationEnded(interactionId: String) = transition {
@@ -98,7 +107,7 @@ object AssistantRuntimeStateStore {
         else copy(
             interactionId = null,
             sessionVisible = false,
-            captureState = AssistantCaptureState.IDLE,
+            state = AssistantState.SERVICE_READY,
         )
     }
 

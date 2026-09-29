@@ -32,6 +32,7 @@ import com.halo.sdk.runtime.CognitiveRequestStarted
 import com.halo.sdk.runtime.EventBus
 import com.halo.sdk.runtime.SpeechOutputFallback
 import com.halo.sdk.runtime.SpeechOutputTarget
+import com.halo.sdk.runtime.SpeechInputRoute
 import java.time.Instant
 import java.util.UUID
 
@@ -144,8 +145,14 @@ class CognitiveTurnExecutor(
                         userText = turn.request.text.orEmpty(),
                         response = AiResponse(text = "HANDOFF_STARTED", providerId = outcome.providerId, modelId = outcome.modelId),
                         responseDelivery = turn.responseDelivery,
-                        outputTarget = SpeechOutputTarget.Phone,
-                        outputFallback = SpeechOutputFallback.ALLOW_PHONE,
+                        outputTarget = turn.origin?.speechRoute?.let { route ->
+                            if (route is SpeechInputRoute.Device) {
+                                SpeechOutputTarget.Device(route.deviceId, route.platformEndpointId, route.displayName, route.kind)
+                            } else SpeechOutputTarget.Phone
+                        } ?: SpeechOutputTarget.Phone,
+                        outputFallback = turn.origin?.speechRoute?.let { route ->
+                            if (route is SpeechInputRoute.Device) SpeechOutputFallback.DISALLOW_PHONE else SpeechOutputFallback.ALLOW_PHONE
+                        } ?: SpeechOutputFallback.ALLOW_PHONE,
                         sourceCaptureId = turn.sourceCaptureId,
                         metadata = turn.metadata,
                     )
@@ -191,8 +198,14 @@ class CognitiveTurnExecutor(
                     userText = turn.request.text.orEmpty(),
                     response = initialResponse,
                     responseDelivery = turn.responseDelivery,
-                    outputTarget = SpeechOutputTarget.Phone,
-                    outputFallback = SpeechOutputFallback.ALLOW_PHONE,
+                    outputTarget = turn.origin?.speechRoute?.let { route ->
+                        if (route is SpeechInputRoute.Device) {
+                            SpeechOutputTarget.Device(route.deviceId, route.platformEndpointId, route.displayName, route.kind)
+                        } else SpeechOutputTarget.Phone
+                    } ?: SpeechOutputTarget.Phone,
+                    outputFallback = turn.origin?.speechRoute?.let { route ->
+                        if (route is SpeechInputRoute.Device) SpeechOutputFallback.DISALLOW_PHONE else SpeechOutputFallback.ALLOW_PHONE
+                    } ?: SpeechOutputFallback.ALLOW_PHONE,
                     sourceCaptureId = turn.sourceCaptureId,
                     metadata = turn.metadata,
                 )
@@ -281,8 +294,14 @@ class CognitiveTurnExecutor(
                             userText = turn.request.text.orEmpty(),
                             response = AiResponse(text = "Waiting for approval", providerId = currentTarget.providerId, modelId = currentTarget.modelId),
                             responseDelivery = turn.responseDelivery,
-                            outputTarget = SpeechOutputTarget.Phone,
-                            outputFallback = SpeechOutputFallback.ALLOW_PHONE,
+                            outputTarget = turn.origin?.speechRoute?.let { route ->
+                                if (route is SpeechInputRoute.Device) {
+                                    SpeechOutputTarget.Device(route.deviceId, route.platformEndpointId, route.displayName, route.kind)
+                                } else SpeechOutputTarget.Phone
+                            } ?: SpeechOutputTarget.Phone,
+                            outputFallback = turn.origin?.speechRoute?.let { route ->
+                                if (route is SpeechInputRoute.Device) SpeechOutputFallback.DISALLOW_PHONE else SpeechOutputFallback.ALLOW_PHONE
+                            } ?: SpeechOutputFallback.ALLOW_PHONE,
                             sourceCaptureId = turn.sourceCaptureId,
                             metadata = turn.metadata,
                         )
@@ -295,8 +314,14 @@ class CognitiveTurnExecutor(
                             userText = turn.request.text.orEmpty(),
                             response = AiResponse(text = "Resource busy", providerId = currentTarget.providerId, modelId = currentTarget.modelId),
                             responseDelivery = turn.responseDelivery,
-                            outputTarget = SpeechOutputTarget.Phone,
-                            outputFallback = SpeechOutputFallback.ALLOW_PHONE,
+                            outputTarget = turn.origin?.speechRoute?.let { route ->
+                                if (route is SpeechInputRoute.Device) {
+                                    SpeechOutputTarget.Device(route.deviceId, route.platformEndpointId, route.displayName, route.kind)
+                                } else SpeechOutputTarget.Phone
+                            } ?: SpeechOutputTarget.Phone,
+                            outputFallback = turn.origin?.speechRoute?.let { route ->
+                                if (route is SpeechInputRoute.Device) SpeechOutputFallback.DISALLOW_PHONE else SpeechOutputFallback.ALLOW_PHONE
+                            } ?: SpeechOutputFallback.ALLOW_PHONE,
                             sourceCaptureId = turn.sourceCaptureId,
                             metadata = turn.metadata,
                         )
@@ -309,8 +334,14 @@ class CognitiveTurnExecutor(
                             userText = turn.request.text.orEmpty(),
                             response = AiResponse(text = "Capability missing", providerId = currentTarget.providerId, modelId = currentTarget.modelId),
                             responseDelivery = turn.responseDelivery,
-                            outputTarget = SpeechOutputTarget.Phone,
-                            outputFallback = SpeechOutputFallback.ALLOW_PHONE,
+                            outputTarget = turn.origin?.speechRoute?.let { route ->
+                                if (route is SpeechInputRoute.Device) {
+                                    SpeechOutputTarget.Device(route.deviceId, route.platformEndpointId, route.displayName, route.kind)
+                                } else SpeechOutputTarget.Phone
+                            } ?: SpeechOutputTarget.Phone,
+                            outputFallback = turn.origin?.speechRoute?.let { route ->
+                                if (route is SpeechInputRoute.Device) SpeechOutputFallback.DISALLOW_PHONE else SpeechOutputFallback.ALLOW_PHONE
+                            } ?: SpeechOutputFallback.ALLOW_PHONE,
                             sourceCaptureId = turn.sourceCaptureId,
                             metadata = turn.metadata,
                         )
@@ -482,8 +513,14 @@ class CognitiveTurnExecutor(
                 userText = turn.request.text.orEmpty(),
                 response = response,
                 responseDelivery = turn.responseDelivery,
-                outputTarget = SpeechOutputTarget.Phone,
-                outputFallback = SpeechOutputFallback.ALLOW_PHONE,
+                outputTarget = turn.origin?.speechRoute?.let { route ->
+                    if (route is SpeechInputRoute.Device) {
+                        SpeechOutputTarget.Device(route.deviceId, route.platformEndpointId, route.displayName, route.kind)
+                    } else SpeechOutputTarget.Phone
+                } ?: SpeechOutputTarget.Phone,
+                outputFallback = turn.origin?.speechRoute?.let { route ->
+                    if (route is SpeechInputRoute.Device) SpeechOutputFallback.DISALLOW_PHONE else SpeechOutputFallback.ALLOW_PHONE
+                } ?: SpeechOutputFallback.ALLOW_PHONE,
                 sourceCaptureId = turn.sourceCaptureId,
                 metadata = turn.metadata,
             )
@@ -569,8 +606,14 @@ class CognitiveTurnExecutor(
                 userText = turn.request.text.orEmpty(),
                 response = response,
                 responseDelivery = turn.responseDelivery,
-                outputTarget = SpeechOutputTarget.Phone,
-                outputFallback = SpeechOutputFallback.ALLOW_PHONE,
+                outputTarget = turn.origin?.speechRoute?.let { route ->
+                    if (route is SpeechInputRoute.Device) {
+                        SpeechOutputTarget.Device(route.deviceId, route.platformEndpointId, route.displayName, route.kind)
+                    } else SpeechOutputTarget.Phone
+                } ?: SpeechOutputTarget.Phone,
+                outputFallback = turn.origin?.speechRoute?.let { route ->
+                    if (route is SpeechInputRoute.Device) SpeechOutputFallback.DISALLOW_PHONE else SpeechOutputFallback.ALLOW_PHONE
+                } ?: SpeechOutputFallback.ALLOW_PHONE,
                 sourceCaptureId = turn.sourceCaptureId,
                 metadata = turn.metadata,
             )

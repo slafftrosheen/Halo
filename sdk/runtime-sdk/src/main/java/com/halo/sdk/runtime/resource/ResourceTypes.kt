@@ -35,6 +35,7 @@ object HaloResourceIds {
     val ScreenCapture = ResourceId("screen.capture")
     val ComputeInference = ResourceId("compute.inference")
     val ComputeAsr = ResourceId("compute.asr")
+    val ComputeTts = ResourceId("compute.tts")
     val ComputeHeavy = ResourceId("compute.heavy")
     val NetworkHighBandwidth = ResourceId("network.high_bandwidth")
     val MobilityDrive = ResourceId("mobility.drive")

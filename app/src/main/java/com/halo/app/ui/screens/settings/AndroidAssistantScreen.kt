@@ -184,7 +184,7 @@ fun AndroidAssistantScreen(
             )
             DiagnosticStateRow("Service", if (runtimeState.serviceReady) "ACTIVE" else "NOT BOUND", runtimeState.serviceReady)
             DiagnosticStateRow("Session", if (runtimeState.sessionCreated) "CREATED" else "NOT CREATED", runtimeState.sessionCreated)
-            DiagnosticStateRow("Capture", runtimeState.captureState.name.replace('_', ' '), runtimeState.captureState.name in setOf("LISTENING", "TRANSCRIBING", "INFERENCE_RUNNING", "RESPONDING"))
+            DiagnosticStateRow("Capture", runtimeState.state.name.replace('_', ' '), runtimeState.state.name in setOf("LISTENING", "TRANSCRIBING", "INFERENCE_RUNNING", "RESPONDING", "THINKING"))
             runtimeState.lastResponseAtMs?.let { DiagnosticTextRow("Last response", DateFormat.getDateTimeInstance().format(Date(it))) }
             runtimeState.inputRoute?.let { DiagnosticTextRow("Input route", it) }
             runtimeState.outputRoute?.let { DiagnosticTextRow("Output route", it) }
