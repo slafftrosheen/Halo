@@ -109,6 +109,174 @@ enum class AiWireProtocol {
     OPENAI_CHAT_COMPLETIONS, OPENAI_RESPONSES, ANTHROPIC_MESSAGES, GEMINI_GENERATE_CONTENT, OLLAMA, LITERT_NATIVE
 }
 
+/**
+ * How a remote provider obtains authorization.
+ *
+ * This is identity-adjacent metadata used by preset wiring and UI. It is
+ * deliberately separate from the HTTP transport and from the provider contract
+ * so that Groq, Cerebras, xAI, OpenCode Zen and custom OpenAI-compatible
+ * endpoints can share one wire implementation.
+ */
+enum class ProviderAuthKind {
+    NONE,
+    API_KEY,
+    BEARER_TOKEN,
+    GOOGLE_OAUTH,
+    DEVICE_OAUTH,
+    COMPANION
+}
+
+/**
+ * How a provider is accessed from a cost/billing perspective.
+ *
+ * This is presentation and policy metadata, not a billing guarantee. Free
+ * presence is REMOTE_LIVE evidence from current catalog metadata, not permanent
+ * truth baked into Halo.
+ */
+enum class ProviderAccessKind {
+    LOCAL,
+    FREE_TIER,
+    SUBSCRIPTION,
+    PAY_AS_YOU_GO,
+    MIXED,
+    CUSTOM
+}
+
+/**
+ * Lifecycle/auth state for a remote provider.
+ *
+ * This is separate from [ProviderStatus] because OAuth and companion flows have
+ * UI-visible intermediate states that do not map cleanly onto provider readiness.
+ */
+enum class ProviderAuthState {
+    NOT_REQUIRED,
+    NOT_CONFIGURED,
+    AUTHORIZING,
+    CONNECTED,
+    EXPIRED,
+    REFRESHING,
+    FAILED
+}
+
+/**
+ * How a remote provider discovers its model catalog.
+ */
+enum class ModelDiscoveryMode {
+    STATIC_HINTS,
+    REMOTE_CATALOG,
+    NONE
+}
+
+/**
+ * Portable descriptor for a remote or gateway provider.
+ *
+ * This is the reusable identity/protocol/auth/capability description that the
+ * provider fabric uses to present presets, drive catalog normalization and feed
+ * UI badges/connect/test actions. It is not a live provider instance.
+ */
+data class RemoteProviderDescriptor(
+    val id: String,
+    val displayName: String,
+    val protocol: AiWireProtocol,
+    val authKinds: Set<ProviderAuthKind>,
+    val accessKind: ProviderAccessKind,
+    val modelDiscovery: ModelDiscoveryMode,
+    val capabilities: Set<AiCapability>,
+    val executionLocation: AiExecutionLocation = AiExecutionLocation.REMOTE,
+    val freeModelHint: String? = null,
+)
+
+/**
+ * Optional remote cost preference applied after privacy, capability and role
+ * constraints. It never overrides LOCAL_ONLY and never silently bills a paid
+ * model when no free compatible target exists.
+ */
+enum class RemoteCostPreference {
+    ANY,
+    PREFER_FREE,
+    FREE_ONLY
+}
+
+/**
+ * Portable quota/header telemetry parsed by the shared transport.
+ *
+ * Unknown providers or headers leave fields null. These values are diagnostic
+ * and must not be treated as billing truth.
+ */
+data class ProviderQuotaSnapshot(
+    val providerId: String,
+    val retrievedAtMs: Long,
+    val requestLimit: Int? = null,
+    val requestRemaining: Int? = null,
+    val tokenLimit: Int? = null,
+    val tokenRemaining: Int? = null,
+    val retryAfterMs: Long? = null,
+    val resetAtMs: Long? = null,
+)
+
+/**
+ * Auth and connection metadata exposed to UI for a remote provider.
+ *
+ * This deliberately avoids storing credential values. Non-sensitive labels such
+ * as an account/provider name may be surfaced for display only.
+ */
+data class ProviderAuthInfo(
+    val authKind: ProviderAuthKind,
+    val authState: ProviderAuthState,
+    val lastAuthFailure: String? = null,
+    val accountLabel: String? = null,
+    val expiresAtMs: Long? = null,
+    val quotaSnapshot: ProviderQuotaSnapshot? = null,
+)
+
+/**
+ * Transport security outcome for credential-bearing requests.
+ */
+enum class CredentialTransportResult {
+    /** Credentials may be sent. */
+    SAFE,
+    /** Public cleartext transport must not receive credentials. */
+    INSECURE_CREDENTIAL_TRANSPORT
+}
+
+/**
+ * Built-in provider identity constants used by the SDK fabric and presets.
+ *
+ * IDs are stable because remote model identity is normalized to
+ * [AiModelRef.providerId] alongside modelId.
+ */
+object RemoteProviderIds {
+    const val GROQ = "groq"
+    const val CEREBRAS = "cerebras"
+    const val OPENCODE_ZEN = "opencode.zen"
+    const val XAI = "xai"
+    const val OPENCODE_COMPANION = "companion.opencode"
+    const val CUSTOM_OPENAI_COMPATIBLE = "custom.openaicompatible"
+}
+
+/**
+ * Credential transport security check.
+ *
+ * Credentials may only be sent over HTTPS or explicitly trusted local transport
+ * (loopback, LAN, Tailscale, or *.local). Public cleartext HTTP must not receive
+ * credentials.
+ */
+object CredentialTransportPolicy {
+    fun evaluate(url: String, allowInsecureLocal: Boolean): CredentialTransportResult {
+        val uri = runCatching { java.net.URI(url) }.getOrNull() ?: return CredentialTransportResult.INSECURE_CREDENTIAL_TRANSPORT
+        if (uri.scheme != "http" && uri.scheme != "https") return CredentialTransportResult.INSECURE_CREDENTIAL_TRANSPORT
+        if (uri.scheme == "https") return CredentialTransportResult.SAFE
+        if (!allowInsecureLocal) return CredentialTransportResult.INSECURE_CREDENTIAL_TRANSPORT
+        val host = uri.host?.lowercase() ?: return CredentialTransportResult.INSECURE_CREDENTIAL_TRANSPORT
+        if (host == "localhost" || host == "127.0.0.1" || host == "::1") return CredentialTransportResult.SAFE
+        if (host == "0.0.0.0") return CredentialTransportResult.SAFE
+        if (host.endsWith(".local")) return CredentialTransportResult.SAFE
+        if (host.startsWith("10.") || host.startsWith("172.") || host.startsWith("192.168.")) return CredentialTransportResult.SAFE
+        if (host == "tailscale" || host.endsWith(".ts.net")) return CredentialTransportResult.SAFE
+        return CredentialTransportResult.INSECURE_CREDENTIAL_TRANSPORT
+    }
+}
+
 data class AiModelRuntimeMetadata(
     val ref: AiModelRef,
     val location: AiExecutionLocation,

@@ -19,6 +19,7 @@ import com.halo.app.data.workspace.WorkspaceRelationEntity
 import com.halo.sdk.runtime.Storage
 import com.halo.sdk.runtime.embodiment.PersistentDeviceRegistry
 import com.halo.host.android.reminder.ReminderRecordStore
+import com.halo.sdk.provider.AiModelRole
 import com.squareup.moshi.JsonClass
 import java.io.File
 import java.util.UUID
@@ -127,7 +128,8 @@ class RoomBrainSnapshotSource(
                 DeviceConfigurationSnapshot(it.identity.deviceId, it.identity.displayName, it.identity.deviceType, it.firmwareVersion, it.autoConnect)
             },
             settings = UserSettingsSnapshot(
-                values = listOf("active_ai_provider", "active_ai_model", "ai_routing_policy", "ollama_endpoint", "speech_locale")
+                values = (listOf("active_ai_provider", "active_ai_model", "ai_routing_policy", "ollama_endpoint", "speech_locale", "speech_stt_provider", "speech_tts_provider") +
+                    AiModelRole.entries.flatMap { listOf("role_${it.name}_selection", "role_${it.name}_provider", "role_${it.name}_model") })
                     .mapNotNull { key -> storage.getString(key)?.let { key to it } }.toMap(),
                 providerConfiguration = mapOf("openrouter" to !storage.getString("openrouter_api_key").isNullOrBlank()),
                 skillEnabled = com.halo.runtime.cognition.skills.DefaultSkillRegistry.defaultBuiltInSkills()

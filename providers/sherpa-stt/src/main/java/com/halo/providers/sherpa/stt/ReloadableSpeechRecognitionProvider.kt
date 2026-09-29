@@ -6,6 +6,7 @@ import com.halo.sdk.provider.BufferedSpeechRecognitionProvider
 import com.halo.sdk.provider.ProviderHealth
 import com.halo.sdk.provider.ProviderMetadata
 import com.halo.sdk.provider.RecognitionResult
+import com.halo.sdk.provider.SpeechProviderSelector
 import com.halo.sdk.provider.SpeechRecognitionMode
 import com.halo.sdk.provider.SpeechRecognitionProvider
 import com.halo.sdk.runtime.NativeResourceCoordinator
@@ -32,7 +33,8 @@ class ReloadableSpeechRecognitionProvider(
     private val modelDirectory: File,
     private val getLanguage: () -> String = { "en" },
     private val nativeResourceCoordinator: NativeResourceCoordinator? = null,
-    private val dispatchers: HaloDispatchers = productionHaloDispatchers()
+    private val dispatchers: HaloDispatchers = productionHaloDispatchers(),
+    private val selector: SpeechProviderSelector? = null
 ) : BufferedSpeechRecognitionProvider {
 
     private val lifecycle = Mutex()
@@ -50,11 +52,20 @@ class ReloadableSpeechRecognitionProvider(
     fun refresh(): Job = cleanupScope.launch { refreshNow() }
 
     private suspend fun refreshNow() = lifecycle.withLock {
-        val newDelegate: BufferedSpeechRecognitionProvider = if (SherpaOfflineSpeechRecognitionProvider.isInstalled(modelDirectory)) {
+        val sttSelectedId = selector?.sttSelection?.value?.id ?: "AUTOMATIC"
+        val isExplicitSherpa = sttSelectedId == "speech.sherpa_onnx.whisper_tiny"
+        val isAuto = sttSelectedId == "AUTOMATIC"
+        val isSelected = isAuto || isExplicitSherpa
+        
+        val newDelegate: BufferedSpeechRecognitionProvider = if (isSelected && SherpaOfflineSpeechRecognitionProvider.isInstalled(modelDirectory)) {
             SherpaOfflineSpeechRecognitionProvider(
                 modelDirectory = modelDirectory,
                 language = getLanguage(),
                 nativeResourceCoordinator = nativeResourceCoordinator
+            )
+        } else if (isExplicitSherpa) {
+            UnavailableSpeechRecognitionProvider(
+                "Local Whisper model is missing but explicitly selected."
             )
         } else {
             UnavailableSpeechRecognitionProvider(

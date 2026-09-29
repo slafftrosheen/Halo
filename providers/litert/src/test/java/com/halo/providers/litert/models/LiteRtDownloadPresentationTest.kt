@@ -18,7 +18,8 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 class LiteRtDownloadPresentationTest {
     @Test
-    fun requestIsQueuedThenPreparedDownloadedAndCancellationBecomesPaused() = runBlocking {
+    fun requestIsQueuedThenPreparedDownloadedAndCancellationBecomesPaused() {
+        runBlocking {
         val enteredDownload = CompletableDeferred<Unit>()
         val downloader = object : LiteRtModelDownloader {
             override suspend fun download(
@@ -41,7 +42,7 @@ class LiteRtDownloadPresentationTest {
             repoId = "halo/test",
             revision = "a3c5d805ae362dff7f580bc25f2dfb9a5a7eaa76",
             filename = "presentation-test.litertlm",
-            expectedBytes = 100L,
+            expectedBytes = 2_000_000L,
             sha256 = "0".repeat(64),
             contextWindowTokens = 1024,
             supportsVision = false,
@@ -63,8 +64,9 @@ class LiteRtDownloadPresentationTest {
         manager.cancelDownload(artifact.id)
         awaitState(manager, artifact.id) { it is DownloadState.Paused }
         assertTrue(manager.downloadStates.value[artifact.id] is DownloadState.Paused)
-        collector.cancelAndJoin()
-        root.deleteRecursively()
+            collector.cancelAndJoin()
+            root.deleteRecursively()
+        }
     }
 
     private fun awaitState(

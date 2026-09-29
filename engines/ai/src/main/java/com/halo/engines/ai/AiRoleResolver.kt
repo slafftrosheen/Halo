@@ -15,6 +15,8 @@ interface AiRoleResolver {
         bindings: Map<AiModelRole, AiRoleBinding>,
         providers: List<AiProvider>
     ): AiExecutionPreference
+
+    fun determineRole(workload: AiWorkloadSpec): AiModelRole
 }
 
 class DefaultAiRoleResolver : AiRoleResolver {
@@ -54,18 +56,13 @@ class DefaultAiRoleResolver : AiRoleResolver {
         }
     }
     
-    private fun determineRole(workload: AiWorkloadSpec): AiModelRole {
+    override fun determineRole(workload: AiWorkloadSpec): AiModelRole {
+        workload.preferredRole?.let { return it }
         if (AiCapability.IMAGE in workload.requiredCapabilities || AiCapability.VIDEO in workload.requiredCapabilities) {
             return AiModelRole.VISION
         }
         if (workload.tools == AiFeatureRequirement.REQUIRED || workload.kind == AiWorkloadKind.TOOL_ASSISTED) {
             return AiModelRole.AGENTIC
-        }
-        if (workload.kind == AiWorkloadKind.QUESTION || workload.kind == AiWorkloadKind.DOCUMENT_CONTEXT) {
-            return AiModelRole.REASONING
-        }
-        if (workload.kind == AiWorkloadKind.SCREEN_CONTEXT) {
-            return AiModelRole.FAST
         }
         return AiModelRole.CHAT
     }

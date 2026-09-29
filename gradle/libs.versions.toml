@@ -36,6 +36,7 @@ cameraView = "1.5.0"
 cameraCore = "1.5.0"
 loggingInterceptor = "4.12.0"
 okhttp = "4.12.0"
+orgjson = "0.9.4"
 moshiKotlin = "1.15.2"
 moshiKotlinCodegen = "1.15.2"
 datastorePreferences = "1.2.1"
@@ -101,6 +102,7 @@ androidx-camera-core = { group = "androidx.camera", name = "camera-core", versio
 logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "loggingInterceptor" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver", version.ref = "okhttp" }
+org-json = { module = "org.json:json", version.ref = "orgjson" }
 moshi-kotlin = { group = "com.squareup.moshi", name = "moshi-kotlin", version.ref = "moshiKotlin" }
 moshi-kotlin-codegen = { group = "com.squareup.moshi", name = "moshi-kotlin-codegen", version.ref = "moshiKotlinCodegen" }
 moshi-adapters = { group = "com.squareup.moshi", name = "moshi-adapters", version.ref = "moshiKotlin" }

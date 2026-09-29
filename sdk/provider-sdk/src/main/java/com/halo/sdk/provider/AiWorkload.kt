@@ -23,4 +23,5 @@ data class AiWorkloadSpec(
     val streaming: AiFeatureRequirement = AiFeatureRequirement.OPTIONAL,
     val minimumContextTokens: Int = 0,
     val allowRemote: Boolean = true,
+    val preferredRole: AiModelRole? = null,
 )

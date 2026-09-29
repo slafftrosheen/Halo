@@ -1,0 +1,322 @@
+package com.halo.providers.opencode.companion
+
+import com.halo.app.security.SecretStore
+import com.halo.sdk.provider.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.json.JSONObject
+import java.net.URI
+import java.util.concurrent.TimeUnit
+
+/**
+ * OpenCode Companion provider.
+ *
+ * Execution location: LOCAL_NETWORK when private/Tailscale/LAN. If the user
+ * explicitly points it to a remote public host, execution is REMOTE.
+ *
+ * Purpose: Halo connects to a USER-RUNNING OpenCode server. OpenCode owns its
+ * own provider credentials. Halo never sees ChatGPT/xAI/Zen/OpenRouter
+ * credentials. Halo stores only the endpoint, preferred provider/model and a
+ * local auth credential. The password belongs in SecretStore and is never
+ * backed up in Brain snapshots.
+ *
+ * For ordinary Halo inference turns, OpenCode companion supplies model
+ * inference only. OpenCode tools (shell/fs/MCP/browser/phone) are disabled for
+ * normal Halo inference where the companion API supports it.
+ */
+class OpenCodeCompanionProvider(
+    private val storage: Storage,
+    private val secretStore: SecretStore,
+    private val transport: OpenAiCompatibleTransport,
+    private val companionCredentialProvider: CompanionCredentialProvider,
+) : AiInferenceProvider, CredentialProvider by companionCredentialProvider {
+
+    override val id: String = RemoteProviderIds.OPENCODE_COMPANION
+    override val displayName: String = "OpenCode Companion"
+    override val isLocal: Boolean = false
+
+    private val descriptor = RemoteProviderPresets.opencodeCompanion
+    private val configured: ConfiguredOpenAiCompatibleProvider = ConfiguredOpenAiCompatibleProvider(
+        descriptor = descriptor,
+        transport = transport,
+        credentialProvider = companionCredentialProvider,
+        systemPrompt = storage.getString("opencode_companion_system_prompt") ?: "You are Halo, a helpful AI assistant.",
+        allowInsecureLocalCredentialTransport = true,
+        fallbackWhenUnauthenticated = false,
+        staticHints = companionStaticHints(),
+    )
+
+    override val status: StateFlow<ProviderStatus> get() = configured.status
+    override val authInfo: StateFlow<ProviderAuthInfo> get() = configured.authInfo
+
+    override suspend fun getCapabilities(): Set<AiCapability> = configured.getCapabilities()
+    override suspend fun getStatus(): ProviderStatus = configured.getStatus()
+    override suspend fun testConnection(): Boolean = configured.testConnection()
+    override suspend fun generate(request: AiRequest, context: AiContext): AiResponse = companionGenerate(request, context)
+    override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = companionStream(request, context)
+    override suspend fun listModels(): List<AiModel> = companionListModels()
+
+    /** Health diagnostics from the OpenCode server health endpoint. */
+    suspend fun health(): CompanionHealth {
+        val endpoint = companionEndpoint()
+        val base = healthBaseUrl(endpoint)
+        val start = System.currentTimeMillis()
+        return try {
+            val url = "$base/health"
+            val security = CredentialTransportPolicy.evaluate(url, allowInsecureLocal = true)
+            if (security == CredentialTransportResult.INSECURE_CREDENTIAL_TRANSPORT) {
+                return CompanionHealth(
+                    reachable = false,
+                    serverVersion = null,
+                    authenticated = false,
+                    latencyMs = System.currentTimeMillis() - start,
+                    warning = "Public cleartext OpenCode endpoint is not permitted for credentials",
+                )
+            }
+            val request = Request.Builder().url(url).get().build()
+            transport.javaClass.getDeclaredField("client").apply { isAccessible = true }.get(transport) as OkHttpClient
+                .newCall(request).execute().use { response ->
+                    if (!response.isSuccessful) {
+                        CompanionHealth(
+                            reachable = false,
+                            serverVersion = null,
+                            authenticated = false,
+                            latencyMs = System.currentTimeMillis() - start,
+                            warning = "OpenCode health returned HTTP ${response.code}",
+                        )
+                    } else {
+                        val body = response.body?.string()
+                        val version = body?.let { runCatching { JSONObject(it).optString("version") }.getOrNull() }
+                        CompanionHealth(
+                            reachable = true,
+                            serverVersion = version,
+                            authenticated = hasCompanionCredential(),
+                            latencyMs = System.currentTimeMillis() - start,
+                        )
+                    }
+                }
+        } catch (e: Exception) {
+            CompanionHealth(
+                reachable = false,
+                serverVersion = null,
+                authenticated = hasCompanionCredential(),
+                latencyMs = System.currentTimeMillis() - start,
+                warning = e.message ?: "OpenCode health check failed",
+            )
+        }
+    }
+
+    /** Discover underlying providers/models from OpenCode's provider/config API. */
+    suspend fun discoverProvidersAndModels(): CompanionDiscoveryResult {
+        val endpoint = companionEndpoint()
+        val base = healthBaseUrl(endpoint)
+        return try {
+            val url = "$base/api/providers?includeModels=true"
+            val request = Request.Builder().url(url).get().build()
+            transport.javaClass.getDeclaredField("client").apply { isAccessible = true }.get(transport) as OkHttpClient
+                .newCall(request).execute().use { response ->
+                    if (!response.isSuccessful) {
+                        CompanionDiscoveryResult.Failed("OpenCode provider discovery returned HTTP ${response.code}")
+                    } else {
+                        val body = response.body?.string() ?: return CompanionDiscoveryResult.Failed("Empty discovery body")
+                        val json = JSONObject(body)
+                        val providers = parseDiscoveryProviders(json)
+                        CompanionDiscoveryResult.Ok(providers)
+                    }
+                }
+        } catch (e: Exception) {
+            CompanionDiscoveryResult.Failed(e.message ?: "OpenCode discovery failed")
+        }
+    }
+
+    private suspend fun companionGenerate(request: AiRequest, context: AiContext): AiResponse {
+        // OpenCode companion inference uses Halo's selected underlying provider/model.
+        // Halo tool loop remains owner; companion tools are disabled for ordinary Halo turns.
+        val cred = companionCredentialProvider.credential() ?: throw companionMissingCredential()
+        val (header, value) = credentialHeader(cred)
+        val model = request.modelId?.takeIf { it.isNotBlank() }
+            ?: throw AiProviderException(AiErrorType.MODEL_NOT_SELECTED, "Select an OpenCode companion model first")
+        return try {
+            transport.generate(request, context, model, header, value, null, true).also {
+                if (it.text.isNotBlank() || it.toolCalls.isNotEmpty()) setAuthState(ProviderAuthState.CONNECTED)
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: AiProviderException) {
+            if (e.type == AiErrorType.AUTHENTICATION_FAILED) setAuthState(ProviderAuthState.EXPIRED, e.message)
+            throw e
+        }
+    }
+
+    private fun companionStream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = Flow<AiStreamEvent> {
+        val cred = companionCredentialProvider.credential() ?: throw companionMissingCredential()
+        val (header, value) = credentialHeader(cred)
+        val model = request.modelId?.takeIf { it.isNotBlank() }
+            ?: throw AiProviderException(AiErrorType.MODEL_NOT_SELECTED, "Select an OpenCode companion model first")
+        transport.stream(request, context, model, header, value, null, true).collect { emit(it) }
+    }
+
+    private suspend fun companionListModels(): List<AiModel> {
+        // Companion models are discovered from the companion, with underlying
+        // provider prefixes so same-named models cannot collide.
+        return companionDiscoveryModels()
+    }
+
+    private fun companionDiscoveryModels(): List<AiModel> {
+        // Placeholder mapping: underlying provider prefixes are encoded so
+        // openai/<model>, xai/<model> and zen/<model> remain distinct.
+        return emptyList()
+    }
+
+    private fun companionEndpoint(): String = storage.getString("opencode_companion_endpoint")?.trim()?.ifBlank { null } ?: "http://localhost:8080"
+    private fun healthBaseUrl(endpoint: String): String = endpoint.trimEnd('/').removeSuffix("/api")
+
+    private fun credentialHeader(cred: Credential): Pair<String, String> = when (cred.id) {
+        "companion.basic" -> Pair("Authorization", "Basic ${cred.value}")
+        else -> Pair("Authorization", "Bearer ${cred.value}")
+    }
+
+    private fun companionMissingCredential() = AiProviderException(
+        AiErrorType.AUTHENTICATION_FAILED,
+        "OpenCode companion is not configured",
+        AiFailureDetails(recoverability = Recoverability.USER_ACTION_REQUIRED),
+    )
+
+    private fun hasCompanionCredential(): Boolean = companionCredentialProvider.hasCredential()
+
+    private fun companionStaticHints(): List<AiModel> {
+        val endpoint = companionEndpoint()
+        val base = healthBaseUrl(endpoint)
+        return listOf(
+            AiModel(
+                id = "companion.defaults",
+                displayName = "OpenCode companion defaults",
+                providerId = id,
+                inputCapabilities = setOf(AiCapability.TEXT),
+                contextLength = null,
+                supportsStreaming = true,
+                supportsTools = false,
+                isFree = false,
+            ),
+        )
+    }
+
+    private fun setAuthState(state: ProviderAuthState, failure: String? = null) {
+        configured.setAuthState(state, failure)
+    }
+
+    companion object {
+        private fun parseDiscoveryProviders(json: JSONObject): List<CompanionProviderMirror> {
+            val list = json.optJSONArray("providers") ?: JSONArray()
+            return buildList {
+                for (i in 0 until list.length()) {
+                    val provider = list.optJSONObject(i) ?: continue
+                    val underlying = provider.optString("provider", "unknown")
+                    val models = provider.optJSONArray("models") ?: JSONArray()
+                    val modelEntries = buildList {
+                        for (j in 0 until models.length()) {
+                            val model = models.optJSONObject(j) ?: continue
+                            val modelId = model.optString("id")
+                            add(
+                                CompanionModelMirror(
+                                    id = if (modelId.isNotBlank()) "$underlying/$modelId" else modelId,
+                                    displayName = model.optString("name", modelId),
+                                    isFree = model.optBoolean("free", false),
+                                ),
+                            )
+                        }
+                    }
+                    add(
+                        CompanionProviderMirror(
+                            underlyingProvider = underlying,
+                            models = modelEntries,
+                        ),
+                    )
+                }
+            }
+        }
+    }
+}
+
+data class CompanionHealth(
+    val reachable: Boolean,
+    val serverVersion: String?,
+    val authenticated: Boolean,
+    val latencyMs: Long,
+    val warning: String? = null,
+)
+
+sealed interface CompanionDiscoveryResult {
+    data class Ok(val providers: List<CompanionProviderMirror>) : CompanionDiscoveryResult
+    data class Failed(val reason: String) : CompanionDiscoveryResult
+}
+
+data class CompanionProviderMirror(
+    val underlyingProvider: String,
+    val models: List<CompanionModelMirror>,
+)
+
+data class CompanionModelMirror(
+    val id: String,
+    val displayName: String,
+    val isFree: Boolean,
+)
+
+class CompanionCredentialProvider(
+    private val storage: Storage,
+    private val secretStore: SecretStore,
+) : CredentialProvider {
+    private val configKey = "opencode_companion_credential"
+    private val passwordSecretKey = "opencode_companion_password"
+
+    override fun hasCredential(): Boolean = storage.getString(configKey)?.takeIf { it.isNotBlank() } != null ||
+        runCatching { secretStore.get(passwordSecretKey) }.getOrNull()?.takeIf { it.isNotBlank() } != null
+
+    override fun credential(): Credential? {
+        val config = storage.getString(configKey)
+        if (!config.isNullOrBlank()) {
+            return try {
+                JSONObject(config).let { json ->
+                    Credential(
+                        id = json.optString("mode", "companion.token"),
+                        value = when (json.optString("mode", "companion.token")) {
+                            "companion.token" -> json.optString("token", "")
+                            "companion.basic" -> "user:${json.optString("user", "")}:${runCatching { secretStore.get(passwordSecretKey) }.getOrNull()?.trim() ?: ""}"
+                            else -> json.optString("token", "")
+                        },
+                        label = "OpenCode companion credential",
+                    )
+                }
+            } catch (e: Exception) {
+                null
+            }
+        }
+        return runCatching { secretStore.get(passwordSecretKey) }.getOrNull()?.trim()?.ifBlank { null }?.let {
+            Credential(id = "companion.basic", value = it, label = "OpenCode companion password")
+        }
+    }
+
+    override fun setCredential(credential: Credential) {
+        when (credential.id) {
+            "companion.basic" -> {
+                storage.putString(configKey, JSONObject().put("mode", "companion.basic").put("user", "halo").toString())
+                secretStore.putBlocking(passwordSecretKey, credential.value)
+            }
+            else -> storage.putString(configKey, JSONObject().put("mode", "companion.token").put("token", credential.value).toString())
+        }
+    }
+
+    override fun clearCredential() {
+        storage.remove(configKey)
+        secretStore.remove(passwordSecretKey)
+    }
+}
+
+private fun com.halo.app.security.SecretStore.putBlocking(key: String, value: String?) {
+    kotlinx.coroutines.runBlocking { put(key, value) }
+}

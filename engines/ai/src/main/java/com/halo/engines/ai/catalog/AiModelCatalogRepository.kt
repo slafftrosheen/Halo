@@ -23,6 +23,8 @@ class DefaultAiModelCatalogRepository(
     private val _state = MutableStateFlow(AiModelCatalogState())
     override val state: StateFlow<AiModelCatalogState> = _state.asStateFlow()
 
+    private val catalogCache = ModelCatalogCache()
+
     override suspend fun refresh() = coroutineScope {
         val ids = providers.mapTo(linkedSetOf()) { it.id }
         _state.value = _state.value.copy(refreshingProviders = ids)
@@ -48,7 +50,18 @@ class DefaultAiModelCatalogRepository(
             providerErrors = results.mapNotNull { it.error?.let { message -> it.providerId to message } }.toMap(),
             refreshedAtMs = nowMs(),
         )
+        for (result in results) {
+            if (result.entries != null) {
+                catalogCache.put(result.providerId, result.entries.map { it.model }, lastSourceFor(result.providerId, merged))
+            }
+        }
     }
+
+    private fun lastSourceFor(providerId: String, merged: List<AiModelCatalogEntry>): ModelCatalogueSource {
+        return merged.filter { it.model.providerId == providerId }.lastOrNull()?.source ?: ModelCatalogueSource.REMOTE_CACHED
+    }
+
+    fun cachedModels(providerId: String): List<AiModel> = catalogCache.get(providerId)?.models.orEmpty()
 
     private fun AiModel.toEntry(provider: AiInferenceProvider, status: ProviderStatus): AiModelCatalogEntry {
         val location = when (provider.id) {

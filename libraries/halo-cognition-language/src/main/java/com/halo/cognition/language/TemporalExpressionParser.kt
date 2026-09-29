@@ -16,7 +16,9 @@ class TemporalExpressionParser : TemporalParser {
 
     override fun parse(text: String): TemporalParseResult {
         val original = text.trim()
-        val normalized = normalize(original)
+        var normalized = normalize(original)
+            .replace(Regex("^(set\\s+)?(an?\\s+)?alarm\\s+(for\\s+)?"), "")
+            .trim()
 
         if (normalized.isBlank()) {
             return TemporalParseResult.Incomplete(

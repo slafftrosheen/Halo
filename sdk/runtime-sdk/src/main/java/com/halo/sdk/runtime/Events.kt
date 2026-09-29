@@ -205,8 +205,9 @@ data class EngineStarted(override val id: String = UUID.randomUUID().toString(),
 data class EngineFailed(override val id: String = UUID.randomUUID().toString(), override val engineId: String, val reason: String, override val timestamp: Long = System.currentTimeMillis()) : EngineLifecycleEvent
 data class EngineStopped(override val id: String = UUID.randomUUID().toString(), override val engineId: String, override val timestamp: Long = System.currentTimeMillis()) : EngineLifecycleEvent
 
-// Provider Events
-data class ProviderConnected(override val id: String = UUID.randomUUID().toString(), val providerId: String, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
+// Provider Events    data class ProviderConnected(override val id: String = UUID.randomUUID().toString(), val providerId: String, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
+    data class ProviderAuthStateChanged(override val id: String = UUID.randomUUID().toString(), val providerId: String, val authState: String, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
+
 
 // Planning & Execution Events
 data class GoalCreated(override val id: String = UUID.randomUUID().toString(), val goalId: String, override val timestamp: Long = System.currentTimeMillis()) : HaloEvent
@@ -373,4 +374,36 @@ data class ProviderFailure(
     val providerId: String,
     val reason: String,
     override val timestamp: Long = System.currentTimeMillis()
+) : HaloEvent
+
+data class AiRoleResolutionEvent(
+    override val id: String = UUID.randomUUID().toString(),
+    override val timestamp: Long = System.currentTimeMillis(),
+    val workloadKind: String,
+    val requestedRole: String,
+    val resolvedRole: String,
+    val bindingMode: String,
+    val preferredProvider: String?,
+    val preferredModel: String?
+) : HaloEvent
+
+data class AiTargetResolvedEvent(
+    override val id: String = UUID.randomUUID().toString(),
+    override val timestamp: Long = System.currentTimeMillis(),
+    val resolvedProvider: String,
+    val resolvedModel: String?,
+    val isLocal: Boolean,
+    val fallbackUsed: Boolean
+) : HaloEvent
+
+data class RemoteProviderRequestEvent(
+    override val id: String = UUID.randomUUID().toString(),
+    override val timestamp: Long = System.currentTimeMillis(),
+    val interactionId: String?,
+    val requestId: String,
+    val providerId: String,
+    val modelId: String?,
+    val routingPolicy: String,
+    val role: String,
+    val reason: String
 ) : HaloEvent

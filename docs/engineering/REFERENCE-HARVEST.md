@@ -174,3 +174,41 @@ neither builds nor tests). They describe intent until run once.
   honoured upstream.
 - **Coordinate tapping, long-press and gestures** — remain unexposed until risk semantics and a
   concrete product need exist.
+
+## Harvested this round — RUNTIME-055 (remote provider fabric / free-tier presets / OAuth + companion)
+
+**Provider identity ≠ wire protocol ≠ auth method.** The batch adds the shared
+OpenAI-compatible transport and descriptor/preset types so Groq, Cerebras, xAI,
+OpenCode Zen and local/custom OpenAI-compatible endpoints stop duplicating HTTP,
+SSE, tool-call parsing and error mapping. Gemini keeps official Google OAuth,
+OpenCode companion is a user-operated inference host, and secret migration expands
+the keystore-protected credential set. This is a source-only pass: no build/test
+was run.
+
+| Route | Reference | Idea | Halo state | Status |
+| --- | --- | --- | --- | --- |
+| Generic remote inference | OneBox provider/protocol/auth split | Provider identity, request protocol and auth type are separate concepts; data-driven engine config drives multiple providers from one transport | New `OpenAiCompatibleTransport` + `ConfiguredOpenAiCompatibleProvider` + `RemoteProviderDescriptor` extracted in `sdk/provider-sdk`; existing OpenAI/OpenRouter/Gemini/Anthropic providers are reference points | WIRED 2026-09-29 |
+| Generic remote inference | FerSaiyan OpenAI-compatible client + relay boundary | Generic OpenAI-compatible client is useful; CLI/relay provider and mobile ephemeral credential patterns are separate boundaries | Transport reuse adopted; credential transport is HTTPS-or-explicitly-trusted-local, public cleartext key transport returns `INSECURE_CREDENTIAL_TRANSPORT` | WIRED 2026-09-29 |
+| Ephemeral mobile auth | FerSaiyan Gemini Live credential pattern | Long-lived credential stays outside the mobile boundary; mobile receives only bounded/ephemeral authorization | Adopted as a design constraint; no Halo-hosted relay added in this batch | CONFIRMED constraint (no Relay added) |
+| OpenAI-compatible error/rate-limit model | OneBox/Zafiro error classification + retry-after | HTTP mapping, 429 handling and quota snapshot belong in the shared transport, not per vendor | `ProviderQuotaSnapshot`, `AiProviderException` 429 handling and `INSECURE_CREDENTIAL_TRANSPORT` wired into the transport; existing OpenAI/OpenRouter error mapping preserved as compatibility reference | WIRED 2026-09-29 |
+| Free-tier metadata | OneBox `AiExecutionLocation` / `AiCostClass` | Cost class and execution location are distinct from provider brand; free is per-model metadata, not provider-wide marketing | `ProviderAccessKind` added alongside existing `AiCostClass`/`AiModel.isFree`; free is REMOTE_LIVE evidence, not baked permanent truth | WIRED 2026-09-29 |
+| Remote free/cost policy | OneBox routing policy | Free-tier preference is an optional policy applied after privacy/capability/role constraints; it must never silently bill a paid model or bypass LOCAL_ONLY | `RemoteCostPreference` added; `LOCAL_ONLY` remote guard enforced before any remote consideration | WIRED 2026-09-29 |
+| OAuth lifecycle | Google AuthorizationClient pattern in existing Gemini UI | Real OAuth session with silent reissue, single-flight token expiry + one retry, and explicit Google-owned debug/release client config | `GeminiOAuthCoordinator` keeps the existing in-flight OAuth path honest; in-memory-only token behavior is replaced with reusable-but-ephemeral session semantics; CLI credential import stays unsupported | WIRED 2026-09-29 |
+| OAuth boundary | Gemini CLI prohibition | Do not implement Gemini CLI OAuth piggyback, token harvesting, or CLI credential import | Hard comment + unsupported path left in auth routing; no CLI credential import added | WIRED 2026-09-29 |
+| Device-code OAuth | xAI device auth semantics in supported tooling | RFC-8628 device flow abstraction (request code, verify URL, poll, authorization_pending/slow_down/access_denied/expired_token, single-flight refresh, no token logging) | `XaiSubscriptionAuthCoordinator` skeleton added; enabled only when Halo has a documented/public or Halo-registered xAI client; otherwise surfaces "Experimental / client registration required" | WIRED (placeholder) 2026-09-29 |
+| User-owned LAN remote inference | OpenCode headless/companion pattern | A user-operated OpenCode instance can own its own provider credentials; Halo stores only endpoint + local auth and performs inference only | `OpenCodeCompanionProvider` with connection config, health, provider/model discovery and bounded inference session; companion shell/fs/MCP/browser/phone tool execution disabled for normal Halo turns | WIRED 2026-09-29 |
+| Custom OpenAI-compatible provider | FerSaiyan/OneBox generic remote endpoint idea | vLLM/LM Studio/llama.cpp/private gateways should not require another Halo provider module | `custom.openaicompatible` preset + settings UI + discovery toggle added | WIRED 2026-09-29 |
+| Secret protection | Existing `AndroidKeystoreSecretStore` / `SecretBackedStorage` / `SecretMigration` | All provider API keys and OAuth/companion secrets belong in the keystore-backed secret store; BrainSnapshot must not export secrets and must restore providers as NEEDS_AUTH | `SecretMigrationV2` expands the protected key set, is idempotent/crash-safe/backward-aware and removes plaintext; `BrainSnapshotSecretsGuard` blocks secret export and sets restored remote providers to NEEDS_AUTH | WIRED 2026-09-29 |
+| Composable provider composition | Existing `AndroidProviderFactory` / `ProviderGraph` / `Providers` | New presets/companion must wire into the existing factory and provider registry without breaking existing flow | `ProviderGraph` and `AndroidProviderFactory` extended with remote fabric presets and companion; existing providers retained | WIRED 2026-09-29 |
+| Provider auth state UI contract | Existing `IntelligenceScreen`/`SystemCheckScreen` | Connecting a provider must not auto-select it; separate "Use as Default / Assign to role" actions preserve RUNTIME-054 semantics | `ProviderAuthState`, `ProviderAuthInfo`, `AiProviderUiState` extensions and `RemoteProviderPresence` added; `IntelligenceScreen`/`SystemCheckScreen` extended for remote auth state, connect/test/refresh, badges and source chips | WIRED 2026-09-29 |
+| Model catalog normalization | OneBox provider/model identity stability | Remote models normalized to `AiModelRef(providerId, modelId)` with REMOTE_LIVE/REMOTE_CACHED and TTL; companion underlying models must not collide | `AiModelCatalogRepository` extended with remote/cached normalization and `ModelCatalogCache`; companion models encoded with underlying provider prefix | WIRED 2026-09-29 |
+| Provider diagnostic probe | Existing System Check AI probe | Diagnostic probes must be bounded, short, content-free and not send history | `ProviderDiagnosticProbe` added with bounded prompt / max-output guard and no conversation history; System Check exposes per-provider rows and "Run provider probe" | WIRED 2026-09-29 |
+
+### What was NOT copied
+
+- Gemini CLI OAuth client identity, token cache, or any CLI credential import path.
+- OpenCode OpenAI/ChatGPT OAuth client identity or ChatGPT cookie/session token handling.
+- xAI OAuth client identity; subscription auth is only enabled when Halo has its own suitable client configuration.
+- Any vendor-operated Halo relay; OpenCode companion is a user-operated endpoint.
+- Per-vendor duplicate HTTP/SSE/tool parsing; existing providers are preserved as compatibility references, not rewritten wholesale.
+

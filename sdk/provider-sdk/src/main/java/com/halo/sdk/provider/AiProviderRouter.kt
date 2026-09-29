@@ -47,6 +47,7 @@ enum class TargetRejectionReason {
     POLICY_EXCLUDED,
     PROVIDER_COOLDOWN,
     RESOURCE_BUSY,
+    ROLE_DISABLED,
 }
 
 data class RejectedAiTarget(
@@ -98,6 +99,14 @@ interface AiProviderRouter {
     /** Policy used to resolve execution targets. Read-only projection for observers. */
     val routingPolicy: StateFlow<AiRoutingPolicy>
         get() = MutableStateFlow(AiRoutingPolicy.AUTOMATIC)
+
+    val roleBindings: StateFlow<Map<AiModelRole, AiRoleBinding>>
+        get() = MutableStateFlow(emptyMap())
+
+    fun setRoleBinding(binding: AiRoleBinding) {}
+
+    fun roleBinding(role: AiModelRole): AiRoleBinding = 
+        roleBindings.value[role] ?: AiRoleBinding(role, null, null, AiRoleSelection.INHERIT_DEFAULT)
 
     fun selectProvider(id: String)
 

@@ -1,6 +1,8 @@
 package com.halo.app.di
 
 import android.content.Context
+import com.halo.app.ai.DefaultSpeechProviderSelector
+import com.halo.app.ai.SpeechSelectionRepository
 import com.halo.app.storage.haloStorageLayout
 import com.halo.engines.speech.AlwaysWakeDetector
 import com.halo.providers.android.tts.AndroidTTSProvider
@@ -14,6 +16,7 @@ import com.halo.providers.openrouter.OpenRouterProvider
 import com.halo.providers.sherpa.stt.ReloadableSpeechRecognitionProvider
 import com.halo.providers.sherpa.stt.SherpaKeywordSpotterWakeWordDetector
 import com.halo.providers.sherpa.stt.SherpaSpeechModelCatalog
+
 import com.halo.sdk.provider.SpeechRecognitionProvider
 import com.halo.sdk.runtime.NativeResourceCoordinator
 import com.halo.sdk.runtime.Storage
@@ -24,7 +27,7 @@ class AndroidProviderFactory(
     private val context: Context,
     private val modelManager: LiteRtModelManager,
     private val storage: Storage,
-    private val nativeResourceCoordinator: NativeResourceCoordinator
+    private val nativeResourceCoordinator: NativeResourceCoordinator,
 ) : ProviderFactory {
 
     override fun createProviders(): Providers {
@@ -33,9 +36,7 @@ class AndroidProviderFactory(
             inventoryRepository = modelManager,
             storage = storage,
             nativeResourceCoordinator = nativeResourceCoordinator,
-            // The manager owns the pinned development catalog (including gated entries used for
-            // import canonicalization); the provider resolves per-artifact runtime profiles from it.
-            catalog = modelManager.getAllCatalogModels()
+            catalog = modelManager.getAllCatalogModels(),
         )
 
         val speechRoot = haloStorageLayout(context).speechModels
@@ -48,29 +49,18 @@ class AndroidProviderFactory(
                     ?: Locale.getDefault().toLanguageTag()
                 configuredLocale.substringBefore('-').substringBefore('_')
             },
-            nativeResourceCoordinator = nativeResourceCoordinator
+            selector = DefaultSpeechProviderSelector(SpeechSelectionRepository(storage)),
+            nativeResourceCoordinator = nativeResourceCoordinator,
         )
 
         val sherpaKwsDirectory = File(speechRoot, SherpaSpeechModelCatalog.KWS_ENGLISH_DIRECTORY)
-        val sherpaKwsKeywords = File(
-            sherpaKwsDirectory,
-            SherpaSpeechModelCatalog.KWS_ENGLISH_KEYWORDS_FILE
-        )
+        val sherpaKwsKeywords = File(sherpaKwsDirectory, SherpaSpeechModelCatalog.KWS_ENGLISH_KEYWORDS_FILE)
         val wakeWord = runCatching {
-            if (!SherpaSpeechModelCatalog.isInstalled(
-                    sherpaKwsDirectory,
-                    SherpaSpeechModelCatalog.kwsEnglish
-                )
-            ) {
+            if (!SherpaSpeechModelCatalog.isInstalled(sherpaKwsDirectory, SherpaSpeechModelCatalog.kwsEnglish)) {
                 throw IllegalStateException("Sherpa KWS model is not installed")
             }
-            SherpaKeywordSpotterWakeWordDetector(
-                modelDirectory = sherpaKwsDirectory,
-                keywordsFile = sherpaKwsKeywords
-            )
-        }.getOrElse {
-            AlwaysWakeDetector()
-        }
+            SherpaKeywordSpotterWakeWordDetector(modelDirectory = sherpaKwsDirectory, keywordsFile = sherpaKwsKeywords)
+        }.getOrElse { AlwaysWakeDetector() }
 
         return Providers(
             inference = localProvider,
@@ -84,7 +74,7 @@ class AndroidProviderFactory(
                 runCatching { OpenAiProvider(storage) }.getOrNull(),
                 runCatching { AnthropicProvider(storage) }.getOrNull(),
                 runCatching { GeminiProvider(storage) }.getOrNull(),
-            )
+            ),
         )
     }
 }

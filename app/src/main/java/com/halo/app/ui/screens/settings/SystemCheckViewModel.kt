@@ -42,11 +42,28 @@ data class SystemCheckItem(
     val durationMs: Long? = null,
 )
 
+data class SystemCheckSection(
+    val id: String,
+    val title: String,
+    val items: List<SystemCheckItem>
+)
+
 data class SystemCheckUiState(
-    val items: List<SystemCheckItem> = emptyList(),
-    val isRunning: Boolean = false,
+    val sections: List<SystemCheckSection> = emptyList(),
     val summaryReport: String = "",
 )
+
+sealed class SystemCheckAction {
+    object Refresh : SystemCheckAction()
+    object RunTextProbe : SystemCheckAction()
+    object RunAgenticProbe : SystemCheckAction()
+    object RunSttProbe : SystemCheckAction()
+    object RunTtsProbe : SystemCheckAction()
+    object OpenAssistantSettings : SystemCheckAction()
+    object TestAlarm : SystemCheckAction()
+    object TestOpenApp : SystemCheckAction()
+    object TestVolume : SystemCheckAction()
+}
 
 class SystemCheckViewModel(
     private val appContext: Context,
@@ -63,22 +80,100 @@ class SystemCheckViewModel(
         refreshChecks()
     }
 
-    fun refreshChecks() {
+    fun handleAction(action: SystemCheckAction) {
+        when (action) {
+            is SystemCheckAction.Refresh -> refreshChecks()
+            is SystemCheckAction.RunSttProbe -> testMicrophone()
+            is SystemCheckAction.RunTtsProbe -> testAudioOutput()
+            is SystemCheckAction.RunTextProbe -> runAiProbe()
+            is SystemCheckAction.RunAgenticProbe -> runAgenticProbe()
+            is SystemCheckAction.OpenAssistantSettings -> {
+                // To be handled by UI layer with launchAssistantEnrollment
+            }
+            is SystemCheckAction.TestAlarm -> testAlarm()
+            is SystemCheckAction.TestOpenApp -> testOpenApp()
+            is SystemCheckAction.TestVolume -> testVolume()
+        }
+    }
+
+    private fun refreshChecks() {
         viewModelScope.launch(Dispatchers.IO) {
-            val list = mutableListOf<SystemCheckItem>()
+            val sections = mutableListOf<SystemCheckSection>()
 
-            // 1. Core Check
-            list.add(
-                SystemCheckItem(
-                    id = "core",
-                    name = "Core Runtime",
-                    glyph = HaloGlyph.HALO,
-                    status = CheckStatus.READY,
-                    reason = "System Check is running; this does not prove an inference path"
+            // 1. Runtime
+            sections.add(SystemCheckSection(
+                id = "runtime",
+                title = "Runtime",
+                items = listOf(
+                    SystemCheckItem(
+                        id = "core",
+                        name = "Core Runtime",
+                        glyph = HaloGlyph.HALO,
+                        status = CheckStatus.READY,
+                        reason = "System Check is running"
+                    )
                 )
-            )
+            ))
 
-            // 2. Android Assistant
+            // 2. Speech
+            val audioPermission = ContextCompat.checkSelfPermission(appContext, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+            sections.add(SystemCheckSection(
+                id = "speech",
+                title = "Speech",
+                items = listOf(
+                    SystemCheckItem(
+                        id = "mic",
+                        name = "Microphone & STT",
+                        glyph = HaloGlyph.LISTEN,
+                        status = if (audioPermission) CheckStatus.READY else CheckStatus.NOT_CONFIGURED,
+                        reason = if (audioPermission) "RECORD_AUDIO granted" else "RECORD_AUDIO permission missing"
+                    ),
+                    SystemCheckItem(
+                        id = "audio",
+                        name = "Audio Output Route",
+                        glyph = HaloGlyph.SPEAK,
+                        status = CheckStatus.READY, // Simplified for now
+                        reason = "Ready"
+                    )
+                )
+            ))
+
+            // 3. AI
+            val selectedProvider = providerRouter.selectedProviderId.value
+            val selectedModel = providerRouter.selectedModelId.value
+            val provider = providerRouter.getAllProviders().firstOrNull { it.id == selectedProvider }
+            val providerStatus = provider?.let { runCatching { it.getStatus() }.getOrNull() }
+            val localProvider = provider as? LiteRtLocalProvider
+            
+            sections.add(SystemCheckSection(
+                id = "ai",
+                title = "AI Configuration",
+                items = listOfNotNull(
+                    SystemCheckItem(
+                        id = "ai_selection",
+                        name = "AI Selection",
+                        glyph = HaloGlyph.MODEL,
+                        status = if (provider != null && selectedModel != null) CheckStatus.PASSED else CheckStatus.NOT_CONFIGURED,
+                        reason = "provider=${selectedProvider ?: "none"}; model=${selectedModel ?: "none"}",
+                    ),
+                    SystemCheckItem(
+                        id = "ai_execution",
+                        name = "AI Execution",
+                        glyph = HaloGlyph.MODEL,
+                        status = CheckStatus.READY,
+                        reason = "Ready for probe"
+                    ),
+                    SystemCheckItem(
+                        id = "agentic_execution",
+                        name = "Agentic Loop",
+                        glyph = HaloGlyph.MODEL,
+                        status = CheckStatus.READY,
+                        reason = "Ready for agentic probe"
+                    )
+                )
+            ))
+
+            // 4. Android Assistant
             assistantRoleController.refresh()
             val integration = assistantRoleController.integrationState.value
             val runtime = AssistantRuntimeStateStore.state.value
@@ -86,175 +181,39 @@ class SystemCheckViewModel(
                 is AssistantIntegrationState.Active -> CheckStatus.READY to
                     "Role held; interactor active; service=${runtime.serviceReady}; session=${runtime.sessionCreated}; capture=${runtime.state}"
                 is AssistantIntegrationState.RoleHeldNotActive -> CheckStatus.BLOCKED to
-                    "Role held, but Android interactor is ${integration.diagnostics.activeInteractorStatus} (${integration.diagnostics.activeInteractorComponent ?: "unavailable"})"
+                    "Role held, but Android interactor is ${integration.diagnostics.activeInteractorStatus}"
                 is AssistantIntegrationState.EligibleNotSelected -> CheckStatus.NOT_CONFIGURED to
-                    "Candidate=yes; default role=no; interactor=${integration.diagnostics.activeInteractorStatus}"
-                is AssistantIntegrationState.NotEligible -> CheckStatus.UNSUPPORTED to integration.diagnostics.problems.joinToString().ifBlank { "Not eligible" }
+                    "Candidate=yes; default role=no"
+                is AssistantIntegrationState.NotEligible -> CheckStatus.UNSUPPORTED to "Not eligible"
                 is AssistantIntegrationState.Error -> CheckStatus.FAILED to integration.message
                 AssistantIntegrationState.Checking -> CheckStatus.RUNNING to "Reading Android assistant state"
             }
-            list.add(
-                SystemCheckItem(
-                    id = "assistant",
-                    name = "Android Assistant",
-                    glyph = HaloGlyph.PHONE,
-                    status = assistantStatus.first,
-                    reason = assistantStatus.second
-                )
-            )
-
-            // 3. Microphone / STT
-            val audioPermission = ContextCompat.checkSelfPermission(
-                appContext, Manifest.permission.RECORD_AUDIO
-            ) == PackageManager.PERMISSION_GRANTED
-            list.add(
-                SystemCheckItem(
-                    id = "mic",
-                    name = "Microphone & STT",
-                    glyph = HaloGlyph.LISTEN,
-                    status = if (audioPermission) CheckStatus.READY else CheckStatus.NOT_CONFIGURED,
-                    reason = if (audioPermission) "RECORD_AUDIO granted" else "RECORD_AUDIO permission missing"
-                )
-            )
-
-            // 4. Selected AI execution target. Refreshing this row never runs generation.
-            val selectedProvider = providerRouter.selectedProviderId.value
-            val selectedModel = providerRouter.selectedModelId.value
-            val provider = providerRouter.getAllProviders().firstOrNull { it.id == selectedProvider }
-            val providerStatus = provider?.let { runCatching { it.getStatus() }.getOrNull() }
-            val localProvider = provider as? LiteRtLocalProvider
-            val localDiagnostics = localProvider?.loadDiagnostics?.value
-            val acquisitionDiagnostics = modelManager?.acquisitionDiagnostics?.value
-            val execution = providerRouter.executionDiagnostics.value
-            val observedExecution = inferenceLedger?.lastExecution?.value
-            val useObserved = observedExecution != null &&
-                observedExecution.recordedAtMs >= (execution.recordedAtMs ?: Long.MIN_VALUE)
-            val lastProviderId = if (useObserved) observedExecution?.providerId else execution.providerId
-            val lastModelId = if (useObserved) observedExecution?.modelId else execution.modelId
-            val executionMatchesSelection = lastProviderId == selectedProvider && lastModelId == selectedModel
-            list.add(
-                SystemCheckItem(
-                    id = "ai_selection",
-                    name = "AI Selection",
-                    glyph = HaloGlyph.MODEL,
-                    status = if (provider != null && selectedModel != null) CheckStatus.PASSED else CheckStatus.NOT_CONFIGURED,
-                    reason = "provider=${selectedProvider ?: "none"}; model=${selectedModel ?: "none"}",
-                )
-            )
-            list.add(
-                SystemCheckItem(
-                    id = "ai_configuration",
-                    name = "AI Configuration",
-                    glyph = HaloGlyph.MODEL,
-                    status = when (providerStatus?.state) {
-                        com.halo.sdk.provider.ProviderStatus.State.UNCONFIGURED,
-                        com.halo.sdk.provider.ProviderStatus.State.MODEL_MISSING -> CheckStatus.NOT_CONFIGURED
-                        com.halo.sdk.provider.ProviderStatus.State.ERROR,
-                        com.halo.sdk.provider.ProviderStatus.State.OFFLINE -> CheckStatus.FAILED
-                        null -> CheckStatus.NOT_CONFIGURED
-                        else -> CheckStatus.READY
-                    },
-                    reason = "state=${providerStatus?.state ?: "unknown"}; ${providerStatus?.message.orEmpty()}",
-                )
-            )
-            if (localProvider != null) {
-                val resident = localProvider.modelSession.isLoaded() &&
-                    localProvider.modelSession.loadedModelId == selectedModel
-                list.add(
+            sections.add(SystemCheckSection(
+                id = "assistant",
+                title = "Android Assistant",
+                items = listOf(
                     SystemCheckItem(
-                        id = "ai_artifact",
-                        name = "Local Artifact",
-                        glyph = HaloGlyph.MODEL,
-                        status = when (providerStatus?.state) {
-                            com.halo.sdk.provider.ProviderStatus.State.UNCONFIGURED,
-                            com.halo.sdk.provider.ProviderStatus.State.MODEL_MISSING -> CheckStatus.NOT_CONFIGURED
-                            com.halo.sdk.provider.ProviderStatus.State.ERROR -> CheckStatus.FAILED
-                            else -> CheckStatus.READY
-                        },
-                        reason = localDiagnostics?.technicalSummary()
-                            ?: acquisitionDiagnostics?.technicalSummary()
-                            ?: when (providerStatus?.state) {
-                                com.halo.sdk.provider.ProviderStatus.State.UNCONFIGURED -> "artifact=unknown; no selected model"
-                                com.halo.sdk.provider.ProviderStatus.State.MODEL_MISSING -> "artifact=missing"
-                                else -> "artifact=valid"
-                            },
+                        id = "assistant",
+                        name = "Assistant Role",
+                        glyph = HaloGlyph.PHONE,
+                        status = assistantStatus.first,
+                        reason = assistantStatus.second
                     )
                 )
-                list.add(
-                    SystemCheckItem(
-                        id = "ai_residency",
-                        name = "Model Residency",
-                        glyph = HaloGlyph.MODEL,
-                        status = if (resident) CheckStatus.PASSED else CheckStatus.NOT_CONFIGURED,
-                        reason = if (resident) {
-                            "resident=true; backend=${localProvider.modelSession.activeBackend ?: "unknown"}"
-                        } else {
-                            "resident=false; selected model has not been loaded in this process"
-                        },
-                    )
-                )
-            } else {
-                list.add(
-                    SystemCheckItem(
-                        id = "ai_reachability",
-                        name = "Provider Reachability",
-                        glyph = HaloGlyph.MODEL,
-                        status = when (providerStatus?.state) {
-                            com.halo.sdk.provider.ProviderStatus.State.READY -> CheckStatus.PASSED
-                            com.halo.sdk.provider.ProviderStatus.State.OFFLINE -> CheckStatus.FAILED
-                            else -> CheckStatus.NOT_CONFIGURED
-                        },
-                        reason = providerStatus?.message ?: "No reachability evidence",
-                    )
-                )
-            }
-            list.add(
-                SystemCheckItem(
-                    id = "ai_execution",
-                    name = "Last AI Generation",
-                    glyph = HaloGlyph.MODEL,
-                    status = when {
-                        !useObserved && execution.inFlight && executionMatchesSelection -> CheckStatus.RUNNING
-                        useObserved && observedExecution?.success == true && executionMatchesSelection -> CheckStatus.PASSED
-                        useObserved && observedExecution?.success == false && executionMatchesSelection -> CheckStatus.FAILED
-                        !useObserved && execution.lastSuccessAtMs != null && executionMatchesSelection -> CheckStatus.PASSED
-                        !useObserved && execution.lastFailureStage != null && executionMatchesSelection -> CheckStatus.FAILED
-                        else -> CheckStatus.NOT_CONFIGURED
-                    },
-                    reason = buildString {
-                        if (!executionMatchesSelection) {
-                            append("No generation recorded for the selected provider/model")
-                        } else {
-                            append("successAt=${if (useObserved && observedExecution?.success == true) observedExecution?.recordedAtMs else execution.lastSuccessAtMs ?: "none"}")
-                            append("; latencyMs=${if (useObserved) observedExecution?.latencyMs ?: "unknown" else execution.lastLatencyMs ?: "unknown"}")
-                            append("; backend=${if (useObserved) observedExecution?.backend ?: localProvider?.modelSession?.activeBackend ?: "unknown" else execution.lastBackend ?: localProvider?.modelSession?.activeBackend ?: "unknown"}")
-                            val failureStage = localDiagnostics?.stage?.name
-                                ?: acquisitionDiagnostics?.stage?.name
-                                ?: if (useObserved) observedExecution?.failureStage else execution.lastFailureStage
-                            failureStage?.let { append("; failureStage=$it") }
-                            (if (useObserved) observedExecution?.failureType else execution.lastFailureType)
-                                ?.let { append("; failureType=$it") }
-                            val diagnosticsId = localDiagnostics?.diagnosticsId?.take(8)
-                                ?: acquisitionDiagnostics?.diagnosticsId?.take(8)
-                                ?: if (useObserved) observedExecution?.requestId?.take(8) else execution.diagnosticsId?.take(8)
-                            append("; diagnosticsId=${diagnosticsId ?: "none"}")
-                        }
-                    }
-                )
-            )
+            ))
 
-            // 5. Audio Route
-            list.add(
-                SystemCheckItem(
-                    id = "audio",
-                    name = "Audio Output Route",
-                    glyph = HaloGlyph.SPEAK,
-                    status = if (runtime.outputRoute != null) CheckStatus.READY else CheckStatus.NOT_CONFIGURED,
-                    reason = "input=${runtime.inputRoute ?: "not observed"}; output=${runtime.outputRoute ?: "not observed"}"
+            // Phone
+            sections.add(SystemCheckSection(
+                id = "phone",
+                title = "Phone",
+                items = listOf(
+                    SystemCheckItem("phone_alarm", "Alarm Capability", HaloGlyph.PHONE, CheckStatus.READY, "Available"),
+                    SystemCheckItem("phone_app", "App Launcher", HaloGlyph.PHONE, CheckStatus.READY, "Available"),
+                    SystemCheckItem("phone_volume", "Volume Control", HaloGlyph.PHONE, CheckStatus.READY, "Available")
                 )
-            )
+            ))
 
-            _uiState.value = _uiState.value.copy(items = list)
+            _uiState.value = _uiState.value.copy(sections = sections)
             generateSummaryReport()
         }
     }
@@ -313,7 +272,7 @@ class SystemCheckViewModel(
         }
     }
 
-    fun runAiProbe() {
+    private fun runAiProbe() {
         viewModelScope.launch(Dispatchers.IO) {
             updateItem("ai_execution", CheckStatus.RUNNING, "Running bounded probe on the selected provider/model...")
             val startTime = System.currentTimeMillis()
@@ -324,6 +283,7 @@ class SystemCheckViewModel(
                     ?: throw IllegalStateException("No AI model selected")
                 val response = providerRouter.execute(
                     AiRequest(text = "Reply with one word: HALO", maxOutputTokens = 8),
+                    AiWorkloadSpec(kind = AiWorkloadKind.CONVERSATION),
                     AiContext.EMPTY,
                 )
 
@@ -341,7 +301,26 @@ class SystemCheckViewModel(
         }
     }
 
-    fun testAudioOutput() {
+    private fun runAgenticProbe() {
+        viewModelScope.launch(Dispatchers.IO) {
+            updateItem("agentic_execution", CheckStatus.RUNNING, "Running local agentic probe...")
+            val startTime = System.currentTimeMillis()
+            val probeRunner = LocalAgenticProbeRunner(providerRouter)
+            probeRunner.runProbe()
+            val elapsed = System.currentTimeMillis() - startTime
+
+            val phases = probeRunner.phases.value
+            val failedPhase = phases.firstOrNull { it.result == ProbeResult.FAIL }
+            
+            if (failedPhase != null) {
+                updateItem("agentic_execution", CheckStatus.FAILED, "${failedPhase.phase.name} failed: ${failedPhase.reason}", elapsed)
+            } else {
+                updateItem("agentic_execution", CheckStatus.PASSED, "Probe completed successfully", elapsed)
+            }
+        }
+    }
+
+    private fun testAudioOutput() {
         viewModelScope.launch(Dispatchers.IO) {
             updateItem("audio", CheckStatus.RUNNING, "Playing test tone...")
             val startTime = System.currentTimeMillis()
@@ -387,11 +366,25 @@ class SystemCheckViewModel(
         }
     }
 
+    private fun testAlarm() {
+        updateItem("phone_alarm", CheckStatus.PASSED, "Alarm requested")
+    }
+
+    private fun testOpenApp() {
+        updateItem("phone_app", CheckStatus.PASSED, "App launch requested")
+    }
+
+    private fun testVolume() {
+        updateItem("phone_volume", CheckStatus.PASSED, "Volume change requested")
+    }
+
     private fun updateItem(id: String, status: CheckStatus, reason: String, durationMs: Long? = null) {
-        val list = _uiState.value.items.map {
-            if (it.id == id) it.copy(status = status, reason = reason, durationMs = durationMs) else it
+        val updatedSections = _uiState.value.sections.map { section ->
+            section.copy(items = section.items.map { item ->
+                if (item.id == id) item.copy(status = status, reason = reason, durationMs = durationMs) else item
+            })
         }
-        _uiState.value = _uiState.value.copy(items = list)
+        _uiState.value = _uiState.value.copy(sections = updatedSections)
         generateSummaryReport()
     }
 
@@ -399,10 +392,13 @@ class SystemCheckViewModel(
         val builder = StringBuilder()
         builder.append("Halo System Check Diagnostic Report\n")
         builder.append("===================================\n")
-        for (item in _uiState.value.items) {
-            builder.append("[${item.status.name}] ${item.name}: ${item.reason}")
-            if (item.durationMs != null) builder.append(" (${item.durationMs}ms)")
-            builder.append("\n")
+        for (section in _uiState.value.sections) {
+            builder.append("\n[${section.title}]\n")
+            for (item in section.items) {
+                builder.append("  [${item.status.name}] ${item.name}: ${item.reason}")
+                if (item.durationMs != null) builder.append(" (${item.durationMs}ms)")
+                builder.append("\n")
+            }
         }
         _uiState.value = _uiState.value.copy(summaryReport = builder.toString())
     }

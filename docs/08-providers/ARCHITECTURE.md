@@ -64,3 +64,50 @@ Pins, the evidence ladder (CATALOGUED -> DOWNLOAD VERIFIED -> ENGINE VERIFIED ->
 VERIFIED -> PHYSICAL DEVICE VERIFIED) and the phone acceptance checklist are in
 [LITERT-DEVELOPMENT-MATRIX.md](LITERT-DEVELOPMENT-MATRIX.md). Model-role routing
 (FAST/REASONING/AGENTIC/VISION) and 3.5-5 GB multimodal artifacts are deliberately deferred.
+
+## Remote provider fabric (RUNTIME-055)
+
+Halo now separates three concepts for every remote provider:
+
+1. Provider identity — who operates the service
+2. Wire protocol — how Halo talks to it
+3. Authentication method — how Halo obtains authorization
+
+This avoids one bespoke HTTP stack per vendor. The shared
+`OpenAiCompatibleTransport` handles chat completions and responses, SSE
+streaming, tool-call parsing, HTTP error mapping, rate-limit parsing and model
+list parsing. `ConfiguredOpenAiCompatibleProvider` configures identity, display
+name, base endpoint, protocol, credential reference, model discovery mode,
+static model hints, capabilities, access metadata and optional headers.
+
+Presets built on the fabric:
+
+- groq — API key, free tier / pay-as-you-go, OpenAI chat completions
+- cerebras — API key, free tier, OpenAI chat completions
+- opencode.zen — API key, mixed free/paid, OpenAI chat completions
+- xai — API key, pay-as-you-go, OpenAI compatible / responses
+- companion.opencode — OpenCode companion, user-operated endpoint, inference only
+- custom.openaicompatible — user-defined OpenAI-compatible endpoint
+
+Gemini keeps official Google OAuth through `GeminiOAuthCoordinator`. xAI
+subscription auth is a coordinator skeleton enabled only when Halo has its own
+client configuration; it must not ship someone else's OAuth client identity.
+
+OpenCode companion stores only endpoint + local auth credential. Halo never sees
+ChatGPT/xAI/Zen/OpenRouter credentials. Companion tools (shell/fs/MCP/browser/
+phone) are disabled for normal Halo inference turns.
+
+Transport security: credentials may only be sent over HTTPS or explicitly trusted
+local transport (loopback, LAN, Tailscale, *.local). Public cleartext HTTP
+returns `INSECURE_CREDENTIAL_TRANSPORT`.
+
+Free-tier metadata is per-model from current remote catalog, not provider-wide
+marketing. Free presence is REMOTE_LIVE evidence.
+
+Secret migration V2 expands the keystore-protected credential set and removes
+plaintext after verified write. Brain snapshot export strips secret keys and
+restored remote providers are returned as NEEDS_AUTH when credentials are absent.
+
+UI: System Check exposes per-provider auth state, connect/test/refresh actions
+and provider matrix. Provider rows show auth state without auto-selecting the
+provider on connect.

@@ -95,19 +95,37 @@ fun SystemCheckScreen(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        items(uiState.items, key = { it.id }) { item ->
-            SystemCheckCard(
-                item = item,
-                onAction = {
-                    when (item.id) {
-                        "assistant" -> viewModel.launchAssistantEnrollment { intent -> assistantLauncher.launch(intent) }
-                        "mic" -> viewModel.testMicrophone()
-                        "ai_execution" -> viewModel.runAiProbe()
-                        "audio" -> viewModel.testAudioOutput()
-                        else -> viewModel.refreshChecks()
+        uiState.sections.forEach { section ->
+            item {
+                Text(
+                    text = section.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(top = 16.dp, bottom = 4.dp, start = 16.dp, end = 16.dp)
+                )
+            }
+            items(section.items, key = { it.id }) { item ->
+                SystemCheckCard(
+                    item = item,
+                    onAction = {
+                        val action = when (item.id) {
+                            "assistant" -> SystemCheckAction.OpenAssistantSettings
+                            "mic" -> SystemCheckAction.RunSttProbe
+                            "ai_execution" -> SystemCheckAction.RunTextProbe
+                            "agentic_execution" -> SystemCheckAction.RunAgenticProbe
+                            "audio" -> SystemCheckAction.RunTtsProbe
+                            "phone_alarm" -> SystemCheckAction.TestAlarm
+                            "phone_app" -> SystemCheckAction.TestOpenApp
+                            "phone_volume" -> SystemCheckAction.TestVolume
+                            else -> SystemCheckAction.Refresh
+                        }
+                        if (action is SystemCheckAction.OpenAssistantSettings) {
+                            viewModel.launchAssistantEnrollment { intent -> assistantLauncher.launch(intent) }
+                        } else {
+                            viewModel.handleAction(action)
+                        }
                     }
-                }
-            )
+                )
+            }
         }
     }
     }

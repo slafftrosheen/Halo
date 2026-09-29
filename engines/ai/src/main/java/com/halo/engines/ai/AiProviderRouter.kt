@@ -8,6 +8,9 @@ import com.halo.sdk.runtime.EventBus
 import com.halo.sdk.runtime.ProviderRequest
 import com.halo.sdk.runtime.ProviderResult
 import com.halo.sdk.runtime.ProviderFailure
+import com.halo.sdk.runtime.AiRoleResolutionEvent
+import com.halo.sdk.runtime.AiTargetResolvedEvent
+import com.halo.sdk.runtime.RemoteProviderRequestEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -61,7 +64,7 @@ class DefaultAiProviderRouter(
     override val routingPolicy: StateFlow<AiRoutingPolicy> = _routingPolicy.asStateFlow()
 
     private val _roleBindings = MutableStateFlow<Map<AiModelRole, AiRoleBinding>>(emptyMap())
-    val roleBindings: StateFlow<Map<AiModelRole, AiRoleBinding>> = _roleBindings.asStateFlow()
+    override val roleBindings: StateFlow<Map<AiModelRole, AiRoleBinding>> = _roleBindings.asStateFlow()
     
     private val roleResolver: AiRoleResolver = DefaultAiRoleResolver()
 
@@ -164,7 +167,7 @@ class DefaultAiProviderRouter(
         )
     }
 
-    fun setRoleBinding(binding: AiRoleBinding) {
+    override fun setRoleBinding(binding: AiRoleBinding) {
         selectionRepository.writeRoleBinding(binding)
         _roleBindings.value = selectionRepository.readRoleBindings()
     }
@@ -194,10 +197,31 @@ class DefaultAiProviderRouter(
         val policy = pref.policy
         val selectedId = pref.providerId
         val selectedModel = pref.modelId
-        val selected = allProviders.firstOrNull { it.id == selectedId }
+
         val rejected = mutableListOf<RejectedAiTarget>()
         var resolved: AiExecutionTarget? = null
+
+        val requestedRole = workload.preferredRole ?: roleResolver.determineRole(workload)
+        eventBus?.publish(
+            AiRoleResolutionEvent(
+                workloadKind = workload.kind.name,
+                requestedRole = requestedRole.name,
+                resolvedRole = requestedRole.name,
+                bindingMode = _roleBindings.value[requestedRole]?.selection?.name ?: "UNKNOWN",
+                preferredProvider = selectedId,
+                preferredModel = selectedModel
+            )
+        )
+
         try {
+            if (policy == AiRoutingPolicy.EXPLICIT && selectedId == null) {
+                rejected += RejectedAiTarget("none", null, TargetRejectionReason.ROLE_DISABLED)
+                throw AiProviderException(
+                    AiErrorType.CAPABILITY_DISABLED,
+                    "${requestedRole.name} AI is disabled."
+                )
+            }
+            val selected = allProviders.firstOrNull { it.id == selectedId }
             if (policy == AiRoutingPolicy.EXPLICIT &&
                 (selected !is AiInferenceProvider || selected is AiHandoffProvider)
             ) {
@@ -209,7 +233,10 @@ class DefaultAiProviderRouter(
                 )
             }
             val candidates = if (policy == AiRoutingPolicy.EXPLICIT) listOfNotNull(selected as? AiInferenceProvider)
-                else inferenceProviders.sortedBy { if (it.id == selectedId) 0 else 1 }
+                else inferenceProviders.sortedWith(
+                    compareBy<AiInferenceProvider> { if (it.id == selectedId) 0 else if (it.isLocal) 1 else 2 }
+                        .thenBy { it.id }
+                )
             for (provider in candidates) {
                 if (policy == AiRoutingPolicy.LOCAL_ONLY && !provider.isLocal) {
                     rejected += RejectedAiTarget(provider.id, null, TargetRejectionReason.POLICY_EXCLUDED)
@@ -268,7 +295,13 @@ class DefaultAiProviderRouter(
                         preferredModelId = selectedModel.takeIf { provider.id == selectedId },
                         allowPreferredModelFallback = policy != AiRoutingPolicy.EXPLICIT,
                     )
-                    return resolved
+                    eventBus?.publish(AiTargetResolvedEvent(
+                resolvedProvider = resolved!!.providerId,
+                resolvedModel = resolved.modelId,
+                isLocal = resolved.provider.isLocal,
+                fallbackUsed = policy != AiRoutingPolicy.EXPLICIT && (resolved.providerId != selectedId || resolved.modelId != selectedModel)
+            ))
+            return resolved
                 } catch (cancelled: CancellationException) {
                     throw cancelled
                 } catch (error: Exception) {
@@ -490,6 +523,19 @@ class DefaultAiProviderRouter(
         )
         logger?.info("AiProviderRouter", "AI execute start provider=${target.providerId} model=${target.modelId}")
         eventBus?.publish(ProviderRequest(requestId = requestId, providerId = target.providerId))
+        
+        if (!target.provider.isLocal) {
+            eventBus?.publish(RemoteProviderRequestEvent(
+                interactionId = request.modelId, // Hack since request doesn't have interactionId but we can't easily get it here without breaking api
+                requestId = requestId,
+                providerId = target.providerId,
+                modelId = target.modelId,
+                routingPolicy = policy.name,
+                role = "UNKNOWN", // Don't have requested role easily here
+                reason = "Remote execution requested"
+            ))
+        }
+
         return try {
             finalRequest.validateAgainst(target.providerCapabilities)
             validateModelWorkload(target.model, finalRequest, workload, target.providerCapabilities)
