@@ -22,7 +22,6 @@ import com.halo.providers.opencode.zen.OpenCodeZenProvider
 import com.halo.providers.xai.XaiProvider
 import com.halo.providers.custom.openaicompatible.CustomOpenAiCompatibleProvider
 import com.halo.providers.custom.openaicompatible.CustomOpenAiCompatibleCredentialProvider
-import com.halo.providers.custom.openaicompatible.CustomAuthMode
 import com.halo.providers.opencode.companion.OpenCodeCompanionProvider
 
 import com.halo.sdk.provider.AiInferenceProvider
@@ -100,7 +99,7 @@ class AndroidProviderFactory(
                             ?: "http://localhost:8080/v1",
                         com.halo.sdk.provider.AiWireProtocol.OPENAI_CHAT_COMPLETIONS,
                     ),
-                    credentialProvider = CustomOpenAiCompatibleCredentialProvider(storage, CustomAuthMode.NONE),
+                    credentialProvider = CustomOpenAiCompatibleCredentialProvider(storage),
                 )
             }.getOrNull()?.let { add(it) }
             if (secretStore != null) {
