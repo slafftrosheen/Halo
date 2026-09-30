@@ -91,3 +91,9 @@ Coordinate taps, shell input, root, Shizuku, Xposed, privileged UiAutomator brid
 automation, CAPTCHA solving, password/banking/authenticator control and background surveillance are
 rejected. Screenshot vision remains observation only. [Contracts and residual uncertainties](../engineering/SEMANTIC-PHONE-OPERATOR.md).
 Source review is not device acceptance; build/tests/device acceptance not run.
+
+## MINING-P6-001 — proactive automation runtime (2026-09-30)
+
+Automation threats: forged external events must never become instructions or capability grants. Only audited descriptor opt-ins run; always-interactive actions remain blocked. Canonical grants bind trigger/conditions/tool ids/arguments/delivery/cooldown; missing/tampered/edited grants block both action dispatch and disruptive delivery. Notification signals contain no body/title/sender and cannot select CRITICAL attention or predicate execution. No credential values, background permission dialogs, external auto-replies, raw event histories or implicit cloud fallback are introduced. Queue restoration rechecks policy and durable delivery claims prevent replay; receipt retention is 30 days.
+
+See [Proactive automation runtime](../engineering/PROACTIVE-AUTOMATION-RUNTIME.md).

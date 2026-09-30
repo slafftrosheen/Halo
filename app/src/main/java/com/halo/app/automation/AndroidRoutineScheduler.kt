@@ -49,7 +49,8 @@ class AndroidRoutineScheduler(private val context: Context, private val reposito
         work.cancelUniqueWork("halo.routine.${routineId.value}").result.get()
         repository.dao.nextRun(routineId.value, null)
     }
-    override suspend fun reconcile() = withContext(Dispatchers.IO) {
+    override suspend fun reconcile() { reconcile(false) }
+    suspend fun reconcile(clockChanged: Boolean) = withContext(Dispatchers.IO) {
         val routines = repository.all()
         val ids = routines.map { it.id.value }.toSet()
         val existing = work.getWorkInfosByTag(TAG).get()
@@ -60,7 +61,8 @@ class AndroidRoutineScheduler(private val context: Context, private val reposito
         routines.forEach { r ->
             // Preserve overdue persisted work and running workers; bootstrap must not replace either.
             val pending = existing.any { !it.state.isFinished && "routine:${r.id.value}" in it.tags && "revision:${r.updatedAt.toEpochMilli()}" in it.tags }
-            if (!r.enabled) cancel(r.id) else if (!pending) schedule(r)
+            val running = existing.any { it.state == WorkInfo.State.RUNNING && "routine:${r.id.value}" in it.tags }
+            if (!r.enabled) cancel(r.id) else if (!pending || (clockChanged && !running && r.trigger is RoutineTrigger.AtTime)) schedule(r)
         }
     }
     companion object { const val TAG = "halo.routines" }
@@ -82,7 +84,7 @@ class RoutineWorker(context: Context, params: WorkerParameters) : CoroutineWorke
         if (!routine.enabled || routine.updatedAt.toEpochMilli() != inputData.getLong("revision", -1)) return Result.success()
         val epoch = inputData.getLong("occurrence", -1)
         if (epoch < 0) return Result.failure()
-        graph.routineExecutor.execute(id, Instant.ofEpochMilli(epoch))
+        graph.routineExecutor.execute(RoutineOccurrence.scheduled(routine, Instant.ofEpochMilli(epoch)))
         val latest = graph.routineRepository.get(id)
         if (latest != null && latest.updatedAt == routine.updatedAt) {
             // Enqueue a successor, without cancelling this running worker via REPLACE.

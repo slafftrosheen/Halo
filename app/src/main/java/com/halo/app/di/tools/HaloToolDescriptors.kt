@@ -237,7 +237,7 @@ object HaloToolDescriptors {
             security = readOnly("halo_notification_digest"),
             keywords = setOf("notification", "digest", "summary"),
             requirements = setOf(ToolRequirement.Capability(CapabilityId("host.notification.read"))),
-        )
+        ).copy(automation = ToolAutomationMetadata(com.halo.runtime.cognition.routine.AutomationPermission.ALLOWED_WITH_ROUTINE_GRANT, true, true))
     }
 
     // ---- workspace / notebook / memory ------------------------------------

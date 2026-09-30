@@ -26,6 +26,8 @@ import kotlinx.coroutines.withContext
 @Composable
 fun NotificationSettingsScreen(viewModel: RoutinesViewModel, onBack: () -> Unit) {
     val context = LocalContext.current
+    val postPermission = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) { }
+
     val graph = ManualDependencyGraph
     val bridge = graph.notificationBridge
     val state by bridge.state.collectAsState()
@@ -69,6 +71,7 @@ fun NotificationSettingsScreen(viewModel: RoutinesViewModel, onBack: () -> Unit)
     LazyColumn(Modifier.fillMaxSize().padding(horizontal = 20.dp), contentPadding = PaddingValues(bottom = 100.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         item {
             TextButton(onClick = onBack) { Text("Back") }
+            AttentionSettingsSection()
             Text("Notifications & Digests", style = MaterialTheme.typography.headlineSmall)
             Text("Notification access: " + when (state) {
                 NotificationListenerState.PermissionMissing -> "Not granted"
@@ -77,6 +80,7 @@ fun NotificationSettingsScreen(viewModel: RoutinesViewModel, onBack: () -> Unit)
                 NotificationListenerState.Disconnected -> "Disconnected"
             })
             TextButton(onClick = bridge::openNotificationAccessSettings) { Text("Open Android notification access") }
+            if(android.os.Build.VERSION.SDK_INT >= 33) TextButton(onClick = { postPermission.launch(android.Manifest.permission.POST_NOTIFICATIONS) }) { Text("Allow Halo notifications") }
             Text("Halo notification delivery permission: ${if (posting) "Allowed" else "Not granted / disabled"}")
             TextButton(onClick = { context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)) }) { Text("Manage Halo notification delivery") }
             Text("Exact reminder access: $exact")

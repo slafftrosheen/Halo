@@ -7,70 +7,141 @@ import com.halo.cognition.language.InteractionId
 import com.halo.runtime.cognition.agent.*
 import com.halo.runtime.cognition.routine.*
 import com.halo.runtime.cognition.tools.*
-import com.halo.sdk.provider.ToolCall
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
-import org.json.JSONObject
 import java.time.Instant
 
 class RoutineExecutor(private val db: AppDatabase, private val repository: RoomRoutineRepository,
     private val coordinator: AgentRunCoordinator, private val store: AgentRunStore,
-    private val registry: ToolRegistry, private val condition: suspend (RoutineCondition) -> Boolean,
-    private val currentlyAllowed: (String) -> Boolean) {
-    private val policy = DefaultToolAutomationPolicy()
+    private val registry: ToolRegistry, val environmentSnapshot: suspend () -> AutomationEnvironmentSnapshot,
+    private val attention: com.halo.runtime.cognition.attention.AttentionController,
+    private val currentlyAllowed: (String) -> Boolean,
+    private val resources: () -> ToolResourceCoordinator) {
+    private val policy = DefaultToolAutomationPolicy(registry::descriptor)
+    fun actionDescriptors() = registry.descriptors().filter { it.automation.permission == AutomationPermission.ALLOWED_WITH_ROUTINE_GRANT && it.automation.argumentsPersistable && it.automation.backgroundCompatible }
+    fun grantSummary(r: Routine): String {
+        validate(r)
+        return routineGrantSummary(r, r.actions.map { action ->
+            val descriptor = requireNotNull(registry.descriptor(action.toolId))
+            val fields = RoutineArguments.decode(action.argumentsJson).entries.joinToString { (key, value) ->
+                "${key.replace('_', ' ')}: ${value.toString().take(80)}"
+            }
+            (descriptor.presentation?.title ?: descriptor.definition.description.take(80)) + if(fields.isEmpty()) "" else " ($fields)"
+        })
+    }
+    fun validateForSave(r: Routine) {
+        validate(r)
+        (r.trigger as? RoutineTrigger.Once)?.let { require(it.at > Instant.now()) { "Choose a future time" } }
+        when(val t = r.trigger) {
+            is RoutineTrigger.AppStarted -> require(AutomationServiceSignals.foreground.availability.value == AutomationSourceStatus.AVAILABLE) { "Set up Phone screen access before saving" }
+            is RoutineTrigger.NotificationFromApp -> require(AutomationServiceSignals.notifications.availability.value == AutomationSourceStatus.AVAILABLE) { "Set up Notification access before saving" }
+            else -> Unit
+        }
+    }
     fun validate(r: Routine) {
+        require(r.id.value.length in 1..80) { "Invalid routine identity" }
         require(r.name.isNotBlank() && r.name.length <= 120) { "Enter a name of at most 120 characters" }
         require(r.actions.size in 1..10) { "A routine requires 1–10 actions" }
         require(r.conditions.size <= 10)
-        require(r.trigger !is RoutineTrigger.AppStarted) { "AppStarted is unsupported" }
-        require(r.conditions.none { it is RoutineCondition.BatteryAbove }) { "Battery target is unsupported" }
+        require(r.minimumIntervalSeconds in 0..86400)
+        r.conditions.filterIsInstance<RoutineCondition.BatteryAbove>().forEach { require(it.percent in 1..100) }
+        when(val t = r.trigger) {
+            is RoutineTrigger.BatteryCrossedAbove -> require(t.percent in 1..100)
+            is RoutineTrigger.BatteryCrossedBelow -> require(t.percent in 1..100)
+            is RoutineTrigger.AppStarted -> require(t.appPackage.matches(Regex("[A-Za-z0-9_]+(\\.[A-Za-z0-9_]+)+")))
+            is RoutineTrigger.NotificationFromApp -> { require(t.packageName.matches(Regex("[A-Za-z0-9_]+(\\.[A-Za-z0-9_]+)+"))); require(t.coalesceSeconds in 0..3600) }
+            else -> Unit
+        }
+        if (r.delivery is RoutineDeliveryPolicy.WearableSpeech) require(r.delivery.deviceId.isNotBlank())
         when (val t = r.trigger) {
             is RoutineTrigger.DeviceConnected -> require(t.deviceId.isNotBlank()) { "Choose a device" }
             is RoutineTrigger.DeviceDisconnected -> require(t.deviceId.isNotBlank()) { "Choose a device" }
             else -> Unit
         }
         r.actions.forEachIndexed { index, action ->
-            require(policy.policyFor(action.toolId) == AutomationPermission.ALLOWED_WITH_ROUTINE_GRANT) { "${action.toolId} cannot run unattended" }
-            require(currentlyAllowed(action.toolId)) { "Tool disabled by current permission policy" }
             val call = call(action, "validate:$index")
             require(registry.validate(call) == null) { "Unknown tool or invalid arguments" }
+            val descriptor = requireNotNull(registry.descriptor(action.toolId)) { "Unknown action" }
+            require(descriptor.automation.backgroundCompatible && descriptor.automation.argumentsPersistable) { "Action cannot run in background with durable arguments" }
+            require(descriptor.security.confirmation != ConfirmationPolicy.ALWAYS) { "Action requires interactive approval" }
+            require(descriptor.presentation?.sensitiveArguments.orEmpty().intersect(RoutineArguments.decode(action.argumentsJson).keys).isEmpty()) { "Sensitive arguments cannot be stored" }
+            require(policy.policyFor(action.toolId) == AutomationPermission.ALLOWED_WITH_ROUTINE_GRANT) { "${action.toolId} cannot run unattended" }
+            require(currentlyAllowed(action.toolId)) { "Tool disabled by current permission policy" }
         }
     }
-    private fun call(action: RoutineAction, id: String): ToolCall {
-        require(action.argumentsJson.length <= 1024) { "Arguments too large" }
-        val json = JSONObject(action.argumentsJson)
-        require(json.keys().asSequence().all { it == "window_minutes" }) { "Unsupported digest argument" }
-        val value = if (json.has("window_minutes")) json.get("window_minutes") else 60
-        require(value is Number && value.toDouble().isFinite() && value.toDouble() % 1.0 == 0.0) { "Window must be whole minutes" }
-        return ToolCall(id, action.toolId, mapOf("window_minutes" to value.toLong().coerceIn(15, 1440)))
-    }
+    private fun call(action: RoutineAction, id: String) = RoutineArguments.call(action, id)
     suspend fun execute(id: RoutineId, occurrence: Instant, manual: Boolean = false): String? {
+        val r = repository.get(id) ?: return null
+        return execute(if(manual) RoutineOccurrence.manual(r, occurrence) else RoutineOccurrence.scheduled(r, occurrence))
+    }
+    suspend fun execute(occurrence: RoutineOccurrence): String? {
+        val id = occurrence.routineId
+        val manual = occurrence.source == RoutineOccurrenceSource.MANUAL
+        if (id.value in occurrence.causalRoutineIds) return "Blocked: causal routine cycle"
         coordinator.prepareOutstandingRunsForRecovery()
-        val identity = "routine:${id.value}:${occurrence.toEpochMilli()}"
+        val identity = occurrence.id
         val runId = AgentRunId(identity)
         // The run and occurrence claim commit together. A crashed/duplicate claim is never resumed:
         // routine runs carry RunRecoveryPolicy.NO_RESUME (RUNTIME-018).
         val routine = db.withTransaction {
             if (repository.dao.run(identity) != null) return@withTransaction null
             val r = repository.get(id) ?: return@withTransaction null
+            if(occurrence.routineRevision != null && r.updatedAt != occurrence.routineRevision) return@withTransaction null
             if (!manual && !r.enabled) return@withTransaction null
+            val cooldown = maxOf(r.minimumIntervalSeconds, (r.trigger as? RoutineTrigger.NotificationFromApp)?.coalesceSeconds ?: 0)
+            if (!manual && occurrence.source == RoutineOccurrenceSource.EVENT && r.lastRunAt?.let { occurrence.occurredAt.isBefore(it.plusSeconds(cooldown)) } == true) {
+                if(r.trigger is RoutineTrigger.NotificationFromApp) repository.dao.coalesceLatest(id.value)
+                return@withTransaction null
+            }
             val now = Instant.now()
+            android.util.Log.i("HALO_ROUTINE_OCCURRENCE_CLAIM", "routine=${id.value.take(8)} occurrence=${identity.takeLast(12)} source=${occurrence.source}")
             store.create(AgentRun(runId, InteractionId(identity), r.name, AgentRunState.CREATED,
                 createdAt = now, updatedAt = now, startedAt = now))
             store.appendStep(AgentStep.RunPrepared(AgentStepId("$identity:prepared"), runId, now,
                 AgentRunKind.ROUTINE, RunRecoveryPolicy.NO_RESUME))
-            check(repository.dao.insertRun(RoutineRunEntity(identity, id.value, runId.value, occurrence.toEpochMilli(), "RUNNING")) != -1L)
-            repository.dao.lastRun(id.value, occurrence.toEpochMilli())
+            check(repository.dao.insertRun(RoutineRunEntity(identity, id.value, runId.value, occurrence.occurredAt.toEpochMilli(), "RUNNING", source = occurrence.source.name, signalId = occurrence.signalId, rootOccurrenceId = occurrence.rootOccurrenceId, causedByOccurrenceId = occurrence.causedByOccurrenceId)) != -1L)
+            repository.dao.lastRun(id.value, occurrence.occurredAt.toEpochMilli())
             r
         } ?: return null
         var completed = 0
+        val limits = AgentRunLimits.forKind(AgentRunKind.ROUTINE)
+        val guard = AgentRunGuard(identity, identity, limits)
         suspend fun finish(state: RoutineRunState, reason: String) {
-            coordinator.recordStep(AgentStep.ResponseProduced(AgentStepId("$identity:response"), runId, Instant.now(), identity, reason))
+            val boundedReason = reason.take(2400)
+            coordinator.recordStep(AgentStep.ResponseProduced(AgentStepId("$identity:response"), runId, Instant.now(), identity, boundedReason))
             if (state == RoutineRunState.COMPLETED) coordinator.complete(runId)
             else if (state == RoutineRunState.SKIPPED || state == RoutineRunState.CANCELLED) coordinator.cancel(runId, reason)
             else coordinator.fail(runId, reason)
             repository.dao.updateRunState(identity, state.name)
+            repository.dao.runEvidence(identity, completed, routine.actions.size, System.currentTimeMillis(), reason.take(240))
+            val currentDefinition = repository.get(id)
+            val validDeliveryGrant = runCatching {
+                routine.grantDigest != null && routine.grantDigest == RoutineArguments.grant(routine) &&
+                    currentDefinition != null && currentDefinition.grantDigest == routine.grantDigest && currentDefinition.updatedAt == routine.updatedAt &&
+                    (manual || currentDefinition.enabled)
+            }.getOrDefault(false)
+            val selectedDelivery = if(validDeliveryGrant && state != RoutineRunState.CANCELLED) routine.delivery else RoutineDeliveryPolicy.SilentActivity
+            val channel = when(val d = selectedDelivery) {
+                RoutineDeliveryPolicy.AndroidNotification -> com.halo.runtime.cognition.attention.DeliveryChannel.AndroidNotification
+                RoutineDeliveryPolicy.InAppWhenForeground -> com.halo.runtime.cognition.attention.DeliveryChannel.InApp
+                is RoutineDeliveryPolicy.WearableSpeech -> com.halo.runtime.cognition.attention.DeliveryChannel.WearableSpeech(d.deviceId)
+                else -> null
+            }
+            val receipt = try { attention.submit(com.halo.runtime.cognition.attention.AttentionRequest(
+                com.halo.runtime.cognition.attention.AttentionRequestId("result:$identity"),
+                com.halo.runtime.cognition.attention.AttentionSource.Routine, InteractionId(identity),
+                importance = com.halo.runtime.cognition.attention.AttentionImportance.NORMAL,
+                deliveryIntent = com.halo.runtime.cognition.attention.DeliveryIntent.Inform(
+                    com.halo.runtime.cognition.attention.UserFacingContent(routine.name.take(120),
+                        RoutineResultSummary(routine.actions.size, completed, state, listOf(boundedReason)).text())),
+                preferredRoutineChannel = channel, deduplicationKey = "result:$identity", expiresAt = Instant.now().plusSeconds(86400))) }
+                catch(cancelled: CancellationException) { throw cancelled }
+                catch(_: Exception) { com.halo.runtime.cognition.attention.DeliveryReceipt(
+                    com.halo.runtime.cognition.attention.AttentionRequestId("result:$identity"), com.halo.runtime.cognition.attention.DeliveryOutcome.FAILED,
+                    reason = "Delivery unavailable") }
+            repository.dao.deliveryEvidence(identity, receipt.outcome.name)
+
         }
         try {
             coordinator.transition(runId, AgentRunState.PLANNING)
@@ -79,11 +150,24 @@ class RoutineExecutor(private val db: AppDatabase, private val repository: RoomR
             try { validate(routine) } catch (e: IllegalArgumentException) {
                 finish(RoutineRunState.BLOCKED, e.message ?: "Routine blocked"); return e.message
             }
+            if (routine.grantDigest == null || routine.grantDigest != RoutineArguments.grant(routine)) {
+                finish(RoutineRunState.BLOCKED, "ROUTINE_GRANT_MISMATCH: open and save this automation"); return "Routine needs approval"
+            }
+            val environment = environmentSnapshot()
+            BackgroundWorkPolicy.blockReason(environment, routine.actions.any { registry.descriptor(it.toolId)?.automation?.requiresModel == true })?.let {
+                finish(RoutineRunState.BLOCKED, it); return it
+            }
             routine.conditions.forEachIndexed { index, c ->
-                val passed = condition(c)
+                val outcome = RoutineConditionEvaluator.evaluate(c, environment)
+                android.util.Log.i("HALO_ROUTINE_CONDITION", "type=${c.javaClass.simpleName} outcome=$outcome")
+                val passed = outcome == ConditionOutcome.PASSED
                 coordinator.recordStep(AgentStep.PlanCreated(AgentStepId("$identity:condition:$index"), runId,
-                    Instant.now(), identity, "Condition ${index + 1}: ${if (passed) "Passed" else "Not met"}"))
-                if (!passed) { finish(RoutineRunState.SKIPPED, "Condition not met"); return "Skipped: condition not met" }
+                    Instant.now(), identity, "Condition ${index + 1} (${c.javaClass.simpleName}): $outcome"))
+                if (!passed) {
+                    val unavailable = outcome == ConditionOutcome.UNAVAILABLE
+                    val reason = "${c.javaClass.simpleName}: ${if(unavailable) "status unavailable" else "condition not met"}"
+                    finish(if(unavailable) RoutineRunState.BLOCKED else RoutineRunState.SKIPPED, reason); return reason
+                }
             }
             coordinator.transition(runId, AgentRunState.EXECUTING)
             val output = mutableListOf<String>()
@@ -93,22 +177,50 @@ class RoutineExecutor(private val db: AppDatabase, private val repository: RoomR
                     finish(RoutineRunState.CANCELLED, "Routine changed or disabled"); return "Cancelled"
                 }
                 validate(current)
+                if(current.grantDigest != RoutineArguments.grant(current)) { finish(RoutineRunState.BLOCKED, "ROUTINE_GRANT_MISMATCH"); return "Routine changed" }
+                val deadline = guard.checkDeadline()
+                val digest = java.security.MessageDigest.getInstance("SHA-256").digest(RoutineArguments.canonical(action.argumentsJson).toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }
+                val guardDecision = if(deadline is RunGuardDecision.Stop) deadline else guard.onToolCallPrepared(action.toolId, digest)
+                if(guardDecision is RunGuardDecision.Stop) {
+                    coordinator.recordStep(guard.toJournalStep(guardDecision))
+                    finish(if(completed > 0) RoutineRunState.PARTIAL else RoutineRunState.BLOCKED, RunGuardMessages.summary(guardDecision))
+                    return "Execution limit reached"
+                }
                 val key = "$identity:action:$index"
                 val call = call(action, key)
                 coordinator.recordStep(AgentStep.ToolRequested(AgentStepId("$key:request"), runId, Instant.now(), key, action.toolId, action.argumentsJson))
-                // RUNTIME-018: persist the execution CLAIM before executing (dedup key unchanged;
-                // a duplicate claim means a previous attempt already claimed this occurrence).
-                if (!coordinator.recordStep(AgentStep.ToolExecutionClaimed(AgentStepId("$key:claim"), runId, Instant.now(),
-                        ToolInvocationId("$key:invocation"), key, action.toolId, key,
-                        com.halo.runtime.cognition.tools.ReplaySafety.NEVER_REPLAY.name))) {
-                    finish(RoutineRunState.INTERRUPTED, "Execution already claimed; completion unknown"); return "Interrupted"
+                val acquisition = resources().prepareAndAcquire(
+                    requireNotNull(registry.descriptor(action.toolId)),
+                    com.halo.sdk.runtime.resource.ResourceHolder(key, identity, identity, "$key:invocation",
+                        com.halo.sdk.runtime.resource.ResourceHolderKind.TOOL),
+                    priority = com.halo.sdk.runtime.resource.ResourcePriority.BACKGROUND)
+                val lease = (acquisition as? ToolResourceAcquisition.Granted)?.lease
+                if (lease == null) {
+                    val reason = if(acquisition is ToolResourceAcquisition.CapabilityMissing) "Required device capability unavailable" else "Required resource busy"
+                    finish(if(completed > 0) RoutineRunState.PARTIAL else RoutineRunState.BLOCKED, reason)
+                    return reason
                 }
-                when (val result = registry.executeAuthorized(ToolAuthorization.Authorized(call))) {
+                val result = try {
+                    // Claim before dispatch; never replay a claimed action after unknown completion.
+                    if (!coordinator.recordStep(AgentStep.ToolExecutionClaimed(AgentStepId("$key:claim"), runId, Instant.now(),
+                            ToolInvocationId("$key:invocation"), key, action.toolId, key, ReplaySafety.NEVER_REPLAY.name))) {
+                        finish(RoutineRunState.INTERRUPTED, "Execution already claimed; completion unknown"); return "Interrupted"
+                    }
+                    withContext(RunToolScope(runId, targetIsLocal = true)) {
+                        registry.executeAuthorized(ToolAuthorization.Authorized(call))
+                    }
+                } finally { lease.release() }
+                android.util.Log.i("HALO_ROUTINE_ACTION", "tool=${action.toolId} index=$index status=${result.javaClass.simpleName}")
+                when (result) {
                     is ToolExecutionResult.Success -> {
+                        coordinator.recordStep(AgentStep.ToolOutcomeRecorded(AgentStepId("$key:outcome"), runId, Instant.now(),
+                            ToolInvocationId("$key:invocation"), key, action.toolId, true, result.output.take(4000),
+                            result.actionTruth, null, result.payloadRef?.id, result.payloadRef?.sha256, result.payloadRef?.byteCount))
                         coordinator.recordStep(AgentStep.ToolCompleted(AgentStepId("$key:result"), runId, Instant.now(), key, action.toolId,
-                            result.output, true, result.actionTruth))
+                            result.output.take(4000), true, result.actionTruth))
                         completed++
-                        output += result.output
+                        output += result.output.take(240)
+                        android.util.Log.i("HALO_ROUTINE_ACTION", "tool=${action.toolId} index=$index status=COMPLETED truth=${result.actionTruth}")
                     }
                     else -> {
                         val unknown = result is ToolExecutionResult.Failed && result.completionUnknown
@@ -147,7 +259,7 @@ class RoutineExecutor(private val db: AppDatabase, private val repository: RoomR
                     }
                 }
             }
-            val text = output.joinToString("\n")
+            val text = RoutineResultSummary(routine.actions.size, completed, RoutineRunState.COMPLETED, output).text()
             finish(RoutineRunState.COMPLETED, text)
             return text
         } catch (e: CancellationException) {
@@ -158,14 +270,16 @@ class RoutineExecutor(private val db: AppDatabase, private val repository: RoomR
                     if (unknown) coordinator.transition(runId, AgentRunState.INTERRUPTED, "Cancelled after dispatch; completion unknown")
                     else coordinator.cancel(runId, "Routine execution cancelled")
                 }
-                repository.dao.updateRunState(identity, if (unknown) "INTERRUPTED" else "CANCELLED")
+                if(run?.state?.isTerminal == true) repository.dao.deliveryEvidence(identity, "COMPLETION_UNKNOWN")
+                else repository.dao.updateRunState(identity, if (unknown) "INTERRUPTED" else "CANCELLED")
             }
             throw e
         }
         catch (e: Exception) {
             val run = store.get(runId)
             if (run != null && !run.state.isTerminal) coordinator.fail(runId, e.message ?: "Routine failed")
-            repository.dao.updateRunState(identity, if (run?.hasUnknownAction == true) "INTERRUPTED" else if (completed > 0) "PARTIAL" else "FAILED")
+            if (run?.state?.isTerminal == true) repository.dao.deliveryEvidence(identity, "COMPLETION_UNKNOWN")
+            else repository.dao.updateRunState(identity, if (run?.hasUnknownAction == true) "INTERRUPTED" else if (completed > 0) "PARTIAL" else "FAILED")
             return e.message ?: "Routine failed"
         }
     }

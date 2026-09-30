@@ -181,7 +181,7 @@ class HaloApplication :
         resourceScope.launch {
             try {
                 automationBootstrap.await()
-                ManualDependencyGraph.routinePresenceObserver.observe()
+                ManualDependencyGraph.automationRuntime.observe()
             } catch (e: CancellationException) { throw e }
               catch (e: Exception) { Log.e("HaloApplication", "Routine presence observer failed", e) }
         }

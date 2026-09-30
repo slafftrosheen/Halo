@@ -21,11 +21,17 @@ class DefaultAttentionDeliveryCoordinator(
     private val queue: AttentionQueue = InMemoryAttentionQueue(),
     private val sinks: List<AttentionSink> = emptyList(),
     private val silentSurface: suspend (AttentionRequest, SilentSurface) -> Boolean = { _, _ -> false },
+    private val receiptStore: AttentionReceiptStore? = null,
+    private val audit: (DeliveryReceipt) -> Unit = {},
 ) : AttentionDeliveryCoordinator {
     private val _receipts = MutableStateFlow<List<DeliveryReceipt>>(emptyList())
     val receipts = _receipts.asStateFlow()
 
     override suspend fun deliver(request: AttentionRequest, decision: AttentionDecision): DeliveryReceipt {
+        receiptStore?.terminal(request.id)?.let { return it }
+        if (decision !is AttentionDecision.Queue && receiptStore?.claim(request, (decision as? AttentionDecision.DeliverNow)?.channel) == false) {
+            return DeliveryReceipt(request.id, DeliveryOutcome.COMPLETION_UNKNOWN, reason = "Already claimed; delivery completion unknown")
+        }
         val now = Instant.now()
         val receipt = if (request.expiresAt?.let { !now.isBefore(it) } == true) {
             queue.remove(request.id)
@@ -36,7 +42,11 @@ class DefaultAttentionDeliveryCoordinator(
                     val sink = sinks.firstOrNull { it.supports(decision.channel) }
                     val result = sink?.deliver(request, decision.channel)
                         ?: AttentionSinkResult(false, "Unsupported delivery channel")
-                    DeliveryReceipt(request.id, if (result.delivered) DeliveryOutcome.DELIVERED else DeliveryOutcome.FAILED,
+                    DeliveryReceipt(request.id, if (!result.delivered) DeliveryOutcome.FAILED else when(decision.channel) {
+                            DeliveryChannel.AndroidNotification -> DeliveryOutcome.DISPATCHED
+                            is DeliveryChannel.WearableSpeech, DeliveryChannel.PhoneSpeech -> DeliveryOutcome.PLAYBACK_COMPLETED
+                            else -> DeliveryOutcome.DELIVERED
+                        },
                         decision.channel, Instant.now().takeIf { result.delivered }, result.reason)
                 }
                 is AttentionDecision.Queue -> {
@@ -54,6 +64,8 @@ class DefaultAttentionDeliveryCoordinator(
             }
         } catch (cancelled: CancellationException) { throw cancelled }
         catch (error: Exception) { DeliveryReceipt(request.id, DeliveryOutcome.FAILED, reason = "Delivery adapter failed") }
+        audit(receipt)
+        receiptStore?.record(request, receipt)
         _receipts.update { (it + receipt).takeLast(200) }
         return receipt
     }

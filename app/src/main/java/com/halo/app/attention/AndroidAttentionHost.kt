@@ -42,7 +42,9 @@ class AndroidAttentionHost(
                 refresh()
             }
         }
-        val filter = IntentFilter(NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED)
+        val filter = IntentFilter(NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED).apply {
+            addAction(Intent.ACTION_SCREEN_ON); addAction(Intent.ACTION_SCREEN_OFF); addAction(Intent.ACTION_USER_PRESENT)
+        }
         if (Build.VERSION.SDK_INT >= 33) context.registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
         else context.registerReceiver(receiver, filter)
     }
@@ -51,6 +53,7 @@ class AndroidAttentionHost(
     fun refresh() { revisions.update { it + 1 } }
     override fun snapshot() = AttentionContext(
         foregroundState = if (foreground) ForegroundState.HALO_FOREGROUND else ForegroundState.OTHER_APP_FOREGROUND,
+        screenInteractive = context.getSystemService(android.os.PowerManager::class.java).isInteractive,
         activeInteraction = interacting || cognitiveActive,
         activeSpeechSession = speechActive,
         doNotDisturb = if (notifications.currentInterruptionFilter == NotificationManager.INTERRUPTION_FILTER_ALL)
@@ -82,6 +85,7 @@ class AndroidAttentionHost(
                 AttentionSinkResult(true, "Accepted by Android NotificationManager")
             }
             DeliveryChannel.PhoneSpeech, is DeliveryChannel.WearableSpeech -> coroutineScope {
+                com.halo.app.di.ManualDependencyGraph.startAndroidSpeaker()
                 val transaction = "attention:${request.id.value}"
                 val target = if (channel is DeliveryChannel.WearableSpeech) SpeechOutputTarget.Device(channel.deviceId, null, "Wearable", AudioDeviceKind.WEARABLE) else SpeechOutputTarget.Phone
                 val result = async(start = CoroutineStart.UNDISPATCHED) {

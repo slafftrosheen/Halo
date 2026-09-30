@@ -36,6 +36,9 @@ import com.halo.app.ui.design.HaloSpacing
 import com.halo.runtime.cognition.routine.Routine
 import com.halo.runtime.cognition.routine.RoutineId
 import com.halo.runtime.cognition.routine.RoutineTrigger
+import com.halo.runtime.cognition.routine.summary
+import com.halo.runtime.cognition.routine.label
+import com.halo.runtime.cognition.routine.availabilityLabel
 import java.time.Instant
 
 @Composable
@@ -53,7 +56,7 @@ fun RoutinesScreen(
     ) {
         Spacer(Modifier.height(16.dp))
         HaloScreenHeader(
-            title = "Routines",
+            title = "Automations",
             subtitle = "Automate local tasks",
             primaryAction = HaloHeaderAction("New", onCreateRoutine)
         )
@@ -120,7 +123,7 @@ private fun RoutineRow(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = "${routine.actions.size} action${if (routine.actions.size != 1) "s" else ""}",
+                    text = "IF: ${routine.conditions.size} conditions · THEN: ${routine.actions.size} actions\nDelivery: ${routine.delivery.label()}\n${routine.trigger.availabilityLabel()}",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -134,10 +137,4 @@ private fun RoutineRow(
     }
 }
 
-private fun triggerSummary(trigger: RoutineTrigger): String = when (trigger) {
-    is RoutineTrigger.AtTime -> "At ${trigger.localTime}"
-    is RoutineTrigger.Once -> "Once at ${trigger.at}"
-    is RoutineTrigger.DeviceConnected -> "When device connects (${trigger.deviceId})"
-    is RoutineTrigger.DeviceDisconnected -> "When device disconnects (${trigger.deviceId})"
-    is RoutineTrigger.AppStarted -> "When ${trigger.appPackage} starts"
-}
+private fun triggerSummary(trigger: RoutineTrigger): String = trigger.summary()

@@ -44,6 +44,7 @@ fun SystemCheckScreen(
     viewModel: SystemCheckViewModel,
     onBack: () -> Unit,
     onOpenPhoneSandbox: (() -> Unit)? = null,
+    onOpenAutomationSandbox: (() -> Unit)? = null,
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val clipboard = LocalClipboardManager.current
@@ -61,6 +62,9 @@ fun SystemCheckScreen(
             navigation = onBack
         )
 
+        TextButton(onClick = { com.halo.app.di.ManualDependencyGraph.routinesViewModel.reconcile() }) { Text("Reconcile automation schedules") }
+        TextButton(onClick = viewModel::runSafeChecks) { Text("Refresh automation source availability") }
+        onOpenAutomationSandbox?.let { open -> TextButton(onClick = open) { Text("Automation sandbox · preview only") } }
         Spacer(Modifier.height(20.dp))
 
         Row(

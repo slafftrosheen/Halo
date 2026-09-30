@@ -168,6 +168,7 @@ fun AppShell(
             ) {
                 composable(Screen.Home.route) {
                     HomeScreen(
+                        onOpenPendingUpdates = { navigateSafely("activity") },
                         viewModel = homeViewModel,
                         onRequestMicrophonePermission = onRequestPermissions
                     )
@@ -362,10 +363,14 @@ fun AppShell(
                     SystemCheckScreen(
                         viewModel = viewModel,
                         onOpenPhoneSandbox = { navigateSafely("phone_control_sandbox") },
+                        onOpenAutomationSandbox = { navigateSafely("automation_sandbox") },
                         onBack = { navController.popBackStack() }
                     )
                 }
 
+                composable("automation_sandbox") {
+                    com.halo.app.ui.screens.settings.AutomationSandboxScreen(onBack = { navController.popBackStack() })
+                }
                 composable("phone_control_sandbox") {
                     com.halo.app.ui.screens.settings.PhoneControlSandboxScreen(onBack = { navController.popBackStack() })
                 }

@@ -8,6 +8,14 @@ import java.time.LocalTime
 value class RoutineId(val value: String)
 
 sealed interface RoutineTrigger {
+    data class BatteryCrossedAbove(val percent: Int) : RoutineTrigger
+    data class BatteryCrossedBelow(val percent: Int) : RoutineTrigger
+    data object ChargingStarted : RoutineTrigger
+    data object ChargingStopped : RoutineTrigger
+    data object NetworkAvailable : RoutineTrigger
+    data object NetworkLost : RoutineTrigger
+    data class NotificationFromApp(val packageName: String, val coalesceSeconds: Long = 300) : RoutineTrigger
+
     data class AtTime(
         val localTime: LocalTime,
         val days: Set<DayOfWeek> = emptySet(),
@@ -53,5 +61,8 @@ data class Routine(
     val createdAt: Instant,
     val updatedAt: Instant,
     val lastRunAt: Instant? = null,
-    val nextRunAt: Instant? = null
+    val nextRunAt: Instant? = null,
+    val delivery: RoutineDeliveryPolicy = RoutineDeliveryPolicy.SilentActivity,
+    val grantDigest: String? = null,
+    val minimumIntervalSeconds: Long = 0
 )

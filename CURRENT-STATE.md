@@ -807,3 +807,9 @@ Home, Activity, semantic approvals, Skills, Assistant, System Check, sandbox and
 are wired. Actual baseline is `12a31947a732790f1e6f8418c5b5aade831aa321`; database version 20 is preserved.
 [Implementation, file inventory and uncertainties](docs/engineering/SEMANTIC-PHONE-OPERATOR.md).
 Build, tests and device acceptance NOT RUN. Native phone capabilities remain preferred.
+
+## MINING-P6-001 — proactive automation runtime (2026-09-30)
+
+P6 adds the portable event fabric, baseline-safe battery/charging/network/device/app/notification triggers, coherent conditions, descriptor automation opt-ins and reviewed canonical grants. Production attention is now Room-backed with claimed delivery receipts, typed initiative and centralized disruption budgets. Database advances to v21; legacy definitions are retained but disabled until reviewed save. Only offline notification digest is opted in. Full-screen Automations, passive System Check, preview-only sandbox, pending Home/Activity and diagnostics are wired. Source baseline was cfc63991; no build/tests/device checks were run.
+
+See [Proactive automation runtime](docs/engineering/PROACTIVE-AUTOMATION-RUNTIME.md).

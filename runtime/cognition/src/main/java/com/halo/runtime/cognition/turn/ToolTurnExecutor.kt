@@ -533,6 +533,14 @@ class DefaultToolTurnExecutor(
             ) {
                 approvalGrants?.grant(grantKey)
             }
+            val grantSummary = try {
+                (toolRegistry.executorFor(toolCall.functionName) as? com.halo.runtime.cognition.tools.ToolGrantPreviewProvider)?.grantSummary(toolCall)
+            } catch(cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+              catch(_: Exception) {
+                toolMessages.add(persistAndPublishToolRejection(runId, interactionId, requestId, toolCall,
+                    ToolRejectionFactory.create(ToolRejectionCode.INVALID_ARGUMENTS, "Automation proposal is invalid or source setup is required")))
+                continue
+            }
             val durableDecision = if (runId != null && !previouslyApproved && !grantSatisfied) {
                 (toolAuthorizer as? PolicyToolAuthorizer)?.authorizeDurable(
                     toolCall = toolCall,
@@ -541,6 +549,7 @@ class DefaultToolTurnExecutor(
                     invocationId = invocationId,
                     argumentsDigest = argumentsDigest,
                     presentationContext = validated.preview,
+                    grantSummary = grantSummary,
                 ) { UUID.randomUUID().toString() }
             } else {
                 null

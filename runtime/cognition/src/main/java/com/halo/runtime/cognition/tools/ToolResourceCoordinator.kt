@@ -64,6 +64,7 @@ class ToolResourceCoordinator(
         availableDevices: List<RuntimeDevice> = emptyList(),
         waitPolicy: ResourceWaitPolicy = ResourceWaitPolicy.FailFast,
         ownerYieldHandler: ResourceYieldHandler? = null,
+        priority: ResourcePriority = ResourcePriority.INTERACTIVE,
     ): ToolResourceAcquisition {
         val devicesToUse = availableDevices.ifEmpty { runtimeDeviceSource?.devices?.value.orEmpty() }
 
@@ -115,7 +116,7 @@ class ToolResourceCoordinator(
             requestId = "tool:${holder.toolInvocationId ?: holder.id}",
             holder = holder,
             claims = allClaims,
-            priority = ResourcePriority.INTERACTIVE,
+            priority = priority,
             waitPolicy = waitPolicy,
             preemption = ResourcePreemptionPolicy.COOPERATIVE,
         )

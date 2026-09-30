@@ -321,3 +321,9 @@ SOURCE WIRED, device acceptance pending:
   it does not capture it or send it to a model.
 
 [Detailed wiring and limitations](../engineering/SEMANTIC-PHONE-OPERATOR.md). Build/tests/device acceptance NOT RUN.
+
+## MINING-P6-001 — proactive automation runtime (2026-09-30)
+
+Automations is a Halo workspace screen with WHEN/IF/THEN, schema-driven simple action fields, installed-app selection, delivery, reachability, setup links and substantive reviewed save. Nested schemas are disabled in the editor. Cards show ZoneId and actual reachability; history shows action counts, outcomes and grouped events. Home pending count opens Activity; Activity projects durable delivery receipts. Notification settings include typed initiative and DND. System Check links preview-only Automation sandbox.
+
+See [Proactive automation runtime](../engineering/PROACTIVE-AUTOMATION-RUNTIME.md).

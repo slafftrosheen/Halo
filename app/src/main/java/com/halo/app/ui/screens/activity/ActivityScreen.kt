@@ -1,5 +1,6 @@
 package com.halo.app.ui.screens.activity
 
+import com.halo.app.di.ManualDependencyGraph
 import com.halo.runtime.cognition.agent.ActionTruth
 
 import android.os.Trace
@@ -54,6 +55,9 @@ import kotlinx.coroutines.flow.stateIn
 
 @Composable
 fun ActivityScreen(viewModel: ActivityViewModel, onOpenObject: (String) -> Unit = {}) {
+    val pendingUpdates by ManualDependencyGraph.attentionQueue.pending.collectAsState()
+    val deliveryReceipts by ManualDependencyGraph.attentionQueue.receipts.collectAsState()
+
     val uiState by viewModel.uiState.collectAsState()
     val filtered = uiState.events
 
@@ -66,7 +70,7 @@ fun ActivityScreen(viewModel: ActivityViewModel, onOpenObject: (String) -> Unit 
         HaloScreenHeader("Activity", "What Halo did")
         Spacer(Modifier.size(24.dp))
 
-        if (filtered.isEmpty()) {
+        if (filtered.isEmpty() && pendingUpdates.isEmpty() && deliveryReceipts.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
                     text = "Nothing here yet.",
@@ -80,6 +84,18 @@ fun ActivityScreen(viewModel: ActivityViewModel, onOpenObject: (String) -> Unit 
                 contentPadding = PaddingValues(bottom = 80.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
+            item {
+                if(pendingUpdates.isNotEmpty()) Text("${pendingUpdates.size} Halo updates waiting")
+                pendingUpdates.take(5).forEach { queued ->
+                    val content = (queued.request.deliveryIntent as? com.halo.runtime.cognition.attention.DeliveryIntent.Inform)?.content
+                    content?.let {
+                        Text(it.title.take(120), style = MaterialTheme.typography.titleSmall)
+                        Text(it.body.take(240), style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+                deliveryReceipts.take(5).forEach { receipt -> Text("Update delivery · ${receipt.outcome.name.lowercase().replace('_', ' ')}") }
+            }
+
                 items(filtered, key = { it.id }) { event ->
                     ActivityListItem(event, onOpenObject)
                 }

@@ -75,8 +75,10 @@ import com.halo.sdk.provider.ProviderStatus
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
-    onRequestMicrophonePermission: () -> Unit
+    onRequestMicrophonePermission: () -> Unit,
+    onOpenPendingUpdates: () -> Unit = {},
 ) {
+    val pendingUpdates by com.halo.app.di.ManualDependencyGraph.attentionQueue.pending.collectAsState()
     val selectedContext by (viewModel.workspace?.workingSet ?: kotlinx.coroutines.flow.flowOf(emptyList<String>())).collectAsState(emptyList())
     val context = androidx.compose.ui.platform.LocalContext.current
     var pendingPhoto by rememberSaveable { mutableStateOf<String?>(null) }
@@ -199,6 +201,8 @@ fun HomeScreen(
             .padding(horizontal = 24.dp, vertical = 18.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        if(pendingUpdates.isNotEmpty()) TextButton(onClick = onOpenPendingUpdates) { Text("${pendingUpdates.size} updates waiting") }
+
         uiState.longTaskStatus?.let { Text(it, style = MaterialTheme.typography.labelSmall) }
         uiState.longTaskProgress?.let { com.halo.app.interaction.StructuredPresentationRenderer(it, Modifier.fillMaxWidth()) }
         Row(

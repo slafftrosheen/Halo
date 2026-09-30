@@ -105,3 +105,9 @@ when later acceptance is authorized. Opening it must not itself capture or discl
     unconfirmed and diagnostics contain no labels, field values, snapshot trees or target tokens.
 
 [Source ledger and all restrictions](../engineering/SEMANTIC-PHONE-OPERATOR.md).
+
+## MINING-P6-001 — proactive automation runtime (2026-09-30)
+
+P6 later acceptance (DO NOT RUN in this batch): validate v20→v21 Room migration; legacy reviewed re-save; time/once and boot/time/timezone reconciliation; no baseline-trigger firing; actual threshold crossings and same-side suppression; connected/disconnected debounce; exact app and notification package matching; permission/service reachability; ingestion-before-trigger; burst grouping; schema rejection/credential exclusion; grant mutation blocking; unknown vs false conditions; occurrence dedup and causal-cycle rejection; central guard; silent/default and explicit delivery; Room queue expiry/restoration/claim crashes; durable disruption budgets; exact wearable transaction with no phone fallback; Home/Activity/System Check and sandbox preview isolation. No build, tests or device acceptance has been performed.
+
+See [Proactive automation runtime](../engineering/PROACTIVE-AUTOMATION-RUNTIME.md).

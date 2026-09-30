@@ -14,6 +14,7 @@ class HaloNotificationListenerService : NotificationListenerService() {
     override fun onListenerConnected() {
         super.onListenerConnected()
         connected = true
+        com.halo.runtime.cognition.routine.AutomationServiceSignals.notifications.availability.value = com.halo.runtime.cognition.routine.AutomationSourceStatus.AVAILABLE
         val active = activeNotifications.orEmpty()
         // MINING-P1-001: capture live RemoteInput reply actions for currently posted notifications.
         // Only the live platform objects are held, never persisted.
@@ -24,6 +25,7 @@ class HaloNotificationListenerService : NotificationListenerService() {
     }
     override fun onListenerDisconnected() {
         connected = false
+        com.halo.runtime.cognition.routine.AutomationServiceSignals.notifications.availability.value = if(bridge.isAccessGranted()) com.halo.runtime.cognition.routine.AutomationSourceStatus.REQUIRES_SERVICE else com.halo.runtime.cognition.routine.AutomationSourceStatus.REQUIRES_PERMISSION
         NotificationReplyRegistry.shared.clear()
         bridge.disconnected()
         super.onListenerDisconnected()
@@ -31,7 +33,16 @@ class HaloNotificationListenerService : NotificationListenerService() {
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         if (connected && sbn != null) {
             NotificationReplyRegistry.shared.replace(sbn.key, sbn.notification.actions?.toList().orEmpty())
-            bridge.posted(incoming(sbn))
+            val automationSignal = if (sbn.packageName != packageName && sbn.notification.flags and Notification.FLAG_GROUP_SUMMARY == 0) {
+                val opaque = java.security.MessageDigest.getInstance("SHA-256")
+                    .digest((sbn.key + ":" + sbn.postTime).toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }
+                com.halo.runtime.cognition.routine.AutomationSignal(opaque,
+                    com.halo.runtime.cognition.routine.AutomationSignalKind.NOTIFICATION_POSTED,
+                    Instant.ofEpochMilli(sbn.postTime), "notifications",
+                    com.halo.runtime.cognition.routine.AutomationTrust.UNTRUSTED_EXTERNAL,
+                    mapOf("package" to com.halo.runtime.cognition.routine.AutomationValue.Text(sbn.packageName)))
+            } else null
+            bridge.posted(incoming(sbn), automationSignal)
             if (sbn.notification.flags and Notification.FLAG_GROUP_SUMMARY == 0) {
                 activeNotifications.orEmpty().filter {
                     it.groupKey == sbn.groupKey && it.notification.flags and Notification.FLAG_GROUP_SUMMARY != 0
@@ -46,6 +57,7 @@ class HaloNotificationListenerService : NotificationListenerService() {
         if (connected) bridge.disconnected()
         NotificationReplyRegistry.shared.clear()
         connected = false
+        com.halo.runtime.cognition.routine.AutomationServiceSignals.notifications.availability.value = if(bridge.isAccessGranted()) com.halo.runtime.cognition.routine.AutomationSourceStatus.REQUIRES_SERVICE else com.halo.runtime.cognition.routine.AutomationSourceStatus.REQUIRES_PERMISSION
         super.onDestroy()
     }
     override fun onNotificationRemoved(sbn: StatusBarNotification?) {

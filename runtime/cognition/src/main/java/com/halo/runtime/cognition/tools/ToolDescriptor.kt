@@ -219,6 +219,7 @@ data class ToolDescriptor(
     val security: ToolSecurityPolicy = ToolSecurityPolicy.READ_ONLY,
     val execution: ToolExecutionPolicy = ToolExecutionPolicy(),
     val presentation: ToolPresentation? = null,
+    val automation: ToolAutomationMetadata = ToolAutomationMetadata(),
 ) {
     val name: String get() = definition.name
 }

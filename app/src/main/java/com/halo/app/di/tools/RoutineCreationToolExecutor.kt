@@ -6,7 +6,10 @@ import com.halo.runtime.cognition.routine.RoutineId
 import com.halo.runtime.cognition.routine.RoutineRepository
 import com.halo.runtime.cognition.routine.RoutineScheduleResult
 import com.halo.runtime.cognition.routine.RoutineScheduler
-import com.halo.runtime.cognition.routine.RoutineTrigger
+import com.halo.runtime.cognition.routine.*
+import com.halo.runtime.cognition.tools.ToolGrantPreviewProvider
+import com.halo.app.automation.RoutineArguments
+import com.halo.app.data.routine.RoutineCodec
 import com.halo.runtime.cognition.tools.ToolExecutionResult
 import com.halo.runtime.cognition.tools.ToolExecutor
 import com.halo.sdk.provider.ToolCall
@@ -38,22 +41,27 @@ class RoutineCreationToolExecutor(
     private val scheduler: RoutineScheduler,
     /** `RoutineExecutor::validate` — the single authority on what may run unattended. */
     private val validate: (Routine) -> Unit,
+    private val grantCopy: (Routine) -> String = { routineGrantSummary(it) },
     private val newId: () -> String = { UUID.randomUUID().toString() },
     private val now: () -> Instant = Instant::now,
-) : ToolExecutor {
+) : ToolExecutor, ToolGrantPreviewProvider {
 
     override fun definitions(): List<ToolDefinition> = listOf(
         ToolDefinition(
             id = "halo_create_routine",
             name = "halo_create_routine",
-            description = "Create a scheduled Halo routine from a time-of-day trigger and existing " +
+            description = "Propose a Halo automation with a tagged trigger, optional conditions, delivery and existing " +
                 "tool actions. Requires the user's approval and only succeeds for actions that are " +
                 "allowed to run unattended.",
             parameters = mapOf(
                 "type" to "object",
                 "properties" to mapOf(
                     "name" to mapOf("type" to "string", "maxLength" to 80),
-                    "time" to mapOf("type" to "string", "description" to "24-hour HH:mm"),
+                    "time" to mapOf("type" to "string", "description" to "Legacy 24-hour HH:mm; use time OR trigger"),
+                    "trigger" to mapOf("type" to "string", "maxLength" to 2048, "description" to "Tagged JSON object. Types: time (time, zone, days), once (at ISO instant), connected/disconnected (device), app_started/notification (package; notification coalesce seconds), battery_above/battery_below (percent), charging_started/charging_stopped/network_available/network_lost."),
+                    "conditions" to mapOf("type" to "string", "maxLength" to 4096, "description" to "JSON array: device (id), provider (id), battery (percent), network (required boolean). No text predicates."),
+                    "delivery" to mapOf("type" to "string", "maxLength" to 512, "description" to "Tagged JSON object: silent (default), notification, in_app, wearable (device)."),
+                    "minimum_interval_seconds" to mapOf("type" to "integer", "minimum" to 0, "maximum" to 86400),
                     "days" to mapOf(
                         "type" to "array",
                         "items" to mapOf(
@@ -70,14 +78,14 @@ class RoutineCreationToolExecutor(
                             "type" to "object",
                             "properties" to mapOf(
                                 "toolId" to mapOf("type" to "string", "maxLength" to 120),
-                                "arguments" to mapOf("type" to "string", "maxLength" to 1024),
+                                "arguments" to mapOf("type" to "string", "maxLength" to 8192),
                             ),
                             "required" to listOf("toolId"),
                             "additionalProperties" to false,
                         ),
                     ),
                 ),
-                "required" to listOf("name", "time", "actions"),
+                "required" to listOf("name", "actions"),
                 "additionalProperties" to false,
             ),
         )
@@ -88,29 +96,11 @@ class RoutineCreationToolExecutor(
         if (toolCall.functionName != "halo_create_routine") {
             return reject("Unsupported routine tool: ${toolCall.functionName}")
         }
-        val allowedKeys = setOf("name", "time", "days", "actions")
-        if (toolCall.arguments.keys.any { it !in allowedKeys }) return reject("Invalid arguments")
-
-        val name = toolCall.arguments["name"]?.toString()?.trim().orEmpty()
-        if (name.isBlank() || name.length > 80) return reject("A routine needs a short name")
-
-        val time = parseTime(toolCall.arguments["time"]?.toString()) ?: return reject("Time must be HH:mm")
-        val days = parseDays(toolCall.arguments["days"]) ?: return reject("Unrecognized day list")
-        val actions = parseActions(toolCall.arguments["actions"]) ?: return reject("Actions must be a list of toolId entries")
-        if (actions.isEmpty()) return reject("A routine needs at least one action")
-        if (actions.size > MAX_ACTIONS) return reject("At most $MAX_ACTIONS actions are supported")
-
-        val timestamp = now()
-        val routine = Routine(
-            id = RoutineId(newId()),
-            name = name,
-            enabled = true,
-            trigger = RoutineTrigger.AtTime(localTime = time, days = days),
-            conditions = emptyList(),
-            actions = actions,
-            createdAt = timestamp,
-            updatedAt = timestamp,
-        )
+        val proposal = try { proposal(toolCall) } catch(e: IllegalArgumentException) { return reject(e.message ?: "Invalid automation") }
+            catch(e: org.json.JSONException) { return reject("Invalid automation definition") }
+            catch(e: IllegalStateException) { return reject(e.message ?: "Invalid automation") }
+        val name = proposal.name
+        val routine = proposal.copy(grantDigest = com.halo.app.automation.RoutineArguments.grant(proposal))
 
         /*
          * MINING-P1-001: policy is checked BEFORE anything is saved. Halo never stores a routine that
@@ -160,6 +150,34 @@ class RoutineCreationToolExecutor(
         }
     }
 
+    private fun proposal(call: ToolCall): Routine {
+        require(call.functionName == "halo_create_routine")
+        require(call.arguments.keys.all { it in setOf("name", "time", "days", "actions", "trigger", "conditions", "delivery", "minimum_interval_seconds") }) { "Invalid arguments" }
+        val name = (call.arguments["name"] as? String)?.trim().orEmpty()
+        require(name.isNotBlank() && name.length <= 80) { "A routine needs a short name" }
+        val codec = RoutineCodec()
+        val triggerRaw = call.arguments["trigger"] as? String
+        require(triggerRaw == null || call.arguments["time"] == null) { "Use time or trigger" }
+        val trigger = if(triggerRaw != null) {
+            RoutineArguments.decode(triggerRaw)
+            codec.decodeTrigger(triggerRaw, 1)
+        } else RoutineTrigger.AtTime(requireNotNull(parseTime(call.arguments["time"] as? String)) { "Time must be HH:mm" },
+            requireNotNull(parseDays(call.arguments["days"])) { "Invalid days" })
+        val conditionsRaw = (call.arguments["conditions"] as? String) ?: "[]"
+        RoutineArguments.decode("{\"conditions\":$conditionsRaw}")
+        val deliveryRaw = (call.arguments["delivery"] as? String) ?: "{\"type\":\"silent\"}"
+        RoutineArguments.decode(deliveryRaw)
+        val timestamp = now()
+        val r = Routine(RoutineId(newId()), name, trigger = trigger, conditions = codec.decodeConditions(conditionsRaw, 1),
+            actions = requireNotNull(parseActions(call.arguments["actions"])) { "Invalid actions" }, createdAt = timestamp, updatedAt = timestamp,
+            delivery = codec.decodeDelivery(deliveryRaw), minimumIntervalSeconds = (call.arguments["minimum_interval_seconds"] as? Number)?.toLong() ?: 0)
+        validate(r)
+        return r
+    }
+    override suspend fun grantSummary(toolCall: ToolCall): String {
+        val r = proposal(toolCall)
+        return grantCopy(r)
+    }
     private fun parseTime(raw: String?): LocalTime? {
         val text = raw?.trim().orEmpty()
         if (text.isEmpty()) return null
@@ -211,8 +229,8 @@ class RoutineCreationToolExecutor(
             if (toolId.isEmpty()) return null
             val arguments = item.optString("arguments").ifBlank { "{}" }
             // Bounded before it ever reaches the registry.
-            if (arguments.length > 1024) return null
-            runCatching { JSONObject(arguments) }.getOrNull() ?: return null
+            if (arguments.toByteArray(Charsets.UTF_8).size > 8192) return null
+            runCatching { RoutineArguments.decode(arguments) }.getOrNull() ?: return null
             RoutineAction(toolId = toolId.take(120), argumentsJson = arguments)
         }
     }

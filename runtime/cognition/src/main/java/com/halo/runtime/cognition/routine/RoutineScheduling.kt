@@ -4,7 +4,9 @@ import java.time.Instant
 import kotlinx.coroutines.flow.Flow
 
 enum class RoutineRunState { SCHEDULED, RUNNING, COMPLETED, FAILED, PARTIAL, SKIPPED, CANCELLED, INTERRUPTED, BLOCKED }
-data class RoutineRunSummary(val id: String, val routineId: RoutineId, val agentRunId: String, val triggerAt: Instant, val state: RoutineRunState)
+data class RoutineRunSummary(val id: String, val routineId: RoutineId, val agentRunId: String, val triggerAt: Instant, val state: RoutineRunState,
+    val source: String = "SCHEDULED", val actionsCompleted: Int = 0, val actionsTotal: Int = 0,
+    val finishedAt: Instant? = null, val reason: String? = null, val deliveryOutcome: String? = null, val coalescedCount: Int = 1)
 interface RoutineRepository {
     fun observeRoutines(): Flow<List<Routine>>
     suspend fun get(id: RoutineId): Routine?
@@ -33,7 +35,6 @@ fun RoutineTrigger.nextOccurrence(after: Instant): Instant? = when (this) {
 }
 enum class AutomationPermission { DISALLOWED, ALLOWED_WITH_ROUTINE_GRANT, REQUIRES_INTERACTIVE_APPROVAL }
 interface ToolAutomationPolicy { fun policyFor(toolId: String): AutomationPermission }
-class DefaultToolAutomationPolicy : ToolAutomationPolicy {
-    override fun policyFor(toolId: String) = if (toolId == "halo_notification_digest")
-        AutomationPermission.ALLOWED_WITH_ROUTINE_GRANT else AutomationPermission.DISALLOWED
+class DefaultToolAutomationPolicy(private val descriptor: (String) -> com.halo.runtime.cognition.tools.ToolDescriptor?) : ToolAutomationPolicy {
+    override fun policyFor(toolId: String) = descriptor(toolId)?.automation?.permission ?: AutomationPermission.DISALLOWED
 }

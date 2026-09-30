@@ -188,6 +188,16 @@ class SystemCheckViewModel(
     private fun refreshChecks() {
         viewModelScope.launch(Dispatchers.IO) {
             val sections = mutableListOf<SystemCheckSection>()
+            com.halo.app.di.ManualDependencyGraph.notificationBridge.refresh()
+            val automation = com.halo.app.di.ManualDependencyGraph.automationRuntime
+            val pendingAttention = com.halo.app.di.ManualDependencyGraph.attentionQueue.pending.value.size
+            val automationRows = mutableListOf(SystemCheckItem("automation_scheduler", "Scheduler and repository", HaloGlyph.HALO, CheckStatus.READY,
+                "WorkManager and durable occurrence claims · Android timing may be delayed"))
+            automation.registry.availability().forEach { (name, status) -> automationRows.add(SystemCheckItem("automation_source_$name", name.replace('_', ' '), HaloGlyph.HALO,
+                if(status in setOf(com.halo.runtime.cognition.routine.AutomationSourceStatus.AVAILABLE, com.halo.runtime.cognition.routine.AutomationSourceStatus.RUNTIME_ONLY)) CheckStatus.READY else CheckStatus.NOT_CONFIGURED, status.name.lowercase().replace('_', ' '))) }
+            automationRows.add(SystemCheckItem("automation_attention", "Durable attention", HaloGlyph.HALO, CheckStatus.READY,
+                "$pendingAttention updates pending · " + com.halo.runtime.cognition.attention.AttentionInitiativeLevel.fromStored(com.halo.app.di.ManualDependencyGraph.storage.getString("attention_initiative")).name.lowercase()))
+            sections.add(SystemCheckSection("automation_runtime", "Automation runtime", automationRows))
             val uiMetrics = com.halo.runtime.cognition.ui.UiOperatorDiagnostics.metrics.value
             sections.add(SystemCheckSection("phone_operator", "Phone operator", listOf(
                 SystemCheckItem("phone_operator_accessibility", "Accessibility service", HaloGlyph.SEE,

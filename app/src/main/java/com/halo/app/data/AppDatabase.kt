@@ -87,12 +87,15 @@ import com.halo.app.data.notebook.NotebookDao
         com.halo.app.data.mcp.McpServerEntity::class,
         com.halo.app.data.mcp.McpToolEntity::class,
         com.halo.app.data.payload.PayloadBodyEntity::class,
-        com.halo.app.data.payload.PayloadReferenceEntity::class
+        com.halo.app.data.payload.PayloadReferenceEntity::class,
+        com.halo.app.data.attention.AttentionPendingEntity::class,
+        com.halo.app.data.attention.AttentionReceiptEntity::class
     ],
-    version = 20,
+    version = 21,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
+    abstract fun attentionDao(): com.halo.app.data.attention.AttentionDao
     abstract fun payloadDao(): com.halo.app.data.payload.PayloadDao
     abstract fun notificationDao(): com.halo.app.data.notification.NotificationDao
     abstract fun routineDao(): com.halo.app.data.routine.RoutineDao
@@ -879,9 +882,28 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_20_21 = object : Migration(20, 21) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE routines ADD COLUMN deliveryJson TEXT NOT NULL DEFAULT '{\"type\":\"silent\"}'")
+                db.execSQL("ALTER TABLE routines ADD COLUMN grantDigest TEXT")
+                db.execSQL("ALTER TABLE routines ADD COLUMN minimumIntervalSeconds INTEGER NOT NULL DEFAULT 0")
+                // Existing definitions remain silent and require a reviewed save to mint a grant.
+                db.execSQL("UPDATE routines SET enabled = 0")
+                db.execSQL("ALTER TABLE routine_runs ADD COLUMN source TEXT NOT NULL DEFAULT 'SCHEDULED'")
+                for(c in listOf("signalId", "rootOccurrenceId", "causedByOccurrenceId", "reason", "deliveryOutcome")) db.execSQL("ALTER TABLE routine_runs ADD COLUMN $c TEXT")
+                db.execSQL("ALTER TABLE routine_runs ADD COLUMN actionsCompleted INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE routine_runs ADD COLUMN actionsTotal INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE routine_runs ADD COLUMN finishedAt INTEGER")
+                db.execSQL("ALTER TABLE routine_runs ADD COLUMN coalescedCount INTEGER NOT NULL DEFAULT 1")
+                db.execSQL("CREATE TABLE IF NOT EXISTS attention_pending (id TEXT NOT NULL PRIMARY KEY, dedupKey TEXT, json TEXT NOT NULL, createdAt INTEGER NOT NULL)")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_attention_pending_dedupKey ON attention_pending(dedupKey)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS attention_receipts (id TEXT NOT NULL PRIMARY KEY, outcome TEXT NOT NULL, channel TEXT, reason TEXT, at INTEGER NOT NULL, dedupKey TEXT, disruptive INTEGER NOT NULL)")
+            }
+        }
+
         fun create(context: Context): AppDatabase =
             Room.databaseBuilder(context, AppDatabase::class.java, "halo.db")
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21)
                 .build()
     }
 }

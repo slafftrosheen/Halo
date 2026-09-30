@@ -34,9 +34,13 @@ class HaloAccessibilityService : AccessibilityService() {
         super.onServiceConnected()
         instance = this
         UiOperatorDiagnostics.accessibilityConnected.value = true
+        com.halo.runtime.cognition.routine.AutomationServiceSignals.foreground.availability.value = com.halo.runtime.cognition.routine.AutomationSourceStatus.AVAILABLE
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+        if (event?.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+            event.packageName?.toString()?.let(com.halo.runtime.cognition.routine.AutomationServiceSignals::foregrounded)
+        }
         // Track change timing only. The semantic tree is still captured on demand.
         uiRevision.incrementAndGet()
         lastUiChangeElapsedMs = SystemClock.elapsedRealtime()
@@ -47,6 +51,7 @@ class HaloAccessibilityService : AccessibilityService() {
     override fun onDestroy() {
         invalidateSnapshot()
         instance = null
+        com.halo.runtime.cognition.routine.AutomationServiceSignals.foregroundDisconnected()
         UiOperatorDiagnostics.accessibilityConnected.value = false
         super.onDestroy()
     }

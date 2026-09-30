@@ -84,3 +84,9 @@ wait. Native contact/reply/dial/share and other phone tools remain preferred. Ty
 it are separate operations. A dispatched action may remain unconfirmed; that distinction appears in
 responses/TTS and Activity. [Full source contract](../engineering/SEMANTIC-PHONE-OPERATOR.md).
 These features are source implemented; builds/tests/device acceptance have not been run.
+
+## MINING-P6-001 — proactive automation runtime (2026-09-30)
+
+Automations now support app foreground, exact-app notification, battery crossing, charging and validated network transitions as well as device/time/once rules. BatteryAbove works with unknown distinct from false. Only descriptor-opted-in background/persistable actions can run; initial catalog is offline notification digest. Per-definition delivery defaults silent. Event grouping, cooldown, grant digest and durable attention receipts are implemented. Runtime-only reachability is explicit.
+
+See [Proactive automation runtime](../engineering/PROACTIVE-AUTOMATION-RUNTIME.md).

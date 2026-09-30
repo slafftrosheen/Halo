@@ -168,3 +168,9 @@ accessibility events, Compose rows/hints, approval expiry, launcher/navigation e
 boundaries, as recorded in [the ledger](../engineering/SEMANTIC-PHONE-OPERATOR.md).
 Coordinate/privileged control, permission/CAPTCHA/payment/password automation and surveillance are
 not promoted to roadmap implementation by this batch.
+
+## MINING-P6-001 — proactive automation runtime (2026-09-30)
+
+P6 source implementation lands event fabric and durable attention through existing registered tools. Remaining acceptance is Android/Room/device validation, not assumed success. Future audited safe tools may opt in individually. Deferred: location/SSID/calendar/weather polling, unrestricted prompt jobs, automatic replies/payments/account security, routine DAG/cascades, permanent agent service, behavioral inference, general app/event history and offline transition backfill. Generated v21 Room schema awaits an authorized build.
+
+See [Proactive automation runtime](../engineering/PROACTIVE-AUTOMATION-RUNTIME.md).

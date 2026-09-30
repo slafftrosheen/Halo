@@ -86,6 +86,7 @@ class PolicyToolAuthorizer(
         invocationId: com.halo.runtime.cognition.agent.ToolInvocationId,
         argumentsDigest: String,
         presentationContext: com.halo.runtime.cognition.ui.UiTargetPreview? = null,
+        grantSummary: String? = null,
         newRequestId: () -> String,
     ): AuthorizationDecision {
         val toolName = toolCall.functionName
@@ -120,7 +121,7 @@ class PolicyToolAuthorizer(
             invocationId = invocationId,
             toolId = ToolId(toolName),
             action = presentationContext?.let { "${it.action} ${it.targetLabel.orEmpty()}".trim() } ?: buildApprovalAction(toolCall),
-            detail = presentationContext?.description ?: buildApprovalDetail(toolCall),
+            detail = grantSummary?.take(2400) ?: presentationContext?.description ?: buildApprovalDetail(toolCall),
             risk = risk.name,
             argumentsDigest = argumentsDigest,
         )

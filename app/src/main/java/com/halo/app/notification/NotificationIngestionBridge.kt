@@ -39,7 +39,10 @@ class NotificationIngestionBridge(private val context: Context,
     private fun enqueue(event: suspend () -> Unit) {
         if (!events.trySend(event).isSuccess) android.util.Log.w("NotificationBridge", "Ingestion queue full; event dropped")
     }
-    fun posted(item: IncomingNotification) = enqueue { repository.ingest(item) }
+    fun posted(item: IncomingNotification, automationSignal: com.halo.runtime.cognition.routine.AutomationSignal? = null) = enqueue {
+        repository.ingest(item)
+        automationSignal?.let { com.halo.runtime.cognition.routine.AutomationServiceSignals.notifications.emit(it) }
+    }
     fun removed(key: String) = enqueue { repository.markRemoved(key, Instant.now()) }
     fun connected(items: List<IncomingNotification>) {
         mutableState.value = NotificationListenerState.Connected
@@ -52,6 +55,11 @@ class NotificationIngestionBridge(private val context: Context,
     fun refresh() {
         if (!isAccessGranted()) mutableState.value = NotificationListenerState.PermissionMissing
         else if (mutableState.value == NotificationListenerState.PermissionMissing) mutableState.value = NotificationListenerState.Connecting
+        com.halo.runtime.cognition.routine.AutomationServiceSignals.notifications.availability.value = when(mutableState.value) {
+            NotificationListenerState.Connected -> com.halo.runtime.cognition.routine.AutomationSourceStatus.AVAILABLE
+            NotificationListenerState.PermissionMissing -> com.halo.runtime.cognition.routine.AutomationSourceStatus.REQUIRES_PERMISSION
+            else -> com.halo.runtime.cognition.routine.AutomationSourceStatus.REQUIRES_SERVICE
+        }
     }
     override fun isAccessGranted(): Boolean {
         val component = ComponentName(context, HaloNotificationListenerService::class.java)

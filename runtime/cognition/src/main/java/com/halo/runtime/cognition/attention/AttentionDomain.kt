@@ -92,6 +92,7 @@ data class AttentionRequest(
     val explanation: String = "",
     val createdAt: Instant = Instant.now(),
     val preferredDigestChannel: DeliveryChannel? = null,
+    val preferredRoutineChannel: DeliveryChannel? = null,
 )
 
 sealed interface DeliveryChannel {
@@ -150,6 +151,9 @@ sealed interface AttentionDecision {
 
 enum class DeliveryOutcome {
     DELIVERED,
+    DISPATCHED,
+    PLAYBACK_COMPLETED,
+    COMPLETION_UNKNOWN,
     QUEUED,
     SURFACED_SILENTLY,
     SUPPRESSED,
@@ -168,5 +172,5 @@ data class DeliveryReceipt(
 data class AttentionPreferences(
     val quietByDefault: Boolean = true,
     val respectSystemDnd: Boolean = true,
-    val initiativeLevel: String = "Quiet" // "Quiet", "Balanced", "Active"
+    val initiativeLevel: AttentionInitiativeLevel = AttentionInitiativeLevel.QUIET
 )

@@ -274,15 +274,25 @@ object ManualDependencyGraph {
         refreshCustomSkills()
     }
     val attentionContextProvider by lazy { com.halo.app.attention.AndroidAttentionHost(applicationContext, eventBus, infra.scope) }
-    val attentionPolicyEngine by lazy { com.halo.runtime.cognition.attention.DefaultAttentionPolicyEngine() }
-    val attentionQueue by lazy { com.halo.runtime.cognition.attention.InMemoryAttentionQueue() }
+    val attentionPolicyEngine by lazy { com.halo.runtime.cognition.attention.AuditedAttentionPolicyEngine(
+        com.halo.runtime.cognition.attention.BudgetedAttentionPolicyEngine(com.halo.runtime.cognition.attention.DefaultAttentionPolicyEngine(), attentionQueue::dispatches)) { request, preferences, decision ->
+            android.util.Log.i("HALO_ATTENTION_DECISION", "request=${request.id.value.takeLast(12)} source=${request.source.javaClass.simpleName} importance=${request.importance} initiative=${preferences.initiativeLevel} decision=$decision")
+        } }
+    val attentionQueue by lazy { com.halo.app.data.attention.RoomAttentionQueue(appDatabase, infra.scope) }
     val attentionDeliveryCoordinator by lazy {
         com.halo.runtime.cognition.attention.DefaultAttentionDeliveryCoordinator(attentionQueue,
-            listOf(attentionContextProvider), attentionContextProvider::surfaceSilently)
+            listOf(attentionContextProvider), attentionContextProvider::surfaceSilently, attentionQueue,
+            audit = { receipt -> android.util.Log.i("HALO_ATTENTION_DELIVERY", "request=${receipt.requestId.value.takeLast(12)} outcome=${receipt.outcome} channel=${receipt.channel}") })
     }
     val attentionController by lazy {
+        val level = com.halo.runtime.cognition.attention.AttentionInitiativeLevel.fromStored(storage.getString("attention_initiative"))
+        storage.putString("attention_initiative", level.name)
         com.halo.runtime.cognition.attention.AttentionController(attentionContextProvider,
-            attentionPolicyEngine, attentionQueue, attentionDeliveryCoordinator, infra.scope)
+            attentionPolicyEngine, attentionQueue, attentionDeliveryCoordinator, infra.scope, preferences = {
+                val level = com.halo.runtime.cognition.attention.AttentionInitiativeLevel.fromStored(storage.getString("attention_initiative"))
+                com.halo.runtime.cognition.attention.AttentionPreferences(quietByDefault = level == com.halo.runtime.cognition.attention.AttentionInitiativeLevel.QUIET,
+                    respectSystemDnd = storage.getBoolean("attention_respect_dnd", true), initiativeLevel = level)
+            })
     }
     val agentRunStore by lazy { RoomAgentRunRepository(appDatabase) }
     val agentRunRepository get() = agentRunStore
@@ -394,29 +404,39 @@ object ManualDependencyGraph {
         }
     }
     // Same executor and registry contract, without initializing unrelated workspace/device tools in a worker.
-    val automationToolRegistry by lazy { com.halo.runtime.cognition.tools.ToolRegistry(listOf(notificationDigestTool)) }
+    val automationToolRegistry by lazy { com.halo.runtime.cognition.tools.ToolRegistry(listOf(notificationDigestTool), notificationDigestTool.definitions().mapNotNull(com.halo.app.di.tools.HaloToolDescriptors::notificationDigest), payloadStore = contentPayloadStore) }
     val routineRepository by lazy { com.halo.app.data.routine.RoomRoutineRepository(appDatabase.routineDao()) }
     val routineExecutor by lazy { com.halo.app.automation.RoutineExecutor(appDatabase, routineRepository,
-        agentRunCoordinator, agentRunStore, automationToolRegistry, condition = { condition ->
-            when (condition) {
-                is com.halo.runtime.cognition.routine.RoutineCondition.DeviceAvailable -> devicePresenceRepository.getPresence(condition.deviceId)?.state in
-                    setOf(com.halo.runtime.cognition.device.DevicePresenceState.CONNECTED, com.halo.runtime.cognition.device.DevicePresenceState.READY)
-                is com.halo.runtime.cognition.routine.RoutineCondition.NetworkAvailable -> {
-                    val manager = applicationContext.getSystemService(android.net.ConnectivityManager::class.java)
-                    val available = manager.getNetworkCapabilities(manager.activeNetwork)?.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED) == true
-                    available == condition.required
-                }
-                is com.halo.runtime.cognition.routine.RoutineCondition.ProviderAvailable -> aiProviderRouter.getAllProviders()
-                    .firstOrNull { it.id == condition.providerId }?.status?.value?.state == com.halo.sdk.provider.ProviderStatus.State.READY
-                else -> false
-            }
-        }, currentlyAllowed = { tool ->
+        agentRunCoordinator, agentRunStore, automationToolRegistry, environmentSnapshot = {
+            val battery = applicationContext.registerReceiver(null, android.content.IntentFilter(android.content.Intent.ACTION_BATTERY_CHANGED))
+            val level = battery?.getIntExtra(android.os.BatteryManager.EXTRA_LEVEL, -1) ?: -1
+            val scale = battery?.getIntExtra(android.os.BatteryManager.EXTRA_SCALE, -1) ?: -1
+            val status = battery?.getIntExtra(android.os.BatteryManager.EXTRA_STATUS, -1) ?: -1
+            val manager = applicationContext.getSystemService(android.net.ConnectivityManager::class.java)
+            val power = applicationContext.getSystemService(android.os.PowerManager::class.java)
+            com.halo.runtime.cognition.routine.AutomationEnvironmentSnapshot(java.time.Instant.now(),
+                batteryPercent = if(level >= 0 && scale > 0) (level * 100 / scale).coerceIn(0, 100) else null,
+                charging = if(status < 0) null else status in setOf(android.os.BatteryManager.BATTERY_STATUS_CHARGING, android.os.BatteryManager.BATTERY_STATUS_FULL),
+                networkAvailable = manager.getNetworkCapabilities(manager.activeNetwork)?.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED) == true,
+                foregroundPackage = com.halo.runtime.cognition.routine.AutomationServiceSignals.foregroundPackage,
+                availableDevices = devicePresenceRepository.presenceMap.value.filterValues { it.state in setOf(com.halo.runtime.cognition.device.DevicePresenceState.CONNECTED, com.halo.runtime.cognition.device.DevicePresenceState.READY) }.keys,
+                availableProviders = aiProviderRouter.getAllProviders().filter { it.status.value.state == com.halo.sdk.provider.ProviderStatus.State.READY }.map { it.id }.toSet(),
+                userMode = attentionContextProvider.snapshot().userMode, screenInteractive = power.isInteractive,
+                thermalLimited = android.os.Build.VERSION.SDK_INT >= 29 && power.currentThermalStatus >= android.os.PowerManager.THERMAL_STATUS_SEVERE)
+        }, attention = attentionController, currentlyAllowed = { tool ->
             tool == com.halo.app.notification.NotificationDigestTool.ID &&
                 storage.getBoolean("skill_enabled_halo.notifications", true) &&
                 (storage.getString("skill_approval_halo.notifications") ?: "ALWAYS_ALLOW") == "ALWAYS_ALLOW"
-        }) }
+        }, resources = { toolResourceCoordinator }) }
     val routineScheduler by lazy { com.halo.app.automation.AndroidRoutineScheduler(applicationContext, routineRepository, routineExecutor::validate) }
-    val routinePresenceObserver by lazy { com.halo.app.automation.RoutinePresenceObserver(devicePresenceRepository, routineRepository, routineExecutor) }
+    val automationRuntime by lazy {
+        com.halo.app.automation.AutomationRuntime(com.halo.runtime.cognition.routine.AutomationSignalRegistry(mapOf(
+            "device" to com.halo.app.automation.DeviceAutomationSignalSource(devicePresenceRepository),
+            "battery_charging" to com.halo.app.automation.AndroidBatterySignalSource(applicationContext),
+            "network" to com.halo.app.automation.AndroidNetworkSignalSource(applicationContext),
+            "foreground" to com.halo.runtime.cognition.routine.AutomationServiceSignals.foreground,
+            "notifications" to com.halo.runtime.cognition.routine.AutomationServiceSignals.notifications)), routineRepository, routineExecutor)
+    }
     val routinesViewModel by lazy { com.halo.app.ui.screens.settings.RoutinesViewModel(routineRepository, routineScheduler, routineExecutor) }
     /** RUNTIME-017 / RUNTIME-020.1: portable semantic capability catalogue. */
     val capabilityCatalogue by lazy {
@@ -516,7 +536,8 @@ object ManualDependencyGraph {
         val routineCreationExecutor = com.halo.app.di.tools.RoutineCreationToolExecutor(
             repository = routineRepository,
             scheduler = routineScheduler,
-            validate = { routine -> routineExecutor.validate(routine) },
+            validate = { routine -> routineExecutor.validateForSave(routine) },
+            grantCopy = { routine -> routineExecutor.grantSummary(routine) },
         )
         val procedureExecutor = com.halo.app.di.tools.ProcedureToolExecutor(
             store = learnedProcedureStore,

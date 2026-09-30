@@ -30,7 +30,10 @@ class AttentionController(
     init {
         scope.launch { contextProvider.changes.collect { release() } }
         scope.launch {
+            var restoredIds: Set<String> = emptySet()
             queue.pending.collect { pending ->
+                val ids = pending.map { it.request.id.value }.toSet()
+                if(ids != restoredIds) { restoredIds = ids; scope.launch { release() } }
                 expiryJob?.cancel()
                 pending.mapNotNull { it.expiresAt }.minOrNull()?.let { next ->
                     expiryJob = scope.launch {

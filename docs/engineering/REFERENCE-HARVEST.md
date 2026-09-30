@@ -313,3 +313,9 @@ claiming dispatch proves delivery. Android-Agent harness-improve AgentRunner inf
 approval and bounded failure/guard evidence. No reference code, alternate journal, agent loop, approval
 store or privileged input runtime was copied. Halo's existing P1 guard/oscillation detector and AgentStep
 journal remain owners. Source wired; build/tests/device acceptance not run.
+
+## MINING-P6-001 — proactive automation runtime (2026-09-30)
+
+P6 reviewed Brownie AgentSchedulerTool, ScheduleCalculator, BrownieService, BrownieNotificationListener and MessagingTool, plus kotlin-adk EventActions through primary raw sources. Harvested event-driven scheduling, typed event/action separation, background lifecycle and origin-only notification mechanics. Rejected unrestricted prompts, permanent sticky agent service as correctness requirement, untrusted notification instructions, unattended message side effects and silent capability escalation. Exact references, differences and source inventory are in the P6 engineering ledger.
+
+See [Proactive automation runtime](PROACTIVE-AUTOMATION-RUNTIME.md).

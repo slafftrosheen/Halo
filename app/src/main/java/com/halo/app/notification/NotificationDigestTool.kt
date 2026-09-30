@@ -35,7 +35,7 @@ class NotificationDigestTool(private val repository: NotificationRepository,
     private val attention: AttentionController, private val accessGranted: () -> Boolean,
     private val delivery: () -> DeliveryChannel? = { null }) : ToolExecutor {
     override fun definitions() = listOf(ToolDefinition(ID, ID, "Build a private, offline notification digest",
-        mapOf("type" to "object", "properties" to mapOf("window_minutes" to mapOf("type" to "integer", "minimum" to 15, "maximum" to 1440)))))
+        mapOf("type" to "object", "properties" to mapOf("window_minutes" to mapOf("type" to "integer", "minimum" to 15, "maximum" to 1440)), "additionalProperties" to false)))
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
         if (!accessGranted()) return ToolExecutionResult.Rejected(toolCall.id, ID, "Notification listener access required; open Notifications & Digests settings")
         val minutes = (toolCall.arguments["window_minutes"] as? Number)?.toLong()?.coerceIn(15, 1440) ?: 60L
@@ -43,6 +43,7 @@ class NotificationDigestTool(private val repository: NotificationRepository,
         val from = now.minusSeconds(minutes * 60)
         val digest = DeterministicNotificationDigestSummarizer().summarize(NotificationDigestInput(toolCall.id,
             from, now, repository.recentForDigest(from, 500)))
+        if (toolCall.id.startsWith("routine:")) return ToolExecutionResult.Success(toolCall.id, ID, digest.text())
         val interaction = toolCall.id.substringBefore(":action:")
         val receipt = attention.submit(AttentionRequest(AttentionRequestId("digest:${toolCall.id}"),
             AttentionSource.NotificationDigest, InteractionId(interaction), importance = AttentionImportance.BACKGROUND,
