@@ -304,3 +304,20 @@ Model Browser separates supported input chips from observed Vision qualification
 | Intelligence | Delegation and context compaction controls; existing FAST/REASONING roles | Source reviewed |
 
 [Implementation ledger](../engineering/LONG-HORIZON-AGENT-MINING.md). No UI screenshot, build, test or device acceptance was performed in this batch.
+
+## MINING-P5-001 — phone operator surfaces (2026-09-30)
+
+SOURCE WIRED, device acceptance pending:
+
+- Skills → Phone screen control: passive service, reading/action policy, sensitive-app enforcement,
+  last observed app/inspectability and transaction; supported policies have human-readable labels.
+- Existing full/compact InteractionSurface approvals receive app/action/target/role/region and field
+  character count, never raw JSON, opaque target tokens or entered values.
+- Home reuses P2 checklist/progress; Activity collapses semantic transactions and expands typed evidence.
+- Android Assistant settings shows passive operator status; the live compact Assistant uses the shared
+  confirmation renderer and semantic preflight payload.
+- System Check adds passive operator rows/metrics plus explicit Read/Preview and sandbox navigation.
+- PhoneControlSandboxScreen owns inert counter/switch/input/50-row list/dialog/details controls; opening
+  it does not capture it or send it to a model.
+
+[Detailed wiring and limitations](../engineering/SEMANTIC-PHONE-OPERATOR.md). Build/tests/device acceptance NOT RUN.

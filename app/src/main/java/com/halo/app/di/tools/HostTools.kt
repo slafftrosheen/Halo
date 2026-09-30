@@ -27,7 +27,9 @@ class HostTools(
     private val context: Context,
     private val isForeground: () -> Boolean = { true },
     private val additionalExecutors: List<ToolExecutor> = emptyList(),
-) : ToolExecutor {
+) : ToolExecutor, com.halo.runtime.cognition.tools.ToolPreflightProvider {
+    override suspend fun preflight(toolCall: ToolCall) = registry.preflight(toolCall)
+    override fun restoreTransientCall(toolCall: ToolCall) = registry.restoreTransientCall(toolCall)
     private val registry = HostToolRegistry(
         buildList {
             add(ApplicationTools(context, isForeground))

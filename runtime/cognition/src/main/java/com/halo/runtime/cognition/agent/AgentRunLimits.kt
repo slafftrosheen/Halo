@@ -33,6 +33,9 @@ data class AgentRunLimits(
     val generationMinWindowChars: Int = 24,
     /** How many times that window must repeat before the run is considered stuck. */
     val generationMinRepeats: Int = 3,
+    val maxUiActionsPerRun: Int = 12,
+    val maxScrollsPerRun: Int = 6,
+    val maxRepeatedSameUiAction: Int = 3,
 ) {
     init {
         require(maxWallClockMs > 0) { "A run must have a positive wall-clock budget" }
@@ -41,6 +44,7 @@ data class AgentRunLimits(
         require(oscillationMaxPeriod in 1..8) { "Oscillation period must stay small and bounded" }
         require(oscillationMinRepeats >= 1) { "Oscillation requires at least one repetition" }
         require(generationMinRepeats >= 2) { "A single repeated phrase is not a loop" }
+        require(maxUiActionsPerRun > 0 && maxScrollsPerRun > 0 && maxRepeatedSameUiAction > 0)
     }
 
     companion object {

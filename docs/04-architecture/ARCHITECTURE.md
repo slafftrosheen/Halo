@@ -321,3 +321,14 @@ CognitiveContextPlanner checks every provider boundary, including reconstructed 
 DelegatedTaskCoordinator is admission/lifecycle orchestration over AgentRunStore, the normal router, P1 guards and CognitiveTurnExecutor. Child parent/root links, role, depth, approved references and target pins persist in Room. No second runner, session database, planning truth or Working Set exists. Parent recovery owns unfinished children; terminal children return recorded results. The generic root recovery path cannot publish child responses into the conversation.
 
 Room migration 19→20 adds payload bodies/references and child fields/indices. Portable BrainSnapshot retains child relationships and saved Note provenance, excludes payload bodies/metadata, and preserves existing conservative import normalization. Details: [mining ledger](../engineering/LONG-HORIZON-AGENT-MINING.md).
+
+## MINING-P5-001 — semantic screen transactions (2026-09-30)
+
+The existing Android accessibility adapter emits exact-generation observations. Portable UiActionIntent,
+UiTargetPreview, UiActionReceipt and UiWorkflowState live in runtime/cognition; Android traversal stays
+in host-android. Optional ToolPreflightProvider is forwarded by both host aggregators and runs after
+schema/exposure validation but before durable authorization. Dispatch revalidates after approval and
+journaling. UiTransactionRecorded reuses AgentStep JSON (step schema 7); no new Room table or loop
+detector exists. BoundedUiSearchCoordinator calls the existing guarded scroll contracts and never
+replays partial workflows. [Protocol and inventory](../engineering/SEMANTIC-PHONE-OPERATOR.md).
+Source wiring only; build/tests/device acceptance not run.

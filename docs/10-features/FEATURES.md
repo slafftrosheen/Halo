@@ -75,3 +75,12 @@ Source-wired tools: `halo_delegate_task` (five fixed roles, explicit selected re
 Children are read-only, depth one, bounded by the central DELEGATED P1 limits, pinned to normal FAST/REASONING routing, and limited to four children per root, two globally active slots, one local slot. Research topics run sequentially by default. Side-effect/approval requests become parent input rather than inherited grants.
 
 Explicit Save to Notebook stores final synthesis and bounded source evidence/provenance. Saving does not promote cognitive memory. Working Set, context inspector, Home progress, Activity children, Intelligence toggles and System Check diagnostics are wired to existing state. All claims here concern source implementation; build/tests/device acceptance remain unrun. [Details](../engineering/LONG-HORIZON-AGENT-MINING.md).
+
+## MINING-P5-001 — phone screen control (2026-09-30)
+
+Screen fallback gains semantic target previews, exact-revision rejection, deterministic set-checked,
+action-specific postconditions, filtered ranked find, up-to-three-scroll search and bounded read-only
+wait. Native contact/reply/dial/share and other phone tools remain preferred. Typing a draft and sending
+it are separate operations. A dispatched action may remain unconfirmed; that distinction appears in
+responses/TTS and Activity. [Full source contract](../engineering/SEMANTIC-PHONE-OPERATOR.md).
+These features are source implemented; builds/tests/device acceptance have not been run.

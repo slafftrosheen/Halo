@@ -188,6 +188,23 @@ class SystemCheckViewModel(
     private fun refreshChecks() {
         viewModelScope.launch(Dispatchers.IO) {
             val sections = mutableListOf<SystemCheckSection>()
+            val uiMetrics = com.halo.runtime.cognition.ui.UiOperatorDiagnostics.metrics.value
+            sections.add(SystemCheckSection("phone_operator", "Phone operator", listOf(
+                SystemCheckItem("phone_operator_accessibility", "Accessibility service", HaloGlyph.SEE,
+                    if (com.halo.host.android.accessibility.HaloAccessibilityService.isEnabled) CheckStatus.READY else CheckStatus.NOT_CONFIGURED,
+                    if (com.halo.host.android.accessibility.HaloAccessibilityService.isEnabled) "Connected" else "Enable in Android settings"),
+                SystemCheckItem("phone_operator_projection", "Semantic projection", HaloGlyph.SEE, CheckStatus.READY, "Bounded on-demand capture · No automatic screen reads"),
+                SystemCheckItem("phone_operator_revision", "Snapshot revision tracking", HaloGlyph.SEE, CheckStatus.READY, "Exact-generation validation wired · Device acceptance pending"),
+                SystemCheckItem("phone_operator_preflight", "Action preflight", HaloGlyph.SEE, CheckStatus.READY, "Semantic target preview before authorization"),
+                SystemCheckItem("phone_operator_verifier", "Postcondition verifier", HaloGlyph.SEE, CheckStatus.READY, "Action-specific evidence · Dispatch alone remains unconfirmed"),
+                SystemCheckItem("phone_operator_sensitive", "Sensitive-app policy", HaloGlyph.SEE, CheckStatus.READY, "Block before tree traversal · Manual takeover"),
+                SystemCheckItem("phone_operator_metrics", "Transactions", HaloGlyph.HALO, CheckStatus.READY,
+                    "Reads ${uiMetrics.screenReadCount} · Dispatches ${uiMetrics.actionDispatchCount} · Verified ${uiMetrics.confirmedCount}", detail = uiMetrics.toString()),
+                SystemCheckItem("phone_operator_limits", "Bounded actions", HaloGlyph.HALO, CheckStatus.READY,
+                    "12 actions · 6 scrolls · 3 identical semantic actions per run"),
+                SystemCheckItem("phone_operator_safety", "Semantic control", HaloGlyph.HALO, CheckStatus.READY,
+                    "Sensitive packages blocked · No coordinates or privileged input")
+            )))
 
             // 1. Runtime
             sections.add(SystemCheckSection(

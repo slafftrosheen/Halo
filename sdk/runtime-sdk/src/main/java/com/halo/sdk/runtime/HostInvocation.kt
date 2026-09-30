@@ -62,6 +62,14 @@ data class ScreenContextNode(
      */
     val hiddenChildCount: Int = 0,
     val hiddenChildPreviews: List<String> = emptyList(),
+    /** Cross-generation comparison only; never authorizes an action. */
+    val stableFingerprint: String = "",
+    val visibleChildKeys: List<String> = emptyList(),
+    val rowIndex: Int? = null,
+    val valueFullyExposed: Boolean = false,
+    /** Platform field hint, distinct from the editable value. */
+    val labelHint: String? = null,
+    val visibleRowIndices: List<Int> = emptyList(),
 )
 
 typealias UiSemanticNode = ScreenContextNode
@@ -86,6 +94,9 @@ data class ScreenContextSnapshot(
     val snapshotId: String = UUID.randomUUID().toString(),
     /** Whether this projection is worth acting on at all; see [UiInspectability]. */
     val inspectability: UiInspectability = UiInspectability.INSPECTABLE,
+    /** Accessibility actionable observation generation; -1 denotes a non-actionable projection. */
+    val uiRevision: Long = -1L,
+    val navigationFingerprint: String? = null,
 )
 
 enum class ContextTrust { TRUSTED_RUNTIME, UNTRUSTED_CONTENT }

@@ -23,6 +23,8 @@ enum class RunGuardReason {
     THERMAL_LIMIT,
     TOO_MANY_TOOL_ROUNDS,
     REPEATED_TOOL_CALL,
+    UI_ACTION_LIMIT,
+    UI_SCROLL_LIMIT,
 }
 
 /** Content-free evidence. Hashes, counts and ids only — never user content. */
@@ -103,6 +105,7 @@ class AgentRunGuard(
     val elapsedMs: Long get() = clock.nowMs() - startedAtMs
     val remainingMs: Long get() = (limits.maxWallClockMs - elapsedMs).coerceAtLeast(0)
     val currentToolRounds: Int get() = toolRounds
+    val uiRepeatLimit: Int get() = limits.maxRepeatedSameUiAction
     val currentFailureStreak: Int get() = failureStreak
     val tokenSnapshot: AgentRunTokenLedger get() = tokens.snapshot()
 
@@ -154,12 +157,12 @@ class AgentRunGuard(
      * canonical arguments digest) has already been prepared [AgentRunLimits.maxRepeatedToolCalls]
      * times, or when the rotation has begun to oscillate.
      */
-    fun onToolCallPrepared(toolId: String, argumentsDigest: String): RunGuardDecision {
+    fun onToolCallPrepared(toolId: String, argumentsDigest: String, uiAction: Boolean = false): RunGuardDecision {
         toolRounds++
         oscillation.record(toolId, argumentsDigest)
         repeatedCalls++
         val repeatCount = countOccurrencesOf(toolId, argumentsDigest)
-        if (repeatCount > limits.maxRepeatedToolCalls) {
+        if (repeatCount > (if (uiAction) limits.maxRepeatedSameUiAction else limits.maxRepeatedToolCalls)) {
             return stop(
                 RunGuardReason.REPEATED_TOOL_CALL,
                 RunGuardEvidence(
@@ -205,9 +208,18 @@ class AgentRunGuard(
     }
 
     /** A successful meaningful action clears the streak and the oscillation window. */
-    fun onToolSucceeded() {
+    fun onToolSucceeded(preserveOscillation: Boolean = false) {
         failureStreak = 0
-        oscillation.reset()
+        if (!preserveOscillation) oscillation.reset()
+    }
+    /** Counts come from durable ACTING records, so restart cannot replenish action budgets. */
+    fun beforeUiDispatch(actions: Int, scrolls: Int, scroll: Boolean): RunGuardDecision {
+        lastStop?.let { return it }
+        if (actions >= limits.maxUiActionsPerRun) return stop(RunGuardReason.UI_ACTION_LIMIT,
+            RunGuardEvidence(toolRounds, count = actions, elapsedMs = elapsedMs))
+        if (scroll && scrolls >= limits.maxScrollsPerRun) return stop(RunGuardReason.UI_SCROLL_LIMIT,
+            RunGuardEvidence(toolRounds, count = scrolls, elapsedMs = elapsedMs))
+        return RunGuardDecision.Continue
     }
 
     /** Bounded streaming observation. Only clearly pathological loops stop the run. */
@@ -309,6 +321,8 @@ object RunGuardMessages {
         RunGuardReason.GENERATION_REPETITION -> "Started repeating itself"
         RunGuardReason.TOKEN_BUDGET_EXCEEDED -> "Reached the run's processing budget"
         RunGuardReason.THERMAL_LIMIT -> "Stopped because the phone is too hot"
+        RunGuardReason.UI_ACTION_LIMIT -> "Reached the screen action limit"
+        RunGuardReason.UI_SCROLL_LIMIT -> "Reached the screen scroll limit"
     }
 
     /** Spoken/primary wording when a run was deliberately stopped. */
@@ -327,5 +341,7 @@ object RunGuardMessages {
             "I stopped because this task needed more processing than allowed."
         RunGuardReason.THERMAL_LIMIT ->
             "Local processing paused because the phone is too hot."
+        RunGuardReason.UI_ACTION_LIMIT, RunGuardReason.UI_SCROLL_LIMIT ->
+            "I stopped because this screen workflow needed too many actions."
     }
 }

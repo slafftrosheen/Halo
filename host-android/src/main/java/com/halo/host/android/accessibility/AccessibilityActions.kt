@@ -3,95 +3,65 @@ package com.halo.host.android.accessibility
 import android.accessibilityservice.AccessibilityService
 import android.os.Bundle
 import android.view.accessibility.AccessibilityNodeInfo
+import com.halo.runtime.cognition.ui.*
 
+/** Platform dispatch only. Effect verification belongs to UiPostconditionVerifier. */
 class AccessibilityActions(private val service: HaloAccessibilityService) {
-    private val formatter = AccessibilitySnapshotFormatter()
-
-    fun clickToken(snapshotId: String, token: String): Boolean = recordDispatch(withAllowedRoot { root, packageName ->
-        if (service.latestSemanticSnapshotId != snapshotId) return@withAllowedRoot false
-        val capturedAt = service.latestSemanticSnapshotAtMs ?: return@withAllowedRoot false
-        if (System.currentTimeMillis() - capturedAt > TOKEN_MAX_AGE_MS) return@withAllowedRoot false
-        performOnToken(root, snapshotId, packageName, token) { target ->
-            target.isEnabled && target.isClickable && target.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-        }
-    })
-
-    fun scrollToken(snapshotId: String, token: String, forward: Boolean): Boolean =
-        recordDispatch(withAllowedRoot { root, packageName ->
-            if (service.latestSemanticSnapshotId != snapshotId) return@withAllowedRoot false
-            val capturedAt = service.latestSemanticSnapshotAtMs ?: return@withAllowedRoot false
-            if (System.currentTimeMillis() - capturedAt > TOKEN_MAX_AGE_MS) return@withAllowedRoot false
-            val actionId = if (forward) AccessibilityNodeInfo.ACTION_SCROLL_FORWARD else AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD
-            performOnToken(root, snapshotId, packageName, token) { target ->
-                target.isEnabled && target.isScrollable && target.performAction(actionId)
+    private val resolver = UiTargetResolver(service)
+    fun dispatch(intent: UiActionIntent, text: String? = null): Pair<UiDispatchStatus, UiFailure?> {
+        val result = if (intent is UiActionIntent.Global) {
+            val failure = resolver.validateSnapshot(intent.snapshotId)
+            if (failure != null || intent.uiRevision != service.currentActionableRevision)
+                UiDispatchStatus.NOT_DISPATCHED to (failure ?: UiFailure.SNAPSHOT_SUPERSEDED)
+            else {
+                val action = when (intent.operation) { UiOperation.BACK -> AccessibilityService.GLOBAL_ACTION_BACK
+                    UiOperation.HOME -> AccessibilityService.GLOBAL_ACTION_HOME
+                    else -> return UiDispatchStatus.NOT_DISPATCHED to UiFailure.ACTION_NOT_SUPPORTED }
+                (if (service.performGlobalAction(action)) UiDispatchStatus.DISPATCHED else UiDispatchStatus.NOT_DISPATCHED) to null
             }
-        })
-
-    fun setTextToken(snapshotId: String, token: String, text: String): Boolean =
-        recordDispatch(withAllowedRoot { root, packageName ->
-            if (service.latestSemanticSnapshotId != snapshotId) return@withAllowedRoot false
-            val capturedAt = service.latestSemanticSnapshotAtMs ?: return@withAllowedRoot false
-            if (System.currentTimeMillis() - capturedAt > TOKEN_MAX_AGE_MS) return@withAllowedRoot false
-            performOnToken(root, snapshotId, packageName, token) { target ->
-                if (!target.isEnabled || !target.isEditable || target.isPassword) return@performOnToken false
-                val arguments = Bundle().apply {
-                    putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, text)
+        } else resolver.dispatch(intent) { node ->
+            if (intent is UiActionIntent.SetChecked && node.isCheckable && node.isChecked == intent.checked)
+                UiDispatchStatus.ALREADY_SATISFIED
+            else {
+                val ok = when (intent) {
+                    is UiActionIntent.Activate -> node.isClickable && node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                    is UiActionIntent.SetChecked -> node.isCheckable && node.isClickable && node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                    is UiActionIntent.Scroll -> node.isScrollable && node.performAction(if (intent.forward)
+                        AccessibilityNodeInfo.ACTION_SCROLL_FORWARD else AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD)
+                    is UiActionIntent.SetText -> node.isEditable && !node.isPassword && text != null && text.length <= 2000 &&
+                        uiDigest(text) == intent.textDigest && node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT,
+                            Bundle().apply { putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, text) })
+                    is UiActionIntent.Global -> false
                 }
-                target.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, arguments)
+                if (ok) UiDispatchStatus.DISPATCHED else UiDispatchStatus.NOT_DISPATCHED
             }
-        })
-
-    fun scroll(forward: Boolean): Boolean {
-        val root = service.rootInActiveWindow ?: return false
-        if (AccessibilitySafetyPolicy.isPackageBlocked(root.packageName?.toString())) { root.recycle(); return false }
-        val action = if (forward) AccessibilityNodeInfo.ACTION_SCROLL_FORWARD else AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD
-        val result = root.performAction(action)
-        root.recycle()
+        }
+        if (result.first == UiDispatchStatus.DISPATCHED) {
+            UiOperatorDiagnostics.update { it.copy(actionDispatchCount = it.actionDispatchCount + 1) }
+            android.util.Log.i("HaloUi", "HALO_UI_ACTION_DISPATCH operation=${intent.operation} fingerprint=${intent.target?.stableFingerprint?.take(8)} revision=${intent.uiRevision} package=${intent.target?.packageName}")
+            service.markActionDispatched()
+        } else service.invalidateSnapshot()
         return result
     }
-
-    fun globalBack(): Boolean = recordDispatch(service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK))
-
-    fun globalHome(): Boolean = recordDispatch(service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_HOME))
-
-    private fun recordDispatch(dispatched: Boolean): Boolean {
-        if (dispatched) service.markActionDispatched()
-        return dispatched
+    // Legacy host adapters retain source compatibility while using exact-generation resolution.
+    private fun legacy(snapshotId: String, token: String, operation: UiOperation,
+        intent: (ResolvedUiTarget) -> UiActionIntent, text: String? = null): Boolean {
+        val target = (resolver.resolve(snapshotId, token, operation) as? UiTargetOutcome.Resolved)?.target ?: return false
+        return dispatch(intent(target), text).first in setOf(UiDispatchStatus.DISPATCHED, UiDispatchStatus.ALREADY_SATISFIED)
     }
-
-    private inline fun withAllowedRoot(block: (AccessibilityNodeInfo, String?) -> Boolean): Boolean {
-        val root = service.rootInActiveWindow ?: return false
-        val packageName = root.packageName?.toString()
-        if (AccessibilitySafetyPolicy.isPackageBlocked(packageName)) {
-            root.recycle()
-            return false
-        }
-        return try { block(root, packageName) } finally { root.recycle() }
+    fun clickToken(snapshotId: String, token: String) = legacy(snapshotId, token, UiOperation.ACTIVATE, { UiActionIntent.Activate(it) })
+    fun scrollToken(snapshotId: String, token: String, forward: Boolean) = legacy(snapshotId, token, UiOperation.SCROLL, { UiActionIntent.Scroll(it, forward) })
+    fun setTextToken(snapshotId: String, token: String, text: String) = legacy(snapshotId, token, UiOperation.SET_TEXT,
+        { UiActionIntent.SetText(it, text.length, uiDigest(text)) }, text)
+    fun scroll(forward: Boolean): Boolean {
+        val snapshot = service.latestSemanticSnapshot ?: return false
+        val target = snapshot.nodes.filter { it.scrollable && it.enabled && !it.sensitive }.singleOrNull() ?: return false
+        return scrollToken(snapshot.snapshotId, target.token ?: return false, forward)
     }
-
-    private fun performOnToken(
-        root: AccessibilityNodeInfo,
-        snapshotId: String,
-        packageName: String?,
-        token: String,
-        action: (AccessibilityNodeInfo) -> Boolean,
-    ): Boolean {
-        fun visit(node: AccessibilityNodeInfo, path: String): Boolean {
-            if (formatter.tokenForNode(snapshotId, packageName, path, node) == token) return action(node)
-            for (index in 0 until node.childCount) {
-                val child = node.getChild(index) ?: continue
-                try {
-                    if (visit(child, "$path.$index")) return true
-                } finally {
-                    child.recycle()
-                }
-            }
-            return false
-        }
-        return visit(root, "0")
+    private fun global(operation: UiOperation): Boolean {
+        val snapshot = service.latestSemanticSnapshot ?: return false
+        return dispatch(UiActionIntent.Global(snapshot.snapshotId, snapshot.uiRevision, operation)).first == UiDispatchStatus.DISPATCHED
     }
-
-    private companion object {
-        const val TOKEN_MAX_AGE_MS = 30_000L
-    }
+    fun globalBack() = global(UiOperation.BACK)
+    fun globalHome() = global(UiOperation.HOME)
 }

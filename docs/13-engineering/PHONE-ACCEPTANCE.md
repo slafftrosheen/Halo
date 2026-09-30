@@ -76,3 +76,32 @@ This document describes the step-by-step physical phone verification sequence fo
       read instead of retrying or acting on a guess.
     - Deny the action consent when prompted and verify nothing is dispatched; verify dismissing the prompt is not
       treated as approval.
+
+## MINING-P5-001 — later sandbox acceptance (NOT RUN, 2026-09-30)
+
+This is a future manual checklist. No build, test, adb, emulator or physical acceptance action was
+performed for this batch. Open Settings → Runtime Status → System Check → Open phone-control sandbox
+when later acceptance is authorized. Opening it must not itself capture or disclose its contents.
+
+1. Explicitly read/preview the sandbox; inspect revision, safe labels and collection metadata.
+2. Manually mutate it; an old token must return SNAPSHOT_SUPERSEDED and dispatch zero actions.
+3. Find Test toggle uniquely, set checked true, verify the Boolean; repeat from a fresh generation and
+   verify already-in-requested-state without another click.
+4. Set Test text; confirm only when the full normalized value is exposed. Inspect journal/export/logs
+   for length/digest and absence of entered values. Check long/truncated/empty and password fields.
+5. Scroll Test rows; confirm directional keys/indices in the selected container. Unverified movement,
+   missing metadata, end-of-list and ambiguity must stop the bounded helper.
+6. Open/dismiss dialog and navigate to details; inspect action-specific evidence. When Android exposes
+   identical structural roots and no navigation evidence, expect unconfirmed dispatch rather than a lie.
+7. Verify unrelated text/animation does not confirm another target; duplicate labels require refinement.
+8. Check semantic full/compact approval, then change the screen during approval and verify refusal.
+9. Check blocked packages, permission controllers, unreadable/CAPTCHA controls and manual Continue.
+10. Restart at claim/receipt/outcome boundaries: no click/scroll replay, fresh observation, observational
+    set-checked reconciliation only. Old approval cannot authorize a new token.
+11. Verify Home needs a package transition to the known launcher; Android return Boolean alone is insufficient.
+12. Exercise bounded waits/search, P1 repeated/oscillating limits, small-model compact output, native-tool
+    preference, screen injection rejection and observation-only screenshot boundaries.
+13. Inspect Home, Assistant, Skills, Activity and diagnostic summaries; unconfirmed effects remain
+    unconfirmed and diagnostics contain no labels, field values, snapshot trees or target tokens.
+
+[Source ledger and all restrictions](../engineering/SEMANTIC-PHONE-OPERATOR.md).

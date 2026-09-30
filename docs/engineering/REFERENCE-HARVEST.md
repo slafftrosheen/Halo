@@ -303,3 +303,13 @@ MINING-P3-001 harvest is documented in [MULTIMODAL-PERCEPTION-MINING.md](MULTIMO
 [Long-horizon mining ledger](LONG-HORIZON-AGENT-MINING.md) records inspected Android-Agent `harness-improve` and Brownie references. Adopted concepts: immutable content-addressed bodies/atomic writes, atomic tool groups, bounded reference search, parent-scoped read-only children and role routing. Halo implementation reuses its own persistence, executor, guards, router and Working Set; no reference code is copied or imported.
 
 Android-Agent SegmentedHistoryStore explicitly reports itself unwired; its existence is not evidence of integration. The inspected compressor currently uses window trimming rather than a wired summarizing implementation. Brownie's summary-to-SYSTEM approach is rejected, as are separate subagent session storage and hidden execution truth. Exact source links, source uncertainty and per-file inventory appear in the ledger. Status: Halo source wired; build/tests/device acceptance not run.
+
+## MINING-P5-001 harvest — 2026-09-30
+
+[Semantic phone operator ledger](SEMANTIC-PHONE-OPERATOR.md) records the actual baseline, complete
+production inventory and primary reference links. Brownie BrowserTool informs bounded quiet/deadline
+settling; MessagingTool/NotificationTool inform native reply and bounded observation preference, without
+claiming dispatch proves delivery. Android-Agent harness-improve AgentRunner informs exact-argument
+approval and bounded failure/guard evidence. No reference code, alternate journal, agent loop, approval
+store or privileged input runtime was copied. Halo's existing P1 guard/oscillation detector and AgentStep
+journal remain owners. Source wired; build/tests/device acceptance not run.

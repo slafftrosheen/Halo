@@ -92,6 +92,7 @@ fun AndroidAssistantScreen(
         HaloScreenHeader("Android Assistant", "System interactor & gesture integration", navigation = onBack)
 
         Spacer(Modifier.height(HaloSpacing.md))
+        PhoneOperatorPanel()
 
         val (bannerTitle, bannerSubtitle, bannerColor) = when (val s = state) {
             is AssistantIntegrationState.Active -> Triple("Halo is the active Android assistant", "Android reports both the default role and Halo voice interactor active.", HaloPastelMint)

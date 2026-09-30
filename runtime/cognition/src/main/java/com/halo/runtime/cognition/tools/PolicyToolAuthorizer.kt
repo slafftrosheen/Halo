@@ -85,6 +85,7 @@ class PolicyToolAuthorizer(
         interactionId: InteractionId,
         invocationId: com.halo.runtime.cognition.agent.ToolInvocationId,
         argumentsDigest: String,
+        presentationContext: com.halo.runtime.cognition.ui.UiTargetPreview? = null,
         newRequestId: () -> String,
     ): AuthorizationDecision {
         val toolName = toolCall.functionName
@@ -95,7 +96,7 @@ class PolicyToolAuthorizer(
         }
 
         val security = descriptorProvider(toolName)?.security
-        val destructive = (security?.risk ?: ToolRiskClass.SENSITIVE) == ToolRiskClass.DESTRUCTIVE
+        val destructive = (security?.risk ?: ToolRiskClass.SENSITIVE) == ToolRiskClass.DESTRUCTIVE || presentationContext?.forceConfirmation == true
         val risk = security?.risk.toSkillRisk()
 
         if (policy == ToolApprovalPolicy.ALWAYS_ALLOW && !destructive &&
@@ -118,8 +119,8 @@ class PolicyToolAuthorizer(
             createdAt = Instant.now(),
             invocationId = invocationId,
             toolId = ToolId(toolName),
-            action = buildApprovalAction(toolCall),
-            detail = buildApprovalDetail(toolCall),
+            action = presentationContext?.let { "${it.action} ${it.targetLabel.orEmpty()}".trim() } ?: buildApprovalAction(toolCall),
+            detail = presentationContext?.description ?: buildApprovalDetail(toolCall),
             risk = risk.name,
             argumentsDigest = argumentsDigest,
         )

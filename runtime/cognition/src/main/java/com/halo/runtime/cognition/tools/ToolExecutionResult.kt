@@ -9,6 +9,9 @@ sealed interface ToolExecutionResult {
         val actionTruth: com.halo.runtime.cognition.agent.ActionTruth = com.halo.runtime.cognition.agent.ActionTruth.CONFIRMED,
         val outputMetadata: ToolOutputMetadata? = null,
         val payloadRef: com.halo.runtime.cognition.context.PayloadRef? = null,
+        val uiReceipt: com.halo.runtime.cognition.ui.UiActionReceipt? = null,
+        val uiObservation: com.halo.runtime.cognition.ui.UiObservation? = null,
+        val uiSearchStatus: com.halo.runtime.cognition.ui.UiSearchStatus? = null,
     ) : ToolExecutionResult
 
     data class Rejected(

@@ -116,6 +116,8 @@ fun SkillsScreen(
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(HaloSpacing.sm)) {
                         Text(skill.description)
+                        if (id == "halo.phone.screen") PhoneOperatorPanel(readingEnabled = skill.enabled && policy != ToolApprovalPolicy.DENY,
+                            actionPolicy = screenPolicyCopy(id, policy))
                         Text("Status · ${skillRuntimeAvailability(skill, descriptors, availabilityResolver)}")
                         Text("Access · ${skill.requiredPermissions.joinToString().ifBlank { "No special permission" }}")
                         Text("Source · ${skill.source.name.lowercase().replace('_', ' ')} · schema ${skill.schemaVersion}")
@@ -163,7 +165,7 @@ fun SkillsScreen(
                         }
 
                         TextButton(onClick = { showPolicies = true }) {
-                            Text("Approval · ${policy.name.replace('_', ' ').lowercase()}")
+                            Text("Approval · ${screenPolicyCopy(id, policy)}")
                         }
                         DropdownMenu(
                             expanded = showPolicies,
@@ -175,7 +177,7 @@ fun SkillsScreen(
                                 ToolApprovalPolicy.DENY,
                             ).forEach { choice ->
                                 DropdownMenuItem(
-                                    text = { Text(choice.name.replace('_', ' ').lowercase()) },
+                                    text = { Text(screenPolicyCopy(id, choice)) },
                                     onClick = {
                                         showPolicies = false
                                         policy = choice
@@ -484,3 +486,9 @@ private fun availabilityLabel(value: SkillAvailability): String = when (value) {
     is SkillAvailability.MissingDependency -> "Unavailable · ${value.dependency} is missing"
     SkillAvailability.UnsupportedDevice -> "Unsupported on this device"
 }
+
+private fun screenPolicyCopy(skillId: String, policy: ToolApprovalPolicy): String = if (skillId == "halo.phone.screen") when (policy) {
+    ToolApprovalPolicy.ASK_EVERY_TIME, ToolApprovalPolicy.ALLOW_WHILE_APP_OPEN -> "Ask before screen actions"
+    ToolApprovalPolicy.ALWAYS_ALLOW -> "Allow reversible screen actions"
+    ToolApprovalPolicy.DENY -> "Never allow screen actions"
+} else policy.name.replace('_', ' ').lowercase()

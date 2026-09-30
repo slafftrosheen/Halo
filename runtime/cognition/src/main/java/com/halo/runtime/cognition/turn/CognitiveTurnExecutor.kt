@@ -260,7 +260,7 @@ class CognitiveTurnExecutor(
                         turnId = turnId,
                         assistantText = initialResponse.text,
                         toolCalls = initialResponse.toolCalls.map {
-                            ProviderToolCallRecord(it.id, it.functionName, ToolArgumentCanonicalizer.canonicalize(it.arguments))
+                            ProviderToolCallRecord(it.id, it.functionName, ToolArgumentCanonicalizer.canonicalize(com.halo.runtime.cognition.tools.journalToolArguments(it)))
                         },
                         finishReason = initialResponse.finishReason ?: "stop", payloadRefId = initialResponse.payloadRefId
                     )
@@ -666,7 +666,7 @@ class CognitiveTurnExecutor(
                                     turnId = roundTurnId,
                                     assistantText = response.text,
                                     toolCalls = response.toolCalls.map {
-                                        ProviderToolCallRecord(it.id, it.functionName, ToolArgumentCanonicalizer.canonicalize(it.arguments))
+                                        ProviderToolCallRecord(it.id, it.functionName, ToolArgumentCanonicalizer.canonicalize(com.halo.runtime.cognition.tools.journalToolArguments(it)))
                                     },
                                     finishReason = response.finishReason ?: "stop", payloadRefId = response.payloadRefId
                                 )
@@ -678,6 +678,11 @@ class CognitiveTurnExecutor(
 
             val durableRun = createDurableRunIfNeeded()
             if (durableRun != null) {
+                agentRunStore?.get(durableRun)?.let { run ->
+                    com.halo.runtime.cognition.ui.UiWorkflowProjector.summary(run)?.let { summary ->
+                        response = response.copy(text = summary, payloadRefId = null)
+                    }
+                }
                 agentRunCoordinator?.recordStep(
                     AgentStep.ResponseProduced(
                         id = newStepId(),
@@ -767,12 +772,17 @@ class CognitiveTurnExecutor(
                     turnId = roundTurnId,
                     assistantText = response.text,
                     toolCalls = response.toolCalls.map {
-                        ProviderToolCallRecord(it.id, it.functionName, ToolArgumentCanonicalizer.canonicalize(it.arguments))
+                        ProviderToolCallRecord(it.id, it.functionName, ToolArgumentCanonicalizer.canonicalize(com.halo.runtime.cognition.tools.journalToolArguments(it)))
                     },
                     finishReason = response.finishReason ?: "stop", payloadRefId = response.payloadRefId
                 )
             )
 
+            agentRunStore?.get(durableRun)?.let { run ->
+                com.halo.runtime.cognition.ui.UiWorkflowProjector.summary(run)?.let { summary ->
+                    response = response.copy(text = summary, payloadRefId = null)
+                }
+            }
             agentRunCoordinator?.recordStep(
                 AgentStep.ResponseProduced(
                     id = newStepId(),

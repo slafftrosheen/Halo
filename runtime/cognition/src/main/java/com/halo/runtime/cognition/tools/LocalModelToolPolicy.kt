@@ -74,6 +74,8 @@ data class LocalModelToolPolicy(
             "halo_ui_click",
             "halo_ui_scroll",
             "halo_ui_set_text",
+            "halo_ui_set_checked",
+            "halo_ui_wait", "halo_ui_search",
             "halo_ui_global_action",
         )
 

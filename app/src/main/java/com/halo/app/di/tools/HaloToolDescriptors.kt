@@ -473,6 +473,14 @@ object HaloToolDescriptors {
         "halo_find_on_screen" -> descriptor(definition.name, definition, ToolCategory.PERCEPTION,
             readOnly(definition.name), keywords = setOf("screen", "find", "search", "accessibility"),
             requirements = setOf(ToolRequirement.Capability(CapabilityId("host.screen.observe"))))
+        "halo_ui_wait" -> descriptor(definition.name, definition, ToolCategory.PERCEPTION,
+            readOnly(definition.name), keywords = setOf("wait", "screen", "observe"),
+            requirements = setOf(ToolRequirement.Capability(CapabilityId("host.screen.observe"))))
+        "halo_ui_set_checked" -> descriptor(definition.name, definition, ToolCategory.HOST_CONTROL,
+            ToolSecurityPolicy(risk = ToolRiskClass.REVERSIBLE, confirmation = ConfirmationPolicy.USER_POLICY,
+                replaySafety = ReplaySafety.NEVER_REPLAY), keywords = setOf("toggle", "switch", "checkbox", "screen"),
+            requirements = setOf(ToolRequirement.Capability(CapabilityId("host.screen.control"))),
+            presentation = ToolPresentation(title = "Change a screen toggle", actionVerb = "Set checked state"))
         "halo_ui_click" -> descriptor(definition.name, definition, ToolCategory.HOST_CONTROL,
             ToolSecurityPolicy(
                 risk = ToolRiskClass.EXTERNAL_SIDE_EFFECT,
@@ -480,7 +488,7 @@ object HaloToolDescriptors {
                 replaySafety = ReplaySafety.NEVER_REPLAY,
             ), keywords = setOf("click", "tap", "ui"),
             requirements = setOf(ToolRequirement.Capability(CapabilityId("host.screen.control"))))
-        "halo_ui_scroll" -> descriptor(definition.name, definition, ToolCategory.HOST_CONTROL,
+        "halo_ui_scroll", "halo_ui_search" -> descriptor(definition.name, definition, ToolCategory.HOST_CONTROL,
             ToolSecurityPolicy(
                 risk = ToolRiskClass.EXTERNAL_SIDE_EFFECT,
                 confirmation = ConfirmationPolicy.ALWAYS,

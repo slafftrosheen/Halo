@@ -1,5 +1,7 @@
 package com.halo.app.di
 
+import com.halo.runtime.cognition.ui.observation
+
 import android.content.Context
 import com.halo.app.HaloRuntime
 import com.halo.app.embodiment.DeviceAutoConnectCoordinator
@@ -445,6 +447,14 @@ object ManualDependencyGraph {
             registry = toolRegistry,
             availabilityResolver = toolAvailabilityResolver,
             skillRegistry = skillRegistry,
+            uiObservation = {
+                com.halo.host.android.accessibility.HaloAccessibilityService.instance?.let { service ->
+                    service.latestSemanticSnapshot?.takeIf { it.uiRevision == service.currentActionableRevision &&
+                        System.currentTimeMillis() - it.capturedAtMs <= 30_000 && it.inspectability == com.halo.sdk.runtime.UiInspectability.INSPECTABLE }?.let {
+                        it.observation()
+                    }
+                }
+            },
         )
     }
 
@@ -882,6 +892,9 @@ object ManualDependencyGraph {
             imageInputPreparer = imageInputPreparer,
             mediaObjectPolicy = workspaceMediaAiPolicy,
             eventBus = eventBus,
+            freshUiObservation = { kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main.immediate) {
+                com.halo.host.android.accessibility.HaloAccessibilityService.instance?.captureSnapshot()
+            } },
         )
     }
     val cognitiveResponseCommitter by lazy {
@@ -913,6 +926,25 @@ object ManualDependencyGraph {
             toolRegistry = toolRegistry,
             eventBus = eventBus,
             recoveryPlanner = DefaultAgentRecoveryPlanner(),
+            uiGenerationValid = { snapshotId ->
+                com.halo.host.android.accessibility.HaloAccessibilityService.instance?.let { service ->
+                    service.latestSemanticSnapshot?.let { snapshot -> snapshot.snapshotId == snapshotId &&
+                        snapshot.uiRevision == service.currentActionableRevision && System.currentTimeMillis() - snapshot.capturedAtMs <= 30_000 }
+                } == true
+            },
+            uiRecoveryObserver = { transaction -> kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main.immediate) {
+                com.halo.host.android.accessibility.HaloAccessibilityService.instance?.captureSnapshot()?.let { snapshot ->
+                    val target = snapshot.nodes.singleOrNull { it.stableFingerprint == transaction.targetFingerprint && !it.sensitive && it.enabled && it.checkable }
+                    val receipt = if (transaction.operation == com.halo.runtime.cognition.ui.UiOperation.SET_CHECKED &&
+                        transaction.requestedChecked != null && target?.checked == transaction.requestedChecked)
+                        com.halo.runtime.cognition.ui.UiActionReceipt(transaction.toolCallId, com.halo.runtime.cognition.ui.UiOperation.SET_CHECKED, transaction.targetFingerprint,
+                            com.halo.runtime.cognition.ui.UiDispatchStatus.ALREADY_SATISFIED,
+                            com.halo.runtime.cognition.ui.UiVerification.CONFIRMED, com.halo.runtime.cognition.agent.ActionTruth.CONFIRMED,
+                            transaction.observation?.snapshotId ?: "unavailable", snapshot.snapshotId, "observation_reconciled",
+                            requestedChecked = transaction.requestedChecked, observedChecked = target?.checked) else null
+                    com.halo.runtime.cognition.ui.UiRecoveryObservation(snapshot, receipt)
+                }
+            } },
         )
     }
     val cognitiveSession by lazy {

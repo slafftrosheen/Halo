@@ -27,6 +27,7 @@ class InfrastructureGraph {
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     val clock: RuntimeClock = SystemRuntimeClock()
     val metrics: RuntimeMetricsSink = InMemoryRuntimeMetrics()
+    init { com.halo.runtime.cognition.ui.UiOperatorDiagnostics.attachMetricsSink(metrics) }
     var powerMode: RuntimePowerMode = RuntimePowerMode.BALANCED
 
     val eventBus by lazy { RecordingEventBus(DefaultEventBus()) }

@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.activity
 
+import com.halo.runtime.cognition.agent.ActionTruth
+
 import android.os.Trace
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -308,7 +310,9 @@ class ActivityViewModel(
 
 private fun AgentRun.toStory(): ActivityStory {
     val status = when {
-        hasUnknownAction -> ActivityStatus.UNKNOWN
+        hasUnknownAction || steps.filterIsInstance<AgentStep.UiTransactionRecorded>().any {
+            it.transaction.receipt?.actionTruth in setOf(ActionTruth.DISPATCHED, ActionTruth.UNKNOWN)
+        } -> ActivityStatus.UNKNOWN
         state == AgentRunState.INTERRUPTED -> ActivityStatus.INTERRUPTED
         state == AgentRunState.FAILED -> ActivityStatus.FAILED
         state == AgentRunState.CANCELLED -> ActivityStatus.CANCELLED
@@ -340,6 +344,11 @@ private fun AgentRun.toStory(): ActivityStory {
     val activitySteps = steps.map { step ->
         val title = RuntimeUiFormatters.formatStepTitle(step)
         val message = when (step) {
+            is AgentStep.UiTransactionRecorded -> step.transaction.let {
+                listOfNotNull(it.preview?.description, it.phase.name.lowercase().replace('_', ' '),
+                    it.searchStatus?.let { status -> "Search ${status.name.lowercase().replace('_', ' ')}" },
+                    it.receipt?.let { receipt -> "${receipt.actionTruth.name.lowercase()} · ${receipt.changeKind.replace('_', ' ')}" }).joinToString(" · ")
+            }
             is AgentStep.ToolExecutionClaimed -> "${step.toolId}: action started"
             is AgentStep.ToolOutcomeRecorded -> "${step.toolId}: ${if (step.success) "completed" else "failed"} (${step.actionTruth.name.lowercase()})"
             is AgentStep.ResourceBlocked -> "${step.toolId}: waiting for ${step.resourceIds.joinToString { RuntimeUiFormatters.formatResource(
@@ -397,7 +406,7 @@ private fun AgentRun.toStory(): ActivityStory {
         correlationId = interactionId.value,
         kind = ActivityKind.HALO,
         title = request,
-        summary = summaryText,
+        summary = com.halo.runtime.cognition.ui.UiWorkflowProjector.summary(this) ?: summaryText,
         timestamp = createdAt,
         status = status,
         steps = activitySteps,

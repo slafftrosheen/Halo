@@ -10,6 +10,8 @@ import com.halo.sdk.runtime.UiInspectability
 import com.halo.sdk.runtime.UiSemanticType
 import java.security.MessageDigest
 import java.util.UUID
+import com.halo.runtime.cognition.ui.semanticIdentity
+import com.halo.runtime.cognition.ui.uiDigest
 
 /**
  * Produces a bounded, redacted semantic projection of Android's live accessibility tree.
@@ -32,6 +34,7 @@ class AccessibilitySnapshotFormatter(
         screenHeight: Int,
         capturedAtMs: Long = System.currentTimeMillis(),
         snapshotId: String = UUID.randomUUID().toString(),
+        uiRevision: Long = -1L,
     ): ScreenContextSnapshot {
         val nodes = mutableListOf<ScreenContextNode>()
         val omissions = linkedMapOf<String, Int>()
@@ -63,7 +66,7 @@ class AccessibilitySnapshotFormatter(
 
             rawNodes++
             val sensitive = node.isPassword
-            val text = if (sensitive) null else normalize(node.text?.toString())
+            val text = if (sensitive) null else normalize(node.text?.toString()) ?: "".takeIf { node.isEditable && node.text != null }
             val hint = if (sensitive) null else normalize(node.contentDescription?.toString())
             val viewId = normalize(node.viewIdResourceName)?.take(MAX_VIEW_ID_CHARS)
             val role = AccessibilityProjectionRules.classify(
@@ -132,7 +135,14 @@ class AccessibilitySnapshotFormatter(
                     depth = depth,
                     sensitive = sensitive,
                     region = AccessibilityProjectionRules.regionOf(rect.centerX(), rect.centerY(), screenWidth, screenHeight),
+                    rowIndex = node.collectionItemInfo?.rowIndex?.takeIf { it >= 0 },
+                    valueFullyExposed = !sensitive && node.text != null && text == safeText,
+                    labelHint = if (sensitive) null else normalize(node.hintText?.toString())?.take(100),
                 )
+                val intrinsicRole = AccessibilityProjectionRules.classify(node.className?.toString(), null,
+                    node.isEditable, node.isScrollable, node.isCheckable, node.isClickable, node.childCount > 0)
+                nodes[emittedIndex] = nodes[emittedIndex].copy(stableFingerprint = semanticIdentity(packageName,
+                    nodes[emittedIndex].copy(semanticType = intrinsicRole)))
             } else if (node.childCount == 0) {
                 omitted("empty_leaf")
             }
@@ -153,6 +163,13 @@ class AccessibilitySnapshotFormatter(
                     hiddenChildPreviews = ownHidden.previews.toList(),
                 )
             }
+            if (ownHidden != null && emittedIndex != null) {
+                val descendants = nodes.drop(emittedIndex + 1)
+                nodes[emittedIndex] = nodes[emittedIndex].copy(visibleChildKeys = descendants
+                    .filter { !it.sensitive && !it.editable && (it.semanticType == UiSemanticType.LIST_ITEM || it.rowIndex != null) }
+                    .take(64).map { uiDigest(it.viewId.orEmpty() + "|" + it.text.orEmpty() + "|" + it.contentDescription.orEmpty()) },
+                    visibleRowIndices = descendants.filter { !it.sensitive && !it.editable }.mapNotNull { it.rowIndex }.distinct().sorted().take(64))
+            }
         }
 
         visit(root, 0, "0", null, null, false)
@@ -171,6 +188,9 @@ class AccessibilitySnapshotFormatter(
             truncationReason = reason,
             omissionCounts = omissions.toMap(),
             snapshotId = snapshotId,
+            uiRevision = uiRevision,
+            navigationFingerprint = uiDigest(root.className.toString() + "|" + root.viewIdResourceName.orEmpty() + "|" +
+                nodes.filter { it.semanticType == UiSemanticType.TOOLBAR }.joinToString { it.className.orEmpty() + ":" + it.viewId.orEmpty() }),
             inspectability = when {
                 readableNodes > 0 -> UiInspectability.INSPECTABLE
                 rawNodes <= 1 -> UiInspectability.EMPTY_OR_ROOT_ONLY

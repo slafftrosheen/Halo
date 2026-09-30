@@ -68,6 +68,8 @@ class DefaultAgentRecoveryPlanner : AgentRecoveryPlanner {
 
         // 3. Claimed tool without a definitive outcome is the critical case.
         unclaimedOutcomeInvocation(steps)?.let { invocation ->
+            if (invocation.toolId.value.startsWith("halo_ui_") && invocation.toolId.value != "halo_ui_wait")
+                return checkClaim(run, RecoveryPlan.MissingContext(run.id, "OBSERVATION_REQUIRED"))
             val plan = when (invocation.replaySafety) {
                 com.halo.runtime.cognition.tools.ReplaySafety.SAFE -> RecoveryPlan.RetryTool(run.id, invocation, useOriginalIdempotencyKey = true)
                 com.halo.runtime.cognition.tools.ReplaySafety.IDEMPOTENT_WITH_KEY -> RecoveryPlan.RetryTool(run.id, invocation, useOriginalIdempotencyKey = true)

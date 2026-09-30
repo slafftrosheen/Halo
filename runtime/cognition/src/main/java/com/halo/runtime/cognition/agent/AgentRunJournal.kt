@@ -88,6 +88,8 @@ sealed interface AgentStep {
     val id: AgentStepId
     val runId: AgentRunId
     val createdAt: Instant
+    data class UiTransactionRecorded(override val id: AgentStepId, override val runId: AgentRunId,
+        override val createdAt: Instant, val transaction: com.halo.runtime.cognition.ui.UiTransactionRecord) : AgentStep
 
     data class DelegationResultRecorded(override val id: AgentStepId, override val runId: AgentRunId,
         override val createdAt: Instant, val status: String, val summary: String,

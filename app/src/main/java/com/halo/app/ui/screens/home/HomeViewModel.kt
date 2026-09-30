@@ -102,7 +102,9 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
             is CognitiveSessionState.PreparingContext -> "Preparing context..."
             is CognitiveSessionState.Reasoning -> "Reasoning..."
             is CognitiveSessionState.Streaming -> sessionState.text.ifBlank { "Responding…" }
-            is CognitiveSessionState.ExecutingTool -> "Executing ${sessionState.toolId}..."
+            is CognitiveSessionState.ExecutingTool -> if (sessionState.toolId.startsWith("halo_ui_") ||
+                sessionState.toolId in setOf("halo_read_screen", "halo_find_on_screen")) "Operating the current screen"
+                else "Executing ${sessionState.toolId}..."
             is CognitiveSessionState.Completed -> sessionState.response.text.ifBlank { "Completed" }
             is CognitiveSessionState.Failed -> "Error: ${sessionState.message}"
             CognitiveSessionState.Idle -> when {
@@ -217,7 +219,8 @@ class HomeViewModel(
         val research = children.isNotEmpty() && root?.steps?.any {
             it is com.halo.runtime.cognition.agent.AgentStep.ToolInvocationPrepared && it.toolId in setOf("halo_research", "halo_delegate_task")
         } == true
-        val longTask = root?.takeIf { children.isNotEmpty() }
+        val phoneWorkflow = root?.let { com.halo.runtime.cognition.ui.UiWorkflowProjector.from(it) }
+        val longTask = root?.takeIf { children.isNotEmpty() || phoneWorkflow != null }
         val activeConversationId = conversations?.activeConversationId().orEmpty()
         val presented = HomeResponseProjector.project(
             activeConversationId,
@@ -241,7 +244,20 @@ class HomeViewModel(
                 !mapped.speechActive &&
                 !mapped.speechProcessing
         }
-        val contextualText = durableStatus ?: mapped.contextualText
+        val phoneStatus = phoneWorkflow?.takeUnless { it.state in setOf(com.halo.runtime.cognition.ui.UiWorkflowPhase.COMPLETED,
+            com.halo.runtime.cognition.ui.UiWorkflowPhase.FAILED) }?.let { workflow ->
+            val phase = when (workflow.state) {
+                com.halo.runtime.cognition.ui.UiWorkflowPhase.OBSERVING -> "Reading screen"
+                com.halo.runtime.cognition.ui.UiWorkflowPhase.READY -> "Ready to act"
+                com.halo.runtime.cognition.ui.UiWorkflowPhase.WAITING_FOR_APPROVAL -> "Needs your approval"
+                com.halo.runtime.cognition.ui.UiWorkflowPhase.ACTING -> "Acting"
+                com.halo.runtime.cognition.ui.UiWorkflowPhase.SETTLING -> "Waiting for screen"
+                com.halo.runtime.cognition.ui.UiWorkflowPhase.VERIFYING -> "Verifying effect"
+                else -> "Thinking about the next step"
+            }
+            listOfNotNull(phase, workflow.preview?.description).joinToString(" · ")
+        }
+        val contextualText = phoneStatus?.takeIf { !mapped.speechActive && !mapped.speechProcessing } ?: durableStatus ?: mapped.contextualText
         val sourceLabel = when (val route = input.turn?.route) {
             SpeechInputRoute.Phone, null -> "Built-in microphone"
             is SpeechInputRoute.Device -> route.displayName
@@ -273,7 +289,7 @@ class HomeViewModel(
                 runtimeWaitingCount = taskSummary.waitingCount,
                 researchResult = research && turns.lastOrNull()?.metadata?.get("runId") == root?.id?.value,
                 longTaskProgress = longTask?.let { com.halo.runtime.cognition.interaction.PlanPresentationProjector.fromJournal(it.steps, "Task progress") },
-                longTaskStatus = longTask?.let { "${children.count { child -> child.state == com.halo.runtime.cognition.agent.AgentRunState.COMPLETED }} / ${children.size} tasks complete · ${children.count { child -> child.state == com.halo.runtime.cognition.agent.AgentRunState.FAILED }} failed" },
+                longTaskStatus = phoneWorkflow?.let { "${it.state.name.lowercase().replace('_', ' ')} · ${it.preview?.description.orEmpty()} · ${it.actionCount} actions · ${it.scrollCount} scrolls" } ?: longTask?.let { "${children.count { child -> child.state == com.halo.runtime.cognition.agent.AgentRunState.COMPLETED }} / ${children.size} tasks complete · ${children.count { child -> child.state == com.halo.runtime.cognition.agent.AgentRunState.FAILED }} failed" },
             )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(0), HomeUiState())
 

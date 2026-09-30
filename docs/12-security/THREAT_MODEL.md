@@ -71,3 +71,23 @@ Children receive only host-resolved explicit references and revision checks. Rem
 Root cancellation cascades to children and active work is watched by parent lifecycle. Child target pins and journal results survive restart; no unattended independent child recovery publishes a response. Diagnostics export budgets/counts/classifications/target status without prompts, summary text or source bodies. Explicit saved Note content/provenance is user workspace truth and follows existing backup behavior; transient payload caches are excluded from portable backup. Android system backup may retain DB metadata while excluding body files; reads then truthfully report missing payloads.
 
 Device/provider/Room acceptance remains unrun; see [ledger](../engineering/LONG-HORIZON-AGENT-MINING.md).
+
+## MINING-P5-001 — screen transaction boundaries (2026-09-30)
+
+Stale-generation or substituted target → exact snapshot id/age/revision/package validation before
+resolution and again at dispatch. A comparison fingerprint is never authority. All dispatched actions
+kill the original token generation. Old approvals cannot authorize materially changed targets.
+
+Malicious screen text → explicitly untrusted bounded projection. Exposure directives are parsed only
+from trusted discovery/skill results; screen text cannot activate a skill, lower risk or grant approval.
+Entered text → transient comparison, bounded expiring draft cache for exact same-process continuation,
+length/digest-only durable tool arguments, no field values in previews/fingerprints/diagnostics.
+
+Interrupted UI effect → NEVER_REPLAY; missing claimed receipt remains UNKNOWN, then fresh observation.
+Checked state can reconcile without a click. Blocked destination → reject before traversal and manual
+Continue surface. Consequence hints elevate confirmation and never weaken descriptor policy.
+
+Coordinate taps, shell input, root, Shizuku, Xposed, privileged UiAutomator bridges, permission-dialog
+automation, CAPTCHA solving, password/banking/authenticator control and background surveillance are
+rejected. Screenshot vision remains observation only. [Contracts and residual uncertainties](../engineering/SEMANTIC-PHONE-OPERATOR.md).
+Source review is not device acceptance; build/tests/device acceptance not run.

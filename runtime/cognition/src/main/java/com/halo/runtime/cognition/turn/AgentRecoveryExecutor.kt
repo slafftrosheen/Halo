@@ -22,6 +22,11 @@ import com.halo.sdk.runtime.EventBus
 import com.halo.sdk.runtime.ResponseDelivery
 import java.time.Instant
 import java.util.UUID
+import com.halo.runtime.cognition.ui.*
+import com.halo.runtime.cognition.agent.ToolArgumentCanonicalizer
+import com.halo.runtime.cognition.agent.ToolInvocationId
+import com.halo.runtime.cognition.agent.ActionTruth
+import com.halo.runtime.cognition.agent.isTerminal
 
 sealed interface RecoveryExecutionResult {
     data object Noop : RecoveryExecutionResult
@@ -38,17 +43,47 @@ class DefaultAgentRecoveryExecutor(
     private val toolRegistry: ToolRegistry?,
     private val eventBus: EventBus,
     private val recoveryPlanner: AgentRecoveryPlanner,
+    private val uiGenerationValid: (String) -> Boolean = { false },
+    private val uiRecoveryObserver: suspend (UiTransactionRecord) -> UiRecoveryObservation? = { null },
 ) {
     suspend fun executeRecovery(runId: AgentRunId): RecoveryExecutionResult {
         if (agentRunStore == null || agentRunCoordinator == null) return RecoveryExecutionResult.Noop
-        val run = agentRunStore.get(runId) ?: return RecoveryExecutionResult.Noop
+        var run = agentRunStore.get(runId) ?: return RecoveryExecutionResult.Noop
+        if (run.state.isTerminal) return RecoveryExecutionResult.Noop
         if (run.parentRunId != null) return RecoveryExecutionResult.Blocked("Child recovery is owned by its parent")
+        if (run.steps.filterIsInstance<AgentStep.RunPrepared>().any { it.recoveryPolicy == RunRecoveryPolicy.NO_RESUME }) return RecoveryExecutionResult.Noop
+        val resolvedCalls = run.steps.filterIsInstance<AgentStep.ToolOutcomeRecorded>().map { it.toolCallId }.toSet() +
+            run.steps.filterIsInstance<AgentStep.ToolRejected>().map { it.toolCallId }.toSet()
+        val pendingUi = run.steps.filterIsInstance<AgentStep.ProviderTurnCompleted>().lastOrNull()?.toolCalls.orEmpty()
+            .filter { it.toolName.startsWith("halo_ui_") && it.toolName != "halo_ui_wait" && it.toolCallId !in resolvedCalls }
+        var validUiContinuation = false
+        for (call in pendingUi) {
+            val args = ToolArgumentCanonicalizer.parseToArgumentsMap(call.argumentsJson)
+            val claimed = run.steps.filterIsInstance<AgentStep.ToolExecutionClaimed>().any { it.toolCallId == call.toolCallId }
+            if (!claimed && uiGenerationValid(args["snapshotId"]?.toString().orEmpty())) { validUiContinuation = true; continue }
+            val previous = run.steps.filterIsInstance<AgentStep.UiTransactionRecorded>().lastOrNull { it.transaction.toolCallId == call.toolCallId }?.transaction
+            val observed = previous?.let { uiRecoveryObserver(it) }
+            val knownReceipt = previous?.receipt ?: observed?.receipt
+            val truth = knownReceipt?.actionTruth ?: if (claimed) ActionTruth.UNKNOWN else ActionTruth.FAILED
+            val output = "status=" + if (truth == ActionTruth.CONFIRMED) "confirmed_success change=observation_reconciled next=USE_FRESH_SNAPSHOT" else
+                "observation_required actionTruth=$truth next=READ_SCREEN"
+            val invocation = run.steps.filterIsInstance<AgentStep.ToolInvocationPrepared>().firstOrNull { it.toolCallId == call.toolCallId }?.invocationId
+                ?: ToolInvocationId("${runId.value}:ui-recovery:${call.toolCallId}")
+            agentRunStore.appendStep(AgentStep.ToolOutcomeRecorded(AgentStepId(UUID.randomUUID().toString()), runId, Instant.now(),
+                invocation, call.toolCallId, call.toolName, truth == ActionTruth.CONFIRMED, output, truth, "OBSERVATION_REQUIRED"))
+            if (previous != null) agentRunStore.appendStep(AgentStep.UiTransactionRecorded(AgentStepId(UUID.randomUUID().toString()), runId, Instant.now(),
+                previous.copy(phase = UiWorkflowPhase.WAITING_FOR_MODEL, observation = observed?.snapshot?.observation(), receipt = knownReceipt)))
+        }
+        if (pendingUi.isNotEmpty()) run = agentRunStore.get(runId) ?: run
 
-        val plan = recoveryPlanner.plan(
+        val classifiedPlan = recoveryPlanner.plan(
             run = run,
             catalog = toolRegistry,
             capabilities = CapabilitySnapshot(),
         )
+        val plan = if (validUiContinuation && classifiedPlan is RecoveryPlan.MissingContext && classifiedPlan.requirement == "OBSERVATION_REQUIRED")
+            RecoveryPlan.ContinueAfterToolResult(runId, run.steps.filterIsInstance<AgentStep.ProviderTurnCompleted>().lastOrNull()?.turnId, emptySet())
+            else classifiedPlan
 
         val runPrepared = run.steps.filterIsInstance<AgentStep.RunPrepared>().firstOrNull()
         if (runPrepared?.recoveryPolicy == RunRecoveryPolicy.NO_RESUME) {
@@ -80,7 +115,7 @@ class DefaultAgentRecoveryExecutor(
 
         return when (plan) {
             is RecoveryPlan.CompleteFromRecordedResponse -> {
-                RecoveryExecutionResult.CompleteResponse(runId, InteractionId(run.interactionId.value), plan.responseText, "")
+                RecoveryExecutionResult.CompleteResponse(runId, InteractionId(run.interactionId.value), UiWorkflowProjector.summary(run) ?: plan.responseText, "")
             }
             is RecoveryPlan.RetryProviderTurn -> {
                 val req =
@@ -92,7 +127,7 @@ class DefaultAgentRecoveryExecutor(
                     policy = AiContextPolicy.CONSERVATIVE, // Filled by session
                     responseDelivery = ResponseDelivery.VISUAL_ONLY, // Filled by session
                     origin = null,
-                    metadata = mapOf("resumedRunId" to runId.value),
+                    metadata = mapOf("resumedRunId" to runId.value, "uiGenerationPreserved" to validUiContinuation.toString()),
                     runId = runId,
                     mode = CognitiveTurnMode.RECOVER_PROVIDER,
                 )
@@ -107,7 +142,7 @@ class DefaultAgentRecoveryExecutor(
                     policy = AiContextPolicy.CONSERVATIVE, // Filled by session
                     responseDelivery = ResponseDelivery.VISUAL_ONLY, // Filled by session
                     origin = null,
-                    metadata = mapOf("resumedRunId" to runId.value),
+                    metadata = mapOf("resumedRunId" to runId.value, "uiGenerationPreserved" to validUiContinuation.toString()),
                     runId = runId,
                     mode = CognitiveTurnMode.CONTINUE_AFTER_TOOL,
                 )

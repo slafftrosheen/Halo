@@ -47,6 +47,11 @@ object DiagnosticsExport {
         appendLocalLiteRt(sb, providers)
         appendNativeResources(sb)
         appendAudioContinuity(sb)
+        sb.append("--- PHONE OPERATOR V1 ---\n")
+        sb.append("Metrics: ${com.halo.runtime.cognition.ui.UiOperatorDiagnostics.metrics.value}\n")
+        com.halo.runtime.cognition.ui.UiOperatorDiagnostics.lastReceipt.value?.let {
+            sb.append("Last receipt: operation=${it.operation}; dispatch=${it.dispatchStatus}; verification=${it.verificationStatus}; truth=${it.actionTruth}; change=${it.changeKind}; settle=${it.settleStatus}; settleMs=${it.settleMs}\n")
+        }
         sb.append("--- LONG TASKS ---\n")
         val budget = com.halo.runtime.cognition.context.ContextDiagnostics.composition.value
         budget?.let {

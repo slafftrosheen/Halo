@@ -157,3 +157,14 @@ Implemented source: bounded durable payloads, semantic context budget projection
 Later acceptance must compile generated Room schema and exercise 19→20 migration, small-window provider protocol, interruption at each child/tool/result commit boundary, missing/forbidden/revised references, quota and atomic-write faults, cancellation/resource release, thermal/local serialization, backup/import without body caches, and Android UI layout/accessibility. These checks are deliberately not run under the source-only request.
 
 Deliberately excluded: another agent/session/planner store, autonomous recursive agents, role voting, unrestricted web browsing, shell/browser automation, implicit memory promotion, cloud sharing overrides and mandatory startup inference probes. [Source ledger](../engineering/LONG-HORIZON-AGENT-MINING.md).
+
+## MINING-P5-001 — delivered in source (2026-09-30)
+
+Semantic phone transaction pipeline, revision validation, semantic approval, checked setter,
+action-specific verification, bounded search/wait, durable workflow/recovery/takeover, operator UI,
+sandbox and diagnostics are source wired. Existing native capabilities remain first choice.
+No build, tests or device acceptance run. Next gate is later stabilization/physical acceptance of
+accessibility events, Compose rows/hints, approval expiry, launcher/navigation evidence and crash
+boundaries, as recorded in [the ledger](../engineering/SEMANTIC-PHONE-OPERATOR.md).
+Coordinate/privileged control, permission/CAPTCHA/payment/password automation and surveillance are
+not promoted to roadmap implementation by this batch.

@@ -49,6 +49,7 @@ class ToolExposurePlanner(
     private val registry: ToolRegistry,
     private val availabilityResolver: ToolAvailabilityResolver? = null,
     private val skillRegistry: SkillRegistry? = null,
+    private val uiObservation: () -> com.halo.runtime.cognition.ui.UiObservation? = { null },
 ) {
     /** Default children receive public/read-only reads, never discovery or user-data-wide searches. */
     fun delegatedDefinitions(): List<ToolDefinition> = registry.descriptors().filter {
@@ -191,7 +192,17 @@ class ToolExposurePlanner(
         }
 
         val budget = localPolicy?.maxExposedSchemas ?: Int.MAX_VALUE
-        for (toolId in exposure.effective) {
+        val screen = uiObservation()
+        fun applicable(name: String): Boolean = when (name) {
+            "halo_ui_click" -> screen?.clickable == true
+            "halo_ui_set_text" -> screen?.editable == true
+            "halo_ui_set_checked" -> screen?.checkable == true
+            "halo_ui_scroll", "halo_ui_search" -> screen?.scrollable == true
+            "halo_ui_global_action", "halo_ui_wait" -> screen != null
+            else -> true
+        }
+        val screenPriority = listOf("halo_read_screen", "halo_find_on_screen", "halo_ui_set_checked", "halo_ui_set_text", "halo_ui_scroll", "halo_ui_click", "halo_ui_global_action", "halo_ui_wait")
+        for (toolId in exposure.effective.sortedBy { screenPriority.indexOf(it.value).takeIf { index -> index >= 0 } ?: 100 }) {
             if (definitions.size >= budget) break
             if (toolId.value == ToolDiscoveryService.DISCOVER_TOOL) continue
             // mayExpose, not allows: membership in the planned exposure set is what
@@ -200,6 +211,7 @@ class ToolExposurePlanner(
             if (localPolicy != null && !localPolicy.mayExpose(toolId.value)) continue
             val descriptor = registry.descriptor(toolId.value) ?: continue
             if (availabilityResolver?.isAvailable(descriptor) == false) continue
+            if (!applicable(descriptor.name)) continue
             definitions.add(descriptor.definition)
         }
         return definitions

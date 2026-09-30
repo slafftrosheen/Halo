@@ -571,3 +571,14 @@ framing, published checksum vectors, web-reader refusals, ringer/brightness/time
 shapes) and `HostToolDescriptorDispatchTest` (exact claiming, no fallback classifications, capability
 requirements per ability, consent classification). Both round-trip through `BuiltInSkillManifestTest`,
 which requires every built-in skill to ship a validated manifest. No physical-phone run was performed.
+
+## MINING-P5-001 — semantic operator supersedes the earlier action gate (2026-09-30)
+
+RUNTIME-033's read-after-action gate now has action-specific typed evidence, exact uiRevision targets,
+preflight-before-approval and dispatch-time revalidation. UiTransactionRecorded projects the existing
+journal into Home/Activity/Assistant; no second truth store exists. Checked state is an explicit setter;
+bounded search/wait are wired through existing tool/guard contracts. Source completion does not establish
+Android acceptance. [New ledger and file inventory](SEMANTIC-PHONE-OPERATOR.md).
+Coordinate, shell, root, Shizuku, Xposed and privilege bridges are rejected for this semantic operator;
+the older optional privileged-adapter note below is superseded by this batch. Builds/tests/device
+acceptance not run.

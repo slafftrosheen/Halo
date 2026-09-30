@@ -49,6 +49,27 @@ object PlanPresentationProjector {
         title: String? = null,
         summary: String? = null,
     ): StructuredPresentation {
+        val transactions = steps.filterIsInstance<AgentStep.UiTransactionRecorded>().map { it.transaction }
+        if (transactions.isNotEmpty()) {
+            val items = transactions.groupBy { it.toolCallId }.values.toList().takeLast(PresentationLimits.MAX_CHECKLIST_ITEMS).map { history ->
+                val latest = history.last()
+                val receipt = history.mapNotNull { it.receipt }.lastOrNull()
+                val preview = history.mapNotNull { it.preview }.lastOrNull()
+                val phase = (latest.searchStatus?.name ?: latest.phase.name).lowercase().replace('_', ' ')
+                PresentationDirectiveItem(
+                    text = "${preview?.description ?: "Observe screen"} · $phase".take(PresentationLimits.MAX_LIST_ITEM_CHARS),
+                    state = when {
+                        receipt?.actionTruth == com.halo.runtime.cognition.agent.ActionTruth.CONFIRMED -> PresentationStepState.COMPLETED
+                        receipt?.actionTruth == com.halo.runtime.cognition.agent.ActionTruth.FAILED -> PresentationStepState.FAILED
+                        receipt != null -> PresentationStepState.SKIPPED
+                        latest.searchStatus != null -> PresentationStepState.COMPLETED
+                        latest.phase == com.halo.runtime.cognition.ui.UiWorkflowPhase.WAITING_FOR_APPROVAL -> PresentationStepState.PENDING
+                        latest.operation == null && latest.observation != null -> PresentationStepState.COMPLETED
+                        else -> PresentationStepState.ACTIVE
+                    })
+            }
+            return PresentationTemplates.checklist(title ?: "Phone operator", items, conclusion = summary)
+        }
         val items = mutableListOf<PresentationDirectiveItem>()
         for (step in steps) {
             when (step) {

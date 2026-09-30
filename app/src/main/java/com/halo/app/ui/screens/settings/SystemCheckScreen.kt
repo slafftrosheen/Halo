@@ -42,7 +42,8 @@ import com.halo.app.ui.icons.HaloIcon
 @Composable
 fun SystemCheckScreen(
     viewModel: SystemCheckViewModel,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onOpenPhoneSandbox: (() -> Unit)? = null,
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val clipboard = LocalClipboardManager.current
@@ -97,6 +98,7 @@ fun SystemCheckScreen(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        item { PhoneOperatorPanel(observationControls = true, onOpenSandbox = onOpenPhoneSandbox) }
         /*
          * MINING-P2-001 presentation preview. Static sample components, rendered only after an explicit
          * tap: no model call, no tool, no provider, no network.

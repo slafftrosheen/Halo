@@ -797,3 +797,13 @@ Source implementation extends the existing cognitive executor, context assembler
 Home shows existing P2 checklist and child status; Activity nests children; Notebook exposes selected-reference token estimates and cloud eligibility; Intelligence controls delegation/compaction; System Check exposes passive budgets/storage/counts and explicit payload GC. Explicit research saves include bounded factual source evidence in Notebook and portable backup.
 
 Status: source wired; basic source checks only. Build, tests and device acceptance were not run. These additions are not claims of verified Android/Room/provider/device behavior. See [implementation and acceptance ledger](docs/engineering/LONG-HORIZON-AGENT-MINING.md). Earlier historical validation claims apply only to their named batches.
+
+## MINING-P5-001 — semantic phone operator (2026-09-30)
+
+Source now follows OBSERVE → TARGET → PREFLIGHT → AUTHORIZE → DISPATCH → SETTLE → VERIFY.
+Exact UI revision checks, typed targets/intents/receipts, checked-state setter, bounded search/wait,
+durable transaction projection and conservative recovery reuse the existing host/tools/AgentStep/P1 path.
+Home, Activity, semantic approvals, Skills, Assistant, System Check, sandbox and content-free diagnostics
+are wired. Actual baseline is `12a31947a732790f1e6f8418c5b5aade831aa321`; database version 20 is preserved.
+[Implementation, file inventory and uncertainties](docs/engineering/SEMANTIC-PHONE-OPERATOR.md).
+Build, tests and device acceptance NOT RUN. Native phone capabilities remain preferred.

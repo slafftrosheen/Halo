@@ -143,6 +143,10 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
     private fun payloadFor(step: AgentStep): Pair<JSONObject, String> {
         val payload = JSONObject()
         val type = when (step) {
+            is AgentStep.UiTransactionRecorded -> {
+                payload.put("transaction", UiTransactionCodec.encode(step.transaction))
+                "UiTransactionRecorded"
+            }
             is AgentStep.DelegationResultRecorded -> {
                 payload.put("status", step.status).put("summary", step.summary).put("payloadRefId", step.payloadRefId)
                     .put("evidence", org.json.JSONArray(step.evidence.map { value -> JSONObject()
@@ -304,6 +308,7 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
         val call = p.optString("toolCallId", id)
         val tool = p.optString("toolId", p.optString("toolName"))
         return when (type) {
+            "UiTransactionRecorded" -> AgentStep.UiTransactionRecorded(step, run, at, UiTransactionCodec.decode(p.getJSONObject("transaction")))
             "DelegationResultRecorded" -> {
                 val values = p.optJSONArray("evidence") ?: org.json.JSONArray()
                 AgentStep.DelegationResultRecorded(step, run, at, p.getString("status"), p.getString("summary"),
@@ -479,6 +484,6 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
     }
 
     private companion object {
-        const val STEP_SCHEMA_VERSION = 6
+        const val STEP_SCHEMA_VERSION = 7
     }
 }

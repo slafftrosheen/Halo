@@ -361,8 +361,13 @@ fun AppShell(
                     }
                     SystemCheckScreen(
                         viewModel = viewModel,
+                        onOpenPhoneSandbox = { navigateSafely("phone_control_sandbox") },
                         onBack = { navController.popBackStack() }
                     )
+                }
+
+                composable("phone_control_sandbox") {
+                    com.halo.app.ui.screens.settings.PhoneControlSandboxScreen(onBack = { navController.popBackStack() })
                 }
 
                 composable("notebook/conversations") {
