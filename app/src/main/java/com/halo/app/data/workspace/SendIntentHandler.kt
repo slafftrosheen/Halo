@@ -28,11 +28,15 @@ class SendIntentHandler(
             } else {
                 val streamUri = intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
                 if (streamUri != null) {
-                    fileRepository.importFile(
+                    val imported = fileRepository.importFile(
                         uri = streamUri,
                         mimeType = type.ifBlank { null },
                         source = WorkspaceObjectSource.SHARE_INTENT
                     )
+                    if (imported.mimeType.startsWith("image/")) {
+                        com.halo.app.di.ManualDependencyGraph.visualAttachments.attach(imported.uri, "Shared file",
+                            com.halo.sdk.runtime.multimodal.MediaProvenance.SHARED_FILE, imported.objectId.value)
+                    }
                     importedCount++
                 }
             }

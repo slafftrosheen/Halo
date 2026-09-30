@@ -16,7 +16,12 @@ import com.halo.host.android.assistant.AndroidAssistantRoleController
 import com.halo.host.android.assistant.AssistantIntegrationState
 import com.halo.host.android.assistant.AssistantRuntimeStateStore
 import com.halo.providers.litert.LiteRtLocalProvider
+import com.halo.providers.litert.LiteRtModelRuntimeStatus
+import com.halo.providers.litert.LiteRtToolChannelDiagnostics
+import com.halo.providers.litert.LiteRtToolQualification
 import com.halo.providers.litert.models.LiteRtModelManager
+import com.halo.providers.litert.models.LocalModelValidation
+import com.halo.providers.litert.models.ModelVerificationResult
 import com.halo.sdk.provider.AiContext
 import com.halo.sdk.provider.AiProviderRouter
 import com.halo.sdk.provider.AiRequest
@@ -45,6 +50,11 @@ data class SystemCheckItem(
     val status: CheckStatus,
     val reason: String,
     val durationMs: Long? = null,
+    /**
+     * MINING-P0-001 compact technical detail for System Check / Model Browser only. Never contains
+     * prompts, generated text, tool argument values or secrets.
+     */
+    val detail: String? = null,
 )
 
 data class SystemCheckSection(
@@ -56,11 +66,36 @@ data class SystemCheckSection(
 data class SystemCheckUiState(
     val sections: List<SystemCheckSection> = emptyList(),
     val summaryReport: String = "",
+    /** MINING-P0-001 last explicit direct-LiteRT control probe, if one has been run. */
+    val liteRtControlProbe: com.halo.providers.litert.runtime.LiteRtControlProbeResult? = null,
+    /** MINING-P0-001 content-free tool-channel truth for the selected local artifact. */
+    val toolChannel: com.halo.providers.litert.LiteRtToolChannelDiagnostics? = null,
+    /** MINING-P2-001 static renderer preview; purely local, opened explicitly by the user. */
+    val showPresentationPreview: Boolean = false,
 )
 
 sealed class SystemCheckAction {
     object Refresh : SystemCheckAction()
-    object RunTextProbe : SystemCheckAction()
+
+    /**
+     * MINING-P0-001 each diagnostic level is a separate EXPLICIT user action. They are deliberately
+     * never chained: a differential diagnosis needs "raw PASS / provider FAIL" to be visible.
+     */
+    object RunLiteRtControlProbe : SystemCheckAction()
+
+    /** Selected-provider probe through the router (LEVEL 4). */
+    object RunProviderProbe : SystemCheckAction()
+
+    /** Halo local provider verification through LocalModelSession (LEVEL 2). */
+    object RunProviderVerification : SystemCheckAction()
+
+    /** Explicit synthetic native tool-call probe; only meaningful for a tool-capable artifact. */
+    object RunToolChannelProbe : SystemCheckAction()
+    object RunVisionProbe : SystemCheckAction()
+
+    /** Releases the resident local model so a direct probe can own the engine. */
+    object UnloadLocalModel : SystemCheckAction()
+
     object RunAgenticProbe : SystemCheckAction()
     object RunSttProbe : SystemCheckAction()
     object RunTtsProbe : SystemCheckAction()
@@ -68,6 +103,12 @@ sealed class SystemCheckAction {
     object TestAlarm : SystemCheckAction()
     object TestOpenApp : SystemCheckAction()
     object TestVolume : SystemCheckAction()
+
+    /**
+     * MINING-P2-001 renders fixed sample components. Static data only: no model call, no tool, no
+     * provider and no network — opening System Check never probes anything by itself.
+     */
+    object PreviewPresentations : SystemCheckAction()
 }
 
 class SystemCheckViewModel(
@@ -87,6 +128,10 @@ class SystemCheckViewModel(
     /** Reports whether a stored credential exists for the given secret key. */
     private val remoteCredentialPresent: (String) -> Boolean = { false },
     val assistantRoleController: AndroidAssistantRoleController = AndroidAssistantRoleController(appContext),
+    /** Optional runtime snapshot for native-resource residency/execution truth (MINING-P0-001). */
+    private val runtimeSnapshotSource: com.halo.sdk.runtime.RuntimeSnapshotSource? = null,
+    /** In-memory surface registry, read only to display how many projections are live (MINING-P2-001). */
+    private val presentationProjection: com.halo.runtime.cognition.interaction.PresentationSurfaceProjection? = null,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SystemCheckUiState())
@@ -101,7 +146,17 @@ class SystemCheckViewModel(
             is SystemCheckAction.Refresh -> refreshChecks()
             is SystemCheckAction.RunSttProbe -> testMicrophone()
             is SystemCheckAction.RunTtsProbe -> testAudioOutput()
-            is SystemCheckAction.RunTextProbe -> runAiProbe()
+            is SystemCheckAction.RunLiteRtControlProbe -> runLiteRtControlProbe()
+            is SystemCheckAction.RunProviderProbe -> runAiProbe()
+            is SystemCheckAction.RunProviderVerification -> runProviderVerification()
+            is SystemCheckAction.RunToolChannelProbe -> runToolChannelProbe()
+            is SystemCheckAction.RunVisionProbe -> viewModelScope.launch {
+                val status = com.halo.app.capture.inspectMultimodal(providerRouter)
+                val target = status.target
+                if (target != null) (target.provider as? LiteRtLocalProvider)?.probeVision(target.modelId)
+                refreshChecks()
+            }
+            is SystemCheckAction.UnloadLocalModel -> unloadLocalModel()
             is SystemCheckAction.RunAgenticProbe -> runAgenticProbe()
             is SystemCheckAction.OpenAssistantSettings -> {
                 // To be handled by UI layer with launchAssistantEnrollment
@@ -109,6 +164,16 @@ class SystemCheckViewModel(
             is SystemCheckAction.TestAlarm -> testAlarm()
             is SystemCheckAction.TestOpenApp -> testOpenApp()
             is SystemCheckAction.TestVolume -> testVolume()
+            is SystemCheckAction.PreviewPresentations -> {
+                val showing = !_uiState.value.showPresentationPreview
+                _uiState.value = _uiState.value.copy(showPresentationPreview = showing)
+                // Local row update only: toggling a preview must never trigger a re-check.
+                updateItem(
+                    id = "presentation_preview",
+                    status = CheckStatus.READY,
+                    reason = if (showing) "Preview shown" else "Tap to preview",
+                )
+            }
         }
     }
 
@@ -189,6 +254,39 @@ class SystemCheckViewModel(
                 )
             ))
 
+            // 3b. MINING-P0-001 local inference diagnostic ladder. Every level stays independently
+            // visible so "raw LiteRT PASS / provider FAIL" cannot be mistaken for "LiteRT broken".
+            if (localProvider != null || selectedModel != null) {
+                sections.add(SystemCheckSection(
+                    id = "local_ai",
+                    title = "Local AI execution truth",
+                    items = localExecutionItems(localProvider, selectedModel),
+                ))
+            }
+
+            val multimodal = com.halo.app.capture.inspectMultimodal(providerRouter)
+            sections.add(SystemCheckSection("multimodal", "Multimodal", listOf(
+                SystemCheckItem("vision_role", "Vision role", HaloGlyph.MODEL, CheckStatus.READY,
+                    providerRouter.roleBinding(com.halo.sdk.provider.AiModelRole.VISION).let { "${it.selection} · ${it.providerId ?: "automatic/inherited"}/${it.modelId ?: "automatic/inherited"}" }),
+                SystemCheckItem("vision_probe", "Local vision", HaloGlyph.MODEL,
+                    when (multimodal.visionEvidence) {
+                        "proven" -> CheckStatus.PASSED
+                        "failed" -> CheckStatus.FAILED
+                        else -> CheckStatus.NOT_CONFIGURED
+                    },
+                    "${multimodal.target?.modelId ?: "Local vision unavailable"} · ${multimodal.visionEvidence}"),
+                SystemCheckItem("image_pipeline", "Image pipeline", HaloGlyph.MODEL, CheckStatus.READY, "Bounded preparation · ephemeral captures"),
+                SystemCheckItem("audio_model", "Audio-model transcription", HaloGlyph.LISTEN, CheckStatus.NOT_CONFIGURED, "Disabled · dedicated STT remains active"),
+                SystemCheckItem("heycyan_visual", "HeyCyan visual source", HaloGlyph.MODEL,
+                    if (com.halo.app.di.ManualDependencyGraph.heyCyanDriver.activeDeviceId != null) CheckStatus.READY else CheckStatus.NOT_CONFIGURED,
+                    if (com.halo.app.di.ManualDependencyGraph.heyCyanDriver.activeDeviceId != null) "Connected" else "Unavailable"),
+                SystemCheckItem("dedicated_stt", "Dedicated STT", HaloGlyph.LISTEN,
+                    if (com.halo.app.di.ManualDependencyGraph.speechRecognitionAvailability.value) CheckStatus.READY else CheckStatus.NOT_CONFIGURED,
+                    "${com.halo.app.di.ManualDependencyGraph.providers.speechRecognition.metadata.id} · dedicated transcription strategy"),
+                SystemCheckItem("capability_packs", "Capability packs", HaloGlyph.MODEL, CheckStatus.READY,
+                    multimodal.packs.joinToString(" · ") { "${it.descriptor.displayName}: ${it.state.name.lowercase().replace('_', ' ')}" }),
+            )))
+
             // 4. Android Assistant
             assistantRoleController.refresh()
             val integration = assistantRoleController.integrationState.value
@@ -223,6 +321,59 @@ class SystemCheckViewModel(
                 id = "phone",
                 title = "Phone abilities",
                 items = phoneAbilityItems()
+            ))
+
+            /*
+             * Interaction presentation (MINING-P2-001). Passive rows plus one explicit, local preview
+             * action. There is no network or inference probe here on purpose: the schema version and
+             * renderer availability are compile-time facts, and the active-surface count is in-memory.
+             */
+            val activeSurfaces = runCatching { presentationProjection?.activeCount() }.getOrNull()
+            sections.add(SystemCheckSection(
+                id = "interaction_presentation",
+                title = "Interaction presentation",
+                items = listOf(
+                    SystemCheckItem(
+                        id = "presentation_renderer",
+                        name = "Surface renderer",
+                        glyph = HaloGlyph.SEE,
+                        status = CheckStatus.READY,
+                        reason = "Available",
+                        detail = "FULL on Home and Notebook, COMPACT in the Android Assistant overlay",
+                    ),
+                    SystemCheckItem(
+                        id = "presentation_schema",
+                        name = "Schema",
+                        glyph = HaloGlyph.MODEL,
+                        status = CheckStatus.READY,
+                        reason = "v" + com.halo.runtime.cognition.interaction.CURRENT_PRESENTATION_SCHEMA_VERSION,
+                        detail = "Newer payloads fall back to the assistant's text",
+                    ),
+                    SystemCheckItem(
+                        id = "presentation_surfaces",
+                        name = "Active surfaces",
+                        glyph = HaloGlyph.AUTOMATION,
+                        status = CheckStatus.READY,
+                        reason = (activeSurfaces ?: 0).toString(),
+                        detail = "Ephemeral projections; committed cards live in the conversation turn",
+                    ),
+                    SystemCheckItem(
+                        id = "presentation_responses",
+                        name = "Structured responses",
+                        glyph = HaloGlyph.TOOL,
+                        status = CheckStatus.READY,
+                        reason = "Supported",
+                        detail = "halo_present · presentation only, cannot execute anything",
+                    ),
+                    SystemCheckItem(
+                        id = "presentation_preview",
+                        name = "Preview presentation components",
+                        glyph = HaloGlyph.PLAY,
+                        status = CheckStatus.READY,
+                        reason = if (_uiState.value.showPresentationPreview) "Preview shown" else "Tap to preview",
+                        detail = "Fixed sample data. No model call and no tools.",
+                    ),
+                ),
             ))
 
             // Remote provider fabric presence (RUNTIME-055)
@@ -382,6 +533,233 @@ class SystemCheckViewModel(
         }
     }
 
+    // -------------------------------------------------------------------------------------
+    // MINING-P0-001 local AI execution truth
+    // -------------------------------------------------------------------------------------
+
+    private fun selectedLocalProvider(): LiteRtLocalProvider? =
+        providerRouter.getAllProviders()
+            .firstOrNull { it.id == providerRouter.selectedProviderId.value } as? LiteRtLocalProvider
+
+    /**
+     * LEVEL 0..3 view for the selected on-device artifact. Each row reports only what its own layer
+     * observed: the artifact is never marked PASSED because a file exists, and raw LiteRT control is
+     * never inferred from the provider being READY.
+     */
+    private suspend fun localExecutionItems(
+        localProvider: LiteRtLocalProvider?,
+        selectedModelId: String?,
+    ): List<SystemCheckItem> {
+        if (localProvider == null || selectedModelId == null) {
+            return listOf(
+                SystemCheckItem(
+                    id = "litert_artifact",
+                    name = "Artifact",
+                    glyph = HaloGlyph.MODEL,
+                    status = CheckStatus.NOT_CONFIGURED,
+                    reason = "No on-device model selected",
+                )
+            )
+        }
+
+        val status = runCatching { localProvider.modelStatus(selectedModelId) }.getOrNull()
+        val toolChannel = runCatching { localProvider.toolChannelDiagnostics(selectedModelId) }.getOrNull()
+        val providerStatus = runCatching { localProvider.status.value }.getOrNull()
+        val control = _uiState.value.liteRtControlProbe?.takeIf { it.modelId == selectedModelId }
+
+        return listOfNotNull(
+            artifactItem(status),
+            control?.let(::controlProbeItem) ?: controlProbeNotRunItem(),
+            providerItem(providerStatus, status),
+            generationItem(status),
+            toolChannelItem(toolChannel),
+            resourceItem(localProvider),
+            backendItem(status),
+            contextItem(status),
+        )
+    }
+
+    private fun artifactItem(status: LiteRtModelRuntimeStatus?): SystemCheckItem {
+        // installed != verified. Only VERIFIED_ARTIFACT may render as verified.
+        val (check, word) = when (status?.validation) {
+            LocalModelValidation.VERIFIED_ARTIFACT -> CheckStatus.PASSED to "VERIFIED"
+            LocalModelValidation.UNVERIFIED -> CheckStatus.READY to "UNVERIFIED"
+            LocalModelValidation.CORRUPT -> CheckStatus.FAILED to "CORRUPT"
+            LocalModelValidation.INCOMPATIBLE -> CheckStatus.FAILED to "NOT USABLE"
+            null -> CheckStatus.NOT_CONFIGURED to "NOT INSTALLED"
+        }
+        return SystemCheckItem(
+            id = "litert_artifact",
+            name = "Artifact",
+            glyph = HaloGlyph.MODEL,
+            status = check,
+            reason = word + (status?.artifactFingerprintPrefix?.let { " · sha $it" } ?: ""),
+        )
+    }
+
+    private fun controlProbeNotRunItem(): SystemCheckItem = SystemCheckItem(
+        id = "litert_control",
+        name = "Raw LiteRT control",
+        glyph = HaloGlyph.MODEL,
+        status = CheckStatus.READY,
+        reason = "Not run — direct SDK probe (Engine → Conversation → first token)",
+    )
+
+    private fun controlProbeItem(result: com.halo.providers.litert.runtime.LiteRtControlProbeResult): SystemCheckItem =
+        SystemCheckItem(
+            id = "litert_control",
+            name = "Raw LiteRT control",
+            glyph = HaloGlyph.MODEL,
+            status = when {
+                result.controlProbePassed -> CheckStatus.PASSED
+                result.blocked -> CheckStatus.BLOCKED
+                else -> CheckStatus.FAILED
+            },
+            reason = result.summaryLine(),
+            durationMs = result.totalDurationMs,
+            detail = result.stages.joinToString("\n") { stage ->
+                buildString {
+                    append(stage.stage.name)
+                    append(' ')
+                    append(stage.status.name)
+                    stage.durationMs?.let { append(" ${it}ms") }
+                    stage.boundedDetail?.let { append(" — $it") }
+                    stage.exceptionClass?.let { append(" ($it)") }
+                }
+            },
+        )
+
+    private fun providerItem(
+        providerStatus: ProviderStatus?,
+        status: LiteRtModelRuntimeStatus?,
+    ): SystemCheckItem {
+        val (check, word) = when (providerStatus?.state) {
+            ProviderStatus.State.READY ->
+                if (status?.resident == true) CheckStatus.PASSED to "RESIDENT" else CheckStatus.READY to "COLD"
+            ProviderStatus.State.LOADING -> CheckStatus.RUNNING to "LOADING"
+            ProviderStatus.State.BUSY -> CheckStatus.RUNNING to "BUSY"
+            ProviderStatus.State.ERROR -> CheckStatus.FAILED to "FAILED"
+            ProviderStatus.State.UNAVAILABLE,
+            ProviderStatus.State.UNCONFIGURED,
+            ProviderStatus.State.MODEL_MISSING,
+            ProviderStatus.State.OFFLINE,
+            null -> CheckStatus.NOT_CONFIGURED to "UNAVAILABLE"
+            else -> CheckStatus.READY to providerStatus.state.name
+        }
+        return SystemCheckItem(
+            id = "litert_provider",
+            name = "Halo local provider",
+            glyph = HaloGlyph.MODEL,
+            status = check,
+            reason = word + (providerStatus?.message?.let { " · ${it.take(120)}" } ?: ""),
+        )
+    }
+
+    private fun generationItem(status: LiteRtModelRuntimeStatus?): SystemCheckItem {
+        val record = status?.failureRecord
+        val failureStage = record?.lastGenerationFailureStage ?: record?.lastLoadFailureStage
+        val (check, word) = when {
+            status?.generationProven == true -> CheckStatus.PASSED to
+                "PROVEN ${status.effectiveBackend?.name ?: ""}".trim()
+            failureStage != null -> CheckStatus.FAILED to "FAILED $failureStage"
+            else -> CheckStatus.READY to "NOT RUN"
+        }
+        return SystemCheckItem(
+            id = "litert_generation",
+            name = "Generation proof",
+            glyph = HaloGlyph.MODEL,
+            status = check,
+            reason = word,
+            detail = record?.summaryLine(),
+        )
+    }
+
+    private fun toolChannelItem(diagnostics: LiteRtToolChannelDiagnostics?): SystemCheckItem {
+        if (diagnostics == null) {
+            return SystemCheckItem(
+                id = "litert_tools",
+                name = "Tool channel",
+                glyph = HaloGlyph.TOOL,
+                status = CheckStatus.NOT_CONFIGURED,
+                reason = "Not assessed",
+            )
+        }
+        val check = when (diagnostics.qualification) {
+            LiteRtToolQualification.NATIVE_PROVEN -> CheckStatus.PASSED
+            LiteRtToolQualification.PROMPT_MEDIATED -> CheckStatus.READY
+            LiteRtToolQualification.PROBING -> CheckStatus.RUNNING
+            LiteRtToolQualification.FAILED_LAST_PROBE -> CheckStatus.FAILED
+            LiteRtToolQualification.DECLARED,
+            LiteRtToolQualification.PROBE_REQUIRED -> CheckStatus.BLOCKED
+            LiteRtToolQualification.NOT_APPLICABLE -> CheckStatus.UNSUPPORTED
+        }
+        return SystemCheckItem(
+            id = "litert_tools",
+            name = "Tool channel",
+            glyph = HaloGlyph.TOOL,
+            status = check,
+            reason = diagnostics.qualification.label.uppercase(),
+            detail = diagnostics.summaryLine(),
+        )
+    }
+
+    private fun resourceItem(localProvider: LiteRtLocalProvider): SystemCheckItem {
+        val snapshot = runtimeSnapshotSource?.snapshot?.value?.nativeResources
+            .orEmpty()
+            .firstOrNull { it.ownerId == localProvider.nativeResourceId }
+        if (snapshot == null) {
+            return SystemCheckItem(
+                id = "litert_resource",
+                name = "Native resource",
+                glyph = HaloGlyph.DEVICE,
+                status = CheckStatus.NOT_CONFIGURED,
+                reason = "RELEASED — no native claim held",
+            )
+        }
+        // Residency is not execution: RESIDENT must show executionLeaseHeld=false.
+        val check = when {
+            snapshot.executing -> CheckStatus.RUNNING
+            snapshot.state == com.halo.sdk.runtime.NativeResourceState.RESIDENT -> CheckStatus.PASSED
+            snapshot.state == com.halo.sdk.runtime.NativeResourceState.ACQUIRING -> CheckStatus.BLOCKED
+            else -> CheckStatus.READY
+        }
+        val reason = when {
+            snapshot.state == com.halo.sdk.runtime.NativeResourceState.ACQUIRING ->
+                "WAITING — ${snapshot.reason ?: "contended"}"
+            snapshot.executing -> "IN USE — executionLeaseHeld=true"
+            else -> "${snapshot.state.name} — executionLeaseHeld=${snapshot.executionLeaseHeld}"
+        }
+        return SystemCheckItem(
+            id = "litert_resource",
+            name = "Native resource",
+            glyph = HaloGlyph.DEVICE,
+            status = check,
+            reason = reason,
+            detail = buildString {
+                append("kind=${snapshot.kind} resource=${snapshot.executionResourceId ?: "none"}")
+                snapshot.executionWaitMs?.let { append(" waitMs=$it") }
+                append(" reason=${snapshot.reason ?: "none"}")
+            },
+        )
+    }
+
+    private fun backendItem(status: LiteRtModelRuntimeStatus?): SystemCheckItem = SystemCheckItem(
+        id = "litert_backend",
+        name = "Backend",
+        glyph = HaloGlyph.MODEL,
+        status = CheckStatus.READY,
+        reason = "requested ${status?.requestedBackend?.name ?: "AUTO"} · " +
+            "effective ${status?.effectiveBackend?.name ?: "none"}",
+    )
+
+    private fun contextItem(status: LiteRtModelRuntimeStatus?): SystemCheckItem = SystemCheckItem(
+        id = "litert_context",
+        name = "Context",
+        glyph = HaloGlyph.MODEL,
+        status = CheckStatus.READY,
+        reason = "requested/effective ${status?.effectiveContextTokens?.toString() ?: "model default"}",
+    )
+
     private fun glyphFor(toolName: String): HaloGlyph = when (toolName) {
         "halo_device_info", "halo_battery_status", "halo_network_status" -> HaloGlyph.DEVICE
         "halo_clipboard_read", "halo_clipboard_write" -> HaloGlyph.NOTE
@@ -537,25 +915,141 @@ class SystemCheckViewModel(
         refreshChecks()
     }
 
-    fun runLocalLoop() {
+    /**
+     * MINING-P0-001 LEVEL 1 — direct LiteRT SDK control probe.
+     *
+     * Stream K cleanup: this replaces the previous `runLocalLoop()`, which called
+     * `providerRouter.execute()` and therefore sat on the SAME layer as the selected-provider probe
+     * while implying it was lower-level. The direct probe bypasses the router, cognition, memory,
+     * tools, the agent loop and speech, so a raw PASS / provider FAIL is now genuinely differential.
+     *
+     * Explicit user action only: never runs at startup or when Settings opens.
+     */
+    private fun runLiteRtControlProbe() {
         viewModelScope.launch(Dispatchers.IO) {
-            updateItem("core", CheckStatus.RUNNING, "Running synthetic loop...")
-            val startTime = System.currentTimeMillis()
-            runCatching {
-                val response = providerRouter.execute(
-                    AiRequest(text = "Hello", maxOutputTokens = 8),
-                    AiWorkloadSpec(kind = AiWorkloadKind.CONVERSATION),
-                    AiContext.EMPTY,
-                )
-                val elapsed = System.currentTimeMillis() - startTime
-                if (response.text.isNotBlank()) {
-                    updateItem("core", CheckStatus.PASSED, "Synthetic loop completed (${response.text})", elapsed)
-                } else {
-                    updateItem("core", CheckStatus.FAILED, "Synthetic loop returned empty text", elapsed)
-                }
-            }.onFailure { err ->
-                updateItem("core", CheckStatus.FAILED, "${err::class.java.simpleName}: ${err.message}", System.currentTimeMillis() - startTime)
+            val provider = selectedLocalProvider()
+            val modelId = providerRouter.selectedModelId.value
+            if (provider == null || modelId == null) {
+                updateItem("litert_control", CheckStatus.NOT_CONFIGURED, "No on-device model selected")
+                return@launch
             }
+            updateItem("litert_control", CheckStatus.RUNNING, "Running direct LiteRT control probe…")
+            val result = runCatching { provider.runControlProbe(modelId) }.getOrNull()
+            if (result == null) {
+                updateItem("litert_control", CheckStatus.FAILED, "Control probe could not run")
+                return@launch
+            }
+            _uiState.value = _uiState.value.copy(liteRtControlProbe = result)
+            refreshChecks()
+        }
+    }
+
+    /**
+     * LEVEL 2 — Halo's own provider verification (LocalModelSession, load policy, backend fallback,
+     * provider status). Deliberately separate from the raw control probe and from the router probe.
+     */
+    private fun runProviderVerification() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val provider = selectedLocalProvider()
+            val modelId = providerRouter.selectedModelId.value
+            if (provider == null || modelId == null) {
+                updateItem("litert_provider", CheckStatus.NOT_CONFIGURED, "No on-device model selected")
+                return@launch
+            }
+            updateItem("litert_provider", CheckStatus.RUNNING, "Verifying $modelId through Halo's local session…")
+            val start = System.currentTimeMillis()
+            val result = runCatching { provider.verifyModel(modelId) }.getOrNull()
+            val elapsed = System.currentTimeMillis() - start
+            when (result) {
+                is ModelVerificationResult.Verified -> updateItem(
+                    "litert_provider",
+                    CheckStatus.PASSED,
+                    "Load + conversation + first token on ${result.backend}",
+                    elapsed,
+                    "loadBackend=${result.loadBackend} generationBackend=${result.generationBackend}" +
+                        " loadMs=${result.loadMs} ttftMs=${result.ttftMs}",
+                )
+                is ModelVerificationResult.Failed -> updateItem(
+                    "litert_provider",
+                    CheckStatus.FAILED,
+                    "${result.stage}: ${result.reason}",
+                    elapsed,
+                    result.technicalDetail,
+                )
+                null -> updateItem("litert_provider", CheckStatus.FAILED, "Verification threw unexpectedly", elapsed)
+            }
+            refreshChecks()
+        }
+    }
+
+    /**
+     * Explicit synthetic native tool-call probe. Harmless: Halo's own tool never executes inside
+     * LiteRT. Only meaningful when the artifact is tool-capable, so a NONE artifact is refused
+     * instead of probed for nothing.
+     */
+    private fun runToolChannelProbe() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val provider = selectedLocalProvider()
+            val modelId = providerRouter.selectedModelId.value
+            if (provider == null || modelId == null) {
+                updateItem("litert_tools", CheckStatus.NOT_CONFIGURED, "No on-device model selected")
+                return@launch
+            }
+            val channel = runCatching { provider.toolChannelDiagnostics(modelId) }.getOrNull()
+            _uiState.value = _uiState.value.copy(toolChannel = channel)
+            if (channel?.qualification == LiteRtToolQualification.NOT_APPLICABLE) {
+                updateItem(
+                    "litert_tools",
+                    CheckStatus.UNSUPPORTED,
+                    "This artifact cannot carry a tool loop",
+                    detail = channel.summaryLine(),
+                )
+                return@launch
+            }
+            updateItem("litert_tools", CheckStatus.RUNNING, "Probing the native tool channel…")
+            val start = System.currentTimeMillis()
+            val result = runCatching { provider.probeToolCalling(modelId) }.getOrNull()
+            val elapsed = System.currentTimeMillis() - start
+            val refreshed = runCatching { provider.toolChannelDiagnostics(modelId) }.getOrNull()
+            _uiState.value = _uiState.value.copy(toolChannel = refreshed ?: channel)
+            if (result == null) {
+                updateItem("litert_tools", CheckStatus.FAILED, "Tool probe could not run", elapsed)
+                return@launch
+            }
+            updateItem(
+                "litert_tools",
+                when {
+                    result.qualification == LiteRtToolQualification.NATIVE_PROVEN -> CheckStatus.PASSED
+                    result.failureStage != null -> CheckStatus.FAILED
+                    else -> CheckStatus.READY
+                },
+                result.summaryLine(),
+                elapsed,
+                result.failureDetail ?: refreshed?.summaryLine(),
+            )
+            refreshChecks()
+        }
+    }
+
+    /**
+     * Releases the resident local model so a direct runtime probe can own the engine. A warm
+     * RESIDENT model makes the probe BLOCKED on purpose rather than silently loading a second one.
+     */
+    private fun unloadLocalModel() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val provider = selectedLocalProvider()
+            if (provider == null) {
+                updateItem("litert_control", CheckStatus.NOT_CONFIGURED, "No on-device provider selected")
+                return@launch
+            }
+            val unloaded = runCatching { provider.unloadLocalModel() }.getOrDefault(false)
+            updateItem(
+                "litert_control",
+                if (unloaded) CheckStatus.READY else CheckStatus.FAILED,
+                if (unloaded) "Local model unloaded — the direct control probe can run now"
+                else "No resident local model to unload",
+            )
+            refreshChecks()
         }
     }
 
@@ -571,10 +1065,24 @@ class SystemCheckViewModel(
         updateItem("phone_volume", CheckStatus.PASSED, "Volume change requested")
     }
 
-    private fun updateItem(id: String, status: CheckStatus, reason: String, durationMs: Long? = null) {
+    private fun updateItem(
+        id: String,
+        status: CheckStatus,
+        reason: String,
+        durationMs: Long? = null,
+        detail: String? = null,
+    ) {
         val updatedSections = _uiState.value.sections.map { section ->
             section.copy(items = section.items.map { item ->
-                if (item.id == id) item.copy(status = status, reason = reason, durationMs = durationMs) else item
+                if (item.id == id) {
+                    item.copy(
+                        status = status,
+                        reason = reason,
+                        durationMs = durationMs ?: item.durationMs,
+                        // null means "keep what the row already reported".
+                        detail = detail ?: item.detail,
+                    )
+                } else item
             })
         }
         _uiState.value = _uiState.value.copy(sections = updatedSections)

@@ -114,6 +114,13 @@ private fun ActivityListItem(story: ActivityStory, onOpenObject: (String) -> Uni
         Spacer(Modifier.width(14.dp))
         Column(modifier = Modifier.weight(1f)) {
             if (expanded) {
+                story.planPresentation?.let { plan ->
+                    com.halo.app.interaction.StructuredPresentationRenderer(
+                        presentation = plan,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Spacer(Modifier.size(6.dp))
+                }
                 story.steps.forEach { step ->
                     Text("${step.title}: ${step.message}", style = MaterialTheme.typography.bodySmall,
                         color = if (step.failed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)
@@ -133,6 +140,14 @@ private fun ActivityListItem(story: ActivityStory, onOpenObject: (String) -> Uni
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 4
             )
+            story.planProgress?.let { progress ->
+                Spacer(Modifier.size(2.dp))
+                Text(
+                    text = progress,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }
@@ -158,7 +173,14 @@ data class ActivityStory(
     val timestamp: Instant,
     val status: ActivityStatus,
     val steps: List<ActivityStep>,
-    val objectId: String? = null
+    val objectId: String? = null,
+    /**
+     * MINING-P2-001 Part K: progress projected from the AgentRun journal only. A model's prose can
+     * never mark a step complete — the checklist reflects recorded execution evidence.
+     */
+    val planPresentation: com.halo.runtime.cognition.interaction.StructuredPresentation? = null,
+    /** Compact "3 / 4 steps complete" line for the collapsed row. */
+    val planProgress: String? = null,
 )
 
 data class ActivityUiState(
@@ -289,7 +311,17 @@ private fun AgentRun.toStory(): ActivityStory {
         null -> null
     }
     val formattedState = RuntimeUiFormatters.formatRunState(state)
-    val summaryText = listOfNotNull(waitingLabel ?: formattedState, "Outcome unknown".takeIf { hasUnknownAction }, failureReason)
+    /*
+     * MINING-P1-001: a deliberately stopped run reads as "Task stopped · <reason>", not as a runtime
+     * failure. The summary is content-free by construction (counts, digests, tool ids only).
+     */
+    val guardStop = steps.filterIsInstance<AgentStep.RunGuardTriggered>().lastOrNull()
+    val summaryText = listOfNotNull(
+        guardStop?.summary ?: (waitingLabel ?: formattedState),
+        "Outcome unknown".takeIf { hasUnknownAction },
+        guardStop?.let { "${it.round} tool rounds" },
+        failureReason,
+    )
         .filter { it.isNotBlank() }
         .joinToString(" · ")
 
@@ -308,6 +340,12 @@ private fun AgentRun.toStory(): ActivityStory {
             is AgentStep.ToolRejected -> "${step.toolId}: rejected (${step.reasonCode.name.lowercase()})"
             is AgentStep.ToolFailed -> "${step.toolId}: ${step.reason}"
             is AgentStep.ToolCompleted -> "${step.toolId}: ${step.resultSummary}"
+            // MINING-P1-001: reason and bounded evidence, never a raw enum name or user content.
+            is AgentStep.RunGuardTriggered -> buildString {
+                append(step.summary)
+                step.toolId?.let { append(" · ").append(it) }
+                append(" · ").append(step.round).append(" rounds")
+            }
             else -> step::class.simpleName ?: "Step"
         }
         ActivityStep(
@@ -319,7 +357,41 @@ private fun AgentRun.toStory(): ActivityStory {
         )
     }
 
-    return ActivityStory("agent:${id.value}", interactionId.value, ActivityKind.HALO, request, summaryText, createdAt, status, activitySteps)
+    /*
+     * MINING-P2-001 Part K: a projected plan checklist for multi-step runs. Derived only from journal
+     * evidence, and only when the run actually recorded several execution phases — a single tool call
+     * does not deserve a checklist.
+     */
+    val evidencedPhases = steps.count { step ->
+        step is AgentStep.PlanCreated || step is AgentStep.ToolExecutionClaimed ||
+            step is AgentStep.ToolOutcomeRecorded || step is AgentStep.ToolCompleted ||
+            step is AgentStep.ToolFailed || step is AgentStep.ToolRejected ||
+            step is AgentStep.InputRequested
+    }
+    val planPresentation = if (evidencedPhases >= 2) {
+        // Title is fixed copy: the run title already appears above, and the checklist must not restate
+        // the user's request to itself.
+        com.halo.runtime.cognition.interaction.PlanPresentationProjector.fromJournal(
+            steps = steps,
+            title = "Plan",
+        )
+    } else null
+    val planProgress = if (evidencedPhases >= 2) {
+        com.halo.runtime.cognition.interaction.PlanPresentationProjector.progressLine(steps)
+    } else null
+
+    return ActivityStory(
+        id = "agent:${id.value}",
+        correlationId = interactionId.value,
+        kind = ActivityKind.HALO,
+        title = request,
+        summary = summaryText,
+        timestamp = createdAt,
+        status = status,
+        steps = activitySteps,
+        planPresentation = planPresentation,
+        planProgress = planProgress,
+    )
 }
 
 private val activityTimeFormatter = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())

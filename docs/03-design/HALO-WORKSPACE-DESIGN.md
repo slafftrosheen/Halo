@@ -176,3 +176,20 @@ physical motion. Semantic danger/warning colors remain stronger than pastel obje
 The migration intentionally preserved the existing control contract: motors must be armed before
 drive commands, forward motion remains blocked by safety telemetry, joystick release sends STOP,
 manual pulses remain bounded/throttled, and the embedded SafetySupervisor remains authoritative.
+
+### Structured answers in the workspace (RUNTIME-059)
+
+A structured assistant answer reaches the Notebook only through an explicit host action on the
+response card ("Save to Notebook"). The saved object is an ordinary note: its body is the assistant's
+text fallback, and the bounded presentation payload travels in the object's existing provenance
+metadata. The note detail view shows the original card read-only above the editable document, labelled
+as the original presentation, so nobody mistakes a generated view for an editable document.
+
+The presentation schema is deliberately **not** merged into the Markdown document schema, and no new
+table was added for it. A payload the renderer cannot understand (a future schema version, a truncated
+or corrupt record) simply does not render: the note remains exactly the text it always was.
+
+Working Set continues to be the only way workspace objects enter a task's context. It already existed
+(`WorkingSetEntry`, the Working Set sheet and `ContextSource.WorkingSet` priority in context assembly);
+this batch added nothing parallel to it, and a Notebook object still never enters model context just
+because it was saved.

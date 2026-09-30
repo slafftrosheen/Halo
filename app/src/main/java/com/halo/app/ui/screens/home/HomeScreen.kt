@@ -81,6 +81,10 @@ fun HomeScreen(
     val context = androidx.compose.ui.platform.LocalContext.current
     var pendingPhoto by rememberSaveable { mutableStateOf<String?>(null) }
     val captureMessage by viewModel.captureMessage.collectAsState()
+    val visualAttachment by com.halo.app.di.ManualDependencyGraph.visualAttachments.state.collectAsState()
+    val imagePicker = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.GetContent()
+    ) { uri -> uri?.let(viewModel::attachSharedImage) }
     val scope = rememberCoroutineScope()
     val camera = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.TakePicture()) { received ->
         val path = pendingPhoto
@@ -322,6 +326,17 @@ fun HomeScreen(
         }
         Spacer(Modifier.height(16.dp))
         captureMessage?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+        visualAttachment?.let { attachment ->
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                com.halo.app.capture.VisualAttachmentThumbnail(attachment, Modifier.size(48.dp))
+                Text("${attachment.source} · ${attachment.ref.bytes ?: 0} bytes", modifier = Modifier.weight(1f))
+                androidx.compose.material3.TextButton(onClick = viewModel::saveVisualAttachment) { Text("Save to Notebook") }
+                androidx.compose.material3.TextButton(onClick = viewModel::removeVisualAttachment) { Text("Remove") }
+            }
+            Text("Ask about this image…", style = MaterialTheme.typography.bodySmall)
+            androidx.compose.material3.TextButton(onClick = viewModel::navigateToIntelligence) { Text("Configure Vision model") }
+        }
+        androidx.compose.material3.TextButton(onClick = { imagePicker.launch("image/*") }) { Text("Attach image") }
         uiState.inputStatus.rejection?.let { Text(it.replace('_', ' '), style = MaterialTheme.typography.bodySmall) }
         AnimatedVisibility(visible = responseText.isNotBlank()) {
             Surface(
@@ -366,6 +381,18 @@ fun HomeScreen(
                         }
                     }
                     Spacer(Modifier.height(14.dp))
+                    /*
+                     * MINING-P2-001: a committed structured answer renders as a bounded card, with the
+                     * assistant's own text kept underneath as the fallback. Text-only hosts, speech and
+                     * the notebook never see the component tree.
+                     */
+                    uiState.structuredPresentation?.let { presentation ->
+                        com.halo.app.interaction.StructuredPresentationRenderer(
+                            presentation = presentation,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        Spacer(Modifier.height(12.dp))
+                    }
                     HaloMarkdownText(
                         markdown = responseText,
                         textColor = MaterialTheme.colorScheme.onSurface,
@@ -375,7 +402,12 @@ fun HomeScreen(
                         Spacer(Modifier.height(10.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                             TextButton(onClick = { clipboard.setText(AnnotatedString(responseText)) }) { Text("Copy") }
-                            TextButton(onClick = { viewModel.saveResponse(responseText) }) { Text("Save") }
+                            TextButton(onClick = { viewModel.saveResponse(responseText) }) {
+                                // Explicit host action; saving is never automatic (Part N).
+                                Text(
+                                    if (uiState.structuredPresentation != null) "Save to Notebook" else "Save",
+                                )
+                            }
                         }
                     }
                 }

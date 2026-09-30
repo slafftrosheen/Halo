@@ -40,6 +40,8 @@ import com.halo.app.ui.design.HaloScreenHeader
 import com.halo.app.ui.design.HaloSpacing
 import com.halo.app.ui.theme.HaloPastelMint
 import com.halo.providers.litert.LiteRtToolProbeResult
+import com.halo.providers.litert.LiteRtToolQualification
+import com.halo.providers.litert.runtime.LiteRtControlProbeResult
 import com.halo.providers.litert.models.DownloadState
 import com.halo.providers.litert.models.LiteRtCatalogAccess
 import com.halo.providers.litert.models.LiteRtCatalogModel
@@ -142,6 +144,21 @@ fun ModelBrowserScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit) {
                     smokeTest = ui.smokeTests[model.id],
                     benchmark = ui.benchmarkResults[model.id],
                     toolProbe = ui.toolProbes[model.id],
+                    controlProbe = ui.controlProbes[model.id],
+                    toolQualification = ui.toolQualification[model.id]
+                        ?: LiteRtToolQualification.NOT_APPLICABLE,
+                    executionState = ui.nativeResources
+                        .firstOrNull {
+                            it.kind == com.halo.sdk.runtime.NativeResourceKind.HEAVY_LLM &&
+                                it.ownerId == "litert_local"
+                        }
+                        ?.let { snapshot ->
+                            when {
+                                snapshot.executing -> "In use"
+                                snapshot.state == com.halo.sdk.runtime.NativeResourceState.RESIDENT -> "Idle (resident)"
+                                else -> snapshot.state.name.lowercase().replace('_', ' ')
+                            }
+                        },
                     busy = ui.busyModelId == model.id,
                     detailsExpanded = detailsFor == model.id,
                     diagnosticsLine = ui.litertLoadDiagnostics
@@ -160,6 +177,9 @@ fun ModelBrowserScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit) {
                     onSmokeTest = { viewModel.smokeTestModel(model.id) },
                     onBenchmark = { viewModel.benchmarkModel(model.id) },
                     onProbeTools = { viewModel.probeModelTools(model.id) },
+                    onProbeVision = { viewModel.probeModelVision(model.id) },
+                    visionQualification = ui.visionQualification[model.id],
+                    onControlProbe = { viewModel.runControlProbe(model.id) },
                     onUnload = { viewModel.unloadLocalModel() },
                     onDelete = { viewModel.deleteModel(model.id) },
                     onImport = { importLauncher.launch("*/*") },
@@ -212,6 +232,9 @@ private fun ModelCard(
     smokeTest: LocalModelSmokeTestResult?,
     benchmark: LocalModelBenchmarkResult?,
     toolProbe: LiteRtToolProbeResult?,
+    controlProbe: LiteRtControlProbeResult?,
+    toolQualification: LiteRtToolQualification,
+    executionState: String?,
     busy: Boolean,
     detailsExpanded: Boolean,
     diagnosticsLine: String?,
@@ -225,6 +248,9 @@ private fun ModelCard(
     onSmokeTest: () -> Unit,
     onBenchmark: () -> Unit,
     onProbeTools: () -> Unit,
+    onProbeVision: () -> Unit,
+    visionQualification: com.halo.providers.litert.VisionQualification?,
+    onControlProbe: () -> Unit,
     onUnload: () -> Unit,
     onDelete: () -> Unit,
     onImport: () -> Unit,
@@ -272,12 +298,46 @@ private fun ModelCard(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                listOfNotNull("Text", "Vision".takeIf { model.supportsVision }, "Audio".takeIf { model.supportsAudio },
+                    "Tools".takeIf { model.supportsTools }, "Thinking".takeIf { model.supportsThinking }).forEach { capability ->
+                    Surface(shape = RoundedCornerShape(8.dp), color = MaterialTheme.colorScheme.secondaryContainer) {
+                        Text(capability, modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp), style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(4.dp))
+
+            // MINING-P0-001 compact truth indicators. Each is a separate fact: artifact,
+            // selection, residency, execution lease, backend, generation proof, tool channel.
             Text(
-                "access=${model.access.name} · maturity=${model.maturity.name} · " +
-                    "tools=${model.supportsTools} vision=${model.supportsVision} thinking=${model.supportsThinking} · " +
-                    "revision ${model.revision.take(12)}",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                buildString {
+                    append("Artifact: ")
+                    append(
+                        when (descriptor?.validation) {
+                            LocalModelValidation.VERIFIED_ARTIFACT -> "Verified"
+                            LocalModelValidation.UNVERIFIED -> "Unverified"
+                            LocalModelValidation.CORRUPT -> "Corrupt"
+                            LocalModelValidation.INCOMPATIBLE -> "Incompatible"
+                            null -> "Not installed"
+                        }
+                    )
+                    append(" · Selected: "); append(if (selected) "Yes" else "No")
+                    append(" · Resident: "); append(if (resident) "Yes" else "No")
+                    append(" · Execution: "); append(executionState ?: "Idle")
+                    append(" · Backend: "); append(effectiveBackend?.let(::backendLabel) ?: "-")
+                    append(" · Generation: "); append(if (generationProven) "Proven" else "Not proven")
+                    append(" · Tools: "); append(toolQualification.label)
+                    append(" · Vision: "); append(when (visionQualification) {
+                        com.halo.providers.litert.VisionQualification.PROVEN -> "Proven"
+                        com.halo.providers.litert.VisionQualification.FAILED -> "Last probe failed"
+                        else -> if (model.supportsVision) "Probe required" else "Not supported"
+                    })
+                    append(" · Audio: "); append(if (model.supportsAudio) "Probe required" else "Not supported")
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
             Spacer(Modifier.height(8.dp))
@@ -371,10 +431,20 @@ private fun ModelCard(
                     }
                     installedAndVerified -> {
                         if (!selected) Button(onClick = onSelect) { Text("Select") }
-                        OutlinedButton(onClick = onVerify, enabled = !busy) { Text("Verify") }
+                        // Three deliberately distinct levels: raw SDK probe, provider verification,
+                        // native tool channel. Never presented as one action.
+                        OutlinedButton(onClick = onControlProbe, enabled = !busy) {
+                            Text("Direct runtime probe")
+                        }
+                        OutlinedButton(onClick = onVerify, enabled = !busy) { Text("Verify model") }
                         OutlinedButton(onClick = onSmokeTest, enabled = !busy) { Text("Smoke test") }
                         OutlinedButton(onClick = onBenchmark, enabled = !busy) { Text("Benchmark") }
-                        OutlinedButton(onClick = onProbeTools, enabled = !busy) { Text("Probe tools") }
+                        OutlinedButton(onClick = onProbeTools, enabled = !busy) {
+                            Text("Probe tool channel")
+                        }
+                        if (model.supportsVision) OutlinedButton(onClick = onProbeVision, enabled = !busy) {
+                            Text("Run synthetic vision probe")
+                        }
                         if (resident) OutlinedButton(onClick = onUnload) { Text("Unload") }
                         OutlinedButton(onClick = onDelete) { Text("Delete") }
                     }
@@ -461,6 +531,16 @@ private fun ModelCard(
                 )
             }
 
+            controlProbe?.let { result ->
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    result.summaryLine(),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontFamily = FontFamily.Monospace,
+                    color = if (result.controlProbePassed) HaloPastelMint else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+
             val validationDetail = descriptor?.validationDetail
             if (damaged && validationDetail != null) {
                 Spacer(Modifier.height(4.dp))
@@ -481,6 +561,9 @@ private fun ModelCard(
                 Text(
                     buildString {
                         appendLine("Artifact: ${model.filename}")
+                        appendLine("Access: ${model.access} · maturity: ${model.maturity}")
+                        appendLine("Pinned revision: ${model.revision}")
+                        appendLine("Declared vision: ${model.supportsVision} · audio: ${model.supportsAudio} · tools: ${model.supportsTools}")
                         appendLine("Expected bytes: ${model.expectedBytes}")
                         appendLine("Expected SHA-256: ${model.sha256}")
                         appendLine("Runtime profile: preferred=${model.runtimeProfile.preferredBackend} " +
@@ -508,6 +591,17 @@ private fun ModelCard(
                             verification.technicalDetail?.let { appendLine("  $it") }
                         }
                         diagnosticsLine?.let { appendLine(it) }
+                        controlProbe?.let { probe ->
+                            appendLine("Direct runtime probe: ${probe.summaryLine()}")
+                            probe.stages.forEach { stage ->
+                                appendLine(
+                                    "  ${stage.stage}: ${stage.status}" +
+                                        (stage.durationMs?.let { " ${it}ms" } ?: "") +
+                                        (stage.boundedDetail?.let { " — $it" } ?: "") +
+                                        (stage.exceptionClass?.let { " ($it)" } ?: "")
+                                )
+                            }
+                        }
                     }.trim(),
                     style = MaterialTheme.typography.labelSmall,
                     fontFamily = FontFamily.Monospace,

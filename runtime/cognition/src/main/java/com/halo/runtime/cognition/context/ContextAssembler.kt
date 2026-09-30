@@ -19,7 +19,7 @@ data class ContextAssemblyResult(
 )
 
 data class ImageContext(
-    val imageBytes: ByteArray,
+    val imageBytes: ByteArray = byteArrayOf(),
     val mimeType: String,
     val timestampMs: Long,
     val assetId: String? = null,
@@ -28,15 +28,16 @@ data class ImageContext(
     val source: ContextSource = ContextSource.CurrentRequest,
     val trust: ContextTrust = ContextTrust.EXTERNAL_UNTRUSTED,
     val freshness: VisualFreshness = VisualFreshness.RECENT_CAPTURE,
+    val mediaRef: com.halo.sdk.runtime.multimodal.MediaAssetRef? = null,
 ) {
 
     val sizeBytes: Int
-        get() = imageBytes.size
+        get() = mediaRef?.bytes?.coerceAtMost(Int.MAX_VALUE.toLong())?.toInt() ?: imageBytes.size
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is ImageContext) return false
-        return imageBytes.contentEquals(other.imageBytes) &&
+        return mediaRef == other.mediaRef && imageBytes.contentEquals(other.imageBytes) &&
             mimeType == other.mimeType &&
             timestampMs == other.timestampMs &&
             assetId == other.assetId &&
@@ -49,6 +50,7 @@ data class ImageContext(
 
     override fun hashCode(): Int {
         var result = imageBytes.contentHashCode()
+        result = 31 * result + (mediaRef?.hashCode() ?: 0)
         result = 31 * result + mimeType.hashCode()
         result = 31 * result + timestampMs.hashCode()
         result = 31 * result + (assetId?.hashCode() ?: 0)

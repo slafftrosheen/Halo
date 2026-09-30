@@ -271,7 +271,8 @@ class DefaultAiProviderRouter(
                         .thenBy { it.id }
                 )
             for (provider in candidates) {
-                if (policy == AiRoutingPolicy.LOCAL_ONLY && !provider.isLocal) {
+                if ((policy == AiRoutingPolicy.LOCAL_ONLY ||
+                        (currentSelection().policy == AiRoutingPolicy.LOCAL_ONLY && AiCapability.IMAGE in workload.requiredCapabilities)) && !provider.isLocal) {
                     rejected += RejectedAiTarget(provider.id, null, TargetRejectionReason.POLICY_EXCLUDED)
                     continue
                 }
@@ -443,11 +444,13 @@ class DefaultAiProviderRouter(
         )
 
         validateModelWorkload(candidateModel, request, workload, providerCapabilities)
+        val targetCapabilities = (provider as? ModelInputCapabilityReporting)?.capabilitiesForModel(candidateModel.id) ?: providerCapabilities
+        validateModelWorkload(candidateModel, request, workload, targetCapabilities)
 
         return AiExecutionTarget(
             provider = provider,
             model = candidateModel,
-            providerCapabilities = providerCapabilities,
+            providerCapabilities = targetCapabilities,
         )
     }
 
@@ -457,6 +460,8 @@ class DefaultAiProviderRouter(
         workload: AiWorkloadSpec,
         providerCapabilities: Set<AiCapability>,
     ): Boolean {
+        if (!workload.allowRemote && model.executionLocation != AiExecutionLocation.ON_DEVICE) return false
+        if (currentSelection().policy == AiRoutingPolicy.LOCAL_ONLY && AiCapability.IMAGE in workload.requiredCapabilities && model.executionLocation != AiExecutionLocation.ON_DEVICE) return false
         val effectiveCaps = providerCapabilities.intersect(
             model.inputCapabilities +
                 (if (model.supportsTools && AiCapability.TOOLS in providerCapabilities) {

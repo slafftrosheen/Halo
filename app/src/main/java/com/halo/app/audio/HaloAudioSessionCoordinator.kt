@@ -1,6 +1,10 @@
 package com.halo.app.audio
 
+import com.halo.sdk.runtime.AudioDeviceKind
+import com.halo.sdk.runtime.InteractionAudioAffinity
+import com.halo.sdk.runtime.InteractionAudioRouteState
 import com.halo.sdk.runtime.SpeechInputRoute
+import com.halo.sdk.runtime.SpeechOutputFallback
 import com.halo.sdk.runtime.SpeechOutputTarget
 import com.halo.sdk.runtime.SpeechRouteEvidence
 import com.halo.sdk.runtime.resource.HaloResourceIds
@@ -112,6 +116,16 @@ class HaloAudioSessionCoordinator(
     @Volatile private var inputOwner: InputLease? = null
     @Volatile private var outputOwner: OutputLease? = null
 
+    /**
+     * MINING-P0-001 the most recent (or active) interaction's audio affinity.
+     *
+     * This outlives the microphone capture: `finishInput()` ends the capture-scoped listening
+     * state but deliberately never clears this binding. Only the interaction finishing, being
+     * cancelled, an explicit policy handoff, or teardown ends it.
+     */
+    private val _affinity = MutableStateFlow<InteractionAudioAffinity?>(null)
+    val affinity: StateFlow<InteractionAudioAffinity?> = _affinity.asStateFlow()
+
     @Volatile var playbackGuard: PlaybackGuardWindow? = null
         private set
 
@@ -216,12 +230,22 @@ class HaloAudioSessionCoordinator(
     fun failed(transactionId: String?, reason: HaloAudioFailure) {
         if (transactionId != null && transactionId != currentTransactionId()) return
         finishGuard()
+        transactionId?.let { id ->
+            when (reason) {
+                HaloAudioFailure.ROUTE_UNAVAILABLE -> transitionRoute(id, InteractionAudioRouteState.UNAVAILABLE)
+                HaloAudioFailure.ROUTE_LOST -> transitionRoute(id, InteractionAudioRouteState.LOST)
+                else -> Unit
+            }
+        }
         mutableState.value = HaloAudioSessionState.Failed(transactionId, reason)
     }
 
     fun idle(transactionId: String? = null) {
         if (transactionId != null && currentTransactionId() != transactionId) return
         finishGuard()
+        // The interaction is finished: retain the record as "most recent" for diagnostics, but the
+        // route is no longer authoritative for a new interaction.
+        endCurrentInteraction()
         mutableState.value = HaloAudioSessionState.Idle
     }
 
@@ -233,7 +257,99 @@ class HaloAudioSessionCoordinator(
             else -> null
         }
         if (ownedCapture == captureId) mutableState.compareAndSet(current, HaloAudioSessionState.Idle)
+        // Interaction audio affinity intentionally survives capture end. Speech recognition,
+        // cognition, provider load, inference, planning, tool execution and TTS preparation all
+        // happen after the microphone lease is released and must keep the same output target.
     }
+
+    // -------------------------------------------------------------------------------------
+    // Interaction audio affinity (MINING-P0-001)
+    // -------------------------------------------------------------------------------------
+
+    /**
+     * Binds route affinity for an interaction whose input/origin is now established.
+     *
+     * A wearable-origin input keeps the originating wearable as the intended output with phone
+     * fallback disabled, matching Halo's existing HeyCyan continuity policy. A phone-origin input
+     * keeps Android's own communication-route selection for output.
+     */
+    fun bindInteraction(
+        interactionId: String,
+        inputRoute: SpeechInputRoute,
+        intendedTarget: SpeechOutputTarget = defaultTargetFor(inputRoute),
+        fallback: SpeechOutputFallback = defaultFallbackFor(inputRoute),
+        originDeviceId: String? = (inputRoute as? SpeechInputRoute.Device)?.deviceId,
+        originKind: AudioDeviceKind? = (inputRoute as? SpeechInputRoute.Device)?.kind,
+    ) {
+        if (interactionId.isBlank()) return
+        val now = System.currentTimeMillis()
+        val existing = _affinity.value
+        _affinity.value = InteractionAudioAffinity(
+            interactionId = interactionId,
+            originDeviceId = originDeviceId,
+            originKind = originKind,
+            inputRoute = inputRoute,
+            intendedTarget = intendedTarget,
+            fallback = fallback,
+            resolvedEndpointLabel = existing?.takeIf { it.interactionId == interactionId }?.resolvedEndpointLabel,
+            routeState = InteractionAudioRouteState.PENDING,
+            boundAtMs = existing?.takeIf { it.interactionId == interactionId }?.boundAtMs ?: now,
+            lastTransitionAtMs = now,
+        )
+    }
+
+    /** Records the outcome of route preparation for the active interaction. */
+    fun transitionRoute(
+        interactionId: String,
+        state: InteractionAudioRouteState,
+        endpointLabel: String? = null,
+        intendedTarget: SpeechOutputTarget? = null,
+        fallback: SpeechOutputFallback? = null,
+    ) {
+        val current = currentAffinityFor(interactionId) ?: return
+        _affinity.value = current.copy(
+            intendedTarget = intendedTarget ?: current.intendedTarget,
+            fallback = fallback ?: current.fallback,
+            resolvedEndpointLabel = endpointLabel ?: current.resolvedEndpointLabel,
+            routeState = state,
+            lastTransitionAtMs = System.currentTimeMillis(),
+        )
+    }
+
+    /** Ends affinity because the interaction finished, failed terminally, or was cancelled. */
+    fun endInteraction(interactionId: String) {
+        transitionRoute(interactionId, InteractionAudioRouteState.ENDED)
+    }
+
+    /** Ends the currently-tracked affinity, whatever id it was bound under. */
+    fun endCurrentInteraction() {
+        _affinity.value?.let { endInteraction(it.interactionId) }
+    }
+
+    /**
+     * Exactly one audio interaction is active at a time, but the capture id bound at listening
+     * time differs from the TTS transaction id that later finishes the turn. Adopt the transition
+     * for the live record instead of silently dropping it.
+     */
+    private fun currentAffinityFor(interactionId: String?): InteractionAudioAffinity? {
+        val current = _affinity.value ?: return null
+        if (interactionId == null || current.interactionId == interactionId) return current
+        return current.takeIf { it.routeState != InteractionAudioRouteState.ENDED }
+    }
+
+    private fun defaultTargetFor(route: SpeechInputRoute): SpeechOutputTarget = when (route) {
+        is SpeechInputRoute.Phone -> SpeechOutputTarget.Phone
+        is SpeechInputRoute.Device -> SpeechOutputTarget.Device(
+            deviceId = route.deviceId,
+            platformEndpointId = route.platformEndpointId,
+            displayName = route.displayName,
+            kind = route.kind,
+        )
+    }
+
+    private fun defaultFallbackFor(route: SpeechInputRoute): SpeechOutputFallback =
+        if (route is SpeechInputRoute.Device) SpeechOutputFallback.DISALLOW_PHONE
+        else SpeechOutputFallback.ALLOW_PHONE
 
     private fun finishGuard() {
         playbackGuard = playbackGuard?.copy(endedAt = System.currentTimeMillis())

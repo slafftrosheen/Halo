@@ -23,25 +23,30 @@ class RuntimeVisualContextSource(
     private val deviceRegistry: DeviceRegistry,
     private val heyCyanDriverProvider: () -> RealHeyCyanDriver,
     private val resourceLeaseManager: ResourceLeaseManager,
+    private val mediaStore: com.halo.sdk.runtime.multimodal.MediaAssetStore,
 ) : VisualContextSource {
 
     override suspend fun capture(request: VisualContextCaptureRequest): Result<ImageContext> = runCatching {
         val record = deviceRegistry.getDevice(request.originDeviceId)
-            ?: error("Origin device is not registered")
+            ?: throw com.halo.sdk.runtime.multimodal.MediaAcquisitionException(com.halo.sdk.runtime.multimodal.MediaFailure.SOURCE_UNAVAILABLE)
 
         when (record.descriptor.kind) {
-            DeviceKind.HEYCYAN_GLASSES -> captureHeyCyan(request)
-            else -> error("Origin device does not expose a still-image source")
+            DeviceKind.HEYCYAN_GLASSES -> {
+                val selected = com.halo.sdk.runtime.multimodal.VisualSourceResolver().resolve(
+                    com.halo.sdk.runtime.multimodal.VisualOrigin.HEYCYAN, false, false, true,
+                    setOf(com.halo.sdk.runtime.multimodal.VisualSource.HEYCYAN_CAMERA), false)
+                println("[HALO_VISUAL_SOURCE_RESOLVED] origin=HEYCYAN requested=${request.freshness} source=${selected.source} reason=interaction_origin")
+                captureHeyCyan(request)
+            }
+            else -> throw com.halo.sdk.runtime.multimodal.MediaAcquisitionException(com.halo.sdk.runtime.multimodal.MediaFailure.SOURCE_UNAVAILABLE)
         }
     }
 
     private suspend fun captureHeyCyan(request: VisualContextCaptureRequest): ImageContext {
         val driver = heyCyanDriverProvider()
         val activeId = driver.activeDeviceId
-            ?: error("HeyCyan device is not connected")
-        require(activeId == request.originDeviceId) {
-            "Requested visual origin is not the active HeyCyan device"
-        }
+            ?: throw com.halo.sdk.runtime.multimodal.MediaAcquisitionException(com.halo.sdk.runtime.multimodal.MediaFailure.SOURCE_DISCONNECTED)
+        if (activeId != request.originDeviceId) throw com.halo.sdk.runtime.multimodal.MediaAcquisitionException(com.halo.sdk.runtime.multimodal.MediaFailure.SOURCE_DISCONNECTED)
 
         val source = LeasedStillImageSource(
             delegate = HeyCyanStillImageSource(
@@ -65,9 +70,14 @@ class RuntimeVisualContextSource(
             )
         ).getOrThrow()
 
-        val bytes = asset.bytes ?: error("Still-image source returned no bytes")
+        val bytes = asset.bytes ?: throw com.halo.sdk.runtime.multimodal.MediaAcquisitionException(com.halo.sdk.runtime.multimodal.MediaFailure.TRANSFER_FAILED)
+        val ref = mediaStore.ingest(
+            com.halo.sdk.runtime.multimodal.MediaAssetContent(bytes, asset.mimeType),
+            com.halo.sdk.runtime.multimodal.MediaProvenance.HEYCYAN_CAMERA,
+            request.interactionId.value, activeId,
+        )
         return ImageContext(
-            imageBytes = bytes.copyOf(),
+            mediaRef = ref,
             mimeType = asset.mimeType,
             timestampMs = asset.capturedAtMs,
             assetId = asset.id,

@@ -298,6 +298,27 @@ sealed interface AgentStep {
         val planKind: String,
         val evidenceStepId: String?,
     ) : AgentStep
+
+    /**
+     * MINING-P1-001 bounded-run guard.
+     *
+     * Durable evidence that Halo stopped a run on purpose, and why. Content-free by
+     * construction: tool ids, counts, digests and timings only. Activity renders this as
+     * "Task stopped" with a human explanation instead of "Runtime failure".
+     */
+    data class RunGuardTriggered(
+        override val id: AgentStepId,
+        override val runId: AgentRunId,
+        override val createdAt: Instant,
+        val reason: RunGuardReason,
+        val round: Int,
+        val toolId: String?,
+        /** Digest over the pattern/evidence that tripped the guard. Never user content. */
+        val evidenceHash: String?,
+        val elapsedMs: Long,
+        /** Bounded, content-free explanation safe to show and log. */
+        val summary: String,
+    ) : AgentStep
 }
 
 /** Provider-neutral record of one model tool call. */

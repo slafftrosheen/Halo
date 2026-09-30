@@ -226,6 +226,7 @@ fun AppShell(
                                 ManualDependencyGraph.aiProviderRouter,
                                 { ManualDependencyGraph.workspaceContext.cloudSharing.value },
                                 study = ManualDependencyGraph.studyUseCases,
+                                structuredResults = ManualDependencyGraph.notebookStructuredResults,
                             )
                         )
                         NoteEditorScreen(
@@ -321,6 +322,7 @@ fun AppShell(
                         availabilityResolver = ManualDependencyGraph.toolAvailabilityResolver,
                         capabilityCatalogue = ManualDependencyGraph.capabilityCatalogue,
                         onInstallCustomSkill = ManualDependencyGraph::installCustomSkillPackage,
+                        capabilityStatus = ManualDependencyGraph.capabilityStatusViewModel,
                     )
                 }
 
@@ -349,6 +351,10 @@ fun AppShell(
                             remoteCredentialPresent = { key ->
                                 !ManualDependencyGraph.storage.getString(key, null).isNullOrBlank()
                             },
+                            // MINING-P0-001 native residency vs execution lease truth.
+                            runtimeSnapshotSource = ManualDependencyGraph.runtimeSnapshotManager,
+                            // MINING-P2-001 passive active-surface count for the presentation section.
+                            presentationProjection = ManualDependencyGraph.presentationProjection,
                         )
                     }
                     SystemCheckScreen(
@@ -445,6 +451,9 @@ fun AppShell(
                 composable("android_assistant") {
                     AndroidAssistantScreen(
                         ManualDependencyGraph.assistantRoleController,
+                        // MINING-P0-001 interaction audio affinity: the coordinator that owns the
+                        // audio leases owns this record, so it stays the single source of truth.
+                        audioAffinity = ManualDependencyGraph.haloSpeechOutputCoordinator.session.affinity,
                         onBack = { navController.popBackStack() }
                     )
                 }

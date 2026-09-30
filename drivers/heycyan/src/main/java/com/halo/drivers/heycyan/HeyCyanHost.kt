@@ -132,6 +132,7 @@ class HeyCyanHost(
         return runCatching {
             sm.autoConnectDevice(target.identity.deviceId)
         }.onFailure {
+            if (it is CancellationException) throw it
             Log.w("HeyCyanHost", "Saved device auto-connect failed", it)
         }.getOrDefault(false)
     }

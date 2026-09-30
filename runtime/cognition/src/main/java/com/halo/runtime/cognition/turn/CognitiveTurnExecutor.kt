@@ -2,11 +2,14 @@ package com.halo.runtime.cognition.turn
 
 import com.halo.cognition.language.InteractionId
 import com.halo.runtime.cognition.agent.AgentRunCoordinator
+import com.halo.runtime.cognition.agent.AgentRunGuardRegistry
 import com.halo.runtime.cognition.agent.AgentRunId
 import com.halo.runtime.cognition.agent.AgentRunKind
 import com.halo.runtime.cognition.agent.AgentRunStore
 import com.halo.runtime.cognition.agent.AgentStep
 import com.halo.runtime.cognition.agent.AgentStepId
+import com.halo.runtime.cognition.agent.RunGuardDecision
+import com.halo.runtime.cognition.agent.RunGuardMessages
 import com.halo.runtime.cognition.agent.ProviderTurnId
 import com.halo.runtime.cognition.agent.ProviderToolCallRecord
 import com.halo.runtime.cognition.agent.RunRecoveryPolicy
@@ -47,8 +50,51 @@ class CognitiveTurnExecutor(
     private val toolExposurePlanner: ToolExposurePlanner? = null,
     private val toolExposureGate: ToolExposureGate? = null,
     private val limits: ToolLoopLimits = ToolLoopLimits(),
+    /**
+     * MINING-P1-001 bounded-run guard. Shared with [toolExecutor] through the registry so the
+     * provider loop and the tool loop cannot disagree about how long this run has left.
+     */
+    private val runGuards: AgentRunGuardRegistry? = null,
 ) {
     private fun newStepId() = AgentStepId(UUID.randomUUID().toString())
+
+    private suspend fun executeProvider(
+        target: com.halo.sdk.provider.AiExecutionTarget,
+        request: com.halo.sdk.provider.AiRequest,
+        context: AiContext,
+        requestId: String,
+        interactionId: InteractionId,
+        workload: com.halo.sdk.provider.AiWorkloadSpec,
+        runId: AgentRunId?,
+    ): ProviderTurnResult {
+        val guard = runId?.let { runGuards?.guardFor(it, interactionId) }
+        suspend fun stopped(stop: RunGuardDecision.Stop): ProviderTurnResult {
+            agentRunCoordinator?.recordStep(guard!!.toJournalStep(stop))
+            return ProviderTurnResult.Response(AiResponse(text = RunGuardMessages.userMessage(stop),
+                providerId = target.providerId, modelId = target.modelId), target)
+        }
+        if (guard != null) {
+            val chars = request.text.orEmpty().length.toLong() + context.conversation.sumOf { it.content.length.toLong() } +
+                context.availableTools.sumOf { it.description.length.toLong() + it.parameters.toString().length }
+            guard.tokens.noteEstimatedPrompt((chars + 3) / 4)
+            (guard.beforeRound() as? RunGuardDecision.Stop)?.let { return stopped(it) }
+        }
+        val outcome = if (guard == null) providerExecutor.execute(target, request, context, requestId, interactionId, workload)
+        else {
+            val result = kotlinx.coroutines.withTimeoutOrNull(guard.remainingMs.coerceAtLeast(1)) {
+                providerExecutor.execute(target, request, context, requestId, interactionId, workload)
+            }
+            result ?: return stopped(RunGuardDecision.Stop(com.halo.runtime.cognition.agent.RunGuardReason.DEADLINE_EXCEEDED,
+                com.halo.runtime.cognition.agent.RunGuardEvidence(guard.currentToolRounds, elapsedMs = guard.elapsedMs)))
+        }
+        if (guard != null && outcome is ProviderTurnResult.Response) {
+            guard.tokens.noteProviderReported(outcome.response.metrics?.inputTokens?.toLong(), outcome.response.metrics?.outputTokens?.toLong())
+            val decision = guard.onGenerationDelta(outcome.response.text)
+            guard.onGenerationCompleted()
+            if (decision is RunGuardDecision.Stop) return stopped(decision)
+        }
+        return outcome
+    }
 
     private fun trace(event: String, fields: List<Pair<String, Any?>>) {
         val rendered = fields.joinToString(" ") { (key, value) -> "$key=${value ?: "none"}" }
@@ -127,13 +173,14 @@ class CognitiveTurnExecutor(
                 "outgoingUserChars" to if (currentRequest.appendTextAsUserMessage) currentRequest.text.orEmpty().length else 0,
                 "continuation" to (currentRequest.turnKind == ProviderTurnKind.TOOL_CONTINUATION),
             ))
-            val outcome = providerExecutor.execute(
+            val outcome = executeProvider(
                 target = prepared.target,
                 request = currentRequest,
                 context = currentContext,
                 requestId = turn.requestId,
                 interactionId = turn.interactionId,
                 workload = prepared.workload.inference,
+                runId = durableRunId,
             )
 
             val initialResponse = when (outcome) {
@@ -244,6 +291,49 @@ class CognitiveTurnExecutor(
 
             while (response.toolCalls.isNotEmpty()) {
                 round++
+                /*
+                 * MINING-P1-001: the run-level ceiling is consulted before each round. A guard stop
+                 * here ends the run with recovery copy rather than a bare "failure".
+                 */
+                if (durableRunId != null && runGuards != null) {
+                    val guard = runGuards.guardFor(durableRunId, turn.interactionId)
+                    val decision = guard.beforeRound()
+                    if (decision is RunGuardDecision.Stop) {
+                        agentRunCoordinator?.recordStep(guard.toJournalStep(decision))
+                        trace(
+                            "AGENT_RUN_GUARD",
+                            listOf(
+                                "interactionId" to turn.interactionId.value,
+                                "runId" to durableRunId.value,
+                                "round" to round,
+                                "reason" to decision.reason.name,
+                                "evidence" to decision.evidence.summary,
+                            ),
+                        )
+                        return CognitiveResponseCommit(
+                            runId = durableRunId,
+                            interactionId = turn.interactionId,
+                            requestId = turn.requestId,
+                            userText = turn.request.text.orEmpty(),
+                            response = AiResponse(
+                                text = RunGuardMessages.userMessage(decision),
+                                providerId = currentTarget.providerId,
+                                modelId = currentTarget.modelId,
+                            ),
+                            responseDelivery = turn.responseDelivery,
+                            outputTarget = turn.origin?.speechRoute?.let { route ->
+                                if (route is SpeechInputRoute.Device) {
+                                    SpeechOutputTarget.Device(route.deviceId, route.platformEndpointId, route.displayName, route.kind)
+                                } else SpeechOutputTarget.Phone
+                            } ?: SpeechOutputTarget.Phone,
+                            outputFallback = turn.origin?.speechRoute?.let { route ->
+                                if (route is SpeechInputRoute.Device) SpeechOutputFallback.DISALLOW_PHONE else SpeechOutputFallback.ALLOW_PHONE
+                            } ?: SpeechOutputFallback.ALLOW_PHONE,
+                            sourceCaptureId = turn.sourceCaptureId,
+                            metadata = turn.metadata,
+                        )
+                    }
+                }
                 if (round > limits.maxToolRounds) {
                     trace(
                         "AGENT_COMPLETED",
@@ -346,6 +436,42 @@ class CognitiveTurnExecutor(
                             metadata = turn.metadata,
                         )
                     }
+                    is ToolTurnResult.RunStopped -> {
+                        // The durable RunGuardTriggered step was journaled by the tool executor.
+                        trace(
+                            "AGENT_COMPLETED",
+                            listOf(
+                                "interactionId" to turn.interactionId.value,
+                                "runId" to durableRun?.value,
+                                "rounds" to round,
+                                "outcome" to "guard_stop",
+                                "reason" to toolResult.reason.name,
+                            ),
+                        )
+                        return CognitiveResponseCommit(
+                            runId = durableRun,
+                            interactionId = turn.interactionId,
+                            requestId = turn.requestId,
+                            userText = turn.request.text.orEmpty(),
+                            response = AiResponse(
+                                text = toolResult.message,
+                                providerId = currentTarget.providerId,
+                                modelId = currentTarget.modelId,
+                            ),
+                            responseDelivery = turn.responseDelivery,
+                            outputTarget = turn.origin?.speechRoute?.let { route ->
+                                if (route is SpeechInputRoute.Device) {
+                                    SpeechOutputTarget.Device(route.deviceId, route.platformEndpointId, route.displayName, route.kind)
+                                } else SpeechOutputTarget.Phone
+                            } ?: SpeechOutputTarget.Phone,
+                            outputFallback = turn.origin?.speechRoute?.let { route ->
+                                if (route is SpeechInputRoute.Device) SpeechOutputFallback.DISALLOW_PHONE else SpeechOutputFallback.ALLOW_PHONE
+                            } ?: SpeechOutputFallback.ALLOW_PHONE,
+                            sourceCaptureId = turn.sourceCaptureId,
+                            metadata = turn.metadata,
+                        )
+                    }
+
                     is ToolTurnResult.Completed -> {
                         currentContext = continueToolConversation(currentContext, response, toolResult.toolMessages)
 
@@ -450,7 +576,7 @@ class CognitiveTurnExecutor(
                             "outgoingUserChars" to 0,
                             "continuation" to true,
                         ))
-                        val roundOutcome = providerExecutor.execute(
+                        val roundOutcome = executeProvider(
                             target = currentTarget,
                             request = currentRequest.copy(
                                 modelId = currentTarget.modelId,
@@ -461,6 +587,7 @@ class CognitiveTurnExecutor(
                             requestId = roundRequestId,
                             interactionId = turn.interactionId,
                             workload = prepared.workload.inference,
+                            runId = durableRun,
                         )
 
                         response = when (roundOutcome) {
@@ -551,7 +678,7 @@ class CognitiveTurnExecutor(
                 )
             )
 
-            val roundOutcome = providerExecutor.execute(
+            val roundOutcome = executeProvider(
                 target = currentTarget,
                 request = currentRequest.copy(
                     modelId = currentTarget.modelId,
@@ -562,6 +689,7 @@ class CognitiveTurnExecutor(
                 requestId = roundRequestId,
                 interactionId = turn.interactionId,
                 workload = prepared.workload.inference,
+                runId = durableRun,
             )
 
             response = when (roundOutcome) {

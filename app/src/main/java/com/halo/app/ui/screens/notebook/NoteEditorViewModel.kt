@@ -20,6 +20,7 @@ import com.halo.app.data.notebook.NoteBlock
 import com.halo.app.data.notebook.NoteBlockType
 import com.halo.app.data.notebook.NotebookDocumentCodec
 import com.halo.app.data.notebook.NotebookDocumentRepository
+import com.halo.app.data.notebook.NotebookStructuredResults
 import com.halo.app.data.notebook.ProposalPlacement
 import com.halo.app.data.notebook.WorkspaceLifecycle
 import com.halo.app.data.notebook.WorkspaceObject
@@ -96,6 +97,12 @@ data class NoteEditorUiState(
     val isAddingAttachment: Boolean = false,
     /** Reference blocks whose target is missing, waiting for a relink decision. */
     val unlinkedReferenceIds: Set<String> = emptySet(),
+    /**
+     * MINING-P2-001 Part O: how a saved structured answer looked when it was captured. Read-only —
+     * the note itself remains an ordinary editable document, and the payload is never mixed into the
+     * Markdown body.
+     */
+    val structuredResult: com.halo.runtime.cognition.interaction.StructuredPresentation? = null,
 ) {
     val isEditable: Boolean
         get() = status != SaveStatus.LOADING && status != SaveStatus.MISSING &&
@@ -130,6 +137,7 @@ class NoteEditorViewModel(
     private val allowCloudSharing: () -> Boolean = { false },
     private val autosaveDelayMs: Long = 400,
     private val study: StudyUseCases? = null,
+    private val structuredResults: NotebookStructuredResults? = null,
     private val newId: () -> String = { UUID.randomUUID().toString() },
 ) : ViewModel() {
     private val mutableUiState = MutableStateFlow(NoteEditorUiState())
@@ -234,6 +242,11 @@ class NoteEditorViewModel(
             loadDocument()
         } finally {
             loaded = true
+        }
+        // Resolved after the document so a restored card can never delay or fail the note itself.
+        val structured = structuredResults?.presentationFor(noteId)
+        if (structured != null) {
+            mutableUiState.value = mutableUiState.value.copy(structuredResult = structured)
         }
     }
 
@@ -1106,12 +1119,14 @@ class NoteEditorViewModel(
         private val aiProviderRouter: AiProviderRouter? = null,
         private val allowCloudSharing: () -> Boolean = { false },
         private val study: StudyUseCases? = null,
+        private val structuredResults: NotebookStructuredResults? = null,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
             NoteEditorViewModel(
                 noteId, useCases, assets, document, workspace, aiProviderRouter, allowCloudSharing,
                 study = study,
+                structuredResults = structuredResults,
             ) as T
     }
 

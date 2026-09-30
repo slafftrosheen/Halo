@@ -47,6 +47,9 @@ import com.halo.app.ui.workspace.HaloWorkspaceRow
 import com.halo.app.ui.workspace.HaloWorkspaceSection
 import com.halo.providers.litert.models.LocalModelDescriptor
 import com.halo.providers.litert.models.LocalModelValidation
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import com.halo.providers.gemini.GeminiAuthenticationMode
 import com.google.android.gms.auth.api.identity.AuthorizationRequest
 import com.google.android.gms.auth.api.identity.Identity
@@ -175,6 +178,60 @@ fun IntelligenceScreen(
         Spacer(Modifier.height(20.dp))
 
         val providerState = uiState.activeProviderStatus.state
+        HaloWorkspaceCard {
+            Text("Model roles", style = MaterialTheme.typography.titleMedium)
+            com.halo.sdk.provider.AiModelRole.entries.forEach { role ->
+                val binding = uiState.roleBindings[role]
+                Text("${if (role == com.halo.sdk.provider.AiModelRole.CHAT) "Default" else role.name.lowercase().replaceFirstChar { it.uppercase() }} · ${binding?.selection?.name?.lowercase() ?: "inherit default"} · ${binding?.modelId ?: uiState.activeModelId ?: "Not configured"}")
+                if (role != com.halo.sdk.provider.AiModelRole.CHAT) {
+                    Row {
+                        listOf(com.halo.sdk.provider.AiRoleSelection.INHERIT_DEFAULT, com.halo.sdk.provider.AiRoleSelection.AUTOMATIC,
+                            com.halo.sdk.provider.AiRoleSelection.EXPLICIT).forEach { mode ->
+                            FilterChip(selected = binding?.selection == mode, onClick = { viewModel.setRoleSelection(role, mode) },
+                                label = { Text(when (mode) {
+                                    com.halo.sdk.provider.AiRoleSelection.INHERIT_DEFAULT -> "Inherit"
+                                    com.halo.sdk.provider.AiRoleSelection.AUTOMATIC -> "Automatic"
+                                    else -> "Use selected"
+                                }) })
+                        }
+                    }
+                }
+            }
+            Text("Vision requires image input capability; declarations require a synthetic probe for local proof.", style = MaterialTheme.typography.bodySmall)
+        }
+        Spacer(Modifier.height(12.dp))
+        var multimodal by remember { mutableStateOf<com.halo.app.capture.MultimodalStatus?>(null) }
+        androidx.compose.runtime.LaunchedEffect(uiState.roleBindings, uiState.visionQualification, uiState.activeModelId) {
+            multimodal = com.halo.app.capture.inspectMultimodal(com.halo.app.di.ManualDependencyGraph.aiProviderRouter)
+        }
+        HaloWorkspaceCard {
+            Text("On-device capabilities", style = MaterialTheme.typography.titleMedium)
+            multimodal?.packs?.forEach { pack ->
+                Text("${pack.descriptor.displayName} · ${pack.state.name.lowercase().replace('_', ' ')}")
+                Text(pack.descriptor.description, style = MaterialTheme.typography.bodySmall)
+            }
+            Text("Captured context: ephemeral by default. Visual captures are deleted after the interaction; explicitly saved images belong to Notebook.", style = MaterialTheme.typography.bodySmall)
+            var screenImageFallback by remember { mutableStateOf(com.halo.app.di.ManualDependencyGraph.storage.getBoolean("policy_screen_image_fallback", false)) }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Screen image fallback", modifier = Modifier.weight(1f))
+                Switch(checked = screenImageFallback, onCheckedChange = {
+                    screenImageFallback = it
+                    com.halo.app.di.ManualDependencyGraph.storage.putBoolean("policy_screen_image_fallback", it)
+                })
+            }
+            Text("Only unreadable, permitted apps. Semantic screen context remains preferred.", style = MaterialTheme.typography.bodySmall)
+            var dynamicWebExtraction by remember { mutableStateOf(com.halo.app.di.ManualDependencyGraph.storage.getBoolean("policy_dynamic_web_extraction", false)) }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Rendered web page extraction", modifier = Modifier.weight(1f))
+                Switch(checked = dynamicWebExtraction, onCheckedChange = {
+                    dynamicWebExtraction = it
+                    com.halo.app.di.ManualDependencyGraph.storage.putBoolean("policy_dynamic_web_extraction", it)
+                })
+            }
+            Text("Allow bounded page scripts when static extraction has little readable text.", style = MaterialTheme.typography.bodySmall)
+            HaloWorkspaceButton(text = "Inspect capability models", onClick = onBrowseModels)
+        }
+        Spacer(Modifier.height(12.dp))
         val providerAccent = when (providerState) {
             ProviderStatus.State.READY -> HaloPastelMint
             ProviderStatus.State.LOADING,
@@ -655,6 +712,67 @@ fun IntelligenceScreen(
                             primary = !isActive && model.valid
                         )
                     }
+                }
+            }
+
+            // MINING-P0-001 concise on-device runtime card. System Check owns the deep stage
+            // timings; this screen only states the semantic state so it stays readable.
+            val activeLocal = uiState.localModels.firstOrNull { it.id == uiState.activeModelId }
+            if (activeLocal != null) {
+                Spacer(Modifier.height(12.dp))
+                HaloWorkspaceCard(accent = if (uiState.residentModelId == activeLocal.id) HaloPastelMint else null) {
+                    Text(
+                        text = "On-device runtime",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        text = activeLocal.displayName,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Text(
+                        text = buildString {
+                            if (uiState.residentModelId == activeLocal.id) {
+                                append("Resident")
+                                uiState.residentBackend?.let { append(" · $it") }
+                            } else {
+                                append("Cold (loads on request)")
+                            }
+                            append(" · Native tools: ")
+                            append(
+                                uiState.toolQualification[activeLocal.id]
+                                    ?.label ?: "probe required",
+                            )
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+
+            uiState.litertLoadDiagnostics?.let { failure ->
+                Spacer(Modifier.height(12.dp))
+                HaloWorkspaceCard(accent = MaterialTheme.colorScheme.errorContainer) {
+                    Text(
+                        text = "Last local failure",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    // Stage + time only. Full timings and stack detail belong to System Check.
+                    Text(
+                        text = "${failure.stage} · " +
+                            SimpleDateFormat("HH:mm", Locale.US).format(Date(failure.recordedAtMs)),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        text = "Open System Check for the full local inference ladder",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
             }
         }

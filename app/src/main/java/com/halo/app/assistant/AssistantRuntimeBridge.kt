@@ -48,6 +48,17 @@ class HaloAssistantRuntimeBridge(private val context: Context) : AssistantRuntim
     }
 
     override suspend fun attachScreenshot(interactionId: String, bitmap: Bitmap) {
+        val screen = ManualDependencyGraph.assistantContextRepository.screenFor(interactionId)
+            ?: throw com.halo.sdk.runtime.multimodal.MediaAcquisitionException(com.halo.sdk.runtime.multimodal.MediaFailure.POLICY_BLOCKED)
+        if (screen.packageName == null || com.halo.host.android.accessibility.AccessibilitySafetyPolicy.isPackageBlocked(screen.packageName) ||
+            screen.omissionCounts.values.any { it > 0 } ||
+            !ManualDependencyGraph.storage.getBoolean("policy_screen_image_fallback", false)) {
+            throw com.halo.sdk.runtime.multimodal.MediaAcquisitionException(com.halo.sdk.runtime.multimodal.MediaFailure.POLICY_BLOCKED)
+        }
+        if (screen.inspectability == com.halo.sdk.runtime.UiInspectability.INSPECTABLE) return
+        if (com.halo.app.capture.inspectMultimodal(ManualDependencyGraph.aiProviderRouter).target == null) {
+            throw com.halo.sdk.runtime.multimodal.MediaAcquisitionException(com.halo.sdk.runtime.multimodal.MediaFailure.VISION_MODEL_UNAVAILABLE)
+        }
         val prepared = withContext(Dispatchers.Default) { bitmap.limitLongestEdge(MAX_SCREENSHOT_EDGE_PX) }
         try {
             val bytes = withContext(Dispatchers.Default) {
@@ -59,10 +70,14 @@ class HaloAssistantRuntimeBridge(private val context: Context) : AssistantRuntim
                 }
             }
             val capturedAtMs = System.currentTimeMillis()
+            val mediaRef = ManualDependencyGraph.mediaAssetStore.ingest(
+                com.halo.sdk.runtime.multimodal.MediaAssetContent(bytes, "image/jpeg"),
+                com.halo.sdk.runtime.multimodal.MediaProvenance.SCREEN_CAPTURE, interactionId,
+            )
             ManualDependencyGraph.assistantContextRepository.putImage(
                 interactionId,
                 com.halo.runtime.cognition.context.ImageContext(
-                    imageBytes = bytes,
+                    mediaRef = mediaRef,
                     mimeType = "image/jpeg",
                     timestampMs = capturedAtMs,
                     assetId = "assist:$interactionId:$capturedAtMs",
@@ -78,7 +93,7 @@ class HaloAssistantRuntimeBridge(private val context: Context) : AssistantRuntim
                     observation = Observation(
                         modality = Modality.IMAGE,
                         source = Source.OS,
-                        payload = ImageObservationPayload(bytes),
+                        payload = ImageObservationPayload(mediaRef = mediaRef),
                         origin = ObservationOrigin(ObservationSource.AndroidAssist, null),
                         sourceDeviceId = null,
                         freshness = Freshness.FRESH,

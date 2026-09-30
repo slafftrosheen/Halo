@@ -86,6 +86,7 @@ data class RuntimeLoadConfig(
      * forcing a guessed value can make an otherwise valid model fail engine initialization.
      */
     val useModelDefaultContext: Boolean = false,
+    val visionEnabled: Boolean = false,
 )
 
 data class RuntimeLoadResult(

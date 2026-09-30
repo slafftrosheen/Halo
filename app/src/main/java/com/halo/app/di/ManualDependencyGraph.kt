@@ -41,6 +41,9 @@ import com.halo.app.ui.theme.AppearancePreferences
 import com.halo.providers.sherpa.stt.ReloadableSpeechRecognitionProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import com.halo.engines.memory.WorkingMemoryProcess
 import com.halo.host.android.assistant.AndroidAssistantRoleController
 import com.halo.providers.android.tts.AndroidTTSProvider
@@ -229,7 +232,17 @@ object ManualDependencyGraph {
             conversationStore, workspaceFileRepository, memoryRepository, notebookUseCases)
     }
     val memoryRepository by lazy { RoomMemoryRepository(appDatabase) }
-    val memoryContextSource by lazy { BoundedMemoryContextSource(memoryRepository) }
+
+    /**
+     * MINING-P1-001: one bounded retrieval implementation. No embedding provider is wired yet, so
+     * semantic search reports NOT_INSTALLED instead of faking vectors from hashes.
+     */
+    val memoryRetriever by lazy {
+        com.halo.app.data.memory.RoomMemoryRetriever(appDatabase.memoryRecordDao())
+    }
+    val memoryContextSource by lazy {
+        BoundedMemoryContextSource(memoryRepository, memoryRetriever)
+    }
     val customSkillPackages by lazy { com.halo.app.skills.CustomSkillPackageRepository(applicationContext) }
     val skillRegistry by lazy {
         val permissions = AndroidSkillPermissionChecker(applicationContext)
@@ -436,6 +449,53 @@ object ManualDependencyGraph {
             studySessionDescriptions = { sessionId -> studyUseCases.describeSession(sessionId) },
         )
         val memoryExecutor = com.halo.app.di.tools.MemoryToolExecutor(memoryRepository, memoryContextSource)
+        // MINING-P1-001: agent-facing bridges onto existing Halo routine + procedure machinery.
+        // Both resolve their collaborators through lambdas so the composition root stays acyclic.
+        val routineCreationExecutor = com.halo.app.di.tools.RoutineCreationToolExecutor(
+            repository = routineRepository,
+            scheduler = routineScheduler,
+            validate = { routine -> routineExecutor.validate(routine) },
+        )
+        val procedureExecutor = com.halo.app.di.tools.ProcedureToolExecutor(
+            store = learnedProcedureStore,
+            capabilityKnown = { capabilityId -> toolRegistry.contains(capabilityId) },
+        )
+        // MINING-P2-001: choice surfaces can only resolve durable input requests.
+        val presentationChoiceAuthority = com.halo.app.di.tools.PresentationChoiceAuthority(agentRunStore)
+        val presentationExecutor = com.halo.app.di.tools.PresentationToolExecutor(
+            projection = presentationProjection,
+            choiceBinding = { presentationChoiceAuthority.binding() },
+            pendingChoiceOptions = { requestId -> presentationChoiceAuthority.pendingOptions(requestId) },
+            presentations = presentationCommitRegistry,
+        )
+        // MINING-P1-001: reply reaches another app only through its own live RemoteInput action.
+        val notificationReplyExecutor = com.halo.app.di.tools.NotificationReplyToolExecutor(
+            context = applicationContext,
+            canReply = { key ->
+                val item = appDatabase.notificationDao().activeByKey(key)
+                item != null && notificationBridge.isAccessGranted() &&
+                    notificationPolicies.policyForApp(item.packageName) == com.halo.app.data.notification.NotificationAccessPolicy.ALLOW
+            },
+            registry = com.halo.app.notification.NotificationReplyRegistry.shared,
+            dispatcher = notificationReplyDispatcher,
+            source = com.halo.app.di.tools.ReplyCapableNotificationSource { limit ->
+                val registry = com.halo.app.notification.NotificationReplyRegistry.shared
+                appDatabase.notificationDao().observeActive().first()
+                    .filter { registry.supportsReply(it.key) &&
+                        notificationPolicies.policyForApp(it.packageName) == com.halo.app.data.notification.NotificationAccessPolicy.ALLOW }
+                    .take(limit.coerceIn(1, 10))
+                    .map { entity ->
+                        val live = registry.replyActionFor(entity.key)
+                        com.halo.app.di.tools.ReplyCapableNotification(
+                            notificationKey = entity.key,
+                            appLabel = entity.appLabel,
+                            title = entity.title,
+                            postedAtMs = entity.postedAt,
+                            replyLabel = live?.label ?: "Reply",
+                        )
+                    }
+            },
+        )
         // RUNTIME-056: native ability batch mined from the OneBox agent tool catalogue.
         // Device insight, clipboard, checksum and bounded web reading are host executors
         // that only need Android APIs (plus, for checksums, the workspace file grants the
@@ -451,7 +511,11 @@ object ManualDependencyGraph {
                     workspaceFileRepository,
                     workspaceRepository,
                 ),
-                com.halo.app.di.tools.host.WebInsightTools(),
+                // MINING-P2-001: dynamic fallback exists but stays opt-in per call, and only runs
+                // when static extraction finds almost no readable text.
+                com.halo.app.di.tools.host.WebInsightTools(
+                    dynamicExtractor = dynamicPageExtractor,
+                ),
             ),
         )
         // AGENTIC-001: skill loading must be a real registered tool, otherwise the
@@ -467,6 +531,10 @@ object ManualDependencyGraph {
                 workspaceExecutor,
                 memoryExecutor,
                 hostExecutor,
+                notificationReplyExecutor,
+                routineCreationExecutor,
+                procedureExecutor,
+                presentationExecutor,
                 useSkillExecutor,
                 // Discovery meta-tool is internal: it expands schemas without widening authorization.
                 toolDiscoveryExecutor,
@@ -491,6 +559,10 @@ object ManualDependencyGraph {
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.MEDIA to hostExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.ACCESSIBILITY to hostExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.USE_SKILL to useSkillExecutor,
+                com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.NOTIFICATION_REPLY to notificationReplyExecutor,
+                com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.ROUTINE to routineCreationExecutor,
+                com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.PROCEDURE to procedureExecutor,
+                com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.PRESENTATION to presentationExecutor,
             ) + listOf(
                 com.halo.app.di.tools.HaloToolDescriptors.discoveryMeta(
                     com.halo.runtime.cognition.tools.ToolDiscoveryService.discoveryToolDefinition()
@@ -498,6 +570,96 @@ object ManualDependencyGraph {
             )
         )
     }
+    /**
+     * MINING-P1-001 MCP capability fabric.
+     *
+     * Nothing connects at startup: `syncRegistry` only reflects *already established* sessions, and
+     * every session is created by an explicit user action or an authorized tool call. Credentials are
+     * resolved from the existing SecretStore by reference and are never persisted in the MCP tables.
+     */
+    val mcpIntegrationManager by lazy {
+        com.halo.app.mcp.McpIntegrationManager(
+            dao = appDatabase.mcpDao(),
+            client = com.halo.app.mcp.McpClient(
+                transport = mcpTransport,
+                credentialResolver = { reference -> reference?.let { secretStore.get(it) } },
+            ),
+        )
+    }
+
+    private val mcpTransport by lazy { com.halo.app.mcp.HttpMcpTransport() }
+
+    /**
+     * MINING-P2-001: isolated ephemeral WebView extractor. Constructed lazily and only when a page
+     * actually needs rendered content; it is never created at startup.
+     */
+    private val dynamicPageExtractor by lazy {
+        com.halo.app.web.AndroidDynamicPageExtractor(applicationContext) {
+            storage.getBoolean("policy_dynamic_web_extraction", false)
+        }
+    }
+
+    /**
+     * MINING-P2-001 ephemeral presentation surfaces. Projection only: rebuilt from conversation or
+     * journal truth, never a second durable surface store.
+     */
+    val presentationProjection by lazy {
+        com.halo.runtime.cognition.interaction.PresentationSurfaceProjection()
+    }
+
+    /**
+     * MINING-P2-001: the single bridge between a validated presentation and the committed turn. It is
+     * process-local and bounded on purpose — committed presentation truth lives in the conversation
+     * turn, not here.
+     */
+    val presentationCommitRegistry by lazy {
+        com.halo.runtime.cognition.interaction.PresentationCommitRegistry()
+    }
+
+    /**
+     * MINING-P2-001 Part O: restores a saved structured answer from the workspace object's existing
+     * provenance metadata. No new table, and the note body stays the editable truth.
+     */
+    val notebookStructuredResults by lazy {
+        com.halo.app.data.notebook.NotebookStructuredResults(appDatabase.workspaceContextDao())
+    }
+
+    /**
+     * MINING-P1-001 capability status summary for the Skills dashboard. Read-only, no probes: it only
+     * reports what is already installed or configured.
+     */
+    val capabilityStatusViewModel by lazy {
+        com.halo.app.ui.screens.settings.CapabilityStatusViewModel(
+            scope = infra.scope,
+            thermalSource = androidThermalSource,
+            memoryRetriever = memoryRetriever,
+            procedureStore = learnedProcedureStore,
+            mcpStatus = { mcpIntegrationManager.statusSummary() },
+            replyableCount = { com.halo.app.notification.NotificationReplyRegistry.shared.size() },
+            capabilityPacks = { com.halo.app.capture.inspectMultimodal(aiProviderRouter).packs },
+        )
+    }
+
+    /**
+     * MINING-P1-001 learned procedures. Small bounded document store: no second database, and no
+     * capability authority of its own.
+     */
+    val learnedProcedureStore by lazy {
+        com.halo.app.data.procedure.SharedPreferencesLearnedProcedureStore(applicationContext)
+    }
+
+    /** MINING-P1-001: hands reply text to another app's own RemoteInput action. */
+    val notificationReplyDispatcher by lazy {
+        com.halo.app.notification.NotificationReplyDispatcher(
+            registry = com.halo.app.notification.NotificationReplyRegistry.shared,
+        )
+    }
+
+    /** Registers/removes dynamic MCP sources on the single Halo tool registry. */
+    suspend fun syncMcpRegistry() {
+        mcpIntegrationManager.syncRegistry(toolRegistry)
+    }
+
     val workspaceContext by lazy { WorkspaceContextStore(appDatabase, notebookRepository, storage) }
     val assistantContextRepository by lazy {
         AssistantContextRepository(
@@ -552,11 +714,19 @@ object ManualDependencyGraph {
             runtimeDeviceSource = runtimeDeviceCapabilityBridge,
         )
     }
+    val mediaAssetStore by lazy {
+        com.halo.app.capture.EphemeralMediaAssetStore(applicationContext.cacheDir, scope = infra.scope, eventBus = eventBus)
+    }
+    val imageInputPreparer by lazy { com.halo.app.capture.AndroidImageInputPreparer() }
+    val mediaAssetResolver by lazy { com.halo.app.capture.WorkspaceMediaAssetResolver(applicationContext, workspaceFileRepository, mediaAssetStore) }
+    val workspaceMediaAiPolicy by lazy { com.halo.app.data.workspace.WorkspaceMediaAiPolicy(appDatabase, storage) }
+    val visualAttachments by lazy { com.halo.app.capture.VisualAttachmentStore(applicationContext, mediaAssetStore) }
     val visualContextSource by lazy {
         com.halo.app.capture.RuntimeVisualContextSource(
             deviceRegistry = deviceRegistry,
             heyCyanDriverProvider = { heyCyanDriver },
             resourceLeaseManager = infra.resourceLeaseManager,
+            mediaStore = mediaAssetStore,
         )
     }
     val contextAcquisitionCoordinator by lazy {
@@ -573,6 +743,42 @@ object ManualDependencyGraph {
     val providerTurnExecutor by lazy {
         DefaultProviderTurnExecutor(eventBus, aiProviderRouter)
     }
+    /**
+     * MINING-P1-001 host thermal truth. Started lazily on first read; a single property read, never
+     * a startup probe or a BackgroundSettings scan.
+     */
+    val androidThermalSource by lazy {
+        com.halo.app.thermal.AndroidThermalStateSource(applicationContext).also { it.start() }
+    }
+
+    /** One guard registry per process so the provider loop and tool loop share run counters. */
+    val agentRunGuardRegistry by lazy {
+        com.halo.runtime.cognition.agent.AgentRunGuardRegistry(
+            thermalGate = androidThermalSource.asAgentRunGate(),
+        ).also { registry ->
+            infra.scope.launch {
+                agentRunStore.observeRuns().collect { runs ->
+                    val terminal = setOf(com.halo.runtime.cognition.agent.AgentRunState.COMPLETED,
+                        com.halo.runtime.cognition.agent.AgentRunState.FAILED,
+                        com.halo.runtime.cognition.agent.AgentRunState.CANCELLED,
+                        com.halo.runtime.cognition.agent.AgentRunState.INTERRUPTED)
+                    runs.filter { it.state in terminal }.forEach {
+                        registry.release(it.id.value)
+                        toolApprovalGrants.clearScope(it.id.value)
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * MINING-P1-001 short-lived exact approval grants. Process-scoped and memory-only: a grant is
+     * convenience inside a burst of work, never durable policy.
+     */
+    val toolApprovalGrants by lazy {
+        com.halo.runtime.cognition.agent.EphemeralToolApprovalGrantStore()
+    }
+
     val toolTurnExecutor by lazy {
         DefaultToolTurnExecutor(
             toolRegistry = toolRegistry,
@@ -581,6 +787,9 @@ object ManualDependencyGraph {
             agentRunCoordinator = agentRunCoordinator,
             agentRunStore = agentRunStore,
             eventBus = eventBus,
+            runGuards = agentRunGuardRegistry,
+            approvalGrants = toolApprovalGrants,
+            presentationCommits = presentationCommitRegistry,
         )
     }
     val cognitiveTurnPreparer by lazy {
@@ -591,6 +800,10 @@ object ManualDependencyGraph {
             contextAssembler = contextAssembler,
             agentRunStore = agentRunStore,
             toolExposurePlanner = toolExposurePlanner,
+            mediaResolver = mediaAssetResolver,
+            imageInputPreparer = imageInputPreparer,
+            mediaObjectPolicy = workspaceMediaAiPolicy,
+            eventBus = eventBus,
         )
     }
     val cognitiveResponseCommitter by lazy {
@@ -598,6 +811,7 @@ object ManualDependencyGraph {
             conversationStore = conversationStore,
             agentRunCoordinator = agentRunCoordinator,
             eventBus = eventBus,
+            presentationCommits = presentationCommitRegistry,
         )
     }
     val cognitiveTurnExecutor by lazy {
@@ -610,6 +824,7 @@ object ManualDependencyGraph {
             eventBus = eventBus,
             toolExposurePlanner = toolExposurePlanner,
             toolExposureGate = toolExposureGate,
+            runGuards = agentRunGuardRegistry,
         )
     }
     val agentRecoveryExecutor by lazy {

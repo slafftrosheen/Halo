@@ -46,6 +46,9 @@ class DefaultAiWorkloadPlanner : AiWorkloadPlanner {
         val hasBoundScreen = request.metadata["hasScreenContext"]?.toBooleanStrictOrNull() == true
         val hasBoundAssistantImage = request.metadata["hasAssistantImage"]?.toBooleanStrictOrNull() == true
         val invocationSource = request.metadata["invocationSource"].orEmpty()
+        val typedVisualFreshness = request.metadata["visualContextRequirement"]?.let { raw ->
+            VisualFreshness.entries.firstOrNull { it.name == raw }
+        }
 
         val isGlassesOrigin =
             request.origin?.source == ObservationSource.HeyCyanGlasses ||
@@ -68,6 +71,9 @@ class DefaultAiWorkloadPlanner : AiWorkloadPlanner {
             "this image",
             "this photo",
             "what does this look like",
+            "what does this sign say",
+            "read this sign",
+            "which bottle is this",
         )
         val screenPhrases = listOf(
             "this page",
@@ -89,9 +95,9 @@ class DefaultAiWorkloadPlanner : AiWorkloadPlanner {
                 (text.contains("look") || text.contains("describe") || text.contains("see"))
             )
 
-        val asksVisual = hasExplicitImage || visualPhrases.any(text::contains) ||
+        val asksVisual = typedVisualFreshness != null || hasExplicitImage || hasBoundAssistantImage || visualPhrases.any(text::contains) ||
             asksScreenVisual ||
-            (isGlassesOrigin && text in setOf("what is this", "what's this", "what is that", "what's that"))
+            (isGlassesOrigin && text.trimEnd('.', '?', '!') in setOf("what is this", "what's this", "what is that", "what's that", "read this"))
 
         val asksScreen = isAssistantOrigin && screenPhrases.any(text::contains)
 
@@ -123,7 +129,7 @@ class DefaultAiWorkloadPlanner : AiWorkloadPlanner {
                     kind = ContextKind.VISUAL_IMAGE,
                     requirement = ContextRequirement.REQUIRED,
                     affinity = affinity,
-                    visualFreshness = VisualFreshness.CURRENT_VIEW,
+                    visualFreshness = if (request.metadata["explicitImageReference"] == "true") VisualFreshness.REFERENCE else typedVisualFreshness ?: VisualFreshness.CURRENT_VIEW,
                 )
             }
         } else if (asksScreen && (text.contains("icon") || text.contains("button"))) {

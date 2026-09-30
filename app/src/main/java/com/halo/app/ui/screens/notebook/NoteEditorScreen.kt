@@ -993,6 +993,22 @@ private fun ColumnScope.SourceModeEditor(state: NoteEditorUiState, viewModel: No
 @Composable
 private fun ReadModeView(state: NoteEditorUiState, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(bottom = 20.dp)) {
+        /*
+         * MINING-P2-001 Part O: when this object was saved from a structured assistant answer, show
+         * how it looked at capture time. It is a read-only view of the original presentation; the note
+         * below it stays an ordinary editable document, and the payload never enters the body.
+         */
+        state.structuredResult?.let { presentation ->
+            Column(Modifier.padding(bottom = 12.dp)) {
+                Text(
+                    "Saved from Halo · original presentation",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(6.dp))
+                com.halo.app.interaction.StructuredPresentationRenderer(presentation = presentation)
+            }
+        }
         if (state.blocks.isEmpty()) {
             Text("This note is empty.", style = MaterialTheme.typography.bodyMedium)
             return@Column

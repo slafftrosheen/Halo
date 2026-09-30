@@ -482,6 +482,7 @@ class DefaultContextAssembler(
         val payload = selected.payload as ImageObservationPayload
         return ImageContext(
             imageBytes = payload.imageBytes.copyOf(),
+            mediaRef = payload.mediaRef,
             mimeType = payload.mimeType,
             timestampMs = selected.timestamp,
             assetId = selected.id.value,
@@ -498,12 +499,12 @@ class DefaultContextAssembler(
     }
 
     private fun validateImage(image: ImageContext): String? {
-        if (image.imageBytes.isEmpty()) return "Image context contains no bytes"
+        if (image.mediaRef == null && image.imageBytes.isEmpty()) return "Image context contains no bytes"
         if (image.mimeType !in SUPPORTED_IMAGE_MIME_TYPES) {
             return "Unsupported image MIME type: ${image.mimeType}"
         }
-        if (image.imageBytes.size > MAX_IMAGE_CONTEXT_BYTES) {
-            return "Image exceeds maximum context size: ${image.imageBytes.size} bytes"
+        if (image.sizeBytes > MAX_IMAGE_CONTEXT_BYTES) {
+            return "Image exceeds maximum context size: ${image.sizeBytes} bytes"
         }
 
         if (image.freshness != VisualFreshness.REFERENCE) {

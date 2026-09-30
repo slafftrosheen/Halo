@@ -4,6 +4,14 @@ import com.halo.cognition.language.InteractionId
 import com.halo.runtime.cognition.agent.AgentInputRequest
 import com.halo.runtime.cognition.agent.AgentInputResolutions
 import com.halo.runtime.cognition.agent.AgentRunCoordinator
+import com.halo.runtime.cognition.agent.AgentRunGuard
+import com.halo.runtime.cognition.agent.AgentRunGuardRegistry
+import com.halo.runtime.cognition.agent.EphemeralToolApprovalGrantStore
+import com.halo.runtime.cognition.agent.RunGuardDecision
+import com.halo.runtime.cognition.agent.ToolApprovalGrantKey
+import com.halo.runtime.cognition.agent.ToolApprovalReusePolicy
+import com.halo.runtime.cognition.agent.RunGuardMessages
+import com.halo.runtime.cognition.agent.RunGuardReason
 import com.halo.runtime.cognition.agent.AgentRunId
 import com.halo.runtime.cognition.agent.AgentRunState
 import com.halo.runtime.cognition.agent.AgentRunStore
@@ -12,6 +20,7 @@ import com.halo.runtime.cognition.agent.AgentStepId
 import com.halo.runtime.cognition.agent.ToolArgumentCanonicalizer
 import com.halo.runtime.cognition.agent.ToolInvocationId
 import com.halo.runtime.cognition.agent.ToolRejectionCode
+import com.halo.runtime.cognition.interaction.PresentationCommitRegistry
 import com.halo.runtime.cognition.tools.AuthorizationDecision
 import com.halo.runtime.cognition.tools.PolicyToolAuthorizer
 import com.halo.runtime.cognition.tools.ToolAuthorizer
@@ -61,6 +70,19 @@ sealed interface ToolTurnResult {
     data class WaitingForCapability(
         val runId: AgentRunId,
     ) : ToolTurnResult
+
+    /**
+     * MINING-P1-001: the bounded-run guard ended this run on purpose.
+     *
+     * This is not a failure: the durable [AgentStep.RunGuardTriggered] step is already journaled and
+     * [message] is user-facing recovery copy.
+     */
+    data class RunStopped(
+        val runId: AgentRunId,
+        val reason: RunGuardReason,
+        val message: String,
+        val summary: String,
+    ) : ToolTurnResult
 }
 
 interface ToolTurnExecutor {
@@ -89,6 +111,18 @@ class DefaultToolTurnExecutor(
     private val agentRunStore: AgentRunStore?,
     private val eventBus: EventBus,
     private val limits: ToolLoopLimits = ToolLoopLimits(),
+    /**
+     * MINING-P1-001 bounded-run guard. Optional so existing constructions keep working; the
+     * application graph always supplies one.
+     */
+    private val runGuards: AgentRunGuardRegistry? = null,
+    /** MINING-P1-001 convenience layer over durable approval; never authoritative. */
+    private val approvalGrants: EphemeralToolApprovalGrantStore? = null,
+    /**
+     * MINING-P2-001 presentation bridge. Promotion happens only here, on a tool call the runtime
+     * observed succeed — presentation is a view over durable execution, never a claim of it.
+     */
+    private val presentationCommits: PresentationCommitRegistry? = null,
 ) : ToolTurnExecutor {
     private fun newStepId() = AgentStepId(UUID.randomUUID().toString())
 
@@ -188,6 +222,33 @@ class DefaultToolTurnExecutor(
         )
     }
 
+    /** Journals the guard stop as durable evidence and returns the terminal tool-turn result. */
+    private suspend fun stopForGuard(
+        runId: AgentRunId,
+        interactionId: InteractionId,
+        requestId: String,
+        guard: AgentRunGuard,
+        stop: RunGuardDecision.Stop,
+    ): ToolTurnResult.RunStopped {
+        agentRunCoordinator?.recordStep(guard.toJournalStep(stop))
+        trace(
+            "AGENT_RUN_GUARD",
+            listOf(
+                "run" to runId.value,
+                "interactionId" to interactionId.value,
+                "requestId" to requestId,
+                "reason" to stop.reason.name,
+                "evidence" to stop.evidence.summary,
+            ),
+        )
+        return ToolTurnResult.RunStopped(
+            runId = runId,
+            reason = stop.reason,
+            message = RunGuardMessages.userMessage(stop),
+            summary = RunGuardMessages.summary(stop),
+        )
+    }
+
     private suspend fun durableToolResult(runId: AgentRunId, toolCallId: String): AgentStep? {
         val run = agentRunStore?.get(runId) ?: return null
         return run.steps.asReversed().firstOrNull {
@@ -224,8 +285,23 @@ class DefaultToolTurnExecutor(
     ): ToolTurnResult {
         val toolMessages = mutableListOf<AIMessage>()
         var hasUnconfirmedAction = false
+        val guard: AgentRunGuard? = runId?.let {
+            runGuards?.guardFor(it, interactionId)
+        }
 
         for ((index, toolCall) in toolCalls.withIndex()) {
+            /*
+             * MINING-P1-001: consult the guard before doing any work for this call. Deadline,
+             * thermal pressure, outstanding oscillation and token budget are all checked here, so
+             * a small model looping A -> B -> A -> B terminates instead of grinding through the
+             * whole turn budget.
+             */
+            if (guard != null && runId != null) {
+                val decision = guard.beforeRound()
+                if (decision is RunGuardDecision.Stop) {
+                    return stopForGuard(runId, interactionId, requestId, guard, decision)
+                }
+            }
             if (index >= limits.maxToolCallsPerTurn) {
                 val rejection = ToolRejectionFactory.create(
                     ToolRejectionCode.TRANSIENT_FAILURE,
@@ -280,6 +356,12 @@ class DefaultToolTurnExecutor(
 
             val canonicalArguments = ToolArgumentCanonicalizer.canonicalize(toolCall.arguments)
             val argumentsDigest = ToolArgumentCanonicalizer.digest(canonicalArguments)
+            if (guard != null && runId != null) {
+                val decision = guard.onToolCallPrepared(toolCall.functionName, argumentsDigest)
+                if (decision is RunGuardDecision.Stop) {
+                    return stopForGuard(runId, interactionId, requestId, guard, decision)
+                }
+            }
             trace(
                 "TOOL_VALIDATED",
                 listOf(
@@ -350,8 +432,36 @@ class DefaultToolTurnExecutor(
                 continue
             }
 
+            /*
+             * MINING-P1-001 short-lived exact approval grants.
+             *
+             * Policy still decides: a grant can only exist for a descriptor that
+             * [ToolApprovalReusePolicy] classifies as repeatable, and it is keyed by
+             * scope + tool + canonical arguments digest + security mode, so approving
+             * `level=40` never approves `level=100`. Denials are never cached.
+             */
+            val descriptorForGrant = toolRegistry.descriptor(toolCall.functionName)
+            val grantKey = descriptorForGrant?.let { descriptor ->
+                ToolApprovalGrantKey(
+                    scopeId = runId?.value ?: interactionId.value,
+                    toolId = toolCall.functionName,
+                    argumentsDigest = argumentsDigest,
+                    securityMode = ToolApprovalReusePolicy.securityModeOf(descriptor),
+                )
+            }
+            val grantSatisfied = grantKey != null &&
+                descriptorForGrant != null &&
+                approvalGrants != null &&
+                ToolApprovalReusePolicy.allowsReuse(descriptorForGrant) &&
+                approvalGrants.isGranted(grantKey)
+
             val previouslyApproved = approvalEvidence == DurableApprovalEvidence.APPROVED
-            val durableDecision = if (runId != null && !previouslyApproved) {
+            if (previouslyApproved && grantKey != null && descriptorForGrant != null &&
+                ToolApprovalReusePolicy.allowsReuse(descriptorForGrant)
+            ) {
+                approvalGrants?.grant(grantKey)
+            }
+            val durableDecision = if (runId != null && !previouslyApproved && !grantSatisfied) {
                 (toolAuthorizer as? PolicyToolAuthorizer)?.authorizeDurable(
                     toolCall = toolCall,
                     runId = runId,
@@ -365,6 +475,7 @@ class DefaultToolTurnExecutor(
 
             val authorization = when {
                 previouslyApproved -> ToolAuthorization.Authorized(toolCall)
+                grantSatisfied -> ToolAuthorization.Authorized(toolCall)
                 durableDecision is AuthorizationDecision.Authorized ->
                     ToolAuthorization.Authorized(toolCall)
                 durableDecision is AuthorizationDecision.Rejected ->
@@ -563,6 +674,13 @@ class DefaultToolTurnExecutor(
                             "durationMs" to durationMs,
                         ),
                     )
+                    guard?.onToolSucceeded()
+                    presentationCommits?.observeToolSuccess(
+                        runId = runId?.value,
+                        interactionId = interactionId.value,
+                        toolId = toolCall.functionName,
+                        output = result.output,
+                    )
                     eventBus.publish(
                         ToolCallCompleted(
                             requestId = requestId,
@@ -634,6 +752,13 @@ class DefaultToolTurnExecutor(
                             toolCallId = toolCall.id
                         )
                     )
+                    // Record the outcome before stopping; recovery must retain unknown-action truth.
+                    if (guard != null && runId != null) {
+                        val decision = guard.onToolFailure(toolCall.functionName, result.code)
+                        if (decision is RunGuardDecision.Stop) {
+                            return stopForGuard(runId, interactionId, requestId, guard, decision)
+                        }
+                    }
                 }
             }
         }

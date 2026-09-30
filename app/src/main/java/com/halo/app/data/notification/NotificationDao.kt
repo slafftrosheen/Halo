@@ -5,6 +5,8 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface NotificationDao {
+    @Query("SELECT * FROM notifications WHERE `key` = :key AND active = 1 LIMIT 1")
+    suspend fun activeByKey(key: String): NotificationEntity?
     @Upsert suspend fun upsert(entity: NotificationEntity)
     @Query("UPDATE notifications SET active = 0, removedAt = :removedAt WHERE `key` = :key")
     suspend fun markRemoved(key: String, removedAt: Long)

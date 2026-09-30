@@ -64,6 +64,12 @@ class HaloSpeechOutputCoordinator(
                     is ListeningStarted -> {
                         stop("ListeningStarted")
                         session.listening(event.source, event.captureId)
+                        // MINING-P0-001 route affinity begins here, when the interaction's
+                        // input/origin is established — before STT, cognition or inference.
+                        session.bindInteraction(
+                            interactionId = event.captureId,
+                            inputRoute = event.source,
+                        )
                     }
                     is SpeechRecognized -> event.input?.let { session.thinking(it.route, it.captureId) }
                     is CognitiveRequestStarted -> (session.state.value as? HaloAudioSessionState.Thinking)?.let {
@@ -78,6 +84,11 @@ class HaloSpeechOutputCoordinator(
         }
     }
 
+    /**
+     * MINING-P0-001 the audio-route transition for a failed wearable route never plays on the
+     * phone when policy is DISALLOW_PHONE: the handoff decision above returns Unavailable and
+     * publishes TtsFailed, and the affinity records UNAVAILABLE.
+     */
     private fun speak(event: TtsRequested) {
         if (event.text.isBlank()) {
             scope.launch { eventBus.publish(TtsFailed(transactionId = event.transactionId, target = event.target, reason = "Speech text is empty", interactionId = event.interactionId)) }
@@ -169,6 +180,13 @@ class HaloSpeechOutputCoordinator(
                     )
                     playbackTarget = SpeechOutputTarget.Phone
                     session.preparing(playbackTarget, event.transactionId)
+                    // Explicit policy handoff: recorded as a real transition, not a silent re-route.
+                    session.transitionRoute(
+                        interactionId = event.transactionId,
+                        state = com.halo.sdk.runtime.InteractionAudioRouteState.PENDING,
+                        intendedTarget = SpeechOutputTarget.Phone,
+                        fallback = SpeechOutputFallback.ALLOW_PHONE,
+                    )
                     routePreparation = routeController.prepareRoute(
                         SpeechRouteRequest(
                             transactionId = event.transactionId,
@@ -213,6 +231,15 @@ class HaloSpeechOutputCoordinator(
                 }
                 val evidence = (routePreparation as? SpeechRoutePreparation.Ready)?.evidence
                     ?: error("Speech route has no endpoint evidence")
+                // Route resolved and endpoint verified: record it as the interaction's binding.
+                // Never the raw address, only the platform display label.
+                session.transitionRoute(
+                    interactionId = event.transactionId,
+                    state = com.halo.sdk.runtime.InteractionAudioRouteState.BOUND,
+                    endpointLabel = evidence.androidDeviceName,
+                    intendedTarget = playbackTarget,
+                    fallback = fallback,
+                )
                 val playback = routedSpeechPlaybackProvider ?: error("Routed speech playback is unavailable")
                 val result = when (val routed = playback.synthesizeRouted(request, evidence, onStarted, playbackTarget, acquireFocus = {
                     focusGranted = activeTransactionId == event.transactionId &&

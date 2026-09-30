@@ -1,4 +1,5 @@
 [versions]
+exifinterface = "1.4.2"
 workRuntimeKtx = "2.11.2"
 appsearch = "1.1.0"
 agp = "9.4.0"
@@ -56,6 +57,7 @@ baselineprofile = "1.5.0"
 
 
 [libraries]
+androidx-exifinterface = { group = "androidx.exifinterface", name = "exifinterface", version.ref = "exifinterface" }
 androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workRuntimeKtx" }
 androidx-appsearch = { group = "androidx.appsearch", name = "appsearch", version.ref = "appsearch" }
 androidx-appsearch-local-storage = { group = "androidx.appsearch", name = "appsearch-local-storage", version.ref = "appsearch" }

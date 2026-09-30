@@ -6,6 +6,8 @@ import com.halo.runtime.cognition.agent.AgentRunId
 import com.halo.runtime.cognition.agent.AgentStep
 import com.halo.runtime.cognition.agent.AgentStepId
 import com.halo.runtime.cognition.conversation.ConversationStore
+import com.halo.runtime.cognition.interaction.PresentationCommitRegistry
+import com.halo.runtime.cognition.interaction.PresentationMetadata
 import com.halo.sdk.provider.AiResponse
 import com.halo.sdk.runtime.AssistantResponsePublished
 import com.halo.sdk.runtime.CognitiveCompleted
@@ -41,6 +43,12 @@ class DefaultCognitiveResponseCommitter(
     private val conversationStore: ConversationStore,
     private val agentRunCoordinator: AgentRunCoordinator?,
     private val eventBus: EventBus,
+    /**
+     * MINING-P2-001: carries a validated structured presentation produced during this run into the
+     * committed turn, and nothing more. Text stays the semantic truth; the payload is a bounded view
+     * that context assembly never reads back.
+     */
+    private val presentationCommits: PresentationCommitRegistry? = null,
 ) : CognitiveResponseCommitter {
 
     private fun responseCommitId(runId: AgentRunId, responseId: String): String {
@@ -53,7 +61,29 @@ class DefaultCognitiveResponseCommitter(
         val interactionId = commit.interactionId
         val isHandoff = response.text.equals("HANDOFF_STARTED", ignoreCase = true) ||
             response.finishReason.equals("handoff", ignoreCase = true)
-        
+
+        /*
+         * Presentation metadata is resolved exactly once per commit. A handoff consumes and drops it:
+         * the continuing run owns the surface, and the committed turn must never carry a card the
+         * assistant never actually finished with.
+         */
+        val recordedPresentation = presentationCommits?.consume(commit.runId?.value, interactionId.value)
+        val presentationMetadata = if (isHandoff || recordedPresentation == null) {
+            emptyMap()
+        } else {
+            PresentationMetadata.metadataFor(
+                presentation = recordedPresentation.presentation,
+                template = recordedPresentation.template,
+                nodeCount = recordedPresentation.nodeCount,
+            ) + PresentationMetadata.provenanceMetadata(
+                runId = commit.runId?.value,
+                interactionId = interactionId.value,
+                providerId = response.providerId,
+                modelId = response.modelId,
+                createdAtMs = System.currentTimeMillis(),
+            )
+        }
+
         val turn = if (!isHandoff) {
             conversationStore.appendIfAbsent(
                 commitId = responseCommitId(commit.runId ?: AgentRunId("ephemeral"), requestId),
@@ -67,7 +97,7 @@ class DefaultCognitiveResponseCommitter(
                     "requestId" to requestId,
                     "interactionId" to interactionId.value,
                     "sourceCaptureId" to (commit.sourceCaptureId ?: "")
-                )
+                ) + presentationMetadata
             )
         } else null
 

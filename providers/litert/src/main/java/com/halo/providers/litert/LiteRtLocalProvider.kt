@@ -15,8 +15,12 @@ import com.halo.providers.litert.models.LocalModelValidation
 import com.halo.providers.litert.models.ModelVerificationResult
 import com.halo.providers.litert.models.ModelVerificationStage
 import com.halo.providers.litert.runtime.HaloPromptToolProtocol
+import com.halo.providers.litert.runtime.LiteRtControlProbeResult
+import com.halo.providers.litert.runtime.LiteRtControlProbeRunner
 import com.halo.providers.litert.runtime.LiteRtConversationMapper
+import com.halo.providers.litert.runtime.LiteRtEngineConfigFactory
 import com.halo.providers.litert.runtime.LiteRtModelLoadException
+import com.halo.providers.litert.runtime.LiteRtNativeToolCallValidator
 import com.halo.providers.litert.runtime.LocalModelBenchmarkResult
 import com.halo.providers.litert.runtime.LocalModelBenchmarkRunner
 import com.halo.providers.litert.runtime.LocalModelDevelopmentRunner
@@ -59,6 +63,7 @@ import com.halo.sdk.runtime.WorkloadResourcePolicy
 import com.halo.sdk.runtime.Storage
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -106,20 +111,37 @@ data class LiteRtLoadDiagnostics(
     }
 }
 
-/** Result of the optional development tool-calling probe. Never marks a model broken. */
+/**
+ * Result of the optional development tool-calling probe. Never marks a model broken.
+ *
+ * MINING-P0-001 tightened: never stores raw argument values or generated text. Only structural
+ * facts, counts and digests are retained, so the probe can be exported and shown safely.
+ */
 data class LiteRtToolProbeResult(
     val modelId: String,
     val nativeToolCallObserved: Boolean,
     val toolName: String?,
-    val arguments: Map<String, Any>?,
-    val responseText: String,
+    val argumentsFieldCount: Int?,
+    /** Digest over sorted argument *key names* only: never over values. */
+    val argumentsSha256Prefix: String?,
+    val outputNonEmpty: Boolean,
+    val outputMatchedExpected: Boolean,
+    val callIdComplete: Boolean,
+    val argumentsStructurallyComplete: Boolean,
+    val pairedResponseCount: Int,
+    val qualification: LiteRtToolQualification,
+    val qualificationKey: String?,
     val failureStage: String?,
     val failureDetail: String?,
+    val probedAtMs: Long = System.currentTimeMillis(),
 ) {
     fun summaryLine(): String = buildString {
         append("model=$modelId toolCall=$nativeToolCallObserved")
         toolName?.let { append(" tool=$it") }
-        arguments?.let { append(" args=$it") }
+        argumentsFieldCount?.let { append(" argsFields=$it") }
+        argumentsSha256Prefix?.let { append(" argsSha=$it") }
+        append(" qualification=${qualification.label}")
+        append(" outputNonEmpty=$outputNonEmpty")
         failureStage?.let { append(" stage=$it") }
     }
 }
@@ -142,7 +164,55 @@ data class LiteRtModelRuntimeStatus(
     val effectiveBackend: LocalComputeBackend?,
     val effectiveContextTokens: Int?,
     val failureRecord: LiteRtModelFailureRecord?,
+    /** MINING-P0-001 artifact truth, independently visible from verified/resident/proven. */
+    val validation: LocalModelValidation? = null,
+    val artifactFingerprintPrefix: String? = null,
+    val toolQualification: LiteRtToolQualification = LiteRtToolQualification.NOT_APPLICABLE,
 )
+
+/**
+ * MINING-P0-001 content-free local-LiteRT facts for diagnostics export.
+ *
+ * Never contains prompts, generated text, user utterances, tool argument values, credentials or
+ * tokens: only states, counts, digests and stage names.
+ */
+data class LiteRtProviderDiagnostics(
+    val modelId: String,
+    val displayName: String,
+    val installed: Boolean,
+    val artifactState: String,
+    val artifactFingerprintPrefix: String?,
+    val resident: Boolean,
+    val requestedBackend: LocalComputeBackend,
+    val effectiveBackend: LocalComputeBackend?,
+    val requestedContextTokens: Int?,
+    val effectiveContextTokens: Int?,
+    val generationProven: Boolean,
+    val toolQualification: LiteRtToolQualification,
+    val qualificationKey: String?,
+    val configuredToolCount: Int,
+    val toolChannelObservation: String?,
+    val lastFailureStage: String?,
+    val runtimeVersion: String,
+) {
+    fun exportLines(): List<String> = buildList {
+        add("model=$modelId")
+        add("display=$displayName")
+        add("artifact=$artifactState (installed=$installed)")
+        add("artifactShaPrefix=${artifactFingerprintPrefix ?: "unknown"}")
+        add("resident=$resident selected=true")
+        add("backend requested=${LiteRtEngineConfigFactory.backendName(requestedBackend)} " +
+            "effective=${effectiveBackend?.let(LiteRtEngineConfigFactory::backendName) ?: "none"}")
+        add("context requested=${requestedContextTokens ?: "model-default"} " +
+            "effective=${effectiveContextTokens ?: "model-default"}")
+        add("generationProven=$generationProven")
+        add("lastFailureStage=${lastFailureStage ?: "none"}")
+        add("runtimeVersion=$runtimeVersion")
+        add("toolChannel qualification=${toolQualification.name} key=${qualificationKey ?: "none"}")
+        add("toolChannel configuredToolCount=$configuredToolCount")
+        toolChannelObservation?.let { add("toolChannel observation=$it") }
+    }
+}
 
 class LiteRtLocalProvider(
     private val context: Context,
@@ -154,7 +224,7 @@ class LiteRtLocalProvider(
     private val catalog: List<LiteRtCatalogModel> = LiteRtModelCatalog.BUILT_IN_MODELS,
     preferences: LiteRtModelPreferences? = null,
     failureMemory: LiteRtModelFailureMemory? = null,
-) : AiInferenceProvider, NativeResourceOwner, com.halo.sdk.provider.ToolProtocolReporting {
+) : AiInferenceProvider, NativeResourceOwner, com.halo.sdk.provider.ToolProtocolReporting, com.halo.sdk.provider.ModelInputCapabilityReporting {
 
     override val id: String = ProviderIds.LITERT
     override val displayName: String = "On-device (LiteRT)"
@@ -174,27 +244,32 @@ class LiteRtLocalProvider(
     val modelMemory: StateFlow<Map<String, LiteRtModelFailureRecord>> get() = failureMemory.records
 
     override suspend fun releaseIfIdle(): Boolean {
-        if (!modelSession.isLoaded()) return true
-        val releasingModelId = modelSession.loadedModelId
-        val currentActivity = modelSession.activity.value
-        if (currentActivity is LocalModelActivityState.Generating ||
-            currentActivity is LocalModelActivityState.Loading ||
-            currentActivity is LocalModelActivityState.Benchmarking
-        ) {
-            return false
+        if (!loadMutex.tryLock()) return false
+        try {
+            if (!modelSession.isLoaded()) return true
+            val releasingModelId = modelSession.loadedModelId
+            val currentActivity = modelSession.activity.value
+            if (currentActivity is LocalModelActivityState.Generating ||
+                currentActivity is LocalModelActivityState.Loading ||
+                currentActivity is LocalModelActivityState.Benchmarking
+            ) {
+                return false
+            }
+            val unloadResult = modelSession.unloadModel()
+            val unloaded = unloadResult.isSuccess
+            if (!unloaded) {
+                recordGenerationFailure(
+                    releasingModelId,
+                    unloadResult.exceptionOrNull() ?: IllegalStateException("LiteRT teardown failed"),
+                    LiteRtFailureStage.TEARDOWN,
+                )
+            }
+            // The coordinator owns lease bookkeeping. releaseIfIdle() is invoked while it
+            // arbitrates an owner, so re-entering coordinator.release() here can deadlock.
+            return unloaded
+        } finally {
+            loadMutex.unlock()
         }
-        val unloadResult = modelSession.unloadModel()
-        val unloaded = unloadResult.isSuccess
-        if (!unloaded) {
-            recordGenerationFailure(
-                releasingModelId,
-                unloadResult.exceptionOrNull() ?: IllegalStateException("LiteRT teardown failed"),
-                LiteRtFailureStage.TEARDOWN,
-            )
-        }
-        // The coordinator owns lease bookkeeping. releaseIfIdle() is invoked while it
-        // arbitrates an owner, so re-entering coordinator.release() here can deadlock.
-        return unloaded
     }
 
     private val _status = MutableStateFlow(ProviderStatus.UNAVAILABLE)
@@ -210,15 +285,33 @@ class LiteRtLocalProvider(
     private val loadMutex = Mutex()
 
     /**
-     * Artifact fingerprints for which Halo observed a real native tool call. Keyed by
-     * fingerprint so a failed or succeeded probe for one revision can never be inherited by
-     * another, and so a GPU failure on one model cannot poison a different one.
+     * MINING-P0-001 native tool proof is keyed by artifact + LiteRT-LM runtime version + tool-schema
+     * contract version, not by model id. The same bytes against another LiteRT version may behave
+     * differently, so stale proof must not survive an incompatible runtime/schema change.
      */
-    private val nativeToolProvenFingerprints =
+    private val nativeToolProvenKeys =
         java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+
+    /** Qualification keys with a probe in flight right now. */
+    private val toolProbeInFlight = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+
+    /** Last explicit probe failure per qualification key, as (stage, bounded detail). */
+    private val lastToolProbeFailures =
+        java.util.concurrent.ConcurrentHashMap<String, Pair<String, String>>()
+
+    /** Structured, content-free conversation diagnostics for the last generation. */
+    private val _conversationDiagnostics = MutableStateFlow<LiteRtConversationDiagnostics?>(null)
+    val conversationDiagnostics: StateFlow<LiteRtConversationDiagnostics?> =
+        _conversationDiagnostics.asStateFlow()
+
+    private val generationCounter = java.util.concurrent.atomic.AtomicLong(0L)
 
     private fun LocalModelDescriptor.artifactFingerprint(): String =
         sha256 ?: "id:$id:bytes:$bytes"
+
+    /** `<sha256>:litertlm-<version>:<schema>`; the unit native proof is stored against. */
+    private fun LocalModelDescriptor.qualificationKey(): String =
+        LiteRtToolQualificationKey.of(artifactFingerprint(), RUNTIME_VERSION)
 
     @Volatile
     private var lastLoggedSelection: String? = null
@@ -246,7 +339,7 @@ class LiteRtLocalProvider(
     }
 
     fun loadConfigFor(descriptor: LocalModelDescriptor): RuntimeLoadConfig =
-        preferences.buildLoadConfig(catalogModelFor(descriptor), descriptor)
+        preferences.buildLoadConfig(catalogModelFor(descriptor), descriptor).copy(visionEnabled = descriptor.supportsVision)
 
     fun isGenerationProven(descriptor: LocalModelDescriptor): Boolean =
         failureMemory.isGenerationProven(descriptor.id, descriptor.sha256)
@@ -364,13 +457,17 @@ class LiteRtLocalProvider(
     }
 
     override suspend fun getCapabilities(): Set<AiCapability> {
-        val modelId = configuredModelId ?: return emptySet()
+        val models = (inventoryRepository.inventoryState.value as? LocalModelInventoryState.Ready)?.models.orEmpty()
+        return models.filter { it.valid }.flatMap { capabilitiesForModel(it.id) }.toSet()
+    }
+
+    override suspend fun capabilitiesForModel(modelId: String): Set<AiCapability> {
         val descriptor = inventoryRepository.resolveModel(modelId)?.takeIf { it.valid } ?: return emptySet()
         return buildSet {
             add(AiCapability.TEXT)
             add(AiCapability.STREAMING)
             if (descriptor.supportsVision) add(AiCapability.IMAGE)
-            if (descriptor.supportsAudio) add(AiCapability.AUDIO)
+            // AUDIO metadata is preparatory: RuntimeGenerationConfig has no audio wire path yet.
             /*
              * AGENTIC-001: TOOLS describes whether Halo can complete a tool loop with this
              * artifact, which is true for a prompt-mediated loop as well. The native flag
@@ -391,34 +488,76 @@ class LiteRtLocalProvider(
         toolCallProtocolFor(descriptor)
     }
 
+    /**
+     * MINING-P0-001 a catalog boolean is DECLARATION, not proof.
+     *
+     * NATIVE is claimed only when Halo observed a real native tool call for this exact
+     * artifact/runtime/schema key. A declared-native but unproven artifact honestly falls back to
+     * the prompt-mediated envelope loop instead of pretending to be native.
+     */
     private fun toolCallProtocolFor(descriptor: LocalModelDescriptor): ToolCallProtocol {
         if (!descriptor.supportsText) return ToolCallProtocol.NONE
-        if (descriptor.supportsTools || nativeToolProven(descriptor)) return ToolCallProtocol.NATIVE
+        if (nativeToolProven(descriptor)) return ToolCallProtocol.NATIVE
         val preference = catalogModelFor(descriptor)?.toolCallPreference
             ?: LiteRtToolCallPreference.HALO_PROMPT
         return when (preference) {
-            LiteRtToolCallPreference.NATIVE -> ToolCallProtocol.NATIVE
+            // Declared native, unproven: Halo can still complete a tool loop via the prompt
+            // envelope, which is what the router actually cares about.
+            LiteRtToolCallPreference.NATIVE -> ToolCallProtocol.HALO_PROMPT
             LiteRtToolCallPreference.HALO_PROMPT -> ToolCallProtocol.HALO_PROMPT
-            LiteRtToolCallPreference.NONE -> ToolCallProtocol.NONE
+            LiteRtToolCallPreference.NONE ->
+                if (descriptor.supportsTools) ToolCallProtocol.HALO_PROMPT else ToolCallProtocol.NONE
         }
     }
 
     private fun nativeToolProven(descriptor: LocalModelDescriptor): Boolean =
-        nativeToolProvenFingerprints.contains(descriptor.artifactFingerprint())
+        nativeToolProvenKeys.contains(descriptor.qualificationKey())
+
+    /**
+     * Honest qualification state for one artifact. See [LiteRtToolQualification]: every state maps
+     * to something Halo actually observed or declared, never to an assumption.
+     */
+    fun toolQualificationFor(
+        descriptor: LocalModelDescriptor,
+        includeProbing: Boolean = true,
+    ): LiteRtToolQualification {
+        if (!descriptor.supportsText) return LiteRtToolQualification.NOT_APPLICABLE
+        val key = descriptor.qualificationKey()
+        if (nativeToolProvenKeys.contains(key)) return LiteRtToolQualification.NATIVE_PROVEN
+        if (includeProbing && toolProbeInFlight.contains(key)) return LiteRtToolQualification.PROBING
+        if (lastToolProbeFailures.containsKey(key)) return LiteRtToolQualification.FAILED_LAST_PROBE
+        val preference = catalogModelFor(descriptor)?.toolCallPreference
+            ?: LiteRtToolCallPreference.HALO_PROMPT
+        val declaresNative = descriptor.supportsTools || preference == LiteRtToolCallPreference.NATIVE
+        if (declaresNative) return LiteRtToolQualification.DECLARED
+        return when (toolCallProtocolFor(descriptor)) {
+            ToolCallProtocol.HALO_PROMPT -> LiteRtToolQualification.PROMPT_MEDIATED
+            ToolCallProtocol.NATIVE -> LiteRtToolQualification.NATIVE_PROVEN
+            ToolCallProtocol.NONE -> if (preference == LiteRtToolCallPreference.NONE) {
+                LiteRtToolQualification.NOT_APPLICABLE
+            } else {
+                LiteRtToolQualification.PROBE_REQUIRED
+            }
+        }
+    }
 
     override suspend fun testConnection(): Boolean = loadModelIfNeeded()
 
-    suspend fun loadModelIfNeeded(): Boolean = loadMutex.withLock {
-        val modelId = configuredModelId ?: return@withLock false
-        val descriptor = inventoryRepository.resolveModel(modelId) ?: return@withLock false
+    suspend fun loadModelIfNeeded(requestedModelId: String? = null): Boolean = loadMutex.withLock {
+        loadModelIfNeededLocked(requestedModelId)
+    }
+
+    private suspend fun loadModelIfNeededLocked(requestedModelId: String?): Boolean {
+        val modelId = requestedModelId ?: configuredModelId ?: return false
+        val descriptor = inventoryRepository.resolveModel(modelId) ?: return false
         if (!descriptor.valid) {
             _status.value = ProviderStatus(
                 ProviderStatus.State.ERROR,
                 "${descriptor.displayName} is ${describeValidation(descriptor.validation)} — re-download it",
             )
-            return@withLock false
+            return false
         }
-        loadLocked(descriptor)
+        return loadLocked(descriptor)
     }
 
     private suspend fun loadLocked(descriptor: LocalModelDescriptor): Boolean {
@@ -426,6 +565,8 @@ class LiteRtLocalProvider(
 
         val acquired = try {
             nativeResourceCoordinator?.acquire(this) ?: true
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (e: Exception) {
             false
         }
@@ -516,6 +657,8 @@ class LiteRtLocalProvider(
     private suspend fun acquireExecutionLease(operation: String) {
         val acquired = try {
             nativeResourceCoordinator?.acquire(this) ?: true
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (e: Exception) {
             false
         }
@@ -590,6 +733,7 @@ class LiteRtLocalProvider(
                 id = desc.id,
                 displayName = desc.displayName,
                 providerId = id,
+                executionLocation = com.halo.sdk.provider.AiExecutionLocation.ON_DEVICE,
                 inputCapabilities = buildSet {
                     add(AiCapability.TEXT)
                     if (desc.supportsVision) add(AiCapability.IMAGE)
@@ -623,25 +767,32 @@ class LiteRtLocalProvider(
             effectiveBackend = if (modelSession.loadedModelId == modelId) modelSession.activeBackend else null,
             effectiveContextTokens = if (modelSession.loadedModelId == modelId) modelSession.effectiveContextSize else null,
             failureRecord = descriptor?.let { failureMemory.record(modelId, it.sha256) },
+            validation = descriptor?.validation,
+            artifactFingerprintPrefix = descriptor?.sha256?.take(12),
+            toolQualification = descriptor?.let(::toolQualificationFor) ?: LiteRtToolQualification.NOT_APPLICABLE,
         )
     }
 
     /** Loads, generates "HALO_OK", then generates a second prompt without a process restart. */
     suspend fun smokeTestModel(modelId: String): LocalModelSmokeTestResult = withContext(Dispatchers.IO) {
-        developmentRunner().smokeTest(modelId) { descriptor -> loadConfigFor(descriptor) }
+        loadMutex.withLock {
+            developmentRunner().smokeTest(modelId) { descriptor -> loadConfigFor(descriptor) }
+        }
     }
 
     /** Development-only serial matrix over every installed model. Never keeps two resident. */
     suspend fun runModelMatrix(): List<LocalModelMatrixRow> = withContext(Dispatchers.IO) {
-        val state = inventoryRepository.inventoryState.value
-        val installed = (state as? LocalModelInventoryState.Ready)?.models
-            ?.filter { it.valid }
-            .orEmpty()
-        Log.i(TAG, "$EVENT_SWITCH action=matrix models=${installed.size}")
-        developmentRunner().runMatrix(
-            descriptors = installed,
-            loadConfigFor = { descriptor -> loadConfigFor(descriptor) },
-        )
+        loadMutex.withLock {
+            val state = inventoryRepository.inventoryState.value
+            val installed = (state as? LocalModelInventoryState.Ready)?.models
+                ?.filter { it.valid }
+                .orEmpty()
+            Log.i(TAG, "$EVENT_SWITCH action=matrix models=${installed.size}")
+            developmentRunner().runMatrix(
+                descriptors = installed,
+                loadConfigFor = { descriptor -> loadConfigFor(descriptor) },
+            )
+        }
     }
 
     suspend fun benchmarkModel(
@@ -649,12 +800,14 @@ class LiteRtLocalProvider(
         prompt: String = LocalModelBenchmarkRunner.DEFAULT_PROMPT,
         maxOutputTokens: Int = LocalModelBenchmarkRunner.DEFAULT_MAX_OUTPUT_TOKENS,
     ): Result<LocalModelBenchmarkResult> = withContext(Dispatchers.IO) {
-        LocalModelBenchmarkRunner(modelSession, inventoryRepository).runBenchmark(
-            modelId = modelId,
-            prompt = prompt,
-            maxOutputTokens = maxOutputTokens,
-            loadConfigFor = { descriptor -> loadConfigFor(descriptor) },
-        )
+        loadMutex.withLock {
+            LocalModelBenchmarkRunner(modelSession, inventoryRepository).runBenchmark(
+                modelId = modelId,
+                prompt = prompt,
+                maxOutputTokens = maxOutputTokens,
+                loadConfigFor = { descriptor -> loadConfigFor(descriptor) },
+            )
+        }
     }
 
     /**
@@ -664,63 +817,245 @@ class LiteRtLocalProvider(
      * artifact to call one harmless synthetic tool and records what actually happened. A failed
      * probe never marks the model broken and never disables normal text generation.
      */
-    suspend fun probeToolCalling(modelId: String): LiteRtToolProbeResult = withContext(Dispatchers.IO) {
-        val descriptor = inventoryRepository.resolveModel(modelId)
-            ?: return@withContext LiteRtToolProbeResult(
-                modelId, false, null, null, "", "LOAD", "Model is not installed",
-            )
-        if (!descriptor.valid) {
-            return@withContext LiteRtToolProbeResult(
-                modelId, false, null, null, "", "ARTIFACT", descriptor.validationDetail,
-            )
-        }
+    private val visionEvidence = java.util.concurrent.ConcurrentHashMap<String, VisionProbeResult>()
 
-        val requestId = UUID.randomUUID().toString()
-        val loadOk = loadMutex.withLock { loadLocked(descriptor) }
-        if (!loadOk) {
-            return@withContext LiteRtToolProbeResult(
-                modelId, false, null, null, "", "ENGINE_INIT", _loadDiagnostics.value?.technicalSummary(),
-            )
-        }
-        if (modelSession.tryBeginBenchmark(requestId) is com.halo.sdk.provider.InferenceAdmission.Granted) {
-            try {
-                val result = modelSession.generate(
-                    RuntimeGenerationConfig(
-                        prompt = "Call the halo_probe tool with value=\"ok\". Do not answer in prose.",
-                        maxTokens = 64,
-                        temperature = 0.0,
-                        availableTools = listOf(HALO_PROBE_TOOL),
-                    ),
-                    benchmarkRequestId = requestId,
-                )
-                val generated = result.getOrElse { error ->
-                    return@withContext LiteRtToolProbeResult(
-                        modelId, false, null, null, "", failureStage(error), error.message?.take(200),
-                    )
-                }
-                val call = generated.toolCalls.firstOrNull { it.functionName == HALO_PROBE_TOOL.name }
-                Log.i(
-                    TAG,
-                    "$EVENT_TOOL_PROBE model=$modelId nativeToolCall=${call != null} " +
-                        "sha=${descriptor.sha256?.take(12) ?: "unknown"}",
-                )
-                if (call != null) nativeToolProvenFingerprints.add(descriptor.artifactFingerprint())
-                LiteRtToolProbeResult(
-                    modelId = modelId,
-                    nativeToolCallObserved = call != null,
-                    toolName = call?.functionName,
-                    arguments = call?.arguments,
-                    responseText = generated.text,
-                    failureStage = null,
-                    failureDetail = null,
-                )
-            } finally {
-                modelSession.endBenchmark(requestId)
-            }
-        } else {
-            LiteRtToolProbeResult(modelId, false, null, null, "", "BUSY", "Session busy")
+    suspend fun visionQualificationForModel(modelId: String): VisionQualification? =
+        inventoryRepository.resolveModel(modelId)?.let(::visionQualificationFor)
+
+    suspend fun visionQualificationKeyForModel(modelId: String): String? =
+        inventoryRepository.resolveModel(modelId)?.sha256?.let { VisionQualificationKey.of(it, RUNTIME_VERSION) }
+
+    fun visionQualificationFor(descriptor: LocalModelDescriptor): VisionQualification? {
+        if (!descriptor.supportsVision) return null
+        val fingerprint = descriptor.sha256 ?: return VisionQualification.DECLARED
+        val evidence = visionEvidence[VisionQualificationKey.of(fingerprint, RUNTIME_VERSION)]
+        return when {
+            evidence == null -> VisionQualification.PROBE_REQUIRED
+            evidence.passed -> VisionQualification.PROVEN
+            else -> VisionQualification.FAILED
         }
     }
+
+    /** Explicit user action only; reuses normal model residency/admission and never has tools. */
+    suspend fun probeVision(modelId: String): VisionProbeResult = withContext(Dispatchers.IO) {
+        val started = System.currentTimeMillis()
+        val descriptor = inventoryRepository.resolveModel(modelId)
+        val fingerprint = descriptor?.sha256
+        val key = fingerprint?.let { VisionQualificationKey.of(it, RUNTIME_VERSION) }
+        if (descriptor == null || !descriptor.valid || !descriptor.supportsVision || key == null) {
+            return@withContext VisionProbeResult(key, false, null, 0, false, "ARTIFACT_OR_CAPABILITY")
+        }
+        val result = try {
+            val response = kotlinx.coroutines.withTimeout(30_000) {
+                generate(AiRequest(text = "Read the text and number in this image.", image = SyntheticVisionImage.create(),
+                    mimeTypes = listOf("image/png"), modelId = modelId, maxOutputTokens = 64), AiContext.EMPTY)
+            }
+            val matched = Regex("\\bHALO\\b", RegexOption.IGNORE_CASE).containsMatchIn(response.text) && Regex("\\b42\\b").containsMatchIn(response.text)
+            VisionProbeResult(key, matched && response.toolCalls.isEmpty(), response.executionBackend,
+                System.currentTimeMillis() - started, matched, if (matched && response.toolCalls.isEmpty()) null else "EXPECTED_CONTENT")
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            if (cancelled !is kotlinx.coroutines.TimeoutCancellationException) throw cancelled
+            VisionProbeResult(key, false, null, System.currentTimeMillis() - started, false, "TIMEOUT")
+        } catch (_: Exception) {
+            VisionProbeResult(key, false, null, System.currentTimeMillis() - started, false, "GENERATION")
+        }
+        visionEvidence[key] = result
+        result
+    }
+
+    suspend fun probeToolCalling(modelId: String): LiteRtToolProbeResult = withContext(Dispatchers.IO) {
+        loadMutex.withLock locked@ {
+            val descriptor = inventoryRepository.resolveModel(modelId)
+                ?: return@locked toolProbeFailure(modelId, null, "LOAD", "Model is not installed")
+            if (!descriptor.valid) {
+                return@locked toolProbeFailure(modelId, descriptor, "ARTIFACT", descriptor.validationDetail)
+            }
+
+            val key = descriptor.qualificationKey()
+            if (!toolProbeInFlight.add(key)) {
+                return@locked toolProbeFailure(modelId, descriptor, "BUSY", "A tool probe is already running")
+            }
+            try {
+                val requestId = UUID.randomUUID().toString()
+                val loadOk = loadLocked(descriptor)
+                if (!loadOk) {
+                    val detail = _loadDiagnostics.value?.technicalSummary()
+                    lastToolProbeFailures[key] = "ENGINE_INIT" to (detail ?: "Local model could not be loaded")
+                    return@locked toolProbeFailure(modelId, descriptor, "ENGINE_INIT", detail)
+                }
+                if (modelSession.tryBeginBenchmark(requestId) !is com.halo.sdk.provider.InferenceAdmission.Granted) {
+                    return@locked toolProbeFailure(modelId, descriptor, "BUSY", "Session busy")
+                }
+                try {
+                    val result = modelSession.generate(
+                        RuntimeGenerationConfig(
+                            prompt = TOOL_PROBE_PROMPT,
+                            maxTokens = TOOL_PROBE_MAX_TOKENS,
+                            temperature = 0.0,
+                            availableTools = listOf(HALO_PROBE_TOOL),
+                        ),
+                        benchmarkRequestId = requestId,
+                    )
+                    val generated = result.getOrElse { error ->
+                        val stage = failureStage(error)
+                        lastToolProbeFailures[key] = stage to (error.message?.take(200) ?: "generation failed")
+                        return@locked toolProbeFailure(modelId, descriptor, stage, error.message?.take(200))
+                    }
+
+                    val call = generated.toolCalls.firstOrNull { it.functionName == HALO_PROBE_TOOL.name }
+                    val structurallyUsable = call != null &&
+                        LiteRtNativeToolCallValidator.rejectionFor(call.functionName, call.arguments) == null
+                    val observation = modelSession.lastToolChannelObservation
+                    Log.i(
+                        TAG,
+                        "$EVENT_TOOL_PROBE model=$modelId nativeToolCall=${call != null} " +
+                            "usable=$structurallyUsable sha=${descriptor.sha256?.take(12) ?: "unknown"} " +
+                            "argsFields=${call?.arguments?.size ?: 0}",
+                    )
+                    if (structurallyUsable) {
+                        // Proof is recorded against artifact + runtime + schema, never against model id.
+                        nativeToolProvenKeys.add(key)
+                        lastToolProbeFailures.remove(key)
+                    } else if (call != null) {
+                        lastToolProbeFailures[key] = "ARGUMENTS" to "Emitted call had incomplete arguments"
+                    }
+                    LiteRtToolProbeResult(
+                        modelId = modelId,
+                        nativeToolCallObserved = call != null,
+                        toolName = call?.functionName,
+                        argumentsFieldCount = call?.arguments?.size,
+                        argumentsSha256Prefix = call?.arguments?.keys
+                            ?.sorted()
+                            ?.joinToString(",")
+                            ?.let(::digestPrefix),
+                        outputNonEmpty = generated.text.isNotBlank(),
+                        outputMatchedExpected = structurallyUsable,
+                        callIdComplete = observation?.callIdComplete ?: (call?.functionName != null),
+                        argumentsStructurallyComplete = observation?.argumentsStructurallyComplete
+                            ?: structurallyUsable,
+                        pairedResponseCount = observation?.pairedResponseCount ?: 0,
+                        qualification = toolQualificationFor(descriptor, includeProbing = false),
+                        qualificationKey = key,
+                        failureStage = null,
+                        failureDetail = null,
+                    )
+                } finally {
+                    modelSession.endBenchmark(requestId)
+                }
+            } finally {
+                toolProbeInFlight.remove(key)
+            }
+        }
+    }
+
+    private fun toolProbeFailure(
+        modelId: String,
+        descriptor: LocalModelDescriptor?,
+        stage: String,
+        detail: String?,
+    ): LiteRtToolProbeResult = LiteRtToolProbeResult(
+        modelId = modelId,
+        nativeToolCallObserved = false,
+        toolName = null,
+        argumentsFieldCount = null,
+        argumentsSha256Prefix = null,
+        outputNonEmpty = false,
+        outputMatchedExpected = false,
+        callIdComplete = false,
+        argumentsStructurallyComplete = false,
+        pairedResponseCount = 0,
+        qualification = descriptor?.let { toolQualificationFor(it, includeProbing = false) }
+            ?: LiteRtToolQualification.NOT_APPLICABLE,
+        qualificationKey = descriptor?.qualificationKey(),
+        failureStage = stage,
+        failureDetail = detail,
+    )
+
+    /**
+     * MINING-P0-001 content-free tool-channel truth for one artifact: qualification state,
+     * fingerprint prefix, runtime/schema versions, structural call validity and probe history.
+     * Never exposes argument values or generated text.
+     */
+    suspend fun toolChannelDiagnostics(modelId: String): LiteRtToolChannelDiagnostics = withContext(Dispatchers.IO) {
+        val descriptor = inventoryRepository.resolveModel(modelId)
+        val observation = modelSession.lastToolChannelObservation
+        val failure = descriptor?.let { lastToolProbeFailures[it.qualificationKey()] }
+        LiteRtToolChannelDiagnostics(
+            modelId = modelId,
+            qualification = descriptor?.let(::toolQualificationFor) ?: LiteRtToolQualification.NOT_APPLICABLE,
+            qualificationKey = descriptor?.qualificationKey(),
+            artifactFingerprintPrefix = descriptor?.sha256?.take(12),
+            runtimeVersion = RUNTIME_VERSION,
+            schemaContractVersion = LiteRtToolQualificationKey.SCHEMA_CONTRACT_VERSION,
+            configuredToolCount = _conversationDiagnostics.value?.toolSchemaCount
+                ?: if (descriptor != null && toolCallProtocolFor(descriptor).supportsToolLoop) 1 else 0,
+            nativeToolCallObserved = observation?.observedNativeCall == true,
+            callIdComplete = observation?.callIdComplete ?: true,
+            argumentsStructurallyComplete = observation?.argumentsStructurallyComplete ?: true,
+            pairedResponseCount = observation?.pairedResponseCount ?: 0,
+            lastProbeAtMs = failure?.let { System.currentTimeMillis() },
+            lastProbeFailureStage = failure?.first,
+            lastProbeFailureDetail = failure?.second,
+        )
+    }
+
+    /**
+     * MINING-P0-001 explicit raw LiteRT SDK control probe.
+     *
+     * Bypasses the provider router, cognition, memory, tools, the agent loop and speech so a field
+     * failure can be attributed to a layer. Still honours artifact verification, ABI preflight and
+     * native-resource arbitration. Never runs at startup or when Settings opens.
+     */
+    suspend fun runControlProbe(modelId: String): LiteRtControlProbeResult = withContext(Dispatchers.IO) {
+        loadMutex.withLock {
+            LiteRtControlProbeRunner(
+                context = context,
+                inventoryRepository = inventoryRepository,
+                loadConfigFor = { descriptor -> loadConfigFor(descriptor) },
+                nativeResourceSnapshot = { nativeResourceCoordinator?.snapshot?.value.orEmpty() },
+                residentModelId = { if (modelSession.isLoaded()) modelSession.loadedModelId else null },
+            ).run(modelId)
+        }
+    }
+
+    /**
+     * Non-suspend, content-free snapshot for DiagnosticsExport. Reads already-published state only;
+     * never triggers a probe, a load or any inference.
+     */
+    fun diagnosticsSnapshot(): LiteRtProviderDiagnostics? {
+        val modelId = configuredModelId ?: return null
+        val descriptor = (inventoryRepository.inventoryState.value as? LocalModelInventoryState.Ready)
+            ?.models
+            ?.firstOrNull { it.id == modelId }
+        val observation = modelSession.lastToolChannelObservation
+        return LiteRtProviderDiagnostics(
+            modelId = modelId,
+            displayName = descriptor?.displayName ?: modelId,
+            installed = descriptor != null,
+            artifactState = descriptor?.validation?.name ?: "NOT_INSTALLED",
+            artifactFingerprintPrefix = descriptor?.sha256?.take(12),
+            resident = modelSession.isLoaded() && modelSession.loadedModelId == modelId,
+            requestedBackend = requestedBackend(modelId),
+            effectiveBackend = modelSession.activeBackend,
+            requestedContextTokens = modelSession.requestedContextSize,
+            effectiveContextTokens = modelSession.effectiveContextSize,
+            generationProven = descriptor != null && isGenerationProven(descriptor),
+            toolQualification = descriptor?.let { toolQualificationFor(it) }
+                ?: LiteRtToolQualification.NOT_APPLICABLE,
+            qualificationKey = descriptor?.qualificationKey(),
+            configuredToolCount = _conversationDiagnostics.value?.toolSchemaCount
+                ?: if (descriptor != null && toolCallProtocolFor(descriptor).supportsToolLoop) 1 else 0,
+            toolChannelObservation = observation?.summaryLine(),
+            lastFailureStage = _loadDiagnostics.value?.stage?.name,
+            runtimeVersion = RUNTIME_VERSION,
+        )
+    }
+
+    /** Bounded digest prefix over a label list (argument key names / schema names), never values. */
+    private fun digestPrefix(text: String): String = java.security.MessageDigest.getInstance("SHA-256")
+        .digest(text.toByteArray())
+        .joinToString("") { "%02x".format(it) }
+        .take(12)
 
     private fun failureStage(error: Throwable): String = when ((error as? LiteRtModelLoadException)?.stage) {
         ModelLoadStage.CONVERSATION -> "CONVERSATION"
@@ -731,10 +1066,13 @@ class LiteRtLocalProvider(
     }
 
     suspend fun unloadLocalModel(): Boolean = withContext(Dispatchers.IO) {
-        val modelId = modelSession.loadedModelId
-        val ok = modelSession.unloadModel().isSuccess
-        Log.i(TAG, "$EVENT_UNLOAD model=$modelId success=$ok")
-        ok
+        loadMutex.withLock locked@ {
+            val modelId = modelSession.loadedModelId
+            val ok = modelSession.unloadModel().isSuccess
+            if (ok) nativeResourceCoordinator?.release(this@LiteRtLocalProvider)
+            Log.i(TAG, "$EVENT_UNLOAD model=$modelId success=$ok")
+            ok
+        }
     }
 
     private fun developmentRunner() = LocalModelDevelopmentRunner(modelSession, inventoryRepository)
@@ -748,107 +1086,109 @@ class LiteRtLocalProvider(
      * proves a non-empty completion. Never run on app launch — only on explicit user request.
      */
     suspend fun verifyModel(modelId: String): ModelVerificationResult = withContext(Dispatchers.IO) {
-        val descriptor = inventoryRepository.resolveModel(modelId)
-            ?: return@withContext ModelVerificationResult.Failed(
-                modelId,
-                ModelVerificationStage.DOWNLOAD,
-                "Model is not installed.",
-            )
-        if (!descriptor.valid) {
-            return@withContext ModelVerificationResult.Failed(
-                modelId,
-                ModelVerificationStage.INTEGRITY,
-                descriptor.validationDetail ?: "Model file failed integrity verification.",
-            )
-        }
-
-        val loadStart = System.currentTimeMillis()
-        val loaded = loadMutex.withLock { loadLocked(descriptor) }
-        if (!loaded) {
-            val diagnostics = _loadDiagnostics.value
-            return@withContext ModelVerificationResult.Failed(
-                modelId,
-                when (diagnostics?.stage) {
-                    LiteRtFailureStage.CONVERSATION_CREATE -> ModelVerificationStage.CONVERSATION
-                    else -> ModelVerificationStage.ENGINE_INIT
-                },
-                "${descriptor.displayName} could not be loaded.",
-                diagnostics?.technicalSummary(),
-            )
-        }
-        val loadMs = System.currentTimeMillis() - loadStart
-        val loadBackend = modelSession.activeBackend ?: LocalComputeBackend.AUTO
-        val generation = withTimeoutOrNull(VERIFY_TIMEOUT_MS) {
-            modelSession.generate(
-                RuntimeGenerationConfig(
-                    prompt = VERIFY_PROMPT,
-                    maxTokens = VERIFY_MAX_TOKENS,
-                    temperature = 0.0,
-                    priority = com.halo.sdk.provider.InferencePriority.INTERACTIVE,
-                    availableTools = emptyList(),
+        loadMutex.withLock locked@ {
+            val descriptor = inventoryRepository.resolveModel(modelId)
+                ?: return@locked ModelVerificationResult.Failed(
+                    modelId,
+                    ModelVerificationStage.DOWNLOAD,
+                    "Model is not installed.",
                 )
+            if (!descriptor.valid) {
+                return@locked ModelVerificationResult.Failed(
+                    modelId,
+                    ModelVerificationStage.INTEGRITY,
+                    descriptor.validationDetail ?: "Model file failed integrity verification.",
+                )
+            }
+
+            val loadStart = System.currentTimeMillis()
+            val loaded = loadLocked(descriptor)
+            if (!loaded) {
+                val diagnostics = _loadDiagnostics.value
+                return@locked ModelVerificationResult.Failed(
+                    modelId,
+                    when (diagnostics?.stage) {
+                        LiteRtFailureStage.CONVERSATION_CREATE -> ModelVerificationStage.CONVERSATION
+                        else -> ModelVerificationStage.ENGINE_INIT
+                    },
+                    "${descriptor.displayName} could not be loaded.",
+                    diagnostics?.technicalSummary(),
+                )
+            }
+            val loadMs = System.currentTimeMillis() - loadStart
+            val loadBackend = modelSession.activeBackend ?: LocalComputeBackend.AUTO
+            val generation = withTimeoutOrNull(VERIFY_TIMEOUT_MS) {
+                modelSession.generate(
+                    RuntimeGenerationConfig(
+                        prompt = VERIFY_PROMPT,
+                        maxTokens = VERIFY_MAX_TOKENS,
+                        temperature = 0.0,
+                        priority = com.halo.sdk.provider.InferencePriority.INTERACTIVE,
+                        availableTools = emptyList(),
+                    )
+                )
+            }
+
+            if (generation == null) {
+                recordGenerationFailure(
+                    modelId,
+                    java.util.concurrent.TimeoutException("LiteRT verification timed out"),
+                    LiteRtFailureStage.FIRST_TOKEN,
+                )
+                return@locked ModelVerificationResult.Failed(
+                    modelId,
+                    ModelVerificationStage.GENERATION,
+                    "Timed out while waiting for a response from the model.",
+                )
+            }
+
+            val result = generation.getOrElse { error ->
+                recordGenerationFailure(modelId, error, stageFor(error))
+                return@locked ModelVerificationResult.Failed(
+                    modelId,
+                    when ((error as? LiteRtModelLoadException)?.stage) {
+                        ModelLoadStage.CONVERSATION -> ModelVerificationStage.CONVERSATION
+                        ModelLoadStage.ENGINE_INIT -> ModelVerificationStage.ENGINE_INIT
+                        else -> ModelVerificationStage.GENERATION
+                    },
+                    "The model loaded but could not generate a response.",
+                    "${error::class.java.simpleName}: ${error.message?.take(300)}",
+                )
+            }
+
+            val text = result.text.trim()
+            if (text.isEmpty()) {
+                recordGenerationFailure(
+                    modelId,
+                    AiProviderException(AiErrorType.EMPTY_RESPONSE, "LiteRT verification returned empty text"),
+                    LiteRtFailureStage.FIRST_TOKEN,
+                )
+                return@locked ModelVerificationResult.Failed(
+                    modelId,
+                    ModelVerificationStage.GENERATION,
+                    "The model produced an empty response.",
+                )
+            }
+
+            val backend = modelSession.activeBackend ?: LocalComputeBackend.AUTO
+            failureMemory.recordSuccess(modelId, descriptor.sha256, backend, modelSession.effectiveContextSize)
+
+            Log.i(
+                "HALO_LITERT_VERIFY",
+                "HALO_LITERT_VERIFY_OK model=$modelId sha=${descriptor.sha256?.take(12) ?: "unknown"} " +
+                    "backend=$backend loadMs=$loadMs ttftMs=${result.timeToFirstTokenMs}",
+            )
+            ModelVerificationResult.Verified(
+                modelId = modelId,
+                backend = backend,
+                loadMs = loadMs,
+                ttftMs = result.timeToFirstTokenMs,
+                sampleText = text.take(80),
+                loadBackend = loadBackend,
+                generationBackend = backend,
+                fallbackReason = modelSession.fallbackReason,
             )
         }
-
-        if (generation == null) {
-            recordGenerationFailure(
-                modelId,
-                java.util.concurrent.TimeoutException("LiteRT verification timed out"),
-                LiteRtFailureStage.FIRST_TOKEN,
-            )
-            return@withContext ModelVerificationResult.Failed(
-                modelId,
-                ModelVerificationStage.GENERATION,
-                "Timed out while waiting for a response from the model.",
-            )
-        }
-
-        val result = generation.getOrElse { error ->
-            recordGenerationFailure(modelId, error, stageFor(error))
-            return@withContext ModelVerificationResult.Failed(
-                modelId,
-                when ((error as? LiteRtModelLoadException)?.stage) {
-                    ModelLoadStage.CONVERSATION -> ModelVerificationStage.CONVERSATION
-                    ModelLoadStage.ENGINE_INIT -> ModelVerificationStage.ENGINE_INIT
-                    else -> ModelVerificationStage.GENERATION
-                },
-                "The model loaded but could not generate a response.",
-                "${error::class.java.simpleName}: ${error.message?.take(300)}",
-            )
-        }
-
-        val text = result.text.trim()
-        if (text.isEmpty()) {
-            recordGenerationFailure(
-                modelId,
-                AiProviderException(AiErrorType.EMPTY_RESPONSE, "LiteRT verification returned empty text"),
-                LiteRtFailureStage.FIRST_TOKEN,
-            )
-            return@withContext ModelVerificationResult.Failed(
-                modelId,
-                ModelVerificationStage.GENERATION,
-                "The model produced an empty response.",
-            )
-        }
-
-        val backend = modelSession.activeBackend ?: LocalComputeBackend.AUTO
-        failureMemory.recordSuccess(modelId, descriptor.sha256, backend, modelSession.effectiveContextSize)
-
-        Log.i(
-            "HALO_LITERT_VERIFY",
-            "HALO_LITERT_VERIFY_OK model=$modelId sha=${descriptor.sha256?.take(12) ?: "unknown"} " +
-                "backend=$backend loadMs=$loadMs ttftMs=${result.timeToFirstTokenMs}",
-        )
-        ModelVerificationResult.Verified(
-            modelId = modelId,
-            backend = backend,
-            loadMs = loadMs,
-            ttftMs = result.timeToFirstTokenMs,
-            sampleText = text.take(80),
-            loadBackend = loadBackend,
-            generationBackend = backend,
-            fallbackReason = modelSession.fallbackReason,
-        )
     }
 
     // -------------------------------------------------------------------------------------
@@ -937,149 +1277,227 @@ class LiteRtLocalProvider(
     }
 
     override suspend fun generate(request: AiRequest, context: AiContext): AiResponse = withContext(Dispatchers.IO) {
-        request.validateForTextGeneration()
-        request.validateAgainst(getCapabilities())
+        loadMutex.withLock locked@ {
+            request.validateForTextGeneration()
+            request.validateAgainst((request.modelId ?: configuredModelId)?.let { capabilitiesForModel(it) }.orEmpty())
 
-        if (!loadModelIfNeeded()) {
-            throw AiProviderException(
-                AiErrorType.LOCAL_MODEL_UNAVAILABLE,
-                _loadDiagnostics.value?.let { "${it.displayName} could not be loaded: ${it.stage}" }
-                    ?: "Failed to load LiteRT model",
-            )
-        }
-
-        acquireExecutionLease("Inferring")
-
-        val descriptor = descriptorForGeneration()
-        val mapped = LiteRtConversationMapper.map(request, context)
-        val requestedTools = toolDefinitionsFor(context)
-        val protocol = descriptor?.let(::toolCallProtocolFor) ?: ToolCallProtocol.NONE
-        val usePromptProtocol = protocol == ToolCallProtocol.HALO_PROMPT
-        val genConfig = generationConfig(
-            descriptor = descriptor,
-            mappedPrompt = mapped.outgoingMessage?.content.orEmpty(),
-            systemInstruction = systemInstructionFor(mapped.systemInstruction, requestedTools, usePromptProtocol),
-            imageBytes = request.image,
-            initialMessages = mapped.initialMessages.map { message -> message.toRuntimeMessage() },
-            // The prompt protocol advertises actions as text; passing them as native tools
-            // too would invite double execution and claim a channel the artifact lacks.
-            availableTools = if (usePromptProtocol) emptyList() else requestedTools,
-            requestMaxTokens = request.maxOutputTokens,
-        )
-
-        return@withContext try {
-            val result = modelSession.generate(genConfig).getOrElse { err ->
-                if (err is CancellationException) throw err
-                recordGenerationFailure(modelSession.loadedModelId, err, stageFor(err))
-                throw AiProviderException(AiErrorType.GENERATION_FAILED, "LiteRT generation failed: ${err.message}", err)
+            if (!loadModelIfNeededLocked(request.modelId)) {
+                throw AiProviderException(
+                    AiErrorType.LOCAL_MODEL_UNAVAILABLE,
+                    _loadDiagnostics.value?.let { "${it.displayName} could not be loaded: ${it.stage}" }
+                        ?: "Failed to load LiteRT model",
+                )
             }
 
-            val effective = applyPromptProtocol(result, usePromptProtocol, requestedTools)
+            acquireExecutionLease("Inferring")
+            return@locked try {
+                val descriptor = descriptorForGeneration()
+                val mapped = LiteRtConversationMapper.map(request, context)
+                val requestedTools = toolDefinitionsFor(context)
+                val protocol = descriptor?.let(::toolCallProtocolFor) ?: ToolCallProtocol.NONE
+                val usePromptProtocol = protocol == ToolCallProtocol.HALO_PROMPT
+                val genConfig = generationConfig(
+                    descriptor = descriptor,
+                    mappedPrompt = mapped.outgoingMessage?.content.orEmpty(),
+                    systemInstruction = systemInstructionFor(mapped.systemInstruction, requestedTools, usePromptProtocol),
+                    imageBytes = request.image,
+                    initialMessages = mapped.initialMessages.map { message -> message.toRuntimeMessage() },
+                    // The prompt protocol advertises actions as text; passing them as native tools
+                    // too would invite double execution and claim a channel the artifact lacks.
+                    availableTools = if (usePromptProtocol) emptyList() else requestedTools,
+                    requestMaxTokens = request.maxOutputTokens,
+                )
 
-            if (effective.text.isBlank() && effective.toolCalls.isEmpty()) {
-                val error = AiProviderException(AiErrorType.EMPTY_RESPONSE, "LiteRT produced no response text")
-                recordGenerationFailure(modelSession.loadedModelId, error, LiteRtFailureStage.FIRST_TOKEN)
-                throw error
+                val result = modelSession.generate(genConfig).getOrElse { err ->
+                    if (err is CancellationException) throw err
+                    recordGenerationFailure(modelSession.loadedModelId, err, stageFor(err))
+                    throw AiProviderException(AiErrorType.GENERATION_FAILED, "LiteRT generation failed: ${err.message}", err)
+                }
+
+                val effective = applyPromptProtocol(result, usePromptProtocol, requestedTools)
+
+                if (effective.text.isBlank() && effective.toolCalls.isEmpty()) {
+                    val error = AiProviderException(AiErrorType.EMPTY_RESPONSE, "LiteRT produced no response text")
+                    recordGenerationFailure(modelSession.loadedModelId, error, LiteRtFailureStage.FIRST_TOKEN)
+                    throw error
+                }
+                recordReasoning(result.reasoningText)
+                descriptorForGeneration()?.let(::markGenerationProven)
+                recordConversationDiagnostics(
+                    descriptor = descriptor,
+                    genConfig = genConfig,
+                    generatedText = effective.text,
+                    usePromptProtocol = usePromptProtocol,
+                    requestedTools = requestedTools,
+                    firstTokenMs = result.timeToFirstTokenMs,
+                )
+                _loadDiagnostics.value = null
+
+                AiResponse(
+                    text = effective.text,
+                    providerId = id,
+                    modelId = modelSession.loadedModelId ?: "litert",
+                    finishReason = if (effective.toolCalls.isNotEmpty()) "tool_calls" else "stop",
+                    toolCalls = effective.toolCalls,
+                    executionBackend = modelSession.activeBackend?.name,
+                )
+            } finally {
+                withContext(NonCancellable) {
+                    nativeResourceCoordinator?.mark(this@LiteRtLocalProvider, NativeResourceState.RESIDENT, "Resident")
+                }
             }
-            recordReasoning(result.reasoningText)
-            descriptorForGeneration()?.let(::markGenerationProven)
-            _loadDiagnostics.value = null
-
-            AiResponse(
-                text = effective.text,
-                providerId = id,
-                modelId = modelSession.loadedModelId ?: "litert",
-                finishReason = if (effective.toolCalls.isNotEmpty()) "tool_calls" else "stop",
-                toolCalls = effective.toolCalls,
-                executionBackend = modelSession.activeBackend?.name,
-            )
-        } finally {
-            nativeResourceCoordinator?.mark(this@LiteRtLocalProvider, NativeResourceState.RESIDENT, "Resident")
         }
     }
 
     override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = channelFlow {
-        request.validateForTextGeneration()
-        request.validateAgainst(getCapabilities())
-        send(AiStreamEvent.Started)
+        loadMutex.withLock locked@ {
+            request.validateForTextGeneration()
+            request.validateAgainst((request.modelId ?: configuredModelId)?.let { capabilitiesForModel(it) }.orEmpty())
+            send(AiStreamEvent.Started)
 
-        if (!loadModelIfNeeded()) {
-            val diagnostics = _loadDiagnostics.value
-            send(
-                AiStreamEvent.Failed(
-                    AiProviderException(
-                        AiErrorType.LOCAL_MODEL_UNAVAILABLE,
-                        diagnostics?.let { "${it.displayName} could not be loaded." }
-                            ?: "Failed to load LiteRT model",
-                    )
-                )
-            )
-            return@channelFlow
-        }
-
-        acquireExecutionLease("Inferring")
-
-        val descriptor = descriptorForGeneration()
-        val mapped = LiteRtConversationMapper.map(request, context)
-        val requestedTools = toolDefinitionsFor(context)
-        val protocol = descriptor?.let(::toolCallProtocolFor) ?: ToolCallProtocol.NONE
-        val usePromptProtocol = protocol == ToolCallProtocol.HALO_PROMPT
-        val genConfig = generationConfig(
-            descriptor = descriptor,
-            mappedPrompt = mapped.outgoingMessage?.content.orEmpty(),
-            systemInstruction = systemInstructionFor(mapped.systemInstruction, requestedTools, usePromptProtocol),
-            imageBytes = request.image,
-            initialMessages = mapped.initialMessages.map { message -> message.toRuntimeMessage() },
-            availableTools = if (usePromptProtocol) emptyList() else requestedTools,
-            requestMaxTokens = request.maxOutputTokens,
-        )
-
-        try {
-            val result = modelSession.generate(genConfig) { token ->
-                send(AiStreamEvent.Token(token))
-            }
-
-            result.onSuccess { gen ->
-                val effective = applyPromptProtocol(gen, usePromptProtocol, requestedTools)
-                if (effective.text.isNotBlank() || effective.toolCalls.isNotEmpty()) {
-                    recordReasoning(gen.reasoningText)
-                    descriptorForGeneration()?.let(::markGenerationProven)
-                    _loadDiagnostics.value = null
-                }
+            if (!loadModelIfNeededLocked(request.modelId)) {
+                val diagnostics = _loadDiagnostics.value
                 send(
-                    AiStreamEvent.Completed(
-                        AiResponse(
-                            text = effective.text,
-                            providerId = id,
-                            modelId = modelSession.loadedModelId ?: "litert",
-                            finishReason = if (effective.toolCalls.isNotEmpty()) "tool_calls" else "stop",
-                            toolCalls = effective.toolCalls,
-                            executionBackend = modelSession.activeBackend?.name,
+                    AiStreamEvent.Failed(
+                        AiProviderException(
+                            AiErrorType.LOCAL_MODEL_UNAVAILABLE,
+                            diagnostics?.let { "${it.displayName} could not be loaded." }
+                                ?: "Failed to load LiteRT model",
                         )
                     )
                 )
-            }.onFailure { err ->
-                if (err is CancellationException) throw err
-                recordGenerationFailure(modelSession.loadedModelId, err, stageFor(err))
-                send(AiStreamEvent.Failed(AiProviderException(AiErrorType.GENERATION_FAILED, err.message ?: "Stream failed", err)))
+                return@locked
             }
-        } catch (cancelled: CancellationException) {
-            throw cancelled
-        } catch (error: AiProviderException) {
-            send(AiStreamEvent.Failed(error))
-        } catch (error: Throwable) {
-            send(AiStreamEvent.Failed(AiProviderException(AiErrorType.GENERATION_FAILED, "LiteRT generation failed", error)))
-        } finally {
-            nativeResourceCoordinator?.mark(this@LiteRtLocalProvider, NativeResourceState.RESIDENT, "Resident")
+
+            acquireExecutionLease("Inferring")
+            try {
+
+                val descriptor = descriptorForGeneration()
+                val mapped = LiteRtConversationMapper.map(request, context)
+                val requestedTools = toolDefinitionsFor(context)
+                val protocol = descriptor?.let(::toolCallProtocolFor) ?: ToolCallProtocol.NONE
+                val usePromptProtocol = protocol == ToolCallProtocol.HALO_PROMPT
+                val genConfig = generationConfig(
+                    descriptor = descriptor,
+                    mappedPrompt = mapped.outgoingMessage?.content.orEmpty(),
+                    systemInstruction = systemInstructionFor(mapped.systemInstruction, requestedTools, usePromptProtocol),
+                    imageBytes = request.image,
+                    initialMessages = mapped.initialMessages.map { message -> message.toRuntimeMessage() },
+                    availableTools = if (usePromptProtocol) emptyList() else requestedTools,
+                    requestMaxTokens = request.maxOutputTokens,
+                )
+
+                val result = modelSession.generate(genConfig) { token ->
+                    send(AiStreamEvent.Token(token))
+                }
+
+                result.onSuccess { gen ->
+                    val effective = applyPromptProtocol(gen, usePromptProtocol, requestedTools)
+                    if (effective.text.isNotBlank() || effective.toolCalls.isNotEmpty()) {
+                        recordReasoning(gen.reasoningText)
+                        descriptorForGeneration()?.let(::markGenerationProven)
+                        recordConversationDiagnostics(
+                            descriptor = descriptor,
+                            genConfig = genConfig,
+                            generatedText = effective.text,
+                            usePromptProtocol = usePromptProtocol,
+                            requestedTools = requestedTools,
+                            firstTokenMs = gen.timeToFirstTokenMs,
+                        )
+                        _loadDiagnostics.value = null
+                    }
+                    send(
+                        AiStreamEvent.Completed(
+                            AiResponse(
+                                text = effective.text,
+                                providerId = id,
+                                modelId = modelSession.loadedModelId ?: "litert",
+                                finishReason = if (effective.toolCalls.isNotEmpty()) "tool_calls" else "stop",
+                                toolCalls = effective.toolCalls,
+                                executionBackend = modelSession.activeBackend?.name,
+                            )
+                        )
+                    )
+                }.onFailure { err ->
+                    if (err is CancellationException) throw err
+                    recordGenerationFailure(modelSession.loadedModelId, err, stageFor(err))
+                    send(AiStreamEvent.Failed(AiProviderException(AiErrorType.GENERATION_FAILED, err.message ?: "Stream failed", err)))
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: AiProviderException) {
+                send(AiStreamEvent.Failed(error))
+            } catch (error: Throwable) {
+                send(AiStreamEvent.Failed(AiProviderException(AiErrorType.GENERATION_FAILED, "LiteRT generation failed", error)))
+            } finally {
+                withContext(NonCancellable) {
+                    nativeResourceCoordinator?.mark(this@LiteRtLocalProvider, NativeResourceState.RESIDENT, "Resident")
+                }
+            }
         }
     }.flowOn(Dispatchers.IO)
+
+    /**
+     * MINING-P0-001 structured, content-free conversation snapshot plus a bounded prompt-echo
+     * observation.
+     *
+     * Observation only: this batch does NOT terminate generation. The later P1 bounded-agent batch
+     * owns breaker policy. The matched sequence itself is never logged or retained; only the fact
+     * and the threshold are emitted.
+     */
+    private fun recordConversationDiagnostics(
+        descriptor: LocalModelDescriptor?,
+        genConfig: RuntimeGenerationConfig,
+        generatedText: String,
+        usePromptProtocol: Boolean,
+        requestedTools: List<ToolDefinition>,
+        firstTokenMs: Long?,
+    ) {
+        val generation = generationCounter.incrementAndGet()
+        val preface = genConfig.systemInstruction
+        val echo = LiteRtPromptEcho.suspected(generatedText, preface)
+        if (echo) {
+            Log.i(
+                TAG,
+                "$EVENT_PROMPT_ECHO generation=$generation " +
+                    "matchedChars>=${LiteRtPromptEcho.MIN_MATCHED_CHARS}",
+            )
+        }
+        val schemaNames = genConfig.availableTools.map { it.name }.sorted()
+        _conversationDiagnostics.value = LiteRtConversationDiagnostics(
+            generationId = generation.toString(),
+            conversationGeneration = generation,
+            createdAtMs = System.currentTimeMillis(),
+            systemInstructionMode = if (preface.isNullOrBlank()) {
+                LiteRtSystemInstructionMode.NONE
+            } else {
+                LiteRtSystemInstructionMode.SDK_SYSTEM_INSTRUCTION
+            },
+            systemInstructionChars = preface?.length ?: 0,
+            systemInstructionFingerprint = preface?.takeIf { it.isNotBlank() }?.let(::digestPrefix),
+            // The prompt-mediated tool preface is folded into the SDK system instruction, not a
+            // separate channel Halo pretends to have.
+            toolPrefaceFolded = usePromptProtocol && requestedTools.isNotEmpty(),
+            initialMessageCount = genConfig.initialMessages.size,
+            toolSchemaCount = genConfig.availableTools.size,
+            toolSchemaFingerprint = schemaNames.takeIf { it.isNotEmpty() }?.joinToString(",")?.let(::digestPrefix),
+            requestedBackend = descriptor?.id?.let(::requestedBackend),
+            effectiveBackend = modelSession.activeBackend,
+            requestedContextTokens = modelSession.requestedContextSize,
+            effectiveContextTokens = modelSession.effectiveContextSize,
+            conversationCreateDurationMs = modelSession.conversationCreateDurationMs,
+            firstTokenDurationMs = firstTokenMs,
+            lastRebuildReason = modelSession.fallbackReason,
+            promptEchoSuspected = echo,
+        )
+    }
 
     private fun recordReasoning(reasoningText: String?) {
         val preview = reasoningText?.take(200)?.replace('\n', ' ')
         if (preview.isNullOrBlank()) return
         // Diagnostic evidence only: internal reasoning must never reach Android TTS.
         _lastReasoningPreview.value = preview
-        Log.i(TAG, "$EVENT_THINKING chars=${reasoningText.length} preview=$preview")
+        Log.i(TAG, "$EVENT_THINKING chars=${reasoningText.length}")
     }
 
     private fun stageFor(error: Throwable): LiteRtFailureStage =
@@ -1159,6 +1577,13 @@ class LiteRtLocalProvider(
         const val VERIFY_PROMPT = "Reply with OK."
         const val VERIFY_MAX_TOKENS = 8
         const val VERIFY_TIMEOUT_MS = 120_000L
+
+        /** Harmless synthetic probe prompt: one bounded tool call, no prose. Never stored. */
+        const val TOOL_PROBE_PROMPT =
+            "Call the halo_probe tool with value=\"ok\". Do not answer in prose."
+        const val TOOL_PROBE_MAX_TOKENS = 64
+
+        const val EVENT_PROMPT_ECHO = "HALO_LITERT_PROMPT_ECHO"
 
         const val EVENT_SELECT = "HALO_LITERT_SELECT"
         const val EVENT_LOAD_START = "HALO_LITERT_LOAD_START"

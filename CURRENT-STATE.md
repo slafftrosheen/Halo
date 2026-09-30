@@ -339,3 +339,453 @@ the recorded provider/model, and sends only an internal continuation trigger. Re
 continuation never replays a completed side effect. Deterministic responses use the same durable
 conversation store and idempotent commit boundary as agentic responses. Source complete; build,
 unit, and physical-phone verification were intentionally not run in this patching pass.
+
+## RUNTIME-056 — native Android ability expansion
+
+**BUILD VERIFIED / UNIT VERIFIED / PHYSICAL DEVICE NOT RUN.** Mined from the OneBox agent tool
+catalogue in the local reference archive (`docs/engineering/REFERENCE-HARVEST.md`). The runtime,
+host, provider and journal boundaries are unchanged: new abilities are Android host executors
+behind the existing portable `ToolDescriptor` fabric, and no Runtime module imports Android.
+
+New phone abilities (all Android APIs Halo already had permission for; no new dependency):
+
+- **Device insight** — `halo_device_info`, `halo_battery_status`, `halo_network_status`. Observation
+  only. A value the platform will not answer is reported as `unknown` with the reason; the
+  Wi-Fi network name is withheld unless location access is granted, and metering/validation
+  come from the active network's reported capabilities.
+- **Clipboard** — `halo_clipboard_read` (SENSITIVE, never replayed) and `halo_clipboard_write`
+  (REVERSIBLE). Copied text is framed as `UNTRUSTED_CLIPBOARD_CONTENT`. Android only grants clipboard
+  reads to the focused app, which is reported as a distinct, non-retryable outcome rather than
+  presented as an empty clipboard.
+- **Checksum** — `halo_checksum` over user text or a file **already imported into the workspace**,
+  MD5/SHA-1/SHA-256, with an optional expected value. There is deliberately no arbitrary-path mode:
+  Halo has no general filesystem capability and this must not become one. A mismatch is a successful
+  measurement, not a tool failure.
+- **Web reading** — `halo_fetch_url` returns the readable text or the links of one public page.
+  Bounded by construction: http/https only, manual redirect following so **every hop is re-validated**,
+  refusal of loopback/link-local/private/`.local` targets by literal *and* by resolved address,
+  a 512 KB body ceiling, text media types only, and no credentials of any kind. Page text is framed
+  as `UNTRUSTED_WEB_CONTENT`.
+- **Device controls** — `halo_ringer` (reads the sound mode back and reports `DISPATCHED` when the
+  platform did not apply the request) and `halo_brightness` (requires Android's modify-system-settings
+  access; reports `WRITE_SETTINGS_REQUIRED` with the exact grant path otherwise).
+- **Timers** — `halo_timer` dispatches a countdown to the system clock app and reports `DISPATCHED`;
+  Halo does not own the timer and never claims it is counting down.
+- **Settings catalogue** — `halo_open_settings` is now device truth: a section is offered to a model
+  only when an installed activity answers that intent, package-scoped screens are addressed with their
+  package (`app`, `notifications`, `write_settings`), and known-but-absent screens report
+  `SETTINGS_SECTION_UNAVAILABLE` instead of opening something else.
+
+Host descriptor dispatch correction (defect found while wiring the new families): every executor kind
+used to fall through to a default descriptor, and `ToolRegistry`'s first-wins catalogue therefore
+stored whichever kind was registered first for *every* host tool. Android settings, volume, media,
+alarms, contacts and the entire accessibility family were catalogued as `NAVIGATION` +
+`EXTERNAL_SIDE_EFFECT` + `NEVER_REPLAY`, and descriptors declaring `ConfirmationPolicy.ALWAYS`
+(for example `halo_ui_set_text`) lost their mandatory confirmation to a user policy that may be
+`ALWAYS_ALLOW`. Each kind now claims an exact definition or returns nothing, and an unclaimed
+definition falls back to the registry's conservative descriptor. The same correction is covered by
+`HostToolDescriptorDispatchTest`.
+
+Provider selection repair (pre-existing defect the full-suite run exposed): `AiSelectionRepository`
+marked the legacy migration complete on every start, including starts with no legacy value present,
+so a retired `provider.llamacpp.native` id restored *after* that marker was set (backup restore,
+earlier process, copied preferences) could never be repaired and stayed selected forever. A retired
+provider id is now repaired on every start; the marker still guards the one-time legacy
+provider-specific model-key lookup it was introduced for.
+
+UI mirroring: the new host capabilities (`host.device.inspect`, `host.battery.read`,
+`host.network.read`, `host.clipboard.read`, `host.clipboard.write`, `host.web.fetch`,
+`host.timer.set`, `host.ringer.control`, `host.screen.brightness`, `host.settings.open`) are
+published by the Android capability publisher and labelled in the Skills screen. Every new ability
+ships a validated built-in skill manifest (`halo.device.info`, `halo.clipboard`, `halo.web`, plus
+`halo.device`, `halo.files`, `halo.reminders`, `halo.phone.actions` updates) with runtime guidance.
+`halo.reminders` previously declared three tools that are registered nowhere and now names real
+actions. System Check's Phone section no longer prints hardcoded "Available" rows: it lists the
+phone abilities this build registers with the availability the Runtime resolver reports, naming the
+missing setup step.
+
+Verification actually performed: `:engines:ai:test`, `:runtime:cognition:test` and
+`:app:testDebugUnitTest` pass, including 31 descriptor and native-ability tests. A full `test` run
+also exercises `:providers:litert`, where `LiteRtModelDownloaderTest` has one timing-sensitive case
+that failed once and passed on rerun. No physical-phone run was performed.
+
+## RUNTIME-057 / MINING-P0-001 — LiteRT execution truth + native tool qualification + resource observability + audio route continuity
+
+**SOURCE COMPLETE / BUILD NOT RUN / TESTS NOT RUN / PHONE ACCEPTANCE NOT RUN.** Edited from
+`faca1ae45cb1fc3ac8d8f7dee5836244e6deebc6`. Pure production source + UI wiring; no Gradle, no compile,
+no test, no device run was performed for this entry.
+
+### Why
+
+Halo had substantial LiteRT machinery but no way to answer "where exactly did local inference fail?"
+without reading thousands of log lines. `SystemCheckViewModel` even had two buttons that both called
+`providerRouter.execute()` while implying one was lower-level. Native tool support was inferable from
+catalog metadata rather than observed on the device artifact. `NativeResourceCoordinator` had begun
+separating residency from execution leases but the distinction was not observable. Interaction audio
+route affinity was correct in practice but implicit, and `HaloAudioSessionCoordinator.finishInput()`
+cleared the interaction's audio state when only the microphone capture ended.
+
+### Corrected semantics (real defects, not refactors)
+
+1. `LiteRtLocalProvider.toolCallProtocolFor()` returned `ToolCallProtocol.NATIVE` whenever a catalog
+descriptor declared `supportsTools`. A catalog boolean is a **declaration**; it is not device/runtime
+proof, and the method's own contract said so. `NATIVE` is now returned only for a proven
+artifact/runtime/schema key; a declared-native but unproven artifact honestly falls back to
+`HALO_PROMPT`, which is what the router actually needs.
+2. `HaloAudioSessionCoordinator.finishInput()` set the session to `Idle` when capture ended, which is
+correct for capture-scoped state but erased the interaction's route binding. Capture end, STT,
+cognition, provider load and inference all happen after the microphone lease is released and must keep
+the same output target.
+3. Residency was being reported with an execution claim. `mark(RESIDENT)` released the
+`ResourceLeaseManager` lease but left `executionLeaseHeld` unobservable, so a warm ASR/LLM looked
+indistinguishable from an active one in the UI and in exported diagnostics.
+
+### Direct control probe (LEVEL 1)
+
+`LiteRtControlProbeRunner` (`providers:litert`) runs model file → `Engine.initialize()` →
+`Conversation` → `Reply exactly HALO_OK` (≤ 8 output tokens, greedy sampler, no tools, no history, no
+memory, no system instruction) → bounded completion → teardown. It involves no `AiProviderRouter`,
+cognition, memory, tools, agent loop or speech, so "raw LiteRT works" and "Halo provider works" stay
+separately falsifiable. `LiteRtControlProbeResult` records per-stage status/duration plus
+`outputNonEmpty` / `outputMatchedExpected` only — never generated text.
+
+Engine-config rules were not duplicated: `LiteRtEngineConfigFactory` is now the single owner of backend
+mapping, `EngineConfig` construction, content-addressed cache paths, the bounded context ladder, the
+ABI preflight and memory-failure classification, consumed by both `LiteRtRuntime` and the probe.
+Resource safety: a probe is `BLOCKED` while any heavyweight native resource is ACQUIRING/LOADING/IN_USE,
+and `BLOCKED` while a model is merely warm RESIDENT (System Check then offers the existing unload path)
+rather than silently loading a second engine. `controlProbePassed` is a separate diagnostic fact and
+never promotes generation-proven state or selects anything.
+
+### Native tool qualification (LEVEL 2/3)
+
+`LiteRtToolQualification` (`NOT_APPLICABLE`, `DECLARED`, `PROBE_REQUIRED`, `PROBING`, `NATIVE_PROVEN`,
+`PROMPT_MEDIATED`, `FAILED_LAST_PROBE`) is LiteRT implementation detail and is not added to
+provider-sdk. Proof is keyed `<sha256>:litertlm-0.17.1:halo-openapi-v1`, so stale proof cannot survive
+a runtime or tool-schema change. `LiteRtNativeToolCallValidator` rejects a call with a missing function
+name or incomplete arguments and logs `HALO_LITERT_TOOL_CALL_REJECTED` instead of executing it; the
+runtime records content-free channel observation (emitted/accepted/rejected, duplicate suppression,
+call-id completeness, argument completeness, paired responses, unpaired model calls after trimming).
+`LiteRtToolProbeResult` no longer stores raw argument values or the generated response: it stores field
+counts, a digest over sorted argument **key names**, and structural booleans. `automaticToolCalling =
+false` and `HaloOpenApiTool.execute()` throwing loudly are unchanged, now with an explicit
+`SECURITY INVARIANT` comment at the `ConversationConfig` construction site.
+
+### Resource observability (LEVEL 3)
+
+`NativeResourceSnapshot` now carries `executionLeaseHeld`, `executionResourceId`, `executionWaitMs`,
+`executionAcquiredAtMs`, `lastTransitionAtMs` and `operationId`, plus a truthful `executing` flag.
+`RESIDENT` therefore means "loaded/cached with `executionLeaseHeld = false`" and `IN_USE` means "an
+active compute lease is held". `executingKinds()`/`isExecuting()` were added *alongside* `activeKinds()`,
+whose residency semantics (used by model-storage cleanup) are deliberately unchanged. Contention was
+not "fixed" by raising the 1000 ms wait, sharing compute.heavy, unloading after every request, adding
+sleeps or disabling the lease manager.
+
+### Audio route continuity (LEVEL 6)
+
+`InteractionAudioAffinity` / `InteractionAudioRouteState` in runtime-sdk formalise
+`interaction route lifetime > capture lifetime > utterance lifetime`. The binding begins when the
+interaction's input/origin is established (`ListeningStarted`), survives `InputLease.release()`,
+STT, cognition, provider load, inference and TTS preparation, and ends only when the interaction
+finishes, fails terminally or the host tears down. For a wearable-origin input the intended output is
+the originating wearable with phone fallback disabled; phone-origin interactions keep Android's own
+communication-route selection (no forced built-in speaker). The coordinator that owns the audio leases
+owns this record, so there is no second router. `SpeechOutputRouteController`'s HeyCyan path and the
+`DISALLOW_PHONE` handoff refusal are unchanged: a wearable route failure still reports
+`ROUTE_UNAVAILABLE` and never becomes an audible phone fallback.
+
+### System Check (LEVEL 0–4, differential)
+
+New "Local AI execution truth" section with independently reported rows: Artifact
+(`VERIFIED`/`UNVERIFIED`/`CORRUPT`), Raw LiteRT control (`NOT RUN`/`PASSED`/`FAILED`/`BLOCKED`),
+Halo local provider (`COLD`/`LOADING`/`RESIDENT`/`FAILED`), Generation proof
+(`PROVEN GPU|CPU`/`FAILED <stage>`/`NOT RUN`), Tool channel (qualification label), Native resource
+(`RELEASED`/`RESIDENT executionLeaseHeld=false`/`IN USE`/`WAITING`), Backend and Context
+(requested/effective). Actions are explicit and never chained: **Run control probe**, **Verify**
+(provider path), **Probe tools**, **Run router probe**, **Run agentic probe**; a `BLOCKED` control
+probe offers the existing unload. Stream K cleanup: `runLocalLoop()` was removed rather than kept,
+because it executed the router layer while pretending to be lower-level.
+
+### UI changes by screen
+
+- **System Check** — the ladder above, plus monospace per-stage detail (stage, status, ms, bounded
+detail, exception class). No prompts or generated text are ever displayed.
+- **Model Browser** — "Direct runtime probe" added as the lowest-level action and labelled distinctly
+from "Verify model" and "Probe tool channel"; compact truth indicators Artifact / Selected / Resident
+/ Execution / Backend / Generation / Tools; `toolsDeclared=` now marks catalog metadata as a
+declaration, and the honest qualification state is shown instead of it.
+- **Intelligence** — a concise "On-device runtime" card (model, Resident·backend, native-tool
+qualification) and a "Last local failure" card showing stage + time only; deep timings stay in System
+Check.
+- **Android Assistant** — an "Audio continuity" subsection (Origin, Intended output, Actual endpoint,
+Fallback, Route state) fed by the audio session coordinator's affinity flow. Display labels only; no
+MAC addresses, and it configures nothing.
+- **Diagnostics export** — new `--- LOCAL LITERT ---`, `--- NATIVE RESOURCES ---` and
+`--- AUDIO CONTINUITY ---` sections, all content-free (states, counts, digests, wait times, labels).
+
+### Deliberately not adopted from the references
+
+- Android-Agent `harness-improve` `NativeToolBridge`: adopted the *invariants* (schema transport,
+  `automaticToolCalling = false`, fail-loud execution, app-side execution ownership, call/result
+  history pairing, probe truth, channel-drift visibility, conversation/preface diagnostics). Their
+  Agent architecture was not copied; Halo's `AgentStep` journal remains execution truth.
+- Voice Agent: adopted "audio mode/routing belongs to the interaction session, not one mic capture".
+  Its forced built-in speaker was **not** adopted — Halo preserves wearable/headset affinity.
+- Minimal ADK + LiteRT sample (no root LICENSE in the inspected tree): used only as a conceptual
+  reference for how small a direct control path can be. No ADK dependency, no
+  `MANAGE_EXTERNAL_STORAGE`, no provider-architecture replacement, no LiteRT version change (0.17.1).
+- Prompt-echo detection is observation-only in this batch: it emits
+  `HALO_LITERT_PROMPT_ECHO generation=<id> matchedChars>=64` (threshold, never the matched text) and
+  sets `promptEchoSuspected`. Actual breaker policy is deferred to the P1 bounded-agent batch.
+
+### Open items for the validation pass
+
+Compilation, unit tests and the physical acceptance ladder
+(`docs/08-providers/LITERT-DEVELOPMENT-MATRIX.md`) are unrun. Source-level uncertainty: exact
+litertlm 0.17.1 `SamplerConfig`/`ConversationConfig` parameter types at the new probe call site;
+`LocalModelInventoryState.Ready` lookup used by the non-suspend diagnostics snapshot; and the
+`SystemCheckItem.detail` monospace rendering on narrow devices.
+
+## RUNTIME-058 / MINING-P1-001 — bounded agent + memory pull + MCP + voice continuity + procedures
+
+Status: **SOURCE COMPLETE / BUILD NOT RUN / TESTS NOT RUN / DEVICE ACCEPTANCE NOT RUN.**
+Baseline: `faca1ae4` (main had not advanced; all newer work preserved). Identifier: **RUNTIME-058**
+(057 was MINING-P0-001). Full reference/decision record:
+[ANDROID-AGENT-VOICE-MCP-MINING.md](docs/engineering/ANDROID-AGENT-VOICE-MCP-MINING.md).
+
+### Bounded agent execution
+
+- `AgentRunLimits` (interactive 90 s · routine 240 s · system 45 s, per-kind, never one global magic
+  number) + `AgentRunGuard` + `AgentRunGuardRegistry`: one guard per run, shared by the provider loop
+  and the tool loop so they cannot disagree about the remaining budget.
+- Reasons are typed: `DEADLINE_EXCEEDED`, `TOOL_FAILURE_STREAK`, `TOOL_OSCILLATION`,
+  `GENERATION_REPETITION`, `TOKEN_BUDGET_EXCEEDED`, `THERMAL_LIMIT`, `TOO_MANY_TOOL_ROUNDS`,
+  `REPEATED_TOOL_CALL`. No exception-message substring matching anywhere.
+- `ToolOscillationDetector` recognises `A A A A` and bounded rotations up to 4 calls, storing only
+  `toolId` + an arguments *digest*. `GenerationRepetitionDetector` only trips on a repeated,
+  normalized, identical window (≥ 24 chars, ≥ 3 times), so normal writing style is never a loop.
+- `ToolTurnResult.RunStopped` is a deliberate stop, not a failure: the durable
+  `AgentStep.RunGuardTriggered` step carries reason/round/tool/digest/elapsed/summary and Activity
+  renders "Task stopped", with spoken recovery copy such as "I stopped because I was repeating the
+  same actions." Existing `ToolLoopLimits` still applies.
+- Thermal: portable `ThermalStateSource` + `ThermalPolicy` in runtime-sdk; `AndroidThermalStateSource`
+  maps `PowerManager` status in the host only. MODERATE reduces automatic background preference,
+  SEVERE blocks new expensive background work, CRITICAL/EMERGENCY stop local heavyweight generation at
+  a safe boundary and release idle native resources. **No** cloud fallback: `LOCAL_ONLY` stays
+  `LOCAL_ONLY`, and an explicit local selection returns thermal-unavailable instead.
+- `AgentRunTokenAccounting`/`AgentRunTokenLedger` keep `estimatedInputTokens` and
+  `reportedInputTokens`/`reportedOutputTokens` separate forever; unreported output is never treated as
+  zero, and estimated is never presented as reported.
+- `EphemeralToolApprovalGrantStore`: identity = scope + tool id + canonical arguments digest + security
+  mode. `set_volume(level=40)` can never approve `level=100`; denials are never cached; and
+  `ToolApprovalReusePolicy` refuses reuse for `ConfirmationPolicy.ALWAYS`, `SENSITIVE`, `DESTRUCTIVE`
+  and `NEVER_REPLAY`. The durable approval journal is still authoritative.
+
+### Memory pull
+
+- New portable contract `MemoryRetriever`/`MemorySearchResult` with **separate** `lexicalScore`,
+  `semanticScore` (null when absent), `recencyScore` and `finalScore`, plus optional
+  `MemoryEmbeddingProvider`/`MemorySemanticIndex` and a shared `LexicalMemoryScorer`.
+- `RoomMemoryRetriever` queries at SQL level with `LIMIT`ed candidate pools (no schema change) and is
+  now the single implementation used by context assembly (`BoundedMemoryContextSource`), by
+  `halo_search_memory` and (next) the Memory UI, so relevance cannot mean two different things.
+- Semantic search reports `NOT_INSTALLED` (no embeddings are faked from hashes). Existing cloud memory
+  policy (`allowCloudMemories`) still governs whether retrieved memory may reach a remote provider.
+- `halo_search_memory` now returns bounded ids, snippets, kind and relevance and frames memory as
+  background data, never instructions.
+
+### MCP capability fabric
+
+- `McpTransport`/`HttpMcpTransport` (MCP streamable HTTP: JSON-RPC POST plus `text/event-stream`
+  framing, `Mcp-Session-Id` and `MCP-Protocol-Version` headers, 20 s call ceiling), `McpClient`
+  (`initialize` → `notifications/initialized` → `tools/list` → `tools/call`, bounded pagination, honest
+  version negotiation that refuses an unsupported protocol version), `McpIntegrationManager`.
+- Namespacing: canonical id `mcp.<serverId>.<remoteToolName>` (sanitized), remote name stored
+  separately; never registered globally. `ToolRegistry` gained a bounded, removable **dynamic overlay**
+  (`registerDynamic`/`unregisterDynamic`) so a disabled or removed server makes its tools unavailable on
+  the next lookup — this is the same registry, not a second one.
+- Security: a remote server supplies name/description/schema only. Risk defaults to `SENSITIVE`
+  regardless of trust level; trust never implies execution approval. Results are bounded, marked
+  `UNTRUSTED_MCP_CONTENT`, and can never be read as new system instructions. Cancellation propagates, so
+  a cancelled run leaves no orphan call. Credentials are resolved from the existing SecretStore by
+  reference and are never stored in the MCP tables (new Room v19 `mcp_servers`/`mcp_tools`).
+- No connection is made at startup or merely because Settings opened.
+
+### Learned procedures and routines
+
+- `LearnedProcedure` (+ `ProcedureStep`, `ProcedureOrigin`, usage/staleness) is deliberately **not** a
+  Skill: it is an instruction-only recipe over *existing* capabilities. `halo_propose_procedure`
+  rejects unknown capability ids, `halo_save_procedure` is `ConfirmationPolicy.ALWAYS` so Halo's
+  existing durable approval surface is what persists it, and `halo_use_procedure` returns steps and
+  records usage — each step still passes current policy at execution time, so a procedure can never
+  bypass a later permission change. Storage is a small bounded document, not a second database.
+- `halo_create_routine` bridges onto the existing `RoutineRepository` + `AndroidRoutineScheduler` +
+  `RoutineExecutor.validate`, rejects anything that cannot run unattended *before* saving, and reports
+  SAVED / SCHEDULED / BLOCKED / SCHEDULE_FAILED separately.
+
+### Notification reply
+
+- `NotificationReplyRegistry` holds live `Notification.Action` objects in memory only (bounded, TTL'd);
+  the listener service populates it on post/connect and drops entries on removal or disconnect, and the
+  platform objects are never persisted. `NotificationReplyDispatcher` fills every declared RemoteInput
+  (plus `setResultsSource` on API 28+) and returns `DISPATCHED` — never "sent", "delivered" or "read".
+- `halo_reply_notification` is `SENSITIVE` + `ConfirmationPolicy.ALWAYS` + `NEVER_REPLAY`, and
+  `halo_replyable_notifications` is the read-only listing that makes keys addressable. Only
+  RemoteInput-compatible replies are reachable; no arbitrary PendingIntent can be fired, and
+  notification text remains data that cannot instruct Halo.
+
+### Voice continuity
+
+- `BargeInEvidence` gained `sustainedSpeechMs`, `semanticInterruptProbability`,
+  `semanticClassification` and `sourceDeviceId` (all defaulted, so existing call sites compile).
+  `BargeInPolicy.decide(evidence, outputActive, config)` keeps physical activation unconditional, then
+  uses an *installed* semantic classifier when the user enabled it, then falls back to the existing
+  voiced-speech heuristic with a sustained-speech threshold so a short backchannel need not cut Halo off.
+  `BargeInSemanticClassifier` is optional; absence reports "Not installed" and changes nothing else.
+- `StreamingSpeechChunker` refuses any non-`TERMINAL_RESPONSE` source, so tool requests, tool results,
+  reasoning and approval payloads can never be spoken; `TtsSanitizer` is applied to every chunk after
+  it is cut, with sentence/clause/CJK/dash boundaries and `minWords`/`minChars`/`maxBufferedChars`.
+
+### UI
+
+- **Skills** now opens with a "What Halo can do now" summary (agent safety, thermal, memory search and
+  semantic availability, learned procedures, MCP servers/tools, barge-in, streaming speech, replyable
+  notifications), plus routine-creation and procedure tools appearing through the ordinary descriptor
+  catalogue.
+- New/changed producible tools are all descriptor-backed (`ROUTINE`, `PROCEDURE`, `NOTIFICATION_REPLY`
+  kinds), so System Check's Phone abilities and the exposure planner see the same truth.
+
+### Deliberately deferred (recorded, not dropped)
+
+SKILL.md foreign-frontmatter normalisation (Part H); discovery source metadata in
+`halo_discover_tools` results (Part M); voice settings surfaces for interruption mode and streaming
+playback (K3/L3); a notifications detail screen showing "Reply supported" (J5 — Halo has no such
+screen yet); Activity rendering beyond `RunGuardTriggered` (Part O); enabling streaming speech by
+default. See [ANDROID-AGENT-VOICE-MCP-MINING.md](docs/engineering/ANDROID-AGENT-VOICE-MCP-MINING.md).
+
+### Open items for the validation pass
+
+Compilation, unit tests, lint and the physical acceptance list are unrun. Source-level uncertainty:
+Kotlin exhaustiveness of the new `AgentStep.RunGuardTriggered` / `ToolTurnResult.RunStopped` variants
+across every `when` in the tree; the `ToolTurnResult.RunStopped` branch added to
+`CognitiveTurnExecutor` uses the same nullable `durableRun` as its neighbours; `JSONObject(Map)`
+construction in the MCP call path; the Room v19 schema export
+(`app/schemas/.../19.json`) which Room will generate on the first build; two `when` branches in
+`HaloToolDescriptors` that must keep returning `null` for unowned tool names; and the new
+`RoomMemoryRetriever` LIKE-escape behaviour against real stored memory text.
+
+## RUNTIME-059 / MINING-P2-001 — adaptive interaction surfaces + plan projection + web hardening
+
+Status: **SOURCE COMPLETE / BUILD NOT RUN / TESTS NOT RUN / DEVICE ACCEPTANCE NOT RUN.**
+Baseline: `faca1ae4`. Identifier: **RUNTIME-059** (057 = P0, 058 = P1). Full record:
+[ADAPTIVE-INTERACTION-MINING.md](docs/engineering/ADAPTIVE-INTERACTION-MINING.md).
+
+### Structured presentation (extends InteractionSurface; not A2UI)
+
+- `InteractionContent.Presentation` + `InteractionSurfaceKind.PRESENTATION` + a closed, versioned
+  `PresentationNode` catalog (Text, Heading, Caption, KeyValue, Badge, Status, Progress, BulletList,
+  Checklist, Comparison, ImageReference, Divider, Row, Column, Card, ChoiceGroup) with
+  `HALO_PRESENTATION_SCHEMA_V1`. No generic container, no callback, no Intent, no remote URL, no tool
+  name is representable.
+- `PresentationValidator` enforces depth 6, 120 nodes, 6 000 text characters, 20 list items, 12×5
+  comparison bounds, 6 choices and a 24 000-character payload cap, and **rejects with bounded reasons**
+  instead of truncating a UI tree. `InteractionSurfaceValidator.validate` takes a
+  `ChoiceBindingResolver`, so an unbound or mismatched `ChoiceGroup` fails validation by default.
+- `PresentationTemplates` implements KEY_VALUE_SUMMARY, COMPARISON, CHECKLIST, SEARCH_RESULTS, STATUS
+  and CHOICE plus deterministic adapters for device status, model status, web results, memory results
+  and MCP discovery — a 0.6B model supplies a flat directive, never a nested tree.
+- `PlanPresentationProjector` reads `ExecutionPlan`/`Task`/`TaskState` and, for the agentic path,
+  derives **only journal-verified** checklist phases (`ToolOutcomeRecorded(success)` → COMPLETED, an
+  unmatched `ToolExecutionClaimed` → ACTIVE, an unresolved `InputRequested` → PENDING). A model cannot
+  mark a failed action complete, and no second plan truth exists.
+- `AssistantPresentation(text, structured, provenance)` is the commit carrier; text stays required (TTS,
+  voice-only hosts, Notebook fallback, model context). `PresentationCodec` + `PresentationMetadata`
+  persist a validated payload in existing committed-turn metadata (`presentationSchemaVersion`,
+  `presentationPayload`, `presentationSummary`) — no second surface database and no extra migration;
+  `contextSafeText` documents that serialized UI is never fed back into context.
+- `PresentationSurfaceProjection` handles SurfaceCreated/Updated/Removed with monotonic revisions and
+  rejects stale updates, bounded to 8 active surfaces.
+- `halo_present` is the only model-facing path (no `<a2ui-json>` parsing out of assistant prose): flat
+  directive → deterministic expansion → hard validation → ephemeral surface → tiny machine result.
+  `READ_ONLY`, `BOOTSTRAP`, `halo.presentation` skill manifest, and zero external authority.
+  `PresentationChoiceAuthority` binds a `ChoiceGroup` only to an unresolved durable
+  `AgentInputRequest.Clarification` with matching option ids.
+- Rendering: `StructuredPresentationRenderer` (FULL/COMPACT) branches on presentation nodes only, with
+  Compose semantics for status (content description), progress (`progressBarRangeInfo`), checklist
+  (`stateDescription`), choice (`selectableGroup`) and linear comparison order — and words alongside
+  color so color is never the only signal. `InteractionSurfaceRenderer` gained the PRESENTATION branch
+  and always shows the text fallback when the schema is newer than the renderer.
+- `halo_fetch_url` gained `mode=summary` (title, domain, readable chars, link count, extraction mode,
+  content type, fetched-at) plus `extraction=STATIC|DYNAMIC` on the existing modes. Untrusted framing
+  (`UNTRUSTED_WEB_CONTENT`) is unchanged and page text still never becomes instructions.
+
+### Web reading hardening
+
+`DynamicPageExtractor` (+ `AndroidDynamicPageExtractor`) is opt-in and only consulted when static
+readable text is under 200 characters. One isolated ephemeral WebView per extraction: JavaScript on
+for rendering, Halo-owned extraction script only, file/content access, DOM storage, cookies, autofill
+and password saving disabled, D-Bus-free teardown to `about:blank` then `destroy()`, public-network
+re-validation on every navigation and subresource, a ~550 ms MutationObserver quiet window, and a 6 s
+hard deadline. `DYNAMIC_CONTENT_REQUIRED` / `DYNAMIC_EXTRACTION_FAILED` are reported as notes rather
+than silently pretending the page was read.
+
+### Optional capability packs and audio preparation
+
+`OptionalRuntimeCapability` + `BuiltInOptionalCapabilities` describe semantic memory, smart
+interruption, vision and audio understanding — all **Not installed**, because Halo has verified no
+artifact metadata for any of them. They render in the Skills capability card (including when nothing
+is installed) and explicitly distinguish capability models from chat models. `AudioContext`
+(asset-referencing, no raw bytes in durable contracts), `SpeechInterpretationStrategy`
+(`DEDICATED_STT` default, `AUDIO_MODEL_TRANSCRIBE_THEN_REASON` defined but not enabled, transcript as
+the semantic boundary) and `Pcm16Wav` prepare a future multimodal adapter without touching Sherpa.
+
+### Commit path, hosts and workspace handoff
+
+- `PresentationCommitRegistry` is the only process-local state: a validated presentation is staged by
+  `halo_present`, **promoted only when `DefaultToolTurnExecutor` observes that call succeed**, and
+  consumed once by `DefaultCognitiveResponseCommitter`, which merges `PresentationMetadata` into the
+  committed turn. TTL 10 minutes, 8 entries, both maps bounded — a run that never commits cannot leak
+  a card into a later conversation, and no second durable surface store exists.
+- Home restores the card from conversation truth (`HomeResponseProjector` decodes the payload into
+  `HomeUiState.structuredPresentation`), renders it above the assistant's text, and offers an explicit
+  "Save to Notebook" action on eligible cards. Text remains the spoken, persisted and text-only-host
+  answer; a newer schema decodes to null and the turn renders as prose.
+- Activity attaches a projected plan checklist and a compact `3 / 4 steps complete · Waiting for
+  approval` line when the journal evidences at least two execution phases. COMPLETED can only come from
+  a recorded success, never from model prose.
+- Notebook: a saved structured answer keeps its text fallback as the note body and the bounded payload
+  in the object's **existing** provenance metadata; `NotebookStructuredResults` decodes it for a
+  read-only card in the note view, and the note stays an ordinary editable document (no schema merge,
+  no new table, no migration). Corrupt or future payloads degrade to plain text.
+- Working Set (Part P) already existed (`WorkingSetEntry`, `WorkspaceContextSource`, the Working Set
+  sheet, `ContextSource.WorkingSet` priority). Nothing parallel was added.
+- System Check gained a passive "Interaction presentation" section (renderer, schema version, live
+  surface count, structured-response support) and an explicitly tapped preview built from fixed sample
+  components (`PresentationPreviewCatalog`). Opening the screen still probes nothing.
+
+### Deferred (recorded, not dropped)
+
+The Intelligence screen's language-vs-capability model split beyond the Skills card, a full
+`halo_fetch_url` card binding (the `webResult` adapter exists), and any default rendering of dynamic
+extraction. See the mining document.
+
+### Open items for the validation pass
+
+Compilation, tests, lint and the acceptance list are unrun. Source-level uncertainty: Kotlin
+exhaustiveness for the new `InteractionContent.Presentation` and
+`InteractionSurfaceKind.PRESENTATION` members across renderers and validators; `PresentationCodec`
+round-tripping (the `%25` decode ordering and nested child records) after a real build; Compose API
+availability for `progressBarRangeInfo`, `selectableGroup` and `LinearProgressIndicator(progress = {})`
+at the project's Compose version; `RemoteInput` import parity between the reply registry and the
+WebView extractor's `handler.postDelayed` teardown when a coroutine is cancelled mid-load; and whether
+`halo_fetch_url`'s `summary` mode schema enum change affects the existing descriptor dispatch tests.
+
+Added during the commit-path pass (same status, unrun): `PresentationCommitRegistry`'s `surface_id=`
+parsing against the real `halo_present` result envelope; the committer consuming presentation metadata
+for every non-handoff commit path; `ConversationTurn.metadata` round-tripping the payload through
+`RoomConversationStore`'s JSON column; `WorkspaceContextDao.provenanceMetadata` returning the same JSON
+shape `SaveResponse` writes; and Compose imports for the preview card, Activity checklist and note
+read view.
+# MINING-P3-001 — multimodal perception and capability packs (2026-09-30)
+
+The MINING-P3-001 source batch adds typed media references, ephemeral capture retention, shared image preparation, origin-aware visual acquisition, model-specific vision qualification and optional capability-pack status. Home image attachments, HeyCyan visual questions and policy-gated Assistant screenshots enter existing cognition/provider routing. No build, tests or device acceptance were run for this batch. Built-in LiteRT catalog entries remain text-only; declaring an imported artifact vision-capable does not prove inference. See [implementation accounting](docs/engineering/MULTIMODAL-PERCEPTION-MINING.md).

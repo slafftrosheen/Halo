@@ -9,6 +9,7 @@ import com.halo.sdk.provider.AiFailureDetails
 import com.halo.sdk.provider.AiInferenceProvider
 import com.halo.sdk.provider.AiModel
 import com.halo.sdk.provider.AiProviderException
+import com.halo.sdk.provider.imageMimeType
 import com.halo.sdk.provider.AiRequest
 import com.halo.sdk.provider.AiResponse
 import com.halo.sdk.provider.AiStreamEvent
@@ -164,7 +165,7 @@ class AnthropicProvider(
                                 "source",
                                 JSONObject()
                                     .put("type", "base64")
-                                    .put("media_type", request.mimeTypes.firstOrNull() ?: "image/jpeg")
+                                    .put("media_type", request.imageMimeType())
                                     .put("data", Base64.encodeToString(image, Base64.NO_WRAP)),
                             ),
                     )

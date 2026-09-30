@@ -135,7 +135,10 @@ class HeyCyanCaptureCoordinator(private val context: Context, private val driver
                 observation = Observation(
                     modality = Modality.IMAGE,
                     source = Source.CAMERA,
-                    payload = ImageObservationPayload(thumbnail.bytes),
+                    payload = ImageObservationPayload(mediaRef = com.halo.app.di.ManualDependencyGraph.mediaAssetStore.ingest(
+                        com.halo.sdk.runtime.multimodal.MediaAssetContent(thumbnail.bytes, "image/jpeg"),
+                        com.halo.sdk.runtime.multimodal.MediaProvenance.HEYCYAN_CAMERA, operationId, deviceId,
+                    )),
                     origin = ObservationOrigin(ObservationSource.HeyCyanGlasses, deviceId),
                     sourceDeviceId = deviceId,
                     freshness = Freshness.FRESH,

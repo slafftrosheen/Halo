@@ -179,3 +179,43 @@ without restarting Halo, and finally run `speech -> Whisper -> selected LiteRT -
 
 Tool-call probe results and context-downshift events must be recorded per artifact; a failure in one
 artifact must not abort testing the others.
+
+## Diagnostic ladder (RUNTIME-057 / MINING-P0-001)
+
+Status: SOURCE COMPLETE / **BUILD NOT RUN / TESTS NOT RUN / PHONE ACCEPTANCE NOT RUN**.
+
+Local inference failures are now attributable to a layer. Each level is inspectable without implying
+the next one passed:
+
+| Level | Owner | What it exercises | How to invoke |
+| --- | --- | --- | --- |
+| 0 Artifact/inventory | `LocalModelInventoryRepository` | bytes, SHA-256, compatibility | automatic (inventory refresh) |
+| 1 Direct LiteRT control | `LiteRtControlProbeRunner` | `Engine` → `Conversation` → first token → completion | System Check → **Run control probe**; Model Browser → **Direct runtime probe** |
+| 2 Halo LiteRT provider | `LiteRtLocalProvider` + `LocalModelSession` | load policy, backend fallback, provider status | System Check → **Verify** |
+| 3 Native resource arbitration | `NativeResourceCoordinator` | execution acquire/release vs residency | System Check → Native resource row |
+| 4 Provider router | `AiProviderRouter` | explicit provider/model routing | System Check → **Run router probe** |
+| 5 Agent/cognition | `CognitiveSession` + journal | normal user interaction | a real conversation |
+| 6 Speech route | `HaloAudioSessionCoordinator` + `SpeechOutputRouteController` | delivered to the correct target | Android Assistant → Audio continuity |
+
+**Native tool truth.** A catalog `supportsTools = true` is a declaration: it makes the artifact
+eligible for probing and never by itself means `NATIVE`. `NATIVE` is claimed only for a proven
+`<sha256>:litertlm-<version>:halo-openapi-v1` key, so proof does not survive a runtime or schema
+change. A declared-native but unproven artifact honestly reports `HALO_PROMPT`. The synthetic probe
+tool (`halo_probe`) never executes inside LiteRT — `automaticToolCalling = false` and
+`HaloOpenApiTool.execute()` still throws loudly.
+
+**Control-probe safety.** A probe is `BLOCKED` while any heavyweight native resource is
+ACQUIRING/LOADING/IN_USE, and `BLOCKED` while a model is merely warm RESIDENT (use the existing
+unload path). It never bypasses artifact verification or the arm64-v8a ABI preflight, and it never
+changes selection, routing or generation-proven state.
+
+Acceptance additions for the next physical pass:
+
+1. System Check shows the local artifact as VERIFIED and the four control-probe stages separately.
+2. Provider verification and the router probe report separately from the control probe.
+3. A warm RESIDENT ASR/LLM shows `executionLeaseHeld=false`; an active one shows `true`.
+4. A tool-capable artifact runs the synthetic probe explicitly and is not called native-proven from
+   catalog metadata alone; a malformed emitted call cannot execute.
+5. A HeyCyan-origin interaction keeps HeyCyan as intended output across STT → inference → TTS
+   preparation, and releasing mic capture does not erase that affinity.
+6. A `DISALLOW_PHONE` wearable policy never turns into an audible phone fallback.

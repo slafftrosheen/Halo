@@ -58,6 +58,39 @@ class AiSelectionPersistenceTest {
         assertSelection(router(storage, providers().reversed()), LITERT, QWEN)
     }
 
+    /**
+     * The marker must not be able to preserve a provider Halo no longer ships. A start that
+     * happened before the legacy key was restored (backup restore, earlier process, copied
+     * preferences) sets the marker, and the retired id must still be repaired afterwards.
+     */
+    @Test fun retiredProviderIdIsRepairedEvenAfterTheMigrationMarkerIsSet() {
+        val storage = MemoryStorage().apply {
+            putString(AiSelectionRepository.PROVIDER_KEY, DefaultAiProviderRouter.LEGACY_LLAMACPP_PROVIDER_ID)
+            putString("litert_model", QWEN)
+            putString(AiSelectionRepository.POLICY_KEY, AiRoutingPolicy.EXPLICIT.name)
+            putBoolean(AiSelectionRepository.MIGRATION_COMPLETE_KEY, true)
+        }
+
+        val restored = router(storage, providers())
+
+        assertSelection(restored, LITERT, QWEN)
+        assertEquals(LITERT, storage.getString(AiSelectionRepository.PROVIDER_KEY))
+        assertSelection(router(storage, providers().reversed()), LITERT, QWEN)
+    }
+
+    @Test fun aCompletedMigrationStillAvoidsRewritingAProviderSpecificModelKey() {
+        val storage = MemoryStorage().apply {
+            putString(AiSelectionRepository.PROVIDER_KEY, LITERT)
+            putString(AiSelectionRepository.MODEL_KEY, QWEN)
+            putString(AiSelectionRepository.POLICY_KEY, AiRoutingPolicy.EXPLICIT.name)
+            putString("litert_model", "some-other-stale-model")
+            putBoolean(AiSelectionRepository.MIGRATION_COMPLETE_KEY, true)
+        }
+
+        assertSelection(router(storage, providers()), LITERT, QWEN)
+        assertEquals(QWEN, storage.getString(AiSelectionRepository.MODEL_KEY))
+    }
+
     @Test fun litertQwenSurvivesProcessReconstruction() = assertRestart(LITERT, QWEN)
     @Test fun openRouterSurvivesProcessReconstruction() = assertRestart(OPENROUTER, "openrouter/free")
     @Test fun ollamaSurvivesProcessReconstruction() = assertRestart(OLLAMA, "llama3.2")

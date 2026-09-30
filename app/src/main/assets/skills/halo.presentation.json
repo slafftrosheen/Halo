@@ -1,0 +1,14 @@
+{
+  "id": "halo.presentation",
+  "schemaVersion": 2,
+  "name": "Presentation",
+  "description": "Present bounded structured information to the user: a key/value summary, a comparison, a checklist, search results, a status or a choice that resolves an existing question. Presentation only \u2014 it grants no ability to act, and it is always accompanied by a short spoken fallback.",
+  "category": "INFORMATION",
+  "risk": "READ_ONLY",
+  "tools": [
+    "halo_present"
+  ],
+  "toolDefinitions": [
+    { "toolId": "halo_present", "risk": "READ_ONLY" }
+  ]
+}

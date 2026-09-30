@@ -58,6 +58,7 @@ import com.halo.sdk.runtime.SpeechOutputFallback
 import com.halo.sdk.runtime.SpeechOutputTarget
 import com.halo.sdk.runtime.TtsRequested
 import com.halo.sdk.runtime.defaultResponseDelivery
+import com.halo.runtime.cognition.agent.AgentRunGuardRegistry
 
 class CognitiveSession(
     private val eventBus: EventBus,
@@ -94,6 +95,8 @@ class CognitiveSession(
         toolAvailabilityResolver: ToolAvailabilityResolver? = null,
         workloadPlanner: AiWorkloadPlanner = DefaultAiWorkloadPlanner(),
         contextAcquisitionCoordinator: ContextAcquisitionCoordinator? = null,
+        /** MINING-P1-001: shared so the provider loop and tool loop share one run budget. */
+        runGuards: AgentRunGuardRegistry = AgentRunGuardRegistry(),
     ) : this(
         eventBus = eventBus,
         conversationStore = conversationStore,
@@ -126,12 +129,14 @@ class CognitiveSession(
                 agentRunCoordinator = agentRunCoordinator,
                 agentRunStore = agentRunStore,
                 eventBus = eventBus,
+                runGuards = runGuards,
             ),
             agentRunCoordinator = agentRunCoordinator,
             agentRunStore = agentRunStore,
             eventBus = eventBus,
             toolExposurePlanner = toolExposurePlanner,
             toolExposureGate = toolExposureGate,
+            runGuards = runGuards,
         ),
         responseCommitter = DefaultCognitiveResponseCommitter(
             conversationStore = conversationStore,

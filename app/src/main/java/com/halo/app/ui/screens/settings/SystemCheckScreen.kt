@@ -24,6 +24,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -31,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -95,6 +97,35 @@ fun SystemCheckScreen(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        /*
+         * MINING-P2-001 presentation preview. Static sample components, rendered only after an explicit
+         * tap: no model call, no tool, no provider, no network.
+         */
+        if (uiState.showPresentationPreview) {
+            item {
+                Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                    Text(
+                        text = "Presentation preview",
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                    Text(
+                        text = "Fixed sample data. This exercises every component the renderer supports, " +
+                            "including the inert choice group.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    com.halo.app.interaction.StructuredPresentationRenderer(
+                        presentation = com.halo.app.interaction.PresentationPreviewCatalog.staticPreview(),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    TextButton(onClick = { viewModel.handleAction(SystemCheckAction.PreviewPresentations) }) {
+                        Text("Close preview")
+                    }
+                }
+            }
+        }
+
         uiState.sections.forEach { section ->
             item {
                 Text(
@@ -107,15 +138,27 @@ fun SystemCheckScreen(
                 SystemCheckCard(
                     item = item,
                     onAction = {
+                        // MINING-P0-001 each id maps to the diagnostic level it actually exercises.
+                        // Probe actions are never chained: differential diagnosis needs them separate.
                         val action = when {
                             item.id == "assistant" -> SystemCheckAction.OpenAssistantSettings
                             item.id == "mic" -> SystemCheckAction.RunSttProbe
-                            item.id == "ai_execution" -> SystemCheckAction.RunTextProbe
+                            // A blocked control probe means a native model is resident: the
+                            // operator explicitly unloads it instead of Halo silently loading a
+                            // second engine to satisfy a diagnostic.
+                            item.id == "litert_control" && item.status == CheckStatus.BLOCKED ->
+                                SystemCheckAction.UnloadLocalModel
+                            item.id == "litert_control" -> SystemCheckAction.RunLiteRtControlProbe
+                            item.id == "litert_provider" -> SystemCheckAction.RunProviderVerification
+                            item.id == "litert_tools" -> SystemCheckAction.RunToolChannelProbe
+                            item.id == "vision_probe" -> SystemCheckAction.RunVisionProbe
+                            item.id == "ai_execution" -> SystemCheckAction.RunProviderProbe
                             item.id == "agentic_execution" -> SystemCheckAction.RunAgenticProbe
                             item.id == "audio" -> SystemCheckAction.RunTtsProbe
                             item.id == "phone_alarm" -> SystemCheckAction.TestAlarm
                             item.id == "phone_app" -> SystemCheckAction.TestOpenApp
                             item.id == "phone_volume" -> SystemCheckAction.TestVolume
+                            item.id == "presentation_preview" -> SystemCheckAction.PreviewPresentations
                             item.id.startsWith("remote_") -> SystemCheckAction.Refresh
                             else -> SystemCheckAction.Refresh
                         }
@@ -194,6 +237,17 @@ private fun SystemCheckCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+                // Compact, expandable-worthy technical detail: stage statuses, resource facts and
+                // digests only. Never prompts, generated text or tool argument values.
+                item.detail?.takeIf { it.isNotBlank() }?.let { detail ->
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = detail,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontFamily = FontFamily.Monospace,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
 
             Spacer(Modifier.size(8.dp))
@@ -204,10 +258,16 @@ private fun SystemCheckCard(
                 onClick = onAction
             ) {
                 Text(
-                    text = if (item.id == "ai_execution" && item.status != CheckStatus.RUNNING) {
-                        "RUN AI PROBE"
-                    } else {
-                        item.status.name
+                    text = when {
+                        item.status == CheckStatus.RUNNING -> "RUNNING"
+                        item.id == "litert_control" && item.status == CheckStatus.BLOCKED -> "UNLOAD LOCAL MODEL"
+                        item.id == "litert_control" -> "RUN CONTROL PROBE"
+                        item.id == "litert_provider" -> "VERIFY"
+                        item.id == "litert_tools" -> "PROBE TOOLS"
+                        item.id == "vision_probe" -> "PROBE VISION"
+                        item.id == "ai_execution" -> "RUN ROUTER PROBE"
+                        item.id == "agentic_execution" -> "RUN AGENTIC PROBE"
+                        else -> item.status.name
                     },
                     color = statusColor,
                     style = MaterialTheme.typography.labelMedium,

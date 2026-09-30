@@ -160,6 +160,21 @@ sealed interface InteractionContent {
         val followUps: List<InteractionFollowUp> = emptyList(),
     ) : InteractionContent
 
+    /**
+     * MINING-P2-001 bounded structured presentation.
+     *
+     * This is the ONLY way an agent may request richer presentation. It is a view over durable state:
+     * it cannot dispatch anything, and a [PresentationNode.ChoiceGroup] inside it may only resolve an
+     * already durable input request. Hosts that do not support the schema version render the textual
+     * fallback instead.
+     */
+    data class Presentation(
+        val presentation: StructuredPresentation,
+        /** Text fallback, also the TTS input. Required even when structured content exists. */
+        val textFallback: String,
+        val provenance: PresentationProvenance? = null,
+    ) : InteractionContent
+
     /** Structured failure. No stack traces, class names, or raw exceptions. */
     data class Error(
         val headline: String,

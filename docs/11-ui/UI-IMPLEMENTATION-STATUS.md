@@ -207,3 +207,87 @@ current screen context and images. All remote-sharing gates default off.
 These UI controls permit context use; they do not enable cloud routing by themselves. The selected
 routing policy remains authoritative. This is source wiring only and has not yet received visual,
 accessibility or physical-device acceptance.
+
+## RUNTIME-057 / MINING-P0-001 local execution truth surfaces — 2026-09-30
+
+Status: SOURCE WIRING ONLY. **BUILD NOT RUN / TESTS NOT RUN / PHONE ACCEPTANCE NOT RUN.**
+
+**System Check** gains a "Local AI execution truth" section whose rows are independent facts, so a raw
+LiteRT PASS next to a provider FAIL is readable as a layer diagnosis rather than "LiteRT broken":
+Artifact, Raw LiteRT control, Halo local provider, Generation proof, Tool channel, Native resource,
+Backend, Context. Actions are explicit and never chained (Run control probe / Verify / Probe tools /
+Run router probe / Run agentic probe), and a `BLOCKED` control probe routes to the existing unload
+path instead of silently loading a second engine. Rows may carry a compact monospace detail line
+(stage, status, ms, bounded detail, exception class). Chip labels name the layer: "RUN CONTROL PROBE",
+"VERIFY", "PROBE TOOLS", "RUN ROUTER PROBE".
+
+**Model Browser** adds "Direct runtime probe" as the lowest-level action, deliberately worded apart from
+"Verify model" and "Probe tool channel". A compact truth indicator line reports Artifact / Selected /
+Resident / Execution / Backend / Generation / Tools. `toolsDeclared=` marks catalog metadata as a
+declaration, and the displayed Tools state is the honest qualification, not the catalog boolean.
+
+**Intelligence** adds a concise "On-device runtime" card (model, Resident · backend, native-tool
+qualification) and a "Last local failure" card with stage and time only; stage timings stay in System
+Check so this screen does not become a developer console.
+
+**Android Assistant** adds an "Audio continuity" subsection (Origin, Intended output, Actual endpoint,
+Fallback, Route state) fed by the audio session coordinator's affinity flow. It is diagnostic only,
+configures nothing, and shows device display labels rather than MAC addresses.
+
+Normal user screens show semantic status; technical detail appears only on System Check and Model
+Browser. No new visual language, Material demo cards or log dumps were introduced.
+
+## RUNTIME-058 / MINING-P1-001 — capability overview and new producible tools
+
+**Skills** opens with a "What Halo can do now" summary card (`CapabilityStatusViewModel`): agent run
+deadline, tool loop guard, thermal policy, saved facts, memory search kind, semantic-search
+availability, learned procedures, MCP servers/tools, barge-in mode, semantic interruption and
+replyable notifications. It is a read-only summary — no probes, no connection attempts — and it says
+"Not installed"/"Off" where that is the truth rather than implying readiness.
+
+New tools are all descriptor-backed, so they appear through the existing exposure planner and System
+Check Phone abilities rather than as screen-specific rows:
+
+| Tool | Screen surface |
+| --- | --- |
+| `halo_create_routine` | agent-facing; the existing durable approval surface is the confirmation UI |
+| `halo_propose_procedure` / `halo_save_procedure` / `halo_use_procedure` | agent-facing + Skills summary counts |
+| `halo_reply_notification` / `halo_replyable_notifications` | agent-facing + summary count |
+| `mcp.<server>.<tool>` | dynamic entries in the same catalogue; no bespoke screen yet |
+
+Activity renders the new `AgentStep.RunGuardTriggered` as **Task stopped** with the content-free
+summary (for example "Repeated the same action pattern"), never as "Runtime failure".
+
+Not yet surfaced: an MCP servers screen (add/edit/enable/refresh/test/remove), a notifications detail
+"Reply supported" row (Halo has no notification detail screen), and Voice settings rows for
+interruption mode and streaming playback. Those are recorded as deferred in
+[ANDROID-AGENT-VOICE-MCP-MINING.md](../engineering/ANDROID-AGENT-VOICE-MCP-MINING.md).
+
+## RUNTIME-059 / MINING-P2-001 — structured presentation rendering
+
+`StructuredPresentationRenderer` renders the closed presentation catalog in two densities. **FULL**
+(Home/conversation) shows every node including comparisons; **COMPACT** (Android Assistant overlay)
+renders Text, Heading, Caption, KeyValue, Badge, Status, Progress, BulletList, Checklist, containers
+and ChoiceGroup, and degrades a comparison to "Comparison available in Halo" rather than cramming a
+table into a small overlay. `InteractionSurfaceRenderer` gained the `PRESENTATION` branch and always
+shows the text fallback, including when the payload's schema version is newer than the renderer.
+
+Visual language stays Halo's: theme surfaces with a 10–14 dp radius and Halo spacing, no neon or
+gradient "AI" styling, no generated-content banner. Status and checklist state carry words as well as
+color, so color is never the only signal. Compose semantics are applied per node — `contentDescription`
+for status and key/value pairs, `progressBarRangeInfo` for determinate progress, `stateDescription`
+for checklist state, `selectableGroup` plus `selectable` for choice groups, and label-then-cells linear
+order for comparisons.
+
+Skills gained optional capability-model rows (semantic memory, smart interruption, vision, audio
+understanding) that render even when nothing is installed, with copy explaining that these are
+abilities rather than chat models and that Halo installs nothing without a verified artifact.
+
+Wired after the first pass: the Home "Save to Notebook" affordance on eligible cards (the note keeps
+the text fallback, the bounded payload rides in existing provenance metadata, and the note view shows
+the original card read-only above an ordinary editable document), the Activity plan summary (projected
+checklist plus `3 / 4 steps complete · Waiting for approval`, from journal evidence only), and the
+System Check "Interaction presentation" section with its explicitly tapped static component preview.
+# MINING-P3-001 — multimodal perception and capability packs (2026-09-30)
+
+Model Browser separates supported input chips from observed Vision qualification and keeps raw artifact flags/revisions in Details. Intelligence exposes role bindings and capability-pack inspection without automatic downloads. System Check reports target, qualification, capture source, input preparation and actual dedicated-STT availability; its vision probe uses synthetic content. Home exposes pending image source/thumbnail/removal/explicit persistence; Notebook file details expose object AI access. HeyCyan exposes connected source status and explicit visual question. This is source implementation only, with no rendered/device acceptance.

@@ -111,7 +111,7 @@ class ConfiguredOpenAiCompatibleProvider(
                 }
             }
             ModelDiscoveryMode.NONE -> emptyList()
-        }
+        }.map { it.copy(executionLocation = descriptor.executionLocation) }
     }
 
     fun setAuthState(state: ProviderAuthState, failure: String? = null) {

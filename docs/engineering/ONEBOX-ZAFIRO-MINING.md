@@ -512,3 +512,62 @@ checklist in `docs/13-engineering/PHONE-ACCEPTANCE.md` is what turns the project
 answer rather than a plausible one.
 
 No tests or builds are part of this pass either, following the current task constraint.
+
+## Mining and implementation record — RUNTIME-056
+
+Status: **BUILD VERIFIED / UNIT VERIFIED / PHYSICAL DEVICE NOT RUN.** Reference inspected: the
+OneBox agent tool catalogue `feature/ai/src/main/java/com/shifenmiao/ai/agent/tool/**` and its
+network services (`WebFetchService`, `NetworkInfoService`, `UrlCheckService`), which is where the
+archive is ahead of Halo: it can *describe* and *read* through the assistant, not only act.
+
+### Adopted ideas (fitted to Halo's own contracts)
+
+| OneBox tool | Idea | Halo outcome |
+| --- | --- | --- |
+| `get_device_info` | The assistant must be able to describe the device it runs on | `halo_device_info` reports model, Android version, screen, memory, locale. OneBox reads JVM heap only; Halo reports total RAM and screen refresh from platform sources |
+| (network status) | Connection truth as data | `halo_network_status` reads the active network's reported capabilities: transports, validated, metered, roaming, link speeds, interface and local addresses. SSID only when location access is granted |
+| (battery, absent in OneBox) | Battery should be a first-class answer | `halo_battery_status` reads the sticky `ACTION_BATTERY_CHANGED` broadcast so the answer matches what Android publishes, including `not_charging` vs `discharging` |
+| `checksum_tool` | Verify integrity of user data | `halo_checksum` over text or a workspace-imported file. OneBox accepts a `uri`; Halo deliberately accepts only a workspace object id, because arbitrary-URI hashing would create a second file-access route |
+| `fetch_webpage` | Read a page, do not just open it | `halo_fetch_url`, bounded far more tightly than the reference: manual redirect following (the reference relies on `followRedirects` and cannot see a redirect into a private address), private/loopback/link-local refusal by literal *and* resolved address, 512 KB cap, text media types only, no credentials |
+| `theme_setting`, `night_mode_setting`, `font_scale_setting`, `start_entry_setting` | Deep-link settings as a capability | `halo_open_settings` becomes device truth: only sections an installed activity answers are offered, package-scoped screens are addressed with their package. Halo keeps its own settings surface instead of one tool per vendor screen |
+| clipboard-shaped file tools | Move text between apps | `halo_clipboard_read` / `halo_clipboard_write` with untrusted-content framing and the focused-app limitation reported as its own outcome |
+| `read_text_aloud` / `stop_reading` | Speak text | Not ported: Halo already owns speech output through the assistant and TTS path, and a second reading channel would compete with it |
+| `manage_todo`, `create_note`, `memory_get/write` | Durable user data | Not ported: Halo's Notebook and Memory surfaces already own these, and the reference's second store would duplicate them |
+
+### Rejected deliberately
+
+- **`vision-automation`-style screenshot + act tools** (`VisualAutomation`, `act_on_ui`, `automate_ui_task`).
+  Halo's accessibility path already reads semantic snapshots with opaque tokens, redaction, postaction
+  receipts and per-action consent. A parallel coordinate/screenshot actor would be a second, weaker
+  consent model.
+- **`send_http_request`, `download_file`, `search_web`, HTTP-registered tools, cloud/WebDAV, PDF,
+  image pipeline** (watermark, compress, convert, EXIF, WebP, base64). Each needs a dependency,
+  a credential, a storage route or a UI surface Halo does not have yet. Nothing here is needed to
+  make the phone agent *useful*; they stay in the ledger as future work, not as half-wired tools.
+- **OCR / barcode / calendar / SMS / call-log tools.** They need permissions Halo does not declare
+  (`HostPermission` has no reading of calendar or messages), and adding a permission surface is a
+  product decision, not a mining outcome. Recorded as the next permission-shaped milestone.
+
+### Defects this pass found in Halo (not in the reference)
+
+1. **Host descriptor dispatch was effectively one category.** Every `ExecutorKind` fell through to
+   a default descriptor, and `ToolRegistry`'s first-wins catalogue kept the first kind registered
+   for each tool name. All non-navigation host tools were therefore catalogued as `NAVIGATION` +
+   `EXTERNAL_SIDE_EFFECT` + `NEVER_REPLAY`, and `ConfirmationPolicy.ALWAYS` declarations
+   (`halo_ui_set_text`, `halo_ui_click`, `halo_ui_scroll`, `halo_ui_global_action`) were downgraded to
+   `USER_POLICY`, which a user `ALWAYS_ALLOW` policy silently overrides. Kinds now claim an exact
+   definition or return nothing; unclaimed definitions take the registry's conservative fallback.
+2. **A retired provider id could survive forever.** `AiSelectionRepository` set the legacy migration
+   marker on every start, so a stored `provider.llamacpp.native` restored after that marker was set
+   was never repaired. Retired ids are now repaired on every start; the marker still guards the
+   one-time legacy model-key lookup. `LiteRtSelectionTest` (previously failing) and two new engine
+   tests pin this.
+
+### Verification
+
+`:engines:ai:test`, `:runtime:cognition:test` and `:app:testDebugUnitTest` pass, including
+`NativeAbilityToolsTest` (device/battery/network honesty, clipboard round-trip and untrusted
+framing, published checksum vectors, web-reader refusals, ringer/brightness/timer/settings failure
+shapes) and `HostToolDescriptorDispatchTest` (exact claiming, no fallback classifications, capability
+requirements per ability, consent classification). Both round-trip through `BuiltInSkillManifestTest`,
+which requires every built-in skill to ship a validated manifest. No physical-phone run was performed.

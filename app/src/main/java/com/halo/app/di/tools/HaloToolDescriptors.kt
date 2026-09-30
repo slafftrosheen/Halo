@@ -112,6 +112,122 @@ object HaloToolDescriptors {
         )
     }
 
+    /**
+     * MINING-P2-001 presentation.
+     *
+     * READ_ONLY by construction: a presentation is a view. It cannot dispatch an Intent, run a tool,
+     * grant an approval, change settings, create a routine, send a message or delete memory. It is
+     * BOOTSTRAP so a small model can reach for it without a discovery round trip.
+     */
+    fun presentation(definition: ToolDefinition): ToolDescriptor? {
+        if (definition.name != "halo_present") return null
+        return descriptor(
+            id = "halo_present",
+            definition = definition,
+            category = ToolCategory.INFORMATION,
+            security = readOnly("halo_present"),
+            keywords = setOf("present", "show", "card", "compare", "summary", "chart", "display"),
+            visibility = ToolVisibility.BOOTSTRAP,
+            presentation = ToolPresentation(title = "Present information", actionVerb = "Present"),
+        )
+    }
+
+    /**
+     * MINING-P1-001 model-callable routine creation.
+     *
+     * Persisting a routine is a durable side effect on the user's device, so it is SENSITIVE with
+     * `ConfirmationPolicy.ALWAYS`: the existing durable approval surface is what asks the user.
+     */
+    fun routineCreation(definition: ToolDefinition): ToolDescriptor? {
+        if (definition.name != "halo_create_routine") return null
+        return descriptor(
+            id = "halo_create_routine",
+            definition = definition,
+            category = ToolCategory.AUTOMATION,
+            security = ToolSecurityPolicy(
+                risk = ToolRiskClass.SENSITIVE,
+                confirmation = ConfirmationPolicy.ALWAYS,
+                replaySafety = ReplaySafety.NEVER_REPLAY,
+            ),
+            keywords = setOf("routine", "schedule", "automation", "daily", "remind"),
+            presentation = ToolPresentation(
+                title = "Create routine",
+                actionVerb = "Create routine",
+                targetArgument = "name",
+            ),
+        )
+    }
+
+    /**
+     * MINING-P1-001 learned procedures.
+     *
+     * A procedure is a recipe over *existing* capabilities. It never grants new authority: using one
+     * only returns instructions, and every step still runs through the ordinary tool policy.
+     */
+    fun procedure(definition: ToolDefinition): ToolDescriptor? = when (definition.name) {
+        "halo_propose_procedure" -> descriptor(
+            id = "halo_propose_procedure",
+            definition = definition,
+            category = ToolCategory.AUTOMATION,
+            security = readOnly("halo_propose_procedure"),
+            keywords = setOf("procedure", "routine", "recipe", "learn"),
+        )
+        "halo_save_procedure" -> descriptor(
+            id = "halo_save_procedure",
+            definition = definition,
+            category = ToolCategory.AUTOMATION,
+            security = ToolSecurityPolicy(
+                risk = ToolRiskClass.SENSITIVE,
+                confirmation = ConfirmationPolicy.ALWAYS,
+                replaySafety = ReplaySafety.NEVER_REPLAY,
+            ),
+            keywords = setOf("procedure", "save", "remember"),
+            presentation = ToolPresentation(title = "Save procedure", actionVerb = "Save"),
+        )
+        "halo_use_procedure" -> descriptor(
+            id = "halo_use_procedure",
+            definition = definition,
+            category = ToolCategory.INFORMATION,
+            security = readOnly("halo_use_procedure"),
+            keywords = setOf("procedure", "recipe", "steps", "run"),
+        )
+        else -> null
+    }
+
+    /**
+     * MINING-P1-001 notification reply.
+     *
+     * Sending a reply is an external side effect on another app and on a human conversation, so it
+     * is SENSITIVE with `ConfirmationPolicy.ALWAYS`: it is never run unattended, and the ephemeral
+     * approval-grant layer explicitly refuses to reuse an approval for it.
+     */
+    fun notificationReply(definition: ToolDefinition): ToolDescriptor? = when (definition.name) {
+        "halo_reply_notification" -> descriptor(
+            id = "halo_reply_notification",
+            definition = definition,
+            category = ToolCategory.COMMUNICATION,
+            security = ToolSecurityPolicy(
+                risk = ToolRiskClass.SENSITIVE,
+                confirmation = ConfirmationPolicy.ALWAYS,
+                replaySafety = ReplaySafety.NEVER_REPLAY,
+            ),
+            keywords = setOf("notification", "reply", "message", "respond"),
+            presentation = ToolPresentation(
+                title = "Reply to notification",
+                actionVerb = "Reply",
+                sensitiveArguments = setOf("replyText"),
+            ),
+        )
+        "halo_replyable_notifications" -> descriptor(
+            id = "halo_replyable_notifications",
+            definition = definition,
+            category = ToolCategory.INFORMATION,
+            security = readOnly("halo_replyable_notifications"),
+            keywords = setOf("notification", "reply", "inbox"),
+        )
+        else -> null
+    }
+
     fun notificationDigest(definition: ToolDefinition): ToolDescriptor? {
         if (definition.name != "halo_notification_digest") return null
         return descriptor(
@@ -430,6 +546,10 @@ object HaloToolDescriptors {
             ExecutorKind.SYSTEM -> system(definition)
             ExecutorKind.ACCESSIBILITY -> accessibility(definition)
             ExecutorKind.USE_SKILL -> useSkill(definition)
+            ExecutorKind.NOTIFICATION_REPLY -> notificationReply(definition)
+            ExecutorKind.ROUTINE -> routineCreation(definition)
+            ExecutorKind.PROCEDURE -> procedure(definition)
+            ExecutorKind.PRESENTATION -> presentation(definition)
         }
 
     enum class ExecutorKind {
@@ -452,6 +572,10 @@ object HaloToolDescriptors {
         SYSTEM,
         ACCESSIBILITY,
         USE_SKILL,
+        NOTIFICATION_REPLY,
+        ROUTINE,
+        PROCEDURE,
+        PRESENTATION,
     }
 
     /** Discovery meta-tool is always part of bounded bootstrap exposure. */

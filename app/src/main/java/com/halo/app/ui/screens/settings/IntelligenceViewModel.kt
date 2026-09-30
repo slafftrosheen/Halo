@@ -6,9 +6,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.halo.app.ai.readRuntimeAiContextPolicy
 import com.halo.app.ai.writeRuntimeAiContextPolicy
+import com.halo.providers.litert.LiteRtConversationDiagnostics
 import com.halo.providers.litert.LiteRtLoadDiagnostics
 import com.halo.providers.litert.LiteRtLocalProvider
 import com.halo.providers.litert.LiteRtToolProbeResult
+import com.halo.providers.litert.LiteRtToolQualification
 import com.halo.providers.litert.models.LiteRtModelManager
 import com.halo.providers.litert.models.LiteRtAcquisitionDiagnostics
 import com.halo.providers.litert.models.DownloadState
@@ -17,6 +19,7 @@ import com.halo.providers.litert.models.LiteRtModelFailureRecord
 import com.halo.providers.litert.models.LiteRtStoragePreflightResult
 import com.halo.providers.litert.models.LocalModelDescriptor
 import com.halo.providers.litert.models.ModelVerificationResult
+import com.halo.providers.litert.runtime.LiteRtControlProbeResult
 import com.halo.providers.litert.runtime.LocalModelBenchmarkResult
 import com.halo.providers.litert.runtime.LocalModelMatrixRow
 import com.halo.providers.litert.runtime.LocalModelSmokeTestResult
@@ -81,6 +84,17 @@ data class IntelligenceUiState(
     val matrixRows: List<LocalModelMatrixRow> = emptyList(),
     val runningMatrix: Boolean = false,
     val busyModelId: String? = null,
+    /** MINING-P0-001 last direct control probe result, keyed by model id. */
+    val controlProbes: Map<String, LiteRtControlProbeResult> = emptyMap(),
+    /**
+     * MINING-P0-001 honest tool qualification per artifact: catalog metadata may make an artifact
+     * eligible for probing, but it never by itself means native tool calling is proven.
+     */
+    val toolQualification: Map<String, LiteRtToolQualification> = emptyMap(),
+    val visionQualification: Map<String, com.halo.providers.litert.VisionQualification?> = emptyMap(),
+    val roleBindings: Map<com.halo.sdk.provider.AiModelRole, com.halo.sdk.provider.AiRoleBinding> = emptyMap(),
+    /** Conversation-level preface/echo diagnostics for the resident local model, when any. */
+    val conversationDiagnostics: LiteRtConversationDiagnostics? = null,
     /** Currently resident (loaded) model, if any. Resident != selected. */
     val residentModelId: String? = null,
     val residentBackend: LocalComputeBackend? = null,
@@ -146,6 +160,8 @@ private data class LocalDevInputs(
     val smokeTests: Map<String, LocalModelSmokeTestResult> = emptyMap(),
     val benchmarkResults: Map<String, LocalModelBenchmarkResult> = emptyMap(),
     val toolProbes: Map<String, LiteRtToolProbeResult> = emptyMap(),
+    /** MINING-P0-001 explicit direct LiteRT SDK control probe results, keyed by model id. */
+    val controlProbes: Map<String, LiteRtControlProbeResult> = emptyMap(),
     val matrixRows: List<LocalModelMatrixRow> = emptyList(),
     val runningMatrix: Boolean = false,
     val busyModelId: String? = null,
@@ -268,7 +284,7 @@ class IntelligenceViewModel(
         },
         modelManager?.downloadStates ?: MutableStateFlow<Map<String, DownloadState>>(emptyMap()),
         modelManager?.legacyGgufFiles ?: MutableStateFlow(emptyList()),
-        combine(presentationInputs, devInputs) { presentation, dev -> presentation to dev }
+        combine(presentationInputs, devInputs, _refreshTrigger, aiProviderRouter.roleBindings) { presentation, dev, _, _ -> presentation to dev }
     ) { snapshot, selection, dlStates, ggufs, uiInputs ->
         val presentation = uiInputs.first
         val dev = uiInputs.second
@@ -374,6 +390,14 @@ class IntelligenceViewModel(
             smokeTests = dev.smokeTests,
             benchmarkResults = dev.benchmarkResults,
             toolProbes = dev.toolProbes,
+            controlProbes = dev.controlProbes,
+            toolQualification = localModels.associate { descriptor ->
+                descriptor.id to (localProvider?.toolQualificationFor(descriptor)
+                    ?: LiteRtToolQualification.NOT_APPLICABLE)
+            },
+            visionQualification = localModels.associate { it.id to localProvider?.visionQualificationFor(it) },
+            roleBindings = aiProviderRouter.roleBindings.value,
+            conversationDiagnostics = localProvider?.conversationDiagnostics?.value,
             matrixRows = dev.matrixRows,
             runningMatrix = dev.runningMatrix,
             busyModelId = dev.busyModelId,
@@ -684,9 +708,33 @@ class IntelligenceViewModel(
     }
 
     /** Optional capability probe: never marks the model broken when the artifact cannot tool-call. */
+    fun probeModelVision(modelId: String) = runModelTask(modelId) { provider ->
+        provider.probeVision(modelId)
+    }
+
+    fun setRoleSelection(role: com.halo.sdk.provider.AiModelRole, selection: com.halo.sdk.provider.AiRoleSelection) {
+        aiProviderRouter.setRoleBinding(com.halo.sdk.provider.AiRoleBinding(role,
+            if (selection == com.halo.sdk.provider.AiRoleSelection.EXPLICIT) uiState.value.activeProviderId else null,
+            if (selection == com.halo.sdk.provider.AiRoleSelection.EXPLICIT) uiState.value.activeModelId else null, selection))
+        _refreshTrigger.update { it + 1 }
+    }
+
     fun probeModelTools(modelId: String) = runModelTask(modelId) { provider ->
         val result = provider.probeToolCalling(modelId)
         devInputs.value = devInputs.value.copy(toolProbes = devInputs.value.toolProbes + (modelId to result))
+    }
+
+    /**
+     * MINING-P0-001 the lowest-level diagnostic action: the raw LiteRT SDK control probe.
+     *
+     * Deliberately distinct from "Verify model" (provider/session path) and "Probe tools" (native
+     * tool channel). Explicit user action only; never runs on app start or when a screen opens.
+     */
+    fun runControlProbe(modelId: String) = runModelTask(modelId) { provider ->
+        val result = provider.runControlProbe(modelId)
+        devInputs.value = devInputs.value.copy(
+            controlProbes = devInputs.value.controlProbes + (modelId to result),
+        )
     }
 
     fun unloadLocalModel() {

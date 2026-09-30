@@ -1,15 +1,12 @@
 package com.halo.providers.litert.runtime
 
 import android.content.Context
-import android.os.Build
 import android.util.Log
-import com.google.ai.edge.litertlm.Backend
 import com.google.ai.edge.litertlm.Conversation
 import com.google.ai.edge.litertlm.ConversationConfig
 import com.google.ai.edge.litertlm.Content
 import com.google.ai.edge.litertlm.Contents
 import com.google.ai.edge.litertlm.Engine
-import com.google.ai.edge.litertlm.EngineConfig
 import com.google.ai.edge.litertlm.Message
 import com.google.ai.edge.litertlm.SamplerConfig
 import com.google.ai.edge.litertlm.ToolCall as LiteRtToolCall
@@ -148,6 +145,7 @@ class LiteRtRuntime(
     private var activeModelPath: String? = null
     private var activeCacheRootPath: String? = null
     private var activeLoadConfig: RuntimeLoadConfig? = null
+    private var visionInputEnabled: Boolean = false
 
     /**
      * Some devices (notably emulators and older GPUs) report a successful GPU `initialize()` and
@@ -156,6 +154,14 @@ class LiteRtRuntime(
     private var cpuFallbackConsumed = false
 
     private var activeRequestId: String? = null
+
+    /**
+     * MINING-P0-001 content-free observation of the last generation's native tool channel. A model
+     * may *emit* a tool call; Halo still decides whether it is structurally usable.
+     */
+    private val _lastToolChannelObservation = MutableStateFlow<LiteRtNativeToolChannelObservation?>(null)
+    val lastToolChannelObservation: StateFlow<LiteRtNativeToolChannelObservation?> =
+        _lastToolChannelObservation.asStateFlow()
 
     private val stateMutex = Mutex()
     private val inferenceMutex = Mutex()
@@ -189,57 +195,29 @@ class LiteRtRuntime(
     /**
      * LiteRT Android local inference only ships arm64-v8a native libraries. Entering
      * `Engine.initialize()` on an unsupported ABI produces an opaque native abort instead of a
-     * diagnosable failure, so it is rejected here.
+     * diagnosable failure, so it is rejected here. Shared with the direct control probe.
      */
-    private fun abiBlocker(): String? {
-        val abis = Build.SUPPORTED_ABIS?.toList().orEmpty()
-        return if (abis.any { it.equals(SUPPORTED_ABI, ignoreCase = true) }) {
-            null
-        } else {
-            "This device does not support arm64-v8a native inference (SUPPORTED_ABIS=${abis.joinToString(",")})"
-        }
-    }
+    private fun abiBlocker(): String? = LiteRtEngineConfigFactory.abiBlocker()
 
-    private fun backendName(backend: LocalComputeBackend): String = when (backend) {
-        LocalComputeBackend.GPU -> "GPU"
-        LocalComputeBackend.CPU -> "CPU"
-        LocalComputeBackend.AUTO -> "AUTO"
-    }
+    private fun backendName(backend: LocalComputeBackend): String =
+        LiteRtEngineConfigFactory.backendName(backend)
 
+    /**
+     * MINING-P0-001 the engine-config build rules live in [LiteRtEngineConfigFactory] so the
+     * production runtime and the direct control probe cannot slowly diverge.
+     */
     private fun createAndInitializeEngine(
         modelPath: String,
         backend: LocalComputeBackend,
         contextTokens: Int?,
         cacheDir: File,
-    ): Result<Engine> {
-        val litertBackend = when (backend) {
-            LocalComputeBackend.GPU -> Backend.GPU()
-            LocalComputeBackend.CPU -> Backend.CPU()
-            LocalComputeBackend.AUTO -> Backend.GPU()
-        }
-
-        val engineConfig = EngineConfig(
-            modelPath = modelPath,
-            backend = litertBackend,
-            // null => the native engine applies the model's own default context window.
-            maxNumTokens = contextTokens,
-            // Inference compile/weight caches live under filesDir: the OS may purge cacheDir.
-            cacheDir = cacheDir.absolutePath,
-        )
-
-        var created: Engine? = null
-        return try {
-            created = Engine(engineConfig)
-            created.initialize()
-            Result.success(created)
-        } catch (cancelled: CancellationException) {
-            created?.let { runCatching { it.close() } }
-            throw cancelled
-        } catch (error: Throwable) {
-            created?.let { runCatching { it.close() } }
-            Result.failure(error)
-        }
-    }
+    ): Result<Engine> = LiteRtEngineConfigFactory.createAndInitialize(
+        modelPath = modelPath,
+        backend = backend,
+        contextTokens = contextTokens,
+        cacheDir = cacheDir,
+        visionEnabled = visionInputEnabled,
+    )
 
     /**
      * Releasing weights takes seconds. Running it inside a cancelled coroutine can abort the native
@@ -260,45 +238,15 @@ class LiteRtRuntime(
         }
     }
 
-    private fun bounded(error: Throwable?): String = error?.let {
-        "${it::class.java.simpleName}: ${it.message?.lineSequence()?.firstOrNull()?.take(300)}"
-    } ?: "unknown"
+    private fun bounded(error: Throwable?): String = LiteRtEngineConfigFactory.bounded(error)
 
     /**
-     * True only for failures that a smaller context allocation could plausibly fix.
-     *
-     * A corrupt artifact, an unsupported op, an ABI mismatch or an invalid-metadata error must
-     * never trigger a context downshift: retrying would just hide a real defect.
+     * True only for failures that a smaller context allocation could plausibly fix. Shared with the
+     * direct control probe: a corrupt artifact, unsupported op or ABI mismatch must never trigger a
+     * context downshift in either path.
      */
-    private fun isMemoryAllocationFailure(error: Throwable?): Boolean {
-        var current = error
-        var depth = 0
-        while (current != null && depth < 4) {
-            if (current is OutOfMemoryError) return true
-            val message = current.message?.lowercase().orEmpty()
-            if (MEMORY_MARKERS.any { message.contains(it) }) return true
-            current = current.cause
-            depth++
-        }
-        return false
-    }
-
-    /**
-     * Bounded context ladder. Only an AUTO policy may downshift, and only through the declared
-     * 4096 -> 2048 -> 1024 steps. Explicit GPU/CPU never silently change the allocation.
-     */
-    private fun contextLadder(
-        requestedContext: Int?,
-        backend: LocalComputeBackend,
-    ): List<Int?> {
-        if (requestedContext == null) return listOf(null)
-        if (backend != LocalComputeBackend.AUTO) return listOf(requestedContext)
-        val candidates = mutableListOf(requestedContext)
-        CONTEXT_LADDER.forEach { candidate ->
-            if (candidate < requestedContext && candidate >= MINIMUM_CONTEXT_TOKENS) candidates.add(candidate)
-        }
-        return candidates.distinct()
-    }
+    private fun isMemoryAllocationFailure(error: Throwable?): Boolean =
+        LiteRtEngineConfigFactory.isMemoryAllocationFailure(error)
 
     private fun resolveEngine(
         file: File,
@@ -306,15 +254,15 @@ class LiteRtRuntime(
         config: RuntimeLoadConfig,
     ): EngineLoadOutcome {
         val artifactFingerprint = sha256(file)
-        val modelCacheRoot = File(
-            context.filesDir,
-            "litertlm_cache/${modelId.replace('/', '_')}-$artifactFingerprint",
-        )
+        // Cache-path and context-ladder rules are owned by the shared factory so the production
+        // runtime and the direct control probe cannot drift apart.
+        val cacheDirs = LiteRtEngineConfigFactory.cacheDirsFor(context.filesDir, modelId, artifactFingerprint)
+        val modelCacheRoot = cacheDirs.root
         // A failed GPU initialization must never leave state that influences the CPU fallback.
-        val gpuCacheDir = File(modelCacheRoot, GPU_CACHE_SUBDIR).also { if (!it.exists()) it.mkdirs() }
-        val cpuCacheDir = File(modelCacheRoot, CPU_CACHE_SUBDIR).also { if (!it.exists()) it.mkdirs() }
+        val gpuCacheDir = cacheDirs.gpu
+        val cpuCacheDir = cacheDirs.cpu
         val requestedContext = if (config.useModelDefaultContext) null else config.contextSize
-        val ladder = contextLadder(requestedContext, config.computeBackend)
+        val ladder = LiteRtEngineConfigFactory.contextLadder(requestedContext, config.computeBackend)
 
         val start = System.currentTimeMillis()
         var downshiftReason: String? = null
@@ -533,6 +481,7 @@ class LiteRtRuntime(
             }
             closeConversationQuietly(replacedResources.conversation, cancel = true)
             closeEngineQuietly(replacedResources.engine)
+            visionInputEnabled = config.visionEnabled
 
             val outcome = withContext(Dispatchers.Default) {
                 resolveEngine(file, modelId, config).also(unpublishedOutcome::set)
@@ -647,7 +596,8 @@ class LiteRtRuntime(
         val modelPath = activeModelPath ?: return Result.failure(IllegalStateException("No resident model path"))
         val cacheRoot = activeCacheRootPath?.let(::File)
             ?: File(context.filesDir, "litertlm_cache/${modelId.replace('/', '_')}").also { it.mkdirs() }
-        val cpuCacheDir = File(cacheRoot, CPU_CACHE_SUBDIR).also { if (!it.exists()) it.mkdirs() }
+        val cpuCacheDir = File(cacheRoot, LiteRtEngineConfigFactory.CPU_CACHE_SUBDIR)
+            .also { if (!it.exists()) it.mkdirs() }
         val contextTokens = activeLoadConfig?.let { if (it.useModelDefaultContext) null else it.contextSize }
             ?: effectiveContextTokens
 
@@ -736,6 +686,12 @@ class LiteRtRuntime(
         val textBuilder = StringBuilder()
         val nativeToolCalls = linkedMapOf<String, ToolCall>()
         val thinkingFilter = LiteRtThinkingFilter()
+        var emittedToolCalls = 0
+        var rejectedToolCalls = 0
+        var duplicateSuppressed = 0
+        var callIdComplete = true
+        var argumentsStructurallyComplete = true
+        val rejections = linkedSetOf<LiteRtToolCallRejection>()
 
         try {
             val convConfig = ConversationConfig(
@@ -747,6 +703,13 @@ class LiteRtRuntime(
                     topP = config.topP,
                     temperature = config.temperature,
                 ),
+                // SECURITY INVARIANT:
+                // automaticToolCalling = false
+                //
+                // LiteRT may DESCRIBE/EMIT a requested tool call; it must never EXECUTE a Halo
+                // tool. Execution ownership stays with Halo's runtime (ToolDescriptor ->
+                // exposure/policy/approval -> executor -> AgentStep truth). If a future SDK
+                // change causes HaloOpenApiTool.execute() to run, it throws loudly on purpose.
                 automaticToolCalling = false,
                 maxOutputToken = config.maxTokens.takeIf { it > 0 },
             )
@@ -811,13 +774,34 @@ class LiteRtRuntime(
                     .filterIsInstance<Content.Text>()
                     .joinToString("") { it.text }
                 message.toolCalls.forEach { call ->
+                    emittedToolCalls++
+                    // A malformed native call must never execute. It is rejected visibly and
+                    // reported through the tool-channel observation instead.
+                    val rejection = LiteRtNativeToolCallValidator.rejectionFor(call.name, call.arguments)
+                    if (rejection != null) {
+                        rejectedToolCalls++
+                        rejections += rejection
+                        when (rejection) {
+                            LiteRtToolCallRejection.MISSING_FUNCTION_NAME -> callIdComplete = false
+                            LiteRtToolCallRejection.INCOMPLETE_ARGUMENTS -> argumentsStructurallyComplete = false
+                            LiteRtToolCallRejection.CONFLICTING_DUPLICATE_ID -> Unit
+                        }
+                        Log.i(
+                            TAG,
+                            "$EVENT_TOOL_CALL_REJECTED model=$_loadedModelId reason=${rejection.label} " +
+                                "argsFields=${call.arguments?.size ?: 0}",
+                        )
+                        return@forEach
+                    }
                     val key = "${call.name}:${call.arguments}"
                     if (key !in nativeToolCalls) {
                         nativeToolCalls[key] = ToolCall(
                             id = "litert:${activeRequestId ?: startTime}:${nativeToolCalls.size + 1}",
-                            functionName = call.name,
-                            arguments = call.arguments.filterValues { it != null } as Map<String, Any>,
+                            functionName = call.name!!,
+                            arguments = call.arguments.orEmpty().filterValues { it != null } as Map<String, Any>,
                         )
+                    } else {
+                        duplicateSuppressed++
                     }
                 }
                 if (chunk.isNotEmpty()) {
@@ -841,9 +825,23 @@ class LiteRtRuntime(
                 Log.i(
                     TAG,
                     "$EVENT_THINKING model=$_loadedModelId rawChars=${thinkingFilter.rawText().length} " +
-                        "reasoningChars=${reasoning.length} preview=${reasoning.take(160).replace('\n', ' ')}",
+                        "reasoningChars=${reasoning.length}",
                 )
             }
+
+            val (pairedResponses, unpairedModelToolCalls) =
+                LiteRtNativeToolCallValidator.pairing(config.initialMessages)
+            _lastToolChannelObservation.value = LiteRtNativeToolChannelObservation(
+                emittedToolCalls = emittedToolCalls,
+                acceptedToolCalls = nativeToolCalls.size,
+                rejectedToolCalls = rejectedToolCalls,
+                duplicateSuppressed = duplicateSuppressed,
+                callIdComplete = callIdComplete,
+                argumentsStructurallyComplete = argumentsStructurallyComplete,
+                pairedResponseCount = pairedResponses,
+                unpairedModelToolCalls = unpairedModelToolCalls,
+                rejections = rejections.toList(),
+            )
 
             val endTime = System.currentTimeMillis()
             val durationMs = (endTime - startTime).coerceAtLeast(1L)
@@ -1009,22 +1007,6 @@ class LiteRtRuntime(
 
     companion object {
         private const val TAG = "LiteRtRuntime"
-        private const val SUPPORTED_ABI = "arm64-v8a"
-        private const val GPU_CACHE_SUBDIR = "gpu"
-        private const val CPU_CACHE_SUBDIR = "cpu"
-        private const val MINIMUM_CONTEXT_TOKENS = 1024
-
-        /** Bounded ladder used only for memory/resource allocation failures under AUTO. */
-        private val CONTEXT_LADDER = listOf(2048, 1024)
-
-        private val MEMORY_MARKERS = listOf(
-            "out of memory",
-            "oom",
-            "memory",
-            "alloc",
-            "insufficient",
-            "resource exhausted",
-        )
 
         /** Character-based estimate: NOT tokenizer-accurate, reported as estimatedTokens. */
         internal fun estimatedTokens(text: String): Int =
@@ -1045,5 +1027,6 @@ class LiteRtRuntime(
         const val EVENT_GENERATION_FAILED = "HALO_LITERT_GENERATION_FAILED"
         const val EVENT_THINKING = "HALO_LITERT_THINKING"
         const val EVENT_UNLOAD = "HALO_LITERT_UNLOAD"
+        const val EVENT_TOOL_CALL_REJECTED = "HALO_LITERT_TOOL_CALL_REJECTED"
     }
 }

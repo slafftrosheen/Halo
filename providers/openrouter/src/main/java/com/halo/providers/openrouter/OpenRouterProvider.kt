@@ -479,7 +479,7 @@ class OpenRouterProvider(
                     put(JSONObject().apply {
                         put("type", "image_url")
                         put("image_url", JSONObject().apply {
-                            val mimeType = request.mimeTypes.firstOrNull() ?: "image/jpeg"
+                            val mimeType = request.imageMimeType()
                             put("url", "data:$mimeType;base64,${android.util.Base64.encodeToString(request.image, android.util.Base64.NO_WRAP)}")
                         })
                     })

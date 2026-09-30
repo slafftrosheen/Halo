@@ -27,19 +27,33 @@ class AiSelectionRepository(
     fun migrateLegacySelectionIfNeeded(): PersistedAiSelection {
         val stored = readPersistedSelection()
         val migrationPending = !storage.getBoolean(MIGRATION_COMPLETE_KEY, false)
-        if (!migrationPending) return stored
-        val migratedProvider = if (stored.providerId == DefaultAiProviderRouter.LEGACY_LLAMACPP_PROVIDER_ID) {
+        // A retired provider id is repaired on every start, not only while the marker is unset.
+        // The marker exists so a provider-specific legacy model key cannot rewrite the canonical
+        // selection on a later start; it must not be able to preserve an id the app no longer
+        // ships. Without this, any start that ran before the legacy key was restored (backup
+        // restore, an earlier process, a copied preference file) would leave a dead provider
+        // selected forever and the marker would silently block the repair.
+        val retiredProvider =
+            stored.providerId == DefaultAiProviderRouter.LEGACY_LLAMACPP_PROVIDER_ID
+        if (!migrationPending && !retiredProvider) return stored
+        val migratedProvider = if (retiredProvider) {
             DefaultAiProviderRouter.LITERT_PROVIDER_ID
-        } else stored.providerId
-        val migratedModel = stored.modelId ?: migratedProvider
-            ?.let(::legacyModelKey)
-            ?.let { key -> storage.getString(key) }
-            ?.trim()
-            ?.ifBlank { null }
+        } else {
+            stored.providerId
+        }
+        // The legacy per-provider model key is only read once, while the migration is pending.
+        val migratedModel = stored.modelId ?: if (migrationPending) {
+            migratedProvider
+                ?.let(::legacyModelKey)
+                ?.let { key -> storage.getString(key) }
+                ?.trim()
+                ?.ifBlank { null }
+        } else {
+            null
+        }
         val migrated = PersistedAiSelection(migratedProvider, migratedModel, stored.policy)
-        // Mark the migration complete even when no legacy value existed. Otherwise a fresh install
-        // remains permanently "migration pending" and a later provider-specific key can
-        // unexpectedly rewrite the canonical selection on a future start.
+        // Mark the migration complete even when no legacy value existed, so a fresh install is not
+        // permanently "migration pending".
         writeExplicitSelection(migrated)
         return migrated
     }

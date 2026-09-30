@@ -204,11 +204,97 @@ was run.
 | Model catalog normalization | OneBox provider/model identity stability | Remote models normalized to `AiModelRef(providerId, modelId)` with REMOTE_LIVE/REMOTE_CACHED and TTL; companion underlying models must not collide | `AiModelCatalogRepository` extended with remote/cached normalization and `ModelCatalogCache`; companion models encoded with underlying provider prefix | WIRED 2026-09-29 |
 | Provider diagnostic probe | Existing System Check AI probe | Diagnostic probes must be bounded, short, content-free and not send history | `ProviderDiagnosticProbe` added with bounded prompt / max-output guard and no conversation history; System Check exposes per-provider rows and "Run provider probe" | WIRED 2026-09-29 |
 
+### RUNTIME-057 / MINING-P0-001 — execution truth, tool qualification, resource and audio-route observability (2026-09-30)
+
+Sources: `https://github.com/Rickeal-Boss/Android-Agent` branch `harness-improve`
+(`core-engine/.../local/NativeToolBridge.kt` plus its native-tools handoff doc),
+`https://github.com/ChaseDreamInfinity/voice-agent` (`AudioCaptureEngine.kt`,
+`VoiceAudioRouting.kt`, `LlmEngine.kt`), and the minimal ADK+LiteRT sample
+`https://github.com/MukeshKumar009/android-agent-adk-litertlm-on-device-ai` (conceptual only; no root
+LICENSE in the inspected tree). Status for this batch is **SOURCE COMPLETE / BUILD NOT RUN / TESTS NOT
+RUN / PHONE ACCEPTANCE NOT RUN**.
+
+| Idea | Source | What Halo needed | What was wired | Status |
+| --- | --- | --- | --- | --- |
+| Detect the layer that failed, not "LiteRT is broken" | Android-Agent diagnostics ladder; minimal ADK/LiteRT control path | A probe below the provider and below the router | `LiteRtControlProbeRunner` + `LiteRtControlProbeResult`/`Stage`/`Status`: artifact → ABI → engine init → conversation → first token → completion → teardown, stages independently reported | SOURCE COMPLETE 2026-09-30 |
+| One owner for engine configuration | Minimal ADK/LiteRT sample (how small a direct path can be) | The probe and the runtime must not drift | `LiteRtEngineConfigFactory` extracted (backend mapping, `EngineConfig`, content-addressed cache paths, context ladder, ABI preflight, memory-failure classification) and consumed by `LiteRtRuntime` and the probe | SOURCE COMPLETE 2026-09-30 |
+| `automaticToolCalling = false` and fail-loud `execute()` | Android-Agent `NativeToolBridge` | Preserve, make explicit | Unchanged behaviour; explicit `SECURITY INVARIANT` comment at the `ConversationConfig` site; `HaloOpenApiTool.execute()` still throws | PRESERVED 2026-09-30 |
+| Native tool support must be observed, not declared | Android-Agent capability/probe truth | Stop trusting a catalog boolean | `LiteRtToolQualification` states; `NATIVE` only for a proven `<sha256>:litertlm-<version>:<schema>` key; declared-native-but-unproven falls back to `HALO_PROMPT` | SOURCE COMPLETE 2026-09-30 |
+| Tool call/result history pairing and malformed-call rejection | Android-Agent native tool call/result pairing | Reject, do not execute | `LiteRtNativeToolCallValidator` rejects missing name / incomplete arguments, logs `HALO_LITERT_TOOL_CALL_REJECTED`, and records content-free channel observation including unpaired model calls after trimming | SOURCE COMPLETE 2026-09-30 |
+| Channel-drift visibility | Android-Agent channel drift | See whether the native channel was even used | `LiteRtToolChannelDiagnostics` + `LiteRtToolProbeResult` tightened (field counts and key-name digests only; no argument values, no response text) | SOURCE COMPLETE 2026-09-30 |
+| Conversation/preface diagnostics | Android-Agent preface diagnostics | Explain a preface problem without leaking it | `LiteRtConversationDiagnostics` (mode, length, fingerprint, schema count, timings, echo flag) — raw instruction never retained; prompt-echo observation only (`matchedChars>=64` threshold, no text logged, no termination) | SOURCE COMPLETE (observation only) 2026-09-30 |
+| Residency vs active execution | Halo's own `NativeResourceCoordinator` work in progress | Make the distinction undeniable | `executionLeaseHeld` and friends on `NativeResourceSnapshot`, `executingKinds()`/`isExecuting()` added beside `activeKinds()` (unchanged semantics for residency consumers) | SOURCE COMPLETE 2026-09-30 |
+| Audio mode/routing belongs to the interaction session | Voice Agent `VoiceAudioRouting` | Formalise the lifetime Halo already honoured | `InteractionAudioAffinity` in runtime-sdk; binding survives `InputLease.release()`; ends only with the interaction | SOURCE COMPLETE 2026-09-30 |
+
 ### What was NOT copied
 
+- Android-Agent's Agent architecture, memory system or journal: Halo's `AgentStep` journal remains execution truth.
+- Voice Agent's forced built-in speaker: Halo preserves wearable/headset/Bluetooth route affinity, including `DISALLOW_PHONE` for wearable origin.
+- The minimal ADK/LiteRT sample's dependency surface: no ADK in production, no `MANAGE_EXTERNAL_STORAGE`, no provider-architecture replacement, LiteRT-LM stays pinned at 0.17.1.
+- No new agent runtime, durable journal, provider, router, resource manager, speech stack, assistant state machine or model database was introduced.
 - Gemini CLI OAuth client identity, token cache, or any CLI credential import path.
 - OpenCode OpenAI/ChatGPT OAuth client identity or ChatGPT cookie/session token handling.
 - xAI OAuth client identity; subscription auth is only enabled when Halo has its own suitable client configuration.
 - Any vendor-operated Halo relay; OpenCode companion is a user-operated endpoint.
 - Per-vendor duplicate HTTP/SSE/tool parsing; existing providers are preserved as compatibility references, not rewritten wholesale.
+
+## RUNTIME-058 / MINING-P1-001 — bounded agent, memory pull, MCP, voice continuity, procedures
+
+Full record and the deferred-items list: [ANDROID-AGENT-VOICE-MCP-MINING.md](ANDROID-AGENT-VOICE-MCP-MINING.md).
+
+### Harvested
+
+- **Android-Agent `harness-improve`** — bounded execution guards (wall-clock, tool-round, failure
+  streak, oscillation, run token accounting), thermal gating as policy, memory *pull* rather than a
+  memory prompt dump, and short-lived exact-argument approval grants. Concepts only; no code copied.
+- **ChaseDreamInfinity/voice-agent** — semantic barge-in evidence, interaction/session-owned audio
+  routing, sentence/clause TTS chunking, sticky backend/route per response, tiered memory and an
+  *optional* embedding capability.
+- **Brownie** — MCP JSON-RPC mechanics (`initialize` → `tools/list` → `tools/call`), namespaced dynamic
+  tool registration, learned-procedure metadata (origin, usage count, staleness), agent-authored
+  schedules, notification RemoteInput reply.
+- **kotlin-adk** — SKILL.md interoperability concepts only.
+
+### Deliberately not adopted
+
+- Android-Agent's `AgentRunner`/agent architecture, memory system or journal — Halo's `AgentStep`
+  journal stays execution truth.
+- Voice Agent's forced built-in speaker — Halo keeps wearable/headset/Bluetooth affinity, including
+  `DISALLOW_PHONE` for wearable origin.
+- Brownie's trust model, shell and filesystem delegation — imported MCP tools default to `SENSITIVE`,
+  trust never implies execution approval, and results are bounded untrusted content.
+- kotlin-adk's LiteRT module (intentionally incomplete/stubbed) and its skill runtime.
+- No new agent runtime, journal, scheduler, provider, router, resource manager, speech stack, assistant
+  state machine or model database. `ToolRegistry` gained a bounded removable dynamic overlay rather than
+  a second registry.
+
+## RUNTIME-059 / MINING-P2-001 — adaptive interaction, plan, web, optional capabilities
+
+Full record and deferred-items list: [ADAPTIVE-INTERACTION-MINING.md](ADAPTIVE-INTERACTION-MINING.md).
+
+### Harvested
+
+- **kotlin-adk (A2UI)** — versioned structured UI messages, closed component catalog, streaming-safe
+  accumulation, host renderer registry, and create/update/delete surface concepts (mapped onto
+  projection events with monotonic revisions).
+- **Android-Agent `harness-improve`** — visible plan steps and PENDING / IN_PROGRESS / COMPLETED
+  progress projection.
+- **Brownie** — DOM-settle: observe mutations, require a quiet window, then extract bounded content.
+- **voice-agent** — the lesson that audio models may need a container (source of `Pcm16Wav`) and the
+  optional-embedding capability shape (source of `OptionalRuntimeCapability`).
+
+### Rejected
+
+- A2UI as a second surface system; foreign durable-state ownership; arbitrary action dispatch;
+  generic model-generated Compose; executable form callbacks; arbitrary URLs as image sources.
+- Android-Agent's plan store: Halo's `ExecutionPlan`, `Task`/`TaskState` and `AgentStep` journal remain
+  the only plan truth.
+- Unrestricted browser automation: the dynamic web path is one isolated ephemeral WebView behind an
+  explicit opt-in contract with a hard deadline.
+- voice-agent's forced speaker routing and mandatory embedding download; Halo ships no capability
+  artifact it has not verified, and reports every optional capability as Not installed.
+- Replacing Sherpa or enabling `AUDIO_MODEL_TRANSCRIBE_THEN_REASON` by default.
+# MINING-P3-001 — multimodal perception and capability packs (2026-09-30)
+
+MINING-P3-001 harvest is documented in [MULTIMODAL-PERCEPTION-MINING.md](MULTIMODAL-PERCEPTION-MINING.md). Reviewed [voice-agent LlmEngine](https://github.com/ChaseDreamInfinity/voice-agent/blob/main/android/app/src/main/java/io/github/chasedreaminfinity/voiceagent/engine/LlmEngine.kt) for same-turn image/text, explicit image backend and PCM16 WAV framing; [AgentADK](https://github.com/MukeshKumar009/android-agent-adk-litertlm-on-device-ai/blob/main/app/src/main/java/com/mukesh/android_agent_adk_litertlm_on_device_ai/AgentADK.kt) for lifecycle context. No ADK or second assistant runtime is imported. [LiteRT Engine source](https://github.com/google-ai-edge/LiteRT-LM/blob/main/kotlin/java/com/google/ai/edge/litertlm/Engine.kt) informs configuration but does not establish pinned 0.17.1 acceptance. [AndroidX ExifInterface](https://developer.android.com/jetpack/androidx/releases/exifinterface) 1.4.2 is declared for JPEG/PNG/WebP metadata/orientation parsing; no dependency was downloaded in this batch. The Android-Agent harness-improve/core-engine URL could not be inspected reliably; no source-copy claim is made for that path.
 

@@ -40,6 +40,8 @@ import com.halo.runtime.cognition.interaction.InteractionRiskLevel
 import com.halo.runtime.cognition.interaction.InteractionSurface
 import com.halo.runtime.cognition.interaction.InteractionSupplement
 import com.halo.runtime.cognition.interaction.TemporalInputValue
+import com.halo.runtime.cognition.interaction.CURRENT_PRESENTATION_SCHEMA_VERSION
+import com.halo.app.ui.design.HaloSpacing
 
 /**
  * Host presentation hint — Android UI layer concept, deliberately NOT part of
@@ -73,6 +75,40 @@ fun InteractionSurfaceRenderer(
         is InteractionContent.Progress -> HaloProgressSurface(surface, content, onRespond, mode)
         is InteractionContent.Result -> HaloResultSurface(surface, content, onRespond, mode)
         is InteractionContent.Error -> HaloErrorSurface(surface, content, onRespond, mode)
+        // MINING-P2-001: bounded structured presentation. It never renders raw payload text and
+        // never falls back to a serialized tree; unsupported schema shows the text fallback.
+        is InteractionContent.Presentation -> HaloPresentationSurface(surface, content, mode)
+    }
+}
+
+@Composable
+private fun HaloPresentationSurface(
+    surface: InteractionSurface,
+    content: InteractionContent.Presentation,
+    mode: SurfaceRenderMode,
+) {
+    val presentation = content.presentation
+    val supported = presentation.schemaVersion <= CURRENT_PRESENTATION_SCHEMA_VERSION
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(HaloSpacing.xs),
+    ) {
+        surface.title?.let {
+            Text(it, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Medium)
+        }
+        if (supported) {
+            StructuredPresentationRenderer(
+                presentation = presentation,
+                density = if (mode == SurfaceRenderMode.COMPACT) PresentationDensity.COMPACT else PresentationDensity.FULL,
+            )
+        }
+        // The textual fallback is always available, including for a newer schema version.
+        content.textFallback.takeIf { it.isNotBlank() }?.let {
+            Text(it, style = MaterialTheme.typography.bodyMedium)
+        }
+        surface.message?.takeIf { it.isNotBlank() && it != content.textFallback }?.let {
+            Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     }
 }
 

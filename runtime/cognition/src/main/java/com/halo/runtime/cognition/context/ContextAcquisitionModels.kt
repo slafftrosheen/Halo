@@ -35,6 +35,7 @@ data class ContextAcquisitionResult(
     val candidates: List<ContextCandidate>,
     val omitted: List<OmittedContextCandidate> = emptyList(),
     val unsatisfiedRequired: List<ContextNeed> = emptyList(),
+    val mediaFailures: List<com.halo.sdk.runtime.multimodal.MediaFailure> = emptyList(),
 )
 
 /**

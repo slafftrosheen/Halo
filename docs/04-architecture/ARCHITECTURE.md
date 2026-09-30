@@ -256,3 +256,58 @@ A tool continuation is not a new user turn. The runtime reconstructs USER → AS
 TOOL result plus the recorded exposure set from the AgentRun journal, pins the recorded
 provider/model, and invokes the adapter with `TOOL_CONTINUATION`. A recovered continuation uses the
 same reconstruction and cannot execute an already recorded tool outcome again.
+
+## Bounded agent execution (RUNTIME-058)
+
+A run is bounded by construction. `AgentRunLimits` supplies per-kind ceilings (interactive, routine,
+system) and `AgentRunGuard` enforces them; one `AgentRunGuardRegistry` holds one guard per run so the
+provider loop (`CognitiveTurnExecutor`) and the tool loop (`DefaultToolTurnExecutor`) consult the same
+counters and the same thermal reading. A guard stop is a *decision*, not an exception: it is journaled
+as `AgentStep.RunGuardTriggered` (reason, round, tool id, digest, elapsed, bounded summary) and reaches
+the user as recovery copy. Thermal policy is portable (`ThermalStateSource`/`ThermalPolicy` in
+runtime-sdk); the Android host maps `PowerManager` into `ThermalSeverity`, and thermal pressure never
+silently changes provider — `LOCAL_ONLY` stays `LOCAL_ONLY`. Run-scoped token accounting keeps
+estimated and provider-reported tokens as separate facts.
+
+## Capability fabric: MCP, procedures, routines (RUNTIME-058)
+
+Halo has exactly one tool catalogue. MCP servers contribute *dynamic* entries through a bounded,
+removable overlay on `ToolRegistry`, namespaced `mcp.<serverId>.<remoteToolName>`; a removed or
+disabled server therefore stops being callable on the next lookup. A remote server describes its tool
+only — Halo's own `ToolDescriptor` assigns risk, approval policy, replay policy and timeout, and risk
+defaults to `SENSITIVE` regardless of trust. Results are bounded untrusted content.
+
+Learned procedures are instruction-only recipes over existing capabilities; they cannot add authority,
+and every step they mention still passes the ordinary resolver, policy, approval, resource and journal
+path at execution time. Agent-created routines are persisted through the existing routine repository
+and scheduler, never through a parallel one.
+
+## Interaction audio and speech (RUNTIME-058)
+
+Audio routing belongs to the interaction, not to one microphone capture. `BargeInEvidence` now carries
+sustained-speech duration and an optional semantic class, with physical activation unconditionally
+accepted; `BargeInSemanticClassifier` is optional and its absence is reported honestly.
+`StreamingSpeechChunker` may only speak `SpeechSourceKind.TERMINAL_RESPONSE`, so tool requests, tool
+results, reasoning and approval payloads can never be spoken, and `TtsSanitizer` runs per chunk.
+
+## Structured presentation (RUNTIME-059)
+
+A terminal assistant response may carry `AssistantPresentation(text, structured, provenance)`. Text
+stays mandatory: it is the TTS input, the voice-only and text-only fallback, the Notebook fallback and
+the only thing a context assembler ever sees — a serialized component tree never enters model
+context. The `structured` half is a closed, versioned catalog (`HALO_PRESENTATION_SCHEMA_V1`) with no
+generic container and no executable member: it cannot dispatch an Intent, run a tool, grant approval,
+change settings, create a routine, send a message or delete memory. A `ChoiceGroup` only resolves an
+already durable input request (`PresentationChoiceAuthority`), and an unsupported newer schema version
+degrades to text instead of guessing.
+
+Producers are deterministic: `PresentationTemplates` expands a flat model directive, and
+`PlanPresentationProjector` projects `ExecutionPlan` / journal evidence so progress can only reflect
+verified execution. Persistence rides in existing committed-turn metadata through a bounded codec,
+which is why there is no second durable surface store; ephemeral progress lives in
+`PresentationSurfaceProjection`, where a stale revision is rejected rather than overwriting newer
+state. Rendering is a host concern (`StructuredPresentationRenderer`, FULL/COMPACT), which is what
+keeps the same semantic surface portable across Home, Assistant, Notebook, Activity and future hosts.
+# MINING-P3-001 — multimodal perception and capability packs (2026-09-30)
+
+MediaAssetRef is portable identity/provenance/lifetime, not a URI or durable payload. Android owns cache and Workspace resolution. Runtime acquires reference context, checks policy and target capabilities, prepares bounded content, then materializes bytes at the provider boundary. Existing workload, role routing, interaction lifecycle, resource leases and response delivery remain authoritative. Explicit references precede acquisition; HeyCyan-origin requests use HeyCyan and fail without phone fallback. Audio-model transcription is a prepared optional first pass returning text, not a second assistant.

@@ -226,6 +226,14 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
                 payload.put("planKind", step.planKind).put("evidenceStepId", step.evidenceStepId ?: "")
                 "RecoveryClaimed"
             }
+            is AgentStep.RunGuardTriggered -> {
+                payload.put("reason", step.reason.name).put("round", step.round)
+                    .put("toolId", step.toolId ?: "")
+                    .put("evidenceHash", step.evidenceHash ?: "")
+                    .put("elapsedMs", step.elapsedMs)
+                    .put("summary", step.summary)
+                "RunGuardTriggered"
+            }
         }
         return payload to type
     }
@@ -357,6 +365,14 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
                 p.getString("commitId"), p.getString("interactionId"))
             "RecoveryClaimed" -> AgentStep.RecoveryClaimed(
                 step, run, at, p.optString("planKind"), p.optString("evidenceStepId").ifBlank { null })
+            "RunGuardTriggered" -> AgentStep.RunGuardTriggered(step, run, at,
+                runCatching { RunGuardReason.valueOf(p.optString("reason")) }
+                    .getOrDefault(RunGuardReason.TOO_MANY_TOOL_ROUNDS),
+                p.optInt("round"),
+                p.optString("toolId").ifBlank { null },
+                p.optString("evidenceHash").ifBlank { null },
+                p.optLong("elapsedMs"),
+                p.optString("summary"))
             // Legacy reasoning is deliberately not exposed as public execution evidence.
             else -> AgentStep.ToolFailed(step, run, at, id, "legacy", "Unsupported historical step: $type")
         }

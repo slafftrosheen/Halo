@@ -173,6 +173,33 @@ fun HeyCyanControlScreen(
 
         Spacer(Modifier.height(20.dp))
 
+        var perception by remember { androidx.compose.runtime.mutableStateOf<com.halo.app.capture.MultimodalStatus?>(null) }
+        LaunchedEffect(isConnected) {
+            perception = com.halo.app.capture.inspectMultimodal(com.halo.app.di.ManualDependencyGraph.aiProviderRouter)
+        }
+        HaloWorkspaceSection(title = "AI perception") {
+            Column(modifier = Modifier.padding(12.dp)) {
+                Text("Camera source · HeyCyan camera · ${if (isConnected) "Connected" else "Unavailable"}")
+                Text("Visual AI · ${perception?.target?.modelId ?: "Local vision unavailable"}")
+                Text("Ask what I see · ${if (perception?.target != null && isConnected) "Setup available" else "Setup required"}")
+                Text("Capture retention · Ephemeral")
+                Text("Audio reply · Glasses · Phone fallback disabled")
+                HaloWorkspaceButton(text = "Test visual question", enabled = isConnected && perception?.target != null, onClick = {
+                    val interactionId = java.util.UUID.randomUUID().toString()
+                    com.halo.app.di.ManualDependencyGraph.cognitiveSession.submit(
+                        request = com.halo.sdk.provider.AiRequest(text = "What am I looking at?"),
+                        responseDelivery = com.halo.sdk.runtime.ResponseDelivery.SPEECH_AND_VISUAL,
+                        origin = com.halo.runtime.cognition.blackboard.InteractionOrigin(
+                            source = com.halo.sdk.runtime.Source.MICROPHONE, sourceDeviceId = deviceId,
+                            captureId = interactionId, speechRoute = com.halo.sdk.runtime.SpeechInputRoute.Device(
+                                deviceId, null, "HeyCyan", com.halo.sdk.runtime.AudioDeviceKind.WEARABLE)),
+                        metadata = mapOf("interactionId" to interactionId, "inputSource" to "HeyCyan", "origin" to "glasses"),
+                    )
+                })
+            }
+        }
+        Spacer(Modifier.height(12.dp))
+
         HaloWorkspaceSection(title = "Quick actions") {
             Column(
                 modifier = Modifier.padding(12.dp),

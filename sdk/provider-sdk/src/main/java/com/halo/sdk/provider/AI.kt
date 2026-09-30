@@ -41,6 +41,9 @@ data class AiRequest(
 
 enum class ProviderTurnKind { INITIAL, TOOL_CONTINUATION }
 
+/** Shared wire MIME selection. Preparation and privacy remain the host/Runtime's responsibility. */
+fun AiRequest.imageMimeType(): String = mimeTypes.firstOrNull { it.startsWith("image/") } ?: "image/jpeg"
+
 fun AiRequest.validateForTextGeneration() {
     require(!text.isNullOrBlank()) {
         "Text generation request must contain non-empty text"
@@ -429,7 +432,9 @@ data class AiModel(
     val contextLength: Long?,
     val supportsStreaming: Boolean,
     val supportsTools: Boolean,
-    val isFree: Boolean = false
+    val isFree: Boolean = false,
+    /** Physical execution boundary; local-network endpoints still receive data off device. */
+    val executionLocation: AiExecutionLocation = AiExecutionLocation.REMOTE,
 )
 
 // Legacy compatibility (to be removed once migrated)

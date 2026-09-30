@@ -33,7 +33,7 @@ class LeasedStillImageSource(
                     acq.lease.release()
                 }
             }
-            else -> Result.failure(IllegalStateException("Camera resource busy or unavailable on endpoint $deviceId"))
+            else -> Result.failure(com.halo.sdk.runtime.multimodal.MediaAcquisitionException(com.halo.sdk.runtime.multimodal.MediaFailure.SOURCE_BUSY))
         }
     }
 }

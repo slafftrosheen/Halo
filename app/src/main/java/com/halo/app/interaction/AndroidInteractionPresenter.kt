@@ -86,6 +86,11 @@ class AndroidInteractionPresenter(
         com.halo.runtime.cognition.interaction.InteractionSurfaceKind.ERROR -> 20
         com.halo.runtime.cognition.interaction.InteractionSurfaceKind.PROGRESS -> 10
         com.halo.runtime.cognition.interaction.InteractionSurfaceKind.RESULT -> 5
+        /*
+         * MINING-P2-001: a presentation is output, so it ranks with a result and can never outrank
+         * an unresolved input request. A generated card must never cover an approval prompt.
+         */
+        com.halo.runtime.cognition.interaction.InteractionSurfaceKind.PRESENTATION -> 5
     }
 }
 

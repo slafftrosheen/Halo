@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.halo.app.capture.LocalCaptureStore
+import com.halo.app.ai.readRuntimeAiContextPolicy
 import com.halo.app.ui.glass.material.HaloRuntimeState
 import com.halo.app.ui.state.presenceFromSpeech
 import com.halo.engines.speech.SpeechRecognizedPayload
@@ -48,6 +49,11 @@ data class HomeUiState(
     val speechReady: Boolean = true,
     val microphonePermissionGranted: Boolean = true,
     val presentedResponse: String? = null,
+    /**
+     * MINING-P2-001: committed structured presentation for the current answer, when the turn carried
+     * one. Display only — [presentedResponse] remains the spoken and persisted text.
+     */
+    val structuredPresentation: com.halo.runtime.cognition.interaction.StructuredPresentation? = null,
     val orb: com.halo.app.ui.presence.HaloOrbPresentation = com.halo.app.ui.presence.HaloOrbPresentation(),
     val inputStatus: SpeechInputStatus = SpeechInputStatus(),
     val runtimeTaskStatus: String? = null,
@@ -248,6 +254,7 @@ class HomeViewModel(
                     transition = (sessionState as? CognitiveSessionState.ExecutingTool)?.hashCode() ?: 0
                 ),
                 presentedResponse = presented?.text,
+                structuredPresentation = presented?.structured,
                 speechReady = speechReady,
                 microphonePermissionGranted = microphonePermissionGranted,
                 runtimeTaskStatus = durableStatus,
@@ -330,6 +337,32 @@ class HomeViewModel(
         viewModelScope.launch {
             runCatching {
                 val timestamp = System.currentTimeMillis()
+                val interactionId = UUID.randomUUID().toString()
+                val pendingAttachment = com.halo.app.di.ManualDependencyGraph.visualAttachments.state.value
+                if (pendingAttachment != null) {
+                    val policy = com.halo.app.di.ManualDependencyGraph.storage.readRuntimeAiContextPolicy()
+                    if (!policy.includeImages) throw com.halo.sdk.runtime.multimodal.MediaAcquisitionException(com.halo.sdk.runtime.multimodal.MediaFailure.POLICY_BLOCKED)
+                    val target = aiProviderRouter?.resolveExecutionTarget(AiRequest(text = normalized),
+                        AiWorkloadSpec(kind = AiWorkloadKind.VISUAL_UNDERSTANDING,
+                            requiredCapabilities = setOf(AiCapability.TEXT, AiCapability.IMAGE), allowRemote = policy.allowCloudImages))
+                        ?: throw com.halo.sdk.runtime.multimodal.MediaAcquisitionException(com.halo.sdk.runtime.multimodal.MediaFailure.VISION_MODEL_UNAVAILABLE)
+                    if (!com.halo.app.di.ManualDependencyGraph.workspaceMediaAiPolicy.permits(pendingAttachment.ref,
+                            target.model.executionLocation == AiExecutionLocation.ON_DEVICE)) {
+                        throw com.halo.sdk.runtime.multimodal.MediaAcquisitionException(com.halo.sdk.runtime.multimodal.MediaFailure.POLICY_BLOCKED)
+                    }
+                }
+                val attachment = com.halo.app.di.ManualDependencyGraph.visualAttachments.take()
+                attachment?.let {
+                    val ref = com.halo.app.di.ManualDependencyGraph.mediaAssetStore.transferOwnership(it.ref, interactionId)
+                    com.halo.app.di.ManualDependencyGraph.assistantContextRepository.putImage(interactionId,
+                        com.halo.runtime.cognition.context.ImageContext(mediaRef = ref, mimeType = ref.mimeType,
+                            timestampMs = it.ref.createdAtMs, assetId = it.ref.id, interactionId = interactionId,
+                            freshness = com.halo.sdk.runtime.VisualFreshness.REFERENCE))
+                    cognitiveSession.submit(request = AiRequest(text = normalized), responseDelivery = ResponseDelivery.VISUAL_ONLY,
+                        metadata = mapOf("input" to "keyboard", "mode" to selectedMode.value.name, "interactionId" to interactionId,
+                            "hasAssistantImage" to "true", "explicitImageReference" to "true"))
+                    return@runCatching
+                }
                 eventBus.publish(
                     ObservationCreated(
                         observation = Observation(
@@ -342,11 +375,18 @@ class HomeViewModel(
                                 transcript = normalized,
                                 language = Locale.getDefault().toLanguageTag()
                             ),
-                            metadata = mapOf("input" to "keyboard", "mode" to selectedMode.value.name)
+                            interactionId = interactionId,
+                            metadata = mapOf("input" to "keyboard", "mode" to selectedMode.value.name,
+                                "interactionId" to interactionId, "hasAssistantImage" to (attachment != null).toString(),
+                                "explicitImageReference" to (attachment != null).toString())
                         )
                     )
                 )
             }.onFailure {
+                captureMessage.value = if (it is com.halo.sdk.runtime.multimodal.MediaAcquisitionException) it.message
+                    else if (com.halo.app.di.ManualDependencyGraph.visualAttachments.state.value != null)
+                        "Vision unavailable for this image. Configure a Vision model or remove the attachment."
+                    else "Could not submit this message. Please try again."
                 Log.e("HomeViewModel", "Text submission failed", it)
             }
         }
@@ -390,15 +430,32 @@ class HomeViewModel(
 
     private suspend fun receiveCaptureNow(store: LocalCaptureStore, file: java.io.File) {
         try {
-            store.receive(file)
-            val target = aiProviderRouter?.resolveExecutionTarget(AiRequest(text = ""))
-            captureMessage.value = if (target?.providerCapabilities?.contains(AiCapability.IMAGE) == true)
-                "Saved to Inbox. Ask Halo about the image to use it in this turn."
-            else "Saved to Inbox. Vision is unavailable for the selected model."
+            com.halo.app.di.ManualDependencyGraph.visualAttachments.attachFile(file)
+            store.discardPendingCapture(file)
+            captureMessage.value = "Camera image attached. Captured context is ephemeral unless explicitly saved."
         } catch (error: Exception) {
             captureMessage.value = error.message ?: "Capture failed"
         }
     }
+
+    fun removeVisualAttachment() { viewModelScope.launch { com.halo.app.di.ManualDependencyGraph.visualAttachments.remove() } }
+
+    fun saveVisualAttachment() { viewModelScope.launch {
+        val store = captures ?: return@launch
+        val attachment = com.halo.app.di.ManualDependencyGraph.visualAttachments.state.value ?: return@launch
+        try {
+            val content = com.halo.app.di.ManualDependencyGraph.mediaAssetStore.open(attachment.ref)
+            val pending = store.preparePhoneCapture()
+            pending.file.writeBytes(content.bytes)
+            store.receive(pending.file)
+            captureMessage.value = "Image saved to Notebook Inbox."
+        } catch (_: Exception) { captureMessage.value = "Image could not be saved." }
+    } }
+
+    fun attachSharedImage(uri: android.net.Uri) { viewModelScope.launch {
+        try { com.halo.app.di.ManualDependencyGraph.visualAttachments.attach(uri, "Shared file", com.halo.sdk.runtime.multimodal.MediaProvenance.SHARED_FILE) }
+        catch (_: Exception) { captureMessage.value = "Image could not be attached." }
+    } }
 
     fun createNote() { viewModelScope.launch {
         val note = notebook?.createNote() ?: return@launch

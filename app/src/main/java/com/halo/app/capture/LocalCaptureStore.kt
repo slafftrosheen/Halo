@@ -84,11 +84,18 @@ class LocalCaptureStore(private val context: Context, private val db: AppDatabas
         events.publish(ActionReceipt(operationId = captureId, category = "Vision", title = "Image received", stage = "Completed",
             detail = "$source · $mime · saved in Notebook Inbox", sourceDeviceId = deviceId, objectId = note.id))
         // Oversize captures remain local even when they cannot fit model context.
-        if (local.length() <= 8L * 1024 * 1024) events.publish(ObservationCreated(observation = Observation(
+        if (local.length() <= 8L * 1024 * 1024) {
+            val ref = com.halo.app.di.ManualDependencyGraph.mediaAssetStore.ingest(
+                com.halo.sdk.runtime.multimodal.MediaAssetContent(local.readBytes(), mime),
+                if (deviceId == null) com.halo.sdk.runtime.multimodal.MediaProvenance.PHONE_CAMERA else com.halo.sdk.runtime.multimodal.MediaProvenance.HEYCYAN_CAMERA,
+                captureId, deviceId,
+            )
+            events.publish(ObservationCreated(observation = Observation(
             modality = Modality.IMAGE, source = Source.CAMERA,
-            payload = ImageObservationPayload(local.readBytes(), mime), sourceDeviceId = deviceId,
+            payload = ImageObservationPayload(mimeType = mime, mediaRef = ref), sourceDeviceId = deviceId,
             origin = ObservationOrigin(if (deviceId == null) ObservationSource.PhoneCamera else ObservationSource.HeyCyanGlasses),
             metadata = mapOf("captureId" to captureId, "objectId" to note.id, "mimeType" to mime))))
+        }
         note.id
     }
 }

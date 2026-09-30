@@ -48,7 +48,7 @@ class AssistantContextRepository(
     }
 
     fun imageFor(interactionId: String): ImageContext? =
-        images[interactionId]?.takeIf { nowMs() - it.timestampMs <= ttlMs }
+        images[interactionId]?.takeIf { it.freshness == com.halo.sdk.runtime.VisualFreshness.REFERENCE || nowMs() - it.timestampMs <= ttlMs }
 
     fun clear(interactionId: String) {
         screens.remove(interactionId)
@@ -58,7 +58,7 @@ class AssistantContextRepository(
     private fun evictExpired() {
         val cutoff = nowMs() - ttlMs
         screens.entries.removeIf { it.value.capturedAtMs < cutoff }
-        images.entries.removeIf { it.value.timestampMs < cutoff }
+        images.entries.removeIf { it.value.freshness != com.halo.sdk.runtime.VisualFreshness.REFERENCE && it.value.timestampMs < cutoff }
     }
 
     private companion object { const val DEFAULT_TTL_MS = 60_000L }

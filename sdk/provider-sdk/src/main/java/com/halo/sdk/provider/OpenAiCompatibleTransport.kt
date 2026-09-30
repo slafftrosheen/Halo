@@ -304,7 +304,7 @@ class OpenAiCompatibleTransport(
                         put(JSONObject().put("type", "text").put("text", text))
                         put(JSONObject().apply {
                             put("type", "image_url")
-                            put("image_url", JSONObject().put("url", "data:${request.mimeTypes.firstOrNull() ?: "image/jpeg"};base64,${Base64.getEncoder().encodeToString(image)}"))
+                            put("image_url", JSONObject().put("url", "data:${request.imageMimeType()};base64,${Base64.getEncoder().encodeToString(image)}"))
                         })
                     }
                 } ?: text
@@ -322,7 +322,7 @@ class OpenAiCompatibleTransport(
                         put(JSONObject().put("type", "text").put("text", text))
                         put(JSONObject().apply {
                             put("type", "image_url")
-                            put("image_url", JSONObject().put("url", "data:${request.mimeTypes.firstOrNull() ?: "image/jpeg"};base64,${Base64.getEncoder().encodeToString(image)}"))
+                            put("image_url", JSONObject().put("url", "data:${request.imageMimeType()};base64,${Base64.getEncoder().encodeToString(image)}"))
                         })
                     }
                 } ?: text

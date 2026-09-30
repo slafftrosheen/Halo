@@ -83,9 +83,11 @@ import com.halo.app.data.notebook.NotebookDao
         StudyAttemptEntity::class,
         StudyFeedbackEntity::class,
         StudyPracticeItemEntity::class,
-        StudyReviewEventEntity::class
+        StudyReviewEventEntity::class,
+        com.halo.app.data.mcp.McpServerEntity::class,
+        com.halo.app.data.mcp.McpToolEntity::class
     ],
-    version = 18,
+    version = 19,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -106,6 +108,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun brainSnapshotDao(): BrainSnapshotDao
     abstract fun backupRecordDao(): BackupRecordDao
     abstract fun modelRuntimeProfileDao(): ModelRuntimeProfileDao
+    abstract fun mcpDao(): com.halo.app.data.mcp.McpDao
 
     companion object {
         val MIGRATION_1_2 = object : Migration(1, 2) {
@@ -813,9 +816,52 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * v19: MCP capability fabric. Configuration and discovered tool metadata only; credentials
+         * live in SecretStore and live platform objects are never persisted.
+         */
+        val MIGRATION_18_19 = object : Migration(18, 19) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS mcp_servers (
+                        id TEXT NOT NULL PRIMARY KEY,
+                        displayName TEXT NOT NULL,
+                        endpoint TEXT NOT NULL,
+                        enabled INTEGER NOT NULL,
+                        authKind TEXT NOT NULL,
+                        credentialRef TEXT,
+                        trust TEXT NOT NULL,
+                        createdAt INTEGER NOT NULL,
+                        updatedAt INTEGER NOT NULL,
+                        protocolVersion TEXT,
+                        lastConnectedAt INTEGER,
+                        lastError TEXT
+                    )
+                    """
+                )
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS mcp_tools (
+                        id TEXT NOT NULL PRIMARY KEY,
+                        serverId TEXT NOT NULL,
+                        remoteName TEXT NOT NULL,
+                        displayName TEXT NOT NULL,
+                        description TEXT NOT NULL,
+                        inputSchemaJson TEXT NOT NULL,
+                        risk TEXT NOT NULL,
+                        enabled INTEGER NOT NULL,
+                        lastRefreshedAt INTEGER NOT NULL
+                    )
+                    """
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_mcp_tools_serverId ON mcp_tools (serverId)")
+            }
+        }
+
         fun create(context: Context): AppDatabase =
             Room.databaseBuilder(context, AppDatabase::class.java, "halo.db")
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19)
                 .build()
     }
 }

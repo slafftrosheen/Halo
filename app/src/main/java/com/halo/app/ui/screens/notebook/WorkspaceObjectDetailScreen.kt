@@ -267,8 +267,34 @@ private fun FileDetailCard(
 ) {
     val canOpen = file.availability == WorkspaceFileAvailability.AVAILABLE ||
         file.availability == WorkspaceFileAvailability.OWNED_LOCAL
+    val mediaScope = rememberCoroutineScope()
+    var mediaMessage by remember(file.objectId) { mutableStateOf<String?>(null) }
+    var mediaAccess by remember(file.objectId) { mutableStateOf(com.halo.app.di.ManualDependencyGraph.workspaceMediaAiPolicy.access(file.objectId.value)) }
     HaloWorkspaceCard {
         Text("File information", style = MaterialTheme.typography.titleMedium)
+        if (file.mimeType.startsWith("image/")) {
+            HaloWorkspaceButton(text = "Attach image to Home", enabled = canOpen && !busy, onClick = {
+                mediaScope.launch {
+                    try {
+                        com.halo.app.di.ManualDependencyGraph.visualAttachments.attach(file.uri, "Notebook",
+                            com.halo.sdk.runtime.multimodal.MediaProvenance.WORKSPACE, file.objectId.value)
+                        mediaMessage = "Image attached. Open Home to ask about it or remove it."
+                    } catch (_: Exception) { mediaMessage = "Image could not be attached." }
+                }
+            })
+            Text("Image AI access", style = MaterialTheme.typography.labelMedium)
+            com.halo.app.data.workspace.WorkspaceAiAccess.entries.forEach { access ->
+                androidx.compose.material3.FilterChip(selected = mediaAccess == access, onClick = {
+                    mediaAccess = access
+                    com.halo.app.di.ManualDependencyGraph.workspaceMediaAiPolicy.setAccess(file.objectId.value, access)
+                }, label = { Text(when (access) {
+                    com.halo.app.data.workspace.WorkspaceAiAccess.LOCAL_ONLY -> "On device only"
+                    com.halo.app.data.workspace.WorkspaceAiAccess.ALLOW_CONFIGURED_CLOUD -> "Allow configured remote processing"
+                    com.halo.app.data.workspace.WorkspaceAiAccess.EXCLUDE_FROM_AI -> "Exclude from AI"
+                }) })
+            }
+            mediaMessage?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+        }
         Text(
             text = listOf(file.mimeType, formatFileSize(file.sizeBytes)).joinToString(" · "),
             style = MaterialTheme.typography.bodyMedium,

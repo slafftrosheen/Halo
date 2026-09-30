@@ -90,6 +90,13 @@ class LocalModelSession(
     val effectiveContextSize: Int?
         get() = activeConfig?.contextSize
 
+    /**
+     * MINING-P0-001 content-free native tool-channel observation from the last generation, when the
+     * active runtime reports one. Structural facts and counts only: no argument values, no text.
+     */
+    val lastToolChannelObservation: LiteRtNativeToolChannelObservation?
+        get() = (activeRuntime as? LiteRtRuntime)?.lastToolChannelObservation?.value
+
     private val lifecycleMutex = Mutex()
     private val generationMutex = Mutex()
     private val generationCounter = AtomicLong(0L)

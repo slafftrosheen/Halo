@@ -168,6 +168,9 @@ class DefaultInteractionResponseHandler(
             is InteractionContent.Progress,
             is InteractionContent.Result,
             is InteractionContent.Error,
+            // MINING-P2-001: a structured presentation is a view, not a durable input request. A
+            // ChoiceGroup inside one resolves the *existing* clarification surface, never the card.
+            is InteractionContent.Presentation,
             -> "surface does not resolve durable input"
         }
     }

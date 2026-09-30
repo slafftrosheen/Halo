@@ -1,0 +1,45 @@
+package com.halo.runtime.cognition.agent
+
+import com.halo.cognition.language.InteractionId
+import java.util.concurrent.ConcurrentHashMap
+
+/**
+ * MINING-P1-001: one guard per run, shared by every executor that participates in that run.
+ *
+ * A run's bounded-ness is only meaningful if the provider loop and the tool loop consult the *same*
+ * counters and the *same* thermal reading. The registry is the single owner of that state; it does
+ * not replace [AgentRunStore], which remains the durable execution truth.
+ */
+class AgentRunGuardRegistry(
+    private val limits: (AgentRunKind) -> AgentRunLimits = AgentRunLimits::forKind,
+    private val thermalGate: AgentRunThermalGate = AgentRunThermalGate.NONE,
+    private val clock: AgentRunClock = AgentRunClock.System,
+) {
+
+    private val guards = ConcurrentHashMap<String, AgentRunGuard>()
+
+    fun limitsFor(kind: AgentRunKind): AgentRunLimits = limits(kind)
+
+    fun guardFor(
+        runId: AgentRunId,
+        interactionId: InteractionId? = null,
+        kind: AgentRunKind = AgentRunKind.INTERACTIVE,
+    ): AgentRunGuard = guards.getOrPut(runId.value) {
+        AgentRunGuard(
+            runId = runId.value,
+            interactionId = interactionId?.value,
+            limits = limits(kind),
+            thermalGate = thermalGate,
+            clock = clock,
+        )
+    }
+
+    fun peek(runId: String): AgentRunGuard? = guards[runId]
+
+    /** Called when a run reaches a terminal state so the guard cannot outlive its run. */
+    fun release(runId: String) {
+        guards.remove(runId)
+    }
+
+    fun activeRunCount(): Int = guards.size
+}

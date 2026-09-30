@@ -111,3 +111,6 @@ restored remote providers are returned as NEEDS_AUTH when credentials are absent
 UI: System Check exposes per-provider auth state, connect/test/refresh actions
 and provider matrix. Provider rows show auth state without auto-selecting the
 provider on connect.
+# MINING-P3-001 — multimodal perception and capability packs (2026-09-30)
+
+ModelInputCapabilityReporting supplies model-specific capabilities. AiModel.executionLocation distinguishes on-device, LAN and remote execution for media policy. LiteRT loads the requested role's model and configures a single image only for declared vision artifacts. Vision evidence is DECLARED / PROBE_REQUIRED / PROVEN / FAILED, keyed by artifact fingerprint, runtime and image contract; a user-triggered synthetic HALO/42 probe supplies process-scoped evidence. Provider image serializers share MIME selection. LiteRT does not advertise operational audio support until an audio backend exists. No new catalog artifact/download is introduced.

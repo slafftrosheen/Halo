@@ -88,6 +88,64 @@ HeyCyan validation remains an essential engineering track, but it is not the ent
    restore journaled history/exposure and remain pinned to the original target without replaying
    completed tools.
 
+19. **RUNTIME-057 / MINING-P0-001 — LiteRT execution truth + native tool qualification + resource observability + audio route continuity** — SOURCE COMPLETE / **BUILD NOT RUN / TESTS NOT RUN / PHONE ACCEPTANCE NOT RUN** (2026-09-30).
+   A raw-SDK control probe (`LiteRtControlProbeRunner`) now sits below `LiteRtLocalProvider` and below `AiProviderRouter`, so a field failure can be attributed to a layer instead of "LiteRT broken"; engine-config rules are owned once by `LiteRtEngineConfigFactory` and consumed by both the production runtime and the probe. `NATIVE` tool calling is claimed only for a proven
+   `<sha256>:litertlm-<version>:<schema>` key: catalog `supportsTools` is treated as a declaration that makes an artifact eligible for probing and falls back to the prompt-mediated loop, and a malformed emitted call is rejected visibly instead of executing. `NativeResourceSnapshot` now separates residency from execution (`executionLeaseHeld`, resource id, wait, transition time), with `executingKinds()` added beside `activeKinds()` so existing residency consumers are unchanged. Interaction audio affinity is explicit in runtime-sdk (`interaction route lifetime > capture lifetime > utterance lifetime`), survives `InputLease.release()`, and a `DISALLOW_PHONE` wearable route still cannot become an audible phone fallback. Stream K removed the misleading `runLocalLoop()`, which executed the router layer. Harvested from Android-Agent `harness-improve`, the Voice Agent audio-session idea, and a minimal ADK/LiteRT sample (conceptual only).
+
+20. **RUNTIME-058 / MINING-P1-001 — bounded agent + memory pull + MCP capability fabric + voice continuity + procedural skills** — SOURCE COMPLETE / **BUILD NOT RUN / TESTS NOT RUN / DEVICE ACCEPTANCE NOT RUN** (2026-09-30).
+   `AgentRunLimits` + `AgentRunGuard` (shared through `AgentRunGuardRegistry`) put a typed, non-string-matching
+   ceiling on every run — wall clock, tool rounds, repeated identical calls, failure streak, bounded
+   oscillation periods, generation repetition and token budget — and journal a content-free
+   `AgentStep.RunGuardTriggered` with user-facing recovery copy ("Task stopped · Repeated the same
+   action pattern"), never "Runtime failure". Thermal policy is a portable `ThermalStateSource` with an
+   Android `PowerManager` host implementation; it refuses new expensive background work and never forces
+   a cloud fallback. Run-scoped `AgentRunTokenAccounting` keeps estimated and provider-reported tokens
+   strictly separate, and `EphemeralToolApprovalGrantStore` reuses an approval only for the *exact*
+   same tool + canonical arguments + security mode (never for `ALWAYS`, `SENSITIVE` or `NEVER_REPLAY`,
+   and never for denials). Memory becomes pull-based: a portable `MemoryRetriever` with honest
+   lexical/semantic/recency scoring (semantic = null when no embedding provider is installed) is now
+   the single implementation shared by context assembly, `halo_search_memory` and the Memory UI. MCP is
+   a real capability fabric: streamable-HTTP `McpTransport`, `McpClient` (`initialize` →
+   `notifications/initialized` → `tools/list` → `tools/call`, honest version negotiation),
+   `McpIntegrationManager` with credential references into the existing SecretStore, namespaced
+   `mcp.<server>.<tool>` ids mapped into the *existing* `ToolDescriptor`/`ToolRegistry` via a bounded,
+   removable dynamic overlay, `SENSITIVE` default risk (a server never declares itself safe), bounded
+   untrusted results and cancellation on run cancel. Learned procedures are instruction-only recipes
+   over existing capabilities: the agent may propose, nothing persists without the user's durable
+   approval, and every step still passes current per-tool policy. `halo_create_routine` bridges onto
+   the existing routine repository/scheduler/validation and reports SAVED / SCHEDULED / BLOCKED /
+   SCHEDULE_FAILED separately. `halo_reply_notification` replies only through a live RemoteInput
+   action registry and reports `DISPATCHED`, never "delivered". Barge-in gains sustained-speech and
+   optional semantic evidence with physical activation still unconditional, and `StreamingSpeechChunker`
+   can only ever speak a terminal user response. Harvested from Android-Agent `harness-improve`,
+   ChaseDreamInfinity/voice-agent, Brownie and kotlin-adk; see
+   [ANDROID-AGENT-VOICE-MCP-MINING.md](../engineering/ANDROID-AGENT-VOICE-MCP-MINING.md).
+
+21. **RUNTIME-059 / MINING-P2-001 — adaptive interaction surfaces + plan visualization + structured results + workspace handoff + web context hardening** — SOURCE COMPLETE / **BUILD NOT RUN / TESTS NOT RUN / DEVICE ACCEPTANCE NOT RUN** (2026-09-30).
+   Halo's existing `InteractionSurface` gains a closed, versioned structured-presentation vocabulary
+   (`HALO_PRESENTATION_SCHEMA_V1`) with a hard-bounded validator, deterministic templates
+   (KEY_VALUE_SUMMARY, COMPARISON, CHECKLIST, SEARCH_RESULTS, STATUS, CHOICE) and result adapters, so a
+   0.6B model can present a card with a flat directive instead of authoring a component tree. A2UI was
+   **not** adopted as a second surface system: the catalog has no callback, Intent, URL or tool name, a
+   `ChoiceGroup` can only resolve an already durable input request through
+   `PresentationChoiceAuthority`, and `halo_present` is `READ_ONLY`. `PlanPresentationProjector`
+   projects `ExecutionPlan` and, for the agentic path, only journal-verified checklist phases, so no
+   second plan truth and no model-claimed progress exist. Committed responses carry
+   `AssistantPresentation(text, structured, provenance)` with the payload in existing turn metadata via
+   a dependency-free bounded codec (no second surface database, no extra Room migration, and never fed
+   back into model context). Rendering is FULL/COMPACT with real Compose semantics and the text
+   fallback always available, including for a newer schema. `halo_fetch_url` reports structured read
+   facts and gained an opt-in `DynamicPageExtractor` (isolated ephemeral WebView, no cookies, no file
+   or content access, public-network re-validation, MutationObserver quiet window, hard deadline) used
+   only when static extraction finds almost no readable text. Optional capability packs and portable
+   `AudioContext` / `SpeechInterpretationStrategy` / `Pcm16Wav` prepare future ability models without
+   downloading an unverified artifact or touching Sherpa. Harvested from kotlin-adk, Android-Agent
+   `harness-improve`, Brownie and voice-agent; see
+   [ADAPTIVE-INTERACTION-MINING.md](../engineering/ADAPTIVE-INTERACTION-MINING.md).
+
 All future batches must adhere to the product contract and interaction-origin continuity rules established in the [Vision](../01-vision/VISION.md).
 Runtime expresses capabilities, resources, context, tools, interactions and execution; hosts and
 drivers translate those abstractions into Android/Linux/Windows/wearable-specific behavior.
+# MINING-P3-001 — multimodal perception and capability packs (2026-09-30)
+
+MINING-P3-001 source implementation is complete; stabilization remains unrun. Next acceptance should verify pinned LiteRT-LM 0.17.1 vision configuration, imported vision-artifact compatibility, synthetic probe behavior, EXIF handling, resource cleanup/cancellation, HeyCyan transfer/audio affinity, screen callback ordering and role/privacy fallbacks. Optional semantic-memory, smart-barge-in and audio-transcription packs remain unavailable until actual adapters/artifacts/qualification exist. No video, continuous capture, facial identity, background surveillance, automatic visual memory or optional download is scheduled by this source batch.

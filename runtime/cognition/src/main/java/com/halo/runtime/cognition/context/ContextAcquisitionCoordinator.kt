@@ -35,6 +35,7 @@ class DefaultContextAcquisitionCoordinator(
         val candidates = mutableListOf<ContextCandidate>()
         val omitted = mutableListOf<OmittedContextCandidate>()
         val unsatisfied = mutableListOf<ContextNeed>()
+        val mediaFailures = mutableListOf<com.halo.sdk.runtime.multimodal.MediaFailure>()
         val observations = blackboard?.flow?.value
             ?.mapNotNull { (it.payload as? ObservationKnowledge)?.observation }
             .orEmpty()
@@ -42,7 +43,7 @@ class DefaultContextAcquisitionCoordinator(
         for (need in plan.needs.filter { it.requirement != ContextRequirement.NONE }) {
             val candidate = when (need.kind) {
                 ContextKind.SCREEN_TEXT -> acquireScreen(plan, need)
-                ContextKind.VISUAL_IMAGE -> acquireImage(plan, query, need, observations, omitted)
+                ContextKind.VISUAL_IMAGE -> acquireImage(plan, query, need, observations, omitted, mediaFailures)
                 ContextKind.WORKSPACE_REFERENCE -> acquireWorkspace(query)
                 ContextKind.DEVICE_STATE,
                 ContextKind.RECENT_EVENTS -> null
@@ -62,6 +63,7 @@ class DefaultContextAcquisitionCoordinator(
                 .take(query.maximumCandidates.coerceAtLeast(1)),
             omitted = omitted,
             unsatisfiedRequired = unsatisfied,
+            mediaFailures = mediaFailures,
         )
     }
 
@@ -109,6 +111,7 @@ class DefaultContextAcquisitionCoordinator(
         need: ContextNeed,
         observations: List<Observation>,
         omitted: MutableList<OmittedContextCandidate>,
+        failures: MutableList<com.halo.sdk.runtime.multimodal.MediaFailure>,
     ): ContextCandidate? {
         val freshness = need.visualFreshness ?: VisualFreshness.RECENT_CAPTURE
 
@@ -138,13 +141,19 @@ class DefaultContextAcquisitionCoordinator(
         if (originDeviceId != null &&
             need.affinity in setOf(ContextAffinity.ORIGIN_DEVICE, ContextAffinity.ANY_RECENT)
         ) {
-            val captured = visualContextSource?.capture(
+            val captureResult = visualContextSource?.capture(
                 VisualContextCaptureRequest(
                     interactionId = plan.interactionId,
                     originDeviceId = originDeviceId,
                     freshness = freshness,
                 )
-            )?.getOrNull()
+            )
+            val captured = captureResult?.getOrNull()
+            captureResult?.exceptionOrNull()?.let { error ->
+                if (error is kotlinx.coroutines.CancellationException) throw error
+                failures += (error as? com.halo.sdk.runtime.multimodal.MediaAcquisitionException)?.failure
+                    ?: com.halo.sdk.runtime.multimodal.MediaFailure.TRANSFER_FAILED
+            }
 
             if (captured != null && imageFreshEnough(captured, freshness)) {
                 return imageCandidate(captured)
@@ -201,6 +210,7 @@ class DefaultContextAcquisitionCoordinator(
         val payload = payload as ImageObservationPayload
         return ImageContext(
             imageBytes = payload.imageBytes.copyOf(),
+            mediaRef = payload.mediaRef,
             mimeType = payload.mimeType,
             timestampMs = timestamp,
             assetId = id.value,

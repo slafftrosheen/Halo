@@ -41,6 +41,12 @@ class WebInsightTools(
     private val hostResolver: (String) -> List<String> = { name ->
         InetAddress.getAllByName(name).mapNotNull { it.hostAddress }
     },
+    /**
+     * MINING-P2-001: OPTIONAL dynamic fallback. Only consulted when static extraction finds almost no
+     * readable text, and only when the host supplied an isolated extractor. Absent by default, so the
+     * static path is unchanged.
+     */
+    private val dynamicExtractor: com.halo.app.web.DynamicPageExtractor? = null,
 ) : ToolExecutor {
 
     override fun definitions(): List<ToolDefinition> = listOf(
@@ -54,7 +60,7 @@ class WebInsightTools(
                 "type" to "object",
                 "properties" to mapOf(
                     "url" to mapOf("type" to "string", "maxLength" to 2_000),
-                    "mode" to mapOf("type" to "string", "enum" to listOf("text", "links")),
+                    "mode" to mapOf("type" to "string", "enum" to listOf("text", "links", "summary")),
                 ),
                 "required" to listOf("url"),
                 "additionalProperties" to false,
@@ -71,8 +77,8 @@ class WebInsightTools(
         val rawUrl = (toolCall.arguments["url"] as? String)?.trim()
             ?: return reject("url is required", ToolRejectionKind.INVALID_ARGUMENTS)
         val mode = ((toolCall.arguments["mode"] as? String)?.lowercase(Locale.US) ?: "text")
-        if (mode !in setOf("text", "links")) {
-            return reject("Unsupported mode; use text or links", ToolRejectionKind.INVALID_ARGUMENTS)
+        if (mode !in setOf("text", "links", "summary")) {
+            return reject("Unsupported mode; use text, links or summary", ToolRejectionKind.INVALID_ARGUMENTS)
         }
         if (rawUrl.length > MAX_URL_CHARS) {
             return reject("URL exceeds $MAX_URL_CHARS characters", ToolRejectionKind.INVALID_ARGUMENTS)
@@ -98,9 +104,39 @@ class WebInsightTools(
             )
         }
 
+        val links = readLinks(result.html, result.finalUrl)
+        var staticText = htmlToText(result.html)
+        var extractionMode = "STATIC"
+        var dynamicNote: String? = null
+
+        /*
+         * MINING-P2-001: static extraction stays primary. A rendered page routinely returns markup
+         * with no readable body, which is exactly the case for the optional dynamic fallback — and it
+         * is opt-in per host, never automatic browser automation.
+         */
+        if (mode != "links" && staticText.length < MIN_STATIC_TEXT_CHARS) {
+            val extractor = dynamicExtractor
+            if (extractor == null || !extractor.available) {
+                dynamicNote = "DYNAMIC_CONTENT_REQUIRED"
+            } else {
+                when (val dynamic = extractor.extract(result.finalUrl, DYNAMIC_DEADLINE_MS)) {
+                    is com.halo.app.web.DynamicExtractionOutcome.Extracted -> {
+                        staticText = dynamic.readableText
+                        extractionMode = "DYNAMIC"
+                    }
+                    is com.halo.app.web.DynamicExtractionOutcome.Unavailable -> dynamicNote = "DYNAMIC_CONTENT_REQUIRED"
+                    is com.halo.app.web.DynamicExtractionOutcome.Failed -> {
+                        extractionMode = "STATIC"
+                        dynamicNote = "DYNAMIC_EXTRACTION_FAILED"
+                    }
+                }
+            }
+        }
+
         val body = when (mode) {
-            "links" -> renderLinks(result, readLinks(result.html, result.finalUrl))
-            else -> renderText(result, htmlToText(result.html))
+            "links" -> renderLinks(result, links, extractionMode)
+            "summary" -> renderSummary(result, staticText, links.size, extractionMode, dynamicNote)
+            else -> renderText(result, staticText, extractionMode, dynamicNote)
         }
         return ToolExecutionResult.Success(
             toolCallId = toolCall.id,
@@ -257,6 +293,7 @@ class WebInsightTools(
         val statusCode: Int,
         val contentType: String,
         val html: String,
+        val fetchedAtMs: Long = System.currentTimeMillis(),
     )
 
     private fun failedFetch(toolCall: ToolCall, code: String, message: String, hint: String, retryable: Boolean) =
@@ -269,13 +306,42 @@ class WebInsightTools(
             hint = hint,
         )
 
-    private fun renderText(result: Fetch, text: String): String = buildString {
+    /** Structured, bounded facts about one read. No page prose, so it is cheap on a small model. */
+    private fun renderSummary(
+        result: Fetch,
+        text: String,
+        linkCount: Int,
+        extractionMode: String,
+        dynamicNote: String?,
+    ): String = buildString {
+        appendLine("UNTRUSTED_WEB_CONTENT")
+        appendLine("untrusted=true source=web")
+        appendLine("title=${extractTitle(result.html).orEmpty().take(MAX_TITLE_CHARS)}")
+        appendLine("domain=${runCatching { HttpUrl.get(result.finalUrl).host }.getOrDefault("unknown")}")
+        appendLine("readable_chars=${text.length}")
+        appendLine("links=$linkCount")
+        appendLine("extraction=$extractionMode")
+        appendLine("content_type=${result.contentType}")
+        appendLine("fetched_at=${result.fetchedAtMs}")
+        dynamicNote?.let { appendLine("note=$it") }
+        append("END_UNTRUSTED_WEB_CONTENT")
+    }
+
+    private fun renderText(
+        result: Fetch,
+        text: String,
+        extractionMode: String,
+        dynamicNote: String?,
+    ): String = buildString {
         appendLine("UNTRUSTED_WEB_CONTENT")
         appendLine("untrusted=true source=web")
         appendLine("url=${result.url}")
         if (result.finalUrl != result.url) appendLine("final_url=${result.finalUrl}")
         appendLine("http_status=${result.statusCode}")
         appendLine("content_type=${result.contentType}")
+        appendLine("extraction=$extractionMode")
+        appendLine("fetched_at=${result.fetchedAtMs}")
+        dynamicNote?.let { appendLine("note=$it") }
         extractTitle(result.html)?.let { appendLine("title=$it") }
         appendLine("text:")
         append(text.take(MAX_TEXT_CHARS).ifBlank { "(no readable text on this page)" })
@@ -284,11 +350,13 @@ class WebInsightTools(
         append("END_UNTRUSTED_WEB_CONTENT")
     }
 
-    private fun renderLinks(result: Fetch, links: List<String>): String = buildString {
+    private fun renderLinks(result: Fetch, links: List<String>, extractionMode: String): String = buildString {
         appendLine("UNTRUSTED_WEB_CONTENT")
         appendLine("untrusted=true source=web")
         appendLine("url=${result.url}")
         appendLine("http_status=${result.statusCode}")
+        appendLine("extraction=$extractionMode")
+        appendLine("fetched_at=${result.fetchedAtMs}")
         extractTitle(result.html)?.let { appendLine("title=$it") }
         appendLine("links=${links.size}")
         links.forEach { link -> appendLine("- $link") }
@@ -389,6 +457,16 @@ class WebInsightTools(
         const val MAX_LINKS = 40
         const val MAX_BODY_BYTES = 512 * 1024
         const val MAX_REDIRECTS = 3
+        const val MAX_TITLE_CHARS = 300
+
+        /**
+         * MINING-P2-001: below this many characters of static readable text, Halo treats the page as
+         * needing rendered content instead of presenting an empty page as if it had been read.
+         */
+        const val MIN_STATIC_TEXT_CHARS = 200
+
+        /** Hard ceiling for the optional dynamic extraction. Never an open-ended wait. */
+        const val DYNAMIC_DEADLINE_MS = 6_000L
 
         val READABLE_TYPES = setOf("application/json", "application/xhtml+xml", "application/xml")
 

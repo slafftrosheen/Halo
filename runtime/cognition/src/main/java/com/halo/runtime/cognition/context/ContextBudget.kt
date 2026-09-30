@@ -11,6 +11,8 @@ data class ContextBudget(
     val workspaceBudget: Int = (maximumTokens * 0.35).toInt(),
     val memoryBudget: Int = (maximumTokens * 0.15).toInt(),
     val toolBudget: Int = (maximumTokens * 0.15).toInt(),
+    val imageSlots: Int = 1,
+    val audioDurationMs: Long = 30_000,
 ) {
     companion object {
         fun forModelCapacity(contextSize: Int, isSpeech: Boolean = false): ContextBudget {

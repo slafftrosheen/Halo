@@ -52,6 +52,9 @@ enum class InteractionSurfaceKind {
     PROGRESS,
     RESULT,
     ERROR,
+
+    /** MINING-P2-001 bounded structured presentation. */
+    PRESENTATION,
 }
 
 /** What a surface is derived from. Not a vendor or product name. */

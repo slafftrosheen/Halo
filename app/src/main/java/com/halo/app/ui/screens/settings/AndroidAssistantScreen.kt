@@ -42,17 +42,27 @@ import com.halo.host.android.assistant.AssistantEnrollmentLaunchResult
 import com.halo.host.android.assistant.AssistantRoleController
 import com.halo.host.android.assistant.ActiveInteractorStatus
 import com.halo.host.android.assistant.AssistantRuntimeStateStore
+import com.halo.sdk.runtime.InteractionAudioAffinity
+import com.halo.sdk.runtime.InteractionAudioRouteState
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import java.text.DateFormat
 import java.util.Date
 
 @Composable
 fun AndroidAssistantScreen(
     roleController: AssistantRoleController,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    /**
+     * MINING-P0-001 interaction audio affinity, owned by the audio session coordinator that holds
+     * the leases. Optional so the screen still renders without an audio session in tests.
+     */
+    audioAffinity: StateFlow<InteractionAudioAffinity?> = MutableStateFlow(null),
 ) {
     val state by roleController.integrationState.collectAsState()
     val enrollmentDiagnostics by roleController.enrollmentDiagnostics.collectAsState()
     val runtimeState by AssistantRuntimeStateStore.state.collectAsState()
+    val affinity by audioAffinity.collectAsState()
     var enrollmentError by remember { mutableStateOf<String?>(null) }
 
     val launcher = rememberLauncherForActivityResult(
@@ -188,6 +198,27 @@ fun AndroidAssistantScreen(
             runtimeState.lastResponseAtMs?.let { DiagnosticTextRow("Last response", DateFormat.getDateTimeInstance().format(Date(it))) }
             runtimeState.inputRoute?.let { DiagnosticTextRow("Input route", it) }
             runtimeState.outputRoute?.let { DiagnosticTextRow("Output route", it) }
+
+            // MINING-P0-001 audio continuity: origin -> intended output -> actual endpoint must
+            // stay visible across STT, inference and TTS preparation. Diagnostic only; this screen
+            // does not configure routes. Device display labels only, never MAC addresses.
+            affinity?.let { binding ->
+                Spacer(Modifier.height(14.dp))
+                Text("Audio continuity", style = MaterialTheme.typography.labelLarge)
+                Spacer(Modifier.height(4.dp))
+                DiagnosticTextRow("Interaction", binding.interactionId.take(20))
+                DiagnosticTextRow("Origin", binding.originLabel)
+                DiagnosticTextRow("Intended output", binding.intendedTargetLabel)
+                DiagnosticTextRow("Actual endpoint", binding.resolvedEndpointLabel ?: "unresolved")
+                DiagnosticTextRow("Fallback", binding.fallbackPolicyLabel)
+                DiagnosticStateRow(
+                    "Route state",
+                    binding.routeState.name,
+                    pass = binding.routeState == InteractionAudioRouteState.BOUND,
+                    unknown = binding.routeState == InteractionAudioRouteState.PENDING ||
+                        binding.routeState == InteractionAudioRouteState.ENDED,
+                )
+            }
 
             Spacer(Modifier.height(14.dp))
             BreakdownRow("VoiceInteractionService Declared", diag.voiceInteractionServiceDeclared)

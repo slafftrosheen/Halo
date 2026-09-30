@@ -22,4 +22,42 @@ Sources: [storage](../../host-android/src/main/java/com/halo/host/android/Androi
 
 Required validation: hostile tool inputs, permission revocation, untrusted notifications/web
 content, duplicate side effects, backup/restore, credential migration and redacted exports.
+
+## RUNTIME-058 / MINING-P1-001 additions
+
+| Surface | Control now in source | Not established |
+| --- | --- | --- |
+| Remote MCP servers | Namespaced `mcp.<server>.<tool>` ids, `SENSITIVE` default risk regardless of trust level, bounded untrusted results (`UNTRUSTED_MCP_CONTENT`), per-call timeout + cancellation, credentials only by `credentialRef` into SecretStore | That no hostile server can influence a model through schema/description wording; that every server's auth model is correctly configured by the user |
+| Imported remote tool schema | Schema is translated into Halo's closed parameter map; unknown keywords dropped; `additionalProperties = false` | That a schema cannot still steer argument *choice* within the allowed shape |
+| Learned procedures | Instruction-only recipes; unknown capability ids rejected at proposal time; nothing persists without the durable approval surface; every step re-passes current policy | That a procedure's *text* cannot be interpreted as authority |
+| `halo_create_routine` | `ConfirmationPolicy.ALWAYS`; existing `RoutineExecutor.validate` + `AutomationPermission` gate before saving; SAVED/SCHEDULED/BLOCKED reported separately | That unattended execution is safe for every future tool added to the automation policy |
+| Notification reply | Live-action registry only (never persisted), RemoteInput-only, `SENSITIVE` + `ALWAYS`, `DISPATCHED` only | That a reply sent to the wrong live notification cannot happen if keys collide across apps |
+| Thermal / resource pressure | Typed thermal policy, release of idle native resources, no silent cloud fallback | Battery/thermal behaviour on real hardware |
+| Approval grants | Exact scope + tool + canonical arguments + security mode; denied requests never cached; `ALWAYS`/`SENSITIVE`/`NEVER_REPLAY` never reusable | That a re-prompt is not skipped where a human would have wanted one |
+| Run guards | Typed reasons, content-free evidence (ids, counts, digests) in the durable journal | That the thresholds are well-tuned on a real 0.6B device |
+
+Tightened by this batch: an MCP server can never classify its own risk, a learned procedure can never
+grant authority, `automaticToolCalling` stays `false` and `HaloOpenApiTool.execute()` still fails
+loudly, and no prompt, utterance, tool argument or memory content is written into any new log,
+journal step or export field.
 Do not mark a threat “handled” merely because a named module or design paragraph exists.
+
+## RUNTIME-059 / MINING-P2-001 additions
+
+| Surface | Control now in source | Not established |
+| --- | --- | --- |
+| Model-generated presentation | Closed node catalog with no callback, Intent, URI, tool name or fetchable URL; hard depth/node/text/list/comparison/choice ceilings; structurally invalid input rejected with bounded reasons, never truncated | That a hostile payload cannot mislead a *reader* through wording — it can, which is why it is labelled generated content, never authority |
+| Model-generated "actions" | Not representable. A `Button`-with-tool-action cannot exist; `ChoiceGroup` resolves only an already durable input request through `PresentationChoiceAuthority` | That option ids can never be spoofed for a pending request (bound to the journal, but unverified on device) |
+| Presentation as execution truth | Presentation is a view: approval truth stays in `AgentInputRequest`, execution truth in the `AgentRun` journal. Saving to the Notebook is a **host** action, never a model action | That no future producer treats a rendered card as evidence an action happened |
+| Presentation persistence | Bounded payload with an explicit schema version in existing committed-turn metadata and existing provenance metadata; size cap before any write; decode failure degrades to text | Room round-tripping, and that a payload cannot survive into a context window (the assembler reads assistant text only) |
+| Image references | Asset ids only; `http:`, `file:`, `content:`, `javascript:` and `intent:` prefixes are rejected outright and only Halo-owned assets resolve | That asset resolution itself cannot be used as an SSRF vector |
+| Dynamic WebView extraction | Opt-in, only when static text is under 200 characters; one isolated ephemeral WebView, Halo-owned script only, JavaScript enabled for rendering but no model-supplied script, file/content access, DOM storage, cookies, autofill and password saving disabled, teardown to `about:blank` then `destroy()`, public-network re-validation on every navigation and subresource | That a hostile page cannot fingerprint the extraction, and that no credential can leak from a session-scoped view |
+| Extracted web content | Still `UNTRUSTED_EXTERNAL`; it can never become instructions, execute tools, change approval policy or override memory policy | That a summary of hostile text cannot still steer a small model's next *choice* |
+| Plan/progress display | COMPLETED can only come from recorded execution evidence (`ToolOutcomeRecorded(success)`, `ToolCompleted`); a claim in prose is unreachable from the projector | That thresholds and wording feel honest on a real device |
+| Static preview | Fixed sample data, explicit tap, no model, provider, tool or network call; the sample choice group is inert and unbound | Nothing security-relevant; it exists so rendering can be inspected without a model |
+
+Tightened by this batch: a generated surface can never create capability, and a newer presentation
+schema degrades to text rather than being partially interpreted.
+# MINING-P3-001 — multimodal perception and capability packs (2026-09-30)
+
+Images, OCR/sign text and recordings are untrusted evidence, not authority for tools, policy or memory writes. Media bytes and host URIs stay outside durable Runtime context. App-private ephemeral cache is interaction-owned, bounded to 64 MiB with 15-minute maximum age and terminal-interaction cleanup; explicit Save/import uses Workspace storage. Image decoding is source-size/sample/pixel/dimension/output-byte bounded; EXIF is applied and re-encoding strips metadata. Global image policy and per-object LOCAL_ONLY / ALLOW_CONFIGURED_CLOUD / EXCLUDE_FROM_AI apply before resolution; LAN counts as off-device. Screen fallback additionally enforces opt-in, package safety and omissions and cannot fall back to cloud. Diagnostics contain media metadata only. Audio first-pass has empty history/tools, duration/byte/output/time bounds and rejects tool calls.

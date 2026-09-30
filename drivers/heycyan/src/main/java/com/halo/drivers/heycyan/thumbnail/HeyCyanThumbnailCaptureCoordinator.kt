@@ -107,7 +107,7 @@ class HeyCyanThumbnailCaptureCoordinator(
             operation = "captureThumbnail",
             resources = setOf(HeyCyanResource.CAMERA, HeyCyanResource.BLE_BULK_TRANSFER),
         ) ?: return Result.failure(
-            IllegalStateException("HeyCyan glasses are busy with a conflicting operation"),
+            com.halo.sdk.runtime.multimodal.MediaAcquisitionException(com.halo.sdk.runtime.multimodal.MediaFailure.SOURCE_BUSY),
         )
 
         return try {
@@ -134,7 +134,7 @@ class HeyCyanThumbnailCaptureCoordinator(
         val lease = resourceArbiter.tryAcquire(
             operation = "receivePhotoReadyThumbnail",
             resources = setOf(HeyCyanResource.CAMERA, HeyCyanResource.BLE_BULK_TRANSFER),
-        ) ?: return Result.failure(IllegalStateException("HeyCyan glasses are busy with a conflicting operation"))
+        ) ?: return Result.failure(com.halo.sdk.runtime.multimodal.MediaAcquisitionException(com.halo.sdk.runtime.multimodal.MediaFailure.SOURCE_BUSY))
         return try {
             if (settleDelayMs > 0) delay(settleDelayMs)
             val firstChunkAtMs = System.currentTimeMillis()
@@ -177,7 +177,7 @@ class HeyCyanThumbnailCaptureCoordinator(
             // 2. Await photo-ready notification
             val photoReadyTime = withTimeoutOrNull(photoReadyTimeoutMs) {
                 photoReadyDeferred.await()
-            } ?: throw IllegalStateException("Glasses did not confirm a fresh photo within ${photoReadyTimeoutMs}ms")
+            } ?: throw com.halo.sdk.runtime.multimodal.MediaAcquisitionException(com.halo.sdk.runtime.multimodal.MediaFailure.CAPTURE_TIMEOUT)
 
             // 3. Settle delay
             if (settleDelayMs > 0) {
@@ -249,7 +249,7 @@ class HeyCyanThumbnailCaptureCoordinator(
                 val elapsed = System.currentTimeMillis() - transferStartTime
                 val remainingTransferTime = (transferTimeoutMs - elapsed).coerceAtLeast(0L)
                 if (remainingTransferTime <= 0L) {
-                    throw IllegalStateException("Glasses thumbnail transfer timed out after ${transferTimeoutMs}ms")
+                    throw com.halo.sdk.runtime.multimodal.MediaAcquisitionException(com.halo.sdk.runtime.multimodal.MediaFailure.TRANSFER_FAILED)
                 }
 
                 val result = withTimeoutOrNull(minOf(chunkTimeoutMs, remainingTransferTime)) {

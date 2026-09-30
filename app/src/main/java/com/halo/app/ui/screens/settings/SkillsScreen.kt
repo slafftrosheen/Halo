@@ -66,6 +66,8 @@ fun SkillsScreen(
     availabilityResolver: ToolAvailabilityResolver? = null,
     capabilityCatalogue: CapabilityCatalogueSource? = null,
     onInstallCustomSkill: ((String, ByteArray) -> Result<Unit>)? = null,
+    /** MINING-P1-001 capability overview. Optional: the screen works without it. */
+    capabilityStatus: CapabilityStatusViewModel? = null,
 ) {
     val skills by skillRegistry.skills.collectAsState()
     // Recompose whenever live host/device capability availability changes.
@@ -247,6 +249,11 @@ fun SkillsScreen(
     Column(Modifier.fillMaxSize().padding(horizontal = HaloSpacing.screen)) {
         HaloScreenHeader("Skills", "Actions Halo can use", navigation = onBack)
         LazyColumn(verticalArrangement = Arrangement.spacedBy(HaloSpacing.xs)) {
+            if (capabilityStatus != null) {
+                item(key = "capability-status") {
+                    CapabilityStatusCard(capabilityStatus)
+                }
+            }
             if (onInstallCustomSkill != null) {
                 item(key = "import-skill") {
                     TextButton(onClick = { importLauncher.launch(arrayOf("text/markdown", "text/plain")) }) {
@@ -299,6 +306,93 @@ fun SkillsScreen(
                 }
             }
         }
+    }
+}
+
+/**
+ * MINING-P1-001 capability overview card.
+ *
+ * Summary only: every row is a fact about what is installed or wired, never a probe result, and
+ * deep configuration stays on the dedicated screens. Status words are pastel/semantic, not raw
+ * enum names.
+ */
+@Composable
+private fun CapabilityStatusCard(viewModel: CapabilityStatusViewModel) {
+    val state by viewModel.state.collectAsState()
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    DisposableEffect(lifecycle, viewModel) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) viewModel.refresh()
+        }
+        lifecycle.addObserver(observer)
+        onDispose { lifecycle.removeObserver(observer) }
+    }
+
+    Surface(
+        modifier = Modifier.fillMaxWidth().padding(top = HaloSpacing.sm),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        shape = MaterialTheme.shapes.medium,
+    ) {
+        Column(Modifier.padding(HaloSpacing.md), verticalArrangement = Arrangement.spacedBy(HaloSpacing.xs)) {
+            Text(
+                "What Halo can do now",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Medium,
+            )
+            CapabilityStatusRow("Agent safety", "Run deadline", state.agentRunDeadline)
+            CapabilityStatusRow("", "Tool loop guard", state.toolLoopGuard)
+            CapabilityStatusRow("", "Thermal policy", state.thermalPolicy)
+            CapabilityStatusRow("Memory", "Saved facts", state.durableFacts)
+            CapabilityStatusRow("", "Search", state.memorySearch)
+            CapabilityStatusRow("", "Semantic search", state.semanticSearch)
+            CapabilityStatusRow("Extensions", "Learned procedures", state.learnedProcedures)
+            CapabilityStatusRow("", "MCP servers", state.mcpServers)
+            CapabilityStatusRow("", "MCP tools", state.mcpTools)
+            CapabilityStatusRow("Voice", "Barge-in", state.bargeIn)
+            CapabilityStatusRow("", "Semantic interrupt", state.semanticInterrupt)
+            CapabilityStatusRow("", "Streaming speech", state.streamingSpeech)
+            CapabilityStatusRow("Notifications", "Replyable now", state.replyableNotifications)
+            if (state.capabilityModels.isNotEmpty()) {
+                Text(
+                    "Capability models",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(top = HaloSpacing.sm),
+                )
+                state.capabilityModels.forEach { (name, stateLabel) ->
+                    CapabilityStatusRow("", name, stateLabel)
+                }
+                Text(
+                    "These are optional abilities, not chat models. Halo installs nothing without a " +
+                        "verified artifact.",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Text(
+                "Streaming speech ships disabled until terminal-response identity is proven for " +
+                    "every provider path.",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
+private fun CapabilityStatusRow(section: String, label: String, value: String) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            if (section.isBlank()) label else "$section · $label",
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            value,
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.Medium,
+        )
     }
 }
 

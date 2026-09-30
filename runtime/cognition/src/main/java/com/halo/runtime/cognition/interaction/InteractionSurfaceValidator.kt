@@ -29,7 +29,16 @@ object InteractionSurfaceValidator {
         data class Invalid(val reasons: List<String>) : Result
     }
 
-    fun validate(surface: InteractionSurface): Result {
+    /**
+     * [presentationChoices] decides whether a structured presentation's `ChoiceGroup` may resolve the
+     * input request it names. The default refuses every choice node: a generated surface can never
+     * invent execution capability, so a caller that does not supply durable request knowledge gets
+     * the strict behaviour.
+     */
+    fun validate(
+        surface: InteractionSurface,
+        presentationChoices: PresentationValidator.ChoiceBindingResolver = PresentationValidator.NO_CHOICES,
+    ): Result {
         val reasons = mutableListOf<String>()
 
         if (surface.id.value.isBlank()) reasons += "surface id must not be blank"
@@ -124,6 +133,22 @@ object InteractionSurfaceValidator {
                 if (surface.content !is InteractionContent.Error) reasons += "ERROR kind requires Error content"
                 val followUps = (surface.content as? InteractionContent.Error)?.followUps.orEmpty()
                 if (followUps.size > MAX_FOLLOW_UPS) reasons += "too many follow-ups (max $MAX_FOLLOW_UPS)"
+            }
+            InteractionSurfaceKind.PRESENTATION -> {
+                val presentation = surface.content as? InteractionContent.Presentation
+                if (presentation == null) {
+                    reasons += "PRESENTATION kind requires Presentation content"
+                } else {
+                    if (presentation.textFallback.isBlank()) {
+                        reasons += "presentation requires a text fallback"
+                    } else if (presentation.textFallback.length > MAX_MESSAGE_CHARS) {
+                        reasons += "presentation text fallback exceeds $MAX_MESSAGE_CHARS characters"
+                    }
+                    when (val result = PresentationValidator.validate(presentation.presentation, presentationChoices)) {
+                        is PresentationValidator.Result.Valid -> Unit
+                        is PresentationValidator.Result.Invalid -> reasons += result.reasons
+                    }
+                }
             }
         }
 

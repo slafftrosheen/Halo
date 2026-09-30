@@ -14,15 +14,23 @@ class HaloNotificationListenerService : NotificationListenerService() {
     override fun onListenerConnected() {
         super.onListenerConnected()
         connected = true
-        bridge.connected(activeNotifications.orEmpty().map(::incoming))
+        val active = activeNotifications.orEmpty()
+        // MINING-P1-001: capture live RemoteInput reply actions for currently posted notifications.
+        // Only the live platform objects are held, never persisted.
+        active.forEach { sbn ->
+            NotificationReplyRegistry.shared.replace(sbn.key, sbn.notification.actions?.toList().orEmpty())
+        }
+        bridge.connected(active.map(::incoming))
     }
     override fun onListenerDisconnected() {
         connected = false
+        NotificationReplyRegistry.shared.clear()
         bridge.disconnected()
         super.onListenerDisconnected()
     }
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         if (connected && sbn != null) {
+            NotificationReplyRegistry.shared.replace(sbn.key, sbn.notification.actions?.toList().orEmpty())
             bridge.posted(incoming(sbn))
             if (sbn.notification.flags and Notification.FLAG_GROUP_SUMMARY == 0) {
                 activeNotifications.orEmpty().filter {
@@ -36,11 +44,16 @@ class HaloNotificationListenerService : NotificationListenerService() {
     }
     override fun onDestroy() {
         if (connected) bridge.disconnected()
+        NotificationReplyRegistry.shared.clear()
         connected = false
         super.onDestroy()
     }
     override fun onNotificationRemoved(sbn: StatusBarNotification?) {
-        if (connected && sbn != null) bridge.removed(sbn.key)
+        if (connected && sbn != null) {
+            // Gone means gone: a removed notification can no longer be replied to.
+            NotificationReplyRegistry.shared.remove(sbn.key)
+            bridge.removed(sbn.key)
+        }
     }
     private fun incoming(sbn: StatusBarNotification): IncomingNotification {
         val n = sbn.notification

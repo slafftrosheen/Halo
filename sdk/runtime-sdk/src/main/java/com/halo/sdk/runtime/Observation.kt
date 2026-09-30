@@ -52,12 +52,14 @@ data class SpeechObservationPayload(
 ) : ObservationPayload
 
 data class ImageObservationPayload(
-    val imageBytes: ByteArray,
-    val mimeType: String = "image/jpeg"
+    val imageBytes: ByteArray = byteArrayOf(),
+    val mimeType: String = "image/jpeg",
+    val mediaRef: com.halo.sdk.runtime.multimodal.MediaAssetRef? = null,
 ) : ObservationPayload {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is ImageObservationPayload) return false
+        if (mediaRef != other.mediaRef) return false
         if (!imageBytes.contentEquals(other.imageBytes)) return false
         if (mimeType != other.mimeType) return false
         return true
@@ -65,6 +67,7 @@ data class ImageObservationPayload(
 
     override fun hashCode(): Int {
         var result = imageBytes.contentHashCode()
+        result = 31 * result + (mediaRef?.hashCode() ?: 0)
         result = 31 * result + mimeType.hashCode()
         return result
     }
