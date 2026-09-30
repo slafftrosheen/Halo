@@ -243,7 +243,7 @@ class LiteRtControlProbeRunner(
         withTeardown
     }
 
-    private fun preflight(modelId: String, startedAt: Long): Preflight {
+    private suspend fun preflight(modelId: String, startedAt: Long): Preflight {
         val stages = mutableListOf<LiteRtControlProbeStageResult>()
 
         // Explicit artifact resolution. "Direct" never means "skip safety".
@@ -351,10 +351,11 @@ class LiteRtControlProbeRunner(
         stages: MutableList<LiteRtControlProbeStageResult>,
         startedAt: Long,
     ): ConversationProbe {
+        val descriptor = inventoryRepository.resolveModel(modelId)
         var conversation: Conversation? = null
         fun result(passed: Boolean) = ConversationProbe(
             buildResult(
-                modelId, inventoryRepository.resolveModel(modelId), config,
+                modelId, descriptor, config,
                 requestedContext, effectiveContext, stages, startedAt, passed, effectiveBackend,
             ),
             conversation,

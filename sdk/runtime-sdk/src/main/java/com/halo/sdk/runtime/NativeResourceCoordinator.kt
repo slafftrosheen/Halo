@@ -222,7 +222,7 @@ class NativeResourceCoordinator(
                     mutex.withLock {
                         executionFacts[owner] = ExecutionFacts(
                             leaseHeld = false,
-                            resourceId = resourceId,
+                            resourceId = resourceId.value,
                             waitMs = System.currentTimeMillis() - start,
                             acquiredAtMs = null,
                         )
@@ -271,7 +271,7 @@ class NativeResourceCoordinator(
             mutex.withLock {
                 executionFacts[owner] = ExecutionFacts(
                     leaseHeld = true,
-                    resourceId = resourceId,
+                    resourceId = resourceId.value,
                     waitMs = duration,
                     acquiredAtMs = System.currentTimeMillis(),
                 )
@@ -286,7 +286,7 @@ class NativeResourceCoordinator(
                 activeLeases.remove(owner)?.release()
                 executionFacts[owner] = ExecutionFacts(
                     leaseHeld = false,
-                    resourceId = resourceId,
+                    resourceId = resourceId.value,
                     waitMs = duration,
                     acquiredAtMs = null,
                 )

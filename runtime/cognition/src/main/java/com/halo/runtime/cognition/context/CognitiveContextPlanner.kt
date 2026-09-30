@@ -1,6 +1,7 @@
 package com.halo.runtime.cognition.context
 
 import com.halo.sdk.provider.AiContextPolicy
+import com.halo.sdk.runtime.SimpleMemory
 
 data class CognitiveContextPlan(
     val totalTokens: Int,
@@ -18,7 +19,7 @@ class CognitiveContextPlanner {
         val estimator = ConservativeContextTokenEstimator()
         val schemaTokens = context.availableTools.sumOf { estimator.estimate(it.name + it.description + it.parameters.toString()) }
         val extraTokens = estimator.estimate(context.screenContext?.text.orEmpty()) +
-            context.memories.sumOf { estimator.estimate(it.content) } +
+            context.memories.sumOf { estimator.estimate((it as? SimpleMemory)?.content ?: it.toString()) } +
             context.recentEvents.sumOf { estimator.estimate(it.toString()) } +
             estimator.estimate(context.deviceState?.toString().orEmpty())
         val output = (request.maxOutputTokens ?: 768).coerceAtLeast(0)
@@ -74,7 +75,7 @@ class CognitiveContextPlanner {
         val selected = groups.withIndex().filter { it.index in selectedIds || it.value in required }.flatMap { it.value }
         remaining -= admitted.sumOf { it.tokenEstimate }
         val segmentTokens = admitted.groupBy { it.kind }.mapValues { (_, values) -> values.sumOf { it.tokenEstimate } }.toMutableMap()
-        segmentTokens[ContextSegmentKind.MEMORY] = context.memories.sumOf { estimator.estimate(it.content) }
+        segmentTokens[ContextSegmentKind.MEMORY] = context.memories.sumOf { estimator.estimate((it as? SimpleMemory)?.content ?: it.toString()) }
         segmentTokens[ContextSegmentKind.CURRENT_REQUEST] = requestTokens + required.filter { it.first().role != com.halo.sdk.provider.Role.SYSTEM }.sumOf(::cost)
         segmentTokens[ContextSegmentKind.SYSTEM_STABLE] = 256 + schemaTokens + required.filter { it.first().role == com.halo.sdk.provider.Role.SYSTEM }.sumOf(::cost)
         ContextDiagnostics.composition.value = ContextComposition(budget, requestTokens, segmentTokens, remaining,

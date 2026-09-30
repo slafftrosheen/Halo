@@ -84,10 +84,10 @@ object McpToolAdapter {
      * Converts a remote JSON schema into Halo's parameter map. Unknown keywords are dropped rather
      * than trusted, and the schema is forced closed so the model cannot invent extra arguments.
      */
-    fun jsonSchemaToParameters(schemaJson: String): Map<String, Any?> {
+    fun jsonSchemaToParameters(schemaJson: String): Map<String, Any> {
         val schema = runCatching { JSONObject(schemaJson) }.getOrNull() ?: return defaultParameters()
         val properties = schema.optJSONObject("properties") ?: return defaultParameters()
-        val converted = LinkedHashMap<String, Any?>()
+        val converted = LinkedHashMap<String, Any>()
         val keys = properties.keys()
         while (keys.hasNext()) {
             val key = keys.next()
@@ -113,9 +113,9 @@ object McpToolAdapter {
         }
     }
 
-    private fun convert(source: JSONObject, depth: Int): Map<String, Any?> {
+    private fun convert(source: JSONObject, depth: Int): Map<String, Any> {
         if (depth > MAX_SCHEMA_DEPTH) return mapOf("type" to "string")
-        val result = LinkedHashMap<String, Any?>()
+        val result = LinkedHashMap<String, Any>()
         val type = source.optString("type")
         val allowed = setOf("string", "number", "integer", "boolean", "array", "object")
         result["type"] = if (type in allowed) type else "string"
@@ -137,7 +137,7 @@ object McpToolAdapter {
         when (result["type"]) {
             "array" -> source.optJSONObject("items")?.let { result["items"] = convert(it, depth + 1) }
             "object" -> source.optJSONObject("properties")?.let { nested ->
-                val converted = LinkedHashMap<String, Any?>()
+                val converted = LinkedHashMap<String, Any>()
                 val keys = nested.keys()
                 while (keys.hasNext()) {
                     val key = keys.next()
@@ -150,7 +150,7 @@ object McpToolAdapter {
     }
 
     /** Fallback when a server publishes an unusable schema: one bounded free-form object. */
-    private fun defaultParameters(): Map<String, Any?> = mapOf(
+    private fun defaultParameters(): Map<String, Any> = mapOf(
         "type" to "object",
         "properties" to mapOf(
             "arguments" to mapOf("type" to "string", "description" to "JSON object of arguments", "maxLength" to 4_000),

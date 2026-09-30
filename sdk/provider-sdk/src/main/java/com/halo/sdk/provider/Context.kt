@@ -26,11 +26,11 @@ data class ToolDefinition(
  * Full cognitive context for an AI generation request.
  */
 data class AiContext(
-    val conversation: List<AIMessage>,
-    val deviceState: DeviceState?,
-    val recentEvents: List<HaloEvent>,
-    val memories: List<Memory>,
-    val availableTools: List<ToolDefinition>,
+    val conversation: List<AIMessage> = emptyList(),
+    val deviceState: DeviceState? = null,
+    val recentEvents: List<HaloEvent> = emptyList(),
+    val memories: List<Memory> = emptyList(),
+    val availableTools: List<ToolDefinition> = emptyList(),
     val screenContext: ScreenContext? = null,
 ) {
     companion object {

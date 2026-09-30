@@ -58,7 +58,7 @@ interface AgentRunClock {
     fun nowMs(): Long
 
     object System : AgentRunClock {
-        override fun nowMs(): Long = System.currentTimeMillis()
+        override fun nowMs(): Long = java.lang.System.currentTimeMillis()
     }
 }
 
@@ -79,7 +79,7 @@ class AgentRunGuard(
     val runId: String,
     val interactionId: String?,
     private val limits: AgentRunLimits,
-    thermalGate: AgentRunThermalGate = AgentRunThermalGate.NONE,
+    private val thermalGate: AgentRunThermalGate = AgentRunThermalGate.NONE,
     private val clock: AgentRunClock = AgentRunClock.System,
 ) {
 

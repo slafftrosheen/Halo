@@ -150,6 +150,15 @@ class DefaultSkillRegistry(
                 tools = setOf("halo_notification_digest"), risk = SkillRisk.READ_ONLY, source = SkillSource.BUILT_IN
             ),
             SkillDescriptor(
+                id = SkillId("halo.presentation"),
+                name = "Presentation",
+                description = "Present bounded structured information to the user.",
+                category = SkillCategory.INFORMATION,
+                tools = setOf("halo_present"),
+                risk = SkillRisk.READ_ONLY,
+                source = SkillSource.BUILT_IN
+            ),
+            SkillDescriptor(
                 id = SkillId("halo.notebook"),
                 name = "Notebook",
                 description = "Create, search, and manage local notes and workspace items.",

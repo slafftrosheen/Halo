@@ -31,7 +31,7 @@ object PlanPresentationProjector {
             )
         }
         return PresentationTemplates.checklist(
-            title = title ?: plan.goal.description?.takeIf { it.isNotBlank() },
+            title = title ?: plan.goal.type.name,
             items = items.ifEmpty { listOf(PresentationDirectiveItem("Nothing to do", PresentationStepState.SKIPPED)) },
             conclusion = conclusion,
         )

@@ -317,7 +317,7 @@ class WebInsightTools(
         appendLine("UNTRUSTED_WEB_CONTENT")
         appendLine("untrusted=true source=web")
         appendLine("title=${extractTitle(result.html).orEmpty().take(MAX_TITLE_CHARS)}")
-        appendLine("domain=${runCatching { HttpUrl.get(result.finalUrl).host }.getOrDefault("unknown")}")
+        appendLine("domain=${result.finalUrl.toHttpUrlOrNull()?.host ?: "unknown"}")
         appendLine("readable_chars=${text.length}")
         appendLine("links=$linkCount")
         appendLine("extraction=$extractionMode")

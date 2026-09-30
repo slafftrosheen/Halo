@@ -1,6 +1,7 @@
 package com.halo.runtime.cognition.agent
 
 import com.halo.runtime.cognition.tools.ConfirmationPolicy
+import com.halo.runtime.cognition.tools.ReplaySafety
 import com.halo.runtime.cognition.tools.ToolDescriptor
 import com.halo.runtime.cognition.tools.ToolRiskClass
 

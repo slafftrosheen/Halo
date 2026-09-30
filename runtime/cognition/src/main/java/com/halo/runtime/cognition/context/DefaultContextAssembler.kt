@@ -370,7 +370,7 @@ class DefaultContextAssembler(
         ContextDiagnostics.composition.value = ContextComposition(budget, requestTokens,
             mapOf(ContextSegmentKind.RECENT_CONVERSATION to conversation.sumOf { tokenEstimator.estimate(it.content) },
                 ContextSegmentKind.WORKING_SET to referenceMessages.sumOf { tokenEstimator.estimate(it.content) },
-                ContextSegmentKind.MEMORY to memories.sumOf { tokenEstimator.estimate(it.content) }), remainingTokens, compactedTurns)
+                ContextSegmentKind.MEMORY to memories.sumOf { tokenEstimator.estimate((it as? SimpleMemory)?.content ?: it.toString()) }), remainingTokens, compactedTurns)
         println("[HALO_CONTEXT_BUDGET] window=$modelWindow reserved=${budget.reservedOutputTokens + budget.reservedSystemTokens} dynamic=${budget.availableDynamicTokens} request=$requestTokens remaining=$remainingTokens")
         return ContextAssemblyResult(
             context = AiContext(
