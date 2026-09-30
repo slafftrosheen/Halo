@@ -106,6 +106,9 @@ data class NotebookCanvas(
 
 @Dao
 interface NotebookCanvasDao {
+    @Query("SELECT * FROM workspace_objects WHERE id = :canvasId LIMIT 1")
+    fun observeWorkspaceObject(canvasId: String): Flow<WorkspaceObjectEntity?>
+
     @Query("SELECT * FROM canvas_documents WHERE objectId = :canvasId LIMIT 1")
     fun observeDocument(canvasId: String): Flow<CanvasDocumentEntity?>
 
@@ -114,6 +117,24 @@ interface NotebookCanvasDao {
 
     @Query("SELECT * FROM canvas_edges WHERE canvasId = :canvasId ORDER BY createdAtEpochMs ASC")
     fun observeEdges(canvasId: String): Flow<List<CanvasEdgeEntity>>
+
+    @Query("SELECT * FROM canvas_nodes WHERE canvasId = :canvasId ORDER BY zIndex ASC")
+    suspend fun getNodes(canvasId: String): List<CanvasNodeEntity>
+
+    @Query("SELECT * FROM canvas_edges WHERE canvasId = :canvasId")
+    suspend fun getEdges(canvasId: String): List<CanvasEdgeEntity>
+
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insertEdge(entity: CanvasEdgeEntity)
+
+    @Query("DELETE FROM canvas_edges WHERE canvasId = :canvasId AND (fromNodeId = :nodeId OR toNodeId = :nodeId)")
+    suspend fun deleteNodeEdges(canvasId: String, nodeId: String)
+
+    @Query("DELETE FROM canvas_edges WHERE canvasId = :canvasId AND id = :edgeId")
+    suspend fun deleteEdge(canvasId: String, edgeId: String): Int
+
+    @Query("UPDATE canvas_documents SET revision = revision + 1 WHERE objectId = :canvasId")
+    suspend fun touchDocument(canvasId: String)
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertDocument(entity: CanvasDocumentEntity)
@@ -146,9 +167,11 @@ class NotebookCanvasRepository(
         canvasDao.observeDocument(canvasId),
         canvasDao.observeNodes(canvasId),
         canvasDao.observeEdges(canvasId),
-    ) { document, nodes, edges ->
+        canvasDao.observeWorkspaceObject(canvasId),
+    ) { document, nodes, edges, workspace ->
         document ?: return@combine null
-        val workspace = notebookDao.getWorkspaceObject(canvasId) ?: return@combine null
+        workspace ?: return@combine null
+        if (workspace.lifecycle != WorkspaceObjectLifecycle.ACTIVE.name) return@combine null
         NotebookCanvas(
             id = canvasId,
             title = workspace.title,
@@ -173,7 +196,7 @@ class NotebookCanvasRepository(
         val timestamp = now()
         database.withTransaction {
             notebookDao.insertObject(WorkspaceObjectEntity(
-                id = id, type = WorkspaceObjectType.ARTIFACT.name,
+                id = id, type = WorkspaceObjectType.CANVAS.name,
                 title = title, createdAt = timestamp, updatedAt = timestamp,
                 source = WorkspaceObjectSource.USER_CREATED.name,
                 lifecycle = WorkspaceObjectLifecycle.ACTIVE.name,
@@ -184,29 +207,104 @@ class NotebookCanvasRepository(
         return id
     }
 
-    suspend fun addTextNode(canvasId: String, x: Float, y: Float): String {
-        val id = newId()
-        val timestamp = now()
-        canvasDao.insertNode(
-            CanvasNodeEntity(
-                id = id, canvasId = canvasId, type = CanvasNodeType.TEXT.name,
-                refObjectId = null, text = "", x = x, y = y,
-                width = 240f, height = 150f, zIndex = timestamp.toInt(),
-                createdAtEpochMs = timestamp, updatedAtEpochMs = timestamp,
-            )
-        )
-        return id
+    suspend fun rename(canvasId: String, title: String): Boolean = database.withTransaction {
+        requireWritable(canvasId)
+        require(title.trim().isNotEmpty())
+        val changed = notebookDao.updateTitle(canvasId, title.trim().take(160), now()) == 1
+        if (changed) canvasDao.touchDocument(canvasId)
+        changed
     }
 
-    suspend fun updateText(canvasId: String, nodeId: String, text: String): Boolean =
-        canvasDao.updateNodeText(canvasId, nodeId, text, now()) == 1
+    private suspend fun requireWritable(canvasId: String) {
+        require(notebookDao.getWorkspaceObject(canvasId)?.lifecycle == WorkspaceObjectLifecycle.ACTIVE.name)
+    }
 
-    suspend fun moveNode(canvasId: String, nodeId: String, x: Float, y: Float): Boolean =
-        canvasDao.updateNodePosition(canvasId, nodeId, x, y, now()) == 1
+    private suspend fun touch(canvasId: String) {
+        val item = notebookDao.getWorkspaceObject(canvasId) ?: return
+        notebookDao.updateTitle(canvasId, item.title, now())
+        canvasDao.touchDocument(canvasId)
+    }
 
-    suspend fun deleteNode(canvasId: String, nodeId: String): Boolean =
-        canvasDao.deleteNode(canvasId, nodeId) == 1
+    suspend fun addTextNode(canvasId: String, x: Float, y: Float, text: String = ""): String =
+        addNode(canvasId, CanvasNodeType.TEXT, null, text, x, y)
 
-    suspend fun saveViewport(canvasId: String, x: Float, y: Float, scale: Float): Boolean =
-        canvasDao.updateViewport(canvasId, x, y, scale.coerceIn(0.35f, 2.5f)) == 1
+    suspend fun addReference(canvasId: String, objectId: String, x: Float, y: Float, image: Boolean = false): String = database.withTransaction {
+        require(objectId != canvasId)
+        val item = requireNotNull(notebookDao.getWorkspaceObject(objectId))
+        require(item.lifecycle == WorkspaceObjectLifecycle.ACTIVE.name)
+        val type = when (item.type) {
+            WorkspaceObjectType.NOTE.name -> CanvasNodeType.NOTE
+            WorkspaceObjectType.MEDIA.name -> CanvasNodeType.IMAGE
+            else -> CanvasNodeType.FILE
+        }
+        addNode(canvasId, if (image) CanvasNodeType.IMAGE else type, objectId, item.title, x, y)
+    }
+
+    private suspend fun addNode(canvasId: String, type: CanvasNodeType, reference: String?, text: String, x: Float, y: Float): String = database.withTransaction {
+        val item = requireNotNull(notebookDao.getWorkspaceObject(canvasId))
+        require(item.lifecycle == WorkspaceObjectLifecycle.ACTIVE.name)
+        require(x.isFinite() && y.isFinite())
+        val id = newId()
+        val timestamp = now()
+        val layer = (canvasDao.getNodes(canvasId).maxOfOrNull { it.zIndex } ?: -1) + 1
+        canvasDao.insertNode(CanvasNodeEntity(id, canvasId, type.name, reference, text, x, y,
+            240f, if (type == CanvasNodeType.IMAGE) 280f else 150f, layer, timestamp, timestamp))
+        touch(canvasId)
+        id
+    }
+
+    suspend fun duplicateNode(canvasId: String, nodeId: String): String = database.withTransaction {
+        val node = requireNotNull(canvasDao.getNodes(canvasId).firstOrNull { it.id == nodeId })
+        addNode(canvasId, CanvasNodeType.valueOf(node.type), node.refObjectId, node.text, node.x + 32f, node.y + 32f)
+    }
+
+    suspend fun connect(canvasId: String, from: String, to: String, label: String?): String = database.withTransaction {
+        requireWritable(canvasId)
+        require(from != to)
+        val nodes = canvasDao.getNodes(canvasId).map { it.id }.toSet()
+        require(from in nodes && to in nodes)
+        val existing = canvasDao.getEdges(canvasId).firstOrNull { it.fromNodeId == from && it.toNodeId == to }
+        if (existing != null) return@withTransaction existing.id
+        val id = newId()
+        canvasDao.insertEdge(CanvasEdgeEntity(id, canvasId, from, to, label?.trim()?.take(100)?.takeIf { it.isNotEmpty() }, now()))
+        touch(canvasId)
+        id
+    }
+
+    suspend fun disconnect(canvasId: String, edgeId: String): Boolean = database.withTransaction {
+        requireWritable(canvasId)
+        val changed = canvasDao.deleteEdge(canvasId, edgeId) == 1
+        if (changed) touch(canvasId)
+        changed
+    }
+
+    suspend fun updateText(canvasId: String, nodeId: String, text: String): Boolean = database.withTransaction {
+        requireWritable(canvasId)
+        val node = canvasDao.getNodes(canvasId).firstOrNull { it.id == nodeId } ?: return@withTransaction false
+        if (node.refObjectId != null) return@withTransaction false
+        val changed = canvasDao.updateNodeText(canvasId, nodeId, text, now()) == 1
+        if (changed) touch(canvasId)
+        changed
+    }
+
+    suspend fun moveNode(canvasId: String, nodeId: String, x: Float, y: Float): Boolean = database.withTransaction {
+        requireWritable(canvasId)
+        require(x.isFinite() && y.isFinite())
+        val changed = canvasDao.updateNodePosition(canvasId, nodeId, x, y, now()) == 1
+        if (changed) touch(canvasId)
+        changed
+    }
+
+    suspend fun deleteNode(canvasId: String, nodeId: String): Boolean = database.withTransaction {
+        requireWritable(canvasId)
+        canvasDao.deleteNodeEdges(canvasId, nodeId)
+        val changed = canvasDao.deleteNode(canvasId, nodeId) == 1
+        if (changed) touch(canvasId)
+        changed
+    }
+
+    suspend fun saveViewport(canvasId: String, x: Float, y: Float, scale: Float): Boolean {
+        require(x.isFinite() && y.isFinite() && scale.isFinite())
+        return canvasDao.updateViewport(canvasId, x, y, scale.coerceIn(0.35f, 2.5f)) == 1
+    }
 }

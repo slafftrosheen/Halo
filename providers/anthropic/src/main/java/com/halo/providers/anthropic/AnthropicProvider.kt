@@ -37,6 +37,7 @@ import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
@@ -45,7 +46,11 @@ import org.json.JSONObject
 class AnthropicProvider(
     private val storage: Storage,
     private val client: OkHttpClient = defaultClient(),
-) : AiInferenceProvider, com.halo.sdk.provider.CredentialProvider {
+) : AiInferenceProvider, com.halo.sdk.provider.CredentialProvider, com.halo.sdk.provider.ProviderConfigurationReporting {
+
+    override val configurationDescriptor: com.halo.sdk.provider.ProviderConfigurationDescriptor get() =
+        com.halo.sdk.provider.ProviderConfigurationDescriptor(id, displayName, com.halo.sdk.provider.AiExecutionLocation.REMOTE,
+            listOf(com.halo.sdk.provider.ProviderConfigurationField("credential", "API key", com.halo.sdk.provider.ProviderFieldKind.SECRET)), "ANTHROPIC_MESSAGES", "ACCOUNT_DEPENDENT")
     override val id = ID
     override val displayName = "Anthropic"
     override val isLocal = false
@@ -75,6 +80,9 @@ class AnthropicProvider(
         AiCapability.TOOLS,
     )
 
+    override fun configurationChanged() {
+        _status.value = if (hasCredential()) configuredCold() else ProviderStatus.UNCONFIGURED
+    }
     override suspend fun getStatus(): ProviderStatus {
         val value = if (apiKey == null) ProviderStatus.UNCONFIGURED else _status.value.let {
             if (it.state == ProviderStatus.State.UNCONFIGURED) configuredCold() else it
@@ -93,27 +101,26 @@ class AnthropicProvider(
 
     override suspend fun listModels(): List<AiModel> = withContext(Dispatchers.IO) {
         val key = apiKey ?: return@withContext emptyList()
-        execute(modelsRequest(key)) { body ->
-            val data = JSONObject(body).optJSONArray("data") ?: JSONArray()
-            buildList {
-                for (index in 0 until data.length()) {
-                    val item = data.optJSONObject(index) ?: continue
-                    val modelId = item.optString("id").trim()
-                    if (!modelId.startsWith("claude-")) continue
-                    add(
-                        AiModel(
-                            id = modelId,
-                            displayName = item.optString("display_name", modelId),
-                            providerId = id,
-                            inputCapabilities = setOf(AiCapability.TEXT, AiCapability.IMAGE),
-                            contextLength = null,
-                            supportsStreaming = false,
-                            supportsTools = true,
-                        ),
-                    )
-                }
-            }.sortedBy { it.displayName.lowercase() }
-        }
+        val models = mutableListOf<AiModel>()
+        val seen = mutableSetOf<String>()
+        var cursor: String? = null
+        do {
+            val url = "$API_BASE/models".toHttpUrl().newBuilder().addQueryParameter("limit", "100")
+                .apply { cursor?.let { addQueryParameter("after_id", it) } }.build()
+            val page = execute(Request.Builder().url(url).anthropicHeaders(key).get().build()) { JSONObject(it) }
+            val data = page.optJSONArray("data") ?: JSONArray()
+            for (index in 0 until data.length()) {
+                val item = data.optJSONObject(index) ?: continue
+                val modelId = item.optString("id").trim()
+                if (!modelId.startsWith("claude-")) continue
+                models += AiModel(modelId, item.optString("display_name", modelId), id,
+                    setOf(AiCapability.TEXT, AiCapability.IMAGE), null, supportsStreaming = false, supportsTools = true)
+            }
+            cursor = if (page.optBoolean("has_more")) page.optString("last_id").takeIf { it.isNotBlank() } else null
+            check(!page.optBoolean("has_more") || cursor != null) { "Missing model page cursor" }
+            if (cursor != null) check(seen.add(cursor!!) && seen.size <= 30) { "Model catalogue pagination did not finish" }
+        } while (cursor != null)
+        models.distinctBy { it.id }.sortedBy { it.displayName.lowercase() }
     }
 
     override suspend fun generate(request: AiRequest, context: AiContext): AiResponse = withContext(Dispatchers.IO) {

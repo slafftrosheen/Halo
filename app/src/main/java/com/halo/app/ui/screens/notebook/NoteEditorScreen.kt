@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.notebook
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -128,17 +130,22 @@ fun NoteEditorScreen(
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val scope = rememberCoroutineScope()
-    val state by viewModel.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
-    val referenceCandidates by viewModel.referenceCandidates.collectAsState()
+    val referenceCandidates by viewModel.referenceCandidates.collectAsStateWithLifecycle()
 
     var showOutline by remember { mutableStateOf(false) }
     var showReferencePicker by remember { mutableStateOf(false) }
     // Non-null while the picker is repairing an existing reference block instead of inserting one.
     var relinkBlockId by remember { mutableStateOf<String?>(null) }
     var showFindBar by remember { mutableStateOf(false) }
+    var showImageStudio by remember { mutableStateOf(false) }
     var showAssistMenu by remember { mutableStateOf(false) }
     var studyError by remember { mutableStateOf<String?>(null) }
+
+    if (showImageStudio) viewModel.imageStudio?.let { studio ->
+        com.halo.app.ui.workspace.WorkspaceImageDialog(studio) { showImageStudio = false }
+    }
 
     val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let(viewModel::addAttachment)
@@ -281,6 +288,7 @@ fun NoteEditorScreen(
             EditorMode.EDIT -> EditModeView(
                 state = state,
                 viewModel = viewModel,
+                onImage = { attachment -> viewModel.imageStudio?.prepare(attachment); showImageStudio = true },
                 onAddAttachment = { filePicker.launch(arrayOf("image/*", "application/pdf", "text/*", "audio/*", "video/*")) },
                 onPickReference = {
                     relinkBlockId = null
@@ -558,6 +566,7 @@ private fun ColumnScope.EditModeView(
     state: NoteEditorUiState,
     viewModel: NoteEditorViewModel,
     onAddAttachment: () -> Unit,
+    onImage: (NoteAttachment?) -> Unit,
     onPickReference: () -> Unit,
     onPickExistingReference: (String) -> Unit,
     onAssist: () -> Unit,
@@ -566,6 +575,10 @@ private fun ColumnScope.EditModeView(
     showAssistMenu: Boolean,
     context: android.content.Context,
 ) {
+    var viewingImage by remember { mutableStateOf<NoteAttachment?>(null) }
+    viewingImage?.let { image -> AlertDialog(onDismissRequest = { viewingImage = null },
+        title = { Text(image.displayName ?: "Image") }, text = { com.halo.app.ui.workspace.WorkspaceAttachmentPreview(image, Modifier.fillMaxWidth().height(320.dp)) },
+        confirmButton = { TextButton(onClick = { viewingImage = null }) { Text("Close") } }) }
     val listState = rememberLazyListState()
     val enabled = state.isEditable
 
@@ -601,6 +614,8 @@ private fun ColumnScope.EditModeView(
         )
     }
 
+    if (viewModel.imageStudio != null) TextButton(onClick = { onImage(null) }, enabled = enabled && !state.isGenerating) { Text("Create an image") }
+    if (state.isGenerating) TextButton(onClick = viewModel::cancelAssistance) { Text("Cancel AI writing") }
     state.proposal?.let { proposal ->
         ProposalCard(
             operationLabel = proposal.operation.label,
@@ -611,6 +626,8 @@ private fun ColumnScope.EditModeView(
             onApply = viewModel::applyProposal,
             onSaveAsNote = viewModel::saveProposalAsNewNote,
             onDiscard = viewModel::discardProposal,
+            onRegenerate = viewModel::regenerateProposal,
+            onEdit = viewModel::editProposal,
         )
     }
 
@@ -621,7 +638,8 @@ private fun ColumnScope.EditModeView(
                 AttachmentCard(
                     attachment = attachment,
                     onOpen = {
-                        runCatching {
+                        if (attachment.type == "IMAGE") viewingImage = attachment
+                        else runCatching {
                             context.startActivity(
                                 Intent(Intent.ACTION_VIEW)
                                     .setDataAndType(Uri.parse(attachment.pathOrUri), attachment.mimeType)
@@ -630,6 +648,7 @@ private fun ColumnScope.EditModeView(
                         }
                     },
                     onRemove = { viewModel.removeAttachment(attachment.id) },
+                    onEdit = { onImage(attachment) },
                 )
             }
         }
@@ -822,6 +841,7 @@ private fun AssistMenu(
         DocumentOperation.entries.forEach { operation ->
             val needsSelection = operation in setOf(
                 DocumentOperation.REWRITE,
+                DocumentOperation.TURN_INTO_TASKS,
                 DocumentOperation.EXPLAIN,
                 DocumentOperation.TRANSLATE,
             )
@@ -849,7 +869,10 @@ private fun ProposalCard(
     onApply: () -> Unit,
     onSaveAsNote: () -> Unit,
     onDiscard: () -> Unit,
+    onRegenerate: () -> Unit,
+    onEdit: (String) -> Unit,
 ) {
+    var editing by remember { mutableStateOf(false) }
     val stale = baseRevision != currentRevision
     Surface(
         Modifier.fillMaxWidth().padding(vertical = 8.dp),
@@ -869,7 +892,8 @@ private fun ProposalCard(
                 if (isGenerating) CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
             }
             Spacer(Modifier.height(6.dp))
-            Text(
+            if (editing) OutlinedTextField(content, onEdit, modifier = Modifier.fillMaxWidth().heightIn(max = 220.dp), enabled = !isGenerating)
+            else Text(
                 content,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -889,6 +913,10 @@ private fun ProposalCard(
                 TextButton(onClick = onApply, enabled = !stale && !isGenerating) { Text("Apply") }
                 TextButton(onClick = onSaveAsNote, enabled = !isGenerating) { Text("Save as new note") }
                 TextButton(onClick = onDiscard) { Text("Discard") }
+            }
+            Row {
+                TextButton(onClick = onRegenerate, enabled = !isGenerating) { Text("Regenerate") }
+                TextButton(onClick = { editing = !editing }, enabled = !isGenerating) { Text(if (editing) "Done editing" else "Edit draft") }
             }
         }
     }
@@ -1315,7 +1343,7 @@ private fun placeholderFor(type: NoteBlockType): String = when (type) {
 // ---------------------------------------------------------------------------------------------
 
 @Composable
-private fun AttachmentCard(attachment: NoteAttachment, onOpen: () -> Unit, onRemove: () -> Unit) {
+private fun AttachmentCard(attachment: NoteAttachment, onOpen: () -> Unit, onRemove: () -> Unit, onEdit: () -> Unit) {
     Surface(
         modifier = Modifier.width(if (attachment.type == "IMAGE") 248.dp else 220.dp),
         shape = RoundedCornerShape(16.dp),
@@ -1325,7 +1353,8 @@ private fun AttachmentCard(attachment: NoteAttachment, onOpen: () -> Unit, onRem
         Column {
             if (attachment.type == "IMAGE") {
                 AttachmentImage(attachment, onOpen)
-            } else {
+            }
+            if (attachment.type == "IMAGE") TextButton(onClick = onEdit) { Text("Edit with AI") } else {
                 Row(
                     modifier = Modifier.fillMaxWidth().clickable(onClick = onOpen).padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically,

@@ -1,5 +1,12 @@
 # Security and privacy assessment
 
+## STABILIZATION-PROVIDER-001 - 2026-09-30
+
+**IMPLEMENTED / UNVALIDATED.** SecretBackedStorage now shares SecretMigrationV2.SECRET_KEYS as the single protected set; ElevenLabs was already included. Compose uses blank replacement drafts and configured booleans. Backup exports use existing non-secret allowlists. Speech telemetry excludes voice prefixes and spoken-text length. Endpoint location metadata no longer marks public Custom/Companion servers as local.
+
+See [source map and deferred acceptance](../engineering/PROVIDER-CONVERSATION-STABILIZATION.md). Build, tests and device acceptance were not run. Earlier dated sections below are historical.
+
+
 ## P8 provider UX and conversation reset — 2026-09-30
 
 General conversational answering is a core Halo capability and does not depend on tool availability. DirectResponse/CHAT is separate from Agentic actions; configuration, authentication, model discovery and generation proof are separate. Speech uses the selected PCM provider, protected ElevenLabs opt-in, phone-only settings tests and host-owned route policy. See [implementation and deferred acceptance](../engineering/PROVIDER-UX-AND-CONVERSATION-RESET.md). Earlier sections retain historical context.

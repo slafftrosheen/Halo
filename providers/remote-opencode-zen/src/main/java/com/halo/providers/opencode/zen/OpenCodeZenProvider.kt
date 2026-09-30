@@ -21,7 +21,7 @@ class OpenCodeZenProvider(
         OpenAiCompatibleTransport(it, "https://api.opencode.ai/v1", AiWireProtocol.OPENAI_CHAT_COMPLETIONS)
     },
     private val credentialProvider: CredentialProvider = OpenCodeZenCredentialProvider(storage),
-) : AiInferenceProvider, CredentialProvider by credentialProvider {
+) : AiInferenceProvider, CredentialProvider by credentialProvider, ProviderConfigurationReporting {
 
     override val id: String = RemoteProviderIds.OPENCODE_ZEN
     override val displayName: String = "OpenCode Zen"
@@ -42,6 +42,8 @@ class OpenCodeZenProvider(
         // Free model ids are determined from remote catalog, not baked in.
         freeModelIds = emptySet(),
     )
+
+    override val configurationDescriptor: ProviderConfigurationDescriptor get() = configured.configurationDescriptor
 
     override val status: StateFlow<ProviderStatus> get() = configured.status
     val authInfo: StateFlow<ProviderAuthInfo> get() = configured.authInfo

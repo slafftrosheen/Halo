@@ -6,7 +6,6 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
-import com.halo.providers.android.tts.AndroidTTSProvider
 import com.halo.sdk.provider.SpeechRequest
 import com.halo.sdk.provider.SpeechResult
 import com.halo.sdk.runtime.SpeechRouteEvidence

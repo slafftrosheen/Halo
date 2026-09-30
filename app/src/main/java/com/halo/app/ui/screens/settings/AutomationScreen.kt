@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -20,11 +22,11 @@ import java.util.UUID
 
 @Composable
 fun AutomationScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onNotifications: () -> Unit, reviewRoutineId: String? = null, onReviewedSave: () -> Unit = {}) {
-    val state by viewModel.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     var editing by remember { mutableStateOf<Routine?>(null) }
     var editor by remember { mutableStateOf(false) }
     var history by remember { mutableStateOf(false) }
-    val result by viewModel.result.collectAsState()
+    val result by viewModel.result.collectAsStateWithLifecycle()
     LaunchedEffect(reviewRoutineId,state.loading) {
         if(reviewRoutineId != null && !state.loading) {
             editing=state.routines.firstOrNull { it.id.value == reviewRoutineId }
@@ -93,7 +95,7 @@ private fun RoutineEditor(original: Routine?, error: String?, descriptors: List<
     var localError by remember { mutableStateOf<String?>(null) }
     var proposal by remember { mutableStateOf<Routine?>(null) }
     val context = LocalContext.current
-    val devices by ManualDependencyGraph.devicePresenceRepository.presenceMap.collectAsState()
+    val devices by ManualDependencyGraph.devicePresenceRepository.presenceMap.collectAsStateWithLifecycle()
     fun trigger(): RoutineTrigger = when(type) {
         "Once" -> RoutineTrigger.Once(LocalDateTime.parse(once).atZone(ZoneId.of(zone)).toInstant())
         "Device connects" -> RoutineTrigger.DeviceConnected(device)
@@ -171,7 +173,7 @@ private fun RoutineEditor(original: Routine?, error: String?, descriptors: List<
         HaloWorkspaceSection("AVAILABILITY") { Text(runCatching { trigger().availabilityLabel() }.getOrDefault("Complete the trigger"))
             val sourceName = when(type) { "App opens" -> "foreground"; "App notification" -> "notifications"; "Device connects", "Device disconnects" -> "device"; "Network available", "Network lost" -> "network"; else -> "battery_charging" }
             ManualDependencyGraph.automationRuntime.registry.sources[sourceName]?.let { source ->
-                val status by source.availability.collectAsState()
+                val status by source.availability.collectAsStateWithLifecycle()
                 Text(when(status) { AutomationSourceStatus.REQUIRES_SERVICE -> "Phone screen access needs setup"; AutomationSourceStatus.REQUIRES_PERMISSION -> "Notification access needs setup"; AutomationSourceStatus.UNAVAILABLE -> "Source unavailable"; else -> "Source ready" })
             }
             if(type == "App opens") TextButton(onClick = { context.startActivity(android.content.Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS)) }) { Text("Set up Phone screen access") }

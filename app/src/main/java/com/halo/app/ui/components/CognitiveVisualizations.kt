@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,18 +26,18 @@ fun EnginePulse(
 ) {
     Row(
         modifier = modifier
-            .background(HaloSurface, RoundedCornerShape(16.dp))
-            .border(1.dp, HaloDivider, RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp))
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
             .padding(horizontal = 12.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         PulseIndicator(
-            color = if (isActive) HaloPrimary else HaloTextSecondary,
+            color = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
             size = 8.dp,
             isPulsing = isActive
         )
         Spacer(modifier = Modifier.width(8.dp))
-        Text(name, color = HaloTextPrimary, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+        Text(name, color = MaterialTheme.colorScheme.onSurface, fontSize = 12.sp, fontWeight = FontWeight.Medium)
     }
 }
 
@@ -56,24 +57,24 @@ fun CognitiveFlow(stages: List<String>, activeStageIndex: Int) {
                     modifier = Modifier
                         .size(32.dp)
                         .background(
-                            if (isActive) HaloPrimary.copy(alpha = 0.2f)
-                            else if (isCompleted) HaloSurface
-                            else HaloBackground,
+                            if (isActive) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                            else if (isCompleted) MaterialTheme.colorScheme.surface
+                            else MaterialTheme.colorScheme.background,
                             CircleShape
                         )
                         .border(
                             1.dp,
-                            if (isActive || isCompleted) HaloPrimary else HaloDivider,
+                            if (isActive || isCompleted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
                             CircleShape
                         ),
                     contentAlignment = Alignment.Center
                 ) {
                     if (isCompleted) {
-                        Icon(HaloIcons.Shield, contentDescription = null, tint = HaloPrimary, modifier = Modifier.size(16.dp))
+                        Icon(HaloIcons.Shield, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
                     } else {
                         Text(
                             "${index + 1}",
-                            color = if (isActive) HaloPrimary else HaloTextSecondary,
+                            color = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -82,8 +83,8 @@ fun CognitiveFlow(stages: List<String>, activeStageIndex: Int) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     stage,
-                    color = if (isActive) HaloPrimary else HaloTextSecondary,
-                    fontSize = 10.sp,
+                    color = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 12.sp,
                     fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal
                 )
             }
@@ -92,7 +93,7 @@ fun CognitiveFlow(stages: List<String>, activeStageIndex: Int) {
                     modifier = Modifier
                         .weight(1f)
                         .height(2.dp)
-                        .background(if (isCompleted) HaloPrimary else HaloDivider)
+                        .background(if (isCompleted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant)
                 )
             }
         }
@@ -112,11 +113,11 @@ fun MemoryNode(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(HaloIcons.Memory, contentDescription = null, tint = HaloPrimary, modifier = Modifier.size(16.dp))
+                Icon(HaloIcons.Memory, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(title, color = HaloTextPrimary, fontWeight = FontWeight.Medium)
+                Text(title, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Medium)
             }
-            Text(timeAgo, color = HaloTextSecondary, fontSize = 12.sp)
+            Text(timeAgo, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
         }
         Spacer(modifier = Modifier.height(12.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -152,7 +153,7 @@ fun GoalChip(goal: String, priority: String) {
 fun BlackboardGraph(nodes: List<String>) {
     // A simplified visual representation of interconnected blackboard concepts
     HaloCard(modifier = Modifier.fillMaxWidth()) {
-        Text("Active Context", color = HaloTextSecondary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        Text("Active Context", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(16.dp))
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),

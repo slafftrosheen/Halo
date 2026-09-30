@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
@@ -47,7 +49,7 @@ fun SystemCheckScreen(
     onOpenPhoneSandbox: (() -> Unit)? = null,
     onOpenAutomationSandbox: (() -> Unit)? = null,
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val clipboard = LocalClipboardManager.current
 
     Column(

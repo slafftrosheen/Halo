@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -23,10 +25,10 @@ fun RuntimeScreen(
     onBack: () -> Unit,
     onOpenSystemCheck: (() -> Unit)? = null,
 ) {
-    val taskSummary by projection.taskSummary.collectAsState()
-    val resourceSummary by projection.resourceSummary.collectAsState()
-    val capabilitySummary by projection.capabilitySummary.collectAsState()
-    val capabilitySnapshot by (catalogueSource?.snapshot ?: remember { flowOf(CapabilityCatalogueSnapshot(emptyList(), 0L)) }).collectAsState(initial = CapabilityCatalogueSnapshot(emptyList(), 0L))
+    val taskSummary by projection.taskSummary.collectAsStateWithLifecycle()
+    val resourceSummary by projection.resourceSummary.collectAsStateWithLifecycle()
+    val capabilitySummary by projection.capabilitySummary.collectAsStateWithLifecycle()
+    val capabilitySnapshot by (catalogueSource?.snapshot ?: remember { flowOf(CapabilityCatalogueSnapshot(emptyList(), 0L)) }).collectAsStateWithLifecycle(initialValue = CapabilityCatalogueSnapshot(emptyList(), 0L))
 
     Column(
         modifier = Modifier

@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -14,9 +16,9 @@ import kotlinx.coroutines.launch
 @Composable
 fun PhoneOperatorPanel(observationControls: Boolean = false, onOpenSandbox: (() -> Unit)? = null,
     readingEnabled: Boolean = true, actionPolicy: String = "Semantic targets with approval") {
-    val metrics by UiOperatorDiagnostics.metrics.collectAsState()
-    val connected by UiOperatorDiagnostics.accessibilityConnected.collectAsState()
-    val receipt by UiOperatorDiagnostics.lastReceipt.collectAsState()
+    val metrics by UiOperatorDiagnostics.metrics.collectAsStateWithLifecycle()
+    val connected by UiOperatorDiagnostics.accessibilityConnected.collectAsStateWithLifecycle()
+    val receipt by UiOperatorDiagnostics.lastReceipt.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     var preview by remember { mutableStateOf<String?>(null) }
     var previewVisible by remember { mutableStateOf(false) }

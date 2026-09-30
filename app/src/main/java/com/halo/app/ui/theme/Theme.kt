@@ -10,12 +10,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 
 private val HaloDarkColorScheme = darkColorScheme(
-    primary = HaloReady,
+    primary = HaloPrimary,
     onPrimary = DarkBackground,
-    primaryContainer = HaloPastelMint.copy(alpha = 0.16f),
+    primaryContainer = androidx.compose.ui.graphics.Color(0xFF263E38),
     onPrimaryContainer = DarkOnBackground,
     secondary = HaloAction,
-    onSecondary = DarkOnBackground,
+    onSecondary = DarkBackground,
     secondaryContainer = HaloPastelBlue.copy(alpha = 0.14f),
     onSecondaryContainer = DarkOnSurface,
     tertiary = HaloPastelCoral,
@@ -29,16 +29,16 @@ private val HaloDarkColorScheme = darkColorScheme(
     onSurfaceVariant = DarkOnSurfaceVariant,
     outline = DarkOutline,
     outlineVariant = DarkOutlineVariant,
-    error = HaloDanger,
-    onError = DarkOnBackground
+    error = androidx.compose.ui.graphics.Color(0xFFFF8795),
+    onError = DarkBackground
 )
 
 private val HaloLightColorScheme = lightColorScheme(
-    primary = HaloReady,
-    onPrimary = LightOnBackground,
-    primaryContainer = HaloPastelMint.copy(alpha = 0.42f),
+    primary = androidx.compose.ui.graphics.Color(0xFF147D64),
+    onPrimary = LightSurface,
+    primaryContainer = androidx.compose.ui.graphics.Color(0xFFDDF2E9),
     onPrimaryContainer = LightOnBackground,
-    secondary = HaloAction,
+    secondary = androidx.compose.ui.graphics.Color(0xFF3967B5),
     onSecondary = LightSurface,
     secondaryContainer = HaloPastelBlue.copy(alpha = 0.48f),
     onSecondaryContainer = LightOnSurface,
@@ -53,7 +53,7 @@ private val HaloLightColorScheme = lightColorScheme(
     onSurfaceVariant = LightOnSurfaceVariant,
     outline = LightOutline,
     outlineVariant = LightOutlineVariant,
-    error = HaloDanger,
+    error = androidx.compose.ui.graphics.Color(0xFFB3263B),
     onError = LightSurface
 )
 

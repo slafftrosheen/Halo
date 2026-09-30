@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.notebook
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import android.text.format.DateUtils
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -77,12 +79,28 @@ private val secondaryFilters = NotebookFilter.entries.filterNot(primaryFilters::
 
 @Composable
 fun NotebookScreen(viewModel: NotebookViewModel) {
-    val state by viewModel.uiState.collectAsState()
-    val cloudAllowed by viewModel.cloudSharing.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val cloudAllowed by viewModel.cloudSharing.collectAsStateWithLifecycle()
+    val selectedIds by viewModel.selectedIds.collectAsStateWithLifecycle()
+    val notice by viewModel.notice.collectAsStateWithLifecycle()
+    val mutating by viewModel.isMutating.collectAsStateWithLifecycle()
+    var selecting by remember { mutableStateOf(false) }
+    var sortMenu by remember { mutableStateOf(false) }
+    var batchMenu by remember { mutableStateOf(false) }
+    var confirmTrash by remember { mutableStateOf(false) }
+    val visibleItems = remember(state.items, state.filter) {
+        state.items.filterNot { it.objectRef.id.value.startsWith("learning:") || state.filter == NotebookFilter.MEMORY }
+    }
+    val collectionChoices = remember(state.collections) { state.collections.map { it.id to it.name } }
     var showWorkingSet by remember { mutableStateOf(false) }
     var showNewCollection by remember { mutableStateOf(false) }
     var showDeleteCollection by remember { mutableStateOf(false) }
     var collectionName by remember { mutableStateOf("") }
+
+    if (confirmTrash) AlertDialog(onDismissRequest = { confirmTrash = false },
+        title = { Text("Move ${selectedIds.size} items to trash?") }, text = { Text("You can restore them from the Trash filter.") },
+        confirmButton = { TextButton(onClick = { confirmTrash = false; viewModel.applyToSelection(NotebookBatchAction.TRASH) }) { Text("Move to trash") } },
+        dismissButton = { TextButton(onClick = { confirmTrash = false }) { Text("Cancel") } })
 
     if (showWorkingSet) {
         WorkingSetSheet(
@@ -152,54 +170,53 @@ fun NotebookScreen(viewModel: NotebookViewModel) {
             )
         }
 
-        item(key = "tools-title") { SectionTitle("Tools", "Create or continue") }
+        item(key = "organize") {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Box {
+                    TextButton(onClick = { sortMenu = true }) { Text(state.sort.label) }
+                    DropdownMenu(sortMenu, { sortMenu = false }) {
+                        NotebookSort.entries.forEach { sort -> DropdownMenuItem(text = { Text(sort.label) }, onClick = { viewModel.setSort(sort); sortMenu = false }) }
+                    }
+                }
+                Spacer(Modifier.weight(1f))
+                TextButton(onClick = { selecting = !selecting; viewModel.clearSelection() }) { Text(if (selecting) "Done" else "Select") }
+            }
+            if (selecting) Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text("${selectedIds.size} selected", Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
+                TextButton(onClick = viewModel::selectVisible, enabled = !mutating) { Text("Select visible") }
+                Box {
+                    TextButton(onClick = { batchMenu = true }, enabled = selectedIds.isNotEmpty() && !mutating) { Text(if (mutating) "Updating..." else "Actions") }
+                    DropdownMenu(batchMenu, { batchMenu = false }) {
+                        if (state.filter !in listOf(NotebookFilter.TRASH, NotebookFilter.ARCHIVED)) {
+                            DropdownMenuItem(text = { Text("Add to Halo context") }, onClick = { batchMenu = false; viewModel.applyToSelection(NotebookBatchAction.CONTEXT) })
+                            DropdownMenuItem(text = { Text("Archive") }, onClick = { batchMenu = false; viewModel.applyToSelection(NotebookBatchAction.ARCHIVE) })
+                        } else DropdownMenuItem(text = { Text("Restore") }, onClick = { batchMenu = false; viewModel.applyToSelection(NotebookBatchAction.RESTORE) })
+                        if (state.filter != NotebookFilter.TRASH) DropdownMenuItem(text = { Text("Move to trash") }, onClick = { batchMenu = false; confirmTrash = true })
+                        state.collections.forEach { collection -> DropdownMenuItem(text = { Text("Add to ${collection.name}") }, onClick = {
+                            batchMenu = false; viewModel.applyToSelection(NotebookBatchAction.COLLECTION, collection.id)
+                        }) }
+                    }
+                }
+            }
+            notice?.let { message -> Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(message, Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
+                TextButton(onClick = viewModel::clearNotice) { Text("Dismiss") }
+            } }
+        }
+
         item(key = "tools") {
-            val due = state.duePractice.firstOrNull()
-            val session = state.studySessions.firstOrNull()
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    WorkspaceToolCard(
-                        "Note",
-                        "Capture an idea",
-                        Icons.Rounded.NoteAlt,
-                        modifier = Modifier.weight(1f),
-                        onClick = viewModel::createNote,
-                    )
-                    WorkspaceToolCard(
-                        "Canvas",
-                        "Arrange and explore",
-                        Icons.Rounded.DashboardCustomize,
-                        modifier = Modifier.weight(1f),
-                        onClick = viewModel::createCanvas,
-                    )
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    WorkspaceToolCard(
-                        title = "Study",
-                        subtitle = when {
-                            due != null -> "${state.duePractice.size} due to review"
-                            session != null -> "Resume your session"
-                            else -> "Choose a note to begin"
-                        },
-                        icon = Icons.Rounded.AutoStories,
-                        emphasized = due != null,
-                        onClick = {
-                            when {
-                                due != null -> viewModel.openStudy(due.sessionId)
-                                session != null -> viewModel.openStudy(session.id)
-                                else -> viewModel.setFilter(NotebookFilter.NOTES)
-                            }
-                        },
-                        modifier = Modifier.weight(1f),
-                    )
-                    WorkspaceToolCard(
-                        title = "Halo context",
-                        subtitle = "${state.workingSet.size} item${if (state.workingSet.size == 1) "" else "s"} attached",
-                        icon = Icons.Rounded.Psychology,
-                        modifier = Modifier.weight(1f),
-                        onClick = { showWorkingSet = true },
-                    )
-                }
+            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = viewModel::createCanvas) { Text("New canvas") }
+                TextButton(onClick = {
+                    val due = state.duePractice.firstOrNull()
+                    val session = state.studySessions.firstOrNull()
+                    when {
+                        due != null -> viewModel.openStudy(due.sessionId)
+                        session != null -> viewModel.openStudy(session.id)
+                        else -> viewModel.setFilter(NotebookFilter.NOTES)
+                    }
+                }) { Text("Study") }
+                TextButton(onClick = { showWorkingSet = true }) { Text("Context (${state.workingSet.size})") }
             }
         }
 
@@ -284,14 +301,18 @@ fun NotebookScreen(viewModel: NotebookViewModel) {
                 WorkspaceEmptyState(state.query.isNotBlank(), viewModel::createNote)
             }
         } else {
-            items(state.items.filterNot { it.objectRef.id.value.startsWith("learning:") || state.filter == NotebookFilter.MEMORY }, key = { it.objectRef.id.value }) { item ->
+            items(visibleItems, key = { it.objectRef.id.value }) { item ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                if (selecting) androidx.compose.material3.Checkbox(checked = item.objectRef.id.value in selectedIds,
+                    enabled = !mutating, onCheckedChange = { viewModel.toggleSelection(item.objectRef.id.value) })
                 WorkspaceObjectRow(
                     item = item,
                     selected = item.objectRef.id.value in state.workingSet,
                     favorite = item.objectRef.id.value in state.favorites,
-                    collections = state.collections.map { it.id to it.name },
+                    collections = collectionChoices,
                     inSelectedCollection = item.objectRef.id.value in state.selectedCollectionMembers,
-                    onOpen = { viewModel.openObject(item.objectRef) },
+                    onOpen = { if (selecting) viewModel.toggleSelection(item.objectRef.id.value) else viewModel.openObject(item.objectRef) },
+                    onStudy = { viewModel.startStudy(item.objectRef.id.value) },
                     onToggleFavorite = { viewModel.toggleFavorite(item.objectRef.id.value) },
                     onAddToCollection = { viewModel.addToCollection(item.objectRef.id.value, it) },
                     onRemoveFromSelectedCollection = { viewModel.removeFromSelectedCollection(item.objectRef.id.value) },
@@ -299,6 +320,7 @@ fun NotebookScreen(viewModel: NotebookViewModel) {
                         viewModel.selectContext(item.objectRef.id.value, item.objectRef.id.value !in state.workingSet)
                     },
                 )
+                }
             }
         }
         item(key = "bottom-space") { Spacer(Modifier.height(12.dp)) }
@@ -456,6 +478,7 @@ private fun WorkspaceObjectRow(
     collections: List<Pair<String, String>>,
     inSelectedCollection: Boolean,
     onOpen: () -> Unit,
+    onStudy: () -> Unit,
     onToggleFavorite: () -> Unit,
     onAddToCollection: (String) -> Unit,
     onRemoveFromSelectedCollection: () -> Unit,
@@ -500,6 +523,10 @@ private fun WorkspaceObjectRow(
                     Icon(Icons.Rounded.MoreVert, "Organize ${row.title.ifBlank { "item" }}")
                 }
                 DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                    if (row.type == com.halo.app.data.notebook.WorkspaceObjectType.NOTE && row.lifecycle == com.halo.app.data.notebook.WorkspaceObjectLifecycle.ACTIVE) {
+                        DropdownMenuItem(text = { Text("Study this note") }, onClick = { menuExpanded = false; onStudy() })
+                    }
+
                     DropdownMenuItem(
                         leadingIcon = { Icon(if (favorite) Icons.Rounded.Star else Icons.Rounded.StarBorder, null) },
                         text = { Text(if (favorite) "Remove favorite" else "Add favorite") },

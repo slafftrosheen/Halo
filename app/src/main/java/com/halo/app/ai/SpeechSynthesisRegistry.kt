@@ -26,12 +26,12 @@ class SpeechSynthesisRegistry(
             override suspend fun synthesizeToPcm(request: SpeechRequest): PcmSpeech? {
                 val startedAt = SystemClock.elapsedRealtime()
                 val pcm = try {
-                    if (selected is ElevenLabsTtsProvider && (pinned.voiceId == null || pinned.modelId == null)) error("Speech selection is incomplete")
+                    if (!fallbackUsed && selected is ElevenLabsTtsProvider && (pinned.voiceId == null || pinned.modelId == null)) error("Speech selection is incomplete")
                     if (fallbackUsed) android.synthesizeToPcm(request.copy(voiceId = null, modelId = null, voiceSettings = emptyMap())) else selected.synthesizeToPcm(pinned.copy(text = request.text)) }
                 catch (cancelled: CancellationException) { throw cancelled }
                 catch (_: Exception) { null }
                 if (pcm != null) {
-                    Log.i("HALO_TTS_SYNTHESIS", "provider=${selected.metadata.id}; voicePrefix=${pinned.voiceId?.take(6)}; model=${pinned.modelId}; textLength=${pinned.text.length}; audioBytes=${pcm.chunks.sumOf { it.size.toLong() }}; sampleRate=${pcm.sampleRateHz}; durationMs=${SystemClock.elapsedRealtime() - startedAt}")
+                    Log.i("HALO_TTS_SYNTHESIS", "provider=${if (fallbackUsed) android.metadata.id else selected.metadata.id}; audioBytes=${pcm.chunks.sumOf { it.size.toLong() }}; sampleRate=${pcm.sampleRateHz}; durationMs=${SystemClock.elapsedRealtime() - startedAt}")
                     return pcm
                 }
                 if (selected !== android && allowFallback) {

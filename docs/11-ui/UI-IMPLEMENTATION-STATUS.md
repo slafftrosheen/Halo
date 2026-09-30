@@ -1,5 +1,12 @@
 # UI source inventory
 
+## STABILIZATION-PROVIDER-001 - 2026-09-30
+
+**IMPLEMENTED / UNVALIDATED.** Intelligence renders bounded summaries and no model catalogue. Provider detail is the credential entry surface. Voice root has input/output/routing summaries; recognition and output have dedicated routes. Model rows are compact and lazy. Home and System Check use readable status/proof and provider-specific navigation.
+
+See [source map and deferred acceptance](../engineering/PROVIDER-CONVERSATION-STABILIZATION.md). Build, tests and device acceptance were not run. Earlier dated sections below are historical.
+
+
 ## P8 provider UX and conversation reset — 2026-09-30
 
 General conversational answering is a core Halo capability and does not depend on tool availability. DirectResponse/CHAT is separate from Agentic actions; configuration, authentication, model discovery and generation proof are separate. Speech uses the selected PCM provider, protected ElevenLabs opt-in, phone-only settings tests and host-owned route policy. See [implementation and deferred acceptance](../engineering/PROVIDER-UX-AND-CONVERSATION-RESET.md). Earlier sections retain historical context.

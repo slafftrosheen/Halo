@@ -1,6 +1,9 @@
 package com.halo.app.ui.screens.settings
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import androidx.lifecycle.ViewModel
+import com.halo.app.ui.design.HaloScreenHeader
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
@@ -26,16 +29,17 @@ class ContextPrivacyViewModel(private val storage: Storage) : ViewModel() {
 }
 
 @Composable
-fun ContextPrivacyScreen(viewModel: ContextPrivacyViewModel, onBack: () -> Unit) {
-    val policy by viewModel.policy.collectAsState()
+fun ContextPrivacyScreen(viewModel: ContextPrivacyViewModel, onBack: () -> Unit, onAdvanced: () -> Unit = {}) {
+    val policy by viewModel.policy.collectAsStateWithLifecycle()
     LaunchedEffect(viewModel) { viewModel.refresh() }
-    LazyColumn(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { TextButton(onClick = onBack) { Text("Back") }; Text("Context and privacy", style = MaterialTheme.typography.headlineMedium) }
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        item { HaloScreenHeader("Context & privacy", "Choose what Halo can use.", navigation = onBack) }
         item { Text("General conversational answering is a core Halo capability and does not depend on tool availability. Sharing permissions never select a cloud provider.") }
         item { ContextToggle("Conversation", policy.includeConversation) { viewModel.update { p -> p.copy(includeConversation = it) } } }
         item { ContextToggle("Personal memory", policy.includeMemories) { viewModel.update { p -> p.copy(includeMemories = it) } } }
         item { ContextToggle("Workspace", policy.includeWorkspace) { viewModel.update { p -> p.copy(includeWorkspace = it) } } }
         item { ContextToggle("Images", policy.includeImages) { viewModel.update { p -> p.copy(includeImages = it) } } }
+        item { TextButton(onClick = onAdvanced) { Text("Generation and advanced settings") } }
         item { Text("Allow context with remote inference", style = MaterialTheme.typography.titleMedium) }
         item { ContextToggle("Workspace references", policy.allowCloudWorkspace) { viewModel.update { p -> p.copy(allowCloudWorkspace = it) } } }
         item { ContextToggle("Current screen", policy.allowCloudScreenContext) { viewModel.update { p -> p.copy(allowCloudScreenContext = it) } } }
@@ -45,5 +49,5 @@ fun ContextPrivacyScreen(viewModel: ContextPrivacyViewModel, onBack: () -> Unit)
 }
 @Composable
 private fun ContextToggle(label: String, checked: Boolean, changed: (Boolean) -> Unit) {
-    Row(Modifier.fillMaxWidth()) { Text(label, Modifier.weight(1f)); Switch(checked, changed) }
+    Row(Modifier.fillMaxWidth().heightIn(min = 56.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) { Text(label, Modifier.weight(1f)); Switch(checked, changed) }
 }

@@ -51,7 +51,11 @@ import org.json.JSONObject
  */
 class OllamaProvider(
     private val storage: Storage
-) : AiInferenceProvider {
+) : AiInferenceProvider, com.halo.sdk.provider.ProviderConfigurationReporting {
+
+    override val configurationDescriptor: com.halo.sdk.provider.ProviderConfigurationDescriptor get() =
+        com.halo.sdk.provider.ProviderConfigurationDescriptor(id, displayName, com.halo.sdk.provider.endpointExecutionLocation(storage.getString("ollama_endpoint") ?: "http://localhost:11434"),
+            listOf(com.halo.sdk.provider.ProviderConfigurationField("ollama_endpoint", "Endpoint", com.halo.sdk.provider.ProviderFieldKind.ENDPOINT)), "OLLAMA", "LOCAL")
 
     private val tag = "OllamaProvider"
     private val jsonMediaType = "application/json; charset=utf-8".toMediaType()
@@ -91,8 +95,12 @@ class OllamaProvider(
 
     override val id: String = "provider.ollama"
     override val displayName: String = "Ollama"
-    override val isLocal: Boolean = true
+    override val isLocal: Boolean get() = com.halo.sdk.provider.endpointExecutionLocation(storage.getString("ollama_endpoint") ?: "http://localhost:11434") == com.halo.sdk.provider.AiExecutionLocation.LOCAL_NETWORK
 
+    override fun configurationChanged() {
+        modelMetadataCache.clear()
+        _status.value = if (normalizedEndpointOrNull() != null) ProviderStatus(ProviderStatus.State.STANDBY, "Configured; not checked") else ProviderStatus.UNCONFIGURED
+    }
     override suspend fun getStatus(): ProviderStatus = withContext(Dispatchers.IO) {
         val endpoint = normalizedEndpointOrNull()
             ?: return@withContext ProviderStatus(
@@ -518,7 +526,7 @@ class OllamaProvider(
             id = name,
             displayName = name,
             providerId = id,
-            executionLocation = com.halo.sdk.provider.AiExecutionLocation.LOCAL_NETWORK,
+            executionLocation = configurationDescriptor.location,
             inputCapabilities = setOf(AiCapability.TEXT),
             contextLength = null,
             supportsStreaming = true,
@@ -570,7 +578,7 @@ class OllamaProvider(
                     id = name,
                     displayName = name,
                     providerId = id,
-                    executionLocation = com.halo.sdk.provider.AiExecutionLocation.LOCAL_NETWORK,
+                    executionLocation = configurationDescriptor.location,
                     inputCapabilities = inputCapabilities,
                     contextLength = contextLength,
                     supportsStreaming = true,

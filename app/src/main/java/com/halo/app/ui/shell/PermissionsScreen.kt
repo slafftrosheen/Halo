@@ -1,5 +1,7 @@
 package com.halo.app.ui.shell
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
@@ -83,7 +85,7 @@ fun PermissionsScreen(
     }
     val wifiGranted = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
         granted(Manifest.permission.NEARBY_WIFI_DEVICES)
-    val storageState = storageAccessRepository?.state?.collectAsState()?.value
+    val storageState = storageAccessRepository?.state?.collectAsStateWithLifecycle()?.value
 
     Column(
         modifier = Modifier

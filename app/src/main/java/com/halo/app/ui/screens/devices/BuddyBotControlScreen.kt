@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.devices
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -77,11 +79,11 @@ fun BuddyBotControlScreen(
     buddyBotHost: BuddyBotHost? = viewModel.buddyBotHost,
     onBack: () -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val device = uiState.devices.find { it.id == deviceId }
     val isConnected = device?.isConnected == true
     val fallbackTelemetry = remember { MutableStateFlow(BuddyBotTelemetry()) }
-    val telemetry by (buddyBotHost?.telemetry ?: fallbackTelemetry).collectAsState()
+    val telemetry by (buddyBotHost?.telemetry ?: fallbackTelemetry).collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
 
     var pairingCode by remember { mutableStateOf("") }

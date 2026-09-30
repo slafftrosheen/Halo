@@ -14,6 +14,7 @@ import com.halo.app.ui.glass.material.HaloGlassColors
 import com.halo.app.ui.glass.material.HaloGlassMaterial
 import com.halo.app.ui.glass.material.HaloGlassMaterials
 import com.halo.app.ui.glass.material.HaloGlassTokens
+import com.halo.app.ui.glass.material.HaloTypography
 
 /**
  * Primary grouping primitive for Halo's glass UI.
@@ -27,11 +28,8 @@ fun HaloGlassSection(
     surfaceModifier: Modifier = Modifier,
     trailing: @Composable () -> Unit = {},
     material: HaloGlassMaterial = HaloGlassMaterials.Standard,
-    titleStyle: TextStyle = TextStyle(
-        fontSize = 11.sp,
-        fontWeight = FontWeight.SemiBold,
+    titleStyle: TextStyle = HaloTypography.titleMedium.copy(
         color = HaloGlassColors.TextSecondary,
-        letterSpacing = 1.2.sp
     ),
     spacing: Dp = HaloGlassTokens.sm,
     content: @Composable ColumnScope.() -> Unit
@@ -47,7 +45,7 @@ fun HaloGlassSection(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = title.uppercase(), style = titleStyle)
+            Text(text = title, style = titleStyle)
             trailing()
         }
 

@@ -34,10 +34,15 @@ fun HaloGlassButton(
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
 
+    val resolvedMaterial = if (isPrimary && material == HaloGlassMaterials.Interactive) {
+        material.copy(containerColor = androidx.compose.material3.MaterialTheme.colorScheme.primary,
+            contentColor = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary)
+    } else material
+
     val baseContentColor = if (contentColor != Color.Unspecified) {
         contentColor
     } else {
-        HaloGlassColors.TextPrimary
+        resolvedMaterial.contentColor
     }
     val buttonContentColor = if (enabled) {
         baseContentColor
@@ -46,9 +51,9 @@ fun HaloGlassButton(
     }
 
     val buttonContainerColor = when {
-        !enabled -> material.containerColor.copy(alpha = 0.22f)
-        isPressed -> material.containerColor.copy(alpha = 0.78f)
-        else -> material.containerColor
+        !enabled -> resolvedMaterial.containerColor.copy(alpha = 0.22f)
+        isPressed -> resolvedMaterial.containerColor.copy(alpha = 0.78f)
+        else -> resolvedMaterial.containerColor
     }
 
     HaloGlassSurface(
@@ -58,12 +63,14 @@ fun HaloGlassButton(
                 interactionSource = interactionSource,
                 indication = null,
                 enabled = enabled,
+                role = androidx.compose.ui.semantics.Role.Button,
                 onClick = onClick
             ),
-        material = material.copy(
+        material = resolvedMaterial.copy(
             containerColor = buttonContainerColor,
-            elevation = if (isPressed) 2.dp else material.elevation
+            elevation = if (isPressed) 2.dp else resolvedMaterial.elevation
         ),
+        contentPadding = 0.dp,
         shape = HaloGlassTokens.pillShape
     ) {
         Box(
@@ -102,7 +109,8 @@ object HaloGlassButton {
             enabled = enabled,
             isPrimary = true,
             material = HaloGlassMaterials.Interactive.copy(
-                containerColor = HaloGlassColors.Accent
+                containerColor = HaloGlassColors.Accent,
+                contentColor = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary
             )
         )
     }
@@ -159,7 +167,8 @@ object HaloGlassButton {
             enabled = enabled,
             isPrimary = true,
             material = HaloGlassMaterials.Interactive.copy(
-                containerColor = HaloGlassColors.Danger
+                containerColor = HaloGlassColors.Danger,
+                contentColor = androidx.compose.material3.MaterialTheme.colorScheme.onError
             )
         )
     }

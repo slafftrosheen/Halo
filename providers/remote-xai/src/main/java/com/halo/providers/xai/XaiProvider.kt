@@ -20,7 +20,7 @@ class XaiProvider(
         OpenAiCompatibleTransport(it, "https://api.x.ai/v1", AiWireProtocol.OPENAI_CHAT_COMPLETIONS)
     },
     private val credentialProvider: CredentialProvider = XaiCredentialProvider(storage),
-) : AiInferenceProvider, CredentialProvider by credentialProvider {
+) : AiInferenceProvider, CredentialProvider by credentialProvider, ProviderConfigurationReporting {
 
     override val id: String = RemoteProviderIds.XAI
     override val displayName: String = "xAI"
@@ -34,6 +34,8 @@ class XaiProvider(
         systemPrompt = storage.getString("xai_system_prompt") ?: "You are Halo, a helpful AI assistant.",
         allowInsecureLocalCredentialTransport = false,
     )
+
+    override val configurationDescriptor: ProviderConfigurationDescriptor get() = configured.configurationDescriptor
 
     override val status: StateFlow<ProviderStatus> get() = configured.status
     val authInfo: StateFlow<ProviderAuthInfo> get() = configured.authInfo

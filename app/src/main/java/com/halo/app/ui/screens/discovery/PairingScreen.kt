@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.discovery
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -43,7 +45,7 @@ fun PairingScreen(
     onRequestBluetoothPermissions: () -> Unit,
     onRequestBluetoothEnable: () -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
     val bluetoothReady = uiState.bluetoothPrerequisite == BluetoothPrerequisite.READY
     val isActive =

@@ -2,6 +2,7 @@ package com.halo.runtime.cognition.turn
 
 import com.halo.cognition.language.InteractionId
 import com.halo.runtime.cognition.agent.AgentInputRequest
+import com.halo.runtime.cognition.agent.AgentInputRequestId
 import com.halo.runtime.cognition.agent.AgentInputResolutions
 import com.halo.runtime.cognition.agent.AgentRunCoordinator
 import com.halo.runtime.cognition.agent.AgentRunGuard

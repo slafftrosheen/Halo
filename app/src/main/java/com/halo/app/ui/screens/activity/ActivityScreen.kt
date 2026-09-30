@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.activity
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import com.halo.app.di.ManualDependencyGraph
 import com.halo.runtime.cognition.agent.ActionTruth
 
@@ -55,13 +57,14 @@ import kotlinx.coroutines.flow.stateIn
 
 @Composable
 fun ActivityScreen(viewModel: ActivityViewModel, onOpenObject: (String) -> Unit = {}) {
-    val reflectionStates by ManualDependencyGraph.personalLearning.reflections.collectAsState(emptyList())
-    val learningSuggestions by ManualDependencyGraph.personalLearning.pending.collectAsState(emptyList())
-    val pendingUpdates by ManualDependencyGraph.attentionQueue.pending.collectAsState()
-    val deliveryReceipts by ManualDependencyGraph.attentionQueue.receipts.collectAsState()
+    val reflectionStates by ManualDependencyGraph.personalLearning.reflections.collectAsStateWithLifecycle(emptyList())
+    val learningSuggestions by ManualDependencyGraph.personalLearning.pending.collectAsStateWithLifecycle(emptyList())
+    val pendingUpdates by ManualDependencyGraph.attentionQueue.pending.collectAsStateWithLifecycle()
+    val deliveryReceipts by ManualDependencyGraph.attentionQueue.receipts.collectAsStateWithLifecycle()
 
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val filtered = uiState.events
+    var showProcessingDetails by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -70,7 +73,7 @@ fun ActivityScreen(viewModel: ActivityViewModel, onOpenObject: (String) -> Unit 
             .padding(horizontal = 24.dp)
     ) {
         HaloScreenHeader("Activity", "What Halo did")
-        Spacer(Modifier.size(24.dp))
+        Spacer(Modifier.size(8.dp))
 
         if (filtered.isEmpty() && pendingUpdates.isEmpty() && deliveryReceipts.isEmpty() && reflectionStates.isEmpty() && learningSuggestions.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -83,7 +86,7 @@ fun ActivityScreen(viewModel: ActivityViewModel, onOpenObject: (String) -> Unit 
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = 80.dp),
+                contentPadding = PaddingValues(bottom = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
             item {
@@ -96,6 +99,11 @@ fun ActivityScreen(viewModel: ActivityViewModel, onOpenObject: (String) -> Unit 
                     }
                 }
                 if(learningSuggestions.isNotEmpty()) Text("${learningSuggestions.size} learning suggestions pending review in Notebook")
+                if (reflectionStates.isNotEmpty() || deliveryReceipts.isNotEmpty()) {
+                    TextButton(onClick = { showProcessingDetails = !showProcessingDetails }) {
+                        Text(if (showProcessingDetails) "Hide processing details" else "Processing details")
+                    }
+                    if (showProcessingDetails) {
                 reflectionStates.take(5).forEach { state -> Text("Reflection · " + when(state.status) {
                     "NOT_REQUIRED" -> "No durable learning needed"
                     "PENDING" -> "Pending"
@@ -104,6 +112,8 @@ fun ActivityScreen(viewModel: ActivityViewModel, onOpenObject: (String) -> Unit 
                     else -> "Completed"
                 }) }
                 deliveryReceipts.take(5).forEach { receipt -> Text("Update delivery · ${receipt.outcome.name.lowercase().replace('_', ' ')}") }
+                    }
+                }
             }
 
                 items(filtered, key = { it.id }) { event ->

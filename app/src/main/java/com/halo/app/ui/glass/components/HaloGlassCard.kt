@@ -21,7 +21,7 @@ fun HaloGlassCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    indication: Indication? = null,
+    indication: Indication? = androidx.compose.foundation.LocalIndication.current,
     enabled: Boolean = true,
     material: HaloGlassMaterial = HaloGlassMaterials.Standard,
     shape: Shape = HaloGlassTokens.largeShape,
@@ -35,6 +35,7 @@ fun HaloGlassCard(
                         interactionSource = interactionSource,
                         indication = indication,
                         enabled = enabled,
+                        role = androidx.compose.ui.semantics.Role.Button,
                         onClick = onClick
                     )
                 } else {

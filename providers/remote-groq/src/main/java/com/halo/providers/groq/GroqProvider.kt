@@ -20,7 +20,7 @@ class GroqProvider(
         OpenAiCompatibleTransport(it, "https://api.groq.com/v1", AiWireProtocol.OPENAI_CHAT_COMPLETIONS)
     },
     private val credentialProvider: CredentialProvider = GroqCredentialProvider(storage),
-) : AiInferenceProvider, CredentialProvider by credentialProvider {
+) : AiInferenceProvider, CredentialProvider by credentialProvider, ProviderConfigurationReporting {
 
     override val id: String = RemoteProviderIds.GROQ
     override val displayName: String = "Groq"
@@ -35,6 +35,8 @@ class GroqProvider(
         allowInsecureLocalCredentialTransport = false,
         freeModelIds = freePlanHints(),
     )
+
+    override val configurationDescriptor: ProviderConfigurationDescriptor get() = configured.configurationDescriptor
 
     override val status: StateFlow<ProviderStatus> get() = configured.status
     val authInfo: StateFlow<ProviderAuthInfo> get() = configured.authInfo

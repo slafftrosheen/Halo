@@ -30,19 +30,6 @@ class SecretBackedStorage(
     }
 
     companion object {
-        private val SECRET_KEYS = setOf(
-            SecretMigrationV2.ELEVENLABS_KEY,
-            SecretMigration.OPENROUTER_KEY,
-            com.halo.app.security.SecretMigrationV2.OPENAI_KEY,
-            com.halo.app.security.SecretMigrationV2.ANTHROPIC_KEY,
-            com.halo.app.security.SecretMigrationV2.GEMINI_KEY,
-            com.halo.app.security.SecretMigrationV2.GROQ_KEY,
-            com.halo.app.security.SecretMigrationV2.CEREBRAS_KEY,
-            com.halo.app.security.SecretMigrationV2.XAI_KEY,
-            com.halo.app.security.SecretMigrationV2.OPENCODE_ZEN_KEY,
-            com.halo.app.security.SecretMigrationV2.OPENCODE_COMPANION_PASSWORD_KEY,
-            com.halo.app.security.SecretMigrationV2.OPENCODE_COMPANION_CREDENTIAL_KEY,
-            com.halo.app.security.SecretMigrationV2.CUSTOM_OPENAI_COMPATIBLE_CREDENTIAL_KEY,
-        )
+        private val SECRET_KEYS = SecretMigrationV2.SECRET_KEYS
     }
 }

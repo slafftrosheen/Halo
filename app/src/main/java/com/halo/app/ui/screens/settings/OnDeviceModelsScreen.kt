@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.horizontalScroll
@@ -56,7 +58,7 @@ import com.halo.sdk.provider.LocalComputeBackend
 
 @Composable
 fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit) {
-    val ui by viewModel.uiState.collectAsState()
+    val ui by viewModel.uiState.collectAsStateWithLifecycle()
     var query by remember { mutableStateOf("") }
     var detailsFor by remember { mutableStateOf<String?>(null) }
 

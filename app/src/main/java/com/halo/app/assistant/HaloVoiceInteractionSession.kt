@@ -11,6 +11,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.halo.app.ui.theme.AppearanceMode
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -82,8 +86,15 @@ class HaloVoiceInteractionSession(
         setViewTreeViewModelStoreOwner(this@HaloVoiceInteractionSession)
         setViewTreeSavedStateRegistryOwner(this@HaloVoiceInteractionSession)
 
+        setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
         setContent {
-            HaloTheme {
+            val appearance by ManualDependencyGraph.appearancePreferences.mode.collectAsStateWithLifecycle()
+            val darkTheme = when (appearance) {
+                AppearanceMode.SYSTEM -> isSystemInDarkTheme()
+                AppearanceMode.LIGHT -> false
+                AppearanceMode.DARK -> true
+            }
+            HaloTheme(darkTheme = darkTheme) {
                 /*
                  * RUNTIME-019: the overlay observes the shared interaction
                  * projection and can render the active input surface inline;
@@ -93,7 +104,7 @@ class HaloVoiceInteractionSession(
                     androidx.lifecycle.viewmodel.compose.viewModel(
                         factory = com.halo.app.interaction.InteractionSurfaceViewModelFactory(),
                     )
-                val interactionState2 by interactionViewModel.state.collectAsState()
+                val interactionState2 by interactionViewModel.state.collectAsStateWithLifecycle()
                 AssistantSurface(
                     interactionState = interactionState,
                     screenContextAttached = screenContextAttached,

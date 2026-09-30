@@ -1,5 +1,7 @@
 package com.halo.app.ui.shell
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.TextButton
@@ -9,6 +11,8 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Book
@@ -38,6 +42,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.halo.app.di.ManualDependencyGraph
+import com.halo.app.ai.readRuntimeAiContextPolicy
 import com.halo.app.ui.glass.components.HaloNavigation
 import com.halo.app.ui.glass.components.NavigationItem
 import androidx.compose.material3.MaterialTheme
@@ -77,21 +82,14 @@ import kotlinx.coroutines.launch
 
 sealed class Screen(val route: String, val title: String, val glyph: HaloGlyph) {
     data object Home : Screen("home", "Home", HaloGlyph.HOME)
+    data object Study : Screen("study", "Study", HaloGlyph.QUESTION)
     data object Activity : Screen("activity", "Activity", HaloGlyph.ACTIVITY)
     data object Notebook : Screen("notebook", "Workspace", HaloGlyph.NOTE)
     data object Devices : Screen("devices", "Devices", HaloGlyph.DEVICE)
     data object Settings : Screen("settings", "Settings", HaloGlyph.SETTINGS)
 }
 
-val bottomNavItems = listOf(Screen.Home, Screen.Activity, Screen.Notebook, Screen.Devices, Screen.Settings)
-
-private fun primaryNavigationRoute(route: String?): String? = when {
-    route == null -> null
-    route.startsWith("notebook/") -> Screen.Notebook.route
-    route == "discovery" || route.startsWith("device/") -> Screen.Devices.route
-    route.startsWith("settings/") || route in setOf("ai_settings", "voice_settings", "permissions", "provider_setup", "model_browser") -> Screen.Settings.route
-    else -> route
-}
+val bottomNavItems = listOf(Screen.Home, Screen.Study, Screen.Notebook, Screen.Devices, Screen.Settings)
 
 @Composable
 fun AppShell(
@@ -114,7 +112,7 @@ fun AppShell(
         androidx.lifecycle.viewmodel.compose.viewModel(
             factory = com.halo.app.interaction.InteractionSurfaceViewModelFactory(),
         )
-    val interactionState by interactionViewModel.state.collectAsState()
+    val interactionState by interactionViewModel.state.collectAsStateWithLifecycle()
     interactionState.primary?.let { surface ->
         com.halo.app.interaction.InteractionSurfaceRenderer(
             surface = surface,
@@ -124,7 +122,8 @@ fun AppShell(
 
     fun navigateSafely(route: String) {
         if (navController.currentDestination?.route != route) {
-            navController.navigate(route) { launchSingleTop = true }
+            if (bottomNavItems.any { it.route == route }) navController.navigateToPrimary(route)
+            else navController.navigate(route) { launchSingleTop = true }
         }
     }
 
@@ -142,7 +141,7 @@ fun AppShell(
             if (!expandedNavigation) {
                 HaloNavigation(
                     navController = navController,
-                    items = bottomNavItems.map { NavigationItem(it.route, it.title, it.glyph) }
+                    items = remember { bottomNavItems.map { NavigationItem(it.route, it.title, it.glyph) } }
                 )
             }
         },
@@ -161,19 +160,33 @@ fun AppShell(
                     }
                 }
             }
-        Box(Modifier.weight(1f).fillMaxSize()) {
+        Box(Modifier.weight(1f).fillMaxSize(), contentAlignment = Alignment.TopCenter) {
             NavHost(
                 navController = navController,
                 startDestination = Screen.Home.route,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.widthIn(max = 1040.dp).fillMaxSize(),
+                enterTransition = { androidx.compose.animation.EnterTransition.None },
+                exitTransition = { androidx.compose.animation.ExitTransition.None },
+                popEnterTransition = { androidx.compose.animation.EnterTransition.None },
+                popExitTransition = { androidx.compose.animation.ExitTransition.None },
             ) {
                 composable(Screen.Home.route) {
                     HomeScreen(
                         onOpenLearningSuggestions = { ManualDependencyGraph.notebookViewModel.setFilter(com.halo.app.ui.screens.notebook.NotebookFilter.INBOX); navigateSafely(Screen.Notebook.route) },
                         onOpenPendingUpdates = { navigateSafely("activity") },
                         viewModel = homeViewModel,
+                        onOpenProvider = { navigateSafely("settings/intelligence/providers/${android.net.Uri.encode(it)}") },
                         onRequestMicrophonePermission = onRequestPermissions
                     )
+                }
+                composable(Screen.Study.route) {
+                    val model: com.halo.app.ui.screens.study.StudyHomeViewModel = viewModel(
+                        factory = com.halo.app.ui.screens.study.StudyHomeViewModel.Factory(ManualDependencyGraph.studyUseCases))
+                    LaunchedEffect(model) { model.navigation.collectLatest { id -> navigateSafely("notebook/study/${android.net.Uri.encode(id)}") } }
+                    com.halo.app.ui.screens.study.StudyHomeScreen(model,
+                        onResume = { id -> navigateSafely("notebook/study/${android.net.Uri.encode(id)}") },
+                        onReview = { id -> navigateSafely("notebook/study/${android.net.Uri.encode(id)}?review=true") },
+                        onNotebook = { navigateSafely("notebook") })
                 }
                 composable(Screen.Activity.route) {
                     ActivityScreen(ManualDependencyGraph.activityViewModel, onOpenObject = { id ->
@@ -229,7 +242,8 @@ fun AppShell(
                                 ManualDependencyGraph.notebookDocumentRepository,
                                 ManualDependencyGraph.workspaceUseCases,
                                 ManualDependencyGraph.aiProviderRouter,
-                                { ManualDependencyGraph.workspaceContext.cloudSharing.value },
+                                { ManualDependencyGraph.storage.readRuntimeAiContextPolicy().allowCloudWorkspace },
+                                imageService = ManualDependencyGraph.workspaceImageService,
                                 study = ManualDependencyGraph.studyUseCases,
                                 structuredResults = ManualDependencyGraph.notebookStructuredResults,
                             )
@@ -243,8 +257,8 @@ fun AppShell(
                 }
 
                 composable(
-                    "notebook/study/{sessionId}",
-                    arguments = listOf(navArgument("sessionId") { type = NavType.StringType })
+                    "notebook/study/{sessionId}?review={review}",
+                    arguments = listOf(navArgument("sessionId") { type = NavType.StringType }, navArgument("review") { type = NavType.BoolType; defaultValue = false })
                 ) { entry ->
                     val sessionId = entry.arguments?.getString("sessionId")
                     if (sessionId == null) {
@@ -256,9 +270,14 @@ fun AppShell(
                                 sessionId,
                                 ManualDependencyGraph.studyUseCases,
                                 ManualDependencyGraph.studyTutorGateway,
+                                lessons = ManualDependencyGraph.studyLessonStore,
+                                notes = ManualDependencyGraph.notebookUseCases,
                             ),
                         )
-                        StudyScreen(studyViewModel) { navController.popBackStack() }
+                        LaunchedEffect(studyViewModel) {
+                            studyViewModel.savedNotes.collectLatest { id -> navigateSafely("notebook/note/${android.net.Uri.encode(id)}") }
+                        }
+                        StudyScreen(studyViewModel, startInReview = entry.arguments?.getBoolean("review") == true, onOpenSource = { id -> navigateSafely("notebook/note/${android.net.Uri.encode(id)}") }) { navController.popBackStack() }
                     }
                 }
 
@@ -275,8 +294,34 @@ fun AppShell(
                             factory = CanvasEditorViewModel.Factory(
                                 canvasId,
                                 ManualDependencyGraph.notebookCanvasRepository,
+                                workspace = ManualDependencyGraph.workspaceUseCases,
+                                router = ManualDependencyGraph.aiProviderRouter,
+                                allowCloudSharing = { ManualDependencyGraph.storage.readRuntimeAiContextPolicy().allowCloudWorkspace },
+                                imageService = ManualDependencyGraph.workspaceImageService,
+                                assets = ManualDependencyGraph.notebookAssetRepository,
+                                notes = ManualDependencyGraph.notebookUseCases,
+                                study = ManualDependencyGraph.studyUseCases,
                             ),
                         )
+                        LaunchedEffect(canvasViewModel) {
+                            canvasViewModel.navigationEvents.collectLatest { event ->
+                                when (event) {
+                                    is com.halo.app.ui.screens.notebook.CanvasEditorNavigation.OpenNote -> navigateSafely("notebook/note/${android.net.Uri.encode(event.id)}")
+                                    is com.halo.app.ui.screens.notebook.CanvasEditorNavigation.OpenStudy -> navigateSafely("notebook/study/${android.net.Uri.encode(event.sessionId)}")
+                                    is com.halo.app.ui.screens.notebook.CanvasEditorNavigation.OpenObject -> {
+                                        val item = event.objectRef
+                                        val kind = when (item.type) {
+                                            WorkspaceObjectType.NOTE -> "note"
+                                            WorkspaceObjectType.CANVAS -> "canvas"
+                                            WorkspaceObjectType.CONVERSATION -> "conversation"
+                                            WorkspaceObjectType.MEMORY -> "memory"
+                                            else -> if (item.contentRef.startsWith("canvas:")) "canvas" else "file"
+                                        }
+                                        navigateSafely("notebook/$kind/${android.net.Uri.encode(item.id.value)}")
+                                    }
+                                }
+                            }
+                        }
                         CanvasEditorScreen(canvasViewModel) { navController.popBackStack() }
                     }
                 }
@@ -309,7 +354,7 @@ fun AppShell(
                 composable("device/{deviceId}", arguments = listOf(navArgument("deviceId") { type = NavType.StringType })) { entry ->
                     val viewModel = ManualDependencyGraph.devicesViewModel
                     val deviceId = entry.arguments?.getString("deviceId")
-                    val state by viewModel.uiState.collectAsState()
+                    val state by viewModel.uiState.collectAsStateWithLifecycle()
                     val deviceKind = state.devices.firstOrNull { it.id == deviceId }?.kind
                     when {
                         deviceId == null -> navController.popBackStack()
@@ -396,8 +441,8 @@ fun AppShell(
                     if (conversationId == null) {
                         LaunchedEffect(Unit) { navController.popBackStack() }
                     } else {
-                        val history by ManualDependencyGraph.conversationStore.history.collectAsState()
-                        val conversations by ManualDependencyGraph.conversationStore.conversations.collectAsState()
+                        val history by ManualDependencyGraph.conversationStore.history.collectAsStateWithLifecycle()
+                        val conversations by ManualDependencyGraph.conversationStore.conversations.collectAsStateWithLifecycle()
                         val turns = history.filter { it.conversationId == conversationId }
                         ConversationDetailScreen(
                             conversationId = conversationId,
@@ -448,8 +493,8 @@ fun AppShell(
                         onRoles = { navigateSafely("settings/intelligence/roles") },
                         onDevice = { navigateSafely("settings/intelligence/on-device") },
                         onContext = { navigateSafely("settings/intelligence/context") },
-                        onPolicy = { navigateSafely("settings/intelligence/policy") },
-                        onDiagnostics = { navigateSafely("settings/intelligence/usage") },
+                        onDiagnostics = { navigateSafely("system_check") },
+                        onVoice = { navigateSafely("voice_settings") },
                     )
                 }
                 composable("provider_setup") {
@@ -467,7 +512,13 @@ fun AppShell(
                         onModels = { navigateSafely("settings/intelligence/models?providerId=${android.net.Uri.encode(it)}") },
                         onAssignRole = { navigateSafely("settings/intelligence/roles") },
                         onDevice = { navigateSafely("settings/intelligence/on-device") },
+                        onImages = { navigateSafely("settings/intelligence/images/${android.net.Uri.encode(entry.arguments?.getString("providerId").orEmpty())}") },
                         onDiagnostics = { navigateSafely("system_check") })
+                }
+                composable("settings/intelligence/images/{providerId}") { entry ->
+                    val provider = entry.arguments?.getString("providerId").orEmpty()
+                    com.halo.app.ui.screens.settings.ImageModelsScreen(ManualDependencyGraph.workspaceImageService, provider,
+                        onBack = { navController.popBackStack() }, onSetup = { navigateSafely("settings/intelligence/providers/${android.net.Uri.encode(provider)}") })
                 }
                 composable("model_browser") {
                     com.halo.app.ui.screens.settings.ModelBrowserScreen(ManualDependencyGraph.modelBrowserViewModel,
@@ -493,7 +544,12 @@ fun AppShell(
                     com.halo.app.ui.screens.settings.OnDeviceModelsScreen(ManualDependencyGraph.intelligenceViewModel, onBack = { navController.popBackStack() })
                 }
                 composable("settings/intelligence/context") {
-                    com.halo.app.ui.screens.settings.ContextPrivacyScreen(ManualDependencyGraph.contextPrivacyViewModel, onBack = { navController.popBackStack() })
+                    com.halo.app.ui.screens.settings.ContextPrivacyScreen(ManualDependencyGraph.contextPrivacyViewModel, onBack = { navController.popBackStack() },
+                        onAdvanced = { navigateSafely("settings/intelligence/policy") })
+                }
+                composable("settings/voice/input") {
+                    com.halo.app.ui.screens.settings.SpeechRecognitionSettingsScreen(ManualDependencyGraph.voiceSettingsViewModel,
+                        onBack = { navController.popBackStack() })
                 }
                 composable("settings/voice/output") {
                     Column {
@@ -507,7 +563,7 @@ fun AppShell(
                 }
                 composable("settings/voice/elevenlabs") {
                     val provider = ManualDependencyGraph.speechSynthesisRegistry.providers.filterIsInstance<com.halo.providers.elevenlabs.tts.ElevenLabsTtsProvider>().first()
-                    com.halo.app.ui.screens.settings.ElevenLabsSettingsScreen(provider, ManualDependencyGraph.storage,
+                    com.halo.app.ui.screens.settings.ElevenLabsSettingsScreen(provider,
                         onBack = { navController.popBackStack() },
                         onTestVoice = { ManualDependencyGraph.haloSpeechOutputCoordinator.preview(provider.metadata.id) })
                 }
@@ -526,7 +582,8 @@ fun AppShell(
                     LaunchedEffect(viewModel) {
                         viewModel.navigationEvents.collectLatest { if (it == "back") navController.popBackStack() }
                     }
-                    VoiceSettingsScreen(viewModel, onBack = { navController.popBackStack() }, onSpeechOutput = { navigateSafely("settings/voice/output") })
+                    VoiceSettingsScreen(viewModel, onBack = { navController.popBackStack() }, onSpeechOutput = { navigateSafely("settings/voice/output") },
+                        onSpeechRecognition = { navigateSafely("settings/voice/input") })
                 }
 
                 composable("permissions") {

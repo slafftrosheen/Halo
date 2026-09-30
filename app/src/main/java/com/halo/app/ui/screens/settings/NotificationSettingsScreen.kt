@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import android.app.NotificationManager
 import android.content.Intent
 import android.provider.Settings
@@ -30,20 +32,20 @@ fun NotificationSettingsScreen(viewModel: RoutinesViewModel, onBack: () -> Unit)
 
     val graph = ManualDependencyGraph
     val bridge = graph.notificationBridge
-    val state by bridge.state.collectAsState()
-    val digest by viewModel.result.collectAsState()
-    val routines by viewModel.uiState.collectAsState()
+    val state by bridge.state.collectAsStateWithLifecycle()
+    val digest by viewModel.result.collectAsStateWithLifecycle()
+    val routines by viewModel.uiState.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     var revision by remember { mutableIntStateOf(0) }
     var posting by remember { mutableStateOf(false) }
     var exact by remember { mutableStateOf("Checking") }
     var reminders by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
     var apps by remember { mutableStateOf<List<Pair<String, String>>>(emptyList()) }
-    val deliverySettings by graph.digestDeliverySettings.state.collectAsState()
+    val deliverySettings by graph.digestDeliverySettings.state.collectAsStateWithLifecycle()
     val deliveryChannel = deliverySettings.channel
     val wearableId = deliverySettings.wearableId
     var wearableDraft by rememberSaveable(wearableId) { mutableStateOf(wearableId) }
-    val recent by graph.notificationRepository.observeRecent().collectAsState(initial = emptyList())
+    val recent by graph.notificationRepository.observeRecent().collectAsStateWithLifecycle(initialValue = emptyList())
     var policyError by remember { mutableStateOf<String?>(null) }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     fun refresh() {

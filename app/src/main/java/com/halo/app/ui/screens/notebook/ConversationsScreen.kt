@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.notebook
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import android.text.format.DateUtils
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -49,9 +51,9 @@ fun ConversationsListScreen(
     onOpenConversation: (String) -> Unit,
     onBack: () -> Unit
 ) {
-    val history by conversationStore.history.collectAsState()
-    val summaries by conversationStore.conversations.collectAsState()
-    val loaded by conversationStore.historyLoaded.collectAsState()
+    val history by conversationStore.history.collectAsStateWithLifecycle()
+    val summaries by conversationStore.conversations.collectAsStateWithLifecycle()
+    val loaded by conversationStore.historyLoaded.collectAsStateWithLifecycle()
     var query by remember { mutableStateOf("") }
     val conversations = remember(history, summaries, query) {
         val titles = summaries.associate { it.id to it.title }

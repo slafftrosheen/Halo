@@ -27,7 +27,7 @@ fun HaloMarkdownText(
 ) {
     if (markdown.isBlank()) return
 
-    val lines = markdown.lines()
+    val lines = androidx.compose.runtime.remember(markdown) { markdown.lines() }
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         var inCodeBlock = false
         val codeBuffer = StringBuilder()
@@ -54,7 +54,7 @@ fun HaloMarkdownText(
             when {
                 trimmed.startsWith("# ") -> {
                     Text(
-                        text = parseFormattedText(trimmed.removePrefix("# ")),
+                        text = formattedText(trimmed.removePrefix("# ")),
                         style = HaloTypography.titleLarge,
                         color = textColor,
                         modifier = Modifier.padding(top = 8.dp, bottom = 2.dp)
@@ -62,7 +62,7 @@ fun HaloMarkdownText(
                 }
                 trimmed.startsWith("## ") -> {
                     Text(
-                        text = parseFormattedText(trimmed.removePrefix("## ")),
+                        text = formattedText(trimmed.removePrefix("## ")),
                         style = HaloTypography.titleMedium,
                         color = textColor,
                         modifier = Modifier.padding(top = 6.dp, bottom = 2.dp)
@@ -70,7 +70,7 @@ fun HaloMarkdownText(
                 }
                 trimmed.startsWith("### ") -> {
                     Text(
-                        text = parseFormattedText(trimmed.removePrefix("### ")),
+                        text = formattedText(trimmed.removePrefix("### ")),
                         style = HaloTypography.labelLarge,
                         color = textColor,
                         modifier = Modifier.padding(top = 4.dp, bottom = 2.dp)
@@ -84,7 +84,7 @@ fun HaloMarkdownText(
                     ) {
                         Text("•", style = HaloTypography.bodyLarge, color = HaloGlassColors.Accent)
                         Text(
-                            text = parseFormattedText(content),
+                            text = formattedText(content),
                             style = HaloTypography.bodyLarge,
                             color = textColor
                         )
@@ -100,7 +100,7 @@ fun HaloMarkdownText(
                     ) {
                         Text(num, style = HaloTypography.labelLarge, color = HaloGlassColors.Accent)
                         Text(
-                            text = parseFormattedText(content),
+                            text = formattedText(content),
                             style = HaloTypography.bodyLarge,
                             color = textColor
                         )
@@ -111,7 +111,7 @@ fun HaloMarkdownText(
                 }
                 else -> {
                     Text(
-                        text = parseFormattedText(line),
+                        text = formattedText(line),
                         style = HaloTypography.bodyLarge,
                         color = textColor,
                         lineHeight = 22.sp
@@ -143,7 +143,16 @@ private fun CodeBlock(code: String) {
     }
 }
 
-private fun parseFormattedText(text: String): AnnotatedString {
+@Composable
+private fun formattedText(text: String): AnnotatedString {
+    val codeBackground = HaloGlassColors.Glass
+    val codeColor = HaloGlassColors.Accent
+    return androidx.compose.runtime.remember(text, codeBackground, codeColor) {
+        parseFormattedText(text, codeBackground, codeColor)
+    }
+}
+
+private fun parseFormattedText(text: String, codeBackground: Color, codeColor: Color): AnnotatedString {
     return buildAnnotatedString {
         var i = 0
         val len = text.length
@@ -153,7 +162,7 @@ private fun parseFormattedText(text: String): AnnotatedString {
                 val end = text.indexOf("**", i + 2)
                 if (end != -1) {
                     withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
-                        append(parseFormattedText(text.substring(i + 2, end)))
+                        append(parseFormattedText(text.substring(i + 2, end), codeBackground, codeColor))
                     }
                     i = end + 2
                     continue
@@ -178,8 +187,8 @@ private fun parseFormattedText(text: String): AnnotatedString {
                     withStyle(
                         SpanStyle(
                             fontFamily = FontFamily.Monospace,
-                            background = HaloGlassColors.Glass,
-                            color = HaloGlassColors.Accent
+                            background = codeBackground,
+                            color = codeColor
                         )
                     ) {
                         append(text.substring(i + 1, end))

@@ -18,7 +18,7 @@ class CerebrasProvider(
         OpenAiCompatibleTransport(it, "https://api.cerebras.ai/v1", AiWireProtocol.OPENAI_CHAT_COMPLETIONS)
     },
     private val credentialProvider: CredentialProvider = CerebrasCredentialProvider(storage),
-) : AiInferenceProvider, CredentialProvider by credentialProvider {
+) : AiInferenceProvider, CredentialProvider by credentialProvider, ProviderConfigurationReporting {
 
     override val id: String = RemoteProviderIds.CEREBRAS
     override val displayName: String = "Cerebras"
@@ -32,6 +32,8 @@ class CerebrasProvider(
         systemPrompt = storage.getString("cerebras_system_prompt") ?: "You are Halo, a helpful AI assistant.",
         allowInsecureLocalCredentialTransport = false,
     )
+
+    override val configurationDescriptor: ProviderConfigurationDescriptor get() = configured.configurationDescriptor
 
     override val status: StateFlow<ProviderStatus> get() = configured.status
     val authInfo: StateFlow<ProviderAuthInfo> get() = configured.authInfo

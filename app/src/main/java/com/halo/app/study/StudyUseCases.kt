@@ -199,6 +199,8 @@ class StudyUseCases(
     fun observeDuePracticeItems(limit: Int = 50): Flow<List<StudyPracticeItem>> =
         repository.observeDuePracticeItems(limit)
 
+    fun observeSessionDuePractice(sessionId: String): Flow<List<StudyPracticeItem>> = repository.observeSessionDuePractice(sessionId)
+
     suspend fun getSession(sessionId: String): StudySessionRecord? = repository.getSession(sessionId)
 
     suspend fun sourceRevision(objectId: String): Long? = documents?.load(objectId)?.revision
@@ -231,6 +233,19 @@ class StudyUseCases(
             onSuccess = { StudyStartResult.Started(it) },
             onFailure = { StudyStartResult.Unavailable(StudyUnavailableReason.PERSISTENCE_FAILED) },
         )
+    }
+
+    /** A topic is sufficient; notebook sources are optional. */
+    suspend fun startTopic(topic: String, explanationLanguage: String? = null): StudyStartResult {
+        require(topic.isNotBlank()) { "Choose something to learn" }
+        return try {
+            StudyStartResult.Started(repository.createSession(
+                sourceObjectIds = emptyList(), sourceRevision = null,
+                languages = StudyLanguagePreferences(explanationLanguage = explanationLanguage),
+                goal = topic.trim().take(400),
+            ))
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (_: Exception) { StudyStartResult.Unavailable(StudyUnavailableReason.PERSISTENCE_FAILED) }
     }
 
     /** Resume restores the exact stage and exercise, or reports that there is nothing to resume. */

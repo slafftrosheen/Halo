@@ -15,12 +15,6 @@ import androidx.compose.ui.unit.dp
 import com.halo.app.ui.glass.material.HaloGlassColors
 import com.halo.app.ui.glass.material.HaloTypography
 
-private val HaloPageBackground = Brush.verticalGradient(
-    0f to HaloGlassColors.BackgroundSecondary,
-    0.28f to HaloGlassColors.Background,
-    1f to HaloGlassColors.Background
-)
-
 @Composable
 fun HaloGlassPage(
     title: String,
@@ -34,9 +28,9 @@ fun HaloGlassPage(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(HaloPageBackground)
+            .background(HaloGlassColors.Background)
             .then(scrollModifier)
-            .padding(horizontal = 16.dp, vertical = 16.dp),
+            .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
         content = {
             if (title.isNotEmpty()) {
@@ -62,8 +56,8 @@ fun HaloGlassLazyPage(
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .background(HaloPageBackground),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
+            .background(HaloGlassColors.Background),
+        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         item {

@@ -13,6 +13,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import com.halo.app.ui.theme.rememberReducedMotion
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
@@ -26,10 +28,11 @@ fun PulseIndicator(
     isPulsing: Boolean = true,
     durationMillis: Int = 2000
 ) {
-    if (isPulsing) {
+    val reducedMotion by rememberReducedMotion()
+    if (isPulsing && !reducedMotion) {
         val infiniteTransition = rememberInfiniteTransition(label = "pulse")
         
-        val scale by infiniteTransition.animateFloat(
+        val scale = infiniteTransition.animateFloat(
             initialValue = 0.8f,
             targetValue = 1.2f,
             animationSpec = infiniteRepeatable(
@@ -39,7 +42,7 @@ fun PulseIndicator(
             label = "scale"
         )
         
-        val alpha by infiniteTransition.animateFloat(
+        val alpha = infiniteTransition.animateFloat(
             initialValue = 0.4f,
             targetValue = 1.0f,
             animationSpec = infiniteRepeatable(
@@ -52,15 +55,18 @@ fun PulseIndicator(
         Box(
             modifier = Modifier
                 .size(size)
-                .scale(scale)
-                .alpha(alpha)
+                .graphicsLayer {
+                    scaleX = scale.value
+                    scaleY = scale.value
+                    this.alpha = alpha.value
+                }
                 .background(color = color, shape = CircleShape)
         )
     } else {
         Box(
             modifier = Modifier
                 .size(size)
-                .background(color = color.copy(alpha = 0.4f), shape = CircleShape)
+                .background(color = color.copy(alpha = if (isPulsing) 1f else 0.4f), shape = CircleShape)
         )
     }
 }

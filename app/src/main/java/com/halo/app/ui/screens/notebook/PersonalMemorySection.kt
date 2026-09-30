@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.notebook
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -14,9 +16,9 @@ import kotlinx.coroutines.*
 /** Uses the Notebook visual system and Inbox; review stays inline, never interrupts normal work. */
 @Composable fun PersonalMemorySection(viewModel: NotebookViewModel,inboxOnly: Boolean = false) {
     val learning=ManualDependencyGraph.personalLearning
-    val pending by learning.pending.collectAsState(emptyList())
-    val memories by ManualDependencyGraph.memoryRepository.observeMemories().collectAsState(emptyList())
-    val episodes by learning.episodes.collectAsState(emptyList())
+    val pending by learning.pending.collectAsStateWithLifecycle(emptyList())
+    val memories by ManualDependencyGraph.memoryRepository.observeMemories().collectAsStateWithLifecycle(emptyList())
+    val episodes by learning.episodes.collectAsStateWithLifecycle(emptyList())
     var section by remember { mutableStateOf(if(inboxOnly) "Suggestions" else "Confirmed") }
     val scope=rememberCoroutineScope()
     var error by remember { mutableStateOf<String?>(null) }

@@ -141,6 +141,7 @@ private fun FrontRangeIndicator(
     }
     val progress = (rangeMm?.coerceIn(0, 2000)?.div(2000f) ?: 0f)
 
+    val ringColor = HaloGlassColors.BorderSubtle
     Row(
         modifier
             .height(52.dp)
@@ -152,7 +153,7 @@ private fun FrontRangeIndicator(
         Canvas(Modifier.size(32.dp)) {
             val center = androidx.compose.ui.geometry.Offset(size.width / 2f, size.height / 2f)
             val radius = size.minDimension * 0.38f
-            drawCircle(HaloGlassColors.BorderSubtle, radius, center, style = Stroke(1.dp.toPx()))
+            drawCircle(ringColor, radius, center, style = Stroke(1.dp.toPx()))
             drawArc(tone.copy(alpha = 0.9f), -90f, 360f * progress, false, style = Stroke(3.dp.toPx()))
             drawCircle(tone, 3.dp.toPx(), center)
         }
@@ -171,6 +172,7 @@ private fun FrontRangeIndicator(
     }
 }
 
+@Composable
 private fun rangeColor(range: Int?): Color = when {
     range == null -> HaloGlassColors.TextMuted
     range <= 150 -> HaloGlassColors.Danger

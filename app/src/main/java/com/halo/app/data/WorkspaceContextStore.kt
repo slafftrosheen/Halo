@@ -84,6 +84,11 @@ class WorkspaceContextStore(private val database: AppDatabase, private val notes
             "FILE" -> database.workspaceFileDao().getFile(id)?.let {
                 "${it.displayName} (${it.mimeType})"
             }
+            "CANVAS", "ARTIFACT" -> if (item.contentRef.startsWith("canvas:")) {
+                database.notebookCanvasDao().getNodes(id).joinToString("\n\n") { node ->
+                    if (node.refObjectId == null) node.text else "Linked workspace item: ${node.text}. Select that source separately to include its content."
+                }.take(8000).ifBlank { item.title }
+            } else item.title
             "CONVERSATION" -> database.conversationDao().turns(id).takeLast(3)
                 .joinToString("\n") { "User: ${it.userText}\nHalo: ${it.assistantText}" }
             else -> item.title

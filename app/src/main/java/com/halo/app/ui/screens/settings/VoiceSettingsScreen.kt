@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -42,12 +44,11 @@ import com.halo.app.ui.workspace.HaloWorkspaceRow
 import com.halo.app.ui.workspace.HaloWorkspaceSection
 
 @Composable
-fun VoiceSettingsScreen(
+fun SpeechRecognitionSettingsScreen(
     viewModel: VoiceSettingsViewModel,
     onBack: () -> Unit,
-    onSpeechOutput: () -> Unit = {},
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
 
     DisposableEffect(lifecycleOwner, viewModel) {
@@ -68,21 +69,13 @@ fun VoiceSettingsScreen(
             .padding(horizontal = 20.dp, vertical = 14.dp)
     ) {
         HaloWorkspaceHeader(
-            title = "Voice",
-            subtitle = "Speech input, output and audio routing.",
+            title = "Speech recognition",
+            subtitle = "Local speech model and language.",
             onBack = onBack
         )
 
         Spacer(Modifier.height(20.dp))
 
-        HaloWorkspaceSection(title = "Output") {
-            viewModel.synthesisRegistry?.let { registry ->
-                val selected by registry.selector.ttsSelection.collectAsState()
-                Text("Voice provider: ${selected.id}")
-            }
-            TextButton(onClick = onSpeechOutput) { Text("Speech output settings") }
-        }
-        Spacer(Modifier.height(20.dp))
         HaloWorkspaceSection(title = "Speech recognition") {
             HaloWorkspaceRow(
                 title = "Model",
@@ -119,18 +112,6 @@ fun VoiceSettingsScreen(
             text = { Column { uiState.availableLocales.forEach { option ->
                 TextButton(onClick = { viewModel.selectLocale(option.tag); languagePicker = false }) { Text(option.displayName) }
             } } }, confirmButton = { TextButton(onClick = { languagePicker = false }) { Text("Close") } })
-
-        Spacer(Modifier.height(20.dp))
-
-        HaloWorkspaceSection(title = "Wearable audio") {
-            HaloWorkspaceRow(title = "Reply on glasses", trailingText = "On")
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            HaloWorkspaceRow(
-                title = "If glasses audio is unavailable",
-                trailingText = if (uiState.wearablePhoneFallback) "Use phone speaker" else "Stay silent",
-                onClick = { viewModel.setWearablePhoneFallback(!uiState.wearablePhoneFallback) }
-            )
-        }
 
         Spacer(Modifier.height(20.dp))
 
@@ -216,5 +197,39 @@ fun VoiceSettingsScreen(
         }
 
         Spacer(Modifier.height(32.dp))
+    }
+}
+
+@Composable
+fun VoiceSettingsScreen(viewModel: VoiceSettingsViewModel, onBack: () -> Unit,
+    onSpeechOutput: () -> Unit = {}, onSpeechRecognition: () -> Unit = {}) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        HaloWorkspaceHeader(title = "Voice", subtitle = "Speech input, output and routing", onBack = onBack)
+        HaloWorkspaceSection(title = "Input") {
+            Text("Whisper Tiny")
+            Text(if (uiState.isInstalled) "Ready" else if (uiState.isDownloading) "Downloading" else "Not installed")
+            Text("Language: " + (uiState.availableLocales.firstOrNull { it.tag == uiState.selectedLocale }?.displayName ?: uiState.selectedLocale))
+            TextButton(onClick = onSpeechRecognition) { Text("Speech recognition") }
+        }
+        HaloWorkspaceSection(title = "Output") {
+            viewModel.synthesisRegistry?.let { registry ->
+                val selected by registry.selector.ttsSelection.collectAsStateWithLifecycle()
+                val provider = registry.providers.firstOrNull { it.metadata.id == selected.id }
+                    ?: registry.providers.firstOrNull { it.metadata.id == "provider.android.tts" }
+                Text(provider?.metadata?.displayName ?: "Android TTS")
+                (provider as? com.halo.providers.elevenlabs.tts.ElevenLabsTtsProvider)?.let { cloud ->
+                    val health by cloud.state.collectAsStateWithLifecycle()
+                    Text(cloud.cachedCatalogue()?.voices?.firstOrNull { it.id == cloud.voiceId() }?.name ?: "Choose a voice")
+                    Text(if (!health.configured) "Setup required" else if (health.ready) "Ready" else "Configured")
+                }
+            }
+            TextButton(onClick = onSpeechOutput) { Text("Speech output") }
+        }
+        HaloWorkspaceSection(title = "Routing") {
+            HaloWorkspaceRow(title = "Glasses replies", trailingText = "On")
+            HaloWorkspaceRow(title = "Phone fallback", trailingText = if (uiState.wearablePhoneFallback) "On" else "Off",
+                onClick = { viewModel.setWearablePhoneFallback(!uiState.wearablePhoneFallback) })
+        }
     }
 }

@@ -39,7 +39,11 @@ class OpenRouterProvider(
     private val storage: Storage,
     private val client: OkHttpClient = defaultClient(),
     private val nowEpochMs: () -> Long = System::currentTimeMillis,
-) : AiInferenceProvider, com.halo.sdk.provider.CredentialProvider {
+) : AiImageProvider, com.halo.sdk.provider.CredentialProvider, com.halo.sdk.provider.ProviderConfigurationReporting {
+
+    override val configurationDescriptor: com.halo.sdk.provider.ProviderConfigurationDescriptor get() =
+        com.halo.sdk.provider.ProviderConfigurationDescriptor(id, displayName, com.halo.sdk.provider.AiExecutionLocation.REMOTE,
+            listOf(com.halo.sdk.provider.ProviderConfigurationField("credential", "API key", com.halo.sdk.provider.ProviderFieldKind.SECRET)), "OPENAI_CHAT_COMPLETIONS", "ACCOUNT_DEPENDENT")
 
     override val id: String = "openrouter"
     override val displayName: String = "OpenRouter"
@@ -75,6 +79,10 @@ class OpenRouterProvider(
     @Volatile private var rejectedApiKey: String? = null
     @Volatile var modelMetadata: Map<String, OpenRouterModelMetadata> = emptyMap()
         private set
+    override fun configurationChanged() {
+        rejectedApiKey = null; cooldown = null
+        _status.value = if (hasCredential()) ProviderStatus(ProviderStatus.State.STANDBY, "Configured; not checked") else ProviderStatus.UNCONFIGURED
+    }
     override suspend fun getStatus(): ProviderStatus = withContext(Dispatchers.IO) {
         val current = if (apiKey.isNullOrBlank()) {
             ProviderStatus.UNCONFIGURED
@@ -135,6 +143,50 @@ class OpenRouterProvider(
     override suspend fun getCapabilities(): Set<AiCapability> = setOf(
         AiCapability.TEXT, AiCapability.IMAGE, AiCapability.STREAMING, AiCapability.TOOLS
     )
+
+    override suspend fun listImageModels(): List<AiImageModel> = withContext(Dispatchers.IO) {
+        val key = apiKey ?: return@withContext emptyList()
+        val request = Request.Builder().url("https://openrouter.ai/api/v1/images/models")
+            .header("Authorization", "Bearer $key").get().build()
+        val response = client.newCall(request).awaitImagePayload()
+        run {
+            if (response.code !in 200..299) throw httpError(response.code, response.body, response.retryAfter)
+            val data = JSONObject(response.body).optJSONArray("data") ?: JSONArray()
+            (0 until data.length()).mapNotNull { index ->
+                val item = data.optJSONObject(index) ?: return@mapNotNull null
+                val modelId = item.optString("id").takeIf { it.isNotBlank() } ?: return@mapNotNull null
+                // SVG generators are not supported by Android's raster attachment decoder.
+                if (modelId.contains("vector", true)) return@mapNotNull null
+                val inputs = item.optJSONObject("architecture")?.optJSONArray("input_modalities") ?: JSONArray()
+                AiImageModel(modelId, item.optString("name", modelId), (0 until inputs.length()).any { inputs.optString(it) == "image" })
+            }.sortedBy { it.displayName }
+        }
+    }
+
+    override suspend fun generateImage(request: AiImageRequest): AiImageResult = withContext(Dispatchers.IO) {
+        throwIfCoolingDown()
+        val key = apiKey ?: throw missingApiKey()
+        val body = JSONObject().put("model", request.modelId).put("prompt", request.prompt).put("n", 1)
+        request.reference?.let { bytes ->
+            body.put("input_references", JSONArray().put(JSONObject().put("type", "image_url").put("image_url",
+                JSONObject().put("url", "data:${request.referenceMime};base64,${android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)}"))))
+        }
+        val http = Request.Builder().url("https://openrouter.ai/api/v1/images").header("Authorization", "Bearer $key")
+            .post(body.toString().toRequestBody("application/json".toMediaType())).build()
+        try {
+            val response = client.newBuilder().readTimeout(180, TimeUnit.SECONDS).callTimeout(180, TimeUnit.SECONDS).build().newCall(http).awaitImagePayload()
+            run {
+                if (response.code !in 200..299) throw httpError(response.code, response.body, response.retryAfter)
+                val output = JSONObject(response.body).optJSONArray("data")?.optJSONObject(0)
+                    ?: throw AiProviderException(AiErrorType.INVALID_RESPONSE, "No image returned")
+                val encoded = output.optString("b64_json")
+                require(encoded.isNotBlank() && encoded.length <= 45_000_000) { "Image response was empty or too large" }
+                val result = AiImageResult(android.util.Base64.decode(encoded, android.util.Base64.DEFAULT), output.optString("media_type", "image/png"), id, request.modelId)
+                _status.value = ProviderStatus.READY; cooldown = null; rejectedApiKey = null
+                result
+            }
+        } catch (error: AiProviderException) { _status.value = providerStatus(error); throw error }
+    }
 
     override suspend fun generate(request: AiRequest, context: AiContext): AiResponse = withContext(Dispatchers.IO) {
         throwIfCoolingDown()
@@ -326,6 +378,11 @@ class OpenRouterProvider(
         }
     }.flowOn(Dispatchers.IO)
 
+    override suspend fun refreshModels(): List<AiModel> {
+        storage.remove(MODEL_CATALOG_REFRESHED_AT_KEY)
+        return listModels()
+    }
+
     override suspend fun listModels(): List<AiModel> = withContext(Dispatchers.IO) {
         throwIfCoolingDown()
         val key = apiKey ?: return@withContext readCachedModels()
@@ -387,6 +444,8 @@ class OpenRouterProvider(
                 val item = data.getJSONObject(i)
                 val modelId = item.getString("id")
                 val parameters = jsonStringArray(item, "supported_parameters")
+                val outputs = item.optJSONObject("architecture")?.let { jsonStringArray(it, "output_modalities") }.orEmpty()
+                if (outputs.isNotEmpty() && "text" !in outputs) continue
                 val modalities = item.optJSONObject("architecture")
                     ?.let { jsonStringArray(it, "input_modalities") }.orEmpty()
                 val pricing = item.optJSONObject("pricing")

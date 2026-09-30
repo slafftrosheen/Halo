@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -19,7 +21,7 @@ import com.halo.app.ui.workspace.HaloWorkspaceSection
 
 @Composable
 fun StorageBackupScreen(viewModel: StorageBackupViewModel, onBack: () -> Unit) {
-    val state by viewModel.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     var includeFiles by remember { mutableStateOf(false) }
     var protect by remember { mutableStateOf(false) }
     var password by remember { mutableStateOf("") }

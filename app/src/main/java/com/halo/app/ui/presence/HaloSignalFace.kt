@@ -1,48 +1,36 @@
 package com.halo.app.ui.presence
 
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.semantics.*
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.halo.app.ui.icons.HaloGlyphRenderer
+import com.halo.app.ui.theme.rememberReducedMotion
 
-enum class HaloSignalFaceSize {
-    HERO,
-    STANDARD,
-    COMPACT,
-    MICRO,
-}
+enum class HaloSignalFaceSize { HERO, STANDARD, COMPACT, MICRO }
 
+/** Motion is read only by drawing/layer phases, never by the surrounding screen. */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HaloSignalFace(
@@ -53,289 +41,101 @@ fun HaloSignalFace(
     onClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null,
 ) {
-    val isDark = isSystemInDarkTheme()
-    val palette = HaloSignalPalette.resolve(presentation.state, isDark)
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-
-    val pressScale by animateFloatAsState(
-        targetValue = if (isPressed) 0.94f else 1f,
-        animationSpec = tween(durationMillis = 150),
-        label = "signal_face_press"
-    )
-
-    val transition = rememberInfiniteTransition(label = "halo_signal_face_motion")
-    val pulseAnimation by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "halo_pulse"
-    )
-    val orbitAnimation by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 5200, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "halo_orbit",
-    )
-
-    val sizeProfile = when {
-        size >= 140.dp -> HaloSignalFaceSize.HERO
-        size >= 72.dp -> HaloSignalFaceSize.STANDARD
-        size >= 32.dp -> HaloSignalFaceSize.COMPACT
-        else -> HaloSignalFaceSize.MICRO
+    val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val palette = remember(presentation.state, dark) { HaloSignalPalette.resolve(presentation.state, dark) }
+    val systemReducedMotion by rememberReducedMotion()
+    val reducedMotion = presentation.reducedMotion || systemReducedMotion
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    var foreground by remember(lifecycle) { mutableStateOf(lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) }
+    DisposableEffect(lifecycle) {
+        val observer = LifecycleEventObserver { _, _ ->
+            foreground = lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
+        }
+        lifecycle.addObserver(observer)
+        onDispose { lifecycle.removeObserver(observer) }
     }
-
-    val activeActivityLevel = if (presentation.reducedMotion) 0f else presentation.activityLevel.coerceIn(0f, 1f)
-    val motionOffset = if (presentation.reducedMotion) 0f else pulseAnimation
-
-    val semanticStateDescription = buildString {
-        append("Halo, ${presentation.label}")
-        if (presentation.detail != null) append(", ${presentation.detail}")
-    }
-
+    val interactions = remember { MutableInteractionSource() }
+    val pressed by interactions.collectIsPressedAsState()
+    val pressScale = animateFloatAsState(
+        targetValue = if (pressed) 0.96f else 1f,
+        animationSpec = tween(if (reducedMotion) 0 else 90), label = "halo_touch",
+    )
+    val moving = !reducedMotion && foreground && size >= 72.dp &&
+        presentation.state !in setOf(HaloSignalState.OFFLINE, HaloSignalState.STOPPED, HaloSignalState.ERROR, HaloSignalState.WARNING)
+    val still = remember { mutableStateOf(0f) }
+    val phase: State<Float> = if (moving) {
+        rememberInfiniteTransition(label = "halo_breath").animateFloat(
+            initialValue = 0f, targetValue = 1f,
+            animationSpec = infiniteRepeatable(tween(3600, easing = LinearEasing), RepeatMode.Restart),
+            label = "halo_phase",
+        )
+    } else still
+    val friendly = size >= 72.dp && presentation.state in setOf(
+        HaloSignalState.IDLE, HaloSignalState.LISTENING, HaloSignalState.SPEAKING, HaloSignalState.SUCCESS,
+    )
+    val activity = presentation.activityLevel.coerceIn(0f, 1f)
     Box(
-        modifier = modifier
-            .size(size)
-            .scale(pressScale)
+        modifier = modifier.size(size)
+            .graphicsLayer { scaleX = pressScale.value; scaleY = pressScale.value }
             .semantics {
                 this.contentDescription = contentDescription
-                stateDescription = semanticStateDescription
+                stateDescription = listOfNotNull(presentation.label, presentation.detail).joinToString(", ")
             }
-            .then(
-                if (onClick != null || onLongClick != null) {
-                    Modifier.combinedClickable(
-                        interactionSource = interactionSource,
-                        indication = null,
-                        onClick = { onClick?.invoke() },
-                        onLongClick = { onLongClick?.invoke() }
-                    )
-                } else Modifier
-            ),
-        contentAlignment = Alignment.Center
+            .then(if (onClick != null || onLongClick != null) Modifier.combinedClickable(
+                interactionSource = interactions, indication = null, role = Role.Button,
+                onClickLabel = "Interact with Halo", onClick = { onClick?.invoke() },
+                onLongClick = onLongClick,
+            ) else Modifier),
+        contentAlignment = Alignment.Center,
     ) {
-        Canvas(modifier = Modifier.matchParentSize()) {
-            val canvasSize = this.size.minDimension
-            val center = Offset(this.size.width / 2f, this.size.height / 2f)
-
-            if (sizeProfile == HaloSignalFaceSize.MICRO) {
-                val ringRadius = canvasSize * 0.44f
-                val ringStroke = canvasSize * 0.12f
-                drawCircle(
-                    color = palette.halo,
-                    radius = ringRadius,
-                    center = center,
-                    style = Stroke(width = ringStroke)
-                )
-                drawCircle(
-                    color = palette.display,
-                    radius = ringRadius - ringStroke / 2f,
-                    center = center
-                )
-                return@Canvas
-            }
-
-            val outerRadius = canvasSize * 0.46f
-            val ringWidth = when (sizeProfile) {
-                HaloSignalFaceSize.HERO -> canvasSize * 0.08f
-                HaloSignalFaceSize.STANDARD -> canvasSize * 0.09f
-                else -> canvasSize * 0.10f
-            }
-
-            val expansion = if (presentation.state == HaloSignalState.LISTENING || presentation.state == HaloSignalState.SPEAKING) {
-                activeActivityLevel * (canvasSize * 0.04f)
-            } else if (presentation.state == HaloSignalState.THINKING) {
-                motionOffset * (canvasSize * 0.02f)
-            } else 0f
-
-            val haloRadius = outerRadius + expansion
-            val ambientRadius = haloRadius + ringWidth * (1.55f + motionOffset * 0.18f)
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(
-                        palette.halo.copy(alpha = 0.16f),
-                        palette.haloSecondary.copy(alpha = 0.07f),
-                        Color.Transparent,
-                    ),
-                    center = center,
-                    radius = ambientRadius,
-                ),
-                radius = ambientRadius,
-                center = center,
+        Box(Modifier.matchParentSize().drawWithCache {
+            val c = Offset(this.size.width / 2f, this.size.height / 2f)
+            val radius = this.size.minDimension * 0.38f
+            val ring = this.size.minDimension * 0.038f
+            val ambient = Brush.radialGradient(
+                listOf(palette.halo.copy(alpha = 0.22f), Color.Transparent), c, radius * 1.32f,
             )
-
-            // A quiet outer rail gives the active color a physical boundary and
-            // keeps the presence legible without relying on a large neon glow.
-            drawCircle(
-                color = palette.halo.copy(alpha = 0.18f),
-                radius = haloRadius + ringWidth * 0.72f,
-                center = center,
-                style = Stroke(width = 1.dp.toPx()),
+            val shell = Brush.sweepGradient(listOf(palette.halo, palette.haloSecondary, palette.halo), c)
+            val core = Brush.radialGradient(
+                listOf(palette.displayHighlight, palette.display), c - Offset(radius * 0.25f, radius * 0.35f), radius * 1.5f,
             )
-            val haloGlowBrush = Brush.radialGradient(
-                colors = listOf(
-                    palette.halo.copy(alpha = 0.54f),
-                    palette.haloSecondary.copy(alpha = 0.28f),
-                    palette.halo.copy(alpha = 0f)
-                ),
-                center = center,
-                radius = haloRadius + ringWidth
-            )
-
-            drawCircle(
-                brush = haloGlowBrush,
-                radius = haloRadius + ringWidth * 0.5f,
-                center = center
-            )
-
-            drawCircle(
-                brush = Brush.sweepGradient(
-                    colors = listOf(palette.halo, palette.haloSecondary, palette.halo),
-                    center = center
-                ),
-                radius = haloRadius,
-                center = center,
-                style = Stroke(width = ringWidth)
-            )
-
-            val signalPixel = when (sizeProfile) {
-                HaloSignalFaceSize.HERO -> 5.dp.toPx()
-                HaloSignalFaceSize.STANDARD -> 4.dp.toPx()
-                else -> 3.dp.toPx()
-            }
-            val signalOffset = haloRadius + ringWidth * 0.72f
-            listOf(
-                Offset(center.x, center.y - signalOffset),
-                Offset(center.x + signalOffset, center.y),
-                Offset(center.x, center.y + signalOffset),
-                Offset(center.x - signalOffset, center.y),
-            ).forEachIndexed { index, point ->
-                drawRoundRect(
-                    color = if (index == 0) palette.glyph.copy(alpha = 0.90f) else palette.halo.copy(alpha = 0.58f),
-                    topLeft = point - Offset(signalPixel / 2f, signalPixel / 2f),
-                    size = Size(signalPixel, signalPixel),
-                )
-            }
-
-            val motionAlpha = if (presentation.reducedMotion) 0f else 1f
-            when (presentation.state) {
-                HaloSignalState.THINKING -> rotate(orbitAnimation, center) {
-                    drawArc(
-                        color = palette.glyph.copy(alpha = 0.72f * motionAlpha),
-                        startAngle = -34f,
-                        sweepAngle = 68f,
-                        useCenter = false,
-                        topLeft = Offset(center.x - haloRadius, center.y - haloRadius),
-                        size = Size(haloRadius * 2f, haloRadius * 2f),
-                        style = Stroke(width = ringWidth * 0.34f, cap = StrokeCap.Round),
-                    )
-                }
-                HaloSignalState.CAPTURING, HaloSignalState.ACTING -> rotate(orbitAnimation * 1.25f, center) {
-                    repeat(3) { index ->
-                        drawArc(
-                            color = palette.glyph.copy(alpha = (0.62f - index * 0.12f) * motionAlpha),
-                            startAngle = index * 120f,
-                            sweepAngle = 34f,
-                            useCenter = false,
-                            topLeft = Offset(center.x - haloRadius, center.y - haloRadius),
-                            size = Size(haloRadius * 2f, haloRadius * 2f),
-                            style = Stroke(width = ringWidth * 0.28f, cap = StrokeCap.Round),
-                        )
+            onDrawBehind {
+                val t = phase.value
+                val breath = if (moving) (kotlin.math.sin(t * Math.PI * 2).toFloat() + 1f) * 0.5f else 0.5f
+                val r = radius * (1f + if (reducedMotion) 0f else breath * 0.025f + activity * 0.035f)
+                drawCircle(ambient, radius * 1.32f, c)
+                drawCircle(shell, r, c, style = Stroke(ring))
+                drawCircle(core, r - ring, c)
+                drawArc(palette.glyph.copy(alpha = 0.16f), 210f, 72f, false,
+                    c - Offset(r * 0.84f, r * 0.84f), Size(r * 1.68f, r * 1.68f), style = Stroke(1.dp.toPx(), cap = StrokeCap.Round))
+                if (presentation.state in setOf(HaloSignalState.THINKING, HaloSignalState.ACTING, HaloSignalState.CAPTURING)) {
+                    rotate(t * 360f, c) {
+                        drawArc(palette.glyph.copy(alpha = 0.8f), -90f, 48f, false,
+                            c - Offset(r, r), Size(r * 2, r * 2), style = Stroke(ring * 0.55f, cap = StrokeCap.Round))
                     }
                 }
-                HaloSignalState.LISTENING, HaloSignalState.SPEAKING -> {
-                    val responseRadius = haloRadius + ringWidth * (0.72f + activeActivityLevel * 0.35f)
-                    drawCircle(
-                        color = palette.haloSecondary.copy(alpha = (0.12f + activeActivityLevel * 0.18f) * motionAlpha),
-                        radius = responseRadius,
-                        center = center,
-                        style = Stroke(width = ringWidth * 0.22f),
-                    )
+                presentation.progress?.let {
+                    drawArc(palette.glyph, -90f, it.coerceIn(0f, 1f) * 360f, false,
+                        c - Offset(r, r), Size(r * 2, r * 2), style = Stroke(ring, cap = StrokeCap.Round))
                 }
-                HaloSignalState.WAITING, HaloSignalState.WARNING, HaloSignalState.ERROR -> {
-                    drawCircle(
-                        color = palette.haloSecondary.copy(alpha = (0.10f + pulseAnimation * 0.12f) * motionAlpha),
-                        radius = haloRadius + ringWidth * (0.55f + pulseAnimation * 0.22f),
-                        center = center,
-                        style = Stroke(width = ringWidth * 0.18f),
-                    )
-                }
-                else -> Unit
-            }
-
-            if (presentation.progress != null) {
-                val progressSweep = presentation.progress.coerceIn(0f, 1f) * 360f
-                drawArc(
-                    color = Color.White.copy(alpha = 0.90f),
-                    startAngle = -90f,
-                    sweepAngle = progressSweep,
-                    useCenter = false,
-                    topLeft = Offset(center.x - haloRadius, center.y - haloRadius),
-                    size = Size(haloRadius * 2f, haloRadius * 2f),
-                    style = Stroke(width = ringWidth * 1.2f, cap = StrokeCap.Round)
-                )
-            }
-
-            val displayRadius = haloRadius - ringWidth * 0.8f
-            drawCircle(
-                color = Color.Black.copy(alpha = 0.20f),
-                radius = displayRadius + 2.dp.toPx(),
-                center = center + Offset(0f, 2.dp.toPx())
-            )
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(palette.displayHighlight, palette.display),
-                    center = center - Offset(displayRadius * 0.22f, displayRadius * 0.28f),
-                    radius = displayRadius * 1.45f,
-                ),
-                radius = displayRadius,
-                center = center
-            )
-
-            if (sizeProfile == HaloSignalFaceSize.HERO || sizeProfile == HaloSignalFaceSize.STANDARD) {
-                val scanHalfWidth = displayRadius * 0.72f
-                repeat(3) { index ->
-                    val y = center.y + (index - 1) * displayRadius * 0.34f
-                    drawLine(
-                        color = palette.glyph.copy(alpha = 0.028f),
-                        start = Offset(center.x - scanHalfWidth, y),
-                        end = Offset(center.x + scanHalfWidth, y),
-                        strokeWidth = 1.dp.toPx(),
-                    )
+                if (friendly) {
+                    val eyeY = c.y - r * 0.08f
+                    val eyeHeight = r * (0.20f + if (presentation.state == HaloSignalState.LISTENING) activity * 0.08f else 0f)
+                    for (side in listOf(-1f, 1f)) {
+                        val x = c.x + side * r * 0.23f
+                        drawLine(palette.glyph, Offset(x, eyeY - eyeHeight / 2), Offset(x, eyeY + eyeHeight / 2),
+                            strokeWidth = r * 0.075f, cap = StrokeCap.Round)
+                    }
+                    // A small smile gives the resting presence warmth without masking runtime state.
+                    drawArc(palette.glyph.copy(alpha = 0.85f), 25f, 130f, false,
+                        Offset(c.x - r * 0.24f, c.y + r * 0.04f), Size(r * 0.48f, r * 0.30f),
+                        style = Stroke(r * 0.045f, cap = StrokeCap.Round))
                 }
             }
-
-            drawCircle(
-                color = palette.halo.copy(alpha = 0.32f),
-                radius = displayRadius,
-                center = center,
-                style = Stroke(width = 1.5.dp.toPx())
-            )
-        }
-
-        val glyphSize = when (sizeProfile) {
-            HaloSignalFaceSize.HERO -> size * 0.44f
-            HaloSignalFaceSize.STANDARD -> size * 0.46f
-            HaloSignalFaceSize.COMPACT -> size * 0.50f
-            HaloSignalFaceSize.MICRO -> size * 0.58f
-        }
-
-        if (sizeProfile != HaloSignalFaceSize.MICRO) {
-            Crossfade(
-                targetState = presentation.glyph,
-                animationSpec = tween(durationMillis = if (presentation.reducedMotion) 0 else 220),
-                label = "halo_glyph_transition",
-            ) { glyph ->
-                HaloGlyphRenderer(
-                    glyph = glyph,
-                    modifier = Modifier.size(glyphSize),
-                    tint = palette.glyph,
-                )
+        })
+        if (!friendly && size >= 32.dp) {
+            Crossfade(presentation.glyph, animationSpec = tween(if (reducedMotion) 0 else 160), label = "halo_state") { glyph ->
+                HaloGlyphRenderer(glyph = glyph, modifier = Modifier.size(size * 0.38f), tint = palette.glyph)
             }
         }
     }

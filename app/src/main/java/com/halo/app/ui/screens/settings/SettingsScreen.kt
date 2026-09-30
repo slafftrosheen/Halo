@@ -2,302 +2,107 @@ package com.halo.app.ui.screens.settings
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Devices
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.Palette
-import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.SmartToy
-import androidx.compose.material.icons.filled.Storage
-import androidx.compose.material.icons.filled.PhoneAndroid
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.halo.app.ui.theme.AppearanceMode
-import com.halo.app.ui.theme.HaloPastelBlue
-import com.halo.app.ui.theme.HaloPastelLilac
-import com.halo.app.ui.theme.HaloPastelMint
-import com.halo.app.ui.theme.HaloPastelYellow
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.halo.app.ui.design.HaloScreenHeader
 import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.icons.HaloIcon
-import com.halo.host.android.assistant.AssistantRoleState
+import com.halo.app.ui.theme.AppearanceMode
 
 @Composable
 fun SettingsScreen(viewModel: SettingsViewModel) {
-    val uiState by viewModel.uiState.collectAsState()
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp)
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    LazyColumn(
+        Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
+        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
-        Spacer(Modifier.height(16.dp))
-        HaloScreenHeader("Settings", "Make Halo yours.")
-
-        Spacer(Modifier.height(28.dp))
-
-        SettingsRow(
-            glyph = HaloGlyph.MODEL,
-            tint = HaloPastelBlue,
-            title = "Intelligence",
-            subtitle = "Models & providers · ${uiState.provider}",
-            onClick = viewModel::openIntelligence
-        )
-        SettingsRow(
-            glyph = com.halo.app.ui.icons.HaloGlyph.TOOL,
-            tint = HaloPastelLilac,
-            title = "Skills",
-            subtitle = "Actions Halo can use",
-            onClick = viewModel::openSkills
-        )
-        SettingsRow(
-            glyph = HaloGlyph.LISTEN,
-            tint = HaloPastelLilac,
-            title = "Voice",
-            subtitle = "Speech and audio · ${uiState.voiceStatus}",
-            onClick = viewModel::openVoice
-        )
-        SettingsRow(glyph=HaloGlyph.STORAGE,tint=HaloPastelMint,title="Memory & learning",
-            subtitle="Explicit requests and reviewed suggestions",onClick=viewModel::openLearning)
-        SettingsRow(
-            glyph = HaloGlyph.SECURITY,
-            tint = HaloPastelYellow,
-            title = "Permissions",
-            subtitle = "Device and data access",
-            onClick = viewModel::openPermissions
-        )
-        SettingsRow(
-            glyph = HaloGlyph.STORAGE,
-            tint = HaloPastelMint,
-            title = "Storage & Backup",
-            subtitle = "Halo Brain and Vault",
-            onClick = viewModel::openStorageBackup
-        )
-
-        Spacer(Modifier.height(18.dp))
-        Text(
-            text = "System Integration",
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(vertical = 8.dp),
-        )
-        SettingsRow(
-            glyph = HaloGlyph.PHONE,
-            tint = HaloPastelBlue,
-            title = "Default Android Assistant",
-            subtitle = "System interactor & gesture integration",
-            onClick = viewModel::openAndroidAssistant,
-        )
-
-        SettingsRow(
-            glyph = com.halo.app.ui.icons.HaloGlyph.AUTOMATION,
-            tint = HaloPastelMint,
-            title = "Automation",
-            subtitle = "Routines & notification digests",
-            onClick = viewModel::openAutomation
-        )
-
-        SettingsRow(
-            glyph = com.halo.app.ui.icons.HaloGlyph.ACTIVITY,
-            tint = HaloPastelBlue,
-            title = "Runtime Status",
-            subtitle = "Tasks, capabilities & resources",
-            onClick = viewModel::openRuntimeStatus
-        )
-
-        Spacer(Modifier.height(18.dp))
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(vertical = 8.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Palette,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(Modifier.size(12.dp))
-            Column {
-                Text(
-                    text = "Appearance",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Text(
-                    text = "Choose once; Halo remembers it.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+        item(key = "header") { HaloScreenHeader("Settings", "Make Halo feel like yours.") }
+        item(key = "companion") {
+            SettingsGroup("Your companion") {
+                SettingsLink(HaloGlyph.MODEL, "Intelligence", "Models and providers", viewModel::openIntelligence)
+                SettingsLink(HaloGlyph.LISTEN, "Voice", "Listening and speaking", viewModel::openVoice)
+                SettingsLink(HaloGlyph.TOOL, "Skills", "Actions Halo can use", viewModel::openSkills)
+                SettingsLink(HaloGlyph.STORAGE, "Memory & learning", "Review what Halo remembers", viewModel::openLearning)
             }
         }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            AppearanceMode.entries.forEach { mode ->
-                val selected = uiState.appearanceMode == mode
-                Surface(
-                    modifier = Modifier
-                        .weight(1f)
-                        .heightIn(min = 48.dp)
-                        .selectable(
-                            selected = selected,
-                            role = Role.RadioButton,
-                            onClick = { viewModel.setAppearanceMode(mode) }
-                        ),
-                    shape = RoundedCornerShape(14.dp),
-                    color = if (selected) {
-                        MaterialTheme.colorScheme.primaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.surface
-                    },
-                    border = BorderStroke(
-                        1.dp,
-                        if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
-                        else MaterialTheme.colorScheme.outlineVariant
-                    )
-                ) {
-                    Text(
-                        text = mode.label(),
-                        modifier = Modifier.padding(vertical = 10.dp),
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                        color = if (selected) {
-                            MaterialTheme.colorScheme.onPrimaryContainer
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
+        item(key = "access") {
+            SettingsGroup("Access & data") {
+                SettingsLink(HaloGlyph.SECURITY, "Permissions", "Device and data access", viewModel::openPermissions)
+                SettingsLink(HaloGlyph.STORAGE, "Storage & backup", "Manage your saved work", viewModel::openStorageBackup)
+            }
+        }
+        item(key = "appearance") {
+            SettingsGroup("Appearance") {
+                Row(Modifier.fillMaxWidth().padding(12.dp).selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    AppearanceMode.entries.forEach { mode ->
+                        val selected = state.appearanceMode == mode
+                        Surface(
+                            Modifier.weight(1f).heightIn(min = 48.dp).selectable(
+                                selected = selected, role = Role.RadioButton, onClick = { viewModel.setAppearanceMode(mode) },
+                            ),
+                            shape = MaterialTheme.shapes.small,
+                            color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
+                            border = BorderStroke(1.dp, if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant),
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(mode.name.lowercase().replaceFirstChar { it.uppercase() }, textAlign = TextAlign.Center,
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
                         }
-                    )
+                    }
                 }
             }
         }
-
-        Spacer(Modifier.height(18.dp))
-
-        SettingsRow(
-            glyph = HaloGlyph.HALO,
-            tint = HaloPastelBlue,
-            title = "About",
-            subtitle = "Version ${uiState.version}"
-        )
-
-        Spacer(Modifier.height(100.dp))
+        item(key = "system") {
+            SettingsGroup("System") {
+                SettingsLink(HaloGlyph.PHONE, "Android assistant", "Use Halo from your phone", viewModel::openAndroidAssistant)
+                SettingsLink(HaloGlyph.AUTOMATION, "Automation", "Routines and notification digests", viewModel::openAutomation)
+                SettingsLink(HaloGlyph.ACTIVITY, "Runtime status", "Tasks and resources", viewModel::openRuntimeStatus)
+            }
+        }
+        item(key = "version") {
+            Text("Halo  \u00b7  ${state.version}", Modifier.fillMaxWidth(), textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     }
 }
 
 @Composable
-private fun SettingsRow(
-    glyph: HaloGlyph? = null,
-    icon: ImageVector? = null,
-    tint: Color,
-    title: String,
-    subtitle: String,
-    onClick: (() -> Unit)? = null
-) {
-    val interaction = if (onClick != null) {
-        Modifier
-            .clickable(onClick = onClick)
-            .semantics { role = Role.Button }
-    } else {
-        Modifier
-    }
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = 48.dp)
-            .then(interaction)
-            .padding(vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        if (glyph != null) {
-            HaloIcon(
-                glyph = glyph,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        } else if (icon != null) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(20.dp)
-            )
-        }
-        Spacer(Modifier.size(18.dp))
-
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-
-        if (onClick != null) {
-            Icon(
-                imageVector = Icons.Default.ChevronRight,
-                contentDescription = "Open",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f)
-            )
+private fun SettingsGroup(title: String, content: @Composable ColumnScope.() -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(title, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Surface(shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.surface,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+            Column(Modifier.fillMaxWidth(), content = content)
         }
     }
 }
 
-private fun AppearanceMode.label(): String = when (this) {
-    AppearanceMode.SYSTEM -> "System"
-    AppearanceMode.LIGHT -> "Light"
-    AppearanceMode.DARK -> "Dark"
+@Composable
+private fun SettingsLink(glyph: HaloGlyph, title: String, subtitle: String, onClick: () -> Unit) {
+    Surface(onClick = onClick, color = MaterialTheme.colorScheme.surface) {
+        Row(Modifier.fillMaxWidth().heightIn(min = 72.dp).padding(16.dp), verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            HaloIcon(glyph, contentDescription = null, modifier = Modifier.size(22.dp), tint = MaterialTheme.colorScheme.primary)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(title, style = MaterialTheme.typography.titleSmall)
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
 }

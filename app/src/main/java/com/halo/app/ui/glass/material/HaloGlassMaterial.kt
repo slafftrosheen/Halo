@@ -51,55 +51,26 @@ data class HaloGlassMaterial(
  * Collection of predefined glass material levels for Halo.
  */
 object HaloGlassMaterials {
-    val Background = HaloGlassMaterial(
-        containerColor = Color(0x8C080A0B),
-        borderColor = Color(0x33FFFFFF),
-        contentColor = Color(0xFFF5F7F6),
-        blurRadius = 20.dp,
-        elevation = 0.dp,
-        highlightBrush = null
-    )
+    val Background: HaloGlassMaterial @androidx.compose.runtime.Composable get() = themed(false)
+    val Standard: HaloGlassMaterial @androidx.compose.runtime.Composable get() = themed(false)
+    val Elevated: HaloGlassMaterial @androidx.compose.runtime.Composable get() = themed(true)
+    val Strong: HaloGlassMaterial @androidx.compose.runtime.Composable get() = themed(true)
+    val Interactive: HaloGlassMaterial @androidx.compose.runtime.Composable get() = themed(false)
 
-    val Standard = HaloGlassMaterial(
-        containerColor = Color(0xAA141719),
-        borderColor = Color(0x4DFFFFFF),
-        contentColor = Color(0xFFF5F7F6),
-        blurRadius = 30.dp,
-        elevation = HaloGlassElevation.level1,
-        highlightBrush = HaloGlassColors.HighlightTop
-    )
-
-    val Elevated = HaloGlassMaterial(
-        containerColor = Color(0xBF1B1F20),
-        borderColor = Color(0x66FFFFFF),
-        contentColor = Color(0xFFF5F7F6),
-        blurRadius = 40.dp,
-        elevation = HaloGlassElevation.level3,
-        highlightBrush = HaloGlassColors.HighlightTop
-    )
-
-    val Strong = HaloGlassMaterial(
-        containerColor = Color(0xD11B1F20),
-        borderColor = Color(0x80FFFFFF),
-        contentColor = Color(0xFFF5F7F6),
-        blurRadius = 50.dp,
-        elevation = HaloGlassElevation.level4,
-        highlightBrush = HaloGlassColors.HighlightTop
-    )
-
-    val Interactive = HaloGlassMaterial(
-        containerColor = Color(0xE61B1F20),
-        borderColor = Color(0x99FFFFFF),
-        contentColor = Color(0xFFF5F7F6),
-        blurRadius = 20.dp,
-        elevation = HaloGlassElevation.level2,
-        highlightBrush = HaloGlassColors.HighlightTop
-    )
-    
-    fun HaloGlassMaterial.pressed(): HaloGlassMaterial {
-        return copy(
-            containerColor = containerColor.copy(alpha = containerColor.alpha * 0.9f),
-            elevation = elevation * 1.5f
+    @androidx.compose.runtime.Composable
+    private fun themed(raised: Boolean): HaloGlassMaterial {
+        val colors = androidx.compose.material3.MaterialTheme.colorScheme
+        return HaloGlassMaterial(
+            containerColor = if (raised) colors.surfaceVariant else colors.surface,
+            borderColor = colors.outlineVariant,
+            contentColor = colors.onSurface,
+            blurRadius = 0.dp,
+            elevation = if (raised) 1.dp else 0.dp,
+            highlightBrush = null,
         )
     }
+
+    fun HaloGlassMaterial.pressed(): HaloGlassMaterial = copy(
+        containerColor = containerColor.copy(alpha = 0.9f), elevation = 0.dp,
+    )
 }

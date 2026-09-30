@@ -216,6 +216,7 @@ data class DocumentProposal(
 }
 
 enum class DocumentOperation {
+    REVIEW,
     SUMMARIZE,
     REWRITE,
     EXPLAIN,
@@ -228,6 +229,7 @@ enum class DocumentOperation {
 
     val label: String
         get() = when (this) {
+            REVIEW -> "Review and improve"
             SUMMARIZE -> "Summarize"
             REWRITE -> "Rewrite"
             EXPLAIN -> "Explain"
@@ -243,7 +245,7 @@ enum class DocumentOperation {
         get() = when (this) {
             REWRITE -> ProposalPlacement.REPLACE_SELECTION
             TURN_INTO_TASKS -> ProposalPlacement.REPLACE_SELECTION
-            SUMMARIZE, EXPLAIN, TRANSLATE, STUDY_QUESTIONS -> ProposalPlacement.INSERT_BELOW
+            REVIEW, SUMMARIZE, EXPLAIN, TRANSLATE, STUDY_QUESTIONS -> ProposalPlacement.INSERT_BELOW
             CONTINUE -> ProposalPlacement.APPEND_AT_END
             OUTLINE -> ProposalPlacement.INSERT_BELOW
         }

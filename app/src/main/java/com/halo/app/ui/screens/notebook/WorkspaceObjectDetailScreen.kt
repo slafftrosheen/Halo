@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.notebook
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -355,7 +357,7 @@ private fun MemoryDetailCard(
     onSave: (String) -> Unit,
     onForget: () -> Unit
 ) {
-    val revisions by com.halo.app.di.ManualDependencyGraph.memoryRepository.observeRevisions(memory.id).collectAsState(emptyList())
+    val revisions by com.halo.app.di.ManualDependencyGraph.memoryRepository.observeRevisions(memory.id).collectAsStateWithLifecycle(emptyList())
     var correction by remember(memory.id, memory.content) { mutableStateOf(memory.content) }
     HaloWorkspaceCard {
         Text("Remembered context", style = MaterialTheme.typography.titleMedium)

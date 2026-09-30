@@ -278,7 +278,7 @@ class DefaultAiProviderRouter(
                 )
             for (provider in candidates) {
                 if ((policy == AiRoutingPolicy.LOCAL_ONLY ||
-                        (currentSelection().policy == AiRoutingPolicy.LOCAL_ONLY && AiCapability.IMAGE in workload.requiredCapabilities)) && !provider.isLocal) {
+                        (currentSelection().policy == AiRoutingPolicy.LOCAL_ONLY)) && !provider.isLocal) {
                     rejected += RejectedAiTarget(provider.id, null, TargetRejectionReason.POLICY_EXCLUDED)
                     continue
                 }
@@ -467,7 +467,7 @@ class DefaultAiProviderRouter(
         providerCapabilities: Set<AiCapability>,
     ): Boolean {
         if (!workload.allowRemote && model.executionLocation != AiExecutionLocation.ON_DEVICE) return false
-        if (currentSelection().policy == AiRoutingPolicy.LOCAL_ONLY && AiCapability.IMAGE in workload.requiredCapabilities && model.executionLocation != AiExecutionLocation.ON_DEVICE) return false
+        if (currentSelection().policy == AiRoutingPolicy.LOCAL_ONLY && model.executionLocation == AiExecutionLocation.REMOTE) return false
         val effectiveCaps = providerCapabilities.intersect(
             model.inputCapabilities +
                 (if (model.supportsTools && AiCapability.TOOLS in providerCapabilities) {
@@ -515,9 +515,9 @@ class DefaultAiProviderRouter(
         workload: AiWorkloadSpec,
         failedProviderId: String,
     ): AiExecutionTarget? {
-        val policy = _routingPolicy.value
+        val policy = roleResolver.resolvePreference(workload, currentSelection(), _roleBindings.value, allProviders).policy
         if (policy == AiRoutingPolicy.EXPLICIT) return null
-        val localOnly = policy == AiRoutingPolicy.LOCAL_ONLY
+        val localOnly = policy == AiRoutingPolicy.LOCAL_ONLY || _routingPolicy.value == AiRoutingPolicy.LOCAL_ONLY
         // The failed target's model id was bound during preparation. It is not meaningful in a
         // different provider namespace and would make every cross-provider fallback look missing.
         val fallbackRequest = request.copy(modelId = null)

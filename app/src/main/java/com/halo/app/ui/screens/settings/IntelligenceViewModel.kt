@@ -23,8 +23,6 @@ import com.halo.providers.litert.runtime.LiteRtControlProbeResult
 import com.halo.providers.litert.runtime.LocalModelBenchmarkResult
 import com.halo.providers.litert.runtime.LocalModelMatrixRow
 import com.halo.providers.litert.runtime.LocalModelSmokeTestResult
-import com.halo.providers.gemini.GeminiAuthenticationMode
-import com.halo.providers.gemini.GeminiProvider
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.HaloDispatchers
 import com.halo.sdk.runtime.NativeResourceSnapshot
@@ -52,18 +50,6 @@ data class IntelligenceUiState(
     val catalogEntries: List<AiModelCatalogEntry> = emptyList(),
     val catalogErrors: Map<String, String> = emptyMap(),
     val isRefreshingModels: Boolean = false,
-    val openRouterKeyConfigured: Boolean = false,
-    val openRouterModel: String = "openrouter/free",
-    val openAiKeyConfigured: Boolean = false,
-    val openAiModel: String = "",
-    val anthropicKeyConfigured: Boolean = false,
-    val anthropicModel: String = "",
-    val geminiApiKeyConfigured: Boolean = false,
-    val geminiProjectId: String = "",
-    val geminiModel: String = "",
-    val geminiAuthenticationMode: GeminiAuthenticationMode = GeminiAuthenticationMode.NONE,
-    val ollamaEndpoint: String = "",
-    val ollamaModel: String = "",
     val litertModel: String = "",
     val litertContext: Int = 4096,
     val localModels: List<LocalModelDescriptor> = emptyList(),
@@ -121,17 +107,6 @@ data class IntelligenceUiState(
 )
 
 private data class IntelligenceSettings(
-    val openRouterKeyConfigured: Boolean = false,
-    val openRouterModel: String = "openrouter/free",
-    val openAiKeyConfigured: Boolean = false,
-    val openAiModel: String = "",
-    val anthropicKeyConfigured: Boolean = false,
-    val anthropicModel: String = "",
-    val geminiApiKeyConfigured: Boolean = false,
-    val geminiProjectId: String = "",
-    val geminiModel: String = "",
-    val ollamaEndpoint: String = "",
-    val ollamaModel: String = "llama3",
     val litertModel: String = "",
     val litertContext: Int = 4096,
     val temperature: Float = 0.7f,
@@ -189,8 +164,6 @@ class IntelligenceViewModel(
     private val _refreshTrigger = MutableStateFlow(0)
     private val _availableModels = MutableStateFlow<List<AiModel>>(emptyList())
     private val _isRefreshing = MutableStateFlow(false)
-    private val _testConnectionResult = MutableSharedFlow<Boolean>()
-    val testConnectionResult: SharedFlow<Boolean> = _testConnectionResult.asSharedFlow()
     private val _settings = MutableStateFlow(IntelligenceSettings())
     private val _lastResolvedModelId = MutableStateFlow<String?>(null)
     private val _verifications = MutableStateFlow<Map<String, ModelVerificationResult>>(emptyMap())
@@ -199,9 +172,6 @@ class IntelligenceViewModel(
     /** The on-device provider owns load failures and the qualification probe. */
     private val localProvider: LiteRtLocalProvider?
         get() = aiProviderRouter.getAllProviders().filterIsInstance<LiteRtLocalProvider>().firstOrNull()
-    private val geminiProvider: GeminiProvider?
-        get() = aiProviderRouter.getAllProviders().filterIsInstance<GeminiProvider>().firstOrNull()
-
     private val devInputs = MutableStateFlow(LocalDevInputs())
 
     private val localVerificationInputs: Flow<LocalVerificationInputs> = combine(
@@ -241,17 +211,6 @@ class IntelligenceViewModel(
             val activeProvider = aiProviderRouter.selectedProviderId.value
             val activeModel = aiProviderRouter.selectedModelId.value
             IntelligenceSettings(
-                openRouterKeyConfigured = !storage.getString("openrouter_api_key").isNullOrBlank(),
-                openRouterModel = activeModel.takeIf { activeProvider == ProviderIds.OPENROUTER } ?: "openrouter/free",
-                openAiKeyConfigured = !storage.getString("openai_api_key").isNullOrBlank(),
-                openAiModel = activeModel.takeIf { activeProvider == ProviderIds.OPENAI }.orEmpty(),
-                anthropicKeyConfigured = !storage.getString("anthropic_api_key").isNullOrBlank(),
-                anthropicModel = activeModel.takeIf { activeProvider == ProviderIds.ANTHROPIC }.orEmpty(),
-                geminiApiKeyConfigured = !storage.getString("gemini_api_key").isNullOrBlank(),
-                geminiProjectId = storage.getString("gemini_project_id") ?: "",
-                geminiModel = activeModel.takeIf { activeProvider == ProviderIds.GEMINI }.orEmpty(),
-                ollamaEndpoint = storage.getString("ollama_endpoint") ?: "",
-                ollamaModel = activeModel.takeIf { activeProvider == ProviderIds.OLLAMA }.orEmpty(),
                 litertModel = activeModel.takeIf { activeProvider == ProviderIds.LITERT }.orEmpty(),
                 litertContext = storage.getInt("litert_context", 4096),
                 temperature = storage.getInt("ai_temperature", 70) / 100f,
@@ -363,18 +322,6 @@ class IntelligenceViewModel(
             catalogEntries = catalogEntries,
             catalogErrors = selection.catalog.providerErrors,
             isRefreshingModels = selection.catalog.refreshingProviders.isNotEmpty(),
-            openRouterKeyConfigured = settings.openRouterKeyConfigured,
-            openRouterModel = settings.openRouterModel,
-            openAiKeyConfigured = settings.openAiKeyConfigured,
-            openAiModel = settings.openAiModel,
-            anthropicKeyConfigured = settings.anthropicKeyConfigured,
-            anthropicModel = settings.anthropicModel,
-            geminiApiKeyConfigured = settings.geminiApiKeyConfigured,
-            geminiProjectId = settings.geminiProjectId,
-            geminiModel = settings.geminiModel,
-            geminiAuthenticationMode = geminiProvider?.authenticationMode ?: GeminiAuthenticationMode.NONE,
-            ollamaEndpoint = settings.ollamaEndpoint,
-            ollamaModel = settings.ollamaModel,
             litertModel = settings.litertModel,
             litertContext = settings.litertContext,
             localModels = localModels,
@@ -461,14 +408,7 @@ class IntelligenceViewModel(
     }
 
     fun selectTarget(ref: AiModelRef) {
-        when (ref.providerId) {
-            ProviderIds.LITERT -> updateSettings { it.copy(litertModel = ref.modelId) }
-            ProviderIds.OLLAMA -> updateSettings { it.copy(ollamaModel = ref.modelId) }
-            ProviderIds.OPENROUTER -> updateSettings { it.copy(openRouterModel = ref.modelId) }
-            ProviderIds.OPENAI -> updateSettings { it.copy(openAiModel = ref.modelId) }
-            ProviderIds.ANTHROPIC -> updateSettings { it.copy(anthropicModel = ref.modelId) }
-            ProviderIds.GEMINI -> updateSettings { it.copy(geminiModel = ref.modelId) }
-        }
+        if (ref.providerId == ProviderIds.LITERT) updateSettings { it.copy(litertModel = ref.modelId) }
         aiProviderRouter.selectTarget(ref)
     }
 
@@ -500,18 +440,10 @@ class IntelligenceViewModel(
         selectTarget(entry.runtime.ref)
     }
 
-    fun testConnection() {
-        viewModelScope.launch {
-            val currentId = aiProviderRouter.selectedProviderId.value ?: return@launch
-            val provider = aiProviderRouter.getAllProviders().find { it.id == currentId }
-            val ok = runCatching { provider?.testConnection() == true }.getOrDefault(false)
-            _testConnectionResult.emit(ok)
-        }
-    }
-
-    fun refreshModels() {
-        val providerId = aiProviderRouter.selectedProviderId.value ?: return
-        refreshModelsFor(providerId)
+    fun setTemperature(value: Float) {
+        val bounded = value.coerceIn(0f, 2f)
+        updateSettings { it.copy(temperature = bounded) }
+        persist { storage.putInt("ai_temperature", (bounded * 100).toInt()) }
     }
 
     fun setToolsEnabled(enabled: Boolean) {

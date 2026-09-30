@@ -3,6 +3,7 @@ package com.halo.providers.gemini
 import android.util.Base64
 import com.halo.sdk.provider.AIMessage
 import com.halo.sdk.provider.AiCapability
+import com.halo.sdk.provider.awaitImagePayload
 import com.halo.sdk.provider.AiContext
 import com.halo.sdk.provider.AiErrorType
 import com.halo.sdk.provider.AiFailureDetails
@@ -37,6 +38,7 @@ import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
@@ -47,7 +49,11 @@ enum class GeminiAuthenticationMode { OAUTH, API_KEY, NONE }
 class GeminiProvider(
     private val storage: Storage,
     private val client: OkHttpClient = defaultClient(),
-) : AiInferenceProvider, com.halo.sdk.provider.CredentialProvider {
+) : com.halo.sdk.provider.AiImageProvider, com.halo.sdk.provider.CredentialProvider, com.halo.sdk.provider.ProviderConfigurationReporting {
+
+    override val configurationDescriptor: com.halo.sdk.provider.ProviderConfigurationDescriptor get() =
+        com.halo.sdk.provider.ProviderConfigurationDescriptor(id, displayName, com.halo.sdk.provider.AiExecutionLocation.REMOTE,
+            listOf(com.halo.sdk.provider.ProviderConfigurationField("credential", "API key", com.halo.sdk.provider.ProviderFieldKind.SECRET), com.halo.sdk.provider.ProviderConfigurationField("gemini_auth_mode", "Authentication", com.halo.sdk.provider.ProviderFieldKind.ENUM, listOf("API_KEY", "OAUTH")), com.halo.sdk.provider.ProviderConfigurationField("gemini_project_id", "Google Cloud project ID", com.halo.sdk.provider.ProviderFieldKind.TEXT), com.halo.sdk.provider.ProviderConfigurationField("google_oauth", "Google account", com.halo.sdk.provider.ProviderFieldKind.OAUTH_ACTION)), "GEMINI_GENERATE_CONTENT", "ACCOUNT_DEPENDENT")
     override val id = ID
     override val displayName = "Google Gemini"
     override val isLocal = false
@@ -103,6 +109,9 @@ class GeminiProvider(
         AiCapability.TOOLS,
     )
 
+    override fun configurationChanged() {
+        _status.value = if (authenticationMode != GeminiAuthenticationMode.NONE) configuredCold() else ProviderStatus.UNCONFIGURED
+    }
     override suspend fun getStatus(): ProviderStatus {
         val current = if (authenticationMode == GeminiAuthenticationMode.NONE) {
             ProviderStatus.UNCONFIGURED
@@ -119,30 +128,59 @@ class GeminiProvider(
         execute(authenticatedRequest("$API_BASE/models?pageSize=100").get().build()) { _ -> true }
     }
 
+    private suspend fun modelCatalogue(imageMetadata: Boolean = false): List<JSONObject> {
+        if (authenticationMode == GeminiAuthenticationMode.NONE) return emptyList()
+        val result = mutableListOf<JSONObject>()
+        val seen = mutableSetOf<String>()
+        var page: String? = null
+        do {
+            val url = "$API_BASE/models".toHttpUrl().newBuilder().addQueryParameter("pageSize", "100")
+                .apply { page?.let { addQueryParameter("pageToken", it) } }.build()
+            val response = execute(authenticatedRequest(url.toString()).get().build(), imageRequest = imageMetadata) { JSONObject(it) }
+            val models = response.optJSONArray("models") ?: JSONArray()
+            (0 until models.length()).forEach { index -> models.optJSONObject(index)?.let { result += it } }
+            page = response.optString("nextPageToken").takeIf { it.isNotBlank() }
+            if (page != null) check(seen.add(page!!) && seen.size <= 30) { "Model catalogue pagination did not finish" }
+        } while (page != null)
+        return result
+    }
+
     override suspend fun listModels(): List<AiModel> = withContext(Dispatchers.IO) {
-        if (authenticationMode == GeminiAuthenticationMode.NONE) return@withContext emptyList()
-        execute(authenticatedRequest("$API_BASE/models?pageSize=100").get().build()) { body ->
-            val models = JSONObject(body).optJSONArray("models") ?: JSONArray()
-            buildList {
-                for (index in 0 until models.length()) {
-                    val item = models.optJSONObject(index) ?: continue
-                    val methods = item.optJSONArray("supportedGenerationMethods") ?: JSONArray()
-                    if ((0 until methods.length()).none { methods.optString(it) == "generateContent" }) continue
-                    val modelId = item.optString("name").removePrefix("models/").trim()
-                    if (!modelId.startsWith("gemini-")) continue
-                    add(
-                        AiModel(
-                            id = modelId,
-                            displayName = item.optString("displayName", modelId),
-                            providerId = id,
-                            inputCapabilities = setOf(AiCapability.TEXT, AiCapability.IMAGE),
-                            contextLength = item.optLong("inputTokenLimit").takeIf { it > 0L },
-                            supportsStreaming = false,
-                            supportsTools = !modelId.contains("tts", ignoreCase = true),
-                        ),
-                    )
-                }
-            }.sortedBy { it.displayName.lowercase() }
+        modelCatalogue().mapNotNull { item ->
+            val methods = item.optJSONArray("supportedGenerationMethods") ?: JSONArray()
+            if ((0 until methods.length()).none { methods.optString(it) == "generateContent" }) return@mapNotNull null
+            val modelId = item.optString("name").removePrefix("models/").trim()
+            if (!modelId.startsWith("gemini-") || modelId.contains("image", true) || modelId.contains("tts", true)) return@mapNotNull null
+            AiModel(modelId, item.optString("displayName", modelId), id, setOf(AiCapability.TEXT, AiCapability.IMAGE),
+                item.optLong("inputTokenLimit").takeIf { it > 0L }, supportsStreaming = false, supportsTools = true)
+        }.distinctBy { it.id }.sortedBy { it.displayName.lowercase() }
+    }
+
+    override suspend fun listImageModels(): List<com.halo.sdk.provider.AiImageModel> = withContext(Dispatchers.IO) {
+        modelCatalogue(imageMetadata = true).mapNotNull { item ->
+            val modelId = item.optString("name").removePrefix("models/")
+            val methods = item.optJSONArray("supportedGenerationMethods") ?: JSONArray()
+            if (modelId.startsWith("gemini-") && modelId.contains("image", true) &&
+                (0 until methods.length()).any { methods.optString(it) == "generateContent" })
+                com.halo.sdk.provider.AiImageModel(modelId, item.optString("displayName", modelId)) else null
+        }.distinctBy { it.id }
+    }
+
+    override suspend fun generateImage(request: com.halo.sdk.provider.AiImageRequest): com.halo.sdk.provider.AiImageResult = withContext(Dispatchers.IO) {
+        require(request.modelId.contains("image", true) && request.prompt.isNotBlank())
+        val parts = JSONArray().put(JSONObject().put("text", request.prompt))
+        request.reference?.let { bytes -> parts.put(JSONObject().put("inlineData", JSONObject()
+            .put("mimeType", request.referenceMime).put("data", Base64.encodeToString(bytes, Base64.NO_WRAP)))) }
+        val body = JSONObject().put("contents", JSONArray().put(JSONObject().put("role", "user").put("parts", parts)))
+            .put("generationConfig", JSONObject().put("responseModalities", JSONArray().put("TEXT").put("IMAGE")))
+        execute(authenticatedRequest("$API_BASE/models/${request.modelId}:generateContent").post(body.toString().toRequestBody(JSON)).build(), imageRequest = true) { response ->
+            val output = JSONObject(response).optJSONArray("candidates")?.optJSONObject(0)?.optJSONObject("content")?.optJSONArray("parts") ?: JSONArray()
+            val image = (0 until output.length()).firstNotNullOfOrNull { index ->
+                output.optJSONObject(index)?.let { it.optJSONObject("inlineData") ?: it.optJSONObject("inline_data") }
+            } ?: throw AiProviderException(AiErrorType.INVALID_RESPONSE, "No image was returned; try another prompt or image model")
+            val encoded = image.optString("data")
+            require(encoded.isNotBlank() && encoded.length <= 45_000_000) { "Image response was empty or too large" }
+            com.halo.sdk.provider.AiImageResult(Base64.decode(encoded, Base64.DEFAULT), image.optString("mimeType", image.optString("mime_type", "image/png")), id, request.modelId)
         }
     }
 
@@ -325,8 +363,15 @@ class GeminiProvider(
         keys().forEach { key -> put(key, get(key)) }
     }
 
-    private suspend fun <T> execute(request: Request, read: (String) -> T): T {
+    private suspend fun <T> execute(request: Request, imageRequest: Boolean = false, read: (String) -> T): T {
         try {
+            if (imageRequest) {
+                val response = client.newBuilder().readTimeout(180, TimeUnit.SECONDS).callTimeout(180, TimeUnit.SECONDS).build().newCall(request).awaitImagePayload()
+                if (response.code !in 200..299) throw httpError(response.code, response.body)
+                val result = read(response.body)
+                _status.value = ProviderStatus.READY
+                return result
+            }
             client.newCall(request).execute().use { response ->
                 val body = response.body?.string().orEmpty()
                 if (!response.isSuccessful) throw httpError(response.code, body)

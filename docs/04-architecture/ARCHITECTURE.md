@@ -1,5 +1,12 @@
 # Current architecture
 
+## STABILIZATION-PROVIDER-001 - 2026-09-30
+
+**IMPLEMENTED / UNVALIDATED.** Execution has four owners: CHAT model answer, AGENTIC tool loop with positive action evidence, DETERMINISTIC named host executor, and LOCAL FACT runtime answer. Unknown non-action language defaults to Chat. NONE tool mode remains enforced through assembly and provider send. Explicit role selections cannot silently cross-provider fallback.
+
+See [source map and deferred acceptance](../engineering/PROVIDER-CONVERSATION-STABILIZATION.md). Build, tests and device acceptance were not run. Earlier dated sections below are historical.
+
+
 ## P8 provider UX and conversation reset — 2026-09-30
 
 General conversational answering is a core Halo capability and does not depend on tool availability. DirectResponse/CHAT is separate from Agentic actions; configuration, authentication, model discovery and generation proof are separate. Speech uses the selected PCM provider, protected ElevenLabs opt-in, phone-only settings tests and host-owned route policy. See [implementation and deferred acceptance](../engineering/PROVIDER-UX-AND-CONVERSATION-RESET.md). Earlier sections retain historical context.

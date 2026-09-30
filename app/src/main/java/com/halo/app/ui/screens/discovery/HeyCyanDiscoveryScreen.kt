@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.discovery
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -41,8 +43,8 @@ fun HeyCyanDiscoveryScreen(driver: RealHeyCyanDriver) {
     val session = remember(driver) { HeyCyanDiscoverySession(driver) }
     val scope = rememberCoroutineScope()
     val devices = remember { mutableStateListOf<DiscoveredBleDevice>() }
-    val selectedAddress by session.selectedAddress.collectAsState()
-    val state by session.state.collectAsState()
+    val selectedAddress by session.selectedAddress.collectAsStateWithLifecycle()
+    val state by session.state.collectAsStateWithLifecycle()
     var scanJob by remember { mutableStateOf<Job?>(null) }
     var message by remember { mutableStateOf<String?>(null) }
     var selectedScenario by remember { mutableStateOf(CaptureScenario.BOOT) }

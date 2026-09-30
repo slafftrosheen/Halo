@@ -34,6 +34,16 @@ class SpeechRule : InterpretationRule {
         val confidence = context.observation.confidence
         val consumedTokens = transcript.tokenCount()
 
+        // Explicit model-only language and explanations take precedence over command words.
+        if (com.halo.cognition.language.ConversationSemantics.answerFromModel(transcript) ||
+            com.halo.cognition.language.ConversationSemantics.isExplanation(transcript))
+            return RuleMatch(confidence = confidence.coerceAtLeast(0.7f), intent = QuestionIntent,
+                consumedTokens = consumedTokens, diagnostics = "Conversational response")
+        com.halo.cognition.language.ConversationSemantics.actionReason(transcript)?.let { reason ->
+            return RuleMatch(confidence = 0.95f, intent = com.halo.cognition.language.ToolActionIntent(reason),
+                consumedTokens = consumedTokens, diagnostics = reason.name)
+        }
+
         return when {
             normalized.startsWith("call ") || normalized.startsWith("phone ") || normalized == "call" -> {
                 val target = transcript.afterFirstWord().trim()

@@ -16,6 +16,7 @@ import com.halo.app.security.SecretMigration
 import com.halo.app.security.SecretMigrationV2
 import com.halo.app.storage.LocalAssetStorageMigration
 import com.halo.app.storage.haloStorageLayout
+import com.halo.runtime.cognition.agent.isTerminal
 import com.halo.sdk.runtime.NativeMemoryPressure
 import com.halo.sdk.runtime.NativeResourceBudget
 import kotlinx.coroutines.CancellationException

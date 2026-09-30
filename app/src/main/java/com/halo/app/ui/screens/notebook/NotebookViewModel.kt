@@ -28,10 +28,14 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
+
+enum class NotebookSort(val label: String) { UPDATED("Recently updated"), CREATED("Newest first"), TITLE("Title A-Z") }
+enum class NotebookBatchAction { CONTEXT, COLLECTION, ARCHIVE, TRASH, RESTORE }
 
 enum class NotebookFilter(val label: String) {
     ALL("All"), NOTES("Notes"), FILES("Files"), CANVASES("Canvases"), CHATS("Chats"), MEMORY("Memory"),
@@ -42,6 +46,7 @@ data class NotebookWorkspaceItem(val objectRef: WorkspaceObject, val snippet: St
 
 data class NotebookUiState(
     val isLoaded: Boolean = false,
+    val sort: NotebookSort = NotebookSort.UPDATED,
     val items: List<NotebookWorkspaceItem> = emptyList(),
     val query: String = "",
     val filter: NotebookFilter = NotebookFilter.ALL,
@@ -82,11 +87,19 @@ class NotebookViewModel(
     private val duePracticeFlow: kotlinx.coroutines.flow.Flow<List<StudyPracticeItem>> =
         study?.observeDuePracticeItems(limit = 50) ?: flowOf(emptyList())
     private val query = MutableStateFlow("")
+    private val sort = MutableStateFlow(NotebookSort.UPDATED)
+    private val selection = MutableStateFlow<Set<String>>(emptySet())
+    val selectedIds: StateFlow<Set<String>> = selection
+    private val mutableNotice = MutableStateFlow<String?>(null)
+    val notice: StateFlow<String?> = mutableNotice
+    private val mutating = MutableStateFlow(false)
+    val isMutating: StateFlow<Boolean> = mutating
     private val filter = MutableStateFlow(NotebookFilter.ALL)
     private val selectedCollection = MutableStateFlow<String?>(null)
     private val navigationChannel = Channel<NotebookNavigation>(Channel.BUFFERED)
     private val creatingNote = AtomicBoolean(false)
     private val creatingCanvas = AtomicBoolean(false)
+    private val startingStudy = AtomicBoolean(false)
     val navigationEvents = navigationChannel.receiveAsFlow()
     val memories = workspace.memories
     val history = workspace.history
@@ -208,11 +221,74 @@ class NotebookViewModel(
                 )
             }
         }
+        .combine(sort) { state, order ->
+            val sorted = when (order) {
+                NotebookSort.UPDATED -> state.items.sortedByDescending { it.objectRef.updatedAt }
+                NotebookSort.CREATED -> state.items.sortedByDescending { it.objectRef.createdAt }
+                NotebookSort.TITLE -> state.items.sortedWith(compareBy<NotebookWorkspaceItem> { it.objectRef.title.lowercase() }.thenBy { it.objectRef.id.value })
+            }
+            state.copy(items = sorted, sort = order)
+        }
+        .flowOn(kotlinx.coroutines.Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NotebookUiState())
 
-    fun setQuery(value: String) { query.value = value }
-    fun setFilter(value: NotebookFilter) { filter.value = value }
-    fun selectCollection(id: String?) { selectedCollection.value = id }
+    fun setQuery(value: String) { query.value = value; selection.value = emptySet() }
+    fun setFilter(value: NotebookFilter) { filter.value = value; selection.value = emptySet() }
+    fun selectCollection(id: String?) { selectedCollection.value = id; selection.value = emptySet() }
+    fun setSort(value: NotebookSort) { sort.value = value }
+    fun clearSelection() { selection.value = emptySet() }
+    fun clearNotice() { mutableNotice.value = null }
+    fun toggleSelection(id: String) {
+        if (mutating.value) return
+        if (id in selection.value) selection.value = selection.value - id
+        else if (selection.value.size < 100) selection.value = selection.value + id
+        else mutableNotice.value = "Select up to 100 items at a time."
+    }
+    fun selectVisible() {
+        selection.value = uiState.value.items.map { it.objectRef.id.value }.filterNot { it.startsWith("learning:") }.take(100).toSet()
+    }
+    fun applyToSelection(action: NotebookBatchAction, collectionId: String? = null) = viewModelScope.launch {
+        if (mutating.value) return@launch
+        val ids = selection.value.toList()
+        if (ids.isEmpty() || (action == NotebookBatchAction.COLLECTION && collectionId == null)) return@launch
+        mutating.value = true
+        var completed = 0
+        val failed = mutableSetOf<String>()
+        try {
+            for (id in ids) {
+                try {
+                    val item = workspace.getObject(id) ?: error("Item unavailable")
+                    when (action) {
+                        NotebookBatchAction.CONTEXT -> {
+                            require(item.lifecycle == WorkspaceObjectLifecycle.ACTIVE)
+                            workspace.select(id)
+                        }
+                        NotebookBatchAction.COLLECTION -> check(organization.setMembership(collectionId!!, id, true))
+                        NotebookBatchAction.ARCHIVE -> workspace.archive(id)
+                        NotebookBatchAction.TRASH -> workspace.trash(id)
+                        NotebookBatchAction.RESTORE -> workspace.restore(id)
+                    }
+                    completed++
+                } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                catch (_: Exception) { failed += id }
+            }
+            selection.value = failed
+            mutableNotice.value = if (failed.isEmpty()) { if (action == NotebookBatchAction.CONTEXT) "$completed items added to context; Halo uses up to 20 recent items within its context budget." else "$completed items updated" } else "$completed items updated; ${failed.size} could not be changed and remain selected."
+        } finally { mutating.value = false }
+    }
+    fun startStudy(objectId: String) = viewModelScope.launch {
+        val useCases = study ?: return@launch
+        if (!startingStudy.compareAndSet(false, true)) return@launch
+        try {
+            when (val result = useCases.start(com.halo.app.study.StartStudyRequest(objectId))) {
+                is com.halo.app.study.StudyStartResult.Started -> navigationChannel.send(NotebookNavigation.OpenStudy(result.session.id))
+                is com.halo.app.study.StudyStartResult.Unavailable -> mutableNotice.value = result.reason.explanation
+            }
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (_: Exception) { mutableNotice.value = "Study could not start. Your note is unchanged." }
+        finally { startingStudy.set(false) }
+    }
+
     fun createCollection(name: String) = viewModelScope.launch {
         organization.createCollection(name)?.let { selectedCollection.value = it.id }
     }

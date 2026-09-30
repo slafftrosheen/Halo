@@ -1,5 +1,12 @@
 # Halo current state
 
+## STABILIZATION-PROVIDER-001 - 2026-09-30
+
+**IMPLEMENTED / UNVALIDATED.** Provider-owned descriptors now back the single Provider Center; legacy Intelligence credential/endpoint projections are removed. Intelligence and Voice are bounded control centers. Cached model browsing, conservative DirectResponse/action interpretation, readable recovery, explicit-role fallback gates and sticky speech fallback are source implemented.
+
+See [source map and deferred acceptance](docs/engineering/PROVIDER-CONVERSATION-STABILIZATION.md). Build, tests and device acceptance were not run. Earlier dated sections below are historical.
+
+
 ## P8 provider UX and conversation reset — 2026-09-30
 
 General conversational answering is a core Halo capability and does not depend on tool availability. DirectResponse/CHAT is separate from Agentic actions; configuration, authentication, model discovery and generation proof are separate. Speech uses the selected PCM provider, protected ElevenLabs opt-in, phone-only settings tests and host-owned route policy. See [implementation and deferred acceptance](docs/engineering/PROVIDER-UX-AND-CONVERSATION-RESET.md). Earlier sections retain historical context.

@@ -18,11 +18,11 @@ class CustomOpenAiCompatibleProvider(
     private val storage: Storage,
     private val transport: OpenAiCompatibleTransport,
     private val credentialProvider: CredentialProvider,
-) : AiInferenceProvider, CredentialProvider by credentialProvider {
+) : AiInferenceProvider, CredentialProvider by credentialProvider, com.halo.sdk.provider.ProviderConfigurationReporting {
 
     override val id: String = RemoteProviderIds.CUSTOM_OPENAI_COMPATIBLE
     override val displayName: String get() = "Custom OpenAI-compatible"
-    override val isLocal: Boolean = true
+    override val isLocal: Boolean get() = endpointExecutionLocation(storage.getString("custom_openai_compatible_endpoint") ?: "http://localhost:8080/v1") == AiExecutionLocation.LOCAL_NETWORK
 
     private val descriptor = RemoteProviderPresets.customOpenAiCompatible
     private val configured: ConfiguredOpenAiCompatibleProvider = ConfiguredOpenAiCompatibleProvider(
@@ -34,6 +34,11 @@ class CustomOpenAiCompatibleProvider(
         fallbackWhenUnauthenticated = true,
         staticHints = emptyList(),
     )
+
+    override val configurationDescriptor: com.halo.sdk.provider.ProviderConfigurationDescriptor get() =
+        configured.configurationDescriptor.copy(location = if (isLocal) AiExecutionLocation.LOCAL_NETWORK else AiExecutionLocation.REMOTE, fields = listOf(
+            com.halo.sdk.provider.ProviderConfigurationField("credential", "API key / token", com.halo.sdk.provider.ProviderFieldKind.SECRET),
+            com.halo.sdk.provider.ProviderConfigurationField("custom_openai_compatible_endpoint", "Endpoint", com.halo.sdk.provider.ProviderFieldKind.ENDPOINT), ProviderConfigurationField("custom_openai_compatible_model", "Model ID (optional if discovery works)", ProviderFieldKind.TEXT), ProviderConfigurationField("custom_openai_compatible_auth_mode", "Authentication", ProviderFieldKind.ENUM, listOf("NONE", "API_KEY", "BEARER_TOKEN"))))
 
     override val status: StateFlow<ProviderStatus> get() = configured.status
     val authInfo: StateFlow<ProviderAuthInfo> get() = configured.authInfo
@@ -63,7 +68,14 @@ class CustomOpenAiCompatibleProvider(
     }
     override suspend fun listModels(): List<AiModel> {
         syncEndpoint()
-        return configured.listModels()
+        val manual = storage.getString("custom_openai_compatible_model")?.trim()?.takeIf { it.isNotBlank() }?.let {
+            AiModel(it, it, id, setOf(AiCapability.TEXT), null, supportsStreaming = true, supportsTools = false,
+                executionLocation = configurationDescriptor.location)
+        }
+        val discovered = try { configured.listModels() }
+            catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (error: Exception) { if (manual == null) throw error else emptyList() }
+        return (discovered.map { it.copy(executionLocation = configurationDescriptor.location) } + listOfNotNull(manual)).distinctBy { it.id }
     }
 }
 

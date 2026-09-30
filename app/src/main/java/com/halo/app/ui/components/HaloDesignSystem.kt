@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,7 +26,7 @@ import com.halo.runtime.kernel.ProcessState
  */
 @Composable
 fun HaloPixelSignal(
-    color: Color = HaloPrimary,
+    color: Color = MaterialTheme.colorScheme.primary,
     active: Boolean = true,
     modifier: Modifier = Modifier
 ) {
@@ -33,7 +34,7 @@ fun HaloPixelSignal(
         modifier = modifier
             .size(6.dp)
             .background(
-                if (active) color else HaloTextMuted,
+                if (active) color else MaterialTheme.colorScheme.onSurfaceVariant,
                 RoundedCornerShape(1.dp)
             )
     )
@@ -50,8 +51,8 @@ fun HaloCard(
             if (onClick != null) Modifier.clickable { onClick() } else Modifier
         ),
         shape = MaterialTheme.shapes.medium,
-        color = HaloCard,
-        border = BorderStroke(1.dp, HaloBorderSubtle),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         tonalElevation = 0.dp,
         shadowElevation = 0.dp
     ) {
@@ -72,10 +73,10 @@ fun HaloButton(
         shape = RoundedCornerShape(12.dp),
         contentPadding = PaddingValues(horizontal = 18.dp, vertical = 11.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = if (isPrimary) HaloPrimary else HaloSurface,
-            contentColor = if (isPrimary) HaloBackground else HaloTextPrimary
+            containerColor = if (isPrimary) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+            contentColor = if (isPrimary) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
         ),
-        border = if (!isPrimary) BorderStroke(1.dp, HaloBorder) else null
+        border = if (!isPrimary) BorderStroke(1.dp, MaterialTheme.colorScheme.outline) else null
     ) {
         Text(text, fontWeight = FontWeight.Medium)
     }
@@ -84,7 +85,7 @@ fun HaloButton(
 @Composable
 fun HaloStatusChip(
     text: String,
-    color: Color = HaloPrimary
+    color: Color = MaterialTheme.colorScheme.primary
 ) {
     Row(
         modifier = Modifier
@@ -95,9 +96,9 @@ fun HaloStatusChip(
     ) {
         HaloPixelSignal(color = color, modifier = Modifier.padding(end = 6.dp))
         Text(
-            text = text.uppercase(),
+            text = text,
             color = color,
-            fontSize = 10.sp,
+            fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
             letterSpacing = 0.7.sp
         )
@@ -108,17 +109,17 @@ fun HaloStatusChip(
 fun HaloTag(text: String) {
     Box(
         modifier = Modifier
-            .background(HaloSurface, RoundedCornerShape(7.dp))
-            .border(1.dp, HaloBorderSubtle, RoundedCornerShape(7.dp))
+            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(7.dp))
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(7.dp))
             .padding(horizontal = 7.dp, vertical = 3.dp)
     ) {
-        Text(text = text, color = HaloTextSecondary, fontSize = 11.sp)
+        Text(text = text, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
     }
 }
 
 @Composable
 fun HaloDivider(modifier: Modifier = Modifier) {
-    HorizontalDivider(modifier = modifier, thickness = 1.dp, color = HaloDivider)
+    HorizontalDivider(modifier = modifier, thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
 }
 
 @Composable
@@ -138,7 +139,7 @@ fun HaloSection(
                 HaloPixelSignal(modifier = Modifier.padding(end = 8.dp))
                 Text(
                     text = title,
-                    color = HaloTextSecondary,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.1.sp
@@ -153,19 +154,19 @@ fun HaloSection(
 @Composable
 fun HaloMetricCard(label: String, value: String, modifier: Modifier = Modifier) {
     HaloCard(modifier = modifier.fillMaxWidth()) {
-        Text(label, color = HaloTextSecondary, fontSize = 12.sp)
+        Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
         Spacer(modifier = Modifier.height(5.dp))
-        Text(value, color = HaloTextPrimary, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
+        Text(value, color = MaterialTheme.colorScheme.onSurface, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
     }
 }
 
 @Composable
 fun HaloEngineCard(name: String, state: ProcessState) {
     val color = when (state) {
-        ProcessState.Running -> HaloPrimary
+        ProcessState.Running -> MaterialTheme.colorScheme.primary
         ProcessState.Paused -> HaloWarning
         ProcessState.Crashed -> HaloDanger
-        else -> HaloTextSecondary
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
     HaloCard(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
         Row(
@@ -175,7 +176,7 @@ fun HaloEngineCard(name: String, state: ProcessState) {
         ) {
             Text(
                 text = name,
-                color = HaloTextPrimary,
+                color = MaterialTheme.colorScheme.onSurface,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
@@ -195,8 +196,8 @@ fun HaloProviderCard(name: String, status: String, isOnline: Boolean = false) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(name, color = HaloTextPrimary, fontSize = 16.sp, fontWeight = FontWeight.Medium)
-            Text(status, color = if (isOnline) HaloPrimary else HaloTextSecondary, fontSize = 14.sp)
+            Text(name, color = MaterialTheme.colorScheme.onSurface, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+            Text(status, color = if (isOnline) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
         }
     }
 }
@@ -213,7 +214,7 @@ fun HaloTimelineItem(
         verticalAlignment = Alignment.Top
     ) {
         Box(
-            modifier = Modifier.size(34.dp).background(HaloSurface, RoundedCornerShape(10.dp)),
+            modifier = Modifier.size(34.dp).background(MaterialTheme.colorScheme.surface, RoundedCornerShape(10.dp)),
             contentAlignment = Alignment.Center
         ) { icon() }
         Spacer(modifier = Modifier.width(14.dp))
@@ -222,11 +223,11 @@ fun HaloTimelineItem(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(title, color = HaloTextPrimary, fontWeight = FontWeight.Medium, fontSize = 14.sp)
-                Text(time, color = HaloTextSecondary, fontSize = 12.sp)
+                Text(title, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Medium, fontSize = 14.sp)
+                Text(time, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
             }
             Spacer(modifier = Modifier.height(4.dp))
-            Text(description, color = HaloTextSecondary, fontSize = 14.sp)
+            Text(description, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
         }
     }
 }
@@ -234,8 +235,8 @@ fun HaloTimelineItem(
 // Legacy compatibility for screens that have not been migrated yet.
 @Composable
 fun SectionHeader(title: String, subtitle: String? = null) {
-    HaloSection(title = title.uppercase()) {
-        if (subtitle != null) Text(text = subtitle, color = HaloTextSecondary, fontSize = 12.sp)
+    HaloSection(title = title) {
+        if (subtitle != null) Text(text = subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
     }
 }
 
@@ -246,8 +247,8 @@ fun MetricRow(label: String, value: String) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = label, color = HaloTextSecondary, fontSize = 14.sp)
-        Text(text = value, color = HaloTextPrimary, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+        Text(text = label, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
+        Text(text = value, color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp, fontWeight = FontWeight.Medium)
     }
 }
 
@@ -261,13 +262,13 @@ fun ConsoleSection(title: String, content: @Composable () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(HaloSurface, shape = MaterialTheme.shapes.medium)
-            .border(1.dp, HaloBorderSubtle, MaterialTheme.shapes.medium)
+            .background(MaterialTheme.colorScheme.surface, shape = MaterialTheme.shapes.medium)
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium)
             .padding(16.dp)
     ) {
         Text(
             text = title,
-            color = HaloTextSecondary,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.Bold,
             fontSize = 12.sp,
             letterSpacing = 1.sp,
@@ -284,16 +285,16 @@ fun ConsoleRow(label: String, value: String) {
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(label, color = HaloTextSecondary, fontFamily = FontFamily.Monospace, fontSize = 14.sp)
-        Text(value, color = HaloTextPrimary, fontFamily = FontFamily.Monospace, fontSize = 14.sp)
+        Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant, fontFamily = FontFamily.Monospace, fontSize = 14.sp)
+        Text(value, color = MaterialTheme.colorScheme.onSurface, fontFamily = FontFamily.Monospace, fontSize = 14.sp)
     }
 }
 
 @Composable
 fun HaloMetric(label: String, value: String, modifier: Modifier = Modifier) {
     Column(modifier = modifier) {
-        Text(text = label, color = HaloTextSecondary, fontSize = 12.sp)
-        Text(text = value, color = HaloTextPrimary, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+        Text(text = label, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+        Text(text = value, color = MaterialTheme.colorScheme.onSurface, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
     }
 }
 
@@ -304,11 +305,11 @@ fun HaloStatus(label: String, statusText: String, isHealthy: Boolean, modifier: 
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = label, color = HaloTextPrimary, fontSize = 14.sp)
+        Text(text = label, color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp)
         Row(verticalAlignment = Alignment.CenterVertically) {
-            HaloPixelSignal(color = if (isHealthy) HaloPrimary else HaloDanger, active = isHealthy)
+            HaloPixelSignal(color = if (isHealthy) MaterialTheme.colorScheme.primary else HaloDanger, active = isHealthy)
             Spacer(modifier = Modifier.width(6.dp))
-            Text(text = statusText, color = HaloTextSecondary, fontSize = 14.sp)
+            Text(text = statusText, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
         }
     }
 }
@@ -321,9 +322,9 @@ fun HaloDialog(title: String, onDismissRequest: () -> Unit, content: @Composable
     ) {
         Surface(
             modifier = Modifier.fillMaxWidth(0.9f).padding(16.dp),
-            color = HaloSurface,
+            color = MaterialTheme.colorScheme.surface,
             shape = MaterialTheme.shapes.large,
-            border = BorderStroke(1.dp, HaloBorder),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
             tonalElevation = 0.dp
         ) {
             Column(modifier = Modifier.padding(24.dp)) {
@@ -331,7 +332,7 @@ fun HaloDialog(title: String, onDismissRequest: () -> Unit, content: @Composable
                     HaloPixelSignal(modifier = Modifier.padding(end = 10.dp))
                     Text(
                         text = title,
-                        color = HaloTextPrimary,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold
                     )

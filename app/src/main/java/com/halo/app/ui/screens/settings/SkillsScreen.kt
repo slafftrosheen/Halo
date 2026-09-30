@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -69,12 +71,12 @@ fun SkillsScreen(
     /** MINING-P1-001 capability overview. Optional: the screen works without it. */
     capabilityStatus: CapabilityStatusViewModel? = null,
 ) {
-    val skills by skillRegistry.skills.collectAsState()
+    val skills by skillRegistry.skills.collectAsStateWithLifecycle()
     // Recompose whenever live host/device capability availability changes.
     val capabilitySnapshot by (
         capabilityCatalogue?.snapshot
             ?: flowOf(CapabilityCatalogueSnapshot(emptyList(), 0L))
-        ).collectAsState(initial = CapabilityCatalogueSnapshot(emptyList(), 0L))
+        ).collectAsStateWithLifecycle(initialValue = CapabilityCatalogueSnapshot(emptyList(), 0L))
     capabilitySnapshot.revision // explicit observation; availabilityResolver reads the same source.
 
     val scope = rememberCoroutineScope()
@@ -320,7 +322,7 @@ fun SkillsScreen(
  */
 @Composable
 private fun CapabilityStatusCard(viewModel: CapabilityStatusViewModel) {
-    val state by viewModel.state.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     DisposableEffect(lifecycle, viewModel) {
         val observer = LifecycleEventObserver { _, event ->

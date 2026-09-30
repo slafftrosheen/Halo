@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.asStateFlow
 
 interface AiModelCatalogRepository {
     val state: StateFlow<AiModelCatalogState>
+    fun invalidate(providerId: String) {}
+    suspend fun restoreCached() {}
     suspend fun refresh()
     suspend fun refresh(providerId: String) = refresh()
 }
@@ -21,9 +23,45 @@ interface AiModelCatalogRepository {
 class DefaultAiModelCatalogRepository(
     private val providers: List<AiInferenceProvider>,
     private val nowMs: () -> Long = System::currentTimeMillis,
+    private val storage: com.halo.sdk.runtime.Storage? = null,
 ) : AiModelCatalogRepository {
     private val _state = MutableStateFlow(AiModelCatalogState())
     override val state: StateFlow<AiModelCatalogState> = _state.asStateFlow()
+
+    override fun invalidate(providerId: String) {
+        _state.value = _state.value.copy(models = _state.value.models.filter { it.model.providerId != providerId },
+            providerErrors = _state.value.providerErrors - providerId)
+    }
+    override suspend fun restoreCached() {
+        val store = storage ?: return
+        val restored = providers.filter { it.id != DefaultAiProviderRouter.LITERT_PROVIDER_ID }.flatMap { provider ->
+            decodeModels(provider, store.getString(cacheKey(provider))).map { model ->
+                model.toEntry(provider, ProviderStatus.UNCONFIGURED).copy(source = ModelCatalogueSource.REMOTE_CACHED)
+            }
+        }
+        _state.value = _state.value.copy(models = (_state.value.models + restored).distinctBy { it.runtime.ref })
+    }
+    private fun cacheKey(provider: AiInferenceProvider): String {
+        val configuration = (provider as? ProviderConfigurationReporting)?.configurationDescriptor
+        val endpoint = configuration?.fields?.filter { it.kind == ProviderFieldKind.ENDPOINT }?.joinToString { storage?.getString(it.id).orEmpty() }.orEmpty()
+        val fingerprint = java.security.MessageDigest.getInstance("SHA-256").digest(endpoint.toByteArray()).take(8).joinToString("") { "%02x".format(it) }
+        return "ai_model_catalog_v1_${provider.id}_$fingerprint"
+    }
+    private fun encodeModels(models: List<AiModel>): String {
+        fun encode(text: String) = java.util.Base64.getEncoder().encodeToString(text.toByteArray(Charsets.UTF_8))
+        return models.take(3000).joinToString("\n") { model ->
+            listOf(encode(model.id), encode(model.displayName), model.inputCapabilities.joinToString(",") { it.name },
+                model.contextLength?.toString().orEmpty(), model.supportsStreaming.toString(), model.supportsTools.toString(), model.isFree.toString()).joinToString("|")
+        }
+    }
+    private fun decodeModels(provider: AiInferenceProvider, raw: String?): List<AiModel> = raw?.take(2_000_000)?.lineSequence()?.take(3000)?.mapNotNull { line ->
+        runCatching {
+            val fields = line.split('|'); require(fields.size == 7)
+            fun decode(index: Int) = String(java.util.Base64.getDecoder().decode(fields[index]), Charsets.UTF_8)
+            AiModel(decode(0), decode(1), provider.id, fields[2].split(',').mapNotNull { name -> AiCapability.entries.firstOrNull { it.name == name } }.toSet(),
+                fields[3].toLongOrNull(), fields[4].toBooleanStrict(), fields[5].toBooleanStrict(), fields[6].toBooleanStrict())
+        }.getOrNull()
+    }?.toList().orEmpty()
 
     private val catalogCache = ModelCatalogCache()
 
@@ -33,13 +71,15 @@ class DefaultAiModelCatalogRepository(
 
     private suspend fun refreshProviders(targets: List<AiInferenceProvider>) = refreshMutex.withLock {
         val ids = targets.mapTo(linkedSetOf()) { it.id }
+        val configurations = targets.associate { it.id to cacheKey(it) }
         _state.value = _state.value.copy(refreshingProviders = ids)
         try {
             val results = coroutineScope {
                 targets.map { provider -> async {
                     try {
-                        val models = provider.listModels()
-                        ProviderResult(provider.id, models.map { it.toEntry(provider, provider.getStatus()) }, null)
+                        val models = provider.refreshModels()
+                        if (configurations[provider.id] != cacheKey(provider)) ProviderResult(provider.id, null, "Provider configuration changed; refresh again")
+                        else ProviderResult(provider.id, models.map { it.toEntry(provider, provider.getStatus()) }, null)
                     } catch (cancelled: CancellationException) { throw cancelled }
                     catch (_: Exception) { ProviderResult(provider.id, null, "Model metadata could not be refreshed") }
                 } }.awaitAll()
@@ -56,6 +96,11 @@ class DefaultAiModelCatalogRepository(
                 refreshedAtMs = nowMs(),
             )
             results.forEach { result -> result.entries?.let { catalogCache.put(result.providerId, it.map { it.model }, lastSourceFor(result.providerId, merged)) } }
+            results.forEach { result -> result.entries?.let { entries ->
+                targets.firstOrNull { it.id == result.providerId }?.takeIf { it.id != DefaultAiProviderRouter.LITERT_PROVIDER_ID }?.let { provider ->
+                    storage?.putString(cacheKey(provider), encodeModels(entries.map { it.model }))
+                }
+            } }
         } finally { _state.value = _state.value.copy(refreshingProviders = emptySet()) }
     }
 
@@ -66,11 +111,8 @@ class DefaultAiModelCatalogRepository(
     fun cachedModels(providerId: String): List<AiModel> = catalogCache.get(providerId)?.models.orEmpty()
 
     private fun AiModel.toEntry(provider: AiInferenceProvider, status: ProviderStatus): AiModelCatalogEntry {
-        val location = when (provider.id) {
-            DefaultAiProviderRouter.LITERT_PROVIDER_ID -> AiExecutionLocation.ON_DEVICE
-            "provider.ollama" -> AiExecutionLocation.LOCAL_NETWORK
-            else -> AiExecutionLocation.REMOTE
-        }
+        val location = (provider as? ProviderConfigurationReporting)?.configurationDescriptor?.location ?: executionLocation
+
         val live = status.state == ProviderStatus.State.READY
         val source = when (location) {
             AiExecutionLocation.ON_DEVICE -> ModelCatalogueSource.LOCAL_INSTALLED
@@ -85,7 +127,8 @@ class DefaultAiModelCatalogRepository(
                 installed = if (location == AiExecutionLocation.ON_DEVICE) true else null,
                 resident = null,
                 requiresNetwork = location != AiExecutionLocation.ON_DEVICE,
-                requiresCredential = location == AiExecutionLocation.REMOTE,
+                requiresCredential = (provider as? ProviderConfigurationReporting)?.configurationDescriptor?.fields?.any { it.kind == ProviderFieldKind.SECRET || it.kind == ProviderFieldKind.OAUTH_ACTION }
+                    ?: (location == AiExecutionLocation.REMOTE),
                 costClass = when {
                     location == AiExecutionLocation.ON_DEVICE -> AiCostClass.LOCAL
                     isFree -> AiCostClass.FREE
@@ -99,7 +142,7 @@ class DefaultAiModelCatalogRepository(
                     "openai" -> AiWireProtocol.OPENAI_CHAT_COMPLETIONS
                     "anthropic" -> AiWireProtocol.ANTHROPIC_MESSAGES
                     "gemini" -> AiWireProtocol.GEMINI_GENERATE_CONTENT
-                    else -> null
+                    else -> (provider as? ProviderConfigurationReporting)?.configurationDescriptor?.protocol?.let { protocol -> AiWireProtocol.entries.firstOrNull { it.name == protocol } }
                 },
             ),
             kind = if (id == "openrouter/free" || id.startsWith("@preset/")) AiModelKind.ROUTER else AiModelKind.CONCRETE,

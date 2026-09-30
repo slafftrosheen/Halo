@@ -217,6 +217,10 @@ class StudyRepository(
     fun observeDuePracticeItems(limit: Int = 50): Flow<List<StudyPracticeItem>> =
         flushDueQuery(limit)
 
+    fun observeSessionDuePractice(sessionId: String): Flow<List<StudyPracticeItem>> =
+        clockTicks.flatMapLatest { at -> dao.observeSessionDuePractice(sessionId, at) }
+            .map { rows -> rows.map(StudyPracticeItemEntity::toDomain) }
+
     suspend fun getPracticeItem(itemId: String): StudyPracticeItem? =
         dao.getPracticeItem(itemId)?.toDomain()
 

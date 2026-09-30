@@ -49,22 +49,24 @@ fun HaloGlassIconButton(
 
     HaloGlassSurface(
         modifier = modifier
-            .size(size)
+            .size(size.coerceAtLeast(48.dp))
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
                 enabled = enabled,
+                role = androidx.compose.ui.semantics.Role.Button,
                 onClick = onClick
             ),
         material = material.copy(
             containerColor = containerColor,
             elevation = if (isPressed) 2.dp else material.elevation
         ),
+        contentPadding = 0.dp,
         shape = HaloGlassTokens.circleShape
     ) {
         Box(
             contentAlignment = Alignment.Center,
-            modifier = Modifier.size(size)
+            modifier = Modifier.size(size.coerceAtLeast(48.dp))
         ) {
             Icon(
                 imageVector = imageVector,
@@ -92,7 +94,7 @@ object HaloGlassIconButton {
             onClick = onClick,
             modifier = modifier,
             enabled = enabled,
-            tint = Color.White,
+            tint = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary,
             size = size,
             material = HaloGlassMaterials.Interactive.copy(
                 containerColor = HaloGlassColors.Accent
@@ -137,7 +139,7 @@ object HaloGlassIconButton {
             onClick = onClick,
             modifier = modifier,
             enabled = enabled,
-            tint = Color.White,
+            tint = androidx.compose.material3.MaterialTheme.colorScheme.onError,
             size = size,
             material = HaloGlassMaterials.Interactive.copy(
                 containerColor = HaloGlassColors.Danger

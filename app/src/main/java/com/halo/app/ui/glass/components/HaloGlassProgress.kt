@@ -72,8 +72,16 @@ fun HaloGlassIndeterminateProgress(
     progressColor: Color = HaloGlassColors.Accent,
     height: Dp = 4.dp
 ) {
+    val reducedMotion by com.halo.app.ui.theme.rememberReducedMotion()
+    if (reducedMotion) {
+        Canvas(modifier.fillMaxWidth().height(height)) {
+            drawRoundRect(trackColor, size = this.size)
+            drawRoundRect(progressColor, size = Size(this.size.width * 0.3f, this.size.height))
+        }
+        return
+    }
     val transition = rememberInfiniteTransition(label = "progress")
-    val offset by transition.animateFloat(
+    val offset = transition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
@@ -99,7 +107,7 @@ fun HaloGlassIndeterminateProgress(
             cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius)
         )
 
-        val startX = (size.width + indicatorWidth) * offset - indicatorWidth
+        val startX = (size.width + indicatorWidth) * offset.value - indicatorWidth
         drawRoundRect(
             color = progressColor,
             topLeft = Offset(startX.coerceIn(0f, size.width - 1f), 0f),
@@ -157,8 +165,19 @@ fun HaloGlassIndeterminateCircularProgress(
     trackColor: Color = HaloGlassColors.GlassElevated,
     progressColor: Color = HaloGlassColors.Accent
 ) {
+    val reducedMotion by com.halo.app.ui.theme.rememberReducedMotion()
+    if (reducedMotion) {
+        Canvas(modifier.size(size)) {
+            val stroke = strokeWidth.toPx()
+            val arcSize = Size(this.size.width - stroke, this.size.height - stroke)
+            val topLeft = Offset(stroke / 2f, stroke / 2f)
+            drawArc(trackColor, 0f, 360f, false, topLeft, arcSize, style = Stroke(stroke))
+            drawArc(progressColor, -90f, 100f, false, topLeft, arcSize, style = Stroke(stroke, cap = StrokeCap.Round))
+        }
+        return
+    }
     val transition = rememberInfiniteTransition(label = "circular_progress")
-    val rotation by transition.animateFloat(
+    val rotation = transition.animateFloat(
         initialValue = 0f,
         targetValue = 360f,
         animationSpec = infiniteRepeatable(
@@ -185,7 +204,7 @@ fun HaloGlassIndeterminateCircularProgress(
 
         drawArc(
             color = progressColor,
-            startAngle = rotation - 90f,
+            startAngle = rotation.value - 90f,
             sweepAngle = 100f,
             useCenter = false,
             topLeft = topLeft,

@@ -19,4 +19,6 @@ interface AiInferenceProvider : AiProvider {
      * metadata, and large parsing work, so callers may safely invoke this on Main.
      */
     suspend fun listModels(): List<AiModel>
+    /** Explicit settings refresh may bypass a provider's inference-time metadata cache. */
+    suspend fun refreshModels(): List<AiModel> = listModels()
 }

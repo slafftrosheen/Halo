@@ -81,7 +81,7 @@ class DefaultProviderTurnExecutor(
         val canUseTools = AiCapability.TOOLS in target.effectiveCapabilities
         val outboundContext = if (mode == com.halo.sdk.provider.ToolUseMode.NONE || !canUseTools) context.copy(availableTools = emptyList()) else context
         if (mode == com.halo.sdk.provider.ToolUseMode.REQUIRED && outboundContext.availableTools.isEmpty())
-            throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY, "Required actions are unavailable for this target")
+            throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY, "I can't perform that action yet. Choose a tool-capable model and enable the required capability.")
         println("[HALO_PROVIDER_REQUEST_SHAPE] provider=${target.providerId} model=${target.modelId} toolMode=$mode toolsIncluded=${outboundContext.availableTools.isNotEmpty()} toolCount=${outboundContext.availableTools.size} historyMessages=${outboundContext.conversation.size} image=${request.image != null}")
         val provider = target.provider
         val expectedModelId = target.modelId

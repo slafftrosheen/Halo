@@ -17,7 +17,7 @@ enum class ProviderCatalogueState { LIVE, CACHED, STALE, UNAVAILABLE }
 data class ProviderControlRow(val descriptor: ProviderConfigurationDescriptor, val credentialConfigured: Boolean,
     val configured: Boolean, val selected: Boolean, val connection: ProviderConnectionState,
     val catalogue: ProviderCatalogueState, val modelCount: Int, val fields: Map<String, String> = emptyMap(),
-    val generation: GenerationProof = GenerationProof.NOT_TESTED, val lastCheckedAt: Long? = null, val lastError: String? = null)
+    val generation: GenerationProof = GenerationProof.NOT_TESTED, val lastCheckedAt: Long? = null, val lastError: String? = null, val lastSelectedModelId: String? = null)
 
 /** Single configuration owner. Saving never selects a provider or refreshes its remote catalogue. */
 class ProviderControlRepository(val router: AiProviderRouter, val catalogue: AiModelCatalogRepository, private val storage: Storage) : ViewModel() {
@@ -34,36 +34,18 @@ class ProviderControlRepository(val router: AiProviderRouter, val catalogue: AiM
     val rows: StateFlow<List<ProviderControlRow>> = _rows.asStateFlow()
     init {
         viewModelScope.launch(Dispatchers.IO) {
+            catalogue.restoreCached()
             catalogue.refresh("provider.litert.local") // Installed inventory only; no remote discovery or engine load.
             launch { combine(providers.map { it.status }) { Unit }.collect { reload() } }
-            combine(router.selectedProviderId, catalogue.state) { _, _ -> Unit }.collect { reload() }
+            combine(router.selectedProviderId, router.selectedModelId, catalogue.state) { _, _, _ -> Unit }.collect { reload() }
         }
     }
     private fun descriptor(provider: AiInferenceProvider): ProviderConfigurationDescriptor {
         (provider as? ProviderConfigurationReporting)?.let { return it.configurationDescriptor }
-        val preset = when (provider.id) {
-            RemoteProviderIds.GROQ -> RemoteProviderPresets.groq
-            RemoteProviderIds.CEREBRAS -> RemoteProviderPresets.cerebras
-            RemoteProviderIds.XAI -> RemoteProviderPresets.xai
-            RemoteProviderIds.OPENCODE_ZEN -> RemoteProviderPresets.opencodeZen
-            RemoteProviderIds.OPENCODE_COMPANION -> RemoteProviderPresets.opencodeCompanion
-            RemoteProviderIds.CUSTOM_OPENAI_COMPATIBLE -> RemoteProviderPresets.customOpenAiCompatible
-            else -> null
-        }
-        val fields = buildList {
-            if (provider is CredentialProvider) add(ProviderConfigurationField("credential", "API key / token", ProviderFieldKind.SECRET))
-            endpointKey(provider.id)?.let { add(ProviderConfigurationField(it, "Endpoint", ProviderFieldKind.ENDPOINT)) }
-            if (provider.id == "gemini") {
-                add(ProviderConfigurationField("gemini_auth_mode", "Authentication", ProviderFieldKind.ENUM, listOf("API_KEY", "OAUTH")))
-                add(ProviderConfigurationField("gemini_project_id", "Google Cloud project ID", ProviderFieldKind.TEXT))
-                add(ProviderConfigurationField("google_oauth", "Google OAuth", ProviderFieldKind.OAUTH_ACTION))
-            }
-            if (provider.id == RemoteProviderIds.CUSTOM_OPENAI_COMPATIBLE)
-                add(ProviderConfigurationField("custom_openai_compatible_auth_mode", "Authentication", ProviderFieldKind.ENUM, listOf("NONE", "API_KEY", "BEARER_TOKEN")))
-        }
+        // Unconfigurable registry entries may still be represented, but setup belongs to providers.
         return ProviderConfigurationDescriptor(provider.id, provider.displayName,
-            preset?.executionLocation ?: if (provider.id == "provider.litert.local") AiExecutionLocation.ON_DEVICE else if (provider.id == "provider.ollama") AiExecutionLocation.LOCAL_NETWORK else AiExecutionLocation.REMOTE,
-            fields, preset?.protocol?.name ?: when (provider.id) { "anthropic" -> "ANTHROPIC_MESSAGES"; "gemini" -> "GEMINI_GENERATE_CONTENT"; "provider.ollama" -> "OLLAMA"; "provider.litert.local" -> "LITERT_NATIVE"; else -> "OPENAI_CHAT_COMPLETIONS" }, preset?.accessKind?.name ?: if (provider.isLocal) "LOCAL" else "ACCOUNT_DEPENDENT")
+            if (provider.isLocal) AiExecutionLocation.ON_DEVICE else AiExecutionLocation.REMOTE,
+            emptyList(), "UNKNOWN", "ACCOUNT_DEPENDENT")
     }
     private fun reload() {
         _rows.value = providers.map { provider ->
@@ -92,7 +74,7 @@ class ProviderControlRepository(val router: AiProviderRouter, val catalogue: AiM
             val connection = when {
                 !configured -> ProviderConnectionState.NOT_CONFIGURED
                 checked[provider.id] == ProviderConnectionState.CHECKING -> ProviderConnectionState.CHECKING
-                status.cooldown != null -> ProviderConnectionState.RATE_LIMITED
+                status.cooldown?.isActive() == true -> ProviderConnectionState.RATE_LIMITED
                 status.state == ProviderStatus.State.OFFLINE -> ProviderConnectionState.OFFLINE
                 status.state == ProviderStatus.State.ERROR -> if (status.rejectionReason == TargetRejectionReason.CONFIGURATION_MISSING) ProviderConnectionState.AUTH_FAILED else ProviderConnectionState.ERROR
                 provider.isLocal && status.state == ProviderStatus.State.READY -> ProviderConnectionState.READY
@@ -100,7 +82,8 @@ class ProviderControlRepository(val router: AiProviderRouter, val catalogue: AiM
             }
             ProviderControlRow(descriptor, hasKey, configured, router.selectedProviderId.value == provider.id,
                 connection,
-                catalogState, entries.size, nonSecrets, generation[provider.id] ?: GenerationProof.NOT_TESTED, checkedAt[provider.id], errors[provider.id] ?: when (connection) { ProviderConnectionState.AUTH_FAILED, ProviderConnectionState.ERROR, ProviderConnectionState.OFFLINE, ProviderConnectionState.RATE_LIMITED -> connection.name; else -> null })
+                catalogState, entries.size, nonSecrets, generation[provider.id] ?: GenerationProof.NOT_TESTED, checkedAt[provider.id], errors[provider.id] ?: when (connection) { ProviderConnectionState.AUTH_FAILED, ProviderConnectionState.ERROR, ProviderConnectionState.OFFLINE, ProviderConnectionState.RATE_LIMITED -> connection.name; else -> null },
+                if (router.selectedProviderId.value == provider.id) router.selectedModelId.value else storage.getString("ai_last_model_${provider.id}"))
         }
     }
     fun save(providerId: String, values: Map<String, String>, credentialDraft: String?, onDone: (Boolean) -> Unit = {}) {
@@ -108,6 +91,7 @@ class ProviderControlRepository(val router: AiProviderRouter, val catalogue: AiM
             val provider = providers.firstOrNull { it.id == providerId } ?: return@launch
             try {
                 val descriptor = descriptor(provider)
+                val previousEndpoint = descriptor.fields.filter { it.kind == ProviderFieldKind.ENDPOINT }.associate { it.id to storage.getString(it.id) }
                 val allowed = descriptor.fields.filter { it.kind in setOf(ProviderFieldKind.TEXT, ProviderFieldKind.ENDPOINT, ProviderFieldKind.ENUM) }
                 allowed.forEach { field -> values[field.id]?.let { value ->
                     if (field.kind == ProviderFieldKind.ENDPOINT && value.isNotBlank()) {
@@ -117,6 +101,7 @@ class ProviderControlRepository(val router: AiProviderRouter, val catalogue: AiM
                     require(field.kind != ProviderFieldKind.ENUM || value in field.options)
                 } }
                 allowed.forEach { field -> values[field.id]?.let { storage.putString(field.id, it.trim()) } }
+                if (previousEndpoint.any { (id, value) -> value != storage.getString(id) }) catalogue.invalidate(providerId)
                 if (!credentialDraft.isNullOrBlank()) (provider as? CredentialProvider)?.setCredential(Credential(providerId, credentialDraft.trim()))
                 if (provider is GeminiProvider && values["gemini_auth_mode"] == "API_KEY") provider.clearOAuthSession()
                 provider.configurationChanged(); revisions.merge(providerId, 1L) { previous, delta -> previous + delta }; refreshed.remove(providerId); checked.remove(providerId); generation.remove(providerId); checkedAt.remove(providerId); errors.remove(providerId); reload(); withContext(Dispatchers.Main) { onDone(true) }
@@ -152,7 +137,7 @@ class ProviderControlRepository(val router: AiProviderRouter, val catalogue: AiM
         try {
             checked[providerId] = if (withTimeout(20_000) { provider.testConnection() }) ProviderConnectionState.READY else {
                 val status = provider.getStatus()
-                when { status.cooldown != null -> ProviderConnectionState.RATE_LIMITED
+                when { status.cooldown?.isActive() == true -> ProviderConnectionState.RATE_LIMITED
                     status.rejectionReason == TargetRejectionReason.NETWORK_UNAVAILABLE -> ProviderConnectionState.OFFLINE
                     status.state == ProviderStatus.State.OFFLINE -> ProviderConnectionState.OFFLINE
                     status.message?.contains("auth", true) == true || status.message?.contains("key", true) == true -> ProviderConnectionState.AUTH_FAILED
@@ -194,13 +179,5 @@ class ProviderControlRepository(val router: AiProviderRouter, val catalogue: AiM
         if (!row.configured) return false
         router.selectProvider(providerId) // Existing router restores the per-provider model preference.
         return true
-    }
-    companion object {
-        private fun endpointKey(id: String): String? = when(id) {
-            "provider.ollama" -> "ollama_endpoint"
-            RemoteProviderIds.OPENCODE_COMPANION -> "opencode_companion_endpoint"
-            RemoteProviderIds.CUSTOM_OPENAI_COMPATIBLE -> "custom_openai_compatible_endpoint"
-            else -> null
-        }
     }
 }

@@ -119,6 +119,8 @@ object ManualDependencyGraph {
         )
     }
     val notebookUseCases by lazy { NotebookUseCases(notebookRepository) }
+    val studyLessonStore by lazy { com.halo.app.ui.screens.study.StudyLessonStore(storage) }
+    val workspaceImageService by lazy { com.halo.app.ai.WorkspaceImageService(aiProviderRouter, storage) }
     val notebookAssetRepository by lazy {
         com.halo.app.data.workspace.NotebookAssetRepository(applicationContext, appDatabase)
     }
@@ -151,7 +153,7 @@ object ManualDependencyGraph {
     val studyTutorGateway by lazy {
         com.halo.app.study.AiRouterTutorGateway(
             router = aiProviderRouter,
-            allowCloudSharing = { workspaceContext.cloudSharing.value },
+            allowCloudSharing = { storage.readRuntimeAiContextPolicy().allowCloudWorkspace },
         )
     }
 
@@ -1139,7 +1141,7 @@ object ManualDependencyGraph {
         )
     }
     val aiModelCatalogRepository by lazy {
-        com.halo.engines.ai.catalog.DefaultAiModelCatalogRepository(aiProviderRouter.getAllProviders().filterIsInstance<com.halo.sdk.provider.AiInferenceProvider>())
+        com.halo.engines.ai.catalog.DefaultAiModelCatalogRepository(aiProviderRouter.getAllProviders().filterIsInstance<com.halo.sdk.provider.AiInferenceProvider>(), storage = storage)
     }
     val modelBrowserViewModel by lazy { com.halo.app.ui.screens.settings.ModelBrowserViewModel(providerControlRepository) }
     val providerControlRepository by lazy { com.halo.app.ai.ProviderControlRepository(aiProviderRouter, aiModelCatalogRepository, storage) }

@@ -41,8 +41,8 @@ sealed interface InterpretationExecutionRoute {
     data class DirectResponse(val intent: Intent) : InterpretationExecutionRoute
 
     /**
-     * No deterministic executor owns this intent, so the cognitive agent path must
-     * handle it (local model plus tools). This is the route that replaces the old
+     * Positive action evidence exists and no deterministic executor owns it, so a
+     * tool-capable AGENTIC target must handle it. This is the route that replaces the old
      * silent return.
      */
     data class Agentic(
@@ -75,12 +75,13 @@ class InterpretationRouteResolver(
             return InterpretationExecutionRoute.DeterministicAction(intent, executorId)
         }
         return when (intent) {
+            is com.halo.cognition.language.ToolActionIntent -> InterpretationExecutionRoute.Agentic(intent, intent.reason.name)
             is ConversationIntent, is QuestionIntent -> InterpretationExecutionRoute.DirectResponse(intent)
-            else -> InterpretationExecutionRoute.Agentic(
-                intent = intent,
-                hint = "The user asked for something the deterministic host path cannot do. " +
-                    "Use the available Halo actions if one fits; otherwise say what you cannot do.",
-            )
+            // Only a known action whose deterministic owner is absent enters the tool path.
+            is OpenIntent, is CallIntent, is NavigateIntent, is PlayIntent, is PauseIntent,
+            is ReminderIntent, is SearchIntent, is SetAlarmIntent, is ShowAlarmsIntent ->
+                InterpretationExecutionRoute.Agentic(intent, "ACTION_INTENT")
+            else -> InterpretationExecutionRoute.DirectResponse(intent)
         }
     }
 

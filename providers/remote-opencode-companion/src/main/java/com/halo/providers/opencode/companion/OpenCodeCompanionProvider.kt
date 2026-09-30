@@ -58,11 +58,11 @@ class OpenCodeCompanionProvider(
     private val client: OkHttpClient = OpenAiCompatibleTransport.defaultClient(),
     private val companionCredentialProvider: CompanionCredentialProvider =
         CompanionCredentialProvider(storage, secretStore),
-) : AiInferenceProvider, CredentialProvider by companionCredentialProvider {
+) : AiInferenceProvider, CredentialProvider by companionCredentialProvider, com.halo.sdk.provider.ProviderConfigurationReporting {
 
     override val id: String = RemoteProviderIds.OPENCODE_COMPANION
     override val displayName: String = "OpenCode Companion"
-    override val isLocal: Boolean = false
+    override val isLocal: Boolean get() = com.halo.sdk.provider.endpointExecutionLocation(companionEndpoint()) == com.halo.sdk.provider.AiExecutionLocation.LOCAL_NETWORK
 
     private val descriptor = RemoteProviderPresets.opencodeCompanion
 
@@ -81,6 +81,11 @@ class OpenCodeCompanionProvider(
             staticHints = companionStaticHints(),
         )
     }
+
+    override val configurationDescriptor: com.halo.sdk.provider.ProviderConfigurationDescriptor get() =
+        configured.configurationDescriptor.copy(location = com.halo.sdk.provider.endpointExecutionLocation(companionEndpoint()), fields = listOf(
+            com.halo.sdk.provider.ProviderConfigurationField("credential", "API key / token", com.halo.sdk.provider.ProviderFieldKind.SECRET),
+            com.halo.sdk.provider.ProviderConfigurationField("opencode_companion_endpoint", "Endpoint", com.halo.sdk.provider.ProviderFieldKind.ENDPOINT)))
 
     override val status: StateFlow<ProviderStatus> get() = configured.status
     val authInfo: StateFlow<ProviderAuthInfo> get() = configured.authInfo
@@ -106,7 +111,7 @@ class OpenCodeCompanionProvider(
     }
     override suspend fun listModels(): List<AiModel> {
         syncEndpoint()
-        return companionListModels()
+        return companionListModels().map { it.copy(executionLocation = configurationDescriptor.location) }
     }
 
     /** Health diagnostics from the OpenCode server health endpoint. */

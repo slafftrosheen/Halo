@@ -3,6 +3,7 @@ package com.halo.app.di.tools
 import com.halo.runtime.cognition.tools.CapabilityId
 import com.halo.runtime.cognition.tools.ConfirmationPolicy
 import com.halo.runtime.cognition.tools.ReplaySafety
+import com.halo.runtime.cognition.tools.ToolAutomationMetadata
 import com.halo.runtime.cognition.tools.ToolCategory
 import com.halo.runtime.cognition.tools.ToolDescriptor
 import com.halo.runtime.cognition.tools.ToolId

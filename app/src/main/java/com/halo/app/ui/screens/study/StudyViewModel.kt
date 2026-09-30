@@ -32,6 +32,9 @@ import com.halo.app.study.TutorTurnResponse
 import com.halo.sdk.runtime.study.StudyLanguagePreferences
 import com.halo.sdk.runtime.study.StudySessionLifecycle
 import com.halo.sdk.runtime.study.TutorStage
+import com.halo.app.notebook.NotebookUseCases
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.receiveAsFlow
 import java.util.UUID
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -51,6 +54,7 @@ data class StudyTurn(
     val nextStep: String? = null,
     val uncertainty: String? = null,
     val failure: String? = null,
+    val question: String? = null,
 )
 
 /**
@@ -93,6 +97,9 @@ data class StudyUiState(
     val attempts: List<StudyAttempt> = emptyList(),
     val feedback: List<StudyFeedback> = emptyList(),
     val practiceItems: List<StudyPracticeItem> = emptyList(),
+    val dueReviewItems: List<StudyPracticeItem> = emptyList(),
+    val reviewing: Set<String> = emptySet(),
+    val savingSummary: Boolean = false,
     val turns: List<StudyTurn> = emptyList(),
     val draft: String = "",
     val notice: String? = null,
@@ -114,7 +121,7 @@ data class StudyUiState(
         get() = !isSubmitting && !isFinished && draft.isNotBlank()
 
     val dueCards: List<StudyPracticeItem>
-        get() = practiceItems.filter { it.accepted && !it.mastered }
+        get() = dueReviewItems
 
     val masteredCount: Int get() = practiceItems.count(StudyPracticeItem::mastered)
 
@@ -154,16 +161,25 @@ class StudyViewModel(
     private val newId: () -> String = { UUID.randomUUID().toString() },
     /** Single clock read per recomputation, so a curve cannot be built from two different "now"s. */
     private val clock: () -> Long = System::currentTimeMillis,
+    private val notes: NotebookUseCases? = null,
+    private val lessons: StudyLessonStore? = null,
 ) : ViewModel() {
 
     private val mutableUiState = MutableStateFlow(StudyUiState())
     val uiState: StateFlow<StudyUiState> = mutableUiState.asStateFlow()
 
+    private val navigation = Channel<String>(Channel.BUFFERED)
+    val savedNotes = navigation.receiveAsFlow()
     private var activeRequestId: String? = null
     private var turnJob: Job? = null
     private var generationCounter = 0L
 
     init {
+        viewModelScope.launch {
+            study.observeSessionDuePractice(sessionId).collect { due ->
+                mutableUiState.value = mutableUiState.value.copy(dueReviewItems = due)
+            }
+        }
         viewModelScope.launch {
             val session = study.getSession(sessionId)
             if (session == null) {
@@ -173,16 +189,22 @@ class StudyViewModel(
                 )
                 return@launch
             }
+            val history = lessons?.load(sessionId).orEmpty()
             mutableUiState.value = mutableUiState.value.copy(
                 loading = false,
                 session = session,
+                turns = (history + mutableUiState.value.turns).distinctBy { it.id },
                 sources = study.sourceReferences(session),
                 narrationAvailable = study.narrationAvailable,
             )
         }
         viewModelScope.launch {
             study.observeSession(sessionId).collect { session ->
-                if (session == null) return@collect
+                if (session == null) {
+                    cancelTurn("Session unavailable")
+                    mutableUiState.value = mutableUiState.value.copy(loading = false, unavailable = "This session is no longer available", turns = emptyList())
+                    return@collect
+                }
                 mutableUiState.value = mutableUiState.value.copy(session = session, loading = false)
                 if (session.lifecycle == StudySessionLifecycle.COMPLETED) {
                     stopReading("Session completed")
@@ -356,11 +378,18 @@ class StudyViewModel(
         requestTutorTurn(session, attempt = null)
     }
 
+    fun askQuestion() {
+        val current = mutableUiState.value
+        val session = current.session ?: return
+        if (current.isGenerating || current.isFinished || current.draft.isBlank()) return
+        requestTutorTurn(session, attempt = null, question = current.draft.trim().take(2000))
+    }
+
     /**
      * One tutor turn. Passing the [attempt] (rather than reading "the latest attempt" later) makes
      * the graded submission part of the request, so no shared mutable pointer can drift.
      */
-    private fun requestTutorTurn(session: StudySessionRecord, attempt: StudyAttempt?) {
+    private fun requestTutorTurn(session: StudySessionRecord, attempt: StudyAttempt?, question: String? = null) {
         val gateway = gateway
         if (gateway == null || !gateway.available) {
             mutableUiState.value = mutableUiState.value.copy(
@@ -370,7 +399,7 @@ class StudyViewModel(
             return
         }
         generationCounter += 1
-        val requestId = "$sessionId:${session.currentExerciseId ?: "no-exercise"}:$generationCounter"
+        val requestId = "$sessionId:${session.currentExerciseId ?: "no-exercise"}:${newId()}:$generationCounter"
         activeRequestId = requestId
         val exerciseAtRequest = session.currentExerciseId
         val stage = session.tutorStage
@@ -399,6 +428,8 @@ class StudyViewModel(
                     helpAlreadyRevealed = TutorStagePolicyHelper.helpRevealed(stage),
                     exerciseId = exerciseAtRequest,
                     requestId = requestId,
+                    learnerQuestion = question,
+                    recentLesson = mutableUiState.value.turns.filter { it.failure == null }.takeLast(4).map { turn -> turn.question?.let { "Learner: $it\nTutor: ${turn.text}" } ?: turn.text },
                 )
             )
             // Reject a late response whose request, session or exercise moved on.
@@ -414,6 +445,7 @@ class StudyViewModel(
                 is TutorTurnResponse.Ready -> {
                     val turn = StudyTurn(
                         id = response.generationId,
+                        question = question,
                         stage = stage,
                         text = response.text,
                         citations = response.citations,
@@ -421,9 +453,13 @@ class StudyViewModel(
                         nextStep = response.nextStep,
                         uncertainty = response.uncertainty,
                     )
+                    val turns = (mutableUiState.value.turns + turn).takeLast(30)
+                    try { lessons?.save(sessionId, turns) }
+                    catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                    catch (_: Exception) { mutableUiState.value = mutableUiState.value.copy(notice = "This reply couldn't be saved locally. Save study notes to keep a copy.") }
                     mutableUiState.value = mutableUiState.value.copy(
                         isGenerating = false,
-                        turns = mutableUiState.value.turns + turn,
+                        turns = turns,
                     )
                     persistFeedback(currentSession, response, exerciseAtRequest, attempt?.id)
                 }
@@ -682,17 +718,21 @@ class StudyViewModel(
 
     /** Self-assessment for answers Halo cannot verify; never presented as a verified grade. */
     fun selfAssessCard(itemId: String, known: Boolean) = viewModelScope.launch {
-        val outcome = study.reviewPracticeItem(itemId, known)
-        mutableUiState.value = mutableUiState.value.copy(
-            cardResults = mutableUiState.value.cardResults + (itemId to CardReviewResult(
-                itemId = itemId,
-                verdict = known,
-                diff = mutableUiState.value.cardResults[itemId]?.diff,
-                message = if (known) "Recorded as remembered" else "Recorded for an earlier review",
-            )),
-            revealedAnswers = mutableUiState.value.revealedAnswers - itemId,
-            notice = outcome?.let { "Next review in ${it.decision.intervalDays} day(s)" },
-        )
+        if (itemId in mutableUiState.value.reviewing) return@launch
+        mutableUiState.value = mutableUiState.value.copy(reviewing = mutableUiState.value.reviewing + itemId)
+        try {
+            val outcome = study.reviewPracticeItem(itemId, known)
+            mutableUiState.value = mutableUiState.value.copy(
+                cardResults = mutableUiState.value.cardResults + (itemId to CardReviewResult(itemId = itemId, verdict = known,
+                    diff = mutableUiState.value.cardResults[itemId]?.diff,
+                    message = if (outcome == null) "The review could not be saved" else if (known) "Recorded as remembered" else "Recorded for an earlier review")),
+                revealedAnswers = mutableUiState.value.revealedAnswers - itemId,
+                notice = outcome?.let { "Next review in ${it.decision.intervalDays} day(s)" } ?: "Could not update this card's schedule",
+                dueReviewItems = if (outcome != null) mutableUiState.value.dueReviewItems.filterNot { it.id == itemId } else mutableUiState.value.dueReviewItems,
+            )
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (_: Exception) { mutableUiState.value = mutableUiState.value.copy(notice = "Could not save this review. Try again.") }
+        finally { mutableUiState.value = mutableUiState.value.copy(reviewing = mutableUiState.value.reviewing - itemId) }
     }
 
     fun revealAnswer(itemId: String) {
@@ -751,8 +791,42 @@ class StudyViewModel(
         }
 
     fun deleteAllSessionData() = viewModelScope.launch {
-        cancelTurn("Deleting study data")
-        study.deleteSessionData(sessionId)
+        cancelTurn("Session deleted")
+        try {
+            check(study.deleteSessionData(sessionId))
+            lessons?.delete(sessionId)
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (_: Exception) { mutableUiState.value = mutableUiState.value.copy(notice = "Session deletion could not finish. Try again.") }
+    }
+
+    fun refreshSources() = viewModelScope.launch {
+        val session = mutableUiState.value.session ?: return@launch
+        mutableUiState.value = mutableUiState.value.copy(sources = study.sourceReferences(session))
+    }
+
+    fun saveSummaryToNotebook() = viewModelScope.launch {
+        val state = mutableUiState.value
+        if (state.savingSummary || state.loading) return@launch
+        val store = notes ?: return@launch
+        mutableUiState.value = state.copy(savingSummary = true)
+        try {
+            val title = state.session?.goal?.takeIf { it.isNotBlank() } ?: "Study notes"
+            val body = buildString {
+                append("# ").append(title).append("\n\n")
+                append("## Sources\n")
+                state.sources.forEach { append("- ").append(it.title).append(" (revision ").append(it.revision ?: "unknown").append(")\nSource: ").append(it.objectId).append("\n") }
+                append("\n## Tutor notes\n")
+                state.turns.filter { it.failure == null }.forEach { append(it.stage.name.lowercase().replace('_', ' ')).append("\n").append(it.text).append("\n\n") }
+                append("## Your attempts\n")
+                state.attempts.forEach { append(it.response).append("\n\n") }
+                append("## Practice\n")
+                state.practiceItems.filter { it.accepted }.forEach { append(it.question).append("\n").append(it.answer).append("\n\n") }
+            }
+            val note = store.createNote(body, title)
+            navigation.send(note.id)
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (_: Exception) { mutableUiState.value = mutableUiState.value.copy(notice = "Could not save study notes. Your session is still available.") }
+        finally { mutableUiState.value = mutableUiState.value.copy(savingSummary = false) }
     }
 
     fun clearNotice() {
@@ -763,10 +837,12 @@ class StudyViewModel(
         private val sessionId: String,
         private val study: StudyUseCases,
         private val gateway: StudyTutorGateway? = null,
+        private val notes: NotebookUseCases? = null,
+        private val lessons: StudyLessonStore? = null,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            StudyViewModel(sessionId, study, gateway) as T
+            StudyViewModel(sessionId, study, gateway, notes = notes, lessons = lessons) as T
     }
 }
 

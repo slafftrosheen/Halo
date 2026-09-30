@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -59,10 +61,10 @@ fun AndroidAssistantScreen(
      */
     audioAffinity: StateFlow<InteractionAudioAffinity?> = MutableStateFlow(null),
 ) {
-    val state by roleController.integrationState.collectAsState()
-    val enrollmentDiagnostics by roleController.enrollmentDiagnostics.collectAsState()
-    val runtimeState by AssistantRuntimeStateStore.state.collectAsState()
-    val affinity by audioAffinity.collectAsState()
+    val state by roleController.integrationState.collectAsStateWithLifecycle()
+    val enrollmentDiagnostics by roleController.enrollmentDiagnostics.collectAsStateWithLifecycle()
+    val runtimeState by AssistantRuntimeStateStore.state.collectAsStateWithLifecycle()
+    val affinity by audioAffinity.collectAsStateWithLifecycle()
     var enrollmentError by remember { mutableStateOf<String?>(null) }
 
     val launcher = rememberLauncherForActivityResult(

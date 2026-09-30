@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
@@ -70,6 +71,7 @@ import com.halo.app.ui.workspace.HaloWorkspaceButton
 import com.halo.app.ui.workspace.HaloWorkspaceCard
 import com.halo.runtime.cognition.context.CognitiveOperatingMode
 import com.halo.sdk.provider.CognitiveSessionState
+import com.halo.app.ai.label
 import com.halo.sdk.provider.ProviderStatus
 
 @Composable
@@ -77,17 +79,20 @@ fun HomeScreen(
     viewModel: HomeViewModel,
     onRequestMicrophonePermission: () -> Unit,
     onOpenPendingUpdates: () -> Unit = {},
+    onOpenProvider: (String) -> Unit = {},
     onOpenLearningSuggestions: () -> Unit = {},
 ) {
-    val learningSuggestions by com.halo.app.di.ManualDependencyGraph.personalLearning.pending.collectAsState(emptyList())
-    val showLearning = com.halo.runtime.cognition.memory.PersonalSuggestionPolicy.showHome(
-        com.halo.runtime.cognition.attention.AttentionInitiativeLevel.fromStored(com.halo.app.di.ManualDependencyGraph.storage.getString("attention_initiative")))
-    val pendingUpdates by com.halo.app.di.ManualDependencyGraph.attentionQueue.pending.collectAsState()
-    val selectedContext by (viewModel.workspace?.workingSet ?: kotlinx.coroutines.flow.flowOf(emptyList<String>())).collectAsState(emptyList())
+    val learningSuggestions by com.halo.app.di.ManualDependencyGraph.personalLearning.pending.collectAsStateWithLifecycle(emptyList())
+    fun readLearningPolicy() = com.halo.runtime.cognition.memory.PersonalSuggestionPolicy.showHome(
+        com.halo.runtime.cognition.attention.AttentionInitiativeLevel.fromStored(
+            com.halo.app.di.ManualDependencyGraph.storage.getString("attention_initiative")))
+    var showLearning by remember { mutableStateOf(readLearningPolicy()) }
+    val pendingUpdates by com.halo.app.di.ManualDependencyGraph.attentionQueue.pending.collectAsStateWithLifecycle()
+    val selectedContext by (viewModel.workspace?.workingSet ?: kotlinx.coroutines.flow.flowOf(emptyList<String>())).collectAsStateWithLifecycle(emptyList())
     val context = androidx.compose.ui.platform.LocalContext.current
     var pendingPhoto by rememberSaveable { mutableStateOf<String?>(null) }
-    val captureMessage by viewModel.captureMessage.collectAsState()
-    val visualAttachment by com.halo.app.di.ManualDependencyGraph.visualAttachments.state.collectAsState()
+    val captureMessage by viewModel.captureMessage.collectAsStateWithLifecycle()
+    val visualAttachment by com.halo.app.di.ManualDependencyGraph.visualAttachments.state.collectAsStateWithLifecycle()
     val imagePicker = androidx.activity.compose.rememberLauncherForActivityResult(
         androidx.activity.result.contract.ActivityResultContracts.GetContent()
     ) { uri -> uri?.let(viewModel::attachSharedImage) }
@@ -117,7 +122,16 @@ fun HomeScreen(
     }
     val clipboard = LocalClipboardManager.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val listeningRequested by viewModel.listeningRequested.collectAsState()
+    val providerControl = com.halo.app.di.ManualDependencyGraph.providerControlRepository
+    val providerRows by providerControl.rows.collectAsStateWithLifecycle()
+    val chatProviderId by providerControl.router.selectedProviderId.collectAsStateWithLifecycle()
+    val chatProvider = providerRows.firstOrNull { it.descriptor.providerId == chatProviderId }
+    val connectionNeedsAttention = chatProvider?.connection in setOf(
+        com.halo.app.ai.ProviderConnectionState.AUTH_FAILED, com.halo.app.ai.ProviderConnectionState.OFFLINE,
+        com.halo.app.ai.ProviderConnectionState.RATE_LIMITED, com.halo.app.ai.ProviderConnectionState.ERROR,
+    )
+
+    val listeningRequested by viewModel.listeningRequested.collectAsStateWithLifecycle()
     var textInput by rememberSaveable { mutableStateOf("") }
     val reducedMotion by rememberReducedMotion()
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -129,6 +143,7 @@ fun HomeScreen(
     DisposableEffect(lifecycleOwner, viewModel) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
+                showLearning = readLearningPolicy()
                 viewModel.refreshProviderDiagnostics()
             }
         }
@@ -196,20 +211,14 @@ fun HomeScreen(
         else -> uiState.presentedResponse.orEmpty()
     }.trim()
 
+    var showDetails by rememberSaveable { mutableStateOf(false) }
+    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).imePadding()) {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+        modifier = Modifier.weight(1f).fillMaxWidth()
             .verticalScroll(rememberScrollState())
-            .imePadding()
-            .padding(horizontal = 24.dp, vertical = 18.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(horizontal = 24.dp, vertical = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        if(showLearning && learningSuggestions.isNotEmpty()) TextButton(onClick=onOpenLearningSuggestions) { Text("${learningSuggestions.size} learning suggestions · Review") }
-        if(pendingUpdates.isNotEmpty()) TextButton(onClick = onOpenPendingUpdates) { Text("${pendingUpdates.size} updates waiting") }
-
-        uiState.longTaskStatus?.let { Text(it, style = MaterialTheme.typography.labelSmall) }
-        uiState.longTaskProgress?.let { com.halo.app.interaction.StructuredPresentationRenderer(it, Modifier.fillMaxWidth()) }
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -223,13 +232,13 @@ fun HomeScreen(
                     color = MaterialTheme.colorScheme.onBackground,
                 )
                 Text(
-                    "Your personal intelligence",
+                    "A little clarity for your day.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             when {
-                providerNeedsAttention -> TextButton(onClick = viewModel::navigateToIntelligence) { Text("Set up") }
+                providerNeedsAttention || connectionNeedsAttention -> TextButton(onClick = { chatProviderId?.let(onOpenProvider) ?: viewModel.navigateToIntelligence() }) { Text("Configure") }
                 !uiState.microphonePermissionGranted -> TextButton(onClick = onRequestMicrophonePermission) { Text("Enable voice") }
                 !uiState.speechReady -> TextButton(onClick = viewModel::navigateToVoice) { Text("Set up voice") }
             }
@@ -242,14 +251,14 @@ fun HomeScreen(
             shape = RoundedCornerShape(28.dp),
             color = MaterialTheme.colorScheme.surface,
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-            shadowElevation = 2.dp,
+            shadowElevation = 0.dp,
         ) {
             Column(
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
         Box(
-            modifier = Modifier.fillMaxWidth().height(172.dp),
+            modifier = Modifier.fillMaxWidth().height(if (responseText.isNotBlank() || isActiveSession) 112.dp else 192.dp),
             contentAlignment = Alignment.Center,
         ) {
             val basePresentation = uiState.sessionState.toSignalPresentation(
@@ -276,11 +285,15 @@ fun HomeScreen(
                     glyph = HaloGlyph.OFFLINE,
                     label = "Setup needed",
                 )
+                connectionNeedsAttention && uiState.sessionState == CognitiveSessionState.Idle -> basePresentation.copy(
+                    state = HaloSignalState.WARNING, glyph = HaloGlyph.OFFLINE,
+                    label = "Connection needs attention", detail = chatProvider?.connection?.label,
+                )
                 else -> basePresentation
             }
             HaloSignalFace(
                 presentation = signalPresentation,
-                size = 160.dp,
+                size = if (responseText.isNotBlank() || isActiveSession) 96.dp else 176.dp,
                 onClick = ::togglePresence
             )
         }
@@ -288,18 +301,24 @@ fun HomeScreen(
         Spacer(Modifier.height(10.dp))
 
         Text(
-            text = presenceLabel,
+            text = if (uiState.runtimeState == HaloRuntimeState.Idle && !providerNeedsAttention && !connectionNeedsAttention && !isSpeechProcessing && runtimeTaskStatus == null) { if (responseText.isBlank()) "Hello, I'm Halo" else "Ready when you are" } else presenceLabel,
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onBackground
         )
         Spacer(Modifier.height(4.dp))
         Text(
-            text = if (isActiveSession || isSpeechProcessing) uiState.contextualText else "Tap the presence or use the composer",
+            text = when {
+                isActiveSession || isSpeechProcessing -> uiState.contextualText
+                providerNeedsAttention -> "Choose a provider to start a conversation."
+                connectionNeedsAttention -> "${chatProvider?.descriptor?.displayName}: ${chatProvider?.connection?.label}"
+                else -> "What would you like to explore?"
+            },
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(Modifier.height(8.dp))
+        if (showDetails) {
         Surface(
             shape = RoundedCornerShape(10.dp),
             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
@@ -311,17 +330,26 @@ fun HomeScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+        }
         var showActions by remember { mutableStateOf(false) }
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            TextButton(onClick = {
-                    if (context.checkSelfPermission(android.Manifest.permission.CAMERA) ==
-                        android.content.pm.PackageManager.PERMISSION_GRANTED) launchCamera()
-                    else cameraPermission.launch(android.Manifest.permission.CAMERA)
-            }) { Text("Capture") }
-            TextButton(onClick = viewModel::createNote) { Text("New note") }
             Box {
-                TextButton(onClick = { showActions = true }) { Text("More") }
+                TextButton(onClick = { showActions = true }) { Text(if (pendingUpdates.isNotEmpty() || (showLearning && learningSuggestions.isNotEmpty())) "Actions \u00b7 Review" else "Actions") }
                 DropdownMenu(expanded = showActions, onDismissRequest = { showActions = false }) {
+                    DropdownMenuItem(text = { Text("Take a photo") }, onClick = {
+                        showActions = false
+                        if (context.checkSelfPermission(android.Manifest.permission.CAMERA) == android.content.pm.PackageManager.PERMISSION_GRANTED) launchCamera()
+                        else cameraPermission.launch(android.Manifest.permission.CAMERA)
+                    })
+                    DropdownMenuItem(text = { Text("Attach image") }, onClick = { showActions = false; imagePicker.launch("image/*") })
+                    DropdownMenuItem(text = { Text("New note") }, onClick = { showActions = false; viewModel.createNote() })
+                    DropdownMenuItem(text = { Text("Connection & context") }, onClick = { showActions = false; showDetails = !showDetails })
+                    if (showLearning && learningSuggestions.isNotEmpty()) {
+                        DropdownMenuItem(text = { Text("Review learning (${learningSuggestions.size})") }, onClick = { showActions = false; onOpenLearningSuggestions() })
+                    }
+                    if (pendingUpdates.isNotEmpty()) {
+                        DropdownMenuItem(text = { Text("Waiting updates (${pendingUpdates.size})") }, onClick = { showActions = false; onOpenPendingUpdates() })
+                    }
                 DropdownMenuItem(text = { Text("New conversation") }, onClick = {
                     showActions = false
                     viewModel.newConversation()
@@ -347,9 +375,10 @@ fun HomeScreen(
             Text("Ask about this image…", style = MaterialTheme.typography.bodySmall)
             androidx.compose.material3.TextButton(onClick = viewModel::navigateToIntelligence) { Text("Configure Vision model") }
         }
-        androidx.compose.material3.TextButton(onClick = { imagePicker.launch("image/*") }) { Text("Attach image") }
         uiState.inputStatus.rejection?.let { Text(it.replace('_', ' '), style = MaterialTheme.typography.bodySmall) }
-        AnimatedVisibility(visible = responseText.isNotBlank()) {
+        uiState.longTaskStatus?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+        uiState.longTaskProgress?.let { com.halo.app.interaction.StructuredPresentationRenderer(it, Modifier.fillMaxWidth()) }
+        if (responseText.isNotBlank()) {
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -404,11 +433,12 @@ fun HomeScreen(
                         )
                         Spacer(Modifier.height(12.dp))
                     }
-                    HaloMarkdownText(
-                        markdown = responseText,
-                        textColor = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
+                    if (uiState.sessionState is CognitiveSessionState.Streaming) {
+                        Text(responseText, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.fillMaxWidth())
+                    } else {
+                        HaloMarkdownText(markdown = responseText, textColor = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.fillMaxWidth())
+                    }
                     if (!isActiveSession) {
                         Spacer(Modifier.height(10.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -425,7 +455,9 @@ fun HomeScreen(
             }
         }
 
-        val currentMode by viewModel.selectedMode.collectAsState()
+    }
+    Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp)) {
+        val currentMode by viewModel.selectedMode.collectAsStateWithLifecycle()
         var modeMenuExpanded by remember { mutableStateOf(false) }
 
         Row(
@@ -435,6 +467,7 @@ fun HomeScreen(
             Box {
                 Surface(
                     onClick = { modeMenuExpanded = true },
+                    modifier = Modifier.heightIn(min = 48.dp),
                     shape = RoundedCornerShape(16.dp),
                     color = MaterialTheme.colorScheme.surfaceVariant,
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
@@ -452,7 +485,7 @@ fun HomeScreen(
                         HaloIcon(glyph = glyph, contentDescription = currentMode.name, modifier = Modifier.size(14.dp))
                         Spacer(Modifier.width(6.dp))
                         Text(
-                            text = "${currentMode.name.lowercase().replaceFirstChar { it.uppercase() }} ▾",
+                            text = currentMode.name.lowercase().replaceFirstChar { it.uppercase() },
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -497,7 +530,7 @@ fun HomeScreen(
             showStop = isActiveSession
         )
 
-        Spacer(Modifier.height(24.dp))
+    }
     }
 }
 
@@ -519,8 +552,8 @@ private fun HaloComposer(
         shape = RoundedCornerShape(24.dp),
         color = MaterialTheme.colorScheme.surface,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        tonalElevation = 3.dp,
-        shadowElevation = 2.dp,
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp,
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
@@ -552,6 +585,7 @@ private fun HaloComposer(
                     color = MaterialTheme.colorScheme.onSurface
                 ),
                 cursorBrush = SolidColor(MaterialTheme.colorScheme.secondary),
+                maxLines = 4,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
                 keyboardActions = KeyboardActions(onSend = { onSubmit() }),
                 decorationBox = { inner ->

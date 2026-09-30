@@ -1,5 +1,12 @@
 # Phone Acceptance & System Check Test Script
 
+## STABILIZATION-PROVIDER-001 - 2026-09-30
+
+**IMPLEMENTED / UNVALIDATED.** Do not execute this matrix in the source-only pass. Later acceptance must cover provider save/test/refresh without selection side effects, conversational prompts with zero tools, action-vs-explanation pairs, role/fallback privacy, ElevenLabs PHONE preview and normal/wearable output, DISALLOW_PHONE during Android synthesis fallback, and restart/backup secrecy.
+
+See [source map and deferred acceptance](../engineering/PROVIDER-CONVERSATION-STABILIZATION.md). Build, tests and device acceptance were not run. Earlier dated sections below are historical.
+
+
 Status: EXECUTABLE TEST SCRIPT. Updated 2026-09-28.
 
 This document describes the step-by-step physical phone verification sequence for Halo.

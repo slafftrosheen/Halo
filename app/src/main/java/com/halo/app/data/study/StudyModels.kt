@@ -426,6 +426,9 @@ interface StudyDao {
     )
     fun observeDuePracticeItems(now: Long, limit: Int): kotlinx.coroutines.flow.Flow<List<StudyPracticeItemEntity>>
 
+    @Query("SELECT * FROM study_practice_items WHERE sessionId = :sessionId AND accepted = 1 AND dueAtEpochMs <= :now ORDER BY dueAtEpochMs ASC, id ASC")
+    fun observeSessionDuePractice(sessionId: String, now: Long): kotlinx.coroutines.flow.Flow<List<StudyPracticeItemEntity>>
+
     @Query("SELECT * FROM study_practice_items WHERE id = :itemId LIMIT 1")
     suspend fun getPracticeItem(itemId: String): StudyPracticeItemEntity?
 

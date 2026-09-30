@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.settings
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,9 +32,16 @@ import com.halo.app.ui.workspace.HaloWorkspaceSection
 
 @Composable
 fun IntelligencePolicyScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit, onBrowseModels: () -> Unit) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp)) {
         HaloWorkspaceHeader(title = "Context and on-device policy", subtitle = "Privacy, capability packs and advanced agent settings", onBack = onBack)
+        var temperature by remember(uiState.temperature) { mutableStateOf(uiState.temperature) }
+        HaloWorkspaceCard {
+            Text("On-device temperature: ${"%.2f".format(temperature)}")
+            androidx.compose.material3.Slider(value = temperature, onValueChange = { temperature = it },
+                valueRange = 0f..2f, onValueChangeFinished = { viewModel.setTemperature(temperature) })
+            Text("Used by the local model preferences. Remote providers retain their own sampling policy.")
+        }
         var multimodal by remember { mutableStateOf<com.halo.app.capture.MultimodalStatus?>(null) }
         androidx.compose.runtime.LaunchedEffect(uiState.roleBindings, uiState.visionQualification, uiState.activeModelId) {
             multimodal = com.halo.app.capture.inspectMultimodal(com.halo.app.di.ManualDependencyGraph.aiProviderRouter)

@@ -76,6 +76,9 @@ class VoiceSettingsViewModel(
         }
     }
 
+    fun cloudSynthesisFallback(): Boolean = storage?.getBoolean(com.halo.app.ai.SpeechSynthesisRegistry.FALLBACK, true) ?: true
+    fun setCloudSynthesisFallback(enabled: Boolean) = storage?.putBoolean(com.halo.app.ai.SpeechSynthesisRegistry.FALLBACK, enabled)
+
     fun refreshState() {
         viewModelScope.launch { speechInventory.refresh(languageSettings.languageMode.value) }
     }

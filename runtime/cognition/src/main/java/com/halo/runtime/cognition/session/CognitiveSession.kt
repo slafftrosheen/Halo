@@ -237,7 +237,7 @@ class CognitiveSession(
                  * code returned after logging "BYPASSING LLM", which is only valid when a
                  * deterministic executor actually consumes the intent; now that decision
                  * is a value, it is traced, and everything the deterministic pipeline does
-                 * not own is submitted to the agentic path instead of disappearing.
+                 * not own is conversational unless positive action evidence requires tools.
                  */
                 val route = routeResolver.resolve(intent)
                 println(
@@ -255,6 +255,12 @@ class CognitiveSession(
                             InterpretationExecutionRoute.LocalFact -> "resolver=fact-resolver"
                         }
                 )
+
+                println("[HALO_CONVERSATION_ROUTE] intentType=${intent::class.simpleName} confidence=${interpretation.confidence} " +
+                    "route=${if (route is InterpretationExecutionRoute.DirectResponse) "DIRECT_RESPONSE" else route::class.simpleName} " +
+                    "toolUseMode=${if (route is InterpretationExecutionRoute.DirectResponse) "NONE" else if (route is InterpretationExecutionRoute.Agentic) "REQUIRED" else "HOST"} " +
+                    "preferredRole=${if (route is InterpretationExecutionRoute.DirectResponse) "CHAT" else if (route is InterpretationExecutionRoute.Agentic) "AGENTIC" else "HOST"}" +
+                    ((route as? InterpretationExecutionRoute.Agentic)?.let { " reason=${it.hint ?: "ACTION_INTENT"}" } ?: ""))
 
                 if (route is InterpretationExecutionRoute.Unsupported) {
                     publishRouteResponse(
@@ -569,11 +575,13 @@ class CognitiveSession(
                 AiErrorType.MODEL_NOT_SELECTED -> "Select a model for the chosen provider. Download it first when using on-device intelligence."
                 AiErrorType.MODEL_NOT_FOUND -> "The selected model is unavailable for this provider."
                 AiErrorType.LOCAL_MODEL_UNAVAILABLE -> "The selected local model is unavailable."
-                AiErrorType.NETWORK_UNAVAILABLE, AiErrorType.NETWORK_ERROR -> "The AI provider could not be reached."
+                AiErrorType.NETWORK_UNAVAILABLE, AiErrorType.NETWORK_ERROR -> "No network connection, or the provider could not be reached."
                 AiErrorType.TIMEOUT -> "The AI provider did not respond in time."
                 AiErrorType.GENERATION_FAILED -> "The AI failed to generate a response."
                 AiErrorType.INVALID_RESPONSE -> "The AI provider returned an invalid response."
-                else -> e.message ?: "An unexpected intelligence error occurred."
+                AiErrorType.MODEL_UNAVAILABLE -> "That model is unavailable."
+                AiErrorType.UNSUPPORTED_CAPABILITY -> "That model can’t perform this type of request. For actions, choose a tool-capable model and enable the required capability."
+                else -> "An unexpected intelligence error occurred. Open provider settings for recovery."
             }
         }
         val message = e.message.orEmpty()

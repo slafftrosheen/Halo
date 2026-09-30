@@ -224,7 +224,11 @@ class LiteRtLocalProvider(
     private val catalog: List<LiteRtCatalogModel> = LiteRtModelCatalog.BUILT_IN_MODELS,
     preferences: LiteRtModelPreferences? = null,
     failureMemory: LiteRtModelFailureMemory? = null,
-) : AiInferenceProvider, NativeResourceOwner, com.halo.sdk.provider.ToolProtocolReporting, com.halo.sdk.provider.ModelInputCapabilityReporting {
+) : AiInferenceProvider, NativeResourceOwner, com.halo.sdk.provider.ToolProtocolReporting, com.halo.sdk.provider.ModelInputCapabilityReporting, com.halo.sdk.provider.ProviderConfigurationReporting {
+
+    override val configurationDescriptor: com.halo.sdk.provider.ProviderConfigurationDescriptor get() =
+        com.halo.sdk.provider.ProviderConfigurationDescriptor(id, displayName, com.halo.sdk.provider.AiExecutionLocation.ON_DEVICE,
+            emptyList(), "LITERT_NATIVE", "LOCAL")
 
     override val id: String = ProviderIds.LITERT
     override val displayName: String = "On-device (LiteRT)"

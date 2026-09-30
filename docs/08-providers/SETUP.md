@@ -1,5 +1,12 @@
 # Provider setup
 
+## STABILIZATION-PROVIDER-001 - 2026-09-30
+
+**IMPLEMENTED / UNVALIDATED.** Use Settings -> Intelligence -> Providers -> provider to replace a credential, edit supported endpoints, test connection, refresh metadata and choose Chat or role models. Empty secret drafts preserve the stored key. Gemini Google authorization remains session-only. ElevenLabs setup is Settings -> Voice -> Speech output -> Configure ElevenLabs; choose voice/model IDs before selecting cloud speech.
+
+See [source map and deferred acceptance](../engineering/PROVIDER-CONVERSATION-STABILIZATION.md). Build, tests and device acceptance were not run. Earlier dated sections below are historical.
+
+
 ## PRODUCT-P0-001 — source update, 2026-09-30
 
 Open Intelligence → Providers → a provider to replace/remove credentials or edit endpoint/authentication. Saving never selects a provider. Test connection and refresh metadata explicitly. Gemini OAuth remains available with project ID confined to that path. Configure ElevenLabs under Voice → Set up ElevenLabs, refresh voices/TTS models, choose IDs and explicitly select output. Automatic speech uses Android TTS.

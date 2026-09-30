@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.devices
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -60,7 +62,7 @@ fun HeyCyanControlScreen(
     var thumbnailQuality by remember {
         mutableIntStateOf(thumbnailPreferences.getInt("ai_thumbnail_quality", 3).coerceIn(0, 5))
     }
-    val audioPairing by viewModel.audioPairingState.collectAsState()
+    val audioPairing by viewModel.audioPairingState.collectAsStateWithLifecycle()
     val audioAssociationLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartIntentSenderForResult()
     ) { result -> viewModel.onAudioAssociationResult(result.resultCode, result.data) }
@@ -70,8 +72,8 @@ fun HeyCyanControlScreen(
             audioAssociationLauncher.launch(IntentSenderRequest.Builder(sender).build())
         }
     }
-    val media by (viewModel.mediaCoordinator()?.state ?: kotlinx.coroutines.flow.MutableStateFlow(com.halo.app.capture.WearableCaptureStatus())).collectAsState()
-    val uiState by viewModel.uiState.collectAsState()
+    val media by (viewModel.mediaCoordinator()?.state ?: kotlinx.coroutines.flow.MutableStateFlow(com.halo.app.capture.WearableCaptureStatus())).collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val device = uiState.devices.find { it.id == deviceId }
     val isConnected = device?.isConnected == true
     val connectionState = device?.connectionStateText ?: "Unknown"

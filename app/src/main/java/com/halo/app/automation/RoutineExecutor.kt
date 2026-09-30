@@ -53,7 +53,8 @@ class RoutineExecutor(private val db: AppDatabase, private val repository: RoomR
             is RoutineTrigger.NotificationFromApp -> { require(t.packageName.matches(Regex("[A-Za-z0-9_]+(\\.[A-Za-z0-9_]+)+"))); require(t.coalesceSeconds in 0..3600) }
             else -> Unit
         }
-        if (r.delivery is RoutineDeliveryPolicy.WearableSpeech) require(r.delivery.deviceId.isNotBlank())
+        val delivery = r.delivery
+        if (delivery is RoutineDeliveryPolicy.WearableSpeech) require(delivery.deviceId.isNotBlank())
         when (val t = r.trigger) {
             is RoutineTrigger.DeviceConnected -> require(t.deviceId.isNotBlank()) { "Choose a device" }
             is RoutineTrigger.DeviceDisconnected -> require(t.deviceId.isNotBlank()) { "Choose a device" }

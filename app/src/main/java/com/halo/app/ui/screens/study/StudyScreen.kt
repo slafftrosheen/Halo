@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.study
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -15,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -39,7 +42,16 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.compose.runtime.key
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -69,10 +81,25 @@ import com.halo.app.ui.presence.HaloSignalKind
 import com.halo.sdk.runtime.study.TutorStage
 
 @Composable
-fun StudyScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
-    val state by viewModel.uiState.collectAsState()
+fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, startInReview: Boolean = false, onBack: () -> Unit) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     var showMenu by remember { mutableStateOf(false) }
+    var showDetails by rememberSaveable { mutableStateOf(false) }
+    var confirmDelete by remember { mutableStateOf(false) }
+    var showCards by rememberSaveable { mutableStateOf(false) }
+    var showSaveCard by remember { mutableStateOf(false) }
     var cardQuestion by remember { mutableStateOf("") }
+    var focusedReview by rememberSaveable { mutableStateOf(startInReview) }
+    var skippedReviewIds by rememberSaveable { mutableStateOf(listOf<String>()) }
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    DisposableEffect(lifecycle, viewModel) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) viewModel.refreshSources()
+            if (event == Lifecycle.Event.ON_PAUSE) viewModel.stopReading("Study no longer visible")
+        }
+        lifecycle.addObserver(observer)
+        onDispose { lifecycle.removeObserver(observer) }
+    }
 
     // Leaving the screen must never leave the phone talking to an empty room.
     BackHandler(enabled = true) {
@@ -80,14 +107,28 @@ fun StudyScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
         onBack()
     }
 
+    if (confirmDelete) AlertDialog(onDismissRequest = { confirmDelete = false },
+        title = { Text("Delete this session?") }, text = { Text("Its attempts and review cards will be removed.") },
+        confirmButton = { TextButton(onClick = { viewModel.deleteAllSessionData(); confirmDelete = false }) { Text("Delete") } },
+        dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Keep session") } })
+    if (showDetails) AlertDialog(onDismissRequest = { showDetails = false }, title = { Text("Your learning") },
+        text = { Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Text("${state.attempts.size} attempts saved", style = MaterialTheme.typography.bodyMedium)
+            state.measuredMasteryPercent?.let { Text("Measured mastery: $it%") }
+            ReviewIntensityRow(state.reviewIntensity, viewModel)
+            if (state.sources.isEmpty()) Text("Learning from your topic. No notebook source is attached.")
+            state.sources.forEach { SourceCard(it, state, viewModel, onOpenSource) }
+        } }, confirmButton = { TextButton(onClick = { showDetails = false }) { Text("Done") } })
+
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
     Column(
-        Modifier.fillMaxSize()
+        Modifier.widthIn(max = 720.dp).fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = HaloSpacing.screen)
     ) {
         HaloScreenHeader(
             title = "Study",
-            subtitle = state.session?.goal ?: state.stage.guidance,
+            subtitle = state.session?.goal ?: "One step at a time.",
             navigation = {
                 viewModel.stopReading("Left the Study screen")
                 onBack()
@@ -97,8 +138,12 @@ fun StudyScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
 
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box {
-                TextButton(onClick = { showMenu = true }) { Text("Session") }
+                TextButton(onClick = { showMenu = true }) { Text("More") }
                 DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+                    DropdownMenuItem(text = { Text("Sources and progress") }, onClick = { showMenu = false; showDetails = true })
+                    DropdownMenuItem(text = { Text("Save study notes to Workspace") }, enabled = !state.savingSummary && !state.loading,
+                        onClick = { showMenu = false; viewModel.saveSummaryToNotebook() })
+
                     DropdownMenuItem(
                         text = { Text(if (state.isFinished) "Already completed" else "Finish session") },
                         enabled = !state.isFinished,
@@ -111,14 +156,13 @@ fun StudyScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
                         text = { Text("Delete this session's data") },
                         onClick = {
                             showMenu = false
-                            viewModel.deleteAllSessionData()
+                            confirmDelete = true
                         },
                     )
                 }
             }
-            state.measuredMasteryPercent?.let { percent ->
-                Spacer(Modifier.width(8.dp))
-                MasteryChip(percent)
+            TextButton(onClick = { focusedReview = !focusedReview; skippedReviewIds = emptyList() }) {
+                Text(if (focusedReview) "Learn" else "Review (${state.dueReviewItems.size})")
             }
             Spacer(Modifier.weight(1f))
             if (state.isGenerating) {
@@ -164,13 +208,46 @@ fun StudyScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
             return@Column
         }
 
+        if (focusedReview) {
+            val current = state.dueReviewItems.firstOrNull { it.id !in skippedReviewIds }
+            Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Text("Focused review", style = MaterialTheme.typography.titleMedium)
+                Text("${state.dueReviewItems.size} due now. Ratings are your self-assessment; they update the saved review schedule.",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (current == null) {
+                    Text(if (state.dueReviewItems.isEmpty()) "You're caught up for now." else "You've skipped the remaining cards.")
+                    if (skippedReviewIds.isNotEmpty()) TextButton(onClick = { skippedReviewIds = emptyList() }) { Text("Return to skipped cards") }
+                    TextButton(onClick = { focusedReview = false }) { Text("Back to tutor") }
+                } else key(current.id) {
+                    Surface(shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.surface,
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+                        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                            Text(current.question, style = MaterialTheme.typography.titleMedium)
+                            val revealed = current.id in state.revealedAnswers
+                            if (revealed) {
+                                Text(current.answer, style = MaterialTheme.typography.bodyLarge)
+                                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    OutlinedButton(enabled = current.id !in state.reviewing,
+                                        onClick = { viewModel.selfAssessCard(current.id, false) }) { Text("Needs practice") }
+                                    Button(enabled = current.id !in state.reviewing,
+                                        onClick = { viewModel.selfAssessCard(current.id, true) }) { Text("Remembered") }
+                                }
+                            } else Button(onClick = { viewModel.revealAnswer(current.id) }) { Text("Reveal answer") }
+                            Row {
+                                TextButton(onClick = { skippedReviewIds = skippedReviewIds + current.id }) { Text("Skip for now") }
+                                current.sourceObjectId?.let { id -> TextButton(onClick = { viewModel.stopReading("Opening source"); onOpenSource(id) }) { Text("Open source") } }
+                            }
+                        }
+                    }
+                }
+            }
+            return@Column
+        }
+
         Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState())) {
             Spacer(Modifier.height(4.dp))
-            StageStrip(state)
-            Spacer(Modifier.height(10.dp))
-            StageControls(state, viewModel)
-            Spacer(Modifier.height(14.dp))
-            state.sources.forEach { source -> SourceCard(source, state, viewModel) }
+            Text(state.stage.guidance, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(24.dp))
             if (state.hasPartialCoverage) {
                 Text(
                     "Halo sent only part of this source to the model. Ask about a narrower passage for a " +
@@ -199,19 +276,23 @@ fun StudyScreen(viewModel: StudyViewModel, onBack: () -> Unit) {
                 }
             }
             state.turns.forEach { turn -> TutorTurnCard(turn, state, viewModel) }
+            StageControls(state, viewModel)
             Spacer(Modifier.height(12.dp))
             AttemptEditor(state, viewModel)
             Spacer(Modifier.height(14.dp))
             if (state.turns.isNotEmpty()) {
-                SaveAsCardRow(cardQuestion, { cardQuestion = it }) {
+                TextButton(onClick = { showSaveCard = !showSaveCard }) { Text("Make a learning card") }
+                if (showSaveCard) SaveAsCardRow(cardQuestion, { cardQuestion = it }) {
                     viewModel.saveLatestTurnAsCard(cardQuestion)
                     cardQuestion = ""
                 }
                 Spacer(Modifier.height(10.dp))
             }
-            PracticeSection(state, viewModel)
+            TextButton(onClick = { showCards = !showCards }) { Text(if (showCards) "Hide saved cards" else "Saved cards (${state.practiceItems.size})") }
+            if (showCards) PracticeSection(state, viewModel)
             Spacer(Modifier.height(28.dp))
         }
+    }
     }
 }
 
@@ -301,58 +382,21 @@ private fun ReaderPanel(reader: ReaderState, viewModel: StudyViewModel) {
 }
 
 @Composable
-private fun StageStrip(state: StudyUiState) {
-    Row(
-        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        TutorStage.entries.forEach { stage ->
-            val active = stage == state.stage
-            val reached = stage.ordinal <= state.stage.ordinal
-            Surface(
-                shape = RoundedCornerShape(10.dp),
-                color = when {
-                    active -> MaterialTheme.colorScheme.primaryContainer
-                    reached -> MaterialTheme.colorScheme.surfaceVariant
-                    else -> MaterialTheme.colorScheme.surface
-                },
-            ) {
-                Text(
-                    stage.name.replace('_', ' ').lowercase().replaceFirstChar { it.uppercase() },
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = if (active) FontWeight.SemiBold else FontWeight.Normal,
-                    color = when {
-                        active -> MaterialTheme.colorScheme.onPrimaryContainer
-                        else -> MaterialTheme.colorScheme.onSurfaceVariant
-                    },
-                )
-            }
-        }
-    }
-}
-
-@Composable
 private fun StageControls(state: StudyUiState, viewModel: StudyViewModel) {
-    Row(
-        Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        TextButton(
-            onClick = viewModel::goBack,
-            enabled = state.stage.previous() != null && !state.isFinished,
-        ) { Text("Back") }
-        TextButton(onClick = viewModel::repeatStage, enabled = !state.isGenerating && !state.isFinished) {
-            Text("Repeat")
-        }
-        Spacer(Modifier.weight(1f))
-        if (!state.isFinished && !state.stage.isSolution) {
-            TextButton(onClick = viewModel::askTutor, enabled = !state.isGenerating) { Text("Ask") }
-            TextButton(onClick = viewModel::advance, enabled = !state.isGenerating) { Text("Next step") }
-            TextButton(onClick = viewModel::askForSolution, enabled = !state.isGenerating) {
-                Text("Full solution")
+    if (state.isFinished) return
+    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Button(onClick = viewModel::askTutor, enabled = !state.isGenerating) { Text(if (state.turns.isEmpty()) "Begin" else "Try another explanation") }
+        TextButton(onClick = viewModel::advance, enabled = !state.isGenerating && !state.stage.isSolution) { Text("Next step") }
+        var more by remember { mutableStateOf(false) }
+        Box {
+            TextButton(onClick = { more = true }) { Text("Help") }
+            DropdownMenu(more, { more = false }) {
+                DropdownMenuItem(text = { Text("Previous step") }, enabled = state.stage.previous() != null,
+                    onClick = { more = false; viewModel.goBack() })
+                DropdownMenuItem(text = { Text("Regenerate this step") }, enabled = !state.isGenerating,
+                    onClick = { more = false; viewModel.repeatStage() })
+                DropdownMenuItem(text = { Text("Show full solution") }, enabled = !state.isGenerating && !state.stage.isSolution,
+                    onClick = { more = false; viewModel.askForSolution() })
             }
         }
     }
@@ -363,6 +407,7 @@ private fun SourceCard(
     source: StudySourceReference,
     state: StudyUiState,
     viewModel: StudyViewModel,
+    onOpenSource: (String) -> Unit,
 ) {
     Surface(
         Modifier.fillMaxWidth().padding(vertical = 4.dp),
@@ -381,6 +426,7 @@ private fun SourceCard(
                     Icon(Icons.Rounded.GraphicEq, contentDescription = "Read source aloud")
                 }
             }
+            TextButton(onClick = { viewModel.stopReading("Opening source"); onOpenSource(source.objectId) }) { Text("Open source note") }
             source.excerpt?.let { excerpt ->
                 Spacer(Modifier.height(4.dp))
                 Text(excerpt, style = MaterialTheme.typography.bodySmall, maxLines = 4)
@@ -449,6 +495,7 @@ private fun TutorTurnCard(turn: StudyTurn, state: StudyUiState, viewModel: Study
                     }
                 }
             }
+            turn.question?.let { Text("You asked: $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant); Spacer(Modifier.height(12.dp)) }
             if (turn.failure != null) {
                 Text(turn.failure, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
             } else {
@@ -511,7 +558,7 @@ private fun VerdictChip(verdict: StudyVerdict) {
 @Composable
 private fun AttemptEditor(state: StudyUiState, viewModel: StudyViewModel) {
     Column(Modifier.fillMaxWidth()) {
-        Text("Your attempt", style = MaterialTheme.typography.titleSmall)
+        Text("Your thoughts or question", style = MaterialTheme.typography.titleSmall)
         Spacer(Modifier.height(6.dp))
         OutlinedTextField(
             value = state.draft,
@@ -522,9 +569,12 @@ private fun AttemptEditor(state: StudyUiState, viewModel: StudyViewModel) {
             placeholder = { Text("Write what you have so far — you can submit at any stage") },
         )
         Spacer(Modifier.height(8.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             TextButton(onClick = viewModel::submitAttempt, enabled = state.canSubmitAttempt) {
                 Text(if (state.isSubmitting) "Saving…" else "Submit attempt")
+            }
+            TextButton(onClick = viewModel::askQuestion, enabled = state.draft.isNotBlank() && !state.isGenerating && !state.isFinished) {
+                Text("Ask a question")
             }
             TextButton(onClick = viewModel::askTutor, enabled = !state.isGenerating && !state.isFinished) {
                 Text("Ask for a hint")
@@ -593,8 +643,9 @@ private fun PracticeSection(state: StudyUiState, viewModel: StudyViewModel) {
             )
             return
         }
-        ReviewIntensityRow(state.reviewIntensity, viewModel)
-        state.curveFocusItemId?.let { focusId ->
+        var showProgress by remember { mutableStateOf(false) }
+        TextButton(onClick = { showProgress = !showProgress }) { Text("Memory progress") }
+        if (showProgress) state.curveFocusItemId?.let { focusId ->
             val curve = state.curves[focusId]
             val item = state.practiceItems.firstOrNull { it.id == focusId }
             if (curve != null && item != null) {

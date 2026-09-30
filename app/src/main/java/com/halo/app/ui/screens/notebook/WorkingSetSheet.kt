@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.notebook
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -168,7 +170,7 @@ fun ContextTransparencySheet(
     cloudSharingAllowed: Boolean,
     onDismiss: () -> Unit
 ) {
-    val composition by com.halo.runtime.cognition.context.ContextDiagnostics.composition.collectAsState()
+    val composition by com.halo.runtime.cognition.context.ContextDiagnostics.composition.collectAsStateWithLifecycle()
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
