@@ -11,7 +11,7 @@ import com.halo.app.ai.ProviderControlRepository
 @Composable
 fun IntelligenceScreen(control: ProviderControlRepository, onBack: () -> Unit,
     onBrowseModels: () -> Unit, onProviderSetup: () -> Unit, onRoles: () -> Unit,
-    onDevice: () -> Unit, onPolicy: () -> Unit, onDiagnostics: () -> Unit) {
+    onDevice: () -> Unit, onContext: () -> Unit, onPolicy: () -> Unit, onDiagnostics: () -> Unit) {
     val providerId by control.router.selectedProviderId.collectAsState()
     val modelId by control.router.selectedModelId.collectAsState()
     val rows by control.rows.collectAsState()
@@ -30,7 +30,8 @@ fun IntelligenceScreen(control: ProviderControlRepository, onBack: () -> Unit,
         TextButton(onClick = onBrowseModels) { Text("Browse models") }
         TextButton(onClick = onRoles) { Text("Model roles and routing") }
         TextButton(onClick = onDevice) { Text("On-device models") }
-        TextButton(onClick = onPolicy) { Text("Context sharing and advanced settings") }
+        TextButton(onClick = onContext) { Text("Context and privacy") }
+        TextButton(onClick = onPolicy) { Text("Advanced runtime policy") }
         TextButton(onClick = onDiagnostics) { Text("Usage and diagnostics") }
     }
 }

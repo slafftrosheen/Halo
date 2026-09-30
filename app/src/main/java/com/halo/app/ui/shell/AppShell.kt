@@ -1,6 +1,8 @@
 package com.halo.app.ui.shell
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.TextButton
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -445,6 +447,7 @@ fun AppShell(
                         onProviderSetup = { navigateSafely("settings/intelligence/providers") },
                         onRoles = { navigateSafely("settings/intelligence/roles") },
                         onDevice = { navigateSafely("settings/intelligence/on-device") },
+                        onContext = { navigateSafely("settings/intelligence/context") },
                         onPolicy = { navigateSafely("settings/intelligence/policy") },
                         onDiagnostics = { navigateSafely("settings/intelligence/usage") },
                     )
@@ -462,6 +465,7 @@ fun AppShell(
                         providerId = entry.arguments?.getString("providerId").orEmpty(),
                         onBack = { navController.popBackStack() },
                         onModels = { navigateSafely("settings/intelligence/models?providerId=${android.net.Uri.encode(it)}") },
+                        onAssignRole = { navigateSafely("settings/intelligence/roles") },
                         onDevice = { navigateSafely("settings/intelligence/on-device") },
                         onDiagnostics = { navigateSafely("system_check") })
                 }
@@ -488,6 +492,15 @@ fun AppShell(
                 composable("settings/intelligence/on-device") {
                     com.halo.app.ui.screens.settings.OnDeviceModelsScreen(ManualDependencyGraph.intelligenceViewModel, onBack = { navController.popBackStack() })
                 }
+                composable("settings/intelligence/context") {
+                    com.halo.app.ui.screens.settings.ContextPrivacyScreen(ManualDependencyGraph.contextPrivacyViewModel, onBack = { navController.popBackStack() })
+                }
+                composable("settings/voice/output") {
+                    Column {
+                        TextButton(onClick = { navController.popBackStack() }) { Text("Back") }
+                        com.halo.app.ui.screens.settings.SpeechOutputSettings(ManualDependencyGraph.voiceSettingsViewModel, onElevenLabs = { navigateSafely("settings/voice/elevenlabs") })
+                    }
+                }
                 composable("settings/intelligence/policy") {
                     com.halo.app.ui.screens.settings.IntelligencePolicyScreen(ManualDependencyGraph.intelligenceViewModel,
                         onBack = { navController.popBackStack() }, onBrowseModels = { navigateSafely("settings/intelligence/on-device") })
@@ -513,7 +526,7 @@ fun AppShell(
                     LaunchedEffect(viewModel) {
                         viewModel.navigationEvents.collectLatest { if (it == "back") navController.popBackStack() }
                     }
-                    VoiceSettingsScreen(viewModel, onBack = { navController.popBackStack() }, onElevenLabs = { navigateSafely("settings/voice/elevenlabs") })
+                    VoiceSettingsScreen(viewModel, onBack = { navController.popBackStack() }, onSpeechOutput = { navigateSafely("settings/voice/output") })
                 }
 
                 composable("permissions") {

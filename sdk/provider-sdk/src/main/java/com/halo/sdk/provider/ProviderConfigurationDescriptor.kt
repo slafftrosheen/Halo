@@ -10,5 +10,11 @@ data class ProviderConfigurationDescriptor(
     val fields: List<ProviderConfigurationField>,
     val protocol: String,
     val access: String,
-) { init { require(fields.size <= 8) } }
+) {
+    init { require(fields.size <= 8) }
+    val endpointEditable: Boolean get() = fields.any { it.kind == ProviderFieldKind.ENDPOINT }
+    val supportsOAuth: Boolean get() = fields.any { it.kind == ProviderFieldKind.OAUTH_ACTION }
+    val supportsModelDiscovery: Boolean get() = true
+    val supportsConnectionTest: Boolean get() = true
+}
 interface ProviderConfigurationReporting { val configurationDescriptor: ProviderConfigurationDescriptor }

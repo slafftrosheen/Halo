@@ -152,7 +152,10 @@ class DefaultAiProviderRouter(
             val previous = currentSelection()
             val providerChanged = _selectedProviderId.value != id
             _selectedProviderId.value = id
-            if (providerChanged) _selectedModelId.value = null
+            if (providerChanged) {
+                previous.providerId?.let { provider -> previous.modelId?.let { storage.putString("ai_last_model_$provider", it) } }
+                _selectedModelId.value = storage.getString("ai_last_model_$id")
+            }
             _routingPolicy.value = AiRoutingPolicy.EXPLICIT
             persistSelection(currentSelection(), "USER_PROVIDER", previous)
             updateDiagnosticsSelection()
@@ -163,6 +166,7 @@ class DefaultAiProviderRouter(
     override fun selectModel(modelId: String?) {
         val previous = currentSelection()
         _selectedModelId.value = modelId
+        _selectedProviderId.value?.let { provider -> if (modelId == null) storage.remove("ai_last_model_$provider") else storage.putString("ai_last_model_$provider", modelId) }
         persistSelection(currentSelection(), "USER_MODEL", previous)
         updateDiagnosticsSelection()
         scope.launch { refreshDiagnostics() }
@@ -172,6 +176,8 @@ class DefaultAiProviderRouter(
     override fun selectTarget(ref: AiModelRef) {
         if (inferenceProviders.none { it.id == ref.providerId }) return
         val previous = currentSelection()
+        previous.providerId?.let { provider -> previous.modelId?.let { storage.putString("ai_last_model_$provider", it) } }
+        storage.putString("ai_last_model_${ref.providerId}", ref.modelId)
         _selectedProviderId.value = ref.providerId
         _selectedModelId.value = ref.modelId
         _routingPolicy.value = AiRoutingPolicy.EXPLICIT

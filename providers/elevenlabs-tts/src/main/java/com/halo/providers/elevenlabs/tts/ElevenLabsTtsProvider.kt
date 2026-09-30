@@ -4,6 +4,7 @@ import com.halo.sdk.host.AudioFrame
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.Storage
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -22,9 +23,9 @@ import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-data class ElevenLabsTtsState(val configured: Boolean, val ready: Boolean = false, val error: String? = null)
+data class ElevenLabsTtsState(val configured: Boolean, val ready: Boolean = false, val error: String? = null, val authenticated: Boolean = false, val errorCode: SpeechErrorCode? = null)
 
-data class SpeechChoice(val id: String, val name: String)
+data class SpeechChoice(val id: String, val name: String, val category: String? = null)
 data class ElevenLabsCatalogue(val voices: List<SpeechChoice>, val models: List<SpeechChoice>, val fetchedAtMs: Long) {
     val stale: Boolean get() = System.currentTimeMillis() - fetchedAtMs > 24 * 60 * 60 * 1000L
 }
@@ -38,35 +39,71 @@ class ElevenLabsTtsProvider(private val storage: Storage) : PcmSpeechSynthesisPr
     private val calls = ConcurrentHashMap.newKeySet<Call>()
     private val discoveryMutex = Mutex()
     private val configurationVersion = java.util.concurrent.atomic.AtomicLong()
+    @Volatile private var authenticated = false
+    @Volatile private var lastErrorCode: SpeechErrorCode? = null
     @Volatile private var healthy = false
     private val _state = kotlinx.coroutines.flow.MutableStateFlow(ElevenLabsTtsState(hasCredential()))
     val state: kotlinx.coroutines.flow.StateFlow<ElevenLabsTtsState> = _state
     private fun publishState(error: String? = null) {
-        _state.value = ElevenLabsTtsState(hasCredential(), hasCredential() && healthy && voiceId() != null && modelId() != null, error)
+        _state.value = ElevenLabsTtsState(hasCredential(), hasCredential() && healthy && voiceId() != null && modelId() != null, error, authenticated && hasCredential(), lastErrorCode)
     }
     override fun hasCredential() = !storage.getString(KEY).isNullOrBlank()
     override fun credential(): Credential? = storage.getString(KEY)?.takeIf { it.isNotBlank() }?.let { Credential(ID, it) }
-    override fun setCredential(credential: Credential) { configurationVersion.incrementAndGet(); stopCurrent(); storage.putString(KEY, credential.value.trim()); healthy = false; publishState() }
-    override fun clearCredential() { configurationVersion.incrementAndGet(); stopCurrent(); storage.remove(KEY); healthy = false; publishState() }
+    override fun setCredential(credential: Credential) { configurationVersion.incrementAndGet(); stopCurrent(); storage.putString(KEY, credential.value.trim()); healthy = false; authenticated = false; lastErrorCode = null; publishState() }
+    override fun clearCredential() { configurationVersion.incrementAndGet(); stopCurrent(); storage.remove(KEY); healthy = false; authenticated = false; lastErrorCode = null; publishState() }
     fun voiceId(): String? = storage.getString(VOICE)?.takeIf { it.isNotBlank() }
     fun modelId(): String? = storage.getString(MODEL)?.takeIf { it.isNotBlank() }
-    fun selectVoice(id: String) { require(cachedCatalogue()?.voices?.any { it.id == id } == true); configurationVersion.incrementAndGet(); storage.putString(VOICE, id); healthy = false; publishState() }
-    fun selectModel(id: String) { require(cachedCatalogue()?.models?.any { it.id == id } == true); configurationVersion.incrementAndGet(); storage.putString(MODEL, id); healthy = false; publishState() }
-    fun pin(request: SpeechRequest) = request.copy(voiceId = voiceId(), modelId = modelId())
+    fun selectVoice(id: String) { require(cachedCatalogue()?.voices?.any { it.id == id } == true); configurationVersion.incrementAndGet(); storage.putString(VOICE, id); healthy = false; authenticated = false; lastErrorCode = null; publishState() }
+    fun selectModel(id: String) { require(cachedCatalogue()?.models?.any { it.id == id } == true); configurationVersion.incrementAndGet(); storage.putString(MODEL, id); healthy = false; authenticated = false; lastErrorCode = null; publishState() }
+    fun voiceStyle(): Map<String, Double> = mapOf(
+        "stability" to (storage.getString("elevenlabs_stability")?.toDoubleOrNull() ?: 0.5),
+        "similarity_boost" to (storage.getString("elevenlabs_similarity_boost")?.toDoubleOrNull() ?: 0.75),
+        "speed" to (storage.getString("elevenlabs_speed")?.toDoubleOrNull() ?: 1.0))
+    fun saveVoiceStyle(stability: Double, similarity: Double, speed: Double) {
+        require(stability.isFinite() && stability in 0.0..1.0 && similarity.isFinite() && similarity in 0.0..1.0 && speed.isFinite() && speed in 0.7..1.2)
+        storage.putString("elevenlabs_stability", stability.toString()); storage.putString("elevenlabs_similarity_boost", similarity.toString()); storage.putString("elevenlabs_speed", speed.toString())
+    }
+    fun pin(request: SpeechRequest) = request.copy(voiceId = voiceId(), modelId = modelId(), voiceSettings = voiceStyle())
 
     override suspend fun synthesizeToPcm(request: SpeechRequest): PcmSpeech? {
         val version = configurationVersion.get()
-        require(request.text.isNotBlank() && request.text.length <= 4_000) { "Speech text exceeds the supported limit" }
-        val voice = request.voiceId ?: voiceId() ?: error("Select an ElevenLabs voice")
-        val model = request.modelId ?: modelId() ?: error("Select an ElevenLabs TTS model")
+        return try { synthesizeBounded(request) }
+        catch (cancelled: CancellationException) { throw cancelled }
+        catch (error: SpeechProviderException) {
+            if (configurationVersion.get() == version) { healthy = false; lastErrorCode = error.code; publishState(error.code.name) }
+            throw error
+        }
+    }
+
+    private suspend fun synthesizeBounded(request: SpeechRequest): PcmSpeech {
+        val version = configurationVersion.get()
+        require(request.text.isNotBlank() && request.text.length <= 24_000) { "Speech text exceeds the supported limit" }
+        val voice = request.voiceId ?: voiceId() ?: throw SpeechProviderException(SpeechErrorCode.VOICE_NOT_FOUND)
+        val model = request.modelId ?: modelId() ?: throw SpeechProviderException(SpeechErrorCode.MODEL_NOT_AVAILABLE)
         val known = cachedCatalogue()?.models?.any { it.id == model } == true
-        check(known) { "Refresh and select a supported TTS model" }
+        if (!known) throw SpeechProviderException(SpeechErrorCode.MODEL_NOT_AVAILABLE)
         val url = BASE.toHttpUrl().newBuilder().addPathSegments("v1/text-to-speech")
-            .addPathSegment(voice).addPathSegment("stream").addQueryParameter("output_format", "pcm_24000").build()
-        val body = JSONObject().put("text", request.text).put("model_id", model)
-        val bytes = fetch(Request.Builder().url(url).post(body.toString().toRequestBody(JSON)), MAX_PCM)
-        check(bytes.isNotEmpty() && bytes.size % 2 == 0) { "Invalid PCM response" }
-        if (configurationVersion.get() == version && voiceId() == voice && modelId() == model) { healthy = true; publishState() }
+            .addPathSegment(voice).addQueryParameter("output_format", "pcm_24000").build()
+        val output = ByteArrayOutputStream()
+        val style = request.voiceSettings.ifEmpty { voiceStyle() }
+        check(style.all { (key, value) -> value.isFinite() && when (key) { "stability", "similarity_boost" -> value in 0.0..1.0; "speed" -> value in 0.7..1.2; else -> false } })
+        // All bounded chunks complete before host playback, so fallback never splices voices mid-response.
+        var remaining = request.text
+        while (remaining.isNotEmpty()) {
+            kotlinx.coroutines.currentCoroutineContext().ensureActive()
+            var end = minOf(4_000, remaining.length)
+            if (end < remaining.length) {
+                val boundary = remaining.lastIndexOf(' ', end - 1)
+                if (boundary >= 2_000) end = boundary + 1
+                else if (remaining[end - 1].isHighSurrogate()) end--
+            }
+            val body = JSONObject().put("text", remaining.substring(0, end)).put("model_id", model).put("voice_settings", JSONObject(style))
+            val bytes = fetch(Request.Builder().url(url).post(body.toString().toRequestBody(JSON)), MAX_PCM)
+            if (bytes.isEmpty() || bytes.size % 2 != 0 || output.size().toLong() + bytes.size > 32 * 1024 * 1024) throw SpeechProviderException(SpeechErrorCode.INVALID_AUDIO_RESPONSE)
+            output.write(bytes); remaining = remaining.substring(end)
+        }
+        val bytes = output.toByteArray()
+        if (configurationVersion.get() == version && voiceId() == voice && modelId() == model) { healthy = true; authenticated = true; lastErrorCode = null; publishState() }
         return PcmSpeech(24_000, 1, PcmEncoding.SIGNED_16_LE, bytes.asListOfChunks())
     }
 
@@ -76,15 +113,24 @@ class ElevenLabsTtsProvider(private val storage: Storage) : PcmSpeechSynthesisPr
         return SpeechResult(pcm.chunks.sumOf { it.size.toLong() } * 1000 / 48_000, true)
     }
     override fun stream(text: String): Flow<AudioFrame> = emptyFlow()
-    override suspend fun health() = healthy && hasCredential() && voiceId() != null && modelId() != null
-    override suspend fun healthDetails() = ProviderHealth(health(), _state.value.error ?: if (!hasCredential()) "Not configured" else if (health()) "Ready" else "Configured; not checked")
+    /** Explicit lightweight authenticated check; no speech generation. Never called on screen entry. */
+    override suspend fun health(): Boolean {
+        if (!hasCredential()) { lastErrorCode = SpeechErrorCode.NOT_CONFIGURED; publishState("Not configured"); return false }
+        val version = configurationVersion.get()
+        return try {
+            JSONArray(String(fetch(Request.Builder().url(BASE + "v1/models"), MAX_METADATA), Charsets.UTF_8))
+            if (configurationVersion.get() != version) false else { authenticated = true; lastErrorCode = null; publishState(); true }
+        } catch (cancelled: CancellationException) { throw cancelled }
+        catch (error: Exception) { if (configurationVersion.get() == version) { authenticated = false; lastErrorCode = (error as? SpeechProviderException)?.code ?: SpeechErrorCode.NETWORK_ERROR; publishState(lastErrorCode?.name) }; false }
+    }
+    override suspend fun healthDetails(): ProviderHealth { val ready = health(); return ProviderHealth(ready, _state.value.error ?: if (ready) "Authenticated; synthesis ${if (healthy) "proven" else "untested"}" else "Not ready") }
     override fun stopCurrent() { calls.forEach { it.cancel() } }
     override suspend fun close() { stopCurrent(); client.connectionPool.evictAll(); client.dispatcher.executorService.shutdown() }
 
     fun cachedCatalogue(): ElevenLabsCatalogue? = runCatching {
         val json = JSONObject(storage.getString(CACHE) ?: return null)
         fun choices(key: String): List<SpeechChoice> = json.getJSONArray(key).let { array ->
-            (0 until array.length()).map { index -> array.getJSONObject(index).let { SpeechChoice(it.getString("id"), it.getString("name")) } }
+            (0 until array.length()).map { index -> array.getJSONObject(index).let { SpeechChoice(it.getString("id"), it.getString("name"), it.optString("category").takeIf { value -> value.isNotBlank() }) } }
         }
         ElevenLabsCatalogue(choices("voices"), choices("models"), json.getLong("at"))
     }.getOrNull()
@@ -106,7 +152,7 @@ class ElevenLabsTtsProvider(private val storage: Storage) : PcmSpeechSynthesisPr
                 val page = JSONObject(String(fetch(Request.Builder().url(url), MAX_METADATA), Charsets.UTF_8))
                 val array = page.getJSONArray("voices")
                 for (index in 0 until array.length()) array.getJSONObject(index).let {
-                    voices += SpeechChoice(it.getString("voice_id"), it.optString("name", it.getString("voice_id")))
+                    voices += SpeechChoice(it.getString("voice_id"), it.optString("name", it.getString("voice_id")), it.optString("category").takeIf { value -> value.isNotBlank() })
                 }
                 more = page.optBoolean("has_more", false)
                 token = page.optString("next_page_token").takeIf { it.isNotBlank() && it != "null" }
@@ -115,7 +161,7 @@ class ElevenLabsTtsProvider(private val storage: Storage) : PcmSpeechSynthesisPr
         }
         check(!more) { "Voice catalogue exceeds the bounded discovery limit" }
         val result = ElevenLabsCatalogue(voices.distinctBy { it.id }, models, System.currentTimeMillis())
-        fun json(list: List<SpeechChoice>) = JSONArray().apply { list.forEach { put(JSONObject().put("id", it.id).put("name", it.name)) } }
+        fun json(list: List<SpeechChoice>) = JSONArray().apply { list.forEach { put(JSONObject().put("id", it.id).put("name", it.name).put("category", it.category)) } }
         check(configurationVersion.get() == version) { "Speech configuration changed during discovery" }
         storage.putString(CACHE, JSONObject().put("voices", json(result.voices)).put("models", json(models)).put("at", result.fetchedAtMs).toString())
         publishState()
@@ -124,7 +170,7 @@ class ElevenLabsTtsProvider(private val storage: Storage) : PcmSpeechSynthesisPr
 
     private suspend fun fetch(builder: Request.Builder, limit: Int): ByteArray {
         val version = configurationVersion.get()
-        val key = credential()?.value ?: error("ElevenLabs is not configured")
+        val key = credential()?.value ?: throw SpeechProviderException(SpeechErrorCode.NOT_CONFIGURED)
         return suspendCancellableCoroutine { continuation ->
             val call = client.newCall(builder.header("xi-api-key", key).build())
             calls.add(call)
@@ -132,13 +178,13 @@ class ElevenLabsTtsProvider(private val storage: Storage) : PcmSpeechSynthesisPr
             call.enqueue(object : Callback {
                 override fun onFailure(call: Call, e: IOException) {
                     calls.remove(call)
-                    if (continuation.isActive && configurationVersion.get() == version) { healthy = false; publishState("Speech service is unavailable") }
-                    if (continuation.isActive) continuation.resumeWithException(IOException("Speech service is unavailable"))
+                    if (continuation.isActive && configurationVersion.get() == version) { healthy = false; lastErrorCode = SpeechErrorCode.NETWORK_ERROR; publishState(lastErrorCode?.name) }
+                    if (continuation.isActive) continuation.resumeWithException(SpeechProviderException(SpeechErrorCode.NETWORK_ERROR))
                 }
                 override fun onResponse(call: Call, response: Response) {
                     val result = runCatching {
                         response.use {
-                            check(it.isSuccessful) { when (it.code) { 401, 403 -> "Speech authentication failed"; 429 -> "Speech service rate limited"; else -> "Speech service error (${it.code})" } }
+                            if (!it.isSuccessful) throw SpeechProviderException(when (it.code) { 401, 403 -> SpeechErrorCode.AUTHENTICATION_FAILED; 429 -> SpeechErrorCode.RATE_LIMITED; 404 -> SpeechErrorCode.VOICE_NOT_FOUND; 400, 422 -> SpeechErrorCode.MODEL_NOT_AVAILABLE; else -> SpeechErrorCode.SYNTHESIS_FAILED })
                             val body = it.body ?: error("Empty speech response")
                             check(body.contentLength() <= limit) { "Speech response exceeds size limit" }
                             body.byteStream().use { input ->
@@ -153,7 +199,7 @@ class ElevenLabsTtsProvider(private val storage: Storage) : PcmSpeechSynthesisPr
                         }
                     }
                     calls.remove(call)
-                    if (continuation.isActive) result.fold({ continuation.resume(it) }, { if (configurationVersion.get() == version) { healthy = false; publishState("Speech service request failed") }; continuation.resumeWithException(it) })
+                    if (continuation.isActive) result.fold({ continuation.resume(it) }, { if (configurationVersion.get() == version) { healthy = false; lastErrorCode = (it as? SpeechProviderException)?.code ?: SpeechErrorCode.SYNTHESIS_FAILED; publishState(lastErrorCode?.name) }; continuation.resumeWithException(it) })
                 }
             })
         }

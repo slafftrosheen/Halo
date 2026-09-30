@@ -164,7 +164,7 @@ class DefaultAiWorkloadPlanner : AiWorkloadPlanner {
             else -> true
         }
 
-        val toolRequirement = toolRequirement(request, kind, text)
+        val toolRequirement = toolRequirement(request, kind)
         if (toolRequirement == AiFeatureRequirement.REQUIRED) kind = AiWorkloadKind.TOOL_ASSISTED
 
         return CognitiveWorkloadPlan(
@@ -173,6 +173,8 @@ class DefaultAiWorkloadPlanner : AiWorkloadPlanner {
                 requiredCapabilities = requiredCaps,
                 tools = toolRequirement,
                 streaming = AiFeatureRequirement.OPTIONAL,
+                preferredRole = if (AiCapability.IMAGE in requiredCaps && toolRequirement != AiFeatureRequirement.REQUIRED) com.halo.sdk.provider.AiModelRole.VISION else request.metadata["preferredRole"]?.let { raw -> com.halo.sdk.provider.AiModelRole.entries.firstOrNull { it.name == raw } }
+                    ?: if (toolRequirement == AiFeatureRequirement.REQUIRED) com.halo.sdk.provider.AiModelRole.AGENTIC else com.halo.sdk.provider.AiModelRole.CHAT,
                 allowRemote = requiredPrivateContextAllowsRemote,
             ),
             context = ContextAcquisitionPlan(
@@ -181,7 +183,7 @@ class DefaultAiWorkloadPlanner : AiWorkloadPlanner {
             ),
         )
     }
-    private fun toolRequirement(request: WorkloadPlanningRequest, kind: AiWorkloadKind, text: String): AiFeatureRequirement {
+    private fun toolRequirement(request: WorkloadPlanningRequest, kind: AiWorkloadKind): AiFeatureRequirement {
         val explicit = request.request.toolUseMode?.name ?: request.metadata["toolUseMode"]
             ?: request.metadata["requiresTools"]
         when (explicit?.uppercase()) {
@@ -191,17 +193,7 @@ class DefaultAiWorkloadPlanner : AiWorkloadPlanner {
         }
         if (kind != AiWorkloadKind.CONVERSATION || request.metadata["contextRetrieval"] == "true")
             return AiFeatureRequirement.OPTIONAL
-        // Only an anchored operation grammar is used when no typed route exists. Content creation
-        // (e.g. writing a recipe or explaining code) remains a normal text request.
-        if (ACTION.matches(text)) return AiFeatureRequirement.REQUIRED
-        if (PERSONAL_CONTEXT.containsMatchIn(text) || RETRIEVAL.matches(text)) return AiFeatureRequirement.OPTIONAL
         return AiFeatureRequirement.NOT_NEEDED
-    }
-
-    private companion object {
-        val ACTION = Regex("^(?:please )?(?:open|launch|call|dial|navigate to|set (?:an? )?(?:alarm|timer|reminder)|turn (?:on|off)|send (?:a |the )?(?:message|email)|reply to|(?:create|save|delete) (?:a |the )?(?:note|file|calendar event)) .+", RegexOption.IGNORE_CASE)
-        val RETRIEVAL = Regex("^(?:please )?(?:find|search|read|summarize) (?:my |the |a )?(?:notes?|files?|calendar|notifications|screen|web)(?: .*)?$", RegexOption.IGNORE_CASE)
-        val PERSONAL_CONTEXT = Regex("\\b(?:my (?:notes|files|calendar|notifications|phone)|device battery|current screen)\\b", RegexOption.IGNORE_CASE)
     }
 
 }

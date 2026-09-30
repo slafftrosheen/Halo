@@ -249,7 +249,8 @@ class CognitiveSession(
                         "route=${route::class.simpleName} " +
                         when (route) {
                             is InterpretationExecutionRoute.DeterministicAction -> "executor=${route.executorId}"
-                            is InterpretationExecutionRoute.Agentic -> "hint=${route.hint != null}"
+                            is InterpretationExecutionRoute.DirectResponse -> "mode=DIRECT_RESPONSE"
+                            is InterpretationExecutionRoute.Agentic -> "mode=AGENTIC hint=${route.hint != null}"
                             is InterpretationExecutionRoute.Unsupported -> "reason=${route.reason}"
                             InterpretationExecutionRoute.LocalFact -> "resolver=fact-resolver"
                         }
@@ -286,14 +287,15 @@ class CognitiveSession(
                 )
                 val routeHint = (route as? InterpretationExecutionRoute.Agentic)?.hint
                 submit(
-                    request = AiRequest(text = text, priority = InferencePriority.INTERACTIVE),
+                    request = AiRequest(text = text, priority = InferencePriority.INTERACTIVE,
+                        toolUseMode = if (route is InterpretationExecutionRoute.DirectResponse) com.halo.sdk.provider.ToolUseMode.NONE else com.halo.sdk.provider.ToolUseMode.REQUIRED),
                     responseDelivery = responseDelivery,
                     origin = interpretation.origin,
-                    metadata = if (routeHint == null) {
-                        interpretation.metadata
-                    } else {
-                        interpretation.metadata + ("agenticHint" to routeHint) + ("toolUseMode" to "REQUIRED")
-                    }
+                    metadata = interpretation.metadata + mapOf(
+                        "executionRoute" to if (route is InterpretationExecutionRoute.DirectResponse) "DIRECT_RESPONSE" else "AGENTIC",
+                        "preferredRole" to if (route is InterpretationExecutionRoute.DirectResponse) "CHAT" else "AGENTIC",
+                        "requiresTools" to (route !is InterpretationExecutionRoute.DirectResponse).toString(),
+                    ) + (routeHint?.let { mapOf("agenticHint" to it) } ?: emptyMap())
                 )
             }
         }
@@ -397,14 +399,16 @@ class CognitiveSession(
                 _state.value = CognitiveSessionState.Idle
                 throw e
             } catch (e: Exception) {
-                val message = mapErrorMessage(e)
-                val failedProviderId = null
-                val failedModelId = null
+                val reasoning = _state.value as? CognitiveSessionState.Reasoning
+                val failedProviderId = reasoning?.providerId
+                val failedModelId = reasoning?.modelId
+                val message = listOfNotNull(failedProviderId, failedModelId).joinToString(" · ").let { target ->
+                    if (target.isBlank()) mapErrorMessage(e) else "$target: ${mapErrorMessage(e)}"
+                }
                 println(
                     "[HALO-COGNITION-FAIL] requestId=$requestId interactionId=${interactionId.value} " +
-                        "type=${e.javaClass.simpleName} message=${e.message ?: "none"}"
+                        "type=${e.javaClass.simpleName} provider=$failedProviderId model=$failedModelId"
                 )
-                e.printStackTrace()
                 _state.value = CognitiveSessionState.Failed(message)
                 eventBus.publish(CognitiveFailed(
                     requestId = requestId,
@@ -562,8 +566,9 @@ class CognitiveSession(
                     "Provider is rate limited. Try again in about $seconds seconds."
                 } ?: "Provider is rate limited. Retry shortly."
                 AiErrorType.SESSION_CONFLICT -> "The model is currently in use by another session."
-                AiErrorType.MODEL_NOT_SELECTED -> "Select and download a local model before using local intelligence."
-                AiErrorType.MODEL_NOT_FOUND, AiErrorType.LOCAL_MODEL_UNAVAILABLE -> "The selected local model is unavailable."
+                AiErrorType.MODEL_NOT_SELECTED -> "Select a model for the chosen provider. Download it first when using on-device intelligence."
+                AiErrorType.MODEL_NOT_FOUND -> "The selected model is unavailable for this provider."
+                AiErrorType.LOCAL_MODEL_UNAVAILABLE -> "The selected local model is unavailable."
                 AiErrorType.NETWORK_UNAVAILABLE, AiErrorType.NETWORK_ERROR -> "The AI provider could not be reached."
                 AiErrorType.TIMEOUT -> "The AI provider did not respond in time."
                 AiErrorType.GENERATION_FAILED -> "The AI failed to generate a response."

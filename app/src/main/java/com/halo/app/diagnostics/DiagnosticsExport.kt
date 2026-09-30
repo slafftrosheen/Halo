@@ -46,7 +46,7 @@ object DiagnosticsExport {
 
         sb.append("--- PROVIDER CONTROL ---\n")
         ManualDependencyGraph.providerControlRepository.rows.value.forEach { row ->
-            sb.append("${row.descriptor.providerId}: configured=${row.configured}; selected=${row.selected}; connection=${row.connection}; catalogue=${row.catalogue}; models=${row.modelCount}\n")
+            sb.append("${row.descriptor.providerId}: configured=${row.configured}; selected=${row.selected}; connection=${row.connection}; catalogue=${row.catalogue}; models=${row.modelCount}; generation=${row.generation}; lastCheckedAt=${row.lastCheckedAt}\n")
         }
         val tts = ManualDependencyGraph.speechSynthesisRegistry
         sb.append("TTS selection=${tts.selector.ttsSelection.value.id}; registered=${tts.providers.map { it.metadata.id }}\n")

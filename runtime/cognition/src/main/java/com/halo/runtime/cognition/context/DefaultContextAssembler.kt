@@ -85,6 +85,7 @@ class DefaultContextAssembler(
         }
 
         val tools = assembleTools(policy, capabilities, omissions, request)
+        println("[HALO_TOOL_EXPOSURE] mode=${if (request.toolUseMode == com.halo.sdk.provider.ToolUseMode.NONE) "DIRECT_RESPONSE" else "AGENTIC"} count=${tools.size} reason=${if (tools.isEmpty()) "TOOLS_NOT_NEEDED" else "BOUNDED_CAPABILITIES"}")
         val toolTokenEstimate = tools.sumOf { definition ->
             tokenEstimator.estimate(
                 definition.name + "\n" + definition.description + "\n" + definition.parameters.toString()

@@ -40,6 +40,9 @@ fun ElevenLabsSettingsScreen(provider: ElevenLabsTtsProvider, storage: Storage, 
     var voice by remember { mutableStateOf(provider.voiceId()) }
     var model by remember { mutableStateOf(provider.modelId()) }
     var fallback by remember { mutableStateOf(storage.getBoolean(SpeechSynthesisRegistry.FALLBACK, true)) }
+    var search by remember { mutableStateOf("") }
+    var style by remember { mutableStateOf(provider.voiceStyle()) }
+    val health by provider.state.collectAsState()
     var busy by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
@@ -56,6 +59,8 @@ fun ElevenLabsSettingsScreen(provider: ElevenLabsTtsProvider, storage: Storage, 
             TextButton(onClick = { draft = ""; provider.clearCredential(); configured = false }) { Text("Remove key") }
         }
         item {
+            Text("Authentication: ${if (health.authenticated) "Ready" else "Not checked"} · Synthesis: ${if (health.ready) "Proven" else "Not tested"}")
+            Button(enabled = configured && !busy, onClick = { busy = true; scope.launch { try { message = if (provider.health()) "Authentication ready; synthesis is checked separately" else "Connection failed: ${provider.state.value.errorCode}" } finally { busy = false } } }) { Text("Test connection") }
             Button(enabled = configured && !busy, onClick = {
                 busy = true
                 scope.launch {
@@ -72,15 +77,22 @@ fun ElevenLabsSettingsScreen(provider: ElevenLabsTtsProvider, storage: Storage, 
         items(catalogue?.models.orEmpty(), key = { "model:${it.id}" }) { choice ->
             TextButton(onClick = { provider.selectModel(choice.id); model = choice.id }) { Text(choice.name + if (model == choice.id) " · Selected" else "") }
         }
-        item { Text("Voice", style = MaterialTheme.typography.titleMedium) }
-        items(catalogue?.voices.orEmpty(), key = { "voice:${it.id}" }) { choice ->
-            TextButton(onClick = { provider.selectVoice(choice.id); voice = choice.id }) { Text(choice.name + if (voice == choice.id) " · Selected" else "") }
+        item { Text("Voice", style = MaterialTheme.typography.titleMedium); OutlinedTextField(search, { search = it }, label = { Text("Search voices") }) }
+        items(catalogue?.voices.orEmpty().filter { (it.name + " " + it.category.orEmpty()).contains(search, true) }, key = { "voice:${it.id}" }) { choice ->
+            TextButton(onClick = { provider.selectVoice(choice.id); voice = choice.id }) { Text(choice.name + choice.category?.let { " · $it" }.orEmpty() + if (voice == choice.id) " · Selected" else "") }
         }
         item {
+            Text("Voice style", style = MaterialTheme.typography.titleMedium)
+            listOf("stability", "similarity_boost", "speed").forEach { key ->
+                Text("${key.replace('_', ' ')}: ${"%.2f".format(style.getValue(key))}")
+                Slider(value = style.getValue(key).toFloat(), onValueChange = { style = style + (key to it.toDouble()) },
+                    valueRange = if (key == "speed") 0.7f..1.2f else 0f..1f,
+                    onValueChangeFinished = { provider.saveVoiceStyle(style.getValue("stability"), style.getValue("similarity_boost"), style.getValue("speed")) })
+            }
             Text("When cloud synthesis fails")
             TextButton(onClick = { fallback = !fallback; storage.putBoolean(SpeechSynthesisRegistry.FALLBACK, fallback) }) { Text(if (fallback) "Use Android TTS" else "Stay silent") }
             Text("This keeps the chosen audio route. Phone route fallback is a separate setting.")
-            Button(enabled = configured && voice != null && model != null, onClick = onTestVoice) { Text("Test voice on selected audio route") }
+            Button(enabled = configured && voice != null && model != null, onClick = onTestVoice) { Text("Speak test phrase on phone") }
         }
     }
 }

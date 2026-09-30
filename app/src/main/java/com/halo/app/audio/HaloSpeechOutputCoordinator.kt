@@ -91,10 +91,9 @@ class HaloSpeechOutputCoordinator(
      * publishes TtsFailed, and the affinity records UNAVAILABLE.
      */
     fun preview(providerId: String) {
-        val affinity = session.affinity.value
-        speak(TtsRequested(text = "Hello. This is Halo’s voice preview.", transactionId = java.util.UUID.randomUUID().toString(),
-            target = affinity?.intendedTarget ?: SpeechOutputTarget.Phone,
-            fallback = affinity?.fallback ?: SpeechOutputFallback.DISALLOW_PHONE), providerId)
+        speak(TtsRequested(text = "Halo voice test.", transactionId = java.util.UUID.randomUUID().toString(),
+            target = SpeechOutputTarget.Phone,
+            fallback = SpeechOutputFallback.DISALLOW_PHONE), providerId)
     }
 
     private fun speak(event: TtsRequested, previewProviderId: String? = null) {

@@ -7,8 +7,12 @@ data class SpeechRequest(
     val text: String,
     val voiceId: String? = null,
     val language: String? = null,
-    val modelId: String? = null
+    val modelId: String? = null,
+    val voiceSettings: Map<String, Double> = emptyMap(),
 )
+
+enum class SpeechErrorCode { NOT_CONFIGURED, AUTHENTICATION_FAILED, RATE_LIMITED, NETWORK_ERROR, VOICE_NOT_FOUND, MODEL_NOT_AVAILABLE, SYNTHESIS_FAILED, INVALID_AUDIO_RESPONSE, CANCELLED }
+class SpeechProviderException(val code: SpeechErrorCode) : Exception(code.name)
 
 data class SpeechResult(
     val durationMillis: Long,

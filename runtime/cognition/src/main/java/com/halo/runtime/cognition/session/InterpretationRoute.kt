@@ -37,6 +37,9 @@ sealed interface InterpretationExecutionRoute {
         val executorId: String,
     ) : InterpretationExecutionRoute
 
+    /** Conversational knowledge uses provider context without capability discovery. */
+    data class DirectResponse(val intent: Intent) : InterpretationExecutionRoute
+
     /**
      * No deterministic executor owns this intent, so the cognitive agent path must
      * handle it (local model plus tools). This is the route that replaces the old
@@ -72,7 +75,7 @@ class InterpretationRouteResolver(
             return InterpretationExecutionRoute.DeterministicAction(intent, executorId)
         }
         return when (intent) {
-            is ConversationIntent, is QuestionIntent -> InterpretationExecutionRoute.Agentic(intent)
+            is ConversationIntent, is QuestionIntent -> InterpretationExecutionRoute.DirectResponse(intent)
             else -> InterpretationExecutionRoute.Agentic(
                 intent = intent,
                 hint = "The user asked for something the deterministic host path cannot do. " +

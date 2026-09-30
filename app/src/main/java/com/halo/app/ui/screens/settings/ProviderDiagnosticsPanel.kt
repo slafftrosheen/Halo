@@ -16,9 +16,10 @@ fun ProviderDiagnosticsPanel(control: ProviderControlRepository, speech: SpeechS
     Column {
         Text("Provider diagnostics", style = MaterialTheme.typography.titleMedium)
         rows.forEach { row ->
-            Text("${row.descriptor.displayName} · ${if (row.selected) "selected · " else ""}${row.connection.name} · ${row.modelCount} models · ${row.catalogue.name}")
+            Text("${row.descriptor.displayName} · ${if (row.selected) "selected · " else ""}${row.connection.name} · ${row.modelCount} models · ${row.catalogue.name} · generation ${row.generation.name}")
             TextButton(enabled = row.configured && row.connection != com.halo.app.ai.ProviderConnectionState.CHECKING,
                 onClick = { control.testConnection(row.descriptor.providerId) }) { Text("Test ${row.descriptor.displayName} connection") }
+            TextButton(enabled = row.configured && row.generation != com.halo.app.ai.GenerationProof.CHECKING, onClick = { control.checkGeneration(row.descriptor.providerId) }) { Text("Run generation check") }
         }
         Text("STT: ${sttSelection.id} · ${if (recognitionAvailable) "available" else "not installed"} · language and installation in Voice settings")
         Text("TTS selection: ${selection.id}")
@@ -28,7 +29,7 @@ fun ProviderDiagnosticsPanel(control: ProviderControlRepository, speech: SpeechS
             Text("${provider.metadata.displayName} · ${if (provider.metadata.local) "local" else "cloud"} · ${if (cloud == null || health?.configured == true) "configured" else "not configured"}")
             health?.let { Text(if (it.ready) "Synthesis ready" else it.error ?: "Synthesis not checked") }
             if (cloud != null) Text("Voice ${cloud.voiceId() ?: "not selected"} · TTS model ${cloud.modelId() ?: "not selected"} · metadata ${if (cloud.cachedCatalogue()?.stale == true) "stale" else if (cloud.cachedCatalogue() != null) "cached" else "unavailable"}")
-            TextButton(onClick = { com.halo.app.di.ManualDependencyGraph.haloSpeechOutputCoordinator.preview(provider.metadata.id) }) { Text("Test ${provider.metadata.displayName} voice on current route") }
+            TextButton(onClick = { com.halo.app.di.ManualDependencyGraph.haloSpeechOutputCoordinator.preview(provider.metadata.id) }) { Text("Test ${provider.metadata.displayName} voice on phone") }
         }
     }
 }

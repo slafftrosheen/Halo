@@ -200,7 +200,7 @@ class DefaultProviderTurnExecutor(
         interactionId: InteractionId,
         workload: AiWorkloadSpec,
     ): ProviderTurnResult {
-        println("[HALO_TURN_MODE] interactionId=${interactionId.value} workloadKind=${workload.kind} toolUseMode=${workload.toolUseMode} provider=${target.providerId} model=${target.modelId}")
+        println("[HALO_TURN_MODE] interactionId=${interactionId.value} mode=${if (workload.toolUseMode == com.halo.sdk.provider.ToolUseMode.NONE) "DIRECT_RESPONSE" else "AGENTIC"} workloadKind=${workload.kind} toolUseMode=${workload.toolUseMode} provider=${target.providerId} model=${target.modelId}")
         return try {
             execute(target, request, context, requestId, interactionId)
         } catch (cancelled: kotlinx.coroutines.CancellationException) {
@@ -219,7 +219,7 @@ class DefaultProviderTurnExecutor(
                 failedProviderId = target.providerId,
             ) ?: throw error
 
-            println("[HALO_TURN_MODE] interactionId=${interactionId.value} workloadKind=${workload.kind} toolUseMode=${workload.toolUseMode} provider=${fallback.providerId} model=${fallback.modelId}")
+            println("[HALO_TURN_MODE] interactionId=${interactionId.value} mode=${if (workload.toolUseMode == com.halo.sdk.provider.ToolUseMode.NONE) "DIRECT_RESPONSE" else "AGENTIC"} workloadKind=${workload.kind} toolUseMode=${workload.toolUseMode} provider=${fallback.providerId} model=${fallback.modelId}")
             execute(
                 target = fallback,
                 request = request.copy(modelId = fallback.modelId),

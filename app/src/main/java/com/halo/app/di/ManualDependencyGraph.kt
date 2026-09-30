@@ -1143,6 +1143,8 @@ object ManualDependencyGraph {
     }
     val modelBrowserViewModel by lazy { com.halo.app.ui.screens.settings.ModelBrowserViewModel(providerControlRepository) }
     val providerControlRepository by lazy { com.halo.app.ai.ProviderControlRepository(aiProviderRouter, aiModelCatalogRepository, storage) }
+    val contextPrivacyViewModel by lazy { com.halo.app.ui.screens.settings.ContextPrivacyViewModel(storage) }
+
     val intelligenceViewModel by lazy {
         IntelligenceViewModel(
             snapshotManager = runtimeSnapshotManager,

@@ -1,5 +1,10 @@
 # Provider Architecture
 
+## P8 provider UX and conversation reset — 2026-09-30
+
+General conversational answering is a core Halo capability and does not depend on tool availability. DirectResponse/CHAT is separate from Agentic actions; configuration, authentication, model discovery and generation proof are separate. Speech uses the selected PCM provider, protected ElevenLabs opt-in, phone-only settings tests and host-owned route policy. See [implementation and deferred acceptance](../engineering/PROVIDER-UX-AND-CONVERSATION-RESET.md). Earlier sections retain historical context.
+
+
 ## PRODUCT-P0-001 — source update, 2026-09-30
 
 The existing AI router and selection repository remain canonical. ProviderControlRepository owns setup projections; the shared catalogue gains provider-scoped refresh. ToolUseMode derives from workload requirements and is enforced in context assembly and provider send. SpeechSynthesisRegistry is independent of AI routing; portable PCM providers feed verified playback.

@@ -40,7 +40,7 @@ fun ProviderCenterScreen(control: ProviderControlRepository, onBack: () -> Unit,
 
 @Composable
 fun ProviderDetailScreen(control: ProviderControlRepository, providerId: String, onBack: () -> Unit,
-    onModels: (String) -> Unit, onDevice: () -> Unit, onDiagnostics: () -> Unit) {
+    onModels: (String) -> Unit, onAssignRole: () -> Unit, onDevice: () -> Unit, onDiagnostics: () -> Unit) {
     val rows by control.rows.collectAsState()
     val row = rows.firstOrNull { it.descriptor.providerId == providerId }
     var secret by remember(providerId) { mutableStateOf("") }
@@ -66,7 +66,10 @@ fun ProviderDetailScreen(control: ProviderControlRepository, providerId: String,
         if (row != null) {
             item {
                 Text("${row.descriptor.protocol} · ${row.descriptor.location.name.replace('_', ' ')} · ${row.descriptor.access}")
-                Text("Connection: ${row.connection.name.replace('_', ' ')}")
+                Text("Generation: ${row.generation.name.replace('_', ' ')}")
+                row.lastCheckedAt?.let { Text("Last connection check: ${java.text.DateFormat.getDateTimeInstance().format(java.util.Date(it))}") }
+                row.lastError?.let { Text("Last error: $it") }
+                Text("Authentication / connection: ${row.connection.name.replace('_', ' ')}")
                 Text(if (row.descriptor.fields.none { it.kind == ProviderFieldKind.SECRET }) "No credential required" else if (row.credentialConfigured) "Credential configured" else "No stored credential")
                 Text("Catalogue: ${row.catalogue.name.lowercase()} · ${row.modelCount} models")
             }
@@ -97,7 +100,10 @@ fun ProviderDetailScreen(control: ProviderControlRepository, providerId: String,
                     if (row.credentialConfigured) TextButton(onClick = { secret = ""; control.removeCredential(providerId) }) { Text("Remove credential") }
                 }
                 message?.let { Text(it) }
-                Button(enabled = row.configured && row.connection != com.halo.app.ai.ProviderConnectionState.CHECKING, onClick = { control.testConnection(providerId) }) { Text("Test connection") }
+                Button(enabled = row.configured && row.connection != com.halo.app.ai.ProviderConnectionState.CHECKING, onClick = { control.testConnection(providerId) }) { Text("Test authentication / connection") }
+                Button(enabled = row.configured && row.generation != com.halo.app.ai.GenerationProof.CHECKING, onClick = { control.checkGeneration(providerId) }) { Text("Run generation check") }
+                TextButton(enabled = row.configured, onClick = { control.useDefault(providerId) }) { Text("Use as default") }
+                TextButton(onClick = onAssignRole) { Text("Assign role") }
                 Button(enabled = row.configured, onClick = { control.refreshModels(providerId) }) { Text("Refresh model metadata") }
                 TextButton(onClick = { onModels(providerId) }) { Text("Browse this provider’s models") }
                 if (row.descriptor.location == AiExecutionLocation.ON_DEVICE) TextButton(onClick = onDevice) { Text("Manage local models") }

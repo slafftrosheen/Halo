@@ -38,7 +38,7 @@ fun ModelBrowserScreen(viewModel: ModelBrowserViewModel, onBack: () -> Unit, onP
             }
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 FilterChip(filter.capability == null, { viewModel.filter.value = filter.copy(capability = null) }, label = { Text("All capabilities") })
-                listOf(AiCapability.TEXT, AiCapability.IMAGE, AiCapability.TOOLS).forEach { capability -> FilterChip(filter.capability == capability, { viewModel.filter.value = filter.copy(capability = capability) }, label = { Text(capability.name) }) }
+                listOf(AiCapability.TEXT, AiCapability.IMAGE, AiCapability.TOOLS, AiCapability.AUDIO).forEach { capability -> FilterChip(filter.capability == capability, { viewModel.filter.value = filter.copy(capability = capability) }, label = { Text(capability.name) }) }
             }
             if (state.errors) Text("Some catalogues are unavailable or stale. Retained metadata remains browsable.")
             TextButton(enabled = !state.refreshing, onClick = { (filter.provider ?: selectedProvider)?.let { viewModel.control.refreshModels(it) } }) { Text(if (state.refreshing) "Refreshing…" else "Refresh selected provider metadata") }
@@ -46,9 +46,10 @@ fun ModelBrowserScreen(viewModel: ModelBrowserViewModel, onBack: () -> Unit, onP
         }
         if (state.entries.isEmpty()) item { Text("No cached models match. Configure a provider and explicitly refresh its metadata, or download an on-device model.") }
         items(state.entries, key = { "${it.model.providerId}:${it.model.id}" }) { entry ->
-            Card(onClick = { viewModel.pick(entry) }, modifier = Modifier.fillMaxWidth()) {
+            Card(onClick = { if (providers.firstOrNull { it.descriptor.providerId == entry.model.providerId }?.configured == true) viewModel.pick(entry) else onProvider(entry.model.providerId) }, modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(14.dp)) {
                     val selected = entry.model.providerId == selectedProvider && entry.model.id == selectedModel
+                    if (providers.firstOrNull { it.descriptor.providerId == entry.model.providerId }?.configured != true) Text("Provider setup required")
                     Text(entry.model.displayName + if (selected) " · Selected" else "", style = MaterialTheme.typography.titleMedium)
                     Text("${entry.model.providerId} · ${entry.runtime.location.name.replace('_', ' ')} · ${entry.source.name.lowercase()}")
                     Text(if (entry.kind == AiModelKind.ROUTER) "Router / preset · capabilities vary · tools not guaranteed" else "Concrete model · tools ${if (entry.model.supportsTools) "supported" else "unavailable"} · ${entry.runtime.costClass.name.lowercase()}")

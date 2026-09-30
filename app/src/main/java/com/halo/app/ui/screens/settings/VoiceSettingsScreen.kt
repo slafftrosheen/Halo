@@ -45,7 +45,7 @@ import com.halo.app.ui.workspace.HaloWorkspaceSection
 fun VoiceSettingsScreen(
     viewModel: VoiceSettingsViewModel,
     onBack: () -> Unit,
-    onElevenLabs: () -> Unit = {},
+    onSpeechOutput: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -75,7 +75,13 @@ fun VoiceSettingsScreen(
 
         Spacer(Modifier.height(20.dp))
 
-        SpeechOutputSettings(viewModel, onElevenLabs)
+        HaloWorkspaceSection(title = "Output") {
+            viewModel.synthesisRegistry?.let { registry ->
+                val selected by registry.selector.ttsSelection.collectAsState()
+                Text("Voice provider: ${selected.id}")
+            }
+            TextButton(onClick = onSpeechOutput) { Text("Speech output settings") }
+        }
         Spacer(Modifier.height(20.dp))
         HaloWorkspaceSection(title = "Speech recognition") {
             HaloWorkspaceRow(

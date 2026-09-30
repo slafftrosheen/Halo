@@ -1,5 +1,10 @@
 # Halo current state
 
+## P8 provider UX and conversation reset — 2026-09-30
+
+General conversational answering is a core Halo capability and does not depend on tool availability. DirectResponse/CHAT is separate from Agentic actions; configuration, authentication, model discovery and generation proof are separate. Speech uses the selected PCM provider, protected ElevenLabs opt-in, phone-only settings tests and host-owned route policy. See [implementation and deferred acceptance](docs/engineering/PROVIDER-UX-AND-CONVERSATION-RESET.md). Earlier sections retain historical context.
+
+
 ## PRODUCT-P0-001 — source update, 2026-09-30
 
 Provider configuration and model browsing have separate destinations. Intelligence is a short hub, ordinary turns use NONE tools, and ElevenLabs shares portable PCM and verified audio routing. Fresh-install inference/STT/TTS defaults remain local. Actual source baseline: 58c2b2a6cc791d1f1b86aa32cc82fa842e16e150.

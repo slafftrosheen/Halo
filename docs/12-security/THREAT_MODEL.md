@@ -1,5 +1,10 @@
 # Security and privacy assessment
 
+## P8 provider UX and conversation reset — 2026-09-30
+
+General conversational answering is a core Halo capability and does not depend on tool availability. DirectResponse/CHAT is separate from Agentic actions; configuration, authentication, model discovery and generation proof are separate. Speech uses the selected PCM provider, protected ElevenLabs opt-in, phone-only settings tests and host-owned route policy. See [implementation and deferred acceptance](../engineering/PROVIDER-UX-AND-CONVERSATION-RESET.md). Earlier sections retain historical context.
+
+
 ## PRODUCT-P0-001 — source update, 2026-09-30
 
 ElevenLabs keys join the Keystore-protected set and migration version 3. Protected batch writes and the Brain guard prevent plaintext export. Saved key text is absent from Intelligence UI state; replacement drafts clear immediately. Cloud speech receives only TtsSanitizer output, with account-controlled retention. Synthesis fallback cannot relax audio-route policy. New diagnostics contain IDs/counts/enums, never credentials or text bodies.
