@@ -330,16 +330,16 @@ class OpenAiCompatibleTransport(
             }
             payload.put("messages", messages)
         }
-        if (context.availableTools.isNotEmpty()) {
+        if (request.toolUseMode != com.halo.sdk.provider.ToolUseMode.NONE && context.availableTools.isNotEmpty()) {
+            payload.put("tool_choice", "auto")
             payload.put("tools", JSONArray().apply {
                 context.availableTools.forEach { tool ->
                     put(JSONObject().apply {
                         put("type", "function")
-                        put("function", JSONObject().apply {
-                            put("name", tool.id)
-                            put("description", tool.description)
-                            put("parameters", JSONObject(tool.parameters))
-                        })
+                        val function = JSONObject().put("name", tool.id).put("description", tool.description).put("parameters", JSONObject(tool.parameters))
+                        if (protocol == AiWireProtocol.OPENAI_RESPONSES) {
+                            put("name", tool.id); put("description", tool.description); put("parameters", JSONObject(tool.parameters))
+                        } else put("function", function)
                     })
                 }
             })

@@ -46,7 +46,8 @@ class VoiceSettingsViewModel(
     private val speechInventory: SpeechModelInventoryRepository,
     private val languageSettings: SpeechLanguageSettingsRepository,
     private val providerGraph: ProviderGraph? = null,
-    private val storage: Storage? = null
+    private val storage: Storage? = null,
+    val synthesisRegistry: com.halo.app.ai.SpeechSynthesisRegistry? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(VoiceSettingsUiState(

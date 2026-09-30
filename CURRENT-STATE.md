@@ -1,5 +1,11 @@
 # Halo current state
 
+## PRODUCT-P0-001 — source update, 2026-09-30
+
+Provider configuration and model browsing have separate destinations. Intelligence is a short hub, ordinary turns use NONE tools, and ElevenLabs shares portable PCM and verified audio routing. Fresh-install inference/STT/TTS defaults remain local. Actual source baseline: 58c2b2a6cc791d1f1b86aa32cc82fa842e16e150.
+
+See the [control-plane source map](docs/engineering/PROVIDER-CONTROL-PLANE.md) for ownership, official contracts, bounds, security and the later QA plan. Build/tests/device acceptance: not run. Earlier dated descriptions below remain historical.
+
 Status: CURRENT SOURCE MAP. Provider review updated 2026-09-24.
 Source review is correlated with the supplied 2026-09-21 device trace. RUNTIME-048 is source-complete but uncompiled and has not been unit- or physical-device-verified.
 

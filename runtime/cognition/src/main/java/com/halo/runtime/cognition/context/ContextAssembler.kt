@@ -87,6 +87,7 @@ interface ContextAssembler {
 }
 
 data class ContextAssemblyRequest(
+    val toolUseMode: com.halo.sdk.provider.ToolUseMode = com.halo.sdk.provider.ToolUseMode.OPTIONAL,
     val conversationId: String? = null,
     val interactionId: String? = null,
     val allowGenericFallback: Boolean = true,

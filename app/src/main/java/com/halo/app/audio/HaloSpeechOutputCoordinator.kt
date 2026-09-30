@@ -33,7 +33,8 @@ class HaloSpeechOutputCoordinator(
     private val storage: Storage,
     private val eventBus: EventBus,
     private val routeController: SpeechOutputRouteController,
-    private val ttsProvider: AndroidTTSProvider,
+    private val ttsProvider: com.halo.sdk.provider.PcmSpeechSynthesisProvider,
+    private val synthesisRegistry: com.halo.app.ai.SpeechSynthesisRegistry? = null,
     private val routedSpeechPlaybackProvider: RoutedSpeechPlaybackProvider? = null,
     private val nativeResourceCoordinator: NativeResourceCoordinator? = null,
     private val interactionRoutePolicy: InteractionRoutePolicy = DefaultInteractionRoutePolicy(),
@@ -89,7 +90,14 @@ class HaloSpeechOutputCoordinator(
      * phone when policy is DISALLOW_PHONE: the handoff decision above returns Unavailable and
      * publishes TtsFailed, and the affinity records UNAVAILABLE.
      */
-    private fun speak(event: TtsRequested) {
+    fun preview(providerId: String) {
+        val affinity = session.affinity.value
+        speak(TtsRequested(text = "Hello. This is Halo’s voice preview.", transactionId = java.util.UUID.randomUUID().toString(),
+            target = affinity?.intendedTarget ?: SpeechOutputTarget.Phone,
+            fallback = affinity?.fallback ?: SpeechOutputFallback.DISALLOW_PHONE), providerId)
+    }
+
+    private fun speak(event: TtsRequested, previewProviderId: String? = null) {
         if (event.text.isBlank()) {
             scope.launch { eventBus.publish(TtsFailed(transactionId = event.transactionId, target = event.target, reason = "Speech text is empty", interactionId = event.interactionId)) }
             return
@@ -209,7 +217,10 @@ class HaloSpeechOutputCoordinator(
                     }
                 }
                 // 2. Synthesize with onStarted callback to publish TtsStarted when audible playback actually begins
-                val request = SpeechRequest(text = event.text)
+                val sanitized = com.halo.runtime.cognition.turn.TtsSanitizer.sanitize(event.text)
+                check(sanitized.isNotBlank()) { "No speakable response" }
+                val (pinnedProvider, request) = synthesisRegistry?.pin(SpeechRequest(text = sanitized), previewProviderId)
+                    ?: (ttsProvider to SpeechRequest(text = sanitized))
                 val onStarted: () -> Unit = {
                     if (activeTransactionId == event.transactionId &&
                         startedOnce.compareAndSet(false, true)) {
@@ -245,7 +256,7 @@ class HaloSpeechOutputCoordinator(
                     focusGranted = activeTransactionId == event.transactionId &&
                         audioManager.requestAudioFocus(focusRequest) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
                     focusGranted
-                })) {
+                }, provider = pinnedProvider)) {
                     is RoutedPlaybackResult.Completed -> com.halo.sdk.provider.SpeechResult(routed.durationMs, true)
                     RoutedPlaybackResult.Cancelled -> throw CancellationException("Speech playback cancelled")
                     RoutedPlaybackResult.RouteLost -> error("Speech audio route disconnected or changed")
@@ -318,7 +329,7 @@ class HaloSpeechOutputCoordinator(
         activeJob?.cancel()
         activeJob = null
         activeTransactionId = null
-        ttsProvider.stopCurrent()
+        synthesisRegistry?.stopCurrent() ?: ttsProvider.stopCurrent()
         routedSpeechPlaybackProvider?.stopCurrent()
         // activeJob cancellation is the single cancellation event source. The
         // coroutine retains the actual playback target, including phone fallback.
@@ -330,7 +341,7 @@ class HaloSpeechOutputCoordinator(
         stop("Shutdown")
         scope.launch {
             playbackMutex.lock()
-            try { ttsProvider.close() } finally { playbackMutex.unlock() }
+            try { synthesisRegistry?.close() ?: ttsProvider.close() } finally { playbackMutex.unlock() }
         }
     }
 }

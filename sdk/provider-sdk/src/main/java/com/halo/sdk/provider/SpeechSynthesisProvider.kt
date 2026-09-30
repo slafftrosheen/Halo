@@ -6,7 +6,8 @@ import kotlinx.coroutines.flow.Flow
 data class SpeechRequest(
     val text: String,
     val voiceId: String? = null,
-    val language: String? = null
+    val language: String? = null,
+    val modelId: String? = null
 )
 
 data class SpeechResult(

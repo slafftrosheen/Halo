@@ -194,6 +194,8 @@ class CognitiveTurnExecutor(
                         exposedToolIds = currentContext.availableTools.map { it.name }.toSet(),
                         requiredCapabilities = prepared.requiredCapabilityIds,
                         contextRequirements = prepared.contextRequirementIds,
+                        toolUseMode = prepared.workload.inference.toolUseMode.name,
+                        workloadKind = prepared.workload.inference.kind.name,
                     )
                 )
             }
@@ -224,7 +226,7 @@ class CognitiveTurnExecutor(
                 runId = durableRunId,
             )
 
-            val initialResponse = when (outcome) {
+            var initialResponse = when (outcome) {
                 is ProviderTurnResult.HandoffStarted -> {
                     return CognitiveResponseCommit(
                         runId = durableRunId,
@@ -267,7 +269,14 @@ class CognitiveTurnExecutor(
                 )
             }
 
+            if (prepared.workload.inference.toolUseMode == com.halo.sdk.provider.ToolUseMode.NONE && initialResponse.toolCalls.isNotEmpty())
+                throw AiProviderException(AiErrorType.INVALID_RESPONSE, "Tools are disabled for this turn")
+            if (prepared.workload.inference.toolUseMode == com.halo.sdk.provider.ToolUseMode.REQUIRED &&
+                currentRequest.turnKind != ProviderTurnKind.TOOL_CONTINUATION && initialResponse.toolCalls.isEmpty())
+                throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY, "The requested action was not executed")
             if (initialResponse.toolCalls.isEmpty()) {
+                if (prepared.workload.inference.toolUseMode == com.halo.sdk.provider.ToolUseMode.REQUIRED && !hasConfirmedAction(durableRunId))
+                    initialResponse = initialResponse.copy(text = "I could not confirm completion of the requested action.", payloadRefId = null)
                 if (durableRunId != null) {
                     agentRunCoordinator?.recordStep(
                         AgentStep.ResponseProduced(
@@ -616,6 +625,8 @@ class CognitiveTurnExecutor(
                                     exposedToolIds = currentContext.availableTools.map { it.name }.toSet(),
                                     requiredCapabilities = prepared.requiredCapabilityIds,
                                     contextRequirements = prepared.contextRequirementIds,
+                        toolUseMode = prepared.workload.inference.toolUseMode.name,
+                        workloadKind = prepared.workload.inference.kind.name,
                                 )
                             )
                         }
@@ -638,6 +649,7 @@ class CognitiveTurnExecutor(
                                 modelId = currentTarget.modelId,
                                 appendTextAsUserMessage = false,
                                 turnKind = ProviderTurnKind.TOOL_CONTINUATION,
+                                publishStreamingTokens = prepared.turn.request.publishStreamingTokens && prepared.workload.inference.toolUseMode != com.halo.sdk.provider.ToolUseMode.REQUIRED,
                             ),
                             context = currentContext,
                             requestId = roundRequestId,
@@ -677,6 +689,10 @@ class CognitiveTurnExecutor(
             }
 
             val durableRun = createDurableRunIfNeeded()
+            if (prepared.workload.inference.toolUseMode == com.halo.sdk.provider.ToolUseMode.REQUIRED) {
+                val confirmed = hasConfirmedAction(durableRun)
+                if (!confirmed) response = response.copy(text = "I could not confirm completion of the requested action.", payloadRefId = null)
+            }
             if (durableRun != null) {
                 agentRunStore?.get(durableRun)?.let { run ->
                     com.halo.runtime.cognition.ui.UiWorkflowProjector.summary(run)?.let { summary ->
@@ -736,6 +752,8 @@ class CognitiveTurnExecutor(
                     exposedToolIds = currentContext.availableTools.map { it.name }.toSet(),
                     requiredCapabilities = prepared.requiredCapabilityIds,
                     contextRequirements = prepared.contextRequirementIds,
+                        toolUseMode = prepared.workload.inference.toolUseMode.name,
+                        workloadKind = prepared.workload.inference.kind.name,
                 )
             )
 
@@ -812,6 +830,15 @@ class CognitiveTurnExecutor(
                 metadata = turn.metadata,
             )
         }
+    }
+
+    private suspend fun hasConfirmedAction(runId: AgentRunId?): Boolean {
+        val technical = setOf("halo_discover_tools", "halo_use_skill", "halo_present", "halo_read_payload", "halo_delegate", "halo_think")
+        return runId?.let { agentRunStore?.get(it)?.steps }?.any { step -> when(step) {
+            is AgentStep.ToolOutcomeRecorded -> step.success && step.actionTruth == com.halo.runtime.cognition.agent.ActionTruth.CONFIRMED && step.toolId !in technical
+            is AgentStep.ToolCompleted -> step.success && step.actionTruth == com.halo.runtime.cognition.agent.ActionTruth.CONFIRMED && step.toolId !in technical
+            else -> false
+        } } == true
     }
 }
 

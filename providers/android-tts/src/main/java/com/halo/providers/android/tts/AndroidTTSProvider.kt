@@ -42,7 +42,8 @@ class AndroidTTSProvider(
         .setUsage(AudioAttributes.USAGE_ASSISTANT)
         .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
         .build()
-) : SpeechSynthesisProvider, TextToSpeech.OnInitListener {
+) : com.halo.sdk.provider.PcmSpeechSynthesisProvider, TextToSpeech.OnInitListener {
+    override val metadata = com.halo.sdk.provider.ProviderMetadata("provider.android.tts", "Android TTS", local = true)
 
     private val appContext = context.applicationContext
 
@@ -131,7 +132,18 @@ class AndroidTTSProvider(
     )
 
     /** Produces PCM without letting TextToSpeech own playback or routing. */
-    suspend fun synthesizeToPcm(request: SpeechRequest): PcmSynthesis? = withContext(Dispatchers.IO) {
+    override suspend fun synthesizeToPcm(request: SpeechRequest): com.halo.sdk.provider.PcmSpeech? {
+        val pcm = synthesizeLegacyPcm(request) ?: return null
+        val encoding = when (pcm.audioFormat) {
+            AudioFormat.ENCODING_PCM_8BIT -> com.halo.sdk.provider.PcmEncoding.UNSIGNED_8
+            AudioFormat.ENCODING_PCM_16BIT -> com.halo.sdk.provider.PcmEncoding.SIGNED_16_LE
+            AudioFormat.ENCODING_PCM_FLOAT -> com.halo.sdk.provider.PcmEncoding.FLOAT_32_LE
+            else -> return null
+        }
+        return com.halo.sdk.provider.PcmSpeech(pcm.sampleRate, pcm.channelCount, encoding, pcm.chunks)
+    }
+
+    private suspend fun synthesizeLegacyPcm(request: SpeechRequest): PcmSynthesis? = withContext(Dispatchers.IO) {
         withTimeoutOrNull(90_000L) {
             if (request.text.isBlank() || request.text.length > 24_000) return@withTimeoutOrNull null
             val chunks = mutableListOf<ByteArray>()

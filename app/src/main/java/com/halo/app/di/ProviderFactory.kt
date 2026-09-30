@@ -23,6 +23,8 @@ data class Providers(
     val speechSynthesis: SpeechSynthesisProvider,
     val wakeWord: WakeWordDetector,
     val aiProviders: List<AiProvider> = listOf(inference),
+    val ttsProviders: List<com.halo.sdk.provider.PcmSpeechSynthesisProvider> = listOfNotNull(speechSynthesis as? com.halo.sdk.provider.PcmSpeechSynthesisProvider),
+    val speechSelector: com.halo.sdk.provider.SpeechProviderSelector? = null,
     val aiRegistry: AiProviderRegistry = AiProviderRegistry.from(
         aiProviders + inference
     )

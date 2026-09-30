@@ -90,6 +90,7 @@ class OpenCodeCompanionProvider(
     }
 
     override suspend fun getCapabilities(): Set<AiCapability> = configured.getCapabilities()
+    override fun configurationChanged() = configured.configurationChanged()
     override suspend fun getStatus(): ProviderStatus = configured.getStatus()
     override suspend fun testConnection(): Boolean {
         syncEndpoint()

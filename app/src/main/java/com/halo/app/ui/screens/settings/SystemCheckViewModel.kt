@@ -423,38 +423,6 @@ class SystemCheckViewModel(
                 ),
             ))
 
-            // Remote provider fabric presence (RUNTIME-055)
-            remoteProviderRegistry?.let { registry ->
-                val remoteItems = RemoteProviderPresets.groq.let { groq ->
-                    listOf(groq, RemoteProviderPresets.cerebras, RemoteProviderPresets.opencodeZen,
-                        RemoteProviderPresets.xai, RemoteProviderPresets.opencodeCompanion,
-                        RemoteProviderPresets.customOpenAiCompatible).map { descriptor ->
-                        val presence = runCatching { registry.presence(descriptor.id).value }.getOrNull()
-                        val configured = presence?.isConfigured ?: remoteCredentialPresent(credentialKeyFor(descriptor.id))
-                        val authState = presence?.authInfo?.authState
-                            ?: if (configured) ProviderAuthState.CONNECTED else ProviderAuthState.NOT_CONFIGURED
-                        SystemCheckItem(
-                            id = "remote_${descriptor.id}",
-                            name = descriptor.displayName,
-                            glyph = HaloGlyph.MODEL,
-                            status = when (authState) {
-                                ProviderAuthState.CONNECTED -> CheckStatus.PASSED
-                                ProviderAuthState.NOT_CONFIGURED -> CheckStatus.NOT_CONFIGURED
-                                ProviderAuthState.AUTHORIZING, ProviderAuthState.REFRESHING -> CheckStatus.RUNNING
-                                ProviderAuthState.EXPIRED, ProviderAuthState.FAILED -> CheckStatus.FAILED
-                                ProviderAuthState.NOT_REQUIRED -> if (configured) CheckStatus.PASSED else CheckStatus.READY
-                            },
-                            reason = authStateLabel(authState, configured),
-                        )
-                    }
-                }
-                sections.add(SystemCheckSection(
-                    id = "remote_providers",
-                    title = "Remote Providers",
-                    items = remoteItems,
-                ))
-            }
-
             val payloads = payloadStore?.stats()
             com.halo.runtime.cognition.delegation.LongTaskDiagnostics.payloads.value = payloads
             val budget = com.halo.runtime.cognition.context.ContextDiagnostics.composition.value
@@ -494,7 +462,7 @@ class SystemCheckViewModel(
                         presence.copy(
                             authInfo = authInfo.copy(
                                 authState = when {
-                                    presence.isConfigured && authInfo.authState == ProviderAuthState.NOT_CONFIGURED -> ProviderAuthState.CONNECTED
+                                    presence.isConfigured && authInfo.authState == ProviderAuthState.NOT_CONFIGURED -> ProviderAuthState.CONFIGURED
                                     else -> authInfo.authState
                                 },
                             ),
@@ -548,6 +516,7 @@ class SystemCheckViewModel(
     }
 
     private fun authStateLabel(state: ProviderAuthState, configured: Boolean): String = when (state) {
+        ProviderAuthState.CONFIGURED -> "Configured; connection not checked"
         ProviderAuthState.CONNECTED -> "Connected"
         ProviderAuthState.NOT_CONFIGURED -> "Not configured — add an API key in Intelligence settings"
         ProviderAuthState.AUTHORIZING -> "Authorizing"

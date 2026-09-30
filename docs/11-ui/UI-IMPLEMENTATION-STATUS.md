@@ -1,5 +1,11 @@
 # UI source inventory
 
+## PRODUCT-P0-001 — source update, 2026-09-30
+
+Earlier inline Intelligence catalogue/provider forms are superseded by the short hub, Provider Center, Provider Detail, lazy Model Browser and role/routing page. Local development controls moved to OnDeviceModelsScreen; context/advanced controls remain on a separate page. Voice adds output selection, focused ElevenLabs setup and a language picker. No rendered or device acceptance was performed.
+
+See the [control-plane source map](../engineering/PROVIDER-CONTROL-PLANE.md) for ownership, official contracts, bounds, security and the later QA plan. Build/tests/device acceptance: not run. Earlier dated descriptions below remain historical.
+
 Status: CURRENT SOURCE MAP. Reviewed 2026-09-18.
 Route/source presence is not interaction, visual or accessibility acceptance.
 

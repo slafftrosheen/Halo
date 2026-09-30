@@ -173,6 +173,7 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
                     .put("exposedToolIds", JSONArray(step.exposedToolIds.toList()))
                     .put("requiredCapabilities", JSONArray(step.requiredCapabilities.toList()))
                     .put("contextRequirements", JSONArray(step.contextRequirements.toList()))
+                    .put("toolUseMode", step.toolUseMode ?: "").put("workloadKind", step.workloadKind ?: "")
                 "ProviderTurnStarted"
             }
             is AgentStep.ProviderTurnCompleted -> {
@@ -342,7 +343,8 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
             "ProviderTurnStarted" -> AgentStep.ProviderTurnStarted(step, run, at,
                 ProviderTurnId(p.getString("turnId")), p.getString("providerId"), p.optString("modelId").ifBlank { null },
                 p.optString("requestIdentity"), stringSet(p, "exposedToolIds"),
-                stringSet(p, "requiredCapabilities"), stringSet(p, "contextRequirements"))
+                stringSet(p, "requiredCapabilities"), stringSet(p, "contextRequirements"),
+                p.optString("toolUseMode").ifBlank { null }, p.optString("workloadKind").ifBlank { null })
             "ProviderTurnCompleted" -> {
                 val calls = mutableListOf<ProviderToolCallRecord>()
                 val array = p.optJSONArray("toolCalls") ?: JSONArray()

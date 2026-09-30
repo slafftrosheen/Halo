@@ -106,6 +106,7 @@ fun SystemCheckScreen(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        item { ProviderDiagnosticsPanel(com.halo.app.di.ManualDependencyGraph.providerControlRepository, com.halo.app.di.ManualDependencyGraph.speechSynthesisRegistry) }
         item { PhoneOperatorPanel(observationControls = true, onOpenSandbox = onOpenPhoneSandbox) }
         /*
          * MINING-P2-001 presentation preview. Static sample components, rendered only after an explicit

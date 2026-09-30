@@ -52,13 +52,13 @@ data class IntelligenceUiState(
     val catalogEntries: List<AiModelCatalogEntry> = emptyList(),
     val catalogErrors: Map<String, String> = emptyMap(),
     val isRefreshingModels: Boolean = false,
-    val openRouterKey: String = "",
+    val openRouterKeyConfigured: Boolean = false,
     val openRouterModel: String = "openrouter/free",
-    val openAiKey: String = "",
+    val openAiKeyConfigured: Boolean = false,
     val openAiModel: String = "",
-    val anthropicKey: String = "",
+    val anthropicKeyConfigured: Boolean = false,
     val anthropicModel: String = "",
-    val geminiApiKey: String = "",
+    val geminiApiKeyConfigured: Boolean = false,
     val geminiProjectId: String = "",
     val geminiModel: String = "",
     val geminiAuthenticationMode: GeminiAuthenticationMode = GeminiAuthenticationMode.NONE,
@@ -121,13 +121,13 @@ data class IntelligenceUiState(
 )
 
 private data class IntelligenceSettings(
-    val openRouterKey: String = "",
+    val openRouterKeyConfigured: Boolean = false,
     val openRouterModel: String = "openrouter/free",
-    val openAiKey: String = "",
+    val openAiKeyConfigured: Boolean = false,
     val openAiModel: String = "",
-    val anthropicKey: String = "",
+    val anthropicKeyConfigured: Boolean = false,
     val anthropicModel: String = "",
-    val geminiApiKey: String = "",
+    val geminiApiKeyConfigured: Boolean = false,
     val geminiProjectId: String = "",
     val geminiModel: String = "",
     val ollamaEndpoint: String = "",
@@ -183,10 +183,9 @@ class IntelligenceViewModel(
     private val modelManager: LiteRtModelManager? = null,
     private val dispatchers: HaloDispatchers = productionHaloDispatchers(),
     private val inferenceLedger: InferenceLedger? = null,
+    private val catalogRepository: com.halo.engines.ai.catalog.AiModelCatalogRepository = DefaultAiModelCatalogRepository(aiProviderRouter.getAllProviders().filterIsInstance<AiInferenceProvider>()),
 ) : ViewModel() {
-    private val catalogRepository = DefaultAiModelCatalogRepository(
-        aiProviderRouter.getAllProviders().filterIsInstance<AiInferenceProvider>()
-    )
+
     private val _refreshTrigger = MutableStateFlow(0)
     private val _availableModels = MutableStateFlow<List<AiModel>>(emptyList())
     private val _isRefreshing = MutableStateFlow(false)
@@ -221,7 +220,7 @@ class IntelligenceViewModel(
             aiProviderRouter.selectedProviderId.collectLatest { providerId ->
                 if (providerId != null) {
                     runCatching { aiProviderRouter.diagnostics() }
-                    refreshModelsFor(providerId)
+                    if (providerId == ProviderIds.LITERT) refreshModelsFor(providerId)
                 }
             }
         }
@@ -242,13 +241,13 @@ class IntelligenceViewModel(
             val activeProvider = aiProviderRouter.selectedProviderId.value
             val activeModel = aiProviderRouter.selectedModelId.value
             IntelligenceSettings(
-                openRouterKey = storage.getString("openrouter_api_key") ?: "",
+                openRouterKeyConfigured = !storage.getString("openrouter_api_key").isNullOrBlank(),
                 openRouterModel = activeModel.takeIf { activeProvider == ProviderIds.OPENROUTER } ?: "openrouter/free",
-                openAiKey = storage.getString("openai_api_key") ?: "",
+                openAiKeyConfigured = !storage.getString("openai_api_key").isNullOrBlank(),
                 openAiModel = activeModel.takeIf { activeProvider == ProviderIds.OPENAI }.orEmpty(),
-                anthropicKey = storage.getString("anthropic_api_key") ?: "",
+                anthropicKeyConfigured = !storage.getString("anthropic_api_key").isNullOrBlank(),
                 anthropicModel = activeModel.takeIf { activeProvider == ProviderIds.ANTHROPIC }.orEmpty(),
-                geminiApiKey = storage.getString("gemini_api_key") ?: "",
+                geminiApiKeyConfigured = !storage.getString("gemini_api_key").isNullOrBlank(),
                 geminiProjectId = storage.getString("gemini_project_id") ?: "",
                 geminiModel = activeModel.takeIf { activeProvider == ProviderIds.GEMINI }.orEmpty(),
                 ollamaEndpoint = storage.getString("ollama_endpoint") ?: "",
@@ -364,13 +363,13 @@ class IntelligenceViewModel(
             catalogEntries = catalogEntries,
             catalogErrors = selection.catalog.providerErrors,
             isRefreshingModels = selection.catalog.refreshingProviders.isNotEmpty(),
-            openRouterKey = settings.openRouterKey,
+            openRouterKeyConfigured = settings.openRouterKeyConfigured,
             openRouterModel = settings.openRouterModel,
-            openAiKey = settings.openAiKey,
+            openAiKeyConfigured = settings.openAiKeyConfigured,
             openAiModel = settings.openAiModel,
-            anthropicKey = settings.anthropicKey,
+            anthropicKeyConfigured = settings.anthropicKeyConfigured,
             anthropicModel = settings.anthropicModel,
-            geminiApiKey = settings.geminiApiKey,
+            geminiApiKeyConfigured = settings.geminiApiKeyConfigured,
             geminiProjectId = settings.geminiProjectId,
             geminiModel = settings.geminiModel,
             geminiAuthenticationMode = geminiProvider?.authenticationMode ?: GeminiAuthenticationMode.NONE,
@@ -513,129 +512,6 @@ class IntelligenceViewModel(
     fun refreshModels() {
         val providerId = aiProviderRouter.selectedProviderId.value ?: return
         refreshModelsFor(providerId)
-    }
-
-    fun setOpenRouterKey(key: String) {
-        val normalized = key.trim()
-        updateSettings { it.copy(openRouterKey = normalized) }
-        persistAndRefresh { storage.putString("openrouter_api_key", normalized) }
-    }
-
-    fun setOpenAiKey(key: String) {
-        val normalized = key.trim()
-        updateSettings { it.copy(openAiKey = normalized) }
-        persistAndRefresh { storage.putString("openai_api_key", normalized) }
-    }
-
-    fun setAnthropicKey(key: String) {
-        val normalized = key.trim()
-        updateSettings { it.copy(anthropicKey = normalized) }
-        persistAndRefresh { storage.putString("anthropic_api_key", normalized) }
-    }
-
-    fun setGeminiConfiguration(projectId: String, apiKey: String) {
-        val normalizedProject = projectId.trim()
-        val normalizedKey = apiKey.trim()
-        updateSettings {
-            it.copy(geminiProjectId = normalizedProject, geminiApiKey = normalizedKey)
-        }
-        persistAndRefresh {
-            storage.putString("gemini_project_id", normalizedProject)
-            storage.putString("gemini_api_key", normalizedKey)
-        }
-    }
-
-    fun acceptGeminiOAuthToken(token: String, projectId: String) {
-        val normalizedProject = projectId.trim()
-        updateSettings { it.copy(geminiProjectId = normalizedProject) }
-        geminiProvider?.acceptOAuthAccessToken(token, normalizedProject)
-        _refreshTrigger.update { it + 1 }
-        persistAndRefresh { storage.putString("gemini_project_id", normalizedProject) }
-    }
-
-    fun disconnectGeminiOAuth() {
-        geminiProvider?.clearOAuthSession()
-        _refreshTrigger.update { it + 1 }
-        refreshModelsFor(ProviderIds.GEMINI)
-    }
-
-    fun setOllamaEndpoint(endpoint: String) {
-        val normalized = endpoint.trim().trimEnd('/')
-        updateSettings { it.copy(ollamaEndpoint = normalized) }
-        persistAndRefresh { storage.putString("ollama_endpoint", normalized) }
-    }
-
-    /**
-     * Configures the credential for a remote-fabric provider without changing the selected
-     * provider/model. Authentication and inference selection are deliberately separate concerns.
-     */
-    fun setRemoteProviderCredential(providerId: String, credential: String) {
-        val provider = aiProviderRouter.getAllProviders().firstOrNull { it.id == providerId }
-        val credentialProvider = provider as? CredentialProvider ?: return
-        val normalized = credential.trim()
-        persistAndRefresh {
-            if (normalized.isBlank()) {
-                credentialProvider.clearCredential()
-            } else {
-                val credentialId = when (providerId) {
-                    RemoteProviderIds.OPENCODE_COMPANION -> "companion.token"
-                    RemoteProviderIds.CUSTOM_OPENAI_COMPATIBLE -> when (
-                        storage.getString("custom_openai_compatible_auth_mode")?.trim()?.uppercase()
-                    ) {
-                        "BEARER_TOKEN" -> "custom.bearer"
-                        else -> "custom.api_key"
-                    }
-                    else -> providerId
-                }
-                credentialProvider.setCredential(
-                    Credential(
-                        id = credentialId,
-                        value = normalized,
-                        label = "${provider.displayName} credential",
-                    )
-                )
-            }
-        }
-    }
-
-    fun setRemoteProviderEndpoint(providerId: String, endpoint: String) {
-        val key = when (providerId) {
-            RemoteProviderIds.OPENCODE_COMPANION -> "opencode_companion_endpoint"
-            RemoteProviderIds.CUSTOM_OPENAI_COMPATIBLE -> "custom_openai_compatible_endpoint"
-            else -> null
-        } ?: return
-        val normalized = endpoint.trim().trimEnd('/')
-        persistAndRefresh {
-            if (normalized.isBlank()) storage.remove(key) else storage.putString(key, normalized)
-        }
-    }
-
-    fun setCustomOpenAiAuthMode(mode: String) {
-        val normalized = mode.trim().uppercase()
-        if (normalized !in setOf("NONE", "API_KEY", "BEARER_TOKEN")) return
-        persistAndRefresh { storage.putString("custom_openai_compatible_auth_mode", normalized) }
-    }
-
-    fun configuredEndpoint(providerId: String): String = when (providerId) {
-        RemoteProviderIds.OPENCODE_COMPANION ->
-            storage.getString("opencode_companion_endpoint")?.trim().orEmpty()
-        RemoteProviderIds.CUSTOM_OPENAI_COMPATIBLE ->
-            storage.getString("custom_openai_compatible_endpoint")?.trim().orEmpty()
-        else -> ""
-    }
-
-    fun hasRemoteCredential(providerId: String): Boolean =
-        (aiProviderRouter.getAllProviders().firstOrNull { it.id == providerId } as? CredentialProvider)
-            ?.hasCredential() == true
-
-    fun testProvider(providerId: String, onResult: (Boolean) -> Unit = {}) {
-        viewModelScope.launch {
-            val provider = aiProviderRouter.getAllProviders().firstOrNull { it.id == providerId }
-            val ok = runCatching { provider?.testConnection() == true }.getOrDefault(false)
-            onResult(ok)
-            runCatching { aiProviderRouter.diagnostics() }
-            refreshModelsFor(providerId)
-        }
     }
 
     fun setToolsEnabled(enabled: Boolean) {
@@ -811,7 +687,7 @@ class IntelligenceViewModel(
     private fun refreshModelsFor(providerId: String) {
         viewModelScope.launch {
             _isRefreshing.value = true
-            catalogRepository.refresh()
+            catalogRepository.refresh(providerId)
             _isRefreshing.value = false
         }
     }
@@ -824,15 +700,4 @@ class IntelligenceViewModel(
         viewModelScope.launch(dispatchers.io) { block() }
     }
 
-    private fun persistAndRefresh(block: suspend () -> Unit) {
-        viewModelScope.launch {
-            withContext(dispatchers.io) { block() }
-            _isRefreshing.value = true
-            try {
-                catalogRepository.refresh()
-            } finally {
-                _isRefreshing.value = false
-            }
-        }
-    }
 }

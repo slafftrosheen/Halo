@@ -200,6 +200,8 @@ sealed interface AgentStep {
          * Never persist captured screen/image contents in the execution journal.
          */
         val contextRequirements: Set<String> = emptySet(),
+        val toolUseMode: String? = null,
+        val workloadKind: String? = null,
     ) : AgentStep
 
     data class ProviderTurnCompleted(

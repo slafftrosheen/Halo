@@ -1,5 +1,11 @@
 # Feature requirements and implementation boundary
 
+## PRODUCT-P0-001 — source update, 2026-09-30
+
+Provider Control Center covers twelve registered inference providers, with separate detail/model/role/local/policy/usage destinations. General conversation does not require tools. ElevenLabs TTS adds explicit voice/model discovery, persistent speech selection and optional Android synthesis fallback on the same audio route.
+
+See the [control-plane source map](../engineering/PROVIDER-CONTROL-PLANE.md) for ownership, official contracts, bounds, security and the later QA plan. Build/tests/device acceptance: not run. Earlier dated descriptions below remain historical.
+
 Status: CURRENT SOURCE MAP / PLANNED. Reviewed 2026-09-24.
 
 | Feature | Current code | Remaining target |

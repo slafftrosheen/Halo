@@ -420,7 +420,7 @@ class DefaultContextAssembler(
         omissions: MutableList<ContextOmission>,
         request: ContextAssemblyRequest = ContextAssemblyRequest(),
     ): List<ToolDefinition> {
-        if (!policy.includeAvailableTools) return emptyList()
+        if (request.toolUseMode == com.halo.sdk.provider.ToolUseMode.NONE || !policy.includeAvailableTools) return emptyList()
         if (AiCapability.TOOLS !in capabilities) {
             omissions += ContextOmission("TOOLS", "Resolved model lacks TOOLS capability")
             return emptyList()

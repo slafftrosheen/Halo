@@ -20,7 +20,7 @@ class SecretMigrationV2(
     private val secretStore: SecretStore,
 ) {
     private val migrationVersionKey = "secret_migration_v2_version"
-    private val currentVersion = 2
+    private val currentVersion = 3
 
     suspend fun migrate() = withContext(Dispatchers.IO) {
         if (migrationVersion(storage) >= currentVersion) return@withContext
@@ -49,6 +49,7 @@ class SecretMigrationV2(
     }
 
     companion object {
+        const val ELEVENLABS_KEY = "elevenlabs_api_key"
         const val OPENAI_KEY = "openai_api_key"
         const val ANTHROPIC_KEY = "anthropic_api_key"
         const val GEMINI_KEY = "gemini_api_key"
@@ -62,6 +63,7 @@ class SecretMigrationV2(
 
         val SECRET_KEYS = setOf(
             SecretMigration.OPENROUTER_KEY,
+            ELEVENLABS_KEY,
             OPENAI_KEY,
             ANTHROPIC_KEY,
             GEMINI_KEY,
@@ -75,7 +77,7 @@ class SecretMigrationV2(
         )
 
         private const val MIGRATION_VERSION_KEY = "secret_migration_v2_version"
-        private const val CURRENT_VERSION = 2
+        private const val CURRENT_VERSION = 3
 
         private fun migrationVersion(storage: Storage): Int =
             storage.getInt(MIGRATION_VERSION_KEY, 0)

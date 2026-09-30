@@ -1,5 +1,11 @@
 # Provider Architecture
 
+## PRODUCT-P0-001 — source update, 2026-09-30
+
+The existing AI router and selection repository remain canonical. ProviderControlRepository owns setup projections; the shared catalogue gains provider-scoped refresh. ToolUseMode derives from workload requirements and is enforced in context assembly and provider send. SpeechSynthesisRegistry is independent of AI routing; portable PCM providers feed verified playback.
+
+See the [control-plane source map](../engineering/PROVIDER-CONTROL-PLANE.md) for ownership, official contracts, bounds, security and the later QA plan. Build/tests/device acceptance: not run. Earlier dated descriptions below remain historical.
+
 Status: CURRENT SOURCE MAP. Reviewed 2026-09-24.
 
 Halo's provider architecture explicitly distinguishes between different classes of integration.

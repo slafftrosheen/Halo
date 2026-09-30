@@ -29,8 +29,15 @@ class ConfiguredOpenAiCompatibleProvider(
     private val freeModelIds: Set<String> = emptySet(),
     private val fallbackWhenUnauthenticated: Boolean = false,
     private val staticHints: List<AiModel> = emptyList(),
-) : AiInferenceProvider {
+) : AiInferenceProvider, CredentialProvider by credentialProvider, ProviderConfigurationReporting {
 
+    override val configurationDescriptor: ProviderConfigurationDescriptor get() = ProviderConfigurationDescriptor(
+        descriptor.id, descriptor.displayName, descriptor.executionLocation,
+        if (descriptor.authKinds.any { it != ProviderAuthKind.NONE }) listOf(ProviderConfigurationField("credential", "API key / token", ProviderFieldKind.SECRET)) else emptyList(),
+        descriptor.protocol.name, descriptor.accessKind.name,
+    )
+    override fun setCredential(credential: Credential) { credentialProvider.setCredential(credential); configurationChanged() }
+    override fun clearCredential() { credentialProvider.clearCredential(); configurationChanged() }
     override val id: String get() = descriptor.id
     override val displayName: String get() = descriptor.displayName
     override val isLocal: Boolean get() = descriptor.executionLocation == AiExecutionLocation.LOCAL_NETWORK
@@ -40,9 +47,14 @@ class ConfiguredOpenAiCompatibleProvider(
 
     private val _authInfo = MutableStateFlow(ProviderAuthInfo(
         authKind = descriptor.authKinds.firstOrNull() ?: ProviderAuthKind.NONE,
-        authState = if (credentialProvider.hasCredential()) ProviderAuthState.CONNECTED else ProviderAuthState.NOT_CONFIGURED,
+        authState = if (credentialProvider.hasCredential()) ProviderAuthState.CONFIGURED else ProviderAuthState.NOT_CONFIGURED,
     ))
     val authInfo: StateFlow<ProviderAuthInfo> = _authInfo.asStateFlow()
+
+    override fun configurationChanged() {
+        _status.value = if (credentialProvider.hasCredential()) configuredCold() else ProviderStatus.UNCONFIGURED
+        _authInfo.value = _authInfo.value.copy(authState = if (credentialProvider.hasCredential()) ProviderAuthState.CONFIGURED else ProviderAuthState.NOT_CONFIGURED)
+    }
 
     override suspend fun getCapabilities(): Set<AiCapability> = descriptor.capabilities
 

@@ -44,13 +44,26 @@ import org.json.JSONObject
 class OpenAiProvider(
     private val storage: Storage,
     private val client: OkHttpClient = defaultClient(),
-) : AiInferenceProvider {
+) : AiInferenceProvider, com.halo.sdk.provider.CredentialProvider {
     override val id = ID
     override val displayName = "OpenAI"
     override val isLocal = false
 
     private val _status = MutableStateFlow(ProviderStatus.UNCONFIGURED)
     override val status: StateFlow<ProviderStatus> = _status.asStateFlow()
+
+    override fun hasCredential(): Boolean = !apiKey.isNullOrBlank()
+    override fun credential(): com.halo.sdk.provider.Credential? = apiKey?.let { com.halo.sdk.provider.Credential(id, it) }
+    override fun setCredential(credential: com.halo.sdk.provider.Credential) {
+        storage.putString("openai_api_key", credential.value.trim())
+
+        _status.value = ProviderStatus(ProviderStatus.State.STANDBY, "Configured; not checked")
+    }
+    override fun clearCredential() {
+        storage.remove("openai_api_key")
+
+        _status.value = ProviderStatus.UNCONFIGURED
+    }
 
     private val apiKey: String?
         get() = storage.getString(API_KEY_STORAGE)?.trim()?.ifBlank { null }
@@ -197,7 +210,7 @@ class OpenAiProvider(
             .put("messages", messages)
             .apply {
                 request.maxOutputTokens?.takeIf { it > 0 }?.let { put("max_completion_tokens", it) }
-                if (context.availableTools.isNotEmpty()) {
+                if (request.toolUseMode != com.halo.sdk.provider.ToolUseMode.NONE && context.availableTools.isNotEmpty()) {
                     put("tools", JSONArray().apply {
                         context.availableTools.forEach { tool ->
                             put(

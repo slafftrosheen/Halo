@@ -1,5 +1,11 @@
 # Provider setup
 
+## PRODUCT-P0-001 — source update, 2026-09-30
+
+Open Intelligence → Providers → a provider to replace/remove credentials or edit endpoint/authentication. Saving never selects a provider. Test connection and refresh metadata explicitly. Gemini OAuth remains available with project ID confined to that path. Configure ElevenLabs under Voice → Set up ElevenLabs, refresh voices/TTS models, choose IDs and explicitly select output. Automatic speech uses Android TTS.
+
+See the [control-plane source map](../engineering/PROVIDER-CONTROL-PLANE.md) for ownership, official contracts, bounds, security and the later QA plan. Build/tests/device acceptance: not run. Earlier dated descriptions below remain historical.
+
 Status: CURRENT SOURCE MAP. Reviewed 2026-09-27 (LiteRT model acquisition + verified inference path).
 
 This page describes setup implemented by the current Android host.

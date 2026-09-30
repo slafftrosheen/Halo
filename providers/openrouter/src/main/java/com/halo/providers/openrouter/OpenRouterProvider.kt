@@ -39,7 +39,7 @@ class OpenRouterProvider(
     private val storage: Storage,
     private val client: OkHttpClient = defaultClient(),
     private val nowEpochMs: () -> Long = System::currentTimeMillis,
-) : AiInferenceProvider {
+) : AiInferenceProvider, com.halo.sdk.provider.CredentialProvider {
 
     override val id: String = "openrouter"
     override val displayName: String = "OpenRouter"
@@ -47,6 +47,19 @@ class OpenRouterProvider(
 
     private val _status = MutableStateFlow(ProviderStatus.UNCONFIGURED)
     override val status: StateFlow<ProviderStatus> = _status.asStateFlow()
+
+    override fun hasCredential(): Boolean = !apiKey.isNullOrBlank()
+    override fun credential(): com.halo.sdk.provider.Credential? = apiKey?.let { com.halo.sdk.provider.Credential(id, it) }
+    override fun setCredential(credential: com.halo.sdk.provider.Credential) {
+        storage.putString("openrouter_api_key", credential.value.trim())
+        rejectedApiKey = null; cooldown = null
+        _status.value = ProviderStatus(ProviderStatus.State.STANDBY, "Configured; not checked")
+    }
+    override fun clearCredential() {
+        storage.remove("openrouter_api_key")
+        rejectedApiKey = null; cooldown = null
+        _status.value = ProviderStatus.UNCONFIGURED
+    }
 
     private val apiKey: String?
         get() = storage.getString("openrouter_api_key")?.trim()?.ifBlank { null }
@@ -257,7 +270,7 @@ class OpenRouterProvider(
                         }
                     }
                 }
-                
+
                 if (!streamFinishedCleanly && finish == null) {
                     throw AiProviderException(
                         AiErrorType.NETWORK_ERROR,
@@ -394,7 +407,7 @@ class OpenRouterProvider(
                     // Streaming is an OpenRouter chat-completions transport capability, not a
                     // consistently advertised per-model supported_parameter.
                     supportsStreaming = true,
-                    supportsTools = "tools" in parameters,
+                    supportsTools = modelId != FREE_ROUTER_ID && "tools" in parameters,
                     isFree = isFreeModel(item),
                 ))
             }
@@ -492,7 +505,8 @@ class OpenRouterProvider(
             put("messages", messages)
             put("stream", stream)
             request.maxOutputTokens?.takeIf { it > 0 }?.let { put("max_tokens", it) }
-            if (context.availableTools.isNotEmpty()) {
+            if (request.toolUseMode != com.halo.sdk.provider.ToolUseMode.NONE && context.availableTools.isNotEmpty()) {
+                put("tool_choice", "auto")
                 put("tools", JSONArray().apply {
                     context.availableTools.forEach { tool ->
                         put(JSONObject().apply {
@@ -739,7 +753,7 @@ class OpenRouterProvider(
                 rejectionReason = TargetRejectionReason.NETWORK_UNAVAILABLE,
             )
             else -> ProviderStatus(
-                ProviderStatus.State.READY,
+                ProviderStatus.State.ERROR,
                 error.message,
                 ProviderReadiness.ConfiguredCold,
             )

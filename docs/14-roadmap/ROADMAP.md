@@ -1,5 +1,11 @@
 # Halo Execution Roadmap
 
+## PRODUCT-P0-001 — source update, 2026-09-30
+
+PRODUCT-P0 temporarily takes priority over further mining waves and is implemented in source. Stabilization remains pending: compiler/build checks, existing test expectations where behavior changed, twelve-provider setup/navigation, OpenRouter chat/action/continuation behavior and ElevenLabs/HeyCyan routing/cancellation/privacy acceptance. These checks were deliberately not executed.
+
+See the [control-plane source map](../engineering/PROVIDER-CONTROL-PLANE.md) for ownership, official contracts, bounds, security and the later QA plan. Build/tests/device acceptance: not run. Earlier dated descriptions below remain historical.
+
 Next user-directed product target (2026-09-28): **Notebook editor + Study companion**.
 Follow [RFC 0002, NBS-01–07](../rfc/0002-notebook-editor-and-study.md) and its
 [reference/source review](../engineering/NOTEBOOK-STUDY-MINING.md). This is a plan-first

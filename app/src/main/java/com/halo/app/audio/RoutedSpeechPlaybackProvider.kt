@@ -32,7 +32,7 @@ data class AuthoritativeSpeechRouteLease(
 )
 
 /** Both phone and wearable output require actual AudioTrack route proof before unmuting. */
-class RoutedSpeechPlaybackProvider(context: Context, private val ttsProvider: AndroidTTSProvider,
+class RoutedSpeechPlaybackProvider(context: Context, private val ttsProvider: com.halo.sdk.provider.PcmSpeechSynthesisProvider,
     private val audioAttributes: AudioAttributes) {
     private val audioManager = context.applicationContext.getSystemService(AudioManager::class.java)
     private val mutex = Mutex()
@@ -49,14 +49,20 @@ class RoutedSpeechPlaybackProvider(context: Context, private val ttsProvider: An
 
     suspend fun synthesizeRouted(request: SpeechRequest, evidence: SpeechRouteEvidence,
         onStarted: (() -> Unit)? = null, outputTarget: SpeechOutputTarget? = null,
-        generation: Long = 1L, acquireFocus: (() -> Boolean)? = null): RoutedPlaybackResult = withContext(Dispatchers.IO) {
-        mutex.withLock { play(request, evidence, onStarted, acquireFocus) }
+        generation: Long = 1L, acquireFocus: (() -> Boolean)? = null,
+        provider: com.halo.sdk.provider.PcmSpeechSynthesisProvider = ttsProvider): RoutedPlaybackResult = withContext(Dispatchers.IO) {
+        mutex.withLock { play(request, evidence, onStarted, acquireFocus, provider) }
     }
 
     private suspend fun play(request: SpeechRequest, evidence: SpeechRouteEvidence,
-        onStarted: (() -> Unit)?, acquireFocus: (() -> Boolean)?): RoutedPlaybackResult {
+        onStarted: (() -> Unit)?, acquireFocus: (() -> Boolean)?, provider: com.halo.sdk.provider.PcmSpeechSynthesisProvider): RoutedPlaybackResult {
         val startedAt = SystemClock.elapsedRealtime()
-        val pcm = ttsProvider.synthesizeToPcm(request) ?: return RoutedPlaybackResult.Failed("PCM synthesis failed or timed out")
+        val pcm = provider.synthesizeToPcm(request) ?: return RoutedPlaybackResult.Failed("PCM synthesis failed or timed out")
+        val audioFormat = when (pcm.encoding) {
+            com.halo.sdk.provider.PcmEncoding.UNSIGNED_8 -> AudioFormat.ENCODING_PCM_8BIT
+            com.halo.sdk.provider.PcmEncoding.SIGNED_16_LE -> AudioFormat.ENCODING_PCM_16BIT
+            com.halo.sdk.provider.PcmEncoding.FLOAT_32_LE -> AudioFormat.ENCODING_PCM_FLOAT
+        }
         currentCoroutineContext().ensureActive()
         val target = resolveTarget(evidence) ?: return RoutedPlaybackResult.Failed("Selected audio device is unavailable")
         val channelMask = when (pcm.channelCount) {
@@ -64,18 +70,18 @@ class RoutedSpeechPlaybackProvider(context: Context, private val ttsProvider: An
             2 -> AudioFormat.CHANNEL_OUT_STEREO
             else -> return RoutedPlaybackResult.Failed("Unsupported channel count")
         }
-        val bytesPerSample = when (pcm.audioFormat) {
+        val bytesPerSample = when (audioFormat) {
             AudioFormat.ENCODING_PCM_8BIT -> 1
             AudioFormat.ENCODING_PCM_16BIT -> 2
             AudioFormat.ENCODING_PCM_FLOAT -> 4
             else -> return RoutedPlaybackResult.Failed("Unsupported PCM format")
         }
         val frameBytes = bytesPerSample * pcm.channelCount
-        val minBuffer = AudioTrack.getMinBufferSize(pcm.sampleRate, channelMask, pcm.audioFormat)
+        val minBuffer = AudioTrack.getMinBufferSize(pcm.sampleRateHz, channelMask, audioFormat)
         if (minBuffer <= 0) return RoutedPlaybackResult.Failed("Invalid audio buffer size")
         val track = AudioTrack.Builder().setAudioAttributes(audioAttributes)
-            .setAudioFormat(AudioFormat.Builder().setSampleRate(pcm.sampleRate)
-                .setEncoding(pcm.audioFormat).setChannelMask(channelMask).build())
+            .setAudioFormat(AudioFormat.Builder().setSampleRate(pcm.sampleRateHz)
+                .setEncoding(audioFormat).setChannelMask(channelMask).build())
             .setTransferMode(AudioTrack.MODE_STREAM).setBufferSizeInBytes(maxOf(minBuffer, 16 * 1024)).build()
         val stopped = AtomicBoolean(false)
         val routeLost = AtomicBoolean(false)
@@ -98,8 +104,8 @@ class RoutedSpeechPlaybackProvider(context: Context, private val ttsProvider: An
             if (acquireFocus?.invoke() == false) return RoutedPlaybackResult.Failed("Android denied audio focus; open Halo and try again")
             track.setVolume(0f)
             track.play()
-            val silence = ByteArray((pcm.sampleRate / 50) * frameBytes).apply {
-                if (pcm.audioFormat == AudioFormat.ENCODING_PCM_8BIT) fill(128.toByte())
+            val silence = ByteArray((pcm.sampleRateHz / 50) * frameBytes).apply {
+                if (audioFormat == AudioFormat.ENCODING_PCM_8BIT) fill(128.toByte())
             }
             suspend fun write(bytes: ByteArray) {
                 var offset = 0
@@ -133,7 +139,7 @@ class RoutedSpeechPlaybackProvider(context: Context, private val ttsProvider: An
                 if (!started) { started = true; onStarted?.invoke() }
             }
             val expectedFrames = total / frameBytes
-            val deadline = SystemClock.elapsedRealtime() + expectedFrames * 1000L / pcm.sampleRate + 3_000L
+            val deadline = SystemClock.elapsedRealtime() + expectedFrames * 1000L / pcm.sampleRateHz + 3_000L
             while ((track.playbackHeadPosition.toLong() and 0xffffffffL) < expectedFrames) {
                 currentCoroutineContext().ensureActive()
                 if (stopped.get()) return RoutedPlaybackResult.Cancelled

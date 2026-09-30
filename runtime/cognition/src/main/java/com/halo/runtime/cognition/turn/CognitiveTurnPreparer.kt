@@ -78,11 +78,15 @@ class DefaultCognitiveTurnPreparer(
                     continuationMessageToAiMessage(it, false, ResponseDelivery.VISUAL_ONLY)
                 })
             }
-            val protocol = (target.provider as? com.halo.sdk.provider.ToolProtocolReporting)?.toolCallProtocol()
-                ?: com.halo.sdk.provider.ToolCallProtocol.NATIVE
+            val protocol = if (input.workload.toolUseMode == com.halo.sdk.provider.ToolUseMode.NONE) com.halo.sdk.provider.ToolCallProtocol.NONE
+                else (target.provider as? com.halo.sdk.provider.ToolProtocolReporting)?.toolCallProtocol()
+                    ?: if (AiCapability.TOOLS in target.effectiveCapabilities) com.halo.sdk.provider.ToolCallProtocol.NATIVE else com.halo.sdk.provider.ToolCallProtocol.NONE
+            if (input.workload.toolUseMode == com.halo.sdk.provider.ToolUseMode.NONE) context = context.copy(availableTools = emptyList())
+            if (input.workload.toolUseMode == com.halo.sdk.provider.ToolUseMode.REQUIRED && !protocol.supportsToolLoop)
+                throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY, "Child action requires a tool-capable target")
             return PreparedCognitiveTurn(turn, CognitiveWorkloadPlan(input.workload,
                 com.halo.runtime.cognition.context.ContextAcquisitionPlan(turn.interactionId, emptyList())), target, context,
-                turn.request.copy(modelId = target.modelId), target.effectiveCapabilities.map { it.name }.toSet(), emptySet(),
+                turn.request.copy(modelId = target.modelId, toolUseMode = input.workload.toolUseMode), target.effectiveCapabilities.map { it.name }.toSet(), emptySet(),
                 toolExposure = com.halo.runtime.cognition.tools.ToolExposureSet(pinned = input.context.availableTools.map { ToolId(it.name) }.toSet()), toolProtocol = protocol)
         }
         if (turn.runId?.let { agentRunStore?.get(it)?.parentRunId } != null)
@@ -102,10 +106,21 @@ class DefaultCognitiveTurnPreparer(
             contextPolicy = turn.policy,
         )
         var workload = workloadPlanner.plan(planningRequest)
+        if (turn.mode == CognitiveTurnMode.CONTINUE_AFTER_TOOL && workload.inference.tools == com.halo.sdk.provider.AiFeatureRequirement.NOT_NEEDED)
+            workload = workload.copy(inference = workload.inference.copy(tools = com.halo.sdk.provider.AiFeatureRequirement.OPTIONAL))
 
         val target = if (turn.runId != null) {
             val run = agentRunStore?.get(turn.runId)
             val metadata = run?.steps?.filterIsInstance<AgentStep.ProviderTurnStarted>()?.lastOrNull()
+            val storedMode = metadata?.toolUseMode?.let { raw -> com.halo.sdk.provider.ToolUseMode.entries.firstOrNull { it.name == raw } }
+            if (storedMode != null) workload = workload.copy(inference = workload.inference.copy(
+                tools = when(storedMode) {
+                    com.halo.sdk.provider.ToolUseMode.NONE -> com.halo.sdk.provider.AiFeatureRequirement.NOT_NEEDED
+                    com.halo.sdk.provider.ToolUseMode.OPTIONAL -> com.halo.sdk.provider.AiFeatureRequirement.OPTIONAL
+                    com.halo.sdk.provider.ToolUseMode.REQUIRED -> com.halo.sdk.provider.AiFeatureRequirement.REQUIRED
+                },
+                kind = metadata?.workloadKind?.let { raw -> com.halo.sdk.provider.AiWorkloadKind.entries.firstOrNull { it.name == raw } } ?: workload.inference.kind,
+            ))
             val providerId = metadata?.providerId
             val modelId = metadata?.modelId
             
@@ -187,12 +202,19 @@ class DefaultCognitiveTurnPreparer(
          */
         val toolProtocolReporter = (target.provider as? com.halo.sdk.provider.ToolProtocolReporting)
             ?.takeIf { target.provider.isLocal }
-        val toolProtocol = toolProtocolReporter?.toolCallProtocol()
-            ?: com.halo.sdk.provider.ToolCallProtocol.NATIVE
+        val toolProtocol = when {
+            workload.inference.toolUseMode == com.halo.sdk.provider.ToolUseMode.NONE -> com.halo.sdk.provider.ToolCallProtocol.NONE
+            toolProtocolReporter != null -> toolProtocolReporter.toolCallProtocol()
+            AiCapability.TOOLS in target.effectiveCapabilities -> com.halo.sdk.provider.ToolCallProtocol.NATIVE
+            else -> com.halo.sdk.provider.ToolCallProtocol.NONE
+        }
+        if (workload.inference.toolUseMode == com.halo.sdk.provider.ToolUseMode.REQUIRED && !toolProtocol.supportsToolLoop)
+            throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY, "This action requires a tool-capable model")
         val localToolPolicy = if (toolProtocolReporter != null) {
             com.halo.runtime.cognition.tools.LocalModelToolPolicy.forProtocol(toolProtocol)
         } else null
         var toolExposure = when {
+            toolProtocol == com.halo.sdk.provider.ToolCallProtocol.NONE -> com.halo.runtime.cognition.tools.ToolExposureSet()
             localToolPolicy != null && toolExposurePlanner != null ->
                 toolExposurePlanner.localBootstrapExposure(localToolPolicy, toolProtocol)
             toolExposurePlanner != null -> toolExposurePlanner.initialExposure()
@@ -203,6 +225,7 @@ class DefaultCognitiveTurnPreparer(
             policy = turn.policy,
             capabilities = requiredCapabilities,
             request = ContextAssemblyRequest(
+                toolUseMode = workload.inference.toolUseMode,
                 interactionId = turn.interactionId.value,
                 userText = turn.request.text.orEmpty(),
                 queryText = turn.request.text.orEmpty(),
@@ -230,7 +253,10 @@ class DefaultCognitiveTurnPreparer(
             // Carry object/source restrictions into retries and fallback routing, not only the first serialization.
             if (!remoteObjectPermitted || !remoteScreenPermitted) workload = workload.copy(inference = workload.inference.copy(allowRemote = false))
         }
-        var boundRequest = bindAssembledContext(turn.request.copy(modelId = target.modelId), assemblyResult, turn.responseDelivery)
+        var boundRequest = bindAssembledContext(turn.request.copy(modelId = target.modelId,
+            toolUseMode = workload.inference.toolUseMode,
+            publishStreamingTokens = turn.request.publishStreamingTokens &&
+                workload.inference.toolUseMode != com.halo.sdk.provider.ToolUseMode.REQUIRED), assemblyResult, turn.responseDelivery)
         if (boundRequest.video != null) throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY, "Video inference is not implemented")
         if (boundRequest.audio != null) throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY, "Audio must use the transcription-only first pass before cognition")
         boundRequest.image?.let { bytes ->
@@ -304,6 +330,8 @@ class DefaultCognitiveTurnPreparer(
         }
 
 
+        if (workload.inference.toolUseMode == com.halo.sdk.provider.ToolUseMode.NONE)
+            finalContext = finalContext.copy(availableTools = emptyList())
         return PreparedCognitiveTurn(
             turn = turn,
             workload = workload,

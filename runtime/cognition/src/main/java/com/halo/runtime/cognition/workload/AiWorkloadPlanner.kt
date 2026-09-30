@@ -164,15 +164,14 @@ class DefaultAiWorkloadPlanner : AiWorkloadPlanner {
             else -> true
         }
 
+        val toolRequirement = toolRequirement(request, kind, text)
+        if (toolRequirement == AiFeatureRequirement.REQUIRED) kind = AiWorkloadKind.TOOL_ASSISTED
+
         return CognitiveWorkloadPlan(
             inference = AiWorkloadSpec(
                 kind = kind,
                 requiredCapabilities = requiredCaps,
-                tools = when (request.metadata["requiresTools"]?.lowercase()) {
-                    "true", "required" -> AiFeatureRequirement.REQUIRED
-                    "false", "none" -> AiFeatureRequirement.NOT_NEEDED
-                    else -> AiFeatureRequirement.OPTIONAL
-                },
+                tools = toolRequirement,
                 streaming = AiFeatureRequirement.OPTIONAL,
                 allowRemote = requiredPrivateContextAllowsRemote,
             ),
@@ -182,4 +181,27 @@ class DefaultAiWorkloadPlanner : AiWorkloadPlanner {
             ),
         )
     }
+    private fun toolRequirement(request: WorkloadPlanningRequest, kind: AiWorkloadKind, text: String): AiFeatureRequirement {
+        val explicit = request.request.toolUseMode?.name ?: request.metadata["toolUseMode"]
+            ?: request.metadata["requiresTools"]
+        when (explicit?.uppercase()) {
+            "REQUIRED", "TRUE" -> return AiFeatureRequirement.REQUIRED
+            "OPTIONAL" -> return AiFeatureRequirement.OPTIONAL
+            "NONE", "FALSE" -> return AiFeatureRequirement.NOT_NEEDED
+        }
+        if (kind != AiWorkloadKind.CONVERSATION || request.metadata["contextRetrieval"] == "true")
+            return AiFeatureRequirement.OPTIONAL
+        // Only an anchored operation grammar is used when no typed route exists. Content creation
+        // (e.g. writing a recipe or explaining code) remains a normal text request.
+        if (ACTION.matches(text)) return AiFeatureRequirement.REQUIRED
+        if (PERSONAL_CONTEXT.containsMatchIn(text) || RETRIEVAL.matches(text)) return AiFeatureRequirement.OPTIONAL
+        return AiFeatureRequirement.NOT_NEEDED
+    }
+
+    private companion object {
+        val ACTION = Regex("^(?:please )?(?:open|launch|call|dial|navigate to|set (?:an? )?(?:alarm|timer|reminder)|turn (?:on|off)|send (?:a |the )?(?:message|email)|reply to|(?:create|save|delete) (?:a |the )?(?:note|file|calendar event)) .+", RegexOption.IGNORE_CASE)
+        val RETRIEVAL = Regex("^(?:please )?(?:find|search|read|summarize) (?:my |the |a )?(?:notes?|files?|calendar|notifications|screen|web)(?: .*)?$", RegexOption.IGNORE_CASE)
+        val PERSONAL_CONTEXT = Regex("\\b(?:my (?:notes|files|calendar|notifications|phone)|device battery|current screen)\\b", RegexOption.IGNORE_CASE)
+    }
+
 }

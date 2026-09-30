@@ -20,7 +20,7 @@ import kotlinx.coroutines.withContext
 object BrainSnapshotSecretsGuard {
 
     /** Keys that are never exported in a Brain snapshot. */
-    val protectedKeys: Set<String> = SecretMigrationV2.SECRET_KEYS
+    val protectedKeys: Set<String> = SecretMigrationV2.SECRET_KEYS + SecretMigrationV2.ELEVENLABS_KEY
 
     /**
      * Strip any secret-bearing keys from settings before export.

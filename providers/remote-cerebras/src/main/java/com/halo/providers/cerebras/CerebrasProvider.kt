@@ -37,6 +37,7 @@ class CerebrasProvider(
     val authInfo: StateFlow<ProviderAuthInfo> get() = configured.authInfo
 
     override suspend fun getCapabilities(): Set<AiCapability> = configured.getCapabilities()
+    override fun configurationChanged() = configured.configurationChanged()
     override suspend fun getStatus(): ProviderStatus = configured.getStatus()
     override suspend fun testConnection(): Boolean = configured.testConnection()
     override suspend fun generate(request: AiRequest, context: AiContext): AiResponse = configured.generate(request, context)

@@ -217,6 +217,7 @@ dependencies {
     implementation(project(":providers:ollama"))
     implementation(project(":providers:sherpa-stt"))
     implementation(project(":providers:android-tts"))
+    implementation(project(":providers:elevenlabs-tts"))
     implementation(project(":providers:android-assistant"))
     implementation(project(":providers:openrouter"))
     implementation(project(":providers:openai"))

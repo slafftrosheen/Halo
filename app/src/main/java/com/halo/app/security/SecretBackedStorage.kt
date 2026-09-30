@@ -14,6 +14,12 @@ class SecretBackedStorage(
     override fun getString(key: String, defaultValue: String?): String? =
         if (key in SECRET_KEYS) secrets.getBlocking(key) ?: defaultValue else delegate.getString(key, defaultValue)
 
+    override fun putBatch(strings: Map<String, String?>, booleans: Map<String, Boolean>) {
+        strings.filterKeys { it in SECRET_KEYS }.forEach { (key, value) -> secrets.putBlocking(key, value) }
+        require(booleans.keys.none { it in SECRET_KEYS })
+        delegate.putBatch(strings.filterKeys { it !in SECRET_KEYS }, booleans)
+    }
+
     override fun remove(key: String) {
         if (key in SECRET_KEYS) secrets.putBlocking(key, null) else delegate.remove(key)
     }
@@ -25,6 +31,7 @@ class SecretBackedStorage(
 
     companion object {
         private val SECRET_KEYS = setOf(
+            SecretMigrationV2.ELEVENLABS_KEY,
             SecretMigration.OPENROUTER_KEY,
             com.halo.app.security.SecretMigrationV2.OPENAI_KEY,
             com.halo.app.security.SecretMigrationV2.ANTHROPIC_KEY,

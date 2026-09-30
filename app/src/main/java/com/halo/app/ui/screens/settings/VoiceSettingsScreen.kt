@@ -17,6 +17,11 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
@@ -39,7 +44,8 @@ import com.halo.app.ui.workspace.HaloWorkspaceSection
 @Composable
 fun VoiceSettingsScreen(
     viewModel: VoiceSettingsViewModel,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onElevenLabs: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -63,12 +69,14 @@ fun VoiceSettingsScreen(
     ) {
         HaloWorkspaceHeader(
             title = "Voice",
-            subtitle = "Local speech recognition and language.",
+            subtitle = "Speech input, output and audio routing.",
             onBack = onBack
         )
 
         Spacer(Modifier.height(20.dp))
 
+        SpeechOutputSettings(viewModel, onElevenLabs)
+        Spacer(Modifier.height(20.dp))
         HaloWorkspaceSection(title = "Speech recognition") {
             HaloWorkspaceRow(
                 title = "Model",
@@ -96,20 +104,15 @@ fun VoiceSettingsScreen(
 
         Spacer(Modifier.height(20.dp))
 
+        var languagePicker by remember { mutableStateOf(false) }
         HaloWorkspaceSection(title = "Language") {
-            uiState.availableLocales.forEachIndexed { index, option ->
-                val selected = option.tag == uiState.selectedLocale
-                HaloWorkspaceRow(
-                    title = option.displayName,
-                    trailingText = if (selected) "Selected" else null,
-                    selected = selected,
-                    onClick = { viewModel.selectLocale(option.tag) }
-                )
-                if (index < uiState.availableLocales.lastIndex) {
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                }
-            }
+            HaloWorkspaceRow(title = uiState.availableLocales.firstOrNull { it.tag == uiState.selectedLocale }?.displayName ?: uiState.selectedLocale,
+                trailingText = "Change", onClick = { languagePicker = true })
         }
+        if (languagePicker) AlertDialog(onDismissRequest = { languagePicker = false }, title = { Text("Speech recognition language") },
+            text = { Column { uiState.availableLocales.forEach { option ->
+                TextButton(onClick = { viewModel.selectLocale(option.tag); languagePicker = false }) { Text(option.displayName) }
+            } } }, confirmButton = { TextButton(onClick = { languagePicker = false }) { Text("Close") } })
 
         Spacer(Modifier.height(20.dp))
 

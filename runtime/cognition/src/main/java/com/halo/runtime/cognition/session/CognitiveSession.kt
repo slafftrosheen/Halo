@@ -292,7 +292,7 @@ class CognitiveSession(
                     metadata = if (routeHint == null) {
                         interpretation.metadata
                     } else {
-                        interpretation.metadata + ("agenticHint" to routeHint)
+                        interpretation.metadata + ("agenticHint" to routeHint) + ("toolUseMode" to "REQUIRED")
                     }
                 )
             }

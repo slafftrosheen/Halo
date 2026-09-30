@@ -77,6 +77,12 @@ class DefaultProviderTurnExecutor(
     ): ProviderTurnResult {
         val startedAtMs = System.currentTimeMillis()
         request.validateAgainst(target.providerCapabilities)
+        val mode = request.toolUseMode ?: com.halo.sdk.provider.ToolUseMode.OPTIONAL
+        val canUseTools = AiCapability.TOOLS in target.effectiveCapabilities
+        val outboundContext = if (mode == com.halo.sdk.provider.ToolUseMode.NONE || !canUseTools) context.copy(availableTools = emptyList()) else context
+        if (mode == com.halo.sdk.provider.ToolUseMode.REQUIRED && outboundContext.availableTools.isEmpty())
+            throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY, "Required actions are unavailable for this target")
+        println("[HALO_PROVIDER_REQUEST_SHAPE] provider=${target.providerId} model=${target.modelId} toolMode=$mode toolsIncluded=${outboundContext.availableTools.isNotEmpty()} toolCount=${outboundContext.availableTools.size} historyMessages=${outboundContext.conversation.size} image=${request.image != null}")
         val provider = target.provider
         val expectedModelId = target.modelId
         
@@ -87,7 +93,7 @@ class DefaultProviderTurnExecutor(
             if (request.publishStreamingTokens) _streamingText.value = ""
             try {
                 coroutineScope {
-                    val events = provider.stream(request, context).produceIn(this)
+                    val events = provider.stream(request, outboundContext).produceIn(this)
                     var receivedAnyEvent = false
                     while (true) {
                         val timeoutMs = if (receivedAnyEvent) INTER_EVENT_TIMEOUT_MS else FIRST_EVENT_TIMEOUT_MS
@@ -154,7 +160,7 @@ class DefaultProviderTurnExecutor(
                 finishReason = "tool_calls"
             )
         } else {
-            provider.generate(request, context)
+            provider.generate(request, outboundContext)
         }
 
         val validatedResponse = AiResponseValidator.validate(
@@ -194,12 +200,13 @@ class DefaultProviderTurnExecutor(
         interactionId: InteractionId,
         workload: AiWorkloadSpec,
     ): ProviderTurnResult {
+        println("[HALO_TURN_MODE] interactionId=${interactionId.value} workloadKind=${workload.kind} toolUseMode=${workload.toolUseMode} provider=${target.providerId} model=${target.modelId}")
         return try {
             execute(target, request, context, requestId, interactionId)
         } catch (cancelled: kotlinx.coroutines.CancellationException) {
             throw cancelled
         } catch (error: Throwable) {
-            if (!workload.allowFallback) throw error
+            if (!workload.allowFallback || request.turnKind == com.halo.sdk.provider.ProviderTurnKind.TOOL_CONTINUATION) throw error
             val providerCode = (error as? AiProviderException)?.details?.providerCode
             if (providerCode == "STREAM_IDLE_AFTER_OUTPUT" ||
                 providerCode == "STREAM_FAILED_AFTER_OUTPUT" ||
@@ -212,6 +219,7 @@ class DefaultProviderTurnExecutor(
                 failedProviderId = target.providerId,
             ) ?: throw error
 
+            println("[HALO_TURN_MODE] interactionId=${interactionId.value} workloadKind=${workload.kind} toolUseMode=${workload.toolUseMode} provider=${fallback.providerId} model=${fallback.modelId}")
             execute(
                 target = fallback,
                 request = request.copy(modelId = fallback.modelId),

@@ -59,6 +59,9 @@ class AndroidProviderFactory(
 
         val speechRoot = haloStorageLayout(context).speechModels
         val sherpaModelDirectory = File(speechRoot, SherpaSpeechModelCatalog.WHISPER_TINY_DIRECTORY)
+        val speechSelector = DefaultSpeechProviderSelector(SpeechSelectionRepository(storage))
+        val androidTts = AndroidTTSProvider(context)
+        val elevenLabsTts = com.halo.providers.elevenlabs.tts.ElevenLabsTtsProvider(storage)
         val speechRecognition: SpeechRecognitionProvider = ReloadableSpeechRecognitionProvider(
             modelDirectory = sherpaModelDirectory,
             getLanguage = {
@@ -67,7 +70,7 @@ class AndroidProviderFactory(
                     ?: Locale.getDefault().toLanguageTag()
                 configuredLocale.substringBefore('-').substringBefore('_')
             },
-            selector = DefaultSpeechProviderSelector(SpeechSelectionRepository(storage)),
+            selector = speechSelector,
             nativeResourceCoordinator = nativeResourceCoordinator,
         )
 
@@ -121,7 +124,7 @@ class AndroidProviderFactory(
                         descriptor = providerRemoteDescriptor(provider.id),
                         authInfo = ProviderAuthInfo(
                             authKind = providerAuthKind(provider.id),
-                            authState = if (provider.isCredentialPresent()) ProviderAuthState.CONNECTED else ProviderAuthState.NOT_CONFIGURED,
+                            authState = if (provider.isCredentialPresent()) ProviderAuthState.CONFIGURED else ProviderAuthState.NOT_CONFIGURED,
                         ),
                         status = ProviderStatus(ProviderStatus.State.UNCONFIGURED),
                         isConfigured = provider.isCredentialPresent(),
@@ -134,7 +137,9 @@ class AndroidProviderFactory(
         return Providers(
             inference = localProvider,
             speechRecognition = speechRecognition,
-            speechSynthesis = AndroidTTSProvider(context),
+            speechSynthesis = androidTts,
+            ttsProviders = listOf(androidTts, elevenLabsTts),
+            speechSelector = speechSelector,
             wakeWord = wakeWord,
             aiProviders = listOfNotNull(
                 localProvider,

@@ -6,6 +6,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.asStateFlow
 interface AiModelCatalogRepository {
     val state: StateFlow<AiModelCatalogState>
     suspend fun refresh()
+    suspend fun refresh(providerId: String) = refresh()
 }
 
 /** Provider-neutral, last-known-good catalog. Provider failures are isolated. */
@@ -25,36 +27,36 @@ class DefaultAiModelCatalogRepository(
 
     private val catalogCache = ModelCatalogCache()
 
-    override suspend fun refresh() = coroutineScope {
-        val ids = providers.mapTo(linkedSetOf()) { it.id }
-        _state.value = _state.value.copy(refreshingProviders = ids)
-        val results = providers.map { provider ->
-            async {
-                try {
-                    val models = provider.listModels()
-                    val status = provider.getStatus()
-                    ProviderResult(provider.id, models.map { it.toEntry(provider, status) }, null)
-                } catch (cancelled: CancellationException) {
-                    throw cancelled
-                } catch (error: Exception) {
-                    ProviderResult(provider.id, null, error.message ?: error::class.simpleName ?: "Catalog refresh failed")
-                }
-            }
-        }.awaitAll()
+    private val refreshMutex = kotlinx.coroutines.sync.Mutex()
+    override suspend fun refresh() { refreshProviders(providers) }
+    override suspend fun refresh(providerId: String) { refreshProviders(providers.filter { it.id == providerId }) }
 
-        val previous = _state.value.models.groupBy { it.model.providerId }
-        val merged = results.flatMap { result -> result.entries ?: previous[result.providerId].orEmpty() }
-        _state.value = AiModelCatalogState(
-            models = merged.sortedWith(compareBy<AiModelCatalogEntry> { it.runtime.location.ordinal }.thenBy { it.model.displayName.lowercase() }),
-            refreshingProviders = emptySet(),
-            providerErrors = results.mapNotNull { it.error?.let { message -> it.providerId to message } }.toMap(),
-            refreshedAtMs = nowMs(),
-        )
-        for (result in results) {
-            if (result.entries != null) {
-                catalogCache.put(result.providerId, result.entries.map { it.model }, lastSourceFor(result.providerId, merged))
+    private suspend fun refreshProviders(targets: List<AiInferenceProvider>) = refreshMutex.withLock {
+        val ids = targets.mapTo(linkedSetOf()) { it.id }
+        _state.value = _state.value.copy(refreshingProviders = ids)
+        try {
+            val results = coroutineScope {
+                targets.map { provider -> async {
+                    try {
+                        val models = provider.listModels()
+                        ProviderResult(provider.id, models.map { it.toEntry(provider, provider.getStatus()) }, null)
+                    } catch (cancelled: CancellationException) { throw cancelled }
+                    catch (_: Exception) { ProviderResult(provider.id, null, "Model metadata could not be refreshed") }
+                } }.awaitAll()
             }
-        }
+            val previous = _state.value
+            val merged = previous.models.filter { it.model.providerId !in ids } + results.flatMap { result ->
+                result.entries ?: previous.models.filter { it.model.providerId == result.providerId }
+                    .map { it.copy(source = if (it.runtime.location == AiExecutionLocation.REMOTE) ModelCatalogueSource.REMOTE_CACHED else it.source) }
+            }
+            _state.value = previous.copy(
+                models = merged.sortedWith(compareBy<AiModelCatalogEntry> { it.runtime.location.ordinal }.thenBy { it.model.displayName.lowercase() }),
+                refreshingProviders = emptySet(),
+                providerErrors = previous.providerErrors.filterKeys { it !in ids } + results.mapNotNull { result -> result.error?.let { result.providerId to it } }.toMap(),
+                refreshedAtMs = nowMs(),
+            )
+            results.forEach { result -> result.entries?.let { catalogCache.put(result.providerId, it.map { it.model }, lastSourceFor(result.providerId, merged)) } }
+        } finally { _state.value = _state.value.copy(refreshingProviders = emptySet()) }
     }
 
     private fun lastSourceFor(providerId: String, merged: List<AiModelCatalogEntry>): ModelCatalogueSource {

@@ -1,4 +1,10 @@
 > Status: WORKING LEDGER. Started 2026-09-27. Last verified against source 2026-09-28.
+
+## PRODUCT-P0-001 — source update, 2026-09-30
+
+PRODUCT-P0 uses existing Halo configuration/selection/persistence boundaries and official ElevenLabs/OpenRouter contracts. No external reference source or module was copied. Wired in source: short hub, separate detail/catalogue/roles, turn-semantic tool exposure and provider-neutral PCM synthesis. Runtime acceptance remains pending.
+
+See the [control-plane source map](PROVIDER-CONTROL-PLANE.md) for ownership, official contracts, bounds, security and the later QA plan. Build/tests/device acceptance: not run. Earlier dated descriptions below remain historical.
 >
 > Records ideas harvested from external reference projects (`build/refs/OneBox-main`, `build/refs/zafiro-main`,
 > extracted from local archives, never committed and never depended on) and how each maps onto Halo.

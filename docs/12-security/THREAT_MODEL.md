@@ -1,5 +1,11 @@
 # Security and privacy assessment
 
+## PRODUCT-P0-001 — source update, 2026-09-30
+
+ElevenLabs keys join the Keystore-protected set and migration version 3. Protected batch writes and the Brain guard prevent plaintext export. Saved key text is absent from Intelligence UI state; replacement drafts clear immediately. Cloud speech receives only TtsSanitizer output, with account-controlled retention. Synthesis fallback cannot relax audio-route policy. New diagnostics contain IDs/counts/enums, never credentials or text bodies.
+
+See the [control-plane source map](../engineering/PROVIDER-CONTROL-PLANE.md) for ownership, official contracts, bounds, security and the later QA plan. Build/tests/device acceptance: not run. Earlier dated descriptions below remain historical.
+
 Status: CURRENT SOURCE MAP / OPEN REQUIREMENTS. Reviewed 2026-09-18.
 This is source inspection, not a penetration test or security certification.
 

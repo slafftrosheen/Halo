@@ -10,7 +10,9 @@ data class PersistedSpeechSelection(
 class SpeechSelectionRepository(private val storage: Storage) {
     fun readSelection(): PersistedSpeechSelection {
         val stt = storage.getString(STT_KEY)?.takeIf { it.isNotBlank() } ?: "AUTOMATIC"
-        val tts = storage.getString(TTS_KEY)?.takeIf { it.isNotBlank() } ?: "AUTOMATIC"
+        val storedTts = storage.getString(TTS_KEY)?.takeIf { it.isNotBlank() } ?: "AUTOMATIC"
+        val tts = if (storedTts == "com.halo.providers.android.tts.AndroidTTSProvider") "provider.android.tts" else storedTts
+        if (tts != storedTts) storage.putString(TTS_KEY, tts)
         return PersistedSpeechSelection(stt, tts)
     }
 

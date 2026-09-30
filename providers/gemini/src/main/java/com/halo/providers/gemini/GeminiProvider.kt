@@ -47,7 +47,7 @@ enum class GeminiAuthenticationMode { OAUTH, API_KEY, NONE }
 class GeminiProvider(
     private val storage: Storage,
     private val client: OkHttpClient = defaultClient(),
-) : AiInferenceProvider {
+) : AiInferenceProvider, com.halo.sdk.provider.CredentialProvider {
     override val id = ID
     override val displayName = "Google Gemini"
     override val isLocal = false
@@ -64,6 +64,19 @@ class GeminiProvider(
             !apiKey.isNullOrBlank() -> GeminiAuthenticationMode.API_KEY
             else -> GeminiAuthenticationMode.NONE
         }
+
+    override fun hasCredential(): Boolean = !apiKey.isNullOrBlank()
+    override fun credential(): com.halo.sdk.provider.Credential? = apiKey?.let { com.halo.sdk.provider.Credential(id, it) }
+    override fun setCredential(credential: com.halo.sdk.provider.Credential) {
+        storage.putString("gemini_api_key", credential.value.trim())
+        clearOAuthSession()
+        _status.value = ProviderStatus(ProviderStatus.State.STANDBY, "Configured; not checked")
+    }
+    override fun clearCredential() {
+        storage.remove("gemini_api_key")
+        clearOAuthSession()
+        _status.value = ProviderStatus.UNCONFIGURED
+    }
 
     private val apiKey: String?
         get() = storage.getString(API_KEY_STORAGE)?.trim()?.ifBlank { null }
@@ -203,7 +216,7 @@ class GeminiProvider(
                 request.maxOutputTokens?.takeIf { it > 0 }?.let { maxTokens ->
                     put("generationConfig", JSONObject().put("maxOutputTokens", maxTokens))
                 }
-                if (context.availableTools.isNotEmpty()) {
+                if (request.toolUseMode != com.halo.sdk.provider.ToolUseMode.NONE && context.availableTools.isNotEmpty()) {
                     put(
                         "tools",
                         JSONArray().put(

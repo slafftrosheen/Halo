@@ -41,6 +41,8 @@ data class AiRequest(
     val publishStreamingTokens: Boolean = true,
     /** Optional internal sampler override; providers must explicitly advertise support. */
     val temperatureOverride: Double? = null,
+    /** Null preserves direct SDK callers; Runtime always supplies a turn mode. */
+    val toolUseMode: ToolUseMode? = null,
 )
 
 enum class ProviderTurnKind { INITIAL, TOOL_CONTINUATION }
@@ -156,6 +158,8 @@ enum class ProviderAccessKind {
  * UI-visible intermediate states that do not map cleanly onto provider readiness.
  */
 enum class ProviderAuthState {
+    /** Credential present; no successful connection has been observed. */
+    CONFIGURED,
     NOT_REQUIRED,
     NOT_CONFIGURED,
     AUTHORIZING,
@@ -390,6 +394,8 @@ interface AiProvider {
     suspend fun getCapabilities(): Set<AiCapability>
     /** Main-safe diagnostic probe; callers do not choose an IO dispatcher. */
     suspend fun testConnection(): Boolean = getStatus().state == ProviderStatus.State.READY
+    /** Host has changed endpoint/auth settings. Must not perform network IO. */
+    fun configurationChanged() = Unit
 }
 
 sealed interface ProviderReadiness {

@@ -1106,7 +1106,7 @@ object ManualDependencyGraph {
         SettingsViewModel(runtimeSnapshotManager, aiProviderRouter, appearancePreferences, providerGraph.speechModelInventory)
     }
     val voiceSettingsViewModel by lazy {
-        VoiceSettingsViewModel(providerGraph.speechModelInventory, speechLanguageSettingsRepository, providerGraph, storage)
+        VoiceSettingsViewModel(providerGraph.speechModelInventory, speechLanguageSettingsRepository, providerGraph, storage, speechSynthesisRegistry)
     }
     val activityViewModel by lazy { ActivityViewModel(runtimeSnapshotManager, agentRunStore = agentRunStore) }
     val notebookViewModel by lazy {
@@ -1138,6 +1138,11 @@ object ManualDependencyGraph {
             bluetoothEnabled = platformStateMonitor.bluetoothEnabled
         )
     }
+    val aiModelCatalogRepository by lazy {
+        com.halo.engines.ai.catalog.DefaultAiModelCatalogRepository(aiProviderRouter.getAllProviders().filterIsInstance<com.halo.sdk.provider.AiInferenceProvider>())
+    }
+    val modelBrowserViewModel by lazy { com.halo.app.ui.screens.settings.ModelBrowserViewModel(providerControlRepository) }
+    val providerControlRepository by lazy { com.halo.app.ai.ProviderControlRepository(aiProviderRouter, aiModelCatalogRepository, storage) }
     val intelligenceViewModel by lazy {
         IntelligenceViewModel(
             snapshotManager = runtimeSnapshotManager,
@@ -1146,6 +1151,7 @@ object ManualDependencyGraph {
             storage = storage,
             modelManager = modelManager,
             inferenceLedger = inferenceLedger,
+            catalogRepository = aiModelCatalogRepository,
         )
     }
 
@@ -1183,7 +1189,12 @@ object ManualDependencyGraph {
     }
 
     val androidTtsProvider by lazy {
-        AndroidTTSProvider(applicationContext, assistantSpeechAudioAttributes)
+        providers.ttsProviders.first { it.metadata.id == "provider.android.tts" }
+    }
+
+    val speechSynthesisRegistry by lazy {
+        com.halo.app.ai.SpeechSynthesisRegistry(providers.ttsProviders,
+            providers.speechSelector ?: com.halo.app.ai.DefaultSpeechProviderSelector(com.halo.app.ai.SpeechSelectionRepository(storage)), storage)
     }
 
     val routedSpeechPlaybackProvider by lazy {
@@ -1202,6 +1213,7 @@ object ManualDependencyGraph {
             eventBus = infra.eventBus,
             routeController = speechOutputRouteController,
             ttsProvider = androidTtsProvider,
+            synthesisRegistry = speechSynthesisRegistry,
             routedSpeechPlaybackProvider = routedSpeechPlaybackProvider,
             nativeResourceCoordinator = providerGraph.nativeResourceCoordinator,
             interactionRoutePolicy = interactionRoutePolicy,

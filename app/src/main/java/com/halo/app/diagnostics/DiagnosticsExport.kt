@@ -40,10 +40,17 @@ object DiagnosticsExport {
 
         providers.forEach { p ->
             val status = p.status.value
-            sb.append("  - ${p.displayName} [${p.id}]: $status\n")
+            sb.append("  - ${p.displayName} [${p.id}]: ${status.state}\n")
         }
         sb.append("\n")
 
+        sb.append("--- PROVIDER CONTROL ---\n")
+        ManualDependencyGraph.providerControlRepository.rows.value.forEach { row ->
+            sb.append("${row.descriptor.providerId}: configured=${row.configured}; selected=${row.selected}; connection=${row.connection}; catalogue=${row.catalogue}; models=${row.modelCount}\n")
+        }
+        val tts = ManualDependencyGraph.speechSynthesisRegistry
+        sb.append("TTS selection=${tts.selector.ttsSelection.value.id}; registered=${tts.providers.map { it.metadata.id }}\n")
+        sb.append("Cloud synthesis fallback=${ManualDependencyGraph.storage.getBoolean(com.halo.app.ai.SpeechSynthesisRegistry.FALLBACK, true)}; independent of audio-route fallback\n")
         appendLocalLiteRt(sb, providers)
         appendNativeResources(sb)
         appendAudioContinuity(sb)
