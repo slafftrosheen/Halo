@@ -18,4 +18,5 @@ data class MemoryContextItem(
 
 fun interface MemoryContextSource {
     suspend fun recall(query: MemoryRecallQuery): List<MemoryContextItem>
+    suspend fun used(ids: List<String>) = Unit
 }

@@ -234,13 +234,38 @@ object ManualDependencyGraph {
             conversationStore, workspaceFileRepository, memoryRepository, notebookUseCases)
     }
     val memoryRepository by lazy { RoomMemoryRepository(appDatabase) }
+    val interactionWorkingMemory by lazy { com.halo.runtime.cognition.memory.InteractionWorkingMemory() }
+    val personalLearning by lazy { com.halo.app.data.memory.PersonalLearningRepository(appDatabase,memoryRepository, attention = { attentionController }) }
+    fun learningPreferences() = com.halo.runtime.cognition.memory.LearningPreferences(
+        com.halo.runtime.cognition.memory.LearningPreference.fromStored(storage.getString("learning_mode")),
+        storage.getBoolean("learning_memories",true),storage.getBoolean("learning_procedures",true),storage.getBoolean("learning_automations",true),storage.getBoolean("learning_model_reflection",false))
+    val reflectionCoordinator by lazy { com.halo.app.learning.ReflectionCoordinator(appDatabase,agentRunStore,personalLearning,::learningPreferences,
+        routineExecutor.environmentSnapshot, { attentionContextProvider.snapshot().let { it.activeInteraction || it.activeSpeechSession } },agentRunCoordinator.activeRuns,
+        com.halo.app.learning.LocalReflectionModel(aiProviderRouter,infra.resourceLeaseManager) { attentionContextProvider.snapshot().let { it.activeInteraction || it.activeSpeechSession } },
+        learnedProcedureStore, { toolRegistry.descriptor(it) }, { eventBus.publish(it) }, { episodes ->
+            // Registry evidence and fingerprinted artifact references are prerequisites, never source-class existence.
+            val packs=kotlinx.coroutines.withTimeoutOrNull(2_000) { com.halo.app.capture.inspectMultimodal(aiProviderRouter).packs }.orEmpty()
+            val rejected=episodes.take(30).mapNotNull { it.runId?.let { id -> agentRunStore.get(com.halo.runtime.cognition.agent.AgentRunId(id)) } }
+                .flatMap { it.steps.filterIsInstance<com.halo.runtime.cognition.agent.AgentStep.ToolRejected>() }
+                .filter { it.reasonCode == com.halo.runtime.cognition.agent.ToolRejectionCode.CAPABILITY_UNAVAILABLE }
+            packs.filter { pack -> pack.evidence.artifactAvailable && pack.descriptor.artifactRefs.any { !it.fingerprint.isNullOrBlank() } &&
+                pack.state in setOf(com.halo.sdk.runtime.capability.RuntimeCapabilityState.AVAILABLE,com.halo.sdk.runtime.capability.RuntimeCapabilityState.INSTALL_REQUIRED) }.map { pack ->
+                val count=if(pack.descriptor.id == com.halo.sdk.runtime.capability.RuntimeCapabilityId.SEMANTIC_MEMORY)
+                    episodes.count { "halo_search_memory" in it.toolIds } else rejected.count { rejectedTool ->
+                    toolRegistry.descriptor(rejectedTool.toolId)?.requirements?.filterIsInstance<com.halo.runtime.cognition.tools.ToolRequirement.Capability>()
+                        ?.any { it.id.value.equals(pack.descriptor.id.name,ignoreCase=true) } == true
+                }
+                com.halo.runtime.cognition.memory.CapabilityPattern(pack.descriptor.id.name,count,true)
+            }
+        }) }
+
 
     /**
      * MINING-P1-001: one bounded retrieval implementation. No embedding provider is wired yet, so
      * semantic search reports NOT_INSTALLED instead of faking vectors from hashes.
      */
     val memoryRetriever by lazy {
-        com.halo.app.data.memory.RoomMemoryRetriever(appDatabase.memoryRecordDao())
+        com.halo.app.data.memory.RoomMemoryRetriever(appDatabase.memoryRecordDao(), activeScopeIds = { appDatabase.workspaceContextDao().selectedIds().take(20).toSet() })
     }
     val memoryContextSource by lazy {
         BoundedMemoryContextSource(memoryRepository, memoryRetriever)
@@ -521,7 +546,8 @@ object ManualDependencyGraph {
             },
             studySessionDescriptions = { sessionId -> studyUseCases.describeSession(sessionId) },
         )
-        val memoryExecutor = com.halo.app.di.tools.MemoryToolExecutor(memoryRepository, memoryContextSource)
+        val memoryExecutor = com.halo.app.di.tools.MemoryToolExecutor(memoryRepository, memoryContextSource,personalLearning,::learningPreferences,
+            { appDatabase.workspaceContextDao().selectedIds().take(20).toSet() },{ storage.getBoolean("policy_cloud_memories",false) },interactionWorkingMemory)
         val longTaskExecutor = com.halo.app.di.tools.LongTaskToolExecutor(contentPayloadStore,
             delegate = { delegatedTaskCoordinator.delegate(it) },
             selectedRefs = { appDatabase.workspaceContextDao().selectedIds().take(8).mapNotNull { id ->
@@ -766,6 +792,13 @@ object ManualDependencyGraph {
             conversationStore, blackboard, toolRegistry, workspaceContext, skillRegistry, assistantContextRepository,
             discoveryProvider = { toolDiscovery },
             memoryContextSource = memoryContextSource,
+            recordContextUse = { interaction, objects, memories ->
+                appDatabase.agentRunDao().activeRootForInteraction(interaction)?.let { root ->
+                    agentRunCoordinator.recordStep(com.halo.runtime.cognition.agent.AgentStep.ContextUsed(
+                        com.halo.runtime.cognition.agent.AgentStepId("context:${java.util.UUID.randomUUID()}"),
+                        com.halo.runtime.cognition.agent.AgentRunId(root), java.time.Instant.now(), objects, memories))
+                }
+            },
             toolExposureGate = toolExposureGate,
             conversationPolicyRepository = conversationContextPolicies,
             compactor = com.halo.runtime.cognition.context.ContextCompactor(

@@ -47,4 +47,16 @@ interface MemoryRecordDao {
 
     @Query("SELECT * FROM memory_revisions WHERE memoryId = :memoryId ORDER BY changedAt DESC")
     fun observeRevisions(memoryId: String): Flow<List<MemoryRevisionEntity>>
+
+    @Query("SELECT * FROM memory_records WHERE status = 'ACTIVE' AND scope = :scope AND ((scopeId IS NULL AND :scopeId IS NULL) OR scopeId = :scopeId) ORDER BY updatedAt DESC LIMIT 60")
+    suspend fun relevant(scope: String, scopeId: String?): List<MemoryRecordEntity>
+    @Query("UPDATE memory_records SET evidenceCount = MIN(evidenceCount + 1, 1000000), lastConfirmedAt = :at, userConfirmed = 1 WHERE id = :id AND status = 'ACTIVE'")
+    suspend fun reinforce(id: String, at: Long)
+    @Query("UPDATE memory_records SET usageCount = MIN(usageCount + 1, 1000000), lastUsedAt = :at WHERE id IN (:ids) AND status = 'ACTIVE'")
+    suspend fun used(ids: List<String>, at: Long)
+
+    @Query("SELECT * FROM memory_records WHERE status = 'ACTIVE' AND scope IN (:scopes) AND (scope = 'GLOBAL' OR scopeId IN (:scopeIds)) AND (validUntil IS NULL OR validUntil > :now) ORDER BY updatedAt DESC LIMIT :limit")
+    suspend fun recentScoped(scopes: List<String>, scopeIds: List<String>, now: Long, limit: Int): List<MemoryRecordEntity>
+    @Query("SELECT * FROM memory_records WHERE status = 'ACTIVE' AND scope IN (:scopes) AND (scope = 'GLOBAL' OR scopeId IN (:scopeIds)) AND (validUntil IS NULL OR validUntil > :now) AND lower(content) LIKE :pattern ESCAPE '\\' ORDER BY updatedAt DESC LIMIT :limit")
+    suspend fun searchScoped(pattern: String, scopes: List<String>, scopeIds: List<String>, now: Long, limit: Int): List<MemoryRecordEntity>
 }

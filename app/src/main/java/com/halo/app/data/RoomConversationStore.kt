@@ -28,6 +28,11 @@ data class PersistedConversation(
 
 @Dao
 interface ConversationDao {
+    @Query("SELECT * FROM conversation_turns WHERE id = :id LIMIT 1")
+    suspend fun turnById(id: String): PersistedTurn?
+    @Query("SELECT * FROM conversation_turns WHERE metadata LIKE :pattern ORDER BY timestamp DESC LIMIT 3")
+    suspend fun turnsForCommit(pattern: String): List<PersistedTurn>
+
     @Query("SELECT conversation_turns.* FROM conversation_turns INNER JOIN conversations ON conversations.id = conversation_turns.conversationId INNER JOIN workspace_objects ON workspace_objects.id = conversations.id WHERE conversationId = :id AND conversations.archived = 0 AND workspace_objects.lifecycle = 'ACTIVE' AND (userText LIKE :query ESCAPE '\\' OR assistantText LIKE :query ESCAPE '\\') ORDER BY timestamp DESC LIMIT :limit")
     suspend fun searchCurrent(id: String, query: String, limit: Int): List<PersistedTurn>
     @Query("SELECT * FROM conversation_turns ORDER BY timestamp") fun observeAll(): Flow<List<PersistedTurn>>

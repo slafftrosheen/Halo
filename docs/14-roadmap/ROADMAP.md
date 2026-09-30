@@ -174,3 +174,9 @@ not promoted to roadmap implementation by this batch.
 P6 source implementation lands event fabric and durable attention through existing registered tools. Remaining acceptance is Android/Room/device validation, not assumed success. Future audited safe tools may opt in individually. Deferred: location/SSID/calendar/weather polling, unrestricted prompt jobs, automatic replies/payments/account security, routine DAG/cascades, permanent agent service, behavioral inference, general app/event history and offline transition backfill. Generated v21 Room schema awaits an authorized build.
 
 See [Proactive automation runtime](../engineering/PROACTIVE-AUTOMATION-RUNTIME.md).
+
+## MINING-P7-001 — personal intelligence and reflection (2026-09-30)
+
+P7 source is implemented with basic checks only. Next authorized stabilization must generate Room v22 schema, compile generated Room/Moshi adapters and Compose/navigation, validate old/new Brain archives and scope/provenance remapping, confirm native deterministic sampler/preemption/local-only reflection, and accept UI/device privacy behavior. Semantic artifact installation, broader semantic conflict resolution and richer typed correction intent remain deferred; no build/tests/device commands were run here.
+
+See [P7 implementation ledger](../engineering/PERSONAL-INTELLIGENCE-REFLECTION.md).

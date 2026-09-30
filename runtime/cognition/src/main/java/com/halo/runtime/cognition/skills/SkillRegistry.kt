@@ -172,7 +172,7 @@ class DefaultSkillRegistry(
                 name = "Memory",
                 description = "Recall and propose user preferences and facts.",
                 category = SkillCategory.WORKSPACE,
-                tools = setOf("halo_search_memory", "halo_propose_memory"),
+                tools = setOf("halo_search_memory", "halo_read_memory", "halo_propose_memory", "halo_remember", "halo_update_memory", "halo_forget_memory", "halo_set_working_memory", "halo_read_working_memory"),
                 risk = SkillRisk.REVERSIBLE,
                 source = SkillSource.BUILT_IN
             ),

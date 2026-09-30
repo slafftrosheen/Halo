@@ -97,3 +97,9 @@ Source review is not device acceptance; build/tests/device acceptance not run.
 Automation threats: forged external events must never become instructions or capability grants. Only audited descriptor opt-ins run; always-interactive actions remain blocked. Canonical grants bind trigger/conditions/tool ids/arguments/delivery/cooldown; missing/tampered/edited grants block both action dispatch and disruptive delivery. Notification signals contain no body/title/sender and cannot select CRITICAL attention or predicate execution. No credential values, background permission dialogs, external auto-replies, raw event histories or implicit cloud fallback are introduced. Queue restoration rechecks policy and durable delivery claims prevent replay; receipt retention is 30 days.
 
 See [Proactive automation runtime](../engineering/PROACTIVE-AUTOMATION-RUNTIME.md).
+
+## MINING-P7-001 — personal intelligence and reflection (2026-09-30)
+
+P7 threats include sensitive inferred facts, secret retention, forged evidence, cross-project recall, prompt injection through reference data and unsolicited learned side effects. Boundaries: exact supplied evidence validation, active scope before SQL LIMIT, reference-as-data framing, local-only optional reflection, secret rejection/legacy recall exclusion, inferred sensitive/unknown rejection, explicit confirmation for durable tool writes, never-replay semantics and user review for procedures/routines. Lexical/category validation is not semantic proof; later adversarial acceptance remains necessary.
+
+See [P7 implementation ledger](../engineering/PERSONAL-INTELLIGENCE-REFLECTION.md).

@@ -319,3 +319,9 @@ journal remain owners. Source wired; build/tests/device acceptance not run.
 P6 reviewed Brownie AgentSchedulerTool, ScheduleCalculator, BrownieService, BrownieNotificationListener and MessagingTool, plus kotlin-adk EventActions through primary raw sources. Harvested event-driven scheduling, typed event/action separation, background lifecycle and origin-only notification mechanics. Rejected unrestricted prompts, permanent sticky agent service as correctness requirement, untrusted notification instructions, unattended message side effects and silent capability escalation. Exact references, differences and source inventory are in the P6 engineering ledger.
 
 See [Proactive automation runtime](PROACTIVE-AUTOMATION-RUNTIME.md).
+
+## MINING-P7-001 — personal intelligence and reflection (2026-09-30)
+
+P7 inspected primary voice-agent MemoryStore/EpisodeSummarizer/EmbeddingIndex, Android-Agent harness-improve MemorySearch/MemoryTools/AgentMemory and Brownie SkillStore. Harvested fact/episode/working separation, bounded pull and explicit side-effect writes, origin/usage/staleness. Rejected alternate persistence, full prompt dumps, mandatory embeddings/model pass per trivial turn and autonomous behavior creation. No reference code copied. Exact links and production inventory are in the P7 ledger.
+
+See [P7 implementation ledger](PERSONAL-INTELLIGENCE-REFLECTION.md).

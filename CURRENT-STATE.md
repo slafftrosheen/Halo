@@ -813,3 +813,9 @@ Build, tests and device acceptance NOT RUN. Native phone capabilities remain pre
 P6 adds the portable event fabric, baseline-safe battery/charging/network/device/app/notification triggers, coherent conditions, descriptor automation opt-ins and reviewed canonical grants. Production attention is now Room-backed with claimed delivery receipts, typed initiative and centralized disruption budgets. Database advances to v21; legacy definitions are retained but disabled until reviewed save. Only offline notification digest is opted in. Full-screen Automations, passive System Check, preview-only sandbox, pending Home/Activity and diagnostics are wired. Source baseline was cfc63991; no build/tests/device checks were run.
 
 See [Proactive automation runtime](docs/engineering/PROACTIVE-AUTOMATION-RUNTIME.md).
+
+## MINING-P7-001 — personal intelligence and reflection (2026-09-30)
+
+P7 personal intelligence source is implemented: canonical Room memory provenance/confidence/usage/scope, post-commit bounded episodes and auxiliary REFLECTION receipts, Inbox-only inferred proposals, explicit confirmed write/correction/forget tools, safe reviewed procedure/routine suggestions, and Brain schema 2. Learning defaults to Explicit requests only; optional local FAST reflection is off. Semantic encoder and capability artifacts are not installed. Room 21→22 migration is written; generated v22 schema, build, tests and device acceptance are not run.
+
+See [P7 implementation ledger](docs/engineering/PERSONAL-INTELLIGENCE-REFLECTION.md).

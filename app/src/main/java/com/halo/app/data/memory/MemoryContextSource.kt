@@ -7,7 +7,8 @@ import kotlinx.coroutines.flow.first
 data class MemoryQuery(
     val query: String = "",
     val kinds: Set<MemoryKind> = emptySet(),
-    val scopes: Set<MemoryScope> = emptySet()
+    val scopes: Set<MemoryScope> = emptySet(),
+    val scopeIds: Set<String> = emptySet()
 )
 
 data class MemoryContextCandidate(
@@ -21,6 +22,7 @@ data class MemoryContextCandidate(
 
 interface MemoryContextSource {
     suspend fun retrieve(query: MemoryQuery, limit: Int = 5): List<MemoryContextCandidate>
+    suspend fun markUsed(ids: List<String>) = Unit
 }
 
 class BoundedMemoryContextSource(
@@ -33,7 +35,8 @@ class BoundedMemoryContextSource(
 ) : MemoryContextSource, com.halo.runtime.cognition.context.MemoryContextSource {
 
     override suspend fun recall(query: MemoryRecallQuery): List<MemoryContextItem> {
-        val appQuery = MemoryQuery(query = query.text)
+        val appQuery = MemoryQuery(query = query.text, kinds = query.kinds.mapNotNull { runCatching { MemoryKind.valueOf(it) }.getOrNull() }.toSet(),
+            scopes = query.scopes.mapNotNull { runCatching { MemoryScope.valueOf(it) }.getOrNull() }.toSet())
         val candidates = retrieve(appQuery, query.limit)
         return candidates.map { c ->
             MemoryContextItem(
@@ -49,17 +52,19 @@ class BoundedMemoryContextSource(
 
     override suspend fun retrieve(query: MemoryQuery, limit: Int): List<MemoryContextCandidate> {
         val shared = retriever
-        if (shared != null && query.kinds.isEmpty()) {
+        if (shared != null) {
             val scope = when (query.scopes.singleOrNull()) {
                 MemoryScope.GLOBAL -> com.halo.runtime.cognition.memory.MemorySearchScope.GLOBAL
                 MemoryScope.PROJECT -> com.halo.runtime.cognition.memory.MemorySearchScope.PROJECT
                 MemoryScope.DEVICE -> com.halo.runtime.cognition.memory.MemorySearchScope.DEVICE
                 MemoryScope.CONVERSATION -> com.halo.runtime.cognition.memory.MemorySearchScope.CONVERSATION
+                MemoryScope.WORKSPACE_OBJECT -> com.halo.runtime.cognition.memory.MemorySearchScope.WORKSPACE_OBJECT
                 else -> com.halo.runtime.cognition.memory.MemorySearchScope.ALL
             }
-            return shared.search(query.query, scope, limit).filter { result ->
-                query.scopes.isEmpty() || result.scope.toMemoryScope() in query.scopes
-            }.map { result ->
+            return shared.search(query.query, scope, if(query.kinds.isEmpty()) limit.coerceIn(1,20) else 20).filter { result ->
+                (query.scopes.isEmpty() || result.scope.toMemoryScope() in query.scopes) &&
+                    (query.kinds.isEmpty() || runCatching { MemoryKind.valueOf(result.kind) }.getOrNull() in query.kinds)
+            }.take(limit.coerceIn(1,20)).map { result ->
                 MemoryContextCandidate(
                     id = result.memoryId,
                     content = result.snippet,
@@ -70,7 +75,12 @@ class BoundedMemoryContextSource(
                 )
             }
         }
-        val memories = memoryRepository.observeMemories().first()
+        // Fallback is conservative: global current records only without explicit scope-target evidence.
+        val memories = memoryRepository.contextCandidates(query.scopes,query.scopeIds).filter {
+            (it.scope == MemoryScope.GLOBAL || it.scopeId in query.scopeIds) && it.scope != MemoryScope.CONVERSATION &&
+                (it.validUntil == null || it.validUntil > System.currentTimeMillis()) &&
+                com.halo.runtime.cognition.memory.MemorySensitivityClassifier.classify(it.content) != com.halo.runtime.cognition.memory.MemorySensitivity.SECRET
+        }
         val terms = query.query.trim().lowercase().split("\\s+".toRegex()).filter { it.isNotBlank() }
 
         val candidates = memories
@@ -102,11 +112,15 @@ class BoundedMemoryContextSource(
         return candidates
     }
 
+    override suspend fun markUsed(ids: List<String>) = memoryRepository.markUsed(ids)
+    override suspend fun used(ids: List<String>) = memoryRepository.markUsed(ids)
+
     private fun com.halo.runtime.cognition.memory.MemorySearchScope.toMemoryScope(): MemoryScope = when (this) {
         com.halo.runtime.cognition.memory.MemorySearchScope.GLOBAL -> MemoryScope.GLOBAL
         com.halo.runtime.cognition.memory.MemorySearchScope.PROJECT -> MemoryScope.PROJECT
         com.halo.runtime.cognition.memory.MemorySearchScope.DEVICE -> MemoryScope.DEVICE
         com.halo.runtime.cognition.memory.MemorySearchScope.CONVERSATION -> MemoryScope.CONVERSATION
+        com.halo.runtime.cognition.memory.MemorySearchScope.WORKSPACE_OBJECT -> MemoryScope.WORKSPACE_OBJECT
         com.halo.runtime.cognition.memory.MemorySearchScope.ALL -> MemoryScope.GLOBAL
     }
 }

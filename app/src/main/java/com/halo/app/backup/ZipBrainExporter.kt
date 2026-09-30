@@ -33,6 +33,7 @@ class ZipBrainExporter(
     private val adapters: Map<Class<*>, JsonAdapter<*>> = listOf(
         WorkspaceObjectSnapshot::class.java, NoteSnapshot::class.java, ConversationSnapshot::class.java,
         TurnSnapshot::class.java, MemorySnapshot::class.java, LegacyMemorySnapshot::class.java, MemoryRevisionSnapshot::class.java,
+        EpisodeSnapshot::class.java, SuggestionDecisionSnapshot::class.java, ReflectionStatusSnapshot::class.java,
         WorkingSetSnapshot::class.java, ProvenanceSnapshot::class.java, RelationSnapshot::class.java,
         FileSnapshot::class.java, AgentRunSnapshot::class.java, AgentStepSnapshot::class.java,
         ReminderSnapshot::class.java, DeviceConfigurationSnapshot::class.java,
@@ -109,6 +110,9 @@ class ZipBrainExporter(
             writeJsonLines(zip, "memory/memories.jsonl", snapshot.memories, checksums, progress)
             writeJsonLines(zip, "memory/legacy.jsonl", snapshot.legacyMemories, checksums, progress)
             writeJsonLines(zip, "memory/revisions.jsonl", snapshot.memoryRevisions, checksums, progress)
+            writeJsonLines(zip,"memory/episodes.jsonl",snapshot.episodes,checksums,progress)
+            writeJsonLines(zip,"memory/suggestion-decisions.jsonl",snapshot.suggestionDecisions,checksums,progress)
+            writeJsonLines(zip,"memory/reflection-statuses.jsonl",snapshot.reflectionStatuses,checksums,progress)
             writeBytes(zip, "memory/memories.md", memoryMarkdown(snapshot.memories, snapshot.legacyMemories).toByteArray(Charsets.UTF_8), checksums)
             writeJsonLines(zip, "working-set/entries.jsonl", snapshot.workingSet, checksums, progress)
             writeJsonLines(zip, "relations/relations.jsonl", snapshot.relations, checksums, progress)

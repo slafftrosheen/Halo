@@ -98,6 +98,8 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             subtitle = "Speech and audio · ${uiState.voiceStatus}",
             onClick = viewModel::openVoice
         )
+        SettingsRow(glyph=HaloGlyph.STORAGE,tint=HaloPastelMint,title="Memory & learning",
+            subtitle="Explicit requests and reviewed suggestions",onClick=viewModel::openLearning)
         SettingsRow(
             glyph = HaloGlyph.SECURITY,
             tint = HaloPastelYellow,

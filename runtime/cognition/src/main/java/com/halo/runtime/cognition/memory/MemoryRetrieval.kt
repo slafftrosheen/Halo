@@ -22,6 +22,7 @@ enum class MemorySearchScope {
 
     /** Working/session-scoped memories: episodes tied to one conversation. */
     CONVERSATION,
+    WORKSPACE_OBJECT,
 }
 
 data class MemorySearchResult(

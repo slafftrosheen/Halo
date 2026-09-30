@@ -327,3 +327,9 @@ SOURCE WIRED, device acceptance pending:
 Automations is a Halo workspace screen with WHEN/IF/THEN, schema-driven simple action fields, installed-app selection, delivery, reachability, setup links and substantive reviewed save. Nested schemas are disabled in the editor. Cards show ZoneId and actual reachability; history shows action counts, outcomes and grouped events. Home pending count opens Activity; Activity projects durable delivery receipts. Notification settings include typed initiative and DND. System Check links preview-only Automation sandbox.
 
 See [Proactive automation runtime](../engineering/PROACTIVE-AUTOMATION-RUNTIME.md).
+
+## MINING-P7-001 — personal intelligence and reflection (2026-09-30)
+
+P7 Notebook Memory now has Confirmed/Suggestions/Episodes with inline edit/accept/dismiss/never-again review. Existing detail shows provenance/evidence/confidence/usage/revisions. Home has one passive Inbox count except Quiet; Activity shows auxiliary reflection state; Settings adds Memory & learning and System Check exposes safe counts/policy preview. Source wired only; Compose rendering, navigation and accessibility acceptance were not run.
+
+See [P7 implementation ledger](../engineering/PERSONAL-INTELLIGENCE-REFLECTION.md).

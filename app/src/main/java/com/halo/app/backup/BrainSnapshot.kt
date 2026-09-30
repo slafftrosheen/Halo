@@ -34,7 +34,10 @@ data class ConversationSnapshot(val id: String, val createdAt: Long, val active:
 @JsonClass(generateAdapter = true)
 data class TurnSnapshot(val id: String, val conversationId: String, val userText: String, val assistantText: String, val timestamp: Long, val metadata: String)
 @JsonClass(generateAdapter = true)
-data class MemorySnapshot(val id: String, val content: String, val kind: String, val scope: String, val scopeId: String?, val createdAt: Long, val updatedAt: Long, val sourceObjectId: String?, val sourceRevision: Int?, val confidence: Float?, val status: String)
+data class MemorySnapshot(val id: String, val content: String, val kind: String, val scope: String, val scopeId: String?, val createdAt: Long, val updatedAt: Long, val sourceObjectId: String?, val sourceRevision: Int?, val confidence: Float?, val status: String,
+    val origin: String = "IMPORT", val evidenceJson: String = "[]", val sourceEpisodeId: String? = null,
+    val evidenceCount: Int = 0, val lastConfirmedAt: Long? = null, val usageCount: Long = 0, val lastUsedAt: Long? = null,
+    val validUntil: Long? = null, val fingerprint: String = "", val userConfirmed: Boolean = false)
 @JsonClass(generateAdapter = true)
 data class MemoryRevisionSnapshot(val id: String, val memoryId: String, val previousContent: String, val newContent: String, val changedAt: Long, val reason: String)
 @JsonClass(generateAdapter = true)
@@ -87,7 +90,18 @@ data class BrainSnapshot(
     val reminders: List<ReminderSnapshot>,
     val devices: List<DeviceConfigurationSnapshot>,
     val settings: UserSettingsSnapshot,
+    val episodes: List<EpisodeSnapshot> = emptyList(),
+    val suggestionDecisions: List<SuggestionDecisionSnapshot> = emptyList(),
+    val reflectionStatuses: List<ReflectionStatusSnapshot> = emptyList(),
 )
+
+@JsonClass(generateAdapter = true)
+data class EpisodeSnapshot(val id: String,val runId: String,val json: String,val endedAt: Long,val importance: Int,val usageCount: Long,val lastReferencedAt: Long?)
+@JsonClass(generateAdapter = true)
+data class SuggestionDecisionSnapshot(val id: String,val fingerprint: String,val kind: String,val state: String,val createdAt: Long,val updatedAt: Long,val evidenceCount: Int,val dismissedAt: Long?,val neverAgain: Boolean)
+
+@JsonClass(generateAdapter = true)
+data class ReflectionStatusSnapshot(val id: String,val policyVersion: Int,val status: String,val mode: String,val updatedAt: Long)
 
 interface BrainSnapshotSource { suspend fun snapshot(): BrainSnapshot }
 
@@ -113,12 +127,12 @@ class RoomBrainSnapshotSource(
         BrainSnapshot(
             snapshotId = UUID.randomUUID().toString(),
             createdAt = System.currentTimeMillis(),
-            workspace = dao.workspaceObjects().map { WorkspaceObjectSnapshot(it.id, it.type, it.title, it.createdAt, it.updatedAt, it.source, it.lifecycle, it.inInbox, it.indexingState, it.contentRef) },
+            workspace = dao.workspaceObjects().filterNot { it.id.startsWith("learning:") }.map { WorkspaceObjectSnapshot(it.id, it.type, it.title, it.createdAt, it.updatedAt, it.source, it.lifecycle, it.inInbox, it.indexingState, it.contentRef) },
             notes = notes.map { NoteSnapshot(it.objectId, it.body, it.revision) },
             conversations = dao.conversations().map { ConversationSnapshot(it.id, it.createdAt, it.active, it.title, it.updatedAt, it.archived) },
             turns = dao.turns().map { TurnSnapshot(it.id, it.conversationId, it.userText, it.assistantText, it.timestamp, it.metadata) },
-            memories = dao.memories().map { MemorySnapshot(it.id, it.content, it.kind, it.scope, it.scopeId, it.createdAt, it.updatedAt, it.sourceObjectId, it.sourceRevision, it.confidence, it.status) },
-            legacyMemories = database.memoryDao().snapshot().map { LegacyMemorySnapshot(it.id, it.content, it.timestamp, it.sourceObjectId, it.sourceRevision) },
+            memories = dao.memories().map { MemorySnapshot(it.id, it.content, it.kind, it.scope, it.scopeId, it.createdAt, it.updatedAt, it.sourceObjectId, it.sourceRevision, it.confidence, it.status,it.origin,it.evidenceJson,it.sourceEpisodeId,it.evidenceCount,it.lastConfirmedAt,it.usageCount,it.lastUsedAt,it.validUntil,it.fingerprint,it.userConfirmed) },
+            legacyMemories = emptyList(), // Legacy storage is an import archive, never a second export of personal facts.
             memoryRevisions = dao.memoryRevisions().map { MemoryRevisionSnapshot(it.id, it.memoryId, it.previousContent, it.newContent, it.changedAt, it.reason) },
             workingSet = dao.workingSet().map { WorkingSetSnapshot(it.objectId, it.addedAt, it.source) },
             provenance = provenance.map { ProvenanceSnapshot(it.objectId, it.sourceId, it.revision, it.metadata) },
@@ -130,8 +144,11 @@ class RoomBrainSnapshotSource(
             devices = PersistentDeviceRegistry(storage).getSavedDevices().map {
                 DeviceConfigurationSnapshot(it.identity.deviceId, it.identity.displayName, it.identity.deviceType, it.firmwareVersion, it.autoConnect)
             },
+            episodes = database.personalMemoryDao().savedEpisodes().map { EpisodeSnapshot(it.id,it.runId,it.json,it.endedAt,it.importance,it.usageCount,it.lastReferencedAt) },
+            reflectionStatuses = database.personalMemoryDao().reflectionHistory().map { ReflectionStatusSnapshot(it.id,it.policyVersion,it.status,it.mode,it.updatedAt) },
+            suggestionDecisions = database.personalMemoryDao().durableDecisions().map { SuggestionDecisionSnapshot(it.id,it.fingerprint,it.kind,it.state,it.createdAt,it.updatedAt,it.evidenceCount,it.dismissedAt,it.neverAgain) },
             settings = UserSettingsSnapshot(
-                values = (listOf("active_ai_provider", "active_ai_model", "ai_routing_policy", "ollama_endpoint", "speech_locale", "speech_stt_provider", "speech_tts_provider") +
+                values = (listOf("active_ai_provider", "active_ai_model", "ai_routing_policy", "ollama_endpoint", "speech_locale", "speech_stt_provider", "speech_tts_provider", "learning_mode") +
                     AiModelRole.entries.flatMap { listOf("role_${it.name}_selection", "role_${it.name}_provider", "role_${it.name}_model") })
                     .mapNotNull { key -> storage.getString(key)?.let { key to it } }.toMap(),
                 providerConfiguration = mapOf("openrouter" to !storage.getString("openrouter_api_key").isNullOrBlank()),
@@ -140,8 +157,8 @@ class RoomBrainSnapshotSource(
                 booleanValues = listOf(
                     "policy_conversation", "policy_device_state", "policy_recent_events", "policy_memories",
                     "policy_tools", "policy_location", "policy_images", "policy_audio", "policy_video",
-                    "policy_cloud_workspace",
-                ).associateWith { storage.getBoolean(it, false) },
+                    "policy_cloud_workspace", "policy_cloud_memories", "learning_memories", "learning_procedures", "learning_automations", "learning_model_reflection",
+                ).associateWith { storage.getBoolean(it, it in setOf("learning_memories","learning_procedures","learning_automations")) },
                 integerValues = listOf("litert_context", "ai_temperature")
                     .associateWith { storage.getInt(it, 0) },
                 appearanceMode = context.getSharedPreferences("halo_appearance", Context.MODE_PRIVATE)
@@ -156,7 +173,7 @@ internal fun BrainSnapshot.toRoomContent() = RoomBrainContent(
     notes.map { NoteEntity(it.objectId, it.body, it.revision) },
     conversations.map { PersistedConversation(it.id, it.createdAt, it.active, it.title, it.updatedAt, it.archived) },
     turns.map { PersistedTurn(it.id, it.conversationId, it.userText, it.assistantText, it.timestamp, it.metadata) },
-    memories.map { MemoryRecordEntity(it.id, it.content, it.kind, it.scope, it.scopeId, it.createdAt, it.updatedAt, it.sourceObjectId, it.sourceRevision, it.confidence, it.status) },
+    memories.map { MemoryRecordEntity(it.id, it.content, it.kind, it.scope, it.scopeId, it.createdAt, it.updatedAt, it.sourceObjectId, it.sourceRevision, it.confidence, it.status,it.origin,it.evidenceJson,it.sourceEpisodeId,it.evidenceCount,it.lastConfirmedAt,it.usageCount,it.lastUsedAt,it.validUntil,it.fingerprint,it.userConfirmed) },
     memoryRevisions.map { MemoryRevisionEntity(it.id, it.memoryId, it.previousContent, it.newContent, it.changedAt, it.reason) },
     workingSet.map { WorkingSetEntry(it.objectId, it.addedAt, it.source) },
     provenance.map { ObjectProvenance(it.objectId, it.sourceId, it.revision, it.metadata) },

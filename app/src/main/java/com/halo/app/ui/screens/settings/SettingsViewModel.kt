@@ -61,6 +61,7 @@ class SettingsViewModel(
         appearancePreferences.setMode(mode)
     }
 
+    fun openLearning() { _navigationEvents.tryEmit("memory_learning") }
     fun openAutomation() { _navigationEvents.tryEmit("automation") }
     fun openIntelligence() { _navigationEvents.tryEmit("ai_settings") }
     fun openVoice() { _navigationEvents.tryEmit("voice_settings") }

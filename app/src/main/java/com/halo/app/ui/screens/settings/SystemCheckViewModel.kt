@@ -198,6 +198,18 @@ class SystemCheckViewModel(
             automationRows.add(SystemCheckItem("automation_attention", "Durable attention", HaloGlyph.HALO, CheckStatus.READY,
                 "$pendingAttention updates pending · " + com.halo.runtime.cognition.attention.AttentionInitiativeLevel.fromStored(com.halo.app.di.ManualDependencyGraph.storage.getString("attention_initiative")).name.lowercase()))
             sections.add(SystemCheckSection("automation_runtime", "Automation runtime", automationRows))
+            val learning=com.halo.app.di.ManualDependencyGraph.personalLearning
+            val preferences=com.halo.app.di.ManualDependencyGraph.learningPreferences()
+            sections.add(SystemCheckSection("personal_memory","Memory & learning",listOf(
+                SystemCheckItem("memory_repository","Memory repository",HaloGlyph.HALO,CheckStatus.READY,"Canonical Room memory records"),
+                SystemCheckItem("reflection","Reflection",HaloGlyph.HALO,CheckStatus.READY,if(preferences.mode == com.halo.runtime.cognition.memory.LearningPreference.OFF) "Off" else "Deterministic; model path optional"),
+                SystemCheckItem("learning_mode","Learning mode",HaloGlyph.HALO,CheckStatus.READY,preferences.mode.name.lowercase().replace('_',' ')),
+                SystemCheckItem("learning_pending","Pending suggestions",HaloGlyph.HALO,CheckStatus.READY,"${learning.dao.pendingCount()} awaiting review"),
+                SystemCheckItem("learning_episodes","Episodes",HaloGlyph.HALO,CheckStatus.READY,"${learning.dao.episodeCount()} bounded task summaries"),
+                SystemCheckItem("semantic_retrieval","Semantic retrieval",HaloGlyph.HALO,CheckStatus.NOT_CONFIGURED,"Lexical available; semantic encoder not installed"),
+                SystemCheckItem("procedure_suggestions","Procedure suggestions",HaloGlyph.HALO,CheckStatus.READY,if(preferences.mode == com.halo.runtime.cognition.memory.LearningPreference.SUGGEST && preferences.suggestProcedures) "Enabled" else "Disabled"),
+                SystemCheckItem("automation_suggestions","Automation suggestions",HaloGlyph.HALO,CheckStatus.READY,if(preferences.mode == com.halo.runtime.cognition.memory.LearningPreference.SUGGEST && preferences.suggestAutomations) "Enabled" else "Disabled")
+            )))
             val uiMetrics = com.halo.runtime.cognition.ui.UiOperatorDiagnostics.metrics.value
             sections.add(SystemCheckSection("phone_operator", "Phone operator", listOf(
                 SystemCheckItem("phone_operator_accessibility", "Accessibility service", HaloGlyph.SEE,

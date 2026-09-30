@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
  * [AiHandoffProvider].
  */
 interface AiInferenceProvider : AiProvider {
+    val supportsTemperatureOverride: Boolean get() = false
     override suspend fun getCapabilities(): Set<AiCapability>
     suspend fun generate(request: AiRequest, context: AiContext): AiResponse
     fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent>

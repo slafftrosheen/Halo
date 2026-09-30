@@ -338,3 +338,9 @@ Source wiring only; build/tests/device acceptance not run.
 Platform source → AutomationSignal → matcher → revision-bound occurrence → durable claim → one environment snapshot → conditions → schema/automation/security policy → registered sequential actions → AgentRun truth → attention policy → durable delivery claim → host evidence. Sources do not execute actions. WorkManager time/boot reconciliation remains separate from runtime-only transition observation. SDK EventBus, P1 guard, P2 approvals, P4 payload/privacy and P5 screen security remain authoritative.
 
 See [Proactive automation runtime](../engineering/PROACTIVE-AUTOMATION-RUNTIME.md).
+
+## MINING-P7-001 — personal intelligence and reflection (2026-09-30)
+
+P7 keeps one durable Room MemoryRepository. Runtime owns portable Episode/Reflection/MemoryProposal/policy contracts and ephemeral run working notes; AgentStep.ContextUsed records actually admitted opaque reference IDs. Terminal-root observation follows response commit and emits auxiliary RuntimeStage.REFLECTION receipts without changing root trace/action truth. P1 procedures, P6 routines/attention, shared resource leases and P4 compaction retain ownership.
+
+See [P7 implementation ledger](../engineering/PERSONAL-INTELLIGENCE-REFLECTION.md).

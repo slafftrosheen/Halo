@@ -13,6 +13,10 @@ interface AgentRunDao {
     @Transaction
     @Query("SELECT * FROM agent_runs WHERE parentRunId = :parent ORDER BY startedAt")
     suspend fun children(parent: String): List<AgentRunWithSteps>
+    @Query("SELECT id FROM agent_runs WHERE parentRunId IS NULL AND state IN ('COMPLETED','FAILED','CANCELLED','INTERRUPTED') ORDER BY updatedAt DESC LIMIT 30")
+    fun reflectionCandidateIds(): Flow<List<String>>
+    @Query("SELECT id FROM agent_runs WHERE interactionId = :interactionId AND parentRunId IS NULL AND state NOT IN ('COMPLETED','FAILED','CANCELLED','INTERRUPTED') ORDER BY updatedAt DESC LIMIT 1")
+    suspend fun activeRootForInteraction(interactionId: String): String?
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertRun(entity: AgentRunEntity)
     @Update

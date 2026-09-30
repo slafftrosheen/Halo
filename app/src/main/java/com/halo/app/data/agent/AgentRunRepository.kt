@@ -155,6 +155,7 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
                         .put("excerpt", value.excerpt).put("revision", value.revision) }))
                 "DelegationResultRecorded"
             }
+            is AgentStep.ContextUsed -> { payload.put("objectIds", org.json.JSONArray(step.objectIds)).put("memoryIds", org.json.JSONArray(step.memoryIds)); "ContextUsed" }
             is AgentStep.PlanCreated -> { payload.put("planId", step.planId).put("summary", step.summary); "PlanCreated" }
             is AgentStep.ClarificationRequested -> { payload.put("question", step.question).put("field", step.field); "ClarificationRequested" }
             is AgentStep.ApprovalRequested -> { payload.put("action", step.action).put("risk", step.risk); "ApprovalRequested" }
@@ -318,6 +319,13 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
                             value.optString("sha256").takeIf { it.isNotBlank() && it != "null" }, value.optString("excerpt"),
                             value.optString("revision").takeIf { it.isNotBlank() && it != "null" }) },
                     p.optString("payloadRefId").takeIf { it.isNotBlank() && it != "null" })
+            }
+            "ContextUsed" -> {
+                fun ids(key: String, limit: Int): List<String> { val array = p.optJSONArray(key) ?: org.json.JSONArray()
+                    require(array.length() <= limit)
+                    return (0 until array.length()).map { array.getString(it).also { value -> require(value.length in 1..240) } }
+                }
+                AgentStep.ContextUsed(step, run, at, ids("objectIds",20), ids("memoryIds",12))
             }
             "PlanCreated" -> AgentStep.PlanCreated(step, run, at, p.getString("planId"), p.getString("summary"))
             "ClarificationRequested" -> AgentStep.ClarificationRequested(step, run, at, p.getString("question"), p.getString("field"))

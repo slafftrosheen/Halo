@@ -168,6 +168,7 @@ fun AppShell(
             ) {
                 composable(Screen.Home.route) {
                     HomeScreen(
+                        onOpenLearningSuggestions = { ManualDependencyGraph.notebookViewModel.setFilter(com.halo.app.ui.screens.notebook.NotebookFilter.INBOX); navigateSafely(Screen.Notebook.route) },
                         onOpenPendingUpdates = { navigateSafely("activity") },
                         viewModel = homeViewModel,
                         onRequestMicrophonePermission = onRequestPermissions
@@ -202,6 +203,8 @@ fun AppShell(
                                 is NotebookNavigation.OpenFile -> navigateSafely("notebook/file/${event.id}")
                                 is NotebookNavigation.OpenMemory -> navigateSafely("notebook/memory/${event.id}")
                                 is NotebookNavigation.OpenCanvas -> navigateSafely("notebook/canvas/${event.id}")
+                                is NotebookNavigation.ReviewAutomation -> navigateSafely("automation_review/${android.net.Uri.encode(event.routineId)}/${android.net.Uri.encode(event.suggestionId)}")
+                                NotebookNavigation.ReviewCapabilities -> navigateSafely("ai_settings")
                                 is NotebookNavigation.OpenStudy -> navigateSafely("notebook/study/${event.sessionId}")
                             }
                         }
@@ -419,6 +422,17 @@ fun AppShell(
                 composable("automation") {
                     com.halo.app.ui.screens.settings.AutomationScreen(ManualDependencyGraph.routinesViewModel,
                         onBack = { navController.popBackStack() }, onNotifications = { navigateSafely("notification_settings") })
+                }
+                composable("automation_review/{routineId}/{suggestionId}") { entry ->
+                    val reviewScope=rememberCoroutineScope()
+                    com.halo.app.ui.screens.settings.AutomationScreen(ManualDependencyGraph.routinesViewModel,
+                        onBack={navController.popBackStack()},onNotifications={navigateSafely("notification_settings")},
+                        reviewRoutineId=entry.arguments?.getString("routineId"),onReviewedSave={
+                            reviewScope.launch { entry.arguments?.getString("suggestionId")?.let { ManualDependencyGraph.personalLearning.reviewed(it) } }
+                        })
+                }
+                composable("memory_learning") {
+                    com.halo.app.ui.screens.settings.LearningSettingsScreen(onBack={navController.popBackStack()})
                 }
                 composable("notification_settings") {
                     com.halo.app.ui.screens.settings.NotificationSettingsScreen(ManualDependencyGraph.routinesViewModel,

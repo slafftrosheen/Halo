@@ -21,6 +21,7 @@ class RoomMemoryRetriever(
     private val embeddingProvider: MemoryEmbeddingProvider? = null,
     private val semanticIndex: MemorySemanticIndex? = null,
     private val now: () -> Long = System::currentTimeMillis,
+    private val activeScopeIds: suspend () -> Set<String> = { emptySet() },
 ) : MemoryRetriever {
 
     override suspend fun search(
@@ -30,11 +31,13 @@ class RoomMemoryRetriever(
     ): List<MemorySearchResult> {
         val effectiveLimit = limit.coerceIn(1, MemoryRetriever.MAX_LIMIT)
         val scopes = scopesFor(scope)
+        val scopeIds = activeScopeIds().take(20)
+        val queriedAt = now()
         val trimmed = query.trim().take(MemoryRetriever.MAX_QUERY_CHARS)
 
         // Candidate pool: bounded, and small enough that scoring stays cheap on a 0.6B-class device.
         val pool = if (trimmed.isBlank()) {
-            dao.recentActive(scopes, effectiveLimit * 2)
+            dao.recentScoped(scopes,scopeIds,queriedAt,effectiveLimit * 2)
         } else {
             val terms = LexicalMemoryScorer.terms(trimmed)
             val primary = if (terms.isEmpty()) {
@@ -42,13 +45,13 @@ class RoomMemoryRetriever(
             } else {
                 // One bounded LIKE per meaningful term, merged and de-duplicated.
                 terms.take(MAX_LIKE_TERMS).flatMap { term ->
-                    runCatching { dao.searchActive("%${escapeLike(term)}%", scopes, effectiveLimit * 2) }
+                    runCatching { dao.searchScoped("%${escapeLike(term)}%", scopes,scopeIds,queriedAt,effectiveLimit * 2) }
                         .getOrDefault(emptyList())
                 }
             }
             val merged = LinkedHashMap<String, MemoryRecordEntity>()
             primary.forEach { merged[it.id] = it }
-            dao.recentActive(scopes, effectiveLimit * 2).forEach { merged.putIfAbsent(it.id, it) }
+            dao.recentScoped(scopes,scopeIds,queriedAt,effectiveLimit * 2).forEach { merged.putIfAbsent(it.id, it) }
             merged.values.toList()
         }
 
@@ -58,16 +61,25 @@ class RoomMemoryRetriever(
 
         val nowMs = now()
         return pool
+            .filter { com.halo.runtime.cognition.memory.MemorySensitivityClassifier.classify(it.content) != com.halo.runtime.cognition.memory.MemorySensitivity.SECRET }
             .map { entity ->
                 val lexical = if (trimmed.isBlank()) 0.5f else LexicalMemoryScorer.score(trimmed, entity.content)
                 val recency = LexicalMemoryScorer.recencyScore(entity.updatedAt, nowMs)
-                val confidence = entity.confidence?.coerceIn(0f, 1f)
+                val confidence = entity.confidence?.takeIf { it.isFinite() }?.coerceIn(0f, 1f)
                 val semanticScore = semantic?.get(entity.id)
-                val finalScore = if (semanticScore != null) {
+                val baseScore = if (semanticScore != null) {
                     MemoryRankingWeights.withSemantic(lexical, semanticScore, recency, confidence)
                 } else {
                     MemoryRankingWeights.lexicalOnly(lexical, recency, confidence)
                 }
+                val intentBoost = when {
+                    trimmed.contains("prefer",ignoreCase=true) && entity.kind == "PREFERENCE" -> .12f
+                    trimmed.contains("project",ignoreCase=true) && entity.kind in setOf("PROJECT","FACT") -> .1f
+                    else -> 0f
+                }
+                val scopeBoost = if(entity.scopeId in scopeIds && entity.scope != "GLOBAL") .12f else 0f
+                val reinforcement = (entity.evidenceCount.coerceAtMost(10) / 100f)
+                val finalScore = (baseScore + intentBoost + scopeBoost + reinforcement).coerceAtMost(1f)
                 MemorySearchResult(
                     memoryId = entity.id,
                     snippet = LexicalMemoryScorer.snippet(entity.content),
@@ -107,11 +119,12 @@ class RoomMemoryRetriever(
     suspend fun totalCount(): Int = runCatching { dao.activeCount() }.getOrDefault(0)
 
     private fun scopesFor(scope: MemorySearchScope): List<String> = when (scope) {
-        MemorySearchScope.ALL -> MemoryScope.entries.map { it.name }
+        MemorySearchScope.ALL -> MemoryScope.entries.filter { it != MemoryScope.CONVERSATION }.map { it.name }
         MemorySearchScope.GLOBAL -> listOf(MemoryScope.GLOBAL.name)
         MemorySearchScope.PROJECT -> listOf(MemoryScope.PROJECT.name)
         MemorySearchScope.DEVICE -> listOf(MemoryScope.DEVICE.name)
-        MemorySearchScope.CONVERSATION -> listOf(MemoryScope.CONVERSATION.name)
+        MemorySearchScope.CONVERSATION -> emptyList()
+        MemorySearchScope.WORKSPACE_OBJECT -> listOf(MemoryScope.WORKSPACE_OBJECT.name)
     }
 
     /** SQLite LIKE wildcards are user data here, so they must be escaped, not interpreted. */

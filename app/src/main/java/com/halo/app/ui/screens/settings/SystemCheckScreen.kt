@@ -25,6 +25,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -64,6 +65,9 @@ fun SystemCheckScreen(
 
         TextButton(onClick = { com.halo.app.di.ManualDependencyGraph.routinesViewModel.reconcile() }) { Text("Reconcile automation schedules") }
         TextButton(onClick = viewModel::runSafeChecks) { Text("Refresh automation source availability") }
+        var reflectionPreview by remember { mutableStateOf(false) }
+        TextButton(onClick={reflectionPreview=!reflectionPreview}) { Text("Preview reflection policy") }
+        if(reflectionPreview) Text("Trivial tasks: none. Meaningful completed tasks: deterministic episodes. Optional substantial local FAST reflection: bounded, preemptible, no tools. Inferred memories and behaviors require Notebook review.")
         onOpenAutomationSandbox?.let { open -> TextButton(onClick = open) { Text("Automation sandbox · preview only") } }
         Spacer(Modifier.height(20.dp))
 

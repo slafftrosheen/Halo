@@ -39,6 +39,8 @@ data class AiRequest(
     val turnKind: ProviderTurnKind = ProviderTurnKind.INITIAL,
     /** Host presentation policy: auxiliary/child tokens must not become the parent's visible answer. */
     val publishStreamingTokens: Boolean = true,
+    /** Optional internal sampler override; providers must explicitly advertise support. */
+    val temperatureOverride: Double? = null,
 )
 
 enum class ProviderTurnKind { INITIAL, TOOL_CONTINUATION }

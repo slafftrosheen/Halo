@@ -39,6 +39,7 @@ data class EpisodeMemory(
     val reflectionNotes: String
 ) : Memory
 
+/** Historical capability-use reference; durable recipes belong to LearnedProcedureStore. */
 data class SkillMemory(
     override val id: UUID = UUID.randomUUID(),
     override val importance: Float,
@@ -73,6 +74,7 @@ data class RelationshipMemory(
     val relationType: String
 ) : Memory
 
+/** Transient Runtime state only. Never map to a durable personal MemoryRecord. */
 data class WorldStateMemory(
     override val id: UUID = UUID.randomUUID(),
     override val importance: Float,
@@ -85,6 +87,5 @@ data class WorldStateMemory(
 ) : Memory
 
 
-class Episode
-class Reflection
+// Episode and Reflection are defined in PersonalMemory.kt. Legacy value types above are portable only.
 

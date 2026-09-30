@@ -1250,6 +1250,8 @@ class LiteRtLocalProvider(
             .joinToString("\n\n")
     }
 
+    override val supportsTemperatureOverride: Boolean get() = true
+
     private fun generationConfig(
         descriptor: LocalModelDescriptor?,
         mappedPrompt: String,
@@ -1258,6 +1260,7 @@ class LiteRtLocalProvider(
         initialMessages: List<RuntimeConversationMessage>,
         availableTools: List<ToolDefinition>,
         requestMaxTokens: Int?,
+        requestTemperature: Double? = null,
     ): RuntimeGenerationConfig {
         val defaults = preferences.generationDefaults(
             descriptor?.let(::catalogModelFor),
@@ -1270,9 +1273,9 @@ class LiteRtLocalProvider(
             initialMessages = initialMessages,
             availableTools = availableTools,
             maxTokens = defaults.maxOutputTokens,
-            temperature = defaults.temperature,
+            temperature = requestTemperature?.takeIf { it.isFinite() && it in 0.0..2.0 } ?: defaults.temperature,
             topP = defaults.topP,
-            topK = defaults.topK,
+            topK = if(requestTemperature == 0.0) 1 else defaults.topK,
         )
     }
 
@@ -1306,6 +1309,7 @@ class LiteRtLocalProvider(
                     // too would invite double execution and claim a channel the artifact lacks.
                     availableTools = if (usePromptProtocol) emptyList() else requestedTools,
                     requestMaxTokens = request.maxOutputTokens,
+                    requestTemperature = request.temperatureOverride,
                 )
 
                 val result = modelSession.generate(genConfig).getOrElse { err ->
@@ -1385,6 +1389,7 @@ class LiteRtLocalProvider(
                     initialMessages = mapped.initialMessages.map { message -> message.toRuntimeMessage() },
                     availableTools = if (usePromptProtocol) emptyList() else requestedTools,
                     requestMaxTokens = request.maxOutputTokens,
+                    requestTemperature = request.temperatureOverride,
                 )
 
                 val result = modelSession.generate(genConfig) { token ->

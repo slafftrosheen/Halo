@@ -185,6 +185,16 @@ class HaloApplication :
             } catch (e: CancellationException) { throw e }
               catch (e: Exception) { Log.e("HaloApplication", "Routine presence observer failed", e) }
         }
+        resourceScope.launch {
+            ManualDependencyGraph.agentRunStore.observeRuns().collect { runs ->
+                runs.filter { it.state.isTerminal }.forEach { ManualDependencyGraph.interactionWorkingMemory.discard(it.id.value) }
+            }
+        }
+        resourceScope.launch {
+            try { automationBootstrap.await(); ManualDependencyGraph.reflectionCoordinator.observe() }
+            catch(cancelled: CancellationException) { throw cancelled }
+            catch(_: Exception) { Log.w("HaloApplication", "Reflection observer unavailable") }
+        }
         registerActivityLifecycleCallbacks(this)
     }
 

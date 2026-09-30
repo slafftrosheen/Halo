@@ -18,6 +18,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -354,9 +355,21 @@ private fun MemoryDetailCard(
     onSave: (String) -> Unit,
     onForget: () -> Unit
 ) {
+    val revisions by com.halo.app.di.ManualDependencyGraph.memoryRepository.observeRevisions(memory.id).collectAsState(emptyList())
     var correction by remember(memory.id, memory.content) { mutableStateOf(memory.content) }
     HaloWorkspaceCard {
         Text("Remembered context", style = MaterialTheme.typography.titleMedium)
+        Text("${if(memory.userConfirmed) "Confirmed by you" else "Imported · source unverified"} · ${memory.scope.name.lowercase()}${memory.scopeId?.let { " · $it" }.orEmpty()}")
+        Text("Origin: ${memory.origin.name.lowercase().replace('_',' ')} · Evidence: ${memory.evidenceCount}")
+        Text("Confidence: ${when { memory.confidence == null -> "Unknown"; memory.origin in setOf(com.halo.runtime.cognition.memory.MemoryProposalOrigin.USER_EXPLICIT,com.halo.runtime.cognition.memory.MemoryProposalOrigin.USER_CORRECTION) -> "User stated"; memory.confidence >= .8f -> "Likely"; else -> "Suggested" }}")
+        Text("Used ${memory.usageCount} time(s)${memory.lastUsedAt?.let { " · Last used ${java.time.Instant.ofEpochMilli(it)}" }.orEmpty()}")
+        Text("Created ${java.time.Instant.ofEpochMilli(memory.createdAt)} · Updated ${java.time.Instant.ofEpochMilli(memory.updatedAt)}")
+        if(memory.validUntil?.let { it <= System.currentTimeMillis() } == true) Text("Possibly outdated")
+        memory.evidence.take(12).forEach { evidence -> Text("Source: ${evidence.kind.name.lowercase().replace('_',' ')} · ${evidence.id.take(80)}") }
+        revisions.take(20).forEach { revision ->
+            Text("${java.time.Instant.ofEpochMilli(revision.changedAt)} · ${revision.reason}")
+            Text("Changed from: ${revision.previousContent}\nTo: ${revision.newContent}")
+        }
         Text(
             text = "${memory.kind.name.lowercase().replaceFirstChar { it.titlecase() }} · Revision ${memory.sourceRevision ?: 1}",
             style = MaterialTheme.typography.bodySmall,

@@ -19,15 +19,21 @@ import java.time.*
 import java.util.UUID
 
 @Composable
-fun AutomationScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onNotifications: () -> Unit) {
+fun AutomationScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onNotifications: () -> Unit, reviewRoutineId: String? = null, onReviewedSave: () -> Unit = {}) {
     val state by viewModel.uiState.collectAsState()
     var editing by remember { mutableStateOf<Routine?>(null) }
     var editor by remember { mutableStateOf(false) }
     var history by remember { mutableStateOf(false) }
     val result by viewModel.result.collectAsState()
+    LaunchedEffect(reviewRoutineId,state.loading) {
+        if(reviewRoutineId != null && !state.loading) {
+            editing=state.routines.firstOrNull { it.id.value == reviewRoutineId }
+            if(editing != null) editor=true
+        }
+    }
     if(editor) {
         RoutineEditor(editing, state.error, viewModel.actionDescriptors, { editor = false },
-            { viewModel.save(it) { editor = false } }, { editing?.let { viewModel.delete(it.id) }; editor = false },
+            { viewModel.save(it) { editor = false; onReviewedSave() } }, { editing?.let { viewModel.delete(it.id) }; editor = false },
             { editing?.let { viewModel.runNow(it.id) }; editor = false })
         return
     }

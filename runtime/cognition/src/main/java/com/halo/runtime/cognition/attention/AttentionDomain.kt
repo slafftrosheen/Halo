@@ -60,6 +60,7 @@ enum class AttentionUrgency {
 sealed interface AttentionSource {
     data object DirectUserRequest : AttentionSource
     data object AgentCompletion : AttentionSource
+    data object PersonalSuggestion : AttentionSource
     data object Routine : AttentionSource
     data object NotificationDigest : AttentionSource
     data object Reminder : AttentionSource

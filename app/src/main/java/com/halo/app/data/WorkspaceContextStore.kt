@@ -4,6 +4,7 @@ import androidx.room.*
 import com.halo.app.data.notebook.*
 import com.halo.runtime.cognition.context.WorkspaceContextSource
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 @Entity(tableName = "working_set")
 data class WorkingSetEntry(
@@ -39,7 +40,9 @@ class WorkspaceContextStore(private val database: AppDatabase, private val notes
     fun remoteAllowed(type: String): Boolean = cloudSharing.value &&
         (type != "MEMORY" || storage.getBoolean("policy_cloud_memories", false))
     val workingSet = database.workspaceContextDao().observeWorkingSet()
-    val memories = database.memoryDao().getAllMemories()
+    val memories = database.memoryRecordDao().observeActiveRecords().map { rows -> rows.filter { it.id.startsWith("mem_") }.map { row ->
+        Memory(row.id.removePrefix("mem_").toIntOrNull() ?: 0,row.content,row.updatedAt,row.sourceObjectId,row.sourceRevision)
+    } }
     suspend fun select(id: String) {
         requireNotNull(database.notebookDao().getWorkspaceObject(id))
         database.workspaceContextDao().add(WorkingSetEntry(id, System.currentTimeMillis()))
@@ -47,34 +50,37 @@ class WorkspaceContextStore(private val database: AppDatabase, private val notes
     suspend fun remove(id: String) = database.workspaceContextDao().remove(id)
     suspend fun remember(id: String) {
         val note = requireNotNull(notes.getNote(id))
-        database.memoryDao().insertMemory(Memory(content = note.body, sourceObjectId = id, sourceRevision = note.revision))
+        com.halo.app.data.memory.RoomMemoryRepository(database).promoteCandidate(com.halo.app.data.memory.MemoryCandidate(note.body,WorkspaceObjectId(id),note.revision))
     }
     suspend fun correct(memory: Memory, text: String) {
         require(text.isNotBlank())
-        database.memoryDao().updateMemory(memory.copy(content = text.trim(), timestamp = System.currentTimeMillis()))
+        com.halo.app.data.memory.RoomMemoryRepository(database).correctMemory("mem_${memory.id}",text)
     }
-    suspend fun forget(id: Int) = database.memoryDao().deleteMemoryById(id)
-    override suspend fun content(includeMemories: Boolean): List<String> {
-        val selected = database.workspaceContextDao().selectedIds().take(20).mapNotNull { id ->
-            resolveContent(id)?.let { (type, text) ->
-                if (type == "MEMORY" && !includeMemories) null else "Working set ${type.lowercase()}: ${text.take(8_000)}"
+    suspend fun forget(id: Int) { com.halo.app.data.memory.RoomMemoryRepository(database).forgetMemory("mem_$id") }
+    override suspend fun content(includeMemories: Boolean): List<String> = entries(includeMemories).map { it.text }
+    override suspend fun entries(includeMemories: Boolean): List<com.halo.runtime.cognition.context.WorkspaceContextEntry> =
+        database.workspaceContextDao().selectedIds().take(20).mapNotNull { id ->
+            resolveContent(id)?.let { (type,text) ->
+                if(type == "MEMORY" && !includeMemories) null else
+                    com.halo.runtime.cognition.context.WorkspaceContextEntry(id,"Working set ${type.lowercase()}: ${text.take(8_000)}")
             }
         }
-        // Query-driven memory retrieval is injected by MemoryContextSource, exactly once.
-        return selected
-    }
 
     override suspend fun contentFor(objectId: String): String? =
         resolveContent(objectId)?.let { (type, text) ->
             "Explicit ${type.lowercase()} reference: ${text.take(8_000)}"
         }
 
+    override suspend fun isMemory(objectId: String): Boolean = database.notebookDao().getWorkspaceObject(objectId)?.type == "MEMORY"
+
     private suspend fun resolveContent(id: String): Pair<String, String>? {
         val item = database.notebookDao().getWorkspaceObject(id) ?: return null
         if (item.lifecycle != "ACTIVE") return null
         val text = when (item.type) {
             "NOTE" -> notes.getNote(id)?.body
-            "MEMORY" -> database.memoryRecordDao().getRecord(id)?.content
+            "MEMORY" -> database.memoryRecordDao().getRecord(id)?.takeIf { it.status == "ACTIVE" && (it.validUntil == null || it.validUntil > System.currentTimeMillis()) &&
+                (it.scope == "GLOBAL" || it.scopeId in database.workspaceContextDao().selectedIds().take(20)) &&
+                com.halo.runtime.cognition.memory.MemorySensitivityClassifier.classify(it.content) != com.halo.runtime.cognition.memory.MemorySensitivity.SECRET }?.content
             "FILE" -> database.workspaceFileDao().getFile(id)?.let {
                 "${it.displayName} (${it.mimeType})"
             }

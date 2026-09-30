@@ -86,6 +86,7 @@ class RoomAttentionQueue(private val db: AppDatabase, scope: CoroutineScope) : A
         val source = when(j.getString("source")) {
             "DirectUserRequest" -> AttentionSource.DirectUserRequest
             "AgentCompletion" -> AttentionSource.AgentCompletion
+            "PersonalSuggestion" -> AttentionSource.PersonalSuggestion
             "Routine" -> AttentionSource.Routine
             "NotificationDigest" -> AttentionSource.NotificationDigest
             "Reminder" -> AttentionSource.Reminder

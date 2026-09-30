@@ -287,12 +287,16 @@ object HaloToolDescriptors {
     }
 
     fun memory(definition: ToolDefinition): ToolDescriptor? = when (definition.name) {
-        "halo_search_memory" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
+        "halo_search_memory", "halo_read_memory", "halo_read_working_memory" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
             readOnly(definition.name), keywords = setOf("memory", "recall", "fact"))
-        "halo_propose_memory" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
-            reversible(ReplaySafety.IDEMPOTENT_WITH_KEY), keywords = setOf("memory", "save", "remember"),
-            presentation = ToolPresentation(title = "Save a memory", actionVerb = "Remember",
-                targetArgument = "content"))
+        "halo_set_working_memory" -> descriptor(definition.name,definition,ToolCategory.WORKSPACE,
+            reversible(ReplaySafety.IDEMPOTENT_WITH_KEY),keywords=setOf("memory","working","temporary"))
+        "halo_propose_memory" -> descriptor(definition.name,definition,ToolCategory.WORKSPACE,
+            reversible(ReplaySafety.NEVER_REPLAY),keywords=setOf("memory","suggest"),
+            presentation=ToolPresentation(title="Suggest a memory",actionVerb="Suggest",targetArgument="content"))
+        "halo_remember", "halo_update_memory", "halo_forget_memory" -> descriptor(definition.name,definition,ToolCategory.WORKSPACE,
+            ToolSecurityPolicy(if(definition.name == "halo_forget_memory") ToolRiskClass.DESTRUCTIVE else ToolRiskClass.REVERSIBLE,ConfirmationPolicy.ALWAYS,ReplaySafety.NEVER_REPLAY),
+            keywords=setOf("memory","remember","forget","correct"),presentation=ToolPresentation(title="Change personal memory",actionVerb="Review",targetArgument="content"))
         else -> null
     }
 

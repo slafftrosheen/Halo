@@ -62,6 +62,7 @@ class StagedBrainImporter(
     private val adapters: Map<Class<*>, JsonAdapter<*>> = listOf(
         WorkspaceObjectSnapshot::class.java, NoteSnapshot::class.java, ConversationSnapshot::class.java,
         TurnSnapshot::class.java, MemorySnapshot::class.java, LegacyMemorySnapshot::class.java, MemoryRevisionSnapshot::class.java,
+        EpisodeSnapshot::class.java, SuggestionDecisionSnapshot::class.java, ReflectionStatusSnapshot::class.java,
         WorkingSetSnapshot::class.java, ProvenanceSnapshot::class.java, RelationSnapshot::class.java,
         FileSnapshot::class.java, AgentRunSnapshot::class.java, AgentStepSnapshot::class.java,
         ReminderSnapshot::class.java, DeviceConfigurationSnapshot::class.java,
@@ -231,17 +232,61 @@ class StagedBrainImporter(
                     else note.copy(body = note.body.replace(originalUri, replacement))
                 },
             )
-            val room = snapshot.toRoomContent()
+            val rawRoom = snapshot.toRoomContent()
+            val room = rawRoom.copy(memories=rawRoom.memories.map { memory ->
+                val origin=com.halo.runtime.cognition.memory.MemoryProposalOrigin.valueOf(memory.origin)
+                val scope=com.halo.runtime.cognition.memory.MemoryScope.valueOf(memory.scope)
+                com.halo.runtime.cognition.memory.MemoryKind.valueOf(memory.kind)
+                com.halo.app.data.memory.MemoryStatus.valueOf(memory.status)
+                require(scope == com.halo.runtime.cognition.memory.MemoryScope.GLOBAL || !memory.scopeId.isNullOrBlank())
+                require(memory.evidenceCount >= 0 && memory.usageCount >= 0 && memory.id.length in 1..200)
+                require(memory.evidenceJson.length <= 6000)
+                val encodedEvidence=org.json.JSONArray(memory.evidenceJson)
+                val evidence=com.halo.app.data.memory.PersonalMemoryCodec.decodeEvidence(memory.evidenceJson)
+                require(encodedEvidence.length() == evidence.size)
+                memory.copy(confidence=when {
+                    origin == com.halo.runtime.cognition.memory.MemoryProposalOrigin.IMPORT && !memory.userConfirmed -> null
+                    origin in setOf(com.halo.runtime.cognition.memory.MemoryProposalOrigin.MODEL_INFERRED,
+                        com.halo.runtime.cognition.memory.MemoryProposalOrigin.EPISODE_DERIVED,
+                        com.halo.runtime.cognition.memory.MemoryProposalOrigin.WORKSPACE_DERIVED) -> memory.confidence?.coerceAtMost(.95f)
+                    else -> memory.confidence
+                })
+            })
             database.withTransaction {
                 if (mode == BrainImportMode.REPLACE) clearBrain(dao)
                 dao.putWorkspaceObjects(room.workspace)
                 dao.putNotes(room.notes)
                 dao.putConversations(room.conversations)
                 dao.putTurns(room.turns)
+                room.memories.forEach { memory ->
+                    com.halo.runtime.cognition.memory.MemorySensitivityClassifier.requireWritable(memory.content)
+                    require(memory.confidence == null || (memory.confidence.isFinite() && memory.confidence in 0f..1f))
+                    require(memory.evidenceJson.length <= 6000)
+                }
                 dao.putMemories(room.memories)
+                snapshot.reflectionStatuses.take(1000).forEach { incoming ->
+                    require(incoming.id.length in 1..200 && incoming.policyVersion > 0 && incoming.status in setOf("PENDING","NOT_REQUIRED","COMPLETED","FAILED","SKIPPED") && incoming.mode in setOf("NONE","DETERMINISTIC","MODEL"))
+                    database.personalMemoryDao().claim(com.halo.app.data.memory.ReflectionStateEntity(incoming.id,incoming.policyVersion,if(incoming.status == "PENDING") "SKIPPED" else incoming.status,incoming.mode,incoming.updatedAt))
+                }
+                snapshot.episodes.take(1000).forEach { incoming ->
+                    val episode=com.halo.app.data.memory.PersonalMemoryCodec.decodeEpisode(incoming.json)
+                    require(episode.id.value == incoming.id && episode.runId == incoming.runId && incoming.importance > 0 &&
+                        episode.endedAt.toEpochMilli() == incoming.endedAt && incoming.usageCount >= 0)
+                    database.personalMemoryDao().episode(com.halo.app.data.memory.EpisodeEntity(incoming.id,incoming.runId,incoming.json,incoming.endedAt,incoming.importance,incoming.usageCount,incoming.lastReferencedAt))
+                }
+                snapshot.suggestionDecisions.take(1000).forEach { incoming ->
+                    require(incoming.id.length in 1..200 && incoming.evidenceCount >= 0 && incoming.kind in com.halo.runtime.cognition.memory.PersonalSuggestionKind.entries.map { it.name } && incoming.state in setOf("ACCEPTED","DISMISSED","EXPIRED","SUPERSEDED") && incoming.fingerprint.length <= 200)
+                    if(database.personalMemoryDao().fingerprint(incoming.fingerprint) == null) database.personalMemoryDao().put(
+                        com.halo.app.data.memory.PersonalSuggestionEntity(incoming.id,incoming.fingerprint,incoming.kind,"{}",incoming.state,incoming.createdAt,incoming.updatedAt,incoming.evidenceCount,incoming.dismissedAt,incoming.neverAgain))
+                }
                 snapshot.legacyMemories.forEach { legacy ->
-                    val id = if (mode == BrainImportMode.REPLACE || existingLegacyMemories.none { it.id == legacy.legacyId }) legacy.legacyId else 0
-                    database.memoryDao().insertMemory(Memory(id, legacy.content, legacy.timestamp, legacy.sourceObjectId, legacy.sourceRevision))
+                    com.halo.runtime.cognition.memory.MemorySensitivityClassifier.requireWritable(legacy.content)
+                    val canonicalId="mem_${legacy.legacyId}"
+                    if(database.memoryRecordDao().getRecord(canonicalId) == null) {
+                        database.memoryRecordDao().insertRecord(com.halo.app.data.memory.MemoryRecordEntity(canonicalId,legacy.content,"FACT","GLOBAL",null,
+                            legacy.timestamp,legacy.timestamp,legacy.sourceObjectId,legacy.sourceRevision,null,"ACTIVE",origin="IMPORT"))
+                        dao.putWorkspaceObjects(listOf(com.halo.app.data.notebook.WorkspaceObjectEntity(canonicalId,"MEMORY",legacy.content.take(80),legacy.timestamp,legacy.timestamp,"IMPORT","ACTIVE",false,"READY","memory:$canonicalId")))
+                    }
                 }
                 dao.putMemoryRevisions(room.memoryRevisions)
                 dao.putWorkingSet(room.workingSet)
@@ -256,7 +301,9 @@ class StagedBrainImporter(
                 dao.putAgentRuns(normalizedAgentRuns)
                 dao.putAgentSteps(room.agentSteps)
             }
-            val portableStrings = snapshot.settings.values.filterKeys { it in PORTABLE_STRING_KEYS }
+            val portableStrings = snapshot.settings.values.filterKeys { it in PORTABLE_STRING_KEYS }.filter { (key,value) ->
+                key != "learning_mode" || value in setOf("OFF","EXPLICIT_ONLY","SUGGEST")
+            }
             portableStrings.filterKeys { it !in AI_SELECTION_KEYS }.forEach(settingsStorage::putString)
             if (portableStrings.keys.any { it in AI_SELECTION_KEYS }) {
                 val previousProvider = settingsStorage.getString("active_ai_provider")
@@ -422,6 +469,9 @@ class StagedBrainImporter(
         memories = readLines(zip, "memory/memories.jsonl", MemorySnapshot::class.java),
         legacyMemories = readLines(zip, "memory/legacy.jsonl", LegacyMemorySnapshot::class.java),
         memoryRevisions = readLines(zip, "memory/revisions.jsonl", MemoryRevisionSnapshot::class.java),
+        episodes = readLines(zip,"memory/episodes.jsonl",EpisodeSnapshot::class.java),
+        suggestionDecisions = readLines(zip,"memory/suggestion-decisions.jsonl",SuggestionDecisionSnapshot::class.java),
+        reflectionStatuses = readLines(zip,"memory/reflection-statuses.jsonl",ReflectionStatusSnapshot::class.java),
         workingSet = readLines(zip, "working-set/entries.jsonl", WorkingSetSnapshot::class.java),
         provenance = readLines(zip, "workspace/provenance.jsonl", ProvenanceSnapshot::class.java),
         relations = readLines(zip, "relations/relations.jsonl", RelationSnapshot::class.java),
@@ -472,12 +522,29 @@ class StagedBrainImporter(
 
     private fun remap(source: BrainSnapshot, ids: Map<String, String>): BrainSnapshot {
         fun id(value: String) = ids[value] ?: value
+        val turns=source.turns.map { it.copy(id = if(it.conversationId in ids) UUID.randomUUID().toString() else it.id,conversationId=id(it.conversationId)) }
+        val turnIds=source.turns.zip(turns).associate { (old,new) -> old.id to new.id }
+        fun evidence(raw: String): String {
+            require(raw.length <= 6000)
+            val refs=com.halo.app.data.memory.PersonalMemoryCodec.decodeEvidence(raw)
+            require(org.json.JSONArray(raw).length() == refs.size)
+            return com.halo.app.data.memory.PersonalMemoryCodec.evidence(refs.map { ref -> ref.copy(id=when(ref.kind) {
+                com.halo.runtime.cognition.memory.MemoryEvidenceKind.WORKSPACE_OBJECT -> id(ref.id)
+                com.halo.runtime.cognition.memory.MemoryEvidenceKind.CONVERSATION_TURN -> turnIds[ref.id] ?: ref.id
+                else -> ref.id
+            }) })
+        }
         return source.copy(
             workspace = source.workspace.map { it.copy(id = id(it.id), contentRef = it.contentRef.replaceAfter(':', id(it.id))) },
             notes = source.notes.map { it.copy(objectId = id(it.objectId)) },
             conversations = source.conversations.map { it.copy(id = id(it.id)) },
-            turns = source.turns.map { it.copy(id = if (it.conversationId in ids) UUID.randomUUID().toString() else it.id, conversationId = id(it.conversationId)) },
-            memories = source.memories.map { it.copy(id = id(it.id), sourceObjectId = it.sourceObjectId?.let(::id)) },
+            turns = turns,
+            memories = source.memories.map { it.copy(id=id(it.id), sourceObjectId=it.sourceObjectId?.let(::id),scopeId=it.scopeId?.let(::id),evidenceJson=evidence(it.evidenceJson)) },
+            episodes = source.episodes.map { snapshot ->
+                val episode=com.halo.app.data.memory.PersonalMemoryCodec.decodeEpisode(snapshot.json)
+                snapshot.copy(json=com.halo.app.data.memory.PersonalMemoryCodec.episode(episode.copy(
+                    referencedObjectIds=episode.referencedObjectIds.map(::id).toSet(),referencedMemoryIds=episode.referencedMemoryIds.map(::id).toSet(),scopeId=episode.scopeId?.let(::id))))
+            },
             memoryRevisions = source.memoryRevisions.map { it.copy(id = if (it.memoryId in ids) UUID.randomUUID().toString() else it.id, memoryId = id(it.memoryId)) },
             workingSet = source.workingSet.map { it.copy(objectId = id(it.objectId)) },
             provenance = source.provenance.map { it.copy(objectId = id(it.objectId), sourceId = id(it.sourceId)) },
@@ -498,6 +565,7 @@ class StagedBrainImporter(
         dao.clearAgentSteps(); dao.clearAgentRuns(); dao.clearFiles(); dao.clearRelations(); dao.clearProvenance(); dao.clearWorkingSet()
         dao.clearMemoryRevisions(); dao.clearMemories(); dao.clearTurns(); dao.clearConversations(); dao.clearDrafts(); dao.clearNotes(); dao.clearWorkspaceObjects()
         dao.clearLegacyMemories()
+        database.personalMemoryDao().clearSuggestions();database.personalMemoryDao().clearEpisodes();database.personalMemoryDao().clearReflections()
     }
 
     private fun readRequired(zip: ZipFile, path: String, maxBytes: Int): ByteArray {
@@ -532,12 +600,12 @@ class StagedBrainImporter(
         val AI_SELECTION_KEYS = setOf("active_ai_provider", "active_ai_model", "ai_routing_policy")
         val PORTABLE_STRING_KEYS = setOf(
             "active_ai_provider", "active_ai_model", "ai_routing_policy",
-            "ollama_endpoint", "speech_locale",
+            "ollama_endpoint", "speech_locale", "learning_mode",
         )
         val PORTABLE_BOOLEAN_KEYS = setOf(
             "policy_conversation", "policy_device_state", "policy_recent_events", "policy_memories",
             "policy_tools", "policy_location", "policy_images", "policy_audio", "policy_video",
-            "policy_cloud_workspace",
+            "policy_cloud_workspace", "policy_cloud_memories", "learning_memories", "learning_procedures", "learning_automations", "learning_model_reflection",
         )
         val PORTABLE_INTEGER_KEYS = setOf("litert_context", "ai_temperature")
     }

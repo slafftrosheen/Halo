@@ -55,6 +55,8 @@ import kotlinx.coroutines.flow.stateIn
 
 @Composable
 fun ActivityScreen(viewModel: ActivityViewModel, onOpenObject: (String) -> Unit = {}) {
+    val reflectionStates by ManualDependencyGraph.personalLearning.reflections.collectAsState(emptyList())
+    val learningSuggestions by ManualDependencyGraph.personalLearning.pending.collectAsState(emptyList())
     val pendingUpdates by ManualDependencyGraph.attentionQueue.pending.collectAsState()
     val deliveryReceipts by ManualDependencyGraph.attentionQueue.receipts.collectAsState()
 
@@ -70,7 +72,7 @@ fun ActivityScreen(viewModel: ActivityViewModel, onOpenObject: (String) -> Unit 
         HaloScreenHeader("Activity", "What Halo did")
         Spacer(Modifier.size(24.dp))
 
-        if (filtered.isEmpty() && pendingUpdates.isEmpty() && deliveryReceipts.isEmpty()) {
+        if (filtered.isEmpty() && pendingUpdates.isEmpty() && deliveryReceipts.isEmpty() && reflectionStates.isEmpty() && learningSuggestions.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
                     text = "Nothing here yet.",
@@ -93,6 +95,14 @@ fun ActivityScreen(viewModel: ActivityViewModel, onOpenObject: (String) -> Unit 
                         Text(it.body.take(240), style = MaterialTheme.typography.bodySmall)
                     }
                 }
+                if(learningSuggestions.isNotEmpty()) Text("${learningSuggestions.size} learning suggestions pending review in Notebook")
+                reflectionStates.take(5).forEach { state -> Text("Reflection · " + when(state.status) {
+                    "NOT_REQUIRED" -> "No durable learning needed"
+                    "PENDING" -> "Pending"
+                    "FAILED" -> "Learning step failed; task result preserved"
+                    "SKIPPED" -> "Model reflection skipped"
+                    else -> "Completed"
+                }) }
                 deliveryReceipts.take(5).forEach { receipt -> Text("Update delivery · ${receipt.outcome.name.lowercase().replace('_', ' ')}") }
             }
 
@@ -360,6 +370,7 @@ private fun AgentRun.toStory(): ActivityStory {
     val activitySteps = steps.map { step ->
         val title = RuntimeUiFormatters.formatStepTitle(step)
         val message = when (step) {
+            is AgentStep.ContextUsed -> "${step.objectIds.size} workspace reference(s) · ${step.memoryIds.size} memory reference(s)"
             is AgentStep.UiTransactionRecorded -> step.transaction.let {
                 listOfNotNull(it.preview?.description, it.phase.name.lowercase().replace('_', ' '),
                     it.searchStatus?.let { status -> "Search ${status.name.lowercase().replace('_', ' ')}" },

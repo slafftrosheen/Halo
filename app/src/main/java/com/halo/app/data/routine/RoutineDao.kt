@@ -3,8 +3,13 @@ package com.halo.app.data.routine
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow
 
+data class ManualRoutineCount(val routineId: String,val count: Int)
+
 @Dao
 interface RoutineDao {
+    @Query("SELECT routineId, COUNT(*) AS count FROM routine_runs WHERE source = 'MANUAL' AND state = 'COMPLETED' AND triggerAt >= :since GROUP BY routineId ORDER BY count DESC LIMIT 10")
+    suspend fun recentManualPatterns(since: Long): List<ManualRoutineCount>
+
     @Query("SELECT * FROM routines ORDER BY createdAt DESC") fun observeRoutines(): Flow<List<RoutineEntity>>
     @Query("SELECT * FROM routines") suspend fun all(): List<RoutineEntity>
     @Query("SELECT * FROM routines WHERE id = :id") suspend fun get(id: String): RoutineEntity?

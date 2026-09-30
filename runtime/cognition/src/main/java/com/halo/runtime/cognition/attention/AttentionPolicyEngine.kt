@@ -22,6 +22,8 @@ class DefaultAttentionPolicyEngine : AttentionPolicyEngine {
             )
         }
 
+        if(request.source == AttentionSource.PersonalSuggestion) return AttentionDecision.SurfaceSilently(
+            SilentSurface.NOTEBOOK_INBOX,AttentionDecisionReason.SUPPRESSED_BY_POLICY)
         val ceiling = AttentionSourcePolicy.ceiling(request.source)
         if(request.importance.ordinal > ceiling.ordinal) return evaluate(request.copy(importance = ceiling), context, preferences)
         // Direct user requests bypass proactive interruption rules

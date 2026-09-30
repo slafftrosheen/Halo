@@ -65,6 +65,8 @@ sealed interface NotebookNavigation {
     data class OpenMemory(val id: String) : NotebookNavigation
     data class OpenCanvas(val id: String) : NotebookNavigation
     data class OpenStudy(val sessionId: String) : NotebookNavigation
+    data class ReviewAutomation(val routineId: String,val suggestionId: String) : NotebookNavigation
+    data object ReviewCapabilities : NotebookNavigation
 }
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
@@ -272,6 +274,10 @@ class NotebookViewModel(
             WorkspaceObjectType.MEMORY -> NotebookNavigation.OpenMemory(id)
         })
     }
+    fun openMemory(id: String) { navigationChannel.trySend(NotebookNavigation.OpenMemory(id)) }
+    fun reviewAutomation(id: String,suggestionId: String) { navigationChannel.trySend(NotebookNavigation.ReviewAutomation(id,suggestionId)) }
+    fun reviewCapabilities() { navigationChannel.trySend(NotebookNavigation.ReviewCapabilities) }
+    fun openReferencedObject(id: String) = viewModelScope.launch { workspace.getObject(id)?.let(::openObject) }
     fun openNote(id: String) { navigationChannel.trySend(NotebookNavigation.OpenNote(id)) }
     fun openConversation(id: String) = viewModelScope.launch { workspace.openConversation(id) }
     fun selectContext(id: String, selected: Boolean) = viewModelScope.launch {

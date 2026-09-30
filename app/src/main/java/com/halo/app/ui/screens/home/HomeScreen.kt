@@ -77,7 +77,11 @@ fun HomeScreen(
     viewModel: HomeViewModel,
     onRequestMicrophonePermission: () -> Unit,
     onOpenPendingUpdates: () -> Unit = {},
+    onOpenLearningSuggestions: () -> Unit = {},
 ) {
+    val learningSuggestions by com.halo.app.di.ManualDependencyGraph.personalLearning.pending.collectAsState(emptyList())
+    val showLearning = com.halo.runtime.cognition.memory.PersonalSuggestionPolicy.showHome(
+        com.halo.runtime.cognition.attention.AttentionInitiativeLevel.fromStored(com.halo.app.di.ManualDependencyGraph.storage.getString("attention_initiative")))
     val pendingUpdates by com.halo.app.di.ManualDependencyGraph.attentionQueue.pending.collectAsState()
     val selectedContext by (viewModel.workspace?.workingSet ?: kotlinx.coroutines.flow.flowOf(emptyList<String>())).collectAsState(emptyList())
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -201,6 +205,7 @@ fun HomeScreen(
             .padding(horizontal = 24.dp, vertical = 18.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        if(showLearning && learningSuggestions.isNotEmpty()) TextButton(onClick=onOpenLearningSuggestions) { Text("${learningSuggestions.size} learning suggestions · Review") }
         if(pendingUpdates.isNotEmpty()) TextButton(onClick = onOpenPendingUpdates) { Text("${pendingUpdates.size} updates waiting") }
 
         uiState.longTaskStatus?.let { Text(it, style = MaterialTheme.typography.labelSmall) }

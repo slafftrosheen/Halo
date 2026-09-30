@@ -110,6 +110,8 @@ class AndroidAttentionHost(
         }
     }
     suspend fun surfaceSilently(request: AttentionRequest, surface: SilentSurface): Boolean {
+        // Inbox/Home projections already exist durably; do not emit a conversational response or speech.
+        if(request.source == AttentionSource.PersonalSuggestion && surface in setOf(SilentSurface.NOTEBOOK_INBOX,SilentSurface.HOME_PENDING)) return true
         if (surface != SilentSurface.ACTIVITY) return false
         this.surface(request)
         return true

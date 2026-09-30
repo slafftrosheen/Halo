@@ -95,6 +95,12 @@ sealed interface AgentStep {
         override val createdAt: Instant, val status: String, val summary: String,
         val evidence: List<AgentEvidenceRecord>, val payloadRefId: String? = null) : AgentStep
 
+    /** Opaque IDs admitted to provider context, without reference bodies or private reasoning. */
+    data class ContextUsed(override val id: AgentStepId, override val runId: AgentRunId,
+        override val createdAt: Instant, val objectIds: List<String>, val memoryIds: List<String>) : AgentStep {
+        init { require(objectIds.size <= 20 && memoryIds.size <= 12) }
+    }
+
     // ---- historical variants (unchanged shape) -----------------------------
 
     data class PlanCreated(

@@ -265,6 +265,9 @@ fun NotebookScreen(viewModel: NotebookViewModel) {
                 }
             }
         }
+        if(state.filter in listOf(NotebookFilter.MEMORY,NotebookFilter.INBOX)) item(key="personal-memory") {
+            PersonalMemorySection(viewModel,inboxOnly=state.filter == NotebookFilter.INBOX)
+        }
         item(key = "library-title") {
             val location = state.collections.firstOrNull { it.id == state.selectedCollectionId }?.name ?: state.filter.label
             SectionTitle(location, "${state.items.size} item${if (state.items.size == 1) "" else "s"}")
@@ -281,7 +284,7 @@ fun NotebookScreen(viewModel: NotebookViewModel) {
                 WorkspaceEmptyState(state.query.isNotBlank(), viewModel::createNote)
             }
         } else {
-            items(state.items, key = { it.objectRef.id.value }) { item ->
+            items(state.items.filterNot { it.objectRef.id.value.startsWith("learning:") || state.filter == NotebookFilter.MEMORY }, key = { it.objectRef.id.value }) { item ->
                 WorkspaceObjectRow(
                     item = item,
                     selected = item.objectRef.id.value in state.workingSet,

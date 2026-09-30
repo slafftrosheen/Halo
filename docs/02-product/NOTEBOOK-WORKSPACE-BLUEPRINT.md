@@ -1958,3 +1958,9 @@ With Notebook, Halo can **continue**.
 ---
 
 **End of Blueprint**
+
+## MINING-P7-001 — personal intelligence and reflection (2026-09-30)
+
+P7 makes Notebook Memory and Inbox the review surface for personal learning. Confirmed records stay canonical Workspace MEMORY objects; inferred candidates are learning projections, never current facts or Working Set context. Episodes show public historical evidence and can be explicitly kept in Brain. Inline conflict review preserves user control. Procedure/routine suggestions open existing reviewed owners; Home only links to Inbox and Quiet does not surface learning.
+
+See [P7 implementation ledger](../engineering/PERSONAL-INTELLIGENCE-REFLECTION.md).
