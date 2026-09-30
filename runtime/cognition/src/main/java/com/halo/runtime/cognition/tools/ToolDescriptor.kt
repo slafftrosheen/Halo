@@ -152,6 +152,7 @@ data class ToolExecutionPolicy(
 
         /** Global hard ceiling; per-tool policies are clamped to this. */
         const val HARD_CEILING_TIMEOUT_MS = 30_000L
+        const val HARD_DELEGATION_TIMEOUT_MS = 90_000L
     }
 }
 

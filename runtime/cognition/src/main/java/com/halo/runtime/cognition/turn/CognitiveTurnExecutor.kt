@@ -55,6 +55,7 @@ class CognitiveTurnExecutor(
      * provider loop and the tool loop cannot disagree about how long this run has left.
      */
     private val runGuards: AgentRunGuardRegistry? = null,
+    private val payloadStore: com.halo.runtime.cognition.context.ContentPayloadStore? = null,
 ) {
     private fun newStepId() = AgentStepId(UUID.randomUUID().toString())
 
@@ -67,6 +68,8 @@ class CognitiveTurnExecutor(
         workload: com.halo.sdk.provider.AiWorkloadSpec,
         runId: AgentRunId?,
     ): ProviderTurnResult {
+        val boundedContext = com.halo.runtime.cognition.context.CognitiveContextPlanner().fitProviderContext(
+            (target.model.contextLength ?: 8192L).coerceIn(1, Int.MAX_VALUE.toLong()).toInt(), request, context)
         val guard = runId?.let { runGuards?.guardFor(it, interactionId) }
         suspend fun stopped(stop: RunGuardDecision.Stop): ProviderTurnResult {
             agentRunCoordinator?.recordStep(guard!!.toJournalStep(stop))
@@ -74,15 +77,21 @@ class CognitiveTurnExecutor(
                 providerId = target.providerId, modelId = target.modelId), target)
         }
         if (guard != null) {
-            val chars = request.text.orEmpty().length.toLong() + context.conversation.sumOf { it.content.length.toLong() } +
-                context.availableTools.sumOf { it.description.length.toLong() + it.parameters.toString().length }
+            val durable = runId?.let { agentRunStore?.get(it) }
+            if (durable?.parentRunId != null && durable.steps.count { it is AgentStep.ProviderTurnStarted } >
+                com.halo.runtime.cognition.agent.AgentRunLimits.DELEGATED.maxToolRounds + 1) {
+                return stopped(RunGuardDecision.Stop(com.halo.runtime.cognition.agent.RunGuardReason.TOO_MANY_TOOL_ROUNDS,
+                    com.halo.runtime.cognition.agent.RunGuardEvidence(guard.currentToolRounds)))
+            }
+            val chars = (if (request.appendTextAsUserMessage) request.text.orEmpty().length.toLong() else 0) + boundedContext.conversation.sumOf { it.content.length.toLong() } +
+                boundedContext.availableTools.sumOf { it.description.length.toLong() + it.parameters.toString().length }
             guard.tokens.noteEstimatedPrompt((chars + 3) / 4)
             (guard.beforeRound() as? RunGuardDecision.Stop)?.let { return stopped(it) }
         }
-        val outcome = if (guard == null) providerExecutor.execute(target, request, context, requestId, interactionId, workload)
+        val outcome = if (guard == null) providerExecutor.execute(target, request, boundedContext, requestId, interactionId, workload)
         else {
             val result = kotlinx.coroutines.withTimeoutOrNull(guard.remainingMs.coerceAtLeast(1)) {
-                providerExecutor.execute(target, request, context, requestId, interactionId, workload)
+                providerExecutor.execute(target, request, boundedContext, requestId, interactionId, workload)
             }
             result ?: return stopped(RunGuardDecision.Stop(com.halo.runtime.cognition.agent.RunGuardReason.DEADLINE_EXCEEDED,
                 com.halo.runtime.cognition.agent.RunGuardEvidence(guard.currentToolRounds, elapsedMs = guard.elapsedMs)))
@@ -92,6 +101,16 @@ class CognitiveTurnExecutor(
             val decision = guard.onGenerationDelta(outcome.response.text)
             guard.onGenerationCompleted()
             if (decision is RunGuardDecision.Stop) return stopped(decision)
+        }
+        if (outcome is ProviderTurnResult.Response && runId != null && agentRunStore?.get(runId)?.parentRunId != null && outcome.response.text.length > 2048) {
+            val stored = payloadStore?.put(com.halo.runtime.cognition.context.PayloadOwner(
+                com.halo.runtime.cognition.context.PayloadOwnerKind.AGENT_RUN, runId.value), outcome.response.text.toByteArray(),
+                com.halo.runtime.cognition.context.PayloadClassification.CHILD_AGENT_RESULT,
+                com.halo.runtime.cognition.context.ContextTrust.EXTERNAL_UNTRUSTED, "child:${runId.value}", remoteAllowed = workload.allowRemote)
+            val ref = (stored as? com.halo.runtime.cognition.context.PayloadOutcome.Value)?.value
+            return outcome.copy(response = outcome.response.copy(text = outcome.response.text.take(1800) +
+                (ref?.let { "\nAdditional findings: payload=${it.id}; sha256=${it.sha256}; bytes=${it.byteCount}" }
+                    ?: "\nAdditional findings omitted by payload policy."), payloadRefId = ref?.id))
         }
         return outcome
     }
@@ -130,6 +149,24 @@ class CognitiveTurnExecutor(
         var currentContext = prepared.context
         var currentRequest = prepared.providerRequest
         var currentTarget = prepared.target
+        val recoveryRun = turn.runId?.let { agentRunStore?.get(it) }
+        val pendingResponse = if (turn.mode == CognitiveTurnMode.CONTINUE_AFTER_TOOL) recoveryRun?.steps
+            ?.filterIsInstance<AgentStep.ProviderTurnCompleted>()?.lastOrNull()?.takeIf { completed ->
+                completed.toolCalls.any { call -> recoveryRun.steps.none { step -> when (step) {
+                    is AgentStep.ToolOutcomeRecorded -> step.toolCallId == call.toolCallId
+                    is AgentStep.ToolRejected -> step.toolCallId == call.toolCallId
+                    is AgentStep.ToolCompleted -> step.toolCallId == call.toolCallId
+                    is AgentStep.ToolFailed -> step.toolCallId == call.toolCallId
+                    else -> false
+                } } }
+            } else null
+        if (pendingResponse != null) {
+            val replayedIds = pendingResponse.toolCalls.map { it.toolCallId }.toSet()
+            // Reconstructed pending declarations are replaced by the original response and its newly resolved atomic tool group below.
+            currentContext = currentContext.copy(conversation = currentContext.conversation.filterNot { message ->
+                message.toolCalls.any { it.id in replayedIds } || message.toolCallId in replayedIds
+            })
+        }
 
         if (turn.mode == CognitiveTurnMode.CONTINUE_AFTER_TOOL) {
             currentRequest = currentRequest.copy(
@@ -142,7 +179,7 @@ class CognitiveTurnExecutor(
             turn.mode == CognitiveTurnMode.CONTINUE_AFTER_TOOL
         ) {
             val durableRunId = createDurableRunIfNeeded()
-            if (durableRunId != null) {
+            if (durableRunId != null && pendingResponse == null) {
                 agentRunCoordinator?.recordStep(
                     AgentStep.ProviderTurnStarted(
                         id = newStepId(),
@@ -173,7 +210,11 @@ class CognitiveTurnExecutor(
                 "outgoingUserChars" to if (currentRequest.appendTextAsUserMessage) currentRequest.text.orEmpty().length else 0,
                 "continuation" to (currentRequest.turnKind == ProviderTurnKind.TOOL_CONTINUATION),
             ))
-            val outcome = executeProvider(
+            val outcome = if (pendingResponse != null) ProviderTurnResult.Response(AiResponse(
+                text = pendingResponse.assistantText, providerId = currentTarget.providerId, modelId = currentTarget.modelId,
+                toolCalls = pendingResponse.toolCalls.map { call -> com.halo.sdk.provider.ToolCall(call.toolCallId, call.toolName,
+                    ToolArgumentCanonicalizer.parseToArgumentsMap(call.argumentsJson).mapValues { it.value ?: "" }) }), currentTarget)
+            else executeProvider(
                 target = prepared.target,
                 request = currentRequest,
                 context = currentContext,
@@ -210,7 +251,7 @@ class CognitiveTurnExecutor(
                 }
             }
 
-            if (durableRunId != null) {
+            if (durableRunId != null && pendingResponse == null) {
                 agentRunCoordinator?.recordStep(
                     AgentStep.ProviderTurnCompleted(
                         id = newStepId(),
@@ -221,7 +262,7 @@ class CognitiveTurnExecutor(
                         toolCalls = initialResponse.toolCalls.map {
                             ProviderToolCallRecord(it.id, it.functionName, ToolArgumentCanonicalizer.canonicalize(it.arguments))
                         },
-                        finishReason = initialResponse.finishReason ?: "stop"
+                        finishReason = initialResponse.finishReason ?: "stop", payloadRefId = initialResponse.payloadRefId
                     )
                 )
             }
@@ -234,7 +275,7 @@ class CognitiveTurnExecutor(
                             runId = durableRunId,
                             createdAt = Instant.now(),
                             responseId = turn.requestId,
-                            text = initialResponse.text,
+                            text = initialResponse.text, payloadRefId = initialResponse.payloadRefId,
                         )
                     )
                 }
@@ -266,6 +307,9 @@ class CognitiveTurnExecutor(
             ))
 
             // Loop over tool calls if present
+            if (currentRequest.appendTextAsUserMessage && !currentRequest.text.isNullOrBlank()) {
+                currentContext = currentContext.copy(conversation = currentContext.conversation + AIMessage(Role.USER, currentRequest.text.orEmpty()))
+            }
             var response = initialResponse
             val workspaceReadAllowed = turn.policy.includeWorkspace
             var round = 0
@@ -356,6 +400,10 @@ class CognitiveTurnExecutor(
 
                 val durableRun = createDurableRunIfNeeded()
                 val exposedToolIds = currentContext.availableTools.map { it.name }.toSet()
+                durableRun?.let { id -> agentRunStore?.get(id)?.let { run ->
+                    agentRunStore.update(run.copy(pinnedProviderId = currentTarget.providerId,
+                        pinnedModelId = currentTarget.modelId, pinnedTargetLocal = currentTarget.model.executionLocation == com.halo.sdk.provider.AiExecutionLocation.ON_DEVICE))
+                } }
                 val toolCalls = response.toolCalls.map { call ->
                     if (call.functionName == "halo_set_alarm" &&
                         (call.arguments["timeExpression"] as? String).isNullOrBlank() &&
@@ -482,8 +530,10 @@ class CognitiveTurnExecutor(
                          * guidance the next request never sees.
                          */
                         val planner = toolExposurePlanner
-                        if (planner != null) {
-                            val outputs = toolResult.toolMessages.map { it.content }
+                        if (planner != null && turn.delegatedInput == null) {
+                            val outputs = toolResult.toolMessages.filter { message -> response.toolCalls.any { call ->
+                                call.id == message.toolCallId && call.functionName in setOf("halo_discover_tools", "halo_use_skill")
+                            } }.map { it.content }
                             val newlyActivated = outputs
                                 .flatMap { ToolExposureDirective.parseSkills(it) }
                                 .map { com.halo.sdk.runtime.skills.SkillId(it) }
@@ -501,16 +551,22 @@ class CognitiveTurnExecutor(
 
                             val exposureContext = ToolExposureContext(
                                 policy = turn.policy,
-                                isLocalTarget = prepared.target.provider.isLocal,
+                                isLocalTarget = currentTarget.model.executionLocation == com.halo.sdk.provider.AiExecutionLocation.ON_DEVICE,
                                 activatedSkillIds = activatedSkills,
                             )
-                            val expanded = planner.expandFromToolOutputs(
+                            var expanded = planner.expandFromToolOutputs(
                                 current = exposure,
                                 toolOutputs = outputs,
                                 gate = toolExposureGate,
                                 exposureContext = exposureContext,
                                 localPolicy = prepared.localToolPolicy,
                             )
+                            val payloadAvailable = durableRun?.let { id -> agentRunStore?.get(id)?.steps
+                                ?.filterIsInstance<AgentStep.ToolOutcomeRecorded>()?.any { step ->
+                                    step.payloadRefId != null && response.toolCalls.any { it.id == step.toolCallId }
+                                } } == true
+                            if (payloadAvailable) expanded = planner.expand(expanded, listOf("halo_read_payload"),
+                                toolExposureGate, exposureContext, prepared.localToolPolicy)
                             if (expanded != exposure) {
                                 exposure = expanded
                                 trace(
@@ -612,7 +668,7 @@ class CognitiveTurnExecutor(
                                     toolCalls = response.toolCalls.map {
                                         ProviderToolCallRecord(it.id, it.functionName, ToolArgumentCanonicalizer.canonicalize(it.arguments))
                                     },
-                                    finishReason = response.finishReason ?: "stop"
+                                    finishReason = response.finishReason ?: "stop", payloadRefId = response.payloadRefId
                                 )
                             )
                         }
@@ -628,7 +684,7 @@ class CognitiveTurnExecutor(
                         runId = durableRun,
                         createdAt = Instant.now(),
                         responseId = turn.requestId,
-                        text = response.text,
+                        text = response.text, payloadRefId = response.payloadRefId,
                     )
                 )
             }
@@ -713,7 +769,7 @@ class CognitiveTurnExecutor(
                     toolCalls = response.toolCalls.map {
                         ProviderToolCallRecord(it.id, it.functionName, ToolArgumentCanonicalizer.canonicalize(it.arguments))
                     },
-                    finishReason = response.finishReason ?: "stop"
+                    finishReason = response.finishReason ?: "stop", payloadRefId = response.payloadRefId
                 )
             )
 
@@ -723,7 +779,7 @@ class CognitiveTurnExecutor(
                     runId = durableRun,
                     createdAt = Instant.now(),
                     responseId = turn.requestId,
-                    text = response.text,
+                    text = response.text, payloadRefId = response.payloadRefId,
                 )
             )
 

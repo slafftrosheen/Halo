@@ -4,7 +4,7 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "agent_runs")
+@Entity(tableName = "agent_runs", indices = [Index("parentRunId"), Index("rootRunId")])
 data class AgentRunEntity(
     @PrimaryKey val id: String,
     val interactionId: String,
@@ -13,7 +13,15 @@ data class AgentRunEntity(
     val updatedAt: Long,
     val completedAt: Long?,
     val state: String,
-    val failureReason: String? = null
+    val failureReason: String? = null,
+    val parentRunId: String? = null,
+    val rootRunId: String? = null,
+    val delegatedRole: String? = null,
+    @androidx.room.ColumnInfo(defaultValue = "0") val delegationDepth: Int = 0,
+    val pinnedProviderId: String? = null,
+    val pinnedModelId: String? = null,
+    val pinnedTargetLocal: Boolean? = null,
+    val delegatedInputRefs: String? = null,
 )
 
 @Entity(

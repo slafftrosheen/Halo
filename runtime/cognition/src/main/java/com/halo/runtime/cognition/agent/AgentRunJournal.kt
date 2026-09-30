@@ -80,10 +80,18 @@ enum class ToolRejectionCode {
  * - [InputRequested]/[InputResolved] durable approval/clarification waiting.
  * - [ResponseCommitted] conversation commit completed.
  */
+data class AgentEvidenceRecord(val sourceType: String, val sourceRef: String, val title: String,
+    val retrievedAtMs: Long, val payloadRefId: String? = null, val sha256: String? = null,
+    val excerpt: String = "", val revision: String? = null)
+
 sealed interface AgentStep {
     val id: AgentStepId
     val runId: AgentRunId
     val createdAt: Instant
+
+    data class DelegationResultRecorded(override val id: AgentStepId, override val runId: AgentRunId,
+        override val createdAt: Instant, val status: String, val summary: String,
+        val evidence: List<AgentEvidenceRecord>, val payloadRefId: String? = null) : AgentStep
 
     // ---- historical variants (unchanged shape) -----------------------------
 
@@ -155,7 +163,8 @@ sealed interface AgentStep {
         override val runId: AgentRunId,
         override val createdAt: Instant,
         val responseId: String,
-        val text: String
+        val text: String,
+        val payloadRefId: String? = null,
     ) : AgentStep
 
     // ---- RUNTIME-018 durable journal variants ------------------------------
@@ -193,6 +202,7 @@ sealed interface AgentStep {
         val assistantText: String,
         val toolCalls: List<ProviderToolCallRecord>,
         val finishReason: String,
+        val payloadRefId: String? = null,
     ) : AgentStep
 
     data class ToolInvocationPrepared(
@@ -243,6 +253,9 @@ sealed interface AgentStep {
         val output: String,
         val actionTruth: ActionTruth,
         val failureKind: String?,
+        val payloadRefId: String? = null,
+        val payloadSha256: String? = null,
+        val payloadBytes: Long? = null,
     ) : AgentStep
 
     data class ToolRejected(

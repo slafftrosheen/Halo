@@ -67,3 +67,11 @@ intentionally inert. Nothing here is tested or hardware-verified.
 # MINING-P3-001 — multimodal perception and capability packs (2026-09-30)
 
 Home supports one explicit camera/shared/Notebook image attachment, thumbnail, question, remove and explicit Save to Notebook. AI capture alone remains ephemeral. HeyCyan has a visual-question action through normal cognition and wearable delivery. Assistant uses semantic screen extraction first; screenshot fallback is opt-in, local-vision-only and fails closed on missing package/screen evidence or sensitive omissions. PCM16/WAV and bounded audio transcription utilities are prepared; dedicated STT remains the normal voice path. Video, surveillance, recognition of people and always-on visual memory are deferred.
+
+## Long tasks and bounded research — MINING-P4-001
+
+Source-wired tools: `halo_delegate_task` (five fixed roles, explicit selected references and optional run-owned payload IDs), `halo_research` (up to two bounded topics), `halo_read_payload` (owner-authorized 4 KiB ranges), and `halo_search_conversations` (local-only current-conversation excerpts). Parent synthesis uses the ordinary provider continuation. Research source collection uses available URL/MCP read capabilities; general browser automation and unrestricted search are outside this batch.
+
+Children are read-only, depth one, bounded by the central DELEGATED P1 limits, pinned to normal FAST/REASONING routing, and limited to four children per root, two globally active slots, one local slot. Research topics run sequentially by default. Side-effect/approval requests become parent input rather than inherited grants.
+
+Explicit Save to Notebook stores final synthesis and bounded source evidence/provenance. Saving does not promote cognitive memory. Working Set, context inspector, Home progress, Activity children, Intelligence toggles and System Check diagnostics are wired to existing state. All claims here concern source implementation; build/tests/device acceptance remain unrun. [Details](../engineering/LONG-HORIZON-AGENT-MINING.md).

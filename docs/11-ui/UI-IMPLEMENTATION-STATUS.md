@@ -291,3 +291,16 @@ System Check "Interaction presentation" section with its explicitly tapped stati
 # MINING-P3-001 — multimodal perception and capability packs (2026-09-30)
 
 Model Browser separates supported input chips from observed Vision qualification and keeps raw artifact flags/revisions in Details. Intelligence exposes role bindings and capability-pack inspection without automatic downloads. System Check reports target, qualification, capture source, input preparation and actual dedicated-STT availability; its vision probe uses synthetic content. Home exposes pending image source/thumbnail/removal/explicit persistence; Notebook file details expose object AI access. HeyCyan exposes connected source status and explicit visual question. This is source implementation only, with no rendered/device acceptance.
+
+## MINING-P4-001 UI source wiring — 2026-09-30
+
+| Surface | Source behavior | Validation |
+| --- | --- | --- |
+| Notebook Working Set | Per-reference estimates, total estimate, effective cloud eligibility, source, Open and Remove | Source reviewed; layout/device unverified |
+| Context transparency | Passive estimated window/reserves/segment totals/remaining | No inference probe |
+| Home | Existing P2 journal checklist, child counts/status, explicit research Save to Notebook | Source reviewed |
+| Activity | Roots with nested child role, target, status, duration, tool/evidence counts | Source reviewed |
+| System Check | Passive context/payload/child summaries; explicit Collect for unreferenced payloads | No new implicit integration/model probe |
+| Intelligence | Delegation and context compaction controls; existing FAST/REASONING roles | Source reviewed |
+
+[Implementation ledger](../engineering/LONG-HORIZON-AGENT-MINING.md). No UI screenshot, build, test or device acceptance was performed in this batch.

@@ -199,6 +199,8 @@ fun HomeScreen(
             .padding(horizontal = 24.dp, vertical = 18.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        uiState.longTaskStatus?.let { Text(it, style = MaterialTheme.typography.labelSmall) }
+        uiState.longTaskProgress?.let { com.halo.app.interaction.StructuredPresentationRenderer(it, Modifier.fillMaxWidth()) }
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -405,7 +407,7 @@ fun HomeScreen(
                             TextButton(onClick = { viewModel.saveResponse(responseText) }) {
                                 // Explicit host action; saving is never automatic (Part N).
                                 Text(
-                                    if (uiState.structuredPresentation != null) "Save to Notebook" else "Save",
+                                    if (uiState.structuredPresentation != null || uiState.researchResult) "Save to Notebook" else "Save",
                                 )
                             }
                         }

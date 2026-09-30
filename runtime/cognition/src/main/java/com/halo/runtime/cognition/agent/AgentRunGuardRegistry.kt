@@ -35,6 +35,10 @@ class AgentRunGuardRegistry(
     }
 
     fun peek(runId: String): AgentRunGuard? = guards[runId]
+    fun registerChild(runId: AgentRunId, interactionId: InteractionId, local: Boolean): AgentRunGuard = guards.getOrPut(runId.value) {
+        AgentRunGuard(runId.value, interactionId.value, AgentRunLimits.DELEGATED,
+            if (local) thermalGate else AgentRunThermalGate.NONE, clock)
+    }
 
     /** Called when a run reaches a terminal state so the guard cannot outlive its run. */
     fun release(runId: String) {

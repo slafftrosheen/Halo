@@ -232,6 +232,28 @@ fun IntelligenceScreen(
             HaloWorkspaceButton(text = "Inspect capability models", onClick = onBrowseModels)
         }
         Spacer(Modifier.height(12.dp))
+        HaloWorkspaceCard {
+            Text("Advanced agent workloads", style = MaterialTheme.typography.titleMedium)
+            var delegation by remember { mutableStateOf(com.halo.app.di.ManualDependencyGraph.storage.getBoolean("policy_long_task_delegation", true)) }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Allow bounded delegation", modifier = Modifier.weight(1f))
+                Switch(checked = delegation, onCheckedChange = {
+                    delegation = it
+                    com.halo.app.di.ManualDependencyGraph.storage.putBoolean("policy_long_task_delegation", it)
+                })
+            }
+            Text("Read-only children. Research, compare and analyze use Reasoning; summarize and extract use Fast. Existing routing and cloud policy apply.", style = MaterialTheme.typography.bodySmall)
+            var compaction by remember { mutableStateOf(com.halo.app.di.ManualDependencyGraph.storage.getBoolean("policy_context_compaction", true)) }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Compact completed history", modifier = Modifier.weight(1f))
+                Switch(checked = compaction, onCheckedChange = {
+                    compaction = it
+                    com.halo.app.di.ManualDependencyGraph.storage.putBoolean("policy_context_compaction", it)
+                })
+            }
+            Text("Threshold: 70%. Originals stay in history; summaries are context optimizations. Local-only routing prevents remote summarization.", style = MaterialTheme.typography.bodySmall)
+        }
+        Spacer(Modifier.height(12.dp))
         val providerAccent = when (providerState) {
             ProviderStatus.State.READY -> HaloPastelMint
             ProviderStatus.State.LOADING,

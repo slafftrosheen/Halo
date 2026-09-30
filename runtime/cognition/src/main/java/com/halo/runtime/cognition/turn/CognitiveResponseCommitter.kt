@@ -96,6 +96,7 @@ class DefaultCognitiveResponseCommitter(
                     "resolvedModelId" to (response.resolvedModelId ?: response.modelId ?: ""),
                     "requestId" to requestId,
                     "interactionId" to interactionId.value,
+                    "runId" to (commit.runId?.value ?: ""),
                     "sourceCaptureId" to (commit.sourceCaptureId ?: "")
                 ) + presentationMetadata
             )

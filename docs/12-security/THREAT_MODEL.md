@@ -61,3 +61,13 @@ schema degrades to text rather than being partially interpreted.
 # MINING-P3-001 — multimodal perception and capability packs (2026-09-30)
 
 Images, OCR/sign text and recordings are untrusted evidence, not authority for tools, policy or memory writes. Media bytes and host URIs stay outside durable Runtime context. App-private ephemeral cache is interaction-owned, bounded to 64 MiB with 15-minute maximum age and terminal-interaction cleanup; explicit Save/import uses Workspace storage. Image decoding is source-size/sample/pixel/dimension/output-byte bounded; EXIF is applied and re-encoding strips metadata. Global image policy and per-object LOCAL_ONLY / ALLOW_CONFIGURED_CLOUD / EXCLUDE_FROM_AI apply before resolution; LAN counts as off-device. Screen fallback additionally enforces opt-in, package safety and omissions and cannot fall back to cloud. Diagnostics contain media metadata only. Audio first-pass has empty history/tools, duration/byte/output/time bounds and rejects tool calls.
+
+## MINING-P4-001: bounded evidence and delegation
+
+External tool, URL/MCP, payload, retrieved history and child content remain reference data, never SYSTEM authority. Only actual discovery/skill tool outcomes can widen root tool exposure. Opaque run-owned payload IDs authorize access; knowing a SHA does not. Range limits, full-body digest checks, quotas, reference-aware collection and app-private paths bound storage/read exposure. Missing or corrupt bodies return typed failure instead of invented content.
+
+Children receive only host-resolved explicit references and revision checks. Remote dispatch requires every source to permit sharing plus the normal routing policy; selected memories additionally require cloud-memory permission. Children retain their own scoped payload references, inherit no parent approval grants, cannot delegate recursively and expose only read-only no-confirmation fetch/payload/MCP tools. Central execution rejects disallowed writes; requests for parent action carry no execution authority.
+
+Root cancellation cascades to children and active work is watched by parent lifecycle. Child target pins and journal results survive restart; no unattended independent child recovery publishes a response. Diagnostics export budgets/counts/classifications/target status without prompts, summary text or source bodies. Explicit saved Note content/provenance is user workspace truth and follows existing backup behavior; transient payload caches are excluded from portable backup. Android system backup may retain DB metadata while excluding body files; reads then truthfully report missing payloads.
+
+Device/provider/Room acceptance remains unrun; see [ledger](../engineering/LONG-HORIZON-AGENT-MINING.md).

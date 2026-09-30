@@ -1,6 +1,7 @@
 package com.halo.runtime.cognition.agent
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 
 /** Runtime contract; the host owns durable storage and atomic append/deduplication. */
 interface AgentRunStore {
@@ -10,6 +11,9 @@ interface AgentRunStore {
     /** False means this step or dispatch identity already exists. Never dispatch in that case. */
     suspend fun appendStep(step: AgentStep): Boolean
     suspend fun update(run: AgentRun)
+    suspend fun children(parent: AgentRunId): List<AgentRun> = observeRuns().first().filter { it.parentRunId == parent }
+    /** Durable hosts atomically check the parent, depth, identity and child count. */
+    suspend fun createChildIfAllowed(parent: AgentRunId, child: AgentRun, maxChildren: Int): Boolean = false
 
     /** Every run that has not reached a terminal state. */
     suspend fun nonTerminalRuns(): List<AgentRun>

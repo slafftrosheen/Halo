@@ -88,7 +88,7 @@ data class LocalModelToolPolicy(
         ): LocalModelToolPolicy = LocalModelToolPolicy(
             protocol = protocol,
             allowedToolIds = BOOTSTRAP,
-            activatableToolIds = PHONE_ACTIONS + SCREEN + extraActivatable,
+            activatableToolIds = PHONE_ACTIONS + SCREEN + setOf("halo_delegate_task", "halo_research", "halo_read_payload", "halo_search_conversations", "halo_fetch_url") + extraActivatable,
         )
     }
 }

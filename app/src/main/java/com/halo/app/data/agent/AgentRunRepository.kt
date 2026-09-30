@@ -28,6 +28,14 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
     private val dao get() = db.agentRunDao()
     override fun observeRuns() = dao.observeRuns().map { rows -> rows.map { it.toDomain() } }
     override suspend fun get(runId: AgentRunId) = dao.get(runId.value)?.toDomain()
+    override suspend fun children(parent: AgentRunId) = dao.children(parent.value).map { it.toDomain() }
+    override suspend fun createChildIfAllowed(parent: AgentRunId, child: AgentRun, maxChildren: Int): Boolean = db.withTransaction {
+        val root = get(parent) ?: return@withTransaction false
+        if (root.state.isTerminal || root.delegationDepth != 0 || child.parentRunId != parent || child.delegationDepth != 1 ||
+            get(child.id) != null || children(parent).size >= maxChildren.coerceIn(1, 4)) return@withTransaction false
+        create(child)
+        true
+    }
     override suspend fun nonTerminalRuns() = dao.nonTerminalRuns().map { it.toDomain() }
     @Deprecated("Returns every non-terminal run; renamed for honesty")
     override suspend fun interruptedRuns() = nonTerminalRuns()
@@ -135,6 +143,14 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
     private fun payloadFor(step: AgentStep): Pair<JSONObject, String> {
         val payload = JSONObject()
         val type = when (step) {
+            is AgentStep.DelegationResultRecorded -> {
+                payload.put("status", step.status).put("summary", step.summary).put("payloadRefId", step.payloadRefId)
+                    .put("evidence", org.json.JSONArray(step.evidence.map { value -> JSONObject()
+                        .put("sourceType", value.sourceType).put("sourceRef", value.sourceRef).put("title", value.title)
+                        .put("retrievedAtMs", value.retrievedAtMs).put("payloadRefId", value.payloadRefId).put("sha256", value.sha256)
+                        .put("excerpt", value.excerpt).put("revision", value.revision) }))
+                "DelegationResultRecorded"
+            }
             is AgentStep.PlanCreated -> { payload.put("planId", step.planId).put("summary", step.summary); "PlanCreated" }
             is AgentStep.ClarificationRequested -> { payload.put("question", step.question).put("field", step.field); "ClarificationRequested" }
             is AgentStep.ApprovalRequested -> { payload.put("action", step.action).put("risk", step.risk); "ApprovalRequested" }
@@ -143,7 +159,7 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
             is AgentStep.ToolCompleted -> { payload.put("toolCallId", step.toolCallId).put("toolId", step.toolId).put("resultSummary", step.resultSummary).put("success", step.success).put("actionTruth", step.actionTruth.name); "ToolCompleted" }
             is AgentStep.ToolFailed -> { payload.put("toolCallId", step.toolCallId).put("toolId", step.toolId).put("reason", step.reason); "ToolFailed" }
             is AgentStep.ToolRejected -> { payload.put("toolCallId", step.toolCallId).put("toolId", step.toolId).put("reasonCode", step.reasonCode.name).put("reason", step.reason).put("retryable", step.retryable).put("requiresUserAction", step.requiresUserAction).put("modelResult", step.modelResult); "ToolRejected" }
-            is AgentStep.ResponseProduced -> { payload.put("responseId", step.responseId).put("text", step.text); "ResponseProduced" }
+            is AgentStep.ResponseProduced -> { payload.put("responseId", step.responseId).put("text", step.text).put("payloadRefId", step.payloadRefId); "ResponseProduced" }
 
             is AgentStep.RunPrepared -> { payload.put("kind", step.kind.name).put("recoveryPolicy", step.recoveryPolicy.name); "RunPrepared" }
             is AgentStep.ProviderTurnStarted -> {
@@ -161,7 +177,7 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
                         .put("toolName", call.toolName).put("argumentsJson", call.argumentsJson))
                 }
                 payload.put("turnId", step.turnId.value).put("assistantText", step.assistantText)
-                    .put("toolCalls", calls).put("finishReason", step.finishReason)
+                    .put("toolCalls", calls).put("finishReason", step.finishReason).put("payloadRefId", step.payloadRefId)
                 "ProviderTurnCompleted"
             }
             is AgentStep.ToolInvocationPrepared -> {
@@ -189,6 +205,7 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
                 payload.put("invocationId", step.invocationId.value).put("toolCallId", step.toolCallId)
                     .put("toolId", step.toolId).put("success", step.success).put("output", step.output)
                     .put("actionTruth", step.actionTruth.name).put("failureKind", step.failureKind ?: "")
+                    .put("payloadRefId", step.payloadRefId).put("payloadSha256", step.payloadSha256).put("payloadBytes", step.payloadBytes)
                 "ToolOutcomeRecorded"
             }
             is AgentStep.InputRequested -> {
@@ -240,7 +257,8 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
 
     private fun AgentRun.toEntity() = AgentRunEntity(id.value, interactionId.value, request,
         (startedAt ?: createdAt).toEpochMilli(), updatedAt.toEpochMilli(),
-        completedAt?.toEpochMilli().takeIf { state.isTerminal }, state.name, failureReason)
+        completedAt?.toEpochMilli().takeIf { state.isTerminal }, state.name, failureReason,
+        parentRunId?.value, rootRunId?.value, delegatedRole, delegationDepth, pinnedProviderId, pinnedModelId, pinnedTargetLocal, delegatedInputRefs)
 
     private fun AgentRunWithSteps.toDomain(): AgentRun {
         val ordered = steps.sortedWith(compareBy<AgentStepEntity> { it.ordinal }.thenBy { it.createdAt }.thenBy { it.id })
@@ -272,7 +290,10 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
                 SpeechOutputTarget.Device(it, null, metadata?.optString("outputName", "Wearable") ?: "Wearable", AudioDeviceKind.WEARABLE)
             } ?: SpeechOutputTarget.Phone.takeIf { metadata?.optBoolean("phoneOutput") == true },
             runCatching { SpeechOutputFallback.valueOf(metadata?.optString("fallback").orEmpty()) }.getOrDefault(SpeechOutputFallback.DISALLOW_PHONE),
-            metadata?.optString("sourceCaptureId")?.takeIf(String::isNotBlank))
+            metadata?.optString("sourceCaptureId")?.takeIf(String::isNotBlank),
+            parentRunId = run.parentRunId?.let(::AgentRunId), rootRunId = run.rootRunId?.let(::AgentRunId),
+            delegatedRole = run.delegatedRole, delegationDepth = run.delegationDepth,
+            pinnedProviderId = run.pinnedProviderId, pinnedModelId = run.pinnedModelId, pinnedTargetLocal = run.pinnedTargetLocal, delegatedInputRefs = run.delegatedInputRefs)
     }
 
     private fun AgentStepEntity.toDomain(): AgentStep {
@@ -283,6 +304,16 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
         val call = p.optString("toolCallId", id)
         val tool = p.optString("toolId", p.optString("toolName"))
         return when (type) {
+            "DelegationResultRecorded" -> {
+                val values = p.optJSONArray("evidence") ?: org.json.JSONArray()
+                AgentStep.DelegationResultRecorded(step, run, at, p.getString("status"), p.getString("summary"),
+                    (0 until values.length().coerceAtMost(16)).map { index -> val value = values.getJSONObject(index)
+                        AgentEvidenceRecord(value.getString("sourceType"), value.getString("sourceRef"), value.getString("title"),
+                            value.getLong("retrievedAtMs"), value.optString("payloadRefId").takeIf { it.isNotBlank() && it != "null" },
+                            value.optString("sha256").takeIf { it.isNotBlank() && it != "null" }, value.optString("excerpt"),
+                            value.optString("revision").takeIf { it.isNotBlank() && it != "null" }) },
+                    p.optString("payloadRefId").takeIf { it.isNotBlank() && it != "null" })
+            }
             "PlanCreated" -> AgentStep.PlanCreated(step, run, at, p.getString("planId"), p.getString("summary"))
             "ClarificationRequested" -> AgentStep.ClarificationRequested(step, run, at, p.getString("question"), p.getString("field"))
             "ApprovalRequested" -> AgentStep.ApprovalRequested(step, run, at, p.getString("action"), p.getString("risk"))
@@ -290,7 +321,7 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
             "ToolDispatched" -> AgentStep.ToolDispatched(step, run, at, call, tool, idempotencyKey)
             "ToolCompleted" -> AgentStep.ToolCompleted(step, run, at, call, tool, p.optString("resultSummary", p.optString("result")), p.getBoolean("success"), runCatching { ActionTruth.valueOf(p.optString("actionTruth", "UNKNOWN")) }.getOrDefault(ActionTruth.UNKNOWN))
             "ToolFailed" -> AgentStep.ToolFailed(step, run, at, call, tool, p.getString("reason"))
-            "ResponseProduced" -> AgentStep.ResponseProduced(step, run, at, p.getString("responseId"), p.getString("text"))
+            "ResponseProduced" -> AgentStep.ResponseProduced(step, run, at, p.getString("responseId"), p.getString("text"), p.optString("payloadRefId").takeIf { it.isNotBlank() && it != "null" })
 
             "RunPrepared" -> AgentStep.RunPrepared(step, run, at,
                 runCatching { AgentRunKind.valueOf(p.getString("kind")) }.getOrDefault(AgentRunKind.INTERACTIVE),
@@ -308,7 +339,7 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
                         item.optString("argumentsJson", "{}"))
                 }
                 AgentStep.ProviderTurnCompleted(step, run, at, ProviderTurnId(p.getString("turnId")),
-                    p.optString("assistantText"), calls, p.optString("finishReason", "unknown"))
+                    p.optString("assistantText"), calls, p.optString("finishReason", "unknown"), p.optString("payloadRefId").takeIf { it.isNotBlank() && it != "null" })
             }
             "ToolInvocationPrepared" -> AgentStep.ToolInvocationPrepared(step, run, at,
                 ToolInvocationId(p.getString("invocationId")), call, tool, p.optString("argumentsJson", "{}"),
@@ -329,7 +360,8 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
             "ToolOutcomeRecorded" -> AgentStep.ToolOutcomeRecorded(step, run, at,
                 ToolInvocationId(p.getString("invocationId")), call, tool, p.getBoolean("success"),
                 p.optString("output"), runCatching { ActionTruth.valueOf(p.getString("actionTruth")) }.getOrDefault(ActionTruth.UNKNOWN),
-                p.optString("failureKind").ifBlank { null })
+                p.optString("failureKind").ifBlank { null }, p.optString("payloadRefId").ifBlank { null },
+                p.optString("payloadSha256").ifBlank { null }, p.optLong("payloadBytes").takeIf { p.has("payloadBytes") })
             "ToolRejected" -> AgentStep.ToolRejected(step, run, at, call, tool,
                 runCatching { ToolRejectionCode.valueOf(p.optString("reasonCode")) }
                     .getOrDefault(ToolRejectionCode.AUTHORIZATION_DENIED),
@@ -447,6 +479,6 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
     }
 
     private companion object {
-        const val STEP_SCHEMA_VERSION = 5
+        const val STEP_SCHEMA_VERSION = 6
     }
 }

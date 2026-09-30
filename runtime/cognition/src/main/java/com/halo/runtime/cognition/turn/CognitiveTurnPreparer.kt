@@ -3,6 +3,7 @@ package com.halo.runtime.cognition.turn
 import com.halo.runtime.cognition.agent.AgentRunCoordinator
 import com.halo.runtime.cognition.agent.AgentRunStore
 import com.halo.runtime.cognition.agent.AgentStep
+import com.halo.runtime.cognition.agent.isTerminal
 import com.halo.runtime.cognition.agent.ToolArgumentCanonicalizer
 import com.halo.runtime.cognition.agent.recovery.AgentContinuationAssembler
 import com.halo.runtime.cognition.agent.recovery.AgentContinuationMessage
@@ -57,6 +58,32 @@ class DefaultCognitiveTurnPreparer(
 ) : CognitiveTurnPreparer {
 
     override suspend fun prepare(turn: CognitiveTurnRequest): PreparedCognitiveTurn {
+        turn.delegatedInput?.let { input ->
+            val run = turn.runId?.let { agentRunStore?.get(it) }
+                ?: throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY, "Child run is unavailable")
+            val parent = run.parentRunId?.let { agentRunStore?.get(it) }
+            if (run.delegationDepth != 1 || parent == null || parent.state.isTerminal ||
+                run.pinnedProviderId != input.target.providerId || run.pinnedModelId != input.target.modelId)
+                throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY, "Delegation relationship is invalid")
+            val target = providerRouter.resolvePinnedExecutionTarget(turn.request, input.workload,
+                input.target.providerId, input.target.modelId)
+            var context = input.context
+            if (turn.mode != CognitiveTurnMode.FRESH) {
+                val continuation = AgentContinuationAssembler.fromJournal(run, excludeLastCompletedTurn = false)
+                val messages = if (turn.mode == CognitiveTurnMode.CONTINUE_AFTER_TOOL) continuation.messages else continuation.messages.drop(1)
+                context = context.copy(conversation = context.conversation + messages.map {
+                    continuationMessageToAiMessage(it, false, ResponseDelivery.VISUAL_ONLY)
+                })
+            }
+            val protocol = (target.provider as? com.halo.sdk.provider.ToolProtocolReporting)?.toolCallProtocol()
+                ?: com.halo.sdk.provider.ToolCallProtocol.NATIVE
+            return PreparedCognitiveTurn(turn, CognitiveWorkloadPlan(input.workload,
+                com.halo.runtime.cognition.context.ContextAcquisitionPlan(turn.interactionId, emptyList())), target, context,
+                turn.request.copy(modelId = target.modelId), target.effectiveCapabilities.map { it.name }.toSet(), emptySet(),
+                toolExposure = com.halo.runtime.cognition.tools.ToolExposureSet(pinned = input.context.availableTools.map { ToolId(it.name) }.toSet()), toolProtocol = protocol)
+        }
+        if (turn.runId?.let { agentRunStore?.get(it)?.parentRunId } != null)
+            throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY, "Child recovery must be owned by its parent")
         val planningRequest = WorkloadPlanningRequest(
             request = turn.request,
             interactionId = turn.interactionId,
@@ -174,6 +201,8 @@ class DefaultCognitiveTurnPreparer(
             capabilities = requiredCapabilities,
             request = ContextAssemblyRequest(
                 interactionId = turn.interactionId.value,
+                userText = turn.request.text.orEmpty(),
+                queryText = turn.request.text.orEmpty(),
                 acquisition = acquisitionResult,
                 targetIsLocal = targetIsOnDevice,
                 contextWindowTokens = target.model.contextLength,
@@ -230,7 +259,7 @@ class DefaultCognitiveTurnPreparer(
         if (turn.mode == CognitiveTurnMode.CONTINUE_AFTER_TOOL || turn.mode == CognitiveTurnMode.RECOVER_PROVIDER) {
             val run = turn.runId?.let { agentRunStore?.get(it) }
             if (run != null) {
-                val continuation = AgentContinuationAssembler.fromJournal(run, excludeLastCompletedTurn = (turn.mode == CognitiveTurnMode.RECOVER_PROVIDER))
+                val continuation = AgentContinuationAssembler.fromJournal(run, excludeLastCompletedTurn = false)
                 if (toolExposure != null && toolExposurePlanner != null) {
                     toolExposure = toolExposure.copy(
                         pinned = toolExposure.pinned + continuation.exposedToolIds.map(::ToolId)

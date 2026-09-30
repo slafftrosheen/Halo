@@ -36,6 +36,8 @@ class WorkspaceContextStore(private val database: AppDatabase, private val notes
     val cloudSharing = kotlinx.coroutines.flow.MutableStateFlow(storage.getBoolean("policy_cloud_workspace", false))
     fun setUseMemories(enabled: Boolean) { storage.putBoolean("policy_memories", enabled); useMemories.value = enabled }
     fun setCloudSharing(enabled: Boolean) { storage.putBoolean("policy_cloud_workspace", enabled); cloudSharing.value = enabled }
+    fun remoteAllowed(type: String): Boolean = cloudSharing.value &&
+        (type != "MEMORY" || storage.getBoolean("policy_cloud_memories", false))
     val workingSet = database.workspaceContextDao().observeWorkingSet()
     val memories = database.memoryDao().getAllMemories()
     suspend fun select(id: String) {
@@ -55,13 +57,11 @@ class WorkspaceContextStore(private val database: AppDatabase, private val notes
     override suspend fun content(includeMemories: Boolean): List<String> {
         val selected = database.workspaceContextDao().selectedIds().take(20).mapNotNull { id ->
             resolveContent(id)?.let { (type, text) ->
-                "Working set ${type.lowercase()}: ${text.take(8_000)}"
+                if (type == "MEMORY" && !includeMemories) null else "Working set ${type.lowercase()}: ${text.take(8_000)}"
             }
         }
-        val memories = if (includeMemories && useMemories.value) {
-            database.memoryDao().snapshot().map { "Remembered: ${it.content}" }
-        } else emptyList()
-        return selected + memories
+        // Query-driven memory retrieval is injected by MemoryContextSource, exactly once.
+        return selected
     }
 
     override suspend fun contentFor(objectId: String): String? =

@@ -355,6 +355,8 @@ fun AppShell(
                             runtimeSnapshotSource = ManualDependencyGraph.runtimeSnapshotManager,
                             // MINING-P2-001 passive active-surface count for the presentation section.
                             presentationProjection = ManualDependencyGraph.presentationProjection,
+                            payloadStore = ManualDependencyGraph.contentPayloadStore,
+                            agentRuns = ManualDependencyGraph.agentRunStore,
                         )
                     }
                     SystemCheckScreen(

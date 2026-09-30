@@ -84,7 +84,7 @@ class DefaultProviderTurnExecutor(
             var completedResponse: AiResponse? = null
             val accumulatedText = StringBuilder()
             val toolCalls = StreamingToolCallAssembler()
-            _streamingText.value = ""
+            if (request.publishStreamingTokens) _streamingText.value = ""
             try {
                 coroutineScope {
                     val events = provider.stream(request, context).produceIn(this)
@@ -99,14 +99,16 @@ class DefaultProviderTurnExecutor(
                         val event = next.getOrThrow()
                         when (event) {
                             is AiStreamEvent.Started ->
-                                _streamingText.value = ""
+                                if (request.publishStreamingTokens) _streamingText.value = ""
 
                             is AiStreamEvent.Token -> {
                                 accumulatedText.append(event.text)
-                                _streamingText.value = accumulatedText.toString()
-                                eventBus.publish(
-                                    CognitiveTokenReceived(requestId = requestId, token = event.text, interactionId = interactionId.value)
-                                )
+                                if (request.publishStreamingTokens) {
+                                    _streamingText.value = accumulatedText.toString()
+                                    eventBus.publish(
+                                        CognitiveTokenReceived(requestId = requestId, token = event.text, interactionId = interactionId.value)
+                                    )
+                                }
                             }
 
                             is AiStreamEvent.Completed -> completedResponse = event.response
@@ -132,7 +134,7 @@ class DefaultProviderTurnExecutor(
                     events.cancel()
                 }
             } finally {
-                _streamingText.value = null
+                if (request.publishStreamingTokens) _streamingText.value = null
             }
             val completed = completedResponse ?: throw AiProviderException(
                 AiErrorType.INVALID_RESPONSE,
@@ -197,6 +199,7 @@ class DefaultProviderTurnExecutor(
         } catch (cancelled: kotlinx.coroutines.CancellationException) {
             throw cancelled
         } catch (error: Throwable) {
+            if (!workload.allowFallback) throw error
             val providerCode = (error as? AiProviderException)?.details?.providerCode
             if (providerCode == "STREAM_IDLE_AFTER_OUTPUT" ||
                 providerCode == "STREAM_FAILED_AFTER_OUTPUT" ||

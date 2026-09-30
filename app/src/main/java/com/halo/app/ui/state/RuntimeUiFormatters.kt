@@ -68,6 +68,7 @@ object RuntimeUiFormatters {
     }
 
     fun formatStepTitle(step: AgentStep): String = when (step) {
+        is AgentStep.DelegationResultRecorded -> "Delegated findings recorded"
         is AgentStep.PlanCreated -> "Plan created"
         is AgentStep.ClarificationRequested -> "Question asked"
         is AgentStep.ApprovalRequested -> "Approval requested"

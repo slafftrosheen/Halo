@@ -78,6 +78,7 @@ private val secondaryFilters = NotebookFilter.entries.filterNot(primaryFilters::
 @Composable
 fun NotebookScreen(viewModel: NotebookViewModel) {
     val state by viewModel.uiState.collectAsState()
+    val cloudAllowed by viewModel.cloudSharing.collectAsState()
     var showWorkingSet by remember { mutableStateOf(false) }
     var showNewCollection by remember { mutableStateOf(false) }
     var showDeleteCollection by remember { mutableStateOf(false) }
@@ -89,6 +90,10 @@ fun NotebookScreen(viewModel: NotebookViewModel) {
             onRemove = { viewModel.selectContext(it, false) },
             onClearAll = viewModel::clearContext,
             onDismiss = { showWorkingSet = false },
+            estimatedTokens = state.workingSetTokens,
+            cloudAllowed = cloudAllowed,
+            remoteAllowed = viewModel::remoteAllowed,
+            onOpen = { showWorkingSet = false; viewModel.openObject(it) },
         )
     }
     if (showNewCollection) {

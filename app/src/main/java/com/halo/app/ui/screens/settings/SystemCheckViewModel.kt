@@ -38,6 +38,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -76,6 +77,7 @@ data class SystemCheckUiState(
 
 sealed class SystemCheckAction {
     object Refresh : SystemCheckAction()
+    object CollectPayloads : SystemCheckAction()
 
     /**
      * MINING-P0-001 each diagnostic level is a separate EXPLICIT user action. They are deliberately
@@ -132,6 +134,8 @@ class SystemCheckViewModel(
     private val runtimeSnapshotSource: com.halo.sdk.runtime.RuntimeSnapshotSource? = null,
     /** In-memory surface registry, read only to display how many projections are live (MINING-P2-001). */
     private val presentationProjection: com.halo.runtime.cognition.interaction.PresentationSurfaceProjection? = null,
+    private val payloadStore: com.halo.runtime.cognition.context.ContentPayloadStore? = null,
+    private val agentRuns: com.halo.runtime.cognition.agent.AgentRunStore? = null,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SystemCheckUiState())
@@ -144,6 +148,10 @@ class SystemCheckViewModel(
     fun handleAction(action: SystemCheckAction) {
         when (action) {
             is SystemCheckAction.Refresh -> refreshChecks()
+            is SystemCheckAction.CollectPayloads -> viewModelScope.launch(Dispatchers.IO) {
+                payloadStore?.collectUnreferenced()
+                refreshChecks()
+            }
             is SystemCheckAction.RunSttProbe -> testMicrophone()
             is SystemCheckAction.RunTtsProbe -> testAudioOutput()
             is SystemCheckAction.RunLiteRtControlProbe -> runLiteRtControlProbe()
@@ -408,6 +416,29 @@ class SystemCheckViewModel(
                 ))
             }
 
+            val payloads = payloadStore?.stats()
+            com.halo.runtime.cognition.delegation.LongTaskDiagnostics.payloads.value = payloads
+            val budget = com.halo.runtime.cognition.context.ContextDiagnostics.composition.value
+            val children = agentRuns?.observeRuns()?.first().orEmpty().filter { it.parentRunId != null }
+            val latest = children.maxByOrNull { it.updatedAt }
+            val child = com.halo.runtime.cognition.delegation.DelegationDiagnostics(children.size,
+                children.count { it.completedAt == null && it.state !in setOf(com.halo.runtime.cognition.agent.AgentRunState.CANCELLED, com.halo.runtime.cognition.agent.AgentRunState.FAILED, com.halo.runtime.cognition.agent.AgentRunState.INTERRUPTED, com.halo.runtime.cognition.agent.AgentRunState.COMPLETED) },
+                children.maxOfOrNull { it.delegationDepth } ?: 0, latest?.delegatedRole, latest?.pinnedProviderId, latest?.pinnedModelId,
+                latest?.state?.name, latest?.steps?.filterIsInstance<com.halo.runtime.cognition.agent.AgentStep.DelegationResultRecorded>()?.lastOrNull()?.evidence?.size ?: 0)
+            com.halo.runtime.cognition.delegation.LongTaskDiagnostics.delegation.value = child
+            sections.add(SystemCheckSection("long_tasks", "Long tasks", listOf(
+                SystemCheckItem("context_budget", "Context budget", HaloGlyph.HALO, CheckStatus.READY,
+                    budget?.let { "${it.budget.modelContextTokens} tokens · ${it.budget.reservedOutputTokens} output reserved · ${it.remainingTokens} remaining" } ?: "No provider context assembled",
+                    detail = budget?.segmentTokens?.entries?.joinToString { "${it.key}: ${it.value}" }),
+                SystemCheckItem("payload_stats", "Payload storage", HaloGlyph.HALO, CheckStatus.READY,
+                    payloads?.let { "${it.count} bodies · ${it.bytes} bytes · ${it.unreferencedBytes} unreferenced" } ?: "Unavailable",
+                    detail = payloads?.oldestUnreferencedMs?.let { "Oldest unreferenced timestamp: $it" }),
+                SystemCheckItem("payload_gc", "Collect unused payloads", HaloGlyph.HALO, CheckStatus.READY,
+                    "Explicit cleanup · Referenced bodies retained · 24-hour grace"),
+                SystemCheckItem("delegation_budget", "Delegation", HaloGlyph.HALO, CheckStatus.READY,
+                    "${child.childCount} children · ${child.activeChildren} active · depth ${child.maximumDepth} / 1",
+                    detail = "Up to 4 per root; 2 active globally; 1 local. ${child.lastRole.orEmpty()} ${child.lastProvider.orEmpty()} / ${child.lastModel.orEmpty()}"),
+            )))
             _uiState.value = _uiState.value.copy(sections = sections)
             generateSummaryReport()
         }

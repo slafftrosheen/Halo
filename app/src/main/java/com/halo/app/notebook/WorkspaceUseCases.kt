@@ -37,6 +37,8 @@ class WorkspaceUseCases(
 
     fun observe(query: WorkspaceQuery): Flow<List<WorkspaceObject>> = repository.observe(query)
     suspend fun getObject(id: String): WorkspaceObject? = repository.get(WorkspaceObjectId(id))
+    suspend fun contextText(id: String): String? = context.contentFor(id)
+    fun remoteAllowed(type: String): Boolean = context.remoteAllowed(type)
     suspend fun getFile(id: String): WorkspaceFile? = files.getFile(WorkspaceObjectId(id))
     suspend fun keepLocalCopy(id: String): WorkspaceFile = files.keepLocalCopy(WorkspaceObjectId(id))
     suspend fun relinkFile(id: String, uri: Uri): WorkspaceFile = files.relink(WorkspaceObjectId(id), uri)

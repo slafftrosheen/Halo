@@ -89,7 +89,7 @@ class DefaultAgentRunCoordinator(
 ) : AgentRunCoordinator {
     private val mutex = Mutex()
     private var classified = false
-    override val activeRuns = store.observeRuns().map { runs -> runs.filterNot { it.state.isTerminal } }
+    override val activeRuns = store.observeRuns().map { runs -> runs.filter { !it.state.isTerminal && it.parentRunId == null } }
         .stateIn(scope, SharingStarted.Eagerly, emptyList())
 
     override suspend fun prepareOutstandingRunsForRecovery(
@@ -97,6 +97,21 @@ class DefaultAgentRunCoordinator(
     ): Map<AgentRunId, RecoveryClassification> = mutex.withLock {
         val classifications = mutableMapOf<AgentRunId, RecoveryClassification>()
         for (run in store.nonTerminalRuns()) {
+            if (run.parentRunId != null) {
+                val parent = store.get(run.parentRunId)
+                val response = run.steps.filterIsInstance<AgentStep.ResponseProduced>().lastOrNull()
+                val now = Instant.now(clock)
+                when {
+                    run.steps.any { it is AgentStep.RunGuardTriggered } -> store.update(run.copy(state = AgentRunState.FAILED,
+                        updatedAt = now, completedAt = now, failureReason = "CHILD_FAILED"))
+                    response != null -> store.update(run.copy(state = AgentRunState.COMPLETED, updatedAt = now, completedAt = now))
+                    parent == null || parent.state.isTerminal -> store.update(run.copy(state = AgentRunState.CANCELLED,
+                        updatedAt = now, completedAt = now, failureReason = "CHILD_CANCELLED"))
+                    else -> moveSafely(run, AgentRunState.SUSPENDED)
+                }
+                // Parent owns replay admission and explicit context reconstruction. No autonomous startup inference.
+                continue
+            }
             // Routine executions keep their conservative no-resume semantics.
             val isNoResume = run.steps.filterIsInstance<AgentStep.RunPrepared>().any {
                 it.recoveryPolicy == RunRecoveryPolicy.NO_RESUME
@@ -269,5 +284,11 @@ class DefaultAgentRunCoordinator(
         }
         store.update(run.copy(state = finalState, updatedAt = now,
             completedAt = now.takeIf { finalState.isTerminal }, failureReason = finalReason))
+        if (finalState.isTerminal && run.parentRunId == null) {
+            store.children(run.id).filterNot { it.state.isTerminal }.forEach { child ->
+                store.update(child.copy(state = AgentRunState.CANCELLED, updatedAt = now, completedAt = now,
+                    failureReason = "CHILD_CANCELLED"))
+            }
+        }
     }
 }

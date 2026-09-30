@@ -10,6 +10,9 @@ data class AgentRunWithSteps(
 
 @Dao
 interface AgentRunDao {
+    @Transaction
+    @Query("SELECT * FROM agent_runs WHERE parentRunId = :parent ORDER BY startedAt")
+    suspend fun children(parent: String): List<AgentRunWithSteps>
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertRun(entity: AgentRunEntity)
     @Update

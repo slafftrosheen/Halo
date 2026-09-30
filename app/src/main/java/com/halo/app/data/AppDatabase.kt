@@ -85,12 +85,15 @@ import com.halo.app.data.notebook.NotebookDao
         StudyPracticeItemEntity::class,
         StudyReviewEventEntity::class,
         com.halo.app.data.mcp.McpServerEntity::class,
-        com.halo.app.data.mcp.McpToolEntity::class
+        com.halo.app.data.mcp.McpToolEntity::class,
+        com.halo.app.data.payload.PayloadBodyEntity::class,
+        com.halo.app.data.payload.PayloadReferenceEntity::class
     ],
-    version = 19,
+    version = 20,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
+    abstract fun payloadDao(): com.halo.app.data.payload.PayloadDao
     abstract fun notificationDao(): com.halo.app.data.notification.NotificationDao
     abstract fun routineDao(): com.halo.app.data.routine.RoutineDao
     abstract fun agentRunDao(): AgentRunDao
@@ -859,9 +862,26 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_19_20 = object : Migration(19, 20) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS payload_bodies (sha256 TEXT NOT NULL PRIMARY KEY, byteCount INTEGER NOT NULL, createdAtMs INTEGER NOT NULL, unreferencedAtMs INTEGER)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS payload_refs (id TEXT NOT NULL, sha256 TEXT NOT NULL, ownerKind TEXT NOT NULL, ownerId TEXT NOT NULL, mediaType TEXT NOT NULL, classification TEXT NOT NULL, trust TEXT NOT NULL, provenance TEXT NOT NULL, remoteAllowed INTEGER NOT NULL, createdAtMs INTEGER NOT NULL, PRIMARY KEY(id, ownerKind, ownerId), FOREIGN KEY(sha256) REFERENCES payload_bodies(sha256) ON UPDATE NO ACTION ON DELETE RESTRICT)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_payload_refs_ownerKind_ownerId ON payload_refs(ownerKind, ownerId)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_payload_refs_sha256 ON payload_refs(sha256)")
+                for (column in listOf("parentRunId", "rootRunId", "delegatedRole", "pinnedProviderId", "pinnedModelId")) {
+                    db.execSQL("ALTER TABLE agent_runs ADD COLUMN $column TEXT")
+                }
+                db.execSQL("ALTER TABLE agent_runs ADD COLUMN delegationDepth INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE agent_runs ADD COLUMN pinnedTargetLocal INTEGER")
+                db.execSQL("ALTER TABLE agent_runs ADD COLUMN delegatedInputRefs TEXT")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_agent_runs_parentRunId ON agent_runs(parentRunId)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_agent_runs_rootRunId ON agent_runs(rootRunId)")
+            }
+        }
+
         fun create(context: Context): AppDatabase =
             Room.databaseBuilder(context, AppDatabase::class.java, "halo.db")
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20)
                 .build()
     }
 }

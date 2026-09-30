@@ -54,4 +54,13 @@ data class AgentRun(
     val speechOutputTarget: com.halo.sdk.runtime.SpeechOutputTarget? = null,
     val speechOutputFallback: com.halo.sdk.runtime.SpeechOutputFallback = com.halo.sdk.runtime.SpeechOutputFallback.DISALLOW_PHONE,
     val sourceCaptureId: String? = null,
+    val parentRunId: AgentRunId? = null,
+    val rootRunId: AgentRunId? = null,
+    val delegatedRole: String? = null,
+    val delegationDepth: Int = 0,
+    val pinnedProviderId: String? = null,
+    val pinnedModelId: String? = null,
+    val pinnedTargetLocal: Boolean? = null,
+    /** Host-approved references for reconstructing child context; never inferred from global history. */
+    val delegatedInputRefs: String? = null,
 )

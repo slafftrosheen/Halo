@@ -47,6 +47,7 @@ data class NotebookUiState(
     val filter: NotebookFilter = NotebookFilter.ALL,
     val workingSet: Set<String> = emptySet(),
     val workingSetItems: List<WorkspaceObject> = emptyList(),
+    val workingSetTokens: Map<String, Int> = emptyMap(),
     val collections: List<NotebookCollection> = emptyList(),
     val selectedCollectionId: String? = null,
     val favorites: Set<String> = emptySet(),
@@ -89,6 +90,7 @@ class NotebookViewModel(
     val history = workspace.history
     val useMemories = workspace.useMemories
     val cloudSharing = workspace.cloudSharing
+    fun remoteAllowed(item: WorkspaceObject): Boolean = workspace.remoteAllowed(item.type.name)
 
     private val debouncedQuery = query
         .map { it.trim() }
@@ -191,6 +193,10 @@ class NotebookViewModel(
                     filter = selectedFilter,
                     workingSet = selected.toSet(),
                     workingSetItems = allObjects.filter { it.id.value in selected },
+                    workingSetTokens = allObjects.filter { it.id.value in selected }.associate { item ->
+                        item.id.value to com.halo.runtime.cognition.context.ConservativeContextTokenEstimator().estimate(
+                            workspace.contextText(item.id.value).orEmpty())
+                    },
                     collections = organized.collections,
                     selectedCollectionId = queryState.collectionId,
                     favorites = organized.favorites,

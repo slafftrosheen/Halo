@@ -159,6 +159,7 @@ fun SystemCheckScreen(
                             item.id == "phone_app" -> SystemCheckAction.TestOpenApp
                             item.id == "phone_volume" -> SystemCheckAction.TestVolume
                             item.id == "presentation_preview" -> SystemCheckAction.PreviewPresentations
+                            item.id == "payload_gc" -> SystemCheckAction.CollectPayloads
                             item.id.startsWith("remote_") -> SystemCheckAction.Refresh
                             else -> SystemCheckAction.Refresh
                         }
@@ -267,6 +268,8 @@ private fun SystemCheckCard(
                         item.id == "vision_probe" -> "PROBE VISION"
                         item.id == "ai_execution" -> "RUN ROUTER PROBE"
                         item.id == "agentic_execution" -> "RUN AGENTIC PROBE"
+                        item.id == "payload_gc" -> "COLLECT"
+                        item.id in setOf("context_budget", "payload_stats", "delegation_budget") -> "INSPECT"
                         else -> item.status.name
                     },
                     color = statusColor,

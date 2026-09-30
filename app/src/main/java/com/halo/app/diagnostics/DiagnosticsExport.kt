@@ -47,6 +47,15 @@ object DiagnosticsExport {
         appendLocalLiteRt(sb, providers)
         appendNativeResources(sb)
         appendAudioContinuity(sb)
+        sb.append("--- LONG TASKS ---\n")
+        val budget = com.halo.runtime.cognition.context.ContextDiagnostics.composition.value
+        budget?.let {
+            sb.append("Context: window=${it.budget.modelContextTokens}; output=${it.budget.reservedOutputTokens}; system=${it.budget.reservedSystemTokens}; request=${it.requestTokens}; remaining=${it.remainingTokens}\n")
+            sb.append("Segments: ${it.segmentTokens}\n")
+        }
+        sb.append("Compactions: ${com.halo.runtime.cognition.context.ContextDiagnostics.compactionCount.get()}\n")
+        sb.append("Payloads (last passive snapshot): ${com.halo.runtime.cognition.delegation.LongTaskDiagnostics.payloads.value ?: "not observed"}\n")
+        sb.append("Delegation: ${com.halo.runtime.cognition.delegation.LongTaskDiagnostics.delegation.value}\n\n")
         sb.append("--- MULTIMODAL ---\n")
         val visionBinding = router.roleBinding(com.halo.sdk.provider.AiModelRole.VISION)
         sb.append("Vision binding: ${visionBinding.selection} ${visionBinding.providerId ?: "automatic/inherited"}/${visionBinding.modelId ?: "automatic/inherited"}\n")

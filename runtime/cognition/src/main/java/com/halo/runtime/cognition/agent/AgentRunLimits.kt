@@ -44,6 +44,7 @@ data class AgentRunLimits(
     }
 
     companion object {
+        val DELEGATED = AgentRunLimits(45_000L, 4, 1, 2, 12_000, 2_000)
         /** Voice/chat interaction: the user is waiting. */
         val INTERACTIVE = AgentRunLimits(
             maxWallClockMs = 90_000L,

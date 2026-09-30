@@ -50,6 +50,12 @@ class ToolExposurePlanner(
     private val availabilityResolver: ToolAvailabilityResolver? = null,
     private val skillRegistry: SkillRegistry? = null,
 ) {
+    /** Default children receive public/read-only reads, never discovery or user-data-wide searches. */
+    fun delegatedDefinitions(): List<ToolDefinition> = registry.descriptors().filter {
+        it.security.risk == ToolRiskClass.READ_ONLY && it.security.confirmation == ConfirmationPolicy.NONE &&
+            availabilityResolver?.isAvailable(it) != false &&
+            (it.name in setOf("halo_fetch_url", "halo_read_payload") || it.name.startsWith("mcp."))
+    }.take(8).map { it.definition }
 
     fun initialExposure(): ToolExposureSet {
         val bootstrap = registry.descriptors()

@@ -26,6 +26,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -39,7 +41,11 @@ fun WorkingSetSheet(
     items: List<WorkspaceObject>,
     onRemove: (String) -> Unit,
     onClearAll: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    estimatedTokens: Map<String, Int> = emptyMap(),
+    cloudAllowed: Boolean = false,
+    remoteAllowed: (WorkspaceObject) -> Boolean = { cloudAllowed && it.type != WorkspaceObjectType.MEMORY },
+    onOpen: (WorkspaceObject) -> Unit = {},
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(
@@ -74,6 +80,8 @@ fun WorkingSetSheet(
             }
 
             Spacer(Modifier.height(16.dp))
+            Text("About ${estimatedTokens.values.sum()} text tokens · Selected references take priority over older chat",
+                style = MaterialTheme.typography.bodySmall)
 
             if (items.isEmpty()) {
                 Text(
@@ -132,6 +140,11 @@ fun WorkingSetSheet(
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
+                                Column {
+                                    Text("${estimatedTokens[item.id.value] ?: 0} tokens · ${if (remoteAllowed(item)) "Cloud allowed" else "Local only"}", style = MaterialTheme.typography.labelSmall)
+                                    Text(item.source.name.lowercase(), style = MaterialTheme.typography.labelSmall)
+                                    TextButton(onClick = { onOpen(item) }) { Text("Open") }
+                                }
                                 TextButton(onClick = { onRemove(item.id.value) }) {
                                     Text("Remove")
                                 }
@@ -155,6 +168,7 @@ fun ContextTransparencySheet(
     cloudSharingAllowed: Boolean,
     onDismiss: () -> Unit
 ) {
+    val composition by com.halo.runtime.cognition.context.ContextDiagnostics.composition.collectAsState()
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
@@ -197,6 +211,13 @@ fun ContextTransparencySheet(
                 title = "Network Privacy",
                 description = if (cloudSharingAllowed) "Network models may receive selected context" else "Local only · Context restricted for cloud models"
             )
+            composition?.let { value ->
+                HorizontalDivider(Modifier.padding(vertical = 8.dp))
+                ContextSourceRow("Context Inspector", "Estimated tokens · window ${value.budget.modelContextTokens}; output ${value.budget.reservedOutputTokens}; system ${value.budget.reservedSystemTokens}; remaining ${value.remainingTokens}")
+                value.segmentTokens.forEach { (kind, tokens) ->
+                    Text("${kind.name.lowercase().replace('_', ' ')}: $tokens", style = MaterialTheme.typography.labelSmall)
+                }
+            }
 
             Spacer(Modifier.height(24.dp))
         }

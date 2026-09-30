@@ -125,6 +125,9 @@ private fun ActivityListItem(story: ActivityStory, onOpenObject: (String) -> Uni
                     Text("${step.title}: ${step.message}", style = MaterialTheme.typography.bodySmall,
                         color = if (step.failed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)
                 }
+                story.children.forEach { child ->
+                    Column(Modifier.padding(start = 12.dp)) { ActivityListItem(child, onOpenObject) }
+                }
                 story.objectId?.let { id -> TextButton(onClick = { onOpenObject(id) }) { Text("Open Notebook object") } }
             }
             Text(
@@ -181,6 +184,7 @@ data class ActivityStory(
     val planPresentation: com.halo.runtime.cognition.interaction.StructuredPresentation? = null,
     /** Compact "3 / 4 steps complete" line for the collapsed row. */
     val planProgress: String? = null,
+    val children: List<ActivityStory> = emptyList(),
 )
 
 data class ActivityUiState(
@@ -284,7 +288,15 @@ class ActivityViewModel(
             } }
         }.toSet()
         val history = mapper.map(snapshot.timeline.takeLast(500)).events.filterNot { it.correlationId in durableIds }
-        ActivityUiState((history + runs.map { it.toStory() }).sortedByDescending { it.timestamp }.take(100))
+        val roots = runs.filter { it.parentRunId == null }.map { parent ->
+            parent.toStory().copy(children = runs.filter { it.parentRunId == parent.id }.map { child ->
+                child.toStory().copy(title = child.delegatedRole?.lowercase()?.replaceFirstChar { it.uppercase() } ?: "Delegated task",
+                    summary = "${RuntimeUiFormatters.formatRunState(child.state)} · ${child.pinnedProviderId.orEmpty()} / ${child.pinnedModelId.orEmpty()} · " +
+                        "${child.steps.filterIsInstance<AgentStep.ToolOutcomeRecorded>().count { it.success }} reads · ${child.steps.filterIsInstance<AgentStep.DelegationResultRecorded>().lastOrNull()?.evidence?.size ?: 0} sources · " +
+                        "${((child.completedAt ?: child.updatedAt).toEpochMilli() - child.createdAt.toEpochMilli()).coerceAtLeast(0) / 1000}s")
+            })
+        }
+        ActivityUiState((history + roots).sortedByDescending { it.timestamp }.take(100))
     }
         .flowOn(Dispatchers.Default)
         .stateIn(

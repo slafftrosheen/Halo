@@ -789,3 +789,11 @@ read view.
 # MINING-P3-001 — multimodal perception and capability packs (2026-09-30)
 
 The MINING-P3-001 source batch adds typed media references, ephemeral capture retention, shared image preparation, origin-aware visual acquisition, model-specific vision qualification and optional capability-pack status. Home image attachments, HeyCyan visual questions and policy-gated Assistant screenshots enter existing cognition/provider routing. No build, tests or device acceptance were run for this batch. Built-in LiteRT catalog entries remain text-only; declaring an imported artifact vision-capable does not prove inference. See [implementation accounting](docs/engineering/MULTIMODAL-PERCEPTION-MINING.md).
+
+## MINING-P4-001 — long-horizon cognition (2026-09-30)
+
+Source implementation extends the existing cognitive executor, context assembler, AgentRun journal and Notebook Working Set. Large read-only tool outputs use bounded app-private payload bodies with Room ownership metadata; child runs reuse the same executor and recovery planner with pinned targets and read-only depth-one policy. Every provider boundary checks estimated context against the pinned model window. Completed conversation history can be compacted through FAST with a deterministic fallback; durable history is preserved.
+
+Home shows existing P2 checklist and child status; Activity nests children; Notebook exposes selected-reference token estimates and cloud eligibility; Intelligence controls delegation/compaction; System Check exposes passive budgets/storage/counts and explicit payload GC. Explicit research saves include bounded factual source evidence in Notebook and portable backup.
+
+Status: source wired; basic source checks only. Build, tests and device acceptance were not run. These additions are not claims of verified Android/Room/provider/device behavior. See [implementation and acceptance ledger](docs/engineering/LONG-HORIZON-AGENT-MINING.md). Earlier historical validation claims apply only to their named batches.

@@ -37,6 +37,8 @@ data class AiRequest(
     /** False when durable continuation already contains this user message in context. */
     val appendTextAsUserMessage: Boolean = true,
     val turnKind: ProviderTurnKind = ProviderTurnKind.INITIAL,
+    /** Host presentation policy: auxiliary/child tokens must not become the parent's visible answer. */
+    val publishStreamingTokens: Boolean = true,
 )
 
 enum class ProviderTurnKind { INITIAL, TOOL_CONTINUATION }
@@ -342,6 +344,8 @@ data class AiResponse(
     val resolvedModelId: String? = modelId,
     /** Physical/runtime backend when the provider can report it (for example GPU or CPU). */
     val executionBackend: String? = null,
+    /** Opaque host-owned auxiliary body reference; providers do not resolve it. */
+    val payloadRefId: String? = null,
 )
 
 sealed interface AiStreamEvent {

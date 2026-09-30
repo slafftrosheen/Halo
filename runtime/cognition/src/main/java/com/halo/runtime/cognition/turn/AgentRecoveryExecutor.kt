@@ -42,6 +42,7 @@ class DefaultAgentRecoveryExecutor(
     suspend fun executeRecovery(runId: AgentRunId): RecoveryExecutionResult {
         if (agentRunStore == null || agentRunCoordinator == null) return RecoveryExecutionResult.Noop
         val run = agentRunStore.get(runId) ?: return RecoveryExecutionResult.Noop
+        if (run.parentRunId != null) return RecoveryExecutionResult.Blocked("Child recovery is owned by its parent")
 
         val plan = recoveryPlanner.plan(
             run = run,

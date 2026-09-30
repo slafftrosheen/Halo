@@ -24,4 +24,5 @@ data class AiWorkloadSpec(
     val minimumContextTokens: Int = 0,
     val allowRemote: Boolean = true,
     val preferredRole: AiModelRole? = null,
+    val allowFallback: Boolean = true,
 )

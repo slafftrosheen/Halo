@@ -30,6 +30,8 @@ data class CognitiveTurnRequest(
     val runId: AgentRunId? = null,
     val mode: CognitiveTurnMode = CognitiveTurnMode.FRESH,
     val sourceCaptureId: String? = null,
+    /** Runtime-supplied explicit child context. Never populated from model arguments. */
+    val delegatedInput: com.halo.runtime.cognition.delegation.DelegatedTurnInput? = null,
 )
 
 data class PreparedCognitiveTurn(

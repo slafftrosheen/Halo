@@ -149,3 +149,11 @@ drivers translate those abstractions into Android/Linux/Windows/wearable-specifi
 # MINING-P3-001 — multimodal perception and capability packs (2026-09-30)
 
 MINING-P3-001 source implementation is complete; stabilization remains unrun. Next acceptance should verify pinned LiteRT-LM 0.17.1 vision configuration, imported vision-artifact compatibility, synthetic probe behavior, EXIF handling, resource cleanup/cancellation, HeyCyan transfer/audio affinity, screen callback ordering and role/privacy fallbacks. Optional semantic-memory, smart-barge-in and audio-transcription packs remain unavailable until actual adapters/artifacts/qualification exist. No video, continuous capture, facial identity, background surveillance, automatic visual memory or optional download is scheduled by this source batch.
+
+## MINING-P4-001 source milestone — 2026-09-30
+
+Implemented source: bounded durable payloads, semantic context budget projection, completed-history compaction, depth-one read-only child AgentRuns with pinned routing and parent-owned recovery, bounded research, explicit Notebook evidence saves and passive UI diagnostics. This milestone does not complete runtime stabilization.
+
+Later acceptance must compile generated Room schema and exercise 19→20 migration, small-window provider protocol, interruption at each child/tool/result commit boundary, missing/forbidden/revised references, quota and atomic-write faults, cancellation/resource release, thermal/local serialization, backup/import without body caches, and Android UI layout/accessibility. These checks are deliberately not run under the source-only request.
+
+Deliberately excluded: another agent/session/planner store, autonomous recursive agents, role voting, unrestricted web browsing, shell/browser automation, implicit memory promotion, cloud sharing overrides and mandatory startup inference probes. [Source ledger](../engineering/LONG-HORIZON-AGENT-MINING.md).

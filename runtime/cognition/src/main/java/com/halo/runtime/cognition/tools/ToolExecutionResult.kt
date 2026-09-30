@@ -8,6 +8,7 @@ sealed interface ToolExecutionResult {
         val output: String,
         val actionTruth: com.halo.runtime.cognition.agent.ActionTruth = com.halo.runtime.cognition.agent.ActionTruth.CONFIRMED,
         val outputMetadata: ToolOutputMetadata? = null,
+        val payloadRef: com.halo.runtime.cognition.context.PayloadRef? = null,
     ) : ToolExecutionResult
 
     data class Rejected(

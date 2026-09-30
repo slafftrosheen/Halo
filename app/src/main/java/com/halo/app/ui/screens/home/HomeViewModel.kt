@@ -58,6 +58,9 @@ data class HomeUiState(
     val inputStatus: SpeechInputStatus = SpeechInputStatus(),
     val runtimeTaskStatus: String? = null,
     val runtimeWaitingCount: Int = 0,
+    val longTaskProgress: com.halo.runtime.cognition.interaction.StructuredPresentation? = null,
+    val longTaskStatus: String? = null,
+    val researchResult: Boolean = false,
 )
 
 class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
@@ -166,7 +169,8 @@ class HomeViewModel(
     private val conversations: com.halo.app.data.RoomConversationStore? = null,
     private val database: com.halo.app.data.AppDatabase? = null,
     val workspace: com.halo.app.data.WorkspaceContextStore? = null,
-    val captures: com.halo.app.capture.LocalCaptureStore? = null
+    val captures: com.halo.app.capture.LocalCaptureStore? = null,
+    private val agentRuns: com.halo.runtime.cognition.agent.AgentRunStore? = null,
 ) : ViewModel() {
     private val mapper = HomeUiMapper()
     private val listeningCommandMutex = Mutex()
@@ -192,6 +196,7 @@ class HomeViewModel(
         runtimeProjection?.taskSummary ?: MutableStateFlow(
             com.halo.app.ui.state.RuntimeTaskSummary(0, 0)
         ),
+        agentRuns?.observeRuns() ?: kotlinx.coroutines.flow.flowOf(emptyList<com.halo.runtime.cognition.agent.AgentRun>()),
     ) { args ->
         @Suppress("UNCHECKED_CAST")
         val snapshot = args[0] as RuntimeSnapshot
@@ -206,6 +211,13 @@ class HomeViewModel(
         val microphonePermissionGranted = args[9] as Boolean
         val input = args[10] as SpeechInputStatus
         val taskSummary = args[11] as com.halo.app.ui.state.RuntimeTaskSummary
+        @Suppress("UNCHECKED_CAST") val runs = args[12] as List<com.halo.runtime.cognition.agent.AgentRun>
+        val root = runs.filter { it.parentRunId == null }.maxByOrNull { it.updatedAt }
+        val children = runs.filter { it.parentRunId == root?.id }
+        val research = children.isNotEmpty() && root?.steps?.any {
+            it is com.halo.runtime.cognition.agent.AgentStep.ToolInvocationPrepared && it.toolId in setOf("halo_research", "halo_delegate_task")
+        } == true
+        val longTask = root?.takeIf { children.isNotEmpty() }
         val activeConversationId = conversations?.activeConversationId().orEmpty()
         val presented = HomeResponseProjector.project(
             activeConversationId,
@@ -259,6 +271,9 @@ class HomeViewModel(
                 microphonePermissionGranted = microphonePermissionGranted,
                 runtimeTaskStatus = durableStatus,
                 runtimeWaitingCount = taskSummary.waitingCount,
+                researchResult = research && turns.lastOrNull()?.metadata?.get("runId") == root?.id?.value,
+                longTaskProgress = longTask?.let { com.halo.runtime.cognition.interaction.PlanPresentationProjector.fromJournal(it.steps, "Task progress") },
+                longTaskStatus = longTask?.let { "${children.count { child -> child.state == com.halo.runtime.cognition.agent.AgentRunState.COMPLETED }} / ${children.size} tasks complete · ${children.count { child -> child.state == com.halo.runtime.cognition.agent.AgentRunState.FAILED }} failed" },
             )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(0), HomeUiState())
 
@@ -462,10 +477,24 @@ class HomeViewModel(
         _navigationEvents.emit("notebook/note/${note.id}")
     } }
     fun saveResponse(text: String) { viewModelScope.launch {
-        val note = notebook?.createNote(text, com.halo.app.data.notebook.WorkspaceSource.IMPORT) ?: return@launch
         val turn = conversations?.turns?.value?.lastOrNull()
+        val rootId = turn?.metadata?.get("runId")?.takeIf { it.isNotBlank() }?.let { com.halo.runtime.cognition.agent.AgentRunId(it) }
+        val children = rootId?.let { agentRuns?.children(it) }.orEmpty()
+        val evidence = children.flatMap { child -> child.steps.filterIsInstance<com.halo.runtime.cognition.agent.AgentStep.DelegationResultRecorded>()
+            .flatMap { it.evidence } }.distinctBy { it.sourceRef }.take(16)
+        val body = if (evidence.isEmpty()) text else text + "\n\nSources\n" + evidence.joinToString("\n\n") {
+            "${it.title}: ${it.sourceRef}\nRetrieved: ${java.time.Instant.ofEpochMilli(it.retrievedAtMs)}" +
+                it.revision?.let { revision -> " · revision $revision" }.orEmpty() + "\n${it.excerpt}"
+        }
+        val note = notebook?.createNote(body, com.halo.app.data.notebook.WorkspaceSource.IMPORT) ?: return@launch
+        val metadata = org.json.JSONObject(turn?.metadata.orEmpty())
+        if (children.isNotEmpty()) metadata.put("research", org.json.JSONObject().put("runId", rootId?.value)
+            .put("childRunIds", org.json.JSONArray(children.map { it.id.value })).put("evidence", org.json.JSONArray(evidence.map {
+                org.json.JSONObject().put("type", it.sourceType).put("source", it.sourceRef).put("title", it.title)
+                    .put("retrievedAtMs", it.retrievedAtMs).put("revision", it.revision).put("sha256", it.sha256).put("excerpt", it.excerpt)
+            })))
         if (turn != null) database?.workspaceContextDao()?.provenance(com.halo.app.data.ObjectProvenance(
-            note.id, turn.conversationId, turn.id, org.json.JSONObject(turn.metadata).toString()))
+            note.id, turn.conversationId, turn.id, metadata.toString()))
         _navigationEvents.emit("notebook/note/${note.id}")
     } }
     fun newConversation() {

@@ -311,3 +311,13 @@ keeps the same semantic surface portable across Home, Assistant, Notebook, Activ
 # MINING-P3-001 — multimodal perception and capability packs (2026-09-30)
 
 MediaAssetRef is portable identity/provenance/lifetime, not a URI or durable payload. Android owns cache and Workspace resolution. Runtime acquires reference context, checks policy and target capabilities, prepares bounded content, then materializes bytes at the provider boundary. Existing workload, role routing, interaction lifecycle, resource leases and response delivery remain authoritative. Explicit references precede acquisition; HeyCyan-origin requests use HeyCyan and fail without phone fallback. Audio-model transcription is a prepared optional first pass returning text, not a second assistant.
+
+## MINING-P4-001: context, payload and child-run ownership
+
+`ContentPayloadStore` is a portable cognition contract. The app implements immutable digest-addressed body files plus Room references. ToolRegistry stores large successful read-only outputs before budgeting; ToolOutcomeRecorded carries the opaque reference, digest and byte count. RunToolScope binds range reads to the authenticated current run and target privacy policy.
+
+CognitiveContextPlanner checks every provider boundary, including reconstructed tool continuations. DefaultContextAssembler places selected Working Set and bounded memory ahead of completed history. ContextCompactor changes only the provider projection: FAST when permitted, otherwise deterministic excerpts; summaries remain USER reference data. Tool call/result groups stay atomic and incomplete/orphan groups are rejected at the boundary.
+
+DelegatedTaskCoordinator is admission/lifecycle orchestration over AgentRunStore, the normal router, P1 guards and CognitiveTurnExecutor. Child parent/root links, role, depth, approved references and target pins persist in Room. No second runner, session database, planning truth or Working Set exists. Parent recovery owns unfinished children; terminal children return recorded results. The generic root recovery path cannot publish child responses into the conversation.
+
+Room migration 19→20 adds payload bodies/references and child fields/indices. Portable BrainSnapshot retains child relationships and saved Note provenance, excludes payload bodies/metadata, and preserves existing conservative import normalization. Details: [mining ledger](../engineering/LONG-HORIZON-AGENT-MINING.md).
