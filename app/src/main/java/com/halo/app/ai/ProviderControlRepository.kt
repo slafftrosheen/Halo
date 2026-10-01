@@ -100,7 +100,9 @@ class ProviderControlRepository(val router: AiProviderRouter, val catalogue: AiM
                     }
                     require(field.kind != ProviderFieldKind.ENUM || value in field.options)
                 } }
-                allowed.forEach { field -> values[field.id]?.let { storage.putString(field.id, it.trim()) } }
+                storage.putBatch(strings = allowed.mapNotNull { field ->
+                    values[field.id]?.let { field.id to it.trim() }
+                }.toMap())
                 if (previousEndpoint.any { (id, value) -> value != storage.getString(id) }) catalogue.invalidate(providerId)
                 if (!credentialDraft.isNullOrBlank()) (provider as? CredentialProvider)?.setCredential(Credential(providerId, credentialDraft.trim()))
                 if (provider is GeminiProvider && values["gemini_auth_mode"] == "API_KEY") provider.clearOAuthSession()

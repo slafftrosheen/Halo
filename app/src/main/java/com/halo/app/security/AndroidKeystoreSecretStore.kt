@@ -27,14 +27,19 @@ class AndroidKeystoreSecretStore(
     }
 
     override suspend fun remove(key: String) = withContext(Dispatchers.IO) {
-        AtomicFile(secretFile(key)).delete()
-        Unit
+        putBlocking(key, null)
     }
 
-    fun putBlocking(key: String, value: String?) {
+    override suspend fun migrateIfAbsent(key: String, legacyValue: String): String = withContext(Dispatchers.IO) {
+        synchronized(storeLock) {
+            getBlocking(key)?.takeIf { it.isNotBlank() } ?: legacyValue.also { putBlocking(key, it) }
+        }
+    }
+
+    fun putBlocking(key: String, value: String?) = synchronized(storeLock) {
         if (value == null) {
             AtomicFile(secretFile(key)).delete()
-            return
+            return@synchronized
         }
         layout.secretFiles.mkdirs()
         val cipher = Cipher.getInstance(TRANSFORMATION)
@@ -58,10 +63,10 @@ class AndroidKeystoreSecretStore(
         }
     }
 
-    fun getBlocking(key: String): String? {
+    fun getBlocking(key: String): String? = synchronized(storeLock) {
         val source = secretFile(key)
-        if (!source.isFile) return null
-        return runCatching {
+        if (!source.isFile && !File(source.path + ".bak").isFile) return@synchronized null
+        runCatching {
             DataInputStream(AtomicFile(source).openRead()).use { input ->
                 require(input.readInt() == FORMAT_VERSION)
                 val ivLength = input.readInt()
@@ -71,7 +76,10 @@ class AndroidKeystoreSecretStore(
                 require(encryptedLength in 1..MAX_SECRET_BYTES)
                 val encrypted = ByteArray(encryptedLength).also(input::readFully)
                 val cipher = Cipher.getInstance(TRANSFORMATION)
-                cipher.init(Cipher.DECRYPT_MODE, getOrCreateKey(), GCMParameterSpec(128, iv))
+                val keyStore = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
+                val encryptionKey = keyStore.getKey(KEY_ALIAS, null) as? SecretKey
+                    ?: error("Stored credential encryption key is unavailable")
+                cipher.init(Cipher.DECRYPT_MODE, encryptionKey, GCMParameterSpec(128, iv))
                 cipher.doFinal(encrypted).toString(Charsets.UTF_8)
             }
         }.getOrNull()
@@ -100,6 +108,9 @@ class AndroidKeystoreSecretStore(
     }
 
     private companion object {
+        // Shared by bootstrap migration and the runtime facade; neither may replace
+        // the alias or race AtomicFile operations while the other writes a secret.
+        val storeLock = Any()
         const val KEY_ALIAS = "halo.local.secrets.v1"
         const val TRANSFORMATION = "AES/GCM/NoPadding"
         const val FORMAT_VERSION = 1

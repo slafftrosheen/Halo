@@ -108,8 +108,11 @@ fun ProviderDetailScreen(control: ProviderControlRepository, providerId: String,
             item {
                 if (row.descriptor.fields.isNotEmpty()) {
                     Button(onClick = {
-                        val draft = secret; secret = ""
-                        control.save(providerId, values, draft.takeIf { it.isNotBlank() }) { ok -> message = if (ok) "Configured · not checked" else "Invalid endpoint or configuration; unable to save" }
+                        val draft = secret
+                        control.save(providerId, values, draft.takeIf { it.isNotBlank() }) { ok ->
+                            if (ok && secret == draft) secret = ""
+                            message = if (ok) "Configuration saved; connection not checked" else "Unable to save; check the configuration and try again"
+                        }
                     }) { Text("Save configuration") }
                     if (row.credentialConfigured) TextButton(onClick = { secret = ""; control.removeCredential(providerId) }) { Text("Remove credential") }
                 }

@@ -29,8 +29,8 @@ class SecretMigration(
         val existing = legacy.getString(OPENROUTER_KEY, null)
             ?: migratedPreferences.data.first()[preferenceKey]
         if (!existing.isNullOrBlank()) {
-            secretStore.put(OPENROUTER_KEY, existing)
-            check(secretStore.get(OPENROUTER_KEY) == existing) { "Secret migration verification failed" }
+            val protected = secretStore.migrateIfAbsent(OPENROUTER_KEY, existing)
+            check(secretStore.get(OPENROUTER_KEY) == protected) { "Secret migration verification failed" }
         }
         migratedPreferences.edit { it.remove(preferenceKey) }
         dataStoreScope.cancel()

@@ -89,7 +89,7 @@ sealed class Screen(val route: String, val title: String, val glyph: HaloGlyph) 
     data object Settings : Screen("settings", "Settings", HaloGlyph.SETTINGS)
 }
 
-val bottomNavItems = listOf(Screen.Home, Screen.Study, Screen.Notebook, Screen.Devices, Screen.Settings)
+val bottomNavItems = listOf(Screen.Home, Screen.Activity, Screen.Notebook, Screen.Devices, Screen.Settings)
 
 @Composable
 fun AppShell(
@@ -186,7 +186,10 @@ fun AppShell(
                     com.halo.app.ui.screens.study.StudyHomeScreen(model,
                         onResume = { id -> navigateSafely("notebook/study/${android.net.Uri.encode(id)}") },
                         onReview = { id -> navigateSafely("notebook/study/${android.net.Uri.encode(id)}?review=true") },
-                        onNotebook = { navigateSafely("notebook") })
+                        onNotebook = {
+                            ManualDependencyGraph.notebookViewModel.setFilter(com.halo.app.ui.screens.notebook.NotebookFilter.NOTES)
+                            navigateSafely("notebook")
+                        })
                 }
                 composable(Screen.Activity.route) {
                     ActivityScreen(ManualDependencyGraph.activityViewModel, onOpenObject = { id ->
@@ -219,11 +222,11 @@ fun AppShell(
                                 is NotebookNavigation.OpenCanvas -> navigateSafely("notebook/canvas/${event.id}")
                                 is NotebookNavigation.ReviewAutomation -> navigateSafely("automation_review/${android.net.Uri.encode(event.routineId)}/${android.net.Uri.encode(event.suggestionId)}")
                                 NotebookNavigation.ReviewCapabilities -> navigateSafely("ai_settings")
-                                is NotebookNavigation.OpenStudy -> navigateSafely("notebook/study/${event.sessionId}")
+                                is NotebookNavigation.OpenStudy -> navigateSafely("notebook/study/${event.sessionId}?review=${event.review}")
                             }
                         }
                     }
-                    NotebookScreen(notebookViewModel)
+                    NotebookScreen(notebookViewModel, onOpenStudy = { navigateSafely(Screen.Study.route) })
                 }
 
                 composable(

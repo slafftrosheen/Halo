@@ -20,6 +20,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 
 /**
  * Thread-safe speech recognition provider wrapper that dynamically delegates
@@ -46,7 +47,8 @@ class ReloadableSpeechRecognitionProvider(
     val availability: StateFlow<Boolean> = _availability.asStateFlow()
 
     init {
-        refresh()
+        if (selector == null) refresh()
+        else cleanupScope.launch { selector.sttSelection.collect { refreshNow() } }
     }
 
     fun refresh(): Job = cleanupScope.launch { refreshNow() }
@@ -63,6 +65,8 @@ class ReloadableSpeechRecognitionProvider(
                 language = getLanguage(),
                 nativeResourceCoordinator = nativeResourceCoordinator
             )
+        } else if (!isSelected) {
+            UnavailableSpeechRecognitionProvider("Selected speech recognition provider is unavailable: $sttSelectedId")
         } else if (isExplicitSherpa) {
             UnavailableSpeechRecognitionProvider(
                 "Local Whisper model is missing but explicitly selected."
@@ -101,8 +105,9 @@ class ReloadableSpeechRecognitionProvider(
     }
 
     override suspend fun close() {
-        lifecycle.withLock { currentDelegate.get()?.close() }
-        cleanupScope.coroutineContext[Job]?.children?.toList()?.joinAll()
+        val jobs = cleanupScope.coroutineContext[Job]?.children?.toList().orEmpty()
         cleanupScope.cancel()
+        jobs.joinAll()
+        lifecycle.withLock { currentDelegate.get().close() }
     }
 }

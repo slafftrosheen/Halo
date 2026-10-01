@@ -37,7 +37,11 @@ class WorkspaceContextStore(private val database: AppDatabase, private val notes
     val cloudSharing = kotlinx.coroutines.flow.MutableStateFlow(storage.getBoolean("policy_cloud_workspace", false))
     fun setUseMemories(enabled: Boolean) { storage.putBoolean("policy_memories", enabled); useMemories.value = enabled }
     fun setCloudSharing(enabled: Boolean) { storage.putBoolean("policy_cloud_workspace", enabled); cloudSharing.value = enabled }
-    fun remoteAllowed(type: String): Boolean = cloudSharing.value &&
+    fun refreshPolicy() {
+        cloudSharing.value = storage.getBoolean("policy_cloud_workspace", false)
+        useMemories.value = storage.getBoolean("policy_memories", false)
+    }
+    fun remoteAllowed(type: String): Boolean = storage.getBoolean("policy_cloud_workspace", false) &&
         (type != "MEMORY" || storage.getBoolean("policy_cloud_memories", false))
     val workingSet = database.workspaceContextDao().observeWorkingSet()
     val memories = database.memoryRecordDao().observeActiveRecords().map { rows -> rows.filter { it.id.startsWith("mem_") }.map { row ->

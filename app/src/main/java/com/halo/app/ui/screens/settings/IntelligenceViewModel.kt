@@ -386,14 +386,8 @@ class IntelligenceViewModel(
      */
     fun selectModel(modelId: String) {
         val providerId = aiProviderRouter.selectedProviderId.value ?: return
-        when (providerId) {
-            ProviderIds.LITERT -> selectLocalModel(modelId)
-            ProviderIds.OLLAMA -> selectTarget(AiModelRef(ProviderIds.OLLAMA, modelId))
-            ProviderIds.OPENROUTER -> selectTarget(AiModelRef(ProviderIds.OPENROUTER, modelId))
-            ProviderIds.OPENAI -> selectTarget(AiModelRef(ProviderIds.OPENAI, modelId))
-            ProviderIds.ANTHROPIC -> selectTarget(AiModelRef(ProviderIds.ANTHROPIC, modelId))
-            ProviderIds.GEMINI -> selectTarget(AiModelRef(ProviderIds.GEMINI, modelId))
-        }
+        if (providerId == ProviderIds.LITERT) selectLocalModel(modelId)
+        else selectTarget(AiModelRef(providerId, modelId))
     }
 
     /**

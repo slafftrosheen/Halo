@@ -69,7 +69,7 @@ sealed interface NotebookNavigation {
     data class OpenFile(val id: String) : NotebookNavigation
     data class OpenMemory(val id: String) : NotebookNavigation
     data class OpenCanvas(val id: String) : NotebookNavigation
-    data class OpenStudy(val sessionId: String) : NotebookNavigation
+    data class OpenStudy(val sessionId: String, val review: Boolean = false) : NotebookNavigation
     data class ReviewAutomation(val routineId: String,val suggestionId: String) : NotebookNavigation
     data object ReviewCapabilities : NotebookNavigation
 }
@@ -104,6 +104,7 @@ class NotebookViewModel(
     val memories = workspace.memories
     val history = workspace.history
     val useMemories = workspace.useMemories
+    fun refreshContextPolicy() = workspace.refreshContextPolicy()
     val cloudSharing = workspace.cloudSharing
     fun remoteAllowed(item: WorkspaceObject): Boolean = workspace.remoteAllowed(item.type.name)
 
@@ -322,8 +323,8 @@ class NotebookViewModel(
             }
         }
     }
-    fun openStudy(sessionId: String) {
-        navigationChannel.trySend(NotebookNavigation.OpenStudy(sessionId))
+    fun openStudy(sessionId: String, review: Boolean = false) {
+        navigationChannel.trySend(NotebookNavigation.OpenStudy(sessionId, review))
     }
     fun createCanvas() {
         if (!creatingCanvas.compareAndSet(false, true)) return

@@ -47,11 +47,13 @@ class ProviderGraph(
     private var _providers: Providers? = null
 
     val providers: Providers
-        get() = _providers ?: providerFactory.createProviders().also { created ->
-            (created.inference as? LiteRtLocalProvider)?.let { provider ->
-                modelManager.observeResidentModel { provider.modelSession.loadedModelId }
+        get() = synchronized(this) {
+            _providers ?: providerFactory.createProviders().also { created ->
+                (created.inference as? LiteRtLocalProvider)?.let { provider ->
+                    modelManager.observeResidentModel { provider.modelSession.loadedModelId }
+                }
+                _providers = created
             }
-            _providers = created
         }
 
     /**
@@ -59,6 +61,7 @@ class ProviderGraph(
      * Accepts a transform so callers can selectively override individual providers
      * using [Providers.copy].
      */
+    @Synchronized
     fun replaceProviders(transform: (Providers) -> Providers) {
         _providers = transform(providers)
     }

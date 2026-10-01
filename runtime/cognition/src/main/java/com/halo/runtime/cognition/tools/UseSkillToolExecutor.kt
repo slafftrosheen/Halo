@@ -43,7 +43,11 @@ class UseSkillToolExecutor(
 
         val skillId = SkillId(rawSkillId)
         val skillRegistry = skillRegistryProvider()
+        skillRegistry?.refreshAvailability()
         val descriptor = skillRegistry?.get(skillId)
+        if (skillRegistry != null && descriptor == null) {
+            return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Skill $rawSkillId is not registered")
+        }
         if (descriptor != null && !descriptor.enabled) {
             return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Skill $rawSkillId is disabled")
         }

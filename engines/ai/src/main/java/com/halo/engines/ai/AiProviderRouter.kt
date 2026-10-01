@@ -98,6 +98,7 @@ class DefaultAiProviderRouter(
         val resolvedProvider = stored.providerId ?: defaultProvider
         val canApplyDefaultModel = resolvedProvider == defaultProvider &&
             stored.modelId == null &&
+            (stored.providerId == null || stored.policy != AiRoutingPolicy.EXPLICIT) &&
             !defaultInferenceModelId.isNullOrBlank()
         val resolvedModel = if (canApplyDefaultModel) defaultInferenceModelId else stored.modelId
         val freshInstall = stored.providerId == null && stored.modelId == null
@@ -141,12 +142,14 @@ class DefaultAiProviderRouter(
 
     override fun stop() = Unit
 
+    @Synchronized
     fun setRoutingPolicy(policy: AiRoutingPolicy) {
         val previous = currentSelection()
         _routingPolicy.value = policy
         persistSelection(currentSelection(), "OTHER", previous)
     }
 
+    @Synchronized
     override fun selectProvider(id: String) {
         if (allProviders.any { it.id == id }) {
             val previous = currentSelection()
@@ -163,6 +166,7 @@ class DefaultAiProviderRouter(
         }
     }
 
+    @Synchronized
     override fun selectModel(modelId: String?) {
         val previous = currentSelection()
         _selectedModelId.value = modelId

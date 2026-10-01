@@ -31,9 +31,9 @@ class SecretMigrationV2(
             for (key in legacyKeys) {
                 val existing = storage.getString(key, null)
                 if (!existing.isNullOrBlank()) {
-                    secretStore.put(key, existing)
+                    val protected = secretStore.migrateIfAbsent(key, existing)
                     val restored = secretStore.get(key)
-                    if (restored != existing) {
+                    if (restored != protected) {
                         throw IllegalStateException("Secret migration verification failed for $key")
                     }
                     migrated.add(key)

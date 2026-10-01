@@ -40,8 +40,8 @@ class AndroidStorage(private val context: Context, private val name: String = "h
         val editor = prefs.edit()
         strings.forEach { (key, value) -> editor.putString(key, value) }
         booleans.forEach { (key, value) -> editor.putBoolean(key, value) }
-        // One editor commit prevents observers/process death from seeing a torn AI selection.
-        editor.apply()
+        // Explicit settings batches must reach disk before Save/selection reports success.
+        check(editor.commit()) { "Unable to persist settings" }
     }
 
     override fun remove(key: String) {

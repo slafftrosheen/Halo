@@ -1,6 +1,7 @@
 package com.halo.app.ui.screens.notebook
 
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.compose.LifecycleResumeEffect
 
 import android.text.format.DateUtils
 import androidx.compose.foundation.BorderStroke
@@ -64,7 +65,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.halo.app.data.notebook.WorkspaceObject
 import com.halo.app.data.notebook.WorkspaceObjectType
-import com.halo.app.ui.design.HaloHeaderAction
 import com.halo.app.ui.design.HaloScreenHeader
 import com.halo.app.ui.design.HaloSpacing
 
@@ -78,7 +78,11 @@ private val primaryFilters = listOf(
 private val secondaryFilters = NotebookFilter.entries.filterNot(primaryFilters::contains)
 
 @Composable
-fun NotebookScreen(viewModel: NotebookViewModel) {
+fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit) {
+    LifecycleResumeEffect(viewModel) {
+        viewModel.refreshContextPolicy()
+        onPauseOrDispose {}
+    }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val cloudAllowed by viewModel.cloudSharing.collectAsStateWithLifecycle()
     val selectedIds by viewModel.selectedIds.collectAsStateWithLifecycle()
@@ -165,9 +169,34 @@ fun NotebookScreen(viewModel: NotebookViewModel) {
         item(key = "header") {
             HaloScreenHeader(
                 title = "Workspace",
-                subtitle = "Your files, chats and creative tools",
-                primaryAction = HaloHeaderAction("New note", viewModel::createNote),
+                subtitle = "Tools for your ideas, with everything in one place",
             )
+        }
+
+        item(key = "toolbox") {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                WorkspaceTool(
+                    "Notebook", "Write, organize and improve your notes", Icons.Rounded.NoteAlt,
+                    onOpen = { viewModel.setFilter(NotebookFilter.NOTES) },
+                    actionLabel = "New note", onAction = viewModel::createNote,
+                )
+                WorkspaceTool(
+                    "Canvas", "Connect ideas and create with AI", Icons.Rounded.DashboardCustomize,
+                    onOpen = { viewModel.setFilter(NotebookFilter.CANVASES) },
+                    actionLabel = "New canvas", onAction = viewModel::createCanvas,
+                )
+                WorkspaceTool(
+                    "Study", "Explore a topic, continue a lesson or review", Icons.Rounded.AutoStories,
+                    onOpen = onOpenStudy,
+                )
+            }
+        }
+
+        item(key = "library-heading") {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text("Your library", Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
+                TextButton(onClick = { showWorkingSet = true }) { Text("Context (${state.workingSet.size})") }
+            }
         }
 
         item(key = "organize") {
@@ -204,27 +233,11 @@ fun NotebookScreen(viewModel: NotebookViewModel) {
             } }
         }
 
-        item(key = "tools") {
-            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton(onClick = viewModel::createCanvas) { Text("New canvas") }
-                TextButton(onClick = {
-                    val due = state.duePractice.firstOrNull()
-                    val session = state.studySessions.firstOrNull()
-                    when {
-                        due != null -> viewModel.openStudy(due.sessionId)
-                        session != null -> viewModel.openStudy(session.id)
-                        else -> viewModel.setFilter(NotebookFilter.NOTES)
-                    }
-                }) { Text("Study") }
-                TextButton(onClick = { showWorkingSet = true }) { Text("Context (${state.workingSet.size})") }
-            }
-        }
-
         if (state.duePractice.isNotEmpty()) {
             item(key = "due-review") {
                 val due = state.duePractice.first()
                 Surface(
-                    onClick = { viewModel.openStudy(due.sessionId) },
+                    onClick = { viewModel.openStudy(due.sessionId, review = true) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
                     color = MaterialTheme.colorScheme.primaryContainer,
@@ -578,4 +591,32 @@ private fun workspaceTypeLabel(row: WorkspaceObject): String = when (row.type) {
     WorkspaceObjectType.CONVERSATION -> "Saved chat"
     WorkspaceObjectType.MEMORY -> "Memory"
     WorkspaceObjectType.ARTIFACT -> if (row.contentRef.startsWith("canvas:")) "Canvas" else "Artifact"
+}
+
+@Composable
+private fun WorkspaceTool(
+    title: String,
+    description: String,
+    icon: ImageVector,
+    onOpen: () -> Unit,
+    actionLabel: String? = null,
+    onAction: () -> Unit = {},
+) {
+    Surface(
+        onClick = onOpen,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceContainer,
+    ) {
+        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.titleSmall)
+                Text(description, style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            if (actionLabel != null) TextButton(onClick = onAction) { Text(actionLabel) }
+        }
+    }
 }
