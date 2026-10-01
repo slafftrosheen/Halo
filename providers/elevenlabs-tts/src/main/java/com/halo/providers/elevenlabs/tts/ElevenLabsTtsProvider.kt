@@ -32,6 +32,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 data class ElevenLabsTtsState(
+    val loading: Boolean = true,
     val configured: Boolean = false,
     val ready: Boolean = false,
     val error: String? = null,
@@ -82,6 +83,7 @@ class ElevenLabsTtsProvider(private val storage: Storage) : PcmSpeechSynthesisPr
         val model = modelIdSnapshot
         val catalogue = catalogueSnapshot
         _state.value = ElevenLabsTtsState(
+            loading = false,
             configured = credential != null,
             ready = credential != null && healthy && voice != null && model != null,
             error = error,
