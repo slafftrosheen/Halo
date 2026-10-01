@@ -119,7 +119,8 @@ class MainActivity : ComponentActivity() {
                 AppearanceMode.DARK -> true
             }
 
-            HaloTheme(darkTheme = darkTheme) {
+            val assistantPreferences by ManualDependencyGraph.assistantPreferences.state.collectAsState()
+            HaloTheme(darkTheme = darkTheme, fontScale = assistantPreferences.fontScale) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -199,6 +200,7 @@ class MainActivity : ComponentActivity() {
 
         startUiGraphBootstrap()
         startRuntimeLoop()
+        handleHaloScreenIntent(intent)
         handleIncomingShareIntent(intent)
         handleAssistantIntent(intent)
         RuntimeStartupTrace.mark("activity.onCreate.end", startedAt)
@@ -207,8 +209,18 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        handleHaloScreenIntent(intent)
         handleIncomingShareIntent(intent)
         handleAssistantIntent(intent)
+    }
+
+    private fun handleHaloScreenIntent(intent: Intent?) {
+        val screen = intent?.getStringExtra(com.halo.app.ui.shell.HaloScreenCatalog.EXTRA_SCREEN) ?: return
+        intent.removeExtra(com.halo.app.ui.shell.HaloScreenCatalog.EXTRA_SCREEN)
+        if (screen in com.halo.app.ui.shell.HaloScreenCatalog.screens) {
+            ManualDependencyGraph.explicitHaloScreenRequested = true
+            ManualDependencyGraph.requestedHaloScreen.value = screen
+        }
     }
 
     /** OEM fallback for devices that route the default-assistant contract through an activity. */

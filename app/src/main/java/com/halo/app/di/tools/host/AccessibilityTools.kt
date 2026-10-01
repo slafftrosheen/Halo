@@ -34,7 +34,7 @@ class AccessibilityTools : ToolExecutor, ToolPreflightProvider {
                     "region" to enumeration(UiScreenRegion.entries.map { it.name }), "interactiveOnly" to mapOf("type" to "boolean"),
                     "editableOnly" to mapOf("type" to "boolean")), listOf("snapshotId", "query")),
             definition("halo_ui_click", "Activate an enabled exact-generation target. Dispatch alone does not confirm an effect.",
-                target + ("expectedEffect" to enumeration(UiExpectedEffect.entries.map { it.name })), listOf("snapshotId", "token")),
+                target + mapOf("expectedEffect" to enumeration(UiExpectedEffect.entries.map { it.name }), "gesture" to enumeration(listOf("click", "long_press"))), listOf("snapshotId", "token")),
             definition("halo_ui_scroll", "Scroll the selected semantic container once; use the returned fresh snapshot.",
                 target + ("direction" to enumeration(listOf("forward", "backward"))), listOf("snapshotId", "token", "direction")),
             definition("halo_ui_search", "Find a semantic target, with at most three explicitly approved forward scrolls in this container. Stops on ambiguity, unverified movement, or package/container change.",
@@ -44,8 +44,8 @@ class AccessibilityTools : ToolExecutor, ToolPreflightProvider {
                 target + ("text" to string(2000)), listOf("snapshotId", "token", "text")),
             definition("halo_ui_set_checked", "Set a checkable target deterministically. Already-satisfied state needs no click.",
                 target + ("checked" to mapOf("type" to "boolean")), listOf("snapshotId", "token", "checked")),
-            definition("halo_ui_global_action", "Back or home from an exact observed generation. Home requires launcher evidence to confirm.",
-                mapOf("snapshotId" to string(), "action" to enumeration(listOf("back", "home"))), listOf("snapshotId", "action")),
+            definition("halo_ui_global_action", "Perform an available Android global action from an exact observed generation. System dispatch is not proof of the effect.",
+                mapOf("snapshotId" to string(), "action" to enumeration(AndroidGlobalActions.supported(HaloAccessibilityService.instance).keys.toList())), listOf("snapshotId", "action")),
             definition("halo_ui_wait", "Observe a user-driven change for at most five seconds; never acts on the screen.",
                 mapOf("snapshotId" to string(), "condition" to enumeration(UiWaitCondition.entries.map { it.name }),
                     "query" to string(200), "timeoutMs" to mapOf("type" to "integer", "minimum" to 200, "maximum" to 5000)), listOf("snapshotId", "condition")),
@@ -60,13 +60,16 @@ class AccessibilityTools : ToolExecutor, ToolPreflightProvider {
         resolver.validateSnapshot(snapshotId)?.let { return@withContext ToolPreflightResult.Rejected(it) }
         val snapshot = service.latestSemanticSnapshot ?: return@withContext ToolPreflightResult.Rejected(UiFailure.SNAPSHOT_NOT_FOUND)
         val operation = when (toolCall.functionName) {
-            "halo_ui_click" -> UiOperation.ACTIVATE; "halo_ui_scroll", "halo_ui_search" -> UiOperation.SCROLL
+            "halo_ui_click" -> when (toolCall.arguments["gesture"] ?: "click") {
+                "click" -> UiOperation.ACTIVATE; "long_press" -> UiOperation.LONG_PRESS
+                else -> return@withContext ToolPreflightResult.Rejected(UiFailure.ACTION_NOT_SUPPORTED)
+            }; "halo_ui_scroll", "halo_ui_search" -> UiOperation.SCROLL
             "halo_ui_set_text" -> UiOperation.SET_TEXT; "halo_ui_set_checked" -> UiOperation.SET_CHECKED
-            "halo_ui_global_action" -> when (toolCall.arguments["action"]) { "back" -> UiOperation.BACK; "home" -> UiOperation.HOME
-                else -> return@withContext ToolPreflightResult.Rejected(UiFailure.ACTION_NOT_SUPPORTED) }
+            "halo_ui_global_action" -> AndroidGlobalActions.supported(service)[toolCall.arguments["action"]]
+                ?: return@withContext ToolPreflightResult.Rejected(UiFailure.ACTION_NOT_SUPPORTED)
             else -> return@withContext ToolPreflightResult.Rejected(UiFailure.ACTION_NOT_SUPPORTED)
         }
-        val target = if (operation in setOf(UiOperation.BACK, UiOperation.HOME)) null else {
+        val target = if (operation.isGlobal) null else {
             val token = toolCall.arguments["token"] as? String ?: return@withContext ToolPreflightResult.Rejected(UiFailure.TOKEN_NOT_FOUND)
             when (val result = resolver.resolve(snapshotId, token, operation)) {
                 is UiTargetOutcome.Rejected -> return@withContext ToolPreflightResult.Rejected(result.failure)
@@ -74,10 +77,10 @@ class AccessibilityTools : ToolExecutor, ToolPreflightProvider {
             }
         }
         val intent = when (operation) {
-            UiOperation.ACTIVATE -> {
+            UiOperation.ACTIVATE, UiOperation.LONG_PRESS -> {
                 val expected = toolCall.arguments["expectedEffect"] as? String ?: "NONE"
                 val effect = UiExpectedEffect.entries.firstOrNull { it.name == expected } ?: return@withContext ToolPreflightResult.Rejected(UiFailure.ACTION_NOT_SUPPORTED)
-                UiActionIntent.Activate(target!!, effect)
+                UiActionIntent.Activate(target!!, effect, operation == UiOperation.LONG_PRESS)
             }
             UiOperation.SET_TEXT -> {
                 val text = toolCall.arguments["text"] as? String ?: return@withContext ToolPreflightResult.Rejected(UiFailure.OBSERVATION_REQUIRED)
@@ -99,12 +102,13 @@ class AccessibilityTools : ToolExecutor, ToolPreflightProvider {
                 if (direction !in setOf("forward", "backward")) return@withContext ToolPreflightResult.Rejected(UiFailure.ACTION_NOT_SUPPORTED)
                 UiActionIntent.Scroll(target!!, direction == "forward")
             }
-            UiOperation.BACK, UiOperation.HOME -> UiActionIntent.Global(snapshotId, snapshot.uiRevision, operation)
+            else -> if (operation.isGlobal) UiActionIntent.Global(snapshotId, snapshot.uiRevision, operation)
+                else return@withContext ToolPreflightResult.Rejected(UiFailure.ACTION_NOT_SUPPORTED)
         }
         val label = target?.label?.lowercase().orEmpty()
         if (listOf("captcha", "i'm not a robot", "i am not a robot", "verify you are human", "verify you're human").any { label.contains(it) })
             return@withContext ToolPreflightResult.Rejected(UiFailure.USER_TAKEOVER_REQUIRED)
-        val consequence = if (operation !in setOf(UiOperation.ACTIVATE, UiOperation.SET_CHECKED)) UiConsequenceHint.NORMAL else when {
+        val consequence = if (operation !in setOf(UiOperation.ACTIVATE, UiOperation.LONG_PRESS, UiOperation.SET_CHECKED)) UiConsequenceHint.NORMAL else when {
             listOf("delete", "uninstall", "factory reset", "remove account").any { label.contains(it) } -> UiConsequenceHint.DESTRUCTIVE
             listOf("buy", "purchase", "pay", "checkout").any { label.contains(it) } -> UiConsequenceHint.PURCHASE_LIKE
             listOf("send", "post", "publish").any { label == it || label.startsWith("$it ") } -> UiConsequenceHint.COMMUNICATION
@@ -121,10 +125,10 @@ class AccessibilityTools : ToolExecutor, ToolPreflightProvider {
             service.packageManager.getApplicationLabel(service.packageManager.getApplicationInfo(pkg, 0)).toString().take(80)
         }.getOrNull() } ?: "Current app"
         val verb = when (intent) {
-            is UiActionIntent.Activate -> "Tap"; is UiActionIntent.SetText -> "Enter text"
+            is UiActionIntent.Activate -> if (intent.longPress) "Long press" else "Tap"; is UiActionIntent.SetText -> "Enter text"
             is UiActionIntent.SetChecked -> if (intent.checked) "Turn on" else "Turn off"
             is UiActionIntent.Scroll -> if (toolCall.functionName == "halo_ui_search") "Search with up to ${toolCall.arguments["maxScrolls"]} forward scrolls" else if (intent.forward) "Scroll forward" else "Scroll backward"
-            is UiActionIntent.Global -> if (intent.operation == UiOperation.HOME) "Go home" else "Go back"
+            is UiActionIntent.Global -> intent.operation.name.lowercase().replace('_', ' ')
         }
         ToolPreflightResult.Validated(toolCall, UiTargetPreview(app, snapshot.packageName, verb, target?.label,
             target?.semanticType?.name?.lowercase(), target?.region?.name?.lowercase()?.replace('_', ' '),
@@ -278,7 +282,7 @@ class AccessibilityTools : ToolExecutor, ToolPreflightProvider {
     }
     private fun ScreenContextNode.toToolLine(): String = buildString {
         append("token=${token ?: "none"} role=${semanticType.name.lowercase()} region=${region?.name?.lowercase() ?: "unknown"}")
-        if (clickable) append(" clickable"); if (editable) append(" editable"); if (scrollable) append(" scrollable")
+        if (longClickable) append(" longClickable"); if (clickable) append(" clickable"); if (editable) append(" editable"); if (scrollable) append(" scrollable")
         if (checkable) append(" checked=$checked"); if (!enabled) append(" disabled")
         if (sensitive) append(" sensitive=[REDACTED]") else {
             safeTargetLabel()?.let { append(" label=").append(it.replace('\n', ' ').replace('"', '\'')) }

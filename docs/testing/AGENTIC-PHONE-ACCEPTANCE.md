@@ -94,3 +94,19 @@ clicking. Accessibility is never used for work a dedicated Android capability ca
 - Clarification: missing input enters `WAITING_FOR_CLARIFICATION`; the answer resumes the same run.
 - Android Assistant: a visual-only published response completes the invocation without waiting for
   TTS.
+
+
+## PHONE-ASSISTANT-001 physical acceptance — pending
+
+Automated checks pass (338 tests and debug assembly, 2026-10-01); no adb device or emulator image was available. Run this checklist on API 26 and API 37 before claiming physical compatibility.
+
+- Select Halo as assistant, invoke it over an app, capture supported assist context, then hide/reinvoke rapidly. Recording must stop; a late callback must not cancel the successor. Secure/unsupported screenshots must remain unavailable.
+- Speak a request using the selected local and cloud provider. Discover halo.assistant and halo.phone_actions, approve a sensitive action, and verify dispatch/receipt/response on the same provider. Repeat after denying contacts, microphone, accessibility, and API 37 local-network grants.
+- Exercise VoiceInteractor confirmation, option selection, capabilities, stop, completion, abort, and cancellation. Each request completes or cancels once; unsupported commands cannot execute phone tools.
+- Exercise Android SpeechRecognizer against Halo's recognition service: selected language/model, explicit stop, cancel, concurrent microphone ownership, unavailable model, unsupported external audio, and teardown. No transcript should start a conversation or survive as retained PCM.
+- Open an allowlisted Halo page; change appearance/font/start page; restart and verify persistence. Explicit navigation must win over the saved start page. Read and stop shared speech output; background read requests must fail clearly.
+- On API 29+, discover an app's native direct actions, approve one, then verify token expiration, invalidation and session hide prevent replay. App labels are untrusted; receipt stays dispatched until an external effect is proven. API 26 must report this capability unavailable.
+- Enable accessibility and test semantic long press, back/home, notifications, quick settings and available lock/screenshot/media/menu actions. Unsupported or unadvertised global actions must disappear. Freshness, package policy, approval and takeover checks must still apply; arbitrary visual changes must not imply success.
+- On API 37 verify assistant volume changes against the observed stream and foreground-service lifetime across listening, processing, playback and dismissal; test local-network permission denial/regrant and resolver-backed settings/launch behavior.
+
+Record device/API, assistant role, granted services, provider/model, exact receipts, observed effects, and failures. Fix failures before marking this checklist complete.

@@ -50,6 +50,9 @@ class HostToolDescriptorDispatchTest {
         context,
         { true },
         listOf(
+            com.halo.app.di.tools.host.AssistantTools(context,
+                com.halo.app.ui.theme.AppearancePreferences(context), com.halo.app.ui.theme.AssistantPreferences(context),
+                { _, _ -> }, {}, { true }),
             DeviceInsightTools(context),
             ClipboardTools(context),
             IntegrityTools(context, NoFiles, NoWorkspace),
@@ -66,6 +69,7 @@ class HostToolDescriptorDispatchTest {
     private val hostKinds = listOf(
         HaloToolDescriptors.ExecutorKind.NAVIGATION,
         HaloToolDescriptors.ExecutorKind.SYSTEM,
+        HaloToolDescriptors.ExecutorKind.ASSISTANT,
         HaloToolDescriptors.ExecutorKind.APPLICATION,
         HaloToolDescriptors.ExecutorKind.DEVICE,
         HaloToolDescriptors.ExecutorKind.DEVICE_INSIGHT,
@@ -92,6 +96,7 @@ class HostToolDescriptorDispatchTest {
      */
     private val allowedNames = mapOf(
         HaloToolDescriptors.ExecutorKind.NAVIGATION to setOf("halo_navigation", "halo_browser", "halo_search"),
+        HaloToolDescriptors.ExecutorKind.ASSISTANT to setOf("halo_list_screens", "halo_open_screen", "halo_get_preferences", "halo_set_preferences", "halo_read_aloud", "halo_stop_reading", "halo_list_app_actions", "halo_perform_app_action"),
         HaloToolDescriptors.ExecutorKind.SYSTEM to setOf("halo_open_settings", "halo_share_text"),
         HaloToolDescriptors.ExecutorKind.APPLICATION to setOf("halo_list_apps", "halo_open_app"),
         HaloToolDescriptors.ExecutorKind.DEVICE to setOf("halo_volume", "halo_flashlight", "halo_ringer", "halo_brightness"),

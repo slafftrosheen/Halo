@@ -174,6 +174,9 @@ object ManualDependencyGraph {
         )
     }
     val appearancePreferences by lazy { AppearancePreferences(applicationContext) }
+    val assistantPreferences by lazy { com.halo.app.ui.theme.AssistantPreferences(applicationContext) }
+    var explicitHaloScreenRequested = false
+    val requestedHaloScreen = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
 
     /** One runtime instance per Android process; Activities are only views over it. */
     val runtime by lazy {
@@ -615,6 +618,12 @@ object ManualDependencyGraph {
             applicationContext,
             foreground,
             listOf(
+                com.halo.app.di.tools.host.AssistantTools(applicationContext, appearancePreferences, assistantPreferences,
+                    readAloud = { text, id ->
+                        startAndroidSpeaker()
+                        eventBus.publish(com.halo.sdk.runtime.TtsRequested(text = text, transactionId = id,
+                            target = com.halo.sdk.runtime.SpeechOutputTarget.Phone))
+                    }, stopReading = { haloSpeechOutputCoordinator.stop("Read-aloud stop tool") }, isForeground = foreground),
                 com.halo.app.di.tools.host.DeviceInsightTools(applicationContext),
                 com.halo.app.di.tools.host.ClipboardTools(applicationContext),
                 com.halo.app.di.tools.host.IntegrityTools(
@@ -661,6 +670,7 @@ object ManualDependencyGraph {
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.INTEGRITY to hostExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.NAVIGATION to hostExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.SYSTEM to hostExecutor,
+                com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.ASSISTANT to hostExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.APPLICATION to hostExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.DEVICE to hostExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.DEVICE_INSIGHT to hostExecutor,
@@ -1190,7 +1200,7 @@ object ManualDependencyGraph {
 
     private val assistantSpeechAudioAttributes by lazy {
         android.media.AudioAttributes.Builder()
-            .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
+            .setUsage(if (android.os.Build.VERSION.SDK_INT >= 37) android.media.AudioAttributes.USAGE_ASSISTANT else android.media.AudioAttributes.USAGE_MEDIA)
             .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SPEECH)
             .build()
     }

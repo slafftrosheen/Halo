@@ -440,6 +440,28 @@ object HaloToolDescriptors {
         else -> null
     }
 
+    fun assistant(definition: ToolDefinition): ToolDescriptor? = when (definition.name) {
+        "halo_list_screens", "halo_get_preferences" -> descriptor(definition.name, definition, ToolCategory.INFORMATION,
+            readOnly(definition.name), keywords = setOf("halo", "screens", "preferences", "appearance", "font", "start page"))
+        "halo_set_preferences" -> descriptor(definition.name, definition, ToolCategory.HOST_CONTROL,
+            reversible(), keywords = setOf("halo", "theme", "dark", "light", "font", "start page"))
+        "halo_open_screen" -> descriptor(definition.name, definition, ToolCategory.HOST_CONTROL,
+            external(ReplaySafety.NEVER_REPLAY), keywords = setOf("halo", "navigate", "page", "screen"))
+        "halo_read_aloud" -> descriptor(definition.name, definition, ToolCategory.MEDIA,
+            external(ReplaySafety.NEVER_REPLAY), keywords = setOf("speech", "read aloud", "voice"),
+            presentation = ToolPresentation(title = "Read text aloud", actionVerb = "Read", sensitiveArguments = setOf("text")))
+        "halo_list_app_actions" -> descriptor(definition.name, definition, ToolCategory.INFORMATION,
+            readWithConsent(definition.name), keywords = setOf("native", "assistant", "app actions"),
+            requirements = setOf(ToolRequirement.Capability(CapabilityId("host.assistant.native"))))
+        "halo_perform_app_action" -> descriptor(definition.name, definition, ToolCategory.HOST_CONTROL,
+            ToolSecurityPolicy(risk = ToolRiskClass.SENSITIVE, confirmation = ConfirmationPolicy.ALWAYS, replaySafety = ReplaySafety.NEVER_REPLAY),
+            keywords = setOf("native", "assistant", "app actions"),
+            requirements = setOf(ToolRequirement.Capability(CapabilityId("host.assistant.native"))))
+        "halo_stop_reading" -> descriptor(definition.name, definition, ToolCategory.MEDIA,
+            reversible(ReplaySafety.SAFE), keywords = setOf("speech", "stop reading", "stop voice"))
+        else -> null
+    }
+
     fun system(definition: ToolDefinition): ToolDescriptor? = when (definition.name) {
         "halo_open_settings" -> descriptor(definition.name, definition, ToolCategory.HOST_CONTROL,
             external(ReplaySafety.RECONCILE_BEFORE_RETRY),
@@ -517,7 +539,7 @@ object HaloToolDescriptors {
                 risk = ToolRiskClass.EXTERNAL_SIDE_EFFECT,
                 confirmation = ConfirmationPolicy.ALWAYS,
                 replaySafety = ReplaySafety.NEVER_REPLAY,
-            ), keywords = setOf("back", "home", "global"),
+            ), keywords = setOf("back", "home", "global", "recents", "notifications", "quick settings", "lock", "screenshot", "menu", "dpad"),
             requirements = setOf(ToolRequirement.Capability(CapabilityId("host.screen.control"))))
         else -> null
     }
@@ -557,6 +579,7 @@ object HaloToolDescriptors {
             ExecutorKind.MEDIA -> media(definition)
             ExecutorKind.NAVIGATION -> navigation(definition)
             ExecutorKind.SYSTEM -> system(definition)
+            ExecutorKind.ASSISTANT -> assistant(definition)
             ExecutorKind.ACCESSIBILITY -> accessibility(definition)
             ExecutorKind.USE_SKILL -> useSkill(definition)
             ExecutorKind.NOTIFICATION_REPLY -> notificationReply(definition)
@@ -583,6 +606,7 @@ object HaloToolDescriptors {
         MEDIA,
         NAVIGATION,
         SYSTEM,
+        ASSISTANT,
         ACCESSIBILITY,
         USE_SKILL,
         NOTIFICATION_REPLY,

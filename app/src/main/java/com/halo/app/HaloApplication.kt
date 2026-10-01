@@ -29,6 +29,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collect
 
 class HaloApplication :
@@ -83,14 +84,40 @@ class HaloApplication :
         }
 
         ManualDependencyGraph.init(this)
-        ManualDependencyGraph.attentionController
+        storageBootstrap = resourceScope.async {
+            val startedAt = android.os.SystemClock.elapsedRealtime()
+            RuntimeStartupTrace.mark("application.storageBootstrap.begin", startedAt)
+            try {
+                val layout = haloStorageLayout(this@HaloApplication)
+                layout.ensureDirectories()
+                LocalAssetStorageMigration(this@HaloApplication, layout).migrate()
+                val secretStore = AndroidKeystoreSecretStore(layout)
+                SecretMigration(
+                    this@HaloApplication,
+                    secretStore,
+                ).migrate()
+                // Migrate every newer provider credential from legacy/plain storage before the
+                // SecretBackedStorage facade begins serving those keys exclusively from Keystore.
+                SecretMigrationV2(
+                    com.halo.host.android.AndroidStorage(this@HaloApplication),
+                    secretStore,
+                ).migrate()
+                ManualDependencyGraph.providerGraph.reloadPersistedSpeechSettings()
+            } finally {
+                RuntimeStartupTrace.mark("application.storageBootstrap.end", startedAt)
+            }
+        }
+        resourceScope.launch { storageBootstrap.await(); ManualDependencyGraph.attentionController }
         resourceScope.launch {
+            storageBootstrap.await()
             ManualDependencyGraph.devicePresenceRepository.presenceMap.collect { ManualDependencyGraph.attentionContextProvider.refresh() }
         }
         resourceScope.launch {
+            storageBootstrap.await()
             ManualDependencyGraph.agentRunCoordinator.activeRuns.collect { ManualDependencyGraph.attentionContextProvider.interacting(it.isNotEmpty()) }
         }
         resourceScope.launch {
+            storageBootstrap.await()
             var previous: Map<String, com.halo.runtime.cognition.agent.AgentRunState>? = null
             ManualDependencyGraph.agentRunStore.observeRuns().collect { runs ->
                 val prior = previous
@@ -114,37 +141,17 @@ class HaloApplication :
                 }
             }
         }
-        ManualDependencyGraph.devicePresenceBridge
+        resourceScope.launch { storageBootstrap.await(); ManualDependencyGraph.devicePresenceBridge }
         // RUNTIME-018: startup classifies outstanding runs; it never auto-executes
         // consequential work. Recoverable runs become SUSPENDED/WAITING_* and are
         // surfaced as resumable; only genuinely uncertain runs are terminalized.
         resourceScope.launch {
+            storageBootstrap.await()
             runCatching { ManualDependencyGraph.agentRunCoordinator.prepareOutstandingRunsForRecovery() }
                 .onFailure { Log.w("HaloApplication", "Agent recovery classification failed", it) }
         }
 
-        storageBootstrap = resourceScope.async {
-            val startedAt = android.os.SystemClock.elapsedRealtime()
-            RuntimeStartupTrace.mark("application.storageBootstrap.begin", startedAt)
-            try {
-                val layout = haloStorageLayout(this@HaloApplication)
-                layout.ensureDirectories()
-                LocalAssetStorageMigration(this@HaloApplication, layout).migrate()
-                val secretStore = AndroidKeystoreSecretStore(layout)
-                SecretMigration(
-                    this@HaloApplication,
-                    secretStore,
-                ).migrate()
-                // Migrate every newer provider credential from legacy/plain storage before the
-                // SecretBackedStorage facade begins serving those keys exclusively from Keystore.
-                SecretMigrationV2(
-                    com.halo.host.android.AndroidStorage(this@HaloApplication),
-                    secretStore,
-                ).migrate()
-            } finally {
-                RuntimeStartupTrace.mark("application.storageBootstrap.end", startedAt)
-            }
-        }
+
 
         resourceScope.launch {
             try {
@@ -211,6 +218,12 @@ class HaloApplication :
 
     suspend fun awaitStorageBootstrap() {
         storageBootstrap.await()
+    }
+
+    override fun onTerminate() {
+        unregisterActivityLifecycleCallbacks(this)
+        resourceScope.cancel()
+        super.onTerminate()
     }
 
     private fun refreshBudget(pressure: NativeMemoryPressure) {

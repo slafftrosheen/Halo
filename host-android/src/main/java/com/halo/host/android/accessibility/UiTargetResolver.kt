@@ -32,6 +32,7 @@ class UiTargetResolver(private val service: HaloAccessibilityService) {
         val failure = when {
             node.sensitive -> UiFailure.TARGET_SENSITIVE
             !node.enabled -> UiFailure.TARGET_DISABLED
+            operation == UiOperation.LONG_PRESS && !node.longClickable -> UiFailure.ACTION_NOT_SUPPORTED
             operation == UiOperation.ACTIVATE && !node.clickable -> UiFailure.ACTION_NOT_SUPPORTED
             operation == UiOperation.SET_TEXT && !node.editable -> UiFailure.ACTION_NOT_SUPPORTED
             operation == UiOperation.SET_CHECKED && !node.checkable -> UiFailure.ACTION_NOT_SUPPORTED
@@ -41,7 +42,7 @@ class UiTargetResolver(private val service: HaloAccessibilityService) {
         if (failure != null) return UiTargetOutcome.Rejected(failure)
         val target = ResolvedUiTarget(snapshotId, snapshot.uiRevision, snapshot.packageName, token, node.semanticType,
             node.safeTargetLabel(), node.region, node.enabled, node.clickable, node.editable, node.scrollable,
-            node.checkable, node.checked.takeIf { node.checkable }, node.sensitive, node.stableFingerprint)
+            node.checkable, node.checked.takeIf { node.checkable }, node.sensitive, node.stableFingerprint, node.longClickable)
         android.util.Log.i("HaloUi", "HALO_UI_TARGET_RESOLVED id=${snapshotId.take(8)} operation=$operation role=${target.semanticType} region=${target.region} labelPresent=${target.label != null} sensitive=false")
         return UiTargetOutcome.Resolved(target)
     }

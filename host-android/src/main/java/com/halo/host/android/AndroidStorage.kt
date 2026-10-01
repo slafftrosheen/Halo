@@ -17,7 +17,7 @@ class AndroidStorage(private val context: Context, private val name: String = "h
     }
 
     override fun putString(key: String, value: String?) {
-        prefs.edit().putString(key, value).apply()
+        putBatch(strings = mapOf(key to value))
     }
 
     override fun getInt(key: String, defaultValue: Int): Int {
@@ -25,7 +25,7 @@ class AndroidStorage(private val context: Context, private val name: String = "h
     }
 
     override fun putInt(key: String, value: Int) {
-        prefs.edit().putInt(key, value).apply()
+        check(prefs.edit().putInt(key, value).commit()) { "Unable to persist settings" }
     }
 
     override fun getBoolean(key: String, defaultValue: Boolean): Boolean {
@@ -33,7 +33,7 @@ class AndroidStorage(private val context: Context, private val name: String = "h
     }
 
     override fun putBoolean(key: String, value: Boolean) {
-        prefs.edit().putBoolean(key, value).apply()
+        putBatch(booleans = mapOf(key to value))
     }
 
     override fun putBatch(strings: Map<String, String?>, booleans: Map<String, Boolean>) {
@@ -45,10 +45,10 @@ class AndroidStorage(private val context: Context, private val name: String = "h
     }
 
     override fun remove(key: String) {
-        prefs.edit().remove(key).apply()
+        check(prefs.edit().remove(key).commit()) { "Unable to persist settings" }
     }
 
     override fun clear() {
-        prefs.edit().clear().apply()
+        check(prefs.edit().clear().commit()) { "Unable to persist settings" }
     }
 }

@@ -6,7 +6,14 @@ import com.halo.sdk.runtime.*
 import java.security.MessageDigest
 
 enum class UiActionProtocolVersion { V1 }
-enum class UiOperation { ACTIVATE, SET_TEXT, SET_CHECKED, SCROLL, BACK, HOME }
+enum class UiOperation {
+    ACTIVATE, SET_TEXT, SET_CHECKED, SCROLL, LONG_PRESS, BACK, HOME, RECENTS, NOTIFICATIONS,
+    QUICK_SETTINGS, POWER_DIALOG, TOGGLE_SPLIT_SCREEN, LOCK_SCREEN, TAKE_SCREENSHOT,
+    HEADSET_HOOK, ACCESSIBILITY_BUTTON, ACCESSIBILITY_BUTTON_CHOOSER, ACCESSIBILITY_SHORTCUT,
+    ALL_APPS, DPAD_UP, DPAD_DOWN, DPAD_LEFT, DPAD_RIGHT, DPAD_CENTER,
+    MENU, DISMISS_NOTIFICATION_SHADE, MEDIA_PLAY_PAUSE;
+    val isGlobal: Boolean get() = ordinal >= BACK.ordinal
+}
 enum class UiExpectedEffect { NONE, NAVIGATION, STATE_CHANGE, DISMISS }
 enum class UiConsequenceHint { NORMAL, COMMUNICATION, DESTRUCTIVE, PURCHASE_LIKE, PERMISSION_LIKE }
 enum class UiFailure { ACCESSIBILITY_DISABLED, NO_ACTIVE_WINDOW, PACKAGE_BLOCKED, SYSTEM_PERMISSION_SURFACE,
@@ -21,7 +28,7 @@ enum class UiWorkflowPhase { OBSERVING, READY, WAITING_FOR_APPROVAL, ACTING, SET
 data class ResolvedUiTarget(val snapshotId: String, val uiRevision: Long, val packageName: String?,
     val token: String, val semanticType: UiSemanticType, val label: String?, val region: UiScreenRegion?,
     val enabled: Boolean, val clickable: Boolean, val editable: Boolean, val scrollable: Boolean,
-    val checkable: Boolean, val checked: Boolean?, val sensitive: Boolean, val stableFingerprint: String)
+    val checkable: Boolean, val checked: Boolean?, val sensitive: Boolean, val stableFingerprint: String, val longClickable: Boolean = false)
 sealed interface UiTargetOutcome {
     data class Resolved(val target: ResolvedUiTarget) : UiTargetOutcome
     data class Rejected(val failure: UiFailure) : UiTargetOutcome
@@ -32,9 +39,9 @@ sealed interface UiActionIntent {
     val target: ResolvedUiTarget?
     val operation: UiOperation
     val argumentDigest: String
-    data class Activate(override val target: ResolvedUiTarget, val expectedEffect: UiExpectedEffect = UiExpectedEffect.NONE) : UiActionIntent {
+    data class Activate(override val target: ResolvedUiTarget, val expectedEffect: UiExpectedEffect = UiExpectedEffect.NONE, val longPress: Boolean = false) : UiActionIntent {
         override val snapshotId = target.snapshotId; override val uiRevision = target.uiRevision
-        override val operation = UiOperation.ACTIVATE; override val argumentDigest = uiDigest(expectedEffect.name)
+        override val operation = if (longPress) UiOperation.LONG_PRESS else UiOperation.ACTIVATE; override val argumentDigest = uiDigest("${expectedEffect.name}:$longPress")
     }
     data class SetText(override val target: ResolvedUiTarget, val textLength: Int, val textDigest: String) : UiActionIntent {
         override val snapshotId = target.snapshotId; override val uiRevision = target.uiRevision
@@ -64,7 +71,7 @@ data class UiSettlePolicy(val quietWindowMs: Long = 180, val maxWaitMs: Long = 1
     val minimumObservationDelayMs: Long = 180) {
     init { require(quietWindowMs in 50..500 && maxWaitMs in 200..2500 && minimumObservationDelayMs in 0..500) }
     companion object {
-        fun forOperation(operation: UiOperation) = if (operation in setOf(UiOperation.ACTIVATE, UiOperation.BACK, UiOperation.HOME))
+        fun forOperation(operation: UiOperation) = if (operation in setOf(UiOperation.ACTIVATE, UiOperation.LONG_PRESS) || operation.isGlobal)
             UiSettlePolicy(250, 2000, 250) else UiSettlePolicy()
     }
 }
@@ -107,7 +114,7 @@ object UiTargetSearch {
         }
         val ranked = snapshot.nodes.withIndex().filter { (_, n) -> !n.sensitive && n.enabled &&
             (role == null || n.semanticType == role) && (region == null || n.region == region) &&
-            (!interactiveOnly || n.clickable || n.editable || n.checkable || n.scrollable) && (!editableOnly || n.editable) }
+            (!interactiveOnly || n.clickable || n.longClickable || n.editable || n.checkable || n.scrollable) && (!editableOnly || n.editable) }
             .map { it to score(it.value) }.filter { it.second > 0 && key.isNotBlank() }
             .sortedWith(compareByDescending<Pair<IndexedValue<ScreenContextNode>, Int>> { it.second }
                 .thenBy { it.first.value.region?.ordinal ?: Int.MAX_VALUE }.thenBy { it.first.value.depth }.thenBy { it.first.index })
@@ -159,9 +166,12 @@ class UiPostconditionVerifier {
                 UiExpectedEffect.DISMISS -> disappeared || change.dialogDisappeared
                 UiExpectedEffect.NONE -> change.packageChanged || change.rootChanged || change.dialogAppeared || change.targetStateChanged || disappeared
             }
-            is UiActionIntent.Global -> if (intent.operation == UiOperation.HOME)
-                change.packageChanged && launcherPackage != null && after?.packageName == launcherPackage
-                else change.packageChanged || change.rootChanged || change.dialogDisappeared
+            is UiActionIntent.Global -> when (intent.operation) {
+                UiOperation.HOME -> launcherPackage != null && after.packageName == launcherPackage
+                UiOperation.BACK -> change.packageChanged || change.rootChanged || change.dialogDisappeared
+                // A changed screen alone cannot prove which system action took effect.
+                else -> false
+            }
         })
         val verification = when {
             dispatch == UiDispatchStatus.NOT_DISPATCHED -> UiVerification.NOT_CONFIRMED
@@ -233,7 +243,7 @@ object UiOperatorDiagnostics {
 data class UiObservation(val snapshotId: String, val revision: Long, val packageName: String?,
     val clickable: Boolean, val editable: Boolean, val checkable: Boolean, val scrollable: Boolean)
 fun ScreenContextSnapshot.observation() = UiObservation(snapshotId, uiRevision, packageName,
-    nodes.any { it.clickable && it.enabled && !it.sensitive }, nodes.any { it.editable && it.enabled && !it.sensitive },
+    nodes.any { (it.clickable || it.longClickable) && it.enabled && !it.sensitive }, nodes.any { it.editable && it.enabled && !it.sensitive },
     nodes.any { it.checkable && it.enabled && !it.sensitive }, nodes.any { it.scrollable && it.enabled && !it.sensitive })
 class UiTransactionScope(val phase: suspend (UiWorkflowPhase) -> Unit,
     val nested: suspend (UiActionIntent, String, UiWorkflowPhase, UiActionReceipt?, UiObservation?) -> UiFailure? = { _, _, _, _, _ -> UiFailure.ACTION_NOT_SUPPORTED }
@@ -249,7 +259,7 @@ data class UiTransactionRecord(val toolCallId: String, val phase: UiWorkflowPhas
 data class UiRecoveryObservation(val snapshot: ScreenContextSnapshot, val receipt: UiActionReceipt?)
 fun ScreenContextSnapshot.compactUiText(): String = "UNTRUSTED_SCREEN_CONTENT protocol=V1 snapshotId=$snapshotId uiRevision=$uiRevision package=$packageName\n" +
     nodes.take(80).filter { !it.sensitive }.joinToString("\n") {
-        "token=${it.token} role=${it.semanticType} label=${it.safeTargetLabel().orEmpty()} clickable=${it.clickable} editable=${it.editable} checkable=${it.checkable} checked=${it.checked} scrollable=${it.scrollable}"
+        "token=${it.token} role=${it.semanticType} label=${it.safeTargetLabel().orEmpty()} clickable=${it.clickable} longClickable=${it.longClickable} editable=${it.editable} checkable=${it.checkable} checked=${it.checked} scrollable=${it.scrollable}"
     }.take(6000) + "\nnext=USE_FRESH_SNAPSHOT"
 object UiWorkflowProjector {
     fun from(run: com.halo.runtime.cognition.agent.AgentRun): UiWorkflowState? {

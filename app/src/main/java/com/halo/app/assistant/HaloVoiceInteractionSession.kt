@@ -61,6 +61,92 @@ class HaloVoiceInteractionSession(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var active: ActiveInvocation? = null
     private var interactionObserverJob: Job? = null
+    private data class NativeChoice(val request: Request, val prompt: String,
+        val options: List<Pair<String, () -> Unit>>)
+    private var nativeChoice by mutableStateOf<NativeChoice?>(null)
+
+    private fun pauseForNativeChoice() {
+        val old = active
+        old?.let { com.halo.host.android.assistant.NativeAssistantActions.shared.detach(it.invocation.interactionId) }
+        active = null
+        interactionObserverJob?.cancel()
+        old?.let { applicationScope.launch { runtimeBridge.cancelAssistantInteraction(it.invocation.interactionId, "native_choice") } }
+    }
+
+    private fun clearNativeChoice() {
+        nativeChoice?.request?.takeIf { it.isActive }?.cancel()
+        nativeChoice = null
+    }
+
+    override fun onGetSupportedCommands(commands: Array<out String>): BooleanArray =
+        commands.map { it == COMMAND_CAPABILITIES || it == COMMAND_STOP }.toBooleanArray()
+
+    override fun onRequestCommand(request: CommandRequest) {
+        when (request.command) {
+            COMMAND_CAPABILITIES -> request.sendResult(Bundle().apply {
+                putStringArray("commands", arrayOf(COMMAND_CAPABILITIES, COMMAND_STOP))
+                putBoolean("confirmation", true); putBoolean("pickOption", true)
+                putString("phoneExecution", "Halo discovery and durable authorization")
+            })
+            COMMAND_STOP -> {
+                val current = active
+                scope.launch {
+                    try {
+                        current?.let { runtimeBridge.cancelAssistantInteraction(it.invocation.interactionId, "native_stop") }
+                        if (request.isActive) request.sendResult(Bundle().apply { putBoolean("stopped", true) })
+                    } catch (_: Exception) { if (request.isActive) request.cancel() }
+                    hide()
+                }
+            }
+            else -> request.cancel()
+        }
+    }
+
+    override fun onRequestConfirmation(request: ConfirmationRequest) {
+        clearNativeChoice()
+        pauseForNativeChoice()
+        nativeChoice = NativeChoice(request, nativePrompt(request.callingPackage, request.voicePrompt), listOf(
+            "Confirm" to { if (request.isActive) request.sendConfirmationResult(true, Bundle()) },
+            "Decline" to { if (request.isActive) request.sendConfirmationResult(false, Bundle()) },
+        ))
+        show(null, 0)
+    }
+
+    override fun onRequestPickOption(request: PickOptionRequest) {
+        clearNativeChoice()
+        pauseForNativeChoice()
+        val options = request.options
+        if (options.isEmpty() || options.size > 12) { request.cancel(); return }
+        nativeChoice = NativeChoice(request, nativePrompt(request.callingPackage, request.voicePrompt), options.map { option ->
+            option.label.toString().take(120) to { if (request.isActive) request.sendPickOptionResult(arrayOf(option), Bundle()) }
+        })
+        show(null, 0)
+    }
+
+    private fun nativePrompt(caller: String, prompt: android.app.VoiceInteractor.Prompt?): String =
+        "${caller.take(150)}: ${prompt?.visualPrompt?.toString()?.take(500) ?: "Choose an option"}"
+
+    override fun onCancelRequest(request: Request) {
+        if (nativeChoice?.request === request) nativeChoice = null
+        if (request.isActive) request.cancel()
+    }
+
+    override fun onRequestCompleteVoice(request: CompleteVoiceRequest) {
+        request.sendCompleteResult(Bundle())
+        hide()
+    }
+
+    override fun onRequestAbortVoice(request: AbortVoiceRequest) {
+        val current = active
+        current?.let { applicationScope.launch { runtimeBridge.cancelAssistantInteraction(it.invocation.interactionId, "native_abort") } }
+        request.sendAbortResult(Bundle())
+        hide()
+    }
+
+    private companion object {
+        const val COMMAND_CAPABILITIES = "com.halo.assistant.CAPABILITIES"
+        const val COMMAND_STOP = "com.halo.assistant.STOP"
+    }
 
     private var interactionState by mutableStateOf<InteractionTurnState?>(null)
     private var screenContextAttached by mutableStateOf(false)
@@ -94,7 +180,8 @@ class HaloVoiceInteractionSession(
                 AppearanceMode.LIGHT -> false
                 AppearanceMode.DARK -> true
             }
-            HaloTheme(darkTheme = darkTheme) {
+            val preferences by ManualDependencyGraph.assistantPreferences.state.collectAsState()
+            HaloTheme(darkTheme = darkTheme, fontScale = preferences.fontScale) {
                 /*
                  * RUNTIME-019: the overlay observes the shared interaction
                  * projection and can render the active input surface inline;
@@ -105,6 +192,26 @@ class HaloVoiceInteractionSession(
                         factory = com.halo.app.interaction.InteractionSurfaceViewModelFactory(),
                     )
                 val interactionState2 by interactionViewModel.state.collectAsStateWithLifecycle()
+                nativeChoice?.let { choice ->
+                    androidx.compose.material3.AlertDialog(
+                        onDismissRequest = { clearNativeChoice() },
+                        title = { androidx.compose.material3.Text("Voice request") },
+                        text = { androidx.compose.material3.Text(choice.prompt) },
+                        confirmButton = {
+                            androidx.compose.foundation.layout.Column {
+                                choice.options.forEach { (label, respond) ->
+                                    androidx.compose.material3.TextButton(onClick = {
+                                        nativeChoice = null
+                                        respond()
+                                    }) { androidx.compose.material3.Text(label) }
+                                }
+                            }
+                        },
+                        dismissButton = { androidx.compose.material3.TextButton(onClick = { clearNativeChoice() }) {
+                            androidx.compose.material3.Text("Cancel")
+                        } },
+                    )
+                }
                 AssistantSurface(
                     interactionState = interactionState,
                     screenContextAttached = screenContextAttached,
@@ -113,6 +220,7 @@ class HaloVoiceInteractionSession(
                     onInteractionRespond = interactionViewModel::respond,
                     onStopClicked = {
                         val stopped = active
+                        stopped?.let { com.halo.host.android.assistant.NativeAssistantActions.shared.detach(it.invocation.interactionId) }
                         active = null
                         if (stopped != null) {
                             scope.launch {
@@ -136,6 +244,9 @@ class HaloVoiceInteractionSession(
         super.onShow(args, showFlags)
         AssistantRuntimeStateStore.sessionVisible(true)
         lifecycleRegistry.currentState = Lifecycle.State.RESUMED
+        if (nativeChoice != null) return
+        val previous = active
+        previous?.let { com.halo.host.android.assistant.NativeAssistantActions.shared.detach(it.invocation.interactionId) }
         val inputDeviceId = args?.getInt(Intent.EXTRA_ASSIST_INPUT_DEVICE_ID, -1)?.takeIf { it >= 0 }
         val invocation = HostInvocation(
             interactionId = UUID.randomUUID().toString(),
@@ -164,8 +275,14 @@ class HaloVoiceInteractionSession(
 
         scope.launch {
             try {
+                previous?.let { runtimeBridge.cancelAssistantInteraction(it.invocation.interactionId, "replaced") }
+                if (active !== current) return@launch
                 runtimeBridge.begin(invocation)
                 current.ready.complete(Unit)
+                if (active !== current) {
+                    runtimeBridge.hideAssistantSurface(invocation.interactionId)
+                    return@launch
+                }
                 if (active === current) {
                     val listening = runtimeBridge.startListening(invocation.interactionId, inputDeviceId)
                     if (!listening) {
@@ -185,9 +302,10 @@ class HaloVoiceInteractionSession(
         super.onHandleAssist(state)
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return
         val current = active ?: return
+        attachNativeActions(current.invocation.interactionId, state.activityId)
         val snapshot = contextExtractor.extract(state.assistStructure, state.assistContent)
         scope.launch {
-            runCatching { current.ready.await(); runtimeBridge.attachScreen(current.invocation.interactionId, snapshot) }
+            runCatching { current.ready.await(); if (active === current) runtimeBridge.attachScreen(current.invocation.interactionId, snapshot) }
                 .onSuccess {
                     if (active === current) {
                         screenContextAttached = true
@@ -199,23 +317,73 @@ class HaloVoiceInteractionSession(
         }
     }
 
-    override fun onHandleScreenshot(screenshot: Bitmap?) {
-        super.onHandleScreenshot(screenshot)
-        val bitmap = screenshot?.copy(screenshot.config ?: Bitmap.Config.ARGB_8888, false) ?: return
+    @androidx.annotation.RequiresApi(29)
+    private fun attachNativeActions(owner: String, activityId: ActivityId) {
+        com.halo.host.android.assistant.NativeAssistantActions.shared.attach(owner,
+            object : com.halo.host.android.assistant.NativeAppActionSource {
+                private var actions = emptyList<android.app.DirectAction>()
+                override suspend fun list(): List<String> = kotlinx.coroutines.withTimeout(5_000) {
+                    kotlinx.coroutines.suspendCancellableCoroutine { continuation ->
+                        val cancellation = android.os.CancellationSignal()
+                        continuation.invokeOnCancellation { cancellation.cancel() }
+                        requestDirectActions(activityId, cancellation, context.mainExecutor) { result ->
+                            if (continuation.isActive) {
+                                actions = result.take(12)
+                                continuation.resumeWith(Result.success(actions.map { it.id }))
+                            }
+                        }
+                    }
+                }
+                override fun dispatch(index: Int) {
+                    val action = actions.getOrNull(index) ?: error("Native app action is no longer available")
+                    performDirectAction(action, Bundle(), null, context.mainExecutor) { /* App result is untrusted, not proof of the effect. */ }
+                    actions = emptyList()
+                }
+            })
+    }
+
+    override fun onDirectActionsInvalidated(activityId: ActivityId) {
+        super.onDirectActionsInvalidated(activityId)
+        com.halo.host.android.assistant.NativeAssistantActions.shared.invalidate()
+    }
+
+    @Suppress("DEPRECATION")
+    override fun onHandleAssist(data: Bundle?, structure: android.app.assist.AssistStructure?, content: android.app.assist.AssistContent?) {
+        if (Build.VERSION.SDK_INT >= 29) return
         val current = active ?: return
-        if (current.screenshotAttached) return
+        val snapshot = contextExtractor.extract(structure, content) ?: return
         scope.launch {
-            runCatching { current.ready.await(); runtimeBridge.attachScreenshot(current.invocation.interactionId, bitmap) }
-                .onSuccess { current.screenshotAttached = true }
-            bitmap.recycle()
+            current.ready.await()
+            if (active === current) {
+                runtimeBridge.attachScreen(current.invocation.interactionId, snapshot)
+                screenContextAttached = true
+            }
         }
     }
 
+    override fun onHandleScreenshot(screenshot: Bitmap?) {
+        super.onHandleScreenshot(screenshot)
+        val current = active ?: return
+        if (current.screenshotAttached || screenshot == null) return
+        current.screenshotAttached = true
+        val bitmap = screenshot.copy(screenshot.config ?: Bitmap.Config.ARGB_8888, false) ?: return
+        scope.launch {
+            try {
+                current.ready.await()
+                if (active === current) runtimeBridge.attachScreenshot(current.invocation.interactionId, bitmap)
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+              catch (_: Exception) { current.screenshotAttached = false }
+            finally { bitmap.recycle() }
+        }.invokeOnCompletion { if (!bitmap.isRecycled) bitmap.recycle() }
+    }
+
     override fun onHide() {
+        clearNativeChoice()
         AssistantRuntimeStateStore.sessionVisible(false)
         interactionObserverJob?.cancel()
         interactionObserverJob = null
         val ending = active
+        ending?.let { com.halo.host.android.assistant.NativeAssistantActions.shared.detach(it.invocation.interactionId) }
         active = null
         if (ending != null) scope.launch { runtimeBridge.hideAssistantSurface(ending.invocation.interactionId) }
         interactionState = InteractionTurnState.Idle
@@ -224,10 +392,12 @@ class HaloVoiceInteractionSession(
     }
 
     override fun onDestroy() {
+        clearNativeChoice()
         AssistantRuntimeStateStore.sessionDestroyed()
         interactionObserverJob?.cancel()
         interactionObserverJob = null
         active?.let { ending ->
+            com.halo.host.android.assistant.NativeAssistantActions.shared.detach(ending.invocation.interactionId)
             applicationScope.launch {
                 runtimeBridge.hideAssistantSurface(ending.invocation.interactionId)
             }

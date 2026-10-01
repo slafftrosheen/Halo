@@ -55,13 +55,15 @@ class AppearancePreferences(
     private var persistenceJob: Job? = null
 
     fun setMode(mode: AppearanceMode) {
-        if (mutableMode.value == mode) return
+        // The initial SYSTEM value is only a placeholder until disk has loaded.
+        if (initialLoad.isCompleted && mutableMode.value == mode) return
 
-        mutationGeneration.incrementAndGet()
+        val generation = mutationGeneration.incrementAndGet()
         mutableMode.value = mode
 
         persistenceJob = scope.launch {
             writes.withLock {
+                if (mutationGeneration.get() != generation) return@withLock
                 val persisted = preferences()
                     .edit()
                     .putString(KEY_MODE, mode.name)
@@ -70,6 +72,15 @@ class AppearancePreferences(
                     Log.w(TAG, "Could not persist Halo appearance mode")
                 }
             }
+        }
+    }
+
+    suspend fun setModePersisted(mode: AppearanceMode) = withContext(ioDispatcher) {
+        initialLoad.await()
+        writes.withLock {
+            check(preferences().edit().putString(KEY_MODE, mode.name).commit()) { "Could not persist Halo appearance mode" }
+            mutationGeneration.incrementAndGet()
+            mutableMode.value = mode
         }
     }
 

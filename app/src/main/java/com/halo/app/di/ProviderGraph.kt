@@ -70,6 +70,14 @@ class ProviderGraph(
         _providers = transform(providers)
     }
 
+    @Synchronized
+    fun reloadPersistedSpeechSettings() {
+        val existing = _providers ?: return
+        (existing.speechSelector as? com.halo.app.ai.DefaultSpeechProviderSelector)?.reloadSelection()
+        existing.ttsProviders.filterIsInstance<com.halo.providers.elevenlabs.tts.ElevenLabsTtsProvider>()
+            .forEach { it.reloadConfiguration() }
+    }
+
     fun reloadSpeechProvider() {
         val reloadable = providers.speechRecognition as? ReloadableSpeechRecognitionProvider
         reloadable?.refresh()

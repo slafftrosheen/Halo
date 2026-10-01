@@ -127,6 +127,18 @@ fun AppShell(
         }
     }
 
+    val requestedScreen by ManualDependencyGraph.requestedHaloScreen.collectAsState()
+    LaunchedEffect(requestedScreen) {
+        requestedScreen?.let { screen ->
+            if (screen in HaloScreenCatalog.screens) navigateSafely(screen)
+            ManualDependencyGraph.requestedHaloScreen.compareAndSet(screen, null)
+        }
+    }
+    LaunchedEffect(Unit) {
+        val screen = ManualDependencyGraph.assistantPreferences.get().startScreen
+        if (!ManualDependencyGraph.explicitHaloScreenRequested && ManualDependencyGraph.requestedHaloScreen.value == null && navController.currentDestination?.route == "home" && screen != "home") navigateSafely(screen)
+    }
+
     LaunchedEffect(homeViewModel) {
         homeViewModel.navigationEvents.collectLatest(::navigateSafely)
     }
@@ -573,7 +585,8 @@ fun AppShell(
                     val provider = ManualDependencyGraph.speechSynthesisRegistry.providers.filterIsInstance<com.halo.providers.elevenlabs.tts.ElevenLabsTtsProvider>().first()
                     com.halo.app.ui.screens.settings.ElevenLabsSettingsScreen(provider,
                         onBack = { navController.popBackStack() },
-                        onTestVoice = { ManualDependencyGraph.haloSpeechOutputCoordinator.preview(provider.metadata.id) })
+                        onTestVoice = { ManualDependencyGraph.haloSpeechOutputCoordinator.preview(provider.metadata.id) },
+                        onUseProvider = { ManualDependencyGraph.speechSynthesisRegistry.selector.selectTts(provider.metadata.id) })
                 }
                 composable("android_assistant") {
                     AndroidAssistantScreen(

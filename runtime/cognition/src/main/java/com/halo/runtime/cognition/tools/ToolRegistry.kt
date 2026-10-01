@@ -84,15 +84,15 @@ class ToolRegistry(
     /** All registered descriptors. Bare tools receive a conservative fallback descriptor. */
     fun descriptors(): List<ToolDescriptor> =
         definitions().map { definition ->
-            descriptorByTool[definition.name]
+            (descriptorByTool[definition.name]
                 ?: dynamicDescriptors[definition.name]
-                ?: fallbackDescriptor(definition)
+                ?: fallbackDescriptor(definition)).copy(definition = definition)
         }
 
     fun descriptor(toolName: String): ToolDescriptor? {
         val definition = definitions().firstOrNull { it.name == toolName || it.id == toolName }
             ?: return null
-        return descriptorByTool[toolName] ?: dynamicDescriptors[toolName] ?: fallbackDescriptor(definition)
+        return (descriptorByTool[toolName] ?: dynamicDescriptors[toolName] ?: fallbackDescriptor(definition)).copy(definition = definition)
     }
 
     fun definitions(): List<ToolDefinition> {
@@ -103,11 +103,12 @@ class ToolRegistry(
         return static + dynamic
     }
 
-    fun contains(
-        toolId: String
-    ): Boolean = executorByTool.containsKey(toolId) || dynamicExecutorFor(toolId) != null
+    private fun staticExecutorFor(toolName: String): ToolExecutor? = executorByTool[toolName]
+        ?: executors.firstOrNull { executor -> executor.definitions().any { it.name == toolName || it.id == toolName } }
 
-    fun executorFor(toolName: String): ToolExecutor? = executorByTool[toolName] ?: dynamicExecutorFor(toolName)
+    fun contains(toolId: String): Boolean = staticExecutorFor(toolId) != null || dynamicExecutorFor(toolId) != null
+
+    fun executorFor(toolName: String): ToolExecutor? = staticExecutorFor(toolName) ?: dynamicExecutorFor(toolName)
 
     /**
      * Validate a tool call without executing it.

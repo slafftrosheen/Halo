@@ -2,6 +2,7 @@ package com.halo.app.ui.shell
 
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
+import kotlinx.coroutines.launch
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
@@ -83,6 +84,21 @@ fun PermissionsScreen(
     } else {
         granted(Manifest.permission.ACCESS_FINE_LOCATION)
     }
+    val contactsGranted = granted(Manifest.permission.READ_CONTACTS)
+    val permissionScope = androidx.compose.runtime.rememberCoroutineScope()
+    val contactsPermissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+    ) {
+        refreshKey++
+        permissionScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            com.halo.app.di.ManualDependencyGraph.hostGraph.capabilityPublisher.refreshInto(com.halo.app.di.ManualDependencyGraph.capabilityCatalogue)
+            com.halo.app.di.ManualDependencyGraph.skillRegistry.refreshAvailability()
+        }
+    }
+    val localNetworkGranted = Build.VERSION.SDK_INT < 37 || granted(Manifest.permission.ACCESS_LOCAL_NETWORK)
+    val networkPermissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+    ) { refreshKey++ }
     val wifiGranted = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
         granted(Manifest.permission.NEARBY_WIFI_DEVICES)
     val storageState = storageAccessRepository?.state?.collectAsStateWithLifecycle()?.value
@@ -117,8 +133,22 @@ fun PermissionsScreen(
 
         Spacer(Modifier.height(20.dp))
 
+        if (Build.VERSION.SDK_INT >= 37 && !localNetworkGranted) {
+            HaloWorkspaceCard(accent = HaloPastelYellow) {
+                Text("Local network access", style = MaterialTheme.typography.titleMedium)
+                Text("Allow access when connecting to nearby devices or a local AI server.")
+                HaloWorkspaceButton("Allow local network access", {
+                    networkPermissionLauncher.launch(Manifest.permission.ACCESS_LOCAL_NETWORK)
+                })
+            }
+        }
+        if (!contactsGranted) {
+            HaloWorkspaceButton("Allow contact lookup", { contactsPermissionLauncher.launch(Manifest.permission.READ_CONTACTS) })
+        }
         HaloWorkspaceSection(title = "Access") {
             PermissionRow(Icons.Default.Mic, "Microphone", micGranted, missingLabel = "Needed for voice")
+            PermissionRow(Icons.Default.Storage, "Contact names", contactsGranted, missingLabel = "Needed for contact lookup")
+            if (Build.VERSION.SDK_INT >= 37) PermissionRow(Icons.Default.Wifi, "Local network", localNetworkGranted, missingLabel = "Needed for local servers and transfers")
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             PermissionRow(Icons.Default.Bluetooth, "Bluetooth", bluetoothGranted, missingLabel = "Requested from Devices")
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {

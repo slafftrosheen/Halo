@@ -3,6 +3,9 @@ package com.halo.app.ui.theme
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -40,5 +43,20 @@ class AppearancePreferencesTest {
         val restored = AppearancePreferences(context)
         restored.awaitLoaded()
         assertEquals(AppearanceMode.DARK, restored.mode.value)
+    }
+
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    @Test
+    fun explicitSystemChoiceBeforeInitialLoadWinsOverStoredDarkMode() = runTest {
+        context.getSharedPreferences("halo_appearance", Context.MODE_PRIVATE)
+            .edit().putString("mode", AppearanceMode.DARK.name).commit()
+        val preferences = AppearancePreferences(context, StandardTestDispatcher(testScheduler))
+        preferences.setMode(AppearanceMode.SYSTEM)
+        advanceUntilIdle()
+        preferences.awaitLoaded()
+        preferences.awaitPersistence()
+        assertEquals(AppearanceMode.SYSTEM, preferences.mode.value)
+        assertEquals(AppearanceMode.SYSTEM.name,
+            context.getSharedPreferences("halo_appearance", Context.MODE_PRIVATE).getString("mode", null))
     }
 }

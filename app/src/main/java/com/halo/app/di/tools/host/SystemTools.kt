@@ -38,6 +38,25 @@ class SystemTools(private val context: Context) : ToolExecutor {
 
     private val sections: Map<String, Section> = buildMap {
         put("general", Section(Settings.ACTION_SETTINGS))
+        put("wireless", Section(Settings.ACTION_WIRELESS_SETTINGS))
+        put("roaming", Section(Settings.ACTION_DATA_ROAMING_SETTINGS))
+        put("sync", Section(Settings.ACTION_SYNC_SETTINGS))
+        put("search", Section(Settings.ACTION_SEARCH_SETTINGS))
+        put("user_dictionary", Section(Settings.ACTION_USER_DICTIONARY_SETTINGS))
+        put("input_method_subtype", Section(Settings.ACTION_INPUT_METHOD_SUBTYPE_SETTINGS))
+        put("captioning", Section(Settings.ACTION_CAPTIONING_SETTINGS))
+        put("printing", Section(Settings.ACTION_PRINT_SETTINGS))
+        put("dream", Section(Settings.ACTION_DREAM_SETTINGS))
+        put("wifi_ip", Section(Settings.ACTION_WIFI_IP_SETTINGS))
+        if (Build.VERSION.SDK_INT >= 29) {
+            put("internet_panel", Section(Settings.Panel.ACTION_INTERNET_CONNECTIVITY))
+            put("wifi_panel", Section(Settings.Panel.ACTION_WIFI))
+            put("volume_panel", Section(Settings.Panel.ACTION_VOLUME))
+            put("nfc_panel", Section(Settings.Panel.ACTION_NFC))
+        }
+        if (Build.VERSION.SDK_INT >= 30) {
+            put("biometric_enrollment", Section(Settings.ACTION_BIOMETRIC_ENROLL))
+        }
         put("wifi", Section(Settings.ACTION_WIFI_SETTINGS))
         put("bluetooth", Section(Settings.ACTION_BLUETOOTH_SETTINGS))
         put("sound", Section(Settings.ACTION_SOUND_SETTINGS))
@@ -86,14 +105,12 @@ class SystemTools(private val context: Context) : ToolExecutor {
             Uri.parse("package:${ctx.packageName}")
         }))
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            put("exact_alarms", Section(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM))
+            put("exact_alarms", Section(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, dataFor = { ctx -> Uri.parse("package:${ctx.packageName}") }))
         }
     }
 
-    /** Resolved once per process: opening settings must not depend on PackageManager on every call. */
-    private val availableSections: Map<String, Section> by lazy {
-        sections.filterValues { section -> resolveFor(section) != null }
-    }
+    /** Refresh available handlers so discovery follows installed apps and permission changes. */
+    private val availableSections: Map<String, Section> get() = sections.filterValues { section -> resolveFor(section) != null }
 
     private fun resolveFor(section: Section): Intent? {
         val intent = intentFor(section) ?: return null
@@ -175,16 +192,25 @@ class SystemTools(private val context: Context) : ToolExecutor {
                     )
                 } catch (_: ActivityNotFoundException) {
                     unavailable(toolCall, requested ?: "general")
+                } catch (_: SecurityException) {
+                    reject("Android denied opening this settings screen", ToolRejectionKind.PERMISSION_REQUIRED)
                 }
             }
 
             "halo_share_text" -> {
                 val text = toolCall.arguments["text"] as? String ?: return reject("Missing text", ToolRejectionKind.INVALID_ARGUMENTS)
+                if (text.isBlank() || text.length > 2000) return reject("Text must contain 1..2000 characters", ToolRejectionKind.INVALID_ARGUMENTS)
                 val intent = Intent(Intent.ACTION_SEND).apply {
                     type = "text/plain"
                     putExtra(Intent.EXTRA_TEXT, text)
                 }
-                context.startActivity(Intent.createChooser(intent, null).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                try {
+                    context.startActivity(Intent.createChooser(intent, null).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                } catch (_: ActivityNotFoundException) {
+                    return ToolExecutionResult.Failed(toolCall.id, toolCall.functionName, "Share sheet unavailable", failureKind = ToolFailureKind.UNAVAILABLE)
+                } catch (_: SecurityException) {
+                    return reject("Android denied sharing", ToolRejectionKind.PERMISSION_REQUIRED)
+                }
                 ToolExecutionResult.Success(
                     toolCallId = toolCall.id,
                     toolId = toolCall.functionName,

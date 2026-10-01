@@ -68,13 +68,19 @@ private val HaloShapes = Shapes(
 @Composable
 fun HaloTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    fontScale: Float = 0f,
     content: @Composable () -> Unit
 ) {
     MaterialTheme(
         colorScheme = if (darkTheme) HaloDarkColorScheme else HaloLightColorScheme,
         typography = Typography,
         shapes = HaloShapes,
-        content = content
+        content = {
+            val density = androidx.compose.ui.platform.LocalDensity.current
+            androidx.compose.runtime.CompositionLocalProvider(
+                androidx.compose.ui.platform.LocalDensity provides androidx.compose.ui.unit.Density(density.density,
+                    if (fontScale > 0f) fontScale else density.fontScale), content = content)
+        }
     )
 }
 

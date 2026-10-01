@@ -14,9 +14,8 @@ class AccessibilityActions(private val service: HaloAccessibilityService) {
             if (failure != null || intent.uiRevision != service.currentActionableRevision)
                 UiDispatchStatus.NOT_DISPATCHED to (failure ?: UiFailure.SNAPSHOT_SUPERSEDED)
             else {
-                val action = when (intent.operation) { UiOperation.BACK -> AccessibilityService.GLOBAL_ACTION_BACK
-                    UiOperation.HOME -> AccessibilityService.GLOBAL_ACTION_HOME
-                    else -> return UiDispatchStatus.NOT_DISPATCHED to UiFailure.ACTION_NOT_SUPPORTED }
+                val action = AndroidGlobalActions.id(service, intent.operation)
+                    ?: return UiDispatchStatus.NOT_DISPATCHED to UiFailure.ACTION_NOT_SUPPORTED
                 (if (service.performGlobalAction(action)) UiDispatchStatus.DISPATCHED else UiDispatchStatus.NOT_DISPATCHED) to null
             }
         } else resolver.dispatch(intent) { node ->
@@ -24,7 +23,9 @@ class AccessibilityActions(private val service: HaloAccessibilityService) {
                 UiDispatchStatus.ALREADY_SATISFIED
             else {
                 val ok = when (intent) {
-                    is UiActionIntent.Activate -> node.isClickable && node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                    is UiActionIntent.Activate -> if (intent.longPress)
+                        node.isLongClickable && node.performAction(AccessibilityNodeInfo.ACTION_LONG_CLICK)
+                        else node.isClickable && node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
                     is UiActionIntent.SetChecked -> node.isCheckable && node.isClickable && node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
                     is UiActionIntent.Scroll -> node.isScrollable && node.performAction(if (intent.forward)
                         AccessibilityNodeInfo.ACTION_SCROLL_FORWARD else AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD)

@@ -223,6 +223,23 @@ class DefaultSkillRegistry(
                 source = SkillSource.BUILT_IN
             ),
             SkillDescriptor(
+                id = SkillId("halo.assistant"), name = "Halo assistant controls",
+                description = "Halo pages, app-only appearance/font/start page, and read-aloud playback.",
+                category = SkillCategory.DEVICE,
+                tools = setOf("halo_list_screens", "halo_open_screen", "halo_get_preferences", "halo_set_preferences", "halo_read_aloud", "halo_stop_reading", "halo_list_app_actions", "halo_perform_app_action"),
+                risk = SkillRisk.SENSITIVE,
+                toolDefinitions = listOf(
+                    com.halo.sdk.runtime.skills.SkillToolDefinition("halo_list_screens", SkillRisk.READ_ONLY),
+                    com.halo.sdk.runtime.skills.SkillToolDefinition("halo_open_screen", SkillRisk.EXTERNAL_SIDE_EFFECT),
+                    com.halo.sdk.runtime.skills.SkillToolDefinition("halo_get_preferences", SkillRisk.READ_ONLY),
+                    com.halo.sdk.runtime.skills.SkillToolDefinition("halo_set_preferences", SkillRisk.REVERSIBLE),
+                    com.halo.sdk.runtime.skills.SkillToolDefinition("halo_read_aloud", SkillRisk.EXTERNAL_SIDE_EFFECT),
+                    com.halo.sdk.runtime.skills.SkillToolDefinition("halo_stop_reading", SkillRisk.REVERSIBLE),
+                    com.halo.sdk.runtime.skills.SkillToolDefinition("halo_list_app_actions", SkillRisk.READ_ONLY),
+                    com.halo.sdk.runtime.skills.SkillToolDefinition("halo_perform_app_action", SkillRisk.SENSITIVE)
+                ), source = SkillSource.BUILT_IN
+            ),
+            SkillDescriptor(
                 id = SkillId("halo.phone"),
                 name = "Phone",
                 description = "Entry point for phone control: load halo.phone.actions for deterministic actions " +

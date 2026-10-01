@@ -16,6 +16,12 @@ class DefaultSpeechProviderSelector(
     private val _ttsSelection = MutableStateFlow(SpeechProviderSelection(repository.readSelection().ttsProviderId))
     override val ttsSelection: StateFlow<SpeechProviderSelection> = _ttsSelection.asStateFlow()
 
+    fun reloadSelection() {
+        val saved = repository.readSelection()
+        _sttSelection.value = SpeechProviderSelection(saved.sttProviderId)
+        _ttsSelection.value = SpeechProviderSelection(saved.ttsProviderId)
+    }
+
     override fun selectStt(id: String) {
         val current = repository.readSelection()
         val next = current.copy(sttProviderId = id)

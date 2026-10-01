@@ -70,6 +70,7 @@ data class ScreenContextNode(
     /** Platform field hint, distinct from the editable value. */
     val labelHint: String? = null,
     val visibleRowIndices: List<Int> = emptyList(),
+    val longClickable: Boolean = false,
 )
 
 typealias UiSemanticNode = ScreenContextNode

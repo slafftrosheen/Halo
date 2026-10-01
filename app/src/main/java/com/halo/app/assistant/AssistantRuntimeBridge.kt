@@ -24,6 +24,8 @@ import com.halo.sdk.runtime.StopListening
 import java.io.ByteArrayOutputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 interface AssistantRuntimeBridge {
     suspend fun begin(invocation: HostInvocation)
@@ -35,11 +37,22 @@ interface AssistantRuntimeBridge {
 }
 
 class HaloAssistantRuntimeBridge(private val context: Context) : AssistantRuntimeBridge {
+    private val lifecycle = Mutex()
+    private var currentInteractionId: String? = null
     private val audioResolver = AndroidInvocationAudioResolver(context)
+    private val foregroundLeases = java.util.concurrent.ConcurrentHashMap<String, com.halo.app.audio.HaloAudioForegroundService.Lease>()
 
-    override suspend fun begin(invocation: HostInvocation) {
+    override suspend fun begin(invocation: HostInvocation) = lifecycle.withLock {
         withContext(Dispatchers.IO) { ManualDependencyGraph.runtime.start() }
-        ManualDependencyGraph.eventBus.publish(AssistantInvocationStarted(invocation))
+        currentInteractionId = invocation.interactionId
+        // On Android 17 the visible assistant interaction retains while-in-use
+        // foreground ownership between microphone capture and its spoken response.
+        if (android.os.Build.VERSION.SDK_INT >= 37 && context.checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            val lease = com.halo.app.audio.HaloAudioForegroundService.acquire(context, com.halo.app.audio.HaloAudioForegroundService.Kind.PHONE_INPUT)
+            foregroundLeases.put(invocation.interactionId, lease)?.release()
+        }
+        try { ManualDependencyGraph.eventBus.publish(AssistantInvocationStarted(invocation)) }
+        catch (error: Exception) { foregroundLeases.remove(invocation.interactionId)?.release(); throw error }
     }
 
     override suspend fun attachScreen(interactionId: String, snapshot: ScreenContextSnapshot) {
@@ -114,7 +127,8 @@ class HaloAssistantRuntimeBridge(private val context: Context) : AssistantRuntim
         }
     }
 
-    override suspend fun startListening(interactionId: String, inputDeviceId: Int?): Boolean =
+    override suspend fun startListening(interactionId: String, inputDeviceId: Int?): Boolean = lifecycle.withLock {
+        if (currentInteractionId != interactionId) return@withLock false
         withContext(Dispatchers.IO) {
             val route = audioResolver.resolve(inputDeviceId)
             ManualDependencyGraph.hostGraph.androidInteractionAudioManager.prepareInteractionRoute(interactionId, route)
@@ -137,23 +151,32 @@ class HaloAssistantRuntimeBridge(private val context: Context) : AssistantRuntim
             }
             started
         }
-
-    override suspend fun hideAssistantSurface(interactionId: String) {
-        // Dismissing the system assistant must release its microphone capture even when the
-        // cognitive turn has not started yet. Otherwise a hidden session can keep the recorder
-        // and prevent the next assistant invocation from listening.
-        if (ManualDependencyGraph.audioPerceptionEngine.inputStatus.value.turn?.captureId == interactionId) {
-            ManualDependencyGraph.commandBus.dispatch(StopListening)
-        }
-        ManualDependencyGraph.eventBus.publish(AssistantInvocationEnded(interactionId, "hidden"))
     }
 
-    override suspend fun cancelAssistantInteraction(interactionId: String, reason: String) {
-        if (ManualDependencyGraph.audioPerceptionEngine.inputStatus.value.turn?.captureId == interactionId) {
-            ManualDependencyGraph.commandBus.dispatch(StopListening)
+    override suspend fun hideAssistantSurface(interactionId: String) = lifecycle.withLock {
+        try {
+            if (ManualDependencyGraph.audioPerceptionEngine.inputStatus.value.turn?.captureId == interactionId) {
+                ManualDependencyGraph.commandBus.dispatch(StopListening)
+            }
+        } finally {
+            foregroundLeases.remove(interactionId)?.release()
+            if (currentInteractionId == interactionId) currentInteractionId = null
+            ManualDependencyGraph.eventBus.publish(AssistantInvocationEnded(interactionId, "hidden"))
         }
-        ManualDependencyGraph.cognitiveSession.cancel()
-        ManualDependencyGraph.eventBus.publish(AssistantInvocationEnded(interactionId, reason))
+    }
+
+    override suspend fun cancelAssistantInteraction(interactionId: String, reason: String) = lifecycle.withLock {
+        try {
+            if (ManualDependencyGraph.audioPerceptionEngine.inputStatus.value.turn?.captureId == interactionId) {
+                ManualDependencyGraph.commandBus.dispatch(StopListening)
+            }
+            // A late callback from a replaced overlay cannot cancel its successor.
+            if (currentInteractionId == interactionId) ManualDependencyGraph.cognitiveSession.cancel()
+        } finally {
+            foregroundLeases.remove(interactionId)?.release()
+            if (currentInteractionId == interactionId) currentInteractionId = null
+            ManualDependencyGraph.eventBus.publish(AssistantInvocationEnded(interactionId, reason))
+        }
     }
 
     private fun Bitmap.limitLongestEdge(limit: Int): Bitmap {

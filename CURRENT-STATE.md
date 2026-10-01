@@ -1,5 +1,13 @@
 # Halo current state
 
+## SETTINGS-PERSISTENCE-001 — 2026-10-01
+
+**IMPLEMENTED / COMPILED / UNIT VERIFIED.** Fixed the migrate-all settings bug, added recovery of misplaced preferences and encrypted credentials, and unified DataStore ownership. Preference-dependent startup waits for recovery; single-setting saves verify durable persistence. ElevenLabs setup loads choices after saving the key, provides explicit output selection and save feedback, and persists voice/model/style. Fixed the initial System-theme choice race and startup directory/background-scope failures. All 182 app/Android-host tests pass and debug APK assembly succeeds. Live ElevenLabs synthesis and physical restart checks remain unverified. See [fixes and acceptance steps](docs/engineering/SETTINGS-PERSISTENCE-001.md).
+
+## PHONE-ASSISTANT-001 — 2026-10-01
+
+**IMPLEMENTED / COMPILED / UNIT VERIFIED.** Reconciled all 106 OneBox registrations; added eight assistant tools, app preferences/navigation, native app direct actions, semantic long press, and 22 API-gated accessibility global actions. Native assistant request handling and a real bounded RecognitionService share existing runtime/audio ownership. Fixed live tool schema refresh, missing local action activation and contacts permission. App compile/target and host compile use API 37; minSdk remains 26. All 338 affected tests pass and debug APK assembly succeeds. Physical API 26/37 and spoken end-to-end checks remain pending because no device/emulator is available. See [capability ledger, Android audit, and validation](docs/engineering/PHONE-ASSISTANT-001-LEDGER.md).
+
 ## SPEECH-QUALITY-002 — Real STT Probe + Speech Lab — 2026-10-01
 
 **IMPLEMENTED / COMPILED / UNIT VERIFIED.** Shared-owner processed PCM diagnostics, real selected-model STT probing, and an in-memory Speech Lab with serial same-sample cold/warm comparisons, optional Whisper fixed/auto, WER/CER, private exports, and provider-neutral execution metrics. All 191 tests pass, including the unfiltered 143-test app suite; :app:assembleDebug and git diff --check pass. The six earlier app-test failures are fixed. Physical-device quality remains unvalidated. See [implementation and hardware acceptance guide](docs/engineering/SPEECH-QUALITY-002.md).

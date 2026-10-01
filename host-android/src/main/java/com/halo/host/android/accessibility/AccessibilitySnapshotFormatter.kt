@@ -78,7 +78,7 @@ class AccessibilitySnapshotFormatter(
                 clickable = node.isClickable,
                 hasChildren = node.childCount > 0,
             )
-            val interactive = node.isClickable || node.isEditable || node.isScrollable || node.isCheckable
+            val interactive = node.isClickable || node.isLongClickable || node.isEditable || node.isScrollable || node.isCheckable
             val rect = Rect().also(node::getBoundsInScreen)
             val outsideScreen = rect.right <= 0 || rect.bottom <= 0 || rect.left >= screenWidth || rect.top >= screenHeight
             val zeroArea = rect.width() <= 0 || rect.height() <= 0
@@ -122,6 +122,7 @@ class AccessibilitySnapshotFormatter(
                     className = node.className?.toString()?.take(MAX_CLASS_NAME_CHARS),
                     viewId = viewId,
                     clickable = node.isClickable,
+                    longClickable = node.isLongClickable,
                     editable = node.isEditable,
                     bounds = RectValue(rect.left, rect.top, rect.right, rect.bottom),
                     scrollable = node.isScrollable,

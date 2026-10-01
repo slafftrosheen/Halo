@@ -47,6 +47,7 @@ class ElevenLabsTtsProvider(private val storage: Storage) : PcmSpeechSynthesisPr
     private fun publishState(error: String? = null) {
         _state.value = ElevenLabsTtsState(hasCredential(), hasCredential() && healthy && voiceId() != null && modelId() != null, error, authenticated && hasCredential(), lastErrorCode)
     }
+    fun reloadConfiguration() { publishState() }
     override fun hasCredential() = !storage.getString(KEY).isNullOrBlank()
     override fun credential(): Credential? = storage.getString(KEY)?.takeIf { it.isNotBlank() }?.let { Credential(ID, it) }
     override fun setCredential(credential: Credential) { configurationVersion.incrementAndGet(); stopCurrent(); storage.putString(KEY, credential.value.trim()); healthy = false; authenticated = false; lastErrorCode = null; publishState() }
@@ -61,7 +62,7 @@ class ElevenLabsTtsProvider(private val storage: Storage) : PcmSpeechSynthesisPr
         "speed" to (storage.getString("elevenlabs_speed")?.toDoubleOrNull() ?: 1.0))
     fun saveVoiceStyle(stability: Double, similarity: Double, speed: Double) {
         require(stability.isFinite() && stability in 0.0..1.0 && similarity.isFinite() && similarity in 0.0..1.0 && speed.isFinite() && speed in 0.7..1.2)
-        storage.putString("elevenlabs_stability", stability.toString()); storage.putString("elevenlabs_similarity_boost", similarity.toString()); storage.putString("elevenlabs_speed", speed.toString())
+        storage.putBatch(strings = mapOf("elevenlabs_stability" to stability.toString(), "elevenlabs_similarity_boost" to similarity.toString(), "elevenlabs_speed" to speed.toString()))
     }
     fun pin(request: SpeechRequest) = request.copy(voiceId = voiceId(), modelId = modelId(), voiceSettings = voiceStyle())
 

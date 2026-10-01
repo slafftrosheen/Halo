@@ -8,8 +8,10 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStoreFile
-import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.preferencesDataStore
+import com.halo.app.security.AndroidKeystoreSecretStore
+import com.halo.app.storage.haloStorageLayout
+
 import java.io.IOException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -29,11 +31,7 @@ data class HaloSettings(
 
 /** Typed, asynchronous owner for user preferences; legacy SharedPreferences migrate once. */
 class HaloSettingsRepository(context: Context) {
-    private val appContext = context.applicationContext
-    private val dataStore: DataStore<Preferences> = PreferenceDataStoreFactory.create(
-        migrations = listOf(SharedPreferencesMigration(appContext, LEGACY_STORE_NAME)),
-        produceFile = { appContext.preferencesDataStoreFile(DATASTORE_NAME) }
-    )
+    private val dataStore: DataStore<Preferences> = context.applicationContext.haloSettingsDataStore
 
     val settings: Flow<HaloSettings> = dataStore.data
         .catch { error ->
@@ -73,9 +71,9 @@ class HaloSettingsRepository(context: Context) {
 
     suspend fun setStudyReviewIntensity(value: String) { dataStore.edit { it[STUDY_REVIEW_INTENSITY] = value } }
 
-    private companion object {
-        const val DATASTORE_NAME = "halo_settings"
-        const val LEGACY_STORE_NAME = "halo_storage"
+    companion object {
+        internal const val DATASTORE_NAME = "halo_settings"
+        internal const val LEGACY_STORE_NAME = "halo_storage"
         val SPEECH_LANGUAGE = stringPreferencesKey("speech_locale")
         val SPEECH_LANGUAGE_VERSION = intPreferencesKey("speech_language_mode_version")
         val SPEECH_LANGUAGE_USER_SELECTED = booleanPreferencesKey("speech_language_user_selected")
@@ -86,3 +84,23 @@ class HaloSettingsRepository(context: Context) {
         val STUDY_REVIEW_INTENSITY = stringPreferencesKey("study_review_intensity")
     }
 }
+
+
+/** A single process-wide DataStore owner, shared by settings and credential migration. */
+internal val Context.haloSettingsDataStore by preferencesDataStore(
+    name = HaloSettingsRepository.DATASTORE_NAME,
+    produceMigrations = { context ->
+        listOf(
+            MisplacedSettingsRecovery(
+                context.getSharedPreferences(HaloSettingsRepository.LEGACY_STORE_NAME, Context.MODE_PRIVATE),
+                AndroidKeystoreSecretStore(haloStorageLayout(context)),
+            ),
+            SharedPreferencesMigration(context, HaloSettingsRepository.LEGACY_STORE_NAME, keysToMigrate = HALO_DATASTORE_KEYS),
+        )
+    },
+)
+
+internal val HALO_DATASTORE_KEYS = setOf(
+    "speech_locale", "speech_language_mode_version", "speech_language_user_selected",
+    "backup_tree_uri", "automatic_backup", "backup_retention", "restore_generation", "study_review_intensity",
+)

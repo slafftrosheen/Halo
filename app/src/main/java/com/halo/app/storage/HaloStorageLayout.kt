@@ -31,7 +31,8 @@ data class HaloStorageLayout(
             secretFiles,
             restoreSafety,
         ).forEach { directory ->
-            check(directory.exists() || directory.mkdirs()) {
+            // Another startup owner can create this directory between the two checks.
+            check(directory.isDirectory || directory.mkdirs() || directory.isDirectory) {
                 "Unable to create Halo storage directory: ${directory.name}"
             }
         }

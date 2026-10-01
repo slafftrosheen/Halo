@@ -62,6 +62,8 @@ data class LocalModelToolPolicy(
             "halo_share_text",
             "halo_media_status",
             "halo_media_control",
+            "halo_ringer", "halo_brightness", "halo_timer",
+            "halo_list_screens", "halo_open_screen", "halo_get_preferences", "halo_set_preferences", "halo_read_aloud", "halo_stop_reading", "halo_list_app_actions", "halo_perform_app_action",
         )
 
         /**
