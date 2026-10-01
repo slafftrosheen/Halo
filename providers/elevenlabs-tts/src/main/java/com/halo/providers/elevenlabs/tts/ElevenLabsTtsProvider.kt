@@ -60,8 +60,6 @@ class ElevenLabsTtsProvider(private val storage: Storage) : PcmSpeechSynthesisPr
     private val discoveryMutex = Mutex()
     private val configurationVersion = java.util.concurrent.atomic.AtomicLong()
     private val providerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private val discoveryMutex = Mutex()
-    private val configurationVersion = java.util.concurrent.atomic.AtomicLong()
     @Volatile private var authenticated = false
     @Volatile private var lastErrorCode: SpeechErrorCode? = null
     @Volatile private var healthy = false
