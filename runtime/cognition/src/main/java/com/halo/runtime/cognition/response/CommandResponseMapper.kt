@@ -1,5 +1,6 @@
 package com.halo.runtime.cognition.response
 
+import com.halo.runtime.cognition.ActionFailureCode
 import com.halo.runtime.cognition.ApplicationTask
 import com.halo.runtime.cognition.CommunicationTask
 import com.halo.runtime.cognition.DeviceTask
@@ -41,16 +42,25 @@ class CommandResponseMapper {
     }
 
     fun mapResponse(task: Task, outcome: Outcome): String? {
+        if (outcome is Outcome.NeedsClarification) {
+            return outcome.prompt
+        }
+
         val isSuccess = outcome is Outcome.Success || outcome is Outcome.Dispatched
 
         return when (task) {
             is ApplicationTask -> {
                 if (isSuccess) {
                     val label = (outcome as? Outcome.Success)?.message?.ifBlank { task.displayName }
+                        ?: (outcome as? Outcome.Dispatched)?.target?.ifBlank { task.displayName }
                         ?: task.displayName.ifEmpty { task.packageName }
                     "Opening $label."
                 } else if (outcome is Outcome.PermanentFailure) {
-                    outcome.reason
+                    when (outcome.code) {
+                        ActionFailureCode.APP_NOT_FOUND ->
+                            "I couldn't find a launchable app matching that name."
+                        else -> outcome.reason
+                    }
                 } else {
                     "Unable to open application."
                 }
@@ -97,6 +107,12 @@ class CommandResponseMapper {
             is MemoryTask -> {
                 if (isSuccess) {
                     "Reminder set."
+                } else if (outcome is Outcome.PermanentFailure) {
+                    when (outcome.code) {
+                        ActionFailureCode.EXACT_ALARM_ACCESS_REQUIRED ->
+                            "I saved the reminder, but Android needs Exact alarms access before it can schedule it."
+                        else -> outcome.reason
+                    }
                 } else {
                     "Unable to set reminder."
                 }
@@ -117,7 +133,6 @@ class CommandResponseMapper {
                         when (outcome) {
                             is Outcome.Success -> "Alarm set."
                             is Outcome.Dispatched -> "Alarm request sent to Clock."
-                            is Outcome.NeedsClarification -> outcome.prompt
                             is Outcome.PermanentFailure -> outcome.reason
                             is Outcome.RetryableFailure -> "I couldn't set the alarm yet."
                             else -> "Unable to set alarm."
@@ -132,7 +147,9 @@ class CommandResponseMapper {
                         if (isSuccess) "Opening settings." else "Unable to open settings."
                     }
 
-                    else -> if (isSuccess) "Done." else "Unable to complete action."
+                    else -> if (isSuccess) "Done." else outcome.let {
+                        if (it is Outcome.PermanentFailure) it.reason else "Unable to complete action."
+                    }
                 }
             }
 

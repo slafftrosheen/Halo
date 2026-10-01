@@ -87,7 +87,7 @@ class InterpretationRouteResolver(
 
     companion object {
         val DEFAULT_DETERMINISTIC_EXECUTORS: Map<Class<out Intent>, String> = mapOf(
-            OpenIntent::class.java to "engine.execution/device.open_app",
+            OpenIntent::class.java to "engine.execution/application.open_app",
             CallIntent::class.java to "engine.execution/communication.call",
             NavigateIntent::class.java to "engine.execution/navigation",
             PlayIntent::class.java to "engine.execution/media.play",

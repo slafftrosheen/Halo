@@ -434,7 +434,7 @@ object HaloToolDescriptors {
             external(ReplaySafety.RECONCILE_BEFORE_RETRY), keywords = setOf("web", "browser", "open", "url"),
             requirements = setOf(ToolRequirement.Capability(CapabilityId("host.web.open"))),
             presentation = ToolPresentation(title = "Open a web page", actionVerb = "Open"))
-        "halo_search" -> descriptor(definition.name, definition, ToolCategory.INFORMATION,
+        "halo_search" -> descriptor(definition.name, definition, ToolCategory.NAVIGATION,
             external(ReplaySafety.RECONCILE_BEFORE_RETRY), keywords = setOf("search", "web", "internet"),
             requirements = setOf(ToolRequirement.Capability(CapabilityId("host.web.search"))))
         else -> null

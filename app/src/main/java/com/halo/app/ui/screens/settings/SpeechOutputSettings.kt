@@ -33,7 +33,7 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
     Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("Speech output", style = MaterialTheme.typography.titleMedium)
         (listOf("AUTOMATIC" to "Automatic (Android TTS)") + registry.providers.map { it.metadata.id to it.metadata.displayName }).forEach { (id, label) ->
-            TextButton(enabled = !saving && (id != ElevenLabsTtsProvider.ID || (cloudState?.configured == true && elevenLabs?.voiceId() != null && elevenLabs?.modelId() != null)), onClick = {
+            TextButton(enabled = !saving && (id != ElevenLabsTtsProvider.ID || (cloudState?.configured == true && cloudState.voiceId != null && cloudState.modelId != null)), onClick = {
                 saving = true
                 scope.launch {
                     try { withContext(Dispatchers.IO) { registry.selector.selectTts(id) }; saveError = null }
@@ -45,10 +45,11 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
         }
         Text("Android TTS · Local engine; readiness checked on synthesis")
         cloudState?.let { state -> Text("ElevenLabs · " + (state.errorCode?.label ?: if (!state.configured) "Setup required" else if (state.ready) "Ready" else "Configured; not checked") + if (selection.id == ElevenLabsTtsProvider.ID) " · Selected" else " · Not selected") }
-        elevenLabs?.takeIf { selection.id == ElevenLabsTtsProvider.ID }?.let { provider ->
-            val cached = provider.cachedCatalogue()
-            Text("Voice: ${cached?.voices?.firstOrNull { it.id == provider.voiceId() }?.name ?: "Choose a voice"}")
-            Text("Model: ${cached?.models?.firstOrNull { it.id == provider.modelId() }?.name ?: "Choose a model"}")
+        elevenLabs?.takeIf { selection.id == ElevenLabsTtsProvider.ID }?.let { _ ->
+            cloudState?.let { state ->
+                Text("Voice: ${state.voiceName ?: "Choose a voice"}")
+                Text("Model: ${state.modelName ?: "Choose a model"}")
+            }
         }
         Text("If cloud synthesis fails")
         TextButton(enabled = !saving, onClick = {
@@ -71,18 +72,19 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
 
 @Composable
 fun ElevenLabsSettingsScreen(provider: ElevenLabsTtsProvider, onBack: () -> Unit, onTestVoice: () -> Unit, onUseProvider: () -> Unit = {}) {
+    val state by provider.state.collectAsStateWithLifecycle()
     var draft by remember(provider) { mutableStateOf("") }
-    var configured by remember { mutableStateOf(provider.hasCredential()) }
-    var catalogue by remember { mutableStateOf(provider.cachedCatalogue()) }
-    var voice by remember { mutableStateOf(provider.voiceId()) }
-    var model by remember { mutableStateOf(provider.modelId()) }
-
     var search by remember { mutableStateOf("") }
-    var style by remember { mutableStateOf(provider.voiceStyle()) }
-    val health by provider.state.collectAsStateWithLifecycle()
+    var localStyle by remember(state.style) { mutableStateOf(state.style) }
     var busy by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
+
+    val configured = state.configured
+    val catalogue = state.catalogue
+    val voice = state.voiceId
+    val model = state.modelId
+
     LazyColumn(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { TextButton(onClick = onBack) { Text("Back") }; Text("ElevenLabs speech", style = MaterialTheme.typography.headlineSmall) }
         item { Text("Selecting ElevenLabs sends sanitized spoken response text to ElevenLabs. Conversation history, memories and tool payloads are excluded. Provider retention follows your ElevenLabs account policy.") }
@@ -95,12 +97,10 @@ fun ElevenLabsSettingsScreen(provider: ElevenLabsTtsProvider, onBack: () -> Unit
                 scope.launch {
                     try {
                         withContext(Dispatchers.IO) { provider.setCredential(Credential(ElevenLabsTtsProvider.ID, value)) }
-                        configured = provider.hasCredential()
-                        check(configured) { "Credential was not saved" }
                         draft = ""
                         message = "Key saved; loading voices and models..."
                         try {
-                            catalogue = provider.refreshCatalogue()
+                            withContext(Dispatchers.IO) { provider.refreshCatalogue() }
                             message = "Key saved. Choose a voice and TTS model below."
                         } catch (cancelled: CancellationException) { throw cancelled }
                         catch (_: Exception) { message = "Key saved, but loading choices failed. Check key permissions and network, then refresh." }
@@ -112,7 +112,7 @@ fun ElevenLabsSettingsScreen(provider: ElevenLabsTtsProvider, onBack: () -> Unit
             TextButton(enabled = !busy, onClick = {
                 busy = true
                 scope.launch {
-                    try { withContext(Dispatchers.IO) { provider.clearCredential() }; draft = ""; configured = false; message = "Credential removed" }
+                    try { withContext(Dispatchers.IO) { provider.clearCredential() }; draft = ""; message = "Credential removed" }
                     catch (cancelled: CancellationException) { throw cancelled }
                     catch (_: Exception) { message = "Unable to remove credential" }
                     finally { busy = false }
@@ -120,24 +120,24 @@ fun ElevenLabsSettingsScreen(provider: ElevenLabsTtsProvider, onBack: () -> Unit
             }) { Text("Remove key") }
         }
         item {
-            Text("Authentication: ${if (health.authenticated) "Ready" else "Not checked"} · Synthesis: ${if (health.ready) "Proven" else "Not tested"}")
-            Button(enabled = configured && !busy, onClick = { busy = true; scope.launch { try { message = if (provider.health()) "Authentication ready; synthesis is checked separately" else "Connection failed. Check your key and network connection." } finally { busy = false } } }) { Text("Test connection") }
+            Text("Authentication: ${if (state.authenticated) "Ready" else "Not checked"} · Synthesis: ${if (state.ready) "Proven" else "Not tested"}")
+            Button(enabled = configured && !busy, onClick = { busy = true; scope.launch { try { message = if (withContext(Dispatchers.IO) { provider.health() }) "Authentication ready; synthesis is checked separately" else "Connection failed. Check your key and network connection." } finally { busy = false } } }) { Text("Test connection") }
             Button(enabled = configured && !busy, onClick = {
                 busy = true
                 scope.launch {
-                    try { catalogue = provider.refreshCatalogue(); message = "Voice and TTS model metadata refreshed" }
+                    try { withContext(Dispatchers.IO) { provider.refreshCatalogue() }; message = "Voice and TTS model metadata refreshed" }
                     catch (e: CancellationException) { throw e }
                     catch (_: Exception) { message = "Refresh failed; cached choices retained" }
                     finally { busy = false }
                 }
             }) { Text(if (busy) "Refreshing…" else "Refresh voices and TTS models") }
-            Text(if (catalogue == null) "Catalogue unavailable" else if (catalogue!!.stale) "Cached catalogue · Stale" else "Cached catalogue")
+            Text(if (catalogue == null) "Catalogue unavailable" else if (catalogue.stale) "Cached catalogue · Stale" else "Cached catalogue")
             message?.let { Text(it) }
         }
         item { Text("TTS model", style = MaterialTheme.typography.titleMedium) }
         items(catalogue?.models.orEmpty(), key = { "model:${it.id}" }) { choice ->
             TextButton(enabled = !busy, onClick = { busy = true; scope.launch {
-                try { withContext(Dispatchers.IO) { provider.selectModel(choice.id) }; model = provider.modelId(); message = "TTS model saved" }
+                try { withContext(Dispatchers.IO) { provider.selectModel(choice.id) }; message = "TTS model saved" }
                 catch (cancelled: CancellationException) { throw cancelled }
                 catch (_: Exception) { message = "Unable to save TTS model" }
                 finally { busy = false }
@@ -146,7 +146,7 @@ fun ElevenLabsSettingsScreen(provider: ElevenLabsTtsProvider, onBack: () -> Unit
         item { Text("Voice", style = MaterialTheme.typography.titleMedium); OutlinedTextField(search, { search = it }, label = { Text("Search voices") }) }
         items(catalogue?.voices.orEmpty().filter { (it.name + " " + it.category.orEmpty()).contains(search, true) }, key = { "voice:${it.id}" }) { choice ->
             TextButton(enabled = !busy, onClick = { busy = true; scope.launch {
-                try { withContext(Dispatchers.IO) { provider.selectVoice(choice.id) }; voice = provider.voiceId(); message = "Voice saved" }
+                try { withContext(Dispatchers.IO) { provider.selectVoice(choice.id) }; message = "Voice saved" }
                 catch (cancelled: CancellationException) { throw cancelled }
                 catch (_: Exception) { message = "Unable to save voice" }
                 finally { busy = false }
@@ -155,17 +155,18 @@ fun ElevenLabsSettingsScreen(provider: ElevenLabsTtsProvider, onBack: () -> Unit
         item {
             Text("Voice style", style = MaterialTheme.typography.titleMedium)
             listOf("stability", "similarity_boost", "speed").forEach { key ->
-                Text("${key.replace('_', ' ')}: ${"%.2f".format(style.getValue(key))}")
-                Slider(value = style.getValue(key).toFloat(), onValueChange = { style = style + (key to it.toDouble()) },
+                val currentValue = localStyle[key] ?: 0.5
+                Text("${key.replace('_', ' ')}: ${"%.2f".format(currentValue)}")
+                Slider(value = currentValue.toFloat(), onValueChange = { localStyle = localStyle + (key to it.toDouble()) },
                     valueRange = if (key == "speed") 0.7f..1.2f else 0f..1f,
                     enabled = !busy,
                     onValueChangeFinished = {
-                        val selected = style
+                        val selected = localStyle
                         busy = true
                         scope.launch {
                             try { withContext(Dispatchers.IO) { provider.saveVoiceStyle(selected.getValue("stability"), selected.getValue("similarity_boost"), selected.getValue("speed")) }; message = "Voice style saved" }
                             catch (cancelled: CancellationException) { throw cancelled }
-                            catch (_: Exception) { style = provider.voiceStyle(); message = "Unable to save voice style" }
+                            catch (_: Exception) { localStyle = state.style; message = "Unable to save voice style" }
                             finally { busy = false }
                         }
                     })

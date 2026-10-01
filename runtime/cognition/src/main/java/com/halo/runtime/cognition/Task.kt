@@ -97,7 +97,9 @@ data class MemoryTask(
     override val fallbackTasks: List<Task> = emptyList(),
     override val dependencies: List<Task> = emptyList(),
     override val isParallel: Boolean = false,
-    val memoryAction: String
+    val memoryAction: String,
+    val reminderMessage: String? = null,
+    val temporalExpression: String? = null,
 ) : Task
 
 data class WebTask(

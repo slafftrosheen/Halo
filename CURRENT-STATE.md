@@ -1,5 +1,22 @@
 # Halo current state
 
+## DOGFOOD-002 — Deterministic Action Reliability + Main-Thread Purity — 2026-10-01
+
+**IMPLEMENTED / COMPILED / UNIT VERIFIED.**
+Integration repair batch for deterministic action execution, app launching, reminder clarification, action failure taxonomy, and main-thread purity.
+- **Open App Routing:** Changed deterministic ownership to `engine.execution/application.open_app`. `PlanningEngine` compiles `GoalType.DEVICE` (`action="open"`) into `ApplicationTask` (handled by `AndroidApplicationCapability`), resolving app launch failures.
+- **Harden App Resolution:** Added `ApplicationResolution` (`Resolved`, `Ambiguous`, `NotFound`) in `AndroidApplicationResolver`. Single exact/prefix/contains matches resolve cleanly; multi-candidate matches request clarification (`APP_AMBIGUOUS`); missing apps return `APP_NOT_FOUND`.
+- **Reminder Clarification & Time Carrier:** `ReminderIntent` without a time expression requests clarification ("When should I remind you?") before execution. Extended `MemoryTask` to carry structured temporal expressions directly.
+- **Exact Alarm Recovery:** Missing exact alarm permission (`NEEDS_EXACT_ALARM_ACCESS`) returns `EXACT_ALARM_ACCESS_REQUIRED` and explains that Android needs Exact alarms access in Settings.
+- **Action Failure Taxonomy:** Added `ActionFailureCode` enum and extended `Outcome` (`PermanentFailure`, `RetryableFailure`, `Partial`). Logged `code` on `HALO_ACTION_RESULT` telemetry and mapped user-friendly error response messages.
+- **ElevenLabs Main-Thread Purity:** Asynchronous state loading on `Dispatchers.IO` in `ElevenLabsTtsProvider`. `ElevenLabsSettingsScreen` and `SpeechOutputSettings` Composables observe StateFlow instead of making synchronous Keystore calls on Main.
+- **Tool Definitions Purity:** `definitions()` in `NavigationTools` and `ApplicationTools` are static and pure (zero PackageManager or Binder calls during Compose rendering). `HostToolRegistry` indexes executors and definitions once on construction.
+- **Crash Log Cleanup:** Deleted `hs_err_pid*.log` and `replay_pid*.log` artifacts and added patterns to `.gitignore`.
+
+See [DOGFOOD-002 documentation](docs/engineering/DOGFOOD-002-ACTION-RELIABILITY.md).
+
+---
+
 ## SETTINGS-PERSISTENCE-001 — 2026-10-01
 
 **IMPLEMENTED / COMPILED / UNIT VERIFIED.** Fixed the migrate-all settings bug, added recovery of misplaced preferences and encrypted credentials, and unified DataStore ownership. Preference-dependent startup waits for recovery; single-setting saves verify durable persistence. ElevenLabs setup loads choices after saving the key, provides explicit output selection and save feedback, and persists voice/model/style. Fixed the initial System-theme choice race and startup directory/background-scope failures. All 182 app/Android-host tests pass and debug APK assembly succeeds. Live ElevenLabs synthesis and physical restart checks remain unverified. See [fixes and acceptance steps](docs/engineering/SETTINGS-PERSISTENCE-001.md).

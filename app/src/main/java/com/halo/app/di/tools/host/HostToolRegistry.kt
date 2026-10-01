@@ -32,18 +32,35 @@ enum class HostActionReceipt {
 class HostToolRegistry(
     private val executors: List<ToolExecutor>
 ) : ToolExecutor, ToolPreflightProvider {
-    override fun restoreTransientCall(toolCall: ToolCall): ToolCall =
-        (executors.firstOrNull { item -> item.definitions().any { it.name == toolCall.functionName } } as? ToolPreflightProvider)
-            ?.restoreTransientCall(toolCall) ?: toolCall
-    override suspend fun preflight(toolCall: ToolCall): ToolPreflightResult {
-        val executor = executors.firstOrNull { item -> item.definitions().any { it.name == toolCall.functionName } }
-        return (executor as? ToolPreflightProvider)?.preflight(toolCall) ?: ToolPreflightResult.Validated(toolCall)
-    }
-    override fun definitions(): List<ToolDefinition> = executors.flatMap { it.definitions() }
+    private val definitionMap: Map<String, ToolDefinition>
+    private val executorMap: Map<String, ToolExecutor>
+    private val allDefinitions: List<ToolDefinition>
 
-    override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
-        val executor = executors.find { it.definitions().any { def -> def.id == toolCall.functionName } }
-        return executor?.execute(toolCall) 
-            ?: ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Unknown host action")
+    init {
+        val defMap = mutableMapOf<String, ToolDefinition>()
+        val execMap = mutableMapOf<String, ToolExecutor>()
+        val defsList = mutableListOf<ToolDefinition>()
+        for (executor in executors) {
+            for (def in executor.definitions()) {
+                defMap[def.id] = def
+                execMap[def.id] = executor
+                defsList.add(def)
+            }
+        }
+        definitionMap = defMap
+        executorMap = execMap
+        allDefinitions = defsList
     }
+
+    override fun definitions(): List<ToolDefinition> = allDefinitions
+
+    override fun restoreTransientCall(toolCall: ToolCall): ToolCall =
+        (executorMap[toolCall.functionName] as? ToolPreflightProvider)?.restoreTransientCall(toolCall) ?: toolCall
+
+    override suspend fun preflight(toolCall: ToolCall): ToolPreflightResult =
+        (executorMap[toolCall.functionName] as? ToolPreflightProvider)?.preflight(toolCall) ?: ToolPreflightResult.Validated(toolCall)
+
+    override suspend fun execute(toolCall: ToolCall): ToolExecutionResult =
+        executorMap[toolCall.functionName]?.execute(toolCall)
+            ?: ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Unknown host action")
 }

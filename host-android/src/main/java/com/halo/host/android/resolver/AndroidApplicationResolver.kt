@@ -15,6 +15,12 @@ data class ResolvedApp(
 enum class AppMatchQuality { EXACT, PREFIX, CONTAINS }
 data class AppCandidate(val app: ResolvedApp, val quality: AppMatchQuality)
 
+sealed interface ApplicationResolution {
+    data class Resolved(val app: ResolvedApp) : ApplicationResolution
+    data class Ambiguous(val candidates: List<ResolvedApp>) : ApplicationResolution
+    data object NotFound : ApplicationResolution
+}
+
 class AndroidApplicationResolver(private val context: Context) {
     @Volatile private var cachedApps: List<ResolvedApp>? = null
     @Volatile private var cachedAtMs: Long = 0L
@@ -48,9 +54,48 @@ class AndroidApplicationResolver(private val context: Context) {
     }
 
     suspend fun resolve(query: String): ResolvedApp? = withContext(Dispatchers.IO) {
-        val candidates = search(query, includeSystem = true)
-        candidates.firstOrNull { it.app.packageName.equals(query.trim(), ignoreCase = true) }?.app
-            ?: candidates.singleOrNull { it.quality == AppMatchQuality.EXACT }?.app
+        when (val res = resolveApplication(query)) {
+            is ApplicationResolution.Resolved -> res.app
+            else -> null
+        }
+    }
+
+    suspend fun resolveApplication(query: String): ApplicationResolution = withContext(Dispatchers.IO) {
+        val trimmed = query.trim()
+        if (trimmed.isBlank()) return@withContext ApplicationResolution.NotFound
+        val candidates = search(trimmed, includeSystem = true)
+        if (candidates.isEmpty()) return@withContext ApplicationResolution.NotFound
+
+        // 1. Exact package ID match
+        candidates.firstOrNull { it.app.packageName.equals(trimmed, ignoreCase = true) }?.let {
+            return@withContext ApplicationResolution.Resolved(it.app)
+        }
+
+        // 2. Exact human label match
+        val exactLabelMatches = candidates.filter { it.app.label.equals(trimmed, ignoreCase = true) }
+        if (exactLabelMatches.size == 1) {
+            return@withContext ApplicationResolution.Resolved(exactLabelMatches.first().app)
+        } else if (exactLabelMatches.size > 1) {
+            return@withContext ApplicationResolution.Ambiguous(exactLabelMatches.map { it.app })
+        }
+
+        // 3. Single prefix match
+        val prefixMatches = candidates.filter { it.quality == AppMatchQuality.PREFIX }
+        if (prefixMatches.size == 1) {
+            return@withContext ApplicationResolution.Resolved(prefixMatches.first().app)
+        } else if (prefixMatches.size > 1) {
+            return@withContext ApplicationResolution.Ambiguous(prefixMatches.map { it.app })
+        }
+
+        // 4. Single contains match
+        val containsMatches = candidates.filter { it.quality == AppMatchQuality.CONTAINS }
+        if (containsMatches.size == 1) {
+            return@withContext ApplicationResolution.Resolved(containsMatches.first().app)
+        } else if (containsMatches.size > 1) {
+            return@withContext ApplicationResolution.Ambiguous(containsMatches.map { it.app })
+        }
+
+        ApplicationResolution.Ambiguous(candidates.map { it.app })
     }
 
     private fun queryInstalledApps(): List<ResolvedApp> {

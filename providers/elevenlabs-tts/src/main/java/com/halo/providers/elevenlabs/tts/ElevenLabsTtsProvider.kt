@@ -4,12 +4,19 @@ import com.halo.sdk.host.AudioFrame
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.Storage
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import okhttp3.*
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
@@ -23,7 +30,19 @@ import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-data class ElevenLabsTtsState(val configured: Boolean, val ready: Boolean = false, val error: String? = null, val authenticated: Boolean = false, val errorCode: SpeechErrorCode? = null)
+data class ElevenLabsTtsState(
+    val configured: Boolean = false,
+    val ready: Boolean = false,
+    val error: String? = null,
+    val authenticated: Boolean = false,
+    val errorCode: SpeechErrorCode? = null,
+    val voiceId: String? = null,
+    val modelId: String? = null,
+    val voiceName: String? = null,
+    val modelName: String? = null,
+    val catalogue: ElevenLabsCatalogue? = null,
+    val style: Map<String, Double> = mapOf("stability" to 0.5, "similarity_boost" to 0.75, "speed" to 1.0),
+)
 
 data class SpeechChoice(val id: String, val name: String, val category: String? = null)
 data class ElevenLabsCatalogue(val voices: List<SpeechChoice>, val models: List<SpeechChoice>, val fetchedAtMs: Long) {
@@ -39,14 +58,62 @@ class ElevenLabsTtsProvider(private val storage: Storage) : PcmSpeechSynthesisPr
     private val calls = ConcurrentHashMap.newKeySet<Call>()
     private val discoveryMutex = Mutex()
     private val configurationVersion = java.util.concurrent.atomic.AtomicLong()
+    private val providerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     @Volatile private var authenticated = false
     @Volatile private var lastErrorCode: SpeechErrorCode? = null
     @Volatile private var healthy = false
-    private val _state = kotlinx.coroutines.flow.MutableStateFlow(ElevenLabsTtsState(hasCredential()))
-    val state: kotlinx.coroutines.flow.StateFlow<ElevenLabsTtsState> = _state
-    private fun publishState(error: String? = null) {
-        _state.value = ElevenLabsTtsState(hasCredential(), hasCredential() && healthy && voiceId() != null && modelId() != null, error, authenticated && hasCredential(), lastErrorCode)
+    private fun initialConfigured(): Boolean = runCatching { hasCredential() }.getOrDefault(false)
+    private val _state = MutableStateFlow(ElevenLabsTtsState(configured = initialConfigured()))
+    val state: StateFlow<ElevenLabsTtsState> = _state
+
+    init {
+        reloadConfiguration()
     }
+
+    private fun publishState(error: String? = null) {
+        publishStateSync(error)
+        providerScope.launch {
+            publishStateInternal(error)
+        }
+    }
+
+    private fun publishStateSync(error: String? = null) {
+        val hasKey = hasCredential()
+        _state.value = _state.value.copy(
+            configured = hasKey,
+            ready = hasKey && healthy && voiceId() != null && modelId() != null,
+            error = error,
+            authenticated = authenticated && hasKey,
+            errorCode = lastErrorCode,
+            voiceId = voiceId(),
+            modelId = modelId(),
+        )
+    }
+
+    private suspend fun publishStateInternal(error: String? = null) = withContext(Dispatchers.IO) {
+        val hasKey = hasCredential()
+        val vId = voiceId()
+        val mId = modelId()
+        val cat = cachedCatalogue()
+        val vName = cat?.voices?.firstOrNull { it.id == vId }?.name
+        val mName = cat?.models?.firstOrNull { it.id == mId }?.name
+        val styleMap = voiceStyle()
+
+        _state.value = ElevenLabsTtsState(
+            configured = hasKey,
+            ready = hasKey && healthy && vId != null && mId != null,
+            error = error,
+            authenticated = authenticated && hasKey,
+            errorCode = lastErrorCode,
+            voiceId = vId,
+            modelId = mId,
+            voiceName = vName,
+            modelName = mName,
+            catalogue = cat,
+            style = styleMap,
+        )
+    }
+
     fun reloadConfiguration() { publishState() }
     override fun hasCredential() = !storage.getString(KEY).isNullOrBlank()
     override fun credential(): Credential? = storage.getString(KEY)?.takeIf { it.isNotBlank() }?.let { Credential(ID, it) }

@@ -260,12 +260,14 @@ open class DefaultInterpretationEngine(
         }
         if (coordinator != null && (interpretation.intent is SetAlarmIntent || interpretation.intent is ReminderIntent) &&
             interpretation.metadata["clarificationOnly"] != "true") {
-            val reminderTime = interpretation.entities.filterIsInstance<ReminderEntity>().firstOrNull()?.temporalExpression
+            val reminderEntity = interpretation.entities.filterIsInstance<ReminderEntity>().firstOrNull()
+            val reminderTime = reminderEntity?.temporalExpression
+            val hasNoReminderTime = interpretation.intent is ReminderIntent && reminderTime.isNullOrBlank()
             val unresolved = interpretation.entities.filterIsInstance<UnresolvedTimeEntity>().firstOrNull()
                 ?: if (interpretation.intent is ReminderIntent && reminderTime != null &&
                     TemporalExpressionParser().parse(reminderTime) is TemporalParseResult.Incomplete)
                     UnresolvedTimeEntity(reminderTime, TemporalField.AM_PM, 1f) else null
-            val needsTime = unresolved != null || (interpretation.intent is SetAlarmIntent &&
+            val needsTime = unresolved != null || hasNoReminderTime || (interpretation.intent is SetAlarmIntent &&
                 interpretation.entities.filterIsInstance<TimeEntity>().none { it.value is TemporalValue.TimeOfDay })
             if (needsTime) {
                 pendingInterpretation?.metadata?.get("agentRunId")?.let {
@@ -278,8 +280,9 @@ open class DefaultInterpretationEngine(
                     speechOutputTarget = target, sourceCaptureId = interpretation.origin?.captureId))
                 val now = java.time.Instant.now()
                 val expression = unresolved?.originalText.orEmpty()
-                val question = if (unresolved?.missingField == TemporalField.AM_PM)
-                    "$expression in the morning or evening?" else "What exact time should I use?"
+                val question = if (hasNoReminderTime) "When should I remind you?"
+                    else if (unresolved?.missingField == TemporalField.AM_PM) "$expression in the morning or evening?"
+                    else "What exact time should I use?"
                 runId?.let {
                     /*
                      * RUNTIME-019: clarification state lives in the durable journal

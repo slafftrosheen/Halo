@@ -215,13 +215,21 @@ class PlanningEngine(
                 val payload = goal.payload as? DevicePayload
                     ?: return unsupportedGoal(goal)
 
-                DeviceTask(
-                    action = payload.action,
-                    parameters = buildMap {
-                        putAll(payload.parameters)
-                        if (payload.target.isNotBlank()) put("target", payload.target)
-                    }
-                )
+                if (payload.action == "open") {
+                    ApplicationTask(
+                        packageName = payload.target,
+                        intent = "launch",
+                        displayName = payload.target
+                    )
+                } else {
+                    DeviceTask(
+                        action = payload.action,
+                        parameters = buildMap {
+                            putAll(payload.parameters)
+                            if (payload.target.isNotBlank()) put("target", payload.target)
+                        }
+                    )
+                }
             }
 
             GoalType.MEMORY -> {

@@ -8,6 +8,8 @@ import android.os.Build
 import com.halo.host.android.reminder.HaloReminderReceiver
 import com.halo.host.android.reminder.ReminderRecord
 import com.halo.host.android.reminder.ReminderRecordStore
+import com.halo.host.android.reminder.ReminderStatus
+import com.halo.runtime.cognition.ActionFailureCode
 import com.halo.runtime.cognition.Capability
 import com.halo.runtime.cognition.MemoryTask
 import com.halo.runtime.cognition.Outcome
@@ -42,11 +44,18 @@ class AndroidMemoryCapability(
         require(task is MemoryTask)
         var schedulingStarted = false
         return try {
-            val spec = parseReminder(task.memoryAction)
-                ?: return Outcome.PermanentFailure("I couldn't understand when to schedule that reminder")
+            val rawAction = task.reminderMessage?.let { msg -> task.temporalExpression?.let { expr -> "$msg\u001F$expr" } } ?: task.memoryAction
+            val spec = parseReminder(rawAction)
+                ?: return Outcome.PermanentFailure(
+                    reason = "I couldn't understand when to schedule that reminder",
+                    code = ActionFailureCode.REMINDER_TIME_INVALID
+                )
             val triggerTime = spec.triggerAt.toEpochMilli()
             if (triggerTime <= clock.millis()) {
-                return Outcome.PermanentFailure("That reminder time is in the past")
+                return Outcome.PermanentFailure(
+                    reason = "That reminder time is in the past",
+                    code = ActionFailureCode.REMINDER_TIME_INVALID
+                )
             }
 
             val reminderId = "${spec.message}|$triggerTime"
@@ -56,13 +65,26 @@ class AndroidMemoryCapability(
             store.reconcile(clock.millis())
             when (store.status(reminderId)) {
                 com.halo.host.android.reminder.ReminderStatus.Scheduled -> Outcome.Success("Reminder set")
-                com.halo.host.android.reminder.ReminderStatus.Blocked -> Outcome.PermanentFailure("NEEDS_EXACT_ALARM_ACCESS: reminder retained; grant exact alarm access in Settings")
-                com.halo.host.android.reminder.ReminderStatus.Expired -> Outcome.PermanentFailure("That reminder time is in the past")
-                else -> Outcome.PermanentFailure("Reminder was not scheduled")
+                ReminderStatus.Blocked -> Outcome.PermanentFailure(
+                    reason = "I saved the reminder, but Android needs Exact alarms access before it can schedule it.",
+                    code = ActionFailureCode.EXACT_ALARM_ACCESS_REQUIRED
+                )
+                ReminderStatus.Expired -> Outcome.PermanentFailure(
+                    reason = "That reminder time is in the past",
+                    code = ActionFailureCode.REMINDER_TIME_INVALID
+                )
+                else -> Outcome.PermanentFailure(
+                    reason = "Reminder was not scheduled",
+                    code = ActionFailureCode.PLATFORM_REJECTED
+                )
             }
         } catch (e: Exception) {
             if (schedulingStarted) Outcome.Partial("Reminder scheduling was attempted; completion is unknown")
-            else Outcome.PermanentFailure(e.message ?: "Failed to prepare reminder")
+            else Outcome.PermanentFailure(
+                reason = e.message ?: "Failed to prepare reminder",
+                error = e,
+                code = ActionFailureCode.UNKNOWN
+            )
         }
     }
 

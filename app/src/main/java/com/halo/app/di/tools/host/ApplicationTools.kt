@@ -21,12 +21,9 @@ class ApplicationTools(
         add(ToolDefinition("halo_list_apps", "halo_list_apps", "Find launchable installed apps by name and return package IDs for halo_open_app.",
             mapOf("type" to "object", "properties" to mapOf("query" to mapOf("type" to "string", "maxLength" to 100)),
                 "required" to listOf("query"), "additionalProperties" to false)))
-        
-        if (context.packageManager.queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), 0).isNotEmpty()) {
-            add(ToolDefinition("halo_open_app", "halo_open_app", "Open an installed package. Receipt confirms dispatch only.",
-                mapOf("type" to "object", "properties" to mapOf("package" to mapOf("type" to "string", "minLength" to 1, "maxLength" to 500)),
-                    "required" to listOf("package"), "additionalProperties" to false)))
-        }
+        add(ToolDefinition("halo_open_app", "halo_open_app", "Open an installed package. Receipt confirms dispatch only.",
+            mapOf("type" to "object", "properties" to mapOf("package" to mapOf("type" to "string", "minLength" to 1, "maxLength" to 500)),
+                "required" to listOf("package"), "additionalProperties" to false)))
     }
 
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {

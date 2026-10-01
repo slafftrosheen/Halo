@@ -176,8 +176,16 @@ class ExecutionEngine(
                         }
                     },
                     afterDispatch = { dispatched, outcome ->
+                        val codeStr = when (outcome) {
+                            is Outcome.PermanentFailure -> outcome.code?.name
+                            is Outcome.RetryableFailure -> outcome.code?.name
+                            is Outcome.Partial -> outcome.code?.name
+                            else -> null
+                        }
+                        val codeSection = if (codeStr != null) " code=$codeStr" else ""
+                        val taskName = dispatched::class.java.simpleName
                         println("HALO_ACTION_RESULT interactionId=${plan.interactionId} runId=${runId?.value} " +
-                            "planId=${plan.id} executionId=$executionId outcome=${outcome::class.simpleName}")
+                            "task=$taskName outcome=${outcome::class.simpleName}$codeSection stage=CAPABILITY_EXECUTION")
                         if (runId != null && coordinator != null) {
                             val operationId = dispatched.id.toString()
                             if (outcome is Outcome.Success) {
