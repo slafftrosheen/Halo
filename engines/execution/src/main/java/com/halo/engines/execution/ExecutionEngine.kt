@@ -159,7 +159,7 @@ class ExecutionEngine(
                             val invocationId = com.halo.runtime.cognition.agent.ToolInvocationId(UUID.randomUUID().toString())
                             invocationIds[operationId] = invocationId
                             val argumentsDigest = com.halo.runtime.cognition.agent.ToolArgumentCanonicalizer
-                                .digest(dispatched.toString())
+                                .digest(dispatched.safeOperationIdentity())
                             coordinator.recordStep(AgentStep.ToolRequested(AgentStepId(UUID.randomUUID().toString()), runId,
                                 Instant.now(), operationId, dispatched::class.java.simpleName, "{}"))
                             coordinator.recordStep(AgentStep.ToolInvocationPrepared(AgentStepId(UUID.randomUUID().toString()), runId,
@@ -185,7 +185,8 @@ class ExecutionEngine(
                         val codeSection = if (codeStr != null) " code=$codeStr" else ""
                         val taskName = dispatched::class.java.simpleName
                         println("HALO_ACTION_RESULT interactionId=${plan.interactionId} runId=${runId?.value} " +
-                            "task=$taskName outcome=${outcome::class.simpleName}$codeSection stage=CAPABILITY_EXECUTION")
+                            "planId=${plan.id} executionId=$executionId taskId=${dispatched.id} taskType=$taskName " +
+                            "outcome=${outcome::class.simpleName}$codeSection stage=CAPABILITY_EXECUTION")
                         if (runId != null && coordinator != null) {
                             val operationId = dispatched.id.toString()
                             if (outcome is Outcome.Success) {
@@ -277,6 +278,18 @@ class ExecutionEngine(
         return finalOutcome
     }
 
+    private fun Task.safeOperationIdentity(): String = when (this) {
+        is com.halo.runtime.cognition.DeviceTask ->
+            "DeviceTask:${action.lowercase()}:hasTemporal=${parameters.containsKey("temporal_value")}"
+        is com.halo.runtime.cognition.ApplicationTask -> "ApplicationTask:launch"
+        is com.halo.runtime.cognition.MemoryTask ->
+            "MemoryTask:reminder:hasTime=${!temporalExpression.isNullOrBlank()}"
+        is com.halo.runtime.cognition.MediaTask -> "MediaTask:${mediaAction.lowercase()}"
+        is com.halo.runtime.cognition.NavigationTask -> "NavigationTask"
+        is com.halo.runtime.cognition.CommunicationTask -> "CommunicationTask"
+        is com.halo.runtime.cognition.WebTask -> "WebTask"
+        is com.halo.runtime.cognition.SystemTask -> "SystemTask"
+    }
     private fun Outcome.messageForTelemetry(): String = when (this) {
         is Outcome.Success -> message.orEmpty()
         is Outcome.Dispatched -> message

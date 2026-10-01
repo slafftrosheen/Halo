@@ -29,7 +29,15 @@ class SpeechSynthesisRegistry(
                     if (!fallbackUsed && selected is ElevenLabsTtsProvider && (pinned.voiceId == null || pinned.modelId == null)) error("Speech selection is incomplete")
                     if (fallbackUsed) android.synthesizeToPcm(request.copy(voiceId = null, modelId = null, voiceSettings = emptyMap())) else selected.synthesizeToPcm(pinned.copy(text = request.text)) }
                 catch (cancelled: CancellationException) { throw cancelled }
-                catch (_: Exception) { null }
+                catch (error: Exception) {
+                    val code = (error as? SpeechProviderException)?.code?.name
+                        ?: error::class.java.simpleName
+                    Log.w(
+                        "HALO_TTS_FAILURE",
+                        "provider=${selected.metadata.id}; stage=SYNTHESIS; code=$code",
+                    )
+                    null
+                }
                 if (pcm != null) {
                     Log.i("HALO_TTS_SYNTHESIS", "provider=${if (fallbackUsed) android.metadata.id else selected.metadata.id}; audioBytes=${pcm.chunks.sumOf { it.size.toLong() }}; sampleRate=${pcm.sampleRateHz}; durationMs=${SystemClock.elapsedRealtime() - startedAt}")
                     return pcm

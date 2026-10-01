@@ -1,5 +1,25 @@
 # Halo current state
 
+## DOGFOOD-003 — Credential durability + runtime diagnostics — 2026-10-01
+
+**IMPLEMENTED / CI STARTUP FAILURE / PHYSICAL DEVICE VERIFICATION PENDING.**
+- ElevenLabs construction/state publication no longer performs synchronous secure-storage reads.
+- Secure credential writes are verified by readback before the provider reports configured.
+- Protected credential read/decrypt failures are surfaced instead of silently becoming "not configured".
+- Persisted TTS credential/configuration is loaded on the provider IO scope and cached in memory.
+- Stale asynchronous configuration loads are discarded.
+- Settings expose loading/configured/unreadable secure-storage truth.
+- TTS provider failures are logged with sanitized provider/stage/code before optional Android TTS fallback.
+- Deterministic action telemetry again includes plan/execution/task correlation.
+- Deterministic action identity no longer hashes raw task payload text.
+- Duplicate host tool ownership fails fast.
+- Provider-level durability tests were added.
+- GitHub Actions run ended in `startup_failure` before any job was created; no Gradle verification ran.
+
+See [DOGFOOD-003](docs/engineering/DOGFOOD-003-CREDENTIAL-DURABILITY.md).
+
+---
+
 ## DOGFOOD-002 — Deterministic Action Reliability + Main-Thread Purity — 2026-10-01
 
 **IMPLEMENTED / COMPILED / UNIT VERIFIED.**

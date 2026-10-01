@@ -42,6 +42,8 @@ class HostToolRegistry(
         val defsList = mutableListOf<ToolDefinition>()
         for (executor in executors) {
             for (def in executor.definitions()) {
+                check(def.id !in defMap) { "Duplicate host tool definition: ${def.id}" }
+                check(def.id !in execMap) { "Duplicate host tool executor: ${def.id}" }
                 defMap[def.id] = def
                 execMap[def.id] = executor
                 defsList.add(def)

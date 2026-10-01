@@ -66,23 +66,26 @@ class AndroidKeystoreSecretStore(
     fun getBlocking(key: String): String? = synchronized(storeLock) {
         val source = secretFile(key)
         if (!source.isFile && !File(source.path + ".bak").isFile) return@synchronized null
-        runCatching {
-            DataInputStream(AtomicFile(source).openRead()).use { input ->
-                require(input.readInt() == FORMAT_VERSION)
-                val ivLength = input.readInt()
-                require(ivLength in 12..32)
-                val iv = ByteArray(ivLength).also(input::readFully)
-                val encryptedLength = input.readInt()
-                require(encryptedLength in 1..MAX_SECRET_BYTES)
-                val encrypted = ByteArray(encryptedLength).also(input::readFully)
-                val cipher = Cipher.getInstance(TRANSFORMATION)
-                val keyStore = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
-                val encryptionKey = keyStore.getKey(KEY_ALIAS, null) as? SecretKey
-                    ?: error("Stored credential encryption key is unavailable")
-                cipher.init(Cipher.DECRYPT_MODE, encryptionKey, GCMParameterSpec(128, iv))
-                cipher.doFinal(encrypted).toString(Charsets.UTF_8)
-            }
-        }.getOrNull()
+
+        // An absent file means "not configured". Any failure after a file exists means
+        // "configured data is unreadable" and must propagate to the owner. Silently
+        // converting corruption, a missing Keystore alias, or GCM authentication failure
+        // into null made provider setup look as if the user had never saved a key.
+        DataInputStream(AtomicFile(source).openRead()).use { input ->
+            require(input.readInt() == FORMAT_VERSION) { "Unsupported protected secret format" }
+            val ivLength = input.readInt()
+            require(ivLength in 12..32) { "Invalid protected secret IV" }
+            val iv = ByteArray(ivLength).also(input::readFully)
+            val encryptedLength = input.readInt()
+            require(encryptedLength in 1..MAX_SECRET_BYTES) { "Invalid protected secret length" }
+            val encrypted = ByteArray(encryptedLength).also(input::readFully)
+            val cipher = Cipher.getInstance(TRANSFORMATION)
+            val keyStore = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
+            val encryptionKey = keyStore.getKey(KEY_ALIAS, null) as? SecretKey
+                ?: error("Stored credential encryption key is unavailable")
+            cipher.init(Cipher.DECRYPT_MODE, encryptionKey, GCMParameterSpec(128, iv))
+            cipher.doFinal(encrypted).toString(Charsets.UTF_8)
+        }
     }
 
     private fun secretFile(key: String): File {
