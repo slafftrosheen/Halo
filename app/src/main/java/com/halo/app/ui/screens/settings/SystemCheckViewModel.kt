@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.MediaPlayer
-import android.media.MediaRecorder
 import android.media.RingtoneManager
 import android.os.Build
 import androidx.core.content.ContextCompat
@@ -73,6 +72,8 @@ data class SystemCheckUiState(
     val toolChannel: com.halo.providers.litert.LiteRtToolChannelDiagnostics? = null,
     /** MINING-P2-001 static renderer preview; purely local, opened explicitly by the user. */
     val showPresentationPreview: Boolean = false,
+    val speechProbeTranscript: String? = null,
+    val speechRecording: Boolean = false,
 )
 
 sealed class SystemCheckAction {
@@ -100,6 +101,7 @@ sealed class SystemCheckAction {
 
     object RunAgenticProbe : SystemCheckAction()
     object RunSttProbe : SystemCheckAction()
+    object RunCaptureProbe : SystemCheckAction()
     object RunTtsProbe : SystemCheckAction()
     object OpenAssistantSettings : SystemCheckAction()
     object TestAlarm : SystemCheckAction()
@@ -136,6 +138,7 @@ class SystemCheckViewModel(
     private val presentationProjection: com.halo.runtime.cognition.interaction.PresentationSurfaceProjection? = null,
     private val payloadStore: com.halo.runtime.cognition.context.ContentPayloadStore? = null,
     private val agentRuns: com.halo.runtime.cognition.agent.AgentRunStore? = null,
+    private val speechDiagnostics: com.halo.app.speech.diagnostics.SpeechDiagnosticRunner? = null,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SystemCheckUiState())
@@ -152,7 +155,8 @@ class SystemCheckViewModel(
                 payloadStore?.collectUnreferenced()
                 refreshChecks()
             }
-            is SystemCheckAction.RunSttProbe -> testMicrophone()
+            is SystemCheckAction.RunSttProbe -> testMicrophone(recognize = true)
+            is SystemCheckAction.RunCaptureProbe -> testMicrophone(recognize = false)
             is SystemCheckAction.RunTtsProbe -> testAudioOutput()
             is SystemCheckAction.RunLiteRtControlProbe -> runLiteRtControlProbe()
             is SystemCheckAction.RunProviderProbe -> runAiProbe()
@@ -249,13 +253,22 @@ class SystemCheckViewModel(
                 id = "speech",
                 title = "Speech",
                 items = listOf(
-                    SystemCheckItem(
-                        id = "mic",
-                        name = "Microphone & STT",
-                        glyph = HaloGlyph.LISTEN,
-                        status = if (audioPermission) CheckStatus.READY else CheckStatus.NOT_CONFIGURED,
-                        reason = if (audioPermission) "RECORD_AUDIO granted" else "RECORD_AUDIO permission missing"
-                    ),
+                    SystemCheckItem("mic_permission", "Microphone permission", HaloGlyph.LISTEN,
+                        if (audioPermission) CheckStatus.PASSED else CheckStatus.NOT_CONFIGURED,
+                        if (audioPermission) "RECORD_AUDIO granted" else "RECORD_AUDIO permission missing"),
+                    SystemCheckItem("mic_capture", "Microphone capture", HaloGlyph.LISTEN,
+                        if (audioPermission) CheckStatus.READY else CheckStatus.BLOCKED, "Not yet probed; requires processed PCM"),
+                    SystemCheckItem("speech_detector", "Speech detector", HaloGlyph.LISTEN,
+                        if (speechDiagnostics?.detectorReady?.invoke() == true) CheckStatus.READY else CheckStatus.NOT_CONFIGURED,
+                        if (speechDiagnostics?.detectorReady?.invoke() == true) "Verified Silero detector" else "Silero unavailable; energy fallback"),
+                    SystemCheckItem("stt_selection", "STT selection", HaloGlyph.LISTEN,
+                        if (speechDiagnostics != null) CheckStatus.READY else CheckStatus.NOT_CONFIGURED,
+                        "language=${speechDiagnostics?.language?.invoke() ?: "unknown"}; ${speechDiagnostics?.selectedHealth()?.message ?: "STT unavailable"}"),
+                    SystemCheckItem("stt_files", "STT verified files", HaloGlyph.LISTEN,
+                        if (speechDiagnostics?.selectedHealth()?.healthy == true) CheckStatus.READY else CheckStatus.NOT_CONFIGURED,
+                        "${speechDiagnostics?.selectedHealth()?.message ?: "Selected speech provider unavailable"}"),
+                    SystemCheckItem("stt_recognition", "STT recognition", HaloGlyph.LISTEN,
+                        if (audioPermission) CheckStatus.READY else CheckStatus.BLOCKED, "Not yet probed; requires a nonempty decoded transcript"),
                     SystemCheckItem(
                         id = "audio",
                         name = "Audio Output Route",
@@ -838,46 +851,50 @@ class SystemCheckViewModel(
         refreshChecks()
     }
 
-    fun testMicrophone() {
-        viewModelScope.launch(Dispatchers.IO) {
-            updateItem("mic", CheckStatus.RUNNING, "Recording 2s sample...")
-            val startTime = System.currentTimeMillis()
-            runCatching {
-                val sampleFile = File(appContext.cacheDir, "test_mic_sample.3gp")
-                if (sampleFile.exists()) sampleFile.delete()
-
-                @Suppress("DEPRECATION")
-                val recorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    MediaRecorder(appContext)
-                } else {
-                    MediaRecorder()
+    private var speechProbeJob: kotlinx.coroutines.Job? = null
+    private var speechFinish: kotlinx.coroutines.CompletableDeferred<Unit>? = null
+    fun finishSpeechCapture() { speechFinish?.complete(Unit) }
+    fun cancelSpeechProbe() { speechProbeJob?.cancel() }
+    fun leaveSpeechProbe() {
+        speechProbeJob?.cancel()
+        speechProbeJob?.invokeOnCompletion { _uiState.value = _uiState.value.copy(speechProbeTranscript = null) }
+        _uiState.value = _uiState.value.copy(speechProbeTranscript = null)
+    }
+    fun testMicrophone(recognize: Boolean = false) {
+        if (speechProbeJob?.isCompleted == false) return
+        speechProbeJob = viewModelScope.launch(Dispatchers.IO) {
+            var sample: com.halo.app.speech.diagnostics.SpeechDiagnosticSession? = null
+            var captured = false
+            try {
+                val runner = checkNotNull(speechDiagnostics) { "Diagnostic runner unavailable" }
+                speechFinish = kotlinx.coroutines.CompletableDeferred()
+                _uiState.value = _uiState.value.copy(speechProbeTranscript = null, speechRecording = true)
+                updateItem("mic_capture", CheckStatus.RUNNING,
+                    if (runner.language() == "lv") "Saki: Halo runas tests" else "Say: Halo speech test")
+                if (recognize) updateItem("stt_recognition", CheckStatus.RUNNING, "Waiting for capture")
+                sample = runner.captureSession(speechFinish, maxDurationMs = 7_000)
+                captured = true
+                _uiState.value = _uiState.value.copy(speechRecording = false)
+                updateItem("mic_capture", CheckStatus.PASSED,
+                    "Processed PCM: ${sample.activity.durationMs} ms; peak=${sample.activity.peakAmplitude}; ${sample.capture.originalSampleRate} → 16000 Hz mono")
+                if (recognize) {
+                    val result = runner.recognizeSelected(sample)
+                    val recognition = result.recognition
+                    _uiState.value = _uiState.value.copy(speechProbeTranscript = recognition?.text)
+                    updateItem("stt_recognition", if (com.halo.app.speech.diagnostics.SpeechProbeVerdict.recognitionPassed(result)) CheckStatus.PASSED else CheckStatus.FAILED,
+                        "stage=${result.stage}; chars=${recognition?.text?.length ?: 0}; gate=${result.gate ?: "not evaluated"}; ${result.failure.orEmpty()}",
+                        recognition?.metrics?.totalMs)
                 }
-                recorder.apply {
-                    setAudioSource(MediaRecorder.AudioSource.MIC)
-                    setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
-                    setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
-                    setOutputFile(sampleFile.absolutePath)
-                    prepare()
-                    start()
-                }
-
-                delay(2000)
-
-                var maxAmp = 0
-                runCatching { maxAmp = recorder.maxAmplitude }
-                recorder.stop()
-                recorder.release()
-                sampleFile.delete()
-
-                val elapsed = System.currentTimeMillis() - startTime
-                updateItem(
-                    "mic",
-                    CheckStatus.PASSED,
-                    "Recorded sample successfully (Max Amplitude: $maxAmp)",
-                    elapsed
-                )
-            }.onFailure { err ->
-                updateItem("mic", CheckStatus.FAILED, err.message ?: "Recording failed")
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                updateItem(if (captured) "stt_recognition" else "mic_capture", CheckStatus.BLOCKED, "Probe cancelled; no result admitted")
+                if (recognize && !captured) updateItem("stt_recognition", CheckStatus.BLOCKED, "Capture cancelled")
+                throw cancelled
+            } catch (error: Exception) {
+                updateItem(if (captured) "stt_recognition" else "mic_capture", CheckStatus.FAILED, error.message ?: "CAPTURE: failed")
+                if (recognize && !captured) updateItem("stt_recognition", CheckStatus.BLOCKED, "Capture did not complete")
+            } finally {
+                sample?.close(); speechFinish = null
+                _uiState.value = _uiState.value.copy(speechRecording = false)
             }
         }
     }

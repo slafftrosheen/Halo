@@ -32,9 +32,9 @@ class SherpaSpeechModelCatalogTest {
     fun completeWhisperModelPassesValidation() {
         val directory = createTempDir(prefix = "halo-sherpa-")
         try {
-            File(directory, "tiny-encoder.int8.onnx").writeBytes(ByteArray(10_000_001))
-            File(directory, "tiny-decoder.int8.onnx").writeBytes(ByteArray(70_000_001))
-            File(directory, "tiny-tokens.txt").writeBytes(ByteArray(100_001))
+            SherpaSpeechModelCatalog.whisperTiny.files.forEach { spec ->
+                java.io.RandomAccessFile(File(directory, spec.name), "rw").use { it.setLength(spec.expectedBytes) }
+            }
             assertTrue(
                 SherpaSpeechModelCatalog.isInstalled(
                     directory,

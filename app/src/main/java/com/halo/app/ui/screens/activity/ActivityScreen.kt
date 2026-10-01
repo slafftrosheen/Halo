@@ -181,6 +181,7 @@ private fun ActivityListItem(story: ActivityStory, onOpenObject: (String) -> Uni
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 4
             )
+            story.speechProvenance?.let { Text(it, style = MaterialTheme.typography.labelSmall) }
             story.planProgress?.let { progress ->
                 Spacer(Modifier.size(2.dp))
                 Text(
@@ -223,6 +224,7 @@ data class ActivityStory(
     /** Compact "3 / 4 steps complete" line for the collapsed row. */
     val planProgress: String? = null,
     val children: List<ActivityStory> = emptyList(),
+    val speechProvenance: String? = null,
 )
 
 data class ActivityUiState(
@@ -259,9 +261,10 @@ class ActivityUiMapper {
                             kind = kindFor(event),
                             title = event.title,
                             summary = event.description,
+                            speechProvenance = event.details["stt"],
                             timestamp = event.timestamp,
                             status = statusFor(event),
-                            steps = listOf(ActivityStep(event.presentationId, event.title, event.description, statusFor(event) == ActivityStatus.FAILED)),
+                            steps = listOf(ActivityStep(event.presentationId, event.title, event.description + if (event.details.isNotEmpty()) "\n" + event.details.entries.joinToString(" · ") { "${it.key}: ${it.value}" } else "", statusFor(event) == ActivityStatus.FAILED)),
                             objectId = event.objectId
                         )
                     )
@@ -278,9 +281,10 @@ class ActivityUiMapper {
                         kind = kindFor(start),
                         title = start.title,
                         summary = lastMeaningful.description,
+                        speechProvenance = sorted.firstNotNullOfOrNull { it.details["stt"] },
                         timestamp = start.timestamp,
                         status = if (isError) ActivityStatus.FAILED else ActivityStatus.SUCCESS,
-                        steps = sorted.map { ActivityStep(it.presentationId, it.title, it.description, statusFor(it) == ActivityStatus.FAILED) },
+                        steps = sorted.map { ActivityStep(it.presentationId, it.title, it.description + if (it.details.isNotEmpty()) "\n" + it.details.entries.joinToString(" · ") { detail -> "${detail.key}: ${detail.value}" } else "", statusFor(it) == ActivityStatus.FAILED) },
                         objectId = sorted.firstNotNullOfOrNull { it.objectId }
                     )
                 )
@@ -327,7 +331,14 @@ class ActivityViewModel(
         }.toSet()
         val history = mapper.map(snapshot.timeline.takeLast(500)).events.filterNot { it.correlationId in durableIds }
         val roots = runs.filter { it.parentRunId == null }.map { parent ->
-            parent.toStory().copy(children = runs.filter { it.parentRunId == parent.id }.map { child ->
+            val story = parent.toStory()
+            val speech = snapshot.timeline.firstOrNull {
+                it.correlationId == parent.interactionId.value && it.details.containsKey("stt")
+            }
+            story.copy(speechProvenance = speech?.details?.get("stt"),
+                steps = story.steps + listOfNotNull(speech?.let {
+                    ActivityStep(it.presentationId, "Speech recognition", it.details.entries.joinToString(" · ") { detail -> "${detail.key}: ${detail.value}" })
+                }), children = runs.filter { it.parentRunId == parent.id }.map { child ->
                 child.toStory().copy(title = child.delegatedRole?.lowercase()?.replaceFirstChar { it.uppercase() } ?: "Delegated task",
                     summary = "${RuntimeUiFormatters.formatRunState(child.state)} · ${child.pinnedProviderId.orEmpty()} / ${child.pinnedModelId.orEmpty()} · " +
                         "${child.steps.filterIsInstance<AgentStep.ToolOutcomeRecorded>().count { it.success }} reads · ${child.steps.filterIsInstance<AgentStep.DelegationResultRecorded>().lastOrNull()?.evidence?.size ?: 0} sources · " +

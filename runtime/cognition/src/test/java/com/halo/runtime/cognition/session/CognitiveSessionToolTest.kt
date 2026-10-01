@@ -120,7 +120,7 @@ class CognitiveSessionToolTest {
 
         // Request with includeAvailableTools = true
         val enabledPolicy = AiContextPolicy(includeAvailableTools = true)
-        session.submit(AiRequest(text = "Hello"), policy = enabledPolicy)
+        session.submit(AiRequest(text = "Hello", toolUseMode = ToolUseMode.OPTIONAL), policy = enabledPolicy)
         advanceUntilIdle()
 
         assertEquals(1, provider.capturedContexts.size)
@@ -130,7 +130,7 @@ class CognitiveSessionToolTest {
 
         // Request with includeAvailableTools = false
         val disabledPolicy = AiContextPolicy(includeAvailableTools = false)
-        session.submit(AiRequest(text = "Hello 2"), policy = disabledPolicy)
+        session.submit(AiRequest(text = "Hello 2", toolUseMode = ToolUseMode.OPTIONAL), policy = disabledPolicy)
         advanceUntilIdle()
 
         val ctx2 = provider.capturedContexts[1]
@@ -225,7 +225,7 @@ class CognitiveSessionToolTest {
         )
 
         val policy = AiContextPolicy(includeAvailableTools = true)
-        session.submit(AiRequest(text = "Echo Hello World"), policy = policy)
+        session.submit(AiRequest(text = "Echo Hello World", toolUseMode = ToolUseMode.OPTIONAL), policy = policy)
         advanceUntilIdle()
 
         // Verify tool lifecycle events
@@ -261,7 +261,7 @@ class CognitiveSessionToolTest {
         )
 
         val policy = AiContextPolicy(includeAvailableTools = true)
-        session.submit(AiRequest(text = "Run unknown tool"), policy = policy)
+        session.submit(AiRequest(text = "Run unknown tool", toolUseMode = ToolUseMode.OPTIONAL), policy = policy)
         advanceUntilIdle()
 
         // Verify ToolCallRejected event

@@ -19,11 +19,16 @@ import com.halo.sdk.provider.StreamToolCallException
 import com.halo.sdk.runtime.CognitiveTokenReceived
 import com.halo.sdk.runtime.EventBus
 import com.halo.runtime.provider.response.AiResponseValidator
+import com.halo.sdk.provider.ProviderTurnKind
+import com.halo.sdk.provider.ToolUseMode
 import com.halo.sdk.provider.validateAgainst
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.produceIn
 import kotlinx.coroutines.withTimeoutOrNull
 
@@ -75,6 +80,98 @@ class DefaultProviderTurnExecutor(
         requestId: String,
         interactionId: InteractionId,
     ): ProviderTurnResult {
+        return executeWithRetry(target, request, context, requestId, interactionId)
+    }
+
+    private suspend fun executeWithRetry(
+        target: AiExecutionTarget,
+        request: AiRequest,
+        context: AiContext,
+        requestId: String,
+        interactionId: InteractionId,
+    ): ProviderTurnResult {
+        var attempt = 1
+        while (true) {
+            println("[HALO_PROVIDER_ATTEMPT] interactionId=${interactionId.value} requestId=$requestId provider=${target.providerId} model=${target.modelId} attempt=$attempt")
+            val attemptStartMs = System.currentTimeMillis()
+            var textEmitted = false
+            var toolDeltaEmitted = false
+            try {
+                val result = executeAttempt(
+                    target = target,
+                    request = request,
+                    context = context,
+                    requestId = requestId,
+                    interactionId = interactionId,
+                    onTokenEmitted = { textEmitted = true },
+                    onToolDeltaEmitted = { toolDeltaEmitted = true },
+                )
+                val response = (result as? ProviderTurnResult.Response)?.response
+                val resolvedModel = response?.resolvedModelId ?: target.modelId
+                val durationMs = response?.metrics?.totalDurationMs ?: (System.currentTimeMillis() - attemptStartMs)
+                val firstTokenMs = response?.metrics?.timeToFirstTokenMs
+                println(
+                    "[HALO_PROVIDER_SUCCESS] interactionId=${interactionId.value} requestId=$requestId " +
+                        "provider=${target.providerId} requestedModel=${target.modelId} " +
+                        "resolvedModel=$resolvedModel attempt=$attempt " +
+                        "firstTokenMs=${firstTokenMs ?: "null"} durationMs=$durationMs " +
+                        "finishReason=${response?.finishReason ?: "stop"}"
+                )
+                return result
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Throwable) {
+                val partialOutput = textEmitted || toolDeltaEmitted
+                val aiEx = error as? AiProviderException
+                val canRetry = attempt == 1 && maybeRetrySameTarget(request, error, partialOutput)
+
+                if (canRetry) {
+                    val backoffMs = 400L
+                    println(
+                        "[HALO_PROVIDER_RETRY] interactionId=${interactionId.value} requestId=$requestId " +
+                            "provider=${target.providerId} model=${target.modelId} fromAttempt=1 " +
+                            "reason=${aiEx?.type?.name ?: "UNKNOWN_ERROR"} backoffMs=$backoffMs"
+                    )
+                    delay(backoffMs)
+                    attempt++
+                } else {
+                    println(
+                        "[HALO_PROVIDER_FAILURE] interactionId=${interactionId.value} requestId=$requestId " +
+                            "provider=${target.providerId} requestedModel=${target.modelId} " +
+                            "resolvedModel=${target.modelId} errorType=${aiEx?.type?.name ?: error.javaClass.simpleName} " +
+                            "httpStatus=${aiEx?.details?.httpStatus} providerCode=${aiEx?.details?.providerCode} " +
+                            "recoverability=${aiEx?.details?.recoverability?.name} retryAfterMs=${aiEx?.details?.retryAfterMs} " +
+                            "attempt=$attempt partialOutput=$partialOutput"
+                    )
+                    throw error
+                }
+            }
+        }
+    }
+
+    private fun maybeRetrySameTarget(
+        request: AiRequest,
+        error: Throwable,
+        partialOutput: Boolean,
+    ): Boolean {
+        if (partialOutput) return false
+        if (request.turnKind == ProviderTurnKind.TOOL_CONTINUATION) return false
+        val mode = request.toolUseMode ?: ToolUseMode.OPTIONAL
+        if (mode != ToolUseMode.NONE) return false
+        if (error !is AiProviderException) return false
+        return error.details.recoverability == Recoverability.RETRY_IMMEDIATELY
+    }
+
+    @OptIn(FlowPreview::class)
+    private suspend fun executeAttempt(
+        target: AiExecutionTarget,
+        request: AiRequest,
+        context: AiContext,
+        requestId: String,
+        interactionId: InteractionId,
+        onTokenEmitted: () -> Unit,
+        onToolDeltaEmitted: () -> Unit,
+    ): ProviderTurnResult {
         val startedAtMs = System.currentTimeMillis()
         request.validateAgainst(target.providerCapabilities)
         val mode = request.toolUseMode ?: com.halo.sdk.provider.ToolUseMode.OPTIONAL
@@ -92,53 +189,61 @@ class DefaultProviderTurnExecutor(
             val toolCalls = StreamingToolCallAssembler()
             if (request.publishStreamingTokens) _streamingText.value = ""
             try {
-                coroutineScope {
-                    val events = provider.stream(request, outboundContext).produceIn(this)
-                    var receivedAnyEvent = false
-                    while (true) {
-                        val timeoutMs = if (receivedAnyEvent) INTER_EVENT_TIMEOUT_MS else FIRST_EVENT_TIMEOUT_MS
-                        val next = withTimeoutOrNull(timeoutMs) { events.receiveCatching() }
-                            ?: throw streamTimeout(accumulatedText.isNotEmpty(), toolCalls.hasDeltas(), timeoutMs)
-                        next.exceptionOrNull()?.let { throw it }
-                        if (next.isClosed) break
-                        receivedAnyEvent = true
-                        val event = next.getOrThrow()
-                        when (event) {
-                            is AiStreamEvent.Started ->
-                                if (request.publishStreamingTokens) _streamingText.value = ""
+                provider.stream(request, outboundContext).collect { event ->
+                    when (event) {
+                        is AiStreamEvent.Started ->
+                            if (request.publishStreamingTokens) _streamingText.value = ""
 
-                            is AiStreamEvent.Token -> {
-                                accumulatedText.append(event.text)
-                                if (request.publishStreamingTokens) {
-                                    _streamingText.value = accumulatedText.toString()
-                                    eventBus.publish(
-                                        CognitiveTokenReceived(requestId = requestId, token = event.text, interactionId = interactionId.value)
-                                    )
-                                }
+                        is AiStreamEvent.Token -> {
+                            onTokenEmitted()
+                            accumulatedText.append(event.text)
+                            if (request.publishStreamingTokens) {
+                                _streamingText.value = accumulatedText.toString()
+                                eventBus.publish(
+                                    CognitiveTokenReceived(requestId = requestId, token = event.text, interactionId = interactionId.value)
+                                )
                             }
+                        }
 
-                            is AiStreamEvent.Completed -> completedResponse = event.response
-                            is AiStreamEvent.Failed -> {
-                                val visible = accumulatedText.isNotEmpty() || toolCalls.hasDeltas()
-                                val failure = event.error
-                                if (visible && failure is AiProviderException) {
-                                    throw AiProviderException(
-                                        type = failure.type,
-                                        message = failure.message ?: "Provider stream failed after partial output",
-                                        cause = failure,
-                                        details = failure.details.copy(
-                                            providerCode = "STREAM_FAILED_AFTER_OUTPUT",
-                                            recoverability = Recoverability.PERMANENT,
-                                        ),
-                                    )
-                                }
-                                throw failure
+                        is AiStreamEvent.Completed -> completedResponse = event.response
+                        is AiStreamEvent.Failed -> {
+                            val visible = accumulatedText.isNotEmpty() || toolCalls.hasDeltas()
+                            val failure = event.error
+                            if (visible && failure is AiProviderException) {
+                                throw AiProviderException(
+                                    type = failure.type,
+                                    message = failure.message ?: "Provider stream failed after partial output",
+                                    cause = failure,
+                                    details = failure.details.copy(
+                                        providerCode = "STREAM_FAILED_AFTER_OUTPUT",
+                                        recoverability = Recoverability.PERMANENT,
+                                    ),
+                                )
                             }
-                            is AiStreamEvent.ToolCallDelta -> toolCalls.appendDelta(event)
+                            throw failure
+                        }
+                        is AiStreamEvent.ToolCallDelta -> {
+                            onToolDeltaEmitted()
+                            toolCalls.appendDelta(event)
                         }
                     }
-                    events.cancel()
                 }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Throwable) {
+                val visible = accumulatedText.isNotEmpty() || toolCalls.hasDeltas()
+                if (visible && error is AiProviderException) {
+                    throw AiProviderException(
+                        type = error.type,
+                        message = error.message ?: "Provider stream failed after partial output",
+                        cause = error,
+                        details = error.details.copy(
+                            providerCode = "STREAM_FAILED_AFTER_OUTPUT",
+                            recoverability = Recoverability.PERMANENT,
+                        ),
+                    )
+                }
+                throw error
             } finally {
                 if (request.publishStreamingTokens) _streamingText.value = null
             }

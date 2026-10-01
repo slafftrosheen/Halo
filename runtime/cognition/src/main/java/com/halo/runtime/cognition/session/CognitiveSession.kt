@@ -411,9 +411,16 @@ class CognitiveSession(
                 val message = listOfNotNull(failedProviderId, failedModelId).joinToString(" · ").let { target ->
                     if (target.isBlank()) mapErrorMessage(e) else "$target: ${mapErrorMessage(e)}"
                 }
+                val aiEx = (e as? AiProviderException) ?: (e.cause as? AiProviderException)
+                val errorType = aiEx?.type?.name ?: e.javaClass.simpleName
+                val httpStatus = aiEx?.details?.httpStatus
+                val providerCode = aiEx?.details?.providerCode
+                val recoverability = aiEx?.details?.recoverability?.name
                 println(
                     "[HALO-COGNITION-FAIL] requestId=$requestId interactionId=${interactionId.value} " +
-                        "type=${e.javaClass.simpleName} provider=$failedProviderId model=$failedModelId"
+                        "type=${e.javaClass.simpleName} errorType=$errorType httpStatus=$httpStatus " +
+                        "providerCode=$providerCode recoverability=$recoverability " +
+                        "provider=$failedProviderId model=$failedModelId"
                 )
                 _state.value = CognitiveSessionState.Failed(message)
                 eventBus.publish(CognitiveFailed(

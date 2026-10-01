@@ -44,6 +44,7 @@ class AndroidProviderFactory(
     private val storage: Storage,
     private val nativeResourceCoordinator: NativeResourceCoordinator,
     private val secretStore: com.halo.app.security.SecretStore? = null,
+    private val speechLanguageSettings: com.halo.app.ui.screens.settings.SpeechLanguageSettingsRepository? = null,
     /** Live presence for the remote fabric; populated when providers are created. */
     val remoteProviderPresenceRegistry: RemoteProviderPresenceRegistry = RemoteProviderPresenceRegistry(),
 ) : ProviderFactory {
@@ -65,12 +66,14 @@ class AndroidProviderFactory(
         val speechRecognition: SpeechRecognitionProvider = ReloadableSpeechRecognitionProvider(
             modelDirectory = sherpaModelDirectory,
             getLanguage = {
-                val configuredLocale = storage.getString("speech_locale")
+                val configuredLocale = speechLanguageSettings?.languageMode?.value ?: storage.getString("speech_locale")
                     ?.takeIf { it.isNotBlank() }
                     ?: Locale.getDefault().toLanguageTag()
                 configuredLocale.substringBefore('-').substringBefore('_')
             },
             selector = speechSelector,
+            languageChanges = speechLanguageSettings?.languageMode,
+            prepareLanguage = { speechLanguageSettings?.loadAndMigrate(); Unit },
             nativeResourceCoordinator = nativeResourceCoordinator,
         )
 

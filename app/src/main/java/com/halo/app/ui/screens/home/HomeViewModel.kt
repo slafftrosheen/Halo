@@ -34,6 +34,11 @@ import kotlinx.coroutines.sync.withLock
 
 data class TimelinePreviewEvent(val command: String, val status: String, val timestamp: Long)
 
+data class SpeechRejectionNotice(
+    val reasonText: String,
+    val timestamp: Long = System.currentTimeMillis()
+)
+
 data class HomeUiState(
     val contextualText: String = "Ready when you are",
     val runtimeState: HaloRuntimeState = HaloRuntimeState.Idle,
@@ -43,6 +48,7 @@ data class HomeUiState(
     val activeProviderStatus: String = "Unavailable",
     val activeProviderState: ProviderStatus.State? = null,
     val activeProviderMessage: String? = null,
+    val rejectionNotice: SpeechRejectionNotice? = null,
     val sessionState: CognitiveSessionState = CognitiveSessionState.Idle,
     val speechActive: Boolean = false,
     val speechProcessing: Boolean = false,
@@ -183,6 +189,8 @@ class HomeViewModel(
     private var lastProjectedResponseKey: String? = null
     val selectedMode = MutableStateFlow(CognitiveOperatingMode.AUTO)
 
+    private val _speechRejectionNotice = MutableStateFlow<SpeechRejectionNotice?>(null)
+
     val uiState: StateFlow<HomeUiState> = combine(
         snapshotManager.snapshot,
         cognitiveSession.state,
@@ -199,6 +207,7 @@ class HomeViewModel(
             com.halo.app.ui.state.RuntimeTaskSummary(0, 0)
         ),
         agentRuns?.observeRuns() ?: kotlinx.coroutines.flow.flowOf(emptyList<com.halo.runtime.cognition.agent.AgentRun>()),
+        _speechRejectionNotice,
     ) { args ->
         @Suppress("UNCHECKED_CAST")
         val snapshot = args[0] as RuntimeSnapshot
@@ -214,6 +223,7 @@ class HomeViewModel(
         val input = args[10] as SpeechInputStatus
         val taskSummary = args[11] as com.halo.app.ui.state.RuntimeTaskSummary
         @Suppress("UNCHECKED_CAST") val runs = args[12] as List<com.halo.runtime.cognition.agent.AgentRun>
+        val rejectionNotice = args[13] as SpeechRejectionNotice?
         val root = runs.filter { it.parentRunId == null }.maxByOrNull { it.updatedAt }
         val children = runs.filter { it.parentRunId == root?.id }
         val research = children.isNotEmpty() && root?.steps?.any {
@@ -290,10 +300,29 @@ class HomeViewModel(
                 researchResult = research && turns.lastOrNull()?.metadata?.get("runId") == root?.id?.value,
                 longTaskProgress = longTask?.let { com.halo.runtime.cognition.interaction.PlanPresentationProjector.fromJournal(it.steps, "Task progress") },
                 longTaskStatus = phoneWorkflow?.let { "${it.state.name.lowercase().replace('_', ' ')} · ${it.preview?.description.orEmpty()} · ${it.actionCount} actions · ${it.scrollCount} scrolls" } ?: longTask?.let { "${children.count { child -> child.state == com.halo.runtime.cognition.agent.AgentRunState.COMPLETED }} / ${children.size} tasks complete · ${children.count { child -> child.state == com.halo.runtime.cognition.agent.AgentRunState.FAILED }} failed" },
+                rejectionNotice = rejectionNotice,
             )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(0), HomeUiState())
 
     init {
+        viewModelScope.launch {
+            eventBus.observe(SpeechRejected::class.java).collect { rejected ->
+                val friendlyReason = when (rejected.reason) {
+                    "REPETITIVE_HALLUCINATION" -> "repetitive recognition"
+                    "INSUFFICIENT_VOICED_AUDIO" -> "audio was too quiet or short"
+                    "NO_SPEECH" -> "no speech detected"
+                    "LOW_RECOGNIZER_CONFIDENCE" -> "low recognition confidence"
+                    "PUNCTUATION_ONLY" -> "punctuation only"
+                    "LANGUAGE_MISMATCH" -> "language mismatch"
+                    else -> rejected.reason.lowercase().replace('_', ' ')
+                }
+                _speechRejectionNotice.value = SpeechRejectionNotice(friendlyReason)
+                delay(5000)
+                if (_speechRejectionNotice.value?.timestamp == rejected.timestamp) {
+                    _speechRejectionNotice.value = null
+                }
+            }
+        }
         // The UI command state is deliberately separate from the runtime
         // snapshot. A second tap can arrive before the asynchronous snapshot
         // has rendered the first tap; without this local intent state both taps

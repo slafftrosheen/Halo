@@ -32,29 +32,19 @@ class HostGraph(
         com.halo.app.storage.haloStorageLayout(context).speechModels
     }
 
+    val speechActivityEstimator by lazy {
+        SherpaOrEnergySpeechActivityEstimator(
+            modelFile = { File(speechModelDirectory, SherpaSpeechModelCatalog.SILERO_VAD_FILE) })
+    }
     private val vad by lazy {
-        val sileroInstalled = SherpaSpeechModelCatalog.isInstalled(
-            speechModelDirectory,
-            SherpaSpeechModelCatalog.sileroVad
-        )
-        if (sileroInstalled) {
-            runCatching {
-                SherpaSileroVad(
-                    modelFile = File(speechModelDirectory, SherpaSpeechModelCatalog.SILERO_VAD_FILE)
-                )
-            }.getOrNull()
-        } else {
-            null
-        }
+        ReloadableSileroVad { File(speechModelDirectory, SherpaSpeechModelCatalog.SILERO_VAD_FILE) }
     }
 
     /** Android microphone is the canonical input while Halo is phone-only. */
     val audioPipeline by lazy {
         com.halo.engines.speech.AudioPipeline(
-            vad = vad ?: com.halo.engines.speech.EnergyVAD(threshold = 1000),
-            speechActivityEstimator = SherpaOrEnergySpeechActivityEstimator(
-                modelFile = { File(speechModelDirectory, SherpaSpeechModelCatalog.SILERO_VAD_FILE) }
-            ),
+            vad = vad,
+            speechActivityEstimator = speechActivityEstimator,
             wakeWordDetector = providerGraph.providers.wakeWord,
             sttProvider = providerGraph.providers.speechRecognition,
             eventBus = infra.eventBus,

@@ -33,7 +33,7 @@ object SherpaModelInstaller {
         }
 
         val target = File(destinationDirectory, fileSpec.name)
-        val temporary = File(destinationDirectory, ".${fileSpec.name}.partial")
+        val temporary = File(destinationDirectory, "${fileSpec.name}.partial")
 
         return try {
             temporary.delete()
@@ -44,22 +44,32 @@ object SherpaModelInstaller {
                 }
             }
 
-            if (!temporary.isFile || temporary.length() < fileSpec.minimumBytes) {
+            val digest = fileSpec.sha256?.let {
+                java.security.MessageDigest.getInstance("SHA-256").apply {
+                    temporary.inputStream().use { stream ->
+                        val bytes = ByteArray(64 * 1024)
+                        while (true) { val count = stream.read(bytes); if (count < 0) break; update(bytes, 0, count) }
+                    }
+                }.digest().joinToString("") { "%02x".format(it) }
+            }
+            if (!temporary.isFile || temporary.length() < fileSpec.minimumBytes ||
+                (fileSpec.expectedBytes > 0 && temporary.length() != fileSpec.expectedBytes) ||
+                (fileSpec.sha256 != null && digest != fileSpec.sha256)) {
                 temporary.delete()
                 Result.Rejected(
                     "Model file is incomplete: ${fileSpec.name} (${temporary.length()} bytes)"
                 )
             } else {
-                if (target.exists() && !target.delete()) {
-                    temporary.delete()
-                    return Result.Rejected("Unable to replace existing model file")
-                }
-                if (!temporary.renameTo(target)) {
-                    temporary.delete()
-                    return Result.Rejected("Unable to finalize model file")
+                java.nio.file.Files.move(temporary.toPath(), target.toPath(),
+                    java.nio.file.StandardCopyOption.ATOMIC_MOVE,
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+                fileSpec.sha256?.let { hash ->
+                    File(destinationDirectory, "${fileSpec.name}.verified").writeText("$hash:${target.length()}:${target.lastModified()}")
                 }
                 Result.Installed(target)
             }
+        } catch (exception: kotlinx.coroutines.CancellationException) {
+            temporary.delete(); throw exception
         } catch (exception: Exception) {
             temporary.delete()
             Result.Rejected(exception.message ?: "Model installation failed")

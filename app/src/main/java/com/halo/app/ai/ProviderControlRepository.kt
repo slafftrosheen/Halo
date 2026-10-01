@@ -82,7 +82,7 @@ class ProviderControlRepository(val router: AiProviderRouter, val catalogue: AiM
             }
             ProviderControlRow(descriptor, hasKey, configured, router.selectedProviderId.value == provider.id,
                 connection,
-                catalogState, entries.size, nonSecrets, generation[provider.id] ?: GenerationProof.NOT_TESTED, checkedAt[provider.id], errors[provider.id] ?: when (connection) { ProviderConnectionState.AUTH_FAILED, ProviderConnectionState.ERROR, ProviderConnectionState.OFFLINE, ProviderConnectionState.RATE_LIMITED -> connection.name; else -> null },
+                catalogState, entries.size, nonSecrets, generation[provider.id] ?: GenerationProof.NOT_TESTED, checkedAt[provider.id], errors[provider.id] ?: status.message ?: when (connection) { ProviderConnectionState.AUTH_FAILED, ProviderConnectionState.ERROR, ProviderConnectionState.OFFLINE, ProviderConnectionState.RATE_LIMITED -> connection.name; else -> null },
                 if (router.selectedProviderId.value == provider.id) router.selectedModelId.value else storage.getString("ai_last_model_${provider.id}"))
         }
     }

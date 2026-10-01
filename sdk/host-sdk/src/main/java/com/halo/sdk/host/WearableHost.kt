@@ -45,7 +45,7 @@ data class AudioFrame(
     val timestamp: Long
 )
 
-data class AudioBuffer(val frames: List<AudioFrame>)
+data class AudioBuffer(val frames: List<AudioFrame>, val captureId: String? = null)
 
 enum class ButtonEvent {
     Pressed,

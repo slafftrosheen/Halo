@@ -18,7 +18,10 @@ data class SpeechAdmissionPolicy(
 data class RepetitionAnalysis(
     val dominantPhraseRatio: Float,
     val repeatedRuns: Int,
-    val uniqueTokenRatio: Float
+    val uniqueTokenRatio: Float,
+    val tokenCount: Int = 0,
+    val normalizedChars: Int = 0,
+    val repetitionSource: String = "NONE"
 )
 
 data class SpeechRecognitionQuality(
@@ -36,7 +39,11 @@ data class SpeechRecognitionQuality(
 
 sealed interface SpeechGateResult {
     data class Accepted(val transcript: String, val quality: SpeechRecognitionQuality) : SpeechGateResult
-    data class Rejected(val reason: SpeechRejectionReason, val quality: SpeechRecognitionQuality) : SpeechGateResult
+    data class Rejected(
+        val reason: SpeechRejectionReason,
+        val quality: SpeechRecognitionQuality,
+        val repetition: RepetitionAnalysis? = null,
+    ) : SpeechGateResult
 }
 
 class SpeechTranscriptGate(private val policy: SpeechAdmissionPolicy = SpeechAdmissionPolicy()) {
@@ -72,9 +79,18 @@ class SpeechTranscriptGate(private val policy: SpeechAdmissionPolicy = SpeechAdm
         ) return reject(SpeechRejectionReason.LOW_RECOGNIZER_CONFIDENCE)
 
         val repetition = analyzeRepetition(trimmed)
-        if (repetition.repeatedRuns >= 2 && repetition.dominantPhraseRatio >= 0.65f &&
+        val isShortNaturalRepetition = repetition.tokenCount <= 5 && repetition.normalizedChars <= 25
+        if (!isShortNaturalRepetition &&
+            repetition.repeatedRuns >= 2 &&
+            repetition.dominantPhraseRatio >= 0.65f &&
             repetition.uniqueTokenRatio <= 0.5f
-        ) return reject(SpeechRejectionReason.REPETITIVE_HALLUCINATION)
+        ) {
+            return SpeechGateResult.Rejected(
+                reason = SpeechRejectionReason.REPETITIVE_HALLUCINATION,
+                quality = quality,
+                repetition = repetition,
+            )
+        }
 
         if (policy.languageSanityEnabled && quality.language.startsWith("en", ignoreCase = true) &&
             quality.confidence == null && (quality.voicedRatio ?: 1f) < 0.15f &&
@@ -83,29 +99,51 @@ class SpeechTranscriptGate(private val policy: SpeechAdmissionPolicy = SpeechAdm
         return SpeechGateResult.Accepted(trimmed, quality)
     }
 
-    private fun analyzeRepetition(text: String): RepetitionAnalysis {
+    fun analyzeRepetition(text: String): RepetitionAnalysis {
         val tokens = text.lowercase().split(Regex("[^\\p{L}\\p{N}]+"))
             .filter(String::isNotBlank)
-        if (tokens.isEmpty()) return RepetitionAnalysis(0f, 0, 1f)
+        val normalized = text.lowercase().filter(Char::isLetterOrDigit)
+        if (tokens.isEmpty()) return RepetitionAnalysis(0f, 0, 1f, 0, 0, "NONE")
+
         val clauses = text.lowercase().split(Regex("[,，。.!?;；]+"))
             .map(String::trim).filter(String::isNotBlank)
         val counts = clauses.groupingBy { it }.eachCount().values
         val dominant = counts.maxOrNull() ?: 1
+        val clauseRatio = if (clauses.isEmpty()) 0f else dominant.toFloat() / clauses.size
+        val clauseRuns = dominant - 1
+
         val characterLoop = analyzeCharacterNgrams(text)
+        val charRatio = characterLoop.first
+        val charRuns = characterLoop.second
+
+        val isClauseRep = clauseRuns >= 2 && clauseRatio >= 0.65f
+        val isCharRep = charRuns >= 2 && charRatio >= 0.65f
+
+        val source = when {
+            isClauseRep && isCharRep -> "BOTH"
+            isClauseRep -> "CLAUSE"
+            isCharRep -> "CHAR_NGRAM"
+            else -> "NONE"
+        }
+
+        val maxRatio = maxOf(clauseRatio, charRatio)
+        val maxRuns = maxOf(clauseRuns, charRuns)
+        val uniqueRatio = tokens.distinct().size.toFloat() / tokens.size
+
         return RepetitionAnalysis(
-            dominantPhraseRatio = maxOf(
-                if (clauses.isEmpty()) 0f else dominant.toFloat() / clauses.size,
-                characterLoop.first
-            ),
-            repeatedRuns = maxOf(dominant - 1, characterLoop.second),
-            uniqueTokenRatio = tokens.distinct().size.toFloat() / tokens.size
+            dominantPhraseRatio = maxRatio,
+            repeatedRuns = maxRuns,
+            uniqueTokenRatio = uniqueRatio,
+            tokenCount = tokens.size,
+            normalizedChars = normalized.length,
+            repetitionSource = source,
         )
     }
 
     private fun analyzeCharacterNgrams(text: String): Pair<Float, Int> {
         val normalized = text.lowercase().filter(Char::isLetterOrDigit)
         if (normalized.length < MIN_NGRAM_SIZE * 3) return 0f to 0
-        val ngramSize = (normalized.length / 3).coerceIn(MIN_NGRAM_SIZE, MAX_NGRAM_SIZE)
+        val ngramSize = (normalized.length / 3).coerceIn(MIN_NGRAM_SIZE, 12)
         val counts = normalized.windowed(ngramSize).groupingBy { it }.eachCount()
         val dominant = counts.values.maxOrNull() ?: 1
         val coveredRatio = (dominant * ngramSize).toFloat().coerceAtMost(normalized.length.toFloat()) /

@@ -335,7 +335,7 @@ class LiteRtLocalProvider(
 
     fun setDeveloperBackend(modelId: String, backend: LocalComputeBackend) {
         preferences.setDeveloperBackend(modelId, backend)
-        Log.i(TAG, "$EVENT_SELECT model=$modelId requestedBackend=${backend.name} source=developer")
+        Log.i(TAG, "$EVENT_BACKEND_OVERRIDE model=$modelId backend=${backend.name}")
     }
 
     fun clearDeveloperBackend(modelId: String) {
@@ -1595,6 +1595,7 @@ class LiteRtLocalProvider(
         const val EVENT_PROMPT_ECHO = "HALO_LITERT_PROMPT_ECHO"
 
         const val EVENT_SELECT = "HALO_LITERT_SELECT"
+        const val EVENT_BACKEND_OVERRIDE = "HALO_LITERT_BACKEND_OVERRIDE"
         const val EVENT_LOAD_START = "HALO_LITERT_LOAD_START"
         const val EVENT_LOAD_FAILED = "HALO_LITERT_LOAD_FAILED"
         const val EVENT_GENERATION_FAILED = "HALO_LITERT_GENERATION_FAILED"

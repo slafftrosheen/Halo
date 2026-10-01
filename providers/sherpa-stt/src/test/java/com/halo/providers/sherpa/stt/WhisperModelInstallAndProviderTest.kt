@@ -46,15 +46,7 @@ class WhisperModelInstallAndProviderTest {
         val dir = tempFolder.newFolder("complete_model")
         // Create dummy files that meet minimum byte requirements
         spec.files.forEach { fileSpec ->
-            val f = File(dir, fileSpec.name)
-            f.outputStream().use { out ->
-                val buffer = ByteArray(8192)
-                var written = 0L
-                while (written < fileSpec.minimumBytes) {
-                    out.write(buffer)
-                    written += buffer.size
-                }
-            }
+            java.io.RandomAccessFile(File(dir, fileSpec.name), "rw").use { it.setLength(fileSpec.expectedBytes) }
         }
 
         assertTrue(SherpaSpeechModelCatalog.isInstalled(dir, spec))
@@ -77,7 +69,7 @@ class WhisperModelInstallAndProviderTest {
         val fileSpec = SherpaSpeechModelCatalog.FileSpec("tiny-tokens.txt", 1000L)
         val input = ByteArrayInputStream(ByteArray(2000))
 
-        val result = SherpaModelInstaller.installFile(input, dir, fileSpec)
+        val result = SherpaModelInstaller.installFile(input, dir, fileSpec.copy(expectedBytes = 0L, sha256 = null))
         assertTrue(result is SherpaModelInstaller.Result.Installed)
         val installedFile = (result as SherpaModelInstaller.Result.Installed).file
         assertTrue(installedFile.exists())
@@ -93,11 +85,9 @@ class WhisperModelInstallAndProviderTest {
         // Initially missing model -> health is false
         assertFalse(provider.health())
 
-        // Install all 3 files
+        // Legacy Tiny installs have the original complete files without verification sidecars.
         spec.files.forEach { fileSpec ->
-            val input = ByteArrayInputStream(ByteArray((fileSpec.minimumBytes + 1000).toInt()))
-            val result = SherpaModelInstaller.installFile(input, dir, fileSpec)
-            assertTrue(result is SherpaModelInstaller.Result.Installed)
+            java.io.RandomAccessFile(File(dir, fileSpec.name), "rw").use { it.setLength(fileSpec.expectedBytes) }
         }
 
         assertTrue(SherpaSpeechModelCatalog.isInstalled(dir, spec))

@@ -6,6 +6,8 @@ android {
     namespace = "com.halo.providers.sherpa.stt"
     compileSdk = 36
 
+    testOptions { unitTests.isReturnDefaultValues = true }
+
     defaultConfig {
         minSdk = 26
     }

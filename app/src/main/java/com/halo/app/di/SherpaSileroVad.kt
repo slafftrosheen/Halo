@@ -10,9 +10,9 @@ import java.io.File
 /** Composition-layer adapter from sherpa-onnx VAD to Halo's speech VAD contract. */
 class SherpaSileroVad(
     modelFile: File,
-    threshold: Float = 0.5f,
-    minSilenceDuration: Float = 0.35f,
-    minSpeechDuration: Float = 0.20f,
+    threshold: Float = com.halo.engines.speech.SpeechCaptureProfile.Production.vadThreshold,
+    minSilenceDuration: Float = com.halo.engines.speech.SpeechCaptureProfile.Production.trailingSilenceMs / 1000f,
+    minSpeechDuration: Float = com.halo.engines.speech.SpeechCaptureProfile.Production.minSpeechMs / 1000f,
     private val sampleRate: Int = 16_000
 ) : VoiceActivityDetector {
 
@@ -24,7 +24,7 @@ class SherpaSileroVad(
                 minSilenceDuration = minSilenceDuration,
                 minSpeechDuration = minSpeechDuration,
                 windowSize = 512,
-                maxSpeechDuration = 8.0f
+                maxSpeechDuration = com.halo.engines.speech.SpeechCaptureProfile.Production.maxSpeechMs / 1000f
             ),
             sampleRate = sampleRate,
             numThreads = 1,

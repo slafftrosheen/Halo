@@ -1,5 +1,9 @@
 # Provider setup
 
+## Local speech recognition — 2026-10-01
+
+Open Settings → Voice → Speech recognition. Download Base (Balanced, recommended), Small (quality testing), Tiny (Fast), or Omnilingual 300M (Experimental), then explicitly select it. Install Silero VAD from Speech detector. Automatic prefers installed Base, then Tiny. Choose Latviešu (`lv`) to force Latvian transcription; Automatic language uses Whisper detection. Existing Tiny installations and provider IDs are preserved. Delete only inactive models. Test speech recognition captures one local utterance without commands, conversation history or PCM persistence. See [model matrix and physical acceptance guide](../engineering/SPEECH-QUALITY-001.md).
+
 ## STABILIZATION-PROVIDER-001 - 2026-09-30
 
 **IMPLEMENTED / UNVALIDATED.** Use Settings -> Intelligence -> Providers -> provider to replace a credential, edit supported endpoints, test connection, refresh metadata and choose Chat or role models. Empty secret drafts preserve the stored key. Gemini Google authorization remains session-only. ElevenLabs setup is Settings -> Voice -> Speech output -> Configure ElevenLabs; choose voice/model IDs before selecting cloud speech.
@@ -180,3 +184,21 @@ pulled on the Ollama host.
 **OpenRouter unconfigured:** save a valid key, refresh models, select a model/router, then Check connection.
 
 **Android assistant unavailable:** configure Halo as the default assistant in Settings -> Android Assistant.
+
+
+### Real STT probe and Speech Lab (SPEECH-QUALITY-002)
+
+System Check separates microphone permission, processed PCM capture, detector availability,
+selected model/files, and real STT recognition. Use `CAPTURE PCM` to test capture independently
+of model installation, or `RUN STT PROBE` to capture and decode with the selected model. A nonempty
+transcript passes recognition; gate acceptance is a separate result. Say “Halo speech test” or
+“Saki: Halo runas tests”, then Finish capture. Local probe transcripts are excluded from System Check exports.
+
+Settings → Voice → Speech recognition → Speech Lab captures one 16 kHz mono sample through Halo's
+existing engine and compares installed models serially on identical PCM. Each target gets one cold
+run plus one or three warm repetitions. Whisper fixed-language/auto is optional. Selection and persisted
+language remain unchanged. Optional local references produce WER/CER while preserving Latvian accents.
+Audio and results remain in memory and are cleared on leaving; summary exports omit transcripts and
+references by default. Cancellation waits for blocking native work and cleanup before another model.
+No phone/device recognition-quality measurements have yet been established. See
+[Speech Lab engineering and physical acceptance guide](../engineering/SPEECH-QUALITY-002.md).

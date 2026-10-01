@@ -55,10 +55,80 @@ class AudioPerceptionEngine(
     private val transactionMutex = Mutex()
     private var commandJob: Job? = null
     private var captureJob: Job? = null
+    @Volatile private var diagnosticJob: Job? = null
     private var lastLevelNanos = 0L
     private var selectedSource: AudioSource = audioSource
     private val _inputStatus = MutableStateFlow(SpeechInputStatus())
     val inputStatus: StateFlow<SpeechInputStatus> = _inputStatus
+
+    /** Reserve the speech transaction during diagnostic native work, including cleanup. */
+    suspend fun <T> withDiagnosticRecognitionOwnership(block: suspend () -> T): T {
+        check(transactionMutex.tryLock()) { "Speech transaction is busy" }
+        var ownsTransaction = false
+        try {
+            check(_state.value == EngineState.Running) { "Audio engine is not running" }
+            check(captureJob?.isCompleted != false && !audioPipeline.recognitionInFlight) { "Normal speech transaction is busy" }
+            ownsTransaction = true
+            diagnosticJob = currentCoroutineContext()[Job]
+            return block()
+        } finally {
+            if (ownsTransaction) diagnosticJob = null
+            transactionMutex.unlock()
+        }
+    }
+
+    /** Shares the physical owner and preprocessor, without publishing production events. */
+    suspend fun captureDiagnosticAudio(
+        maxDurationMs: Long = 15_000,
+        finish: kotlinx.coroutines.Deferred<Unit>? = null
+    ): DiagnosticAudioCapture {
+        require(maxDurationMs in 1..15_000)
+        check(transactionMutex.tryLock()) { "Microphone transaction is busy" }
+        val frames = mutableListOf<com.halo.sdk.host.AudioFrame>()
+        var originalRate = 0
+        var ownsInput = false
+        try {
+            check(_state.value == EngineState.Running) { "Audio engine is not running" }
+            check(captureJob?.isCompleted != false && !audioPipeline.recognitionInFlight) { "Microphone transaction is busy" }
+            ownsInput = true
+            diagnosticJob = currentCoroutineContext()[Job]
+            preprocessor.reset()
+            selectedSource = audioSource
+            audioSource.start()
+            kotlinx.coroutines.coroutineScope {
+                val reader = launch {
+                    audioSource.frames.collect { raw ->
+                        if (originalRate == 0) originalRate = raw.sampleRate
+                        val processed = try { preprocessor.process(raw) } catch (error: Exception) {
+                            throw SpeechDiagnosticException(SpeechDiagnosticStage.PREPROCESS, error)
+                        }
+                        val remaining = maxDurationMs * 16 - frames.sumOf { it.samples.size }
+                        if (remaining > 0) frames.add(processed.copy(samples = processed.samples.take(remaining.toInt()).toShortArray()))
+                    }
+                }
+                try {
+                    kotlinx.coroutines.withTimeoutOrNull(maxDurationMs) {
+                        if (finish != null) finish.await() else reader.join()
+                    }
+                } finally {
+                    withContext(NonCancellable) { audioSource.stop(); reader.cancel(); reader.join() }
+                }
+            }
+            check(frames.any { it.samples.isNotEmpty() }) { "No processed PCM captured" }
+            return DiagnosticAudioCapture(com.halo.sdk.host.AudioBuffer(frames.toList(), UUID.randomUUID().toString()),
+                "phone", originalRate, 16_000)
+        } catch (error: Throwable) {
+            frames.forEach { it.samples.fill(0) }
+            throw error
+        } finally {
+            if (ownsInput) {
+                withContext(NonCancellable) { audioSource.stop() }
+                preprocessor.reset()
+                diagnosticJob = null
+            }
+            transactionMutex.unlock()
+        }
+    }
 
     val metrics = EngineMetrics()
 
@@ -127,64 +197,68 @@ class AudioPerceptionEngine(
     suspend fun startCapture(turn: SpeechInputTurn): Boolean = acquireInput(turn, audioSource)
 
     /** The engine is the sole capture owner for every physical input. */
-    suspend fun acquireInput(turn: SpeechInputTurn, source: AudioSource): Boolean = transactionMutex.withLock {
-        if (_state.value != EngineState.Running || captureJob?.isCompleted == false || audioPipeline.recognitionInFlight) {
-            val reason = "active_turn_owns_input"
-            _inputStatus.value = _inputStatus.value.copy(rejection = reason)
-            if (::context.isInitialized) context.runtime.logger.info("SPEECH_INPUT_ROUTE", "rejected=$reason")
-            return@withLock false
-        }
-        if (!audioPipeline.isRecognitionAvailable()) {
-            reportCaptureFailure(audioPipeline.unavailableReason())
-            return@withLock false
-        }
-        selectedSource = source
-        preprocessor.reset()
-        audioPipeline.beginCapture(turn)
-        _inputStatus.value = SpeechInputStatus(turn, capturing = true)
-        try {
-            if (!audioPipeline.usesLiveRecognition) source.start()
-            _health.value = EngineHealth.Healthy
-            eventBus.publish(ListeningStarted(captureId = turn.captureId, source = turn.route))
-            context.runtime.logger.info("SPEECH_INPUT_ROUTE", "capture=${turn.captureId} source=${turn.source}")
-            captureJob = scope.launch(start = kotlinx.coroutines.CoroutineStart.UNDISPATCHED) {
-                try {
-                    source.frames.collect { rawFrame ->
-                        val frame = preprocessor.process(rawFrame)
-                        metrics.framesProcessed++
-                        audioPipeline.processFrame(frame)
-                        val now = System.nanoTime()
-                        if (_inputStatus.subscriptionCount.value > 0 && now - lastLevelNanos >= 100_000_000L) {
-                            lastLevelNanos = now
-                            val level = if (frame.samples.isEmpty()) 0f else
-                                kotlin.math.sqrt(frame.samples.sumOf { it.toDouble() * it } / frame.samples.size).toFloat() / 32768f
-                            _inputStatus.value = _inputStatus.value.copy(inputLevel = level.coerceIn(0f, 1f))
-                        }
-                    }
-                } catch (cancelled: CancellationException) {
-                    throw cancelled
-                } catch (error: Exception) {
-                    audioPipeline.reset()
-                    reportCaptureFailure("Audio capture failed: ${error.message}", error)
-                } finally {
-                    val completed = currentCoroutineContext().isActive
-                    withContext(NonCancellable) {
-                        stopAudioSource()
-                        if (completed && turn.boundary == CaptureBoundary.EXTERNAL) {
-                            audioPipeline.finishCapture()
-                        }
-                    }
-                    _inputStatus.value = _inputStatus.value.copy(capturing = false, inputLevel = 0f)
-                }
+    suspend fun acquireInput(turn: SpeechInputTurn, source: AudioSource): Boolean {
+        if (diagnosticJob != null) return false
+        if (!transactionMutex.tryLock()) return false
+        return try {
+            if (_state.value != EngineState.Running || captureJob?.isCompleted == false || audioPipeline.recognitionInFlight) {
+                val reason = "active_turn_owns_input"
+                _inputStatus.value = _inputStatus.value.copy(rejection = reason)
+                if (::context.isInitialized) context.runtime.logger.info("SPEECH_INPUT_ROUTE", "rejected=$reason")
+                return false
             }
-            true
-        } catch (error: Exception) {
-            audioPipeline.reset()
-            _inputStatus.value = SpeechInputStatus(rejection = error.message)
-            if (error is CancellationException) throw error
-            reportCaptureFailure("Audio capture failed: ${error.message}", error)
-            false
-        }
+            if (!audioPipeline.isRecognitionAvailable()) {
+                reportCaptureFailure(audioPipeline.unavailableReason())
+                return false
+            }
+            selectedSource = source
+            preprocessor.reset()
+            audioPipeline.beginCapture(turn)
+            _inputStatus.value = SpeechInputStatus(turn, capturing = true)
+            try {
+                if (!audioPipeline.usesLiveRecognition) source.start()
+                _health.value = EngineHealth.Healthy
+                eventBus.publish(ListeningStarted(captureId = turn.captureId, source = turn.route))
+                context.runtime.logger.info("SPEECH_INPUT_ROUTE", "capture=${turn.captureId} source=${turn.source}")
+                captureJob = scope.launch(start = kotlinx.coroutines.CoroutineStart.UNDISPATCHED) {
+                    try {
+                        source.frames.collect { rawFrame ->
+                            val frame = preprocessor.process(rawFrame)
+                            metrics.framesProcessed++
+                            audioPipeline.processFrame(frame)
+                            val now = System.nanoTime()
+                            if (_inputStatus.subscriptionCount.value > 0 && now - lastLevelNanos >= 100_000_000L) {
+                                lastLevelNanos = now
+                                val level = if (frame.samples.isEmpty()) 0f else
+                                    kotlin.math.sqrt(frame.samples.sumOf { it.toDouble() * it } / frame.samples.size).toFloat() / 32768f
+                                _inputStatus.value = _inputStatus.value.copy(inputLevel = level.coerceIn(0f, 1f))
+                            }
+                        }
+                    } catch (cancelled: CancellationException) {
+                        throw cancelled
+                    } catch (error: Exception) {
+                        audioPipeline.reset()
+                        reportCaptureFailure("Audio capture failed: ${error.message}", error)
+                    } finally {
+                        val completed = currentCoroutineContext().isActive
+                        withContext(NonCancellable) {
+                            stopAudioSource()
+                            if (completed && turn.boundary == CaptureBoundary.EXTERNAL) {
+                                audioPipeline.finishCapture()
+                            }
+                        }
+                        _inputStatus.value = _inputStatus.value.copy(capturing = false, inputLevel = 0f)
+                    }
+                }
+                true
+            } catch (error: Exception) {
+                audioPipeline.reset()
+                _inputStatus.value = SpeechInputStatus(rejection = error.message)
+                if (error is CancellationException) throw error
+                reportCaptureFailure("Audio capture failed: ${error.message}", error)
+                false
+            }
+        } finally { transactionMutex.unlock() }
     }
 
     suspend fun cancelExternalInput(captureId: String) {
@@ -228,6 +302,7 @@ class AudioPerceptionEngine(
     }
 
     private suspend fun stopCapture(finalizeUserCapture: Boolean, expectedCaptureId: String? = null) {
+        if (diagnosticJob != null) return
         transactionMutex.withLock {
             if (expectedCaptureId != null && _inputStatus.value.turn?.captureId != expectedCaptureId) return@withLock
             val job = captureJob
@@ -278,6 +353,7 @@ class AudioPerceptionEngine(
     }
 
     private suspend fun stopLocked() {
+        diagnosticJob?.let { it.cancel(); audioSource.stop(); it.join() }
         val activeCommandJob = commandJob
         commandJob = null
         activeCommandJob?.cancel()

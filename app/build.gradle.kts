@@ -1,9 +1,37 @@
+import java.io.ByteArrayOutputStream
+
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.kotlin.compose)
   alias(libs.plugins.google.devtools.ksp)
   alias(libs.plugins.roborazzi)
   alias(libs.plugins.secrets)
+}
+
+fun getGitCommitHash(): String {
+  return try {
+    val stdout = ByteArrayOutputStream()
+    providers.exec {
+      commandLine("git", "rev-parse", "--short", "HEAD")
+      standardOutput = stdout
+    }.result.get()
+    stdout.toString().trim().ifEmpty { "unknown" }
+  } catch (_: Exception) {
+    "unknown"
+  }
+}
+
+fun getGitDirty(): Boolean {
+  return try {
+    val stdout = ByteArrayOutputStream()
+    providers.exec {
+      commandLine("git", "status", "--porcelain")
+      standardOutput = stdout
+    }.result.get()
+    stdout.toString().trim().isNotEmpty()
+  } catch (_: Exception) {
+    false
+  }
 }
 
 android {
@@ -16,6 +44,9 @@ android {
     targetSdk = 36
     versionCode = 2
     versionName = "1.0-RC1"
+
+    buildConfigField("String", "GIT_COMMIT", "\"${getGitCommitHash()}\"")
+    buildConfigField("Boolean", "GIT_DIRTY", getGitDirty().toString())
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }

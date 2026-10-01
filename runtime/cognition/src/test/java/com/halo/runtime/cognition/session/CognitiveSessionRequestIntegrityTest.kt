@@ -141,7 +141,7 @@ class CognitiveSessionRequestIntegrityTest {
         )
 
         // Submit request targeting P1
-        session.submit(AiRequest(text = "Run tool"))
+        session.submit(AiRequest(text = "Run tool", toolUseMode = ToolUseMode.OPTIONAL))
         advanceUntilIdle()
 
         // P1 should be called twice (initial tool call + tool follow-up generation) despite router selection changing to P2
@@ -229,7 +229,7 @@ class CognitiveSessionRequestIntegrityTest {
             scope = this
         )
 
-        session.submit(AiRequest(text = "Run tool"))
+        session.submit(AiRequest(text = "Run tool", toolUseMode = ToolUseMode.OPTIONAL))
         advanceUntilIdle()
 
         assertTrue(eventBus.published.any { it is ToolCallRequested })

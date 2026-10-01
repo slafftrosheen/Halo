@@ -174,11 +174,12 @@ class CognitiveSessionConversationTest {
         val turn2Context = provider.capturedContexts[1]
 
         // Conversation history in context should contain Turn 1 (USER + ASSISTANT)
-        assertEquals(2, turn2Context.conversation.size)
-        assertEquals(Role.USER, turn2Context.conversation[0].role)
-        assertEquals("What is the capital of France?", turn2Context.conversation[0].content)
-        assertEquals(Role.ASSISTANT, turn2Context.conversation[1].role)
-        assertEquals("Paris.", turn2Context.conversation[1].content)
+        val conversationTurns = turn2Context.conversation.filter { it.role != Role.SYSTEM }
+        assertEquals(2, conversationTurns.size)
+        assertEquals(Role.USER, conversationTurns[0].role)
+        assertEquals("What is the capital of France?", conversationTurns[0].content)
+        assertEquals(Role.ASSISTANT, conversationTurns[1].role)
+        assertEquals("Paris.", conversationTurns[1].content)
     }
 
     @Test
@@ -231,7 +232,7 @@ class CognitiveSessionConversationTest {
         advanceUntilIdle()
 
         val turn2Context = provider.capturedContexts[1]
-        assertTrue(turn2Context.conversation.isEmpty())
+        assertTrue(turn2Context.conversation.filter { it.role != Role.SYSTEM }.isEmpty())
     }
 
     @Test

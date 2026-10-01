@@ -21,9 +21,9 @@ class SherpaSpeechActivityEstimator(
     private val modelFile: File,
     private val dispatchers: HaloDispatchers = productionHaloDispatchers(),
     private val sampleRate: Int = 16_000,
-    private val threshold: Float = 0.5f,
-    private val minSilenceDuration: Float = 0.35f,
-    private val minSpeechDuration: Float = 0.12f
+    private val threshold: Float = com.halo.engines.speech.SpeechCaptureProfile.Production.vadThreshold,
+    private val minSilenceDuration: Float = com.halo.engines.speech.SpeechCaptureProfile.Production.trailingSilenceMs / 1000f,
+    private val minSpeechDuration: Float = com.halo.engines.speech.SpeechCaptureProfile.Production.minSpeechMs / 1000f
 ) : SpeechActivityEstimator {
     private val mutex = Mutex()
     private var vad: Vad? = null
@@ -33,38 +33,32 @@ class SherpaSpeechActivityEstimator(
             mutex.withLock {
                 val analyzer = vad ?: createVad().also { vad = it }
                 analyzer.reset()
-                var durationMs = 0L
-                var voicedDurationMs = 0L
+                val totalSamples = audio.frames.sumOf { it.samples.size }
+                val durationMs = totalSamples * 1000L / sampleRate
                 var peak = 0
-                var segmentCount = 0
-                var currentSegmentMs = 0L
-                var longestSegmentMs = 0L
-                var wasVoiced = false
-
                 audio.frames.forEach { frame ->
-                    require(frame.channels == 1) { "Sherpa Silero VAD requires mono audio" }
-                    require(frame.sampleRate == sampleRate) {
-                        "Sherpa Silero VAD requires $sampleRate Hz audio, got ${frame.sampleRate} Hz"
-                    }
-                    val frameDurationMs = frame.samples.size * 1_000L / frame.sampleRate
-                    durationMs += frameDurationMs
-                    val samples = FloatArray(frame.samples.size)
-                    frame.samples.forEachIndexed { index, sample ->
+                    require(frame.channels == 1 && frame.sampleRate == sampleRate) { "Silero requires mono $sampleRate Hz audio" }
+                    val samples = FloatArray(frame.samples.size) { index ->
+                        val sample = frame.samples[index]
                         peak = maxOf(peak, abs(sample.toInt()))
-                        samples[index] = sample / 32768.0f
+                        sample / 32768.0f
                     }
                     analyzer.acceptWaveform(samples)
-                    val voiced = analyzer.isSpeechDetected()
-                    if (voiced) {
-                        voicedDurationMs += frameDurationMs
-                        currentSegmentMs += frameDurationMs
-                        if (!wasVoiced) segmentCount++
-                        longestSegmentMs = maxOf(longestSegmentMs, currentSegmentMs)
-                    } else {
-                        currentSegmentMs = 0L
-                    }
-                    wasVoiced = voiced
                 }
+                analyzer.flush()
+                var voicedSamples = 0L
+                var longestSamples = 0
+                var segmentCount = 0
+                while (!analyzer.empty()) {
+                    val segment = analyzer.front()
+                    val count = segment.samples.size.coerceAtMost((totalSamples - segment.start).coerceAtLeast(0))
+                    voicedSamples += count
+                    longestSamples = maxOf(longestSamples, count)
+                    if (count > 0) segmentCount++
+                    analyzer.pop()
+                }
+                val voicedDurationMs = voicedSamples.coerceAtMost(totalSamples.toLong()) * 1000L / sampleRate
+                val longestSegmentMs = longestSamples * 1000L / sampleRate
 
                 SpeechActivityEstimate(
                     durationMs = durationMs,
@@ -86,7 +80,7 @@ class SherpaSpeechActivityEstimator(
                 minSilenceDuration = minSilenceDuration,
                 minSpeechDuration = minSpeechDuration,
                 windowSize = 512,
-                maxSpeechDuration = 8.0f
+                maxSpeechDuration = com.halo.engines.speech.SpeechCaptureProfile.Production.maxSpeechMs / 1000f
             ),
             sampleRate = sampleRate,
             numThreads = 1,
@@ -113,10 +107,10 @@ class SherpaOrEnergySpeechActivityEstimator(
                 SherpaSpeechActivityEstimator(file, dispatchers).also { primary = it }
             }
         }
-        return runCatching { estimator?.estimate(audio) ?: fallback.estimate(audio) }
-            .getOrElse {
-                primary = null
-                fallback.estimate(audio)
-            }
+        return withContext(dispatchers.default) {
+            try { estimator?.estimate(audio) ?: fallback.estimate(audio) }
+            catch (error: kotlinx.coroutines.CancellationException) { throw error }
+            catch (error: Exception) { fallback.estimate(audio) }
+        }
     }
 }

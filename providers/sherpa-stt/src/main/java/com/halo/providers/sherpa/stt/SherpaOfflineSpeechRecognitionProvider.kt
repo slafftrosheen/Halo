@@ -21,6 +21,7 @@ import com.k2fsa.sherpa.onnx.OfflineRecognizer
 import com.k2fsa.sherpa.onnx.OfflineRecognizerConfig
 import com.k2fsa.sherpa.onnx.OfflineStream
 import com.k2fsa.sherpa.onnx.OfflineWhisperModelConfig
+import com.k2fsa.sherpa.onnx.OfflineOmnilingualAsrCtcModelConfig
 import java.io.File
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
@@ -34,21 +35,22 @@ import kotlinx.coroutines.sync.withLock
 class SherpaOfflineSpeechRecognitionProvider(
     private val modelDirectory: File,
     private val language: String = "en",
-    private val numThreads: Int = 2,
+    private val spec: SherpaSpeechModelCatalog.ModelSpec = SherpaSpeechModelCatalog.whisperTiny,
+    private val numThreads: Int = spec.effectiveThreads(),
     private val nativeResourceCoordinator: NativeResourceCoordinator? = null
 ) : BufferedSpeechRecognitionProvider, NativeResourceOwner {
 
     companion object {
         private const val SAMPLE_RATE = 16_000
         private const val TAG = "HaloSTT"
-        private const val MULTILINGUAL_TAIL_PADDINGS = 300
 
         fun isInstalled(modelDirectory: File): Boolean =
             SherpaSpeechModelCatalog.isInstalled(modelDirectory, SherpaSpeechModelCatalog.whisperTiny)
     }
 
     override val metadata = com.halo.sdk.provider.ProviderMetadata(
-        id = "speech.sherpa_onnx.whisper_tiny",
+        id = spec.providerId,
+        displayName = spec.displayName,
         supportsStreaming = false
     )
 
@@ -59,7 +61,7 @@ class SherpaOfflineSpeechRecognitionProvider(
         residencyPreference = ResidencyPreference.WARM_EJECTABLE
     )
 
-    override val nativeResourceId = "whisper:" + java.util.UUID.randomUUID().toString()
+    override val nativeResourceId = "${spec.id}:" + java.util.UUID.randomUUID().toString()
     private val closeRequested = AtomicBoolean(false)
     @Volatile private var recognizer: OfflineRecognizer? = null
     private val recognizerLock = Any()
@@ -79,18 +81,18 @@ class SherpaOfflineSpeechRecognitionProvider(
         Thread(runnable, "HaloSTT-Cleanup").apply { isDaemon = true }
     }
 
-    private val whisperLanguage = language.trim().ifBlank { "en" }
+    private val whisperLanguage = language.trim()
         .takeUnless { it.equals("auto", ignoreCase = true) }
         .orEmpty()
 
-    override suspend fun health(): Boolean = isInstalled(modelDirectory)
+    override suspend fun health(): Boolean = SherpaSpeechModelCatalog.isInstalled(modelDirectory, spec)
 
     override suspend fun healthDetails(): ProviderHealth {
-        val missing = SherpaSpeechModelCatalog.missingFiles(modelDirectory, SherpaSpeechModelCatalog.whisperTiny)
+        val missing = SherpaSpeechModelCatalog.missingFiles(modelDirectory, spec)
         return ProviderHealth(
             healthy = missing.isEmpty(),
-            message = if (missing.isEmpty()) "Sherpa-ONNX Whisper tiny multilingual model is installed"
-            else "Sherpa-ONNX Whisper tiny model is incomplete; missing: ${missing.joinToString()}"
+            message = if (missing.isEmpty()) "${spec.displayName} is installed"
+            else "${spec.displayName} is incomplete; missing: ${missing.joinToString()}"
         )
     }
 
@@ -101,11 +103,15 @@ class SherpaOfflineSpeechRecognitionProvider(
             true
         } == true) { "Speech engine cleanup is still busy. Try again shortly; restart Halo if it persists." }
         require(audio.frames.isNotEmpty()) { "Cannot recognize an empty audio buffer" }
-        check(isInstalled(modelDirectory)) { "Sherpa-ONNX model is not installed at ${modelDirectory.absolutePath}" }
+        if (!SherpaSpeechModelCatalog.isInstalled(modelDirectory, spec)) {
+            throw com.halo.sdk.runtime.SpeechDiagnosticException(com.halo.sdk.runtime.SpeechDiagnosticStage.MODEL_RESOLVE,
+                IllegalStateException("Sherpa-ONNX model is not installed at ${modelDirectory.absolutePath}"))
+        }
         require(audio.frames.all { it.sampleRate == SAMPLE_RATE && it.channels == 1 }) {
             "Sherpa-ONNX provider requires mono ${SAMPLE_RATE} Hz PCM audio"
         }
 
+        val startedAt = SystemClock.elapsedRealtime()
         val samples = FloatArray(audio.frames.sumOf { it.samples.size })
         var offset = 0
         var peak = 0
@@ -116,30 +122,31 @@ class SherpaOfflineSpeechRecognitionProvider(
             }
         }
 
+        val captureId = audio.captureId ?: java.util.UUID.randomUUID().toString()
         val audioDurationMs = samples.size * 1000L / SAMPLE_RATE
         Log.i(
             TAG,
-            "STT_BEGIN frames=${audio.frames.size} samples=${samples.size} " +
-                "durationMs=$audioDurationMs peak=$peak language=${whisperLanguage.ifBlank { "auto" }}"
+            "HALO_STT_BEGIN capture=$captureId provider=sherpa_onnx model=${spec.id} family=${spec.family} resident=${recognizer != null} threads=$numThreads frames=${audio.frames.size} samples=${samples.size} " +
+                "audioMs=$audioDurationMs peak=$peak language=${whisperLanguage.ifBlank { "auto" }}"
         )
 
         var stage = "resource_acquire"
-        val startedAt = SystemClock.elapsedRealtime()
         try {
             check(nativeResourceCoordinator?.acquire(this) ?: true) {
-                "Local Whisper recognition deferred: another heavyweight native model is busy"
+                "Local speech recognition deferred: another heavyweight native model is busy"
             }
 
             val wasResident = recognizer != null
             nativeResourceCoordinator?.mark(
                 this,
                 if (wasResident) NativeResourceState.IN_USE else NativeResourceState.LOADING,
-                if (wasResident) "recognition started" else "loading Whisper recognizer"
+                if (wasResident) "recognition started" else "loading ${spec.displayName} recognizer"
             )
 
             stage = "recognizer_load"
             val loadStartedAt = SystemClock.elapsedRealtime()
             val localRecognizer = ensureRecognizer()
+            val loadMs = if (wasResident) 0L else SystemClock.elapsedRealtime() - loadStartedAt
             Log.i(
                 TAG,
                 "RECOGNIZER_READY resident=$wasResident elapsedMs=${SystemClock.elapsedRealtime() - loadStartedAt}"
@@ -159,11 +166,10 @@ class SherpaOfflineSpeechRecognitionProvider(
                 stage = "result"
                 val result = localRecognizer.getResult(stream)
                 val text = result.text.trim()
-                Log.i(
-                    TAG,
-                    "STT_DONE decodeMs=${SystemClock.elapsedRealtime() - decodeStartedAt} " +
-                        "totalMs=${SystemClock.elapsedRealtime() - startedAt} chars=${text.length}"
-                )
+                val decodeMs = SystemClock.elapsedRealtime() - decodeStartedAt
+                val totalMs = SystemClock.elapsedRealtime() - startedAt
+                val rtf = if (audioDurationMs > 0) decodeMs.toDouble() / audioDurationMs else 0.0
+                Log.i(TAG, "HALO_STT_DONE capture=$captureId model=${spec.id} language=${whisperLanguage.ifBlank { "auto" }} audioMs=$audioDurationMs loadMs=$loadMs decodeMs=$decodeMs totalMs=$totalMs rtf=$rtf chars=${text.length}")
                 nativeResourceCoordinator?.hint(NativeNextUseHint.EXPECT_LLM)
 
                 // getResult() has copied the transcript into Kotlin. From this
@@ -176,6 +182,12 @@ class SherpaOfflineSpeechRecognitionProvider(
                     quality = RecognitionQuality(
                         audioDurationMs = audioDurationMs,
                         peakAmplitude = peak
+                    ),
+                    metrics = com.halo.sdk.runtime.SpeechRecognitionMetrics(
+                        providerId = spec.providerId, audioDurationMs = audioDurationMs,
+                        modelId = spec.id, modelDisplayName = spec.displayName,
+                        language = whisperLanguage.ifBlank { "auto" },
+                        loadMs = loadMs, decodeMs = decodeMs, totalMs = totalMs
                     )
                 )
             } finally {
@@ -187,8 +199,20 @@ class SherpaOfflineSpeechRecognitionProvider(
                 "STT_FAILED stage=$stage elapsedMs=${SystemClock.elapsedRealtime() - startedAt}",
                 error
             )
-            nativeResourceCoordinator?.release(this)
-            throw error
+            // A failed decode may still own a stream being destroyed by JNI.
+            // Keep its execution/residency claim until that owner finishes cleanup.
+            if (!streamCleanupBusy.get()) {
+                if (recognizer == null) nativeResourceCoordinator?.release(this)
+                else nativeResourceCoordinator?.mark(this, NativeResourceState.RESIDENT, "recognition failed at $stage")
+            }
+            if (error is kotlinx.coroutines.CancellationException) throw error
+            val diagnosticStage = when (stage) {
+                "resource_acquire" -> com.halo.sdk.runtime.SpeechDiagnosticStage.RESOURCE_ACQUIRE
+                "recognizer_load" -> com.halo.sdk.runtime.SpeechDiagnosticStage.MODEL_LOAD
+                "result" -> com.halo.sdk.runtime.SpeechDiagnosticStage.RESULT
+                else -> com.halo.sdk.runtime.SpeechDiagnosticStage.DECODE
+            }
+            throw com.halo.sdk.runtime.SpeechDiagnosticException(diagnosticStage, error)
         }
     }
 
@@ -205,6 +229,10 @@ class SherpaOfflineSpeechRecognitionProvider(
         } finally {
             recognitionMutex.unlock()
         }
+    }
+
+    override suspend fun awaitQuiescent() {
+        while (streamCleanupBusy.get()) delay(25L)
     }
 
     override suspend fun close() {
@@ -254,27 +282,31 @@ class SherpaOfflineSpeechRecognitionProvider(
         }
     }
 
+    val isResident: Boolean get() = recognizer != null
+
+    internal fun createModelConfig(): OfflineModelConfig = when (spec.family) {
+        SpeechModelFamily.WHISPER -> OfflineModelConfig(
+            whisper = OfflineWhisperModelConfig(
+                encoder = File(modelDirectory, spec.file("encoder")).absolutePath,
+                decoder = File(modelDirectory, spec.file("decoder")).absolutePath,
+                language = whisperLanguage, task = "transcribe",
+                tailPaddings = spec.whisperTailPaddings ?: 300
+            ), tokens = File(modelDirectory, spec.file("tokens")).absolutePath,
+            modelType = "whisper", numThreads = numThreads, provider = "cpu"
+        )
+        SpeechModelFamily.OMNILINGUAL_CTC -> OfflineModelConfig(
+            omnilingual = OfflineOmnilingualAsrCtcModelConfig(model = File(modelDirectory, spec.file("model")).absolutePath),
+            tokens = File(modelDirectory, spec.file("tokens")).absolutePath,
+            numThreads = numThreads, provider = "cpu"
+        )
+    }
+
     private fun ensureRecognizer(): OfflineRecognizer {
         synchronized(recognizerLock) {
             recognizer?.let { return it }
             val config = OfflineRecognizerConfig(
                 featConfig = FeatureConfig(sampleRate = SAMPLE_RATE, featureDim = 80),
-                modelConfig = OfflineModelConfig(
-                    whisper = OfflineWhisperModelConfig(
-                        encoder = File(modelDirectory, "tiny-encoder.int8.onnx").absolutePath,
-                        decoder = File(modelDirectory, "tiny-decoder.int8.onnx").absolutePath,
-                        language = whisperLanguage,
-                        task = "transcribe",
-                        // sherpa-onnx recommends 300 tail frames for multilingual Whisper.
-                        // Its Kotlin default is 1000, which makes short phone utterances
-                        // unnecessarily expensive on CPU.
-                        tailPaddings = MULTILINGUAL_TAIL_PADDINGS
-                    ),
-                    tokens = File(modelDirectory, "tiny-tokens.txt").absolutePath,
-                    modelType = "whisper",
-                    numThreads = numThreads,
-                    provider = "cpu"
-                ),
+                modelConfig = createModelConfig(),
                 decodingMethod = "greedy_search",
                 maxActivePaths = 1
             )

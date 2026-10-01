@@ -410,6 +410,7 @@ fun AppShell(
                             presentationProjection = ManualDependencyGraph.presentationProjection,
                             payloadStore = ManualDependencyGraph.contentPayloadStore,
                             agentRuns = ManualDependencyGraph.agentRunStore,
+                            speechDiagnostics = ManualDependencyGraph.speechDiagnosticRunner,
                         )
                     }
                     SystemCheckScreen(
@@ -552,7 +553,11 @@ fun AppShell(
                 }
                 composable("settings/voice/input") {
                     com.halo.app.ui.screens.settings.SpeechRecognitionSettingsScreen(ManualDependencyGraph.voiceSettingsViewModel,
-                        onBack = { navController.popBackStack() })
+                        onBack = { navController.popBackStack() }, onSpeechLab = { navigateSafely("settings/voice/speech-lab") })
+                }
+                composable("settings/voice/speech-lab") {
+                    val lab = remember { com.halo.app.ui.screens.settings.SpeechLabViewModel(ManualDependencyGraph.speechDiagnosticRunner) }
+                    com.halo.app.ui.screens.settings.SpeechLabScreen(lab, onBack = { navController.popBackStack() })
                 }
                 composable("settings/voice/output") {
                     Column {

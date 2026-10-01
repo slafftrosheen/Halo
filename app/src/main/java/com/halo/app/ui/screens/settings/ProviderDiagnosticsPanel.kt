@@ -23,6 +23,9 @@ fun ProviderDiagnosticsPanel(control: ProviderControlRepository, speech: SpeechS
         Text("AI providers", style = MaterialTheme.typography.titleMedium)
         rows.forEach { row ->
             Text("${row.descriptor.displayName} · ${if (row.selected) "selected · " else ""}${row.connection.label} · ${row.modelCount} models · ${row.catalogue.name.lowercase()} · ${row.generation.label}")
+            row.lastError?.let { err ->
+                Text("  $err", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+            }
             TextButton(enabled = row.configured && row.connection != com.halo.app.ai.ProviderConnectionState.CHECKING,
                 onClick = { control.testConnection(row.descriptor.providerId) }) { Text("Test ${row.descriptor.displayName} connection") }
             TextButton(enabled = row.configured && row.generation != com.halo.app.ai.GenerationProof.CHECKING, onClick = { control.checkGeneration(row.descriptor.providerId) }) { Text("Run generation check") }

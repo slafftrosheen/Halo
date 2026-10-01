@@ -104,7 +104,7 @@ class HostToolDescriptorDispatchTest {
         HaloToolDescriptors.ExecutorKind.MEDIA to setOf("halo_media_status", "halo_media_control"),
         HaloToolDescriptors.ExecutorKind.ACCESSIBILITY to setOf(
             "halo_read_screen", "halo_find_on_screen", "halo_ui_click", "halo_ui_scroll",
-            "halo_ui_set_text", "halo_ui_global_action",
+            "halo_ui_set_text", "halo_ui_global_action", "halo_ui_search", "halo_ui_set_checked", "halo_ui_wait",
         ),
     )
 

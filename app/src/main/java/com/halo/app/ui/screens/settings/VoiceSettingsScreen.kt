@@ -47,9 +47,14 @@ import com.halo.app.ui.workspace.HaloWorkspaceSection
 fun SpeechRecognitionSettingsScreen(
     viewModel: VoiceSettingsViewModel,
     onBack: () -> Unit,
+    onSpeechLab: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val microphonePermission = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+    ) { granted -> if (granted) viewModel.startTest() }
 
     DisposableEffect(lifecycleOwner, viewModel) {
         val observer = LifecycleEventObserver { _, event ->
@@ -74,33 +79,16 @@ fun SpeechRecognitionSettingsScreen(
             onBack = onBack
         )
 
+        TextButton(onClick = onSpeechLab) { Text("Speech Lab · compare one sample") }
         Spacer(Modifier.height(20.dp))
 
         HaloWorkspaceSection(title = "Speech recognition") {
-            HaloWorkspaceRow(
-                title = "Model",
-                trailingText = "Whisper Tiny"
-            )
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            HaloWorkspaceRow(
-                title = "Status",
-                trailingText = when {
-                    uiState.isDownloading -> "Downloading ${(uiState.downloadProgress * 100).toInt()}%"
-                    uiState.isInstalled -> "Ready"
-                    else -> "Not installed"
-                },
-                selected = uiState.isInstalled
-            )
-            if (uiState.isInstalled) {
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                val megabytes = uiState.installedSizeBytes / (1024 * 1024)
-                HaloWorkspaceRow(
-                    title = "Storage",
-                    trailingText = "~$megabytes MB"
-                )
+            Text("Selected: ${uiState.selectedModelName}")
+            TextButton(onClick = { viewModel.selectModel("AUTOMATIC") }, enabled = !uiState.isTesting && !uiState.isDownloading) {
+                Text(if (uiState.selectedProviderId == "AUTOMATIC") "Automatic · Selected" else "Use automatic selection")
             }
+            Text("Automatic prefers installed Base, then Tiny.")
         }
-
         Spacer(Modifier.height(20.dp))
 
         var languagePicker by remember { mutableStateOf(false) }
@@ -115,86 +103,69 @@ fun SpeechRecognitionSettingsScreen(
 
         Spacer(Modifier.height(20.dp))
 
-        when {
-            uiState.isDownloading -> {
+        HaloWorkspaceSection(title = "Local models") {
+            com.halo.providers.sherpa.stt.SherpaSpeechModelCatalog.recognitionModels.forEach { spec ->
+                val installed = uiState.models[spec.id] == true
+                val selected = uiState.selectedProviderId == spec.providerId
+                val resident = uiState.residentModelId == spec.id
+                val compatible = spec.supportsLanguage(uiState.selectedLocale)
+                val downloading = uiState.downloadingModelId == spec.id
                 HaloWorkspaceCard(accent = HaloPastelBlue) {
-                    Text(
-                        text = "Downloading Whisper Tiny",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = uiState.currentFileDownloading ?: "Downloading model files",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(Modifier.height(6.dp))
-                    LinearProgressIndicator(
-                        progress = { uiState.downloadProgress },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(6.dp),
-                        color = MaterialTheme.colorScheme.secondary,
-                        trackColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                }
-            }
-            !uiState.isInstalled -> {
-                HaloWorkspaceCard {
-                    Text(
-                        text = "Local voice input needs the speech model.",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = "The model is stored on this device and works without a cloud speech provider.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    if (uiState.downloadError != null) {
-                        Text(
-                            text = "Error: ${uiState.downloadError}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.error
-                        )
+                    Text(spec.displayName, style = MaterialTheme.typography.titleSmall)
+                    Text(when (spec.tier) {
+                        com.halo.providers.sherpa.stt.SpeechModelTier.FAST -> "Fast"
+                        com.halo.providers.sherpa.stt.SpeechModelTier.BALANCED -> "Balanced · Recommended"
+                        com.halo.providers.sherpa.stt.SpeechModelTier.QUALITY -> "High quality"
+                        com.halo.providers.sherpa.stt.SpeechModelTier.EXPERIMENTAL -> "Experimental multilingual"
+                    })
+                    Text(spec.description)
+                    Text("${spec.expectedBytes / 1_000_000} MB · " + when {
+                        downloading && uiState.verifying -> "Verifying"
+                        downloading -> "Downloading"
+                        uiState.failedModelId == spec.id && !installed -> "Failed"
+                        resident -> "Installed · Resident"
+                        selected && installed -> "Installed · Selected"
+                        selected -> "Selected speech model is not installed"
+                        installed -> "Installed"
+                        else -> "Not installed"
+                    })
+                    if (!compatible) Text("Model does not support ${uiState.selectedLocale}")
+                    if (uiState.selectedLocale == "lv" && spec.family == com.halo.providers.sherpa.stt.SpeechModelFamily.WHISPER) Text("Latvian supported")
+                    if (downloading) {
+                        LinearProgressIndicator(progress = { uiState.downloadProgress }, modifier = Modifier.fillMaxWidth())
+                        Text("${uiState.downloadedBytes / 1_000_000} MB / ${uiState.expectedBytes / 1_000_000} MB · ${(uiState.downloadProgress * 100).toInt()}%")
                     }
-                    Spacer(Modifier.height(8.dp))
-                    HaloWorkspaceButton(
-                        text = "Install Whisper Tiny",
-                        onClick = viewModel::installWhisperTiny,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            }
-            else -> {
-                HaloWorkspaceCard(accent = HaloPastelMint) {
-                    Text(
-                        text = "Whisper Tiny is ready",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = "Speech recognition remains available locally.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    if (uiState.downloadError != null) {
-                        Text(
-                            text = "Error: ${uiState.downloadError}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                    Spacer(Modifier.height(8.dp))
-                    HaloWorkspaceButton(
-                        text = "Reinstall Whisper Tiny",
-                        onClick = viewModel::installWhisperTiny,
-                        modifier = Modifier.fillMaxWidth(),
-                        primary = false
-                    )
+                    HaloWorkspaceButton(text = if (installed) "Select" else "Download", onClick = {
+                        if (installed) viewModel.selectModel(spec.providerId) else viewModel.installModel(spec.id)
+                    }, enabled = compatible && !selected && !uiState.isDownloading && !uiState.isTesting)
+                    if (installed) TextButton(onClick = { viewModel.removeModel(spec.id) },
+                        enabled = !selected && uiState.selectedModelName != spec.displayName && !uiState.isTesting && !uiState.isDownloading) { Text("Delete model") }
                 }
             }
         }
+        HaloWorkspaceSection(title = "Speech detector") {
+            Text(if (uiState.sileroInstalled) "Silero VAD · Ready" else "Energy fallback · Silero VAD not installed")
+            if (!uiState.sileroInstalled) HaloWorkspaceButton(text = "Install Silero VAD",
+                onClick = { viewModel.installModel("silero-vad") }, enabled = !uiState.isDownloading && !uiState.isTesting)
+            if (uiState.downloadingModelId == "silero-vad") Text(if (uiState.verifying) "Verifying" else "Downloading ${(uiState.downloadProgress * 100).toInt()}%")
+        }
+        uiState.downloadError?.let { Text("Failed: $it", color = MaterialTheme.colorScheme.error) }
+        HaloWorkspaceSection(title = "Speech diagnostics") {
+            Text("One local utterance. Audio stays in memory. No commands or conversation entry.")
+            HaloWorkspaceButton(text = if (uiState.testRecording) "Finish capture" else if (uiState.isTesting) "Recognizing…" else "Test speech recognition",
+                onClick = {
+                    if (uiState.testRecording) viewModel.finishTest()
+                    else if (androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.RECORD_AUDIO) == android.content.pm.PackageManager.PERMISSION_GRANTED) viewModel.startTest()
+                    else microphonePermission.launch(android.Manifest.permission.RECORD_AUDIO)
+                },
+                enabled = !uiState.isDownloading && (!uiState.isTesting || uiState.testRecording))
+            if (uiState.isTesting) TextButton(onClick = viewModel::cancelTest) { Text("Cancel test") }
+            uiState.testResult?.let { Text(it) }
+            Text("Capture profile: threshold 0.50 · minimum speech 200 ms · silence 350 ms · maximum speech 8 s · pre-roll 400 ms")
+            Text("Reference phrases (speak them yourself):")
+            SpeechTestReferences.forEach { Text(it) }
+        }
+        DisposableEffect(viewModel) { onDispose { viewModel.cancelTest() } }
 
         Spacer(Modifier.height(32.dp))
     }
@@ -207,7 +178,7 @@ fun VoiceSettingsScreen(viewModel: VoiceSettingsViewModel, onBack: () -> Unit,
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         HaloWorkspaceHeader(title = "Voice", subtitle = "Speech input, output and routing", onBack = onBack)
         HaloWorkspaceSection(title = "Input") {
-            Text("Whisper Tiny")
+            Text(uiState.selectedModelName)
             Text(if (uiState.isInstalled) "Ready" else if (uiState.isDownloading) "Downloading" else "Not installed")
             Text("Language: " + (uiState.availableLocales.firstOrNull { it.tag == uiState.selectedLocale }?.displayName ?: uiState.selectedLocale))
             TextButton(onClick = onSpeechRecognition) { Text("Speech recognition") }

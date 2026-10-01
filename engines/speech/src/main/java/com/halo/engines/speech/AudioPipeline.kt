@@ -30,7 +30,7 @@ class AudioPipeline(
     private val eventBus: EventBus,
     private val scope: CoroutineScope,
     private val speechActivityEstimator: SpeechActivityEstimator = EnergySpeechActivityEstimator(),
-    preRollMillis: Long = 400
+    preRollMillis: Long = SpeechCaptureProfile.Production.preRollMs
 ) {
     private val preRollBuffer = AudioBuffer(maxMillis = preRollMillis)
     private var buffer = AudioBuffer(maxMillis = 120_000)
@@ -268,7 +268,7 @@ class AudioPipeline(
                                     timestamp = System.currentTimeMillis(),
                                     input = inputTurn,
                                     confidence = event.result.confidence,
-                                    quality = event.result.quality
+                                    quality = event.result.quality, metrics = event.result.metrics
                                 )
                             )
                             eventBus.publish(RecognitionFinished(id = UUID.randomUUID().toString()))
@@ -303,18 +303,18 @@ class AudioPipeline(
         eventBus.publish(RecognitionStarted(id = transactionId))
 
         try {
-            val result = provider.recognize(segment.audioBuffer)
-            val acousticQuality = if (inputTurn?.boundary == com.halo.sdk.runtime.CaptureBoundary.EXTERNAL) {
+            val result = provider.recognize(segment.audioBuffer.copy(captureId = transactionId))
+            val acousticQuality = withContext(NonCancellable + kotlinx.coroutines.Dispatchers.Default) {
                 speechActivityEstimator.estimate(segment.audioBuffer)
-            } else null
+            }
             val resultQuality = result.quality.copy(
-                audioDurationMs = acousticQuality?.durationMs ?: result.quality.audioDurationMs,
-                peakAmplitude = acousticQuality?.peakAmplitude ?: result.quality.peakAmplitude,
-                voicedDurationMs = acousticQuality?.voicedDurationMs ?: result.quality.voicedDurationMs,
-                voicedRatio = acousticQuality?.voicedRatio ?: result.quality.voicedRatio,
-                segmentCount = acousticQuality?.segmentCount ?: result.quality.segmentCount,
-                longestSegmentMs = acousticQuality?.longestSegmentMs ?: result.quality.longestSegmentMs,
-                qualityEstimator = acousticQuality?.estimator?.name ?: result.quality.qualityEstimator
+                audioDurationMs = acousticQuality.durationMs,
+                peakAmplitude = acousticQuality.peakAmplitude,
+                voicedDurationMs = acousticQuality.voicedDurationMs,
+                voicedRatio = acousticQuality.voicedRatio,
+                segmentCount = acousticQuality.segmentCount,
+                longestSegmentMs = acousticQuality.longestSegmentMs,
+                qualityEstimator = acousticQuality.estimator.name
             )
 
             // Transaction ownership, not coroutine activity, decides whether a
@@ -335,6 +335,10 @@ class AudioPipeline(
 
                 if (text.isBlank()) {
                     _state.value = SpeechState.Idle
+                    eventBus.publish(com.halo.sdk.runtime.SpeechRejected(
+                        text = text, reason = SpeechRejectionReason.EMPTY.name,
+                        captureId = transactionId, quality = resultQuality, metrics = result.metrics, input = inputTurn
+                    ))
                     eventBus.publish(
                         RecognitionFailed(
                             id = transactionId,
@@ -353,7 +357,7 @@ class AudioPipeline(
                         timestamp = System.currentTimeMillis(),
                         input = inputTurn,
                         confidence = result.confidence,
-                        quality = resultQuality
+                        quality = resultQuality, metrics = result.metrics
                     )
                 )
                 eventBus.publish(RecognitionFinished(id = transactionId))

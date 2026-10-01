@@ -38,12 +38,18 @@ class SpeechPerceptionBridge(
 
                 val eval = gate.evaluate(event.text, quality)
                 if (eval is SpeechGateResult.Rejected) {
-                    println("SPEECH_RESULT_REJECTED capture=${event.input?.captureId} reason=${eval.reason} durationMs=${quality.audioDurationMs} voicedMs=${quality.voicedDurationMs} voicedRatio=${quality.voicedRatio} estimator=${quality.qualityEstimator} confidence=${event.confidence}")
+                    val rep = eval.repetition
+                    if (eval.reason == SpeechRejectionReason.REPETITIVE_HALLUCINATION && rep != null) {
+                        println("SPEECH_RESULT_REJECTED capture=${event.input?.captureId} reason=${eval.reason} durationMs=${quality.audioDurationMs} peak=${quality.peakAmplitude} estimator=${quality.qualityEstimator} tokenCount=${rep.tokenCount} uniqueTokenRatio=${rep.uniqueTokenRatio} dominantPhraseRatio=${rep.dominantPhraseRatio} repeatedRuns=${rep.repeatedRuns} repetitionSource=${rep.repetitionSource}")
+                    } else {
+                        println("SPEECH_RESULT_REJECTED capture=${event.input?.captureId} reason=${eval.reason} durationMs=${quality.audioDurationMs} voicedMs=${quality.voicedDurationMs} voicedRatio=${quality.voicedRatio} estimator=${quality.qualityEstimator} confidence=${event.confidence}")
+                    }
                     eventBus.publish(
                         SpeechRejected(
                             text = event.text,
                             reason = eval.reason.name,
-                            captureId = event.input?.captureId
+                            captureId = event.input?.captureId ?: event.id,
+                            quality = event.quality, metrics = event.metrics, input = event.input
                         )
                     )
                     return@collect
@@ -76,6 +82,7 @@ class SpeechPerceptionBridge(
                         put("inputRoute", event.input?.route ?: SpeechInputRoute.Phone)
                         event.confidence?.let { put("recognitionConfidence", it) }
                         put("recognitionQuality", event.quality)
+                        event.metrics?.let { put("recognitionMetrics", it) }
                     },
                     interactionId = interactionId,
                 )

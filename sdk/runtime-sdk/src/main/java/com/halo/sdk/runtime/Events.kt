@@ -11,7 +11,8 @@ data class SpeechRecognized(
     val locale: String,
     val input: SpeechInputTurn? = null,
     val confidence: Float? = null,
-    val quality: RecognitionQuality = RecognitionQuality()
+    val quality: RecognitionQuality = RecognitionQuality(),
+    val metrics: SpeechRecognitionMetrics? = null
 ) : HaloEvent
 
 data class SpeechRejected(
@@ -19,7 +20,10 @@ data class SpeechRejected(
     override val timestamp: Long = System.currentTimeMillis(),
     val text: String,
     val reason: String,
-    val captureId: String? = null
+    val captureId: String? = null,
+    val quality: RecognitionQuality = RecognitionQuality(),
+    val metrics: SpeechRecognitionMetrics? = null,
+    val input: SpeechInputTurn? = null
 ) : HaloEvent
 
 data class RuntimeFactResolved(

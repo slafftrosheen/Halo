@@ -2,6 +2,7 @@ package com.halo.app.diagnostics
 
 import android.content.Context
 import android.os.Build
+import com.halo.app.BuildConfig
 import com.halo.app.di.ManualDependencyGraph
 import com.halo.providers.litert.LiteRtLocalProvider
 import java.io.File
@@ -24,9 +25,13 @@ object DiagnosticsExport {
         val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
         val file = File(context.cacheDir, "halo_diagnostics_$timestamp.txt")
         
+        val gitCommit = runCatching { BuildConfig::class.java.getField("GIT_COMMIT").get(null) as? String }.getOrNull() ?: "unknown"
+        val gitDirty = runCatching { BuildConfig::class.java.getField("GIT_DIRTY").get(null) as? Boolean }.getOrNull() ?: false
+
         val sb = StringBuilder()
         sb.append("==== HALO TESTFLIGHT DIAGNOSTICS ====\n")
         sb.append("Timestamp: ${Date()}\n")
+        sb.append("Build: ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE}) ${BuildConfig.BUILD_TYPE} commit=$gitCommit dirty=$gitDirty\n")
         sb.append("OS: Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})\n")
         sb.append("Device: ${Build.MANUFACTURER} ${Build.MODEL}\n\n")
 

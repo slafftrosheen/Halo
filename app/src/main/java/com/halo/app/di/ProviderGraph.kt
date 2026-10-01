@@ -19,6 +19,7 @@ class ProviderGraph(
     private val storage: Storage,
     private val infra: InfrastructureGraph? = null,
     private val secretStore: com.halo.app.security.SecretStore? = null,
+    private val speechLanguageSettings: com.halo.app.ui.screens.settings.SpeechLanguageSettingsRepository? = null,
 ) {
 
     private val storageLayout by lazy { haloStorageLayout(applicationContext) }
@@ -30,7 +31,9 @@ class ProviderGraph(
         get() = providerFactory.remoteProviderPresenceRegistry
     val speechModelInventory by lazy {
         DefaultSpeechModelInventoryRepository(
-            speechRoot = { storageLayout.speechModels }
+            speechRoot = { storageLayout.speechModels },
+            selectedProviderId = { _providers?.speechSelector?.sttSelection?.value?.id ?: "AUTOMATIC" },
+            activeProviderId = { _providers?.speechRecognition?.metadata?.id }
         )
     }
 
@@ -41,6 +44,7 @@ class ProviderGraph(
             storage,
             nativeResourceCoordinator,
             secretStore = secretStore,
+            speechLanguageSettings = speechLanguageSettings,
         )
     }
 

@@ -8,7 +8,8 @@ data class RecognitionResult(
     val text: String,
     val language: String,
     val confidence: Float? = null,
-    val quality: RecognitionQuality = RecognitionQuality()
+    val quality: RecognitionQuality = RecognitionQuality(),
+    val metrics: com.halo.sdk.runtime.SpeechRecognitionMetrics? = null
 )
 
 sealed interface RecognitionEvent {
@@ -37,6 +38,8 @@ sealed interface SpeechRecognitionProvider {
 interface BufferedSpeechRecognitionProvider : SpeechRecognitionProvider {
     override val mode: SpeechRecognitionMode get() = SpeechRecognitionMode.BUFFERED
     suspend fun recognize(audio: AudioBuffer): RecognitionResult
+    /** Wait until native stream destruction completes before reuse or another model. */
+    suspend fun awaitQuiescent() = Unit
 }
 
 interface LiveSpeechRecognitionProvider : SpeechRecognitionProvider {

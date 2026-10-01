@@ -169,7 +169,7 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit) {
                         ?: ui.litertAcquisitionDiagnostics
                             ?.takeIf { it.modelId == null || it.modelId == model.id }
                             ?.technicalSummary(),
-                    storagePreflightLine = remember(model.id) { viewModel.storagePreflight(model)?.describe() },
+                    storagePreflightLine = ui.storagePreflightLines[model.id],
                     onDownload = { viewModel.downloadCatalogModel(model) },
                     onResume = { viewModel.resumeCatalogDownload(model) },
                     onCancel = { viewModel.cancelDownload(model.id) },

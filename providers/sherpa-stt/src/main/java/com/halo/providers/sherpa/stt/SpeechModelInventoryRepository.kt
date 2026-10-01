@@ -12,20 +12,27 @@ data class SpeechModelInventoryState(
     val installed: Boolean = false,
     val totalBytes: Long = 0L,
     val missingFiles: List<String> = emptyList(),
-    val selectedModel: String = SherpaSpeechModelCatalog.WHISPER_TINY_DIRECTORY,
+    val selectedModel: String = "AUTOMATIC",
     val languageMode: String = "en",
+    val models: Map<String, Boolean> = emptyMap(),
+    val sileroInstalled: Boolean = false,
     val error: String? = null
 )
 
 interface SpeechModelInventoryRepository {
     val state: StateFlow<SpeechModelInventoryState>
     suspend fun refresh(languageMode: String? = null)
-    suspend fun installWhisperTiny(onProgress: (Float, String) -> Unit): Result<Unit>
+    suspend fun install(modelId: String, onProgress: (SpeechModelDownloadProgress) -> Unit): Result<Unit>
+    suspend fun remove(modelId: String): Result<Unit>
+    suspend fun installWhisperTiny(onProgress: (Float, String) -> Unit): Result<Unit> =
+        install(SherpaSpeechModelCatalog.WHISPER_TINY_ID) { onProgress(it.fraction, it.currentFile) }
 }
 
 class DefaultSpeechModelInventoryRepository(
     private val speechRoot: () -> File,
-    private val dispatchers: HaloDispatchers = productionHaloDispatchers()
+    private val dispatchers: HaloDispatchers = productionHaloDispatchers(),
+    private val selectedProviderId: () -> String = { "AUTOMATIC" },
+    private val activeProviderId: () -> String? = { null }
 ) : SpeechModelInventoryRepository {
     private val _state = MutableStateFlow(SpeechModelInventoryState())
     override val state: StateFlow<SpeechModelInventoryState> = _state
@@ -34,15 +41,25 @@ class DefaultSpeechModelInventoryRepository(
         _state.value = _state.value.copy(loading = true, error = null)
         runCatching {
             withContext(dispatchers.io) {
-                val directory = File(speechRoot(), SherpaSpeechModelCatalog.WHISPER_TINY_DIRECTORY)
-                val spec = SherpaSpeechModelCatalog.whisperTiny
+                val models = SherpaSpeechModelCatalog.recognitionModels.associate { model ->
+                    model.id to SherpaSpeechModelCatalog.isInstalled(File(speechRoot(), model.directoryName), model)
+                }
+                val selected = selectedProviderId()
+                val spec = SherpaSpeechModelCatalog.resolve(selected) { models[it.id] == true }
+                val language = languageMode ?: _state.value.languageMode
                 SpeechModelInventoryState(
                     loading = false,
-                    installed = SherpaSpeechModelCatalog.isInstalled(directory, spec),
-                    totalBytes = if (directory.isDirectory) {
-                        directory.walkTopDown().filter(File::isFile).sumOf(File::length)
-                    } else 0L,
-                    missingFiles = SherpaSpeechModelCatalog.missingFiles(directory, spec),
+                    installed = spec != null && spec.supportsLanguage(language),
+                    selectedModel = spec?.id ?: selected,
+                    totalBytes = SherpaSpeechModelCatalog.recognitionModels.sumOf { model ->
+                        model.files.sumOf { File(File(speechRoot(), model.directoryName), it.name).length() }
+                    },
+                    missingFiles = if (spec != null) emptyList() else {
+                        val requested = SherpaSpeechModelCatalog.recognitionModels.firstOrNull { it.providerId == selected }
+                        requested?.let { SherpaSpeechModelCatalog.missingFiles(File(speechRoot(), it.directoryName), it) } ?: emptyList()
+                    },
+                    models = models,
+                    sileroInstalled = SherpaSpeechModelCatalog.isInstalled(speechRoot(), SherpaSpeechModelCatalog.sileroVad),
                     languageMode = languageMode ?: _state.value.languageMode
                 )
             }
@@ -50,11 +67,33 @@ class DefaultSpeechModelInventoryRepository(
             .onFailure { _state.value = _state.value.copy(loading = false, error = it.message) }
     }
 
-    override suspend fun installWhisperTiny(onProgress: (Float, String) -> Unit): Result<Unit> {
+    override suspend fun install(modelId: String, onProgress: (SpeechModelDownloadProgress) -> Unit): Result<Unit> {
+        val spec = SherpaSpeechModelCatalog.byId(modelId)
+            ?: SherpaSpeechModelCatalog.sileroVad.takeIf { it.id == modelId }
+            ?: return Result.failure(IllegalArgumentException("Unknown speech model"))
         val destination = withContext(dispatchers.io) {
-            File(speechRoot(), SherpaSpeechModelCatalog.WHISPER_TINY_DIRECTORY)
+            if (modelId == SherpaSpeechModelCatalog.SILERO_VAD_ID) speechRoot()
+            else File(speechRoot(), spec.directoryName)
         }
-        return WhisperModelDownloader.downloadAndInstall(destination, onProgress)
-            .also { refresh() }
+        return SpeechModelInstaller.install(spec, destination, onProgress).also { refresh() }
+    }
+
+    override suspend fun remove(modelId: String): Result<Unit> = withContext(dispatchers.io) {
+        try {
+            val spec = requireNotNull(SherpaSpeechModelCatalog.byId(modelId))
+            val selection = selectedProviderId()
+            val automatic = SherpaSpeechModelCatalog.resolve(selection) {
+                SherpaSpeechModelCatalog.isInstalled(File(speechRoot(), it.directoryName), it)
+            }
+            check(selection != spec.providerId && automatic != spec && activeProviderId() != spec.providerId) {
+                "Select another speech model before deleting this model."
+            }
+            val root = speechRoot().canonicalFile
+            val directory = File(root, spec.directoryName).canonicalFile
+            require(directory.parentFile == root) { "Invalid speech model directory" }
+            check(!directory.exists() || directory.deleteRecursively()) { "Unable to remove speech model" }
+            refresh()
+            Result.success(Unit)
+        } catch (error: Exception) { Result.failure(error) }
     }
 }

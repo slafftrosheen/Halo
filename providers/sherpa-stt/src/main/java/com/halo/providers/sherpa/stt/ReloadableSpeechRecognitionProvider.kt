@@ -24,7 +24,7 @@ import kotlinx.coroutines.flow.collect
 
 /**
  * Thread-safe speech recognition provider wrapper that dynamically delegates
- * to [SherpaOfflineSpeechRecognitionProvider] when Whisper Tiny is installed, or
+ * to the selected catalog recognizer when its verified model is installed, or
  * [UnavailableSpeechRecognitionProvider] when missing.
  *
  * Calling [refresh] re-evaluates the delegate on-the-fly without requiring
@@ -35,7 +35,13 @@ class ReloadableSpeechRecognitionProvider(
     private val getLanguage: () -> String = { "en" },
     private val nativeResourceCoordinator: NativeResourceCoordinator? = null,
     private val dispatchers: HaloDispatchers = productionHaloDispatchers(),
-    private val selector: SpeechProviderSelector? = null
+    private val selector: SpeechProviderSelector? = null,
+    private val languageChanges: StateFlow<String>? = null,
+    private val prepareLanguage: suspend () -> Unit = {},
+    private val installed: (File, SherpaSpeechModelCatalog.ModelSpec) -> Boolean = SherpaSpeechModelCatalog::isInstalled,
+    private val delegateFactory: (File, SherpaSpeechModelCatalog.ModelSpec, String) -> BufferedSpeechRecognitionProvider = { directory, spec, language ->
+        SherpaSpeechRecognizerFactory.create(directory, spec, language, nativeResourceCoordinator)
+    }
 ) : BufferedSpeechRecognitionProvider {
 
     private val lifecycle = Mutex()
@@ -46,42 +52,55 @@ class ReloadableSpeechRecognitionProvider(
     private val _availability = MutableStateFlow(false)
     val availability: StateFlow<Boolean> = _availability.asStateFlow()
 
+    private val languageReady = cleanupScope.async { prepareLanguage() }
+    private data class RecognizerKey(val modelId: String?, val language: String, val config: String)
+    @Volatile private var activeKey: RecognizerKey? = null
+
     init {
         if (selector == null) refresh()
         else cleanupScope.launch { selector.sttSelection.collect { refreshNow() } }
+        languageChanges?.let { flow -> cleanupScope.launch { flow.collect { refreshNow() } } }
     }
 
     fun refresh(): Job = cleanupScope.launch { refreshNow() }
 
     private suspend fun refreshNow() = lifecycle.withLock {
+        languageReady.await()
         val sttSelectedId = selector?.sttSelection?.value?.id ?: "AUTOMATIC"
-        val isExplicitSherpa = sttSelectedId == "speech.sherpa_onnx.whisper_tiny"
-        val isAuto = sttSelectedId == "AUTOMATIC"
-        val isSelected = isAuto || isExplicitSherpa
-        
-        val newDelegate: BufferedSpeechRecognitionProvider = if (isSelected && SherpaOfflineSpeechRecognitionProvider.isInstalled(modelDirectory)) {
-            SherpaOfflineSpeechRecognitionProvider(
-                modelDirectory = modelDirectory,
-                language = getLanguage(),
-                nativeResourceCoordinator = nativeResourceCoordinator
-            )
-        } else if (!isSelected) {
-            UnavailableSpeechRecognitionProvider("Selected speech recognition provider is unavailable: $sttSelectedId")
-        } else if (isExplicitSherpa) {
-            UnavailableSpeechRecognitionProvider(
-                "Local Whisper model is missing but explicitly selected."
-            )
-        } else {
-            UnavailableSpeechRecognitionProvider(
-                "Install the local Whisper tiny model in Settings > Voice to enable private voice input"
-            )
+        val spec = SherpaSpeechModelCatalog.resolve(sttSelectedId) {
+            installed(directory(it), it)
         }
-        val old = currentDelegate.getAndSet(newDelegate)
+        val language = getLanguage()
+        val key = RecognizerKey(spec?.id, language,
+            "cpu:greedy:${spec?.revision}:${spec?.effectiveThreads()}:${spec?.whisperTailPaddings}")
+        if (key == activeKey && currentDelegate.get() !is UnavailableSpeechRecognitionProvider) return@withLock
+        val old = currentDelegate.get()
+        if (activeKey != null) android.util.Log.i("HaloSTT",
+            "STT_RECOGNIZER_INVALIDATED reason=${when {
+                activeKey?.modelId != spec?.id -> "MODEL_CHANGED"
+                activeKey?.language != language -> "LANGUAGE_CHANGED"
+                else -> "CONFIG_CHANGED"
+            }}")
+        // Close before constructing the replacement. The resource coordinator also
+        // refuses another heavy owner while asynchronous JNI cleanup remains busy.
+        withContext(NonCancellable) { old.close(); old.awaitQuiescent() }
+        val newDelegate: BufferedSpeechRecognitionProvider = when {
+            spec == null -> UnavailableSpeechRecognitionProvider("Selected speech model is not installed.")
+            !spec.supportsLanguage(language) -> UnavailableSpeechRecognitionProvider("Model does not support $language")
+            else -> delegateFactory(directory(spec), spec, language)
+        }
+        currentDelegate.set(newDelegate)
+        activeKey = key
         _availability.value = newDelegate !is UnavailableSpeechRecognitionProvider
-        if (old != null && old != newDelegate) {
-            old.close()
-        }
     }
+
+    private fun directory(spec: SherpaSpeechModelCatalog.ModelSpec): File =
+        if (spec.id == SherpaSpeechModelCatalog.WHISPER_TINY_ID) modelDirectory
+        else File(modelDirectory.parentFile, spec.directoryName)
+    val selectedProviderId: String get() = selector?.sttSelection?.value?.id ?: "AUTOMATIC"
+    fun selectModel(providerId: String) { selector?.selectStt(providerId) }
+    val residentModelId: String? get() =
+        (delegate as? SherpaOfflineSpeechRecognitionProvider)?.takeIf { it.isResident }?.let { activeKey?.modelId }
 
     val delegate: BufferedSpeechRecognitionProvider
         get() = currentDelegate.get()
@@ -99,6 +118,8 @@ class ReloadableSpeechRecognitionProvider(
     override suspend fun healthDetails(): ProviderHealth = withContext(dispatchers.io) {
         currentDelegate.get().healthDetails()
     }
+
+    override suspend fun awaitQuiescent() = lifecycle.withLock { currentDelegate.get().awaitQuiescent() }
 
     override suspend fun recognize(audio: AudioBuffer): RecognitionResult = withContext(dispatchers.default) {
         lifecycle.withLock { currentDelegate.get().recognize(audio) }

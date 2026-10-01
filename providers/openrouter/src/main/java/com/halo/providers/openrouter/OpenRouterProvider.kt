@@ -789,7 +789,14 @@ class OpenRouterProvider(
         )
     }
 
-    private fun providerStatus(error: AiProviderException): ProviderStatus {
+    @Volatile private var lastFailure: AiProviderException? = null
+    @Volatile private var lastFailedModel: String? = null
+
+    private fun providerStatus(error: AiProviderException, modelId: String? = null): ProviderStatus {
+        lastFailure = error
+        if (modelId != null) lastFailedModel = modelId
+        val targetModel = modelId ?: lastFailedModel ?: selectedModelId
+        val sanitizedMsg = error.sanitizedSummary(targetModel)
         if (error.type == AiErrorType.AUTHENTICATION_FAILED && !apiKey.isNullOrBlank()) {
             rejectedApiKey = apiKey
         }
@@ -801,19 +808,19 @@ class OpenRouterProvider(
         return activeCooldown()?.let(::cooldownStatus) ?: when (error.type) {
             AiErrorType.AUTHENTICATION_FAILED -> ProviderStatus(
                 ProviderStatus.State.ERROR,
-                error.message ?: "OpenRouter authentication failed",
+                sanitizedMsg,
                 ProviderReadiness.Failed("Authentication failed"),
                 rejectionReason = TargetRejectionReason.CONFIGURATION_MISSING,
             )
             AiErrorType.NETWORK_UNAVAILABLE -> ProviderStatus(
                 ProviderStatus.State.OFFLINE,
-                error.message ?: "OpenRouter network unavailable",
+                sanitizedMsg,
                 ProviderReadiness.ConfiguredCold,
                 rejectionReason = TargetRejectionReason.NETWORK_UNAVAILABLE,
             )
             else -> ProviderStatus(
                 ProviderStatus.State.ERROR,
-                error.message,
+                sanitizedMsg,
                 ProviderReadiness.ConfiguredCold,
             )
         }

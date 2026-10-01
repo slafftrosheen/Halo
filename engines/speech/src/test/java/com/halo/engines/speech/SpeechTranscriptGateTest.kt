@@ -90,11 +90,11 @@ class SpeechTranscriptGateTest {
     @Test
     fun repetitiveTranscriptRemainsRejectedOnEnergyFallback() {
         val result = gate.evaluate(
-            transcript = "hello hello hello hello hello hello",
+            transcript = "I am going to the store and I am going to the store and I am going to the store",
             quality = SpeechRecognitionQuality(
-                audioDurationMs = 2_500L,
-                voicedDurationMs = 600L,
-                voicedRatio = 0.24f,
+                audioDurationMs = 4_500L,
+                voicedDurationMs = 1_600L,
+                voicedRatio = 0.35f,
                 peakAmplitude = 4_000,
                 language = "en",
                 qualityEstimator = "SIMPLE_ENERGY",
@@ -107,5 +107,28 @@ class SpeechTranscriptGateTest {
             SpeechRejectionReason.REPETITIVE_HALLUCINATION,
             (result as SpeechGateResult.Rejected).reason
         )
+    }
+
+    @Test
+    fun shortNaturalHumanRepetitionsAreAccepted() {
+        val cases = listOf(
+            "no no no",
+            "yes yes yes",
+            "very very good",
+            "wait wait wait",
+            "thank you thank you"
+        )
+        val quality = SpeechRecognitionQuality(
+            audioDurationMs = 1_500L,
+            voicedDurationMs = 500L,
+            voicedRatio = 0.33f,
+            peakAmplitude = 3_000,
+            qualityEstimator = "SILERO"
+        )
+
+        for (text in cases) {
+            val result = gate.evaluate(text, quality)
+            assertTrue("Expected accepted for '$text' but got $result", result is SpeechGateResult.Accepted)
+        }
     }
 }

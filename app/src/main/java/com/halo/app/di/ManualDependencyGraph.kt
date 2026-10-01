@@ -93,7 +93,7 @@ object ManualDependencyGraph {
     val secretStore by lazy { com.halo.app.security.AndroidKeystoreSecretStore(storageLayout) }
     private val preferenceStorage by lazy { com.halo.host.android.AndroidStorage(applicationContext) }
     val storage by lazy { RuntimeStartupTrace.measure("graph.storage") { com.halo.app.security.SecretBackedStorage(preferenceStorage, secretStore) } }
-    val providerGraph by lazy { RuntimeStartupTrace.measure("graph.providers") { ProviderGraph(applicationContext, storage, infra, secretStore) } }
+    val providerGraph by lazy { RuntimeStartupTrace.measure("graph.providers") { ProviderGraph(applicationContext, storage, infra, secretStore, speechLanguageSettingsRepository) } }
     val deviceRegistry by lazy { com.halo.sdk.runtime.embodiment.PersistentDeviceRegistry(storage) }
     val deviceSessionManager by lazy { com.halo.sdk.runtime.embodiment.DeviceSessionManager(deviceRegistry) }
     val platformStateMonitor by lazy { AndroidPlatformStateMonitor(applicationContext) }
@@ -1107,8 +1107,35 @@ object ManualDependencyGraph {
     val settingsViewModel by lazy {
         SettingsViewModel(runtimeSnapshotManager, aiProviderRouter, appearancePreferences, providerGraph.speechModelInventory)
     }
+    val speechDiagnosticRunner by lazy {
+        val root = com.halo.app.storage.haloStorageLayout(applicationContext).speechModels
+        com.halo.app.speech.diagnostics.SpeechDiagnosticRunner(
+            capture = { duration, finish -> hostGraph.audioPerceptionEngine.captureDiagnosticAudio(duration, finish) },
+            selected = providers.speechRecognition as com.halo.sdk.provider.BufferedSpeechRecognitionProvider,
+            estimator = hostGraph.speechActivityEstimator,
+            factory = { target ->
+                val spec = com.halo.providers.sherpa.stt.SherpaSpeechModelCatalog.byId(target.modelId)
+                    ?: error("Unknown speech model ${target.modelId}")
+                com.halo.providers.sherpa.stt.SherpaSpeechRecognizerFactory.create(java.io.File(root, spec.directoryName), spec,
+                    target.language, providerGraph.nativeResourceCoordinator)
+            },
+            availableTargets = {
+                com.halo.providers.sherpa.stt.SherpaSpeechModelCatalog.recognitionModels.filter {
+                    com.halo.providers.sherpa.stt.SherpaSpeechModelCatalog.isInstalled(java.io.File(root, it.directoryName), it)
+                }.map { com.halo.app.speech.diagnostics.SpeechDiagnosticTarget(it.id, it.displayName, speechLanguageSettingsRepository.languageMode.value) }
+            },
+            language = { speechLanguageSettingsRepository.languageMode.value },
+            detectorReady = { com.halo.providers.sherpa.stt.SherpaSpeechModelCatalog.isInstalled(
+                java.io.File(root, com.halo.providers.sherpa.stt.SherpaSpeechModelCatalog.sileroVad.directoryName),
+                com.halo.providers.sherpa.stt.SherpaSpeechModelCatalog.sileroVad) },
+            engine = hostGraph.audioPerceptionEngine
+        )
+    }
     val voiceSettingsViewModel by lazy {
-        VoiceSettingsViewModel(providerGraph.speechModelInventory, speechLanguageSettingsRepository, providerGraph, storage, speechSynthesisRegistry)
+        VoiceSettingsViewModel(providerGraph.speechModelInventory, speechLanguageSettingsRepository, providerGraph, storage, speechSynthesisRegistry,
+            probe = com.halo.app.ui.screens.settings.SpeechRecognitionProbe(
+                runner = speechDiagnosticRunner
+            ))
     }
     val activityViewModel by lazy { ActivityViewModel(runtimeSnapshotManager, agentRunStore = agentRunStore) }
     val notebookViewModel by lazy {

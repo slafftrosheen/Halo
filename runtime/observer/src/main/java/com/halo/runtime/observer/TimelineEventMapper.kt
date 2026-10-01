@@ -112,6 +112,10 @@ class DefaultTimelineEventMapper : TimelineEventMapper {
                         status = if (event.observation.source == Source.USER) "Sent" else "Received",
                         category = if (event.observation.modality == Modality.AUDIO) "Voice" else "All",
                         details = buildMap {
+                            (event.observation.metadata["recognitionQuality"] as? RecognitionQuality)?.let { quality ->
+                                putAll(speechDetails(quality, event.observation.metadata["recognitionMetrics"] as? com.halo.sdk.runtime.SpeechRecognitionMetrics))
+                            }
+                            put("gate", "Accepted")
                             put("source", event.observation.origin?.source?.toString() ?: event.observation.source.name)
                             event.observation.sourceDeviceId?.let { put("device", it.takeLast(5)) }
                             event.observation.metadata["captureId"]?.let { put("capture", it.toString()) }
@@ -125,6 +129,13 @@ class DefaultTimelineEventMapper : TimelineEventMapper {
             // ObservationCreated event above records the user turn once for both
             // microphone and keyboard input, avoiding duplicate Activity entries.
             is SpeechRecognized -> null
+            is SpeechRejected -> TimelineEvent(
+                presentationId = timelinePresentationId("Speech", event.captureId, timestamp, "rejected"),
+                correlationId = event.captureId, title = "Speech rejected",
+                description = event.reason + "\n" + event.text,
+                timestamp = timestamp, status = "Rejected", category = "Voice",
+                details = speechDetails(event.quality, event.metrics) + mapOf("gate" to event.reason, "source" to (event.input?.source?.toString() ?: "unknown"))
+            )
             is IntentRecognized -> TimelineEvent(
                 presentationId = timelinePresentationId("Intent", correlationId, timestamp, "recognized"),
                 correlationId = correlationId,
@@ -362,4 +373,25 @@ class DefaultTimelineEventMapper : TimelineEventMapper {
             else -> null
         }
     }
+}
+
+private fun speechDetails(quality: RecognitionQuality, metrics: com.halo.sdk.runtime.SpeechRecognitionMetrics?): Map<String, String> = buildMap {
+    metrics?.modelDisplayName?.let { model ->
+        put("stt", listOfNotNull(model, metrics?.language,
+            metrics?.decodeMs?.let { "$it ms" }, metrics?.realTimeFactor?.let { "RTF %.2f".format(java.util.Locale.ROOT, it) }).joinToString(" · "))
+    }
+    metrics?.providerId?.let { put("provider", it) }
+    metrics?.modelId?.let { put("model", it) }
+    metrics?.language?.let { put("language", it) }
+    metrics?.decodeMs?.let { put("decodeMs", it.toString()) }
+    metrics?.realTimeFactor?.let { put("RTF", it.toString()) }
+    quality.voicedDurationMs?.let { put("voicedMs", it.toString()) }
+    quality.segmentCount?.let { put("segments", it.toString()) }
+    quality.longestSegmentMs?.let { put("longestSegmentMs", it.toString()) }
+    quality.audioDurationMs?.let { put("audioMs", it.toString()) }
+    metrics?.loadMs?.let { put("loadMs", it.toString()) }
+    metrics?.totalMs?.let { put("totalMs", it.toString()) }
+    quality.voicedRatio?.let { put("voicedRatio", it.toString()) }
+    quality.peakAmplitude?.let { put("peak", it.toString()) }
+    quality.qualityEstimator?.let { put("estimator", if (it == "SIMPLE_ENERGY") "Energy fallback" else it) }
 }

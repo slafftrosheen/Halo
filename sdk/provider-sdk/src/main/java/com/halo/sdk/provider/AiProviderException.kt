@@ -71,4 +71,18 @@ class AiProviderException(
         message: String,
         cause: Throwable?,
     ) : this(type, message, AiFailureDetails(), cause)
+
+    fun sanitizedSummary(requestedModel: String? = null): String = buildString {
+        append("Last request: ").append(type.name.lowercase().replace('_', ' '))
+        details.httpStatus?.let { append(" | HTTP: ").append(it) }
+        append(" | Recovery: ").append(when (details.recoverability) {
+            Recoverability.RETRY_IMMEDIATELY -> "retryable"
+            Recoverability.RETRY_AFTER -> "retry after backoff"
+            Recoverability.USER_ACTION_REQUIRED -> "user action required"
+            Recoverability.SESSION_CONFLICT -> "session conflict"
+            Recoverability.PERMANENT -> "permanent"
+            Recoverability.UNKNOWN -> "unknown"
+        })
+        requestedModel?.let { append(" | Model: ").append(it) }
+    }
 }

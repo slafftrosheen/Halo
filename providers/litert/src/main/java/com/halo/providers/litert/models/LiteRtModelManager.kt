@@ -58,6 +58,7 @@ class LiteRtModelManager(
     /** Pinned artifacts this manager treats as authoritative. Injectable for tests. */
     private val catalog: List<LiteRtCatalogModel> = LiteRtModelCatalog.BUILT_IN_MODELS,
 ) : LocalModelInventoryRepository {
+    val modelDir: File get() = modelRoot
 
     @Volatile
     private var residentModelIdProvider: () -> String? = { null }

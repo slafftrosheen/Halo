@@ -1,5 +1,29 @@
 # Halo current state
 
+## SPEECH-QUALITY-002 — Real STT Probe + Speech Lab — 2026-10-01
+
+**IMPLEMENTED / COMPILED / UNIT VERIFIED.** Shared-owner processed PCM diagnostics, real selected-model STT probing, and an in-memory Speech Lab with serial same-sample cold/warm comparisons, optional Whisper fixed/auto, WER/CER, private exports, and provider-neutral execution metrics. All 191 tests pass, including the unfiltered 143-test app suite; :app:assembleDebug and git diff --check pass. The six earlier app-test failures are fixed. Physical-device quality remains unvalidated. See [implementation and hardware acceptance guide](docs/engineering/SPEECH-QUALITY-002.md).
+
+## SPEECH-QUALITY-001 — 2026-10-01
+
+Local STT now has descriptor-driven Tiny/Base/Small multilingual Whisper and experimental Omnilingual 300M. Base is the recommended general-purpose option; downloads remain explicit. Latviešu (`lv`), pinned verified artifacts, persisted model selection, phone/external VAD quality, STT provenance and an isolated in-memory self-test are implemented. Speech/provider/observer and focused app checks pass; :app:assembleDebug succeeds. The six database migration and accessibility ownership test failures recorded for this batch were subsequently repaired in SPEECH-QUALITY-002; the full 143-test app suite now passes. Physical-device quality is unvalidated. See [implementation and hardware test guide](docs/engineering/SPEECH-QUALITY-001.md).
+
+## DOGFOOD-001 — Integration Truth + First-Run Reliability — 2026-09-30
+
+**IMPLEMENTED / COMPILED / UNIT VERIFIED.**
+Integration stabilization batch for provider failure diagnostics, direct-chat single retry, LiteRT StrictMode main-thread preflight elimination, speech rejection observability & user-visible feedback, build provenance, and transaction log prefix cleanup.
+- **Provider Failure Truth:** `HALO_PROVIDER_FAILURE` telemetry added with normalized `errorType`, `httpStatus`, `providerCode`, `recoverability`, `retryAfterMs`. Provider Diagnostics / System Check displays sanitized last failure summary.
+- **Safe Direct-Chat Retry:** Bounded same-target retry (max 2 total attempts) for `DIRECT_RESPONSE` (`ToolUseMode.NONE` + `INITIAL` turn + `RETRY_IMMEDIATELY` + zero partial output). No automatic retries for auth, rate-limit, invalid request, context overflow, or tool turns. Telemetry: `HALO_PROVIDER_ATTEMPT`, `HALO_PROVIDER_RETRY`, `HALO_PROVIDER_SUCCESS`, `HALO_PROVIDER_FAILURE`.
+- **LiteRT StrictMode Fix:** `OnDeviceModelsScreen` renders immutable state flow. `StatFs` preflight computed on `Dispatchers.IO` once per state update. Zero main-thread disk reads.
+- **LiteRT Telemetry:** `setDeveloperBackend` changed to `HALO_LITERT_BACKEND_OVERRIDE`. `HALO_LITERT_SELECT` reserved for active target selection.
+- **Speech Rejection Observability & User Notice:** `SpeechTranscriptGate` exposes repetition metrics (`tokenCount`, `normalizedChars`, `uniqueTokenRatio`, `dominantPhraseRatio`, `repeatedRuns`, `repetitionSource`). Character-ngram detector hardened for short natural human repetitions ("no no no", "yes yes yes", "very very good", "wait wait wait", "thank you thank you"). Rejections rendered as lightweight, non-modal UI notice on Home screen.
+- **Build Provenance:** `HALO_BUILD` emitted at startup (`versionName`, `versionCode`, `variant`, `commit`, `dirty`) and exported in diagnostics report.
+- **Clean Transaction Logs:** `ConsoleLogger.formatTag` prevents `[HALO-HALO-TXN]` duplicate prefixing.
+
+See [DOGFOOD-001 documentation](docs/engineering/DOGFOOD-001-INTEGRATION-TRUTH.md).
+
+---
+
 ## STABILIZATION-PROVIDER-001 - 2026-09-30
 
 **IMPLEMENTED / UNVALIDATED.** Provider-owned descriptors now back the single Provider Center; legacy Intelligence credential/endpoint projections are removed. Intelligence and Voice are bounded control centers. Cached model browsing, conservative DirectResponse/action interpretation, readable recovery, explicit-role fallback gates and sticky speech fallback are source implemented.

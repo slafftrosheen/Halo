@@ -1,6 +1,7 @@
 package com.halo.app.ui.screens.settings
 
 import android.net.Uri
+import android.os.StatFs
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -17,6 +18,7 @@ import com.halo.providers.litert.models.DownloadState
 import com.halo.providers.litert.models.LiteRtCatalogModel
 import com.halo.providers.litert.models.LiteRtModelFailureRecord
 import com.halo.providers.litert.models.LiteRtStoragePreflightResult
+import com.halo.providers.litert.models.LiteRtStoragePreflight
 import com.halo.providers.litert.models.LocalModelDescriptor
 import com.halo.providers.litert.models.ModelVerificationResult
 import com.halo.providers.litert.runtime.LiteRtControlProbeResult
@@ -81,6 +83,7 @@ data class IntelligenceUiState(
     val roleBindings: Map<com.halo.sdk.provider.AiModelRole, com.halo.sdk.provider.AiRoleBinding> = emptyMap(),
     /** Conversation-level preface/echo diagnostics for the resident local model, when any. */
     val conversationDiagnostics: LiteRtConversationDiagnostics? = null,
+    val storagePreflightLines: Map<String, String> = emptyMap(),
     /** Currently resident (loaded) model, if any. Resident != selected. */
     val residentModelId: String? = null,
     val residentBackend: LocalComputeBackend? = null,
@@ -299,6 +302,15 @@ class IntelligenceViewModel(
         val catalogEntries = (selection.catalog.models + downloadableEntries)
             .distinctBy { it.runtime.ref }
 
+        val catalogModelsList = modelManager?.getAllCatalogModels().orEmpty()
+        val freeBytes = modelManager?.let { manager ->
+            runCatching {
+                val root = manager.modelDir
+                val target = generateSequence(root) { it.parentFile }.firstOrNull { it.exists() } ?: root
+                StatFs(target.absolutePath).availableBytes
+            }.getOrNull()
+        } ?: -1L
+
         IntelligenceUiState(
             activeProviderId = selectedProviderId ?: "",
             activeProviderName = activeProvider?.displayName ?: "None",
@@ -344,6 +356,9 @@ class IntelligenceViewModel(
             visionQualification = localModels.associate { it.id to localProvider?.visionQualificationFor(it) },
             roleBindings = aiProviderRouter.roleBindings.value,
             conversationDiagnostics = localProvider?.conversationDiagnostics?.value,
+            storagePreflightLines = catalogModelsList.associate { model ->
+                model.id to LiteRtStoragePreflight.evaluate(model.expectedBytes, freeBytes).describe()
+            },
             matrixRows = dev.matrixRows,
             runningMatrix = dev.runningMatrix,
             busyModelId = dev.busyModelId,

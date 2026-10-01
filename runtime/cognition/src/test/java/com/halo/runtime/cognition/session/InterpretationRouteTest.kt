@@ -53,9 +53,9 @@ class InterpretationRouteTest {
     }
 
     @Test
-    fun `conversation and questions go to the agentic path`() {
-        assertTrue(resolver.resolve(ConversationIntent) is InterpretationExecutionRoute.Agentic)
-        assertTrue(resolver.resolve(QuestionIntent) is InterpretationExecutionRoute.Agentic)
+    fun `conversation and questions go to direct response route`() {
+        assertTrue(resolver.resolve(ConversationIntent) is InterpretationExecutionRoute.DirectResponse)
+        assertTrue(resolver.resolve(QuestionIntent) is InterpretationExecutionRoute.DirectResponse)
     }
 
     @Test

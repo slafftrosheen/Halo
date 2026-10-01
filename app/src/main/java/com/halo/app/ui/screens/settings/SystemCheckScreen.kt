@@ -51,6 +51,12 @@ fun SystemCheckScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val clipboard = LocalClipboardManager.current
+    var pendingSpeechAction by remember { mutableStateOf<SystemCheckAction>(SystemCheckAction.RunCaptureProbe) }
+    val microphonePermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) viewModel.handleAction(pendingSpeechAction)
+    }
+    DisposableEffect(viewModel) { onDispose { viewModel.leaveSpeechProbe() } }
+
 
     Column(
         modifier = Modifier
@@ -139,6 +145,11 @@ fun SystemCheckScreen(
             }
         }
 
+        if (uiState.speechRecording) item {
+            TextButton(onClick = viewModel::finishSpeechCapture) { Text("Finish speech capture") }
+            TextButton(onClick = viewModel::cancelSpeechProbe) { Text("Cancel speech probe") }
+        }
+        uiState.speechProbeTranscript?.let { transcript -> item { Text("Local transcript: $transcript") } }
         uiState.sections.forEach { section ->
             item {
                 Text(
@@ -155,7 +166,8 @@ fun SystemCheckScreen(
                         // Probe actions are never chained: differential diagnosis needs them separate.
                         val action = when {
                             item.id == "assistant" -> SystemCheckAction.OpenAssistantSettings
-                            item.id == "mic" -> SystemCheckAction.RunSttProbe
+                            item.id == "mic_capture" -> SystemCheckAction.RunCaptureProbe
+                            item.id == "stt_recognition" -> SystemCheckAction.RunSttProbe
                             // A blocked control probe means a native model is resident: the
                             // operator explicitly unloads it instead of Halo silently loading a
                             // second engine to satisfy a diagnostic.
@@ -177,7 +189,10 @@ fun SystemCheckScreen(
                             else -> SystemCheckAction.Refresh
                         }
                         if (item.id.startsWith("remote_")) viewModel.refreshRemoteProviders()
-                        if (action is SystemCheckAction.OpenAssistantSettings) {
+                        if (action is SystemCheckAction.RunSttProbe || action is SystemCheckAction.RunCaptureProbe) {
+                            pendingSpeechAction = action
+                            microphonePermission.launch(android.Manifest.permission.RECORD_AUDIO)
+                        } else if (action is SystemCheckAction.OpenAssistantSettings) {
                             viewModel.launchAssistantEnrollment { intent -> assistantLauncher.launch(intent) }
                         } else {
                             viewModel.handleAction(action)
@@ -275,6 +290,8 @@ private fun SystemCheckCard(
                     text = when {
                         item.status == CheckStatus.RUNNING -> "RUNNING"
                         item.id == "litert_control" && item.status == CheckStatus.BLOCKED -> "UNLOAD LOCAL MODEL"
+                        item.id == "mic_capture" -> "CAPTURE PCM"
+                        item.id == "stt_recognition" -> "RUN STT PROBE"
                         item.id == "litert_control" -> "RUN CONTROL PROBE"
                         item.id == "litert_provider" -> "VERIFY"
                         item.id == "litert_tools" -> "PROBE TOOLS"
