@@ -1,5 +1,21 @@
 # Halo current state
 
+## DOGFOOD-004 — HeyCyan Audio Completion + Wearable Turn Latency — 2026-10-01
+
+**IMPLEMENTED / COMPILED / UNIT VERIFIED / DEPLOYED.**
+HeyCyan smart glasses speech output completion and wearable turn latency optimization batch:
+- **Association Ownership & Deduplication:** Refactored `HeyCyanAudioPairingCoordinator` with idempotent `adoptAssociationInternal` guarded by mutex. Recovers existing Android system associations (`findMatchingSystemAssociation`) and cleans up stale duplicate CDM associations without unbonding Bluetooth. Android 13+ Activity result `EXTRA_ASSOCIATION` parsing and API 36 `onFailure` support.
+- **Bluetooth Bonding & Telemetry:** Performs explicit `createBond()` checks when unbonded. Logged privacy-safe transition telemetry `HALO_HEYCYAN_AUDIO_STATE`.
+- **Speech Output Route State Machine:** Fixed `prepareRoute` to explicitly return `SpeechRoutePreparation.Pending` for `Bonding` and `Pending` states, preventing `Bonding` from falling through to route commands. `Failed` returns `Unavailable`. Increased endpoint verification window timeout to 5 seconds.
+- **Wearable Audio Prewarm:** Best-effort wearable output prewarm on `ListeningStarted` with source `HeyCyanGlasses` restores association, enables Classic Bluetooth, and refreshes endpoints during STT + cognition latency.
+- **No-Phone-Leak Contract:** Preserved `SpeechOutputFallback.DISALLOW_PHONE` contract (failed glasses route fails visibly with `TtsFailed` rather than speaking on handset speaker).
+- **UI Truth & Main-Thread Purity:** Moved `ai_thumbnail_quality` preference ownership to `DevicesViewModel` on IO thread; removed direct `SharedPreferences` reads/writes from `HeyCyanControlScreen` Composable. Rendered audio state truth and state-driven buttons.
+- **Sherpa ASR 90s Warm Grace & Telemetry:** Set Sherpa ASR default resource policy to `WARM_EJECTABLE` with `idleGraceMillis = 90_000L` (90s). Updated `NativeResourceCoordinator.hint(EXPECT_ASR)` to refresh warm expiry for resident ASR without re-allocation if released. Measured executor-observed TTFT in `ProviderTurnExecutor` and logged `HALO_VOICE_TURN_TIMING` end-to-end voice turn summary.
+
+See [DOGFOOD-004 documentation](docs/engineering/DOGFOOD-004-HEYCYAN-AUDIO-COMPLETION.md).
+
+---
+
 ## DOGFOOD-003 — Credential durability + runtime diagnostics — 2026-10-01
 
 **IMPLEMENTED / CI STARTUP FAILURE / PHYSICAL DEVICE VERIFICATION PENDING.**

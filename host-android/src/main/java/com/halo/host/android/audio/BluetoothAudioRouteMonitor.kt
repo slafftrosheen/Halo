@@ -49,6 +49,8 @@ data class BluetoothAudioEndpoint(
 interface BluetoothAudioRouteMonitor {
     val routes: StateFlow<List<BluetoothAudioEndpoint>>
 
+    fun refreshEndpoints()
+
     suspend fun awaitEndpoint(
         predicate: (BluetoothAudioEndpoint) -> Boolean,
         timeoutMs: Long
@@ -83,7 +85,7 @@ class AndroidBluetoothAudioRouteMonitor(
         }
     }
 
-    fun refreshEndpoints() {
+    override fun refreshEndpoints() {
         val endpointsById = linkedMapOf<Int, BluetoothAudioEndpoint>()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             addDevices(endpointsById, audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS), AudioEndpointDirection.OUTPUT)

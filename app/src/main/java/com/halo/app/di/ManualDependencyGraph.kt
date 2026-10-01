@@ -1167,6 +1167,7 @@ object ManualDependencyGraph {
             audioPairingCoordinator = heyCyanAudioPairingCoordinator,
             capabilityCatalogue = capabilityCatalogue,
             resourceLeaseManager = infra.resourceLeaseManager,
+            storage = storage,
         )
     }
     val pairingViewModel by lazy {

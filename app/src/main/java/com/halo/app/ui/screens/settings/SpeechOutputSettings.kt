@@ -45,10 +45,11 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
         }
         Text("Android TTS · Local engine; readiness checked on synthesis")
         cloudState?.let { state ->
+            val errCode = state.errorCode
             val status = when {
                 state.loading -> "Loading secure configuration"
                 state.error == "SECURE_STORAGE_UNREADABLE" -> "Stored credential unreadable"
-                state.errorCode != null -> state.errorCode.label
+                errCode != null -> errCode.label
                 !state.configured -> "Setup required"
                 state.ready -> "Ready"
                 else -> "Configured; not checked"

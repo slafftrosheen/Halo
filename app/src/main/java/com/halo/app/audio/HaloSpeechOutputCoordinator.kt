@@ -65,6 +65,18 @@ class HaloSpeechOutputCoordinator(
                     is ListeningStarted -> {
                         stop("ListeningStarted")
                         session.listening(event.source, event.captureId)
+                        // Prewarm wearable output during STT + cognition latency window
+                        val inputSource = event.source
+                        if (inputSource is SpeechInputRoute.Device && inputSource.kind == AudioDeviceKind.WEARABLE) {
+                            val deviceId = inputSource.deviceId
+                            if (deviceId != null) {
+                                scope.launch {
+                                    Log.i("HaloAudio", "HALO_AUDIO_PREWARM_BEGIN device=$deviceId capture=${event.captureId}")
+                                    routeController.prewarmRoute(deviceId)
+                                    Log.i("HaloAudio", "HALO_AUDIO_PREWARM_DONE device=$deviceId capture=${event.captureId}")
+                                }
+                            }
+                        }
                         // MINING-P0-001 route affinity begins here, when the interaction's
                         // input/origin is established — before STT, cognition or inference.
                         session.bindInteraction(

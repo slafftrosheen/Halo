@@ -58,7 +58,8 @@ class SherpaOfflineSpeechRecognitionProvider(
     override val defaultResourcePolicy = WorkloadResourcePolicy(
         workloadClass = RuntimeWorkloadClass.ASR,
         exclusive = true,
-        residencyPreference = ResidencyPreference.WARM_EJECTABLE
+        residencyPreference = ResidencyPreference.WARM_EJECTABLE,
+        idleGraceMillis = 90_000L
     )
 
     override val nativeResourceId = "${spec.id}:" + java.util.UUID.randomUUID().toString()

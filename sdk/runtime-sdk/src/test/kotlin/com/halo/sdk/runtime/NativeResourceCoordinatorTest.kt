@@ -1,10 +1,12 @@
 package com.halo.sdk.runtime
 
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.UUID
 
 class NativeResourceCoordinatorTest {
 
@@ -128,12 +130,74 @@ class NativeResourceCoordinatorTest {
         assertEquals(2, coordinator.snapshot.value.size)
     }
 
+    @Test
+    fun ownerSpecificIdleGraceOverridesGlobalBudgetGrace() = runBlocking {
+        val coordinator = NativeResourceCoordinator()
+        coordinator.updateBudget(NativeResourceBudget(idleGraceMillis = 100))
+        val asr = FakeOwner(
+            nativeResourceKind = NativeResourceKind.HEAVY_ASR,
+            policy = WorkloadResourcePolicy(
+                workloadClass = RuntimeWorkloadClass.ASR,
+                residencyPreference = ResidencyPreference.WARM_EJECTABLE,
+                idleGraceMillis = 1_000L
+            )
+        )
+
+        assertTrue(coordinator.acquire(asr))
+        coordinator.mark(asr, NativeResourceState.RESIDENT, "decode finished")
+        delay(200)
+
+        // Global budget is 100ms, but ASR policy is 1000ms, so ASR remains resident after 200ms
+        assertFalse(asr.released)
+        assertTrue(coordinator.activeKinds().contains(NativeResourceKind.HEAVY_ASR))
+    }
+
+    @Test
+    fun memoryPressureEvictsWarmEjectableAsr() = runBlocking {
+        val coordinator = NativeResourceCoordinator()
+        val asr = FakeOwner(
+            nativeResourceKind = NativeResourceKind.HEAVY_ASR,
+            policy = WorkloadResourcePolicy(
+                workloadClass = RuntimeWorkloadClass.ASR,
+                residencyPreference = ResidencyPreference.WARM_EJECTABLE,
+                idleGraceMillis = 90_000L
+            )
+        )
+
+        assertTrue(coordinator.acquire(asr))
+        coordinator.mark(asr, NativeResourceState.RESIDENT, "decode finished")
+
+        coordinator.updateBudget(NativeResourceBudget(pressure = NativeMemoryPressure.LOW))
+        assertTrue(asr.released)
+        assertFalse(coordinator.activeKinds().contains(NativeResourceKind.HEAVY_ASR))
+    }
+
+    @Test
+    fun expectAsrHintRefreshesResidentAsrWarmExpiryWithoutLoadingIfReleased() = runBlocking {
+        val coordinator = NativeResourceCoordinator()
+        val asr = FakeOwner(NativeResourceKind.HEAVY_ASR)
+
+        // Released ASR is not loaded by hint
+        coordinator.hint(NativeNextUseHint.EXPECT_ASR)
+        assertFalse(coordinator.activeKinds().contains(NativeResourceKind.HEAVY_ASR))
+
+        // Resident ASR warm expiry is refreshed
+        assertTrue(coordinator.acquire(asr))
+        coordinator.mark(asr, NativeResourceState.RESIDENT, "decode finished")
+        coordinator.hint(NativeNextUseHint.EXPECT_ASR)
+        assertTrue(coordinator.activeKinds().contains(NativeResourceKind.HEAVY_ASR))
+        assertFalse(asr.released)
+    }
+
     private class FakeOwner(
         override val nativeResourceKind: NativeResourceKind,
-        private val canRelease: Boolean = true
+        private val canRelease: Boolean = true,
+        private val policy: WorkloadResourcePolicy = WorkloadResourcePolicy(RuntimeWorkloadClass.TEXT_CHAT, exclusive = true, residencyPreference = ResidencyPreference.WARM_EJECTABLE)
     ) : NativeResourceOwner {
         var released: Boolean = false
-        private val uniqueId = java.util.UUID.randomUUID().toString()
+        private val uniqueId = UUID.randomUUID().toString()
+
+        override val defaultResourcePolicy: WorkloadResourcePolicy get() = policy
 
         override val nativeResourceId: String
             get() = nativeResourceKind.name + ":" + uniqueId

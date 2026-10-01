@@ -30,7 +30,8 @@ data class WorkloadResourcePolicy(
     val memoryEstimateBytes: Long = 0,
     val exclusive: Boolean = true,
     val residencyPreference: ResidencyPreference = ResidencyPreference.ON_DEMAND,
-    val priority: Int = 0
+    val priority: Int = 0,
+    val idleGraceMillis: Long? = null
 )
 
 enum class NativeResourceKind {
@@ -117,9 +118,31 @@ class NativeResourceCoordinator(
 
     suspend fun hint(next: NativeNextUseHint) = mutex.withLock {
         _nextUseHint.value = next
-        // A hint predicts likely work; it is not an allocation request. Residency remains warm
-        // until grace expiry or pressure. A real conflicting acquire still asks idle owners to
-        // yield, preserving execution exclusivity without paying a cold LLM reload pre-emptively.
+        if (next == NativeNextUseHint.EXPECT_ASR) {
+            val asrOwners = active.filter { it.nativeResourceKind == NativeResourceKind.HEAVY_ASR }
+            for (owner in asrOwners) {
+                expiry[owner]?.cancel()
+                val grace = owner.defaultResourcePolicy.idleGraceMillis
+                    ?: if (_budget.value.pressure == NativeMemoryPressure.NORMAL) _budget.value.idleGraceMillis else 0L
+                expiry[owner] = scope.launch {
+                    delay(if (_budget.value.pressure == NativeMemoryPressure.NORMAL) grace else 0L)
+                    while (isActive) {
+                        val released = mutex.withLock {
+                            if (owner !in active) true else if (owner.releaseIfIdle()) {
+                                active -= owner
+                                expiry.remove(owner)?.cancel()
+                                activeLeases.remove(owner)?.release()
+                                clearExecutionFacts(owner)
+                                publish(owner, NativeResourceState.RELEASED, "idle grace elapsed")
+                                true
+                            } else false
+                        }
+                        if (released) break
+                        delay(500)
+                    }
+                }
+            }
+        }
     }
 
     suspend fun updateBudget(value: NativeResourceBudget) {
@@ -331,8 +354,10 @@ class NativeResourceCoordinator(
         publish(owner, state, reason)
 
         if (state == NativeResourceState.RESIDENT) {
+            val grace = owner.defaultResourcePolicy.idleGraceMillis
+                ?: if (_budget.value.pressure == NativeMemoryPressure.NORMAL) _budget.value.idleGraceMillis else 0L
             expiry[owner] = scope.launch {
-                delay(if (_budget.value.pressure == NativeMemoryPressure.NORMAL) _budget.value.idleGraceMillis else 0)
+                delay(if (_budget.value.pressure == NativeMemoryPressure.NORMAL) grace else 0L)
                 while (isActive) {
                     val released = mutex.withLock {
                         if (owner !in active) true else if (owner.releaseIfIdle()) {

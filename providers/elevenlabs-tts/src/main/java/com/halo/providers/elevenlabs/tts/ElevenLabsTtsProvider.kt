@@ -165,8 +165,8 @@ class ElevenLabsTtsProvider(private val storage: Storage) : PcmSpeechSynthesisPr
         publishSnapshot()
     }
 
-    fun voiceId(): String? = voiceIdSnapshot
-    fun modelId(): String? = modelIdSnapshot
+    fun voiceId(): String? = voiceIdSnapshot ?: storage.getString(VOICE)?.takeIf { it.isNotBlank() }
+    fun modelId(): String? = modelIdSnapshot ?: storage.getString(MODEL)?.takeIf { it.isNotBlank() }
 
     fun selectVoice(id: String) {
         require(catalogueSnapshot?.voices?.any { it.id == id } == true)
@@ -192,12 +192,28 @@ class ElevenLabsTtsProvider(private val storage: Storage) : PcmSpeechSynthesisPr
         publishSnapshot()
     }
 
-    fun voiceStyle(): Map<String, Double> = styleSnapshot.toMap()
+    fun voiceStyle(): Map<String, Double> {
+        val storedStability = storage.getString("elevenlabs_stability")?.toDoubleOrNull()
+        val storedSimilarity = storage.getString("elevenlabs_similarity_boost")?.toDoubleOrNull()
+        val storedSpeed = storage.getString("elevenlabs_speed")?.toDoubleOrNull()
+        if (storedStability != null || storedSimilarity != null || storedSpeed != null) {
+            return mapOf(
+                "stability" to (storedStability ?: 0.5),
+                "similarity_boost" to (storedSimilarity ?: 0.75),
+                "speed" to (storedSpeed ?: 1.0),
+            )
+        }
+        return styleSnapshot.toMap()
+    }
 
     fun saveVoiceStyle(stability: Double, similarity: Double, speed: Double) {
         require(stability.isFinite() && stability in 0.0..1.0 && similarity.isFinite() && similarity in 0.0..1.0 && speed.isFinite() && speed in 0.7..1.2)
         val updated = mapOf("stability" to stability, "similarity_boost" to similarity, "speed" to speed)
-        storage.putBatch(strings = updated.mapValues { it.value.toString() })
+        storage.putBatch(strings = mapOf(
+            "elevenlabs_stability" to stability.toString(),
+            "elevenlabs_similarity_boost" to similarity.toString(),
+            "elevenlabs_speed" to speed.toString(),
+        ))
         styleSnapshot = updated
         publishSnapshot()
     }

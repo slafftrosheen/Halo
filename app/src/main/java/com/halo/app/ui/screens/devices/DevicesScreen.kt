@@ -1,5 +1,6 @@
 package com.halo.app.ui.screens.devices
 
+import android.content.IntentSender
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import androidx.compose.foundation.background
@@ -59,6 +60,7 @@ import com.halo.app.ui.icons.HaloIcon
 import com.halo.app.ui.state.toDisplayText
 import com.halo.drivers.heycyan.RealHeyCyanDriver
 import com.halo.drivers.heycyan.protocol.HeyCyanDeviceState
+import com.halo.sdk.runtime.Storage
 import com.halo.sdk.runtime.embodiment.DeviceKind
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -115,6 +117,7 @@ class DevicesViewModel(
     private val audioPairingCoordinator: com.halo.app.audio.HeyCyanAudioPairingCoordinator? = null,
     private val capabilityCatalogue: com.halo.runtime.cognition.tools.CapabilityCatalogueSource? = null,
     private val resourceLeaseManager: com.halo.sdk.runtime.resource.ResourceLeaseManager? = null,
+    private val storage: Storage? = null,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(DevicesUiState())
     val uiState: StateFlow<DevicesUiState> = _uiState.asStateFlow()
@@ -126,7 +129,22 @@ class DevicesViewModel(
     val audioPairingState: StateFlow<com.halo.app.audio.HeyCyanAudioPairingState> =
         audioPairingCoordinator?.state ?: MutableStateFlow(com.halo.app.audio.HeyCyanAudioPairingState.Unknown)
     val audioConfirmationRequests = audioPairingCoordinator?.confirmationRequests
-        ?: MutableSharedFlow<android.content.IntentSender>()
+        ?: MutableSharedFlow<IntentSender>()
+
+    private val _thumbnailQuality = MutableStateFlow(storage?.getString("heycyan_ai_thumbnail_quality")?.toIntOrNull()?.coerceIn(0, 5) ?: 3)
+    val thumbnailQuality: StateFlow<Int> = _thumbnailQuality.asStateFlow()
+
+    fun setThumbnailQuality(quality: Int) {
+        val valid = quality.coerceIn(0, 5)
+        _thumbnailQuality.value = valid
+        viewModelScope.launch(Dispatchers.IO) {
+            storage?.putString("heycyan_ai_thumbnail_quality", valid.toString())
+        }
+    }
+
+    fun resetAudioAssociation(deviceId: String) {
+        audioPairingCoordinator?.resetAssociation(deviceId)
+    }
 
     init {
         viewModelScope.launch(Dispatchers.IO) {

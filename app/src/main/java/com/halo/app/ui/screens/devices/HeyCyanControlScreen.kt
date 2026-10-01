@@ -37,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.halo.app.audio.HeyCyanAudioPairingState
 import com.halo.app.ui.theme.HaloPastelBlue
 import com.halo.app.ui.theme.HaloPastelMint
 import com.halo.app.ui.theme.HaloWarning
@@ -55,13 +56,7 @@ fun HeyCyanControlScreen(
     viewModel: DevicesViewModel,
     onBack: () -> Unit
 ) {
-    val context = LocalContext.current
-    val thumbnailPreferences = remember(context) {
-        context.getSharedPreferences("heycyan_settings", android.content.Context.MODE_PRIVATE)
-    }
-    var thumbnailQuality by remember {
-        mutableIntStateOf(thumbnailPreferences.getInt("ai_thumbnail_quality", 3).coerceIn(0, 5))
-    }
+    val thumbnailQuality by viewModel.thumbnailQuality.collectAsStateWithLifecycle()
     val audioPairing by viewModel.audioPairingState.collectAsStateWithLifecycle()
     val audioAssociationLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartIntentSenderForResult()
@@ -290,15 +285,50 @@ fun HeyCyanControlScreen(
             DeviceRow("Control", if (isConnected) "Connected · BLE" else connectionState)
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             DeviceRow("Audio", audioStatus)
-            if (audioPairing is com.halo.app.audio.HeyCyanAudioPairingState.NotAssociated ||
-                audioPairing is com.halo.app.audio.HeyCyanAudioPairingState.Failed
-            ) {
-                HaloWorkspaceButton(
-                    text = "Connect audio",
-                    onClick = { viewModel.connectAudio(deviceId) },
-                    enabled = isReady,
-                    modifier = Modifier.fillMaxWidth()
-                )
+            when (audioPairing) {
+                HeyCyanAudioPairingState.Discovering,
+                HeyCyanAudioPairingState.AwaitingUserConfirmation,
+                is HeyCyanAudioPairingState.Bonding -> {
+                    HaloWorkspaceButton(
+                        text = "Connecting audio…",
+                        onClick = {},
+                        enabled = false,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+                is HeyCyanAudioPairingState.Failed -> {
+                    HaloWorkspaceButton(
+                        text = "Repair audio",
+                        onClick = { viewModel.connectAudio(deviceId) },
+                        enabled = isReady,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+                is HeyCyanAudioPairingState.Associated,
+                is HeyCyanAudioPairingState.AudioConnected -> {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        HaloWorkspaceButton(
+                            text = "Reconnect audio",
+                            onClick = { viewModel.connectAudio(deviceId) },
+                            enabled = isReady,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        HaloWorkspaceButton(
+                            text = "Reset audio association",
+                            onClick = { viewModel.resetAudioAssociation(deviceId) },
+                            enabled = isReady,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+                else -> {
+                    HaloWorkspaceButton(
+                        text = "Connect audio",
+                        onClick = { viewModel.connectAudio(deviceId) },
+                        enabled = isReady,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         }
 
@@ -324,10 +354,15 @@ fun HeyCyanControlScreen(
             DeviceRow("Input", "Physical glasses activation automatically uses Halo")
             DeviceRow(
                 "Output",
-                if (audioPairing is com.halo.app.audio.HeyCyanAudioPairingState.AudioConnected) {
-                    "Verified HeyCyan audio endpoint"
-                } else {
-                    "Phone · Android speaker"
+                when (val state = audioPairing) {
+                    is HeyCyanAudioPairingState.AudioConnected -> "Glasses · verified audio endpoint (${state.endpoint.name ?: state.endpoint.type.name})"
+                    is HeyCyanAudioPairingState.Associated -> "Glasses · waiting for media profile"
+                    is HeyCyanAudioPairingState.Bonding -> "Glasses · Bluetooth pairing"
+                    HeyCyanAudioPairingState.AwaitingUserConfirmation -> "Approval required"
+                    HeyCyanAudioPairingState.Discovering -> "Finding audio device…"
+                    HeyCyanAudioPairingState.NotAssociated -> "Glasses output unavailable · Connect audio"
+                    is HeyCyanAudioPairingState.Failed -> "Glasses output unavailable · ${state.message}"
+                    HeyCyanAudioPairingState.Unknown -> "Glasses output checking…"
                 }
             )
             DeviceRow("Input policy", "An active turn owns input; activation during playback is ignored")
@@ -393,10 +428,7 @@ fun HeyCyanControlScreen(
                 listOf("Fast" to 1, "Balanced" to 3, "Detailed" to 5).forEach { (label, quality) ->
                     HaloWorkspaceButton(
                         text = label,
-                        onClick = {
-                            thumbnailQuality = quality
-                            thumbnailPreferences.edit().putInt("ai_thumbnail_quality", quality).apply()
-                        },
+                        onClick = { viewModel.setThumbnailQuality(quality) },
                         modifier = Modifier.weight(1f),
                         primary = thumbnailQuality == quality
                     )

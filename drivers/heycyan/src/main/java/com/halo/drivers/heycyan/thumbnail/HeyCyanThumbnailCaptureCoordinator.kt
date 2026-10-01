@@ -106,9 +106,7 @@ class HeyCyanThumbnailCaptureCoordinator(
         val lease = resourceArbiter.tryAcquire(
             operation = "captureThumbnail",
             resources = setOf(HeyCyanResource.CAMERA, HeyCyanResource.BLE_BULK_TRANSFER),
-        ) ?: return Result.failure(
-            com.halo.sdk.runtime.multimodal.MediaAcquisitionException(com.halo.sdk.runtime.multimodal.MediaFailure.SOURCE_BUSY),
-        )
+        ) ?: return Result.failure(IllegalStateException("Resource arbiter busy"))
 
         return try {
             val thumbnail = executeCaptureFlow(quality)
@@ -134,7 +132,7 @@ class HeyCyanThumbnailCaptureCoordinator(
         val lease = resourceArbiter.tryAcquire(
             operation = "receivePhotoReadyThumbnail",
             resources = setOf(HeyCyanResource.CAMERA, HeyCyanResource.BLE_BULK_TRANSFER),
-        ) ?: return Result.failure(com.halo.sdk.runtime.multimodal.MediaAcquisitionException(com.halo.sdk.runtime.multimodal.MediaFailure.SOURCE_BUSY))
+        ) ?: return Result.failure(IllegalStateException("Resource arbiter busy"))
         return try {
             if (settleDelayMs > 0) delay(settleDelayMs)
             val firstChunkAtMs = System.currentTimeMillis()

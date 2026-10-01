@@ -183,6 +183,7 @@ class DefaultProviderTurnExecutor(
         val provider = target.provider
         val expectedModelId = target.modelId
         
+        var firstTokenAtMs: Long? = null
         val response = if (target.providerCapabilities.contains(AiCapability.STREAMING)) {
             var completedResponse: AiResponse? = null
             val accumulatedText = StringBuilder()
@@ -195,6 +196,7 @@ class DefaultProviderTurnExecutor(
                             if (request.publishStreamingTokens) _streamingText.value = ""
 
                         is AiStreamEvent.Token -> {
+                            if (firstTokenAtMs == null) firstTokenAtMs = System.currentTimeMillis()
                             onTokenEmitted()
                             accumulatedText.append(event.text)
                             if (request.publishStreamingTokens) {
@@ -274,16 +276,21 @@ class DefaultProviderTurnExecutor(
             expectedModelId = expectedModelId,
             response = response
         )
-        val validated = if (validatedResponse.metrics == null) {
-            validatedResponse.copy(
-                metrics = AiGenerationMetrics(
-                    startedAtMs = startedAtMs,
-                    completedAtMs = System.currentTimeMillis(),
-                )
+        val completedAtMs = System.currentTimeMillis()
+        val metrics = validatedResponse.metrics
+        val metricsWithTtft = if (metrics == null) {
+            AiGenerationMetrics(
+                startedAtMs = startedAtMs,
+                firstTokenAtMs = firstTokenAtMs,
+                completedAtMs = completedAtMs,
             )
         } else {
-            validatedResponse
+            metrics.copy(
+                firstTokenAtMs = metrics.firstTokenAtMs ?: firstTokenAtMs,
+                completedAtMs = metrics.completedAtMs ?: completedAtMs,
+            )
         }
+        val validated = validatedResponse.copy(metrics = metricsWithTtft)
 
         val isHandoff = validated.finishReason.equals("handoff", ignoreCase = true) ||
             validated.text.equals("HANDOFF_STARTED", ignoreCase = true)
