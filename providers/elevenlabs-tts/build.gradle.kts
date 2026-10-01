@@ -10,4 +10,5 @@ dependencies {
     implementation(project(":sdk:host-sdk"))
     implementation(libs.okhttp)
     implementation(libs.kotlinx.coroutines.core)
+    testImplementation(libs.junit)
 }
