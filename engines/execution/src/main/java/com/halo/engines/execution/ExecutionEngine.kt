@@ -280,7 +280,7 @@ class ExecutionEngine(
 
     private fun Task.safeOperationIdentity(): String = when (this) {
         is com.halo.runtime.cognition.DeviceTask ->
-            "DeviceTask:${action.lowercase()}:hasTemporal=${parameters.containsKey(\"temporal_value\")}"
+            "DeviceTask:${action.lowercase()}:hasTemporal=${parameters.containsKey("temporal_value")}"
         is com.halo.runtime.cognition.ApplicationTask -> "ApplicationTask:launch"
         is com.halo.runtime.cognition.MemoryTask ->
             "MemoryTask:reminder:hasTime=${!temporalExpression.isNullOrBlank()}"
