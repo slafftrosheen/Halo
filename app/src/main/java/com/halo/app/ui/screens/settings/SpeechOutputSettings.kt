@@ -44,7 +44,17 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
             }) { Text(if (selection.id == id) "$label · Selected" else label) }
         }
         Text("Android TTS · Local engine; readiness checked on synthesis")
-        cloudState?.let { state -> Text("ElevenLabs · " + (state.errorCode?.label ?: if (!state.configured) "Setup required" else if (state.ready) "Ready" else "Configured; not checked") + if (selection.id == ElevenLabsTtsProvider.ID) " · Selected" else " · Not selected") }
+        cloudState?.let { state ->
+            val status = when {
+                state.loading -> "Loading secure configuration"
+                state.error == "SECURE_STORAGE_UNREADABLE" -> "Stored credential unreadable"
+                state.errorCode != null -> state.errorCode.label
+                !state.configured -> "Setup required"
+                state.ready -> "Ready"
+                else -> "Configured; not checked"
+            }
+            Text("ElevenLabs · " + status + if (selection.id == ElevenLabsTtsProvider.ID) " · Selected" else " · Not selected")
+        }
         elevenLabs?.takeIf { selection.id == ElevenLabsTtsProvider.ID }?.let { _ ->
             cloudState?.let { state ->
                 Text("Voice: ${state.voiceName ?: "Choose a voice"}")
@@ -89,9 +99,16 @@ fun ElevenLabsSettingsScreen(provider: ElevenLabsTtsProvider, onBack: () -> Unit
         item { TextButton(onClick = onBack) { Text("Back") }; Text("ElevenLabs speech", style = MaterialTheme.typography.headlineSmall) }
         item { Text("Selecting ElevenLabs sends sanitized spoken response text to ElevenLabs. Conversation history, memories and tool payloads are excluded. Provider retention follows your ElevenLabs account policy.") }
         item {
-            Text(if (configured) "Credential configured" else "Setup required")
+            Text(
+                when {
+                    state.loading -> "Loading secure configuration…"
+                    state.error == "SECURE_STORAGE_UNREADABLE" -> "Stored credential cannot be read · enter the key again"
+                    configured -> "Credential configured"
+                    else -> "Setup required"
+                }
+            )
             OutlinedTextField(draft, { draft = it }, label = { Text("API key") }, placeholder = { Text(if (configured) "Credential configured" else "Enter API key") }, visualTransformation = PasswordVisualTransformation(), singleLine = true)
-            Button(enabled = draft.isNotBlank() && !busy, onClick = {
+            Button(enabled = draft.isNotBlank() && !busy && !state.loading, onClick = {
                 val value = draft.trim()
                 busy = true
                 scope.launch {
