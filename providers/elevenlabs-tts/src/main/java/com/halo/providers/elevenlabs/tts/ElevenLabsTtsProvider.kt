@@ -99,6 +99,7 @@ class ElevenLabsTtsProvider(private val storage: Storage) : PcmSpeechSynthesisPr
     private fun publishState(error: String? = null) = publishSnapshot(error)
 
     private suspend fun loadPersistedConfiguration() = withContext(Dispatchers.IO) {
+        val version = configurationVersion.get()
         try {
             val key = storage.getString(KEY)?.trim()?.takeIf { it.isNotEmpty() }
             val voice = storage.getString(VOICE)?.takeIf { it.isNotBlank() }
@@ -110,6 +111,7 @@ class ElevenLabsTtsProvider(private val storage: Storage) : PcmSpeechSynthesisPr
                 "speed" to (storage.getString("elevenlabs_speed")?.toDoubleOrNull() ?: 1.0),
             )
 
+            if (configurationVersion.get() != version) return@withContext
             credentialSnapshot = key?.let { Credential(ID, it) }
             voiceIdSnapshot = voice
             modelIdSnapshot = model
@@ -119,6 +121,7 @@ class ElevenLabsTtsProvider(private val storage: Storage) : PcmSpeechSynthesisPr
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (_: Throwable) {
+            if (configurationVersion.get() != version) return@withContext
             credentialSnapshot = null
             healthy = false
             authenticated = false
