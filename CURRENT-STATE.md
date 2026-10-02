@@ -1,5 +1,41 @@
 # Halo current state
 
+## DOGFOOD-005.1 — Physical-log correction + skill permission authority — 2026-10-02
+
+**SOURCE APPLIED TO MAIN / PHYSICAL RE-TEST PENDING / CI STARTUP FAILURE.**
+The clean physical run from source `80b6e7a36d58` exposed defects that were not visible in the
+pre-device unit pass. The correction is now on `main`:
+- Added Room decode support for `DirectCommandAuthorityRecorded` and all four
+  `ExternalCondition*` journal steps. Fresh native/watch runs no longer become `INTERRUPTED`
+  merely because the repository sees a newly introduced step type.
+- Direct native user authority is now consumed by `DefaultToolTurnExecutor` for the exact
+  interaction/tool/arguments digest, but only when the descriptor is not `SENSITIVE`,
+  `DESTRUCTIVE`, or `ConfirmationPolicy.ALWAYS`. Messaging, clipboard, sharing, calls and
+  semantic UI/app actions do not receive this bypass.
+- `HALO_NATIVE_ACTION_TIMING` reports waiting/failure/interrupted/completed truth instead of
+  hard-coded `SUCCESS`.
+- Continuation matches record `ExternalConditionSatisfied` and surface Ready-to-continue without
+  incorrectly re-transitioning the run into `WAITING_FOR_EVENT`; event/capability waiting states
+  are accepted by the explicit resume coordinator.
+- Model selection persistence moved off the Compose/Main callback path.
+- Skills now expose **Allow all without asking** and **Grant all needed Android access**. Approval
+  policy and Android permission are deliberately separate: the global policy cannot bypass hard
+  `ALWAYS` confirmation, and Android runtime/special access is still granted by the user.
+- Android skill permission planning combines manifest declarations with tool-derived requirements.
+  It covers contacts, calendar, notification listener, camera/flashlight, accessibility screen
+  control, brightness `WRITE_SETTINGS`, DND notification-policy access for silent ringer mode,
+  and notification delivery for follow-up watches. Enabling a skill requests its relevant access.
+- `WRITE_SETTINGS` and `ACCESS_NOTIFICATION_POLICY` are declared in the app manifest; brightness
+  is declared per-tool in both the dedicated and compatibility phone-action manifests.
+- Regression tests were added for the DOGFOOD-005 journal codec and skill/tool permission planning.
+
+GitHub Actions for the resulting direct-main push again ended in `startup_failure` with zero jobs,
+so this correction must **not** be described as compiled or CI-verified yet. The next physical pass
+should re-run native volume/timer/open-app, one continuation, one production vision request, default
+assistant invocation, and the Skills grant-all flow.
+
+---
+
 ## DOGFOOD-005 — Physical Runtime Hardening — 2026-10-02
 
 **IMPLEMENTED / COMPILED / UNIT VERIFIED / DEPLOYED.**
