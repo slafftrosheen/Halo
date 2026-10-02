@@ -3,6 +3,7 @@ package com.halo.app
 import android.Manifest
 import android.bluetooth.BluetoothAdapter
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -35,6 +36,7 @@ import com.halo.app.ui.theme.HaloTheme
 import com.halo.app.ui.workspace.HaloWorkspaceButton
 import com.halo.sdk.runtime.HostInvocation
 import com.halo.sdk.runtime.InvocationSource
+import com.halo.sdk.runtime.skills.HostPermission
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -54,19 +56,36 @@ class MainActivity : ComponentActivity() {
     private var runtimeJob: Job? = null
     private var activityAssistJob: Job? = null
     private var activityAssistInteractionId: String? = null
+    private val pendingSkillSpecialAccess = java.util.ArrayDeque<HostPermission>()
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) {
         lifecycleScope.launch(Dispatchers.IO) {
             ManualDependencyGraph.platformStateMonitor.refreshMicrophonePermission()
-            val publisher = ManualDependencyGraph.hostGraph.capabilityPublisher
-        lifecycleScope.launch { publisher.refresh(CapabilityRefreshReason.APP_RESUME) }
-        publisher.publishInto(ManualDependencyGraph.capabilityCatalogue)
+            refreshSkillPermissionTruth()
             RuntimeStartupTrace.mark(
                 "permissions.microphone.result granted=" +
                     ManualDependencyGraph.platformStateMonitor.microphonePermissionGranted.value
             )
+        }
+    }
+
+    private val skillPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            refreshSkillPermissionTruth()
+            withContext(Dispatchers.Main.immediate) { launchNextSkillSpecialAccess() }
+        }
+    }
+
+    private val skillSpecialAccessLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            refreshSkillPermissionTruth()
+            withContext(Dispatchers.Main.immediate) { launchNextSkillSpecialAccess() }
         }
     }
 
@@ -191,7 +210,8 @@ class MainActivity : ComponentActivity() {
                                 bluetoothEnableLauncher.launch(
                                     Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
                                 )
-                            }
+                            },
+                            onRequestSkillPermissions = ::requestSkillPermissions,
                         )
                     }
                 }
@@ -316,6 +336,55 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    private fun requestSkillPermissions(
+        declaredPermissions: Set<HostPermission>,
+        toolIds: Set<String>,
+    ) {
+        val checker = ManualDependencyGraph.skillPermissionChecker
+        val requested = checker.accessPlan(declaredPermissions, toolIds)
+            .filterNot(checker::granted)
+        pendingSkillSpecialAccess.clear()
+
+        val runtimePermissions = linkedSetOf<String>()
+        requested.forEach { permission ->
+            val normal = checker.runtimePermissions(permission)
+            if (normal.isNotEmpty()) {
+                normal.filterTo(runtimePermissions) {
+                    checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED
+                }
+            } else if (checker.specialAccessIntent(permission) != null) {
+                pendingSkillSpecialAccess.addLast(permission)
+            }
+        }
+
+        if (runtimePermissions.isNotEmpty()) {
+            skillPermissionLauncher.launch(runtimePermissions.toTypedArray())
+        } else {
+            launchNextSkillSpecialAccess()
+        }
+    }
+
+    private fun launchNextSkillSpecialAccess() {
+        val checker = ManualDependencyGraph.skillPermissionChecker
+        while (pendingSkillSpecialAccess.isNotEmpty()) {
+            val permission = pendingSkillSpecialAccess.removeFirst()
+            if (checker.granted(permission)) continue
+            val intent = checker.specialAccessIntent(permission) ?: continue
+            skillSpecialAccessLauncher.launch(intent)
+            return
+        }
+        lifecycleScope.launch(Dispatchers.IO) { refreshSkillPermissionTruth() }
+    }
+
+    private suspend fun refreshSkillPermissionTruth() {
+        ManualDependencyGraph.skillRegistry.refreshAvailability()
+        val publisher = ManualDependencyGraph.hostGraph.capabilityPublisher
+        publisher.refresh(CapabilityRefreshReason.PERMISSION_RESULT)
+        publisher.publishInto(ManualDependencyGraph.capabilityCatalogue)
+        runCatching { ManualDependencyGraph.platformStateMonitor.refreshMicrophonePermission() }
+        runCatching { ManualDependencyGraph.platformStateMonitor.refreshBluetoothState() }
     }
 
     /**

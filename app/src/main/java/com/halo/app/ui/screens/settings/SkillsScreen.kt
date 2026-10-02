@@ -50,6 +50,7 @@ import com.halo.runtime.cognition.tools.ToolAvailabilityResolver
 import com.halo.runtime.cognition.tools.ToolDescriptor
 import com.halo.runtime.cognition.tools.ToolRegistry
 import com.halo.runtime.cognition.tools.ToolRiskClass
+import com.halo.sdk.runtime.skills.HostPermission
 import com.halo.sdk.runtime.skills.SkillAvailability
 import com.halo.sdk.runtime.skills.SkillDescriptor
 import kotlinx.coroutines.flow.flowOf
@@ -75,6 +76,7 @@ fun SkillsScreen(
     refreshAppCapabilities: (suspend () -> Unit)? = null,
     screenControlAvailable: () -> Boolean = { false },
     providerRoleCheck: (suspend (SkillDescriptor) -> String?)? = null,
+    onRequestSkillAccess: ((Set<HostPermission>, Set<String>) -> Unit)? = null,
 ) {
     LaunchedEffect(appCapabilities) { refreshAppCapabilities?.let { refresh -> kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { refresh() } } }
     val appSnapshot by (appCapabilities?.state ?: kotlinx.coroutines.flow.MutableStateFlow(com.halo.runtime.cognition.apps.AppCapabilitySnapshot())).collectAsStateWithLifecycle()
@@ -132,6 +134,7 @@ fun SkillsScreen(
             var policy by remember(id) { mutableStateOf(checks[id]?.policy ?: ToolApprovalPolicy.ASK_EVERY_TIME) }
             var showPolicies by remember(id) { mutableStateOf(false) }
             val descriptors = checks[id]?.descriptors.orEmpty()
+            val requiredAccess = declaredPermissions(skill)
 
             AlertDialog(
                 onDismissRequest = { selectedId = null },
@@ -144,7 +147,12 @@ fun SkillsScreen(
                         Text("Status · ${checks[id]?.status ?: "Checking"}")
                         TextButton(onClick = { checkRevision++ }) { Text("Check") }
                         checks[id]?.detail?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
-                        Text("Access · ${skill.requiredPermissions.joinToString().ifBlank { "No special permission" }}")
+                        Text("Access · ${requiredAccess.joinToString().ifBlank { "No special permission" }}")
+                        if (onRequestSkillAccess != null) {
+                            TextButton(onClick = { onRequestSkillAccess.invoke(requiredAccess, skill.tools) }) {
+                                Text("Grant Android access")
+                            }
+                        }
                         Text("Source · ${skill.source.name.lowercase().replace('_', ' ')} · schema ${skill.schemaVersion}")
                         skill.provenance?.let { provenance ->
                             Text(
@@ -205,7 +213,12 @@ fun SkillsScreen(
                                     onClick = {
                                         showPolicies = false
                                         policy = choice
-                                        scope.launch { skillRegistry.setApprovalPolicy(skill.id, choice) }
+                                        scope.launch {
+                                            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                                skillRegistry.setApprovalPolicy(skill.id, choice)
+                                            }
+                                            checkRevision++
+                                        }
                                     },
                                 )
                             }
@@ -224,7 +237,14 @@ fun SkillsScreen(
                 },
                 confirmButton = {
                     TextButton(onClick = {
-                        scope.launch { skillRegistry.setEnabled(skill.id, !skill.enabled) }
+                        val enable = !skill.enabled
+                        scope.launch {
+                            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                skillRegistry.setEnabled(skill.id, enable)
+                            }
+                            checkRevision++
+                            if (enable) onRequestSkillAccess?.invoke(requiredAccess, skill.tools)
+                        }
                     }) {
                         Text(if (skill.enabled) "Disable" else "Enable")
                     }
@@ -300,6 +320,48 @@ fun SkillsScreen(
                     }
                 }
             }
+            if (onRequestSkillAccess != null) {
+                item(key = "global-skill-access") {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = HaloSpacing.sm),
+                        verticalArrangement = Arrangement.spacedBy(HaloSpacing.xs),
+                    ) {
+                        Text(
+                            "Skill authority",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Text(
+                            "Allow all without asking applies the stored skill policy globally. Android permission and special-access screens remain explicit, and actions marked Always confirm still require confirmation.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        TextButton(onClick = {
+                            val enabled = skills.filter { it.enabled }
+                            val permissions = enabled.flatMap(::declaredPermissions).toSet()
+                            val toolIds = enabled.flatMap { it.tools }.toSet()
+                            scope.launch {
+                                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                    skillRegistry.setApprovalPolicyForAll(ToolApprovalPolicy.ALWAYS_ALLOW)
+                                }
+                                checkRevision++
+                                onRequestSkillAccess?.invoke(permissions, toolIds)
+                            }
+                        }) {
+                            Text("Allow all without asking")
+                        }
+                        TextButton(onClick = {
+                            val enabled = skills.filter { it.enabled }
+                            onRequestSkillAccess?.invoke(
+                                enabled.flatMap(::declaredPermissions).toSet(),
+                                enabled.flatMap { it.tools }.toSet(),
+                            )
+                        }) {
+                            Text("Grant all needed Android access")
+                        }
+                    }
+                }
+            }
             skills.filterNot { it.id.value in setOf("halo.phone.actions", "halo.phone", "halo.reminders") }.groupBy { skillLane(it) }.forEach { (category, entries) ->
                 item(key = category) {
                     Text(
@@ -336,7 +398,16 @@ fun SkillsScreen(
                             Switch(
                                 checked = skill.enabled,
                                 onCheckedChange = { enabled ->
-                                    scope.launch { skillRegistry.setEnabled(skill.id, enabled) }
+                                    scope.launch {
+                                        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                            skillRegistry.setEnabled(skill.id, enabled)
+                                        }
+                                        checkRevision++
+                                        if (enabled) onRequestSkillAccess?.invoke(
+                                            declaredPermissions(skill),
+                                            skill.tools,
+                                        )
+                                    }
                                 },
                             )
                         }
@@ -347,6 +418,9 @@ fun SkillsScreen(
         }
     }
 }
+
+private fun declaredPermissions(skill: SkillDescriptor): Set<HostPermission> =
+    skill.requiredPermissions + skill.toolDefinitions.flatMap { it.requiredPermissions }
 
 /**
  * MINING-P1-001 capability overview card.

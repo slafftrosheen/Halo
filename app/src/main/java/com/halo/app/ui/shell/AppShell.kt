@@ -95,7 +95,8 @@ val bottomNavItems = listOf(Screen.Home, Screen.Activity, Screen.Notebook, Scree
 fun AppShell(
     onRequestPermissions: () -> Unit,
     onRequestBluetoothPermissions: () -> Unit,
-    onRequestBluetoothEnable: () -> Unit
+    onRequestBluetoothEnable: () -> Unit,
+    onRequestSkillPermissions: (Set<com.halo.sdk.runtime.skills.HostPermission>, Set<String>) -> Unit = { _, _ -> },
 ) {
     val navController = rememberNavController()
     val homeViewModel = ManualDependencyGraph.homeViewModel
@@ -417,6 +418,7 @@ fun AppShell(
                         capabilityCatalogue = ManualDependencyGraph.capabilityCatalogue,
                         onInstallCustomSkill = ManualDependencyGraph::installCustomSkillPackage,
                         capabilityStatus = ManualDependencyGraph.capabilityStatusViewModel,
+                        onRequestSkillAccess = onRequestSkillPermissions,
                     )
                 }
 
