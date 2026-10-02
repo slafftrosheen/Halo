@@ -59,6 +59,7 @@ import com.halo.sdk.runtime.SpeechOutputTarget
 import com.halo.sdk.runtime.TtsRequested
 import com.halo.sdk.runtime.defaultResponseDelivery
 import com.halo.runtime.cognition.agent.AgentRunGuardRegistry
+import com.halo.runtime.cognition.vision.InteractionMediaBinder
 
 class CognitiveSession(
     private val eventBus: EventBus,
@@ -73,6 +74,7 @@ class CognitiveSession(
     private val responseCommitter: CognitiveResponseCommitter,
     private val routeResolver: InterpretationRouteResolver = InterpretationRouteResolver(),
     private val nativeDispatcher: com.halo.runtime.cognition.native.NativeCapabilityDispatcher? = null,
+    private val interactionMediaBinder: InteractionMediaBinder? = null,
 ) {
     constructor(
         eventBus: EventBus,
@@ -98,6 +100,7 @@ class CognitiveSession(
         contextAcquisitionCoordinator: ContextAcquisitionCoordinator? = null,
         /** MINING-P1-001: shared so the provider loop and tool loop share one run budget. */
         runGuards: AgentRunGuardRegistry = AgentRunGuardRegistry(),
+        interactionMediaBinder: InteractionMediaBinder? = null,
     ) : this(
         eventBus = eventBus,
         conversationStore = conversationStore,
@@ -144,6 +147,9 @@ class CognitiveSession(
             agentRunCoordinator = agentRunCoordinator,
             eventBus = eventBus,
         ),
+        routeResolver = InterpretationRouteResolver(),
+        nativeDispatcher = null,
+        interactionMediaBinder = interactionMediaBinder,
     )
     private val _state = MutableStateFlow<CognitiveSessionState>(CognitiveSessionState.Idle)
     val state: StateFlow<CognitiveSessionState> = _state.asStateFlow()

@@ -56,13 +56,19 @@ class AndroidCapabilityPublisher(
     }
 
     override fun publishInto(catalogue: CapabilityCatalogue) {
-        val next = _state.value
-        if (next.isEmpty()) return // Not yet initialized
+        val next = if (_state.value.isNotEmpty()) _state.value else snapshotCapabilities().also { _state.value = it }
         val current = catalogue.snapshot.value.capabilities.filter { it.ownerId == scope && it.sourceKind == CapabilitySourceKind.HOST }
         if (current.toSet() != next.toSet()) catalogue.replaceScope(scope, next)
     }
 
-    private fun snapshotCapabilities(): List<CapabilityInstance> {
+    fun refreshInto(catalogue: CapabilityCatalogue) {
+        val next = snapshotCapabilities()
+        _state.value = next
+        val current = catalogue.snapshot.value.capabilities.filter { it.ownerId == scope && it.sourceKind == CapabilitySourceKind.HOST }
+        if (current.toSet() != next.toSet()) catalogue.replaceScope(scope, next)
+    }
+
+    private fun snapshotCapabilities(): List<CapabilityInstance> = synchronized(this) {
         val pm = context.packageManager
 
         val canLaunchApps = pm.queryIntentActivities(

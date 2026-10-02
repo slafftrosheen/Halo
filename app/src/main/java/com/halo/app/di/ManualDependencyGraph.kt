@@ -80,6 +80,7 @@ import com.halo.runtime.cognition.turn.DefaultCognitiveResponseCommitter
 import com.halo.runtime.cognition.turn.DefaultCognitiveTurnPreparer
 import com.halo.runtime.cognition.turn.DefaultProviderTurnExecutor
 import com.halo.runtime.cognition.turn.DefaultToolTurnExecutor
+import com.halo.runtime.cognition.vision.DefaultInteractionMediaBinder
 import com.halo.runtime.cognition.workload.DefaultAiWorkloadPlanner
 import com.halo.runtime.kernel.HaloMicrokernel
 
@@ -1121,6 +1122,10 @@ object ManualDependencyGraph {
     val skillRuntimeAudit by lazy {
         com.halo.runtime.cognition.skills.SkillRuntimeAudit(skillRegistry, toolRegistry, skillExecutionService)
     }
+    val interactionMediaBinder by lazy {
+        DefaultInteractionMediaBinder(mediaAssetStore, assistantContextRepository)
+    }
+
     val cognitiveSession by lazy {
         CognitiveSession(
             eventBus = eventBus,
@@ -1133,6 +1138,7 @@ object ManualDependencyGraph {
             turnExecutor = cognitiveTurnExecutor,
             responseCommitter = cognitiveResponseCommitter,
             nativeDispatcher = nativeCapabilityDispatcher,
+            interactionMediaBinder = interactionMediaBinder,
         )
     }
 

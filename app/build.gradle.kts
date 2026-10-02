@@ -44,6 +44,7 @@ android {
     buildConfigField("Boolean", "GIT_DIRTY", getGitDirty().toString())
     buildConfigField("String", "HALO_GIT_COMMIT", "\"${getGitCommitHash()}\"")
     buildConfigField("Boolean", "HALO_GIT_DIRTY", getGitDirty().toString())
+    buildConfigField("String", "HALO_SOURCE_ID", "\"${getGitCommitHash()}${if (getGitDirty()) "+dirty" else ""}\"")
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }

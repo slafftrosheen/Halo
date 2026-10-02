@@ -52,6 +52,8 @@ import com.halo.app.backup.BackupLocationState
 import com.halo.app.backup.StorageAccessRepository
 import com.halo.app.di.CapabilityRefreshReason
 import com.halo.app.di.ManualDependencyGraph
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 
 @Composable
 fun PermissionsScreen(
@@ -93,8 +95,9 @@ fun PermissionsScreen(
     ) {
         refreshKey++
         permissionScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-            scope.launch { ManualDependencyGraph.hostGraph.capabilityPublisher.refresh(
-                CapabilityRefreshReason.PERMISSION_RESULT) }
+            CoroutineScope(Dispatchers.IO).launch {
+                ManualDependencyGraph.hostGraph.capabilityPublisher.refresh(CapabilityRefreshReason.PERMISSION_RESULT)
+            }
             ManualDependencyGraph.hostGraph.capabilityPublisher.publishInto(ManualDependencyGraph.capabilityCatalogue)
             com.halo.app.di.ManualDependencyGraph.skillRegistry.refreshAvailability()
         }

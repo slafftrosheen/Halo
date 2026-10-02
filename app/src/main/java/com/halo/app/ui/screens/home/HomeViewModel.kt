@@ -5,14 +5,18 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.halo.app.capture.LocalCaptureStore
 import com.halo.app.ai.readRuntimeAiContextPolicy
+import com.halo.app.di.ManualDependencyGraph
 import com.halo.app.ui.glass.material.HaloRuntimeState
 import com.halo.app.ui.state.presenceFromSpeech
+import com.halo.cognition.language.InteractionId
 import com.halo.engines.speech.SpeechRecognizedPayload
 import com.halo.runtime.cognition.context.CognitiveOperatingMode
 import com.halo.runtime.cognition.conversation.ConversationTurn
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.*
 import com.halo.runtime.cognition.session.CognitiveSession
+import com.halo.sdk.runtime.multimodal.MediaAcquisitionException
+import com.halo.sdk.runtime.multimodal.MediaFailure
 import java.util.Locale
 import java.util.UUID
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -440,30 +444,16 @@ class HomeViewModel(
                 val timestamp = System.currentTimeMillis()
                 val interactionId = UUID.randomUUID().toString()
                 val pendingAttachment = com.halo.app.di.ManualDependencyGraph.visualAttachments.state.value
-                if (pendingAttachment != null) {
-                    val policy = com.halo.app.di.ManualDependencyGraph.storage.readRuntimeAiContextPolicy()
-                    if (!policy.includeImages) throw com.halo.sdk.runtime.multimodal.MediaAcquisitionException(com.halo.sdk.runtime.multimodal.MediaFailure.POLICY_BLOCKED)
-                    val target = aiProviderRouter?.resolveExecutionTarget(AiRequest(text = normalized),
-                        AiWorkloadSpec(kind = AiWorkloadKind.VISUAL_UNDERSTANDING,
-                            requiredCapabilities = setOf(AiCapability.TEXT, AiCapability.IMAGE), allowRemote = policy.allowCloudImages))
-                        ?: throw com.halo.sdk.runtime.multimodal.MediaAcquisitionException(com.halo.sdk.runtime.multimodal.MediaFailure.VISION_MODEL_UNAVAILABLE)
-                    if (!com.halo.app.di.ManualDependencyGraph.workspaceMediaAiPolicy.permits(pendingAttachment.ref,
-                            target.model.executionLocation == AiExecutionLocation.ON_DEVICE)) {
-                        throw com.halo.sdk.runtime.multimodal.MediaAcquisitionException(com.halo.sdk.runtime.multimodal.MediaFailure.POLICY_BLOCKED)
-                    }
-                }
-                val attachment = com.halo.app.di.ManualDependencyGraph.visualAttachments.take()
-                attachment?.let {
-                    val ref = com.halo.app.di.ManualDependencyGraph.mediaAssetStore.transferOwnership(it.ref, interactionId)
-                    com.halo.app.di.ManualDependencyGraph.assistantContextRepository.putImage(interactionId,
-                        com.halo.runtime.cognition.context.ImageContext(mediaRef = ref, mimeType = ref.mimeType,
-                            timestampMs = it.ref.createdAtMs, assetId = it.ref.id, interactionId = interactionId,
-                            freshness = com.halo.sdk.runtime.VisualFreshness.REFERENCE))
-                    cognitiveSession.submit(request = AiRequest(text = normalized), responseDelivery = ResponseDelivery.VISUAL_ONLY,
-                        metadata = mapOf("input" to "keyboard", "mode" to selectedMode.value.name, "interactionId" to interactionId,
-                            "hasAssistantImage" to "true", "explicitImageReference" to "true"))
-                    return@runCatching
-                }
+                val imageArg = if (pendingAttachment != null) {
+                    val binder = ManualDependencyGraph.interactionMediaBinder
+                        ?: throw MediaAcquisitionException(MediaFailure.SOURCE_UNAVAILABLE)
+                    val bound = binder.bindImage(pendingAttachment.ref,
+                        InteractionId(interactionId), VisualFreshness.REFERENCE)
+                    bound.ref
+                } else null
+
+                ManualDependencyGraph.visualAttachments.remove()
+
                 eventBus.publish(
                     ObservationCreated(
                         observation = Observation(
@@ -478,11 +468,21 @@ class HomeViewModel(
                             ),
                             interactionId = interactionId,
                             metadata = mapOf("input" to "keyboard", "mode" to selectedMode.value.name,
-                                "interactionId" to interactionId, "hasAssistantImage" to (attachment != null).toString(),
-                                "explicitImageReference" to (attachment != null).toString())
+                                "interactionId" to interactionId, "hasAssistantImage" to (imageArg != null).toString(),
+                                "explicitImageReference" to (imageArg != null).toString())
                         )
                     )
                 )
+
+                // No manual pre-routing. Pass the image argument to the session.
+                val request = AiRequest(
+                    text = normalized,
+                    image = null
+                )
+                cognitiveSession.submit(request = request, responseDelivery = ResponseDelivery.SPEECH_AND_VISUAL,
+                    metadata = mapOf("input" to "keyboard", "mode" to selectedMode.value.name, "interactionId" to interactionId,
+                        "hasAssistantImage" to (imageArg != null).toString(), "explicitImageReference" to (imageArg != null).toString()))
+
             }.onFailure {
                 captureMessage.value = if (it is com.halo.sdk.runtime.multimodal.MediaAcquisitionException) it.message
                     else if (com.halo.app.di.ManualDependencyGraph.visualAttachments.state.value != null)

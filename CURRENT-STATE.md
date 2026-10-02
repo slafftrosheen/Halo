@@ -1,5 +1,21 @@
 # Halo current state
 
+## DOGFOOD-005 — Physical Runtime Hardening — 2026-10-02
+
+**IMPLEMENTED / COMPILED / UNIT VERIFIED / DEPLOYED.**
+Physical runtime hardening batch for native action latency, direct command authority, state machine correctness, vision binding, and UI thread purity:
+- **Hot-Path Preflight Optimization:** Introduced `HostCapabilityStateSource` and `CapabilityRefreshReason`. Removed blocking `PackageManager` capability scans from hot-path tool execution and check loops. Restored immutable O(1) ownership indexing in `HostToolRegistry`.
+- **Direct User Command Authority:** Added `DirectUserCommandAuthority` and recorded `DirectCommandAuthorityRecorded` journal step for safe direct command execution without duplicate secondary approval dialogs.
+- **State Machine & Run Resumption:** Updated `DefaultAgentRunCoordinator` transition rules to support `WAITING_FOR_EVENT` and `INTERRUPTED` run state transitions without `IllegalStateException`.
+- **One Exact Image Binding Authority:** Created `InteractionMediaBinder` and `DefaultInteractionMediaBinder` to bind image asset references and register image context. Refactored `HomeViewModel` to pass image references through binder.
+- **Main-Thread Storage Purity:** Added volatile thread-safe caching in `haloStorageLayout(context)` to prevent synchronous `filesDir` / `cacheDir` disk reads on Main during Compose rendering and navigation.
+- **Traceability & Telemetry:** Added `HALO_SOURCE_ID` build config field (`commit+dirty`) logged on application startup. Added `HALO_NATIVE_ACTION_TIMING` telemetry in `NativeCapabilityDispatcher`.
+- **Automated Verification:** 422 unit tests passed (100% success rate). Debug APK assembled and deployed to `emulator-5554`.
+
+See [DOGFOOD-005 documentation](docs/engineering/DOGFOOD-005-PHYSICAL-RUNTIME-HARDENING.md).
+
+---
+
 ## PHONE-ASSISTANT-004 — Durable Follow-ups + Event Watches + Continuation Runtime — 2026-10-02
 
 **IMPLEMENTED / COMPILED / UNIT VERIFIED / DEPLOYED.**

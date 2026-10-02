@@ -28,6 +28,7 @@ interface MediaAssetResolver {
 }
 interface MediaAssetStore : MediaAssetResolver {
     suspend fun ingest(content: MediaAssetContent, provenance: MediaProvenance, interactionId: String, sourceDeviceId: String? = null, workspaceObjectId: String? = null): MediaAssetRef
+    suspend fun transferOwnership(ref: MediaAssetRef, interactionId: String): MediaAssetRef
     suspend fun releaseInteraction(interactionId: String)
 }
 

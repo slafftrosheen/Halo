@@ -60,7 +60,8 @@ class HaloApplication :
 
         val gitCommit = runCatching { BuildConfig::class.java.getField("HALO_GIT_COMMIT").get(null) as? String }.getOrNull() ?: "unknown"
         val gitDirty = runCatching { BuildConfig::class.java.getField("HALO_GIT_DIRTY").get(null) as? Boolean }.getOrNull() ?: false
-        val buildLog = "HALO_BUILD versionName=${BuildConfig.VERSION_NAME} versionCode=${BuildConfig.VERSION_CODE} variant=${BuildConfig.BUILD_TYPE} commit=$gitCommit dirty=$gitDirty"
+        val sourceId = runCatching { BuildConfig::class.java.getField("HALO_SOURCE_ID").get(null) as? String }.getOrNull() ?: gitCommit
+        val buildLog = "HALO_BUILD versionName=${BuildConfig.VERSION_NAME} versionCode=${BuildConfig.VERSION_CODE} variant=${BuildConfig.BUILD_TYPE} sourceId=$sourceId commit=$gitCommit dirty=$gitDirty"
         Log.i("HaloApplication", buildLog)
         println("[$buildLog]")
 

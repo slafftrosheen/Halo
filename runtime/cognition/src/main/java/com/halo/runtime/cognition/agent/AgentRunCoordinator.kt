@@ -230,8 +230,8 @@ class DefaultAgentRunCoordinator(
     }
 
     override suspend fun recordStep(step: AgentStep): Boolean = mutex.withLock {
-        val run = requireNotNull(store.get(step.runId)) { "Unknown run ${step.runId.value}" }
-        check(!run.state.isTerminal) { "Cannot append to ${run.state}" }
+        val run = store.get(step.runId) ?: return@withLock false
+        if (run.state.isTerminal) return@withLock false
         store.appendStep(step)
     }
 
@@ -242,6 +242,8 @@ class DefaultAgentRunCoordinator(
             if (state.isTerminal) {
                 println("[HALO-AGENT-RUN-IDEMPOTENT] Terminal run ${run.id.value} in state ${run.state} ignored late terminal transition request to $state (reason: $reason)")
                 return@withLock
+            } else if (run.state == AgentRunState.INTERRUPTED) {
+                println("[HALO-AGENT-RUN-RESUME] Resuming interrupted run ${run.id.value} to $state")
             } else {
                 check(!run.state.isTerminal) { "Cannot transition terminal run ${run.id.value} from ${run.state} to $state" }
             }
@@ -251,7 +253,7 @@ class DefaultAgentRunCoordinator(
             AgentRunState.PLANNING -> setOf(AgentRunState.EXECUTING, AgentRunState.COMPLETED, AgentRunState.WAITING_FOR_CLARIFICATION, AgentRunState.WAITING_FOR_CAPABILITY, AgentRunState.WAITING_FOR_RESOURCE)
             AgentRunState.EXECUTING -> setOf(AgentRunState.COMPLETED, AgentRunState.WAITING_FOR_APPROVAL, AgentRunState.WAITING_FOR_CAPABILITY, AgentRunState.WAITING_FOR_RESOURCE, AgentRunState.SUSPENDED)
             AgentRunState.WAITING_FOR_CLARIFICATION -> setOf(AgentRunState.PLANNING, AgentRunState.EXECUTING, AgentRunState.COMPLETED)
-            AgentRunState.WAITING_FOR_APPROVAL, AgentRunState.WAITING_FOR_CAPABILITY, AgentRunState.WAITING_FOR_RESOURCE, AgentRunState.SUSPENDED -> setOf(AgentRunState.EXECUTING, AgentRunState.COMPLETED)
+            AgentRunState.WAITING_FOR_APPROVAL, AgentRunState.WAITING_FOR_CAPABILITY, AgentRunState.WAITING_FOR_RESOURCE, AgentRunState.WAITING_FOR_EVENT, AgentRunState.SUSPENDED, AgentRunState.INTERRUPTED -> setOf(AgentRunState.EXECUTING, AgentRunState.PLANNING, AgentRunState.WAITING_FOR_APPROVAL, AgentRunState.WAITING_FOR_CLARIFICATION, AgentRunState.COMPLETED)
             else -> emptySet()
         } + setOf(AgentRunState.CANCELLED, AgentRunState.FAILED, AgentRunState.INTERRUPTED)
         require(state in allowed) { "Invalid transition ${run.state} -> $state" }

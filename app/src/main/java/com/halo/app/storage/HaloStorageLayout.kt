@@ -39,21 +39,29 @@ data class HaloStorageLayout(
     }
 }
 
+@Volatile private var cachedLayout: HaloStorageLayout? = null
+
 fun haloStorageLayout(context: Context): HaloStorageLayout {
-    val persistent = context.filesDir
-    val noBackup = context.noBackupFilesDir
-    val cache = context.cacheDir
-    return HaloStorageLayout(
-        managedWorkspaceFiles = File(persistent, "workspace/owned"),
-        generatedArtifacts = File(persistent, "workspace/artifacts"),
-        models = File(noBackup, "models"),
-        speechModels = File(noBackup, "speech"),
-        diagnostics = File(noBackup, "diagnostics"),
-        forensicCaptures = File(noBackup, "forensics"),
-        importStaging = File(cache, "import"),
-        restoreStaging = File(cache, "restore"),
-        exportStaging = File(cache, "export"),
-        secretFiles = File(noBackup, "secrets"),
-        restoreSafety = File(noBackup, "restore-safety"),
-    )
+    val existing = cachedLayout
+    if (existing != null) return existing
+    return synchronized(HaloStorageLayout::class.java) {
+        cachedLayout ?: run {
+            val persistent = context.filesDir
+            val noBackup = context.noBackupFilesDir
+            val cache = context.cacheDir
+            HaloStorageLayout(
+                managedWorkspaceFiles = File(persistent, "workspace/owned"),
+                generatedArtifacts = File(persistent, "workspace/artifacts"),
+                models = File(noBackup, "models"),
+                speechModels = File(noBackup, "speech"),
+                diagnostics = File(noBackup, "diagnostics"),
+                forensicCaptures = File(noBackup, "forensics"),
+                importStaging = File(cache, "import"),
+                restoreStaging = File(cache, "restore"),
+                exportStaging = File(cache, "export"),
+                secretFiles = File(noBackup, "secrets"),
+                restoreSafety = File(noBackup, "restore-safety"),
+            ).also { cachedLayout = it }
+        }
+    }
 }

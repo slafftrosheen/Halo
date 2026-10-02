@@ -174,11 +174,14 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
             authority = authority
         ))
 
+        val startMs = System.currentTimeMillis()
         coordinator.transition(runId, AgentRunState.EXECUTING)
         val call = ToolCall(UUID.randomUUID().toString(), request.operation, request.arguments)
-        return execute(request, runId, call).also {
-            if (store.get(runId)?.state == AgentRunState.COMPLETED) references.remember(if (interpretation.intent == OpenIntent) NativeOpenApplicationIntent(request.arguments["appName"].toString()) else interpretation.intent)
-        }
+        val res = execute(request, runId, call)
+        val totalMs = System.currentTimeMillis() - startMs
+        println("HALO_NATIVE_ACTION_TIMING interactionId=${request.interactionId} intent=${request.intent} tool=${request.operation} totalMs=$totalMs result=SUCCESS")
+        if (store.get(runId)?.state == AgentRunState.COMPLETED) references.remember(if (interpretation.intent == OpenIntent) NativeOpenApplicationIntent(request.arguments["appName"].toString()) else interpretation.intent)
+        return res
     }
 
     private suspend fun clarification(interpretation: Interpretation, prompt: String): NativeCapabilityResult {

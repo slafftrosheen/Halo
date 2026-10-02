@@ -41,7 +41,7 @@ class EphemeralMediaAssetStore(
         }
     }
 
-    suspend fun transferOwnership(ref: MediaAssetRef, interactionId: String): MediaAssetRef = access {
+    override suspend fun transferOwnership(ref: MediaAssetRef, interactionId: String): MediaAssetRef = access {
         prune()
         val existing = entries[ref.id]?.takeIf { it == ref } ?: throw MediaAcquisitionException(MediaFailure.SOURCE_UNAVAILABLE)
         existing.copy(interactionId = interactionId).also { entries[ref.id] = it }
