@@ -420,7 +420,7 @@ fun SkillsScreen(
 }
 
 private fun declaredPermissions(skill: SkillDescriptor): Set<HostPermission> =
-    skill.requiredPermissions + skill.toolDefinitions.flatMap { it.requiredPermissions }
+    (skill.requiredPermissions + skill.toolDefinitions.flatMap { it.requiredPermissions }).toSet()
 
 /**
  * MINING-P1-001 capability overview card.
