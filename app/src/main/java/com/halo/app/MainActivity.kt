@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
+import com.halo.app.di.CapabilityRefreshReason
 import com.halo.app.di.ManualDependencyGraph
 import com.halo.app.ui.shell.AppShell
 import com.halo.app.ui.screens.discovery.requiredBluetoothDiscoveryPermissions
@@ -59,9 +60,9 @@ class MainActivity : ComponentActivity() {
     ) {
         lifecycleScope.launch(Dispatchers.IO) {
             ManualDependencyGraph.platformStateMonitor.refreshMicrophonePermission()
-            ManualDependencyGraph.hostGraph.capabilityPublisher.refreshInto(
-                ManualDependencyGraph.capabilityCatalogue
-            )
+            val publisher = ManualDependencyGraph.hostGraph.capabilityPublisher
+        lifecycleScope.launch { publisher.refresh(CapabilityRefreshReason.APP_RESUME) }
+        publisher.publishInto(ManualDependencyGraph.capabilityCatalogue)
             RuntimeStartupTrace.mark(
                 "permissions.microphone.result granted=" +
                     ManualDependencyGraph.platformStateMonitor.microphonePermissionGranted.value
@@ -378,9 +379,9 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         lifecycleScope.launch(Dispatchers.IO) {
             ManualDependencyGraph.platformStateMonitor.refreshMicrophonePermission()
-            ManualDependencyGraph.hostGraph.capabilityPublisher.refreshInto(
-                ManualDependencyGraph.capabilityCatalogue
-            )
+            lifecycleScope.launch { ManualDependencyGraph.hostGraph.capabilityPublisher.refresh(
+                CapabilityRefreshReason.PERMISSION_RESULT) }
+            ManualDependencyGraph.hostGraph.capabilityPublisher.publishInto(ManualDependencyGraph.capabilityCatalogue)
             ManualDependencyGraph.runtimeDeviceCapabilityBridge.updateDeviceCapabilities()
         }
         startUiGraphBootstrap()

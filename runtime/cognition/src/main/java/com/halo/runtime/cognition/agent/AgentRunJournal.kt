@@ -348,6 +348,13 @@ sealed interface AgentStep {
         val summary: String,
     ) : AgentStep
 
+    data class DirectCommandAuthorityRecorded(
+        override val id: AgentStepId,
+        override val runId: AgentRunId,
+        override val createdAt: Instant,
+        val authority: DirectUserCommandAuthority
+    ) : AgentStep
+
     data class ExternalConditionRegistered(
         override val id: AgentStepId,
         override val runId: AgentRunId,

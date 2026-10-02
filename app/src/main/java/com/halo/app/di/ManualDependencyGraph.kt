@@ -1106,7 +1106,7 @@ object ManualDependencyGraph {
     val skillExecutionService by lazy {
         com.halo.runtime.cognition.skills.SkillExecutionService(skillRegistry, toolRegistry, toolAvailabilityResolver,
             toolTurnExecutor, isLocked = { applicationContext.getSystemService(android.app.KeyguardManager::class.java).isDeviceLocked },
-            coordinator = agentRunCoordinator, refreshCapabilities = { hostGraph.capabilityPublisher.publishInto(capabilityCatalogue) })
+            coordinator = agentRunCoordinator)
     }
     val nativeCapabilityDispatcher: com.halo.runtime.cognition.native.NativeCapabilityDispatcher by lazy {
         com.halo.runtime.cognition.native.NativeCapabilityDispatcher(skillExecutionService, agentRunCoordinator, agentRunStore,

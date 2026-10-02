@@ -131,7 +131,10 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
         val completedAt = step.createdAt.toEpochMilli().takeIf {
             step is AgentStep.ToolCompleted || step is AgentStep.ToolFailed || step is AgentStep.ToolRejected ||
                 step is AgentStep.ToolOutcomeRecorded || step is AgentStep.ResponseProduced ||
-                step is AgentStep.ProviderTurnCompleted || step is AgentStep.ResponseCommitted
+                step is AgentStep.ProviderTurnCompleted || step is AgentStep.ResponseCommitted ||
+                step is AgentStep.DirectCommandAuthorityRecorded || step is AgentStep.ExternalConditionRegistered ||
+                step is AgentStep.ExternalConditionSatisfied || step is AgentStep.ExternalConditionExpired ||
+                step is AgentStep.ExternalConditionCancelled
         }
         dao.insertStep(AgentStepEntity(step.id.value, step.runId.value, row.run.interactionId,
             (row.steps.maxOfOrNull { it.ordinal } ?: -1) + 1, type, STEP_SCHEMA_VERSION, payload.toString(), key,
@@ -260,6 +263,15 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
                     .put("elapsedMs", step.elapsedMs)
                     .put("summary", step.summary)
                 "RunGuardTriggered"
+            }
+            is AgentStep.DirectCommandAuthorityRecorded -> {
+                payload.put("interactionId", step.authority.interactionId.value).put("toolId", step.authority.toolId)
+                    .put("argumentsDigest", step.authority.argumentsDigest)
+                    .put("originSource", step.authority.origin.source.name)
+                val dId = step.authority.origin.sourceDeviceId
+                payload.put("originHostId", dId ?: "")
+                payload.put("issuedAtMs", step.authority.issuedAt.toEpochMilli())
+                "DirectCommandAuthorityRecorded"
             }
             is AgentStep.ExternalConditionRegistered -> {
                 payload.put("watchId", step.watchId).put("conditionType", step.conditionType)

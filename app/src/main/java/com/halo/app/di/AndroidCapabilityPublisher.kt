@@ -11,6 +11,30 @@ import com.halo.host.android.accessibility.HaloAccessibilityService
 import com.halo.host.android.assistant.AssistantEligibilityInspector
 import com.halo.runtime.cognition.tools.*
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
+enum class CapabilityRefreshReason {
+    STARTUP,
+    APP_RESUME,
+    PERMISSION_RESULT,
+    ACCESSIBILITY_STATE_CHANGED,
+    NOTIFICATION_LISTENER_CHANGED,
+    ASSISTANT_ROLE_CHANGED,
+    BLUETOOTH_STATE_CHANGED,
+    PACKAGE_CHANGED,
+    SETTINGS_WRITE_CHANGED,
+    EXPLICIT_CHECK
+}
+
+interface HostCapabilityStateSource {
+    val state: StateFlow<List<CapabilityInstance>>
+    suspend fun refresh(reason: CapabilityRefreshReason)
+}
+
 /**
  * RUNTIME-017 / RUNTIME-020.1 host adapter: advertises what THIS Android host can do as semantic
  * Runtime capabilities. Capabilities are generic (launch applications, open web,
@@ -19,15 +43,26 @@ import com.halo.runtime.cognition.tools.*
  */
 class AndroidCapabilityPublisher(
     private val context: Context,
-) : CapabilityPublisher {
+) : CapabilityPublisher, HostCapabilityStateSource {
 
     override val scope: String = "host:primary"
+    
+    private val _state = MutableStateFlow<List<CapabilityInstance>>(emptyList())
+    override val state: StateFlow<List<CapabilityInstance>> = _state.asStateFlow()
 
-    override fun publishInto(catalogue: CapabilityCatalogue) {
-        refreshInto(catalogue)
+    override suspend fun refresh(reason: CapabilityRefreshReason) {
+        val next = withContext(Dispatchers.IO) { snapshotCapabilities() }
+        _state.value = next
     }
 
-    fun snapshotCapabilities(): List<CapabilityInstance> {
+    override fun publishInto(catalogue: CapabilityCatalogue) {
+        val next = _state.value
+        if (next.isEmpty()) return // Not yet initialized
+        val current = catalogue.snapshot.value.capabilities.filter { it.ownerId == scope && it.sourceKind == CapabilitySourceKind.HOST }
+        if (current.toSet() != next.toSet()) catalogue.replaceScope(scope, next)
+    }
+
+    private fun snapshotCapabilities(): List<CapabilityInstance> {
         val pm = context.packageManager
 
         val canLaunchApps = pm.queryIntentActivities(
@@ -129,12 +164,6 @@ class AndroidCapabilityPublisher(
             capability("workspace.write", "Write workspace",
                 "Create and organize user-curated notes and documents.", ToolCategory.WORKSPACE, true),
         )
-    }
-
-    fun refreshInto(catalogue: CapabilityCatalogue) {
-        val next = snapshotCapabilities()
-        val current = catalogue.snapshot.value.capabilities.filter { it.ownerId == scope && it.sourceKind == CapabilitySourceKind.HOST }
-        if (current.toSet() != next.toSet()) catalogue.replaceScope(scope, next)
     }
 
     private fun capability(

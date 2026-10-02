@@ -50,6 +50,8 @@ import com.halo.app.ui.workspace.HaloWorkspaceHeader
 import com.halo.app.ui.workspace.HaloWorkspaceSection
 import com.halo.app.backup.BackupLocationState
 import com.halo.app.backup.StorageAccessRepository
+import com.halo.app.di.CapabilityRefreshReason
+import com.halo.app.di.ManualDependencyGraph
 
 @Composable
 fun PermissionsScreen(
@@ -91,7 +93,9 @@ fun PermissionsScreen(
     ) {
         refreshKey++
         permissionScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-            com.halo.app.di.ManualDependencyGraph.hostGraph.capabilityPublisher.refreshInto(com.halo.app.di.ManualDependencyGraph.capabilityCatalogue)
+            scope.launch { ManualDependencyGraph.hostGraph.capabilityPublisher.refresh(
+                CapabilityRefreshReason.PERMISSION_RESULT) }
+            ManualDependencyGraph.hostGraph.capabilityPublisher.publishInto(ManualDependencyGraph.capabilityCatalogue)
             com.halo.app.di.ManualDependencyGraph.skillRegistry.refreshAvailability()
         }
     }

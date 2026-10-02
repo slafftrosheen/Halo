@@ -2,13 +2,18 @@ package com.halo.runtime.cognition.native
 
 import com.halo.cognition.language.*
 import com.halo.runtime.cognition.agent.*
+import com.halo.runtime.cognition.blackboard.InteractionOrigin
 import com.halo.runtime.cognition.blackboard.Interpretation
 import com.halo.runtime.cognition.skills.SkillExecutionService
 import com.halo.runtime.cognition.tools.CapabilityId
 import com.halo.runtime.cognition.turn.ToolTurnResult
+import com.halo.sdk.host.ObservationSource
 import com.halo.sdk.provider.ToolCall
+import com.halo.sdk.runtime.ObservationOrigin
+import com.halo.sdk.runtime.Source
 import com.halo.sdk.runtime.SpeechOutputTarget
 import com.halo.sdk.runtime.SpeechOutputFallback
+import java.time.Instant
 import java.util.UUID
 
 /** No provider router, cognitive turn, provider turn or ToolUseMode is reachable from this boundary. */
@@ -149,6 +154,26 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
         val runId = coordinator.start(AgentRequest(InteractionId(request.interactionId), if (interpretation.intent is NativeMessageIntent || interpretation.intent is ClipboardWriteIntent || interpretation.intent is ShareIntent || interpretation.intent == CallIntent) "Native " + request.intent.removeSuffix("Intent") else interpretation.transcript,
             speechOutputTarget = target, speechOutputFallback = if (target is SpeechOutputTarget.Device) SpeechOutputFallback.DISALLOW_PHONE else SpeechOutputFallback.ALLOW_PHONE,
             sourceCaptureId = interpretation.origin?.captureId, kind = AgentRunKind.NATIVE))
+
+        // Mark explicit direct-user authority for Safe command set
+        val digest = ToolArgumentCanonicalizer.digest(
+            ToolArgumentCanonicalizer.canonicalize(request.arguments)
+        )
+        val authority = DirectUserCommandAuthority(
+            interactionId = InteractionId(request.interactionId),
+            toolId = request.operation,
+            argumentsDigest = digest,
+            origin = interpretation.origin ?: InteractionOrigin(Source.USER),
+            issuedAt = Instant.now()
+        )
+        coordinator.recordStep(
+            AgentStep.DirectCommandAuthorityRecorded(
+            id = AgentStepId(UUID.randomUUID().toString()),
+            runId = runId,
+            createdAt = authority.issuedAt,
+            authority = authority
+        ))
+
         coordinator.transition(runId, AgentRunState.EXECUTING)
         val call = ToolCall(UUID.randomUUID().toString(), request.operation, request.arguments)
         return execute(request, runId, call).also {

@@ -1,6 +1,7 @@
 package com.halo.runtime.cognition.skills
 
 import com.halo.cognition.language.InteractionId
+import com.halo.runtime.cognition.agent.AgentRunCoordinator
 import com.halo.runtime.cognition.agent.AgentRunId
 import com.halo.runtime.cognition.tools.*
 import com.halo.runtime.cognition.turn.*
@@ -14,11 +15,9 @@ class SkillExecutionService(
     private val availability: ToolAvailabilityResolver,
     private val delegate: ToolTurnExecutor,
     private val isLocked: () -> Boolean = { false },
-    private val coordinator: com.halo.runtime.cognition.agent.AgentRunCoordinator? = null,
-    private val refreshCapabilities: () -> Unit = {},
+    private val coordinator: AgentRunCoordinator? = null,
 ) : ToolTurnExecutor {
     fun check(skillId: SkillId): Map<String, String> {
-        refreshCapabilities()
         skills.refreshAvailability()
         val skill = skills.get(skillId) ?: return mapOf("skill" to "Skill not registered")
         return skill.tools.associateWith { name ->
@@ -41,7 +40,6 @@ class SkillExecutionService(
 
     override suspend fun execute(runId: AgentRunId?, interactionId: InteractionId, requestId: String,
         toolCalls: List<ToolCall>, workspaceReadAllowed: Boolean, exposedToolIds: Set<String>?): ToolTurnResult = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-        refreshCapabilities()
         skills.refreshAvailability()
         for (call in toolCalls) {
             val ownerEnabled = (if (call.functionName.startsWith("halo_appfn_")) skills.get(SkillId("halo.current_app"))?.enabled else skills.skillIdForTool(call.functionName)?.let { skills.get(it)?.enabled }) == true

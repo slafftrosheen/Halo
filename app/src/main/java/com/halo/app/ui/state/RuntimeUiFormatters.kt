@@ -97,6 +97,7 @@ object RuntimeUiFormatters {
         is AgentStep.ExternalConditionSatisfied -> "Condition met"
         is AgentStep.ExternalConditionExpired -> "Condition watch expired"
         is AgentStep.ExternalConditionCancelled -> "Condition watch cancelled"
+        is AgentStep.DirectCommandAuthorityRecorded -> "Direct command authorized"
     }
 
     fun formatRiskClass(risk: ToolRiskClass): String = when (risk) {

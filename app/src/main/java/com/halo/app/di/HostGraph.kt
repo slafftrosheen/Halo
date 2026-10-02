@@ -126,6 +126,8 @@ class HostGraph(
      * the publisher adapter.
      */
     val capabilityPublisher: com.halo.app.di.AndroidCapabilityPublisher by lazy {
-        AndroidCapabilityPublisher(context)
+        AndroidCapabilityPublisher(context).apply {
+            infra.scope.launch { refresh(CapabilityRefreshReason.STARTUP) }
+        }
     }
 }
