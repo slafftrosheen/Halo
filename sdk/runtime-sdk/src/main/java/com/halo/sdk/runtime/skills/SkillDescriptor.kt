@@ -33,6 +33,8 @@ enum class HostPermission {
     CALENDAR_READ,
     CALENDAR_WRITE,
     NOTIFICATION_ACCESS,
+    WRITE_SETTINGS,
+    NOTIFICATION_POLICY,
 }
 
 sealed interface SkillRequirement {

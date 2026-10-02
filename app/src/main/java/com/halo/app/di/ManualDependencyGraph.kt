@@ -286,13 +286,13 @@ object ManualDependencyGraph {
         BoundedMemoryContextSource(memoryRepository, memoryRetriever)
     }
     val customSkillPackages by lazy { com.halo.app.skills.CustomSkillPackageRepository(applicationContext) }
+    val skillPermissionChecker by lazy { AndroidSkillPermissionChecker(applicationContext) }
     val skillRegistry by lazy {
-        val permissions = AndroidSkillPermissionChecker(applicationContext)
         DefaultSkillRegistry(
             storage,
             initialBuiltIns = BuiltInSkillManifestLoader(applicationContext).load() + customSkillPackages.refresh(),
             availabilityResolver = com.halo.runtime.cognition.skills.SkillAvailabilityResolver(
-                permissionGranted = permissions::granted,
+                permissionGranted = skillPermissionChecker::granted,
                 registeredToolNames = {
                     toolRegistry.definitions().flatMap { listOf(it.id, it.name) }.toSet()
                 },
