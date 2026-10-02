@@ -187,6 +187,31 @@ class DefaultToolTurnExecutor(
         return evidence
     }
 
+    private suspend fun directUserAuthorityMatches(
+        runId: AgentRunId,
+        interactionId: InteractionId,
+        toolId: String,
+        argumentsDigest: String,
+    ): Boolean {
+        val run = agentRunStore?.get(runId) ?: return false
+        val authority = run.steps
+            .filterIsInstance<AgentStep.DirectCommandAuthorityRecorded>()
+            .lastOrNull()
+            ?.authority
+            ?: return false
+        if (authority.interactionId != interactionId ||
+            authority.toolId != toolId ||
+            authority.argumentsDigest != argumentsDigest
+        ) return false
+
+        val security = toolRegistry?.descriptor(toolId)?.security ?: return false
+        if (security.confirmation == com.halo.runtime.cognition.tools.ConfirmationPolicy.ALWAYS) return false
+        if (security.risk == com.halo.runtime.cognition.tools.ToolRiskClass.SENSITIVE ||
+            security.risk == com.halo.runtime.cognition.tools.ToolRiskClass.DESTRUCTIVE
+        ) return false
+        return true
+    }
+
     private suspend fun persistAndPublishToolRejection(
         runId: AgentRunId?,
         interactionId: InteractionId,
@@ -532,6 +557,9 @@ class DefaultToolTurnExecutor(
              * `level=40` never approves `level=100`. Denials are never cached.
              */
             val descriptorForGrant = toolRegistry.descriptor(toolCall.functionName)
+            val directCommandAuthorized = runId?.let {
+                directUserAuthorityMatches(it, interactionId, toolCall.functionName, argumentsDigest)
+            } == true
             val grantKey = descriptorForGrant?.let { descriptor ->
                 ToolApprovalGrantKey(
                     scopeId = runId?.value ?: interactionId.value,
@@ -560,7 +588,7 @@ class DefaultToolTurnExecutor(
                     ToolRejectionFactory.create(ToolRejectionCode.INVALID_ARGUMENTS, "Automation proposal is invalid or source setup is required")))
                 continue
             }
-            val durableDecision = if (runId != null && !previouslyApproved && !grantSatisfied) {
+            val durableDecision = if (runId != null && !previouslyApproved && !grantSatisfied && !directCommandAuthorized) {
                 (toolAuthorizer as? PolicyToolAuthorizer)?.authorizeDurable(
                     toolCall = toolCall,
                     runId = runId,
@@ -575,6 +603,18 @@ class DefaultToolTurnExecutor(
             }
 
             val authorization = when {
+                directCommandAuthorized -> {
+                    trace(
+                        "DIRECT_COMMAND_AUTHORITY_USED",
+                        listOf(
+                            "run" to (runId?.value ?: "ephemeral"),
+                            "interactionId" to interactionId.value,
+                            "tool" to toolCall.functionName,
+                            "digest" to argumentsDigest.take(12),
+                        ),
+                    )
+                    ToolAuthorization.Authorized(toolCall)
+                }
                 previouslyApproved -> ToolAuthorization.Authorized(toolCall)
                 grantSatisfied -> ToolAuthorization.Authorized(toolCall)
                 durableDecision is AuthorizationDecision.Authorized ->

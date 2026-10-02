@@ -46,6 +46,37 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
     fun owns(intent: Intent): Boolean = intent is NativeControlIntent || intent in setOf(OpenIntent, CallIntent,
         SetAlarmIntent, PlayIntent, PauseIntent, NavigateIntent, SearchIntent)
 
+    private fun directUserAuthorityAllowed(intent: Intent): Boolean = when (intent) {
+        is NativeTargetMediaIntent,
+        is NativeOpenApplicationIntent,
+        is TimerIntent,
+        is VolumeIntent,
+        is FlashlightIntent,
+        is BrightnessIntent,
+        is RingerIntent,
+        is OpenSettingsIntent,
+        DeviceInfoIntent,
+        BatteryStatusIntent,
+        NetworkStatusIntent,
+        OpenIntent,
+        SetAlarmIntent,
+        PlayIntent,
+        PauseIntent,
+        NavigateIntent,
+        SearchIntent -> true
+
+        // Communications, clipboard access and semantic UI/app actions keep their normal
+        // descriptor policy. Direct speech/text ownership is not blanket authorization.
+        is NativeMessageIntent,
+        is NativeAppActionIntent,
+        is ShareIntent,
+        is ClipboardWriteIntent,
+        ClipboardReadIntent,
+        CallIntent -> false
+
+        else -> false
+    }
+
     fun requestFor(interpretation: Interpretation): NativeCapabilityRequest? {
         if (interpretation.confidence < 0.8f) return null
         val args: Map<String, Any>
@@ -155,32 +186,48 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
             speechOutputTarget = target, speechOutputFallback = if (target is SpeechOutputTarget.Device) SpeechOutputFallback.DISALLOW_PHONE else SpeechOutputFallback.ALLOW_PHONE,
             sourceCaptureId = interpretation.origin?.captureId, kind = AgentRunKind.NATIVE))
 
-        // Mark explicit direct-user authority for Safe command set
-        val digest = ToolArgumentCanonicalizer.digest(
-            ToolArgumentCanonicalizer.canonicalize(request.arguments)
-        )
-        val authority = DirectUserCommandAuthority(
-            interactionId = InteractionId(request.interactionId),
-            toolId = request.operation,
-            argumentsDigest = digest,
-            origin = interpretation.origin ?: InteractionOrigin(Source.USER),
-            issuedAt = Instant.now()
-        )
-        coordinator.recordStep(
-            AgentStep.DirectCommandAuthorityRecorded(
-            id = AgentStepId(UUID.randomUUID().toString()),
-            runId = runId,
-            createdAt = authority.issuedAt,
-            authority = authority
-        ))
+        // Exact, journaled authority applies only to the bounded safe-native set above.
+        if (directUserAuthorityAllowed(interpretation.intent)) {
+            val digest = ToolArgumentCanonicalizer.digest(
+                ToolArgumentCanonicalizer.canonicalize(request.arguments)
+            )
+            val authority = DirectUserCommandAuthority(
+                interactionId = InteractionId(request.interactionId),
+                toolId = request.operation,
+                argumentsDigest = digest,
+                origin = interpretation.origin ?: InteractionOrigin(Source.USER),
+                issuedAt = Instant.now()
+            )
+            coordinator.recordStep(
+                AgentStep.DirectCommandAuthorityRecorded(
+                    id = AgentStepId(UUID.randomUUID().toString()),
+                    runId = runId,
+                    createdAt = authority.issuedAt,
+                    authority = authority
+                )
+            )
+        }
 
         val startMs = System.currentTimeMillis()
         coordinator.transition(runId, AgentRunState.EXECUTING)
         val call = ToolCall(UUID.randomUUID().toString(), request.operation, request.arguments)
         val res = execute(request, runId, call)
         val totalMs = System.currentTimeMillis() - startMs
-        println("HALO_NATIVE_ACTION_TIMING interactionId=${request.interactionId} intent=${request.intent} tool=${request.operation} totalMs=$totalMs result=SUCCESS")
-        if (store.get(runId)?.state == AgentRunState.COMPLETED) references.remember(if (interpretation.intent == OpenIntent) NativeOpenApplicationIntent(request.arguments["appName"].toString()) else interpretation.intent)
+        val finalState = store.get(runId)?.state
+        val timingResult = when (res) {
+            is ToolTurnResult.WaitingForInput -> "WAITING_FOR_INPUT"
+            is ToolTurnResult.WaitingForResource -> "WAITING_FOR_RESOURCE"
+            is ToolTurnResult.WaitingForCapability -> "WAITING_FOR_CAPABILITY"
+            is ToolTurnResult.RunStopped -> "STOPPED"
+            is ToolTurnResult.Completed -> when (finalState) {
+                AgentRunState.COMPLETED -> "COMPLETED"
+                AgentRunState.FAILED -> "FAILED"
+                AgentRunState.INTERRUPTED -> "INTERRUPTED"
+                else -> finalState?.name ?: "COMPLETED"
+            }
+        }
+        println("HALO_NATIVE_ACTION_TIMING interactionId=${request.interactionId} intent=${request.intent} tool=${request.operation} totalMs=$totalMs result=$timingResult")
+        if (finalState == AgentRunState.COMPLETED) references.remember(if (interpretation.intent == OpenIntent) NativeOpenApplicationIntent(request.arguments["appName"].toString()) else interpretation.intent)
         return res
     }
 

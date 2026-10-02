@@ -6,6 +6,7 @@ import com.halo.app.ai.ProviderControlRepository
 import com.halo.sdk.provider.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 
 /** Filter/projection work happens off the composition thread. No catalogue fetch on entry. */
 enum class ModelCostFilter { ALL, FREE, PAID }
@@ -29,8 +30,10 @@ class ModelBrowserViewModel(val control: ProviderControlRepository) : ViewModel(
     fun pick(entry: AiModelCatalogEntry) {
         if (control.rows.value.firstOrNull { it.descriptor.providerId == entry.model.providerId }?.configured != true) return
         val role = filter.value.role
-        if (role == null || role == AiModelRole.CHAT) control.router.selectTarget(entry.runtime.ref)
-        else control.router.setRoleBinding(AiRoleBinding(role, entry.model.providerId, entry.model.id, AiRoleSelection.EXPLICIT))
+        viewModelScope.launch(Dispatchers.IO) {
+            if (role == null || role == AiModelRole.CHAT) control.router.selectTarget(entry.runtime.ref)
+            else control.router.setRoleBinding(AiRoleBinding(role, entry.model.providerId, entry.model.id, AiRoleSelection.EXPLICIT))
+        }
     }
     companion object {
         fun supports(model: AiModel, capability: AiCapability) = when(capability) { AiCapability.TOOLS -> model.supportsTools; AiCapability.STREAMING -> model.supportsStreaming; else -> capability in model.inputCapabilities }

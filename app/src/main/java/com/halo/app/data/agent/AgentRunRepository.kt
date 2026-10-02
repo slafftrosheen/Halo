@@ -457,6 +457,43 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
                 p.optString("evidenceHash").ifBlank { null },
                 p.optLong("elapsedMs"),
                 p.optString("summary"))
+            "DirectCommandAuthorityRecorded" -> AgentStep.DirectCommandAuthorityRecorded(
+                step, run, at,
+                DirectUserCommandAuthority(
+                    interactionId = InteractionId(p.getString("interactionId")),
+                    toolId = p.getString("toolId"),
+                    argumentsDigest = p.getString("argumentsDigest"),
+                    origin = com.halo.runtime.cognition.blackboard.InteractionOrigin(
+                        source = runCatching { com.halo.sdk.runtime.Source.valueOf(p.optString("originSource")) }
+                            .getOrDefault(com.halo.sdk.runtime.Source.USER),
+                        sourceDeviceId = p.optString("originHostId").ifBlank { null },
+                    ),
+                    issuedAt = Instant.ofEpochMilli(p.optLong("issuedAtMs", at.toEpochMilli())),
+                ),
+            )
+            "ExternalConditionRegistered" -> AgentStep.ExternalConditionRegistered(
+                step, run, at,
+                watchId = p.getString("watchId"),
+                conditionType = p.getString("conditionType"),
+                targetId = p.optString("targetId").ifBlank { null },
+                presentationText = p.optString("presentationText").ifBlank { null },
+            )
+            "ExternalConditionSatisfied" -> AgentStep.ExternalConditionSatisfied(
+                step, run, at,
+                watchId = p.getString("watchId"),
+                conditionType = p.getString("conditionType"),
+                targetId = p.optString("targetId").ifBlank { null },
+            )
+            "ExternalConditionExpired" -> AgentStep.ExternalConditionExpired(
+                step, run, at,
+                watchId = p.getString("watchId"),
+                conditionType = p.getString("conditionType"),
+            )
+            "ExternalConditionCancelled" -> AgentStep.ExternalConditionCancelled(
+                step, run, at,
+                watchId = p.getString("watchId"),
+                reason = p.optString("reason").ifBlank { null },
+            )
             // Legacy reasoning is deliberately not exposed as public execution evidence.
             else -> AgentStep.ToolFailed(step, run, at, id, "legacy", "Unsupported historical step: $type")
         }

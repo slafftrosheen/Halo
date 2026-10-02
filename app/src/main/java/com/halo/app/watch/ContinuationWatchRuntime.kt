@@ -144,8 +144,9 @@ class ContinuationWatchRuntime(
                                 targetId = getTargetId(watch.condition),
                             )
                         )
-                        agentRunCoordinator?.transition(rId, AgentRunState.WAITING_FOR_EVENT)
-
+                        // The run entered WAITING_FOR_EVENT when the continuation was registered.
+                        // Matching records durable evidence and surfaces readiness; it never auto-runs
+                        // and must not rewrite the waiting state at match time.
                         if (b.wakePolicy == ContinuationWakePolicy.SURFACE_TO_USER && attentionController != null) {
                             val text = watch.presentationText ?: "Condition met; task ready to continue."
                             attentionController.submit(

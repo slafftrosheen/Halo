@@ -51,8 +51,10 @@ class DefaultRunResumptionCoordinator(
         when (run.state) {
             AgentRunState.WAITING_FOR_APPROVAL,
             AgentRunState.WAITING_FOR_CLARIFICATION,
+            AgentRunState.WAITING_FOR_EVENT,
+            AgentRunState.WAITING_FOR_CAPABILITY,
             -> Unit
-            else -> return ResumeRequestResult.NotEligible("Run is not waiting for input (state=${run.state})")
+            else -> return ResumeRequestResult.NotEligible("Run is not resumable (state=${run.state})")
         }
         resume(runId)
         return ResumeRequestResult.Requested

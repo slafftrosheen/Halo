@@ -250,8 +250,8 @@ class DefaultAgentRunCoordinator(
         }
         val allowed = when (run.state) {
             AgentRunState.CREATED -> setOf(AgentRunState.PLANNING, AgentRunState.EXECUTING, AgentRunState.COMPLETED)
-            AgentRunState.PLANNING -> setOf(AgentRunState.EXECUTING, AgentRunState.COMPLETED, AgentRunState.WAITING_FOR_CLARIFICATION, AgentRunState.WAITING_FOR_CAPABILITY, AgentRunState.WAITING_FOR_RESOURCE)
-            AgentRunState.EXECUTING -> setOf(AgentRunState.COMPLETED, AgentRunState.WAITING_FOR_APPROVAL, AgentRunState.WAITING_FOR_CAPABILITY, AgentRunState.WAITING_FOR_RESOURCE, AgentRunState.SUSPENDED)
+            AgentRunState.PLANNING -> setOf(AgentRunState.EXECUTING, AgentRunState.COMPLETED, AgentRunState.WAITING_FOR_CLARIFICATION, AgentRunState.WAITING_FOR_CAPABILITY, AgentRunState.WAITING_FOR_RESOURCE, AgentRunState.WAITING_FOR_EVENT)
+            AgentRunState.EXECUTING -> setOf(AgentRunState.COMPLETED, AgentRunState.WAITING_FOR_APPROVAL, AgentRunState.WAITING_FOR_CAPABILITY, AgentRunState.WAITING_FOR_RESOURCE, AgentRunState.WAITING_FOR_EVENT, AgentRunState.SUSPENDED)
             AgentRunState.WAITING_FOR_CLARIFICATION -> setOf(AgentRunState.PLANNING, AgentRunState.EXECUTING, AgentRunState.COMPLETED)
             AgentRunState.WAITING_FOR_APPROVAL, AgentRunState.WAITING_FOR_CAPABILITY, AgentRunState.WAITING_FOR_RESOURCE, AgentRunState.WAITING_FOR_EVENT, AgentRunState.SUSPENDED, AgentRunState.INTERRUPTED -> setOf(AgentRunState.EXECUTING, AgentRunState.PLANNING, AgentRunState.WAITING_FOR_APPROVAL, AgentRunState.WAITING_FOR_CLARIFICATION, AgentRunState.COMPLETED)
             else -> emptySet()
