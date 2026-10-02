@@ -1,5 +1,24 @@
 # Halo current state
 
+## PHONE-ASSISTANT-004 — Durable Follow-ups + Event Watches + Continuation Runtime — 2026-10-02
+
+**IMPLEMENTED / COMPILED / UNIT VERIFIED / DEPLOYED.**
+Durable follow-ups, platform signal watches, capability recovery, and continuation runtime batch:
+- **Durable ContinuationWatch Runtime:** Introduced `ContinuationWatch` model (`ContinuationWatchId`, `runId`, `interactionId`, `condition`, `behavior`, `status`, `createdAt`, `expiresAt`, `deduplicationKey`, `matchMode`, `presentationText`). Supports statuses `ACTIVE`, `MATCH_CLAIMED`, `SATISFIED`, `EXPIRED`, `CANCELLED`, `FAILED`.
+- **Supported Conditions:** Network (`NetworkAvailable`, `NetworkLost`), Battery (`BatteryBelow`, `BatteryAbove`), Devices (`DeviceConnected`, `DeviceDisconnected`), Apps (`AppForegrounded`, `NotificationFromApp`), Providers (`ProviderAvailable`), Capabilities (`CapabilityAvailable`).
+- **Signal Fabric Fan-out:** Connected `AutomationFabric` signal stream to `ContinuationWatchMatcher`. Added `ProviderAvailabilitySignalSource` and `CapabilityAvailabilitySignalSource`.
+- **Durable Room Table & Migration 22 -> 23:** Added `continuation_watches` table and Room `MIGRATION_22_23`. Verified schema migration in `ContinuationWatchMigrationTest`.
+- **Transactional Claim & Side-Effect Safety:** Transactional claim (`claimWatchTransaction`) guarantees at-most-once delivery. Watch satisfaction NEVER automatically replays claimed external actions (`ActionTruth.DISPATCHED`).
+- **`WAITING_FOR_EVENT` State & Journaling:** Added `AgentRunState.WAITING_FOR_EVENT` and journal steps `ExternalConditionRegistered`, `ExternalConditionSatisfied`, `ExternalConditionExpired`, `ExternalConditionCancelled`.
+- **Deterministic Watch Intents & Skill:** Created `NotifyWhenNetworkAvailableIntent`, `NotifyWhenBatteryBelowIntent`, `NotifyWhenDeviceConnectedIntent`, `NotifyWhenAppStartedIntent`, `NotifyWhenNotificationFromAppIntent`, `CancelWatchIntent`, `ListWatchesIntent`. Creation operates provider-independently without LLM calls.
+- **Tools & Skill:** Added `halo.followups` skill ("Follow-ups") and tools `halo_create_watch`, `halo_list_watches`, `halo_cancel_watch`.
+- **UI & Sandbox:** Extended Home screen with pending follow-up projection, Activity screen with semantic watch stories, Automations screen with a `Follow-ups` tab, and Automation Sandbox with watch preview matching (`INTERNAL_TEST` trust).
+- **Automated Verification:** 422 unit tests passed (100% success rate across `:sdk:runtime-sdk`, `:runtime:cognition`, `:engines:interpretation`, `:engines:reasoning`, `:host-android`, and `:app`). Debug APK assembled and deployed to `emulator-5554`.
+
+See [PHONE-ASSISTANT-004 documentation](docs/engineering/PHONE-ASSISTANT-004-DURABLE-FOLLOWUPS.md).
+
+---
+
 ## PHONE-ASSISTANT-003 — 2026-10-02
 Semantic app bridge implemented: Native → AppFunction → DirectAction → Intent → Accessibility → User. Model reasoning never owns platform authority. External capabilities are bounded, current-app and generation-scoped; approval and durable claims remain in the shared runtime. Dispatch and effect truth are separate, and possible dispatch forbids fallback. Composer launch does not mean message delivery. AndroidX alpha12 / API 37 activity integration is host-owned; scalar external schemas are supported, nested/resource schemas remain excluded. Automated verification passed: 639 tests, zero failures/errors/skips; API 37 debug APK assembled. Audit: 31 skills / 86 tools with zero wiring issues. See docs/testing/SEMANTIC-APP-OPERATOR-ACCEPTANCE.md; physical acceptance remains pending.
 

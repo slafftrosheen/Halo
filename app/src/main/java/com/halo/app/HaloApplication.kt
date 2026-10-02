@@ -200,6 +200,13 @@ class HaloApplication :
               catch (e: Exception) { Log.e("HaloApplication", "Routine presence observer failed", e) }
         }
         resourceScope.launch {
+            try {
+                automationBootstrap.await()
+                ManualDependencyGraph.continuationWatchRuntime.observe()
+            } catch (e: CancellationException) { throw e }
+              catch (e: Exception) { Log.e("HaloApplication", "Continuation watch runtime observer failed", e) }
+        }
+        resourceScope.launch {
             ManualDependencyGraph.agentRunStore.observeRuns().collect { runs ->
                 runs.filter { it.state.isTerminal }.forEach { ManualDependencyGraph.interactionWorkingMemory.discard(it.id.value) }
             }

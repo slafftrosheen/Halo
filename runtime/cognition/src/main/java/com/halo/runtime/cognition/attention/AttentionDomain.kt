@@ -66,6 +66,7 @@ sealed interface AttentionSource {
     data object Reminder : AttentionSource
     data object DeviceEvent : AttentionSource
     data object SystemHealth : AttentionSource
+    data object FollowUp : AttentionSource
 }
 
 data class UserFacingContent(

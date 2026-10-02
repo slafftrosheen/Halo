@@ -18,12 +18,14 @@ import com.halo.app.data.memory.RoomMemoryRepository
 import com.halo.app.data.notebook.NotebookDocumentRepository
 import com.halo.app.data.notebook.RoomNotebookRepository
 import com.halo.app.data.settings.SharedPreferencesDigestDeliverySettingsRepository
+import com.halo.app.data.watch.RoomContinuationWatchRepository
 import com.halo.app.data.workspace.RoomWorkspaceFileRepository
 import com.halo.app.data.workspace.RoomWorkspaceRepository
 import com.halo.app.data.workspace.SendIntentHandler
 import com.halo.app.di.tools.HostTools
 import com.halo.app.di.tools.StorageStatusToolExecutor
 import com.halo.app.di.tools.WorkspaceToolExecutor
+import com.halo.app.di.tools.host.FollowUpTools
 import com.halo.app.embodiment.RuntimeDeviceCapabilityBridge
 
 import com.halo.app.notebook.NotebookUseCases
@@ -40,6 +42,7 @@ import com.halo.app.ui.screens.settings.SettingsViewModel
 import com.halo.app.ui.screens.settings.VoiceSettingsViewModel
 import com.halo.app.ui.state.RuntimeUiProjection
 import com.halo.app.ui.theme.AppearancePreferences
+import com.halo.app.watch.ContinuationWatchRuntime
 import com.halo.providers.sherpa.stt.ReloadableSpeechRecognitionProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -230,6 +233,12 @@ object ManualDependencyGraph {
     val speechPerceptionBridge get() = engineGraph.speechPerceptionBridge
 
     val conversationStore by lazy { com.halo.app.data.RoomConversationStore(appDatabase, infra.scope) }
+    val followUpRepository by lazy {
+        RoomContinuationWatchRepository(appDatabase.continuationWatchDao())
+    }
+    val continuationWatchRuntime by lazy {
+        ContinuationWatchRuntime(automationRuntime.registry, followUpRepository, attentionController, agentRunCoordinator)
+    }
     val workspaceRepository by lazy { RoomWorkspaceRepository(appDatabase.notebookDao()) }
     val workspaceSearchEngine by lazy {
         com.halo.app.data.search.AppSearchWorkspaceSearchEngine(applicationContext, appDatabase.notebookDao())
@@ -707,6 +716,7 @@ object ManualDependencyGraph {
                 com.halo.app.di.tools.host.WebInsightTools(
                     dynamicExtractor = dynamicPageExtractor,
                 ),
+                FollowUpTools(followUpRepository),
             ),
             preferSemanticRoute = { pkg, label ->
                 val action = com.halo.runtime.cognition.apps.SemanticActionMapping.fromIdentifier(label)

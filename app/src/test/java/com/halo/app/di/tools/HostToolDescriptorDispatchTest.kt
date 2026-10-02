@@ -113,6 +113,7 @@ class HostToolDescriptorDispatchTest {
         HaloToolDescriptors.ExecutorKind.APP_SEMANTIC to setOf("halo_current_app_capabilities", "halo_current_app_action"),
         HaloToolDescriptors.ExecutorKind.COMMUNICATION to setOf("halo_find_contact", "halo_dial_contact", "halo_compose_sms", "halo_compose_email", "halo_compose_message"),
         HaloToolDescriptors.ExecutorKind.MEDIA to setOf("halo_media_status", "halo_media_control"),
+        HaloToolDescriptors.ExecutorKind.FOLLOWUP to setOf("halo_create_watch", "halo_list_watches", "halo_cancel_watch"),
         HaloToolDescriptors.ExecutorKind.ACCESSIBILITY to setOf(
             "halo_read_screen", "halo_find_on_screen", "halo_ui_click", "halo_ui_scroll",
             "halo_ui_set_text", "halo_ui_global_action", "halo_ui_search", "halo_ui_set_checked", "halo_ui_wait",

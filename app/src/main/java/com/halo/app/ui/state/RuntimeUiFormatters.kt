@@ -60,6 +60,7 @@ object RuntimeUiFormatters {
         AgentRunState.WAITING_FOR_APPROVAL -> "Needs your approval"
         AgentRunState.WAITING_FOR_CAPABILITY -> "Waiting for device"
         AgentRunState.WAITING_FOR_RESOURCE -> "Waiting for resource"
+        AgentRunState.WAITING_FOR_EVENT -> "Waiting for condition"
         AgentRunState.SUSPENDED -> "Task paused"
         AgentRunState.COMPLETED -> "Completed"
         AgentRunState.FAILED -> "Failed"
@@ -92,6 +93,10 @@ object RuntimeUiFormatters {
         is AgentStep.ResponseCommitted -> "Response saved"
         is AgentStep.RecoveryClaimed -> "Recovering"
         is AgentStep.RunGuardTriggered -> "Task stopped"
+        is AgentStep.ExternalConditionRegistered -> "Condition watch registered"
+        is AgentStep.ExternalConditionSatisfied -> "Condition met"
+        is AgentStep.ExternalConditionExpired -> "Condition watch expired"
+        is AgentStep.ExternalConditionCancelled -> "Condition watch cancelled"
     }
 
     fun formatRiskClass(risk: ToolRiskClass): String = when (risk) {

@@ -76,5 +76,62 @@ class DeviceAutomationSignalSource(private val presence: DevicePresenceRepositor
         }
     }
 }
+
+class ProviderAvailabilitySignalSource(
+    private val providerStatusFlow: StateFlow<Map<String, Boolean>>
+) : AutomationSignalSource {
+    override val availability = MutableStateFlow(AutomationSourceStatus.RUNTIME_ONLY)
+    override val signals = flow {
+        var previous: Map<String, Boolean>? = null
+        providerStatusFlow.collect { current ->
+            val prior = previous; previous = current.toMap()
+            if (prior != null) {
+                current.forEach { (providerId, nowAvailable) ->
+                    val before = prior[providerId]
+                    if (before != null && before != nowAvailable) {
+                        emit(signal(
+                            AutomationSignalKind.PROVIDER_STATE_CHANGED,
+                            "provider",
+                            mapOf(
+                                "provider" to AutomationValue.Text(providerId),
+                                "available" to AutomationValue.Flag(nowAvailable)
+                            ),
+                            AutomationTrust.TRUSTED_RUNTIME
+                        ))
+                    }
+                }
+            }
+        }
+    }
+}
+
+class CapabilityAvailabilitySignalSource(
+    private val capabilityStatusFlow: StateFlow<Map<String, Boolean>>
+) : AutomationSignalSource {
+    override val availability = MutableStateFlow(AutomationSourceStatus.RUNTIME_ONLY)
+    override val signals = flow {
+        var previous: Map<String, Boolean>? = null
+        capabilityStatusFlow.collect { current ->
+            val prior = previous; previous = current.toMap()
+            if (prior != null) {
+                current.forEach { (capabilityId, nowAvailable) ->
+                    val before = prior[capabilityId]
+                    if (before != null && before != nowAvailable) {
+                        emit(signal(
+                            AutomationSignalKind.CAPABILITY_STATE_CHANGED,
+                            "capability",
+                            mapOf(
+                                "capability" to AutomationValue.Text(capabilityId),
+                                "available" to AutomationValue.Flag(nowAvailable)
+                            ),
+                            AutomationTrust.TRUSTED_RUNTIME
+                        ))
+                    }
+                }
+            }
+        }
+    }
+}
+
 private fun signal(kind: AutomationSignalKind, source: String, attributes: Map<String, AutomationValue> = emptyMap(),
     trust: AutomationTrust = AutomationTrust.PLATFORM_EVENT) = AutomationSignal(UUID.randomUUID().toString(), kind, Instant.now(), source, trust, attributes)

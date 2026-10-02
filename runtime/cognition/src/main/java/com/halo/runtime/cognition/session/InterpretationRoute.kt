@@ -1,9 +1,16 @@
 package com.halo.runtime.cognition.session
 
 import com.halo.cognition.language.CallIntent
+import com.halo.cognition.language.CancelWatchIntent
 import com.halo.cognition.language.ConversationIntent
 import com.halo.cognition.language.Intent
+import com.halo.cognition.language.ListWatchesIntent
 import com.halo.cognition.language.NavigateIntent
+import com.halo.cognition.language.NotifyWhenAppStartedIntent
+import com.halo.cognition.language.NotifyWhenBatteryBelowIntent
+import com.halo.cognition.language.NotifyWhenDeviceConnectedIntent
+import com.halo.cognition.language.NotifyWhenNetworkAvailableIntent
+import com.halo.cognition.language.NotifyWhenNotificationFromAppIntent
 import com.halo.cognition.language.OpenIntent
 import com.halo.cognition.language.PauseIntent
 import com.halo.cognition.language.PlayIntent
@@ -98,6 +105,13 @@ class InterpretationRouteResolver(
             SearchIntent::class.java to "engine.execution/web.search",
             SetAlarmIntent::class.java to "engine.execution/device.set_alarm",
             ShowAlarmsIntent::class.java to "engine.execution/device.show_alarms",
+            NotifyWhenNetworkAvailableIntent::class.java to "engine.execution/watch.create",
+            NotifyWhenBatteryBelowIntent::class.java to "engine.execution/watch.create",
+            NotifyWhenDeviceConnectedIntent::class.java to "engine.execution/watch.create",
+            NotifyWhenAppStartedIntent::class.java to "engine.execution/watch.create",
+            NotifyWhenNotificationFromAppIntent::class.java to "engine.execution/watch.create",
+            CancelWatchIntent::class.java to "engine.execution/watch.cancel",
+            ListWatchesIntent::class.java to "engine.execution/watch.list",
         )
     }
 }

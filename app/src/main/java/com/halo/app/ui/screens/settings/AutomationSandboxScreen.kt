@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.dp
 import com.halo.app.di.ManualDependencyGraph
 import com.halo.app.ui.workspace.*
 import com.halo.runtime.cognition.routine.*
+import com.halo.runtime.cognition.watch.ContinuationWatchMatcher
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.util.UUID
@@ -32,7 +33,13 @@ import java.util.UUID
                     AutomationSignalKind.APP_FOREGROUNDED, AutomationSignalKind.NOTIFICATION_POSTED -> mapOf("package" to AutomationValue.Text(target))
                     else -> emptyMap()
                 }
-                results = ManualDependencyGraph.automationRuntime.preview(AutomationSignal(UUID.randomUUID().toString(), kind, Instant.now(), "sandbox", AutomationTrust.INTERNAL_TEST, attributes))
+                val signal = AutomationSignal(UUID.randomUUID().toString(), kind, Instant.now(), "sandbox", AutomationTrust.INTERNAL_TEST, attributes)
+                val routineResults = ManualDependencyGraph.automationRuntime.preview(signal)
+                val activeWatches = ManualDependencyGraph.followUpRepository.getAllActiveWatches()
+                val watchResults = activeWatches.filter { ContinuationWatchMatcher.matches(it.condition, signal) }.map {
+                    "Follow-up watch ${it.id.value}: matches condition ${it.condition::class.simpleName}"
+                }
+                results = routineResults + watchResults
             } })
         }
         results.forEach { Text(it) }

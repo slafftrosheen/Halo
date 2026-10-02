@@ -261,6 +261,24 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
                     .put("summary", step.summary)
                 "RunGuardTriggered"
             }
+            is AgentStep.ExternalConditionRegistered -> {
+                payload.put("watchId", step.watchId).put("conditionType", step.conditionType)
+                    .put("targetId", step.targetId ?: "").put("presentationText", step.presentationText ?: "")
+                "ExternalConditionRegistered"
+            }
+            is AgentStep.ExternalConditionSatisfied -> {
+                payload.put("watchId", step.watchId).put("conditionType", step.conditionType)
+                    .put("targetId", step.targetId ?: "")
+                "ExternalConditionSatisfied"
+            }
+            is AgentStep.ExternalConditionExpired -> {
+                payload.put("watchId", step.watchId).put("conditionType", step.conditionType)
+                "ExternalConditionExpired"
+            }
+            is AgentStep.ExternalConditionCancelled -> {
+                payload.put("watchId", step.watchId).put("reason", step.reason ?: "")
+                "ExternalConditionCancelled"
+            }
         }
         return payload to type
     }

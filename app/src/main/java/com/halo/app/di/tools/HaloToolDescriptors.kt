@@ -428,6 +428,16 @@ object HaloToolDescriptors {
         else -> null
     }
 
+    fun followups(definition: ToolDefinition): ToolDescriptor? = when (definition.name) {
+        "halo_create_watch" -> descriptor(definition.name, definition, ToolCategory.AUTOMATION, ToolSecurityPolicy.READ_ONLY,
+            keywords = setOf("followup", "watch", "notify", "wait", "when"))
+        "halo_list_watches" -> descriptor(definition.name, definition, ToolCategory.AUTOMATION, ToolSecurityPolicy.READ_ONLY,
+            keywords = setOf("followup", "watch", "list", "active"))
+        "halo_cancel_watch" -> descriptor(definition.name, definition, ToolCategory.AUTOMATION, ToolSecurityPolicy.READ_ONLY,
+            keywords = setOf("followup", "watch", "cancel", "stop"))
+        else -> null
+    }
+
     fun appSemantic(definition: ToolDefinition): ToolDescriptor? = when (definition.name) {
         "halo_current_app_capabilities" -> descriptor(definition.name, definition, ToolCategory.HOST_CONTROL, ToolSecurityPolicy.READ_ONLY,
             keywords = setOf("current app", "app actions"))
@@ -623,6 +633,7 @@ object HaloToolDescriptors {
             ExecutorKind.ROUTINE -> routineCreation(definition)
             ExecutorKind.PROCEDURE -> procedure(definition)
             ExecutorKind.PRESENTATION -> presentation(definition)
+            ExecutorKind.FOLLOWUP -> followups(definition)
         }
 
     enum class ExecutorKind {
@@ -652,6 +663,7 @@ object HaloToolDescriptors {
         ROUTINE,
         PROCEDURE,
         PRESENTATION,
+        FOLLOWUP,
     }
 
     /** Discovery meta-tool is always part of bounded bootstrap exposure. */

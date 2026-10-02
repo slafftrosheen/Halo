@@ -347,6 +347,41 @@ sealed interface AgentStep {
         /** Bounded, content-free explanation safe to show and log. */
         val summary: String,
     ) : AgentStep
+
+    data class ExternalConditionRegistered(
+        override val id: AgentStepId,
+        override val runId: AgentRunId,
+        override val createdAt: Instant,
+        val watchId: String,
+        val conditionType: String,
+        val targetId: String? = null,
+        val presentationText: String? = null,
+    ) : AgentStep
+
+    data class ExternalConditionSatisfied(
+        override val id: AgentStepId,
+        override val runId: AgentRunId,
+        override val createdAt: Instant,
+        val watchId: String,
+        val conditionType: String,
+        val targetId: String? = null,
+    ) : AgentStep
+
+    data class ExternalConditionExpired(
+        override val id: AgentStepId,
+        override val runId: AgentRunId,
+        override val createdAt: Instant,
+        val watchId: String,
+        val conditionType: String,
+    ) : AgentStep
+
+    data class ExternalConditionCancelled(
+        override val id: AgentStepId,
+        override val runId: AgentRunId,
+        override val createdAt: Instant,
+        val watchId: String,
+        val reason: String? = null,
+    ) : AgentStep
 }
 
 /** Provider-neutral record of one model tool call. */

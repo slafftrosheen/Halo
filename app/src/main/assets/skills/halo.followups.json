@@ -1,0 +1,28 @@
+{
+  "id": "halo.followups",
+  "schemaVersion": 2,
+  "name": "Follow-ups",
+  "description": "Durable event watches, condition notifications, and capability recovery.",
+  "category": "AUTOMATION",
+  "risk": "READ_ONLY",
+  "tools": [
+    "halo_create_watch",
+    "halo_list_watches",
+    "halo_cancel_watch"
+  ],
+  "requiredPermissions": [],
+  "toolDefinitions": [
+    {
+      "toolId": "halo_create_watch",
+      "risk": "READ_ONLY"
+    },
+    {
+      "toolId": "halo_list_watches",
+      "risk": "READ_ONLY"
+    },
+    {
+      "toolId": "halo_cancel_watch",
+      "risk": "READ_ONLY"
+    }
+  ]
+}

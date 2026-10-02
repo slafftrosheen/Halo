@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.dp
 import com.halo.app.ui.workspace.*
 import com.halo.app.di.ManualDependencyGraph
 import com.halo.runtime.cognition.routine.*
+import kotlinx.coroutines.launch
 import com.halo.runtime.cognition.tools.ToolDescriptor
 import com.halo.host.android.resolver.AndroidApplicationResolver
 import com.halo.host.android.resolver.AppCandidate
@@ -39,17 +40,50 @@ fun AutomationScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onNotific
             { editing?.let { viewModel.runNow(it.id) }; editor = false })
         return
     }
+    var activeTab by remember { mutableStateOf("routines") }
+    val scope = rememberCoroutineScope()
+    val watches by ManualDependencyGraph.followUpRepository.observeRecentWatches().collectAsStateWithLifecycle(initialValue = emptyList())
+
     Column(Modifier.fillMaxSize()) {
-        Row { TextButton(onClick = onBack) { Text("Back") }; TextButton(onClick = onNotifications) { Text("Notifications & Digests") } }
-        Text(state.schedulingStatus, Modifier.padding(horizontal = 24.dp), style = MaterialTheme.typography.bodySmall)
-        state.error?.let { Text(it, Modifier.padding(16.dp), color = MaterialTheme.colorScheme.error) }
-        state.blockedRoutines.forEach { (id, reason) ->
-            Text(reason, Modifier.padding(16.dp), color = MaterialTheme.colorScheme.error)
-            TextButton(onClick = { viewModel.delete(RoutineId(id)) }) { Text("Delete unsupported automation") }
+        Row(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TextButton(onClick = onBack) { Text("Back") }
+            TextButton(onClick = { activeTab = "routines" }) { Text(if (activeTab == "routines") "✓ Routines" else "Routines") }
+            TextButton(onClick = { activeTab = "followups" }) { Text(if (activeTab == "followups") "✓ Follow-ups (${watches.count { it.status.name == "ACTIVE" }})" else "Follow-ups") }
+            TextButton(onClick = onNotifications) { Text("Notifications & Digests") }
         }
-        Row { TextButton(onClick = { history = true }) { Text("Run history") }; TextButton(onClick = { viewModel.reconcile() }) { Text("Reconcile schedules") } }
-        Box(Modifier.weight(1f)) { RoutinesScreen(state.routines, viewModel::enable,
-            onCreateRoutine = { editing = null; editor = true }, onOpenRoutine = { id -> editing = state.routines.firstOrNull { it.id == id }; editor = true }) }
+
+        if (activeTab == "followups") {
+            Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                HaloWorkspaceHeader("Follow-ups", "Durable event watches · condition notifications & capability recovery")
+                if (watches.isEmpty()) {
+                    Text("No follow-up watches created yet. Ask Halo 'Tell me when internet is back' or 'Tell me when my glasses connect'.")
+                }
+                watches.forEach { watch ->
+                    HaloWorkspaceCard {
+                        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(watch.presentationText ?: watch.condition::class.simpleName ?: "Follow-up", style = MaterialTheme.typography.titleMedium)
+                            Text("Condition: ${watch.condition::class.simpleName} · Status: ${watch.status.name}")
+                            watch.expiresAt?.let { Text("Expires: $it", style = MaterialTheme.typography.bodySmall) }
+                            if (watch.status.name == "ACTIVE") {
+                                HaloWorkspaceButton("Cancel watch", onClick = {
+                                    scope.launch { ManualDependencyGraph.followUpRepository.cancelWatch(watch.id) }
+                                })
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            Text(state.schedulingStatus, Modifier.padding(horizontal = 24.dp), style = MaterialTheme.typography.bodySmall)
+            state.error?.let { Text(it, Modifier.padding(16.dp), color = MaterialTheme.colorScheme.error) }
+            state.blockedRoutines.forEach { (id, reason) ->
+                Text(reason, Modifier.padding(16.dp), color = MaterialTheme.colorScheme.error)
+                TextButton(onClick = { viewModel.delete(RoutineId(id)) }) { Text("Delete unsupported automation") }
+            }
+            Row { TextButton(onClick = { history = true }) { Text("Run history") }; TextButton(onClick = { viewModel.reconcile() }) { Text("Reconcile schedules") } }
+            Box(Modifier.weight(1f)) { RoutinesScreen(state.routines, viewModel::enable,
+                onCreateRoutine = { editing = null; editor = true }, onOpenRoutine = { id -> editing = state.routines.firstOrNull { it.id == id }; editor = true }) }
+        }
     }
     if(history) AlertDialog(onDismissRequest = { history = false }, title = { Text("Automation history") }, text = {
         Column(Modifier.verticalScroll(rememberScrollState())) {

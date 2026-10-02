@@ -46,7 +46,9 @@ import com.halo.app.data.workspace.WorkspaceRelationEntity
 import com.halo.app.backup.BackupRecordDao
 import com.halo.app.backup.BackupRecordEntity
 import com.halo.app.backup.BrainSnapshotDao
+import com.halo.app.data.attention.AttentionReceiptEntity
 import com.halo.app.data.notebook.NotebookDao
+import com.halo.app.data.watch.ContinuationWatchEntity
 
 @Database(
     entities = [
@@ -92,12 +94,14 @@ import com.halo.app.data.notebook.NotebookDao
         com.halo.app.data.payload.PayloadBodyEntity::class,
         com.halo.app.data.payload.PayloadReferenceEntity::class,
         com.halo.app.data.attention.AttentionPendingEntity::class,
-        com.halo.app.data.attention.AttentionReceiptEntity::class
+        AttentionReceiptEntity::class,
+        ContinuationWatchEntity::class
     ],
     version = AppDatabase.VERSION,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
+    abstract fun continuationWatchDao(): com.halo.app.data.watch.ContinuationWatchDao
     abstract fun attentionDao(): com.halo.app.data.attention.AttentionDao
     abstract fun payloadDao(): com.halo.app.data.payload.PayloadDao
     abstract fun notificationDao(): com.halo.app.data.notification.NotificationDao
@@ -121,7 +125,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun mcpDao(): com.halo.app.data.mcp.McpDao
 
     companion object {
-        const val VERSION = 22
+        const val VERSION = 23
 
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
@@ -927,7 +931,36 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        val ALL_MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22)
+        val MIGRATION_22_23 = object : Migration(22, 23) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS continuation_watches (
+                        id TEXT NOT NULL PRIMARY KEY,
+                        runId TEXT,
+                        interactionId TEXT,
+                        conditionType TEXT NOT NULL,
+                        conditionJson TEXT NOT NULL,
+                        behaviorType TEXT NOT NULL,
+                        behaviorJson TEXT NOT NULL,
+                        presentationText TEXT,
+                        status TEXT NOT NULL,
+                        createdAt INTEGER NOT NULL,
+                        expiresAt INTEGER,
+                        deduplicationKey TEXT,
+                        matchMode TEXT NOT NULL,
+                        matchedAt INTEGER,
+                        claimState TEXT NOT NULL DEFAULT 'UNCLAIMED'
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_continuation_watches_runId ON continuation_watches(runId)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_continuation_watches_status ON continuation_watches(status)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_continuation_watches_deduplicationKey ON continuation_watches(deduplicationKey)")
+            }
+        }
+
+        val ALL_MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22, MIGRATION_22_23)
 
         fun create(context: Context): AppDatabase =
             Room.databaseBuilder(context, AppDatabase::class.java, "halo.db")

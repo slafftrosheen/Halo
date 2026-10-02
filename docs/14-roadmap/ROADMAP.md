@@ -1,5 +1,13 @@
 # Halo Execution Roadmap
 
+## PHONE-ASSISTANT-004 - Durable Follow-ups + Event Watches + Continuation Runtime — 2026-10-02
+
+**IMPLEMENTED / COMPILED / UNIT VERIFIED / DEPLOYED.**
+Halo now supports provider-independent durable event watches, condition notifications, capability recovery, and `WAITING_FOR_EVENT` task continuations. Matches use transactional claims; side-effects are never replayed.
+
+See [DURABLE-FOLLOWUPS](../engineering/PHONE-ASSISTANT-004-DURABLE-FOLLOWUPS.md) and [CONTINUATION-WATCH-RUNTIME](../engineering/CONTINUATION-WATCH-RUNTIME.md).
+
+
 ## STABILIZATION-PROVIDER-001 - 2026-09-30
 
 **IMPLEMENTED / UNVALIDATED.** STABILIZATION-PROVIDER-001 source implementation precedes further major runtime expansion. Next is later build/test/phone acceptance of existing inference providers, DirectResponse and Android/ElevenLabs speech. Additional inference vendors and TTS vendors remain deferred.

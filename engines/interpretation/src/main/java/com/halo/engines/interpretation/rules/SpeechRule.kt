@@ -1,6 +1,12 @@
 package com.halo.engines.interpretation.rules
 
+import com.halo.cognition.language.CancelWatchIntent
 import com.halo.cognition.language.DayPartKind
+import com.halo.cognition.language.ListWatchesIntent
+import com.halo.cognition.language.NotifyWhenAppStartedIntent
+import com.halo.cognition.language.NotifyWhenBatteryBelowIntent
+import com.halo.cognition.language.NotifyWhenDeviceConnectedIntent
+import com.halo.cognition.language.NotifyWhenNetworkAvailableIntent
 import com.halo.cognition.language.PersonEntity
 import com.halo.cognition.language.TemporalExpressionParser
 import com.halo.cognition.language.TemporalParseResult
@@ -171,6 +177,57 @@ class SpeechRule : InterpretationRule {
                 }
             }
 
+            networkWatchPattern.containsMatchIn(transcript) -> RuleMatch(
+                confidence = 0.98f,
+                intent = NotifyWhenNetworkAvailableIntent,
+                consumedTokens = consumedTokens,
+                diagnostics = "Detected network watch command"
+            )
+
+            batteryWatchPattern.containsMatchIn(transcript) -> {
+                val percent = batteryWatchPattern.find(transcript)?.groupValues?.get(1)?.toIntOrNull() ?: 20
+                RuleMatch(
+                    confidence = 0.98f,
+                    intent = NotifyWhenBatteryBelowIntent(percent),
+                    consumedTokens = consumedTokens,
+                    diagnostics = "Detected battery watch command"
+                )
+            }
+
+            glassesWatchPattern.containsMatchIn(transcript) -> RuleMatch(
+                confidence = 0.98f,
+                intent = NotifyWhenDeviceConnectedIntent("heycyan"),
+                consumedTokens = consumedTokens,
+                diagnostics = "Detected device watch command"
+            )
+
+            appWatchPattern.containsMatchIn(transcript) -> {
+                val app = appWatchPattern.find(transcript)?.groupValues?.get(1)?.trim().orEmpty()
+                RuleMatch(
+                    confidence = 0.98f,
+                    intent = NotifyWhenAppStartedIntent(app),
+                    consumedTokens = consumedTokens,
+                    diagnostics = "Detected app watch command"
+                )
+            }
+
+            cancelWatchPattern.containsMatchIn(transcript) -> {
+                val target = cancelWatchPattern.find(transcript)?.groupValues?.get(1)?.trim()
+                RuleMatch(
+                    confidence = 0.98f,
+                    intent = CancelWatchIntent(target),
+                    consumedTokens = consumedTokens,
+                    diagnostics = "Detected cancel watch command"
+                )
+            }
+
+            listWatchesPattern.containsMatchIn(transcript) -> RuleMatch(
+                confidence = 0.98f,
+                intent = ListWatchesIntent,
+                consumedTokens = consumedTokens,
+                diagnostics = "Detected list watches command"
+            )
+
             questionPattern.containsMatchIn(transcript) -> RuleMatch(
                 confidence = confidence.coerceAtLeast(0.7f),
                 intent = QuestionIntent,
@@ -220,6 +277,30 @@ class SpeechRule : InterpretationRule {
         )
         val showAlarmsPattern = Regex(
             "^\\s*(?:(?:show|open)(?: my)? alarms|upcoming alarms)\\s*$",
+            RegexOption.IGNORE_CASE
+        )
+        val networkWatchPattern = Regex(
+            "^\\s*(?:tell|notify|let)\\s+me\\s+know?\\s+when\\s+(?:the\\s+)?(?:internet|network|connection)\\s+(?:is\\s+back|comes\\s+back|comes\\s+online|is\\s+available)\\s*$",
+            RegexOption.IGNORE_CASE
+        )
+        val batteryWatchPattern = Regex(
+            "^\\s*(?:tell\\s+me|remind\\s+me\\s+to\\s+charge|let\\s+me\\s+know)\\s+when\\s+(?:the\\s+)?battery\\s+(?:drops|falls|goes)\\s+below\\s+(\\d+)%?\\s*$",
+            RegexOption.IGNORE_CASE
+        )
+        val glassesWatchPattern = Regex(
+            "^\\s*(?:tell|let)\\s+me\\s+know?\\s+when\\s+(?:my\\s+)?(?:glasses|heycyan|wearable)\\s+(?:reconnects?|connects?|is\\s+back)\\s*$",
+            RegexOption.IGNORE_CASE
+        )
+        val appWatchPattern = Regex(
+            "^\\s*(?:tell|let)\\s+me\\s+know?\\s+when\\s+(.+?)\\s+opens?\\s*$",
+            RegexOption.IGNORE_CASE
+        )
+        val cancelWatchPattern = Regex(
+            "^\\s*cancel\\s+(?:that\\s+)?(?:watch|follow-?up|followups?)(?:\\s+for\\s+(.+))?\\s*$",
+            RegexOption.IGNORE_CASE
+        )
+        val listWatchesPattern = Regex(
+            "^\\s*(?:what\\s+are\\s+you\\s+(?:waiting\\s+for|watching)|list\\s+(?:my\\s+)?(?:follow-?ups|watches))\\s*$",
             RegexOption.IGNORE_CASE
         )
     }
