@@ -4,6 +4,7 @@ import android.content.Context
 import com.halo.app.di.tools.host.AccessibilityTools
 import com.halo.app.di.tools.host.AlarmTools
 import com.halo.app.di.tools.host.ApplicationTools
+import com.halo.app.di.tools.host.MessagingTools
 import com.halo.app.di.tools.host.CommunicationTools
 import com.halo.app.di.tools.host.DeviceTools
 import com.halo.app.di.tools.host.HostToolRegistry
@@ -27,6 +28,7 @@ class HostTools(
     private val context: Context,
     private val isForeground: () -> Boolean = { true },
     private val additionalExecutors: List<ToolExecutor> = emptyList(),
+    private val preferSemanticRoute: (String?, String) -> Boolean = { _, _ -> false },
 ) : ToolExecutor, com.halo.runtime.cognition.tools.ToolPreflightProvider {
     override suspend fun preflight(toolCall: ToolCall) = registry.preflight(toolCall)
     override fun restoreTransientCall(toolCall: ToolCall) = registry.restoreTransientCall(toolCall)
@@ -39,9 +41,10 @@ class HostTools(
             add(com.halo.app.di.tools.host.CalendarTools(context))
             add(com.halo.app.di.tools.host.NotificationControlTools(context))
             add(CommunicationTools(context))
+            add(MessagingTools(context))
             add(SystemTools(context))
             add(NavigationTools(context, isForeground))
-            add(AccessibilityTools())
+            add(AccessibilityTools(preferSemanticRoute))
             addAll(additionalExecutors)
         }
     )

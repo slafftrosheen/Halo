@@ -63,6 +63,14 @@ class NativeCapabilityDispatcherTest {
             }
             assertEquals(commands.size, calls.size - before)
         }
+        val sequence = NativeCommandParser.parse("Open Spotify and set volume to 30 percent")!!
+        val startSequence = calls.size
+        dispatcher.dispatch(Interpretation("Open Spotify and set volume to 30 percent", intent = sequence, confidence = 1f))
+        assertEquals(listOf("halo_open_app", "halo_volume"), calls.drop(startSequence).map { it.functionName })
+        dispatcher.dispatch(Interpretation("Set volume to 50 percent", intent = VolumeIntent(percent = 50), confidence = 1f))
+        dispatcher.dispatch(Interpretation("Make it 20", intent = NativeReferenceIntent("make it 20"), confidence = 1f))
+        assertEquals(20, calls.last().arguments["percent"])
+        assertFalse(store.rows.value.any { run -> run.steps.any { it is AgentStep.ProviderTurnStarted } })
         val before = calls.size
         service.check(SkillId("native")); SkillRuntimeAudit(skills, registry, service).inspect()
         assertEquals(before, calls.size)

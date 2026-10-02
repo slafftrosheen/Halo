@@ -68,6 +68,7 @@ object RuntimeUiFormatters {
     }
 
     fun formatStepTitle(step: AgentStep): String = when (step) {
+        is AgentStep.SemanticAppOperationRecorded -> step.receipt.semanticAction.value.replace('_', ' ')
         is AgentStep.UiTransactionRecorded -> "Screen transaction"
         is AgentStep.DelegationResultRecorded -> "Delegated findings recorded"
         is AgentStep.ContextUsed -> "Context used"

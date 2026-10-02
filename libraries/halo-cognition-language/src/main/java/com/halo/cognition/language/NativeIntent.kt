@@ -22,6 +22,7 @@ object NativeCommandParser {
         val raw = text.trim().trimEnd('.', '!', '?')
         val command = raw.lowercase().removePrefix("please ")
         if (ConversationSemantics.isExplanation(raw) || ConversationSemantics.answerFromModel(raw)) return null
+        AppCommandParser.parse(raw)?.let { return it as? NativeControlIntent }
         if (Regex("\\b(and then|then|and)\\b").containsMatchIn(command)) return null
         Regex("(?:set|start) (?:a )?timer (?:for )?([a-z\\d -]+) (seconds?|minutes?|hours?)").matchEntire(command)?.let {
             val amount = number(it.groupValues[1]) ?: return NativeClarificationIntent("Specify a timer duration from 1 second to 24 hours.")

@@ -1,5 +1,8 @@
 # Halo current state
 
+## PHONE-ASSISTANT-003 — 2026-10-02
+Semantic app bridge implemented: Native → AppFunction → DirectAction → Intent → Accessibility → User. Model reasoning never owns platform authority. External capabilities are bounded, current-app and generation-scoped; approval and durable claims remain in the shared runtime. Dispatch and effect truth are separate, and possible dispatch forbids fallback. Composer launch does not mean message delivery. AndroidX alpha12 / API 37 activity integration is host-owned; scalar external schemas are supported, nested/resource schemas remain excluded. Automated verification passed: 639 tests, zero failures/errors/skips; API 37 debug APK assembled. Audit: 31 skills / 86 tools with zero wiring issues. See docs/testing/SEMANTIC-APP-OPERATOR-ACCEPTANCE.md; physical acceptance remains pending.
+
 ## PHONE-ASSISTANT-002 — 2026-10-01
 
 Host-first native dispatch, shared skill authority, independent AGENTIC/VISION selection, explicit Vision Lab, Home quick actions and API 36 AppFunctions are implemented. **AUTOMATED VERIFIED / APK BUILT.** The requested suite passes: 610 tests, no failures or skips. The host graph audit reports 28 skills and 81 tools with zero orphan, unresolved, duplicate or permission-mismatched entries. Physical assistant, wearable and live-provider acceptance remains pending. See [runtime documentation](docs/engineering/PHONE-ASSISTANT-002-HOST-FIRST-RUNTIME.md).

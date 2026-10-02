@@ -89,6 +89,10 @@ sealed interface AgentStep {
     val id: AgentStepId
     val runId: AgentRunId
     val createdAt: Instant
+    data class SemanticAppOperationRecorded(override val id: AgentStepId, override val runId: AgentRunId,
+        override val createdAt: Instant, val receipt: com.halo.runtime.cognition.apps.SemanticOperationReceipt,
+        val argumentShapes: List<com.halo.runtime.cognition.apps.SemanticArgumentShape> = emptyList()) : AgentStep
+
     data class UiTransactionRecorded(override val id: AgentStepId, override val runId: AgentRunId,
         override val createdAt: Instant, val transaction: com.halo.runtime.cognition.ui.UiTransactionRecord) : AgentStep
 

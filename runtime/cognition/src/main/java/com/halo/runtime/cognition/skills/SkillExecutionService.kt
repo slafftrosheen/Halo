@@ -44,7 +44,7 @@ class SkillExecutionService(
         refreshCapabilities()
         skills.refreshAvailability()
         for (call in toolCalls) {
-            val ownerEnabled = skills.skillIdForTool(call.functionName)?.let { skills.get(it)?.enabled } == true
+            val ownerEnabled = (if (call.functionName.startsWith("halo_appfn_")) skills.get(SkillId("halo.current_app"))?.enabled else skills.skillIdForTool(call.functionName)?.let { skills.get(it)?.enabled }) == true
             val descriptor = tools.descriptor(call.functionName)
             val reason = when {
                 !ownerEnabled && descriptor?.visibility != ToolVisibility.INTERNAL -> "Skill disabled or not registered"
@@ -91,7 +91,7 @@ class SkillRuntimeAudit(private val skills: SkillRegistry, private val tools: To
         val registered = definitions.map { it.name }.toSet()
         val internal = tools.descriptors().filter { it.visibility == ToolVisibility.INTERNAL }.map { it.name }.toSet()
         return SkillRuntimeAuditResult(allSkills.size, allSkills.count { it.enabled }, registered.size,
-            registered - declared - internal, declared - registered,
+            registered - declared - internal - registered.filter { it.startsWith("halo_appfn_") && allSkills.any { skill -> skill.id.value == "halo.current_app" } }.toSet(), declared - registered,
             definitions.groupBy { it.name }.filterValues { it.size > 1 }.keys,
             allSkills.flatMap { service.check(it.id).entries }.filter { it.value != "Available" }.associate { it.key to it.value },
             allSkills.flatMap { skill -> skill.toolDefinitions.mapNotNull { definition ->

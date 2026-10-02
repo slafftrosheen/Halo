@@ -71,8 +71,13 @@ fun SkillsScreen(
     /** MINING-P1-001 capability overview. Optional: the screen works without it. */
     capabilityStatus: CapabilityStatusViewModel? = null,
     executionService: com.halo.runtime.cognition.skills.SkillExecutionService? = null,
+    appCapabilities: com.halo.runtime.cognition.apps.AppFunctionCapabilityIndex? = null,
+    refreshAppCapabilities: (suspend () -> Unit)? = null,
+    screenControlAvailable: () -> Boolean = { false },
     providerRoleCheck: (suspend (SkillDescriptor) -> String?)? = null,
 ) {
+    LaunchedEffect(appCapabilities) { refreshAppCapabilities?.let { refresh -> kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { refresh() } } }
+    val appSnapshot by (appCapabilities?.state ?: kotlinx.coroutines.flow.MutableStateFlow(com.halo.runtime.cognition.apps.AppCapabilitySnapshot())).collectAsStateWithLifecycle()
     val skills by skillRegistry.skills.collectAsStateWithLifecycle()
     // Recompose whenever live host/device capability availability changes.
     val capabilitySnapshot by (
@@ -272,6 +277,17 @@ fun SkillsScreen(
     Column(Modifier.fillMaxSize().padding(horizontal = HaloSpacing.screen)) {
         HaloScreenHeader("Skills", "Actions Halo can use", navigation = onBack)
         LazyColumn(verticalArrangement = Arrangement.spacedBy(HaloSpacing.xs)) {
+            if (appCapabilities != null) item(key = "app-capabilities") {
+                Column(Modifier.padding(vertical = HaloSpacing.xs)) {
+                    Text("App capabilities", style = MaterialTheme.typography.titleMedium)
+                    Text("App Functions · ${appSnapshot.availability.name.lowercase().replace('_', ' ')}")
+                    Text("Apps visible · ${appSnapshot.capabilities.map { it.packageName }.distinct().size}")
+                    Text("Functions discovered · ${appSnapshot.capabilities.count { it.route == com.halo.runtime.cognition.apps.AppOperationRoute.APP_FUNCTION }}")
+                    Text("Current app actions · ${appCapabilities.currentCandidates().size}")
+                    Text("Direct Actions · ${appSnapshot.capabilities.count { it.route == com.halo.runtime.cognition.apps.AppOperationRoute.DIRECT_ACTION }}")
+                    Text("Screen control · ${if (screenControlAvailable()) "Available" else "Off"}")
+                }
+            }
             if (capabilityStatus != null) {
                 item(key = "capability-status") {
                     CapabilityStatusCard(capabilityStatus)

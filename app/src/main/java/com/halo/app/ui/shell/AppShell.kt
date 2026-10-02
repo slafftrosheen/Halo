@@ -384,6 +384,9 @@ fun AppShell(
 
                 composable("skills") {
                     SkillsScreen(
+                        appCapabilities = ManualDependencyGraph.appFunctionCapabilityIndex,
+                        refreshAppCapabilities = { ManualDependencyGraph.appFunctionConsumer.refresh() },
+                        screenControlAvailable = { com.halo.host.android.accessibility.HaloAccessibilityService.isEnabled },
                         providerRoleCheck = { skill ->
                             val capabilities = skill.requirements.filterIsInstance<com.halo.sdk.runtime.skills.SkillRequirement.ProviderCapability>().map { it.capability.uppercase() }
                             val role = when {

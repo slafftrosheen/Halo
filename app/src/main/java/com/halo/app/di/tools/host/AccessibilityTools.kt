@@ -10,7 +10,7 @@ import com.halo.sdk.runtime.*
 import kotlinx.coroutines.*
 import kotlin.coroutines.coroutineContext
 
-class AccessibilityTools : ToolExecutor, ToolPreflightProvider {
+class AccessibilityTools(private val preferSemanticRoute: (String?, String) -> Boolean = { _, _ -> false }) : ToolExecutor, ToolPreflightProvider {
     private data class PendingText(val snapshotId: String, val token: String, val digest: String, val text: String, val at: Long)
     private val pendingText = java.util.concurrent.ConcurrentHashMap<String, PendingText>()
     override fun restoreTransientCall(toolCall: ToolCall): ToolCall {
@@ -76,6 +76,8 @@ class AccessibilityTools : ToolExecutor, ToolPreflightProvider {
                 is UiTargetOutcome.Resolved -> result.target
             }
         }
+        if (target != null && preferSemanticRoute(target.packageName, target.label.orEmpty()))
+            return@withContext ToolPreflightResult.Rejected(UiFailure.ACTION_NOT_SUPPORTED)
         val intent = when (operation) {
             UiOperation.ACTIVATE, UiOperation.LONG_PRESS -> {
                 val expected = toolCall.arguments["expectedEffect"] as? String ?: "NONE"

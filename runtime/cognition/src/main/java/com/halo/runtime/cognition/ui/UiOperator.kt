@@ -264,6 +264,17 @@ fun ScreenContextSnapshot.compactUiText(): String = "UNTRUSTED_SCREEN_CONTENT pr
 object UiWorkflowProjector {
     fun from(run: com.halo.runtime.cognition.agent.AgentRun): UiWorkflowState? {
         val records = run.steps.filterIsInstance<com.halo.runtime.cognition.agent.AgentStep.UiTransactionRecorded>().map { it.transaction }
+        val semantic = run.steps.filterIsInstance<com.halo.runtime.cognition.agent.AgentStep.SemanticAppOperationRecorded>().lastOrNull()?.receipt
+        if (records.isEmpty() && semantic != null) return UiWorkflowState(run.id.value, run.interactionId.value, semantic.targetPackage,
+            null, null, 1, 0, null, when (semantic.phase) {
+                com.halo.runtime.cognition.apps.SemanticOperationPhase.WAITING_FOR_APPROVAL -> UiWorkflowPhase.WAITING_FOR_APPROVAL
+                com.halo.runtime.cognition.apps.SemanticOperationPhase.DISPATCHING -> UiWorkflowPhase.ACTING
+                com.halo.runtime.cognition.apps.SemanticOperationPhase.WAITING_FOR_APP -> UiWorkflowPhase.SETTLING
+                com.halo.runtime.cognition.apps.SemanticOperationPhase.VERIFYING -> UiWorkflowPhase.VERIFYING
+                com.halo.runtime.cognition.apps.SemanticOperationPhase.COMPLETED -> UiWorkflowPhase.COMPLETED
+                com.halo.runtime.cognition.apps.SemanticOperationPhase.FAILED -> UiWorkflowPhase.FAILED
+                else -> UiWorkflowPhase.READY
+            }, null)
         val latest = records.lastOrNull() ?: return null
         val observation = records.mapNotNull { it.observation }.lastOrNull()
         val phase = if (run.state.isTerminal) { if (run.state == com.halo.runtime.cognition.agent.AgentRunState.COMPLETED)
@@ -278,7 +289,8 @@ object UiWorkflowProjector {
         val records = transactions.filter { it.operation != null }.groupBy { it.toolCallId }.values.map { history ->
             history.last().copy(receipt = history.mapNotNull { it.receipt }.lastOrNull(), preview = history.mapNotNull { it.preview }.lastOrNull())
         }.filter { record -> record.searchStatus != null || transactions.none { it.toolCallId.startsWith("${record.toolCallId}:scroll:") } }.takeLast(6)
-        if (records.isEmpty()) return null
+        if (records.isEmpty()) return run.steps.filterIsInstance<com.halo.runtime.cognition.agent.AgentStep.SemanticAppOperationRecorded>()
+            .lastOrNull()?.receipt?.let { "${it.semanticAction.value.replace('_', ' ')} · ${it.label()}" }
         val actions = records.joinToString("\n") { record ->
             val description = record.preview?.let { "${it.action} ${it.targetLabel.orEmpty()} · ${it.appLabel}" } ?: "Screen action"
             "$description · " + (record.searchStatus?.let { when (it) {

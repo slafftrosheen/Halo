@@ -1,0 +1,25 @@
+{
+  "id": "halo.current_app",
+  "schemaVersion": 2,
+  "name": "Current app",
+  "description": "Current app through supported platform interfaces.",
+  "category": "INFORMATION",
+  "risk": "SENSITIVE",
+  "tools": [
+    "halo_current_app_capabilities",
+    "halo_current_app_action"
+  ],
+  "requiredPermissions": [],
+  "toolDefinitions": [
+    {
+      "toolId": "halo_current_app_capabilities",
+      "risk": "READ_ONLY",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_current_app_action",
+      "risk": "SENSITIVE",
+      "requiredPermissions": []
+    }
+  ]
+}

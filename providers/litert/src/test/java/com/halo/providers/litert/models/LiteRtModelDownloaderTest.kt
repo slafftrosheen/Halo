@@ -250,7 +250,7 @@ class LiteRtModelDownloaderTest {
 
     @Test
     fun `a second download for the same model is refused while one is in flight`() {
-        alwaysRespond { okResponse(payload).setBodyDelay(10, TimeUnit.SECONDS) }
+        alwaysRespond { okResponse(payload).throttleBody(16 * 1024, 100, TimeUnit.MILLISECONDS) }
         val manager = manager(tempRoot("lock"))
 
         manager.downloadCatalogModel(entry())
@@ -259,6 +259,7 @@ class LiteRtModelDownloaderTest {
         manager.downloadCatalogModel(entry())
         assertTrue(manager.isDownloading(ENTRY_ID))
         manager.cancelDownload(ENTRY_ID)
+        awaitNotDownloading(manager, ENTRY_ID)
     }
 
     // ---------------------------------------------------------------------------------------

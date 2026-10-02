@@ -31,6 +31,7 @@ fun AssistantSurface(
     onStopClicked: () -> Unit,
     onOpenHaloClicked: () -> Unit,
     interactionSurface: InteractionSurface? = null,
+    currentApp: String? = null,
     onInteractionRespond: (InteractionResponse) -> Unit = {},
 ) {
     val signal = remember(interactionState, interactionSurface?.inputRequestId) {
@@ -65,6 +66,7 @@ fun AssistantSurface(
                     HaloSignalFace(signal, size = 80.dp, contentDescription = "Halo assistant")
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text("Halo", style = MaterialTheme.typography.titleMedium)
+                        currentApp?.let { Text("In · $it", style = MaterialTheme.typography.labelSmall) }
                         Text(signal.label, style = MaterialTheme.typography.bodyLarge,
                             modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
                         signal.detail?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }

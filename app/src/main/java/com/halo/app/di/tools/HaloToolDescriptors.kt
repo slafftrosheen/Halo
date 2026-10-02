@@ -428,7 +428,19 @@ object HaloToolDescriptors {
         else -> null
     }
 
+    fun appSemantic(definition: ToolDefinition): ToolDescriptor? = when (definition.name) {
+        "halo_current_app_capabilities" -> descriptor(definition.name, definition, ToolCategory.HOST_CONTROL, ToolSecurityPolicy.READ_ONLY,
+            keywords = setOf("current app", "app actions"))
+        "halo_current_app_action" -> descriptor(definition.name, definition, ToolCategory.HOST_CONTROL,
+            ToolSecurityPolicy(ToolRiskClass.SENSITIVE, ConfirmationPolicy.ALWAYS, ReplaySafety.NEVER_REPLAY),
+            keywords = setOf("archive", "mark unread", "current app"), presentation = ToolPresentation(title = "Use current app"))
+        else -> null
+    }
+
     fun communication(definition: ToolDefinition): ToolDescriptor? = when (definition.name) {
+        "halo_compose_sms", "halo_compose_email", "halo_compose_message" -> descriptor(definition.name, definition, ToolCategory.COMMUNICATION,
+            ToolSecurityPolicy.EXTERNAL.copy(confirmation = ConfirmationPolicy.ALWAYS), keywords = setOf("text", "message", "email", "compose"),
+            presentation = ToolPresentation(title = "Open message composer", sensitiveArguments = setOf("recipient", "body")))
         "halo_find_contact" -> descriptor(definition.name, definition, ToolCategory.COMMUNICATION,
             readOnly(definition.name), keywords = setOf("contact", "phone", "find"),
             requirements = setOf(ToolRequirement.Capability(CapabilityId("host.contacts.read"))))
@@ -599,6 +611,7 @@ object HaloToolDescriptors {
             ExecutorKind.WEB_INSIGHT -> webInsight(definition)
             ExecutorKind.ALARM -> alarm(definition)
             ExecutorKind.CALENDAR -> calendar(definition)
+            ExecutorKind.APP_SEMANTIC -> appSemantic(definition)
             ExecutorKind.COMMUNICATION -> communication(definition)
             ExecutorKind.MEDIA -> media(definition)
             ExecutorKind.NAVIGATION -> navigation(definition)
@@ -627,6 +640,7 @@ object HaloToolDescriptors {
         WEB_INSIGHT,
         ALARM,
         CALENDAR,
+        APP_SEMANTIC,
         COMMUNICATION,
         MEDIA,
         NAVIGATION,

@@ -46,7 +46,7 @@ class DefaultToolExposureGate(
         context: ToolExposureContext,
     ): ToolExposureDecision {
         val toolName = descriptor.name
-        val skillId = skillRegistry?.skillIdForTool(toolName)
+        val skillId = if (toolName.startsWith("halo_appfn_")) com.halo.sdk.runtime.skills.SkillId("halo.current_app") else skillRegistry?.skillIdForTool(toolName)
 
         // 1. Skill check (if tool belongs to a skill)
         if (skillId != null) {

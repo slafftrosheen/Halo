@@ -388,27 +388,35 @@ private fun AgentRun.toStory(): ActivityStory {
         .filter { it.isNotBlank() }
         .joinToString(" · ")
 
+    val semanticLabels = steps.filterIsInstance<AgentStep.SemanticAppOperationRecorded>().associate {
+        it.receipt.operationId to it.receipt.semanticAction.value.replace('_', ' ')
+    }
+    fun actionLabel(name: String, callId: String): String = semanticLabels[callId]
+        ?: if (name.startsWith("halo_appfn_")) "Current app action" else name
     val activitySteps = steps.map { step ->
         val title = RuntimeUiFormatters.formatStepTitle(step)
         val message = when (step) {
+            is AgentStep.SemanticAppOperationRecorded -> step.receipt.let {
+                "${it.targetPackage ?: "Current app"} · ${it.label()}\nRoute · ${it.route}\nDispatch · ${it.dispatchTruth}\nEffect · ${it.effectTruth}"
+            }
             is AgentStep.ContextUsed -> "${step.objectIds.size} workspace reference(s) · ${step.memoryIds.size} memory reference(s)"
             is AgentStep.UiTransactionRecorded -> step.transaction.let {
                 listOfNotNull(it.preview?.description, it.phase.name.lowercase().replace('_', ' '),
                     it.searchStatus?.let { status -> "Search ${status.name.lowercase().replace('_', ' ')}" },
                     it.receipt?.let { receipt -> "${receipt.actionTruth.name.lowercase()} · ${receipt.changeKind.replace('_', ' ')}" }).joinToString(" · ")
             }
-            is AgentStep.ToolExecutionClaimed -> "${step.toolId}: action started"
-            is AgentStep.ToolOutcomeRecorded -> "${step.toolId}: ${if (step.success) "completed" else "failed"} (${step.actionTruth.name.lowercase()})"
-            is AgentStep.ResourceBlocked -> "${step.toolId}: waiting for ${step.resourceIds.joinToString { RuntimeUiFormatters.formatResource(
+            is AgentStep.ToolExecutionClaimed -> "${actionLabel(step.toolId, step.toolCallId)}: action started"
+            is AgentStep.ToolOutcomeRecorded -> "${actionLabel(step.toolId, step.toolCallId)}: ${if (step.success) "completed" else "failed"} (${step.actionTruth.name.lowercase()})"
+            is AgentStep.ResourceBlocked -> "${actionLabel(step.toolId, step.invocationId.value)}: waiting for ${step.resourceIds.joinToString { RuntimeUiFormatters.formatResource(
                 ResourceId(it)
             ) }}"
             is AgentStep.ProviderTurnStarted -> "Provider turn started (${step.providerId})"
             is AgentStep.ProviderTurnCompleted -> step.assistantText.ifBlank { "Provider turn completed" }
             is AgentStep.InputRequested -> "Awaiting user input"
             is AgentStep.InputResolved -> "User input resolved (${step.resolution})"
-            is AgentStep.ToolRejected -> "${step.toolId}: rejected (${step.reasonCode.name.lowercase()})"
-            is AgentStep.ToolFailed -> "${step.toolId}: ${step.reason}"
-            is AgentStep.ToolCompleted -> "${step.toolId}: ${step.resultSummary}"
+            is AgentStep.ToolRejected -> "${actionLabel(step.toolId, step.toolCallId)}: rejected (${step.reasonCode.name.lowercase()})"
+            is AgentStep.ToolFailed -> "${actionLabel(step.toolId, step.toolCallId)}: ${step.reason}"
+            is AgentStep.ToolCompleted -> "${actionLabel(step.toolId, step.toolCallId)}: ${step.resultSummary}"
             // MINING-P1-001: reason and bounded evidence, never a raw enum name or user content.
             is AgentStep.RunGuardTriggered -> buildString {
                 append(step.summary)

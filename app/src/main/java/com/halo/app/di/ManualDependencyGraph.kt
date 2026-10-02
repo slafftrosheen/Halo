@@ -80,7 +80,7 @@ import com.halo.runtime.cognition.turn.DefaultToolTurnExecutor
 import com.halo.runtime.cognition.workload.DefaultAiWorkloadPlanner
 import com.halo.runtime.kernel.HaloMicrokernel
 
-/** Thin façade that wires sub-graphs together. This is the sole composition root. */
+/** Thin faР В Р’В Р вЂ™Р’В Р В Р вЂ Р В РІР‚С™Р РЋРЎв„ўР В Р’В Р Р†Р вЂљРІвЂћСћР В РІР‚в„ўР вЂ™Р’В§ade that wires sub-graphs together. This is the sole composition root. */
 object ManualDependencyGraph {
     lateinit var applicationContext: Context
 
@@ -530,6 +530,75 @@ object ManualDependencyGraph {
         com.halo.runtime.cognition.tools.ToolDiscoveryExecutor { toolDiscovery }
     }
 
+    val appFunctionCapabilityIndex: com.halo.runtime.cognition.apps.AppFunctionCapabilityIndex by lazy { com.halo.runtime.cognition.apps.AppFunctionCapabilityIndex() }
+    val externalSemanticCatalogue: com.halo.runtime.cognition.apps.ExternalSemanticToolCatalogue by lazy { com.halo.runtime.cognition.apps.ExternalSemanticToolCatalogue(appFunctionCapabilityIndex,
+        resolve = { semanticAppActionBroker.resolve(it) }, executePrepared = { semanticAppActionBroker.executePrepared(it) }) { operation, generation ->
+        val resolution = semanticAppActionBroker.resolve(operation)
+        if (resolution is com.halo.runtime.cognition.apps.SemanticOperationResolution.Prepared && resolution.value.generationId == generation)
+            semanticAppActionBroker.executePrepared(resolution.value)
+        else com.halo.runtime.cognition.apps.SemanticOperationReceipt(operation.operationId, operation.action,
+            com.halo.runtime.cognition.apps.AppOperationRoute.APP_FUNCTION, (operation.target as? com.halo.runtime.cognition.apps.AppTarget.Package)?.name,
+            com.halo.runtime.cognition.apps.DispatchTruth.NOT_DISPATCHED, com.halo.runtime.cognition.apps.EffectTruth.UNKNOWN,
+            com.halo.runtime.cognition.apps.SemanticOperationFailure.STALE_GENERATION, java.time.Instant.now())
+    } }
+    val appFunctionConsumer: com.halo.host.android.appfunctions.AndroidAppFunctionConsumer by lazy { com.halo.host.android.appfunctions.AndroidAppFunctionConsumer(applicationContext,
+        appFunctionCapabilityIndex, infra.scope) {
+            toolRegistry.unregisterDynamic(externalSemanticCatalogue)
+            externalSemanticCatalogue.refresh()
+            toolRegistry.registerDynamic(externalSemanticCatalogue, externalSemanticCatalogue.descriptors())
+            appFunctionCapabilityIndex.state.value.currentPackage?.let { pkg -> infra.scope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                val label = runCatching { applicationContext.packageManager.getApplicationLabel(applicationContext.packageManager.getApplicationInfo(pkg, 0)).toString() }.getOrDefault(pkg)
+                if (appFunctionCapabilityIndex.state.value.currentPackage == pkg) nativeCapabilityDispatcher.foregroundChanged(pkg, label)
+            } }
+        } }
+    private val semanticAccessibilityTools by lazy { com.halo.app.di.tools.host.AccessibilityTools() }
+    private val semanticAccessibilityAdapter by lazy { com.halo.app.di.tools.host.SemanticAccessibilityAdapter(semanticAccessibilityTools) }
+    private suspend fun refreshAppCapabilities() {
+        val snapshot = if (skillRegistry.get(com.halo.sdk.runtime.skills.SkillId("halo.phone.screen"))?.enabled == true)
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main.immediate) {
+                com.halo.host.android.accessibility.HaloAccessibilityService.instance?.let { service ->
+                    service.latestSemanticSnapshot?.takeIf { it.uiRevision == service.currentActionableRevision && System.currentTimeMillis() - it.capturedAtMs in 0..30_000 }
+                        ?: service.captureSnapshot()
+                }
+            } else null
+        val pkg = snapshot?.packageName
+        if (pkg != null && pkg != appFunctionCapabilityIndex.state.value.currentPackage) appFunctionConsumer.attach(pkg, null, null, emptyList())
+        appFunctionConsumer.refresh()
+    }
+    val semanticAppActionBroker: com.halo.runtime.cognition.apps.SemanticAppActionBroker by lazy {
+        com.halo.runtime.cognition.apps.SemanticAppActionBroker(appFunctionCapabilityIndex,
+            nativeCapabilities = { op ->
+                val pkg = appFunctionCapabilityIndex.state.value.currentPackage
+                if (pkg != null && com.halo.app.di.tools.host.MediaTools(applicationContext).hasSession(pkg) && skillRegistry.get(com.halo.sdk.runtime.skills.SkillId("halo.media"))?.enabled == true && op.action.value in setOf("media_pause", "media_play")) listOf(
+                    com.halo.runtime.cognition.apps.SemanticAppCapability("halo_media_control", pkg, op.action, "Media control", null,
+                        emptyList(), com.halo.runtime.cognition.apps.AppOperationRoute.HALO_NATIVE)) else emptyList()
+            },
+            intentCapabilities = { op -> if (skillRegistry.get(com.halo.sdk.runtime.skills.SkillId("halo.phone.screen"))?.enabled == true)
+                semanticAccessibilityAdapter.capabilities(op) else emptyList() },
+            executors = mapOf(
+                com.halo.runtime.cognition.apps.AppOperationRoute.ACCESSIBILITY to semanticAccessibilityAdapter,
+                com.halo.runtime.cognition.apps.AppOperationRoute.APP_FUNCTION to appFunctionConsumer,
+                com.halo.runtime.cognition.apps.AppOperationRoute.DIRECT_ACTION to com.halo.runtime.cognition.apps.SemanticRouteExecutor { _, cap, dispatched ->
+                    dispatched()
+                    com.halo.host.android.assistant.NativeAssistantActions.shared.dispatch(cap.id)
+                    com.halo.runtime.cognition.apps.SemanticRouteOutcome(com.halo.runtime.cognition.apps.DispatchTruth.DISPATCHED,
+                        com.halo.runtime.cognition.apps.EffectTruth.UNCONFIRMED)
+                },
+                com.halo.runtime.cognition.apps.AppOperationRoute.HALO_NATIVE to com.halo.runtime.cognition.apps.SemanticRouteExecutor { op, cap, dispatched ->
+                    dispatched()
+                    val result = com.halo.app.di.tools.host.MediaTools(applicationContext).execute(com.halo.sdk.provider.ToolCall(
+                        op.operationId, cap.id, mapOf("targetPackage" to cap.packageName, "action" to if (op.action.value == "media_pause") "pause" else "play")))
+                    val truth = (result as? com.halo.runtime.cognition.tools.ToolExecutionResult.Success)?.actionTruth
+                    com.halo.runtime.cognition.apps.SemanticRouteOutcome(com.halo.runtime.cognition.apps.DispatchTruth.DISPATCHED,
+                        if (truth == com.halo.runtime.cognition.agent.ActionTruth.CONFIRMED) com.halo.runtime.cognition.apps.EffectTruth.CONFIRMED
+                        else com.halo.runtime.cognition.apps.EffectTruth.UNKNOWN)
+                }),
+            // This broker is private to executors entered only after the shared tool turn's authorization.
+            authorize = { true })
+    }
+    val appSemanticTools: com.halo.app.di.tools.host.AppSemanticTools by lazy { com.halo.app.di.tools.host.AppSemanticTools(appFunctionCapabilityIndex,
+        externalSemanticCatalogue, { refreshAppCapabilities() }, { semanticAppActionBroker }) }
+
     val toolRegistry: com.halo.runtime.cognition.tools.ToolRegistry by lazy {
         val foreground = {
             attentionContextProvider.snapshot().foregroundState == com.halo.runtime.cognition.attention.ForegroundState.HALO_FOREGROUND ||
@@ -625,6 +694,7 @@ object ManualDependencyGraph {
                         eventBus.publish(com.halo.sdk.runtime.TtsRequested(text = text, transactionId = id,
                             target = com.halo.sdk.runtime.SpeechOutputTarget.Phone))
                     }, stopReading = { haloSpeechOutputCoordinator.stop("Read-aloud stop tool") }, isForeground = foreground),
+                appSemanticTools,
                 com.halo.app.di.tools.host.DeviceInsightTools(applicationContext),
                 com.halo.app.di.tools.host.ClipboardTools(applicationContext),
                 com.halo.app.di.tools.host.IntegrityTools(
@@ -638,6 +708,11 @@ object ManualDependencyGraph {
                     dynamicExtractor = dynamicPageExtractor,
                 ),
             ),
+            preferSemanticRoute = { pkg, label ->
+                val action = com.halo.runtime.cognition.apps.SemanticActionMapping.fromIdentifier(label)
+                action != null && appFunctionCapabilityIndex.currentCandidates().any { it.packageName == pkg && it.action == action &&
+                    it.route in setOf(com.halo.runtime.cognition.apps.AppOperationRoute.APP_FUNCTION, com.halo.runtime.cognition.apps.AppOperationRoute.DIRECT_ACTION) }
+            },
         )
         // AGENTIC-001: skill loading must be a real registered tool, otherwise the
         // agent loop can never widen its own exposure.
@@ -679,6 +754,7 @@ object ManualDependencyGraph {
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.WEB_INSIGHT to hostExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.ALARM to hostExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.CALENDAR to hostExecutor,
+                com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.APP_SEMANTIC to hostExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.COMMUNICATION to hostExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.MEDIA to hostExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.ACCESSIBILITY to hostExecutor,
@@ -735,7 +811,7 @@ object ManualDependencyGraph {
 
     /**
      * MINING-P2-001: the single bridge between a validated presentation and the committed turn. It is
-     * process-local and bounded on purpose — committed presentation truth lives in the conversation
+     * process-local and bounded on purpose Р В Р’В Р вЂ™Р’В Р В Р’В Р Р†Р вЂљР’В Р В Р’В Р вЂ™Р’В Р В Р вЂ Р В РІР‚С™Р РЋРІвЂћСћР В Р’В Р В РІР‚В Р В Р’В Р Р†Р вЂљРЎв„ўР В Р Р‹Р РЋРЎв„ў committed presentation truth lives in the conversation
      * turn, not here.
      */
     val presentationCommitRegistry by lazy {
@@ -1022,8 +1098,15 @@ object ManualDependencyGraph {
             toolTurnExecutor, isLocked = { applicationContext.getSystemService(android.app.KeyguardManager::class.java).isDeviceLocked },
             coordinator = agentRunCoordinator, refreshCapabilities = { hostGraph.capabilityPublisher.publishInto(capabilityCatalogue) })
     }
-    val nativeCapabilityDispatcher by lazy {
-        com.halo.runtime.cognition.native.NativeCapabilityDispatcher(skillExecutionService, agentRunCoordinator, agentRunStore)
+    val nativeCapabilityDispatcher: com.halo.runtime.cognition.native.NativeCapabilityDispatcher by lazy {
+        com.halo.runtime.cognition.native.NativeCapabilityDispatcher(skillExecutionService, agentRunCoordinator, agentRunStore,
+            messageDrafts = com.halo.runtime.cognition.apps.MessageDraftResolver({ name ->
+                when (val result = com.halo.host.android.resolver.AndroidContactResolver(applicationContext).resolve(name)) {
+                    is com.halo.host.android.resolver.ContactResolveResult.Found -> com.halo.runtime.cognition.apps.MessageRecipientResolution.Found(result.number)
+                    is com.halo.host.android.resolver.ContactResolveResult.MultipleMatches -> com.halo.runtime.cognition.apps.MessageRecipientResolution.Choices(result.candidateNames)
+                    else -> com.halo.runtime.cognition.apps.MessageRecipientResolution.Missing
+                }
+            }), stopSpeech = { haloSpeechOutputCoordinator.stop("User requested stop") })
     }
     val skillRuntimeAudit by lazy {
         com.halo.runtime.cognition.skills.SkillRuntimeAudit(skillRegistry, toolRegistry, skillExecutionService)

@@ -20,6 +20,11 @@ class NativeCommandParserTest {
             "Show device info" to DeviceInfoIntent)
         cases.forEach { (command, intent) -> assertEquals(command, intent, NativeCommandParser.parse(command)) }
     }
+    @Test fun deterministicSequenceIsBounded() {
+        assertTrue(NativeCommandParser.parse("Open Spotify and set volume to 30 percent") is NativeCommandSequenceIntent)
+        assertNull(NativeCommandParser.parse("Open Spotify and make something nice"))
+        assertNull(NativeCommandParser.parse("Open A and open B and open C and open D and open E"))
+    }
     @Test fun invalidNativeSlotsRequestClarification() {
         listOf("Set a timer for zero minutes", "Set volume to 101 percent", "Set brightness to 0 percent", "Set a timer for 25 hours", "Set a timer").forEach {
             assertTrue(it, NativeCommandParser.parse(it) is NativeClarificationIntent)
@@ -27,7 +32,7 @@ class NativeCommandParserTest {
     }
     @Test fun rejectsExplanationsCompoundAmbiguousAndOutOfRange() {
         listOf("Explain how to set a timer for five minutes", "Spotify",
-            "Turn the flashlight on and lower volume", "Copy " + "x".repeat(8001)).forEach {
+            "Copy " + "x".repeat(8001)).forEach {
             assertNull(it, NativeCommandParser.parse(it))
         }
     }

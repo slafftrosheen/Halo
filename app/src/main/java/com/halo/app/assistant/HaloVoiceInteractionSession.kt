@@ -212,7 +212,15 @@ class HaloVoiceInteractionSession(
                         } },
                     )
                 }
+                val appContext by ManualDependencyGraph.appFunctionCapabilityIndex.state.collectAsState()
+                var currentAppLabel by androidx.compose.runtime.remember(appContext.currentPackage) { mutableStateOf<String?>(null) }
+                androidx.compose.runtime.LaunchedEffect(appContext.currentPackage) {
+                    currentAppLabel = appContext.currentPackage?.let { pkg -> kotlinx.coroutines.withContext(Dispatchers.IO) {
+                        runCatching { context.packageManager.getApplicationLabel(context.packageManager.getApplicationInfo(pkg, 0)).toString() }.getOrDefault(pkg)
+                    } }
+                }
                 AssistantSurface(
+                    currentApp = currentAppLabel,
                     interactionState = interactionState,
                     screenContextAttached = screenContextAttached,
                     interactionSurface = interactionState2.primary
@@ -305,6 +313,20 @@ class HaloVoiceInteractionSession(
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return
         val current = active ?: return
         attachNativeActions(current.invocation.interactionId, state.activityId)
+        val currentPackage = state.assistStructure?.activityComponent?.packageName
+        if (currentPackage != null) scope.launch {
+            val identity = UUID.randomUUID().toString()
+            val direct = try { com.halo.host.android.assistant.NativeAssistantActions.shared.list().map { action ->
+                com.halo.runtime.cognition.apps.SemanticAppCapability(action.token, currentPackage,
+                    com.halo.runtime.cognition.apps.SemanticActionMapping.fromIdentifier(action.name)
+                        ?: com.halo.runtime.cognition.apps.SemanticActionId("external_direct_" + java.security.MessageDigest.getInstance("SHA-256").digest(action.name.toByteArray()).take(8).joinToString("") { "%02x".format(it) }),
+                    action.name, null, emptyList(), com.halo.runtime.cognition.apps.AppOperationRoute.DIRECT_ACTION,
+                    com.halo.runtime.cognition.apps.CapabilityScope.CURRENT_ACTIVITY, activityIdentity = identity)
+            } } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                catch (_: Exception) { emptyList() }
+            if (active === current) ManualDependencyGraph.appFunctionConsumer.attach(currentPackage, identity,
+                if (Build.VERSION.SDK_INT >= 37) getAppFunctionActivityId(state.activityId) else null, direct)
+        }
         val snapshot = contextExtractor.extract(state.assistStructure, state.assistContent)
         scope.launch {
             runCatching { current.ready.await(); if (active === current) runtimeBridge.attachScreen(current.invocation.interactionId, snapshot) }
@@ -347,6 +369,7 @@ class HaloVoiceInteractionSession(
     override fun onDirectActionsInvalidated(activityId: ActivityId) {
         super.onDirectActionsInvalidated(activityId)
         com.halo.host.android.assistant.NativeAssistantActions.shared.invalidate()
+        ManualDependencyGraph.appFunctionConsumer.detach()
     }
 
     @Suppress("DEPRECATION")
@@ -383,6 +406,7 @@ class HaloVoiceInteractionSession(
     override fun onHide() {
         clearNativeChoice()
         AssistantRuntimeStateStore.sessionVisible(false)
+        ManualDependencyGraph.appFunctionConsumer.detach()
         interactionObserverJob?.cancel()
         interactionObserverJob = null
         val ending = active

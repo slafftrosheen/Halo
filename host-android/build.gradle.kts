@@ -12,6 +12,7 @@ android {
 }
 
 dependencies {
+    implementation("androidx.appfunctions:appfunctions:1.0.0-alpha12")
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.androidx.media3.session)
     implementation(libs.androidx.media3.common)

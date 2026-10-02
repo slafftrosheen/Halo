@@ -1,0 +1,31 @@
+{
+  "id": "halo.messaging",
+  "schemaVersion": 2,
+  "name": "Messaging",
+  "description": "Messaging through supported platform interfaces.",
+  "category": "INFORMATION",
+  "risk": "EXTERNAL_SIDE_EFFECT",
+  "tools": [
+    "halo_compose_sms",
+    "halo_compose_email",
+    "halo_compose_message"
+  ],
+  "requiredPermissions": [],
+  "toolDefinitions": [
+    {
+      "toolId": "halo_compose_sms",
+      "risk": "EXTERNAL_SIDE_EFFECT",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_compose_email",
+      "risk": "EXTERNAL_SIDE_EFFECT",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_compose_message",
+      "risk": "EXTERNAL_SIDE_EFFECT",
+      "requiredPermissions": []
+    }
+  ]
+}

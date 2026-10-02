@@ -128,7 +128,7 @@ class DefaultToolTurnExecutor(
     private val approvalGrants: EphemeralToolApprovalGrantStore? = null,
     /**
      * MINING-P2-001 presentation bridge. Promotion happens only here, on a tool call the runtime
-     * observed succeed вЂ” presentation is a view over durable execution, never a claim of it.
+     * observed succeed Р В Р вЂ Р В РІР‚С™Р Р†Р вЂљРЎСљ presentation is a view over durable execution, never a claim of it.
      */
     private val presentationCommits: PresentationCommitRegistry? = null,
 ) : ToolTurnExecutor {
@@ -280,7 +280,7 @@ class DefaultToolTurnExecutor(
         val run = agentRunStore?.get(runId) ?: return 0
         return run.steps
             .filterIsInstance<AgentStep.ToolInvocationPrepared>()
-            .count { it.toolId == toolId && it.argumentsDigest == argumentsDigest }
+            .count { it.toolId == toolId && (it.argumentsDigest == argumentsDigest || toolId.startsWith("halo_appfn_") || toolId.startsWith("halo_compose_") || toolId == "halo_current_app_action") }
     }
 
     private suspend fun requestUiTakeover(runId: AgentRunId?, toolCallId: String): ToolTurnResult.WaitingForInput? {
@@ -401,13 +401,29 @@ class DefaultToolTurnExecutor(
                     ToolRejectionFactory.create(ToolRejectionCode.UNSUPPORTED_OPERATION,
                         "status=${preflight.failure.name.lowercase()} next=READ_SCREEN")))
                 if (preflight.failure in setOf(UiFailure.PACKAGE_BLOCKED, UiFailure.SYSTEM_PERMISSION_SURFACE,
-                    UiFailure.USER_TAKEOVER_REQUIRED, UiFailure.TARGET_SENSITIVE))
+                    UiFailure.USER_TAKEOVER_REQUIRED, UiFailure.TARGET_SENSITIVE)) {
+                    if (runId != null && toolCall.functionName == "halo_current_app_action") {
+                        val action = toolCall.arguments["action"] as? String
+                        if (action != null && action.matches(Regex("[a-z0-9_]{1,120}"))) agentRunCoordinator?.recordStep(
+                            AgentStep.SemanticAppOperationRecorded(newStepId(), runId, Instant.now(),
+                                com.halo.runtime.cognition.apps.SemanticOperationReceipt(toolCall.id,
+                                    com.halo.runtime.cognition.apps.SemanticActionId(action), com.halo.runtime.cognition.apps.AppOperationRoute.MANUAL_TAKEOVER,
+                                    null, com.halo.runtime.cognition.apps.DispatchTruth.NOT_DISPATCHED, com.halo.runtime.cognition.apps.EffectTruth.UNKNOWN,
+                                    com.halo.runtime.cognition.apps.SemanticOperationFailure.MANUAL_TAKEOVER, Instant.now(),
+                                    phase = com.halo.runtime.cognition.apps.SemanticOperationPhase.WAITING_FOR_USER)))
+                    }
                     requestUiTakeover(runId, toolCall.id)?.let { return it }
+                }
                 continue
             }
             val validated = preflight as ToolPreflightResult.Validated
             toolCall = validated.sanitizedCall
             val uiIntent = validated.intent
+            suspend fun semanticPhase(phase: com.halo.runtime.cognition.apps.SemanticOperationPhase) {
+                if (runId != null && validated.semanticPreview != null) agentRunCoordinator?.recordStep(AgentStep.SemanticAppOperationRecorded(
+                    newStepId(), runId, Instant.now(), validated.semanticPreview.copy(phase = phase), validated.semanticArgumentShapes))
+            }
+            if (validated.semanticPreview != null) semanticPhase(com.halo.runtime.cognition.apps.SemanticOperationPhase.PREFLIGHT)
             suspend fun uiPhase(phase: UiWorkflowPhase, receipt: UiActionReceipt? = null, observation: UiObservation? = null, searchStatus: UiSearchStatus? = null) {
                 if (runId == null) return
                 agentRunCoordinator?.recordStep(AgentStep.UiTransactionRecorded(newStepId(), runId, Instant.now(),
@@ -421,11 +437,13 @@ class DefaultToolTurnExecutor(
             else if (toolCall.functionName == "halo_find_on_screen") uiPhase(UiWorkflowPhase.READY)
             val canonicalArguments = ToolArgumentCanonicalizer.canonicalize(journalToolArguments(toolCall))
             val argumentsDigest = ToolArgumentCanonicalizer.digest(ToolArgumentCanonicalizer.canonicalize(toolCall.arguments))
+            val loopDigest = ToolArgumentCanonicalizer.digest(ToolArgumentCanonicalizer.canonicalize(
+                com.halo.runtime.cognition.apps.TransientSemanticArguments.loopIdentity(toolCall.arguments)))
             if (guard != null && runId != null) {
                 val searching = toolCall.functionName == "halo_ui_search"
                 val decision = guard.onToolCallPrepared(if (searching) "ui:SEARCH" else if (uiIntent != null) "ui:${uiIntent.operation}" else toolCall.functionName,
                     uiIntent?.let { uiDigest(it.target?.stableFingerprint.orEmpty() + it.operation +
-                        if (searching) uiDigest("${toolCall.arguments["query"]}:${toolCall.arguments["maxScrolls"]}") else it.argumentDigest) } ?: argumentsDigest, uiIntent != null)
+                        if (searching) uiDigest("${toolCall.arguments["query"]}:${toolCall.arguments["maxScrolls"]}") else it.argumentDigest) } ?: loopDigest, uiIntent != null)
                 if (decision is RunGuardDecision.Stop) {
                     return stopForGuard(runId, interactionId, requestId, guard, decision)
                 }
@@ -454,7 +472,7 @@ class DefaultToolTurnExecutor(
             if (runId != null && !replaySafe && priorInvocationsOf(runId, toolCall.functionName, argumentsDigest) >= limits.maxRepeatedIdenticalCalls) {
                 val rejection = ToolRejectionFactory.create(
                     ToolRejectionCode.REPEATED_TOOL_CALL,
-                    "You already ran ${toolCall.functionName} with these exact arguments. " +
+                    "You already ran ${toolCall.functionName} with this operation identity. " +
                         "Do not repeat it; change the arguments or answer using the result you already have.",
                 )
                 toolMessages.add(persistAndPublishToolRejection(runId, interactionId, requestId, toolCall, rejection))
@@ -565,6 +583,7 @@ class DefaultToolTurnExecutor(
                     ToolAuthorization.Rejected(toolCall, durableDecision.reason)
                 durableDecision is AuthorizationDecision.NeedsUserInput -> {
                     if (uiIntent != null) uiPhase(UiWorkflowPhase.WAITING_FOR_APPROVAL)
+                    semanticPhase(com.halo.runtime.cognition.apps.SemanticOperationPhase.WAITING_FOR_APPROVAL)
                     val request = durableDecision.request
                     val waitingRunId = runId ?: return ToolTurnResult.WaitingForInput(request)
                     agentRunCoordinator?.recordStep(
@@ -783,6 +802,8 @@ class DefaultToolTurnExecutor(
                             (payloadRef?.let { "\nPayload: ${it.id}; bytes=${it.byteCount}; sha256=${it.sha256}. Read a bounded range with halo_read_payload." }
                                 ?: "\nAdditional content omitted by context/storage policy.")
                     } else result.output
+                    if (runId != null && result.semanticReceipt != null) agentRunCoordinator?.recordStep(
+                        AgentStep.SemanticAppOperationRecorded(newStepId(), runId, Instant.now(), result.semanticReceipt, result.semanticArgumentShapes))
                     val modelResult = ToolResultEnvelope.ensureEnveloped(bounded, result.actionTruth)
                     runId?.let {
                         agentRunCoordinator?.recordStep(

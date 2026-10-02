@@ -15,6 +15,10 @@ class MediaTools(
     private val context: Context
 ) : ToolExecutor {
 
+    fun hasSession(packageName: String): Boolean = runCatching {
+        val manager = context.getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager
+        manager.getActiveSessions(android.content.ComponentName(context, com.halo.app.notification.HaloNotificationListenerService::class.java)).count { it.packageName == packageName } == 1
+    }.getOrDefault(false)
     override fun definitions(): List<ToolDefinition> = buildList {
         add(
             ToolDefinition(
@@ -32,6 +36,8 @@ class MediaTools(
                 parameters = mapOf(
                     "type" to "object",
                     "properties" to mapOf(
+                        "targetApp" to mapOf("type" to "string", "maxLength" to 150),
+                        "targetPackage" to mapOf("type" to "string", "maxLength" to 150),
                         "action" to mapOf(
                             "type" to "string",
                             "enum" to listOf("play", "pause", "next", "previous")
@@ -59,7 +65,19 @@ class MediaTools(
             if (controllers.isEmpty()) {
                 return reject("No active media sessions")
             }
-            val active = controllers.first()
+            val requestedPackage = toolCall.arguments["targetPackage"] as? String
+            val requestedApp = toolCall.arguments["targetApp"] as? String
+            val matches = controllers.filter { controller ->
+                when {
+                    requestedPackage != null -> controller.packageName == requestedPackage
+                    requestedApp != null -> controller.packageName.equals(requestedApp, true) || runCatching {
+                        context.packageManager.getApplicationLabel(context.packageManager.getApplicationInfo(controller.packageName, 0)).toString().equals(requestedApp, true)
+                    }.getOrDefault(false)
+                    else -> true
+                }
+            }
+            val active = if (requestedPackage != null || requestedApp != null) matches.singleOrNull()
+                ?: return reject("No unambiguous active media session for the requested app") else controllers.first()
 
             when (toolCall.functionName) {
                 "halo_media_status" -> {
@@ -86,6 +104,7 @@ class MediaTools(
                 else -> reject("Unknown tool")
             }
         } catch (_: SecurityException) {
+            if (toolCall.arguments["targetApp"] != null || toolCall.arguments["targetPackage"] != null) return reject("Notification access is required to identify that media session")
             // Fallback to old behavior if no notification listener permission
             val apps = AndroidMediaCapability(context)
             if (toolCall.functionName == "halo_media_control") {

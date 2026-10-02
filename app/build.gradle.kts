@@ -278,6 +278,6 @@ afterEvaluate {
 
 // Android 16+ discovery is optional; ordinary Halo skills remain independent.
 dependencies {
-  implementation("androidx.appfunctions:appfunctions:1.0.0-alpha10")
-  ksp("androidx.appfunctions:appfunctions-compiler:1.0.0-alpha10")
+  implementation("androidx.appfunctions:appfunctions:1.0.0-alpha12")
+  ksp("androidx.appfunctions:appfunctions-compiler:1.0.0-alpha12")
 }

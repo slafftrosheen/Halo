@@ -79,6 +79,7 @@ class HostToolDescriptorDispatchTest {
         HaloToolDescriptors.ExecutorKind.ALARM,
         HaloToolDescriptors.ExecutorKind.CALENDAR,
         HaloToolDescriptors.ExecutorKind.NOTIFICATION_REPLY,
+        HaloToolDescriptors.ExecutorKind.APP_SEMANTIC,
         HaloToolDescriptors.ExecutorKind.COMMUNICATION,
         HaloToolDescriptors.ExecutorKind.MEDIA,
         HaloToolDescriptors.ExecutorKind.ACCESSIBILITY,
@@ -109,7 +110,8 @@ class HostToolDescriptorDispatchTest {
         HaloToolDescriptors.ExecutorKind.WEB_INSIGHT to setOf("halo_fetch_url"),
         HaloToolDescriptors.ExecutorKind.INTEGRITY to setOf("halo_checksum"),
         HaloToolDescriptors.ExecutorKind.ALARM to setOf("halo_set_alarm", "halo_timer"),
-        HaloToolDescriptors.ExecutorKind.COMMUNICATION to setOf("halo_find_contact", "halo_dial_contact"),
+        HaloToolDescriptors.ExecutorKind.APP_SEMANTIC to setOf("halo_current_app_capabilities", "halo_current_app_action"),
+        HaloToolDescriptors.ExecutorKind.COMMUNICATION to setOf("halo_find_contact", "halo_dial_contact", "halo_compose_sms", "halo_compose_email", "halo_compose_message"),
         HaloToolDescriptors.ExecutorKind.MEDIA to setOf("halo_media_status", "halo_media_control"),
         HaloToolDescriptors.ExecutorKind.ACCESSIBILITY to setOf(
             "halo_read_screen", "halo_find_on_screen", "halo_ui_click", "halo_ui_scroll",

@@ -40,6 +40,9 @@ class SpeechRule : InterpretationRule {
             return RuleMatch(confidence = confidence.coerceAtLeast(0.7f), intent = QuestionIntent,
                 consumedTokens = consumedTokens, diagnostics = "Conversational response")
         com.halo.cognition.language.NativeCommandParser.parse(transcript)?.let { intent ->
+            if (intent is com.halo.cognition.language.NativeOpenApplicationIntent) return RuleMatch(confidence = 0.99f,
+                intent = OpenIntent, entities = listOf(ApplicationEntity(intent.application.titlecaseWords(), 0.99f)),
+                consumedTokens = consumedTokens, diagnostics = "Resolved application command")
             return RuleMatch(confidence = 0.99f, intent = intent, consumedTokens = consumedTokens,
                 diagnostics = "Resolved native command slots")
         }

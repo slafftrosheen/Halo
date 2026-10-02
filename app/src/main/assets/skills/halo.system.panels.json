@@ -1,0 +1,19 @@
+{
+  "id": "halo.system.panels",
+  "schemaVersion": 2,
+  "name": "System panels",
+  "description": "System panels through supported platform interfaces.",
+  "category": "INFORMATION",
+  "risk": "REVERSIBLE",
+  "tools": [
+    "halo_open_settings"
+  ],
+  "requiredPermissions": [],
+  "toolDefinitions": [
+    {
+      "toolId": "halo_open_settings",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    }
+  ]
+}

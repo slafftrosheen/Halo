@@ -137,3 +137,8 @@ ModelInputCapabilityReporting supplies model-specific capabilities. AiModel.exec
 ## PHONE-ASSISTANT-002
 
 Native actions use shared host skill execution independently of CHAT. Compound actions use AGENTIC; images use verified VISION candidates. Configure these roles independently in Intelligence, then use Vision Lab for explicit image capability probing under the current privacy policy. Physical and live-provider checks remain pending. See [host-first runtime](../engineering/PHONE-ASSISTANT-002-HOST-FIRST-RUNTIME.md), [Vision evidence](../engineering/VISION-ROLE-AND-CAPABILITY-EVIDENCE.md), [native acceptance](../testing/NATIVE-ASSISTANT-PHYSICAL-ACCEPTANCE.md) and [Vision acceptance](../testing/VISION-LAB-ACCEPTANCE.md).
+
+
+## PHONE-ASSISTANT-003 — 2026-10-02
+
+Semantic app bridge implemented: Native → AppFunction → DirectAction → Intent → Accessibility → User. Model reasoning never owns platform authority. External capabilities are bounded, current-app and generation-scoped; approval and durable claims remain in the shared runtime. Dispatch and effect truth are separate, and possible dispatch forbids fallback. Composer launch does not mean message delivery. AndroidX alpha12 / API 37 activity integration is host-owned; scalar external schemas are supported, nested/resource schemas remain excluded. Automated verification passed: 639 tests, zero failures/errors/skips; API 37 debug APK assembled. Audit: 31 skills / 86 tools with zero wiring issues. See docs/testing/SEMANTIC-APP-OPERATOR-ACCEPTANCE.md; physical acceptance remains pending.

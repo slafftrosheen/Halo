@@ -57,6 +57,8 @@ class SystemTools(private val context: Context) : ToolExecutor {
         if (Build.VERSION.SDK_INT >= 30) {
             put("biometric_enrollment", Section(Settings.ACTION_BIOMETRIC_ENROLL))
         }
+        put("internet", Section(if (android.os.Build.VERSION.SDK_INT >= 29) Settings.Panel.ACTION_INTERNET_CONNECTIVITY else Settings.ACTION_WIRELESS_SETTINGS))
+        put("volume", Section(if (android.os.Build.VERSION.SDK_INT >= 29) Settings.Panel.ACTION_VOLUME else Settings.ACTION_SOUND_SETTINGS))
         put("wifi", Section(Settings.ACTION_WIFI_SETTINGS))
         put("bluetooth", Section(Settings.ACTION_BLUETOOTH_SETTINGS))
         put("sound", Section(Settings.ACTION_SOUND_SETTINGS))
@@ -186,7 +188,7 @@ class SystemTools(private val context: Context) : ToolExecutor {
                         output = ToolResultEnvelope.success(
                             actionTruth = ActionTruth.DISPATCHED,
                             details = "section=${requested ?: "general"}\n" +
-                                "note=The settings screen was opened; no setting was changed.",
+                                if (requested in setOf("internet", "wifi", "bluetooth", "nfc", "volume")) "Android requires confirmation in this panel. Please complete this step." else "note=The settings screen was opened; no setting was changed.",
                         ),
                         actionTruth = ActionTruth.DISPATCHED,
                     )

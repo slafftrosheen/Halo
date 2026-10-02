@@ -143,6 +143,10 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
     private fun payloadFor(step: AgentStep): Pair<JSONObject, String> {
         val payload = JSONObject()
         val type = when (step) {
+            is AgentStep.SemanticAppOperationRecorded -> {
+                payload.put("semantic", SemanticOperationCodec.encode(step.receipt, step.argumentShapes))
+                "SemanticAppOperationRecorded"
+            }
             is AgentStep.UiTransactionRecorded -> {
                 payload.put("transaction", UiTransactionCodec.encode(step.transaction))
                 "UiTransactionRecorded"
@@ -310,6 +314,9 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
         val call = p.optString("toolCallId", id)
         val tool = p.optString("toolId", p.optString("toolName"))
         return when (type) {
+            "SemanticAppOperationRecorded" -> SemanticOperationCodec.decode(p.getJSONObject("semantic")).let {
+                AgentStep.SemanticAppOperationRecorded(step, run, at, it.first, it.second)
+            }
             "UiTransactionRecorded" -> AgentStep.UiTransactionRecorded(step, run, at, UiTransactionCodec.decode(p.getJSONObject("transaction")))
             "DelegationResultRecorded" -> {
                 val values = p.optJSONArray("evidence") ?: org.json.JSONArray()
