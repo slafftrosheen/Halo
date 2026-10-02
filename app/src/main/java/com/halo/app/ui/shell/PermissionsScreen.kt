@@ -6,6 +6,8 @@ import kotlinx.coroutines.launch
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -122,6 +124,37 @@ fun PermissionsScreen(
             subtitle = "Only request access when a capability needs it.",
             onBack = onBack
         )
+
+        Spacer(Modifier.height(12.dp))
+
+        val allPermissionsLauncher = rememberLauncherForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions()
+        ) {
+            refreshKey++
+            permissionScope.launch(Dispatchers.IO) {
+                ManualDependencyGraph.hostGraph.capabilityPublisher.refresh(CapabilityRefreshReason.PERMISSION_RESULT)
+                ManualDependencyGraph.hostGraph.capabilityPublisher.publishInto(ManualDependencyGraph.capabilityCatalogue)
+                ManualDependencyGraph.skillRegistry.refreshAvailability()
+            }
+        }
+
+        HaloWorkspaceButton("Grant all permissions for skills & tools", onClick = {
+            val permissionsToRequest = buildList {
+                add(Manifest.permission.RECORD_AUDIO)
+                add(Manifest.permission.READ_CONTACTS)
+                add(Manifest.permission.READ_CALENDAR)
+                add(Manifest.permission.WRITE_CALENDAR)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    add(Manifest.permission.BLUETOOTH_CONNECT)
+                    add(Manifest.permission.BLUETOOTH_SCAN)
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    add(Manifest.permission.POST_NOTIFICATIONS)
+                    add(Manifest.permission.NEARBY_WIFI_DEVICES)
+                }
+            }.toTypedArray()
+            allPermissionsLauncher.launch(permissionsToRequest)
+        }, modifier = Modifier.fillMaxWidth())
 
         Spacer(Modifier.height(20.dp))
 

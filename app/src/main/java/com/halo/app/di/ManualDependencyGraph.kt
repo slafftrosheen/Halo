@@ -941,7 +941,8 @@ object ManualDependencyGraph {
             coordinator = toolAuthorizationCoordinator,
             defaultPolicyProvider = skillRegistry::approvalPolicyForTool,
             authorizationGroupProvider = skillRegistry::authorizationGroupForTool,
-            descriptorProvider = { toolName -> toolRegistry.descriptor(toolName) }
+            descriptorProvider = { toolName -> toolRegistry.descriptor(toolName) },
+            agentRunStore = agentRunStore,
         )
     }
     val deviceCapabilityResolver by lazy {

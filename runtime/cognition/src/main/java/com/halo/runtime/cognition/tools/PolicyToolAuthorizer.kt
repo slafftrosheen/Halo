@@ -4,6 +4,8 @@ import com.halo.cognition.language.InteractionId
 import com.halo.runtime.cognition.agent.AgentInputRequest
 import com.halo.runtime.cognition.agent.AgentInputRequestId
 import com.halo.runtime.cognition.agent.AgentRunId
+import com.halo.runtime.cognition.agent.AgentRunStore
+import com.halo.runtime.cognition.agent.AgentStep
 import com.halo.sdk.provider.ToolCall
 import com.halo.sdk.runtime.skills.SkillRisk
 import java.time.Instant
@@ -61,6 +63,7 @@ class PolicyToolAuthorizer(
     private val defaultPolicyProvider: (String) -> ToolApprovalPolicy = { ToolApprovalPolicy.ASK_EVERY_TIME },
     private val authorizationGroupProvider: (String) -> String = { it },
     private val descriptorProvider: (String) -> ToolDescriptor? = { null },
+    private val agentRunStore: AgentRunStore? = null,
 ) : ToolAuthorizer {
 
     private val scopedGrants = ConcurrentHashMap<String, MutableSet<String>>()
@@ -94,6 +97,29 @@ class PolicyToolAuthorizer(
 
         if (policy == ToolApprovalPolicy.DENY) {
             return AuthorizationDecision.Rejected(toolCall, "Tool execution denied by user policy")
+        }
+
+        val safeDirectCommands = setOf(
+            "halo_open_app",
+            "halo_timer",
+            "halo_volume",
+            "halo_flashlight",
+            "halo_brightness",
+            "halo_ringer",
+            "halo_open_settings",
+            "halo_media_control",
+            "halo_set_alarm"
+        )
+        if (toolName in safeDirectCommands && agentRunStore != null) {
+            val run = agentRunStore.get(runId)
+            val directAuthority = run?.steps?.filterIsInstance<AgentStep.DirectCommandAuthorityRecorded>()?.lastOrNull()?.authority
+            if (directAuthority != null &&
+                directAuthority.interactionId.value == interactionId.value &&
+                directAuthority.toolId == toolName &&
+                directAuthority.argumentsDigest == argumentsDigest
+            ) {
+                return AuthorizationDecision.Authorized(toolCall)
+            }
         }
 
         val security = descriptorProvider(toolName)?.security

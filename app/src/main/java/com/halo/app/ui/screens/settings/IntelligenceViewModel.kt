@@ -412,13 +412,17 @@ class IntelligenceViewModel(
      * or Ollama.
      */
     fun selectLocalModel(modelId: String) {
-        updateSettings { it.copy(litertModel = modelId) }
-        aiProviderRouter.selectTarget(AiModelRef(ProviderIds.LITERT, modelId))
+        viewModelScope.launch(dispatchers.io) {
+            updateSettings { it.copy(litertModel = modelId) }
+            aiProviderRouter.selectTarget(AiModelRef(ProviderIds.LITERT, modelId))
+        }
     }
 
     fun selectTarget(ref: AiModelRef) {
-        if (ref.providerId == ProviderIds.LITERT) updateSettings { it.copy(litertModel = ref.modelId) }
-        aiProviderRouter.selectTarget(ref)
+        viewModelScope.launch(dispatchers.io) {
+            if (ref.providerId == ProviderIds.LITERT) updateSettings { it.copy(litertModel = ref.modelId) }
+            aiProviderRouter.selectTarget(ref)
+        }
     }
 
     /** Runs the explicit qualification probe. Never triggered automatically on app launch. */
