@@ -32,7 +32,9 @@
     {
       "toolId": "halo_brightness",
       "risk": "REVERSIBLE",
-      "requiredPermissions": []
+      "requiredPermissions": [
+        "WRITE_SETTINGS"
+      ]
     }
   ],
   "requiredPermissions": [

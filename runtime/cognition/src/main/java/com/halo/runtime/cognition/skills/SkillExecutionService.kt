@@ -95,13 +95,20 @@ class SkillRuntimeAudit(private val skills: SkillRegistry, private val tools: To
             allSkills.flatMap { skill -> skill.toolDefinitions.mapNotNull { definition ->
                 val declaredPermissions = skill.requiredPermissions + definition.requiredPermissions
                 val needed = when (definition.toolId) {
+                    "halo_flashlight" -> com.halo.sdk.runtime.skills.HostPermission.CAMERA
+                    "halo_brightness" -> com.halo.sdk.runtime.skills.HostPermission.WRITE_SETTINGS
                     "halo_find_contact" -> com.halo.sdk.runtime.skills.HostPermission.CONTACTS
                     "halo_calendar_upcoming" -> com.halo.sdk.runtime.skills.HostPermission.CALENDAR_READ
                     "halo_calendar_create" -> com.halo.sdk.runtime.skills.HostPermission.CALENDAR_WRITE
-                    "halo_list_notifications", "halo_dismiss_notification", "halo_reply_notification", "halo_replyable_notifications" -> com.halo.sdk.runtime.skills.HostPermission.NOTIFICATION_ACCESS
+                    "halo_notification_digest", "halo_list_notifications", "halo_dismiss_notification",
+                    "halo_reply_notification", "halo_replyable_notifications" ->
+                        com.halo.sdk.runtime.skills.HostPermission.NOTIFICATION_ACCESS
+                    "halo_read_screen", "halo_find_on_screen", "halo_ui_click", "halo_ui_scroll",
+                    "halo_ui_set_text", "halo_ui_global_action", "halo_ui_set_checked", "halo_ui_wait",
+                    "halo_ui_search" -> com.halo.sdk.runtime.skills.HostPermission.ACCESSIBILITY
                     else -> null
                 }
-                if (needed != null && needed !in declaredPermissions && skill.id.value !in setOf("halo.phone.actions", "halo.phone")) "${skill.id.value}:${definition.toolId}:$needed" else null
+                if (needed != null && needed !in declaredPermissions) "${skill.id.value}:${definition.toolId}:$needed" else null
             } }.toSet())
     }
 }

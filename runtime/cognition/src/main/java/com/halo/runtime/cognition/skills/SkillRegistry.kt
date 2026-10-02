@@ -25,6 +25,9 @@ interface SkillRegistry {
     fun approvalPolicyForTool(toolName: String): ToolApprovalPolicy = ToolApprovalPolicy.ASK_EVERY_TIME
     fun authorizationGroupForTool(toolName: String): String = toolName
     suspend fun setApprovalPolicy(id: SkillId, policy: ToolApprovalPolicy) {}
+    suspend fun setApprovalPolicyForAll(policy: ToolApprovalPolicy, enabledOnly: Boolean = false) {
+        skills.value.filter { !enabledOnly || it.enabled }.forEach { setApprovalPolicy(it.id, policy) }
+    }
 }
 
 class DefaultSkillRegistry(
@@ -137,6 +140,12 @@ class DefaultSkillRegistry(
         if (get(id) == null) return
         storage.putString("skill_approval_${id.value}", policy.name)
         _skills.value = _skills.value.toList()
+    }
+
+    override suspend fun setApprovalPolicyForAll(policy: ToolApprovalPolicy, enabledOnly: Boolean) {
+        val targets = _skills.value.filter { !enabledOnly || it.enabled }
+        targets.forEach { storage.putString("skill_approval_${it.id.value}", policy.name) }
+        if (targets.isNotEmpty()) _skills.value = _skills.value.toList()
     }
 
     private fun savedApproval(id: SkillId): String? = storage.getString("skill_approval_${id.value}")
