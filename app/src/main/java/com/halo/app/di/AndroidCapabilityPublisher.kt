@@ -46,6 +46,8 @@ class AndroidCapabilityPublisher(
         val assistant = AssistantEligibilityInspector(context).inspect()
 
         return listOf(
+            capability("host.calendar.read", "Read calendar", "Read upcoming calendar events.", ToolCategory.INFORMATION, granted(context, Manifest.permission.READ_CALENDAR)),
+            capability("host.calendar.write", "Write calendar", "Create an approved calendar event.", ToolCategory.AUTOMATION, granted(context, Manifest.permission.WRITE_CALENDAR)),
             capability("host.application.launch", "Launch applications",
                 "Open an installed application on the host.", ToolCategory.HOST_CONTROL, canLaunchApps),
             capability("host.application.enumerate", "Enumerate applications",
@@ -63,6 +65,8 @@ class AndroidCapabilityPublisher(
                 granted(context, Manifest.permission.READ_CONTACTS)),
             capability("host.alarm.set", "Set alarms",
                 "Create an alarm in the host alarm application.", ToolCategory.AUTOMATION, canSetAlarm),
+            capability("host.notification.live", "Live notifications", "Connected notification listener.", ToolCategory.INFORMATION,
+                isListenerEnabled(context) && com.halo.app.notification.LiveNotificationOwner.connected()),
             capability("host.notification.read", "Read notifications",
                 "Read posted notifications for digests and summaries.", ToolCategory.INFORMATION,
                 isListenerEnabled(context)),
@@ -128,7 +132,9 @@ class AndroidCapabilityPublisher(
     }
 
     fun refreshInto(catalogue: CapabilityCatalogue) {
-        catalogue.replaceScope(scope, snapshotCapabilities())
+        val next = snapshotCapabilities()
+        val current = catalogue.snapshot.value.capabilities.filter { it.ownerId == scope && it.sourceKind == CapabilitySourceKind.HOST }
+        if (current.toSet() != next.toSet()) catalogue.replaceScope(scope, next)
     }
 
     private fun capability(

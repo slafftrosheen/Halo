@@ -80,14 +80,14 @@ class HeyCyanCaptureCoordinator(private val context: Context, private val driver
         }
     }
 
-    suspend fun captureAiThumbnail(quality: Int = thumbnailQuality): Result<HeyCyanCapturedThumbnail> {
-        preloadLocalModel()
+    suspend fun captureAiThumbnail(quality: Int = thumbnailQuality, publishForInference: Boolean = true): Result<HeyCyanCapturedThumbnail> {
+        if (publishForInference) preloadLocalModel()
         val device = driver.activeDeviceId
             ?: return Result.failure(IllegalStateException("No connected HeyCyan device"))
         val operationId = UUID.randomUUID().toString()
         events.publish(ActionReceipt(operationId = operationId, category = "Vision", title = "AI thumbnail", stage = "Requested", detail = "Capturing a fresh glasses thumbnail", sourceDeviceId = device))
         val result = driver.thumbnailCaptureCoordinator.capture(quality)
-        result.onSuccess { thumbnail -> publishThumbnail(operationId, device, thumbnail) }
+        result.onSuccess { thumbnail -> if (publishForInference) publishThumbnail(operationId, device, thumbnail) }
             .onFailure { error ->
                 events.publish(ActionReceipt(operationId = operationId, category = "Vision", title = "AI thumbnail", stage = "Failed", detail = error.message ?: "Thumbnail capture failed", sourceDeviceId = device))
             }

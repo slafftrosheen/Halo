@@ -78,11 +78,11 @@ class AssistantEligibilityInspector(
             )
         }
         val activeInteractorComponent = activeInteractorRead.getOrNull()?.trim()?.ifBlank { null }
+        val publicActive = runCatching { VoiceInteractionService.isActiveService(context, voiceServiceComponent) }
         val activeInteractorStatus = when {
+            publicActive.isSuccess -> if (publicActive.getOrThrow()) ActiveInteractorStatus.ACTIVE else ActiveInteractorStatus.INACTIVE
             activeInteractorRead.isFailure -> ActiveInteractorStatus.UNKNOWN
-            activeInteractorComponent == null -> ActiveInteractorStatus.INACTIVE
-            ComponentName.unflattenFromString(activeInteractorComponent) == voiceServiceComponent ->
-                ActiveInteractorStatus.ACTIVE
+            ComponentName.unflattenFromString(activeInteractorComponent.orEmpty()) == voiceServiceComponent -> ActiveInteractorStatus.ACTIVE
             else -> ActiveInteractorStatus.INACTIVE
         }
         if (activeInteractorStatus == ActiveInteractorStatus.UNKNOWN) {

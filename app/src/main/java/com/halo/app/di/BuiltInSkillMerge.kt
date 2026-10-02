@@ -52,10 +52,12 @@ internal object BuiltInSkillMerge {
             requiredPermissions = defaults.requiredPermissions + manifest.requiredPermissions,
             toolDefinitions = toolRisks.map { (toolId, risk) ->
                 val approval = approvals[toolId]
+                val permissions = (defaults.toolDefinitions + manifest.toolDefinitions)
+                    .filter { it.toolId == toolId }.flatMap { it.requiredPermissions }.toSet()
                 if (approval == null) {
-                    SkillToolDefinition(toolId = toolId, risk = risk)
+                    SkillToolDefinition(toolId = toolId, risk = risk, requiredPermissions = permissions)
                 } else {
-                    SkillToolDefinition(toolId = toolId, risk = risk, defaultApproval = approval)
+                    SkillToolDefinition(toolId = toolId, risk = risk, requiredPermissions = permissions, defaultApproval = approval)
                 }
             },
         )

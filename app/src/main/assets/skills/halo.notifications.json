@@ -1,17 +1,54 @@
 {
   "id": "halo.notifications",
-  "name": "Notification digests",
-  "description": "Build bounded offline digests of notifications from explicitly permitted apps.",
+  "name": "Notifications",
+  "description": "Read notifications from permitted apps, approve an inline reply or dismissal.",
   "category": "AUTOMATION",
-  "risk": "READ_ONLY",
+  "risk": "SENSITIVE",
   "tools": [
-    "halo_notification_digest"
+    "halo_notification_digest",
+    "halo_list_notifications",
+    "halo_dismiss_notification",
+    "halo_reply_notification",
+    "halo_replyable_notifications"
   ],
-  "requiredPermissions": [],
+  "requiredPermissions": [
+    "NOTIFICATION_ACCESS"
+  ],
   "toolDefinitions": [
     {
       "toolId": "halo_notification_digest",
-      "risk": "READ_ONLY"
+      "risk": "READ_ONLY",
+      "requiredPermissions": [
+        "NOTIFICATION_ACCESS"
+      ]
+    },
+    {
+      "toolId": "halo_list_notifications",
+      "risk": "READ_ONLY",
+      "requiredPermissions": [
+        "NOTIFICATION_ACCESS"
+      ]
+    },
+    {
+      "toolId": "halo_dismiss_notification",
+      "risk": "SENSITIVE",
+      "requiredPermissions": [
+        "NOTIFICATION_ACCESS"
+      ]
+    },
+    {
+      "toolId": "halo_reply_notification",
+      "risk": "SENSITIVE",
+      "requiredPermissions": [
+        "NOTIFICATION_ACCESS"
+      ]
+    },
+    {
+      "toolId": "halo_replyable_notifications",
+      "risk": "READ_ONLY",
+      "requiredPermissions": [
+        "NOTIFICATION_ACCESS"
+      ]
     }
   ]
 }

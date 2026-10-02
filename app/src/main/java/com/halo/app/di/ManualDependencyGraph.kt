@@ -532,7 +532,8 @@ object ManualDependencyGraph {
 
     val toolRegistry: com.halo.runtime.cognition.tools.ToolRegistry by lazy {
         val foreground = {
-            attentionContextProvider.snapshot().foregroundState == com.halo.runtime.cognition.attention.ForegroundState.HALO_FOREGROUND
+            attentionContextProvider.snapshot().foregroundState == com.halo.runtime.cognition.attention.ForegroundState.HALO_FOREGROUND ||
+                com.halo.host.android.assistant.AssistantRuntimeStateStore.state.value.sessionVisible
         }
         val currentTimeExecutor = CurrentTimeToolExecutor()
         val notificationExecutor = notificationDigestTool
@@ -677,11 +678,13 @@ object ManualDependencyGraph {
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.CLIPBOARD to hostExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.WEB_INSIGHT to hostExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.ALARM to hostExecutor,
+                com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.CALENDAR to hostExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.COMMUNICATION to hostExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.MEDIA to hostExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.ACCESSIBILITY to hostExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.USE_SKILL to useSkillExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.NOTIFICATION_REPLY to notificationReplyExecutor,
+                com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.NOTIFICATION_REPLY to hostExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.ROUTINE to routineCreationExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.PROCEDURE to procedureExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.PRESENTATION to presentationExecutor,
@@ -871,6 +874,7 @@ object ManualDependencyGraph {
     val mediaAssetStore by lazy {
         com.halo.app.capture.EphemeralMediaAssetStore(applicationContext.cacheDir, scope = infra.scope, eventBus = eventBus)
     }
+    val visionLab by lazy { com.halo.runtime.cognition.vision.VisionLab(mediaAssetResolver, imageInputPreparer, workspaceMediaAiPolicy, storage) }
     val imageInputPreparer by lazy { com.halo.app.capture.AndroidImageInputPreparer() }
     val mediaAssetResolver by lazy { com.halo.app.capture.WorkspaceMediaAssetResolver(applicationContext, workspaceFileRepository, mediaAssetStore) }
     val workspaceMediaAiPolicy by lazy { com.halo.app.data.workspace.WorkspaceMediaAiPolicy(appDatabase, storage) }
@@ -975,7 +979,7 @@ object ManualDependencyGraph {
         com.halo.runtime.cognition.turn.CognitiveTurnExecutor(
             preparer = cognitiveTurnPreparer,
             providerExecutor = providerTurnExecutor,
-            toolExecutor = toolTurnExecutor,
+            toolExecutor = skillExecutionService,
             agentRunCoordinator = agentRunCoordinator,
             agentRunStore = agentRunStore,
             eventBus = eventBus,
@@ -1013,6 +1017,17 @@ object ManualDependencyGraph {
             } },
         )
     }
+    val skillExecutionService by lazy {
+        com.halo.runtime.cognition.skills.SkillExecutionService(skillRegistry, toolRegistry, toolAvailabilityResolver,
+            toolTurnExecutor, isLocked = { applicationContext.getSystemService(android.app.KeyguardManager::class.java).isDeviceLocked },
+            coordinator = agentRunCoordinator, refreshCapabilities = { hostGraph.capabilityPublisher.publishInto(capabilityCatalogue) })
+    }
+    val nativeCapabilityDispatcher by lazy {
+        com.halo.runtime.cognition.native.NativeCapabilityDispatcher(skillExecutionService, agentRunCoordinator, agentRunStore)
+    }
+    val skillRuntimeAudit by lazy {
+        com.halo.runtime.cognition.skills.SkillRuntimeAudit(skillRegistry, toolRegistry, skillExecutionService)
+    }
     val cognitiveSession by lazy {
         CognitiveSession(
             eventBus = eventBus,
@@ -1024,6 +1039,7 @@ object ManualDependencyGraph {
             agentRecoveryExecutor = agentRecoveryExecutor,
             turnExecutor = cognitiveTurnExecutor,
             responseCommitter = cognitiveResponseCommitter,
+            nativeDispatcher = nativeCapabilityDispatcher,
         )
     }
 

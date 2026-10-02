@@ -1,0 +1,18 @@
+{
+  "id": "halo.settings",
+  "schemaVersion": 2,
+  "name": "Settings",
+  "description": "Explicit Android host actions.",
+  "category": "DEVICE",
+  "risk": "REVERSIBLE",
+  "tools": [
+    "halo_open_settings"
+  ],
+  "requiredPermissions": [],
+  "toolDefinitions": [
+    {
+      "toolId": "halo_open_settings",
+      "risk": "REVERSIBLE"
+    }
+  ]
+}

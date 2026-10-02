@@ -90,6 +90,8 @@ interface NativeResourceOwner {
         get() = nativeResourceKind.name + ":" + (this::class.qualifiedName ?: this::class.simpleName ?: "unknown")
     val defaultResourcePolicy: WorkloadResourcePolicy
         get() = WorkloadResourcePolicy(RuntimeWorkloadClass.TEXT_CHAT, exclusive = true, residencyPreference = ResidencyPreference.WARM_EJECTABLE)
+    /** Cancel obsolete active compute and await its cleanup; keep resident caches when safe. */
+    suspend fun preemptForVoiceInput(): Boolean = false
     suspend fun releaseIfIdle(): Boolean
 }
 
@@ -211,6 +213,14 @@ class NativeResourceCoordinator(
 
     suspend fun acquire(owner: NativeResourceOwner, operationId: String? = null): Boolean {
         val start = System.currentTimeMillis()
+        if (owner.nativeResourceKind == NativeResourceKind.HEAVY_ASR) {
+            // Never call an owner's cleanup under the coordinator mutex: its finally block releases the lease.
+            val obsolete = mutex.withLock { active.filter { it !== owner && it.nativeResourceKind == NativeResourceKind.HEAVY_LLM && executionFacts[it]?.leaseHeld == true } }
+            for (conflict in obsolete) {
+                println("NATIVE_EXECUTION_PREEMPT owner=${conflict.nativeResourceId} requester=${owner.nativeResourceId} reason=VOICE_ASR")
+                withTimeoutOrNull(1000) { conflict.preemptForVoiceInput() }
+            }
+        }
         val resourceId = when (owner.nativeResourceKind) {
             NativeResourceKind.HEAVY_LLM -> HaloResourceIds.ComputeInference
             NativeResourceKind.HEAVY_ASR -> HaloResourceIds.ComputeAsr
@@ -233,7 +243,7 @@ class NativeResourceCoordinator(
                 requestId = "native:${owner.nativeResourceId}",
                 holder = ResourceHolder(id = owner.nativeResourceId, kind = ResourceHolderKind.PROVIDER),
                 claims = claims,
-                priority = ResourcePriority.INTERACTIVE,
+                priority = if (owner.nativeResourceKind == NativeResourceKind.HEAVY_ASR) ResourcePriority.INTERACTIVE_INPUT else ResourcePriority.INTERACTIVE,
                 waitPolicy = ResourceWaitPolicy.Wait(1000L),
                 preemption = ResourcePreemptionPolicy.COOPERATIVE,
             )
@@ -262,6 +272,7 @@ class NativeResourceCoordinator(
                     owners += owner
                     expiry.remove(owner)?.cancel()
                     val conflicts = active.filter { it !== owner &&
+                        executionFacts[it]?.leaseHeld == true &&
                         (it.nativeResourceKind == owner.nativeResourceKind || !_budget.value.allowConcurrentHeavyweights ||
                             _budget.value.pressure != NativeMemoryPressure.NORMAL) }
                     var blocked = false

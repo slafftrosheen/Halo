@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -161,6 +162,11 @@ class HomeUiMapper : RuntimeUiMapper<HomeUiState> {
     override fun map(snapshot: RuntimeSnapshot): HomeUiState = map(snapshot, CognitiveSessionState.Idle)
 }
 
+/** Immutable Home projection. Platform and repository reads run in the ViewModel's IO scope. */
+data class HomeDashboardState(val learningCount: Int = 0, val pendingUpdateCount: Int = 0,
+    val showLearning: Boolean = false, val skillCount: Int = 0, val assistantActive: Boolean = false,
+    val nativeReady: Boolean = false, val quickTools: Set<String> = emptySet())
+
 class HomeViewModel(
     private val snapshotManager: RuntimeSnapshotSource,
     private val commandBus: CommandBus,
@@ -180,6 +186,41 @@ class HomeViewModel(
     val captures: com.halo.app.capture.LocalCaptureStore? = null,
     private val agentRuns: com.halo.runtime.cognition.agent.AgentRunStore? = null,
 ) : ViewModel() {
+    private val _dashboard = MutableStateFlow(HomeDashboardState())
+    val dashboard: StateFlow<HomeDashboardState> = _dashboard.asStateFlow()
+    private val _visualAttachment = MutableStateFlow<com.halo.app.capture.VisualAttachment?>(null)
+    val visualAttachment: StateFlow<com.halo.app.capture.VisualAttachment?> = _visualAttachment.asStateFlow()
+    private val _providerRows = MutableStateFlow<List<com.halo.app.ai.ProviderControlRow>>(emptyList())
+    val providerRows: StateFlow<List<com.halo.app.ai.ProviderControlRow>> = _providerRows.asStateFlow()
+    val chatProviderId: StateFlow<String?> = aiProviderRouter?.selectedProviderId ?: MutableStateFlow(null)
+
+    init {
+        println("[HALO_HOME_FIRST_STATE] state=INITIAL")
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            val graph = com.halo.app.di.ManualDependencyGraph
+            if (runCatching { graph.applicationContext }.getOrNull() == null) return@launch
+            launch { graph.personalLearning.pending.collect { rows -> _dashboard.update { it.copy(learningCount = rows.size) } } }
+            launch { graph.attentionQueue.pending.collect { rows -> _dashboard.update { it.copy(pendingUpdateCount = rows.size) } } }
+            launch { graph.visualAttachments.state.collect { _visualAttachment.value = it } }
+            launch { graph.providerControlRepository.rows.collect { _providerRows.value = it } }
+            launch { graph.skillRegistry.skills.collect { rows -> _dashboard.update { it.copy(skillCount = rows.size, nativeReady = rows.any { it.enabled }) } } }
+            refreshDashboard().join()
+            println("[HALO_HOME_INTERACTIVE] state=READY")
+        }
+    }
+    fun refreshDashboard() = viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+        val graph = com.halo.app.di.ManualDependencyGraph
+        val active = com.halo.host.android.assistant.AssistantEligibilityInspector(graph.applicationContext).inspect().let {
+            it.activeVoiceInteractionService
+        }
+        val learning = com.halo.runtime.cognition.memory.PersonalSuggestionPolicy.showHome(
+            com.halo.runtime.cognition.attention.AttentionInitiativeLevel.fromStored(graph.storage.getString("attention_initiative")))
+        val available = graph.skillRegistry.skills.value.flatMap { graph.skillExecutionService.check(it.id).entries }
+            .filter { it.value == "Available" }.map { it.key }.toSet()
+        _dashboard.update { it.copy(showLearning = learning, assistantActive = active, quickTools = available,
+            nativeReady = "halo_open_app" in available && "halo_timer" in available) }
+    }
+
     private val mapper = HomeUiMapper()
     private val listeningCommandMutex = Mutex()
     private val _listeningRequested = MutableStateFlow(false)
@@ -517,9 +558,25 @@ class HomeViewModel(
         catch (_: Exception) { captureMessage.value = "Image could not be attached." }
     } }
 
-    fun createNote() { viewModelScope.launch {
-        val note = notebook?.createNote() ?: return@launch
-        _navigationEvents.emit("notebook/note/${note.id}")
+    fun createNote() { viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+        val graph = com.halo.app.di.ManualDependencyGraph
+        val id = UUID.randomUUID().toString()
+        val run = graph.agentRunCoordinator.start(com.halo.runtime.cognition.agent.AgentRequest(
+            com.halo.cognition.language.InteractionId(id), "Create an empty note", kind = com.halo.runtime.cognition.agent.AgentRunKind.NATIVE))
+        graph.agentRunCoordinator.transition(run, com.halo.runtime.cognition.agent.AgentRunState.EXECUTING)
+        try {
+            val result = graph.skillExecutionService.execute(run, com.halo.cognition.language.InteractionId(id), id,
+                listOf(ToolCall(id, "halo_create_empty_note", emptyMap())), true, setOf("halo_create_empty_note"))
+            if (result is com.halo.runtime.cognition.turn.ToolTurnResult.Completed) {
+                val output = result.toolMessages.joinToString("\n") { it.content }
+                if ("Created note: " in output) {
+                    graph.agentRunCoordinator.complete(run)
+                    val noteId = output.substringAfter("Created note: ").substringBefore(" -")
+                    _navigationEvents.emit("notebook/note/$noteId")
+                } else { graph.agentRunCoordinator.fail(run, "Note creation rejected"); captureMessage.value = "Note creation needs permission or setup" }
+            } else captureMessage.value = "Review note creation in the approval panel"
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { graph.agentRunCoordinator.cancel(run, "Cancelled"); throw cancelled }
+          catch (_: Exception) { graph.agentRunCoordinator.fail(run, "Note creation failed"); captureMessage.value = "Could not create note" }
     } }
     fun saveResponse(text: String) { viewModelScope.launch {
         val turn = conversations?.turns?.value?.lastOrNull()

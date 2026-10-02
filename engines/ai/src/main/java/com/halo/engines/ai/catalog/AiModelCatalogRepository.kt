@@ -51,15 +51,18 @@ class DefaultAiModelCatalogRepository(
         fun encode(text: String) = java.util.Base64.getEncoder().encodeToString(text.toByteArray(Charsets.UTF_8))
         return models.take(3000).joinToString("\n") { model ->
             listOf(encode(model.id), encode(model.displayName), model.inputCapabilities.joinToString(",") { it.name },
-                model.contextLength?.toString().orEmpty(), model.supportsStreaming.toString(), model.supportsTools.toString(), model.isFree.toString()).joinToString("|")
+                model.contextLength?.toString().orEmpty(), model.supportsStreaming.toString(), model.supportsTools.toString(), model.isFree.toString(), model.capabilityEvidence.entries.joinToString(",") { "${it.key.name}:${it.value.name}" }).joinToString("|")
         }
     }
     private fun decodeModels(provider: AiInferenceProvider, raw: String?): List<AiModel> = raw?.take(2_000_000)?.lineSequence()?.take(3000)?.mapNotNull { line ->
         runCatching {
-            val fields = line.split('|'); require(fields.size == 7)
+            val fields = line.split('|'); require(fields.size in 7..8)
             fun decode(index: Int) = String(java.util.Base64.getDecoder().decode(fields[index]), Charsets.UTF_8)
             AiModel(decode(0), decode(1), provider.id, fields[2].split(',').mapNotNull { name -> AiCapability.entries.firstOrNull { it.name == name } }.toSet(),
-                fields[3].toLongOrNull(), fields[4].toBooleanStrict(), fields[5].toBooleanStrict(), fields[6].toBooleanStrict())
+                fields[3].toLongOrNull(), fields[4].toBooleanStrict(), fields[5].toBooleanStrict(), fields[6].toBooleanStrict(), capabilityEvidence = fields.getOrNull(7)?.split(',')?.mapNotNull { item ->
+                    val pair = item.split(':')
+                    if (pair.size != 2) null else runCatching { AiCapability.valueOf(pair[0]) to CapabilityEvidence.valueOf(pair[1]) }.getOrNull()
+                }?.toMap().orEmpty())
         }.getOrNull()
     }?.toList().orEmpty()
 
@@ -120,7 +123,8 @@ class DefaultAiModelCatalogRepository(
             AiExecutionLocation.REMOTE -> if (live) ModelCatalogueSource.REMOTE_LIVE else ModelCatalogueSource.REMOTE_CACHED
         }
         return AiModelCatalogEntry(
-            model = this,
+            model = if (location != com.halo.sdk.provider.AiExecutionLocation.ON_DEVICE && id != "openrouter/free" && storage?.getString("vision_probe_${provider.id}_$id")?.toLongOrNull() != null)
+                copy(capabilityEvidence = capabilityEvidence + (AiCapability.IMAGE to CapabilityEvidence.HALO_PROBE_SUCCESS)) else this,
             runtime = AiModelRuntimeMetadata(
                 ref = AiModelRef(provider.id, id),
                 location = location,

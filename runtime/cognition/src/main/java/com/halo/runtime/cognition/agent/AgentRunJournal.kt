@@ -9,6 +9,7 @@ import java.time.Instant
  */
 enum class AgentRunKind {
     INTERACTIVE,
+    NATIVE,
     ROUTINE,
     SYSTEM,
 }
@@ -28,7 +29,7 @@ enum class RunRecoveryPolicy {
 data class AgentRunMetadata(
     val kind: AgentRunKind = AgentRunKind.INTERACTIVE,
     val recoveryPolicy: RunRecoveryPolicy = when (kind) {
-        AgentRunKind.INTERACTIVE, AgentRunKind.SYSTEM -> RunRecoveryPolicy.USER_RESUME
+        AgentRunKind.INTERACTIVE, AgentRunKind.SYSTEM, AgentRunKind.NATIVE -> RunRecoveryPolicy.USER_RESUME
         AgentRunKind.ROUTINE -> RunRecoveryPolicy.NO_RESUME
     },
     val providerId: String? = null,

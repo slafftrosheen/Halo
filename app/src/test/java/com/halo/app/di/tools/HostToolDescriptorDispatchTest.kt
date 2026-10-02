@@ -77,6 +77,8 @@ class HostToolDescriptorDispatchTest {
         HaloToolDescriptors.ExecutorKind.WEB_INSIGHT,
         HaloToolDescriptors.ExecutorKind.INTEGRITY,
         HaloToolDescriptors.ExecutorKind.ALARM,
+        HaloToolDescriptors.ExecutorKind.CALENDAR,
+        HaloToolDescriptors.ExecutorKind.NOTIFICATION_REPLY,
         HaloToolDescriptors.ExecutorKind.COMMUNICATION,
         HaloToolDescriptors.ExecutorKind.MEDIA,
         HaloToolDescriptors.ExecutorKind.ACCESSIBILITY,
@@ -95,6 +97,8 @@ class HostToolDescriptorDispatchTest {
      * a name from another family.
      */
     private val allowedNames = mapOf(
+        HaloToolDescriptors.ExecutorKind.CALENDAR to setOf("halo_calendar_upcoming", "halo_calendar_create"),
+        HaloToolDescriptors.ExecutorKind.NOTIFICATION_REPLY to setOf("halo_list_notifications", "halo_dismiss_notification"),
         HaloToolDescriptors.ExecutorKind.NAVIGATION to setOf("halo_navigation", "halo_browser", "halo_search"),
         HaloToolDescriptors.ExecutorKind.ASSISTANT to setOf("halo_list_screens", "halo_open_screen", "halo_get_preferences", "halo_set_preferences", "halo_read_aloud", "halo_stop_reading", "halo_list_app_actions", "halo_perform_app_action"),
         HaloToolDescriptors.ExecutorKind.SYSTEM to setOf("halo_open_settings", "halo_share_text"),

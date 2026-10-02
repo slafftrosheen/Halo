@@ -189,6 +189,32 @@ class NativeResourceCoordinatorTest {
         assertFalse(asr.released)
     }
 
+    @Test
+    fun freshAsrPreemptsLlmExecutionWithoutEvictingItsCache() = runBlocking {
+        val coordinator = NativeResourceCoordinator()
+        coordinator.updateBudget(NativeResourceBudget(allowConcurrentHeavyweights = false))
+        var preempted = false
+        var unloaded = false
+        val llm = object : NativeResourceOwner {
+            override val nativeResourceKind = NativeResourceKind.HEAVY_LLM
+            override val nativeResourceId = "test:llm"
+            override suspend fun releaseIfIdle(): Boolean { unloaded = true; return true }
+            override suspend fun preemptForVoiceInput(): Boolean {
+                preempted = true
+                coordinator.mark(this, NativeResourceState.RESIDENT, "cancelled compute; retain cache")
+                return true
+            }
+        }
+        assertTrue(coordinator.acquire(llm))
+        coordinator.mark(llm, NativeResourceState.IN_USE, "superseded generation")
+        assertTrue(coordinator.acquire(FakeOwner(NativeResourceKind.HEAVY_ASR)))
+        assertTrue(preempted)
+        assertFalse(unloaded)
+        val cache = coordinator.snapshot.value.first { it.ownerId == llm.nativeResourceId }
+        assertEquals(NativeResourceState.RESIDENT, cache.state)
+        assertFalse(cache.executionLeaseHeld)
+    }
+
     private class FakeOwner(
         override val nativeResourceKind: NativeResourceKind,
         private val canRelease: Boolean = true,

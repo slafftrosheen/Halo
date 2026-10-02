@@ -13,7 +13,9 @@ class SkillAvailabilityResolver(
 ) {
     fun resolve(skill: SkillDescriptor): SkillAvailability {
         if (!skill.enabled) return SkillAvailability.Disabled
-        skill.requiredPermissions.firstOrNull { !permissionGranted(it) }?.let {
+        val perToolPermissions = skill.toolDefinitions.flatMap { it.requiredPermissions }.toSet()
+        val missingPermissionTools = skill.toolDefinitions.filter { tool -> tool.requiredPermissions.any { !permissionGranted(it) } }.map { it.toolId }.toSet()
+        (skill.requiredPermissions - perToolPermissions).firstOrNull { !permissionGranted(it) }?.let {
             return SkillAvailability.MissingPermission(it)
         }
         registeredToolNames?.invoke()?.let { registered ->
@@ -22,12 +24,13 @@ class SkillAvailabilityResolver(
                 .map { it.toolId }
                 .toSet()
             val allRequiredTools = skill.tools + explicitlyRequired
-            val missing = allRequiredTools - registered
+            val missing = (allRequiredTools - registered) + missingPermissionTools
             if (missing.isNotEmpty()) {
                 return if (missing.size == allRequiredTools.size) SkillAvailability.MissingDependency(missing.joinToString())
                 else SkillAvailability.PartiallyAvailable(missing)
             }
         }
+        if (missingPermissionTools.isNotEmpty()) return SkillAvailability.PartiallyAvailable(missingPermissionTools)
         skill.requirements.firstOrNull { requirement ->
             requirement !is SkillRequirement.ToolRegistered &&
                 requirement !is SkillRequirement.Permission &&

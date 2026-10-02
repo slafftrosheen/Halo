@@ -25,6 +25,8 @@ class WorkspaceToolExecutor(
 ) : ToolExecutor {
 
     override fun definitions(): List<ToolDefinition> = listOf(
+        ToolDefinition("halo_create_empty_note", "halo_create_empty_note", "Create an empty local note for the user to edit.",
+            mapOf("type" to "object", "properties" to emptyMap<String, Any>(), "additionalProperties" to false)),
         ToolDefinition("halo_get_workspace_object", "halo_get_workspace_object", "Read an existing workspace object and its note content.",
             mapOf("type" to "object", "properties" to mapOf("objectId" to mapOf("type" to "string", "maxLength" to 100)),
                 "required" to listOf("objectId"), "additionalProperties" to false)),
@@ -124,6 +126,11 @@ class WorkspaceToolExecutor(
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
         fun reject(reason: String) = ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, reason)
 
+        if (toolCall.functionName == "halo_create_empty_note") {
+            if (toolCall.arguments.isNotEmpty()) return reject("Empty note takes no arguments")
+            val note = notebookRepository.createNote()
+            return ToolExecutionResult.Success(toolCall.id, toolCall.functionName, "Created note: ${note.id} - '${note.title}'")
+        }
         val key = when (toolCall.functionName) {
             "halo_create_note" -> "body"
             "halo_search_notebook" -> "query"

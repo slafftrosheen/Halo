@@ -152,7 +152,8 @@ class GeminiProvider(
             val modelId = item.optString("name").removePrefix("models/").trim()
             if (!modelId.startsWith("gemini-") || modelId.contains("image", true) || modelId.contains("tts", true)) return@mapNotNull null
             AiModel(modelId, item.optString("displayName", modelId), id, setOf(AiCapability.TEXT, AiCapability.IMAGE),
-                item.optLong("inputTokenLimit").takeIf { it > 0L }, supportsStreaming = false, supportsTools = true)
+                item.optLong("inputTokenLimit").takeIf { it > 0L }, supportsStreaming = false, supportsTools = true,
+                capabilityEvidence = mapOf(AiCapability.IMAGE to com.halo.sdk.provider.CapabilityEvidence.HEURISTIC))
         }.distinctBy { it.id }.sortedBy { it.displayName.lowercase() }
     }
 

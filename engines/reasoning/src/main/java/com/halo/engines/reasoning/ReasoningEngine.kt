@@ -38,7 +38,8 @@ import kotlinx.coroutines.withContext
 class ReasoningEngine(
     private val strategy: DefaultReasoningStrategy,
     private val blackboard: Blackboard,
-    private val eventBus: EventBus
+    private val eventBus: EventBus,
+    private val hostOwnsIntent: (com.halo.cognition.language.Intent) -> Boolean = { false },
 ) : Engine {
 
     override val metadata = EngineMetadata(
@@ -84,7 +85,7 @@ class ReasoningEngine(
                         val interpretation =
                             (knowledge.payload as InterpretationKnowledge).interpretation
 
-                        if (interpretation.metadata["clarificationOnly"] == "true") return@collect
+                        if (interpretation.metadata["clarificationOnly"] == "true" || hostOwnsIntent(interpretation.intent)) return@collect
 
                         if (interpretation.intent is ConversationIntent ||
                             interpretation.intent is QuestionIntent

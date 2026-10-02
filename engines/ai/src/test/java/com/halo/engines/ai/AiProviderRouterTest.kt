@@ -46,7 +46,8 @@ class AiProviderRouterTest {
         }
         override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = emptyFlow()
         override suspend fun listModels() = listOf(
-            AiModel(modelId, "Test Model", id, supportedCapabilities, 4096, false, false)
+            AiModel(modelId, "Test Model", id, supportedCapabilities, 4096, false, false,
+                executionLocation = if (isLocal) AiExecutionLocation.ON_DEVICE else AiExecutionLocation.REMOTE)
         )
     }
 
@@ -73,7 +74,7 @@ class AiProviderRouterTest {
     }
 
     @Test
-    fun `changing provider clears the old provider model`() = runTest {
+    fun `changing provider restores its remembered model`() = runTest {
         val storage = FakeStorage()
         val p1 = MockProvider("p1", "P1", modelId = "model-p1")
         val p2 = MockProvider("p2", "P2", modelId = "model-p2")
@@ -83,12 +84,12 @@ class AiProviderRouterTest {
         router.selectProvider("p2")
         router.selectModel("model-p2")
         router.selectProvider("p1")
-        assertEquals(null, router.selectedModelId.value)
-        assertEquals(null, storage.getString("active_ai_model"))
+        assertEquals("model-p1", router.selectedModelId.value)
+        assertEquals("model-p1", storage.getString("active_ai_model"))
     }
 
     @Test
-    fun `only the current provider model tuple is persisted`() = runTest {
+    fun `current selection and remembered provider model survive restart`() = runTest {
         val storage = FakeStorage()
         val p1 = MockProvider("p1", "P1", modelId = "model-p1")
         val p2 = MockProvider("p2", "P2", modelId = "model-p2")
@@ -101,7 +102,7 @@ class AiProviderRouterTest {
         assertEquals("p2", restored.selectedProviderId.value)
         assertEquals("model-p2", restored.selectedModelId.value)
         restored.selectProvider("p1")
-        assertEquals(null, restored.selectedModelId.value)
+        assertEquals("model-p1", restored.selectedModelId.value)
     }
 
     @Test

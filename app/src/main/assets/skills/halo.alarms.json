@@ -1,0 +1,23 @@
+{
+  "id": "halo.alarms",
+  "schemaVersion": 2,
+  "name": "Alarms & timers",
+  "description": "Explicit Android host actions.",
+  "category": "DEVICE",
+  "risk": "EXTERNAL_SIDE_EFFECT",
+  "tools": [
+    "halo_set_alarm",
+    "halo_timer"
+  ],
+  "requiredPermissions": [],
+  "toolDefinitions": [
+    {
+      "toolId": "halo_set_alarm",
+      "risk": "EXTERNAL_SIDE_EFFECT"
+    },
+    {
+      "toolId": "halo_timer",
+      "risk": "EXTERNAL_SIDE_EFFECT"
+    }
+  ]
+}

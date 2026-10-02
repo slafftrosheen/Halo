@@ -203,6 +203,14 @@ object HaloToolDescriptors {
      * approval-grant layer explicitly refuses to reuse an approval for it.
      */
     fun notificationReply(definition: ToolDefinition): ToolDescriptor? = when (definition.name) {
+        "halo_list_notifications" -> descriptor(definition.name, definition, ToolCategory.INFORMATION,
+            ToolSecurityPolicy.READ_ONLY, keywords = setOf("notification", "list", "inbox"),
+            requirements = setOf(ToolRequirement.Capability(CapabilityId("host.notification.live"))))
+        "halo_dismiss_notification" -> descriptor(definition.name, definition, ToolCategory.COMMUNICATION,
+            ToolSecurityPolicy(ToolRiskClass.SENSITIVE, ConfirmationPolicy.ALWAYS, ReplaySafety.NEVER_REPLAY),
+            keywords = setOf("notification", "dismiss"),
+            requirements = setOf(ToolRequirement.Capability(CapabilityId("host.notification.live"))),
+            presentation = ToolPresentation(title = "Dismiss notification", actionVerb = "Dismiss"))
         "halo_reply_notification" -> descriptor(
             id = "halo_reply_notification",
             definition = definition,
@@ -213,6 +221,7 @@ object HaloToolDescriptors {
                 replaySafety = ReplaySafety.NEVER_REPLAY,
             ),
             keywords = setOf("notification", "reply", "message", "respond"),
+            requirements = setOf(ToolRequirement.Capability(CapabilityId("host.notification.live"))),
             presentation = ToolPresentation(
                 title = "Reply to notification",
                 actionVerb = "Reply",
@@ -225,6 +234,7 @@ object HaloToolDescriptors {
             category = ToolCategory.INFORMATION,
             security = readOnly("halo_replyable_notifications"),
             keywords = setOf("notification", "reply", "inbox"),
+            requirements = setOf(ToolRequirement.Capability(CapabilityId("host.notification.live"))),
         )
         else -> null
     }
@@ -246,7 +256,7 @@ object HaloToolDescriptors {
     fun workspace(definition: ToolDefinition) = when (definition.name) {
         "halo_get_workspace_object" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
             readOnly(definition.name), keywords = setOf("note", "workspace", "read"))
-        "halo_create_note" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
+        "halo_create_note", "halo_create_empty_note" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
             reversible(ReplaySafety.IDEMPOTENT_WITH_KEY), keywords = setOf("note", "create", "write"),
             presentation = ToolPresentation(title = "Create a note", actionVerb = "Create note"))
         "halo_search_notebook" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
@@ -318,7 +328,8 @@ object HaloToolDescriptors {
         "halo_volume" -> descriptor(definition.name, definition, ToolCategory.DEVICE_CONTROL,
             reversible(), keywords = setOf("volume", "sound", "louder", "quieter"))
         "halo_flashlight" -> descriptor(definition.name, definition, ToolCategory.DEVICE_CONTROL,
-            reversible(), keywords = setOf("flashlight", "torch", "light"))
+            reversible(), keywords = setOf("flashlight", "torch", "light"),
+            requirements = setOf(ToolRequirement.Capability(CapabilityId("host.flashlight.control"))))
         "halo_ringer" -> descriptor(definition.name, definition, ToolCategory.DEVICE_CONTROL,
             reversible(), keywords = setOf("ringer", "silent", "vibrate", "sound mode", "mute"),
             requirements = setOf(ToolRequirement.Capability(CapabilityId("host.ringer.control"))))
@@ -391,6 +402,18 @@ object HaloToolDescriptors {
             requirements = setOf(ToolRequirement.Capability(CapabilityId("host.web.fetch"))),
             execution = com.halo.runtime.cognition.tools.ToolExecutionPolicy(timeoutMs = 15_000L),
             presentation = ToolPresentation(title = "Read a web page"))
+        else -> null
+    }
+
+    fun calendar(definition: ToolDefinition): ToolDescriptor? = when (definition.name) {
+        "halo_calendar_upcoming" -> descriptor(definition.name, definition, ToolCategory.INFORMATION,
+            ToolSecurityPolicy.READ_ONLY, keywords = setOf("calendar", "upcoming", "events"),
+            requirements = setOf(ToolRequirement.Capability(CapabilityId("host.calendar.read"))))
+        "halo_calendar_create" -> descriptor(definition.name, definition, ToolCategory.AUTOMATION,
+            ToolSecurityPolicy(ToolRiskClass.EXTERNAL_SIDE_EFFECT, ConfirmationPolicy.ALWAYS, ReplaySafety.NEVER_REPLAY),
+            keywords = setOf("calendar", "event", "schedule"),
+            requirements = setOf(ToolRequirement.Capability(CapabilityId("host.calendar.write"))),
+            presentation = ToolPresentation(title = "Create calendar event", actionVerb = "Create", targetArgument = "title"))
         else -> null
     }
 
@@ -575,6 +598,7 @@ object HaloToolDescriptors {
             ExecutorKind.CLIPBOARD -> clipboard(definition)
             ExecutorKind.WEB_INSIGHT -> webInsight(definition)
             ExecutorKind.ALARM -> alarm(definition)
+            ExecutorKind.CALENDAR -> calendar(definition)
             ExecutorKind.COMMUNICATION -> communication(definition)
             ExecutorKind.MEDIA -> media(definition)
             ExecutorKind.NAVIGATION -> navigation(definition)
@@ -602,6 +626,7 @@ object HaloToolDescriptors {
         CLIPBOARD,
         WEB_INSIGHT,
         ALARM,
+        CALENDAR,
         COMMUNICATION,
         MEDIA,
         NAVIGATION,

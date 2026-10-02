@@ -247,6 +247,15 @@ class LiteRtLocalProvider(
     /** Observable per-model health for the development Model Browser. */
     val modelMemory: StateFlow<Map<String, LiteRtModelFailureRecord>> get() = failureMemory.records
 
+    @Volatile private var activeComputeJob: kotlinx.coroutines.Job? = null
+    override suspend fun preemptForVoiceInput(): Boolean {
+        val job = activeComputeJob ?: return true
+        if (!job.isActive) return true
+        job.cancel(CancellationException("Voice ASR preempted obsolete inference"))
+        job.join()
+        return true
+    }
+
     override suspend fun releaseIfIdle(): Boolean {
         if (!loadMutex.tryLock()) return false
         try {
@@ -587,6 +596,7 @@ class LiteRtLocalProvider(
             )
         }
 
+        activeComputeJob = kotlin.coroutines.coroutineContext[kotlinx.coroutines.Job]
         nativeResourceCoordinator?.mark(this, NativeResourceState.LOADING, "Loading LiteRT model: ${descriptor.id}")
         _status.value = ProviderStatus(ProviderStatus.State.LOADING, "Loading ${descriptor.displayName}...")
 
@@ -673,6 +683,7 @@ class LiteRtLocalProvider(
                 AiFailureDetails(retryAfterMs = 1000L, recoverability = Recoverability.RETRY_AFTER),
             )
         }
+        activeComputeJob = kotlin.coroutines.coroutineContext[kotlinx.coroutines.Job]
         nativeResourceCoordinator?.mark(this, NativeResourceState.IN_USE, operation)
     }
 
@@ -738,6 +749,9 @@ class LiteRtLocalProvider(
                 displayName = desc.displayName,
                 providerId = id,
                 executionLocation = com.halo.sdk.provider.AiExecutionLocation.ON_DEVICE,
+                capabilityEvidence = if (desc.supportsVision) mapOf(AiCapability.IMAGE to
+                    if (desc.sha256?.let { visionEvidence[VisionQualificationKey.of(it, RUNTIME_VERSION)]?.passed } == true)
+                        com.halo.sdk.provider.CapabilityEvidence.HALO_PROBE_SUCCESS else com.halo.sdk.provider.CapabilityEvidence.HEURISTIC) else emptyMap(),
                 inputCapabilities = buildSet {
                     add(AiCapability.TEXT)
                     if (desc.supportsVision) add(AiCapability.IMAGE)

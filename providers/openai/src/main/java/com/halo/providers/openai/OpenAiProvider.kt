@@ -127,6 +127,7 @@ class OpenAiProvider(
                                 add(AiCapability.TEXT)
                                 if (supportsVision(modelId)) add(AiCapability.IMAGE)
                             },
+                            capabilityEvidence = mapOf(AiCapability.IMAGE to com.halo.sdk.provider.CapabilityEvidence.HEURISTIC),
                             contextLength = null,
                             supportsStreaming = false,
                             supportsTools = supportsTools(modelId),

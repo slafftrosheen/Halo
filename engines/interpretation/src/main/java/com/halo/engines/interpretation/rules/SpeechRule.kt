@@ -39,6 +39,10 @@ class SpeechRule : InterpretationRule {
             com.halo.cognition.language.ConversationSemantics.isExplanation(transcript))
             return RuleMatch(confidence = confidence.coerceAtLeast(0.7f), intent = QuestionIntent,
                 consumedTokens = consumedTokens, diagnostics = "Conversational response")
+        com.halo.cognition.language.NativeCommandParser.parse(transcript)?.let { intent ->
+            return RuleMatch(confidence = 0.99f, intent = intent, consumedTokens = consumedTokens,
+                diagnostics = "Resolved native command slots")
+        }
         com.halo.cognition.language.ConversationSemantics.actionReason(transcript)?.let { reason ->
             return RuleMatch(confidence = 0.95f, intent = com.halo.cognition.language.ToolActionIntent(reason),
                 consumedTokens = consumedTokens, diagnostics = reason.name)

@@ -1,0 +1,29 @@
+{
+  "id": "halo.media",
+  "schemaVersion": 2,
+  "name": "Media",
+  "description": "Read playback state and control media.",
+  "category": "INFORMATION",
+  "risk": "EXTERNAL_SIDE_EFFECT",
+  "tools": [
+    "halo_media_status",
+    "halo_media_control"
+  ],
+  "requiredPermissions": [
+    "NOTIFICATION_ACCESS"
+  ],
+  "toolDefinitions": [
+    {
+      "toolId": "halo_media_status",
+      "risk": "READ_ONLY",
+      "requiredPermissions": [
+        "NOTIFICATION_ACCESS"
+      ]
+    },
+    {
+      "toolId": "halo_media_control",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    }
+  ]
+}

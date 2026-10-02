@@ -60,7 +60,10 @@ class BuiltInSkillManifestLoader(private val context: Context) {
                             val tool = definitions.getJSONObject(index)
                             com.halo.sdk.runtime.skills.SkillToolDefinition(
                                 toolId = tool.getString("toolId"),
-                                risk = SkillRisk.valueOf(tool.getString("risk"))
+                                risk = SkillRisk.valueOf(tool.getString("risk")),
+                                requiredPermissions = tool.optJSONArray("requiredPermissions")?.let { values ->
+                                    (0 until values.length()).map { HostPermission.valueOf(values.getString(it)) }.toSet()
+                                }.orEmpty()
                             )
                         }
                     }.orEmpty(),

@@ -77,7 +77,7 @@ class AiSelectionRepository(
             val selectionRaw = storage.getString("role_${role.name}_selection")
             val selection = selectionRaw?.let { 
                 runCatching { enumValueOf<AiRoleSelection>(it) }.getOrNull()
-            } ?: if (role == AiModelRole.VISION) AiRoleSelection.AUTOMATIC else AiRoleSelection.INHERIT_DEFAULT
+            } ?: if (role in setOf(AiModelRole.VISION, AiModelRole.AGENTIC)) AiRoleSelection.AUTOMATIC else AiRoleSelection.INHERIT_DEFAULT
             
             val providerId = storage.getString("role_${role.name}_provider")?.trim()?.ifBlank { null }
             val modelId = storage.getString("role_${role.name}_model")?.trim()?.ifBlank { null }

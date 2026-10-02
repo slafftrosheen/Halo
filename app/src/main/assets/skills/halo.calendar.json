@@ -1,0 +1,32 @@
+{
+  "id": "halo.calendar",
+  "schemaVersion": 2,
+  "name": "Calendar",
+  "description": "Read upcoming events and create an approved event.",
+  "category": "INFORMATION",
+  "risk": "EXTERNAL_SIDE_EFFECT",
+  "tools": [
+    "halo_calendar_upcoming",
+    "halo_calendar_create"
+  ],
+  "requiredPermissions": [
+    "CALENDAR_READ",
+    "CALENDAR_WRITE"
+  ],
+  "toolDefinitions": [
+    {
+      "toolId": "halo_calendar_upcoming",
+      "risk": "READ_ONLY",
+      "requiredPermissions": [
+        "CALENDAR_READ"
+      ]
+    },
+    {
+      "toolId": "halo_calendar_create",
+      "risk": "EXTERNAL_SIDE_EFFECT",
+      "requiredPermissions": [
+        "CALENDAR_WRITE"
+      ]
+    }
+  ]
+}

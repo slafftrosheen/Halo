@@ -38,7 +38,8 @@ class DefaultSkillRegistry(
 
     init {
         val list = initialBuiltIns.map { skill ->
-            val savedEnabled = storage.getBoolean("skill_enabled_${skill.id.value}", skill.enabled)
+            val legacyEnabled = if (skill.id.value in NATIVE_COMPATIBILITY_IDS) storage.getBoolean("skill_enabled_halo.phone.actions", skill.enabled) else skill.enabled
+            val savedEnabled = storage.getBoolean("skill_enabled_${skill.id.value}", legacyEnabled)
             skill.copy(enabled = savedEnabled)
         }
         _skills.value = list.map { it.copy(availability = availabilityResolver.resolve(it)) }
@@ -50,20 +51,18 @@ class DefaultSkillRegistry(
 
     override fun enabledTools(allTools: List<ToolDefinition>): List<ToolDefinition> {
         refreshAvailability()
-        val enabledToolNames = _skills.value
-            .filter { it.enabled && (it.availability == SkillAvailability.Available || it.availability is SkillAvailability.PartiallyAvailable) }
-            .flatMap { it.tools }
-            .toSet()
-
         return allTools.filter { tool ->
-            tool.name in enabledToolNames || tool.id in enabledToolNames
+            val owner = ownerForTool(tool.name) ?: ownerForTool(tool.id)
+            owner != null && owner.enabled && when (val state = owner.availability) {
+                SkillAvailability.Available -> true
+                is SkillAvailability.PartiallyAvailable -> tool.name !in state.unavailableTools
+                else -> false
+            }
         }
     }
 
     override fun skillIdForTool(toolName: String): SkillId? {
-        return _skills.value.firstOrNull { skill ->
-            toolName in skill.tools
-        }?.id
+        return ownerForTool(toolName)?.id
     }
 
     override suspend fun setEnabled(id: SkillId, enabled: Boolean) {
@@ -97,14 +96,14 @@ class DefaultSkillRegistry(
 
     override fun approvalPolicy(id: SkillId): ToolApprovalPolicy {
         val skill = get(id) ?: return ToolApprovalPolicy.DENY
-        return storage.getString("skill_approval_${id.value}")?.let {
+        return savedApproval(id)?.let {
             runCatching { ToolApprovalPolicy.valueOf(it) }.getOrNull()
         } ?: defaultApprovalPolicy(skill.risk)
     }
 
     override fun approvalPolicyForTool(toolName: String): ToolApprovalPolicy {
         refreshAvailability()
-        val skill = _skills.value.firstOrNull { toolName in it.tools }
+        val skill = ownerForTool(toolName)
             ?: return ToolApprovalPolicy.DENY
         if (!skill.enabled) return ToolApprovalPolicy.DENY
         when (val availability = skill.availability) {
@@ -113,7 +112,7 @@ class DefaultSkillRegistry(
             else -> return ToolApprovalPolicy.DENY
         }
 
-        return storage.getString("skill_approval_${skill.id.value}")?.let {
+        return savedApproval(skill.id)?.let {
             runCatching { ToolApprovalPolicy.valueOf(it) }.getOrNull()
         } ?: defaultApprovalPolicy(
             skill.toolDefinitions.firstOrNull { it.toolId == toolName }?.risk ?: skill.risk
@@ -121,7 +120,18 @@ class DefaultSkillRegistry(
     }
 
     override fun authorizationGroupForTool(toolName: String): String =
-        _skills.value.firstOrNull { toolName in it.tools }?.id?.value ?: toolName
+        ownerForTool(toolName)?.id?.value ?: toolName
+
+    private fun ownerForTool(toolName: String) = _skills.value.filter { toolName in it.tools }
+        .minByOrNull {
+            val preferred = when (toolName) {
+                "halo_find_contact", "halo_dial_contact" -> "halo.contacts"
+                "halo_media_status", "halo_media_control" -> "halo.media"
+                "halo_share_text" -> "halo.sharing"
+                else -> null
+            }
+            when { it.id.value == preferred -> 0; it.id.value in setOf("halo.phone.actions", "halo.phone") -> 2; else -> 1 }
+        }
 
     override suspend fun setApprovalPolicy(id: SkillId, policy: ToolApprovalPolicy) {
         if (get(id) == null) return
@@ -129,11 +139,29 @@ class DefaultSkillRegistry(
         _skills.value = _skills.value.toList()
     }
 
+    private fun savedApproval(id: SkillId): String? = storage.getString("skill_approval_${id.value}")
+        ?: if (id.value in NATIVE_COMPATIBILITY_IDS) storage.getString("skill_approval_halo.phone.actions") else null
+
     private fun defaultApprovalPolicy(risk: SkillRisk): ToolApprovalPolicy =
         if (risk == SkillRisk.READ_ONLY) ToolApprovalPolicy.ALWAYS_ALLOW else ToolApprovalPolicy.ASK_EVERY_TIME
 
     companion object {
+        private val NATIVE_COMPATIBILITY_IDS = setOf("halo.contacts", "halo.media", "halo.sharing", "halo.alarms", "halo.settings")
         fun defaultBuiltInSkills(): List<SkillDescriptor> = listOf(
+            SkillDescriptor(id = SkillId("halo.study"), name = "Study", description = "Study local workspace material and inspect sessions.", category = SkillCategory.WORKSPACE, tools = setOf("halo_study_with_halo", "halo_get_study_session"), toolDefinitions = listOf(com.halo.sdk.runtime.skills.SkillToolDefinition("halo_study_with_halo", SkillRisk.REVERSIBLE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_get_study_session", SkillRisk.READ_ONLY)), risk = SkillRisk.REVERSIBLE),
+            SkillDescriptor(id = SkillId("halo.research"), name = "Research & delegation", description = "Run bounded reasoning tasks through the configured agentic lane.", category = SkillCategory.INFORMATION, tools = setOf("halo_research", "halo_delegate_task"), toolDefinitions = listOf(com.halo.sdk.runtime.skills.SkillToolDefinition("halo_research", SkillRisk.READ_ONLY), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_delegate_task", SkillRisk.READ_ONLY)), risk = SkillRisk.READ_ONLY),
+            SkillDescriptor(id = SkillId("halo.context"), name = "Conversation & payload reading", description = "Read bounded local conversation history and tool payloads under context policy.", category = SkillCategory.WORKSPACE, tools = setOf("halo_read_payload", "halo_search_conversations"), toolDefinitions = listOf(com.halo.sdk.runtime.skills.SkillToolDefinition("halo_read_payload", SkillRisk.READ_ONLY), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_search_conversations", SkillRisk.READ_ONLY)), risk = SkillRisk.READ_ONLY),
+            SkillDescriptor(id = SkillId("halo.automation"), name = "Routines & procedures", description = "Propose procedures and approve saving a procedure or scheduled routine.", category = SkillCategory.AUTOMATION, tools = setOf("halo_create_routine", "halo_propose_procedure", "halo_save_procedure", "halo_use_procedure"), toolDefinitions = listOf(com.halo.sdk.runtime.skills.SkillToolDefinition("halo_create_routine", SkillRisk.SENSITIVE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_propose_procedure", SkillRisk.READ_ONLY), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_save_procedure", SkillRisk.SENSITIVE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_use_procedure", SkillRisk.READ_ONLY)), risk = SkillRisk.SENSITIVE),
+            SkillDescriptor(id = SkillId("halo.alarms"), name = "Alarms & timers", description = "Set an alarm or timer using Android.", category = SkillCategory.DEVICE, tools = setOf("halo_set_alarm", "halo_timer"), risk = SkillRisk.EXTERNAL_SIDE_EFFECT),
+            SkillDescriptor(id = SkillId("halo.settings"), name = "Settings", description = "Open a system settings page.", category = SkillCategory.DEVICE, tools = setOf("halo_open_settings"), risk = SkillRisk.REVERSIBLE),
+            SkillDescriptor(id = SkillId("halo.contacts"), name = "Contacts", description = "Find contacts and open the dialer.",
+                category = SkillCategory.INFORMATION, tools = setOf("halo_find_contact", "halo_dial_contact"), risk = SkillRisk.EXTERNAL_SIDE_EFFECT),
+            SkillDescriptor(id = SkillId("halo.media"), name = "Media", description = "Read and control active playback.",
+                category = SkillCategory.DEVICE, tools = setOf("halo_media_status", "halo_media_control"), risk = SkillRisk.REVERSIBLE),
+            SkillDescriptor(id = SkillId("halo.sharing"), name = "Sharing", description = "Open the system share chooser.",
+                category = SkillCategory.DEVICE, tools = setOf("halo_share_text"), risk = SkillRisk.EXTERNAL_SIDE_EFFECT),
+            SkillDescriptor(id = SkillId("halo.calendar"), name = "Calendar", description = "Read upcoming events and create an approved event.",
+                category = SkillCategory.INFORMATION, tools = setOf("halo_calendar_upcoming", "halo_calendar_create"), risk = SkillRisk.EXTERNAL_SIDE_EFFECT),
             SkillDescriptor(id = SkillId("halo.time"), name = "Date & time", description = "Read local time and time zone.",
                 category = SkillCategory.INFORMATION, tools = setOf("halo_current_time")),
             SkillDescriptor(id = SkillId("halo.storage"), name = "Storage status", description = "Read available storage.",
@@ -163,7 +191,7 @@ class DefaultSkillRegistry(
                 name = "Notebook",
                 description = "Create, search, and manage local notes and workspace items.",
                 category = SkillCategory.WORKSPACE,
-                tools = setOf("halo_create_note", "halo_search_notebook", "halo_get_workspace_object", "halo_add_to_working_set", "halo_remove_from_working_set"),
+                tools = setOf("halo_save_screen_to_notebook", "halo_create_empty_note", "halo_create_note", "halo_search_notebook", "halo_get_workspace_object", "halo_add_to_working_set", "halo_remove_from_working_set"),
                 risk = SkillRisk.REVERSIBLE,
                 source = SkillSource.BUILT_IN
             ),
@@ -316,7 +344,7 @@ class DefaultSkillRegistry(
                 name = "Apps & Navigation",
                 description = "Open launchable apps and navigation routes in installed maps.",
                 category = SkillCategory.NAVIGATION,
-                tools = setOf("halo_open_app", "halo_navigation", "halo_browser", "halo_search", "halo_media", "halo_list_apps"),
+                tools = setOf("halo_open_app", "halo_navigation", "halo_browser", "halo_search", "halo_media_status", "halo_media_control", "halo_list_apps"),
                 risk = SkillRisk.EXTERNAL_SIDE_EFFECT,
                 source = SkillSource.BUILT_IN
             ),

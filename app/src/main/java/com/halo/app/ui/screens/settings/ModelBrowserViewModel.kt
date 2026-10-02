@@ -35,7 +35,7 @@ class ModelBrowserViewModel(val control: ProviderControlRepository) : ViewModel(
     companion object {
         fun supports(model: AiModel, capability: AiCapability) = when(capability) { AiCapability.TOOLS -> model.supportsTools; AiCapability.STREAMING -> model.supportsStreaming; else -> capability in model.inputCapabilities }
         fun compatible(entry: AiModelCatalogEntry, role: AiModelRole?) = when(role) {
-            AiModelRole.VISION -> supports(entry.model, AiCapability.IMAGE)
+            AiModelRole.VISION -> entry.kind == AiModelKind.CONCRETE && entry.model.hasVerifiedImageInput()
             AiModelRole.AGENTIC -> entry.kind == AiModelKind.CONCRETE && supports(entry.model, AiCapability.TOOLS)
             else -> supports(entry.model, AiCapability.TEXT)
         }

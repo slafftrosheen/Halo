@@ -9,12 +9,12 @@ class HaloVoiceInteractionService : VoiceInteractionService() {
     override fun onReady() {
         super.onReady()
         AssistantRuntimeStateStore.serviceReady(true)
-        Log.i(TAG, "HALO_ASSISTANT_SERVICE_READY component=$packageName/${javaClass.name}")
+        Log.i(TAG, "HALO_ASSISTANT_READY component=$packageName/${javaClass.name}")
     }
 
     override fun onShutdown() {
         AssistantRuntimeStateStore.serviceReady(false)
-        Log.i(TAG, "HALO_ASSISTANT_SERVICE_SHUTDOWN component=$packageName/${javaClass.name}")
+        Log.i(TAG, "HALO_ASSISTANT_SHUTDOWN component=$packageName/${javaClass.name}")
         super.onShutdown()
     }
 

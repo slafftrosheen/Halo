@@ -88,7 +88,8 @@ class EngineGraph(
         ReasoningEngine(
             strategy = defaultReasoningStrategy,
             blackboard = infra.blackboard,
-            eventBus = infra.eventBus
+            eventBus = infra.eventBus,
+            hostOwnsIntent = { ManualDependencyGraph.nativeCapabilityDispatcher.owns(it) },
         )
     }
     val reflectionEngine by lazy { ReflectionEngine(EpisodicMemoryStore()) }

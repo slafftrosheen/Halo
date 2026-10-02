@@ -36,6 +36,8 @@ class HostTools(
             add(MediaTools(context))
             add(DeviceTools(context))
             add(AlarmTools(context))
+            add(com.halo.app.di.tools.host.CalendarTools(context))
+            add(com.halo.app.di.tools.host.NotificationControlTools(context))
             add(CommunicationTools(context))
             add(SystemTools(context))
             add(NavigationTools(context, isForeground))

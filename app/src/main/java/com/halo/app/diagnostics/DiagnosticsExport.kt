@@ -25,8 +25,8 @@ object DiagnosticsExport {
         val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
         val file = File(context.cacheDir, "halo_diagnostics_$timestamp.txt")
         
-        val gitCommit = runCatching { BuildConfig::class.java.getField("GIT_COMMIT").get(null) as? String }.getOrNull() ?: "unknown"
-        val gitDirty = runCatching { BuildConfig::class.java.getField("GIT_DIRTY").get(null) as? Boolean }.getOrNull() ?: false
+        val gitCommit = runCatching { BuildConfig::class.java.getField("HALO_GIT_COMMIT").get(null) as? String }.getOrNull() ?: "unknown"
+        val gitDirty = runCatching { BuildConfig::class.java.getField("HALO_GIT_DIRTY").get(null) as? Boolean }.getOrNull() ?: false
 
         val sb = StringBuilder()
         sb.append("==== HALO TESTFLIGHT DIAGNOSTICS ====\n")

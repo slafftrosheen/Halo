@@ -72,6 +72,7 @@ class CognitiveSession(
     private val turnExecutor: CognitiveTurnExecutor,
     private val responseCommitter: CognitiveResponseCommitter,
     private val routeResolver: InterpretationRouteResolver = InterpretationRouteResolver(),
+    private val nativeDispatcher: com.halo.runtime.cognition.native.NativeCapabilityDispatcher? = null,
 ) {
     constructor(
         eventBus: EventBus,
@@ -273,6 +274,13 @@ class CognitiveSession(
                 }
 
                 if (route is InterpretationExecutionRoute.DeterministicAction) {
+                    if (nativeDispatcher?.owns(intent) == true) {
+                        val result = nativeDispatcher.dispatch(interpretation)
+                        publishRouteResponse(result?.responseText() ?: (intent as? com.halo.cognition.language.NativeClarificationIntent)?.reason ?: "This action needs a precise target or value.",
+                            interpretation, responseDelivery, result?.request?.interactionId ?: interpretation.metadata["interactionId"],
+                            terminal = result == null || result.result is com.halo.runtime.cognition.turn.ToolTurnResult.Completed || result.result is com.halo.runtime.cognition.turn.ToolTurnResult.RunStopped)
+                        return@collect
+                    }
                     // The deterministic engine is already collecting this intent from the
                     // blackboard; the named executor owns the outcome.
                     return@collect
@@ -316,10 +324,11 @@ class CognitiveSession(
         interpretation: com.halo.runtime.cognition.blackboard.Interpretation,
         responseDelivery: ResponseDelivery,
         interactionId: String?,
+        terminal: Boolean = true,
     ) {
         val requestId = UUID.randomUUID().toString()
         eventBus.publish(CognitiveRequestStarted(requestId = requestId, interactionId = interactionId))
-        eventBus.publish(CognitiveCompleted(requestId = requestId, response = text, interactionId = interactionId))
+        if (terminal) eventBus.publish(CognitiveCompleted(requestId = requestId, response = text, interactionId = interactionId))
         eventBus.publish(
             AssistantResponsePublished(
                 text = text,
@@ -462,6 +471,16 @@ class CognitiveSession(
     fun resume(runId: AgentRunId, responseDelivery: ResponseDelivery = ResponseDelivery.VISUAL_ONLY) {
         scope.launch {
             try {
+                if (nativeDispatcher?.ownsRun(runId) == true) {
+                    val nativeResult = nativeDispatcher.resume(runId) ?: return@launch
+                    val interpretation = com.halo.runtime.cognition.blackboard.Interpretation(
+                        metadata = mapOf("interactionId" to nativeResult.request.interactionId),
+                        origin = nativeDispatcher.resumeOrigin(runId))
+                    publishRouteResponse(nativeResult.responseText(), interpretation,
+                        if (interpretation.origin?.speechRoute is SpeechInputRoute.Device) ResponseDelivery.SPEECH_AND_VISUAL else responseDelivery,
+                        nativeResult.request.interactionId, terminal = nativeResult.result is ToolTurnResult.Completed || nativeResult.result is ToolTurnResult.RunStopped)
+                    return@launch
+                }
                 when (val result = agentRecoveryExecutor.executeRecovery(runId)) {
                     is RecoveryExecutionResult.Noop -> Unit
                     is RecoveryExecutionResult.Blocked -> {

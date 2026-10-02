@@ -4,4 +4,4 @@
     android:recognitionService="com.halo.app.assistant.HaloRecognitionService"
     android:supportsAssist="true"
     android:supportsLocalInteraction="true"
-    android:supportsLaunchVoiceAssistFromKeyguard="true" />
+    android:supportsLaunchVoiceAssistFromKeyguard="false" />

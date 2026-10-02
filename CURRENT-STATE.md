@@ -1,5 +1,9 @@
 # Halo current state
 
+## PHONE-ASSISTANT-002 — 2026-10-01
+
+Host-first native dispatch, shared skill authority, independent AGENTIC/VISION selection, explicit Vision Lab, Home quick actions and API 36 AppFunctions are implemented. **AUTOMATED VERIFIED / APK BUILT.** The requested suite passes: 610 tests, no failures or skips. The host graph audit reports 28 skills and 81 tools with zero orphan, unresolved, duplicate or permission-mismatched entries. Physical assistant, wearable and live-provider acceptance remains pending. See [runtime documentation](docs/engineering/PHONE-ASSISTANT-002-HOST-FIRST-RUNTIME.md).
+
 ## DOGFOOD-004 — HeyCyan Audio Completion + Wearable Turn Latency — 2026-10-01
 
 **IMPLEMENTED / COMPILED / UNIT VERIFIED / DEPLOYED.**

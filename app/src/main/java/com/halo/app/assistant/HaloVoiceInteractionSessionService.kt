@@ -14,6 +14,7 @@ class HaloVoiceInteractionSessionService : VoiceInteractionSessionService() {
 
     override fun onNewSession(args: Bundle?): VoiceInteractionSession {
         AssistantRuntimeStateStore.sessionCreated()
+        android.util.Log.i("HaloAssistant", "HALO_ASSISTANT_SESSION_CREATED")
         return HaloVoiceInteractionSession(
             this,
             ManualDependencyGraph.assistantInvocationCoordinator,

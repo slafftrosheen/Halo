@@ -1,5 +1,7 @@
 package com.halo.runtime.cognition.turn
 
+import com.halo.sdk.provider.hasVerifiedImageInput
+
 import com.halo.runtime.cognition.ui.compactUiText
 
 import com.halo.runtime.cognition.agent.AgentRunCoordinator
@@ -149,7 +151,9 @@ class DefaultCognitiveTurnPreparer(
             throw com.halo.sdk.runtime.multimodal.MediaAcquisitionException(com.halo.sdk.runtime.multimodal.MediaFailure.POLICY_BLOCKED)
         }
         if (AiCapability.IMAGE in workload.inference.requiredCapabilities) {
-            println("[HALO_VISION_TARGET_RESOLVED] provider=${target.providerId} model=${target.modelId} location=${target.model.executionLocation} qualification=declared")
+            if (!target.model.hasVerifiedImageInput()) throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY,
+                "VISION_UNVERIFIED: verify a concrete image model in Vision Lab")
+            println("[HALO_VISION_TARGET_RESOLVED] provider=${target.providerId} model=${target.modelId} location=${target.model.executionLocation} qualification=verified")
         }
         if (!targetIsOnDevice && !workload.inference.allowRemote) {
             policyBlocked("Remote media sharing is disabled")

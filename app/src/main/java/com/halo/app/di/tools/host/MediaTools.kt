@@ -55,7 +55,7 @@ class MediaTools(
         // For now, let's keep it simple and just do the right thing if we have access.
         
         return try {
-            val controllers = mediaManager.getActiveSessions(null)
+            val controllers = mediaManager.getActiveSessions(android.content.ComponentName(context, com.halo.app.notification.HaloNotificationListenerService::class.java))
             if (controllers.isEmpty()) {
                 return reject("No active media sessions")
             }
@@ -81,7 +81,7 @@ class MediaTools(
                         "previous" -> transportControls.skipToPrevious()
                         else -> return reject("Unsupported action")
                     }
-                    ToolExecutionResult.Success(toolCall.id, toolCall.functionName, HostActionReceipt.CONFIRMED.name)
+                    ToolExecutionResult.Success(toolCall.id, toolCall.functionName, "Media command dispatched", com.halo.runtime.cognition.agent.ActionTruth.DISPATCHED)
                 }
                 else -> reject("Unknown tool")
             }
@@ -91,7 +91,7 @@ class MediaTools(
             if (toolCall.functionName == "halo_media_control") {
                 val action = toolCall.arguments["action"] as? String ?: return reject("Missing action")
                 apps.execute(MediaTask(mediaAction = action, mediaId = ""))
-                ToolExecutionResult.Success(toolCall.id, toolCall.functionName, HostActionReceipt.DISPATCHED.name)
+                ToolExecutionResult.Success(toolCall.id, toolCall.functionName, "Media command dispatched", com.halo.runtime.cognition.agent.ActionTruth.DISPATCHED)
             } else {
                 reject("Permission denied to read media status")
             }

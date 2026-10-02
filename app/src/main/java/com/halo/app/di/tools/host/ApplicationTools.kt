@@ -22,8 +22,9 @@ class ApplicationTools(
             mapOf("type" to "object", "properties" to mapOf("query" to mapOf("type" to "string", "maxLength" to 100)),
                 "required" to listOf("query"), "additionalProperties" to false)))
         add(ToolDefinition("halo_open_app", "halo_open_app", "Open an installed package. Receipt confirms dispatch only.",
-            mapOf("type" to "object", "properties" to mapOf("package" to mapOf("type" to "string", "minLength" to 1, "maxLength" to 500)),
-                "required" to listOf("package"), "additionalProperties" to false)))
+            mapOf("type" to "object", "properties" to mapOf("package" to mapOf("type" to "string", "minLength" to 1, "maxLength" to 500),
+                    "appName" to mapOf("type" to "string", "minLength" to 1, "maxLength" to 100)),
+                "required" to emptyList<String>(), "additionalProperties" to false)))
     }
 
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
@@ -40,14 +41,18 @@ class ApplicationTools(
         }
         
         if (toolCall.functionName == "halo_open_app") {
-            val pkg = toolCall.arguments["package"] as? String ?: return reject("Missing package argument")
+            val suppliedPackage = toolCall.arguments["package"] as? String
+            val appName = toolCall.arguments["appName"] as? String
+            if ((suppliedPackage == null) == (appName == null)) return reject("Provide exactly one package or appName")
+            val pkg = suppliedPackage ?: resolver.resolve(appName!!)?.packageName
+                ?: return reject("App target is missing or ambiguous; provide its exact name")
             if (!isForeground()) return reject("Open Halo to launch another app")
             if (!pkg.matches(Regex("[A-Za-z][A-Za-z0-9_]*(\\.[A-Za-z0-9_]+)+"))) return reject("Expected installed package name")
             if (context.packageManager.getLaunchIntentForPackage(pkg) == null) return reject("Package is not launchable")
             
             apps.execute(ApplicationTask(packageName = pkg, intent = "launch"))
             val receipt = HostActionReceipt.DISPATCHED
-            return ToolExecutionResult.Success(toolCall.id, toolCall.functionName, receipt.name)
+            return ToolExecutionResult.Success(toolCall.id, toolCall.functionName, receipt.name, com.halo.runtime.cognition.agent.ActionTruth.DISPATCHED)
         }
         
         return reject("Unknown tool")

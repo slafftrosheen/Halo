@@ -216,7 +216,7 @@ class HaloVoiceInteractionSession(
                     interactionState = interactionState,
                     screenContextAttached = screenContextAttached,
                     interactionSurface = interactionState2.primary
-                        ?.takeIf { it.presentation.requiresForegroundAttention.not() },
+                        ?.takeIf { it.interactionId?.value == active?.invocation?.interactionId },
                     onInteractionRespond = interactionViewModel::respond,
                     onStopClicked = {
                         val stopped = active
@@ -242,6 +242,7 @@ class HaloVoiceInteractionSession(
 
     override fun onShow(args: Bundle?, showFlags: Int) {
         super.onShow(args, showFlags)
+        android.util.Log.i("HaloAssistant", "HALO_ASSISTANT_SHOW interactionId=${active?.invocation?.interactionId ?: "none"}")
         AssistantRuntimeStateStore.sessionVisible(true)
         lifecycleRegistry.currentState = Lifecycle.State.RESUMED
         if (nativeChoice != null) return
@@ -300,6 +301,7 @@ class HaloVoiceInteractionSession(
 
     override fun onHandleAssist(state: AssistState) {
         super.onHandleAssist(state)
+        android.util.Log.i("HaloAssistant", "HALO_ASSISTANT_ASSIST_CONTEXT interactionId=${active?.invocation?.interactionId ?: "none"}")
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return
         val current = active ?: return
         attachNativeActions(current.invocation.interactionId, state.activityId)
@@ -363,6 +365,7 @@ class HaloVoiceInteractionSession(
 
     override fun onHandleScreenshot(screenshot: Bitmap?) {
         super.onHandleScreenshot(screenshot)
+        android.util.Log.i("HaloAssistant", "HALO_ASSISTANT_SCREENSHOT interactionId=${active?.invocation?.interactionId ?: "none"}")
         val current = active ?: return
         if (current.screenshotAttached || screenshot == null) return
         current.screenshotAttached = true
@@ -389,9 +392,11 @@ class HaloVoiceInteractionSession(
         interactionState = InteractionTurnState.Idle
         lifecycleRegistry.currentState = Lifecycle.State.CREATED
         super.onHide()
+        android.util.Log.i("HaloAssistant", "HALO_ASSISTANT_HIDE interactionId=${ending?.invocation?.interactionId ?: "none"}")
     }
 
     override fun onDestroy() {
+        val endingInteractionId = active?.invocation?.interactionId
         clearNativeChoice()
         AssistantRuntimeStateStore.sessionDestroyed()
         interactionObserverJob?.cancel()
@@ -407,6 +412,7 @@ class HaloVoiceInteractionSession(
         store.clear()
         scope.cancel()
         super.onDestroy()
+        android.util.Log.i("HaloAssistant", "HALO_ASSISTANT_SESSION_DESTROYED interactionId=${endingInteractionId ?: "none"}")
     }
 
     override val lifecycle: Lifecycle get() = lifecycleRegistry

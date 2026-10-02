@@ -1,0 +1,29 @@
+{
+  "id": "halo.contacts",
+  "schemaVersion": 2,
+  "name": "Contacts",
+  "description": "Find a contact or prepare a dialer call.",
+  "category": "INFORMATION",
+  "risk": "EXTERNAL_SIDE_EFFECT",
+  "tools": [
+    "halo_find_contact",
+    "halo_dial_contact"
+  ],
+  "requiredPermissions": [
+    "CONTACTS"
+  ],
+  "toolDefinitions": [
+    {
+      "toolId": "halo_find_contact",
+      "risk": "READ_ONLY",
+      "requiredPermissions": [
+        "CONTACTS"
+      ]
+    },
+    {
+      "toolId": "halo_dial_contact",
+      "risk": "EXTERNAL_SIDE_EFFECT",
+      "requiredPermissions": []
+    }
+  ]
+}

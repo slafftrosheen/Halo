@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AppFunctionAppMetadata xmlns:appfn="http://schemas.android.com/apk/androidx.appfunctions"
+    appfn:description="Halo provides bounded notebook creation and search, explicit working set selection, and runtime status. Skills may require approval or permission."
+    appfn:displayDescription="@string/app_name" />

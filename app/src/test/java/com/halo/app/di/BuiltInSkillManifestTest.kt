@@ -29,4 +29,18 @@ class BuiltInSkillManifestTest {
             .toSet()
         assertEquals("Every Runtime built-in skill must ship a manifest", defaultIds, manifestIds)
     }
+    @Test
+    fun mergingBuiltInsPreservesPerToolPermissions() {
+        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+        val loaded = BuiltInSkillManifestLoader(context).load()
+        val calendar = loaded.single { it.id.value == "halo.calendar" }
+        assertEquals(setOf(com.halo.sdk.runtime.skills.HostPermission.CALENDAR_READ),
+            calendar.toolDefinitions.single { it.toolId == "halo_calendar_upcoming" }.requiredPermissions)
+        assertEquals(setOf(com.halo.sdk.runtime.skills.HostPermission.CALENDAR_WRITE),
+            calendar.toolDefinitions.single { it.toolId == "halo_calendar_create" }.requiredPermissions)
+        val notifications = loaded.single { it.id.value == "halo.notifications" }
+        assertEquals(setOf(com.halo.sdk.runtime.skills.HostPermission.NOTIFICATION_ACCESS),
+            notifications.toolDefinitions.single { it.toolId == "halo_dismiss_notification" }.requiredPermissions)
+    }
+
 }

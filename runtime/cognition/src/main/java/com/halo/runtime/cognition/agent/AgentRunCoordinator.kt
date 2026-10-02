@@ -218,7 +218,7 @@ class DefaultAgentRunCoordinator(
         val id = AgentRunId(newId())
         val now = Instant.now(clock)
         val recoveryPolicy = when (request.kind) {
-            AgentRunKind.INTERACTIVE, AgentRunKind.SYSTEM -> RunRecoveryPolicy.USER_RESUME
+            AgentRunKind.INTERACTIVE, AgentRunKind.SYSTEM, AgentRunKind.NATIVE -> RunRecoveryPolicy.USER_RESUME
             AgentRunKind.ROUTINE -> RunRecoveryPolicy.NO_RESUME
         }
         store.create(AgentRun(id, request.interactionId, request.text, AgentRunState.CREATED,

@@ -98,7 +98,6 @@ class DefaultAiProviderRouter(
         val resolvedProvider = stored.providerId ?: defaultProvider
         val canApplyDefaultModel = resolvedProvider == defaultProvider &&
             stored.modelId == null &&
-            (stored.providerId == null || stored.policy != AiRoutingPolicy.EXPLICIT) &&
             !defaultInferenceModelId.isNullOrBlank()
         val resolvedModel = if (canApplyDefaultModel) defaultInferenceModelId else stored.modelId
         val freshInstall = stored.providerId == null && stored.modelId == null
@@ -414,7 +413,11 @@ class DefaultAiProviderRouter(
     ): AiExecutionTarget {
         val providerCapabilities = provider.getCapabilities()
         request.validateAgainst(providerCapabilities)
-        val models = provider.listModels()
+        val models = provider.listModels().map { model ->
+            if (model.executionLocation != AiExecutionLocation.ON_DEVICE && storage.getString("vision_probe_${provider.id}_${model.id}")?.toLongOrNull() != null && model.id != "openrouter/free")
+                model.copy(capabilityEvidence = model.capabilityEvidence + (AiCapability.IMAGE to CapabilityEvidence.HALO_PROBE_SUCCESS))
+            else model
+        }
         if (models.isEmpty()) {
             throw AiProviderException(
                 AiErrorType.MODEL_UNAVAILABLE,
@@ -470,6 +473,7 @@ class DefaultAiProviderRouter(
         workload: AiWorkloadSpec,
         providerCapabilities: Set<AiCapability>,
     ): Boolean {
+        if ((AiCapability.IMAGE in workload.requiredCapabilities || request.image != null) && !model.hasVerifiedImageInput()) return false
         if (!workload.allowRemote && model.executionLocation != AiExecutionLocation.ON_DEVICE) return false
         if (currentSelection().policy == AiRoutingPolicy.LOCAL_ONLY && model.executionLocation == AiExecutionLocation.REMOTE) return false
         val effectiveCaps = providerCapabilities.intersect(
@@ -509,7 +513,8 @@ class DefaultAiProviderRouter(
         if (!supportsModelWorkload(model, request, workload, providerCapabilities)) {
             throw AiProviderException(
                 AiErrorType.UNSUPPORTED_CAPABILITY,
-                "Model ${model.id} does not support workload ${workload.kind}"
+                if (AiCapability.IMAGE in workload.requiredCapabilities) "Vision model not configured or verified. Open Vision Lab to check this model." else
+                    "No agent-capable model configured for this workload. Open Intelligence role settings."
             )
         }
     }

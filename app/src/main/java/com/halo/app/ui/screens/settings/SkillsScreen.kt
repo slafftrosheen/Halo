@@ -70,6 +70,8 @@ fun SkillsScreen(
     onInstallCustomSkill: ((String, ByteArray) -> Result<Unit>)? = null,
     /** MINING-P1-001 capability overview. Optional: the screen works without it. */
     capabilityStatus: CapabilityStatusViewModel? = null,
+    executionService: com.halo.runtime.cognition.skills.SkillExecutionService? = null,
+    providerRoleCheck: (suspend (SkillDescriptor) -> String?)? = null,
 ) {
     val skills by skillRegistry.skills.collectAsStateWithLifecycle()
     // Recompose whenever live host/device capability availability changes.
@@ -79,28 +81,42 @@ fun SkillsScreen(
         ).collectAsStateWithLifecycle(initialValue = CapabilityCatalogueSnapshot(emptyList(), 0L))
     capabilitySnapshot.revision // explicit observation; availabilityResolver reads the same source.
 
+    var checks by remember { mutableStateOf<Map<String, SkillCheckSnapshot>>(emptyMap()) }
+    var checkRevision by remember { mutableStateOf(0) }
+    LaunchedEffect(skills, capabilitySnapshot.revision, checkRevision) {
+        checks = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            skills.associate { skill ->
+                val descriptors = skill.tools.mapNotNull { toolRegistry?.descriptor(it) }
+                val availability = descriptors.associate { it.name to (availabilityResolver?.checkAvailability(it) ?: ToolAvailability.Available) }
+                val roleDetail = providerRoleCheck?.invoke(skill)
+                val detail = listOfNotNull(roleDetail, executionService?.check(skill.id)?.entries?.joinToString("\n") { "${it.key}: ${it.value}" }).joinToString("\n")
+                skill.id.value to SkillCheckSnapshot(descriptors, availability,
+                    roleDetail ?: skillRuntimeAvailability(skill, descriptors, availabilityResolver), skillRegistry.approvalPolicy(skill.id), detail)
+            }
+        }
+    }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     var selectedId by remember { mutableStateOf<String?>(null) }
     var pendingImport by remember { mutableStateOf<PendingSkillImport?>(null) }
     var importError by remember { mutableStateOf<String?>(null) }
     val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri != null) {
-            runCatching {
+        if (uri != null) scope.launch {
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { runCatching {
                 val name = uri.lastPathSegment?.substringAfterLast('/') ?: "SKILL.md"
                 val bytes = context.contentResolver.openInputStream(uri)?.use(::readBoundedSkillPackage)
                     ?: error("Could not read selected skill package")
                 PendingSkillImport(name, bytes, SkillMarkdownPackageParser.parse("review:$name", bytes))
-            }.onSuccess { pendingImport = it }
+            } }.onSuccess { pendingImport = it }
                 .onFailure { importError = it.message ?: "Invalid skill package" }
         }
     }
 
-    LaunchedEffect(skillRegistry) { skillRegistry.refreshAvailability() }
+    LaunchedEffect(skillRegistry) { kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { skillRegistry.refreshAvailability() } }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     DisposableEffect(lifecycle, skillRegistry) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) skillRegistry.refreshAvailability()
+            if (event == Lifecycle.Event.ON_RESUME) scope.launch(kotlinx.coroutines.Dispatchers.IO) { skillRegistry.refreshAvailability() }
         }
         lifecycle.addObserver(observer)
         onDispose { lifecycle.removeObserver(observer) }
@@ -108,9 +124,9 @@ fun SkillsScreen(
 
     selectedId?.let { id ->
         skills.firstOrNull { it.id.value == id }?.let { skill ->
-            var policy by remember(id) { mutableStateOf(skillRegistry.approvalPolicy(skill.id)) }
+            var policy by remember(id) { mutableStateOf(checks[id]?.policy ?: ToolApprovalPolicy.ASK_EVERY_TIME) }
             var showPolicies by remember(id) { mutableStateOf(false) }
-            val descriptors = skill.tools.mapNotNull { toolRegistry?.descriptor(it) }
+            val descriptors = checks[id]?.descriptors.orEmpty()
 
             AlertDialog(
                 onDismissRequest = { selectedId = null },
@@ -120,7 +136,9 @@ fun SkillsScreen(
                         Text(skill.description)
                         if (id == "halo.phone.screen") PhoneOperatorPanel(readingEnabled = skill.enabled && policy != ToolApprovalPolicy.DENY,
                             actionPolicy = screenPolicyCopy(id, policy))
-                        Text("Status · ${skillRuntimeAvailability(skill, descriptors, availabilityResolver)}")
+                        Text("Status · ${checks[id]?.status ?: "Checking"}")
+                        TextButton(onClick = { checkRevision++ }) { Text("Check") }
+                        checks[id]?.detail?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
                         Text("Access · ${skill.requiredPermissions.joinToString().ifBlank { "No special permission" }}")
                         Text("Source · ${skill.source.name.lowercase().replace('_', ' ')} · schema ${skill.schemaVersion}")
                         skill.provenance?.let { provenance ->
@@ -138,8 +156,7 @@ fun SkillsScreen(
                                 fontWeight = FontWeight.SemiBold,
                             )
                             descriptors.forEach { descriptor ->
-                                val availability = availabilityResolver?.checkAvailability(descriptor)
-                                    ?: ToolAvailability.Available
+                                val availability = checks[id]?.availability?.get(descriptor.name) ?: ToolAvailability.Disabled("Checking")
                                 Column(Modifier.padding(vertical = HaloSpacing.xs)) {
                                     Text(
                                         descriptor.presentation?.title ?: descriptor.name,
@@ -230,12 +247,14 @@ fun SkillsScreen(
                 }
             },
             confirmButton = {
-                TextButton(onClick = {
-                    val result = onInstallCustomSkill?.invoke(pending.fileName, pending.bytes)
-                        ?: Result.failure(IllegalStateException("Custom skill installation is unavailable"))
+                TextButton(onClick = { scope.launch {
+                    val result = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                        onInstallCustomSkill?.invoke(pending.fileName, pending.bytes)
+                            ?: Result.failure(IllegalStateException("Custom skill installation is unavailable"))
+                    }
                     pendingImport = null
                     if (result.isFailure) importError = result.exceptionOrNull()?.message ?: "Could not install skill"
-                }) { Text("Install") }
+                } }) { Text("Install") }
             },
             dismissButton = { TextButton(onClick = { pendingImport = null }) { Text("Cancel") } },
         )
@@ -265,10 +284,10 @@ fun SkillsScreen(
                     }
                 }
             }
-            skills.groupBy { it.category }.forEach { (category, entries) ->
-                item(key = category.name) {
+            skills.filterNot { it.id.value in setOf("halo.phone.actions", "halo.phone", "halo.reminders") }.groupBy { skillLane(it) }.forEach { (category, entries) ->
+                item(key = category) {
                     Text(
-                        category.name.lowercase().replaceFirstChar { it.uppercase() },
+                        category,
                         modifier = Modifier.padding(top = HaloSpacing.lg, bottom = HaloSpacing.sm),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -276,7 +295,7 @@ fun SkillsScreen(
                 }
 
                 items(entries, key = { it.id.value }) { skill ->
-                    val descriptors = skill.tools.mapNotNull { toolRegistry?.descriptor(it) }
+                    val descriptors = checks[skill.id.value]?.descriptors.orEmpty()
                     Surface(
                         onClick = { selectedId = skill.id.value },
                         modifier = Modifier.fillMaxWidth(),
@@ -293,7 +312,7 @@ fun SkillsScreen(
                                     fontWeight = FontWeight.Medium,
                                 )
                                 Text(
-                                    skillRuntimeAvailability(skill, descriptors, availabilityResolver),
+                                    checks[skill.id.value]?.status ?: "Checking",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
@@ -494,3 +513,15 @@ private fun screenPolicyCopy(skillId: String, policy: ToolApprovalPolicy): Strin
     ToolApprovalPolicy.ALWAYS_ALLOW -> "Allow reversible screen actions"
     ToolApprovalPolicy.DENY -> "Never allow screen actions"
 } else policy.name.replace('_', ' ').lowercase()
+
+private data class SkillCheckSnapshot(val descriptors: List<ToolDescriptor>, val availability: Map<String, ToolAvailability>,
+    val status: String, val policy: ToolApprovalPolicy, val detail: String?)
+private fun skillLane(skill: SkillDescriptor): String = when {
+    skill.id.value == "halo.phone.screen" -> "Screen control"
+    "vision" in skill.id.value -> "Vision"
+    skill.tools.any { it.startsWith("halo_ui_") } -> "Screen control"
+    skill.category == com.halo.sdk.runtime.skills.SkillCategory.WORKSPACE -> "Workspace"
+    skill.tools.any { it.contains("note") || it.contains("working_set") || it.contains("file") || it.contains("memory") } -> "Workspace"
+    skill.id.value in setOf("halo.presentation", "halo.discovery", "halo.web", "halo.research") -> "Agentic"
+    else -> "Native"
+}

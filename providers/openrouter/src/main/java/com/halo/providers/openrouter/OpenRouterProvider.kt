@@ -462,6 +462,8 @@ class OpenRouterProvider(
                     displayName = item.optString("name", modelId),
                     providerId = id,
                     inputCapabilities = mapCapabilities(item),
+                    capabilityEvidence = if (modelId != FREE_ROUTER_ID && "image" in modalities)
+                        mapOf(AiCapability.IMAGE to com.halo.sdk.provider.CapabilityEvidence.AUTHORITATIVE_METADATA) else emptyMap(),
                     contextLength = item.optLong("context_length").takeIf { it > 0L },
                     // Streaming is an OpenRouter chat-completions transport capability, not a
                     // consistently advertised per-model supported_parameter.

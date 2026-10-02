@@ -1,0 +1,19 @@
+{
+  "id": "halo.sharing",
+  "schemaVersion": 2,
+  "name": "Sharing",
+  "description": "Share text through the Android chooser.",
+  "category": "INFORMATION",
+  "risk": "EXTERNAL_SIDE_EFFECT",
+  "tools": [
+    "halo_share_text"
+  ],
+  "requiredPermissions": [],
+  "toolDefinitions": [
+    {
+      "toolId": "halo_share_text",
+      "risk": "EXTERNAL_SIDE_EFFECT",
+      "requiredPermissions": []
+    }
+  ]
+}

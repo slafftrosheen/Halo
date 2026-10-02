@@ -49,10 +49,7 @@ class AlphaW1IntegrationTest {
                     request: com.halo.sdk.provider.AiRequest,
                     context: com.halo.sdk.provider.AiContext
                 ): com.halo.sdk.provider.AiResponse {
-                    return com.halo.sdk.provider.AiResponse(
-                        text = "{\"intent\": \"NavigateIntent\", \"target\": \"home\"}",
-                        providerId = id
-                    )
+                    error("A native media command must never invoke inference")
                 }
 
                 override fun stream(
@@ -122,12 +119,12 @@ class AlphaW1IntegrationTest {
 
             delay(100)
 
+            graph.cognitiveSession // Native interpretation is owned by the shared session, not the legacy planner.
             val eventBus = graph.eventBus
             val outcomeDeferred = async(start = CoroutineStart.UNDISPATCHED) {
-                val outcomeEvent = eventBus.observe(OutcomePublished::class.java).first()
+                val outcomeEvent = eventBus.observe(com.halo.sdk.runtime.AssistantResponsePublished::class.java).first()
                 assertTrue(
-                    outcomeEvent.outcome.contains("Success") ||
-                        outcomeEvent.outcome.contains("Failure")
+                    outcomeEvent.text.isNotBlank()
                 )
             }
 

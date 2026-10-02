@@ -14,6 +14,7 @@ class HaloNotificationListenerService : NotificationListenerService() {
     override fun onListenerConnected() {
         super.onListenerConnected()
         connected = true
+        LiveNotificationOwner.attach(this)
         com.halo.runtime.cognition.routine.AutomationServiceSignals.notifications.availability.value = com.halo.runtime.cognition.routine.AutomationSourceStatus.AVAILABLE
         val active = activeNotifications.orEmpty()
         // MINING-P1-001: capture live RemoteInput reply actions for currently posted notifications.
@@ -24,6 +25,7 @@ class HaloNotificationListenerService : NotificationListenerService() {
         bridge.connected(active.map(::incoming))
     }
     override fun onListenerDisconnected() {
+        LiveNotificationOwner.detach(this)
         connected = false
         com.halo.runtime.cognition.routine.AutomationServiceSignals.notifications.availability.value = if(bridge.isAccessGranted()) com.halo.runtime.cognition.routine.AutomationSourceStatus.REQUIRES_SERVICE else com.halo.runtime.cognition.routine.AutomationSourceStatus.REQUIRES_PERMISSION
         NotificationReplyRegistry.shared.clear()
@@ -54,6 +56,7 @@ class HaloNotificationListenerService : NotificationListenerService() {
         if (connected) activeNotifications.orEmpty().forEach { bridge.posted(incoming(it)) }
     }
     override fun onDestroy() {
+        LiveNotificationOwner.detach(this)
         if (connected) bridge.disconnected()
         NotificationReplyRegistry.shared.clear()
         connected = false

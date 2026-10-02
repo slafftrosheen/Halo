@@ -1,0 +1,23 @@
+{
+  "id": "halo.context",
+  "schemaVersion": 2,
+  "name": "Conversation & payload reading",
+  "description": "Read bounded local conversation history and tool payloads under context policy.",
+  "category": "WORKSPACE",
+  "risk": "READ_ONLY",
+  "tools": [
+    "halo_read_payload",
+    "halo_search_conversations"
+  ],
+  "requiredPermissions": [],
+  "toolDefinitions": [
+    {
+      "toolId": "halo_read_payload",
+      "risk": "READ_ONLY"
+    },
+    {
+      "toolId": "halo_search_conversations",
+      "risk": "READ_ONLY"
+    }
+  ]
+}

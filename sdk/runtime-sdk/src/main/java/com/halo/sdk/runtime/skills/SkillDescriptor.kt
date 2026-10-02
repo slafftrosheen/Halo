@@ -29,6 +29,10 @@ enum class HostPermission {
     FILES,
     BLUETOOTH,
     ACCESSIBILITY,
+    CONTACTS,
+    CALENDAR_READ,
+    CALENDAR_WRITE,
+    NOTIFICATION_ACCESS,
 }
 
 sealed interface SkillRequirement {
@@ -64,6 +68,7 @@ data class SkillProvenance(
 data class SkillToolDefinition(
     val toolId: String,
     val risk: SkillRisk = SkillRisk.READ_ONLY,
+    val requiredPermissions: Set<HostPermission> = emptySet(),
     val defaultApproval: String = "AUTOMATIC_SAFE"
 )
 

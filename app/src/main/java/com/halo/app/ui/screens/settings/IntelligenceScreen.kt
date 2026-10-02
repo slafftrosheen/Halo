@@ -18,7 +18,7 @@ import com.halo.sdk.provider.AiExecutionLocation
 fun IntelligenceScreen(control: ProviderControlRepository, onBack: () -> Unit,
     onBrowseModels: () -> Unit, onProviderSetup: () -> Unit, onRoles: () -> Unit,
     onDevice: () -> Unit, onContext: () -> Unit, onDiagnostics: () -> Unit,
-    onVoice: () -> Unit = {}) {
+    onVoice: () -> Unit = {}, onVisionLab: () -> Unit = {}) {
     val providerId by control.router.selectedProviderId.collectAsStateWithLifecycle()
     val modelId by control.router.selectedModelId.collectAsStateWithLifecycle()
     val rows by control.rows.collectAsStateWithLifecycle()
@@ -49,6 +49,7 @@ fun IntelligenceScreen(control: ProviderControlRepository, onBack: () -> Unit,
         item(key = "preferences") {
             HaloWorkspaceSection("Preferences") {
                 HaloWorkspaceDestination("Context & privacy", "Choose what Halo can use", onContext)
+                HaloWorkspaceDestination("Vision Lab", "Verify and compare image models", onVisionLab)
                 HaloWorkspaceDestination("Model roles", "Route different kinds of work", onRoles)
                 HaloWorkspaceDestination("Voice", "Listening and speaking", onVoice)
             }

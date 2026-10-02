@@ -1,0 +1,23 @@
+{
+  "id": "halo.study",
+  "schemaVersion": 2,
+  "name": "Study",
+  "description": "Study local workspace material and inspect sessions.",
+  "category": "WORKSPACE",
+  "risk": "REVERSIBLE",
+  "tools": [
+    "halo_study_with_halo",
+    "halo_get_study_session"
+  ],
+  "requiredPermissions": [],
+  "toolDefinitions": [
+    {
+      "toolId": "halo_study_with_halo",
+      "risk": "REVERSIBLE"
+    },
+    {
+      "toolId": "halo_get_study_session",
+      "risk": "READ_ONLY"
+    }
+  ]
+}

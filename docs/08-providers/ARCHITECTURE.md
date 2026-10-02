@@ -132,3 +132,8 @@ provider on connect.
 # MINING-P3-001 — multimodal perception and capability packs (2026-09-30)
 
 ModelInputCapabilityReporting supplies model-specific capabilities. AiModel.executionLocation distinguishes on-device, LAN and remote execution for media policy. LiteRT loads the requested role's model and configures a single image only for declared vision artifacts. Vision evidence is DECLARED / PROBE_REQUIRED / PROVEN / FAILED, keyed by artifact fingerprint, runtime and image contract; a user-triggered synthetic HALO/42 probe supplies process-scoped evidence. Provider image serializers share MIME selection. LiteRT does not advertise operational audio support until an audio backend exists. No new catalog artifact/download is introduced.
+
+
+## PHONE-ASSISTANT-002
+
+Native actions use shared host skill execution independently of CHAT. Compound actions use AGENTIC; images use verified VISION candidates. Configure these roles independently in Intelligence, then use Vision Lab for explicit image capability probing under the current privacy policy. Physical and live-provider checks remain pending. See [host-first runtime](../engineering/PHONE-ASSISTANT-002-HOST-FIRST-RUNTIME.md), [Vision evidence](../engineering/VISION-ROLE-AND-CAPABILITY-EVIDENCE.md), [native acceptance](../testing/NATIVE-ASSISTANT-PHYSICAL-ACCEPTANCE.md) and [Vision acceptance](../testing/VISION-LAB-ACCEPTANCE.md).

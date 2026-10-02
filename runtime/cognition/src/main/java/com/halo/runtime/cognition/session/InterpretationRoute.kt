@@ -70,6 +70,8 @@ class InterpretationRouteResolver(
 ) {
 
     fun resolve(intent: Intent): InterpretationExecutionRoute {
+        if (intent is com.halo.cognition.language.NativeControlIntent)
+            return InterpretationExecutionRoute.DeterministicAction(intent, "runtime.native_capability")
         if (intent is SystemFactIntent) return InterpretationExecutionRoute.LocalFact
         deterministicExecutors[intent.javaClass]?.let { executorId ->
             return InterpretationExecutionRoute.DeterministicAction(intent, executorId)

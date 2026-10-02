@@ -27,12 +27,11 @@ class DeviceTools(private val context: Context) : ToolExecutor {
             ToolDefinition(
                 "halo_volume", "halo_volume", "Change media volume by one step, or the dedicated assistant volume on Android 17+.",
                 mapOf("type" to "object", "properties" to mapOf("direction" to mapOf("type" to "string", "enum" to listOf("up", "down")),
-                    "stream" to mapOf("type" to "string", "enum" to if (android.os.Build.VERSION.SDK_INT >= 37) listOf("media", "assistant") else listOf("media"))), "required" to listOf("direction"), "additionalProperties" to false)
+                    "percent" to mapOf("type" to "integer", "minimum" to 0, "maximum" to 100),
+                    "stream" to mapOf("type" to "string", "enum" to if (android.os.Build.VERSION.SDK_INT >= 37) listOf("media", "assistant") else listOf("media"))), "required" to emptyList<String>(), "additionalProperties" to false)
             )
         )
-        if (context.checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED &&
-            context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH)
-        ) {
+        run {
             add(
                 ToolDefinition(
                     "halo_flashlight", "halo_flashlight", "Set phone flashlight state.",
@@ -84,26 +83,33 @@ class DeviceTools(private val context: Context) : ToolExecutor {
 
         return when (toolCall.functionName) {
             "halo_volume" -> {
-                val direction = toolCall.arguments["direction"] as? String ?: return rejectedArg("Missing direction")
-                if (direction !in setOf("up", "down")) return rejectedArg("direction must be up or down")
+                val direction = toolCall.arguments["direction"] as? String
+                val percent = (toolCall.arguments["percent"] as? Number)?.toInt()
+                if ((direction == null) == (percent == null)) return rejectedArg("Provide exactly one direction or percent")
+                if (direction != null && direction !in setOf("up", "down")) return rejectedArg("direction must be up or down")
+                if (percent != null && percent !in 0..100) return rejectedArg("percent must be 0-100")
                 val stream = toolCall.arguments["stream"] as? String ?: "media"
                 if (stream !in setOf("media", "assistant") || stream == "assistant" && android.os.Build.VERSION.SDK_INT < 37)
                     return rejectedArg("Requested volume stream is unavailable")
                 val audio = context.getSystemService(AudioManager::class.java)
                 val streamId = if (stream == "assistant" && android.os.Build.VERSION.SDK_INT >= 37) AudioManager.STREAM_ASSISTANT else AudioManager.STREAM_MUSIC
                 val before = audio.getStreamVolume(streamId)
-                try { audio.adjustStreamVolume(streamId, if (direction == "up") AudioManager.ADJUST_RAISE else AudioManager.ADJUST_LOWER, 0) }
+                val requestedLevel = percent?.let { (audio.getStreamMaxVolume(streamId) * it / 100.0).roundToInt() }
+                try { if (requestedLevel != null) audio.setStreamVolume(streamId, requestedLevel, 0) else audio.adjustStreamVolume(streamId, if (direction == "up") AudioManager.ADJUST_RAISE else AudioManager.ADJUST_LOWER, 0) }
                 catch (_: SecurityException) { return reject("Android denied volume control; open Halo and retry", ToolRejectionKind.PERMISSION_REQUIRED) }
                 val after = audio.getStreamVolume(streamId)
-                val expected = if (direction == "up") (before + 1).coerceAtMost(audio.getStreamMaxVolume(streamId)) else (before - 1).coerceAtLeast(0)
+                val expected = requestedLevel ?: if (direction == "up") (before + 1).coerceAtMost(audio.getStreamMaxVolume(streamId)) else (before - 1).coerceAtLeast(0)
                 receipt(toolCall, if (after == expected) HostActionReceipt.CONFIRMED else HostActionReceipt.DISPATCHED,
                     "direction=$direction;stream=$stream;observed=$after")
             }
 
             "halo_flashlight" -> {
                 val state = toolCall.arguments["state"] as? String ?: return rejectedArg("Missing state")
-                device.execute(DeviceTask(action = "flashlight_$state"))
-                receipt(toolCall, HostActionReceipt.CONFIRMED, "state=$state")
+                if (state !in setOf("on", "off")) return rejectedArg("Invalid flashlight state")
+                val outcome = device.execute(DeviceTask(action = "flashlight_$state"))
+                if (outcome !is com.halo.runtime.cognition.Outcome.Success)
+                    return reject("Android could not change the flashlight", ToolRejectionKind.TRANSIENT_FAILURE)
+                receipt(toolCall, HostActionReceipt.DISPATCHED, "state=$state;observed=unconfirmed")
             }
 
             "halo_ringer" -> setRingerMode(toolCall)

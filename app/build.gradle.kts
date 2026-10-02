@@ -1,5 +1,3 @@
-import java.io.ByteArrayOutputStream
-
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.kotlin.compose)
@@ -9,13 +7,12 @@ plugins {
 }
 
 fun getGitCommitHash(): String {
+  System.getenv("GIT_COMMIT")?.trim()?.takeIf { it.isNotEmpty() }?.let { return it.take(12) }
   return try {
-    val stdout = ByteArrayOutputStream()
     providers.exec {
-      commandLine("git", "rev-parse", "--short", "HEAD")
-      standardOutput = stdout
-    }.result.get()
-    stdout.toString().trim().ifEmpty { "unknown" }
+      workingDir(rootDir)
+      commandLine("git", "rev-parse", "--short=12", "HEAD")
+    }.standardOutput.asText.get().trim().ifEmpty { "unknown" }
   } catch (_: Exception) {
     "unknown"
   }
@@ -23,12 +20,10 @@ fun getGitCommitHash(): String {
 
 fun getGitDirty(): Boolean {
   return try {
-    val stdout = ByteArrayOutputStream()
     providers.exec {
+      workingDir(rootDir)
       commandLine("git", "status", "--porcelain")
-      standardOutput = stdout
-    }.result.get()
-    stdout.toString().trim().isNotEmpty()
+    }.standardOutput.asText.get().trim().isNotEmpty()
   } catch (_: Exception) {
     false
   }
@@ -47,6 +42,8 @@ android {
 
     buildConfigField("String", "GIT_COMMIT", "\"${getGitCommitHash()}\"")
     buildConfigField("Boolean", "GIT_DIRTY", getGitDirty().toString())
+    buildConfigField("String", "HALO_GIT_COMMIT", "\"${getGitCommitHash()}\"")
+    buildConfigField("Boolean", "HALO_GIT_DIRTY", getGitDirty().toString())
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
@@ -277,4 +274,10 @@ afterEvaluate {
     tasks.named("assembleDebug") {
         finalizedBy("copyApkToReleases")
     }
+}
+
+// Android 16+ discovery is optional; ordinary Halo skills remain independent.
+dependencies {
+  implementation("androidx.appfunctions:appfunctions:1.0.0-alpha10")
+  ksp("androidx.appfunctions:appfunctions-compiler:1.0.0-alpha10")
 }

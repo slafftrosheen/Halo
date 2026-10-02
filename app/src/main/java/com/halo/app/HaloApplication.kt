@@ -58,8 +58,8 @@ class HaloApplication :
     override fun onCreate() {
         super.onCreate()
 
-        val gitCommit = runCatching { BuildConfig::class.java.getField("GIT_COMMIT").get(null) as? String }.getOrNull() ?: "unknown"
-        val gitDirty = runCatching { BuildConfig::class.java.getField("GIT_DIRTY").get(null) as? Boolean }.getOrNull() ?: false
+        val gitCommit = runCatching { BuildConfig::class.java.getField("HALO_GIT_COMMIT").get(null) as? String }.getOrNull() ?: "unknown"
+        val gitDirty = runCatching { BuildConfig::class.java.getField("HALO_GIT_DIRTY").get(null) as? Boolean }.getOrNull() ?: false
         val buildLog = "HALO_BUILD versionName=${BuildConfig.VERSION_NAME} versionCode=${BuildConfig.VERSION_CODE} variant=${BuildConfig.BUILD_TYPE} commit=$gitCommit dirty=$gitDirty"
         Log.i("HaloApplication", buildLog)
         println("[$buildLog]")

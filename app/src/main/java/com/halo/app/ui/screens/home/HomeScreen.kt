@@ -81,18 +81,17 @@ fun HomeScreen(
     onOpenPendingUpdates: () -> Unit = {},
     onOpenProvider: (String) -> Unit = {},
     onOpenLearningSuggestions: () -> Unit = {},
+    onConfigureVision: () -> Unit = {},
+    onContextPrivacy: () -> Unit = {},
+    onAssistantSetup: () -> Unit = {},
 ) {
-    val learningSuggestions by com.halo.app.di.ManualDependencyGraph.personalLearning.pending.collectAsStateWithLifecycle(emptyList())
-    fun readLearningPolicy() = com.halo.runtime.cognition.memory.PersonalSuggestionPolicy.showHome(
-        com.halo.runtime.cognition.attention.AttentionInitiativeLevel.fromStored(
-            com.halo.app.di.ManualDependencyGraph.storage.getString("attention_initiative")))
-    var showLearning by remember { mutableStateOf(readLearningPolicy()) }
-    val pendingUpdates by com.halo.app.di.ManualDependencyGraph.attentionQueue.pending.collectAsStateWithLifecycle()
+    val dashboard by viewModel.dashboard.collectAsStateWithLifecycle()
+    val showLearning = dashboard.showLearning
     val selectedContext by (viewModel.workspace?.workingSet ?: kotlinx.coroutines.flow.flowOf(emptyList<String>())).collectAsStateWithLifecycle(emptyList())
     val context = androidx.compose.ui.platform.LocalContext.current
     var pendingPhoto by rememberSaveable { mutableStateOf<String?>(null) }
     val captureMessage by viewModel.captureMessage.collectAsStateWithLifecycle()
-    val visualAttachment by com.halo.app.di.ManualDependencyGraph.visualAttachments.state.collectAsStateWithLifecycle()
+    val visualAttachment by viewModel.visualAttachment.collectAsStateWithLifecycle()
     val imagePicker = androidx.activity.compose.rememberLauncherForActivityResult(
         androidx.activity.result.contract.ActivityResultContracts.GetContent()
     ) { uri -> uri?.let(viewModel::attachSharedImage) }
@@ -122,9 +121,8 @@ fun HomeScreen(
     }
     val clipboard = LocalClipboardManager.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val providerControl = com.halo.app.di.ManualDependencyGraph.providerControlRepository
-    val providerRows by providerControl.rows.collectAsStateWithLifecycle()
-    val chatProviderId by providerControl.router.selectedProviderId.collectAsStateWithLifecycle()
+    val providerRows by viewModel.providerRows.collectAsStateWithLifecycle()
+    val chatProviderId by viewModel.chatProviderId.collectAsStateWithLifecycle()
     val chatProvider = providerRows.firstOrNull { it.descriptor.providerId == chatProviderId }
     val connectionNeedsAttention = chatProvider?.connection in setOf(
         com.halo.app.ai.ProviderConnectionState.AUTH_FAILED, com.halo.app.ai.ProviderConnectionState.OFFLINE,
@@ -143,7 +141,7 @@ fun HomeScreen(
     DisposableEffect(lifecycleOwner, viewModel) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                showLearning = readLearningPolicy()
+                viewModel.refreshDashboard()
                 viewModel.refreshProviderDiagnostics()
             }
         }
@@ -352,10 +350,30 @@ fun HomeScreen(
             )
         }
         }
+        var quickAction by remember { mutableStateOf<String?>(null) }
+        var quickValue by remember { mutableStateOf("") }
+        quickAction?.let { action ->
+            androidx.compose.material3.AlertDialog(onDismissRequest = { quickAction = null }, title = { Text(action) },
+                text = { androidx.compose.material3.OutlinedTextField(value = quickValue, onValueChange = { quickValue = it.take(100) },
+                    label = { Text(if (action == "Timer") "Seconds" else "Application name") }) },
+                confirmButton = { TextButton(onClick = {
+                    val command = if (action == "Timer") quickValue.toIntOrNull()?.takeIf { it in 1..86400 }?.let { "Set a timer for $it seconds" }
+                        else quickValue.trim().takeIf { it.isNotBlank() }?.let { "Open $it" }
+                    if (command != null) { viewModel.submitText(command); quickAction = null }
+                }) { Text("Run") } }, dismissButton = { TextButton(onClick = { quickAction = null }) { Text("Cancel") } })
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            TextButton(enabled = "halo_open_app" in dashboard.quickTools, onClick = { quickValue = ""; quickAction = "Open app" }) { Text("Open app") }
+            TextButton(enabled = "halo_timer" in dashboard.quickTools, onClick = { quickValue = "120"; quickAction = "Timer" }) { Text("Timer") }
+            TextButton(enabled = "halo_create_empty_note" in dashboard.quickTools, onClick = viewModel::createNote) { Text("New note") }
+            TextButton(onClick = { imagePicker.launch("image/*") }) { Text("Vision") }
+        }
+        if (dashboard.assistantActive) Text("Native assistant active", style = MaterialTheme.typography.labelSmall)
+        else TextButton(onClick = onAssistantSetup) { Text("Set up native assistant") }
         var showActions by remember { mutableStateOf(false) }
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             Box {
-                TextButton(onClick = { showActions = true }) { Text(if (pendingUpdates.isNotEmpty() || (showLearning && learningSuggestions.isNotEmpty())) "Actions \u00b7 Review" else "Actions") }
+                TextButton(onClick = { showActions = true }) { Text(if (dashboard.pendingUpdateCount > 0 || (showLearning && dashboard.learningCount > 0)) "Actions \u00b7 Review" else "Actions") }
                 DropdownMenu(expanded = showActions, onDismissRequest = { showActions = false }) {
                     DropdownMenuItem(text = { Text("Take a photo") }, onClick = {
                         showActions = false
@@ -365,11 +383,11 @@ fun HomeScreen(
                     DropdownMenuItem(text = { Text("Attach image") }, onClick = { showActions = false; imagePicker.launch("image/*") })
                     DropdownMenuItem(text = { Text("New note") }, onClick = { showActions = false; viewModel.createNote() })
                     DropdownMenuItem(text = { Text("Connection & context") }, onClick = { showActions = false; showDetails = !showDetails })
-                    if (showLearning && learningSuggestions.isNotEmpty()) {
-                        DropdownMenuItem(text = { Text("Review learning (${learningSuggestions.size})") }, onClick = { showActions = false; onOpenLearningSuggestions() })
+                    if (showLearning && dashboard.learningCount > 0) {
+                        DropdownMenuItem(text = { Text("Review learning (${dashboard.learningCount})") }, onClick = { showActions = false; onOpenLearningSuggestions() })
                     }
-                    if (pendingUpdates.isNotEmpty()) {
-                        DropdownMenuItem(text = { Text("Waiting updates (${pendingUpdates.size})") }, onClick = { showActions = false; onOpenPendingUpdates() })
+                    if (dashboard.pendingUpdateCount > 0) {
+                        DropdownMenuItem(text = { Text("Waiting updates (${dashboard.pendingUpdateCount})") }, onClick = { showActions = false; onOpenPendingUpdates() })
                     }
                 DropdownMenuItem(text = { Text("New conversation") }, onClick = {
                     showActions = false
@@ -387,6 +405,8 @@ fun HomeScreen(
         Spacer(Modifier.height(16.dp))
         captureMessage?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
         visualAttachment?.let { attachment ->
+            Row { TextButton(onClick = onConfigureVision) { Text("Configure Vision") }
+                TextButton(onClick = onContextPrivacy) { Text("Image privacy") } }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 com.halo.app.capture.VisualAttachmentThumbnail(attachment, Modifier.size(48.dp))
                 Text("${attachment.source} · ${attachment.ref.bytes ?: 0} bytes", modifier = Modifier.weight(1f))

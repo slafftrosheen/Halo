@@ -202,3 +202,8 @@ Audio and results remain in memory and are cleared on leaving; summary exports o
 references by default. Cancellation waits for blocking native work and cleanup before another model.
 No phone/device recognition-quality measurements have yet been established. See
 [Speech Lab engineering and physical acceptance guide](../engineering/SPEECH-QUALITY-002.md).
+
+
+## PHONE-ASSISTANT-002
+
+Native actions use shared host skill execution independently of CHAT. Compound actions use AGENTIC; images use verified VISION candidates. Configure these roles independently in Intelligence, then use Vision Lab for explicit image capability probing under the current privacy policy. Physical and live-provider checks remain pending. See [host-first runtime](../engineering/PHONE-ASSISTANT-002-HOST-FIRST-RUNTIME.md), [Vision evidence](../engineering/VISION-ROLE-AND-CAPABILITY-EVIDENCE.md), [native acceptance](../testing/NATIVE-ASSISTANT-PHYSICAL-ACCEPTANCE.md) and [Vision acceptance](../testing/VISION-LAB-ACCEPTANCE.md).

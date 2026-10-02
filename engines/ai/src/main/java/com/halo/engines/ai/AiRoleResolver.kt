@@ -32,7 +32,7 @@ class DefaultAiRoleResolver : AiRoleResolver {
             return AiExecutionPreference(defaultSelection.providerId, defaultSelection.modelId, defaultSelection.policy)
         }
         
-        val binding = bindings[role] ?: AiRoleBinding(role, null, null, AiRoleSelection.INHERIT_DEFAULT)
+        val binding = bindings[role] ?: AiRoleBinding(role, null, null, if (role in setOf(AiModelRole.AGENTIC, AiModelRole.VISION)) AiRoleSelection.AUTOMATIC else AiRoleSelection.INHERIT_DEFAULT)
         
         return when (binding.selection) {
             AiRoleSelection.INHERIT_DEFAULT -> {
@@ -57,13 +57,13 @@ class DefaultAiRoleResolver : AiRoleResolver {
     }
     
     override fun determineRole(workload: AiWorkloadSpec): AiModelRole {
-        workload.preferredRole?.let { return it }
         if (AiCapability.IMAGE in workload.requiredCapabilities || AiCapability.VIDEO in workload.requiredCapabilities) {
             return AiModelRole.VISION
         }
         if (workload.tools == AiFeatureRequirement.REQUIRED || workload.kind == AiWorkloadKind.TOOL_ASSISTED) {
             return AiModelRole.AGENTIC
         }
+        workload.preferredRole?.let { return it }
         return AiModelRole.CHAT
     }
 }

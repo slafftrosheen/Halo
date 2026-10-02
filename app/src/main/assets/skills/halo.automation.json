@@ -1,0 +1,33 @@
+{
+  "id": "halo.automation",
+  "schemaVersion": 2,
+  "name": "Routines & procedures",
+  "description": "Propose procedures and approve saving a procedure or scheduled routine.",
+  "category": "AUTOMATION",
+  "risk": "SENSITIVE",
+  "tools": [
+    "halo_create_routine",
+    "halo_propose_procedure",
+    "halo_save_procedure",
+    "halo_use_procedure"
+  ],
+  "requiredPermissions": [],
+  "toolDefinitions": [
+    {
+      "toolId": "halo_create_routine",
+      "risk": "SENSITIVE"
+    },
+    {
+      "toolId": "halo_propose_procedure",
+      "risk": "READ_ONLY"
+    },
+    {
+      "toolId": "halo_save_procedure",
+      "risk": "SENSITIVE"
+    },
+    {
+      "toolId": "halo_use_procedure",
+      "risk": "READ_ONLY"
+    }
+  ]
+}

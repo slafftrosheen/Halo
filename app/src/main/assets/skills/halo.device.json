@@ -12,9 +12,30 @@
     "halo_brightness"
   ],
   "toolDefinitions": [
-    { "toolId": "halo_volume", "risk": "REVERSIBLE" },
-    { "toolId": "halo_flashlight", "risk": "REVERSIBLE" },
-    { "toolId": "halo_ringer", "risk": "REVERSIBLE" },
-    { "toolId": "halo_brightness", "risk": "REVERSIBLE" }
+    {
+      "toolId": "halo_volume",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_flashlight",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": [
+        "CAMERA"
+      ]
+    },
+    {
+      "toolId": "halo_ringer",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_brightness",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    }
+  ],
+  "requiredPermissions": [
+    "CAMERA"
   ]
 }

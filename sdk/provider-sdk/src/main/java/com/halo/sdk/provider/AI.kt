@@ -447,6 +447,7 @@ data class AiModel(
     val isFree: Boolean = false,
     /** Physical execution boundary; local-network endpoints still receive data off device. */
     val executionLocation: AiExecutionLocation = AiExecutionLocation.REMOTE,
+    val capabilityEvidence: Map<AiCapability, CapabilityEvidence> = emptyMap(),
 )
 
 // Legacy compatibility (to be removed once migrated)

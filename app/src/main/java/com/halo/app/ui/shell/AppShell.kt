@@ -187,6 +187,9 @@ fun AppShell(
                         onOpenLearningSuggestions = { ManualDependencyGraph.notebookViewModel.setFilter(com.halo.app.ui.screens.notebook.NotebookFilter.INBOX); navigateSafely(Screen.Notebook.route) },
                         onOpenPendingUpdates = { navigateSafely("activity") },
                         viewModel = homeViewModel,
+                        onConfigureVision = { navigateSafely("vision_lab") },
+                        onContextPrivacy = { navigateSafely("settings/intelligence/context") },
+                        onAssistantSetup = { navigateSafely("android_assistant") },
                         onOpenProvider = { navigateSafely("settings/intelligence/providers/${android.net.Uri.encode(it)}") },
                         onRequestMicrophonePermission = onRequestPermissions
                     )
@@ -381,6 +384,29 @@ fun AppShell(
 
                 composable("skills") {
                     SkillsScreen(
+                        providerRoleCheck = { skill ->
+                            val capabilities = skill.requirements.filterIsInstance<com.halo.sdk.runtime.skills.SkillRequirement.ProviderCapability>().map { it.capability.uppercase() }
+                            val role = when {
+                                "vision" in skill.id.value || "IMAGE" in capabilities -> com.halo.sdk.provider.AiModelRole.VISION
+                                skill.id.value == "halo.research" || "TOOLS" in capabilities -> com.halo.sdk.provider.AiModelRole.AGENTIC
+                                else -> null
+                            }
+                            if (role == null) null else try {
+                                kotlinx.coroutines.withTimeout(10_000) {
+                                    ManualDependencyGraph.aiProviderRouter.resolveExecutionTarget(
+                                        com.halo.sdk.provider.AiRequest(toolUseMode = if (role == com.halo.sdk.provider.AiModelRole.AGENTIC) com.halo.sdk.provider.ToolUseMode.REQUIRED else com.halo.sdk.provider.ToolUseMode.NONE),
+                                        com.halo.sdk.provider.AiWorkloadSpec(
+                                            requiredCapabilities = if (role == com.halo.sdk.provider.AiModelRole.VISION) setOf(com.halo.sdk.provider.AiCapability.TEXT, com.halo.sdk.provider.AiCapability.IMAGE) else setOf(com.halo.sdk.provider.AiCapability.TEXT),
+                                            tools = if (role == com.halo.sdk.provider.AiModelRole.AGENTIC) com.halo.sdk.provider.AiFeatureRequirement.REQUIRED else com.halo.sdk.provider.AiFeatureRequirement.NOT_NEEDED,
+                                            preferredRole = role))
+                                }
+                                null
+                            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                                if (cancelled !is kotlinx.coroutines.TimeoutCancellationException) throw cancelled
+                                "Needs ${role.name} model setup"
+                            } catch (_: Exception) { "Needs ${role.name} model setup" }
+                        },
+                        executionService = ManualDependencyGraph.skillExecutionService,
                         skillRegistry = ManualDependencyGraph.skillRegistry,
                         onBack = { navController.popBackStack() },
                         toolRegistry = ManualDependencyGraph.toolRegistry,
@@ -511,7 +537,14 @@ fun AppShell(
                         onContext = { navigateSafely("settings/intelligence/context") },
                         onDiagnostics = { navigateSafely("system_check") },
                         onVoice = { navigateSafely("voice_settings") },
+                        onVisionLab = { navigateSafely("vision_lab") },
                     )
+                }
+                composable("vision_lab") {
+                    val model: com.halo.app.ui.screens.settings.VisionLabViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+                    com.halo.app.ui.screens.settings.VisionLabScreen(model,
+                        onBack = { navController.popBackStack() }, onPrivacy = { navigateSafely("settings/intelligence/context") },
+                        onCamera = { navigateSafely("home") })
                 }
                 composable("provider_setup") {
                     com.halo.app.ui.screens.settings.ProviderCenterScreen(ManualDependencyGraph.providerControlRepository,
