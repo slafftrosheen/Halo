@@ -15,11 +15,17 @@ import com.halo.providers.litert.models.LocalModelValidation
 import com.halo.providers.litert.models.ModelVerificationResult
 import com.halo.providers.litert.models.ModelVerificationStage
 import com.halo.providers.litert.runtime.HaloPromptToolProtocol
+import com.halo.providers.litert.runtime.LiteRtBackendQualification
+import com.halo.providers.litert.runtime.LiteRtBackendQualificationPolicy
+import com.halo.providers.litert.runtime.LiteRtBackendQualificationStore
+import com.halo.providers.litert.runtime.LiteRtBackendResolution
 import com.halo.providers.litert.runtime.LiteRtControlProbeResult
 import com.halo.providers.litert.runtime.LiteRtControlProbeRunner
 import com.halo.providers.litert.runtime.LiteRtConversationMapper
 import com.halo.providers.litert.runtime.LiteRtEngineConfigFactory
+import com.halo.providers.litert.runtime.LiteRtGpuStabilityProbeResult
 import com.halo.providers.litert.runtime.LiteRtModelLoadException
+import com.halo.providers.litert.runtime.LiteRtNativeAttemptJournal
 import com.halo.providers.litert.runtime.LiteRtNativeToolCallValidator
 import com.halo.providers.litert.runtime.LocalModelBenchmarkResult
 import com.halo.providers.litert.runtime.LocalModelBenchmarkRunner
@@ -168,6 +174,14 @@ data class LiteRtModelRuntimeStatus(
     val validation: LocalModelValidation? = null,
     val artifactFingerprintPrefix: String? = null,
     val toolQualification: LiteRtToolQualification = LiteRtToolQualification.NOT_APPLICABLE,
+    /**
+     * DOGFOOD-005 accelerator qualification for this artifact on this device/build/runtime.
+     * Independent of verified/resident/proven: installed != verified != resident !=
+     * generation-proven != accelerator-qualified.
+     */
+    val gpuQualification: LiteRtBackendQualification = LiteRtBackendQualification.UNKNOWN,
+    /** DOGFOOD-005 backend the AUTO gate would resolve to right now for this model. */
+    val resolvedBackend: LocalComputeBackend? = null,
 )
 
 /**
@@ -219,7 +233,13 @@ class LiteRtLocalProvider(
     private val inventoryRepository: LocalModelInventoryRepository,
     private val storage: Storage,
     private val nativeResourceCoordinator: NativeResourceCoordinator? = null,
-    val modelSession: LocalModelSession = LocalModelSession(context),
+    /**
+     * DOGFOOD-005 durable, content-free journal of the in-flight native attempt. Survives hard
+     * native crashes so the next launch can attribute the death to a backend/model. Exposed for
+     * the app-level previous-process-exit reconciler.
+     */
+    val nativeAttemptJournal: LiteRtNativeAttemptJournal = LiteRtNativeAttemptJournal(storage),
+    val modelSession: LocalModelSession = LocalModelSession(context, nativeAttemptJournal = nativeAttemptJournal),
     /** Pinned catalog used to resolve per-artifact runtime profiles. */
     private val catalog: List<LiteRtCatalogModel> = LiteRtModelCatalog.BUILT_IN_MODELS,
     preferences: LiteRtModelPreferences? = null,
@@ -243,6 +263,13 @@ class LiteRtLocalProvider(
 
     val preferences: LiteRtModelPreferences = preferences ?: LiteRtModelPreferences(storage)
     val failureMemory: LiteRtModelFailureMemory = failureMemory ?: LiteRtModelFailureMemory(storage)
+
+    /**
+     * DOGFOOD-005 per-(artifact + runtime version + device/build + GPU) qualification state.
+     * AUTO only ever selects a GPU that is explicitly QUALIFIED through the stability probe.
+     */
+    val backendQualificationStore: LiteRtBackendQualificationStore =
+        LiteRtBackendQualificationStore(storage)
 
     /** Observable per-model health for the development Model Browser. */
     val modelMemory: StateFlow<Map<String, LiteRtModelFailureRecord>> get() = failureMemory.records
@@ -356,6 +383,101 @@ class LiteRtLocalProvider(
 
     fun isGenerationProven(descriptor: LocalModelDescriptor): Boolean =
         failureMemory.isGenerationProven(descriptor.id, descriptor.sha256)
+
+    // -------------------------------------------------------------------------------------
+    // DOGFOOD-005 backend qualification
+    // -------------------------------------------------------------------------------------
+
+    /**
+     * Applies the qualification gate to a requested backend and emits the bounded
+     * `HALO_LITERT_BACKEND_RESOLUTION` event. Pure policy: see [LiteRtBackendQualificationPolicy].
+     */
+    private fun resolveBackend(
+        descriptor: LocalModelDescriptor,
+        requested: LocalComputeBackend,
+    ): LiteRtBackendResolution {
+        val qualification = backendQualificationStore.qualificationFor(descriptor.sha256)
+        val resolution = LiteRtBackendQualificationPolicy.resolve(requested, qualification)
+        Log.i(
+            TAG,
+            "${LiteRtBackendQualificationStore.EVENT_BACKEND_RESOLUTION} model=${descriptor.id} " +
+                "sha=${descriptor.sha256?.take(12) ?: "unknown"} requested=${requested.name} " +
+                "effective=${resolution.effective.name} gpu=${qualification.name} reason=${resolution.reason}",
+        )
+        return resolution
+    }
+
+    /** GPU qualification of the installed artifact of [modelId]; UNKNOWN when not installed. */
+    fun gpuQualificationForModel(modelId: String): LiteRtBackendQualification =
+        inventoryRepository.resolveModel(modelId)?.let { backendQualificationStore.qualificationFor(it.sha256) }
+            ?: LiteRtBackendQualification.UNKNOWN
+
+    /** UI-safe one-liner, e.g. `GPU: unqualified` / `GPU: quarantined (native crash ...)`. */
+    fun gpuQualificationSummaryForModel(modelId: String): String =
+        inventoryRepository.resolveModel(modelId)
+            ?.let { backendQualificationStore.summaryLine(it.sha256) }
+            ?: "GPU: not installed"
+
+    /** Resolution that would apply right now if this model were loaded with its stored request. */
+    fun backendResolutionForModel(modelId: String): LiteRtBackendResolution? {
+        val descriptor = inventoryRepository.resolveModel(modelId) ?: return null
+        val requested = loadConfigFor(descriptor).computeBackend
+        return LiteRtBackendQualificationPolicy.resolve(
+            requested,
+            backendQualificationStore.qualificationFor(descriptor.sha256),
+        )
+    }
+
+    /**
+     * DOGFOOD-005 GPU stability probe: [LiteRtControlProbeRunner.LITE_RT_GPU_STABILITY_PROBE_RUNS]
+     * complete consecutive GPU sequences through the existing control-probe path. A pass is the
+     * only way an accelerator becomes QUALIFIED; a fail leaves it unqualified (no penalty).
+     */
+    suspend fun gpuStabilityProbe(modelId: String): LiteRtGpuStabilityProbeResult = withContext(Dispatchers.IO) {
+        loadMutex.withLock {
+            backendQualificationStore.markVerifying(inventoryRepository.resolveModel(modelId)?.sha256)
+            val result = LiteRtControlProbeRunner(
+                context = context,
+                inventoryRepository = inventoryRepository,
+                loadConfigFor = { descriptor -> loadConfigFor(descriptor) },
+                nativeResourceSnapshot = { nativeResourceCoordinator?.snapshot?.value.orEmpty() },
+                residentModelId = { if (modelSession.isLoaded()) modelSession.loadedModelId else null },
+                nativeAttemptJournal = nativeAttemptJournal,
+            ).runGpuStabilityProbe(modelId)
+
+            val sha = inventoryRepository.resolveModel(modelId)?.sha256
+            when {
+                result.passed -> {
+                    backendQualificationStore.markQualified(sha)
+                    Log.i(
+                        TAG,
+                        "${LiteRtBackendQualificationStore.EVENT_GPU_QUALIFIED} model=$modelId " +
+                            "sha=${sha?.take(12) ?: "unknown"} sequences=${result.completedGenerations}",
+                    )
+                }
+
+                result.completedGenerations == 0 ->
+                    backendQualificationStore.markUnknown(sha)
+
+                else ->
+                    // The GPU was exercised and failed (or fell back to CPU): it is not penalized
+                    // as unsafe — it is simply unproven, and AUTO stays on CPU.
+                    backendQualificationStore.markUnknown(sha)
+            }
+            result
+        }
+    }
+
+    /** Developer action: forget every qualification verdict for this artifact. */
+    fun clearGpuQualification(modelId: String) {
+        val sha = inventoryRepository.resolveModel(modelId)?.sha256
+        backendQualificationStore.clear(sha)
+        Log.i(
+            TAG,
+            "${LiteRtBackendQualificationStore.EVENT_GPU_QUALIFICATION_CLEARED} model=$modelId " +
+                "sha=${sha?.take(12) ?: "unknown"}",
+        )
+    }
 
     // -------------------------------------------------------------------------------------
     // Status / readiness
@@ -600,7 +722,15 @@ class LiteRtLocalProvider(
         nativeResourceCoordinator?.mark(this, NativeResourceState.LOADING, "Loading LiteRT model: ${descriptor.id}")
         _status.value = ProviderStatus(ProviderStatus.State.LOADING, "Loading ${descriptor.displayName}...")
 
-        val loadConfig = loadConfigFor(descriptor)
+        val requestedConfig = loadConfigFor(descriptor)
+        // DOGFOOD-005 backend gate: AUTO never selects an unqualified GPU. The requested backend
+        // stays observable (diagnostics, resolution log); the SDK only ever sees the effective one.
+        val resolution = resolveBackend(descriptor, requestedConfig.computeBackend)
+        val loadConfig = if (resolution.effective != requestedConfig.computeBackend) {
+            requestedConfig.copy(computeBackend = resolution.effective)
+        } else {
+            requestedConfig
+        }
         Log.i(
             TAG,
             "$EVENT_LOAD_START model=${descriptor.id} sha=${descriptor.sha256?.take(12) ?: "unknown"} " +
@@ -1032,6 +1162,7 @@ class LiteRtLocalProvider(
                 loadConfigFor = { descriptor -> loadConfigFor(descriptor) },
                 nativeResourceSnapshot = { nativeResourceCoordinator?.snapshot?.value.orEmpty() },
                 residentModelId = { if (modelSession.isLoaded()) modelSession.loadedModelId else null },
+                nativeAttemptJournal = nativeAttemptJournal,
             ).run(modelId)
         }
     }

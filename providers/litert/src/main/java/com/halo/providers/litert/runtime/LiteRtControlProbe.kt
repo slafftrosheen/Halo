@@ -107,6 +107,65 @@ data class LiteRtControlProbeResult(
 }
 
 /**
+ * DOGFOOD-005 GPU stability probe: `requiredConsecutiveSuccesses` complete, isolated,
+ * single-prompt control-probe sequences on the GPU. Only a full pass flips the backend from
+ * UNQUALIFIED/QUARANTINED to QUALIFIED; any single failure or a CPU fallback inside a sequence
+ * fails the probe without penalizing the GPU.
+ */
+data class LiteRtGpuStabilityProbeResult(
+    val modelId: String,
+    val artifactSha256: String?,
+    val backend: LocalComputeBackend,
+    val requiredConsecutiveSuccesses: Int,
+    val completedGenerations: Int,
+    val passed: Boolean,
+    val failureStage: LiteRtControlProbeStage?,
+    val failureDetail: String?,
+    val startedAtMs: Long,
+    val totalDurationMs: Long,
+) {
+    fun summaryLine(): String = buildString {
+        append("gpu-stability-probe model=$modelId result=")
+        append(if (passed) "PASSED" else "FAILED")
+        append(" backend=${LiteRtEngineConfigFactory.backendName(backend)}")
+        append(" sequences=$completedGenerations/$requiredConsecutiveSuccesses")
+        failureStage?.let { append(" failedStage=$it") }
+        failureDetail?.let { append(" detail=${it.take(160)}") }
+        append(" totalMs=$totalDurationMs")
+    }
+}
+
+/**
+ * Pure counter for the stability probe: N consecutive successful sequences are required; one
+ * failure resets the streak. Kept standalone so the pass rule is unit-testable without a device.
+ */
+class LiteRtGpuStabilityTracker(private val requiredConsecutiveSuccesses: Int) {
+    private var consecutiveSuccesses = 0
+    private var completed = 0
+
+    val completedGenerations: Int get() = completed
+    val passed: Boolean get() = consecutiveSuccesses >= requiredConsecutiveSuccesses
+
+    /** Records one passed sequence; returns whether the streak now satisfies the requirement. */
+    fun recordSuccess(): Boolean {
+        completed++
+        consecutiveSuccesses++
+        return passed
+    }
+
+    /** Records one failed sequence; the consecutive streak restarts from zero. */
+    fun recordFailure() {
+        completed++
+        consecutiveSuccesses = 0
+    }
+
+    fun reset() {
+        consecutiveSuccesses = 0
+        completed = 0
+    }
+}
+
+/**
  * Runs the bounded raw-SDK control probe.
  *
  * Resource safety: a direct probe must never spin up a second giant engine while another native
@@ -122,6 +181,11 @@ class LiteRtControlProbeRunner(
     private val nativeResourceSnapshot: () -> List<NativeResourceSnapshot> = { emptyList() },
     /** Currently warm-resident model id, if any. Resident != active execution. */
     private val residentModelId: () -> String? = { null },
+    /**
+     * DOGFOOD-005 durable journal: probe sequences cross the same native boundaries as production
+     * generation, so a probe crash must be recoverable after restart the same way.
+     */
+    private val nativeAttemptJournal: LiteRtNativeAttemptJournal? = null,
 ) {
     private val filesDir = context.applicationContext.filesDir
 
@@ -138,9 +202,20 @@ class LiteRtControlProbeRunner(
         val conversation: Conversation?,
     )
 
-    suspend fun run(modelId: String): LiteRtControlProbeResult = withContext(Dispatchers.IO) {
+    /** One full bounded control-probe sequence on the developer-selected backend. */
+    suspend fun run(modelId: String): LiteRtControlProbeResult = runSequence(modelId, null)
+
+    /**
+     * One full bounded control-probe sequence. [configOverride] lets the GPU stability probe force
+     * the accelerator under test instead of the developer-selected backend; everything else
+     * (preflight, context ladder, teardown) is identical to [run].
+     */
+    internal suspend fun runSequence(
+        modelId: String,
+        configOverride: ((LocalModelDescriptor) -> RuntimeLoadConfig)?,
+    ): LiteRtControlProbeResult = withContext(Dispatchers.IO) {
         val startedAt = System.currentTimeMillis()
-        val preflight = preflight(modelId, startedAt)
+        val preflight = preflight(modelId, startedAt, configOverride)
         preflight.shortCircuit?.let { return@withContext it }
 
         val descriptor = preflight.descriptor!!
@@ -163,6 +238,9 @@ class LiteRtControlProbeRunner(
                 LocalComputeBackend.GPU -> cacheDirs.gpu
                 LocalComputeBackend.AUTO -> cacheDirs.gpu
             }
+            // Durable before the native call: a crash inside initialize() must be attributable
+            // to this exact backend after restart.
+            nativeAttemptJournal?.arm(modelId, fingerprint, config.computeBackend)
             val attempt = LiteRtEngineConfigFactory.createAndInitialize(
                 modelPath = descriptor.path,
                 backend = config.computeBackend,
@@ -225,9 +303,12 @@ class LiteRtControlProbeRunner(
         )
 
         // Teardown always runs and is always recorded, including for blocked/failed probes.
+        nativeAttemptJournal?.advance(LiteRtNativeAttemptStage.TEARDOWN)
         val teardownStart = System.currentTimeMillis()
         closeConversationQuietly(probe.conversation)
         closeEngineQuietly(engine)
+        // Clean endpoint reached: the pending record must not outlive this attempt.
+        nativeAttemptJournal?.clear()
         val withTeardown = probe.result.copy(
             stages = probe.result.stages + LiteRtControlProbeStageResult(
                 LiteRtControlProbeStage.TEARDOWN,
@@ -243,7 +324,11 @@ class LiteRtControlProbeRunner(
         withTeardown
     }
 
-    private suspend fun preflight(modelId: String, startedAt: Long): Preflight {
+    private suspend fun preflight(
+        modelId: String,
+        startedAt: Long,
+        configOverride: ((LocalModelDescriptor) -> RuntimeLoadConfig)? = null,
+    ): Preflight {
         val stages = mutableListOf<LiteRtControlProbeStageResult>()
 
         // Explicit artifact resolution. "Direct" never means "skip safety".
@@ -334,7 +419,73 @@ class LiteRtControlProbeRunner(
         }
         stages.add(LiteRtControlProbeStageResult(LiteRtControlProbeStage.ABI, LiteRtControlProbeStatus.PASSED))
 
-        return Preflight(descriptor, loadConfigFor(descriptor), stages, null)
+        val config = configOverride?.invoke(descriptor) ?: loadConfigFor(descriptor)
+        return Preflight(descriptor, config, stages, null)
+    }
+
+    /**
+     * DOGFOOD-005 GPU stability probe: runs [LITE_RT_GPU_STABILITY_PROBE_RUNS] complete, isolated,
+     * single-prompt sequences on the GPU using the existing control-probe path. The GPU is only
+     * proven by all sequences completing with a first token on the GPU; a CPU fallback inside a
+     * sequence counts as a probe failure, not a success.
+     */
+    suspend fun runGpuStabilityProbe(
+        modelId: String,
+        requiredConsecutiveSuccesses: Int = LITE_RT_GPU_STABILITY_PROBE_RUNS,
+    ): LiteRtGpuStabilityProbeResult {
+        val startedAt = System.currentTimeMillis()
+        val tracker = LiteRtGpuStabilityTracker(requiredConsecutiveSuccesses)
+        val gpuConfig: (LocalModelDescriptor) -> RuntimeLoadConfig = { descriptor ->
+            loadConfigFor(descriptor).copy(computeBackend = LocalComputeBackend.GPU)
+        }
+        var failureStage: LiteRtControlProbeStage? = null
+        var failureDetail: String? = null
+        var stoppedByFailure = false
+
+        while (!tracker.passed) {
+            val sequence = runSequence(modelId, gpuConfig)
+            if (sequence.blocked || !sequence.controlProbePassed ||
+                sequence.effectiveBackend != LocalComputeBackend.GPU
+            ) {
+                stoppedByFailure = true
+                failureStage = sequence.stages.lastOrNull {
+                    it.status == LiteRtControlProbeStatus.FAILED || it.status == LiteRtControlProbeStatus.BLOCKED
+                }?.stage
+                    ?: LiteRtControlProbeStage.COMPLETION
+                failureDetail = if (sequence.effectiveBackend != LocalComputeBackend.GPU && sequence.effectiveBackend != null) {
+                    "effective backend ${LiteRtEngineConfigFactory.backendName(sequence.effectiveBackend)} instead of GPU"
+                } else {
+                    sequence.summaryLine().take(200)
+                }
+                tracker.recordFailure()
+                break
+            }
+            if (!tracker.recordSuccess()) {
+                Log.i(
+                    TAG,
+                    "$EVENT_GPU_STABILITY_PROBE model=$modelId " +
+                        "sequence=${tracker.completedGenerations} consecutive=${requiredConsecutiveSuccesses} " +
+                        "result=CONTINUE",
+                )
+                continue
+            }
+            break
+        }
+
+        val result = LiteRtGpuStabilityProbeResult(
+            modelId = modelId,
+            artifactSha256 = inventoryRepository.resolveModel(modelId)?.sha256,
+            backend = LocalComputeBackend.GPU,
+            requiredConsecutiveSuccesses = requiredConsecutiveSuccesses,
+            completedGenerations = tracker.completedGenerations,
+            passed = tracker.passed,
+            failureStage = if (stoppedByFailure) failureStage else null,
+            failureDetail = if (stoppedByFailure) failureDetail else null,
+            startedAtMs = startedAt,
+            totalDurationMs = System.currentTimeMillis() - startedAt,
+        )
+        Log.i(TAG, "$EVENT_GPU_STABILITY_PROBE ${result.summaryLine()}")
+        result
     }
 
     /**
@@ -362,6 +513,7 @@ class LiteRtControlProbeRunner(
         )
 
         // Conversation create. Deterministic sampler, no tools, no history, no memory.
+        nativeAttemptJournal?.advance(LiteRtNativeAttemptStage.CONVERSATION_CREATE)
         val conversationStart = System.currentTimeMillis()
         conversation = try {
             engine.createConversation(
@@ -397,6 +549,7 @@ class LiteRtControlProbeRunner(
         )
 
         // First token + bounded completion.
+        nativeAttemptJournal?.advance(LiteRtNativeAttemptStage.FIRST_TOKEN_WAIT)
         val generationStart = System.currentTimeMillis()
         var firstTokenAt: Long? = null
         var outputChars = 0
@@ -413,6 +566,7 @@ class LiteRtControlProbeRunner(
                 if (chunk.isEmpty()) return@collect
                 if (firstTokenAt == null) {
                     firstTokenAt = System.currentTimeMillis()
+                    nativeAttemptJournal?.advance(LiteRtNativeAttemptStage.GENERATING)
                     stages.add(
                         LiteRtControlProbeStageResult(
                             LiteRtControlProbeStage.FIRST_TOKEN,
@@ -507,8 +661,12 @@ class LiteRtControlProbeRunner(
         private const val TAG = "LiteRtControlProbe"
 
         const val EVENT_PROBE = "HALO_LITERT_CONTROL_PROBE"
+        const val EVENT_GPU_STABILITY_PROBE = "HALO_LITERT_GPU_STABILITY_PROBE"
         const val PROBE_PROMPT = "Reply exactly HALO_OK"
         const val PROBE_EXPECTED = "HALO_OK"
         const val PROBE_MAX_OUTPUT_TOKENS = 8
+
+        /** DOGFOOD-005: complete consecutive GPU sequences required to qualify the accelerator. */
+        const val LITE_RT_GPU_STABILITY_PROBE_RUNS = 3
     }
 }

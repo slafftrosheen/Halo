@@ -74,6 +74,8 @@ data class EngineLoadOutcome(
     val effectiveContextTokens: Int?,
     val contextFallbackReason: String?,
     val engineInitDurationMs: Long,
+    /** SHA-256 of the loaded artifact; feeds crash-attribution records (content-free). */
+    val artifactFingerprint: String,
 )
 
 data class LiteRtRuntimeSnapshot(
@@ -117,6 +119,11 @@ private sealed interface EngineAttempt {
 class LiteRtRuntime(
     private val context: Context,
     private val scope: CoroutineScope,
+    /**
+     * DOGFOOD-005 durable journal: arms/advances/clears the pending native-attempt record around
+     * every native boundary so a hard crash is attributable after restart.
+     */
+    private val nativeAttemptJournal: LiteRtNativeAttemptJournal? = null,
 ) : LocalInferenceRuntime, LocalRuntimeBackendReporting {
 
     override val format: LocalModelFormat = LocalModelFormat.LITERT_LM
@@ -143,6 +150,8 @@ class LiteRtRuntime(
 
     /** Everything needed to rebuild this exact model on another accelerator. */
     private var activeModelPath: String? = null
+    /** SHA-256 of the resident artifact; reused for crash-attribution records (no re-hash). */
+    private var activeArtifactFingerprint: String? = null
     private var activeCacheRootPath: String? = null
     private var activeLoadConfig: RuntimeLoadConfig? = null
     private var visionInputEnabled: Boolean = false
@@ -218,6 +227,15 @@ class LiteRtRuntime(
         cacheDir = cacheDir,
         visionEnabled = visionInputEnabled,
     )
+
+    /**
+     * DOGFOOD-005: make the pending native-attempt record durable for the accelerator we are
+     * about to enter. Must run before [createAndInitializeEngine] because a hard native crash
+     * leaves no catchable trace in this process.
+     */
+    private fun journalEngineAttempt(modelId: String, artifactFingerprint: String?, backend: LocalComputeBackend) {
+        nativeAttemptJournal?.arm(modelId, artifactFingerprint, backend)
+    }
 
     /**
      * Releasing weights takes seconds. Running it inside a cancelled coroutine can abort the native
@@ -298,6 +316,7 @@ class LiteRtRuntime(
                         effectiveContextTokens = contextTokens,
                         contextFallbackReason = downshiftReason,
                         engineInitDurationMs = System.currentTimeMillis() - start,
+                        artifactFingerprint = artifactFingerprint,
                     )
                 }
 
@@ -329,6 +348,7 @@ class LiteRtRuntime(
     ): EngineAttempt {
         return when (requestedBackend) {
         LocalComputeBackend.CPU -> {
+            journalEngineAttempt(modelId, artifactFingerprint, LocalComputeBackend.CPU)
             createAndInitializeEngine(file.absolutePath, LocalComputeBackend.CPU, contextTokens, cpuCacheDir)
                 .fold(
                     onSuccess = { EngineAttempt.Success(it, cpuCacheDir, LocalComputeBackend.CPU, null) },
@@ -348,6 +368,7 @@ class LiteRtRuntime(
         }
 
         LocalComputeBackend.GPU -> {
+            journalEngineAttempt(modelId, artifactFingerprint, LocalComputeBackend.GPU)
             createAndInitializeEngine(file.absolutePath, LocalComputeBackend.GPU, contextTokens, gpuCacheDir)
                 .fold(
                     onSuccess = { EngineAttempt.Success(it, gpuCacheDir, LocalComputeBackend.GPU, null) },
@@ -367,6 +388,7 @@ class LiteRtRuntime(
         }
 
         LocalComputeBackend.AUTO -> {
+            journalEngineAttempt(modelId, artifactFingerprint, LocalComputeBackend.GPU)
             val gpuResult = createAndInitializeEngine(
                 file.absolutePath,
                 LocalComputeBackend.GPU,
@@ -393,7 +415,9 @@ class LiteRtRuntime(
             )
 
             // Failed GPU engine is already closed by createAndInitializeEngine; the CPU attempt
-            // runs in its own cache directory.
+            // runs in its own cache directory. The pending attempt record now points at the
+            // accelerator actually under test.
+            journalEngineAttempt(modelId, artifactFingerprint, LocalComputeBackend.CPU)
             val cpuResult = createAndInitializeEngine(
                 file.absolutePath,
                 LocalComputeBackend.CPU,
@@ -500,6 +524,7 @@ class LiteRtRuntime(
                 activeCachePath = outcome.cacheDir.absolutePath
                 activeCacheRootPath = outcome.cacheRoot.absolutePath
                 activeModelPath = file.absolutePath
+                activeArtifactFingerprint = outcome.artifactFingerprint
                 activeLoadConfig = config
                 cpuFallbackConsumed = false
                 _loadedModelId = modelId
@@ -617,6 +642,7 @@ class LiteRtRuntime(
                 // any. This keeps the residency invariant at one engine even under memory pressure.
                 closeEngineQuietly(previous)
 
+                journalEngineAttempt(modelId, activeArtifactFingerprint, LocalComputeBackend.CPU)
                 val cpuEngine = createAndInitializeEngine(modelPath, LocalComputeBackend.CPU, contextTokens, cpuCacheDir)
                     .getOrElse { error ->
                         Log.e(
@@ -722,6 +748,7 @@ class LiteRtRuntime(
 
             // Conversation creation is its own failure stage: an engine that initializes but
             // cannot create a conversation is not a verified model.
+            nativeAttemptJournal?.advance(LiteRtNativeAttemptStage.CONVERSATION_CREATE)
             val conversationCreateStart = System.currentTimeMillis()
             val conversation = try {
                 currentEngine.createConversation(convConfig)
@@ -750,6 +777,7 @@ class LiteRtRuntime(
                 if (config.prompt.isNotEmpty()) add(Content.Text(config.prompt))
                 config.imageBytes?.let { add(Content.ImageBytes(it)) }
             }.let(Contents::of)
+            nativeAttemptJournal?.advance(LiteRtNativeAttemptStage.FIRST_TOKEN_WAIT)
             val messageFlow = conversation.sendMessageAsync(
                 Message.user(outgoingContents),
                 maxOutputToken = config.maxTokens.takeIf { it > 0 },
@@ -759,6 +787,7 @@ class LiteRtRuntime(
                 if (text.isEmpty()) return
                 if (firstTokenTime == null) {
                     firstTokenTime = System.currentTimeMillis()
+                    nativeAttemptJournal?.advance(LiteRtNativeAttemptStage.GENERATING)
                     Log.i(
                         TAG,
                         "$EVENT_FIRST_TOKEN model=$_loadedModelId ttftMs=${firstTokenTime!! - startTime}",
@@ -944,8 +973,11 @@ class LiteRtRuntime(
                 detached
             }
         }
+        nativeAttemptJournal?.advance(LiteRtNativeAttemptStage.TEARDOWN)
         closeConversationQuietly(replacedResources.conversation, cancel = true)
         closeEngineQuietly(replacedResources.engine)
+        // Clean endpoint reached: the pending native-attempt record must not outlive the attempt.
+        nativeAttemptJournal?.clear()
         Log.i(TAG, "$EVENT_UNLOAD model=$unloadingModelId")
         Result.success(Unit)
     }
@@ -962,6 +994,7 @@ class LiteRtRuntime(
         engineInitDurationMs = null
         conversationCreateDurationMs = null
         activeModelPath = null
+        activeArtifactFingerprint = null
         activeCacheRootPath = null
         activeLoadConfig = null
         cpuFallbackConsumed = false

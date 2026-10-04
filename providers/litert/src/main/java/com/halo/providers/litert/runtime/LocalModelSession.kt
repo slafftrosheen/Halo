@@ -41,9 +41,11 @@ class LocalModelSession(
     constructor(
         context: Context,
         scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
+        /** DOGFOOD-005 durable native-attempt journal forwarded to the LiteRT runtime. */
+        nativeAttemptJournal: LiteRtNativeAttemptJournal? = null,
     ) : this(
         runtimeProvider = { _ ->
-            LiteRtRuntime(context, scope)
+            LiteRtRuntime(context, scope, nativeAttemptJournal)
         },
         scope = scope,
     )

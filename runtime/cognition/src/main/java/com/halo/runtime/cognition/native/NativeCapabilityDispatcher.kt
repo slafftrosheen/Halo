@@ -225,6 +225,7 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
                 AgentRunState.INTERRUPTED -> "INTERRUPTED"
                 else -> finalState?.name ?: "COMPLETED"
             }
+            else -> "COMPLETED"
         }
         println("HALO_NATIVE_ACTION_TIMING interactionId=${request.interactionId} intent=${request.intent} tool=${request.operation} totalMs=$totalMs result=$timingResult")
         if (finalState == AgentRunState.COMPLETED) references.remember(if (interpretation.intent == OpenIntent) NativeOpenApplicationIntent(request.arguments["appName"].toString()) else interpretation.intent)
