@@ -121,7 +121,7 @@ fun ElevenLabsSettingsScreen(provider: ElevenLabsTtsProvider, onBack: () -> Unit
                             withContext(Dispatchers.IO) { provider.refreshCatalogue() }
                             message = "Key saved. Choose a voice and TTS model below."
                         } catch (cancelled: CancellationException) { throw cancelled }
-                        catch (_: Exception) { message = "Key saved, but loading choices failed. Check key permissions and network, then refresh." }
+                          catch (error: Exception) { message = (error as? com.halo.sdk.provider.SpeechProviderException)?.message ?: "Key saved, but loading choices failed. Check key permissions and network, then refresh." }
                     } catch (cancelled: CancellationException) { throw cancelled }
                     catch (_: Exception) { message = "Unable to save credential; your entered key is retained for retry." }
                     finally { busy = false }
@@ -139,18 +139,19 @@ fun ElevenLabsSettingsScreen(provider: ElevenLabsTtsProvider, onBack: () -> Unit
         }
         item {
             Text("Authentication: ${if (state.authenticated) "Ready" else "Not checked"} · Synthesis: ${if (state.ready) "Proven" else "Not tested"}")
-            Button(enabled = configured && !busy, onClick = { busy = true; scope.launch { try { message = if (withContext(Dispatchers.IO) { provider.health() }) "Authentication ready; synthesis is checked separately" else "Connection failed. Check your key and network connection." } finally { busy = false } } }) { Text("Test connection") }
+            Button(enabled = configured && !busy, onClick = { busy = true; scope.launch { try { message = if (withContext(Dispatchers.IO) { provider.health() }) "Authentication ready; synthesis is checked separately" else provider.state.value.error ?: "Connection failed. Check your key and network connection." } finally { busy = false } } }) { Text("Test connection") }
             Button(enabled = configured && !busy, onClick = {
                 busy = true
                 scope.launch {
                     try { withContext(Dispatchers.IO) { provider.refreshCatalogue() }; message = "Voice and TTS model metadata refreshed" }
                     catch (e: CancellationException) { throw e }
-                    catch (_: Exception) { message = "Refresh failed; cached choices retained" }
+                    catch (error: Exception) { message = (error as? com.halo.sdk.provider.SpeechProviderException)?.message ?: "Refresh failed; cached choices retained" }
                     finally { busy = false }
                 }
             }) { Text(if (busy) "Refreshing…" else "Refresh voices and TTS models") }
             Text(if (catalogue == null) "Catalogue unavailable" else if (catalogue.stale) "Cached catalogue · Stale" else "Cached catalogue")
             message?.let { Text(it) }
+            state.error?.takeIf { it != message && it != "SECURE_STORAGE_UNREADABLE" }?.let { Text(it) }
         }
         item { Text("TTS model", style = MaterialTheme.typography.titleMedium) }
         items(catalogue?.models.orEmpty(), key = { "model:${it.id}" }) { choice ->

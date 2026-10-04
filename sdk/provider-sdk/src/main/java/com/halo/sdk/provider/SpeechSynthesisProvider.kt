@@ -12,7 +12,7 @@ data class SpeechRequest(
 )
 
 enum class SpeechErrorCode { NOT_CONFIGURED, AUTHENTICATION_FAILED, RATE_LIMITED, NETWORK_ERROR, VOICE_NOT_FOUND, MODEL_NOT_AVAILABLE, SYNTHESIS_FAILED, INVALID_AUDIO_RESPONSE, CANCELLED }
-class SpeechProviderException(val code: SpeechErrorCode) : Exception(code.name)
+class SpeechProviderException(val code: SpeechErrorCode, message: String = code.name) : Exception(message)
 
 data class SpeechResult(
     val durationMillis: Long,

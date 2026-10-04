@@ -270,6 +270,34 @@ class LiteRtLocalProvider(
      */
     val backendQualificationStore: LiteRtBackendQualificationStore =
         LiteRtBackendQualificationStore(storage)
+    private val nativeRecoveryMutex = Mutex()
+    private var nativeRecoveryComplete = false
+
+    private suspend fun reconcilePreviousNativeAttempt() = withContext(Dispatchers.IO) {
+        nativeRecoveryMutex.withLock {
+            if (nativeRecoveryComplete) return@withLock
+            val pending = nativeAttemptJournal.pendingAttempt()
+            if (pending != null && pending.appSessionId != nativeAttemptJournal.appSessionId) {
+                val exit = if (android.os.Build.VERSION.SDK_INT >= 30) runCatching {
+                    val processName = android.app.Application.getProcessName()
+                    context.getSystemService(android.app.ActivityManager::class.java)
+                        ?.getHistoricalProcessExitReasons(context.packageName, 0, 16)
+                        ?.filter { it.processName == processName && it.timestamp >= pending.startedAtEpochMs }
+                        ?.maxByOrNull { it.timestamp }
+                        ?.let { com.halo.providers.litert.runtime.LiteRtProcessExit.normalize(it.reason) }
+                }.getOrNull() else null
+                if (pending.backend == LocalComputeBackend.GPU) {
+                    val decision = backendQualificationStore.recordUncleanExit(
+                        pending.artifactSha256, exit ?: com.halo.providers.litert.runtime.LiteRtProcessExitReason.UNKNOWN,
+                    )
+                    Log.w(TAG, "${LiteRtBackendQualificationStore.EVENT_UNCLEAN_ATTEMPT_FOUND} " +
+                        "backend=GPU stage=${pending.stage} exit=$exit outcome=${decision.outcome}")
+                }
+                nativeAttemptJournal.clear()
+            }
+            nativeRecoveryComplete = true
+        }
+    }
 
     /** Observable per-model health for the development Model Browser. */
     val modelMemory: StateFlow<Map<String, LiteRtModelFailureRecord>> get() = failureMemory.records
@@ -392,12 +420,15 @@ class LiteRtLocalProvider(
      * Applies the qualification gate to a requested backend and emits the bounded
      * `HALO_LITERT_BACKEND_RESOLUTION` event. Pure policy: see [LiteRtBackendQualificationPolicy].
      */
-    private fun resolveBackend(
+    private suspend fun resolveBackend(
         descriptor: LocalModelDescriptor,
         requested: LocalComputeBackend,
     ): LiteRtBackendResolution {
+        reconcilePreviousNativeAttempt()
         val qualification = backendQualificationStore.qualificationFor(descriptor.sha256)
-        val resolution = LiteRtBackendQualificationPolicy.resolve(requested, qualification)
+        val resolution = LiteRtBackendQualificationPolicy.resolve(
+            requested, qualification, preferences.developerBackend(descriptor.id) == LocalComputeBackend.GPU,
+        )
         Log.i(
             TAG,
             "${LiteRtBackendQualificationStore.EVENT_BACKEND_RESOLUTION} model=${descriptor.id} " +
@@ -408,24 +439,21 @@ class LiteRtLocalProvider(
     }
 
     /** GPU qualification of the installed artifact of [modelId]; UNKNOWN when not installed. */
-    fun gpuQualificationForModel(modelId: String): LiteRtBackendQualification =
+    suspend fun gpuQualificationForModel(modelId: String): LiteRtBackendQualification =
         inventoryRepository.resolveModel(modelId)?.let { backendQualificationStore.qualificationFor(it.sha256) }
             ?: LiteRtBackendQualification.UNKNOWN
 
     /** UI-safe one-liner, e.g. `GPU: unqualified` / `GPU: quarantined (native crash ...)`. */
-    fun gpuQualificationSummaryForModel(modelId: String): String =
+    suspend fun gpuQualificationSummaryForModel(modelId: String): String =
         inventoryRepository.resolveModel(modelId)
             ?.let { backendQualificationStore.summaryLine(it.sha256) }
             ?: "GPU: not installed"
 
     /** Resolution that would apply right now if this model were loaded with its stored request. */
-    fun backendResolutionForModel(modelId: String): LiteRtBackendResolution? {
+    suspend fun backendResolutionForModel(modelId: String): LiteRtBackendResolution? {
         val descriptor = inventoryRepository.resolveModel(modelId) ?: return null
         val requested = loadConfigFor(descriptor).computeBackend
-        return LiteRtBackendQualificationPolicy.resolve(
-            requested,
-            backendQualificationStore.qualificationFor(descriptor.sha256),
-        )
+        return resolveBackend(descriptor, requested)
     }
 
     /**
@@ -435,6 +463,7 @@ class LiteRtLocalProvider(
      */
     suspend fun gpuStabilityProbe(modelId: String): LiteRtGpuStabilityProbeResult = withContext(Dispatchers.IO) {
         loadMutex.withLock {
+            reconcilePreviousNativeAttempt()
             backendQualificationStore.markVerifying(inventoryRepository.resolveModel(modelId)?.sha256)
             val result = LiteRtControlProbeRunner(
                 context = context,
@@ -469,7 +498,7 @@ class LiteRtLocalProvider(
     }
 
     /** Developer action: forget every qualification verdict for this artifact. */
-    fun clearGpuQualification(modelId: String) {
+    suspend fun clearGpuQualification(modelId: String) {
         val sha = inventoryRepository.resolveModel(modelId)?.sha256
         backendQualificationStore.clear(sha)
         Log.i(

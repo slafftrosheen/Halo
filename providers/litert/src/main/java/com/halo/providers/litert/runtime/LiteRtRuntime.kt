@@ -531,6 +531,7 @@ class LiteRtRuntime(
                 _state.value = LocalModelSessionState.IDLE
             }
             unpublishedOutcome.set(null)
+            nativeAttemptJournal?.clear()
 
             Log.i(
                 TAG,
@@ -554,10 +555,12 @@ class LiteRtRuntime(
             )
         } catch (e: CancellationException) {
             closeEngineQuietly(unpublishedOutcome.getAndSet(null)?.engine)
+            nativeAttemptJournal?.clear()
             _state.value = LocalModelSessionState.IDLE
             throw e
         } catch (e: Throwable) {
             closeEngineQuietly(unpublishedOutcome.getAndSet(null)?.engine)
+            nativeAttemptJournal?.clear()
             _state.value = LocalModelSessionState.ERROR
             Result.failure(e)
         }
@@ -748,7 +751,10 @@ class LiteRtRuntime(
 
             // Conversation creation is its own failure stage: an engine that initializes but
             // cannot create a conversation is not a verified model.
-            nativeAttemptJournal?.advance(LiteRtNativeAttemptStage.CONVERSATION_CREATE)
+            nativeAttemptJournal?.arm(
+                _loadedModelId ?: "unknown", activeArtifactFingerprint, engineBackendAtStart,
+                LiteRtNativeAttemptStage.CONVERSATION_CREATE,
+            )
             val conversationCreateStart = System.currentTimeMillis()
             val conversation = try {
                 currentEngine.createConversation(convConfig)
@@ -943,13 +949,15 @@ class LiteRtRuntime(
                 GenerationAttempt.Finished(Result.failure(staged))
             }
         } finally {
-            val conversation = stateMutex.withLock {
+            val conversation = withContext(NonCancellable) { stateMutex.withLock {
                 val detached = activeConversation
                 activeConversation = null
                 if (activeRequestId == requestId) activeRequestId = null
                 detached
-            }
+            } }
+            nativeAttemptJournal?.advance(LiteRtNativeAttemptStage.TEARDOWN)
             closeConversationQuietly(conversation, cancel = false)
+            nativeAttemptJournal?.clear()
         }
     }
 
@@ -966,6 +974,9 @@ class LiteRtRuntime(
     override suspend fun unloadModel(): Result<Unit> = loadMutex.withLock {
         _state.value = LocalModelSessionState.UNLOADING
         val unloadingModelId = _loadedModelId
+        if (unloadingModelId != null) nativeAttemptJournal?.arm(
+            unloadingModelId, activeArtifactFingerprint, effectiveBackend, LiteRtNativeAttemptStage.TEARDOWN,
+        )
         val replacedResources = inferenceMutex.withLock {
             stateMutex.withLock {
                 val detached = detachRuntimeState()

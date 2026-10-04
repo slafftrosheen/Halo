@@ -19,7 +19,7 @@ data object NetworkStatusIntent : NativeControlIntent
 
 object NativeCommandParser {
     fun parse(text: String): NativeControlIntent? {
-        val raw = text.trim().trimEnd('.', '!', '?')
+        val raw = ConversationSemantics.commandText(text)
         val command = raw.lowercase().removePrefix("please ")
         if (ConversationSemantics.isExplanation(raw) || ConversationSemantics.answerFromModel(raw)) return null
         AppCommandParser.parse(raw)?.let { return it as? NativeControlIntent }

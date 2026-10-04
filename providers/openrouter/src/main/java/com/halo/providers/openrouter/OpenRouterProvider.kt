@@ -567,7 +567,9 @@ class OpenRouterProvider(
             put("stream", stream)
             request.maxOutputTokens?.takeIf { it > 0 }?.let { put("max_tokens", it) }
             if (request.toolUseMode != com.halo.sdk.provider.ToolUseMode.NONE && context.availableTools.isNotEmpty()) {
-                put("tool_choice", "auto")
+                put("tool_choice", if (request.toolUseMode == com.halo.sdk.provider.ToolUseMode.REQUIRED &&
+                    request.turnKind == com.halo.sdk.provider.ProviderTurnKind.INITIAL) "required" else "auto")
+                put("provider", JSONObject().put("require_parameters", true))
                 put("tools", JSONArray().apply {
                     context.availableTools.forEach { tool ->
                         put(JSONObject().apply {

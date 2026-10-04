@@ -1,5 +1,45 @@
 # Halo current state
 
+## Existing functionality hardening — 2026-10-04
+
+**LOCAL CHANGES / 390 TESTS PASSED / UPDATED DEBUG APK / PHYSICAL ACCEPTANCE PENDING.**
+ToolRegistry now keeps schema, security metadata and dispatch with one owner per
+tool name/id; duplicate static/dynamic entries and aliases cannot shadow that owner.
+Dynamic source removal and re-registration preserve other sources' metadata, and
+dynamic dependency checks use the visible catalogue. Cancelled buffered STT returns
+the owned capture to Idle. ElevenLabs configuration changes cancel stale requests,
+voice/style changes invalidate synthesis proof, malformed refreshes preserve cached
+choices with safe diagnostics, and explicit stop propagates cancellation rather than
+network failure or speech fallback.
+
+Verified 19 speech, 9 ElevenLabs, 181 cognition and 181 app tests, with zero
+failures/errors/skips; nine regressions added. Final APK assembly succeeded.
+Composition audit: 32 skills, 89 tools, zero duplicates/orphans/unresolved entries or
+permission mismatches. No ADB device was connected. Source, tests and docs remain
+uncommitted; the physical/live-provider limits from the audit below still apply.
+
+Details: [stabilization audit](docs/engineering/STABILIZATION-2026-10-04.md).
+
+## Speech and phone-control stabilization — 2026-10-04
+
+**LOCAL CHANGES / 547 TESTS PASSED / DEBUG APK BUILT / PHYSICAL ACCEPTANCE PENDING.**
+Reviewed the latest 25 commits and selected source from the two reference ZIPs.
+Fixed STT pre-roll loss, polite command routing, required OpenRouter tool calls,
+ElevenLabs endpoint diagnostics and partial catalogue handling, LiteRT compilation
+and native-attempt recovery, and confirmation-policy regressions. Skills has one
+Allow all tools control with durable batch persistence and refreshed policy display;
+Android access is granted separately.
+
+All 366 affected-module tests and 181 app tests passed with zero failures/errors/skips.
+`:app:assembleDebug` produced `releases/halo-alpha-debug.apk`. Local verification used
+one worker and a 2 GB Gradle heap after the default parallel run exhausted native memory.
+No ADB device was connected; physical STT/control success, native GPU behavior and live
+provider/account access remain unverified. The two previously untracked LiteRT support
+classes must accompany these changes when committed.
+
+Detailed defects, commit review, verification and device checks:
+[stabilization audit](docs/engineering/STABILIZATION-2026-10-04.md).
+
 ## DOGFOOD-005.1 — Physical-log correction + skill permission authority — 2026-10-02
 
 **SOURCE APPLIED TO MAIN / PHYSICAL RE-TEST PENDING / CI STARTUP FAILURE.**

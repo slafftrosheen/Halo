@@ -16,23 +16,14 @@ import com.halo.runtime.cognition.context.*
  *
  * RUNTIME-017: the registry also owns the [ToolDescriptor] catalogue. Registration
  * accepts descriptors directly or bridges bare executors with explicit descriptors
- * supplied by the host composition root. The registry is immutable after construction;
- * discovery never mutates it.
+ * supplied by the host composition root. Static sources remain fixed after construction;
+ * runtime integrations use the removable source-owned overlay below.
  */
 class ToolRegistry(
     private val executors: List<ToolExecutor>,
     descriptors: List<ToolDescriptor> = emptyList(),
     private val payloadStore: ContentPayloadStore? = null,
 ) {
-
-    private val executorByTool: Map<String, ToolExecutor> = buildMap {
-        for (executor in executors) {
-            for (definition in executor.definitions()) {
-                putIfAbsent(definition.name, executor)
-                putIfAbsent(definition.id, executor)
-            }
-        }
-    }
 
     private val descriptorByTool: Map<String, ToolDescriptor> = buildMap {
         for (descriptor in descriptors) {
@@ -49,66 +40,69 @@ class ToolRegistry(
      * bounded, removable overlay, so an integration removal makes its tools unavailable on the very
      * next lookup. The static catalogue can never be overwritten by a dynamic entry.
      */
-    private val dynamicExecutors = java.util.concurrent.CopyOnWriteArrayList<ToolExecutor>()
-    private val dynamicDescriptors = java.util.concurrent.ConcurrentHashMap<String, ToolDescriptor>()
+    private data class DynamicSource(val executor: ToolExecutor, val descriptors: Map<String, ToolDescriptor>)
+    private data class Binding(val definition: ToolDefinition, val executor: ToolExecutor, val descriptor: ToolDescriptor)
+    @Volatile private var dynamicSources: List<DynamicSource> = emptyList()
 
     /** Registers one runtime-discovered source (for example one connected MCP server). */
+    @Synchronized
     fun registerDynamic(executor: ToolExecutor, descriptors: List<ToolDescriptor> = emptyList()) {
-        dynamicExecutors.addIfAbsent(executor)
-        for (descriptor in descriptors) {
-            val name = descriptor.name
-            if (executorByTool.containsKey(name) || descriptorByTool.containsKey(name)) continue
-            dynamicDescriptors[name] = descriptor
+        val byTool = buildMap {
+            for (descriptor in descriptors) {
+                putIfAbsent(descriptor.name, descriptor)
+                putIfAbsent(descriptor.id.value, descriptor)
+            }
         }
+        val source = DynamicSource(executor, byTool)
+        val index = dynamicSources.indexOfFirst { it.executor == executor }
+        dynamicSources = if (index < 0) dynamicSources + source else
+            dynamicSources.mapIndexed { position, existing -> if (position == index) source else existing }
     }
 
     /**
      * Removes a dynamic source and every descriptor it owned. Static catalogue is untouched.
      *
-     * [ownedToolIds] exists because a source that has *just* been disabled can no longer enumerate its
-     * own definitions; without the explicit list its descriptors would linger in the overlay and the
-     * integration would still look callable. Always pass the ids that were registered.
+     * Metadata is owned by the source, so removal works even when it can no longer enumerate tools.
+     * [ownedToolIds] is retained for callers using the previous registration contract.
      */
-    fun unregisterDynamic(executor: ToolExecutor, ownedToolIds: Set<String> = emptySet()) {
-        dynamicExecutors.remove(executor)
-        val owned = executor.definitions().flatMap { listOf(it.name, it.id) }.toSet() + ownedToolIds
-        owned.forEach { dynamicDescriptors.remove(it) }
+    @Synchronized
+    fun unregisterDynamic(executor: ToolExecutor, @Suppress("UNUSED_PARAMETER") ownedToolIds: Set<String> = emptySet()) {
+        dynamicSources = dynamicSources.filterNot { it.executor == executor }
     }
 
-    fun dynamicSourceCount(): Int = dynamicExecutors.size
+    fun dynamicSourceCount(): Int = dynamicSources.size
 
-    private fun dynamicExecutorFor(toolName: String): ToolExecutor? = dynamicExecutors.firstOrNull { executor ->
-        executor.definitions().any { it.name == toolName || it.id == toolName }
+    /** First owner wins across both names and ids; schema, security and dispatch stay together. */
+    private fun bindings(): List<Binding> = buildList {
+        val sources = dynamicSources
+        val taken = mutableSetOf<String>()
+        fun addSource(executor: ToolExecutor, descriptors: Map<String, ToolDescriptor>) {
+            for (definition in executor.definitions()) {
+                if (definition.name in taken || definition.id in taken) continue
+                taken += definition.name
+                taken += definition.id
+                val descriptor = descriptors[definition.name] ?: descriptors[definition.id] ?: fallbackDescriptor(definition)
+                add(Binding(definition, executor, descriptor.copy(definition = definition)))
+            }
+        }
+        executors.forEach { addSource(it, descriptorByTool) }
+        sources.forEach { addSource(it.executor, it.descriptors) }
     }
 
     /** All registered descriptors. Bare tools receive a conservative fallback descriptor. */
-    fun descriptors(): List<ToolDescriptor> =
-        definitions().map { definition ->
-            (descriptorByTool[definition.name]
-                ?: dynamicDescriptors[definition.name]
-                ?: fallbackDescriptor(definition)).copy(definition = definition)
-        }
+    fun descriptors(): List<ToolDescriptor> = bindings().map { it.descriptor }
 
-    fun descriptor(toolName: String): ToolDescriptor? {
-        val definition = definitions().firstOrNull { it.name == toolName || it.id == toolName }
-            ?: return null
-        return (descriptorByTool[toolName] ?: dynamicDescriptors[toolName] ?: fallbackDescriptor(definition)).copy(definition = definition)
+    private fun binding(toolName: String): Binding? = bindings().firstOrNull {
+        it.definition.name == toolName || it.definition.id == toolName
     }
 
-    fun definitions(): List<ToolDefinition> {
-        if (dynamicExecutors.isEmpty()) return executors.flatMap { it.definitions() }
-        val static = executors.flatMap { it.definitions() }
-        val taken = static.mapTo(mutableSetOf()) { it.name }
-        val dynamic = dynamicExecutors.flatMap { it.definitions() }.filterNot { it.name in taken }
-        return static + dynamic
-    }
+    fun descriptor(toolName: String): ToolDescriptor? = binding(toolName)?.descriptor
 
-    private fun staticExecutorFor(toolName: String): ToolExecutor? = executorByTool[toolName]
-        ?: executors.firstOrNull { executor -> executor.definitions().any { it.name == toolName || it.id == toolName } }
+    fun definitions(): List<ToolDefinition> = bindings().map { it.definition }
 
-    fun contains(toolId: String): Boolean = staticExecutorFor(toolId) != null || dynamicExecutorFor(toolId) != null
+    fun contains(toolId: String): Boolean = binding(toolId) != null
 
-    fun executorFor(toolName: String): ToolExecutor? = staticExecutorFor(toolName) ?: dynamicExecutorFor(toolName)
+    fun executorFor(toolName: String): ToolExecutor? = binding(toolName)?.executor
 
     /**
      * Validate a tool call without executing it.
@@ -136,7 +130,11 @@ class ToolRegistry(
             )
         }
 
-        if (!contains(toolCall.functionName)) {
+        val catalogue = bindings()
+        val binding = catalogue.firstOrNull {
+            it.definition.id == toolCall.functionName || it.definition.name == toolCall.functionName
+        }
+        if (binding == null) {
             return ToolExecutionResult.Rejected(
                 toolCallId = toolCall.id,
                 toolId = toolCall.functionName,
@@ -144,10 +142,10 @@ class ToolRegistry(
             )
         }
 
-        val definition = definitions().firstOrNull { it.id == toolCall.functionName || it.name == toolCall.functionName }
-            ?: return ToolExecutionResult.Rejected(toolCall.id, toolCall.functionName, "Tool is no longer available")
-        val descriptor = descriptorByTool[toolCall.functionName] ?: dynamicDescriptors[toolCall.functionName]
-        descriptor?.dependencies?.firstOrNull { dependency -> !executorByTool.containsKey(dependency.value) }
+        val definition = binding.definition
+        binding.descriptor.dependencies.firstOrNull { dependency -> catalogue.none {
+            it.definition.name == dependency.value || it.definition.id == dependency.value
+        } }
             ?.let { unmet ->
                 return ToolExecutionResult.Rejected(
                     toolCallId = toolCall.id,

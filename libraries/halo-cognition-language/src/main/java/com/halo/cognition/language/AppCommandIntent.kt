@@ -10,7 +10,7 @@ data class NativeCommandSequenceIntent(val operations: List<Intent>) : NativeCon
 
 object AppCommandParser {
     fun parse(text: String): Intent? {
-        val command = text.trim().trimEnd('.', '!')
+        val command = ConversationSemantics.commandText(text)
         val lower = command.lowercase()
         if (lower in setOf("what can i do here", "what can i do here?", "current app capabilities")) return NativeAppActionIntent("inspect_capabilities")
         if (lower in setOf("continue", "done", "try again")) return NativeContinueIntent

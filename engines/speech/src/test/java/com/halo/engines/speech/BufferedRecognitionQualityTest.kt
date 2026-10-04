@@ -9,6 +9,64 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class BufferedRecognitionQualityTest {
+    @Test fun cancelledDecodeReturnsToIdleAndReportsTheOwnedCapture() = runBlocking {
+        val failed = CompletableDeferred<RecognitionFailed>()
+        val bus = object : EventBus {
+            override suspend fun publish(event: HaloEvent) { if (event is RecognitionFailed) failed.complete(event) }
+            override fun events(): Flow<HaloEvent> = emptyFlow()
+            override fun <T : HaloEvent> observe(type: Class<T>): Flow<T> = emptyFlow()
+        }
+        val provider = object : BufferedSpeechRecognitionProvider {
+            override suspend fun health() = true
+            override suspend fun recognize(audio: com.halo.sdk.host.AudioBuffer): RecognitionResult {
+                throw CancellationException("Decode cancelled")
+            }
+        }
+        val wake = object : WakeWordDetector {
+            override fun process(frame: AudioFrame) = WakeWordResult(false)
+            override suspend fun health() = true
+        }
+        val pipeline = AudioPipeline(object : VoiceActivityDetector {
+            override fun isSpeech(frame: AudioFrame) = true
+        }, wake, provider, bus, this)
+        pipeline.beginCapture(SpeechInputTurn("cancelled-capture"))
+        pipeline.processFrame(AudioFrame(ShortArray(1600) { 1000 }, 16000, 1, 0))
+        pipeline.finishCapture()
+        assertEquals("cancelled-capture", withTimeout(5000) { failed.await() }.id)
+        assertEquals(com.halo.sdk.runtime.SpeechState.Idle, pipeline.state.value)
+        pipeline.stop()
+    }
+    @Test fun explicitCapturePreservesSpeechOnsetWhileVadIsDeciding() = runBlocking {
+        val captured = CompletableDeferred<com.halo.sdk.host.AudioBuffer>()
+        val provider = object : BufferedSpeechRecognitionProvider {
+            override suspend fun health() = true
+            override suspend fun recognize(audio: com.halo.sdk.host.AudioBuffer): RecognitionResult {
+                captured.complete(audio)
+                return RecognitionResult("open settings", "en")
+            }
+        }
+        val bus = object : EventBus {
+            override suspend fun publish(event: HaloEvent) = Unit
+            override fun events(): Flow<HaloEvent> = emptyFlow()
+            override fun <T : HaloEvent> observe(type: Class<T>): Flow<T> = emptyFlow()
+        }
+        var frames = 0
+        val vad = object : VoiceActivityDetector {
+            override fun isSpeech(frame: AudioFrame) = ++frames >= 3
+        }
+        val wake = object : WakeWordDetector {
+            override fun process(frame: AudioFrame) = WakeWordResult(false)
+            override suspend fun health() = true
+        }
+        val pipeline = AudioPipeline(vad, wake, provider, bus, this)
+        pipeline.beginCapture(SpeechInputTurn("onset"))
+        repeat(4) { index -> pipeline.processFrame(AudioFrame(ShortArray(1600) { (index + 1).toShort() }, 16000, 1, index * 100_000_000L)) }
+        pipeline.finishCapture()
+        val audio = withTimeout(5000) { captured.await() }
+        assertEquals(6400, audio.frames.sumOf { it.samples.size })
+        assertEquals(listOf<Short>(1, 2, 3, 4), audio.frames.map { it.samples.first() })
+        pipeline.stop()
+    }
     @Test fun phoneAndExternalBothRunWholeCaptureEstimator() = runBlocking {
         for (boundary in CaptureBoundary.entries) {
             val seen = CompletableDeferred<SpeechRecognized>()

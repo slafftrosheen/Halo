@@ -144,7 +144,7 @@ class DefaultSkillRegistry(
 
     override suspend fun setApprovalPolicyForAll(policy: ToolApprovalPolicy, enabledOnly: Boolean) {
         val targets = _skills.value.filter { !enabledOnly || it.enabled }
-        targets.forEach { storage.putString("skill_approval_${it.id.value}", policy.name) }
+        storage.putBatch(strings = targets.associate { "skill_approval_${it.id.value}" to policy.name })
         if (targets.isNotEmpty()) _skills.value = _skills.value.toList()
     }
 

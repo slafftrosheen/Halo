@@ -35,7 +35,7 @@ class SpeechRule : InterpretationRule {
     override val priority: Int = 500
 
     override suspend fun match(context: InterpretationContext): RuleMatch? {
-        val transcript = transcript(context) ?: return null
+        val transcript = com.halo.cognition.language.ConversationSemantics.commandText(transcript(context) ?: return null)
         val normalized = transcript.lowercase()
         val confidence = context.observation.confidence
         val consumedTokens = transcript.tokenCount()

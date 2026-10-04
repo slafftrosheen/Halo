@@ -140,6 +140,9 @@ data class LiteRtGpuStabilityProbeResult(
  * failure resets the streak. Kept standalone so the pass rule is unit-testable without a device.
  */
 class LiteRtGpuStabilityTracker(private val requiredConsecutiveSuccesses: Int) {
+    init {
+        require(requiredConsecutiveSuccesses > 0) { "At least one successful generation is required" }
+    }
     private var consecutiveSuccesses = 0
     private var completed = 0
 
@@ -268,6 +271,7 @@ class LiteRtControlProbeRunner(
         }
         val engineDuration = System.currentTimeMillis() - engineStart
         if (engine == null) {
+            nativeAttemptJournal?.clear()
             stages.add(
                 LiteRtControlProbeStageResult(
                     LiteRtControlProbeStage.ENGINE_INIT,
@@ -485,7 +489,7 @@ class LiteRtControlProbeRunner(
             totalDurationMs = System.currentTimeMillis() - startedAt,
         )
         Log.i(TAG, "$EVENT_GPU_STABILITY_PROBE ${result.summaryLine()}")
-        result
+        return result
     }
 
     /**

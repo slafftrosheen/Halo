@@ -99,6 +99,9 @@ class PolicyToolAuthorizer(
             return AuthorizationDecision.Rejected(toolCall, "Tool execution denied by user policy")
         }
 
+        val security = descriptorProvider(toolName)?.security
+        val destructive = (security?.risk ?: ToolRiskClass.SENSITIVE) == ToolRiskClass.DESTRUCTIVE || presentationContext?.forceConfirmation == true
+        val risk = security?.risk.toSkillRisk()
         val safeDirectCommands = setOf(
             "halo_open_app",
             "halo_timer",
@@ -110,7 +113,10 @@ class PolicyToolAuthorizer(
             "halo_media_control",
             "halo_set_alarm"
         )
-        if (toolName in safeDirectCommands && agentRunStore != null) {
+        if (toolName in safeDirectCommands && agentRunStore != null &&
+            security != null && security.confirmation != ConfirmationPolicy.ALWAYS &&
+            security.risk != ToolRiskClass.SENSITIVE && !destructive
+        ) {
             val run = agentRunStore.get(runId)
             val directAuthority = run?.steps?.filterIsInstance<AgentStep.DirectCommandAuthorityRecorded>()?.lastOrNull()?.authority
             if (directAuthority != null &&
@@ -121,10 +127,6 @@ class PolicyToolAuthorizer(
                 return AuthorizationDecision.Authorized(toolCall)
             }
         }
-
-        val security = descriptorProvider(toolName)?.security
-        val destructive = (security?.risk ?: ToolRiskClass.SENSITIVE) == ToolRiskClass.DESTRUCTIVE || presentationContext?.forceConfirmation == true
-        val risk = security?.risk.toSkillRisk()
 
         if (policy == ToolApprovalPolicy.ALWAYS_ALLOW && !destructive &&
             security?.confirmation != ConfirmationPolicy.ALWAYS
@@ -203,7 +205,7 @@ class PolicyToolAuthorizer(
         }
 
         val group = authorizationGroupProvider(toolName)
-        if (!destructive && scopeId != null &&
+        if (!destructive && security?.confirmation != ConfirmationPolicy.ALWAYS && scopeId != null &&
             scopedGrants[scopeId]?.contains(group) == true) {
             return ToolAuthorization.Authorized(toolCall)
         }
@@ -213,7 +215,7 @@ class PolicyToolAuthorizer(
         if (coordinator != null) {
             return coordinator.authorizeRequest(toolCall, preview).also { authorization ->
                 if (authorization is ToolAuthorization.Authorized &&
-                    !destructive && scopeId != null) {
+                    !destructive && security?.confirmation != ConfirmationPolicy.ALWAYS && scopeId != null) {
                     scopedGrants.computeIfAbsent(scopeId) { ConcurrentHashMap.newKeySet() }.add(group)
                 }
             }

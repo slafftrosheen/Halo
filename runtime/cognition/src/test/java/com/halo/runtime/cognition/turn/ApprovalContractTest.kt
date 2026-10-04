@@ -92,6 +92,50 @@ private class TestRunStore : AgentRunStore {
 }
 
 class ApprovalContractTest {
+    @Test fun directCommandAuthorityRespectsDescriptorConfirmationAndRisk() = runTest {
+        val store = TestRunStore()
+        val coordinator = DefaultAgentRunCoordinator(store, backgroundScope)
+        val interaction = InteractionId("direct-policy")
+        val runId = coordinator.start(AgentRequest(interactionId = interaction, text = "set volume"))
+        coordinator.recordStep(AgentStep.DirectCommandAuthorityRecorded(
+            AgentStepId("authority"), runId, Instant.now(),
+            com.halo.runtime.cognition.agent.DirectUserCommandAuthority(
+                interaction, "halo_volume", "matching-digest",
+                com.halo.runtime.cognition.blackboard.InteractionOrigin(com.halo.sdk.runtime.Source.USER), Instant.now())))
+        val call = ToolCall("direct", "halo_volume", mapOf("percent" to 30))
+        suspend fun authorize(risk: ToolRiskClass, confirmation: ConfirmationPolicy, digest: String = "matching-digest"):
+            com.halo.runtime.cognition.tools.AuthorizationDecision {
+            val authorizer = PolicyToolAuthorizer(agentRunStore = store, descriptorProvider = {
+                ToolDescriptor(ToolId("halo_volume"), ToolDefinition("halo_volume", "halo_volume", "Volume"),
+                    ToolCategory.DEVICE_CONTROL, security = ToolSecurityPolicy(risk, confirmation))
+            })
+            return authorizer.authorizeDurable(call, runId, interaction,
+                com.halo.runtime.cognition.agent.ToolInvocationId("invocation"), digest, newRequestId = { "approval" })
+        }
+        assertTrue(authorize(ToolRiskClass.REVERSIBLE, ConfirmationPolicy.USER_POLICY) is com.halo.runtime.cognition.tools.AuthorizationDecision.Authorized)
+        assertTrue(authorize(ToolRiskClass.REVERSIBLE, ConfirmationPolicy.ALWAYS) is com.halo.runtime.cognition.tools.AuthorizationDecision.NeedsUserInput)
+        assertTrue(authorize(ToolRiskClass.SENSITIVE, ConfirmationPolicy.USER_POLICY) is com.halo.runtime.cognition.tools.AuthorizationDecision.NeedsUserInput)
+        assertTrue(authorize(ToolRiskClass.DESTRUCTIVE, ConfirmationPolicy.USER_POLICY) is com.halo.runtime.cognition.tools.AuthorizationDecision.NeedsUserInput)
+        assertTrue(authorize(ToolRiskClass.REVERSIBLE, ConfirmationPolicy.USER_POLICY, "different") is com.halo.runtime.cognition.tools.AuthorizationDecision.NeedsUserInput)
+    }
+
+    @Test fun alwaysConfirmCannotReuseLegacyScopeApproval() = runTest {
+        var approvals = 0
+        val authorizer = PolicyToolAuthorizer(
+            coordinator = object : com.halo.runtime.cognition.tools.ToolAuthorizationCoordinator {
+                override suspend fun authorizeRequest(toolCall: ToolCall, preview: com.halo.runtime.cognition.tools.ToolActionPreview): com.halo.runtime.cognition.tools.ToolAuthorization {
+                    approvals++
+                    return com.halo.runtime.cognition.tools.ToolAuthorization.Authorized(toolCall)
+                }
+            }, descriptorProvider = {
+                ToolDescriptor(ToolId("test_action"), ToolDefinition("test_action", "test_action", "Action"),
+                    ToolCategory.SYSTEM, security = ToolSecurityPolicy(ToolRiskClass.EXTERNAL_SIDE_EFFECT, ConfirmationPolicy.ALWAYS))
+            })
+        val call = ToolCall("one", "test_action", emptyMap())
+        authorizer.authorize(call, "scope")
+        authorizer.authorize(call.copy(id = "two"), "scope")
+        assertEquals(2, approvals)
+    }
 
     private fun createTestTool(onExecute: () -> Unit): ToolExecutor {
         return object : ToolExecutor {

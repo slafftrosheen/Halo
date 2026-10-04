@@ -10,6 +10,21 @@ import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
 class OpenRouterProviderTest {
+    @Test fun requiredActionUsesRequiredChoiceButContinuationCanFinish() {
+        val provider = OpenRouterProvider(FakeStorage())
+        val method = provider.javaClass.getDeclaredMethod("buildRequestBody",
+            com.halo.sdk.provider.AiRequest::class.java, com.halo.sdk.provider.AiContext::class.java,
+            String::class.java, Boolean::class.javaPrimitiveType).apply { isAccessible = true }
+        val context = com.halo.sdk.provider.AiContext.EMPTY.copy(availableTools = listOf(
+            com.halo.sdk.provider.ToolDefinition("halo_volume", "halo_volume", "Adjust volume")))
+        fun body(mode: com.halo.sdk.provider.ToolUseMode, kind: com.halo.sdk.provider.ProviderTurnKind) =
+            method.invoke(provider, com.halo.sdk.provider.AiRequest(text = "change volume", toolUseMode = mode, turnKind = kind), context, "test/model", false) as JSONObject
+        val initial = body(com.halo.sdk.provider.ToolUseMode.REQUIRED, com.halo.sdk.provider.ProviderTurnKind.INITIAL)
+        assertEquals("required", initial.getString("tool_choice"))
+        assertTrue(initial.getJSONObject("provider").getBoolean("require_parameters"))
+        assertEquals("auto", body(com.halo.sdk.provider.ToolUseMode.REQUIRED, com.halo.sdk.provider.ProviderTurnKind.TOOL_CONTINUATION).getString("tool_choice"))
+        assertFalse(body(com.halo.sdk.provider.ToolUseMode.NONE, com.halo.sdk.provider.ProviderTurnKind.INITIAL).has("tools"))
+    }
 
     private class FakeStorage : Storage {
         private val data = mutableMapOf<String, Any?>("openrouter_api_key" to "test-key")

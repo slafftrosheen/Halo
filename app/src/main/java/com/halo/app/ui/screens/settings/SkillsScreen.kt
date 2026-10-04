@@ -91,6 +91,8 @@ fun SkillsScreen(
 
     var checks by remember { mutableStateOf<Map<String, SkillCheckSnapshot>>(emptyMap()) }
     var checkRevision by remember { mutableStateOf(0) }
+    var savingGlobalPolicy by remember { mutableStateOf(false) }
+    var globalPolicyMessage by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(skills, capabilitySnapshot.revision, checkRevision) {
         checks = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             skills.associate { skill ->
@@ -132,7 +134,7 @@ fun SkillsScreen(
 
     selectedId?.let { id ->
         skills.firstOrNull { it.id.value == id }?.let { skill ->
-            var policy by remember(id) { mutableStateOf(checks[id]?.policy ?: ToolApprovalPolicy.ASK_EVERY_TIME) }
+            var policy by remember(id, checks[id]?.policy) { mutableStateOf(checks[id]?.policy ?: ToolApprovalPolicy.ASK_EVERY_TIME) }
             var showPolicies by remember(id) { mutableStateOf(false) }
             val descriptors = checks[id]?.descriptors.orEmpty()
             val requiredAccess = declaredPermissions(skill)
@@ -298,17 +300,30 @@ fun SkillsScreen(
     Column(Modifier.fillMaxSize().padding(horizontal = HaloSpacing.screen)) {
         HaloScreenHeader("Skills", "Actions Halo can use", navigation = onBack)
         Button(
+            enabled = !savingGlobalPolicy,
             onClick = {
+                savingGlobalPolicy = true
                 scope.launch {
-                    skills.forEach { skill ->
-                        skillRegistry.setApprovalPolicy(skill.id, ToolApprovalPolicy.ALWAYS_ALLOW)
+                    try {
+                        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                            skillRegistry.setApprovalPolicyForAll(ToolApprovalPolicy.ALWAYS_ALLOW)
+                        }
+                        checkRevision++
+                        globalPolicyMessage = "Tool policies saved"
+                    } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                        throw cancelled
+                    } catch (_: Exception) {
+                        globalPolicyMessage = "Could not save tool policies. Try again."
+                    } finally {
+                        savingGlobalPolicy = false
                     }
                 }
             },
             modifier = Modifier.fillMaxWidth().padding(vertical = HaloSpacing.xs)
         ) {
-            Text("Allow all skills without asking")
+            Text("Allow all tools without asking")
         }
+        globalPolicyMessage?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
         LazyColumn(verticalArrangement = Arrangement.spacedBy(HaloSpacing.xs)) {
             if (appCapabilities != null) item(key = "app-capabilities") {
                 Column(Modifier.padding(vertical = HaloSpacing.xs)) {
@@ -349,20 +364,6 @@ fun SkillsScreen(
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
-                        TextButton(onClick = {
-                            val enabled = skills.filter { it.enabled }
-                            val permissions = enabled.flatMap(::declaredPermissions).toSet()
-                            val toolIds = enabled.flatMap { it.tools }.toSet()
-                            scope.launch {
-                                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                                    skillRegistry.setApprovalPolicyForAll(ToolApprovalPolicy.ALWAYS_ALLOW)
-                                }
-                                checkRevision++
-                                onRequestSkillAccess?.invoke(permissions, toolIds)
-                            }
-                        }) {
-                            Text("Allow all without asking")
-                        }
                         TextButton(onClick = {
                             val enabled = skills.filter { it.enabled }
                             onRequestSkillAccess?.invoke(

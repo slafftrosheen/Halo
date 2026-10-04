@@ -198,7 +198,13 @@ class AudioPipeline(
                 preRollBuffer.frames().forEach(buffer::append)
                 scope.launch { eventBus.publish(SpeechStarted()) }
             } else if (stateAfterWake == SpeechState.Listening || stateAfterWake == SpeechState.WakeDetected) {
-                buffer.append(frame)
+                if (buffer.duration() == 0L) {
+                    // Explicit listening starts before VAD admits speech. Include the onset
+                    // already buffered while VAD was deciding, including this frame once.
+                    preRollBuffer.frames().forEach(buffer::append)
+                } else {
+                    buffer.append(frame)
+                }
             }
         } else if (
             sttProvider.mode == SpeechRecognitionMode.BUFFERED &&
@@ -366,6 +372,12 @@ class AudioPipeline(
             // reset() is the authoritative cancellation path and clears
             // activeSpeechTransactionId. A cancellation that arrives after a
             // native result has already been handed off is safe to propagate.
+            withContext(NonCancellable) {
+                if (activeSpeechTransactionId == transactionId && _state.value == SpeechState.Recognizing) {
+                    _state.value = SpeechState.Idle
+                    eventBus.publish(RecognitionFailed(id = transactionId, reason = "Recognition cancelled"))
+                }
+            }
             throw cancellation
         } catch (exception: Exception) {
             if (activeSpeechTransactionId != transactionId) return
