@@ -1,5 +1,18 @@
 # LiteRT development model matrix (RUNTIME-049 / LITERT-MATRIX-003)
 
+## RUNTIME-060 — adaptive local execution — 2026-10-05
+
+Explicit benchmarks now persist per artifact/device/runtime variant. Compatible measured
+TTFT and live memory pressure reduce local history/output budgets below the 512/128
+voice and 1024/256 text baseline; budgets never expand. Simple fresh spoken provider
+turns prefer the existing FAST role. Action, vision, explicit reasoning and pinned
+continuation ownership remain intact. Details/System Check expose calibration and
+policy; generation diagnostics report actual cold/warm engine residency.
+
+GPU qualification is unchanged, benchmarking remains explicit, and no device-name
+heuristics or models are added. Serial automated gate passed: 641 tests, zero failures, and debug APK assembled.
+Both-phone physical acceptance remains pending. See [implementation and acceptance record](../engineering/RUNTIME-060-ADAPTIVE-LOCAL-EXECUTION.md).
+
 ## DOGFOOD-006 physical evidence and latency gate — 2026-10-04
 
 The supplied `ad5131ab4fa8+dirty` phone session verifies GPU crash containment,
@@ -19,7 +32,7 @@ PHONE VERIFIED: NO for these repairs and latency profiles. The required gate pas
 469 tests with zero failures and assembled a clean candidate APK. History keeps a
 contiguous newest suffix with conservative framing overhead; current requests, Working
 Set and atomic tool continuations are preserved. The 512/1024 and 128/256 values remain
-unchanged until another physical TTFT trace. See the [verification record](../engineering/STABILIZATION-2026-10-04.md).
+ceilings; RUNTIME-060 adds measured downward tiers. Expansion still requires physical TTFT evidence. See the [verification record](../engineering/STABILIZATION-2026-10-04.md).
 
 `HALO_CONTEXT_PROJECTION` reports only target, surface, window, budget and counts.
 Generation diagnostics expose estimated input/output tokens, history message count,

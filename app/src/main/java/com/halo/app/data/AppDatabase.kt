@@ -125,7 +125,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun mcpDao(): com.halo.app.data.mcp.McpDao
 
     companion object {
-        const val VERSION = 23
+        const val VERSION = 24
 
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
@@ -960,7 +960,19 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        val ALL_MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22, MIGRATION_22_23)
+        val MIGRATION_23_24 = object : Migration(23, 24) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Native model-default context can be unobservable; never persist a guessed limit.
+                db.execSQL("ALTER TABLE model_runtime_profiles RENAME TO model_runtime_profiles_legacy")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `model_runtime_profiles` (`id` TEXT NOT NULL, `artifactId` TEXT NOT NULL, `artifactFingerprint` TEXT NOT NULL, `deviceFingerprint` TEXT NOT NULL, `runtime` TEXT NOT NULL, `backend` TEXT NOT NULL, `contextSize` INTEGER, `threads` INTEGER NOT NULL, `gpuLayers` INTEGER NOT NULL, `loadMs` INTEGER NOT NULL, `ttftMs` INTEGER NOT NULL, `promptTokensPerSecond` REAL NOT NULL, `generationTokensPerSecond` REAL NOT NULL, `peakEstimatedMemoryBytes` INTEGER, `textGenerationProven` INTEGER NOT NULL, `nativeToolCallingProven` INTEGER NOT NULL, `haloPromptToolLoopProven` INTEGER NOT NULL, `agenticContinuationProven` INTEGER NOT NULL, `testedAtEpochMs` INTEGER NOT NULL, `appVersion` TEXT NOT NULL, `runtimeVersion` TEXT NOT NULL, `compatibilityEpoch` INTEGER NOT NULL, `isStable` INTEGER NOT NULL, `failureReason` TEXT, PRIMARY KEY(`id`))")
+                db.execSQL("INSERT INTO model_runtime_profiles SELECT * FROM model_runtime_profiles_legacy")
+                db.execSQL("DROP TABLE model_runtime_profiles_legacy")
+                db.execSQL("CREATE INDEX index_model_runtime_profiles_artifactId_deviceFingerprint ON model_runtime_profiles(artifactId, deviceFingerprint)")
+                db.execSQL("CREATE UNIQUE INDEX index_model_runtime_profiles_profile_variant ON model_runtime_profiles(artifactId, artifactFingerprint, deviceFingerprint, runtime, backend, contextSize, threads, gpuLayers, runtimeVersion, compatibilityEpoch, isStable)")
+            }
+        }
+
+        val ALL_MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22, MIGRATION_22_23, MIGRATION_23_24)
 
         fun create(context: Context): AppDatabase =
             Room.databaseBuilder(context, AppDatabase::class.java, "halo.db")

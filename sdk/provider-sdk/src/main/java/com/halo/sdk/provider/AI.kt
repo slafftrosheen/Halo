@@ -352,6 +352,8 @@ data class AiResponse(
     val executionBackend: String? = null,
     /** Opaque host-owned auxiliary body reference; providers do not resolve it. */
     val payloadRefId: String? = null,
+    /** Actual local engine lifecycle, null when the provider cannot report it. */
+    val coldStart: Boolean? = null,
 )
 
 sealed interface AiStreamEvent {

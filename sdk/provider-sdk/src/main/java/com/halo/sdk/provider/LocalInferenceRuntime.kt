@@ -166,6 +166,8 @@ data class RuntimeGenerationResult(
      * blocks). Diagnostic evidence only: it must never be spoken or shown as the answer.
      */
     val reasoningText: String? = null,
+    /** First generation attempt since native engine creation. */
+    val coldStart: Boolean? = null,
 )
 
 /**

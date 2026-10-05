@@ -37,4 +37,6 @@ enum class ToolCallProtocol {
  */
 interface ToolProtocolReporting {
     suspend fun toolCallProtocol(): ToolCallProtocol = ToolCallProtocol.NONE
+    /** Exact routed model; legacy providers may retain their current-model implementation. */
+    suspend fun toolCallProtocol(modelId: String): ToolCallProtocol = toolCallProtocol()
 }

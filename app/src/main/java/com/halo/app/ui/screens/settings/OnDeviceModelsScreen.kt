@@ -145,6 +145,8 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit) {
                     failureRecord = ui.modelFailureRecords[model.id],
                     smokeTest = ui.smokeTests[model.id],
                     benchmark = ui.benchmarkResults[model.id],
+                    measuredProfile = ui.measuredProfiles[model.id],
+                    memoryPressure = ui.memoryPressure,
                     toolProbe = ui.toolProbes[model.id],
                     controlProbe = ui.controlProbes[model.id],
                     toolQualification = ui.toolQualification[model.id]
@@ -207,6 +209,9 @@ fun OnDeviceModelsScreen(viewModel: IntelligenceViewModel, onBack: () -> Unit) {
                         selected = ui.activeModelId == descriptor.id,
                         resident = ui.residentModelId == descriptor.id,
                         failureRecord = ui.modelFailureRecords[descriptor.id],
+                        measuredProfile = ui.measuredProfiles[descriptor.id],
+                        memoryPressure = ui.memoryPressure,
+                        onBenchmark = { viewModel.benchmarkModel(descriptor.id) },
                         onSelect = { viewModel.selectLocalModel(descriptor.id) },
                         onDelete = { viewModel.deleteModel(descriptor.id) },
                     )
@@ -233,6 +238,8 @@ private fun ModelCard(
     failureRecord: LiteRtModelFailureRecord?,
     smokeTest: LocalModelSmokeTestResult?,
     benchmark: LocalModelBenchmarkResult?,
+    measuredProfile: com.halo.runtime.cognition.context.LocalInferenceRuntimeProfile?,
+    memoryPressure: com.halo.sdk.runtime.NativeMemoryPressure,
     toolProbe: LiteRtToolProbeResult?,
     controlProbe: LiteRtControlProbeResult?,
     toolQualification: LiteRtToolQualification,
@@ -563,6 +570,8 @@ private fun ModelCard(
                 Text(
                     buildString {
                         appendLine("Artifact: ${model.filename}")
+                        appendLine(localInteractionProfilePresentation(measuredProfile, memoryPressure, (descriptor?.contextWindowTokens ?: model.contextWindowTokens).toLong()))
+                        appendLine()
                         appendLine("Access: ${model.access} · maturity: ${model.maturity}")
                         appendLine("Pinned revision: ${model.revision}")
                         appendLine("Declared vision: ${model.supportsVision} · audio: ${model.supportsAudio} · tools: ${model.supportsTools}")
@@ -617,6 +626,9 @@ private fun ModelCard(
 @Composable
 private fun ImportedModelCard(
     descriptor: LocalModelDescriptor,
+    measuredProfile: com.halo.runtime.cognition.context.LocalInferenceRuntimeProfile?,
+    memoryPressure: com.halo.sdk.runtime.NativeMemoryPressure,
+    onBenchmark: () -> Unit,
     generationProven: Boolean,
     selected: Boolean,
     resident: Boolean,
@@ -631,6 +643,8 @@ private fun ImportedModelCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(descriptor.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(localInteractionProfilePresentation(measuredProfile, memoryPressure, descriptor.contextWindowTokens.toLong()), style = MaterialTheme.typography.labelSmall)
+            TextButton(onClick = onBenchmark) { Text("Benchmark") }
             Text(
                 "${descriptor.bytes / 1_000_000} MB · imported · ${descriptor.validation.name}" +
                     if (generationProven) " · generation proven" else "",

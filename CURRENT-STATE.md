@@ -1,5 +1,18 @@
 # Halo current state
 
+## RUNTIME-060 — adaptive local execution — 2026-10-05
+
+Explicit benchmarks now persist per artifact/device/runtime variant. Compatible measured
+TTFT and live memory pressure reduce local history/output budgets below the 512/128
+voice and 1024/256 text baseline; budgets never expand. Simple fresh spoken provider
+turns prefer the existing FAST role. Action, vision, explicit reasoning and pinned
+continuation ownership remain intact. Details/System Check expose calibration and
+policy; generation diagnostics report actual cold/warm engine residency.
+
+GPU qualification is unchanged, benchmarking remains explicit, and no device-name
+heuristics or models are added. Serial automated gate passed: 641 tests, zero failures, and debug APK assembled.
+Both-phone physical acceptance remains pending. See [implementation and acceptance record](docs/engineering/RUNTIME-060-ADAPTIVE-LOCAL-EXECUTION.md).
+
 ## DOGFOOD-006 stabilization — 2026-10-04
 
 **SOURCE VERIFIED / UNIT VERIFIED / CLEAN CHECKOUT VERIFIED / PHONE VERIFIED: NO.**

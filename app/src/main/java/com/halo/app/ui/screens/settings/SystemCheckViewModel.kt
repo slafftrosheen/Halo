@@ -138,6 +138,9 @@ class SystemCheckViewModel(
     private val presentationProjection: com.halo.runtime.cognition.interaction.PresentationSurfaceProjection? = null,
     private val payloadStore: com.halo.runtime.cognition.context.ContentPayloadStore? = null,
     private val agentRuns: com.halo.runtime.cognition.agent.AgentRunStore? = null,
+    private val localProfileSource: com.halo.app.data.models.RoomLocalInferenceProfileSource? = null,
+    private val modelProfileRepository: com.halo.app.data.models.ModelRuntimeProfileRepository? = null,
+    private val memoryPressure: () -> com.halo.sdk.runtime.NativeMemoryPressure = { com.halo.sdk.runtime.NativeMemoryPressure.NORMAL },
     private val speechDiagnostics: com.halo.app.speech.diagnostics.SpeechDiagnosticRunner? = null,
 ) : ViewModel() {
 
@@ -285,6 +288,16 @@ class SystemCheckViewModel(
             val provider = providerRouter.getAllProviders().firstOrNull { it.id == selectedProvider }
             val providerStatus = provider?.let { runCatching { it.getStatus() }.getOrNull() }
             val localProvider = provider as? LiteRtLocalProvider
+            val localProfile = if (localProvider != null && selectedModel != null) localProfileSource?.profile(localProvider.id, selectedModel) else null
+            val projectionContext = localProvider?.listModels()?.firstOrNull { it.id == selectedModel }?.contextLength ?: 4096L
+            val profilePressure = memoryPressure()
+            val decision = com.halo.runtime.cognition.context.localInferencePerformance(true,
+                projectionContext, true, localProfile, profilePressure)
+            sections.add(SystemCheckSection("local_interaction_profile", "Local interaction profile", listOf(
+                SystemCheckItem("local_interaction_profile", "Local interaction profile", HaloGlyph.MODEL,
+                    if (localProfile != null) CheckStatus.READY else CheckStatus.NOT_CONFIGURED,
+                    if (localProfile != null) "MEASURED · ${decision?.tier ?: "UNKNOWN"}" else "DEFAULT · No compatible benchmark for this device/runtime",
+                    detail = localInteractionProfilePresentation(localProfile, profilePressure, projectionContext)))))
             
             sections.add(SystemCheckSection(
                 id = "ai",
@@ -932,7 +945,7 @@ class SystemCheckViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             updateItem("agentic_execution", CheckStatus.RUNNING, "Running local agentic probe...")
             val startTime = System.currentTimeMillis()
-            val probeRunner = LocalAgenticProbeRunner(providerRouter)
+            val probeRunner = LocalAgenticProbeRunner(providerRouter, modelProfileRepository, localProfileSource)
             probeRunner.runProbe()
             val elapsed = System.currentTimeMillis() - startTime
 

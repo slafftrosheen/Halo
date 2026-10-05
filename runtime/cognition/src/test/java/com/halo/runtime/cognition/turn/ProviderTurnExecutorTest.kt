@@ -65,6 +65,31 @@ private class MockStreamProvider(
 }
 
 class ProviderTurnExecutorTest {
+    @Test fun localObservationsCarryTimingAndLifecycleWithoutContent() = runTest {
+        val observations = mutableListOf<com.halo.runtime.cognition.context.LocalInferenceObservation>()
+        val provider = MockStreamProvider(listOf(AiStreamEvent.Completed(AiResponse(
+            text = "private answer", providerId = "mock.provider", modelId = "mock-model",
+            executionBackend = "CPU", coldStart = true,
+            metrics = com.halo.sdk.provider.AiGenerationMetrics(100, 300, 1000, 20, 5)))))
+        val executor = DefaultProviderTurnExecutor(FakeExecutorEventBus(), observationSink =
+            com.halo.runtime.cognition.context.LocalInferenceObservationSink { observations += it })
+        executor.execute(createTarget(provider), AiRequest(text = "private request"), AiContext.EMPTY, "request", InteractionId("local"))
+        val observation = observations.single()
+        assertEquals(200L, observation.ttftMs)
+        assertEquals(900L, observation.totalMs)
+        assertEquals("CPU", observation.backend)
+        assertEquals(true, observation.coldStart)
+        assertTrue(observation.success)
+        assertTrue(!observation.toString().contains("private"))
+    }
+
+    @Test fun optionalObservationFailureCannotRetrySuccessfulGeneration() = runTest {
+        val provider = MockStreamProvider(listOf(AiStreamEvent.Completed(AiResponse(text = "ok", providerId = "mock.provider"))))
+        val executor = DefaultProviderTurnExecutor(FakeExecutorEventBus(), observationSink =
+            com.halo.runtime.cognition.context.LocalInferenceObservationSink { error("sink unavailable") })
+        assertTrue(executor.execute(createTarget(provider), AiRequest(text = "hello"), AiContext.EMPTY, "request", InteractionId("local")) is ProviderTurnResult.Response)
+    }
+
 
     private fun createTarget(provider: AiInferenceProvider, capabilities: Set<AiCapability> = setOf(AiCapability.TEXT, AiCapability.STREAMING, AiCapability.TOOLS)): AiExecutionTarget {
         val model = AiModel(

@@ -90,7 +90,10 @@ class LocalModelSession(
 
     /** Context actually allocated for the resident model. */
     val effectiveContextSize: Int?
-        get() = activeConfig?.contextSize
+        get() {
+            val native = activeRuntime as? LiteRtRuntime
+            return if (native != null) native.snapshot().contextTokens else activeConfig?.contextSize
+        }
 
     /**
      * MINING-P0-001 content-free native tool-channel observation from the last generation, when the

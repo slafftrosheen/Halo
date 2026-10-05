@@ -68,6 +68,7 @@ interface ProviderTurnExecutor {
 class DefaultProviderTurnExecutor(
     private val eventBus: EventBus,
     private val providerRouter: AiProviderRouter? = null,
+    private val observationSink: com.halo.runtime.cognition.context.LocalInferenceObservationSink? = null,
 ) : ProviderTurnExecutor {
     private val _streamingText = MutableStateFlow<String?>(null)
     override val streamingText = _streamingText.asStateFlow()
@@ -117,6 +118,11 @@ class DefaultProviderTurnExecutor(
                         "firstTokenMs=${firstTokenMs ?: "null"} durationMs=$durationMs " +
                         "finishReason=${response?.finishReason ?: "stop"}"
                 )
+                if (response != null && target.provider.isLocal) recordObservation(
+                    com.halo.runtime.cognition.context.LocalInferenceObservation(target.providerId, resolvedModel,
+                        response.executionBackend, firstTokenMs, durationMs, response.metrics?.inputTokens ?:
+                            ((request.text.orEmpty().length.toLong() + context.conversation.sumOf { it.content.length.toLong() } + 2) / 3).coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
+                        response.metrics?.outputTokens, true, response.coldStart))
                 return result
             } catch (cancelled: CancellationException) {
                 throw cancelled
@@ -143,10 +149,18 @@ class DefaultProviderTurnExecutor(
                             "recoverability=${aiEx?.details?.recoverability?.name} retryAfterMs=${aiEx?.details?.retryAfterMs} " +
                             "attempt=$attempt partialOutput=$partialOutput"
                     )
+                    if (target.provider.isLocal) recordObservation(com.halo.runtime.cognition.context.LocalInferenceObservation(
+                        target.providerId, target.modelId, totalMs = System.currentTimeMillis() - attemptStartMs, success = false))
                     throw error
                 }
             }
         }
+    }
+
+    private suspend fun recordObservation(observation: com.halo.runtime.cognition.context.LocalInferenceObservation) {
+        try { observationSink?.record(observation) }
+        catch (cancelled: CancellationException) { throw cancelled }
+        catch (_: Exception) { /* Optional telemetry cannot turn successful inference into a failure. */ }
     }
 
     private fun maybeRetrySameTarget(

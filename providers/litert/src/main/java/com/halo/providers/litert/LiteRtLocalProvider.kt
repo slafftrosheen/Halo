@@ -43,6 +43,7 @@ import com.halo.sdk.provider.AiModel
 import com.halo.sdk.provider.AiProviderException
 import com.halo.sdk.provider.Recoverability
 import com.halo.sdk.provider.AiRequest
+import com.halo.sdk.provider.AiGenerationMetrics
 import com.halo.sdk.provider.AiResponse
 import com.halo.sdk.provider.AiStreamEvent
 import com.halo.sdk.provider.LocalComputeBackend
@@ -645,8 +646,10 @@ class LiteRtLocalProvider(
      * How Halo can complete a tool loop with this artifact. Native calling is claimed only
      * when Halo's own probe observed a real tool call for this exact fingerprint.
      */
-    override suspend fun toolCallProtocol(): ToolCallProtocol = withContext(Dispatchers.IO) {
-        val modelId = configuredModelId ?: return@withContext ToolCallProtocol.NONE
+    override suspend fun toolCallProtocol(): ToolCallProtocol =
+        configuredModelId?.let { toolCallProtocol(it) } ?: ToolCallProtocol.NONE
+
+    override suspend fun toolCallProtocol(modelId: String): ToolCallProtocol = withContext(Dispatchers.IO) {
         val descriptor = inventoryRepository.resolveModel(modelId) ?: return@withContext ToolCallProtocol.NONE
         if (!descriptor.valid) return@withContext ToolCallProtocol.NONE
         toolCallProtocolFor(descriptor)
@@ -978,11 +981,20 @@ class LiteRtLocalProvider(
         maxOutputTokens: Int = LocalModelBenchmarkRunner.DEFAULT_MAX_OUTPUT_TOKENS,
     ): Result<LocalModelBenchmarkResult> = withContext(Dispatchers.IO) {
         loadMutex.withLock {
+            val descriptor = inventoryRepository.resolveModel(modelId)
+                ?: return@withLock Result.failure(com.halo.providers.litert.runtime.LocalModelBenchmarkFailure(
+                    com.halo.providers.litert.runtime.BenchmarkFailureCode.ARTIFACT_MISMATCH))
+            val requested = loadConfigFor(descriptor)
             LocalModelBenchmarkRunner(modelSession, inventoryRepository).runBenchmark(
                 modelId = modelId,
                 prompt = prompt,
                 maxOutputTokens = maxOutputTokens,
-                loadConfigFor = { descriptor -> loadConfigFor(descriptor) },
+                requestedBackend = requested.computeBackend,
+                loadConfigFor = { installed ->
+                    val resolution = resolveBackend(installed, requested.computeBackend)
+                    requested.copy(computeBackend = if (resolution.effective == LocalComputeBackend.GPU &&
+                        requested.computeBackend == LocalComputeBackend.AUTO) LocalComputeBackend.AUTO else resolution.effective)
+                },
             )
         }
     }
@@ -1457,8 +1469,16 @@ class LiteRtLocalProvider(
         )
     }
 
+    private fun generationMetrics(result: RuntimeGenerationResult, startedAtMs: Long, generationCompletedAtMs: Long): AiGenerationMetrics {
+        val completed = System.currentTimeMillis()
+        return AiGenerationMetrics(startedAtMs = startedAtMs,
+            firstTokenAtMs = (generationCompletedAtMs - result.durationMs + result.timeToFirstTokenMs).coerceIn(startedAtMs, completed),
+            completedAtMs = completed, outputTokens = result.tokenCount)
+    }
+
     override suspend fun generate(request: AiRequest, context: AiContext): AiResponse = withContext(Dispatchers.IO) {
         loadMutex.withLock locked@ {
+            val turnStartedAtMs = System.currentTimeMillis()
             request.validateForTextGeneration()
             request.validateAgainst((request.modelId ?: configuredModelId)?.let { capabilitiesForModel(it) }.orEmpty())
 
@@ -1496,6 +1516,7 @@ class LiteRtLocalProvider(
                     throw AiProviderException(AiErrorType.GENERATION_FAILED, "LiteRT generation failed: ${err.message}", err)
                 }
 
+                val generationCompletedAtMs = System.currentTimeMillis()
                 val effective = applyPromptProtocol(result, usePromptProtocol, requestedTools)
 
                 if (effective.text.isBlank() && effective.toolCalls.isEmpty()) {
@@ -1522,6 +1543,8 @@ class LiteRtLocalProvider(
                     finishReason = if (effective.toolCalls.isNotEmpty()) "tool_calls" else "stop",
                     toolCalls = effective.toolCalls,
                     executionBackend = modelSession.activeBackend?.name,
+                    coldStart = result.coldStart,
+                    metrics = generationMetrics(result, turnStartedAtMs, generationCompletedAtMs),
                 )
             } finally {
                 withContext(NonCancellable) {
@@ -1533,6 +1556,7 @@ class LiteRtLocalProvider(
 
     override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = channelFlow {
         loadMutex.withLock locked@ {
+            val turnStartedAtMs = System.currentTimeMillis()
             request.validateForTextGeneration()
             request.validateAgainst((request.modelId ?: configuredModelId)?.let { capabilitiesForModel(it) }.orEmpty())
             send(AiStreamEvent.Started)
@@ -1575,6 +1599,7 @@ class LiteRtLocalProvider(
                 }
 
                 result.onSuccess { gen ->
+                    val generationCompletedAtMs = System.currentTimeMillis()
                     val effective = applyPromptProtocol(gen, usePromptProtocol, requestedTools)
                     if (effective.text.isNotBlank() || effective.toolCalls.isNotEmpty()) {
                         recordReasoning(gen.reasoningText)
@@ -1598,6 +1623,8 @@ class LiteRtLocalProvider(
                                 finishReason = if (effective.toolCalls.isNotEmpty()) "tool_calls" else "stop",
                                 toolCalls = effective.toolCalls,
                                 executionBackend = modelSession.activeBackend?.name,
+                                coldStart = gen.coldStart,
+                                metrics = generationMetrics(gen, turnStartedAtMs, generationCompletedAtMs),
                             )
                         )
                     )

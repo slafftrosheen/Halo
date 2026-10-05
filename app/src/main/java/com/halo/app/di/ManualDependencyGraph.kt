@@ -987,7 +987,10 @@ object ManualDependencyGraph {
         DefaultActiveTurnCoordinator(eventBus)
     }
     val providerTurnExecutor by lazy {
-        DefaultProviderTurnExecutor(eventBus, aiProviderRouter)
+        DefaultProviderTurnExecutor(eventBus, aiProviderRouter, com.halo.runtime.cognition.context.LocalInferenceObservationSink { o ->
+            android.util.Log.i("HaloLocalProfile", "HALO_LOCAL_INFERENCE_OBSERVATION provider=${o.providerId} model=${o.modelId} backend=${o.backend} " +
+                "ttftMs=${o.ttftMs} totalMs=${o.totalMs} estimatedInputTokens=${o.estimatedInputTokens} estimatedOutputTokens=${o.estimatedOutputTokens} success=${o.success} coldStart=${o.coldStart}")
+        })
     }
     /**
      * MINING-P1-001 host thermal truth. Started lazily on first read; a single property read, never
@@ -1038,9 +1041,25 @@ object ManualDependencyGraph {
             presentationCommits = presentationCommitRegistry,
         )
     }
+    val modelRuntimeProfileRepository by lazy { com.halo.app.data.models.ModelRuntimeProfileRepository(appDatabase.modelRuntimeProfileDao()) }
+    val deviceRuntimeIdentity by lazy { com.halo.app.data.models.DeviceRuntimeIdentity.current(applicationContext) }
+    val localInferenceProfileSource by lazy {
+        com.halo.app.data.models.RoomLocalInferenceProfileSource(modelManager, modelRuntimeProfileRepository, deviceRuntimeIdentity,
+            { aiProviderRouter.getAllProviders().filterIsInstance<com.halo.providers.litert.LiteRtLocalProvider>().firstOrNull() })
+    }
+    val localBenchmarkProfileRecorder by lazy { com.halo.app.data.models.LocalBenchmarkProfileRecorder(modelRuntimeProfileRepository, localInferenceProfileSource, deviceRuntimeIdentity) }
     val cognitiveTurnPreparer by lazy {
         com.halo.runtime.cognition.turn.DefaultCognitiveTurnPreparer(
             workloadPlanner = DefaultAiWorkloadPlanner(),
+            localInferenceProfileSource = localInferenceProfileSource,
+            memoryPressure = {
+                providerGraph.nativeResourceCoordinator.budgetReevaluation?.invoke()
+                providerGraph.nativeResourceCoordinator.budget.value.pressure
+            },
+            localVoiceNextUse = { providerId, _ ->
+                if (providerId == com.halo.providers.litert.LiteRtLocalProvider.ProviderIds.LITERT)
+                    providerGraph.nativeResourceCoordinator.hint(com.halo.sdk.runtime.NativeNextUseHint.EXPECT_LLM)
+            },
             providerRouter = aiProviderRouter,
             contextAcquisitionCoordinator = contextAcquisitionCoordinator,
             contextAssembler = contextAssembler,
@@ -1303,6 +1322,9 @@ object ManualDependencyGraph {
 
     val intelligenceViewModel by lazy {
         IntelligenceViewModel(
+            profileSource = localInferenceProfileSource,
+            benchmarkRecorder = localBenchmarkProfileRecorder,
+            nativeResourceBudget = providerGraph.nativeResourceCoordinator.budget,
             snapshotManager = runtimeSnapshotManager,
             aiProviderRouter = aiProviderRouter,
             cognitiveSession = cognitiveSession,

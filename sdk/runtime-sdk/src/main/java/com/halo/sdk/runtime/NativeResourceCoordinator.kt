@@ -123,9 +123,16 @@ class NativeResourceCoordinator(
 
     suspend fun hint(next: NativeNextUseHint) = mutex.withLock {
         _nextUseHint.value = next
-        if (next == NativeNextUseHint.EXPECT_ASR) {
-            val asrOwners = active.filter { it.nativeResourceKind == NativeResourceKind.HEAVY_ASR }
-            for (owner in asrOwners) {
+        val wanted = when (next) {
+            NativeNextUseHint.EXPECT_ASR -> NativeResourceKind.HEAVY_ASR
+            NativeNextUseHint.EXPECT_LLM -> NativeResourceKind.HEAVY_LLM
+            NativeNextUseHint.NONE -> null
+        }
+        if (wanted != null && (next != NativeNextUseHint.EXPECT_LLM || _budget.value.pressure == NativeMemoryPressure.NORMAL)) {
+            val warmOwners = active.filter { it.nativeResourceKind == wanted &&
+                (next != NativeNextUseHint.EXPECT_LLM ||
+                    (it.defaultResourcePolicy.residencyPreference == ResidencyPreference.WARM_EJECTABLE && executionFacts[it]?.leaseHeld != true)) }
+            for (owner in warmOwners) {
                 expiry[owner]?.cancel()
                 val grace = owner.defaultResourcePolicy.idleGraceMillis
                     ?: if (_budget.value.pressure == NativeMemoryPressure.NORMAL) _budget.value.idleGraceMillis else 0L

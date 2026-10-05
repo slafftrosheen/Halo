@@ -33,6 +33,7 @@ data class ProbePhaseResult(
 class LocalAgenticProbeRunner(
     private val providerRouter: AiProviderRouter,
     private val modelProfileRepository: ModelRuntimeProfileRepository? = null,
+    private val profileSource: com.halo.app.data.models.RoomLocalInferenceProfileSource? = null,
 ) {
     private val _phases = MutableStateFlow<List<ProbePhaseResult>>(
         ProbePhase.entries.map { ProbePhaseResult(it, ProbeResult.NOT_RUN) }
@@ -53,7 +54,6 @@ class LocalAgenticProbeRunner(
         _phases.value = ProbePhase.entries.map { ProbePhaseResult(it, ProbeResult.NOT_RUN) }
         
         try {
-            updatePhase(ProbePhase.MODEL_RESOLVE, ProbeResult.PASS)
 
             val toolDef = ToolDefinition(
                 id = "probe_01",
@@ -85,15 +85,22 @@ class LocalAgenticProbeRunner(
 
             val request = AiRequest(
                 text = "Use the halo_probe tool with the value HALO_OK, then say Done.",
+                toolUseMode = ToolUseMode.REQUIRED,
             )
 
+            val target = providerRouter.resolveExecutionTarget(request, workload)
+            require(target.provider.isLocal) { "LOCAL_TARGET_REQUIRED" }
+            val profileBefore = profileSource?.entity(target.providerId, target.modelId)
+            val protocol = (target.provider as? ToolProtocolReporting)?.toolCallProtocol(target.modelId) ?: ToolCallProtocol.NONE
+            require(protocol.supportsToolLoop) { "TOOL_PROTOCOL_UNAVAILABLE" }
+            updatePhase(ProbePhase.MODEL_RESOLVE, ProbeResult.PASS)
+            val response = target.provider.generate(request.copy(modelId = target.modelId), context)
+            require(response.resolvedModelId == target.modelId && response.providerId == target.providerId) { "TARGET_MISMATCH" }
             updatePhase(ProbePhase.MODEL_LOAD, ProbeResult.PASS)
-
-            val response = providerRouter.execute(request, workload, context)
             
             updatePhase(ProbePhase.FIRST_GENERATION, ProbeResult.PASS)
 
-            if (response.toolCalls.isEmpty()) {
+            if (response.toolCalls.size != 1 || response.toolCalls.single().id.isBlank()) {
                 updatePhase(ProbePhase.TOOL_PROTOCOL, ProbeResult.FAIL, "No tool calls produced")
                 return
             }
@@ -120,38 +127,43 @@ class LocalAgenticProbeRunner(
                 conversation = listOf(
                     AIMessage(Role.USER, request.text!!),
                     AIMessage(Role.ASSISTANT, response.text, toolCalls = response.toolCalls),
-                    AIMessage(Role.TOOL, "{\"result\":\"ok\"}")
+                    AIMessage(Role.TOOL, "{\"result\":\"ok\"}", toolCallId = call.id)
                 )
             )
 
             val contRequest = AiRequest(
-                text = "",
-                modelId = response.modelId,
+                text = request.text,
+                modelId = target.modelId,
+                toolUseMode = ToolUseMode.REQUIRED,
+                appendTextAsUserMessage = false,
                 turnKind = ProviderTurnKind.TOOL_CONTINUATION
             )
 
-            val contResponse = providerRouter.execute(contRequest, workload, continuationContext)
+            val contResponse = target.provider.generate(contRequest, continuationContext)
+            require(contResponse.resolvedModelId == target.modelId && contResponse.providerId == target.providerId) { "TARGET_MISMATCH" }
 
             updatePhase(ProbePhase.TOOL_CONTINUATION, ProbeResult.PASS)
 
-            if (contResponse.text.isBlank()) {
+            if (contResponse.text.isBlank() || contResponse.toolCalls.isNotEmpty()) {
                 updatePhase(ProbePhase.FINAL_RESPONSE, ProbeResult.FAIL, "Empty continuation response")
                 return
             }
             updatePhase(ProbePhase.FINAL_RESPONSE, ProbeResult.PASS)
 
-            // If we successfully did all this, mark provenance.
-            // Since we can't easily get the profile ID here without reading it, we'll try to find it.
-            // Simplified logic for hack/fix: just update the local profile.
-            modelProfileRepository?.let { repo ->
-                // This is a naive update; in reality we should fetch the specific profile for the selected artifact/device.
+            val current = profileSource?.entity(target.providerId, target.modelId)
+            if (profileBefore != null && current != null && current.id == profileBefore.id &&
+                response.executionBackend == current.backend && contResponse.executionBackend == current.backend) {
+                markProbeProvenance(modelProfileRepository, current, protocol,
+                    _phases.value.all { it.result == ProbeResult.PASS })
             }
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            throw cancelled
         } catch (e: Exception) {
             // Find first NOT_RUN and mark it FAIL
             val current = _phases.value.toMutableList()
             val index = current.indexOfFirst { it.result == ProbeResult.NOT_RUN }
             if (index >= 0) {
-                current[index] = ProbePhaseResult(current[index].phase, ProbeResult.FAIL, e.message)
+                current[index] = ProbePhaseResult(current[index].phase, ProbeResult.FAIL, "PROBE_FAILED")
                 _phases.value = current
             }
         }

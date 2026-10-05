@@ -12,7 +12,7 @@ import androidx.room.PrimaryKey
             name = "index_model_runtime_profiles_profile_variant",
             value = [
                 "artifactId", "artifactFingerprint", "deviceFingerprint", "runtime", "backend",
-                "contextSize", "threads", "gpuLayers", "runtimeVersion", "compatibilityEpoch"
+                "contextSize", "threads", "gpuLayers", "runtimeVersion", "compatibilityEpoch", "isStable"
             ],
             unique = true
         )
@@ -25,7 +25,7 @@ data class ModelRuntimeProfileEntity(
     val deviceFingerprint: String,
     val runtime: String,
     val backend: String,
-    val contextSize: Int,
+    val contextSize: Int?,
     val threads: Int,
     val gpuLayers: Int,
     val loadMs: Long,

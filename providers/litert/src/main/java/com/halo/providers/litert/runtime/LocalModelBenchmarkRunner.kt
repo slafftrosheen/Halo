@@ -39,6 +39,8 @@ data class LocalModelBenchmarkResult(
     val promptText: String,
     val reasoningChars: Int,
     val peakHeapBytes: Long,
+    val cpuThreads: Int = 4,
+    val gpuLayers: Int = 0,
 ) {
     /** One compact line for the development UI/log. */
     fun summaryLine(): String = buildString {
@@ -59,6 +61,17 @@ data class LocalModelBenchmarkResult(
 internal fun javaHeapUsageBytes(): Long =
     Runtime.getRuntime().let { it.totalMemory() - it.freeMemory() }
 
+enum class BenchmarkFailureCode { LOAD_FAILED, GENERATION_FAILED, TIMEOUT, RESOURCE_BUSY, ARTIFACT_MISMATCH }
+
+class LocalModelBenchmarkFailure(
+    val code: BenchmarkFailureCode,
+    val backend: LocalComputeBackend? = null,
+    val contextTokens: Int? = null,
+    val cpuThreads: Int = 0,
+    val gpuLayers: Int = 0,
+    cause: Throwable? = null,
+) : Exception(code.name, cause)
+
 class LocalModelBenchmarkRunner(
     private val session: LocalModelSession,
     private val inventoryRepository: LocalModelInventoryRepository,
@@ -68,17 +81,18 @@ class LocalModelBenchmarkRunner(
         modelId: String,
         prompt: String = DEFAULT_PROMPT,
         maxOutputTokens: Int = DEFAULT_MAX_OUTPUT_TOKENS,
-        loadConfigFor: (LocalModelDescriptor) -> RuntimeLoadConfig,
+        requestedBackend: LocalComputeBackend? = null,
+        loadConfigFor: suspend (LocalModelDescriptor) -> RuntimeLoadConfig,
     ): Result<LocalModelBenchmarkResult> {
         val requestId = UUID.randomUUID().toString()
         val admission = session.tryBeginBenchmark(requestId)
         if (admission !is InferenceAdmission.Granted) {
-            return Result.failure(IllegalStateException("Session is busy with another task or benchmark"))
+            return Result.failure(LocalModelBenchmarkFailure(BenchmarkFailureCode.RESOURCE_BUSY))
         }
 
         try {
             val descriptor = inventoryRepository.resolveModel(modelId)
-                ?: return Result.failure(IllegalStateException("Model $modelId is not installed in inventory"))
+                ?: return Result.failure(LocalModelBenchmarkFailure(BenchmarkFailureCode.ARTIFACT_MISMATCH))
 
             val loadConfig = loadConfigFor(descriptor)
             val heapBefore = javaHeapUsageBytes()
@@ -88,7 +102,11 @@ class LocalModelBenchmarkRunner(
                 modelId = descriptor.id,
                 modelPath = descriptor.path,
                 config = loadConfig,
-            ).getOrElse { return Result.failure(it) }
+            ).getOrElse {
+                if (it is kotlinx.coroutines.CancellationException) throw it
+                return Result.failure(LocalModelBenchmarkFailure(BenchmarkFailureCode.LOAD_FAILED,
+                    cpuThreads = loadConfig.cpuThreads, gpuLayers = loadConfig.gpuLayers, cause = it))
+            }
             val loadDuration = System.currentTimeMillis() - loadStart
 
             val genConfig = RuntimeGenerationConfig(
@@ -100,7 +118,12 @@ class LocalModelBenchmarkRunner(
             val genResult = session.generate(
                 config = genConfig,
                 benchmarkRequestId = requestId,
-            ).getOrElse { return Result.failure(it) }
+            ).getOrElse {
+                if (it is kotlinx.coroutines.CancellationException) throw it
+                return Result.failure(LocalModelBenchmarkFailure(BenchmarkFailureCode.GENERATION_FAILED,
+                    backend = session.activeBackend, contextTokens = session.effectiveContextSize,
+                    cpuThreads = loadConfig.cpuThreads, gpuLayers = loadResult.activeGpuLayers, cause = it))
+            }
 
             val heapDuring = javaHeapUsageBytes()
 
@@ -110,11 +133,11 @@ class LocalModelBenchmarkRunner(
                     displayName = descriptor.displayName,
                     artifactSha256 = descriptor.sha256,
                     artifactBytes = descriptor.bytes,
-                    requestedBackend = loadConfig.computeBackend,
-                    effectiveBackend = loadResult.activeBackend,
+                    requestedBackend = requestedBackend ?: loadConfig.computeBackend,
+                    effectiveBackend = session.activeBackend ?: loadResult.activeBackend,
                     requestedContextTokens = loadResult.requestedContextSize
                         ?: loadConfig.contextSize.takeUnless { loadConfig.useModelDefaultContext },
-                    effectiveContextTokens = loadResult.effectiveContextSize,
+                    effectiveContextTokens = session.effectiveContextSize,
                     loadDurationMs = loadDuration,
                     engineInitDurationMs = session.engineInitDurationMs,
                     conversationCreateDurationMs = session.conversationCreateDurationMs,
@@ -129,6 +152,8 @@ class LocalModelBenchmarkRunner(
                     promptText = prompt,
                     reasoningChars = genResult.reasoningText?.length ?: 0,
                     peakHeapBytes = maxOf(heapBefore, heapDuring),
+                    cpuThreads = session.activeConfig?.cpuThreads ?: loadConfig.cpuThreads,
+                    gpuLayers = session.activeGpuLayers,
                 )
             )
         } finally {

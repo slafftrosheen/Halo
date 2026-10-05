@@ -36,6 +36,7 @@ import kotlinx.coroutines.delay
 class LiteRtLocalProviderStreamTest {
 
     private class FakeRuntime : LocalInferenceRuntime {
+        var lastLoadBackend: LocalComputeBackend? = null
         override val format = LocalModelFormat.LITERT_LM
         override val state = MutableStateFlow(LocalModelSessionState.IDLE)
         override val loadedModelId: String? = "test_model"
@@ -43,6 +44,7 @@ class LiteRtLocalProviderStreamTest {
         override fun isLoaded(): Boolean = true
 
         override suspend fun loadModel(modelId: String, modelPath: String, config: RuntimeLoadConfig): Result<RuntimeLoadResult> {
+            lastLoadBackend = config.computeBackend
             return Result.success(RuntimeLoadResult(LocalComputeBackend.CPU, 0, config.contextSize, null))
         }
 
@@ -105,6 +107,19 @@ class LiteRtLocalProviderStreamTest {
         override fun putBoolean(key: String, value: Boolean) {}
         override fun remove(key: String) {}
         override fun clear() {}
+    }
+
+    @Test fun explicitBenchmarkUsesTheExistingCpuSafeAutoGate() = runTest {
+        val runtime = FakeRuntime()
+        val provider = LiteRtLocalProvider(
+            context = ApplicationProvider.getApplicationContext(), inventoryRepository = FakeInventory(),
+            storage = FakeStorage(), nativeResourceCoordinator = null,
+            modelSession = LocalModelSession({ runtime }, backgroundScope))
+        val result = provider.benchmarkModel("test_model").getOrThrow()
+        assertEquals(LocalComputeBackend.CPU, runtime.lastLoadBackend)
+        assertEquals(LocalComputeBackend.AUTO, result.requestedBackend)
+        assertEquals(LocalComputeBackend.CPU, result.effectiveBackend)
+        assertEquals(4096, result.effectiveContextTokens)
     }
 
     @Test

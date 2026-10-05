@@ -10,7 +10,6 @@ import com.halo.sdk.runtime.NativeResourceCoordinator
 import com.halo.sdk.runtime.NativeResourceKind
 import com.halo.sdk.runtime.NativeResourceOwner
 import com.halo.sdk.runtime.NativeResourceState
-import com.halo.sdk.runtime.NativeNextUseHint
 import com.halo.sdk.runtime.RuntimeWorkloadClass
 import com.halo.sdk.runtime.ResidencyPreference
 import com.halo.sdk.runtime.WorkloadResourcePolicy
@@ -171,7 +170,7 @@ class SherpaOfflineSpeechRecognitionProvider(
                 val totalMs = SystemClock.elapsedRealtime() - startedAt
                 val rtf = if (audioDurationMs > 0) decodeMs.toDouble() / audioDurationMs else 0.0
                 Log.i(TAG, "HALO_STT_DONE capture=$captureId model=${spec.id} language=${whisperLanguage.ifBlank { "auto" }} audioMs=$audioDurationMs loadMs=$loadMs decodeMs=$decodeMs totalMs=$totalMs rtf=$rtf chars=${text.length}")
-                nativeResourceCoordinator?.hint(NativeNextUseHint.EXPECT_LLM)
+                // Cognition issues EXPECT_LLM only after resolving an actual local target.
 
                 // getResult() has copied the transcript into Kotlin. From this
                 // point on, native stream destruction must not delay handoff to

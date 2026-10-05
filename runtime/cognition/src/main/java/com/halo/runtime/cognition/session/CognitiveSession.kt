@@ -313,9 +313,9 @@ class CognitiveSession(
                     origin = interpretation.origin,
                     metadata = interpretation.metadata + mapOf(
                         "executionRoute" to if (route is InterpretationExecutionRoute.DirectResponse) "DIRECT_RESPONSE" else "AGENTIC",
-                        "preferredRole" to if (route is InterpretationExecutionRoute.DirectResponse) "CHAT" else "AGENTIC",
                         "requiresTools" to (route !is InterpretationExecutionRoute.DirectResponse).toString(),
-                    ) + (routeHint?.let { mapOf("agenticHint" to it) } ?: emptyMap())
+                    ) + (if (route is InterpretationExecutionRoute.Agentic) mapOf("preferredRole" to "AGENTIC") else emptyMap()) +
+                        (routeHint?.let { mapOf("agenticHint" to it) } ?: emptyMap())
                 )
             }
         }

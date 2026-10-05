@@ -146,6 +146,7 @@ class LiteRtRuntime(
     private var lastFallbackReason: String? = null
     private var activeCachePath: String? = null
     private var engineInitDurationMs: Long? = null
+    private var engineGenerationAttempted: Boolean = false
     private var conversationCreateDurationMs: Long? = null
 
     /** Everything needed to rebuild this exact model on another accelerator. */
@@ -513,6 +514,7 @@ class LiteRtRuntime(
 
             stateMutex.withLock {
                 engine = outcome.engine
+                engineGenerationAttempted = false
                 requestedBackend = outcome.requestedBackend
                 effectiveBackend = outcome.effectiveBackend
                 requestedContextTokens = outcome.requestedContextTokens
@@ -634,6 +636,7 @@ class LiteRtRuntime(
                 val previous = stateMutex.withLock {
                     if (engine !== expectedEngine) null else engine.also {
                         engine = null
+                        engineGenerationAttempted = false
                         activeConversation = null
                         _state.value = LocalModelSessionState.LOADING
                     }
@@ -656,6 +659,7 @@ class LiteRtRuntime(
                         )
                         stateMutex.withLock {
                             engine = null
+                            engineGenerationAttempted = false
                             activeConversation = null
                             lastFallbackReason = "$reason; CPU rebuild failed: ${bounded(error)}"
                             _state.value = LocalModelSessionState.ERROR
@@ -673,6 +677,7 @@ class LiteRtRuntime(
 
                 stateMutex.withLock {
                     engine = cpuEngine
+                    engineGenerationAttempted = false
                     requestedBackend = LocalComputeBackend.AUTO
                     effectiveBackend = LocalComputeBackend.CPU
                     effectiveContextTokens = contextTokens
@@ -700,6 +705,9 @@ class LiteRtRuntime(
             )
 
         val engineBackendAtStart = stateMutex.withLock { effectiveBackend }
+        val coldStart = stateMutex.withLock {
+            (!engineGenerationAttempted).also { engineGenerationAttempted = true }
+        }
         val retryableOnGpu = requestedBackend == LocalComputeBackend.AUTO &&
             engineBackendAtStart == LocalComputeBackend.GPU &&
             !cpuFallbackConsumed
@@ -746,7 +754,7 @@ class LiteRtRuntime(
             Log.i(
                 TAG,
                 "$EVENT_GENERATION_START model=$_loadedModelId backend=${backendName(engineBackendAtStart)} " +
-                    "tools=${config.availableTools.size} maxTokens=${config.maxTokens}",
+                    "tools=${config.availableTools.size} maxTokens=${config.maxTokens} runtimeResidency=${if (coldStart) "COLD" else "WARM"}",
             )
 
             // Conversation creation is its own failure stage: an engine that initializes but
@@ -901,7 +909,7 @@ class LiteRtRuntime(
                     "ttftMs=$ttft chars=${textBuilder.length} estimatedTokens=$tokenCount " +
                     "toolCalls=${nativeToolCalls.size} inputEstimatedTokens=${(config.prompt.length + config.systemInstruction.orEmpty().length + config.initialMessages.sumOf { it.content.length } + 2) / 3} " +
                     "historyMessageCount=${config.initialMessages.size} engineLoadMs=${engineInitDurationMs ?: 0} conversationCreateMs=${conversationCreateDurationMs ?: 0} " +
-                    "generationMs=$durationMs outputEstimatedTokens=$tokenCount effectiveBackend=$engineBackendAtStart",
+                    "generationMs=$durationMs outputEstimatedTokens=$tokenCount effectiveBackend=$engineBackendAtStart runtimeResidency=${if (coldStart) "COLD" else "WARM"}",
             )
 
             GenerationAttempt.Finished(
@@ -914,6 +922,7 @@ class LiteRtRuntime(
                         tokensPerSecond = tokensPerSec,
                         durationMs = durationMs,
                         reasoningText = reasoning.ifBlank { null },
+                        coldStart = coldStart,
                     )
                 )
             )
@@ -1000,6 +1009,7 @@ class LiteRtRuntime(
         val detached = DetachedRuntimeResources(engine, activeConversation)
         activeConversation = null
         engine = null
+        engineGenerationAttempted = false
         _loadedModelId = null
         effectiveContextTokens = null
         requestedContextTokens = null

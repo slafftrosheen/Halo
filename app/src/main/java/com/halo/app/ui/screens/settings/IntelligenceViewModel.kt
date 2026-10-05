@@ -68,6 +68,7 @@ data class IntelligenceUiState(
     val modelFailureRecords: Map<String, LiteRtModelFailureRecord> = emptyMap(),
     val smokeTests: Map<String, LocalModelSmokeTestResult> = emptyMap(),
     val benchmarkResults: Map<String, LocalModelBenchmarkResult> = emptyMap(),
+    val measuredProfiles: Map<String, com.halo.runtime.cognition.context.LocalInferenceRuntimeProfile> = emptyMap(),
     val toolProbes: Map<String, LiteRtToolProbeResult> = emptyMap(),
     val matrixRows: List<LocalModelMatrixRow> = emptyList(),
     val runningMatrix: Boolean = false,
@@ -95,6 +96,7 @@ data class IntelligenceUiState(
     val routingPolicy: AiRoutingPolicy = AiRoutingPolicy.AUTOMATIC,
     val activeProviderIsLocal: Boolean? = null,
     val nativeResources: List<NativeResourceSnapshot> = emptyList(),
+    val memoryPressure: com.halo.sdk.runtime.NativeMemoryPressure = com.halo.sdk.runtime.NativeMemoryPressure.NORMAL,
     val legacyGgufCount: Int = 0,
     val legacyGgufBytes: Long = 0L,
     val inferenceRequests: Long = 0L,
@@ -137,6 +139,7 @@ private data class LocalDevInputs(
     val developerBackends: Map<String, LocalComputeBackend> = emptyMap(),
     val smokeTests: Map<String, LocalModelSmokeTestResult> = emptyMap(),
     val benchmarkResults: Map<String, LocalModelBenchmarkResult> = emptyMap(),
+    val measuredProfiles: Map<String, com.halo.runtime.cognition.context.LocalInferenceRuntimeProfile> = emptyMap(),
     val toolProbes: Map<String, LiteRtToolProbeResult> = emptyMap(),
     /** MINING-P0-001 explicit direct LiteRT SDK control probe results, keyed by model id. */
     val controlProbes: Map<String, LiteRtControlProbeResult> = emptyMap(),
@@ -162,6 +165,9 @@ class IntelligenceViewModel(
     private val dispatchers: HaloDispatchers = productionHaloDispatchers(),
     private val inferenceLedger: InferenceLedger? = null,
     private val catalogRepository: com.halo.engines.ai.catalog.AiModelCatalogRepository = DefaultAiModelCatalogRepository(aiProviderRouter.getAllProviders().filterIsInstance<AiInferenceProvider>()),
+    private val profileSource: com.halo.app.data.models.RoomLocalInferenceProfileSource? = null,
+    private val benchmarkRecorder: com.halo.app.data.models.LocalBenchmarkProfileRecorder? = null,
+    private val nativeResourceBudget: StateFlow<com.halo.sdk.runtime.NativeResourceBudget>? = null,
 ) : ViewModel() {
 
     private val _refreshTrigger = MutableStateFlow(0)
@@ -189,6 +195,12 @@ class IntelligenceViewModel(
 
     init {
         viewModelScope.launch { loadSettings() }
+        viewModelScope.launch { nativeResourceBudget?.collect { _refreshTrigger.update { it + 1 } } }
+        viewModelScope.launch(dispatchers.io) {
+            modelManager?.inventoryState?.collectLatest { state ->
+                if (state is com.halo.providers.litert.models.LocalModelInventoryState.Ready) refreshMeasuredProfiles(state.models.map { it.id })
+            }
+        }
         viewModelScope.launch {
             aiProviderRouter.selectedProviderId.collectLatest { providerId ->
                 if (providerId != null) {
@@ -347,6 +359,7 @@ class IntelligenceViewModel(
             modelFailureRecords = verification.modelMemory,
             smokeTests = dev.smokeTests,
             benchmarkResults = dev.benchmarkResults,
+            measuredProfiles = dev.measuredProfiles,
             toolProbes = dev.toolProbes,
             controlProbes = dev.controlProbes,
             toolQualification = localModels.associate { descriptor ->
@@ -372,6 +385,7 @@ class IntelligenceViewModel(
             routingPolicy = selection.routingPolicy,
             activeProviderIsLocal = activeProvider?.isLocal,
             nativeResources = snapshot.nativeResources,
+            memoryPressure = nativeResourceBudget?.value?.pressure ?: com.halo.sdk.runtime.NativeMemoryPressure.NORMAL,
             legacyGgufCount = ggufs.size,
             legacyGgufBytes = ggufs.sumOf { it.length() },
             inferenceRequests = inference.requests,
@@ -512,6 +526,21 @@ class IntelligenceViewModel(
             developerBackends = devInputs.value.developerBackends + (modelId to backend),
         )
         _refreshTrigger.update { it + 1 }
+        viewModelScope.launch(dispatchers.io) { refreshMeasuredProfiles(listOf(modelId)) }
+    }
+
+    private suspend fun refreshMeasuredProfiles(ids: List<String>) {
+        val resolved = mutableMapOf<String, com.halo.runtime.cognition.context.LocalInferenceRuntimeProfile?>()
+        for (id in ids) resolved[id] = profileSource?.profile(ProviderIds.LITERT, id)
+        val installed = (modelManager?.inventoryState?.value as? com.halo.providers.litert.models.LocalModelInventoryState.Ready)
+            ?.models.orEmpty().filter { it.valid }.mapTo(hashSetOf()) { it.id }
+        devInputs.update { current ->
+            val next = current.measuredProfiles.filterKeys { it in installed }.toMutableMap()
+            for ((id, profile) in resolved) {
+                if (profile == null || id !in installed) next.remove(id) else next[id] = profile
+            }
+            current.copy(measuredProfiles = next)
+        }
     }
 
     /** Two-prompt smoke test: proves repeated generation without a process restart. */
@@ -521,11 +550,14 @@ class IntelligenceViewModel(
     }
 
     fun benchmarkModel(modelId: String) = runModelTask(modelId) { provider ->
-        provider.benchmarkModel(modelId).onSuccess { result ->
+        val verifiedBefore = profileSource?.artifactFingerprint(modelId)
+        provider.benchmarkModel(modelId).fold(onSuccess = { result ->
             devInputs.value = devInputs.value.copy(
                 benchmarkResults = devInputs.value.benchmarkResults + (modelId to result),
             )
-        }
+            benchmarkRecorder?.record(result, verifiedBefore)
+        }, onFailure = { error -> benchmarkRecorder?.failure(modelId, verifiedBefore, error) })
+        refreshMeasuredProfiles(listOf(modelId))
     }
 
     /** Optional capability probe: never marks the model broken when the artifact cannot tool-call. */

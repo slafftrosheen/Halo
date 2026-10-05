@@ -59,6 +59,9 @@ class DefaultCognitiveTurnPreparer(
     private val imageInputPreparer: com.halo.sdk.runtime.multimodal.ImageInputPreparer? = null,
     private val mediaObjectPolicy: com.halo.sdk.runtime.multimodal.MediaObjectPolicyResolver? = null,
     private val eventBus: com.halo.sdk.runtime.EventBus? = null,
+    private val localInferenceProfileSource: com.halo.runtime.cognition.context.LocalInferenceProfileSource? = null,
+    private val memoryPressure: suspend () -> com.halo.sdk.runtime.NativeMemoryPressure = { com.halo.sdk.runtime.NativeMemoryPressure.NORMAL },
+    private val localVoiceNextUse: suspend (providerId: String, modelId: String) -> Unit = { _, _ -> },
     private val freshUiObservation: suspend () -> com.halo.sdk.runtime.ScreenContextSnapshot? = { null },
 ) : CognitiveTurnPreparer {
 
@@ -81,11 +84,20 @@ class DefaultCognitiveTurnPreparer(
                 })
             }
             val protocol = if (input.workload.toolUseMode == com.halo.sdk.provider.ToolUseMode.NONE) com.halo.sdk.provider.ToolCallProtocol.NONE
-                else (target.provider as? com.halo.sdk.provider.ToolProtocolReporting)?.toolCallProtocol()
+                else (target.provider as? com.halo.sdk.provider.ToolProtocolReporting)?.toolCallProtocol(target.modelId)
                     ?: if (AiCapability.TOOLS in target.effectiveCapabilities) com.halo.sdk.provider.ToolCallProtocol.NATIVE else com.halo.sdk.provider.ToolCallProtocol.NONE
             if (input.workload.toolUseMode == com.halo.sdk.provider.ToolUseMode.NONE) context = context.copy(availableTools = emptyList())
             if (input.workload.toolUseMode == com.halo.sdk.provider.ToolUseMode.REQUIRED && !protocol.supportsToolLoop)
                 throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY, "Child action requires a tool-capable target")
+            if (target.model.executionLocation == com.halo.sdk.provider.AiExecutionLocation.ON_DEVICE) {
+                val profile = compatibleLocalProfile(target)
+                val pressure = memoryPressure()
+                val tier = com.halo.runtime.cognition.context.localInferencePerformance(true, target.model.contextLength, false, profile, pressure)?.tier
+                println("HALO_LOCAL_INTERACTION_PROFILE interactionId=${turn.interactionId.value} provider=${target.providerId} model=${target.modelId} " +
+                    "surface=TEXT profileSource=${if (profile != null) "MEASURED" else "DEFAULT"} performanceTier=${tier ?: "UNKNOWN"} " +
+                    "profileTtftMs=${profile?.ttftMs} profileEstimatedTokPerSec=${profile?.estimatedGenerationTokensPerSecond} memoryPressure=$pressure " +
+                    "historyBudgetTokens=null outputBudgetTokens=${turn.request.maxOutputTokens} role=${input.workload.preferredRole}")
+            }
             return PreparedCognitiveTurn(turn, CognitiveWorkloadPlan(input.workload,
                 com.halo.runtime.cognition.context.ContextAcquisitionPlan(turn.interactionId, emptyList())), target, context,
                 turn.request.copy(modelId = target.modelId, toolUseMode = input.workload.toolUseMode), target.effectiveCapabilities.map { it.name }.toSet(), emptySet(),
@@ -111,6 +123,7 @@ class DefaultCognitiveTurnPreparer(
         if (turn.mode == CognitiveTurnMode.CONTINUE_AFTER_TOOL && workload.inference.tools == com.halo.sdk.provider.AiFeatureRequirement.NOT_NEEDED)
             workload = workload.copy(inference = workload.inference.copy(tools = com.halo.sdk.provider.AiFeatureRequirement.OPTIONAL))
 
+        workload = preferFastVoiceRole(turn, workload)
         val target = if (turn.runId != null) {
             val run = agentRunStore?.get(turn.runId)
             val metadata = run?.steps?.filterIsInstance<AgentStep.ProviderTurnStarted>()?.lastOrNull()
@@ -208,7 +221,7 @@ class DefaultCognitiveTurnPreparer(
             ?.takeIf { target.provider.isLocal }
         val toolProtocol = when {
             workload.inference.toolUseMode == com.halo.sdk.provider.ToolUseMode.NONE -> com.halo.sdk.provider.ToolCallProtocol.NONE
-            toolProtocolReporter != null -> toolProtocolReporter.toolCallProtocol()
+            toolProtocolReporter != null -> toolProtocolReporter.toolCallProtocol(target.modelId)
             AiCapability.TOOLS in target.effectiveCapabilities -> com.halo.sdk.provider.ToolCallProtocol.NATIVE
             else -> com.halo.sdk.provider.ToolCallProtocol.NONE
         }
@@ -226,7 +239,15 @@ class DefaultCognitiveTurnPreparer(
         }
 
         val voiceSurface = turn.responseDelivery == com.halo.sdk.runtime.ResponseDelivery.SPEECH_AND_VISUAL
-        val performance = com.halo.runtime.cognition.context.localInferencePerformance(targetIsOnDevice, target.model.contextLength, voiceSurface)
+        val profile = if (targetIsOnDevice) compatibleLocalProfile(target) else null
+        val pressure = memoryPressure()
+        if (voiceSurface && targetIsOnDevice) localVoiceNextUse(target.providerId, target.modelId)
+        val performance = com.halo.runtime.cognition.context.localInferencePerformance(targetIsOnDevice, target.model.contextLength, voiceSurface, profile, pressure)
+        if (targetIsOnDevice) println("HALO_LOCAL_INTERACTION_PROFILE interactionId=${turn.interactionId.value} provider=${target.providerId} model=${target.modelId} " +
+            "surface=${if (voiceSurface) "VOICE" else "TEXT"} profileSource=${if (profile != null) "MEASURED" else "DEFAULT"} " +
+            "performanceTier=${performance?.tier ?: com.halo.runtime.cognition.context.LocalPerformanceTier.UNKNOWN} profileTtftMs=${profile?.ttftMs} " +
+            "profileEstimatedTokPerSec=${profile?.estimatedGenerationTokensPerSecond} memoryPressure=$pressure " +
+            "historyBudgetTokens=${performance?.history?.maxConversationTokens} outputBudgetTokens=${performance?.outputTokens?.let { minOf(it, turn.request.maxOutputTokens ?: Int.MAX_VALUE) } ?: turn.request.maxOutputTokens} role=${workload.inference.preferredRole}")
         val performanceBudget = performance?.history
         val assemblyResult = contextAssembler.assemble(
             policy = turn.policy,
@@ -361,6 +382,12 @@ class DefaultCognitiveTurnPreparer(
             toolProtocol = toolProtocol,
         )
     }
+
+    private suspend fun compatibleLocalProfile(target: AiExecutionTarget): com.halo.runtime.cognition.context.LocalInferenceRuntimeProfile? =
+        try { localInferenceProfileSource?.profile(target.providerId, target.modelId)
+            ?.takeIf { it.providerId == target.providerId && it.modelId == target.modelId && it.stable } }
+        catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (_: Exception) { null }
 
     private suspend fun bindAssembledContext(
         request: AiRequest,

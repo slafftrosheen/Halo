@@ -215,6 +215,37 @@ class NativeResourceCoordinatorTest {
         assertFalse(cache.executionLeaseHeld)
     }
 
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    @Test fun llmHintRefreshesOnlyIdleWarmResidencyUnderNormalPressure() = kotlinx.coroutines.test.runTest {
+        val coordinator = NativeResourceCoordinator(scope = backgroundScope)
+        coordinator.updateBudget(NativeResourceBudget(idleGraceMillis = 500))
+        val llm = FakeOwner(NativeResourceKind.HEAVY_LLM)
+        coordinator.acquire(llm)
+        coordinator.mark(llm, NativeResourceState.RESIDENT, "idle")
+        testScheduler.runCurrent()
+        testScheduler.advanceTimeBy(400)
+        coordinator.hint(NativeNextUseHint.EXPECT_LLM)
+        testScheduler.runCurrent()
+        testScheduler.advanceTimeBy(200)
+        assertFalse(llm.released)
+        testScheduler.advanceTimeBy(301)
+        testScheduler.runCurrent()
+        assertTrue(llm.released)
+    }
+
+    @Test fun llmHintDoesNotExtendOrReviveResidencyUnderPressure() = runBlocking {
+        for (pressure in listOf(NativeMemoryPressure.LOW, NativeMemoryPressure.CRITICAL)) {
+            val coordinator = NativeResourceCoordinator()
+            val llm = FakeOwner(NativeResourceKind.HEAVY_LLM)
+            coordinator.acquire(llm)
+            coordinator.mark(llm, NativeResourceState.RESIDENT, "idle")
+            coordinator.updateBudget(NativeResourceBudget(pressure = pressure))
+            coordinator.hint(NativeNextUseHint.EXPECT_LLM)
+            assertTrue(llm.released)
+            assertFalse(NativeResourceKind.HEAVY_LLM in coordinator.activeKinds())
+        }
+    }
+
     private class FakeOwner(
         override val nativeResourceKind: NativeResourceKind,
         private val canRelease: Boolean = true,
