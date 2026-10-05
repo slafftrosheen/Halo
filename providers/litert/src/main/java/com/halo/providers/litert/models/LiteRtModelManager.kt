@@ -91,11 +91,19 @@ class LiteRtModelManager(
         scope.launch { refresh(ModelInventoryRefreshReason.STARTUP) }
     }
 
+    override suspend fun verifyPhysicalArtifact(modelId: String): LocalModelDescriptor? {
+        refresh(ModelInventoryRefreshReason.INVALIDATED)
+        return (inventoryState.value as? LocalModelInventoryState.Ready)?.models?.firstOrNull { it.id == modelId && it.valid }
+    }
+
     override fun invalidate(reason: String) {
         scope.launch { refresh(ModelInventoryRefreshReason.INVALIDATED) }
     }
 
+    private val inventoryRevision = java.util.concurrent.atomic.AtomicLong()
+
     override suspend fun refresh(reason: ModelInventoryRefreshReason) = inventoryMutex.withLock {
+        physicalFingerprints.clear()
         _inventoryState.value = LocalModelInventoryState.Loading
         runCatching {
             withContext(Dispatchers.IO) { scanModelRoot() }
@@ -103,7 +111,7 @@ class LiteRtModelManager(
             if (_acquisitionDiagnostics.value?.stage == LiteRtFailureStage.INVENTORY) {
                 _acquisitionDiagnostics.value = null
             }
-            _inventoryState.value = LocalModelInventoryState.Ready(descriptors, System.currentTimeMillis())
+            _inventoryState.value = LocalModelInventoryState.Ready(descriptors, System.currentTimeMillis(), inventoryRevision.incrementAndGet())
             reconcileDownloadStates(descriptors)
             Log.i(
                 TAG,
@@ -111,6 +119,7 @@ class LiteRtModelManager(
                     "verified=${descriptors.count { it.verified }}",
             )
         }.onFailure { error ->
+            if (error is kotlinx.coroutines.CancellationException) throw error
             Log.e(TAG, "HALO_LITERT_INVENTORY_FAILED reason=$reason", error)
             _acquisitionDiagnostics.value = LiteRtAcquisitionDiagnostics(
                 modelId = null,

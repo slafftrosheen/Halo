@@ -77,6 +77,7 @@ class SpeechPerceptionBridge(
                     payload = SpeechRecognizedPayload(accepted.transcript, event.locale),
                     metadata = buildMap {
                         put("engine", "SpeechPerceptionBridge")
+                        put("inputModality", "VOICE")
                         put("captureId", interactionId)
                         put("interactionId", interactionId)
                         put("inputRoute", event.input?.route ?: SpeechInputRoute.Phone)

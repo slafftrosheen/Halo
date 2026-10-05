@@ -209,6 +209,8 @@ open class DefaultInterpretationEngine(
             put("observationId", observation.id.value)
             put("interactionId", observation.metadata["interactionId"]?.toString() ?: observation.interactionId)
             put("inputSource", observation.origin?.source?.toString() ?: observation.source.name)
+            observation.metadata["inputModality"]?.toString()?.let { put("inputModality", it) }
+                ?: if (observation.source == Source.MICROPHONE || speechRoute != null) put("inputModality", "VOICE") else Unit
             observation.sourceDeviceId?.let { put("sourceDeviceId", it) }
             observation.metadata["captureId"]?.let { put("captureId", it.toString()) }
             observation.metadata["inputRoute"]?.let { put("inputRoute", it.toString()) }

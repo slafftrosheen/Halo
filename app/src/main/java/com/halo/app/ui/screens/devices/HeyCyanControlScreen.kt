@@ -190,7 +190,7 @@ fun HeyCyanControlScreen(
                             source = com.halo.sdk.runtime.Source.MICROPHONE, sourceDeviceId = deviceId,
                             captureId = interactionId, speechRoute = com.halo.sdk.runtime.SpeechInputRoute.Device(
                                 deviceId, null, "HeyCyan", com.halo.sdk.runtime.AudioDeviceKind.WEARABLE)),
-                        metadata = mapOf("interactionId" to interactionId, "inputSource" to "HeyCyan", "origin" to "glasses"),
+                        metadata = mapOf("inputModality" to "TEXT", "interactionId" to interactionId, "inputSource" to "HeyCyan", "origin" to "glasses"),
                     )
                 })
             }

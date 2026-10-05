@@ -59,7 +59,7 @@ fun ModelBrowserScreen(viewModel: ModelBrowserViewModel, onBack: () -> Unit, onP
         }
         if (state.entries.isEmpty()) item { Text("No cached models match. Configure a provider and explicitly refresh its metadata, or download an on-device model.") }
         items(state.entries, key = { "${it.model.providerId}:${it.model.id}" }) { entry ->
-            Card(onClick = { if (providersById[entry.model.providerId]?.configured == true) viewModel.pick(entry) else onProvider(entry.model.providerId) }, modifier = Modifier.fillMaxWidth()) {
+            Card(onClick = { if (entry.runtime.installed != false && providersById[entry.model.providerId]?.configured == true) viewModel.pick(entry) else onProvider(entry.model.providerId) }, modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(14.dp)) {
                     val selected = entry.model.providerId == selectedProvider && entry.model.id == selectedModel
                     if (providersById[entry.model.providerId]?.configured != true) Text("Provider setup required")
@@ -69,6 +69,7 @@ fun ModelBrowserScreen(viewModel: ModelBrowserViewModel, onBack: () -> Unit, onP
                         .filter { ModelBrowserViewModel.supports(entry.model, it) }
                         .joinToString(" · ") { if (it == AiCapability.IMAGE) "Vision" else it.name.lowercase().replaceFirstChar { c -> c.uppercase() } })
                     Text(when (entry.runtime.location) { AiExecutionLocation.ON_DEVICE -> "On device"; AiExecutionLocation.LOCAL_NETWORK -> "Local network"; else -> "Cloud" })
+                    if (entry.runtime.installed == false) Text("Available to download or import · Open provider setup")
                     if (selected) Text("Selected for Chat")
                 }
             }

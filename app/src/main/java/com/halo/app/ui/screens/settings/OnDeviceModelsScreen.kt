@@ -567,10 +567,11 @@ private fun ModelCard(
             }
 
             if (detailsExpanded) {
+                val liveHealth = liveLocalHealth(model.id)
                 Text(
                     buildString {
                         appendLine("Artifact: ${model.filename}")
-                        appendLine(localInteractionProfilePresentation(measuredProfile, memoryPressure, (descriptor?.contextWindowTokens ?: model.contextWindowTokens).toLong()))
+                        appendLine(localInteractionProfilePresentation(measuredProfile, memoryPressure, (descriptor?.contextWindowTokens ?: model.contextWindowTokens).toLong(), liveHealth))
                         appendLine()
                         appendLine("Access: ${model.access} · maturity: ${model.maturity}")
                         appendLine("Pinned revision: ${model.revision}")
@@ -643,7 +644,7 @@ private fun ImportedModelCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(descriptor.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-            Text(localInteractionProfilePresentation(measuredProfile, memoryPressure, descriptor.contextWindowTokens.toLong()), style = MaterialTheme.typography.labelSmall)
+            Text(localInteractionProfilePresentation(measuredProfile, memoryPressure, descriptor.contextWindowTokens.toLong(), liveLocalHealth(descriptor.id)), style = MaterialTheme.typography.labelSmall)
             TextButton(onClick = onBenchmark) { Text("Benchmark") }
             Text(
                 "${descriptor.bytes / 1_000_000} MB · imported · ${descriptor.validation.name}" +
@@ -679,3 +680,11 @@ private fun backendLabel(backend: LocalComputeBackend): String = when (backend) 
 private fun size(bytes: Long): String =
     if (bytes >= 1_000_000_000L) "%.2f GB".format(bytes / 1_000_000_000.0)
     else "%d MB".format((bytes + 999_999L) / 1_000_000L)
+
+@Composable
+private fun liveLocalHealth(modelId: String): com.halo.runtime.cognition.context.LocalInferenceRuntimeHealth? {
+    val samples by com.halo.app.di.ManualDependencyGraph.localInferenceRuntimeHealthTracker.snapshots.collectAsStateWithLifecycle()
+    return if (samples.any { it.modelId == modelId })
+        com.halo.app.di.ManualDependencyGraph.localInferenceProfileSource.runtimeHealth(com.halo.providers.litert.LiteRtLocalProvider.ProviderIds.LITERT, modelId)
+    else null
+}

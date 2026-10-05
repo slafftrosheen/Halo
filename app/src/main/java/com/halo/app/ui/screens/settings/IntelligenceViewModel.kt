@@ -427,6 +427,7 @@ class IntelligenceViewModel(
      */
     fun selectLocalModel(modelId: String) {
         viewModelScope.launch(dispatchers.io) {
+            if (modelManager != null && modelManager.verifyPhysicalArtifact(modelId) == null) return@launch
             updateSettings { it.copy(litertModel = modelId) }
             aiProviderRouter.selectTarget(AiModelRef(ProviderIds.LITERT, modelId))
         }
@@ -434,7 +435,10 @@ class IntelligenceViewModel(
 
     fun selectTarget(ref: AiModelRef) {
         viewModelScope.launch(dispatchers.io) {
-            if (ref.providerId == ProviderIds.LITERT) updateSettings { it.copy(litertModel = ref.modelId) }
+            if (ref.providerId == ProviderIds.LITERT) {
+                if (modelManager != null && modelManager.verifyPhysicalArtifact(ref.modelId) == null) return@launch
+                updateSettings { it.copy(litertModel = ref.modelId) }
+            }
             aiProviderRouter.selectTarget(ref)
         }
     }

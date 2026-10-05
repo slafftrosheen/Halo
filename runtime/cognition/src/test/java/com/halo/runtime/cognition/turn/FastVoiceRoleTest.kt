@@ -11,7 +11,7 @@ class FastVoiceRoleTest {
     private fun turn(text: String = "what is RAM?", voice: Boolean = true, metadata: Map<String, String> = emptyMap(),
         mode: CognitiveTurnMode = CognitiveTurnMode.FRESH) = CognitiveTurnRequest(
             InteractionId("voice"), "request", AiRequest(text = text), AiContextPolicy.CONSERVATIVE,
-            if (voice) ResponseDelivery.SPEECH_AND_VISUAL else ResponseDelivery.VISUAL_ONLY, null, metadata, mode = mode)
+            if (voice) ResponseDelivery.SPEECH_AND_VISUAL else ResponseDelivery.VISUAL_ONLY, null, mapOf("inputModality" to if (voice) "VOICE" else "TEXT") + metadata, mode = mode)
     private fun role(turn: CognitiveTurnRequest): AiModelRole? {
         val plan = DefaultAiWorkloadPlanner().plan(WorkloadPlanningRequest(turn.request, turn.interactionId, metadata = turn.metadata))
         return preferFastVoiceRole(turn, plan).inference.preferredRole
@@ -19,6 +19,12 @@ class FastVoiceRoleTest {
     @Test fun simpleVoicePrefersFastButTextKeepsChat() {
         assertEquals(AiModelRole.FAST, role(turn()))
         assertEquals(AiModelRole.CHAT, role(turn(voice = false)))
+    }
+    @Test fun typedHomeWithSpeechDeliveryKeepsChat() {
+        val home = turn().copy(metadata = mapOf("input" to "keyboard"))
+        assertEquals(InteractionInputModality.TEXT, home.inputModality())
+        assertEquals(AiModelRole.CHAT, role(home))
+        assertEquals(1024, com.halo.runtime.cognition.context.localInferencePerformance(true, 4096, home.inputModality() == InteractionInputModality.VOICE)!!.history.maxConversationTokens)
     }
     @Test fun strongerOwnersRemainIntact() {
         assertEquals(AiModelRole.AGENTIC, role(turn("set a timer for five minutes", metadata = mapOf("requiresTools" to "true"))))

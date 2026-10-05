@@ -72,6 +72,7 @@ fun SystemCheckScreen(
         )
 
         TextButton(onClick = { com.halo.app.di.ManualDependencyGraph.routinesViewModel.reconcile() }) { Text("Reconcile automation schedules") }
+        TextButton(onClick = { clipboard.setText(AnnotatedString(uiState.localAiDiagnostics)) }) { Text("Copy local AI diagnostics") }
         TextButton(onClick = viewModel::runSafeChecks) { Text("Refresh automation source availability") }
         var reflectionPreview by remember { mutableStateOf(false) }
         TextButton(onClick={reflectionPreview=!reflectionPreview}) { Text("Preview reflection policy") }

@@ -66,6 +66,7 @@ data class SystemCheckSection(
 data class SystemCheckUiState(
     val sections: List<SystemCheckSection> = emptyList(),
     val summaryReport: String = "",
+    val localAiDiagnostics: String = "No local model selected.",
     /** MINING-P0-001 last explicit direct-LiteRT control probe, if one has been run. */
     val liteRtControlProbe: com.halo.providers.litert.runtime.LiteRtControlProbeResult? = null,
     /** MINING-P0-001 content-free tool-channel truth for the selected local artifact. */
@@ -289,15 +290,34 @@ class SystemCheckViewModel(
             val providerStatus = provider?.let { runCatching { it.getStatus() }.getOrNull() }
             val localProvider = provider as? LiteRtLocalProvider
             val localProfile = if (localProvider != null && selectedModel != null) localProfileSource?.profile(localProvider.id, selectedModel) else null
-            val projectionContext = localProvider?.listModels()?.firstOrNull { it.id == selectedModel }?.contextLength ?: 4096L
+            val localContext = localProvider?.listModels()?.firstOrNull { it.id == selectedModel }?.contextLength
+            val projectionContext = localContext ?: 4096L
             val profilePressure = memoryPressure()
+            val health = selectedModel?.let { localProfileSource?.runtimeHealth(localProvider?.id.orEmpty(), it) }
             val decision = com.halo.runtime.cognition.context.localInferencePerformance(true,
-                projectionContext, true, localProfile, profilePressure)
+                projectionContext, true, localProfile, profilePressure, health)
+            val localDiagnostics = buildString {
+                appendLine("Halo source: ${com.halo.app.BuildConfig.HALO_SOURCE_ID}")
+                if (localProvider == null || selectedModel == null) {
+                    appendLine("No local model selected.")
+                    return@buildString
+                }
+                appendLine("Model: ${selectedModel.takeIf { localProvider != null } ?: "None"}")
+                appendLine("Artifact: ${selectedModel?.let { localProfileSource?.trustedArtifactIdentity(it)?.take(12) } ?: "Unknown"}")
+                appendLine("Backend: ${health?.backend ?: localProfile?.backend ?: "Unknown"}")
+                appendLine("Context: ${localContext ?: "Unknown"}")
+                val latest = localProfileSource?.lastPolicy?.takeIf { it.modelId == selectedModel && it.providerId == localProvider?.id }
+                appendLine("Input modality: ${latest?.inputModality ?: "UNKNOWN"}")
+                appendLine("Response delivery: ${latest?.responseDelivery ?: "Unknown"}")
+                appendLine("Profile lookup: ${latest?.profileLookupMs?.let { "$it ms" } ?: "Unknown"}")
+                appendLine(localInteractionProfilePresentation(localProfile, profilePressure, projectionContext, health))
+            }.trim()
+            _uiState.value = _uiState.value.copy(localAiDiagnostics = localDiagnostics)
             sections.add(SystemCheckSection("local_interaction_profile", "Local interaction profile", listOf(
                 SystemCheckItem("local_interaction_profile", "Local interaction profile", HaloGlyph.MODEL,
                     if (localProfile != null) CheckStatus.READY else CheckStatus.NOT_CONFIGURED,
                     if (localProfile != null) "MEASURED · ${decision?.tier ?: "UNKNOWN"}" else "DEFAULT · No compatible benchmark for this device/runtime",
-                    detail = localInteractionProfilePresentation(localProfile, profilePressure, projectionContext)))))
+                    detail = localInteractionProfilePresentation(localProfile, profilePressure, projectionContext, health)))))
             
             sections.add(SystemCheckSection(
                 id = "ai",

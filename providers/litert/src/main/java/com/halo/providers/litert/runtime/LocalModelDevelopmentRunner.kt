@@ -111,6 +111,7 @@ class LocalModelDevelopmentRunner(
             val loadResult = session.loadModel(
                 modelId = descriptor.id,
                 modelPath = descriptor.path,
+                artifactSha256 = descriptor.sha256,
                 config = loadConfigFor(descriptor),
             )
             if (loadResult.isFailure) {
@@ -215,6 +216,7 @@ class LocalModelDevelopmentRunner(
             val loadResult = session.loadModel(
                 modelId = descriptor.id,
                 modelPath = descriptor.path,
+                artifactSha256 = descriptor.sha256,
                 config = loadConfigFor(descriptor),
             )
             if (loadResult.isFailure) {

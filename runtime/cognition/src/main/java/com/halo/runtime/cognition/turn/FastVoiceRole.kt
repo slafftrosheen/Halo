@@ -5,7 +5,7 @@ import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.ResponseDelivery
 
 internal fun preferFastVoiceRole(turn: CognitiveTurnRequest, plan: CognitiveWorkloadPlan): CognitiveWorkloadPlan {
-    val simple = turn.responseDelivery == ResponseDelivery.SPEECH_AND_VISUAL &&
+    val simple = turn.inputModality() == InteractionInputModality.VOICE &&
         turn.mode == CognitiveTurnMode.FRESH && turn.runId == null && turn.delegatedInput == null &&
         turn.metadata["preferredRole"] == null &&
         plan.inference.preferredRole in setOf(null, AiModelRole.CHAT) &&

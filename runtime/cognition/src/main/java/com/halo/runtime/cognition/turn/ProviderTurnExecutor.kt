@@ -122,7 +122,7 @@ class DefaultProviderTurnExecutor(
                     com.halo.runtime.cognition.context.LocalInferenceObservation(target.providerId, resolvedModel,
                         response.executionBackend, firstTokenMs, durationMs, response.metrics?.inputTokens ?:
                             ((request.text.orEmpty().length.toLong() + context.conversation.sumOf { it.content.length.toLong() } + 2) / 3).coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
-                        response.metrics?.outputTokens, true, response.coldStart))
+                        response.metrics?.outputTokens, true, response.coldStart, executionIdentity = (target.provider as? com.halo.sdk.provider.LocalInferenceExecutionReporting)?.localExecutionIdentity(resolvedModel)))
                 return result
             } catch (cancelled: CancellationException) {
                 throw cancelled
@@ -150,7 +150,14 @@ class DefaultProviderTurnExecutor(
                             "attempt=$attempt partialOutput=$partialOutput"
                     )
                     if (target.provider.isLocal) recordObservation(com.halo.runtime.cognition.context.LocalInferenceObservation(
-                        target.providerId, target.modelId, totalMs = System.currentTimeMillis() - attemptStartMs, success = false))
+                        target.providerId, target.modelId, backend = (target.provider as? com.halo.sdk.provider.LocalInferenceExecutionReporting)?.localExecutionBackend(target.modelId), totalMs = System.currentTimeMillis() - attemptStartMs, success = false,
+                        outcome = when (aiEx?.type) {
+                            AiErrorType.MODEL_LOAD_FAILED -> com.halo.runtime.cognition.context.LocalInferenceObservationOutcome.LOAD_FAILURE
+                            AiErrorType.TIMEOUT -> com.halo.runtime.cognition.context.LocalInferenceObservationOutcome.TIMEOUT
+                            AiErrorType.SESSION_CONFLICT -> com.halo.runtime.cognition.context.LocalInferenceObservationOutcome.RESOURCE_BUSY
+                            AiErrorType.CANCELLED -> com.halo.runtime.cognition.context.LocalInferenceObservationOutcome.CANCELLED
+                            else -> com.halo.runtime.cognition.context.LocalInferenceObservationOutcome.GENERATION_FAILURE
+                        }, executionIdentity = (target.provider as? com.halo.sdk.provider.LocalInferenceExecutionReporting)?.localExecutionIdentity(target.modelId)))
                     throw error
                 }
             }

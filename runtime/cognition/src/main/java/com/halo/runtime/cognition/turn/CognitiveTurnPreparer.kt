@@ -59,6 +59,7 @@ class DefaultCognitiveTurnPreparer(
     private val imageInputPreparer: com.halo.sdk.runtime.multimodal.ImageInputPreparer? = null,
     private val mediaObjectPolicy: com.halo.sdk.runtime.multimodal.MediaObjectPolicyResolver? = null,
     private val eventBus: com.halo.sdk.runtime.EventBus? = null,
+    private val runtimeHealthTracker: com.halo.runtime.cognition.context.LocalInferenceRuntimeHealthTracker? = null,
     private val localInferenceProfileSource: com.halo.runtime.cognition.context.LocalInferenceProfileSource? = null,
     private val memoryPressure: suspend () -> com.halo.sdk.runtime.NativeMemoryPressure = { com.halo.sdk.runtime.NativeMemoryPressure.NORMAL },
     private val localVoiceNextUse: suspend (providerId: String, modelId: String) -> Unit = { _, _ -> },
@@ -90,11 +91,13 @@ class DefaultCognitiveTurnPreparer(
             if (input.workload.toolUseMode == com.halo.sdk.provider.ToolUseMode.REQUIRED && !protocol.supportsToolLoop)
                 throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY, "Child action requires a tool-capable target")
             if (target.model.executionLocation == com.halo.sdk.provider.AiExecutionLocation.ON_DEVICE) {
+                val profileLookupStart = System.nanoTime()
                 val profile = compatibleLocalProfile(target)
+                val profileLookupMs = ((System.nanoTime() - profileLookupStart) / 1_000_000).coerceIn(0, 60_000)
                 val pressure = memoryPressure()
                 val tier = com.halo.runtime.cognition.context.localInferencePerformance(true, target.model.contextLength, false, profile, pressure)?.tier
                 println("HALO_LOCAL_INTERACTION_PROFILE interactionId=${turn.interactionId.value} provider=${target.providerId} model=${target.modelId} " +
-                    "surface=TEXT profileSource=${if (profile != null) "MEASURED" else "DEFAULT"} performanceTier=${tier ?: "UNKNOWN"} " +
+                    "inputModality=${turn.inputModality()} responseDelivery=${turn.responseDelivery} profileLookupMs=$profileLookupMs surface=TEXT profileSource=${if (profile != null) "MEASURED" else "DEFAULT"} performanceTier=${tier ?: "UNKNOWN"} " +
                     "profileTtftMs=${profile?.ttftMs} profileEstimatedTokPerSec=${profile?.estimatedGenerationTokensPerSecond} memoryPressure=$pressure " +
                     "historyBudgetTokens=null outputBudgetTokens=${turn.request.maxOutputTokens} role=${input.workload.preferredRole}")
             }
@@ -238,16 +241,25 @@ class DefaultCognitiveTurnPreparer(
             else -> null
         }
 
-        val voiceSurface = turn.responseDelivery == com.halo.sdk.runtime.ResponseDelivery.SPEECH_AND_VISUAL
+        val inputModality = turn.inputModality()
+        val voiceSurface = inputModality == InteractionInputModality.VOICE
+        val profileLookupStart = System.nanoTime()
         val profile = if (targetIsOnDevice) compatibleLocalProfile(target) else null
+        val profileLookupMs = ((System.nanoTime() - profileLookupStart) / 1_000_000).coerceIn(0, 60_000)
+        val executionIdentity = (target.provider as? com.halo.sdk.provider.LocalInferenceExecutionReporting)?.localExecutionIdentity(target.modelId)
+        val backend = profile?.backend ?: executionIdentity?.split('|')?.getOrNull(2)
+        runtimeHealthTracker?.baseline(target.providerId, target.modelId, backend, executionIdentity, profile)
+        val health = runtimeHealthTracker?.snapshot(target.providerId, target.modelId, backend, executionIdentity)
         val pressure = memoryPressure()
         if (voiceSurface && targetIsOnDevice) localVoiceNextUse(target.providerId, target.modelId)
-        val performance = com.halo.runtime.cognition.context.localInferencePerformance(targetIsOnDevice, target.model.contextLength, voiceSurface, profile, pressure)
+        val performance = com.halo.runtime.cognition.context.localInferencePerformance(targetIsOnDevice, target.model.contextLength, voiceSurface, profile, pressure, health)
         if (targetIsOnDevice) println("HALO_LOCAL_INTERACTION_PROFILE interactionId=${turn.interactionId.value} provider=${target.providerId} model=${target.modelId} " +
-            "surface=${if (voiceSurface) "VOICE" else "TEXT"} profileSource=${if (profile != null) "MEASURED" else "DEFAULT"} " +
+            "inputModality=$inputModality responseDelivery=${turn.responseDelivery} profileLookupMs=$profileLookupMs surface=${if (voiceSurface) "VOICE" else "TEXT"} profileSource=${if (profile != null) "MEASURED" else "DEFAULT"} " +
             "performanceTier=${performance?.tier ?: com.halo.runtime.cognition.context.LocalPerformanceTier.UNKNOWN} profileTtftMs=${profile?.ttftMs} " +
             "profileEstimatedTokPerSec=${profile?.estimatedGenerationTokensPerSecond} memoryPressure=$pressure " +
             "historyBudgetTokens=${performance?.history?.maxConversationTokens} outputBudgetTokens=${performance?.outputTokens?.let { minOf(it, turn.request.maxOutputTokens ?: Int.MAX_VALUE) } ?: turn.request.maxOutputTokens} role=${workload.inference.preferredRole}")
+        if (targetIsOnDevice) runtimeHealthTracker?.recordPolicy(com.halo.runtime.cognition.context.LocalInteractionPolicySnapshot(
+            target.providerId, target.modelId, inputModality, turn.responseDelivery, profileLookupMs, pressure, performance))
         val performanceBudget = performance?.history
         val assemblyResult = contextAssembler.assemble(
             policy = turn.policy,

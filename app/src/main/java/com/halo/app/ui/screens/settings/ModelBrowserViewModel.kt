@@ -28,9 +28,15 @@ class ModelBrowserViewModel(val control: ProviderControlRepository) : ViewModel(
     }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ModelBrowserState())
     fun enter(provider: String?, role: AiModelRole?) { filter.value = ModelBrowserFilter(provider = provider, role = role) }
     fun pick(entry: AiModelCatalogEntry) {
+        if (entry.runtime.installed == false) return
         if (control.rows.value.firstOrNull { it.descriptor.providerId == entry.model.providerId }?.configured != true) return
         val role = filter.value.role
         viewModelScope.launch(Dispatchers.IO) {
+            if (entry.runtime.location == AiExecutionLocation.ON_DEVICE) {
+                control.catalogue.refresh(entry.model.providerId)
+                val local = control.providers.firstOrNull { it.id == entry.model.providerId } ?: return@launch
+                if (local.listModels().none { it.id == entry.model.id }) return@launch
+            }
             if (role == null || role == AiModelRole.CHAT) control.router.selectTarget(entry.runtime.ref)
             else control.router.setRoleBinding(AiRoleBinding(role, entry.model.providerId, entry.model.id, AiRoleSelection.EXPLICIT))
         }

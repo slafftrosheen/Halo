@@ -245,7 +245,7 @@ class LiteRtLocalProvider(
     private val catalog: List<LiteRtCatalogModel> = LiteRtModelCatalog.BUILT_IN_MODELS,
     preferences: LiteRtModelPreferences? = null,
     failureMemory: LiteRtModelFailureMemory? = null,
-) : AiInferenceProvider, NativeResourceOwner, com.halo.sdk.provider.ToolProtocolReporting, com.halo.sdk.provider.ModelInputCapabilityReporting, com.halo.sdk.provider.ProviderConfigurationReporting {
+) : AiInferenceProvider, NativeResourceOwner, com.halo.sdk.provider.ToolProtocolReporting, com.halo.sdk.provider.ModelInputCapabilityReporting, com.halo.sdk.provider.ProviderConfigurationReporting, com.halo.sdk.provider.LocalInferenceExecutionReporting {
 
     override val configurationDescriptor: com.halo.sdk.provider.ProviderConfigurationDescriptor get() =
         com.halo.sdk.provider.ProviderConfigurationDescriptor(id, displayName, com.halo.sdk.provider.AiExecutionLocation.ON_DEVICE,
@@ -410,6 +410,21 @@ class LiteRtLocalProvider(
     fun loadConfigFor(descriptor: LocalModelDescriptor): RuntimeLoadConfig =
         preferences.buildLoadConfig(catalogModelFor(descriptor), descriptor).copy(visionEnabled = descriptor.supportsVision)
 
+    override fun localExecutionBackend(modelId: String): String? =
+        modelSession.activeBackend?.name?.takeIf { modelSession.loadedModelId == modelId }
+
+    override fun localExecutionIdentity(modelId: String): String? {
+        val descriptor = (inventoryRepository.inventoryState.value as? LocalModelInventoryState.Ready)
+            ?.models?.firstOrNull { it.id == modelId && it.valid } ?: return null
+        val resident = modelSession.takeIf { it.isLoaded() && it.loadedModelId == modelId &&
+            (it.loadedArtifactSha256 == null || it.loadedArtifactSha256 == descriptor.sha256) }
+        val config = resident?.activeConfig ?: loadConfigFor(descriptor)
+        val backend = resident?.activeBackend ?: backendResolutionForDescriptor(descriptor).effective
+        val context = resident?.effectiveContextSize ?: config.contextSize.takeUnless { config.useModelDefaultContext }
+        return listOf(resident?.loadedArtifactSha256 ?: descriptor.sha256, RUNTIME_VERSION, backend.name, context, config.cpuThreads,
+            resident?.activeGpuLayers ?: if (backend == LocalComputeBackend.CPU) 0 else config.gpuLayers).joinToString("|")
+    }
+
     fun isGenerationProven(descriptor: LocalModelDescriptor): Boolean =
         failureMemory.isGenerationProven(descriptor.id, descriptor.sha256)
 
@@ -451,6 +466,12 @@ class LiteRtLocalProvider(
             ?: "GPU: not installed"
 
     /** Resolution that would apply right now if this model were loaded with its stored request. */
+    /** Read existing inventory/backend truth without resolving or scanning inventory. */
+    fun backendResolutionForDescriptor(descriptor: LocalModelDescriptor): LiteRtBackendResolution =
+        LiteRtBackendQualificationPolicy.resolve(loadConfigFor(descriptor).computeBackend,
+            backendQualificationStore.qualificationFor(descriptor.sha256),
+            preferences.developerBackend(descriptor.id) == LocalComputeBackend.GPU)
+
     suspend fun backendResolutionForModel(modelId: String): LiteRtBackendResolution? {
         val descriptor = inventoryRepository.resolveModel(modelId) ?: return null
         val requested = loadConfigFor(descriptor).computeBackend
@@ -716,7 +737,9 @@ class LiteRtLocalProvider(
 
     private suspend fun loadModelIfNeededLocked(requestedModelId: String?): Boolean {
         val modelId = requestedModelId ?: configuredModelId ?: return false
-        val descriptor = inventoryRepository.resolveModel(modelId) ?: return false
+        val descriptor = if (modelSession.isLoaded() && modelSession.loadedModelId == modelId)
+            inventoryRepository.resolveModel(modelId) else inventoryRepository.verifyPhysicalArtifact(modelId)
+        if (descriptor == null) return false
         if (!descriptor.valid) {
             _status.value = ProviderStatus(
                 ProviderStatus.State.ERROR,
@@ -728,7 +751,8 @@ class LiteRtLocalProvider(
     }
 
     private suspend fun loadLocked(descriptor: LocalModelDescriptor): Boolean {
-        if (modelSession.isLoaded() && modelSession.loadedModelId == descriptor.id) return true
+        if (modelSession.isLoaded() && modelSession.loadedModelId == descriptor.id &&
+            (modelSession.loadedArtifactSha256 == null || modelSession.loadedArtifactSha256 == descriptor.sha256)) return true
 
         val acquired = try {
             nativeResourceCoordinator?.acquire(this) ?: true
@@ -774,6 +798,7 @@ class LiteRtLocalProvider(
             modelSession.loadModel(
                 modelId = descriptor.id,
                 modelPath = descriptor.path,
+                artifactSha256 = descriptor.sha256,
                 config = loadConfig,
             )
         } catch (cancelled: CancellationException) {
@@ -1277,7 +1302,7 @@ class LiteRtLocalProvider(
      */
     suspend fun verifyModel(modelId: String): ModelVerificationResult = withContext(Dispatchers.IO) {
         loadMutex.withLock locked@ {
-            val descriptor = inventoryRepository.resolveModel(modelId)
+            val descriptor = inventoryRepository.verifyPhysicalArtifact(modelId)
                 ?: return@locked ModelVerificationResult.Failed(
                     modelId,
                     ModelVerificationStage.DOWNLOAD,

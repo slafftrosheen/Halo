@@ -28,9 +28,15 @@ data class LocalInferenceObservation(
     val estimatedOutputTokens: Int? = null,
     val success: Boolean,
     val coldStart: Boolean? = null,
+    val outcome: LocalInferenceObservationOutcome = if (success) LocalInferenceObservationOutcome.SUCCESS else LocalInferenceObservationOutcome.GENERATION_FAILURE,
+    val executionIdentity: String? = null,
 )
 
 /** Observations are content free and do not replace benchmark calibration. */
 fun interface LocalInferenceObservationSink {
     suspend fun record(observation: LocalInferenceObservation)
+}
+
+enum class LocalInferenceObservationOutcome {
+    SUCCESS, GENERATION_FAILURE, LOAD_FAILURE, TIMEOUT, RESOURCE_BUSY, CANCELLED, PREEMPTED,
 }

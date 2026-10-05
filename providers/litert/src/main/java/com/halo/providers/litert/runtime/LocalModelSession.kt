@@ -57,6 +57,8 @@ class LocalModelSession(
 
     private var activeRuntime: LocalInferenceRuntime? = null
 
+    var loadedArtifactSha256: String? = null
+        private set
     var loadedModelId: String? = null
         private set
     var loadedModelPath: String? = null
@@ -224,9 +226,10 @@ class LocalModelSession(
         modelPath: String,
         format: LocalModelFormat = LocalModelFormat.LITERT_LM,
         config: RuntimeLoadConfig = RuntimeLoadConfig(),
+        artifactSha256: String? = null,
     ): Result<RuntimeLoadResult> = lifecycleMutex.withLock lifecycleLock@{
         generationMutex.withLock generationLock@{
-        if (isLoaded() && loadedModelId == modelId && activeFormat == format) {
+        if (isLoaded() && loadedModelId == modelId && activeFormat == format && (artifactSha256 == null || loadedArtifactSha256 == artifactSha256)) {
             // The native runtime may have downshifted context after an allocation
             // failure. Reuse the proven resident context instead of retrying the
             // larger requested value on every prompt.
@@ -255,6 +258,7 @@ class LocalModelSession(
             val result = runtime.loadModel(modelId, modelPath, config)
             result.onSuccess { loadResult ->
                 residencyVersion.incrementAndGet()
+                loadedArtifactSha256 = artifactSha256
                 loadedModelId = modelId
                 loadedModelPath = modelPath
                 activeFormat = format
@@ -403,6 +407,7 @@ class LocalModelSession(
         val current = activeRuntime
         val res = current?.unloadModel() ?: Result.success(Unit)
         activeRuntime = null
+        loadedArtifactSha256 = null
         loadedModelId = null
         loadedModelPath = null
         activeFormat = null

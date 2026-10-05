@@ -986,8 +986,10 @@ object ManualDependencyGraph {
     val activeTurnCoordinator by lazy {
         DefaultActiveTurnCoordinator(eventBus)
     }
+    val localInferenceRuntimeHealthTracker by lazy { com.halo.runtime.cognition.context.LocalInferenceRuntimeHealthTracker() }
     val providerTurnExecutor by lazy {
         DefaultProviderTurnExecutor(eventBus, aiProviderRouter, com.halo.runtime.cognition.context.LocalInferenceObservationSink { o ->
+            localInferenceRuntimeHealthTracker.record(o)
             android.util.Log.i("HaloLocalProfile", "HALO_LOCAL_INFERENCE_OBSERVATION provider=${o.providerId} model=${o.modelId} backend=${o.backend} " +
                 "ttftMs=${o.ttftMs} totalMs=${o.totalMs} estimatedInputTokens=${o.estimatedInputTokens} estimatedOutputTokens=${o.estimatedOutputTokens} success=${o.success} coldStart=${o.coldStart}")
         })
@@ -1045,13 +1047,14 @@ object ManualDependencyGraph {
     val deviceRuntimeIdentity by lazy { com.halo.app.data.models.DeviceRuntimeIdentity.current(applicationContext) }
     val localInferenceProfileSource by lazy {
         com.halo.app.data.models.RoomLocalInferenceProfileSource(modelManager, modelRuntimeProfileRepository, deviceRuntimeIdentity,
-            { aiProviderRouter.getAllProviders().filterIsInstance<com.halo.providers.litert.LiteRtLocalProvider>().firstOrNull() })
+            { aiProviderRouter.getAllProviders().filterIsInstance<com.halo.providers.litert.LiteRtLocalProvider>().firstOrNull() }, healthTracker = localInferenceRuntimeHealthTracker)
     }
     val localBenchmarkProfileRecorder by lazy { com.halo.app.data.models.LocalBenchmarkProfileRecorder(modelRuntimeProfileRepository, localInferenceProfileSource, deviceRuntimeIdentity) }
     val cognitiveTurnPreparer by lazy {
         com.halo.runtime.cognition.turn.DefaultCognitiveTurnPreparer(
             workloadPlanner = DefaultAiWorkloadPlanner(),
             localInferenceProfileSource = localInferenceProfileSource,
+            runtimeHealthTracker = localInferenceRuntimeHealthTracker,
             memoryPressure = {
                 providerGraph.nativeResourceCoordinator.budgetReevaluation?.invoke()
                 providerGraph.nativeResourceCoordinator.budget.value.pressure
@@ -1314,7 +1317,8 @@ object ManualDependencyGraph {
         )
     }
     val aiModelCatalogRepository by lazy {
-        com.halo.engines.ai.catalog.DefaultAiModelCatalogRepository(aiProviderRouter.getAllProviders().filterIsInstance<com.halo.sdk.provider.AiInferenceProvider>(), storage = storage)
+        com.halo.app.ai.LocalModelCatalogRepository(com.halo.engines.ai.catalog.DefaultAiModelCatalogRepository(aiProviderRouter.getAllProviders().filterIsInstance<com.halo.sdk.provider.AiInferenceProvider>(), storage = storage), modelManager, kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.IO),
+            { aiProviderRouter.getAllProviders().filterIsInstance<com.halo.providers.litert.LiteRtLocalProvider>().firstOrNull() })
     }
     val modelBrowserViewModel by lazy { com.halo.app.ui.screens.settings.ModelBrowserViewModel(providerControlRepository) }
     val providerControlRepository by lazy { com.halo.app.ai.ProviderControlRepository(aiProviderRouter, aiModelCatalogRepository, storage) }

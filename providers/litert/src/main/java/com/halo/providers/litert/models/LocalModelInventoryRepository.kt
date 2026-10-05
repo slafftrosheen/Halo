@@ -70,7 +70,7 @@ data class LocalModelDescriptor(
 
 sealed interface LocalModelInventoryState {
     data object Loading : LocalModelInventoryState
-    data class Ready(val models: List<LocalModelDescriptor>, val scannedAt: Long) : LocalModelInventoryState
+    data class Ready(val models: List<LocalModelDescriptor>, val scannedAt: Long, val revision: Long = scannedAt) : LocalModelInventoryState
     data class Failed(val message: String) : LocalModelInventoryState
 }
 
@@ -78,5 +78,7 @@ interface LocalModelInventoryRepository {
     val inventoryState: StateFlow<LocalModelInventoryState>
     suspend fun refresh(reason: ModelInventoryRefreshReason)
     suspend fun resolveModel(modelId: String): LocalModelDescriptor?
+    /** Explicit verification must bypass cached physical fingerprints. Never called per turn. */
+    suspend fun verifyPhysicalArtifact(modelId: String): LocalModelDescriptor? = resolveModel(modelId)
     fun invalidate(reason: String)
 }

@@ -18,6 +18,7 @@ fun localInferencePerformance(
     voice: Boolean,
     profile: LocalInferenceRuntimeProfile? = null,
     pressure: NativeMemoryPressure = NativeMemoryPressure.NORMAL,
+    health: LocalInferenceRuntimeHealth? = null,
 ): LocalInferencePerformance? {
     if (!onDevice || (contextLength ?: Long.MAX_VALUE) > 4096L) return null
     val measured = profile?.stable == true && profile.ttftMs?.let { it >= 0 } == true
@@ -27,13 +28,23 @@ fun localInferencePerformance(
         profile.ttftMs!! <= 8000 -> LocalPerformanceTier.SLOW
         else -> LocalPerformanceTier.VERY_SLOW
     }
+    // The tracker commits tiers only after its sample/hysteresis gate or a failure streak.
+    val warmTier = health?.tier ?: normal
+    val failures = health?.recentFailureStreak ?: 0
+    val failureFloor = when {
+        failures >= 3 -> LocalPerformanceTier.VERY_SLOW
+        failures == 2 -> if (normal == LocalPerformanceTier.SLOW || normal == LocalPerformanceTier.VERY_SLOW)
+            LocalPerformanceTier.VERY_SLOW else LocalPerformanceTier.SLOW
+        else -> LocalPerformanceTier.UNKNOWN
+    }
+    val adaptive = if (failureFloor.ordinal > warmTier.ordinal) failureFloor else warmTier
     val tier = when (pressure) {
         NativeMemoryPressure.CRITICAL -> LocalPerformanceTier.VERY_SLOW
-        NativeMemoryPressure.LOW -> when (normal) {
+        NativeMemoryPressure.LOW -> when (adaptive) {
             LocalPerformanceTier.UNKNOWN, LocalPerformanceTier.GOOD -> LocalPerformanceTier.SLOW
             else -> LocalPerformanceTier.VERY_SLOW
         }
-        NativeMemoryPressure.NORMAL -> normal
+        NativeMemoryPressure.NORMAL -> adaptive
     }
     val (history, output) = when (tier) {
         LocalPerformanceTier.UNKNOWN, LocalPerformanceTier.GOOD -> if (voice) 512 to 128 else 1024 to 256

@@ -30,6 +30,21 @@ class LiteRtInventoryTest {
     private val unknownPayload = ByteArray(1_200_000) { index -> ((index + 7) % 251).toByte() }
 
     @Test
+    fun `explicit refresh detects replacement even when size and timestamp match`() = runBlocking {
+        val root = tempRoot("mutation")
+        writeArtifact(root, KNOWN_ID, payload)
+        val manager = manager(root)
+        val descriptor = manager.resolveModel(KNOWN_ID)!!
+        val file = File(descriptor.path)
+        val modified = file.lastModified()
+        file.writeBytes(unknownPayload)
+        file.setLastModified(modified)
+        manager.refresh(ModelInventoryRefreshReason.USER_REQUEST)
+        assertFalse(manager.resolveModel(KNOWN_ID)!!.valid)
+        assertNull(manager.verifyPhysicalArtifact(KNOWN_ID))
+    }
+
+    @Test
     fun `a known artifact with matching bytes and sha is VERIFIED_ARTIFACT`() {
         val root = tempRoot("verified")
         writeArtifact(root, KNOWN_ID, payload)

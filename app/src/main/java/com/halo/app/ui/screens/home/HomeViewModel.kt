@@ -467,7 +467,7 @@ class HomeViewModel(
                                 language = Locale.getDefault().toLanguageTag()
                             ),
                             interactionId = interactionId,
-                            metadata = mapOf("input" to "keyboard", "mode" to selectedMode.value.name,
+                            metadata = mapOf("inputModality" to "TEXT", "input" to "keyboard", "mode" to selectedMode.value.name,
                                 "interactionId" to interactionId, "hasAssistantImage" to (imageArg != null).toString(),
                                 "explicitImageReference" to (imageArg != null).toString())
                         )
@@ -480,7 +480,7 @@ class HomeViewModel(
                     image = null
                 )
                 cognitiveSession.submit(request = request, responseDelivery = ResponseDelivery.SPEECH_AND_VISUAL,
-                    metadata = mapOf("input" to "keyboard", "mode" to selectedMode.value.name, "interactionId" to interactionId,
+                    metadata = mapOf("inputModality" to "TEXT", "input" to "keyboard", "mode" to selectedMode.value.name, "interactionId" to interactionId,
                         "hasAssistantImage" to (imageArg != null).toString(), "explicitImageReference" to (imageArg != null).toString()))
 
             }.onFailure {

@@ -8,6 +8,9 @@ package com.halo.app.data.models
 class ModelRuntimeProfileRepository(
     private val dao: ModelRuntimeProfileDao,
 ) {
+    private val calibrationRevision = java.util.concurrent.atomic.AtomicLong()
+    val revision: Long get() = calibrationRevision.get()
+
     suspend fun preferred(
         artifactId: String,
         artifactFingerprint: String,
@@ -37,6 +40,7 @@ class ModelRuntimeProfileRepository(
             "LOAD_FAILED", "GENERATION_FAILED", "GPU_PROCESS_DEATH", "TIMEOUT", "RESOURCE_BUSY", "ARTIFACT_MISMATCH"))
         require(!profile.isStable || (profile.textGenerationProven && profile.failureReason == null))
         dao.saveMeasurement(profile)
+        calibrationRevision.incrementAndGet()
     }
 
     suspend fun hasCompatibleCalibration(artifactId: String, deviceFingerprint: String, runtime: String,
@@ -70,5 +74,6 @@ class ModelRuntimeProfileRepository(
 
     suspend fun invalidateArtifact(artifactId: String) {
         dao.deleteByArtifactId(artifactId)
+        calibrationRevision.incrementAndGet()
     }
 }

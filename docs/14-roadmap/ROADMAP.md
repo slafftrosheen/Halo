@@ -1,5 +1,24 @@
 # Halo Execution Roadmap
 
+## RUNTIME-061 - input truth and live local adaptation - 2026-10-05
+
+Input modality is independent of response delivery. Typed Home requests keep CHAT and
+text budgets even when Halo speaks; actual speech selects the voice latency policy.
+Normal calibration lookup consumes verified inventory and a bounded process cache;
+physical SHA verification belongs to inventory, load, and explicit benchmark boundaries.
+One process-scoped tracker separates cold/warm TTFT, applies warm EWMA with sample gates
+and hysteresis, and keeps live memory pressure as the final conservative authority.
+System Check and model Details distinguish CALIBRATION, LIVE, and EFFECTIVE policy;
+System Check can copy a content-free local AI diagnostic snapshot.
+
+The shared model browser now includes the existing downloadable LiteRT catalogue on a
+fresh install and updates installed/deleted entries from inventory. Uninstalled entries
+open setup rather than becoming inference selections. No models or automatic GPU
+promotion were added; no EWMA persistence or Room migration was introduced.
+Serial automated gate passed: 649 tests, zero failures, debug APK assembled.
+Two-phone physical acceptance remains pending.
+See [implementation and acceptance record](../engineering/RUNTIME-061-LIVE-LOCAL-ADAPTATION.md).
+
 ## RUNTIME-060 — adaptive local execution — 2026-10-05
 
 Explicit benchmarks now persist per artifact/device/runtime variant. Compatible measured
